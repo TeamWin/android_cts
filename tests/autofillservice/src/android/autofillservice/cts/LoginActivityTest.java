@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package android.autofillservice.cts;
 
 import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
@@ -88,8 +89,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     private static final boolean SUPPORTS_PARTITIONED_AUTH = false;
 
     @Rule
-    public final ActivityTestRule<LoginActivity> mActivityRule =
-            new ActivityTestRule<LoginActivity>(LoginActivity.class);
+    public final ActivityTestRule<LoginActivity> mActivityRule = new ActivityTestRule<LoginActivity>(
+            LoginActivity.class);
 
     private LoginActivity mActivity;
 
@@ -174,7 +175,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                     public AccessibilityNodeInfo createAccessibilityNodeInfo(int virtualViewId) {
                         final AccessibilityNodeInfo info = AccessibilityNodeInfo.obtain();
                         if (virtualViewId == View.NO_ID) {
-                          info.addChild(v, 108);
+                            info.addChild(v, 108);
                         }
                         return info;
                     }
@@ -507,7 +508,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     /**
      * Tests the scenario where the service uses custom remote views for different fields (username
      * and password) and the dataset itself, and each dataset has the same number of fields.
-     *
      */
     @Test
     public void testAutofillMultipleDatasetsCustomPresentations() throws Exception {
@@ -552,7 +552,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     /**
      * Tests the scenario where the service uses custom remote views for different fields (username
      * and password), and each dataset has the same number of fields.
-     *
      */
     @Test
     public void testAutofillMultipleDatasetsCustomPresentationSameFields() throws Exception {
@@ -940,12 +939,12 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         extras.putString("numbers", "4815162342");
         AuthenticationActivity.setResponse(
                 new CannedFillResponse.Builder()
-            .addDataset(new CannedDataset.Builder()
-                    .setField(ID_USERNAME, "dude")
-                    .setField(ID_PASSWORD, "sweet")
-                    .setPresentation(createPresentation("Dataset"))
-                    .build())
-            .build());
+                        .addDataset(new CannedDataset.Builder()
+                                .setField(ID_USERNAME, "dude")
+                                .setField(ID_PASSWORD, "sweet")
+                                .setPresentation(createPresentation("Dataset"))
+                                .build())
+                        .build());
 
         // Create the authentication intent
         final IntentSender authentication = PendingIntent.getActivity(getContext(), 0,
@@ -1012,13 +1011,13 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         extras.putString("numbers", "4815162342");
         AuthenticationActivity.setResponse(
                 new CannedFillResponse.Builder()
-            .addDataset(new CannedDataset.Builder()
-                    .setField(ID_USERNAME, "dude")
-                    .setField(ID_PASSWORD, "sweet")
-                    .setPresentation(createPresentation("Dataset"))
-                    .build())
-            .setAuthenticationIds(ID_USERNAME)
-            .build());
+                        .addDataset(new CannedDataset.Builder()
+                                .setField(ID_USERNAME, "dude")
+                                .setField(ID_PASSWORD, "sweet")
+                                .setPresentation(createPresentation("Dataset"))
+                                .build())
+                        .setAuthenticationIds(ID_USERNAME)
+                        .build());
 
         // Create the authentication intent
         final IntentSender authentication = PendingIntent.getActivity(getContext(), 0,
@@ -1248,8 +1247,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertNumberOfChildren(fillRequest.structure, 11);
 
         // Make sure container with a resource id was included:
-        final ViewNode usernameContainer =
-                findNodeByResourceId(fillRequest.structure, ID_USERNAME_CONTAINER);
+        final ViewNode usernameContainer = findNodeByResourceId(fillRequest.structure,
+                ID_USERNAME_CONTAINER);
         assertThat(usernameContainer).isNotNull();
         assertThat(usernameContainer.getChildCount()).isEqualTo(2);
     }
@@ -1301,7 +1300,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // And activity.
         mActivity.onUsername((v) -> {
-            //v.setAutofillMode(AUTOFILL_MODE_MANUAL);
+            // v.setAutofillMode(AUTOFILL_MODE_MANUAL);
             // TODO: setting an empty text, otherwise longPress() does not display the AUTOFILL
             // context menu. Need to fix it, but it's a test case issue...
             v.setText("");
@@ -1335,7 +1334,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Auto-fill it.
         final UiObject2 picker = sUiBot.assertDatasets("The Dude", "Jenny");
-        sUiBot.selectDataset(picker, pickFirst? "The Dude" : "Jenny");
+        sUiBot.selectDataset(picker, pickFirst ? "The Dude" : "Jenny");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -1450,6 +1449,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         final AutofillManager afm = mActivity.getAutofillManager();
         assertThat(afm.isEnabled()).isTrue();
+        assertThat(afm.isAutofillSupported()).isTrue();
 
         // Set expectations.
         final CannedDataset dataset = new CannedDataset.Builder()
@@ -1474,6 +1474,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             waitUntilDisconnected();
             assertNoDanglingSessions();
             assertThat(afm.isEnabled()).isFalse();
+            assertThat(afm.isAutofillSupported()).isFalse();
 
             // ...and then assert is not shown.
             sUiBot.assertNoDatasets();
@@ -1563,7 +1564,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                         .setId("name")
                         .setPresentation(createPresentation("authentication"))
                         .setAuthentication(authentication)
-                        .build()).setExtras(clientState).build());
+                        .build())
+                .setExtras(clientState).build());
 
         // Trigger autofill.
         mActivity.onUsername(View::requestFocus);
@@ -1574,8 +1576,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         eventually(() -> {
             // Verify fill selection
-            FillEventHistory selection =
-                    InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+            FillEventHistory selection = InstrumentedAutoFillService.peekInstance()
+                    .getFillEventHistory();
             assertThat(selection.getClientState().getCharSequence("clientStateKey")).isEqualTo(
                     "clientStateValue");
 
@@ -1620,8 +1622,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         eventually(() -> {
             // Verify fill selection
-            FillEventHistory selection =
-                    InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+            FillEventHistory selection = InstrumentedAutoFillService.peekInstance()
+                    .getFillEventHistory();
             assertThat(selection.getClientState().getCharSequence("clientStateKey")).isEqualTo(
                     "clientStateValue");
 
@@ -1651,8 +1653,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         eventually(() -> {
             // Verify fill selection
-            FillEventHistory selection =
-                    InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+            FillEventHistory selection = InstrumentedAutoFillService.peekInstance()
+                    .getFillEventHistory();
             assertThat(selection.getClientState()).isNull();
 
             assertThat(selection.getEvents().size()).isEqualTo(1);
@@ -1688,8 +1690,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         eventually(() -> {
             // Verify fill selection
-            FillEventHistory selection =
-                    InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+            FillEventHistory selection = InstrumentedAutoFillService.peekInstance()
+                    .getFillEventHistory();
             assertThat(selection.getClientState().getCharSequence("clientStateKey")).isEqualTo(
                     "clientStateValue");
 
@@ -1704,8 +1706,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         eventually(() -> {
             // Verify fill selection
-            FillEventHistory selection =
-                    InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+            FillEventHistory selection = InstrumentedAutoFillService.peekInstance()
+                    .getFillEventHistory();
             assertThat(selection.getClientState().getCharSequence("clientStateKey")).isEqualTo(
                     "clientStateValue");
 
@@ -1718,5 +1720,19 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             assertThat(event2.getType()).isEqualTo(TYPE_SAVE_SHOWN);
             assertThat(event2.getDatasetId()).isNull();
         });
+    }
+
+    @Test
+    public void testIsServiceEnabled() throws Exception {
+        disableService();
+
+        final AutofillManager afm = mActivity.getAutofillManager();
+        assertThat(afm.hasEnabledAutofillServices()).isFalse();
+        try {
+            enableService();
+            assertThat(afm.hasEnabledAutofillServices()).isTrue();
+        } finally {
+            disableService();
+        }
     }
 }

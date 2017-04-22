@@ -138,8 +138,8 @@ public class InstrumentedAutoFillService extends AutofillService {
 
     /**
      * POJO representation of the contents of a
-     * {@link AutofillService#onFillRequest(AssistStructure, Bundle, int, CancellationSignal,
-     * FillCallback)} that can be asserted at the end of a test case.
+     * {@link AutofillService#onFillRequest(android.service.autofill.FillRequest,
+     * CancellationSignal, FillCallback)} that can be asserted at the end of a test case.
      */
     static final class FillRequest {
         final AssistStructure structure;
@@ -160,7 +160,7 @@ public class InstrumentedAutoFillService extends AutofillService {
 
     /**
      * POJO representation of the contents of a
-     * {@link AutofillService#onSaveRequest(AssistStructure, Bundle, SaveCallback)}
+     * {@link AutofillService#onSaveRequest(android.service.autofill.SaveRequest, SaveCallback)}
      * that can be asserted at the end of a test case.
      */
     static final class SaveRequest {
@@ -177,8 +177,8 @@ public class InstrumentedAutoFillService extends AutofillService {
 
     /**
      * Object used to answer a
-     * {@link AutofillService#onFillRequest(android.app.assist.AssistStructure, android.os.Bundle,
-     * int, android.os.CancellationSignal, android.service.autofill.FillCallback)}
+     * {@link AutofillService#onFillRequest(android.service.autofill.FillRequest,
+     * CancellationSignal, FillCallback)}
      * on behalf of a unit test method.
      */
     static final class Replier {
@@ -226,9 +226,9 @@ public class InstrumentedAutoFillService extends AutofillService {
         }
 
         /**
-         * Asserts the total number of {@link AutofillService#onFillRequest(AssistStructure, Bundle,
-         * int, CancellationSignal, FillCallback)}, minus those returned by
-         * {@link #getNextFillRequest()}.
+         * Asserts the total number of {@link AutofillService#onFillRequest(
+         * android.service.autofill.FillRequest,  CancellationSignal, FillCallback)}, minus those
+         * returned by {@link #getNextFillRequest()}.
          */
         void assertNumberUnhandledFillRequests(int expected) {
             assertWithMessage("Invalid number of fill requests").that(mFillRequests.size())
@@ -250,8 +250,9 @@ public class InstrumentedAutoFillService extends AutofillService {
         }
 
         /**
-         * Asserts the total number of {@link AutofillService#onSaveRequest(AssistStructure,
-         * Bundle, SaveCallback)} minus those returned by {@link #getNextSaveRequest()}.
+         * Asserts the total number of
+         * {@link AutofillService#onSaveRequest(android.service.autofill.SaveRequest, SaveCallback)}
+         * minus those returned by {@link #getNextSaveRequest()}.
          */
         void assertNumberUnhandledSaveRequests(int expected) {
             assertWithMessage("Invalid number of save requests").that(mSaveRequests.size())
