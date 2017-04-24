@@ -105,7 +105,8 @@ public class Utils {
             = "android.intent.action.hide_lifecycle_activity";
 
     /** Stub html view to load into WebView */
-    public static final String WEBVIEW_HTML_URL = "http://dev/null!";
+    public static final String WEBVIEW_HTML_URL = "http://dev.null/thou/should?not=pass";
+    public static final String WEBVIEW_HTML_DOMAIN = "dev.null";
     public static final LocaleList WEBVIEW_LOCALE_LIST = new LocaleList(Locale.ROOT, Locale.US);
     public static final String WEBVIEW_HTML_GREETING = "Hello WebView!";
     public static final String WEBVIEW_HTML = "<html><body><div><p>" + WEBVIEW_HTML_GREETING

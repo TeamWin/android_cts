@@ -65,7 +65,7 @@ public final class MyWebView extends WebView {
 
     private void onProvideStructureForAssistOrAutofill(ViewStructure structure) {
         if (mUrl != null) {
-            structure.setUrl(mUrl);
+            structure.setWebDomain(mUrl);
         }
         if (mLocaleList != null) {
             structure.setLocaleList(mLocaleList);
