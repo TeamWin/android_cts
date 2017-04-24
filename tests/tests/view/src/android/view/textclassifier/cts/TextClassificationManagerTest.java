@@ -58,14 +58,10 @@ public class TextClassificationManagerTest {
     }
 
     @Test
-    public void testLanguageDetectionDoesNotThrowException() {
-        mTcm.detectLanguages("text");
-    }
-
-    @Test
     public void testSetTextClassifier() {
         TextClassifier classifier = mock(TextClassifier.class);
         mTcm.setTextClassifier(classifier);
         assertEquals(classifier, mTcm.getTextClassifier());
     }
 }
+
