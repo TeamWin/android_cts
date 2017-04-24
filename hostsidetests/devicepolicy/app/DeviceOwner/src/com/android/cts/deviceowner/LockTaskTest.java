@@ -48,7 +48,7 @@ public class LockTaskTest extends BaseDeviceOwnerTest {
     private static final int ACTIVITY_RESUMED_TIMEOUT_MILLIS = 20000;  // 20 seconds
     private static final int ACTIVITY_RUNNING_TIMEOUT_MILLIS = 10000;  // 10 seconds
     private static final int ACTIVITY_DESTROYED_TIMEOUT_MILLIS = 60000;  // 60 seconds
-    private static final int UPDATE_LOCK_TASK_TIMEOUT_MILLIS = 1000; // 1 second
+    private static final int UPDATE_LOCK_TASK_TIMEOUT_MILLIS = 2000; // 2 second
     public static final String RECEIVING_ACTIVITY_CREATED_ACTION
             = "com.android.cts.deviceowner.RECEIVING_ACTIVITY_CREATED_ACTION";
     /**
