@@ -284,16 +284,17 @@ public class AdapterViewTest {
     @Test
     public void testAccessOnItemSelectedListener() throws Throwable {
         mAdapterView = mActivity.getListView();
-        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAdapterView,
+        WidgetTestUtils.runOnMainAndLayoutSync(mActivityRule, mAdapterView,
                 () -> mAdapterView.setLayoutParams(new FrameLayout.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT)));
+                        ViewGroup.LayoutParams.MATCH_PARENT)), true);
 
         mActivityRule.runOnUiThread(() -> setArrayAdapter(mAdapterView));
 
         AdapterView.OnItemSelectedListener mockSelectedListener =
                 mock(AdapterView.OnItemSelectedListener.class);
-        mAdapterView.setOnItemSelectedListener(mockSelectedListener);
+        mActivityRule.runOnUiThread(() ->
+                mAdapterView.setOnItemSelectedListener(mockSelectedListener));
         assertEquals(mockSelectedListener, mAdapterView.getOnItemSelectedListener());
 
         verifyZeroInteractions(mockSelectedListener);
