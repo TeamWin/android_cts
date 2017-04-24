@@ -261,6 +261,17 @@ public final class TestMeasurementUtil {
                     String.valueOf(measurement.getSnrInDb()),
                     measurement.getSnrInDb() >= 0.0 && measurement.getSnrInDb() <= 63);
         }
+
+        // Check Automatic Gain Control level in dB.
+        if (measurement.hasAutomaticGainControlLevelDb()) {
+            softAssert.assertTrue("Automatic Gain Control level in dB",
+                timeInNs,
+                "-100 >= X <= 100",
+                String.valueOf(measurement.getAutomaticGainControlLevelDb()),
+                measurement.getAutomaticGainControlLevelDb() >= -100
+                    && measurement.getAutomaticGainControlLevelDb() <= 100);
+        }
+
     }
 
     /**
@@ -313,6 +324,12 @@ public final class TestMeasurementUtil {
         String svidLogMessageFormat = "svid: Space Vehicle ID. Constellation type = %s";
         int constellationType = measurement.getConstellationType();
         int svid = measurement.getSvid();
+        validateSvidSub(softAssert, timeInNs, constellationType, svid);
+    }
+
+    public static void validateSvidSub(SoftAssert softAssert, Long timeInNs,
+        int constellationType, int svid) {
+
         String svidValue = String.valueOf(svid);
 
         switch (constellationType) {
@@ -470,6 +487,15 @@ public final class TestMeasurementUtil {
                             "0 day >= X <= 1 day",
                             String.valueOf(sv_time_days),
                             sv_time_days >= 0 && sv_time_days <= 1);
+                } else if ((state | GnssMeasurement.STATE_GLO_TOD_KNOWN)
+                         == GnssMeasurement.STATE_GLO_TOD_KNOWN) {
+                    softAssert.assertTrue(getReceivedSvTimeNsLogMessage(
+                                    "GNSS_MEASUREMENT_STATE_GLO_TOD_KNOWN",
+                                    "GnssStatus.CONSTELLATION_GLONASS"),
+                            timeInNs,
+                            "0 day >= X <= 1 day",
+                            String.valueOf(sv_time_days),
+                            sv_time_days >= 0 && sv_time_days <= 1);
                 } else if ((state | GnssMeasurement.STATE_GLO_STRING_SYNC)
                         == GnssMeasurement.STATE_GLO_STRING_SYNC) {
                     softAssert.assertTrue(getReceivedSvTimeNsLogMessage(
@@ -518,6 +544,15 @@ public final class TestMeasurementUtil {
                             "0 >= X <= 7 days",
                             String.valueOf(sv_time_days),
                             sv_time_days >= 0 && sv_time_days <= 7);
+                } else if ((state | GnssMeasurement.STATE_TOW_KNOWN)
+                              == GnssMeasurement.STATE_TOW_KNOWN) {
+                    softAssert.assertTrue(getReceivedSvTimeNsLogMessage(
+                                    "GNSS_MEASUREMENT_STATE_TOW_DECODED",
+                                    "GnssStatus.CONSTELLATION_GALILEO"),
+                        timeInNs,
+                        "0 >= X <= 7 days",
+                        String.valueOf(sv_time_days),
+                        sv_time_days >= 0 && sv_time_days <= 7);
                 } else if ((state | GnssMeasurement.STATE_GAL_E1B_PAGE_SYNC)
                         == GnssMeasurement.STATE_GAL_E1B_PAGE_SYNC) {
                     softAssert.assertTrue(getReceivedSvTimeNsLogMessage(
