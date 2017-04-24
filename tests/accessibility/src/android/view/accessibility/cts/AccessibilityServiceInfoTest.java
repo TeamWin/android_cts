@@ -62,7 +62,6 @@ public class AccessibilityServiceInfoTest  extends InstrumentationTestCase {
         assertSame(AccessibilityServiceInfo.FEEDBACK_SPOKEN, speakingService.feedbackType);
         assertSame(AccessibilityServiceInfo.DEFAULT
                 | AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS
-                | AccessibilityServiceInfo.FLAG_REQUEST_ENHANCED_WEB_ACCESSIBILITY
                 | AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE
                 | AccessibilityServiceInfo.FLAG_REQUEST_FILTER_KEY_EVENTS
                 | AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS,
@@ -72,8 +71,7 @@ public class AccessibilityServiceInfoTest  extends InstrumentationTestCase {
         assertNull(speakingService.packageNames /*all packages*/);
         assertNotNull(speakingService.getId());
         assertSame(speakingService.getCapabilities(),
-                AccessibilityServiceInfo.CAPABILITY_CAN_REQUEST_ENHANCED_WEB_ACCESSIBILITY
-                | AccessibilityServiceInfo.CAPABILITY_CAN_REQUEST_FILTER_KEY_EVENTS
+                AccessibilityServiceInfo.CAPABILITY_CAN_REQUEST_FILTER_KEY_EVENTS
                 | AccessibilityServiceInfo.CAPABILITY_CAN_REQUEST_TOUCH_EXPLORATION
                 | AccessibilityServiceInfo.CAPABILITY_CAN_RETRIEVE_WINDOW_CONTENT);
         assertEquals("foo.bar.Activity", speakingService.getSettingsActivityName());
