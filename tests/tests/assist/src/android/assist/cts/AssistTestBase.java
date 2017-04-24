@@ -382,11 +382,11 @@ public class AssistTestBase extends ActivityInstrumentationTestCase2<TestStartAc
     }
 
     /**
-     * Return true if the expected URL is found in the WebView, else fail.
+     * Return true if the expected domain is found in the WebView, else fail.
      */
-    protected void verifyAssistStructureHasUrl(String url) {
+    protected void verifyAssistStructureHasWebDomain(String domain) {
         assertTrue(traverse(mAssistStructure.getWindowNodeAt(0).getRootViewNode(), (n) -> {
-            return n.getUrl() != null && url.equals(n.getUrl());
+            return n.getWebDomain() != null && domain.equals(n.getWebDomain());
         }));
     }
 

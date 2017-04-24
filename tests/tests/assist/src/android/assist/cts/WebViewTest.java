@@ -106,7 +106,7 @@ public class WebViewTest extends AssistTestBase {
         verifyAssistDataNullness(false, false, false, false);
         verifyAssistStructure(Utils.getTestAppComponent(TEST_CASE_TYPE),
                 false /*FLAG_SECURE set*/);
-        verifyAssistStructureHasUrl(Utils.WEBVIEW_HTML_URL);
+        verifyAssistStructureHasWebDomain(Utils.WEBVIEW_HTML_DOMAIN);
         verifyAssistStructureHasLocaleList(Utils.WEBVIEW_LOCALE_LIST);
     }
 
