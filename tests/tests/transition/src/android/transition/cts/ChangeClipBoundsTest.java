@@ -95,7 +95,7 @@ public class ChangeClipBoundsTest extends BaseTransitionTest {
         });
         waitForEnd(400);
 
-        mActivityRule.runOnUiThread(() -> assertNotNull(redSquare.getClipBounds()));
+        mActivityRule.runOnUiThread(() -> assertNull(redSquare.getClipBounds()));
     }
 }
 
