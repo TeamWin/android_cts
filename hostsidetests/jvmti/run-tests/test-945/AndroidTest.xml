@@ -21,5 +21,7 @@
     </target_preparer>
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
         <option name="jar" value="CtsJvmtiRunTest945HostTestCases.jar" />
+        <option name="set-option" value="test-file-name:CtsJvmtiRunTest945DeviceApp.apk" />
+        <option name="set-option" value="package-name:android.jvmti.cts.run_test_945" />
     </test>
 </configuration>
