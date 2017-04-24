@@ -23,13 +23,19 @@ import android.hardware.Camera;
 import android.media.CamcorderProfile;
 import android.media.EncoderCapabilities;
 import android.media.MediaCodec;
+import android.media.MediaCodecInfo;
+import android.media.MediaCodecList;
+import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaRecorder;
 import android.media.EncoderCapabilities.VideoEncoderCap;
+import android.media.MediaCodecInfo.CodecCapabilities;
+import android.media.MediaCodecInfo.CodecProfileLevel;
 import android.media.MediaRecorder.OnErrorListener;
 import android.media.MediaRecorder.OnInfoListener;
 import android.media.MediaMetadataRetriever;
+import android.opengl.GLES20;
 import android.os.ConditionVariable;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
@@ -56,6 +62,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+
+import static android.media.MediaCodecInfo.CodecProfileLevel.*;
 
 @SmallTest
 @RequiresDevice
@@ -104,6 +112,18 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
     private ConditionVariable mMaxFileSizeApproachingCond;
     private ConditionVariable mNextOutputFileStartedCond;
     private boolean mExpectMaxFileCond;
+
+    // movie length, in frames
+    private static final int NUM_FRAMES = 120;
+
+    private static final int TEST_R0 = 0;                   // RGB equivalent of {0,0,0} (BT.601)
+    private static final int TEST_G0 = 136;
+    private static final int TEST_B0 = 0;
+    private static final int TEST_R1 = 236;                 // RGB equivalent of {120,160,200} (BT.601)
+    private static final int TEST_G1 = 50;
+    private static final int TEST_B1 = 186;
+
+    private final static String AVC = MediaFormat.MIMETYPE_VIDEO_AVC;
 
     public MediaRecorderTest() {
         super("android.media.cts", MediaStubActivity.class);
@@ -697,6 +717,179 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         mMediaRecorder.stop();
         checkOutputFileSize(OUTPUT_PATH, fileSize, tolerance);
     }
+
+    /**
+     * Returns the first codec capable of encoding the specified MIME type, or null if no
+     * match was found.
+     */
+    private static CodecCapabilities getCapsForPreferredCodecForMediaType(String mimeType) {
+        // FIXME: select codecs based on the complete use-case, not just the mime
+        MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
+        for (MediaCodecInfo info : mcl.getCodecInfos()) {
+            if (!info.isEncoder()) {
+                continue;
+            }
+
+            String[] types = info.getSupportedTypes();
+            for (int j = 0; j < types.length; j++) {
+                if (types[j].equalsIgnoreCase(mimeType)) {
+                    return info.getCapabilitiesForType(mimeType);
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Generates a frame of data using GL commands.
+     */
+    private void generateSurfaceFrame(int frameIndex, int width, int height) {
+        frameIndex %= 8;
+
+        int startX, startY;
+        if (frameIndex < 4) {
+            // (0,0) is bottom-left in GL
+            startX = frameIndex * (width / 4);
+            startY = height / 2;
+        } else {
+            startX = (7 - frameIndex) * (width / 4);
+            startY = 0;
+        }
+
+        GLES20.glDisable(GLES20.GL_SCISSOR_TEST);
+        GLES20.glClearColor(TEST_R0 / 255.0f, TEST_G0 / 255.0f, TEST_B0 / 255.0f, 1.0f);
+        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+        GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
+        GLES20.glScissor(startX, startY, width / 4, height / 2);
+        GLES20.glClearColor(TEST_R1 / 255.0f, TEST_G1 / 255.0f, TEST_B1 / 255.0f, 1.0f);
+        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+    }
+
+    /**
+     * Generates the presentation time for frame N, in microseconds.
+     */
+    private static long computePresentationTime(
+            long startTimeOffset, int frameIndex, int frameRate) {
+        return startTimeOffset + frameIndex * 1000000 / frameRate;
+    }
+
+    private void testLevel(String mediaType, int width, int height, int framerate,
+            int bitrate, int profile, int requestedLevel, int... expectedLevels) throws Exception {
+        CodecCapabilities cap = getCapsForPreferredCodecForMediaType(mediaType);
+        if (cap == null) { // not supported
+            return;
+        }
+        MediaCodecInfo.VideoCapabilities vCap = cap.getVideoCapabilities();
+        if (!vCap.areSizeAndRateSupported(width, height, framerate)
+            || !vCap.getBitrateRange().contains(bitrate * 1000)) {
+            Log.i(TAG, "Skip the test");
+            return;
+        }
+
+        Surface surface = MediaCodec.createPersistentInputSurface();
+        if (surface == null) {
+            return;
+        }
+        InputSurface encSurface = new InputSurface(surface);
+        mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
+        mMediaRecorder.setInputSurface(encSurface.getSurface());
+        mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+        mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
+        mMediaRecorder.setOutputFile(mOutFile);
+
+        try {
+            mMediaRecorder.setVideoEncodingProfileLevel(-1, requestedLevel);
+            fail("Expect IllegalArgumentException.");
+        } catch (IllegalArgumentException e) {
+            // Expect exception.
+        }
+        try {
+            mMediaRecorder.setVideoEncodingProfileLevel(profile, -1);
+            fail("Expect IllegalArgumentException.");
+        } catch (IllegalArgumentException e) {
+            // Expect exception.
+        }
+
+        mMediaRecorder.setVideoEncodingProfileLevel(profile, requestedLevel);
+        mMediaRecorder.setVideoSize(width, height);
+        mMediaRecorder.setVideoEncodingBitRate(bitrate * 1000);
+        mMediaRecorder.setVideoFrameRate(framerate);
+        mMediaRecorder.setPreviewDisplay(mActivity.getSurfaceHolder().getSurface());
+        mMediaRecorder.prepare();
+        encSurface.updateSize(width, height);
+        mMediaRecorder.start();
+
+
+        long startNsec = System.nanoTime();
+        long startTimeOffset =  3000 / framerate;
+        for (int i = 0; i < NUM_FRAMES; i++) {
+            encSurface.makeCurrent();
+            generateSurfaceFrame(i, width, height);
+            long time = startNsec +
+                    computePresentationTime(startTimeOffset, i, framerate) * 1000;
+            encSurface.setPresentationTime(time);
+            encSurface.swapBuffers();
+        }
+
+        mMediaRecorder.stop();
+
+        assertTrue(mOutFile.exists());
+        assertTrue(mOutFile.length() > 0);
+
+        // Verify the recorded file profile/level,
+        MediaExtractor ex = new MediaExtractor();
+        ex.setDataSource(OUTPUT_PATH);
+        for (int i = 0; i < ex.getTrackCount(); i++) {
+            MediaFormat format = ex.getTrackFormat(i);
+            String mime = format.getString(MediaFormat.KEY_MIME);
+            if (mime.startsWith("video/")) {
+                int finalProfile = format.getInteger(MediaFormat.KEY_PROFILE);
+                if (finalProfile != profile) {
+                    fail("Incorrect profile: " + finalProfile + " Expected: " + profile);
+                }
+                int finalLevel = format.getInteger(MediaFormat.KEY_LEVEL);
+                boolean match = false;
+                String expectLvls = new String();
+                for (int level : expectedLevels) {
+                    expectLvls += level;
+                    if (finalLevel == level) {
+                        match = true;
+                        break;
+                    }
+                }
+                if (!match) {
+                    fail("Incorrect Level: " + finalLevel + " Expected: " + expectLvls);
+                }
+            }
+        }
+        mOutFile.delete();
+        if (encSurface != null) {
+            encSurface.release();
+            encSurface = null;
+        }
+    }
+
+    public void testProfileAvcBaselineLevel1() throws Exception {
+        int profile = AVCProfileBaseline;
+
+        if (!hasH264()) {
+            MediaUtils.skipTest("no Avc codecs");
+            return;
+        }
+
+        /*              W    H   fps kbps  profile  request level   expected levels */
+        testLevel(AVC, 176, 144, 15, 64,   profile,  AVCLevel1, AVCLevel1);
+        // Enable them when vendor fixes the failure
+        //testLevel(AVC, 178, 144, 15, 64,   profile,  AVCLevel1, AVCLevel11);
+        //testLevel(AVC, 178, 146, 15, 64,   profile,  AVCLevel1, AVCLevel11);
+        //testLevel(AVC, 176, 144, 16, 64,   profile,  AVCLevel1, AVCLevel11);
+        //testLevel(AVC, 176, 144, 15, 65,   profile,  AVCLevel1, AVCLevel1b);
+        testLevel(AVC, 176, 144, 15, 64,   profile,  AVCLevel1b, AVCLevel1,
+                AVCLevel1b);
+        // testLevel(AVC, 176, 144, 15, 65,   profile,  AVCLevel2, AVCLevel1b,
+        //        AVCLevel11, AVCLevel12, AVCLevel13, AVCLevel2);
+    }
+
 
     public void testRecordExceedFileSizeLimit() throws Exception {
         if (!hasMicrophone() || !hasCamera() || !hasAmrNb() || !hasH264()) {
