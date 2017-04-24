@@ -300,5 +300,5 @@ class XmlFile(object):
     tests = self.doc.getElementsByTagName("Test")
     for test in tests:
       if test.hasAttribute(attr_name):
-        to_return.append(test.parentNode.getAttribute("name") + "#" + test.getAttribute("name"))
+        to_return.append(self.GetPackage() + ".cts." + test.parentNode.getAttribute("name") + "#" + test.getAttribute("name"))
     return to_return
