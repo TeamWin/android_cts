@@ -96,8 +96,14 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     private static final String AUTOFILL_APP_PKG = "com.android.cts.devicepolicy.autofillapp";
     private static final String AUTOFILL_APP_APK = "CtsDevicePolicyAutofillApp.apk";
 
+    protected static final String ASSIST_APP_PKG = "com.android.cts.devicepolicy.assistapp";
+    protected static final String ASSIST_APP_APK = "CtsDevicePolicyAssistApp.apk";
+
     private static final String ENABLED_NOTIFICATION_POLICY_ACCESS_PACKAGES
             = "enabled_notification_policy_access_packages";
+
+    protected static final String ASSIST_INTERACTION_SERVICE =
+            ASSIST_APP_PKG + "/.MyInteractionService";
 
     // ID of the user all tests are run as. For device owner this will be the primary user, for
     // profile owner it is the user id of the created profile.
@@ -361,6 +367,21 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             setScreenCaptureDisabled(mUserId, true);
         } finally {
             setScreenCaptureDisabled(mUserId, false);
+        }
+    }
+
+    public void testScreenCaptureDisabled_assist() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        try {
+            // Install and enable assistant, notice that profile can't have assistant.
+            installAppAsUser(ASSIST_APP_APK, mPrimaryUserId);
+            setVoiceInteractionService(ASSIST_INTERACTION_SERVICE);
+            setScreenCaptureDisabled_assist(mUserId, true /* disabled */);
+        } finally {
+            setScreenCaptureDisabled_assist(mUserId, false /* disabled */);
+            clearVoiceInteractionService();
         }
     }
 
@@ -778,28 +799,36 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         getDevice().executeShellCommand(command);
     }
 
-    // TODO: Remove this after investigation in b/28995242 is done
-    // So we can check which one is the top window / activity.
-    private void runDumpsysWindow() throws Exception {
-        String command = "dumpsys window displays";
-        CLog.d("Output for command " + command + ": " + getDevice().executeShellCommand(command));
-        command = "dumpsys activity a";
-        CLog.d("Output for command " + command + ": " + getDevice().executeShellCommand(command));
-    }
-
     protected void setScreenCaptureDisabled(int userId, boolean disabled) throws Exception {
         String testMethodName = disabled
                 ? "testSetScreenCaptureDisabled_true"
                 : "testSetScreenCaptureDisabled_false";
         executeDeviceTestMethod(".ScreenCaptureDisabledTest", testMethodName);
         startSimpleActivityAsUser(userId);
-        // [b/28995242], dump windows to make sure the top window is
-        // ScreenCaptureDisabledActivity.
-        runDumpsysWindow();
         testMethodName = disabled
                 ? "testScreenCaptureImpossible"
                 : "testScreenCapturePossible";
         executeDeviceTestMethod(".ScreenCaptureDisabledTest", testMethodName);
+    }
+
+    protected void setScreenCaptureDisabled_assist(int userId, boolean disabled) throws Exception {
+        // Set the policy.
+        String testMethodName = disabled
+                ? "testSetScreenCaptureDisabled_true"
+                : "testSetScreenCaptureDisabled_false";
+        executeDeviceTestMethod(".ScreenCaptureDisabledTest", testMethodName);
+        // Make sure the foreground activity is from the target user.
+        startSimpleActivityAsUser(userId);
+        // Check whether the VoiceInteractionService can retrieve the screenshot.
+        testMethodName = disabled
+                ? "testScreenCaptureImpossible_assist"
+                : "testScreenCapturePossible_assist";
+        installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
+        runDeviceTestsAsUser(
+                DEVICE_ADMIN_PKG,
+                ".AssistScreenCaptureDisabledTest",
+                testMethodName,
+                mPrimaryUserId);
     }
 
     /**
@@ -842,5 +871,17 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             return new ArrayList<String>();
         }
         return new ArrayList<String>(Arrays.asList(settingValue.split(":|\n")));
+    }
+
+    protected void setVoiceInteractionService(String componentName)
+            throws DeviceNotAvailableException {
+        getDevice().setSetting(
+                mPrimaryUserId, "secure", "voice_interaction_service", componentName);
+        getDevice().setSetting(mPrimaryUserId, "secure", "assist_structure_enabled", "1");
+        getDevice().setSetting(mPrimaryUserId, "secure", "assist_screenshot_enabled", "1");
+    }
+
+    protected void clearVoiceInteractionService() throws DeviceNotAvailableException {
+        getDevice().executeShellCommand("settings delete secure voice_interaction_service");
     }
 }
