@@ -60,7 +60,7 @@ public abstract class BasePermissionsTest {
     private static final long IDLE_TIMEOUT_MILLIS = 500;
     private static final long GLOBAL_TIMEOUT_MILLIS = 5000;
 
-    private static final long RETRY_TIMEOUT = 5000;
+    private static final long RETRY_TIMEOUT = 3 * GLOBAL_TIMEOUT_MILLIS;
     private static final String LOG_TAG = "BasePermissionsTest";
 
     private static Map<String, String> sPermissionToLabelResNameMap = new ArrayMap<>();
@@ -259,7 +259,7 @@ public abstract class BasePermissionsTest {
 
         // Open the permissions UI
         String label = mContext.getResources().getString(R.string.Permissions);
-        AccessibilityNodeInfo permLabelView = getNodeTimed(() -> findByText(label));
+        AccessibilityNodeInfo permLabelView = getNodeTimed(() -> findByText(label), true);
         Assert.assertNotNull("Permissions label should be present", permLabelView);
 
         AccessibilityNodeInfo permItemView = findCollectionItem(permLabelView);
@@ -273,7 +273,7 @@ public abstract class BasePermissionsTest {
             // Find the permission toggle
             String permissionLabel = getPermissionLabel(permission);
 
-            AccessibilityNodeInfo labelView = getNodeTimed(() -> findByText(permissionLabel));
+            AccessibilityNodeInfo labelView = getNodeTimed(() -> findByText(permissionLabel), true);
             Assert.assertNotNull("Permission label should be present", labelView);
 
             AccessibilityNodeInfo itemView = findCollectionItem(labelView);
@@ -368,13 +368,13 @@ public abstract class BasePermissionsTest {
             }
             if (child.getCollectionInfo() != null) {
                 scrollTop(child);
-                result = getNodeTimed(() -> findByText(child, text));
+                result = getNodeTimed(() -> findByText(child, text), false);
                 if (result != null) {
                     return result;
                 }
                 while (child.getActionList().contains(AccessibilityAction.ACTION_SCROLL_FORWARD)) {
                     scrollForward(child);
-                    result = getNodeTimed(() -> findByText(child, text));
+                    result = getNodeTimed(() -> findByText(child, text), false);
                     if (result != null) {
                         return result;
                     }
@@ -461,7 +461,7 @@ public abstract class BasePermissionsTest {
     }
 
     private static AccessibilityNodeInfo getNodeTimed(
-            Callable<AccessibilityNodeInfo> callable) throws Exception {
+            Callable<AccessibilityNodeInfo> callable, boolean retry) throws Exception {
         final long startTimeMillis = SystemClock.uptimeMillis();
         while (true) {
             try {
@@ -475,7 +475,7 @@ public abstract class BasePermissionsTest {
             }
 
             final long elapsedTimeMillis = SystemClock.uptimeMillis() - startTimeMillis;
-            if (elapsedTimeMillis > RETRY_TIMEOUT) {
+            if (!retry || elapsedTimeMillis > RETRY_TIMEOUT) {
                 return null;
             }
             SystemClock.sleep(2 * elapsedTimeMillis);
