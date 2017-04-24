@@ -23,7 +23,7 @@ LOCAL_DEX_PREOPT := false
 LOCAL_PROGUARD_ENABLED := disabled
 LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util android-support-test
 LOCAL_SRC_FILES := $(call all-java-files-under, ../src)
-LOCAL_COMPATIBILITY_SUITE := cts
+LOCAL_COMPATIBILITY_SUITE := cts general-tests
 LOCAL_SDK_VERSION := current
 
 LOCAL_PREBUILT_JNI_LIBS_arm := ../wrap.sh

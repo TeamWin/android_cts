@@ -24,7 +24,7 @@ LOCAL_SRC_FILES := $(call all-java-files-under, ../StorageApp/src/)
 
 LOCAL_PACKAGE_NAME := CtsStorageAppB
 
-LOCAL_COMPATIBILITY_SUITE := cts
+LOCAL_COMPATIBILITY_SUITE := cts general-tests
 LOCAL_DEX_PREOPT := false
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)

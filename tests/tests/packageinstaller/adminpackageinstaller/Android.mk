@@ -31,6 +31,6 @@ LOCAL_STATIC_JAVA_LIBRARIES := ub-uiautomator android-support-test android-suppo
 LOCAL_SDK_VERSION := test_current
 
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts
+LOCAL_COMPATIBILITY_SUITE := cts general-tests
 
 include $(BUILD_CTS_PACKAGE)

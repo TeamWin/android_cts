@@ -44,7 +44,7 @@ LOCAL_SRC_FILES := \
 LOCAL_PACKAGE_NAME := CtsOsTestCases
 
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts
+LOCAL_COMPATIBILITY_SUITE := cts general-tests
 
 # uncomment when b/13282254 is fixed
 #LOCAL_SDK_VERSION := current
@@ -66,7 +66,7 @@ LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts
+LOCAL_COMPATIBILITY_SUITE := cts general-tests
 
 cts_platform_version_path := cts/tests/tests/os/assets/platform_versions.txt
 cts_platform_version_string := $(shell cat $(cts_platform_version_path))

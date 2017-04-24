@@ -44,7 +44,7 @@ LOCAL_PROGUARD_ENABLED := disabled
 LOCAL_MULTILIB := both
 
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts
+LOCAL_COMPATIBILITY_SUITE := cts general-tests
 
 LOCAL_JAVA_RESOURCE_FILES := \
     libcore/expectations/brokentests.txt \

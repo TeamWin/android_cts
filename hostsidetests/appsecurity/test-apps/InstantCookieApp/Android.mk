@@ -26,7 +26,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := android-support-test
 
 LOCAL_PACKAGE_NAME := CtsInstantCookieApp
 
-LOCAL_COMPATIBILITY_SUITE := cts
+LOCAL_COMPATIBILITY_SUITE := cts general-tests
 
 LOCAL_PROGUARD_ENABLED := disabled
 
