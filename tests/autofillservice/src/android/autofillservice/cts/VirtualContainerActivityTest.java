@@ -119,6 +119,11 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         assertThat(username.getIdEntry()).isEqualTo(ID_USERNAME);
         assertThat(password.getIdEntry()).isEqualTo(ID_PASSWORD);
 
+        // Make sure order is preserved and dupes not removed.
+        assertThat(username.getAutofillHints()).asList()
+                .containsExactly("c", "a", "a", "b", "a", "a")
+                .inOrder();
+
         try {
             VirtualContainerView.assertHtmlInfo(username);
             VirtualContainerView.assertHtmlInfo(password);
