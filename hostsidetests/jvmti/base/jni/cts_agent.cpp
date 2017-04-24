@@ -17,7 +17,6 @@
 #include <jni.h>
 #include <jvmti.h>
 
-#include "agent_startup.h"
 #include "android-base/logging.h"
 #include "jni_binder.h"
 #include "jvmti_helper.h"
@@ -43,15 +42,9 @@ static void InformMainAttach(jvmtiEnv* jenv,
 static constexpr const char* kMainClass = "art/CtsMain";
 static constexpr const char* kMainClassStartup = "startup";
 
-static void CtsStartCallback(jvmtiEnv* jenv, JNIEnv* env) {
-  InformMainAttach(jenv, env, kMainClass, kMainClassStartup);
-}
-
 extern "C" JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM* vm,
                                                char* options ATTRIBUTE_UNUSED,
                                                void* reserved ATTRIBUTE_UNUSED) {
-  BindOnLoad(vm, nullptr);
-
   if (vm->GetEnv(reinterpret_cast<void**>(&jvmti_env), JVMTI_VERSION_1_0) != 0) {
     LOG(FATAL) << "Could not get shared jvmtiEnv";
   }
@@ -63,13 +56,16 @@ extern "C" JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM* vm,
 extern "C" JNIEXPORT jint JNICALL Agent_OnAttach(JavaVM* vm,
                                                  char* options ATTRIBUTE_UNUSED,
                                                  void* reserved ATTRIBUTE_UNUSED) {
-  BindOnAttach(vm, CtsStartCallback);
+  JNIEnv* env;
+  CHECK_EQ(0, vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6))
+      << "Could not get JNIEnv";
 
   if (vm->GetEnv(reinterpret_cast<void**>(&jvmti_env), JVMTI_VERSION_1_0) != 0) {
     LOG(FATAL) << "Could not get shared jvmtiEnv";
   }
 
   SetAllCapabilities(jvmti_env);
+  InformMainAttach(jvmti_env, env, kMainClass, kMainClassStartup);
   return 0;
 }
 
