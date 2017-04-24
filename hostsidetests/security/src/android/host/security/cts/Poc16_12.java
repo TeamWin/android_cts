@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.security.cts;
+package android.host.security.cts;
 
 import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
