@@ -3191,6 +3191,14 @@
     <permission android:name="android.permission.BIND_RESOLVER_RANKER_SERVICE"
                 android:protectionLevel="signature" />
 
+    <!-- @SystemApi Must be held by services that extend
+         {@link android.service.resolver.ResolverRankerService}.
+         <p>Protection level: signature|privileged
+         @hide
+    -->
+    <permission android:name="android.permission.PROVIDE_RESOLVER_RANKER_SERVICE"
+                android:protectionLevel="signature|privileged" />
+
     <!-- Must be required by a {@link
          android.service.notification.ConditionProviderService},
          to ensure that only the system can bind to it.
