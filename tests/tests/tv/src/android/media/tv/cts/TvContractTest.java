@@ -411,11 +411,23 @@ public class TvContractTest extends AndroidTestCase {
         Uri rowUri = mContentResolver.insert(Channels.CONTENT_URI, values);
         assertNull(rowUri);
 
-        // Preview channels can be inserted without input ID
+        // Non-preview channels should not be inserted with null input ID
+        values.putNull(Channels.COLUMN_INPUT_ID);
+        rowUri = mContentResolver.insert(Channels.CONTENT_URI, values);
+        assertNull(rowUri);
+
+        // Preview channels can be inserted with null input ID
         values.put(Channels.COLUMN_TYPE, Channels.TYPE_PREVIEW);
         rowUri = mContentResolver.insert(Channels.CONTENT_URI, values);
         long channelId = ContentUris.parseId(rowUri);
         Uri channelUri = TvContract.buildChannelUri(channelId);
+        verifyChannel(channelUri, values, channelId, false);
+
+        // Preview channels can be inserted without input ID
+        values.remove(Channels.COLUMN_INPUT_ID);
+        rowUri = mContentResolver.insert(Channels.CONTENT_URI, values);
+        channelId = ContentUris.parseId(rowUri);
+        channelUri = TvContract.buildChannelUri(channelId);
         verifyChannel(channelUri, values, channelId, false);
     }
 
@@ -458,7 +470,6 @@ public class TvContractTest extends AndroidTestCase {
         }
         ContentValues baseValues = createDummyChannelValues(mInputId, false);
         Uri channelUri = mContentResolver.insert(mChannelsUri, baseValues);
-
 
         // Test: insert
         ContentValues values = new ContentValues(baseValues);
