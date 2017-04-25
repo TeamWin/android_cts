@@ -75,20 +75,27 @@ public class AutofillRestrictionsTest extends BaseDeviceAdminTest {
         return activity.isAutofillEnabled();
     }
 
-    private void enableService() {
+    private void enableService() throws Exception {
         runShellCommand("settings put --user %d secure %s %s default",
                 mUserId, AUTOFILL_SERVICE, SERVICE_NAME);
-        assertServiceStatus(true);
+        waitForServiceSettingSaved(SERVICE_NAME);
     }
 
     private void disableService() {
         runShellCommand("settings delete --user %d secure %s", mUserId, AUTOFILL_SERVICE);
     }
 
-    private void assertServiceStatus(boolean enabled) {
-        final String actual = runShellCommand("settings get --user %d secure %s",
-                mUserId, AUTOFILL_SERVICE);
-        final String expected = enabled ? SERVICE_NAME : "null";
-        assertEquals(expected, actual);
+    private void waitForServiceSettingSaved(String expected) throws Exception {
+        String actual = null;
+        // Wait up to 0.5 second until setting is saved.
+        for (int i = 0; i < 5; i++) {
+            actual = runShellCommand("settings get --user %d secure %s", mUserId, AUTOFILL_SERVICE);
+            if (expected.equals(actual)) {
+                return;
+            }
+            Thread.sleep(100);
+        }
+        fail("Expected service status: " + expected
+                + "; actual: " + actual + " after 0.5 seconds");
     }
 }
