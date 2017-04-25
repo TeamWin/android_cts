@@ -41,7 +41,6 @@ import android.view.autofill.AutofillManager;
 import android.view.autofill.AutofillValue;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -161,7 +160,8 @@ class VirtualContainerView extends View {
     @Override
     public void dispatchProvideAutofillStructure(ViewStructure structure, int flags) {
         if (mOverrideDispatchProvideAutofillStructure) {
-            Log.d(TAG, "Overriding dispatchProvideAutofillStructure");
+            Log.d(TAG, "Overriding dispatchProvideAutofillStructure()");
+            structure.setAutofillId(getAutofillId());
             onProvideAutofillVirtualStructure(structure, flags);
         } else {
             super.dispatchProvideAutofillStructure(structure, flags);
@@ -184,7 +184,7 @@ class VirtualContainerView extends View {
             final ViewStructure child = mSync
                     ? structure.newChild(index)
                     : structure.asyncNewChild(index);
-            child.setAutofillId(structure, item.id);
+            child.setAutofillId(structure.getAutofillId(), item.id);
             child.setDataIsSensitive(item.sensitive);
             index++;
             final String className = item.editable ? TEXT_CLASS : LABEL_CLASS;
