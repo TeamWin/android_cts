@@ -75,6 +75,7 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
     private static final long EVENT_NOT_RECEIVED_TIMEOUT_MILLIS = 1_000;
 
     private Context mContext;
+    private TelephonyManager mTelephonyManager;
 
     private String mPreviousDefaultDialer;
 
@@ -95,6 +96,9 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
             mPhoneAccountHandle = telecomManager
                     .getDefaultOutgoingPhoneAccount(PhoneAccount.SCHEME_TEL);
             mPhoneNumber = telecomManager.getLine1Number(mPhoneAccountHandle);
+
+            mTelephonyManager = mContext.getSystemService(TelephonyManager.class)
+                    .createForPhoneAccountHandle(mPhoneAccountHandle);
         }
 
         PackageManager packageManager = mContext.getPackageManager();
@@ -136,15 +140,14 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
         String clientPrefix = "//CTSVVM";
         String text = "//CTSVVM:STATUS:st=R;rc=0;srv=1;dn=1;ipt=1;spt=0;u=eg@example.com;pw=1";
 
-        VisualVoicemailService.setSmsFilterSettings(mContext, mPhoneAccountHandle,
+        mTelephonyManager.setVisualVoicemailSmsFilterSettings(
                 new VisualVoicemailSmsFilterSettings.Builder()
                         .setClientPrefix(clientPrefix)
                         .build());
 
         try {
-            VisualVoicemailService
-                    .sendVisualVoicemailSms(mContext, mPhoneAccountHandle, mPhoneNumber, (short) 0,
-                            text, null);
+            mTelephonyManager
+                    .sendVisualVoicemailSms(mPhoneNumber, 0, text, null);
             fail("SecurityException expected");
         } catch (SecurityException e) {
             // Expected
@@ -193,7 +196,7 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
             Log.d(TAG, "skipping test that requires telephony feature");
             return;
         }
-        if (!hasDataSms(mContext)) {
+        if (!hasDataSms()) {
             Log.d(TAG, "skipping test that requires data SMS feature");
             return;
         }
@@ -378,7 +381,7 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
             Log.d(TAG, "skipping test that requires telephony feature");
             return;
         }
-        if (!hasDataSms(mContext)) {
+        if (!hasDataSms()) {
             Log.d(TAG, "skipping test that requires data SMS feature");
             return;
         }
@@ -396,7 +399,7 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
             Log.d(TAG, "skipping test that requires telephony feature");
             return;
         }
-        if (!hasDataSms(mContext)) {
+        if (!hasDataSms()) {
             Log.d(TAG, "skipping test that requires data SMS feature");
             return;
         }
@@ -414,7 +417,7 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
             Log.d(TAG, "skipping test that requires telephony feature");
             return;
         }
-        if (!hasDataSms(mContext)) {
+        if (!hasDataSms()) {
             Log.d(TAG, "skipping test that requires data SMS feature");
             return;
         }
@@ -435,7 +438,7 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
             Log.d(TAG, "skipping test that requires telephony feature");
             return;
         }
-        if (!hasDataSms(mContext)) {
+        if (!hasDataSms()) {
             Log.d(TAG, "skipping test that requires data SMS feature");
             return;
         }
@@ -453,9 +456,7 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
             Log.d(TAG, "skipping test that requires telephony feature");
             return;
         }
-        TelephonyManager telephonyManager = mContext.getSystemService(TelephonyManager.class)
-                .createForPhoneAccountHandle(mPhoneAccountHandle);
-        assertEquals(PACKAGE, telephonyManager.getVisualVoicemailPackageName());
+        assertEquals(PACKAGE, mTelephonyManager.getVisualVoicemailPackageName());
     }
 
     public void testVoicemailRingtoneSettings() {
@@ -464,14 +465,13 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
             return;
         }
         TelecomManager telecomManager = mContext.getSystemService(TelecomManager.class);
-        TelephonyManager telephonyManager = mContext.getSystemService(TelephonyManager.class);
 
         PhoneAccountHandle defaultAccount = telecomManager
                 .getDefaultOutgoingPhoneAccount(PhoneAccount.SCHEME_TEL);
 
         Uri uri = Settings.System.DEFAULT_NOTIFICATION_URI;
-        telephonyManager.setVoicemailRingtoneUri(defaultAccount, uri);
-        assertEquals(uri, telephonyManager.getVoicemailRingtoneUri(defaultAccount));
+        mTelephonyManager.setVoicemailRingtoneUri(defaultAccount, uri);
+        assertEquals(uri, mTelephonyManager.getVoicemailRingtoneUri(defaultAccount));
     }
 
     public void testVoicemailVibrationSettings() {
@@ -480,14 +480,13 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
             return;
         }
         TelecomManager telecomManager = mContext.getSystemService(TelecomManager.class);
-        TelephonyManager telephonyManager = mContext.getSystemService(TelephonyManager.class);
 
         PhoneAccountHandle defaultAccount = telecomManager
                 .getDefaultOutgoingPhoneAccount(PhoneAccount.SCHEME_TEL);
-        telephonyManager.setVoicemailVibrationEnabled(defaultAccount, true);
-        assertTrue(telephonyManager.isVoicemailVibrationEnabled(defaultAccount));
-        telephonyManager.setVoicemailVibrationEnabled(defaultAccount, false);
-        assertFalse(telephonyManager.isVoicemailVibrationEnabled(defaultAccount));
+        mTelephonyManager.setVoicemailVibrationEnabled(defaultAccount, true);
+        assertTrue(mTelephonyManager.isVoicemailVibrationEnabled(defaultAccount));
+        mTelephonyManager.setVoicemailVibrationEnabled(defaultAccount, false);
+        assertFalse(mTelephonyManager.isVoicemailVibrationEnabled(defaultAccount));
     }
 
     private VisualVoicemailSms getSmsFromText(String clientPrefix, String text) {
@@ -522,16 +521,15 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
             String text,
             boolean expectVvmSms) {
 
-        VisualVoicemailService.setSmsFilterSettings(mContext, mPhoneAccountHandle, settings);
+        mTelephonyManager.setVisualVoicemailSmsFilterSettings(settings);
 
         CompletableFuture<VisualVoicemailSms> future = new CompletableFuture<>();
         MockVisualVoicemailService.setSmsFuture(future);
 
         setupSmsReceiver(text);
         try (SentSmsObserver observer = new SentSmsObserver(mContext)) {
-            VisualVoicemailService
-                    .sendVisualVoicemailSms(mContext, mPhoneAccountHandle, mPhoneNumber, (short) 0,
-                            text, null);
+            mTelephonyManager
+                    .sendVisualVoicemailSms(mPhoneNumber,0, text, null);
 
             if (expectVvmSms) {
                 VisualVoicemailSms sms;
@@ -562,15 +560,13 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
     private VisualVoicemailSms getSmsFromData(VisualVoicemailSmsFilterSettings settings, short port,
             String text, boolean expectVvmSms) {
 
-        VisualVoicemailService.setSmsFilterSettings(mContext, mPhoneAccountHandle, settings);
+        mTelephonyManager.setVisualVoicemailSmsFilterSettings(settings);
 
         CompletableFuture<VisualVoicemailSms> future = new CompletableFuture<>();
         MockVisualVoicemailService.setSmsFuture(future);
 
         setupSmsReceiver(text);
-        VisualVoicemailService
-                .sendVisualVoicemailSms(mContext, mPhoneAccountHandle, mPhoneNumber, port,
-                        text, null);
+        mTelephonyManager.sendVisualVoicemailSms(mPhoneNumber, port, text, null);
 
         if (expectVvmSms) {
             VisualVoicemailSms sms;
@@ -704,8 +700,8 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
                 packageManager.hasSystemFeature(PackageManager.FEATURE_CONNECTION_SERVICE);
     }
 
-    private static boolean hasDataSms(Context context) {
-        String mccmnc = context.getSystemService(TelephonyManager.class).getSimOperator();
+    private boolean hasDataSms() {
+        String mccmnc = mTelephonyManager.getSimOperator();
         return !CarrierCapability.UNSUPPORT_DATA_SMS_MESSAGES.contains(mccmnc);
     }
 
