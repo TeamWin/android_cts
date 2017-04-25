@@ -30,7 +30,6 @@ import android.content.pm.PackageInfo;
 import android.content.Context;
 import android.graphics.Typeface;
 import android.graphics.fonts.FontRequest;
-import android.graphics.fonts.FontResult;
 import android.graphics.fonts.FontVariationAxis;
 import android.provider.FontsContract;
 import android.provider.FontsContract.FontFamilyResult;
