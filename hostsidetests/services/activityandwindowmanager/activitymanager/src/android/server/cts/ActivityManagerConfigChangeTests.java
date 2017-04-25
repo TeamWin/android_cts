@@ -32,9 +32,14 @@ import java.util.regex.Pattern;
  * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsServicesHostTestCases android.server.cts.ActivityManagerConfigChangeTests
  */
 public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
-
     private static final String TEST_ACTIVITY_NAME = "TestActivity";
     private static final String NO_RELAUNCH_ACTIVITY_NAME = "NoRelaunchActivity";
+
+    private static final String FONT_SCALE_ACTIVITY_NAME = "FontScaleActivity";
+    private static final String FONT_SCALE_NO_RELAUNCH_ACTIVITY_NAME =
+            "FontScaleNoRelaunchActivity";
+
+    private static final float EXPECTED_FONT_SIZE_SP = 10.0f;
 
     public void testRotation90Relaunch() throws Exception{
         // Should relaunch on every rotation and receive no onConfigurationChanged()
@@ -59,13 +64,13 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
     @Presubmit
     public void testChangeFontScaleRelaunch() throws Exception {
         // Should relaunch and receive no onConfigurationChanged()
-        testChangeFontScale(TEST_ACTIVITY_NAME, true /* relaunch */);
+        testChangeFontScale(FONT_SCALE_ACTIVITY_NAME, true /* relaunch */);
     }
 
     @Presubmit
     public void testChangeFontScaleNoRelaunch() throws Exception {
         // Should receive onConfigurationChanged() and no relaunch
-        testChangeFontScale(NO_RELAUNCH_ACTIVITY_NAME, false /* relaunch */);
+        testChangeFontScale(FONT_SCALE_NO_RELAUNCH_ACTIVITY_NAME, false /* relaunch */);
     }
 
     private void testRotation(
@@ -109,11 +114,19 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
         setFontScale(1.0f);
         mAmWmState.computeState(mDevice, waitForActivitiesVisible);
 
+        final int densityDpi = getGlobalDensityDpi();
+
         for (float fontScale = 0.85f; fontScale <= 1.3f; fontScale += 0.15f) {
             final String logSeparator = clearLogcat();
             setFontScale(fontScale);
             mAmWmState.computeState(mDevice, waitForActivitiesVisible);
             assertRelaunchOrConfigChanged(activityName, relaunch ? 1 : 0, relaunch ? 0 : 1,
+                    logSeparator);
+
+            // Verify that the display metrics are updated, and therefore the text size is also
+            // updated accordingly.
+            assertExpectedFontPixelSize(activityName,
+                    scaledPixelsToPixels(EXPECTED_FONT_SIZE_SP, fontScale, densityDpi),
                     logSeparator);
         }
     }
@@ -169,5 +182,56 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
             }
         }
         return 0;
+    }
+
+    // Calculate the scaled pixel size just like the device is supposed to.
+    private static int scaledPixelsToPixels(float sp, float fontScale, int densityDpi) {
+        final int DEFAULT_DENSITY = 160;
+        float f = densityDpi * (1.0f / DEFAULT_DENSITY) * fontScale * sp;
+        return (int) ((f >= 0) ? (f + 0.5f) : (f - 0.5f));
+    }
+
+    private static Pattern sDeviceDensityPattern =
+            Pattern.compile(".*?-(l|m|tv|h|xh|xxh|xxxh|\\d+)dpi-.*?");
+
+    private int getGlobalDensityDpi() throws Exception {
+        final String result = getDevice().executeShellCommand("am get-config");
+        final String[] lines = result.split("\n");
+        if (lines.length < 1) {
+            throw new IllegalStateException("Invalid config returned from device: " + result);
+        }
+
+        final Matcher matcher = sDeviceDensityPattern.matcher(lines[0]);
+        if (!matcher.matches()) {
+            throw new IllegalStateException("Invalid config returned from device: " + lines[0]);
+        }
+        switch (matcher.group(1)) {
+            case "l": return 120;
+            case "m": return 160;
+            case "tv": return 213;
+            case "h": return 240;
+            case "xh": return 320;
+            case "xxh": return 480;
+            case "xxxh": return 640;
+        }
+        return Integer.parseInt(matcher.group(1));
+    }
+
+    private static final Pattern sFontSizePattern = Pattern.compile("^(.+): fontPixelSize=(.+)$");
+
+    /** Read the font size in the last log line. */
+    private void assertExpectedFontPixelSize(String activityName, int fontPixelSize,
+            String logSeparator) throws Exception {
+        final String[] lines = getDeviceLogsForComponent(activityName, logSeparator);
+        for (int i = lines.length - 1; i >= 0; i--) {
+            final String line = lines[i].trim();
+            final Matcher matcher = sFontSizePattern.matcher(line);
+            if (matcher.matches()) {
+                assertEquals("Expected font pixel size does not match", fontPixelSize,
+                        Integer.parseInt(matcher.group(2)));
+                return;
+            }
+        }
+        fail("No fontPixelSize reported from activity " + activityName);
     }
 }
