@@ -32,7 +32,8 @@
 
         <service
                 android:name=".MyService"
-                android:exported="false">
+                android:exported="false"
+                android:permission="android.permission.BIND_DEVICE_ADMIN" >
             <intent-filter>
                 <action android:name="android.app.action.DEVICE_ADMIN_SERVICE" />
             </intent-filter>
