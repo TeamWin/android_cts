@@ -21,5 +21,7 @@
     </target_preparer>
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
         <option name="jar" value="CtsJvmtiTrackingHostTestCases.jar" />
+        <option name="set-option" value="test-file-name:CtsJvmtiTrackingDeviceApp.apk" />
+        <option name="set-option" value="package-name:android.jvmti.cts.tracking" />
     </test>
 </configuration>

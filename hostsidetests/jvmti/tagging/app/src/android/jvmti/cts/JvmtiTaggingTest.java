@@ -31,12 +31,6 @@ import art.Main;
  */
 public class JvmtiTaggingTest extends JvmtiTestBase {
 
-    @Before
-    public void setUp() throws Exception {
-        // Bind our native methods.
-        Main.bindAgentJNI("android/jvmti/cts/JvmtiTaggingTest", getClass().getClassLoader());
-    }
-
     private static WeakReference<Object> test() {
         Object o1 = new Object();
         Main.setTag(o1, 1);
