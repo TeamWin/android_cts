@@ -22,6 +22,7 @@ import android.support.test.runner.AndroidJUnit4;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Used by GraphicsStatsTest.
@@ -38,12 +39,18 @@ public class SimpleDrawFrameTests {
     @Test
     public void testDrawTenFrames() throws Throwable {
         DrawFramesActivity activity = mActivityRule.getActivity();
+        assertEquals(1, activity.getRenderedFramesCount());
+        assertEquals(0, activity.getDroppedReportsCount());
         activity.drawFrames(10);
+        assertEquals(11, activity.getRenderedFramesCount());
+        assertEquals(0, activity.getDroppedReportsCount());
     }
 
     @Test
     public void testDrawJankyFrames() throws Throwable {
         DrawFramesActivity activity = mActivityRule.getActivity();
+        assertEquals(1, activity.getRenderedFramesCount());
+        assertEquals(0, activity.getDroppedReportsCount());
         int[] frames = new int[50];
         for (int i = 0; i < 10; i++) {
             int indx = i * 5;
@@ -53,11 +60,15 @@ public class SimpleDrawFrameTests {
             frames[indx + 3] = DrawFramesActivity.FRAME_JANK_MISS_VSYNC;
         }
         activity.drawFrames(frames);
+        assertEquals(51, activity.getRenderedFramesCount());
+        assertEquals(0, activity.getDroppedReportsCount());
     }
 
     @Test
     public void testDrawDaveyFrames() throws Throwable {
         DrawFramesActivity activity = mActivityRule.getActivity();
+        assertEquals(1, activity.getRenderedFramesCount());
+        assertEquals(0, activity.getDroppedReportsCount());
         int[] frames = new int[40];
         for (int i = 0; i < 10; i++) {
             int indx = i * 4;
@@ -65,5 +76,7 @@ public class SimpleDrawFrameTests {
             frames[indx + 2] = DrawFramesActivity.FRAME_JANK_DAVEY_JR;
         }
         activity.drawFrames(frames);
+        assertEquals(41, activity.getRenderedFramesCount());
+        assertEquals(0, activity.getDroppedReportsCount());
     }
 }
