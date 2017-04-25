@@ -29,6 +29,7 @@ import android.app.assist.AssistStructure.ViewNode;
 import android.os.Bundle;
 import android.support.test.rule.ActivityTestRule;
 import android.util.Log;
+import android.view.autofill.AutofillValue;
 import android.widget.EditText;
 
 import org.junit.Before;
@@ -83,11 +84,14 @@ public class MultipleFragmentLoginTest extends AutoFillServiceTestCase {
             }, (int) (FILL_TIMEOUT_MS * 2));
 
             assertThat(fillRequest[0].data).isNull();
-            assertThat(findNodeByResourceId(fillRequest[0].structure, "editText1")).isNotNull();
-            assertThat(findNodeByResourceId(fillRequest[0].structure, "editText2")).isNotNull();
-            assertThat(findNodeByResourceId(fillRequest[0].structure, "editText3")).isNull();
-            assertThat(findNodeByResourceId(fillRequest[0].structure, "editText4")).isNull();
-            assertThat(findNodeByResourceId(fillRequest[0].structure, "editText5")).isNull();
+
+            AssistStructure structure = fillRequest[0].contexts.get(0).getStructure();
+            assertThat(fillRequest[0].contexts.size()).isEqualTo(1);
+            assertThat(findNodeByResourceId(structure, "editText1")).isNotNull();
+            assertThat(findNodeByResourceId(structure, "editText2")).isNotNull();
+            assertThat(findNodeByResourceId(structure, "editText3")).isNull();
+            assertThat(findNodeByResourceId(structure, "editText4")).isNull();
+            assertThat(findNodeByResourceId(structure, "editText5")).isNull();
 
             // Wait until autofill has been applied
             sUiBot.selectDataset("dataset1");
@@ -105,10 +109,7 @@ public class MultipleFragmentLoginTest extends AutoFillServiceTestCase {
                             .setField("editText4", "editText4-autofilled")
                             .setPresentation(createPresentation("dataset2"))
                             .build())
-                    .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC,
-                            findNodeByResourceId(fillRequest[0].structure,
-                                    "editText2").getAutofillId())
-                    .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, "editText5")
+                    .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, "editText2", "editText5")
                     .setExtras(clientState)
                     .build());
 
@@ -121,12 +122,36 @@ public class MultipleFragmentLoginTest extends AutoFillServiceTestCase {
 
             fillRequest[0] = sReplier.getNextFillRequest();
 
+            // The fillRequest should have a fillContext for each partition. The first partition
+            // should be filled in
+            assertThat(fillRequest[0].contexts.size()).isEqualTo(2);
+
             assertThat(fillRequest[0].data.getString("key")).isEqualTo("value1");
-            assertThat(findNodeByResourceId(fillRequest[0].structure, "editText1")).isNull();
-            assertThat(findNodeByResourceId(fillRequest[0].structure, "editText2")).isNull();
-            assertThat(findNodeByResourceId(fillRequest[0].structure, "editText3")).isNotNull();
-            assertThat(findNodeByResourceId(fillRequest[0].structure, "editText4")).isNotNull();
-            assertThat(findNodeByResourceId(fillRequest[0].structure, "editText5")).isNotNull();
+
+            AssistStructure structure1 = fillRequest[0].contexts.get(0).getStructure();
+            ViewNode editText1Node = findNodeByResourceId(structure1, "editText1");
+            // The actual value in the structure is not updated in FillRequest-contexts, but the
+            // autofill value is. For text views in SaveRequest both are updated, but this is the
+            // only exception.
+            assertThat(editText1Node.getAutofillValue()).isEqualTo(
+                    AutofillValue.forText("editText1-autofilled"));
+
+            ViewNode editText2Node = findNodeByResourceId(structure1, "editText2");
+            // Manually filled fields are not send to onFill. They appear in onSave if they are set
+            // as saveable fields.
+            assertThat(editText2Node.getText().toString()).isEqualTo("");
+
+            assertThat(findNodeByResourceId(structure1, "editText3")).isNull();
+            assertThat(findNodeByResourceId(structure1, "editText4")).isNull();
+            assertThat(findNodeByResourceId(structure1, "editText5")).isNull();
+
+            AssistStructure structure2 = fillRequest[0].contexts.get(1).getStructure();
+
+            assertThat(findNodeByResourceId(structure2, "editText1")).isNull();
+            assertThat(findNodeByResourceId(structure2, "editText2")).isNull();
+            assertThat(findNodeByResourceId(structure2, "editText3")).isNotNull();
+            assertThat(findNodeByResourceId(structure2, "editText4")).isNotNull();
+            assertThat(findNodeByResourceId(structure2, "editText5")).isNotNull();
 
             // Wait until autofill has been applied
             sUiBot.selectDataset("dataset2");
@@ -146,18 +171,18 @@ public class MultipleFragmentLoginTest extends AutoFillServiceTestCase {
 
             assertThat(saveRequest.data.getString("key")).isEqualTo("value2");
 
-            AssistStructure structure1 = saveRequest.contexts.get(0).getStructure();
-            ViewNode editText1Node = findNodeByResourceId(structure1, "editText1");
+            structure1 = saveRequest.contexts.get(0).getStructure();
+            editText1Node = findNodeByResourceId(structure1, "editText1");
             assertThat(editText1Node.getText().toString()).isEqualTo("editText1-autofilled");
 
-            ViewNode editText2Node = findNodeByResourceId(structure1, "editText2");
+            editText2Node = findNodeByResourceId(structure1, "editText2");
             assertThat(editText2Node.getText().toString()).isEqualTo("editText2-manually-filled");
 
             assertThat(findNodeByResourceId(structure1, "editText3")).isNull();
             assertThat(findNodeByResourceId(structure1, "editText4")).isNull();
             assertThat(findNodeByResourceId(structure1, "editText5")).isNull();
 
-            AssistStructure structure2 = saveRequest.contexts.get(1).getStructure();
+            structure2 = saveRequest.contexts.get(1).getStructure();
             assertThat(findNodeByResourceId(structure2, "editText1")).isNull();
             assertThat(findNodeByResourceId(structure2, "editText2")).isNull();
 

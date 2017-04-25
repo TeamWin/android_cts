@@ -27,6 +27,7 @@ import android.icu.util.Calendar;
 import android.os.Bundle;
 import android.os.UserManager;
 import android.service.autofill.Dataset;
+import android.service.autofill.FillContext;
 import android.service.autofill.FillResponse;
 import android.support.annotation.NonNull;
 import android.support.test.InstrumentationRegistry;
@@ -40,8 +41,10 @@ import android.view.ViewStructure.HtmlInfo;
 
 import com.android.compatibility.common.util.SystemUtil;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * Helper for common funcionalities.
@@ -163,6 +166,15 @@ final class Helper {
     }
 
     /**
+     * Dump the contexts on logcat.
+     */
+    static void dumpStructure(String message, List<FillContext> contexts) {
+        for (FillContext context : contexts) {
+            dumpStructure(message, context.getStructure());
+        }
+    }
+
+    /**
      * Dumps the state of the autofill service on logcat.
      */
     static void dumpAutofillService() {
@@ -217,6 +229,19 @@ final class Helper {
             final WindowNode windowNode = structure.getWindowNodeAt(i);
             final ViewNode rootNode = windowNode.getRootViewNode();
             final ViewNode node = findNodeByResourceId(rootNode, resourceId);
+            if (node != null) {
+                return node;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Gets a node given its Android resource id, or {@code null} if not found.
+     */
+    static ViewNode findNodeByResourceId(ArrayList<FillContext> contexts, String resourceId) {
+        for (FillContext context : contexts) {
+            ViewNode node = findNodeByResourceId(context.getStructure(), resourceId);
             if (node != null) {
                 return node;
             }
@@ -530,15 +555,15 @@ final class Helper {
      * Creates an array of {@link AutofillId} mapped from the {@code structure} nodes with the given
      * {@code resourceIds}.
      */
-    static AutofillId[] getAutofillIds(AssistStructure structure, String[] resourceIds) {
+    static AutofillId[] getAutofillIds(Function<String, ViewNode> nodeResolver,
+            String[] resourceIds) {
         if (resourceIds == null) return null;
 
         final AutofillId[] requiredIds = new AutofillId[resourceIds.length];
         for (int i = 0; i < resourceIds.length; i++) {
             final String resourceId = resourceIds[i];
-            final ViewNode node = findNodeByResourceId(structure, resourceId);
+            final ViewNode node = nodeResolver.apply(resourceId);
             if (node == null) {
-                dumpStructure("getAutofillIds()", structure);
                 throw new AssertionError("No node with savable resourceId " + resourceId);
             }
             requiredIds[i] = node.getAutofillId();
