@@ -223,7 +223,7 @@ public class PipActivity extends AbstractLifecycleLogActivity {
         super.onStop();
 
         if (getIntent().hasExtra(EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP) && !mEnteredPictureInPicture) {
-            Log.w("PipActivity", "Unexpected onStop() called before entering picture-in-picture");
+            Log.w(TAG, "Unexpected onStop() called before entering picture-in-picture");
             finish();
         }
     }
@@ -238,6 +238,13 @@ public class PipActivity extends AbstractLifecycleLogActivity {
     @Override
     public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode);
+
+        // Fail early if the activity state does not match the dispatched state
+        if (isInPictureInPictureMode() != isInPictureInPictureMode) {
+            Log.w(TAG, "Received onPictureInPictureModeChanged mode=" + isInPictureInPictureMode
+                    + " activityState=" + isInPictureInPictureMode());
+            finish();
+        }
 
         // Mark that we've entered picture-in-picture so that we can stop checking for
         // EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP
