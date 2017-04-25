@@ -29,6 +29,8 @@ import android.os.Parcel;
 import android.test.AndroidTestCase;
 import android.widget.RemoteViews;
 
+import org.mockito.internal.matchers.Not;
+
 public class NotificationTest extends AndroidTestCase {
     private static final String TEXT_RESULT_KEY = "text";
     private static final String DATA_RESULT_KEY = "data";
@@ -77,6 +79,7 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(CHANNEL.getId(), mNotification.getChannel());
         assertEquals(Notification.BADGE_ICON_NONE, mNotification.getBadgeIconType());
         assertNull(mNotification.getShortcutId());
+        assertEquals(Notification.GROUP_ALERT_ALL, mNotification.getGroupAlertBehavior());
         assertEquals((long) 0, mNotification.getTimeout());
     }
 
@@ -93,6 +96,7 @@ public class NotificationTest extends AndroidTestCase {
                 .setShortcutId(SHORTCUT_ID)
                 .setTimeout(TIMEOUT)
                 .setSettingsText(SETTING_TEXT)
+                .setGroupAlertBehavior(Notification.GROUP_ALERT_CHILDREN)
                 .build();
         mNotification.icon = 0;
         mNotification.number = 1;
@@ -148,6 +152,7 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(mNotification.getTimeout(), result.getTimeout());
         assertEquals(mNotification.getChannel(), result.getChannel());
         assertEquals(mNotification.getSettingsText(), result.getSettingsText());
+        assertEquals(mNotification.getGroupAlertBehavior(), result.getGroupAlertBehavior());
 
         mNotification.contentIntent = null;
         parcel = Parcel.obtain();
@@ -207,6 +212,7 @@ public class NotificationTest extends AndroidTestCase {
                 .setShortcutId(SHORTCUT_ID)
                 .setTimeout(TIMEOUT)
                 .setSettingsText(SETTING_TEXT)
+                .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY)
                 .build();
         assertEquals(CONTENT_TEXT, mNotification.extras.getString(Notification.EXTRA_TEXT));
         assertEquals(CONTENT_TITLE, mNotification.extras.getString(Notification.EXTRA_TITLE));
@@ -217,6 +223,7 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(SHORTCUT_ID, mNotification.getShortcutId());
         assertEquals(TIMEOUT, mNotification.getTimeout());
         assertEquals(SETTING_TEXT, mNotification.getSettingsText());
+        assertEquals(Notification.GROUP_ALERT_SUMMARY, mNotification.getGroupAlertBehavior());
     }
 
     public void testActionBuilder() {
