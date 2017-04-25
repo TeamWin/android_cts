@@ -399,7 +399,7 @@ public class EncryptionAppTest extends InstrumentationTestCase {
                 .createDeviceProtectedStorageContext();
         final File probe = new File(otherContext.getFilesDir(),
                 getBootCount() + "." + action);
-        for (int i = 0; i < 60; i++) {
+        for (int i = 0; i < 150; i++) {
             Log.d(TAG, "Waiting for " + probe + "...");
             if (probe.exists()) {
                 return;
