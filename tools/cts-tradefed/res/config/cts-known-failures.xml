@@ -19,6 +19,12 @@
     <!-- <option name="compatibility:exclude-filter" value="MODULE_NAME PACKAGE_NAME.CLASS_NAME" /> Excludes whole class -->
     <!-- <option name="compatibility:exclude-filter" value="MODULE_NAME PACKAGE_NAME.CLASS_NAME#TEST_NAME" /> Excludes individual test -->
 
+    <!-- b/37519234 -->
+    <!-- Turn off VR virtual display tests till VR mode issues are resolved -->
+    <option name="compatibility:exclude-filter" value="CtsServicesHostTestCases android.server.cts.ActivityManagerDisplayTests#testVrActivityLaunch" />
+    <option name="compatibility:exclude-filter" value="CtsServicesHostTestCases android.server.cts.ActivityManagerDisplayTests#testVrActivityReLaunch" />
+    <option name="compatibility:exclude-filter" value="CtsServicesHostTestCases android.server.cts.ActivityManagerDisplayTests#testActivityLaunchPostVr" />
+
     <!-- b/35314835 -->
     <option name="compatibility:exclude-filter" value="CtsServicesHostTestCases android.server.cts.ActivityManagerPinnedStackTests#testAlwaysFocusablePipActivity" />
     <option name="compatibility:exclude-filter" value="CtsServicesHostTestCases android.server.cts.ActivityManagerPinnedStackTests#testLaunchIntoPinnedStack" />
