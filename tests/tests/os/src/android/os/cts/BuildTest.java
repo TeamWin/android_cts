@@ -19,6 +19,7 @@ package android.os.cts;
 
 import android.os.Build;
 import android.os.SystemProperties;
+import android.platform.test.annotations.RestrictedBuildTest;
 
 import dalvik.system.VMRuntime;
 
