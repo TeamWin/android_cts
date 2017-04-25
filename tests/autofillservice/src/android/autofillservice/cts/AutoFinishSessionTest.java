@@ -144,8 +144,12 @@ public class AutoFinishSessionTest extends AutoFillServiceTestCase {
     @Test
     public void hideOneViewToFinishSession() throws Exception {
         removeViewsBaseTest(
-                () -> mActivity.syncRunOnUiThread(
-                        () -> mEditText1.setVisibility(ViewGroup.INVISIBLE)),
+                () -> mActivity.syncRunOnUiThread(() -> {
+                    // Do not trigger new partition when switching to editText2
+                    mEditText2.setFocusable(false);
+
+                    mEditText1.setVisibility(ViewGroup.INVISIBLE);
+                }),
                 null,
                 null,
                 "editText1");
