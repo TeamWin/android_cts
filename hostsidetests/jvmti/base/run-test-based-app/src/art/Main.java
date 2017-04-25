@@ -19,12 +19,6 @@ package art;
  * out of the ART run-tests will be used when building.
  */
 public class Main {
-    // Load the given class with the given classloader, and bind all native methods to corresponding
-    // C methods in the agent. Will abort if any of the steps fail.
-    public static native void bindAgentJNI(String className, ClassLoader classLoader);
-    // Same as above, giving the class directly.
-    public static native void bindAgentJNIForClass(Class<?> klass);
-
     // General functionality shared between tests.
     public static native void setTag(Object o, long tag);
 
