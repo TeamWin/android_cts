@@ -143,7 +143,7 @@ public class SearchView_CursorTest {
 
     @UiThreadTest
     @Before
-    public void setup() {
+    public void setup() throws Throwable {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mActivity = mActivityRule.getActivity();
         mSearchView = (SearchView) mActivity.findViewById(R.id.search_view);
@@ -154,14 +154,16 @@ public class SearchView_CursorTest {
         // Use an adapter with our custom layout for each entry. The adapter "maps"
         // the content of the text column of our cursor to the @id/text1 view in the
         // layout.
-        mSuggestionsAdapter = new SimpleCursorAdapter(
-                mActivity,
-                R.layout.searchview_suggestion_item,
-                null,
-                new String[] { TEXT_COLUMN_NAME },
-                new int[] { android.R.id.text1 },
-                CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER);
-        mSearchView.setSuggestionsAdapter(mSuggestionsAdapter);
+        mActivityRule.runOnUiThread(() -> {
+            mSuggestionsAdapter = new SimpleCursorAdapter(
+                    mActivity,
+                    R.layout.searchview_suggestion_item,
+                    null,
+                    new String[] { TEXT_COLUMN_NAME },
+                    new int[] { android.R.id.text1 },
+                    CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER);
+            mSearchView.setSuggestionsAdapter(mSuggestionsAdapter);
+        });
     }
 
     @UiThreadTest
