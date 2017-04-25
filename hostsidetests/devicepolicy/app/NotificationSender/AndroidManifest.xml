@@ -19,7 +19,8 @@
     package="com.android.cts.managedprofiletests.notificationsender">
 
     <application>
-      <activity android:name=".SendNotification" >
+      <activity android:name=".SendNotification"
+                android:exported="true">
       </activity>
     </application>
 </manifest>
