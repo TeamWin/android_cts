@@ -95,11 +95,12 @@ public class InstrumentedAutoFillService extends AutofillService {
     @Override
     public void onSaveRequest(android.service.autofill.SaveRequest request,
             SaveCallback callback) {
-        final List<FillContext> contexts = request.getFillContexts();
-        final AssistStructure structure = contexts.get(contexts.size() - 1).getStructure();
-
-        if (DUMP_SAVE_REQUESTS) dumpStructure("onSaveRequest()", structure);
-        sReplier.onSaveRequest(structure, request.getClientState(), callback);
+        if (request.getFillContexts() != null) {
+            for (FillContext context : request.getFillContexts()) {
+                if (DUMP_SAVE_REQUESTS) dumpStructure("onSaveRequest()", context.getStructure());
+            }
+        }
+        sReplier.onSaveRequest(request.getFillContexts(), request.getClientState(), callback);
     }
 
     /**
@@ -173,12 +174,18 @@ public class InstrumentedAutoFillService extends AutofillService {
      * that can be asserted at the end of a test case.
      */
     static final class SaveRequest {
+        final List<FillContext> contexts;
         final AssistStructure structure;
         final Bundle data;
         final SaveCallback callback;
 
-        private SaveRequest(AssistStructure structure, Bundle data, SaveCallback callback) {
-            this.structure = structure;
+        private SaveRequest(List<FillContext> contexts, Bundle data, SaveCallback callback) {
+            if (contexts != null && contexts.size() > 0) {
+                structure = contexts.get(contexts.size() - 1).getStructure();
+            } else {
+                structure = null;
+            }
+            this.contexts = contexts;
             this.data = data;
             this.callback = callback;
         }
@@ -306,9 +313,9 @@ public class InstrumentedAutoFillService extends AutofillService {
             }
         }
 
-        private void onSaveRequest(AssistStructure structure, Bundle data, SaveCallback callback) {
+        private void onSaveRequest(List<FillContext> contexts, Bundle data, SaveCallback callback) {
             Log.d(TAG, "onSaveRequest()");
-            mSaveRequests.offer(new SaveRequest(structure, data, callback));
+            mSaveRequests.offer(new SaveRequest(contexts, data, callback));
             callback.onSuccess();
         }
     }
