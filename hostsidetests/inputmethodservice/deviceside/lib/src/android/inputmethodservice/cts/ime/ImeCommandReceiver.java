@@ -31,7 +31,7 @@ import android.util.Log;
 final class ImeCommandReceiver<T extends InputMethodService & ImeCommandCallbacks>
         extends BroadcastReceiver {
 
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
 
     interface ImeCommandCallbacks {
         /**
