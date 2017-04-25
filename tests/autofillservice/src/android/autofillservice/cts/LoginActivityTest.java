@@ -62,6 +62,7 @@ import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.service.autofill.FillEventHistory;
+import android.service.autofill.SaveInfo;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.uiautomator.UiObject2;
 import android.view.View;
@@ -1146,7 +1147,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
-    public void testCustomNegativeSaveButton() throws Exception {
+    public void testRejectStyleNegativeSaveButton() throws Exception {
         enableService();
 
         // Set service behavior.
@@ -1159,7 +1160,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
-                .setNegativeAction("Foo", listener)
+                .setNegativeAction(SaveInfo.NEGATIVE_BUTTON_STYLE_REJECT, listener)
                 .build());
 
         // Trigger auto-fill.
@@ -1185,10 +1186,60 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         }, intentFilter);
 
         // Trigger the negative button.
-        sUiBot.saveForAutofill(false, SAVE_DATA_TYPE_PASSWORD);
+        sUiBot.saveForAutofill(SaveInfo.NEGATIVE_BUTTON_STYLE_REJECT,
+                false, SAVE_DATA_TYPE_PASSWORD);
 
         // Wait for the custom action.
         assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
+
+        assertNoDanglingSessions();
+    }
+
+    @Test
+    public void testCancelStyleNegativeSaveButton() throws Exception {
+        enableService();
+
+        // Set service behavior.
+
+        final String intentAction = "android.autofillservice.cts.CUSTOM_ACTION";
+
+        // Configure the save UI.
+        final IntentSender listener = PendingIntent.getBroadcast(
+                getContext(), 0, new Intent(intentAction), 0).getIntentSender();
+
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
+                .setNegativeAction(SaveInfo.NEGATIVE_BUTTON_STYLE_CANCEL, listener)
+                .build());
+
+        // Trigger auto-fill.
+        mActivity.onUsername(View::requestFocus);
+
+        // Wait for onFill() before proceeding.
+        sReplier.getNextFillRequest();
+
+        // Trigger save.
+        mActivity.onUsername((v) -> v.setText("foo"));
+        mActivity.onPassword((v) -> v.setText("foo"));
+        mActivity.tapLogin();
+
+        // Start watching for the negative intent
+        final CountDownLatch latch = new CountDownLatch(1);
+        final IntentFilter intentFilter = new IntentFilter(intentAction);
+        getContext().registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                getContext().unregisterReceiver(this);
+                latch.countDown();
+            }
+        }, intentFilter);
+
+        // Trigger the negative button.
+        sUiBot.saveForAutofill(SaveInfo.NEGATIVE_BUTTON_STYLE_CANCEL,
+                false, SAVE_DATA_TYPE_PASSWORD);
+
+        // Wait for the custom action.
+        assertThat(latch.await(500, TimeUnit.SECONDS)).isTrue();
 
         assertNoDanglingSessions();
     }

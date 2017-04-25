@@ -67,7 +67,7 @@ final class CannedFillResponse {
     private final IntentSender mAuthentication;
     private final String[] mAuthenticationIds;
     private final String[] mIgnoredIds;
-    private final CharSequence mNegativeActionLabel;
+    private final int mNegativeActionStyle;
     private final IntentSender mNegativeActionListener;
     private final int mFlags;
 
@@ -82,7 +82,7 @@ final class CannedFillResponse {
         mAuthentication = builder.mAuthentication;
         mAuthenticationIds = builder.mAuthenticationIds;
         mIgnoredIds = builder.mIgnoredIds;
-        mNegativeActionLabel = builder.mNegativeActionLabel;
+        mNegativeActionStyle = builder.mNegativeActionStyle;
         mNegativeActionListener = builder.mNegativeActionListener;
         mFlags = builder.mFlags;
     }
@@ -118,9 +118,7 @@ final class CannedFillResponse {
             if (mSaveDescription != null) {
                 saveInfo.setDescription(mSaveDescription);
             }
-            if (mNegativeActionLabel != null) {
-                saveInfo.setNegativeAction(mNegativeActionLabel, mNegativeActionListener);
-            }
+            saveInfo.setNegativeAction(mNegativeActionStyle, mNegativeActionListener);
             builder.setSaveInfo(saveInfo.build());
         }
         if (mIgnoredIds != null) {
@@ -158,7 +156,7 @@ final class CannedFillResponse {
         private IntentSender mAuthentication;
         private String[] mAuthenticationIds;
         private String[] mIgnoredIds;
-        private CharSequence mNegativeActionLabel;
+        private int mNegativeActionStyle;
         private IntentSender mNegativeActionListener;
         private int mFlags;
 
@@ -241,9 +239,9 @@ final class CannedFillResponse {
         /**
          * Sets the negative action spec.
          */
-        public Builder setNegativeAction(CharSequence label,
+        public Builder setNegativeAction(int style,
                 IntentSender listener) {
-            mNegativeActionLabel = label;
+            mNegativeActionStyle = style;
             mNegativeActionListener = listener;
             return this;
         }
