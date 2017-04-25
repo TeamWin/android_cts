@@ -392,9 +392,17 @@ public class ClientTest {
 //            startViewIntent.addCategory(Intent.CATEGORY_BROWSABLE);
 //            startViewIntent.setData(Uri.parse("https://cts.google.com/normal"));
 //            InstrumentationRegistry.getContext().startActivity(startViewIntent, null /*options*/);
-//            final BroadcastResult testResult = getResult();
-//            assertThat("com.android.cts.normalapp", is(testResult.packageName));
-//            assertThat("NormalWebActivity", is(testResult.activityName));
+//            final TestResult testResult = getResult();
+//            assertThat(testResult.getPackageName(),
+//                    is("com.android.cts.normalapp"));
+//            assertThat(testResult.getComponentName(),
+//                    is("NormalWebActivity"));
+//            assertThat(testResult.getStatus(),
+//                    is("PASS"));
+//            assertThat(testResult.getEphemeralPackageInfoExposed(),
+//                    is(false));
+//            assertThat(testResult.getException(),
+//                    is(nullValue()));
 //        }
 
         // We don't attempt to start the service since it will merely return and not
@@ -447,7 +455,7 @@ public class ClientTest {
 
     @Test
     public void testStartExposed() throws Exception {
-        // start the exposed activity
+        // start the explicitly exposed activity
         {
             final Intent startExposedIntent = new Intent(ACTION_START_EXPOSED);
             InstrumentationRegistry
@@ -465,7 +473,7 @@ public class ClientTest {
                     is(nullValue()));
         }
 
-        // start the exposed activity; directed package
+        // start the explicitly exposed activity; directed package
         {
             final Intent startExposedIntent = new Intent(ACTION_START_EXPOSED);
             startExposedIntent.setPackage("com.android.cts.normalapp");
@@ -484,7 +492,7 @@ public class ClientTest {
                     is(nullValue()));
         }
 
-        // start the exposed activity; directed component
+        // start the explicitly exposed activity; directed component
         {
             final Intent startExposedIntent = new Intent(ACTION_START_EXPOSED);
             startExposedIntent.setComponent(new ComponentName(
@@ -502,6 +510,34 @@ public class ClientTest {
                     is(true));
             assertThat(testResult.getException(),
                     is(nullValue()));
+        }
+
+        // start the implicitly exposed activity; directed package
+        {
+            try {
+                final Intent startExposedIntent = new Intent(Intent.ACTION_VIEW);
+                startExposedIntent.setPackage("com.android.cts.implicitapp");
+                startExposedIntent.addCategory(Intent.CATEGORY_BROWSABLE);
+                startExposedIntent.setData(Uri.parse("https://cts.google.com/implicit"));
+                InstrumentationRegistry
+                        .getContext().startActivity(startExposedIntent, null /*options*/);
+                fail("activity started");
+            } catch (ActivityNotFoundException expected) { }
+        }
+
+        // start the implicitly exposed activity; directed component
+        {
+            try {
+                final Intent startExposedIntent = new Intent(Intent.ACTION_VIEW);
+                startExposedIntent.setComponent(new ComponentName(
+                        "com.android.cts.implicitapp",
+                        "com.android.cts.implicitapp.ImplicitActivity"));
+                startExposedIntent.addCategory(Intent.CATEGORY_BROWSABLE);
+                startExposedIntent.setData(Uri.parse("https://cts.google.com/implicit"));
+                InstrumentationRegistry
+                        .getContext().startActivity(startExposedIntent, null /*options*/);
+                fail("activity started");
+            } catch (ActivityNotFoundException expected) { }
         }
 
         // start the exposed service; directed package
@@ -879,19 +915,28 @@ public class ClientTest {
     @Test
     public void testPackageInfo() throws Exception {
         PackageInfo info;
-        // Test own package info.
+        // own package info
         info = InstrumentationRegistry.getContext().getPackageManager()
                 .getPackageInfo("com.android.cts.ephemeralapp1", 0);
         assertThat(info.packageName,
                 is("com.android.cts.ephemeralapp1"));
 
-        // Test exposed app package info.
+        // exposed application package info
         info = InstrumentationRegistry.getContext().getPackageManager()
                 .getPackageInfo("com.android.cts.normalapp", 0);
         assertThat(info.packageName,
                 is("com.android.cts.normalapp"));
 
-        // Test unexposed app package info not accessible.
+        // implicitly exposed application package info not accessible
+        try {
+            info = InstrumentationRegistry.getContext().getPackageManager()
+                    .getPackageInfo("com.android.cts.implicitapp", 0);
+            fail("Instant apps should not be able to access PackageInfo for an app that does not" +
+                    " expose itself to Instant Apps.");
+        } catch (PackageManager.NameNotFoundException expected) {
+        }
+
+        // unexposed application package info not accessible
         try {
             info = InstrumentationRegistry.getContext().getPackageManager()
                     .getPackageInfo("com.android.cts.unexposedapp", 0);
@@ -899,7 +944,8 @@ public class ClientTest {
                     " expose itself to Instant Apps.");
         } catch (PackageManager.NameNotFoundException expected) {
         }
-        // Test Instant App (with visibleToInstantApp components) still isn't accessible.
+
+        // instant application (with visibleToInstantApp component) package info not accessible
         try {
             info = InstrumentationRegistry.getContext().getPackageManager()
                     .getPackageInfo("com.android.cts.ephemeralapp2", 0);
