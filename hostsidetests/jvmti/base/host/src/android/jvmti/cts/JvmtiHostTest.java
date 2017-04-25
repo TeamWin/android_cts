@@ -19,6 +19,7 @@ import com.android.ddmlib.testrunner.ITestRunListener;
 import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
 import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.config.Option;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceTestCase;
@@ -41,17 +42,23 @@ import java.util.zip.ZipFile;
  */
 public class JvmtiHostTest extends DeviceTestCase implements IBuildReceiver, IAbiReceiver {
     private static final String RUNNER = "android.support.test.runner.AndroidJUnitRunner";
+    // inject these options from HostTest directly using --set-option <option name>:<option value>
+    @Option(name = "package-name",
+            description = "The package name of the device test",
+            mandatory = true)
+    private String mTestPackageName = null;
+
+    @Option(name = "test-file-name",
+            description = "the name of a test zip file to install on device.",
+            mandatory = true)
+    private String mTestApk = null;
 
     private CompatibilityBuildHelper mBuildHelper;
     private IAbi mAbi;
-    private String mTestPackageName;
-    private String mTestApk;
 
     @Override
     public void setBuild(IBuildInfo arg0) {
         mBuildHelper = new CompatibilityBuildHelper(arg0);
-        mTestPackageName = arg0.getBuildAttributes().get(JvmtiPreparer.PACKAGE_NAME_ATTRIBUTE);
-        mTestApk = arg0.getBuildAttributes().get(JvmtiPreparer.APK_ATTRIBUTE);
     }
 
     @Override
