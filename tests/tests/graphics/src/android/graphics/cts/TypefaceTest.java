@@ -282,22 +282,6 @@ public class TypefaceTest {
     }
 
     @Test
-    public void testTypefaceRequestFailureConstantsAreInSync() {
-        // Error codes from the provider are positive numbers and are in sync
-        assertEquals(FontsContract.Columns.RESULT_CODE_FONT_NOT_FOUND,
-                Typeface.FontRequestCallback.FAIL_REASON_FONT_NOT_FOUND);
-        assertEquals(FontsContract.Columns.RESULT_CODE_FONT_UNAVAILABLE,
-                Typeface.FontRequestCallback.FAIL_REASON_FONT_UNAVAILABLE);
-        assertEquals(FontsContract.Columns.RESULT_CODE_MALFORMED_QUERY,
-                Typeface.FontRequestCallback.FAIL_REASON_MALFORMED_QUERY);
-
-        // Internal errors are negative
-        assertTrue(0 > Typeface.FontRequestCallback.FAIL_REASON_PROVIDER_NOT_FOUND);
-        assertTrue(0 > Typeface.FontRequestCallback.FAIL_REASON_WRONG_CERTIFICATES);
-        assertTrue(0 > Typeface.FontRequestCallback.FAIL_REASON_FONT_LOAD_ERROR);
-    }
-
-    @Test
     public void testTypefaceBuilder_AssetSource() throws FontVariationAxis.InvalidFormatException {
         Typeface typeface1 = new Typeface.Builder(mContext.getAssets(), "samplefont.ttf").build();
         assertNotNull(typeface1);
