@@ -31,7 +31,7 @@ import android.util.Log;
 public final class EventReceiver extends BroadcastReceiver {
 
     private static final String TAG = EventReceiver.class.getSimpleName();
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
 
     private static final Uri CONTENT_URI = Uri.parse(EventTableConstants.CONTENT_URI);
 
