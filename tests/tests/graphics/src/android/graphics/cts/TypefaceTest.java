@@ -221,9 +221,4 @@ public class TypefaceTest extends AndroidTestCase {
                 typeface3, typeface4);
     }
 
-    @SmallTest
-    public void testBadFont() {
-        Typeface typeface = Typeface.createFromAsset(getContext().getAssets(), "ft45987.ttf");
-        assertNotNull(typeface);
-    }
 }
