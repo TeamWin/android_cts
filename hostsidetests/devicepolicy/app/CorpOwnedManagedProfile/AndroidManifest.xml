@@ -37,11 +37,12 @@
         </receiver>
         <activity android:name="com.android.compatibility.common.util.devicepolicy.provisioning.StartProvisioningActivity"/>
 
-        <service android:name=".CrossUserService"
-                android:exported="false">
+        <service android:name=".ProtectedCrossUserService"
+                android:exported="true"
+                android:permission="android.permission.BIND_DEVICE_ADMIN">
         </service>
 
-        <service android:name=".ExportedCrossUserService"
+        <service android:name=".UnprotectedCrossUserService"
                 android:exported="true">
         </service>
     </application>

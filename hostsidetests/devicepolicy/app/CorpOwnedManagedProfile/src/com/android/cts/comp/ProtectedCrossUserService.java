@@ -25,7 +25,7 @@ import android.os.UserHandle;
 /**
  * Handle the cross user call from the device admin in other side.
  */
-public class CrossUserService extends Service {
+public class ProtectedCrossUserService extends Service {
 
     private final ICrossUserService.Stub mBinder = new ICrossUserService.Stub() {
         public String echo(String msg) {
