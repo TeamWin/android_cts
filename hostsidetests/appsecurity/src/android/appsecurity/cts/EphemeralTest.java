@@ -42,6 +42,10 @@ public class EphemeralTest extends DeviceTestCase
     private static final String EPHEMERAL_2_APK = "CtsEphemeralTestsEphemeralApp2.apk";
     private static final String EPHEMERAL_2_PKG = "com.android.cts.ephemeralapp2";
 
+    // a normally installed application with implicitly exposed components
+    private static final String IMPLICIT_APK = "CtsEphemeralTestsImplicitApp.apk";
+    private static final String IMPLICIT_PKG = "com.android.cts.implicitapp";
+
     // a normally installed application with no exposed components
     private static final String UNEXPOSED_APK = "CtsEphemeralTestsUnexposedApp.apk";
     private static final String UNEXPOSED_PKG = "com.android.cts.unexposedapp";
@@ -143,6 +147,7 @@ public class EphemeralTest extends DeviceTestCase
     private void installTestPackages() throws Exception {
         installApp(NORMAL_APK);
         installApp(UNEXPOSED_APK);
+        installApp(IMPLICIT_APK);
         installEphemeralApp(EPHEMERAL_1_APK);
         installEphemeralApp(EPHEMERAL_2_APK);
     }
@@ -150,6 +155,7 @@ public class EphemeralTest extends DeviceTestCase
     private void uninstallTestPackages() throws Exception {
         getDevice().uninstallPackage(NORMAL_PKG);
         getDevice().uninstallPackage(UNEXPOSED_PKG);
+        getDevice().uninstallPackage(IMPLICIT_PKG);
         getDevice().uninstallPackage(EPHEMERAL_1_PKG);
         getDevice().uninstallPackage(EPHEMERAL_2_PKG);
     }
