@@ -33,6 +33,7 @@ import android.os.CancellationSignal;
 import android.service.autofill.AutofillService;
 import android.service.autofill.Dataset;
 import android.service.autofill.FillCallback;
+import android.service.autofill.FillContext;
 import android.service.autofill.FillResponse;
 import android.service.autofill.SaveCallback;
 import android.util.Log;
@@ -41,6 +42,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.List;
 
 /**
  * Implementation of {@link AutofillService} used in the tests.
@@ -81,16 +83,23 @@ public class InstrumentedAutoFillService extends AutofillService {
     }
 
     @Override
-    public void onFillRequest(AssistStructure structure, Bundle data,
-            int flags, CancellationSignal cancellationSignal, FillCallback callback) {
+    public void onFillRequest(android.service.autofill.FillRequest request,
+            CancellationSignal cancellationSignal, FillCallback callback) {
+        final AssistStructure structure = request.getStructure();
         if (DUMP_FILL_REQUESTS) dumpStructure("onFillRequest()", structure);
-        sReplier.onFillRequest(structure, data, cancellationSignal, callback, flags);
+
+        sReplier.onFillRequest(structure, request.getClientState(), cancellationSignal, callback,
+                request.getFlags());
     }
 
     @Override
-    public void onSaveRequest(AssistStructure structure, Bundle data, SaveCallback callback) {
+    public void onSaveRequest(android.service.autofill.SaveRequest request,
+            SaveCallback callback) {
+        final List<FillContext> contexts = request.getFillContexts();
+        final AssistStructure structure = contexts.get(contexts.size() - 1).getStructure();
+
         if (DUMP_SAVE_REQUESTS) dumpStructure("onSaveRequest()", structure);
-        sReplier.onSaveRequest(structure, data, callback);
+        sReplier.onSaveRequest(structure, request.getClientState(), callback);
     }
 
     /**
