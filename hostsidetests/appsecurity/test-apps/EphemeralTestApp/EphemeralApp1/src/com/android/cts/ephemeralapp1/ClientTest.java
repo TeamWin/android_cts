@@ -32,6 +32,7 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ProviderInfo;
 import android.content.pm.ResolveInfo;
 import android.database.Cursor;
 import android.net.Uri;
@@ -44,7 +45,6 @@ import android.provider.MediaStore;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.test.InstrumentationTestCase;
-import android.util.Log;
 
 import com.android.cts.util.TestResult;
 
@@ -258,6 +258,7 @@ public class ClientTest {
                     is("com.android.cts.ephemeralapp1.EphemeralService"));
         }
 
+        // query instant application provider
         {
             final Intent queryIntent = new Intent(ACTION_QUERY);
             final List<ResolveInfo> resolveInfo = InstrumentationRegistry
@@ -279,6 +280,7 @@ public class ClientTest {
                     is(false));
         }
 
+        // query instant application provider ; directed package
         {
             final Intent queryIntent = new Intent(ACTION_QUERY);
             queryIntent.setPackage("com.android.cts.ephemeralapp1");
@@ -295,6 +297,7 @@ public class ClientTest {
                     is("com.android.cts.ephemeralapp1.EphemeralProvider"));
         }
 
+        // query instant application provider ; directed component
         {
             final Intent queryIntent = new Intent(ACTION_QUERY);
             queryIntent.setComponent(
@@ -310,6 +313,38 @@ public class ClientTest {
             assertThat(resolveInfo.get(0).providerInfo.packageName,
                     is("com.android.cts.ephemeralapp1"));
             assertThat(resolveInfo.get(0).providerInfo.name,
+                    is("com.android.cts.ephemeralapp1.EphemeralProvider"));
+        }
+
+        // resolve normal provider
+        {
+            final ProviderInfo providerInfo = InstrumentationRegistry
+                    .getContext().getPackageManager().resolveContentProvider(
+                            "com.android.cts.normalapp.provider", 0 /*flags*/);
+            assertThat(providerInfo, is(nullValue()));
+        }
+
+        // resolve exposed provider
+        {
+            final ProviderInfo providerInfo = InstrumentationRegistry
+                    .getContext().getPackageManager().resolveContentProvider(
+                            "com.android.cts.normalapp.exposed.provider", 0 /*flags*/);
+            assertThat(providerInfo, is(notNullValue()));
+            assertThat(providerInfo.packageName,
+                    is("com.android.cts.normalapp"));
+            assertThat(providerInfo.name,
+                    is("com.android.cts.normalapp.ExposedProvider"));
+        }
+
+        // resolve instant application provider
+        {
+            final ProviderInfo providerInfo = InstrumentationRegistry
+                    .getContext().getPackageManager().resolveContentProvider(
+                            "com.android.cts.ephemeralapp1.provider", 0 /*flags*/);
+            assertThat(providerInfo, is(notNullValue()));
+            assertThat(providerInfo.packageName,
+                    is("com.android.cts.ephemeralapp1"));
+            assertThat(providerInfo.name,
                     is("com.android.cts.ephemeralapp1.EphemeralProvider"));
         }
     }
