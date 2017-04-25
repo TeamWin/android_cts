@@ -427,7 +427,7 @@ public class ContentResolverTest extends AndroidTestCase {
         Bundle queryArgs = new Bundle();
         queryArgs.putInt(ContentResolver.QUERY_ARG_OFFSET, 10);
         queryArgs.putInt(ContentResolver.QUERY_ARG_LIMIT, 3);
-        queryArgs.putInt(TestPagingContentProvider.RECORDSET_SIZE, 100);
+        queryArgs.putInt(TestPagingContentProvider.RECORD_COUNT, 100);
 
         mCursor = mContentResolver.query(
                 TestPagingContentProvider.PAGED_DATA_URI, null, queryArgs, null);
@@ -436,8 +436,8 @@ public class ContentResolverTest extends AndroidTestCase {
         extras = extras != null ? extras : Bundle.EMPTY;
 
         assertEquals(3, mCursor.getCount());
-        assertTrue(extras.containsKey(ContentResolver.EXTRA_TOTAL_SIZE));
-        assertEquals(100, extras.getInt(ContentResolver.EXTRA_TOTAL_SIZE));
+        assertTrue(extras.containsKey(ContentResolver.EXTRA_TOTAL_COUNT));
+        assertEquals(100, extras.getInt(ContentResolver.EXTRA_TOTAL_COUNT));
 
         String[] honoredArgs = extras.getStringArray(ContentResolver.EXTRA_HONORED_ARGS);
         assertNotNull(honoredArgs);

@@ -42,7 +42,7 @@ public final class TestPagingContentProvider extends ContentProvider {
     static final Uri UNPAGED_DATA_URI = Uri.parse("content://" + AUTHORITY + "/un-paged/");
 
     /** Required queryArgument specifying corpus size. */
-    static final String RECORDSET_SIZE = "test-recordset-size";
+    static final String RECORD_COUNT = "test-record-count";
     static final String COLUMN_POS = "ColumnPos";
     static final String COLUMN_A = "ColumnA";
     static final String COLUMN_B = "ColumnB";
@@ -69,25 +69,27 @@ public final class TestPagingContentProvider extends ContentProvider {
 
         queryArgs = queryArgs != null ? queryArgs : Bundle.EMPTY;
 
-        int recordsetSize = queryArgs.getInt(RECORDSET_SIZE, Integer.MIN_VALUE);
-        if (recordsetSize == Integer.MIN_VALUE) {
+        int recordCount = queryArgs.getInt(RECORD_COUNT, Integer.MIN_VALUE);
+        if (recordCount == Integer.MIN_VALUE) {
             throw new RuntimeException("Recordset size must be specified.");
         }
 
-        if (recordsetSize < 0) {
+        if (recordCount < 0) {
             throw new RuntimeException("Recordset size must be >= 0");
         }
 
         Cursor cursor = null;
         if (PAGED_DATA_URI.equals(uri)) {
-            cursor = buildPagedResults(queryArgs, recordsetSize);
+            cursor = buildPagedResults(queryArgs, recordCount);
         } else if (UNPAGED_DATA_URI.equals(uri)) {
-            cursor = buildUnpagedResults(recordsetSize);
+            cursor = buildUnpagedResults(recordCount);
         }
 
         if (cursor == null) {
             throw new IllegalArgumentException("Unsupported URI: " + uri);
         }
+
+        cursor.setNotificationUri(getContext().getContentResolver(), uri);
 
         Log.v(TAG, "Final cursor contains " + cursor.getCount() + " rows.");
         return cursor;
@@ -118,7 +120,7 @@ public final class TestPagingContentProvider extends ContentProvider {
             ContentResolver.QUERY_ARG_OFFSET,
             ContentResolver.QUERY_ARG_LIMIT
         });
-        extras.putInt(ContentResolver.EXTRA_TOTAL_SIZE, recordsetSize);
+        extras.putInt(ContentResolver.EXTRA_TOTAL_COUNT, recordsetSize);
         return c;
     }
 
