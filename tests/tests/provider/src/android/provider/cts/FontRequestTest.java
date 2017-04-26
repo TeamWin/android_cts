@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.graphics.fonts.cts;
+package android.provider.cts;
 
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertNull;
@@ -22,7 +22,7 @@ import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-import android.graphics.fonts.FontRequest;
+import android.provider.FontRequest;
 import android.os.Parcel;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -35,7 +35,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Tests for {@link android.graphics.fonts.FontRequest}.
+ * Tests for {@link android.provider.FontRequest}.
  */
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -47,46 +47,6 @@ public class FontRequestTest {
             Base64.decode("e04fd020ea3a6910a2d808002b30", Base64.DEFAULT);
     private static final List<List<byte[]>> CERTS = Arrays.asList(Arrays.asList(BYTE_ARRAY));
 
-    @Test
-    public void testWriteToParcel() {
-        // GIVEN a FontRequest created with the long constructor
-        FontRequest request = new FontRequest(PROVIDER, PACKAGE, QUERY, CERTS);
-
-        // WHEN we write it to a Parcel
-        Parcel dest = Parcel.obtain();
-        request.writeToParcel(dest, 0);
-        dest.setDataPosition(0);
-
-        // THEN we create from that parcel and get the same values.
-        FontRequest result = FontRequest.CREATOR.createFromParcel(dest);
-        assertEquals(PROVIDER, result.getProviderAuthority());
-        assertEquals(PACKAGE, result.getProviderPackage());
-        assertEquals(QUERY, result.getQuery());
-        assertEquals(CERTS.size(), result.getCertificates().size());
-        List<byte[]> cert = CERTS.get(0);
-        List<byte[]> resultCert = result.getCertificates().get(0);
-        assertEquals(cert.size(), resultCert.size());
-        assertTrue(Arrays.equals(cert.get(0), resultCert.get(0)));
-    }
-
-    @Test
-    public void testWriteToParcel_shortConstructor() {
-        // GIVEN a FontRequest created with the short constructor
-        FontRequest request = new FontRequest(PROVIDER, PACKAGE, QUERY);
-
-        // WHEN we write it to a Parcel
-        Parcel dest = Parcel.obtain();
-        request.writeToParcel(dest, 0);
-        dest.setDataPosition(0);
-
-        // THEN we create from that parcel and get the same values.
-        FontRequest result = FontRequest.CREATOR.createFromParcel(dest);
-        assertEquals(PROVIDER, result.getProviderAuthority());
-        assertEquals(PACKAGE, result.getProviderPackage());
-        assertEquals(QUERY, result.getQuery());
-        assertNotNull(result.getCertificates());
-        assertEquals(0, result.getCertificates().size());
-    }
 
     @Test(expected = NullPointerException.class)
     public void testShortConstructor_nullAuthority() {
