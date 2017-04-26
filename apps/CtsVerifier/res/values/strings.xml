@@ -3291,6 +3291,9 @@ You should be prompted to select credentials; choose the ones you just installed
     Verify that the bundled TV app launches via Intent and calls the proper API to discover
     3rd-party TV inputs.
     </string>
+    <string name="tv_input_discover_test_third_party_tif_input_support">
+    Does the bundled TV app support third-party TV inputs?
+    </string>
     <string name="tv_input_discover_test_go_to_setup">
     Select the \"Launch TV app\" button and set up the newly installed TV input:
     \"CTS Verifier\".
@@ -3359,8 +3362,8 @@ You should be prompted to select credentials; choose the ones you just installed
     Try to unblock the screen by entering PIN; verify that it\'s unblocked.
     </string>
 
-    <string name="tv_parental_control_turn_off_disabled">No</string>
-    <string name="tv_parental_control_turn_off_enabled">Yes</string>
+    <string name="tv_yes">Yes</string>
+    <string name="tv_no">No</string>
     <string name="tv_launch_tv_app">Launch TV app</string>
     <string name="tv_launch_epg">Launch EPG</string>
     <string name="tv_launch_setup">Launch setup</string>
