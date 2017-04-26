@@ -31,6 +31,7 @@ import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.res.Resources;
 import android.os.SystemClock;
+import android.service.autofill.SaveInfo;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
@@ -249,6 +250,10 @@ final class UiBot {
     }
 
     UiObject2 assertSaveShowing(String description, int... types) {
+        return assertSaveShowing(SaveInfo.NEGATIVE_BUTTON_STYLE_CANCEL, description, types);
+    }
+
+    UiObject2 assertSaveShowing(int negativeButtonStyle, String description, int... types) {
         final UiObject2 snackbar = waitForObject(By.res("android", RESOURCE_ID_SAVE_SNACKBAR),
                 SAVE_TIMEOUT_MS);
 
@@ -288,6 +293,12 @@ final class UiBot {
             assertWithMessage("save subtitle(%s)", description).that(saveSubTitle).isNotNull();
         }
 
+        final String negativeButtonText = (negativeButtonStyle
+                == SaveInfo.NEGATIVE_BUTTON_STYLE_REJECT) ? "NOT NOW" : "NO THANKS";
+        UiObject2 negativeButton = snackbar.findObject(By.text(negativeButtonText));
+        assertWithMessage("negative button (%s)", negativeButtonText)
+                .that(negativeButton).isNotNull();
+
         final String expectedAccessibilityTitle =
                 getString(RESOURCE_STRING_SAVE_SNACKBAR_ACCESSIBILITY_TITLE);
         assertAccessibilityTitle(snackbar, expectedAccessibilityTitle);
@@ -302,7 +313,19 @@ final class UiBot {
      * @param types expected types of save info.
      */
     void saveForAutofill(boolean yesDoIt, int... types) {
-        final UiObject2 saveSnackBar = assertSaveShowing(null, types);
+        final UiObject2 saveSnackBar = assertSaveShowing(
+                SaveInfo.NEGATIVE_BUTTON_STYLE_CANCEL,null, types);
+        saveForAutofill(saveSnackBar, yesDoIt);
+    }
+
+    /**
+     * Taps an option in the save snackbar.
+     *
+     * @param yesDoIt {@code true} for 'YES', {@code false} for 'NO THANKS'.
+     * @param types expected types of save info.
+     */
+    void saveForAutofill(int negativeButtonStyle, boolean yesDoIt, int... types) {
+        final UiObject2 saveSnackBar = assertSaveShowing(negativeButtonStyle,null, types);
         saveForAutofill(saveSnackBar, yesDoIt);
     }
 
