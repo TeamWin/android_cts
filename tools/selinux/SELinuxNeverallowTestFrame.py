@@ -92,7 +92,7 @@ src_method = """
 
         /* run sepolicy-analyze neverallow check on policy file using given neverallow rules */
         ProcessBuilder pb = new ProcessBuilder(sepolicyAnalyze.getAbsolutePath(),
-                devicePolicyFile.getAbsolutePath(), "neverallow", "-n",
+                devicePolicyFile.getAbsolutePath(), "neverallow", "-w", "-n",
                 neverallowRule);
         pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
         pb.redirectErrorStream(true);
