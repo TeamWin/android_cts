@@ -26,6 +26,7 @@ import android.preference.PreferenceScreen;
 import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
+import android.test.UiThreadTest;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -56,6 +57,7 @@ public class PreferenceParentGroupTest {
      * from code.
      */
     @Test
+    @UiThreadTest
     public void parentViaCodeTest() {
         PreferenceScreen screen = mActivity.getPreferenceScreen();
         assertNull(screen.getParent());
@@ -84,6 +86,7 @@ public class PreferenceParentGroupTest {
      * To see the tested hierarchy check pref_nested.xml.
      */
     @Test
+    @UiThreadTest
     public void parentViaInflationTest() {
         PreferenceScreen screen = mActivity.getPreferenceScreen();
 
@@ -112,6 +115,7 @@ public class PreferenceParentGroupTest {
      * Adds preference into two different groups without removing it first.
      */
     @Test
+    @UiThreadTest
     public void parentDoubleAddTest() throws InterruptedException {
         PreferenceScreen screen = mActivity.getPreferenceScreen();
 
