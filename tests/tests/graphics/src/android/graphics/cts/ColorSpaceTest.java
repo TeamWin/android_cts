@@ -585,6 +585,12 @@ public class ColorSpaceTest {
         };
 
         assertArrayEquals(sRGBD50, ((ColorSpace.Rgb) adapted).getTransform(), 1e-7f);
+
+        adapted = ColorSpace.adapt(
+                ColorSpace.get(ColorSpace.Named.SRGB),
+                ColorSpace.ILLUMINANT_D50,
+                ColorSpace.Adaptation.BRADFORD);
+        assertArrayEquals(sRGBD50, ((ColorSpace.Rgb) adapted).getTransform(), 1e-7f);
     }
 
     @Test
