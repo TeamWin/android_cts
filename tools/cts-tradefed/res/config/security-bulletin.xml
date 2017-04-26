@@ -15,7 +15,7 @@
 -->
 <configuration description="Runs Security Patch test cases">
 
-    <option name="plan" value="cts-sts" />
+    <option name="plan" value="security-bulletin" />
 
     <include name="cts"/>
 
