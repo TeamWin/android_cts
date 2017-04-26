@@ -38,6 +38,7 @@ import android.service.autofill.FillResponse;
 import android.service.autofill.SaveCallback;
 import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -85,21 +86,17 @@ public class InstrumentedAutoFillService extends AutofillService {
     @Override
     public void onFillRequest(android.service.autofill.FillRequest request,
             CancellationSignal cancellationSignal, FillCallback callback) {
-        final AssistStructure structure = request.getStructure();
-        if (DUMP_FILL_REQUESTS) dumpStructure("onFillRequest()", structure);
+        if (DUMP_FILL_REQUESTS) dumpStructure("onFillRequest()", request.getFillContexts());
 
-        sReplier.onFillRequest(structure, request.getClientState(), cancellationSignal, callback,
-                request.getFlags());
+        sReplier.onFillRequest(request.getFillContexts(), request.getClientState(),
+                cancellationSignal, callback, request.getFlags());
     }
 
     @Override
     public void onSaveRequest(android.service.autofill.SaveRequest request,
             SaveCallback callback) {
-        final List<FillContext> contexts = request.getFillContexts();
-        final AssistStructure structure = contexts.get(contexts.size() - 1).getStructure();
-
-        if (DUMP_SAVE_REQUESTS) dumpStructure("onSaveRequest()", structure);
-        sReplier.onSaveRequest(structure, request.getClientState(), callback);
+        if (DUMP_SAVE_REQUESTS) dumpStructure("onSaveRequest()", request.getFillContexts());
+        sReplier.onSaveRequest(request.getFillContexts(), request.getClientState(), callback);
     }
 
     /**
@@ -152,18 +149,20 @@ public class InstrumentedAutoFillService extends AutofillService {
      */
     static final class FillRequest {
         final AssistStructure structure;
+        final ArrayList<FillContext> contexts;
         final Bundle data;
         final CancellationSignal cancellationSignal;
         final FillCallback callback;
         final int flags;
 
-        private FillRequest(AssistStructure structure, Bundle data,
+        private FillRequest(ArrayList<FillContext> contexts, Bundle data,
                 CancellationSignal cancellationSignal, FillCallback callback, int flags) {
-            this.structure = structure;
+            this.contexts = contexts;
             this.data = data;
             this.cancellationSignal = cancellationSignal;
             this.callback = callback;
             this.flags = flags;
+            structure = contexts.get(contexts.size() - 1).getStructure();
         }
     }
 
@@ -173,12 +172,18 @@ public class InstrumentedAutoFillService extends AutofillService {
      * that can be asserted at the end of a test case.
      */
     static final class SaveRequest {
+        final List<FillContext> contexts;
         final AssistStructure structure;
         final Bundle data;
         final SaveCallback callback;
 
-        private SaveRequest(AssistStructure structure, Bundle data, SaveCallback callback) {
-            this.structure = structure;
+        private SaveRequest(List<FillContext> contexts, Bundle data, SaveCallback callback) {
+            if (contexts != null && contexts.size() > 0) {
+                structure = contexts.get(contexts.size() - 1).getStructure();
+            } else {
+                structure = null;
+            }
+            this.contexts = contexts;
             this.data = data;
             this.callback = callback;
         }
@@ -277,7 +282,7 @@ public class InstrumentedAutoFillService extends AutofillService {
             mSaveRequests.clear();
         }
 
-        private void onFillRequest(AssistStructure structure, Bundle data,
+        private void onFillRequest(ArrayList<FillContext> contexts, Bundle data,
                 CancellationSignal cancellationSignal, FillCallback callback, int flags) {
             try {
                 CannedFillResponse response = null;
@@ -288,7 +293,7 @@ public class InstrumentedAutoFillService extends AutofillService {
                     Thread.currentThread().interrupt();
                 }
                 if (response == null) {
-                    dumpStructure("onFillRequest() without response", structure);
+                    dumpStructure("onFillRequest() without response", contexts);
                     throw new IllegalStateException("No CannedResponse");
                 }
                 if (response == NO_RESPONSE) {
@@ -296,19 +301,20 @@ public class InstrumentedAutoFillService extends AutofillService {
                     return;
                 }
 
-                final FillResponse fillResponse = response.asFillResponse(structure);
+                final FillResponse fillResponse = response.asFillResponse(
+                        (id) -> Helper.findNodeByResourceId(contexts, id));
 
                 Log.v(TAG, "onFillRequest(): fillResponse = " + fillResponse);
                 callback.onSuccess(fillResponse);
             } finally {
-                mFillRequests.offer(new FillRequest(structure, data, cancellationSignal, callback,
+                mFillRequests.offer(new FillRequest(contexts, data, cancellationSignal, callback,
                         flags));
             }
         }
 
-        private void onSaveRequest(AssistStructure structure, Bundle data, SaveCallback callback) {
+        private void onSaveRequest(List<FillContext> contexts, Bundle data, SaveCallback callback) {
             Log.d(TAG, "onSaveRequest()");
-            mSaveRequests.offer(new SaveRequest(structure, data, callback));
+            mSaveRequests.offer(new SaveRequest(contexts, data, callback));
             callback.onSuccess();
         }
     }

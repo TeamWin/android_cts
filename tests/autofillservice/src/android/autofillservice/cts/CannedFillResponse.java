@@ -22,11 +22,11 @@ import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.Helper.getAutofillIds;
 import android.app.assist.AssistStructure;
 import android.app.assist.AssistStructure.ViewNode;
-import android.autofillservice.cts.CannedFillResponse.Builder;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.service.autofill.Dataset;
 import android.service.autofill.FillCallback;
+import android.service.autofill.FillContext;
 import android.service.autofill.FillResponse;
 import android.service.autofill.SaveInfo;
 import android.view.autofill.AutofillId;
@@ -38,6 +38,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * Helper class used to produce a {@link FillResponse} based on expected fields that should be
@@ -96,29 +97,23 @@ final class CannedFillResponse {
      * Creates a new response, replacing the dataset field ids by the real ids from the assist
      * structure.
      */
-    FillResponse asFillResponse(AssistStructure structure) {
+    FillResponse asFillResponse(Function<String, ViewNode> nodeResolver) {
         final FillResponse.Builder builder = new FillResponse.Builder();
         if (mDatasets != null) {
             for (CannedDataset cannedDataset : mDatasets) {
-                final Dataset dataset = cannedDataset.asDataset(structure);
+                final Dataset dataset = cannedDataset.asDataset(nodeResolver);
                 assertWithMessage("Cannot create datase").that(dataset).isNotNull();
                 builder.addDataset(dataset);
             }
         }
         if (mRequiredSavableIds != null) {
-            final SaveInfo.Builder saveInfo;
-
-            if (mRequiredSavableIds == null) {
-                saveInfo = new SaveInfo.Builder(mSaveType, null);
-            } else {
-                saveInfo = new SaveInfo.Builder(mSaveType,
-                        getAutofillIds(structure, mRequiredSavableIds));
-            }
+            final SaveInfo.Builder saveInfo = new SaveInfo.Builder(mSaveType,
+                    getAutofillIds(nodeResolver, mRequiredSavableIds));
 
             saveInfo.setFlags(mFlags);
 
             if (mOptionalSavableIds != null) {
-                saveInfo.setOptionalIds(getAutofillIds(structure, mOptionalSavableIds));
+                saveInfo.setOptionalIds(getAutofillIds(nodeResolver, mOptionalSavableIds));
             }
             if (mSaveDescription != null) {
                 saveInfo.setDescription(mSaveDescription);
@@ -129,12 +124,12 @@ final class CannedFillResponse {
             builder.setSaveInfo(saveInfo.build());
         }
         if (mIgnoredIds != null) {
-            builder.setIgnoredIds(getAutofillIds(structure, mIgnoredIds));
+            builder.setIgnoredIds(getAutofillIds(nodeResolver, mIgnoredIds));
         }
         return builder
                 .setClientState(mExtras)
-                .setAuthentication(getAutofillIds(structure, mAuthenticationIds), mAuthentication,
-                        mPresentation)
+                .setAuthentication(getAutofillIds(nodeResolver, mAuthenticationIds),
+                        mAuthentication, mPresentation)
                 .build();
     }
 
@@ -291,7 +286,7 @@ final class CannedFillResponse {
         /**
          * Creates a new dataset, replacing the field ids by the real ids from the assist structure.
          */
-        Dataset asDataset(AssistStructure structure) {
+        Dataset asDataset(Function<String, ViewNode> nodeResolver) {
             final Dataset.Builder builder = (mPresentation == null)
                     ? new Dataset.Builder()
                     : new Dataset.Builder(mPresentation);
@@ -299,9 +294,8 @@ final class CannedFillResponse {
             if (mFieldValues != null) {
                 for (Map.Entry<String, AutofillValue> entry : mFieldValues.entrySet()) {
                     final String resourceId = entry.getKey();
-                    final ViewNode node = findNodeByResourceId(structure, resourceId);
+                    final ViewNode node = nodeResolver.apply(resourceId);
                     if (node == null) {
-                        dumpStructure("asDataset()", structure);
                         throw new AssertionError("No node with resource id " + resourceId);
                     }
                     final AutofillId id = node.getAutofillId();
