@@ -21,5 +21,7 @@
     </target_preparer>
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
         <option name="jar" value="CtsJvmtiTaggingHostTestCases.jar" />
+        <option name="set-option" value="test-file-name:CtsJvmtiTaggingDeviceApp.apk" />
+        <option name="set-option" value="package-name:android.jvmti.cts.tagging" />
     </test>
 </configuration>
