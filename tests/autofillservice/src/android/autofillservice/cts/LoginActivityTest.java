@@ -1304,13 +1304,17 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertThat(usernameContainer.getChildCount()).isEqualTo(2);
     }
 
+    private static final boolean BUG_36171235_FIXED = false;
+
+    @Test
     public void testAutofillManuallyOneDataset() throws Exception {
         // Set service.
         enableService();
 
+        if (BUG_36171235_FIXED)
         // And activity.
         mActivity.onUsername((v) -> {
-            // v.setAutofillMode(AUTOFILL_MODE_MANUAL);
+            v.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS);
             // TODO: setting an empty text, otherwise longPress() does not
             // display the AUTOFILL context menu. Need to fix it, but it's a test case issue...
             v.setText("");
@@ -1325,7 +1329,11 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("dude", "sweet");
 
         // Long-press field to trigger AUTOFILL menu.
-        sUiBot.getAutofillMenuOption(ID_USERNAME).click();
+        if (BUG_36171235_FIXED) {
+            sUiBot.getAutofillMenuOption(ID_USERNAME).click();
+        } else {
+            mActivity.onUsername((v) -> mActivity.getAutofillManager().requestAutofill(v));
+        }
 
         final FillRequest fillRequest = sReplier.getNextFillRequest();
         assertThat(fillRequest.flags).isEqualTo(FLAG_MANUAL_REQUEST);
@@ -1337,10 +1345,12 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.assertAutoFilled();
     }
 
+    @Test
     public void testAutofillManuallyTwoDatasetsPickFirst() throws Exception {
         autofillManuallyTwoDatasets(true);
     }
 
+    @Test
     public void testAutofillManuallyTwoDatasetsPickSecond() throws Exception {
         autofillManuallyTwoDatasets(false);
     }
@@ -1349,9 +1359,10 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Set service.
         enableService();
 
+        if (BUG_36171235_FIXED)
         // And activity.
         mActivity.onUsername((v) -> {
-            // v.setAutofillMode(AUTOFILL_MODE_MANUAL);
+            v.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS);
             // TODO: setting an empty text, otherwise longPress() does not display the AUTOFILL
             // context menu. Need to fix it, but it's a test case issue...
             v.setText("");
@@ -1378,7 +1389,11 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         }
 
         // Long-press field to trigger AUTOFILL menu.
-        sUiBot.getAutofillMenuOption(ID_USERNAME).click();
+        if (BUG_36171235_FIXED) {
+            sUiBot.getAutofillMenuOption(ID_USERNAME).click();
+        } else {
+            mActivity.onUsername((v) -> mActivity.getAutofillManager().requestAutofill(v));
+        }
 
         final FillRequest fillRequest = sReplier.getNextFillRequest();
         assertThat(fillRequest.flags).isEqualTo(FLAG_MANUAL_REQUEST);
