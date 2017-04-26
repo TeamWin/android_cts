@@ -22,7 +22,6 @@ import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.Helper.getAutofillIds;
 import android.app.assist.AssistStructure;
 import android.app.assist.AssistStructure.ViewNode;
-import android.autofillservice.cts.CannedFillResponse.Builder;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.service.autofill.Dataset;
@@ -59,6 +58,7 @@ final class CannedFillResponse {
     private final List<CannedDataset> mDatasets;
     private final int mSaveType;
     private final String[] mRequiredSavableIds;
+    private final AutofillId[] mRequiredSavableResolvedIds;
     private final String[] mOptionalSavableIds;
     private final String mSaveDescription;
     private final Bundle mExtras;
@@ -73,6 +73,7 @@ final class CannedFillResponse {
     private CannedFillResponse(Builder builder) {
         mDatasets = builder.mDatasets;
         mRequiredSavableIds = builder.mRequiredSavableIds;
+        mRequiredSavableResolvedIds = builder.mRequiredSavableResolvedIds;
         mOptionalSavableIds = builder.mOptionalSavableIds;
         mSaveDescription = builder.mSaveDescription;
         mSaveType = builder.mSaveType;
@@ -108,12 +109,25 @@ final class CannedFillResponse {
         if (mRequiredSavableIds != null) {
             final SaveInfo.Builder saveInfo;
 
-            if (mRequiredSavableIds == null) {
-                saveInfo = new SaveInfo.Builder(mSaveType, null);
-            } else {
-                saveInfo = new SaveInfo.Builder(mSaveType,
-                        getAutofillIds(structure, mRequiredSavableIds));
+            AutofillId[] resolvedIds = null;
+            if (mRequiredSavableIds != null) {
+                resolvedIds = getAutofillIds(structure, mRequiredSavableIds);
             }
+
+            AutofillId[] combinedIds;
+            if (resolvedIds == null) {
+                combinedIds = mRequiredSavableResolvedIds;
+            } else if (mRequiredSavableResolvedIds == null) {
+                combinedIds = resolvedIds;
+            } else {
+                combinedIds =
+                        new AutofillId[resolvedIds.length + mRequiredSavableResolvedIds.length];
+                System.arraycopy(resolvedIds, 0, combinedIds, 0, resolvedIds.length);
+                System.arraycopy(mRequiredSavableResolvedIds, 0, combinedIds, resolvedIds.length,
+                        mRequiredSavableResolvedIds.length);
+            }
+
+            saveInfo = new SaveInfo.Builder(mSaveType, combinedIds);
 
             saveInfo.setFlags(mFlags);
 
@@ -166,6 +180,7 @@ final class CannedFillResponse {
         private CharSequence mNegativeActionLabel;
         private IntentSender mNegativeActionListener;
         private int mFlags;
+        public AutofillId[] mRequiredSavableResolvedIds;
 
         public Builder addDataset(CannedDataset dataset) {
             mDatasets.add(dataset);
@@ -178,6 +193,15 @@ final class CannedFillResponse {
         public Builder setRequiredSavableIds(int type, String... ids) {
             mSaveType = type;
             mRequiredSavableIds = ids;
+            return this;
+        }
+
+        /**
+         * Sets the required savable ids based on their {@link AutofillId}.
+         */
+        public Builder setRequiredSavableIds(int type, AutofillId... ids) {
+            mSaveType = type;
+            mRequiredSavableResolvedIds = ids;
             return this;
         }
 
