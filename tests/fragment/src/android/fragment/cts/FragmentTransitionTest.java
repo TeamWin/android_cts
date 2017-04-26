@@ -175,7 +175,10 @@ public class FragmentTransitionTest {
         FragmentTestUtil.waitForExecution(mActivityRule);
 
         // should be a normal transition from fragment1 to fragment2
+        fragment1.waitForTransition();
         fragment2.waitForTransition();
+        FragmentTestUtil.waitForExecution(mActivityRule);
+
         final View endBlue = findBlue();
         final View endGreen = findGreen();
         verifyAndClearTransition(fragment1.exitTransition, null, startBlue, startGreen);
@@ -187,6 +190,9 @@ public class FragmentTransitionTest {
         FragmentTestUtil.popBackStackImmediate(mActivityRule);
 
         fragment1.waitForTransition();
+        fragment2.waitForTransition();
+        FragmentTestUtil.waitForExecution(mActivityRule);
+
         final View popBlue = findBlue();
         final View popGreen = findGreen();
         verifyAndClearTransition(fragment1.reenterTransition, null, popBlue, popGreen);
