@@ -391,8 +391,6 @@ def collect_data():
         s,e,_,_,_ = cam.do_3a(get_results=True, do_af=False)
         req = its.objects.manual_capture_request(s, e)
         fps = 30
-        if "60fps" in sys.argv:
-            fps = 60
         req["android.control.aeTargetFpsRange"] = [fps, fps]
         print "Capturing %dx%d with sens. %d, exp. time %.1fms" % (
                 W, H, s, e*NSEC_TO_MSEC)
