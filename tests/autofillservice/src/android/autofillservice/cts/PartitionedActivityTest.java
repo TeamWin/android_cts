@@ -25,6 +25,7 @@ import static android.autofillservice.cts.GridActivity.ID_L4C1;
 import static android.autofillservice.cts.GridActivity.ID_L4C2;
 import static android.autofillservice.cts.Helper.assertTextIsSanitized;
 import static android.autofillservice.cts.Helper.assertValue;
+import static android.service.autofill.FillRequest.FLAG_MANUAL_REQUEST;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_ADDRESS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_CREDIT_CARD;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
@@ -79,6 +80,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         // Trigger auto-fill on 1st partition.
         mActivity.focusCell(1, 1);
         final FillRequest fillRequest1 = sReplier.getNextFillRequest();
+        assertThat(fillRequest1.flags).isEqualTo(0);
         final ViewNode p1l1c1 = assertTextIsSanitized(fillRequest1.structure, ID_L1C1);
         final ViewNode p1l1c2 = assertTextIsSanitized(fillRequest1.structure, ID_L1C2);
         assertWithMessage("Focus on p1l1c1").that(p1l1c1.isFocused()).isTrue();
@@ -101,6 +103,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         // Trigger auto-fill on 2nd partition.
         mActivity.focusCell(2, 1);
         final FillRequest fillRequest2 = sReplier.getNextFillRequest();
+        assertThat(fillRequest2.flags).isEqualTo(0);
         final ViewNode p2l1c1 = assertTextIsSanitized(fillRequest2.structure, ID_L1C1);
         final ViewNode p2l1c2 = assertTextIsSanitized(fillRequest2.structure, ID_L1C2);
         final ViewNode p2l2c1 = assertTextIsSanitized(fillRequest2.structure, ID_L2C1);
@@ -160,6 +163,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         // Trigger auto-fill.
         mActivity.focusCell(1, 1);
         final FillRequest fillRequest1 = sReplier.getNextFillRequest();
+        assertThat(fillRequest1.flags).isEqualTo(0);
 
         assertTextIsSanitized(fillRequest1.structure, ID_L1C1);
         assertTextIsSanitized(fillRequest1.structure, ID_L1C2);
@@ -187,6 +191,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         // Trigger auto-fill.
         mActivity.focusCell(2, 1);
         final FillRequest fillRequest2 = sReplier.getNextFillRequest();
+        assertThat(fillRequest2.flags).isEqualTo(0);
 
         assertValue(fillRequest2.structure, ID_L1C1, "l1c1");
         assertValue(fillRequest2.structure, ID_L1C2, "l1c2");
@@ -198,6 +203,155 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
 
         // Check the results.
         expectation2.assertAutoFilled();
+    }
+
+    @Test
+    public void testAutofill4PartitionsAutomatically() throws Exception {
+        autofill4ParitionsTest(false);
+    }
+
+    @Test
+    public void testAutofill4PartitionsManually() throws Exception {
+        autofill4ParitionsTest(true);
+    }
+
+    private void autofill4ParitionsTest(boolean manually) throws Exception {
+        final int expectedFlag = manually ? FLAG_MANUAL_REQUEST : 0;
+
+        // Set service.
+        enableService();
+
+        // 1st partition
+        // Prepare.
+        final CannedFillResponse response1 = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setPresentation(createPresentation("Partition 1"))
+                        .setField(ID_L1C1, "l1c1")
+                        .setField(ID_L1C2, "l1c2")
+                        .build())
+                .build();
+        sReplier.addResponse(response1);
+        final FillExpectation expectation1 = mActivity.expectAutofill()
+                .onCell(1, 1, "l1c1")
+                .onCell(1, 2, "l1c2");
+
+        // Trigger auto-fill.
+        mActivity.triggerAutofill(manually, 1, 1);
+        final FillRequest fillRequest1 = sReplier.getNextFillRequest();
+        assertThat(fillRequest1.flags).isEqualTo(expectedFlag);
+
+        assertTextIsSanitized(fillRequest1.structure, ID_L1C1);
+        assertTextIsSanitized(fillRequest1.structure, ID_L1C2);
+
+        // Auto-fill it.
+        if (!manually) {
+            sUiBot.selectDataset("Partition 1");
+        }
+
+        // Check the results.
+        expectation1.assertAutoFilled();
+
+        // 2nd partition
+        // Prepare.
+        final CannedFillResponse response2 = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setPresentation(createPresentation("Partition 2"))
+                        .setField(ID_L2C1, "l2c1")
+                        .setField(ID_L2C2, "l2c2")
+                        .build())
+                .build();
+        sReplier.addResponse(response2);
+        final FillExpectation expectation2 = mActivity.expectAutofill()
+                .onCell(2, 1, "l2c1")
+                .onCell(2, 2, "l2c2");
+
+        // Trigger auto-fill.
+        mActivity.triggerAutofill(manually, 2, 1);
+        final FillRequest fillRequest2 = sReplier.getNextFillRequest();
+        assertThat(fillRequest2.flags).isEqualTo(expectedFlag);
+
+        assertValue(fillRequest2.structure, ID_L1C1, "l1c1");
+        assertValue(fillRequest2.structure, ID_L1C2, "l1c2");
+        assertTextIsSanitized(fillRequest2.structure, ID_L2C1);
+        assertTextIsSanitized(fillRequest2.structure, ID_L2C2);
+
+        // Auto-fill it.
+        if (!manually) {
+            sUiBot.selectDataset("Partition 2");
+        }
+
+        // Check the results.
+        expectation2.assertAutoFilled();
+
+        // 3rd partition
+        // Prepare.
+        final CannedFillResponse response3 = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setPresentation(createPresentation("Partition 3"))
+                        .setField(ID_L3C1, "l3c1")
+                        .setField(ID_L3C2, "l3c2")
+                        .build())
+                .build();
+        sReplier.addResponse(response3);
+        final FillExpectation expectation3 = mActivity.expectAutofill()
+                .onCell(3, 1, "l3c1")
+                .onCell(3, 2, "l3c2");
+
+        // Trigger auto-fill.
+        mActivity.triggerAutofill(manually, 3, 1);
+        final FillRequest fillRequest3 = sReplier.getNextFillRequest();
+        assertThat(fillRequest3.flags).isEqualTo(expectedFlag);
+
+        assertValue(fillRequest3.structure, ID_L1C1, "l1c1");
+        assertValue(fillRequest3.structure, ID_L1C2, "l1c2");
+        assertValue(fillRequest3.structure, ID_L2C1, "l2c1");
+        assertValue(fillRequest3.structure, ID_L2C2, "l2c2");
+        assertTextIsSanitized(fillRequest3.structure, ID_L3C1);
+        assertTextIsSanitized(fillRequest3.structure, ID_L3C2);
+
+        // Auto-fill it.
+        if (!manually) {
+            sUiBot.selectDataset("Partition 3");
+        }
+
+        // Check the results.
+        expectation3.assertAutoFilled();
+
+        // 4th partition
+        // Prepare.
+        final CannedFillResponse response4 = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setPresentation(createPresentation("Partition 4"))
+                        .setField(ID_L4C1, "l4c1")
+                        .setField(ID_L4C2, "l4c2")
+                        .build())
+                .build();
+        sReplier.addResponse(response4);
+        final FillExpectation expectation4 = mActivity.expectAutofill()
+                .onCell(4, 1, "l4c1")
+                .onCell(4, 2, "l4c2");
+
+        // Trigger auto-fill.
+        mActivity.triggerAutofill(manually, 4, 1);
+        final FillRequest fillRequest4 = sReplier.getNextFillRequest();
+        assertThat(fillRequest4.flags).isEqualTo(expectedFlag);
+
+        assertValue(fillRequest4.structure, ID_L1C1, "l1c1");
+        assertValue(fillRequest4.structure, ID_L1C2, "l1c2");
+        assertValue(fillRequest4.structure, ID_L2C1, "l2c1");
+        assertValue(fillRequest4.structure, ID_L2C2, "l2c2");
+        assertValue(fillRequest4.structure, ID_L3C1, "l3c1");
+        assertValue(fillRequest4.structure, ID_L3C2, "l3c2");
+        assertTextIsSanitized(fillRequest4.structure, ID_L4C1);
+        assertTextIsSanitized(fillRequest4.structure, ID_L4C2);
+
+        // Auto-fill it.
+        if (!manually) {
+            sUiBot.selectDataset("Partition 4");
+        }
+
+        // Check the results.
+        expectation4.assertAutoFilled();
     }
 
     @Test
@@ -221,6 +375,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         // Trigger auto-fill on 1st partition.
         mActivity.focusCell(1, 1);
         final FillRequest fillRequest1 = sReplier.getNextFillRequest();
+        assertThat(fillRequest1.flags).isEqualTo(0);
         assertThat(fillRequest1.data).isNull();
         sUiBot.assertDatasets("l1c1");
 
@@ -241,6 +396,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         // Trigger auto-fill on 2nd partition
         mActivity.focusCell(2, 1);
         final FillRequest fillRequest2 = sReplier.getNextFillRequest();
+        assertThat(fillRequest2.flags).isEqualTo(0);
         assertWithMessage("null bundle on request 2").that(fillRequest2.data).isNotNull();
         assertWithMessage("wrong number of extras on request 2 bundle")
                 .that(fillRequest2.data.size()).isEqualTo(1);
@@ -259,6 +415,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         // Trigger auto-fill on 3rd partition
         mActivity.focusCell(3, 1);
         final FillRequest fillRequest3 = sReplier.getNextFillRequest();
+        assertThat(fillRequest3.flags).isEqualTo(0);
         assertWithMessage("null bundle on request 3").that(fillRequest2.data).isNotNull();
         assertWithMessage("wrong number of extras on request 3 bundle")
                 .that(fillRequest3.data.size()).isEqualTo(2);
@@ -283,6 +440,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         // Trigger auto-fill on 4th partition
         mActivity.focusCell(4, 1);
         final FillRequest fillRequest4 = sReplier.getNextFillRequest();
+        assertThat(fillRequest4.flags).isEqualTo(0);
         assertWithMessage("non-null bundle on request 4").that(fillRequest4.data).isNull();
 
         // Trigger save
@@ -617,6 +775,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         // Trigger auto-fill on 1st partition.
         mActivity.focusCell(1, 1);
         final FillRequest fillRequest1 = sReplier.getNextFillRequest();
+        assertThat(fillRequest1.flags).isEqualTo(0);
         final ViewNode p1l1c1 = assertTextIsSanitized(fillRequest1.structure, ID_L1C1);
         final ViewNode p1l1c2 = assertTextIsSanitized(fillRequest1.structure, ID_L1C2);
         assertWithMessage("Focus on p1l1c1").that(p1l1c1.isFocused()).isTrue();
