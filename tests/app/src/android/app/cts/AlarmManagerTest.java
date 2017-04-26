@@ -16,6 +16,7 @@
 
 package android.app.cts;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
 
 import android.app.AlarmManager;
 import android.app.AlarmManager.AlarmClockInfo;
@@ -289,7 +290,7 @@ public class AlarmManagerTest extends AndroidTestCase {
     }
 
     public void testSetAlarmClock() throws Exception {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.LOLLIPOP)) {
             mMockAlarmReceiver.setAlarmedFalse();
             mMockAlarmReceiver2.setAlarmedFalse();
 

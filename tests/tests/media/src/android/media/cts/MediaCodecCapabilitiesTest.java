@@ -35,6 +35,7 @@ import android.media.MediaPlayer;
 import android.os.Build;
 import android.util.Log;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.DynamicConfigDeviceSide;
 import com.android.compatibility.common.util.MediaUtils;
 
@@ -211,7 +212,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
         if (!checkDecoder(MIMETYPE_VIDEO_AVC, AVCProfileHigh, AVCLevel4)) {
             return; // skip
         }
-        if (Build.VERSION.SDK_INT < 18) {
+        if (ApiLevelUtil.isBefore(18)) {
             MediaUtils.skipTest(TAG, "fragmented mp4 not supported");
             return;
         }
