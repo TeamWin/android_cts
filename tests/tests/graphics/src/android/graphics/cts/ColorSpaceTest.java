@@ -435,12 +435,14 @@ public class ColorSpaceTest {
 
         assertSame(ColorSpace.get(ColorSpace.Named.SRGB), connector.getSource());
         assertSame(ColorSpace.get(ColorSpace.Named.DCI_P3), connector.getDestination());
+        assertSame(ColorSpace.RenderIntent.PERCEPTUAL, connector.getRenderIntent());
 
         connector = ColorSpace.connect(
                 ColorSpace.get(ColorSpace.Named.SRGB),
                 ColorSpace.get(ColorSpace.Named.SRGB));
 
         assertSame(connector.getDestination(), connector.getSource());
+        assertSame(ColorSpace.RenderIntent.RELATIVE, connector.getRenderIntent());
 
         connector = ColorSpace.connect(ColorSpace.get(ColorSpace.Named.DCI_P3));
         assertSame(ColorSpace.get(ColorSpace.Named.SRGB), connector.getDestination());
@@ -543,6 +545,7 @@ public class ColorSpaceTest {
                 ColorSpace.get(ColorSpace.Named.SRGB));
 
         assertSame(connector.getSource(), connector.getDestination());
+        assertSame(ColorSpace.RenderIntent.RELATIVE, connector.getRenderIntent());
 
         float[] source = new float[] { 0.11112f, 0.22227f, 0.444448f };
 
