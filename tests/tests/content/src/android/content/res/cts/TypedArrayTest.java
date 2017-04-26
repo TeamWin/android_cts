@@ -25,6 +25,7 @@ import android.content.cts.util.XmlUtils;
 import android.content.pm.ActivityInfo;
 import android.content.res.TypedArray;
 import android.content.res.XmlResourceParser;
+import android.graphics.Typeface;
 import android.test.AndroidTestCase;
 import android.util.AttributeSet;
 import android.util.TypedValue;
@@ -48,9 +49,9 @@ public class TypedArrayTest extends AndroidTestCase {
     private static final String EXPECTED_TEXT = "TypedArray Test!";
     private static final String[] EXPECTED_TEXT_ARRAY = {"Easy", "Medium", "Hard"};
     private static final TypedValue DEF_VALUE = new TypedValue();
-    private static final int EXPECTED_INDEX_COUNT = 17;
+    private static final int EXPECTED_INDEX_COUNT = 18;
     private static final String EXPTECTED_POS_DESCRIP = "<internal>";
-    private static final int EXPECTED_LENGTH = 19;
+    private static final int EXPECTED_LENGTH = 20;
     private static final String EXPECTED_NON_RESOURCE_STRING = "testNonResourcesString";
     private static final String XML_BEGIN = "resources";
     private static final int EXPECTED_INT_ATT = 86400;
@@ -62,7 +63,8 @@ public class TypedArrayTest extends AndroidTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        mTypedArray = getContext().getTheme().obtainStyledAttributes(R.style.Whatever, R.styleable.style1);
+        mTypedArray = getContext().getTheme()
+                .obtainStyledAttributes(R.style.Whatever, R.styleable.style1);
     }
 
     @Override
@@ -167,6 +169,9 @@ public class TypedArrayTest extends AndroidTestCase {
             actual_indices[idx] = attr_index;
         }
 
+        final Typeface font = t.getFont(R.styleable.style1_type18);
+        assertEquals(mContext.getResources().getFont(R.font.samplefont), font);
+
         // NOTE: order does not matter here.
         // R.styleable.style1_typeEmpty and R.styleable.style1_typeUndefined are not
         // expected because TYPE_NULL values do not get included in the index list.
@@ -187,7 +192,8 @@ public class TypedArrayTest extends AndroidTestCase {
                 R.styleable.style1_type14,
                 R.styleable.style1_type15,
                 R.styleable.style1_type16,
-                R.styleable.style1_type17);
+                R.styleable.style1_type17,
+                R.styleable.style1_type18);
     }
 
     public void testPeekValue() {
