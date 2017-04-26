@@ -43,8 +43,6 @@ public class JvmtiRedefineClassesTest extends JvmtiTestBase {
 
     @Before
     public void setUp() throws Exception {
-        Main.bindAgentJNI("android/jvmti/cts/JvmtiRedefineClassesTest",
-                getClass().getClassLoader());
         // make sure everything is cleared.
         setTransformationEvent(false);
         setPopTransformations(true);
