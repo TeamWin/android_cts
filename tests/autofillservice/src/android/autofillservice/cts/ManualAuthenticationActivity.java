@@ -54,9 +54,11 @@ public class ManualAuthenticationActivity extends Activity {
             if (structure != null) {
                 Parcelable result;
                 if (sResponse != null) {
-                    result = sResponse.asFillResponse(structure);
+                    result = sResponse.asFillResponse(
+                            (id) -> Helper.findNodeByResourceId(structure, id));
                 } else if (sDataset != null) {
-                    result = sDataset.asDataset(structure);
+                    result = sDataset.asDataset(
+                            (id) -> Helper.findNodeByResourceId(structure, id));
                 } else {
                     throw new IllegalStateException("no dataset or response");
                 }
