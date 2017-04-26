@@ -508,7 +508,11 @@ public class StagefrightTest extends InstrumentationTestCase {
                 closeQuietly(fd);
             }
         } else {
-            ex.setDataSource(url);
+            try {
+                ex.setDataSource(url);
+            } catch (Exception e) {
+                // indicative of problems with our tame CTS test web server
+            }
         }
         MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
         int numtracks = ex.getTrackCount();
@@ -665,7 +669,11 @@ public class StagefrightTest extends InstrumentationTestCase {
                 closeQuietly(fd);
             }
         } else {
-            retriever.setDataSource(url, new HashMap<String, String>());
+            try {
+                retriever.setDataSource(url, new HashMap<String, String>());
+            } catch (Exception e) {
+                // indicative of problems with our tame CTS test web server
+            }
         }
         retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
         retriever.getEmbeddedPicture();
