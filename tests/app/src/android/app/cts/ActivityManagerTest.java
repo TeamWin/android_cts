@@ -329,12 +329,18 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         for (RunningAppProcessInfo ra : list) {
             if (ra.processName.equals(SYSTEM_PROCESS)) {
                 hasSystemProcess = true;
+
+                // Make sure the importance is a sane value.
+                assertTrue(ra.importance >= RunningAppProcessInfo.IMPORTANCE_FOREGROUND);
+                assertTrue(ra.importance < RunningAppProcessInfo.IMPORTANCE_GONE);
             } else if (ra.processName.equals(TEST_PROCESS)) {
                 hasTestProcess = true;
             }
         }
+
         // For security reasons the system process is not exposed.
-        assertTrue(!hasSystemProcess && hasTestProcess);
+        assertFalse(hasSystemProcess);
+        assertTrue(hasTestProcess);
 
         for (RunningAppProcessInfo ra : list) {
             if (ra.processName.equals("android.app.stubs:remote")) {
@@ -357,6 +363,17 @@ public class ActivityManagerTest extends InstrumentationTestCase {
             }
         }
         fail("android.app.stubs:remote process should be available");
+    }
+
+    public void testGetMyMemoryState() {
+        final RunningAppProcessInfo ra = new RunningAppProcessInfo();
+        ActivityManager.getMyMemoryState(ra);
+
+        assertEquals(mContext.getApplicationInfo().processName, ra.processName);
+        assertEquals(android.os.Process.myUid(), ra.uid);
+
+        // When an instrumentation test is running, the importance is high.
+        assertEquals(RunningAppProcessInfo.IMPORTANCE_FOREGROUND, ra.importance);
     }
 
     public void testGetProcessInErrorState() throws Exception {
