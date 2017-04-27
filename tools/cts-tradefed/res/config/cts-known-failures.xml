@@ -190,4 +190,7 @@
     <option name="compatibility:exclude-filter" value="CtsVideoTestCases android.video.cts.VideoEncoderDecoderTest#testVp9Goog0Perf1280x0720" />
     <option name="compatibility:exclude-filter" value="CtsVideoTestCases android.video.cts.VideoEncoderDecoderTest#testVp9Goog0Perf1920x1080" />
 
+    <!-- b/37105075 -->
+    <option name="compatibility:exclude-filter" value="CtsIncidentHostTestCases com.android.server.cts.BatteryStatsValidationTest#testWifiUpload" />
+
 </configuration>
