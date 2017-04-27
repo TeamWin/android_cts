@@ -77,7 +77,7 @@ public class ChangeBoundsTest extends BaseTransitionTest {
 
         startTransition(R.layout.scene6);
         // The update listener will validate that it is changing throughout the animation
-        waitForEnd(400);
+        waitForEnd(800);
 
         validateInScene6();
     }
@@ -96,7 +96,7 @@ public class ChangeBoundsTest extends BaseTransitionTest {
         startTransition(R.layout.scene6);
 
         // The update listener will validate that it is changing throughout the animation
-        waitForEnd(400);
+        waitForEnd(800);
 
         validateInScene6();
     }
@@ -112,7 +112,7 @@ public class ChangeBoundsTest extends BaseTransitionTest {
         startTransition(R.layout.scene1);
 
         // The update listener will validate that it is changing throughout the animation
-        waitForEnd(400);
+        waitForEnd(800);
 
         validateInScene1();
     }
@@ -131,7 +131,7 @@ public class ChangeBoundsTest extends BaseTransitionTest {
         startTransition(R.layout.scene6);
 
         assertFalse(isRestartingAnimation());
-        waitForEnd(500);
+        waitForEnd(1000);
         validateInScene6();
     }
 
@@ -153,7 +153,7 @@ public class ChangeBoundsTest extends BaseTransitionTest {
 
         assertFalse(isRestartingAnimation());
         assertFalse(isRestartingClip());
-        waitForEnd(500);
+        waitForEnd(1000);
         validateInScene6();
     }
 
@@ -172,7 +172,7 @@ public class ChangeBoundsTest extends BaseTransitionTest {
         startTransition(R.layout.scene1);
 
         assertFalse(isRestartingAnimation());
-        waitForEnd(500);
+        waitForEnd(1000);
         validateInScene1();
     }
 
@@ -195,7 +195,7 @@ public class ChangeBoundsTest extends BaseTransitionTest {
 
         assertFalse(isRestartingAnimation());
         assertFalse(isRestartingClip());
-        waitForEnd(500);
+        waitForEnd(1000);
         validateInScene1();
     }
 

@@ -605,7 +605,7 @@ public class TransitionTest extends BaseTransitionTest {
 
         enterScene(scene1);
 
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             // scene1
             assertSame(layout1, mActivity.findViewById(R.id.holder));
             assertNotNull(mActivity.findViewById(R.id.hello));

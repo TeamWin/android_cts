@@ -236,7 +236,7 @@ public class ChangeImageTransformTest extends BaseTransitionTest {
         });
         waitForStart();
         verify(mListener, (startScale == endScale) ? times(1) : never()).onTransitionEnd(any());
-        waitForEnd(200);
+        waitForEnd(1000);
     }
 
     private ImageView enterImageViewScene(final ScaleType scaleType) throws Throwable {
