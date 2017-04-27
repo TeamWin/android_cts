@@ -2181,18 +2181,4 @@ public class CanvasTest {
             Assert.fail();
         }
     }
-
-    @Test
-    public void testShadowLayer_paintColorPreserved() {
-        Bitmap bitmap = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-        Paint paint = new Paint();
-
-        paint.setShadowLayer(5.0f, 10.0f, 10.0f, 0xFFFF0000);
-        paint.setColor(0xFF0000FF);
-        canvas.drawPaint(paint);
-
-        // Since the shadow is in the background, the canvas should be blue.
-        ColorUtils.verifyColor(0xFF0000FF, bitmap.getPixel(50, 50));
-    }
 }
