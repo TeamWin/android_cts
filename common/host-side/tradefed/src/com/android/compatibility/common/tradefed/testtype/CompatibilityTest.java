@@ -273,6 +273,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     // variables used for local sharding scenario
     private static CountDownLatch sPreparedLatch;
     private boolean mIsLocalSharding = false;
+    private boolean mIsSharded = false;
 
     /**
      * Create a new {@link CompatibilityTest} that will run the default list of
@@ -746,6 +747,24 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             shardQueue.add(test);
         }
         sPreparedLatch = new CountDownLatch(shardQueue.size());
+        return shardQueue;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Collection<IRemoteTest> split(int shardCount) {
+        if (shardCount <= 1 || mIsSharded) {
+            return null;
+        }
+        mIsSharded = true;
+        List<IRemoteTest> shardQueue = new LinkedList<>();
+        for (int i = 0; i < shardCount; i++) {
+            CompatibilityTest test = (CompatibilityTest) getTestShard(shardCount, i);
+            shardQueue.add(test);
+            test.mIsSharded = true;
+        }
         return shardQueue;
     }
 
