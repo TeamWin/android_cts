@@ -54,7 +54,7 @@ import java.util.stream.Collectors;
 @MediumTest
 @RunWith(Parameterized.class)
 public class FragmentTransitionTest {
-    private final boolean mOptimize;
+    private final boolean mReordered;
 
     @Parameterized.Parameters
     public static Object[] data() {
@@ -69,8 +69,8 @@ public class FragmentTransitionTest {
 
     private FragmentManager mFragmentManager;
 
-    public FragmentTransitionTest(final boolean optimize) {
-        mOptimize = optimize;
+    public FragmentTransitionTest(final boolean reordered) {
+        mReordered = reordered;
     }
 
     @Before
@@ -90,7 +90,7 @@ public class FragmentTransitionTest {
 
         // exit transition
         mFragmentManager.beginTransaction()
-                .setAllowOptimization(mOptimize)
+                .setReorderingAllowed(mReordered)
                 .remove(fragment)
                 .addToBackStack(null)
                 .commit();
@@ -164,7 +164,7 @@ public class FragmentTransitionTest {
             @Override
             public void run() {
                 mFragmentManager.beginTransaction()
-                        .setAllowOptimization(mOptimize)
+                        .setReorderingAllowed(mReordered)
                         .replace(R.id.fragmentContainer, fragment2)
                         .replace(R.id.fragmentContainer, fragment1)
                         .replace(R.id.fragmentContainer, fragment2)
@@ -204,7 +204,7 @@ public class FragmentTransitionTest {
         TransitionFragment fragment2 = new TransitionFragment();
         fragment2.setLayoutId(R.layout.scene1);
         mFragmentManager.beginTransaction()
-                .setAllowOptimization(mOptimize)
+                .setReorderingAllowed(mReordered)
                 .add(R.id.fragmentContainer1, fragment1)
                 .add(R.id.fragmentContainer2, fragment2)
                 .addToBackStack(null)
@@ -320,7 +320,7 @@ public class FragmentTransitionTest {
         mFragmentManager.beginTransaction()
                 .addSharedElement(startBlue, "blueSquare")
                 .replace(R.id.fragmentContainer, fragment2)
-                .setAllowOptimization(mOptimize)
+                .setReorderingAllowed(mReordered)
                 .addToBackStack(null)
                 .commit();
         FragmentTestUtil.waitForExecution(mActivityRule);
@@ -387,7 +387,7 @@ public class FragmentTransitionTest {
         mFragmentManager.beginTransaction()
                 .addSharedElement(startBlue, "blueSquare")
                 .replace(R.id.fragmentContainer, fragment2)
-                .setAllowOptimization(mOptimize)
+                .setReorderingAllowed(mReordered)
                 .addToBackStack(null)
                 .commit();
         FragmentTestUtil.waitForExecution(mActivityRule);
@@ -512,7 +512,7 @@ public class FragmentTransitionTest {
         final View startGreen = findGreen();
 
         mFragmentManager.beginTransaction()
-                .setAllowOptimization(mOptimize)
+                .setReorderingAllowed(mReordered)
                 .add(R.id.fragmentContainer, fragment2)
                 .hide(fragment1)
                 .addToBackStack(null)
@@ -563,7 +563,7 @@ public class FragmentTransitionTest {
         final View startGreen = findGreen();
 
         mFragmentManager.beginTransaction()
-                .setAllowOptimization(mOptimize)
+                .setReorderingAllowed(mReordered)
                 .add(R.id.fragmentContainer, fragment2)
                 .detach(fragment1)
                 .addToBackStack(null)
@@ -610,7 +610,7 @@ public class FragmentTransitionTest {
         mFragmentManager.beginTransaction()
                 .addSharedElement(startBlue, "fooSquare")
                 .replace(R.id.fragmentContainer, fragment2)
-                .setAllowOptimization(mOptimize)
+                .setReorderingAllowed(mReordered)
                 .addToBackStack(null)
                 .commit();
         FragmentTestUtil.waitForExecution(mActivityRule);
@@ -621,7 +621,7 @@ public class FragmentTransitionTest {
         final View endBlue = findBlue();
         final View endGreen = findGreen();
 
-        if (mOptimize) {
+        if (mReordered) {
             verifyAndClearTransition(fragment1.exitTransition, null, startGreen, startBlue);
         } else {
             verifyAndClearTransition(fragment1.exitTransition, startBlueBounds, startGreen);
@@ -661,14 +661,14 @@ public class FragmentTransitionTest {
     // Test that invisible fragment views don't participate in transitions
     @Test
     public void invisibleNoTransitions() throws Throwable {
-        if (!mOptimize) {
-            return; // only optimized transitions can avoid interaction
+        if (!mReordered) {
+            return; // only reordered transitions can avoid interaction
         }
         // enter transition
         TransitionFragment fragment = new InvisibleFragment();
         fragment.setLayoutId(R.layout.scene1);
         mFragmentManager.beginTransaction()
-                .setAllowOptimization(mOptimize)
+                .setReorderingAllowed(mReordered)
                 .add(R.id.fragmentContainer, fragment)
                 .addToBackStack(null)
                 .commit();
@@ -678,7 +678,7 @@ public class FragmentTransitionTest {
 
         // exit transition
         mFragmentManager.beginTransaction()
-                .setAllowOptimization(mOptimize)
+                .setReorderingAllowed(mReordered)
                 .remove(fragment)
                 .addToBackStack(null)
                 .commit();
@@ -710,7 +710,7 @@ public class FragmentTransitionTest {
         fragment2.setLayoutId(R.layout.scene2);
 
         mFragmentManager.beginTransaction()
-                .setAllowOptimization(mOptimize)
+                .setReorderingAllowed(mReordered)
                 .addSharedElement(startBlue, "blueSquare")
                 .replace(R.id.fragmentContainer, fragment2)
                 .addToBackStack(null)
@@ -735,7 +735,7 @@ public class FragmentTransitionTest {
             public void run() {
                 mFragmentManager.popBackStack();
                 mFragmentManager.beginTransaction()
-                        .setAllowOptimization(mOptimize)
+                        .setReorderingAllowed(mReordered)
                         .replace(R.id.fragmentContainer, fragment3)
                         .addToBackStack(null)
                         .commit();
@@ -746,8 +746,8 @@ public class FragmentTransitionTest {
         FragmentTestUtil.executePendingTransactions(mActivityRule);
 
         fragment2.waitForTransition();
-        // It does not transition properly for unoptimized transactions, though.
-        if (mOptimize) {
+        // It does not transition properly for ordered transactions, though.
+        if (mReordered) {
             verifyAndClearTransition(fragment2.returnTransition, null, midGreen, midBlue);
             final View endGreen = findGreen();
             final View endBlue = findBlue();
@@ -758,7 +758,7 @@ public class FragmentTransitionTest {
         } else {
             // fragment3 doesn't get a transition since it conflicts with the pop transition
             verifyNoOtherTransitions(fragment3);
-            // Everything else is just doing its best. Unoptimized transactions can't handle
+            // Everything else is just doing its best. Reordered transactions can't handle
             // multiple transitions acting together except for popping multiple together.
         }
     }
@@ -767,7 +767,7 @@ public class FragmentTransitionTest {
         TransitionFragment fragment1 = new TransitionFragment();
         fragment1.setLayoutId(R.layout.scene1);
         mFragmentManager.beginTransaction()
-                .setAllowOptimization(mOptimize)
+                .setReorderingAllowed(mReordered)
                 .add(R.id.fragmentContainer, fragment1)
                 .addToBackStack(null)
                 .commit();
@@ -834,7 +834,7 @@ public class FragmentTransitionTest {
         final Rect startBlueRect = getBoundsOnScreen(startBlue);
 
         mFragmentManager.beginTransaction()
-                .setAllowOptimization(mOptimize)
+                .setReorderingAllowed(mReordered)
                 .addSharedElement(startBlue, sharedElementName)
                 .replace(R.id.fragmentContainer, to)
                 .addToBackStack(null)
@@ -886,13 +886,13 @@ public class FragmentTransitionTest {
 
         mActivityRule.runOnUiThread(() -> {
             mFragmentManager.beginTransaction()
-                    .setAllowOptimization(mOptimize)
+                    .setReorderingAllowed(mReordered)
                     .addSharedElement(fromShared1, "blueSquare")
                     .replace(R.id.fragmentContainer1, to1)
                     .addToBackStack(null)
                     .commit();
             mFragmentManager.beginTransaction()
-                    .setAllowOptimization(mOptimize)
+                    .setReorderingAllowed(mReordered)
                     .addSharedElement(fromShared2, sharedElementName)
                     .replace(R.id.fragmentContainer2, to2)
                     .addToBackStack(null)
