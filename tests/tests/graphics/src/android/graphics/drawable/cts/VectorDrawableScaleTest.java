@@ -71,7 +71,8 @@ public class VectorDrawableScaleTest {
 
         screenShot = takeScreenshot(srcRect);
         if (DBG_SCREENSHOT) {
-            DrawableTestUtils.saveVectorDrawableIntoPNG(screenShot, "scale");
+            String outputFolder = mActivity.getExternalFilesDir(null).getAbsolutePath();
+            DrawableTestUtils.saveVectorDrawableIntoPNG(screenShot, outputFolder, "scale");
         }
 
         Bitmap golden = BitmapFactory.decodeResource(mResources,
