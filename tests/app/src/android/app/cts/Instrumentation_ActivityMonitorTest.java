@@ -86,17 +86,17 @@ public class Instrumentation_ActivityMonitorTest extends InstrumentationTestCase
 
     /**
      * Verifies that
-     *   - when ActivityMonitor.onMatchIntent returs non-null, then there is monitor hit.
-     *   - when ActivityMonitor.onMatchIntent returns null, then the activity start is not blocked.
+     *   - when ActivityMonitor.onStartActivity returs non-null, then there is monitor hit.
+     *   - when ActivityMonitor.onStartActivity returns null, then the activity start is not blocked.
      */
-    public void testActivityMonitor_onMatchIntent() throws Exception {
+    public void testActivityMonitor_onStartActivity() throws Exception {
         final ActivityResult result = new ActivityResult(Activity.RESULT_OK, new Intent());
         final Instrumentation instrumentation = getInstrumentation();
         final Context context = instrumentation.getTargetContext();
         final Intent intent = new Intent(context, InstrumentationTestActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-        // Verify when ActivityMonitor.onMatchIntent returns non-null, then there is a monitor hit.
+        // Verify when ActivityMonitor.onStartActivity returns non-null, then there is a monitor hit.
         final CustomActivityMonitor cam1 = new CustomActivityMonitor(result);
         instrumentation.addMonitor(cam1);
         context.startActivity(intent);
@@ -109,7 +109,7 @@ public class Instrumentation_ActivityMonitorTest extends InstrumentationTestCase
             instrumentation.removeMonitor(cam1);
         }
 
-        // Verify when ActivityMonitor.onMatchIntent returns null, then activity start is not
+        // Verify when ActivityMonitor.onStartActivity returns null, then activity start is not
         // blocked and there is no monitor hit.
         final CustomActivityMonitor cam2 = new CustomActivityMonitor(null);
         instrumentation.addMonitor(cam2);
@@ -128,9 +128,9 @@ public class Instrumentation_ActivityMonitorTest extends InstrumentationTestCase
     }
 
     /**
-     * Verifies that when ActivityMonitor.onMatchIntent returns non-null, activity start is blocked.
+     * Verifies that when ActivityMonitor.onStartActivity returns non-null, activity start is blocked.
      */
-    public void testActivityMonitor_onMatchIntentBlocks() throws Exception {
+    public void testActivityMonitor_onStartActivityBlocks() throws Exception {
         final Instrumentation instrumentation = getInstrumentation();
         final Context context = instrumentation.getTargetContext();
 
@@ -141,13 +141,13 @@ public class Instrumentation_ActivityMonitorTest extends InstrumentationTestCase
 
         // Initialize and set activity monitor.
         final int expectedResultCode = 1111;
-        final String expectedAction = "matched_using_onMatchIntent";
+        final String expectedAction = "matched_using_onStartActivity";
         final CustomActivityMonitor cam = new CustomActivityMonitor(
                 new ActivityResult(expectedResultCode, new Intent(expectedAction)));
         instrumentation.addMonitor(cam);
 
         // Start InstrumentationTestActivity from ActivityMonitorTestActivity and verify
-        // it is intercepted using onMatchIntent as expected.
+        // it is intercepted using onStartActivity as expected.
         try {
             final CountDownLatch latch = new CountDownLatch(1);
             amTestActivity.setOnActivityResultListener(
@@ -176,9 +176,9 @@ public class Instrumentation_ActivityMonitorTest extends InstrumentationTestCase
 
     /**
      * Verifies that when the activity monitor is created using by passing IntentFilter,
-     * then onMatchIntent return value is ignored.
+     * then onStartActivity return value is ignored.
      */
-    public void testActivityMonitor_onMatchIntentAndIntentFilter() throws Exception {
+    public void testActivityMonitor_onStartActivityAndIntentFilter() throws Exception {
         final Instrumentation instrumentation = getInstrumentation();
         final Context context = instrumentation.getTargetContext();
 
@@ -194,7 +194,7 @@ public class Instrumentation_ActivityMonitorTest extends InstrumentationTestCase
                 new IntentFilter(InstrumentationTestActivity.START_INTENT),
                 new ActivityResult(expectedResultCode, new Intent(expectedAction)),
                 true);
-        cam.setResultToReturn(new ActivityResult(1111, new Intent("matched_using_onMatchIntent")));
+        cam.setResultToReturn(new ActivityResult(1111, new Intent("matched_using_onStartActivity")));
         instrumentation.addMonitor(cam);
 
         // Start explicit InstrumentationTestActivity from ActivityMonitorTestActivity and verify
@@ -227,9 +227,9 @@ public class Instrumentation_ActivityMonitorTest extends InstrumentationTestCase
 
     /**
      * Verifies that when the activity monitor is created using by passing activity class,
-     * then onMatchIntent return value is ignored.
+     * then onStartActivity return value is ignored.
      */
-    public void testActivityMonitor_onMatchIntentAndActivityClass() throws Exception {
+    public void testActivityMonitor_onStartActivityAndActivityClass() throws Exception {
         final Instrumentation instrumentation = getInstrumentation();
         final Context context = instrumentation.getTargetContext();
 
@@ -245,7 +245,7 @@ public class Instrumentation_ActivityMonitorTest extends InstrumentationTestCase
                 InstrumentationTestActivity.class.getName(),
                 new ActivityResult(expectedResultCode, new Intent(expectedAction)),
                 true);
-        cam.setResultToReturn(new ActivityResult(2222, new Intent("matched_using_onMatchIntent")));
+        cam.setResultToReturn(new ActivityResult(2222, new Intent("matched_using_onStartActivity")));
         instrumentation.addMonitor(cam);
 
         // Start implicit InstrumentationTestActivity from ActivityMonitorTestActivity and verify
@@ -299,7 +299,7 @@ public class Instrumentation_ActivityMonitorTest extends InstrumentationTestCase
         }
 
         @Override
-        public ActivityResult onMatchIntent(Intent intent) {
+        public ActivityResult onStartActivity(Intent intent) {
             final boolean implicitInstrumentationTestActivity = intent.getAction() != null &&
                     InstrumentationTestActivity.START_INTENT.equals(intent.getAction());
             final boolean explicitInstrumentationTestActivity = intent.getComponent() != null &&
