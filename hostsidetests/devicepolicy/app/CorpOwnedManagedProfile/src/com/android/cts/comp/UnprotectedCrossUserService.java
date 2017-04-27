@@ -23,7 +23,7 @@ import android.os.IBinder;
 /**
  * Dummy service that is exported.
  */
-public class ExportedCrossUserService extends Service {
+public class UnprotectedCrossUserService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         return null;

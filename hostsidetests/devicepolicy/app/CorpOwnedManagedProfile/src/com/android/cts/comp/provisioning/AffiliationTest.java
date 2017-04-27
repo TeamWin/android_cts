@@ -21,9 +21,11 @@ import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.test.AndroidTestCase;
+
 import com.android.cts.comp.AdminReceiver;
-import java.util.Arrays;
-import java.util.List;
+
+import java.util.Collections;
+import java.util.Set;
 
 public class AffiliationTest extends AndroidTestCase {
 
@@ -39,7 +41,7 @@ public class AffiliationTest extends AndroidTestCase {
         ComponentName admin = AdminReceiver.getComponentName(getContext());
         DevicePolicyManager dpm = (DevicePolicyManager)
                 mContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
-        List<String> ids = Arrays.asList(id);
+        Set<String> ids = Collections.singleton(id);
         dpm.setAffiliationIds(admin, ids);
         assertEquals(ids, dpm.getAffiliationIds(admin));
     }

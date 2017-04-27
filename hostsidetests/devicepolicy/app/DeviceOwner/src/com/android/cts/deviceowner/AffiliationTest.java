@@ -16,26 +16,24 @@
 
 package com.android.cts.deviceowner;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertTrue;
-import static junit.framework.Assert.fail;
-
-import static org.junit.Assert.assertArrayEquals;
-
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Collections;
-import java.util.List;
+import java.util.Set;
+
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.fail;
+import static org.junit.Assert.assertArrayEquals;
 
 @RunWith(AndroidJUnit4.class)
 public class AffiliationTest {
@@ -52,13 +50,33 @@ public class AffiliationTest {
     }
 
     @Test
+    public void testSetAffiliationId_null() {
+        try {
+            mDevicePolicyManager.setAffiliationIds(mAdminComponent, null);
+            fail("Should throw IllegalArgumentException");
+        } catch (IllegalArgumentException ex) {
+            // Expected
+        }
+    }
+
+    @Test
+    public void testSetAffiliationId_containsEmptyString() {
+        try {
+            mDevicePolicyManager.setAffiliationIds(mAdminComponent, Collections.singleton(null));
+            fail("Should throw IllegalArgumentException");
+        } catch (IllegalArgumentException ex) {
+            // Expected
+        }
+    }
+
+    @Test
     public void testSetAffiliationId1() {
-        setAffiliationIds(Collections.singletonList("id.number.1"));
+        setAffiliationIds(Collections.singleton("id.number.1"));
     }
 
     @Test
     public void testSetAffiliationId2() {
-        setAffiliationIds(Collections.singletonList("id.number.2"));
+        setAffiliationIds(Collections.singleton("id.number.2"));
     }
 
     @Test
@@ -75,11 +93,11 @@ public class AffiliationTest {
         assertTrue(mDevicePolicyManager.isLockTaskPermitted("package1"));
         assertFalse(mDevicePolicyManager.isLockTaskPermitted("package3"));
 
-        final List<String> previousAffiliationIds =
+        final Set<String> previousAffiliationIds =
                 mDevicePolicyManager.getAffiliationIds(mAdminComponent);
         try {
             // Clearing affiliation ids for this user. Lock task methods unavailable.
-            setAffiliationIds(Collections.<String>emptyList());
+            setAffiliationIds(Collections.emptySet());
             checkLockTaskMethodsThrow();
             assertFalse(mDevicePolicyManager.isLockTaskPermitted("package1"));
 
@@ -92,7 +110,7 @@ public class AffiliationTest {
         }
     }
 
-    private void setAffiliationIds(List<String> ids) {
+    private void setAffiliationIds(Set<String> ids) {
         mDevicePolicyManager.setAffiliationIds(mAdminComponent, ids);
         assertEquals(ids, mDevicePolicyManager.getAffiliationIds(mAdminComponent));
     }
