@@ -129,7 +129,7 @@ public class BitmapTest {
     @Test
     public void testCopyConfigs() {
         Config[] supportedConfigs = new Config[] {
-                Config.ALPHA_8, Config.RGB_565, Config.ARGB_8888
+                Config.ALPHA_8, Config.RGB_565, Config.ARGB_8888, Config.RGBA_F16,
         };
         for (Config src : supportedConfigs) {
             for (Config dst : supportedConfigs) {
