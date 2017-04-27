@@ -70,14 +70,6 @@ public class CanvasTest {
     private final static int BITMAP_HEIGHT = 28;
     private final static int FLOAT_ARRAY_LEN = 9;
 
-    private final Rect mRect = new Rect(0, 0, 10, 31);
-    private final Rect mInRect = new Rect(0, 0, 20, 10);
-    private final Rect mOutRect = new Rect(10, 31, 11, 32);
-
-    private final RectF mRectF = new RectF(0, 0, 10, 31);
-    private final RectF mInRectF = new RectF(0, 0, 20, 10);
-    private final RectF mOutRectF = new RectF(10, 31, 11, 32);
-
     // used for save related methods tests
     private final float[] values1 = {
             1, 2, 3, 4, 5, 6, 7, 8, 9
@@ -1037,7 +1029,7 @@ public class CanvasTest {
     }
 
     @Test
-    public void testClipRect4F() {
+    public void testClipRect4I() {
         // intersect with clip larger than canvas
         assertTrue(mCanvas.clipRect(0, 0, 10, 31, Op.INTERSECT));
         // intersect with clip outside of canvas bounds
@@ -1050,6 +1042,58 @@ public class CanvasTest {
         assertFalse(mCanvas.clipRect(0, 10, 20, 32, Op.INTERSECT));
         // ensure that difference doesn't widen already closed clip
         assertFalse(mCanvas.clipRect(0, 0, 10, 31, Op.DIFFERENCE));
+    }
+
+    @Test
+    public void testClipRect4F() {
+        // intersect with clip larger than canvas
+        assertTrue(mCanvas.clipRect(0f, 0f, 10f, 31f, Op.INTERSECT));
+        // intersect with clip outside of canvas bounds
+        assertFalse(mCanvas.clipRect(10f, 31f, 11f, 32f, Op.INTERSECT));
+        // replace with clip that is larger than canvas
+        assertTrue(mCanvas.clipRect(0f, 0f, 10f, 31f, Op.REPLACE));
+        // intersect with clip that covers top portion of canvas
+        assertTrue(mCanvas.clipRect(0f, 0f, 20f, 10f, Op.INTERSECT));
+        // intersect with clip that covers bottom portion of canvas
+        assertFalse(mCanvas.clipRect(0f, 10f, 20f, 32f, Op.INTERSECT));
+        // ensure that difference doesn't widen already closed clip
+        assertFalse(mCanvas.clipRect(0f, 0f, 10f, 31f, Op.DIFFERENCE));
+    }
+
+    @Test
+    public void testClipOutRectF() {
+        // remove center, clip not empty
+        assertTrue(mCanvas.clipOutRect(new RectF(1, 1, 9, 27)));
+        // replace clip, verify difference doesn't widen
+        assertFalse(mCanvas.clipRect(new RectF(0, 0, 0, 0), Op.REPLACE));
+        assertFalse(mCanvas.clipOutRect(new RectF(0, 0, 100, 100)));
+    }
+
+    @Test
+    public void testClipOutRect() {
+        // remove center, clip not empty
+        assertTrue(mCanvas.clipOutRect(new Rect(1, 1, 9, 27)));
+        // replace clip, verify difference doesn't widen
+        assertFalse(mCanvas.clipRect(new Rect(0, 0, 0, 0), Op.REPLACE));
+        assertFalse(mCanvas.clipOutRect(new Rect(0, 0, 100, 100)));
+    }
+
+    @Test
+    public void testClipOutRect4I() {
+        // remove center, clip not empty
+        assertTrue(mCanvas.clipOutRect(1, 1, 9, 27));
+        // replace clip, verify difference doesn't widen
+        assertFalse(mCanvas.clipRect(0, 0, 0, 0, Op.REPLACE));
+        assertFalse(mCanvas.clipOutRect(0, 0, 100, 100));
+    }
+
+    @Test
+    public void testClipOutRect4F() {
+        // remove center, clip not empty
+        assertTrue(mCanvas.clipOutRect(1f, 1f, 9f, 27f));
+        // replace clip, verify difference doesn't widen
+        assertFalse(mCanvas.clipRect(0f, 0f, 0f, 0f, Op.REPLACE));
+        assertFalse(mCanvas.clipOutRect(0f, 0f, 100f, 100f));
     }
 
     @Test
@@ -1077,14 +1121,9 @@ public class CanvasTest {
     }
 
     @Test
-    public void testClipRect7() {
-        assertTrue(mCanvas.clipRect(0, 0, 10, 31));
-    }
-
-    @Test
     public void testClipPath1() {
         final Path p = new Path();
-        p.addRect(mRectF, Direction.CCW);
+        p.addRect(new RectF(0, 0, 10, 31), Direction.CCW);
         assertTrue(mCanvas.clipPath(p));
     }
 
@@ -1137,14 +1176,14 @@ public class CanvasTest {
 
     @Test
     public void testQuickReject1() {
-        assertFalse(mCanvas.quickReject(mRectF, EdgeType.AA));
-        assertFalse(mCanvas.quickReject(mRectF, EdgeType.BW));
+        assertFalse(mCanvas.quickReject(new RectF(0, 0, 10, 31), EdgeType.AA));
+        assertFalse(mCanvas.quickReject(new RectF(0, 0, 10, 31), EdgeType.BW));
     }
 
     @Test
     public void testQuickReject2() {
         final Path p = new Path();
-        p.addRect(mRectF, Direction.CCW);
+        p.addRect(new RectF(0, 0, 10, 31), Direction.CCW);
 
         assertFalse(mCanvas.quickReject(p, EdgeType.AA));
         assertFalse(mCanvas.quickReject(p, EdgeType.BW));
