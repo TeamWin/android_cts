@@ -346,6 +346,14 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestMethod(".NetworkLoggingTest", "testNetworkLoggingAndRetrieval");
     }
 
+    public void testSetAffiliationId_IllegalArgumentException() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        executeDeviceTestMethod(".AffiliationTest", "testSetAffiliationId_null");
+        executeDeviceTestMethod(".AffiliationTest", "testSetAffiliationId_containsEmptyString");
+    }
+
     public void testLockTask_deviceOwnerUser() throws Exception {
         if (!mHasFeature) {
             return;
