@@ -32,7 +32,7 @@ import org.junit.runner.RunWith;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
-public class FragmentOptimizationTest {
+public class FragmentReorderingTest {
     @Rule
     public ActivityTestRule<FragmentTestActivity> mActivityRule =
             new ActivityTestRule<FragmentTestActivity>(FragmentTestActivity.class);
@@ -141,7 +141,7 @@ public class FragmentOptimizationTest {
     // ensure that removing a view after adding it is optimized into no
     // View being created. Hide still gets notified.
     @Test
-    public void optimizeRemove() throws Throwable {
+    public void removeRedundantRemove() throws Throwable {
         final CountCallsFragment fragment1 = new CountCallsFragment();
         final int[] id = new int[1];
         mActivityRule.runOnUiThread(new Runnable() {
@@ -175,7 +175,7 @@ public class FragmentOptimizationTest {
 
     // Ensure that removing and adding the same view results in no operation
     @Test
-    public void optimizeAdd() throws Throwable {
+    public void removeRedundantAdd() throws Throwable {
         final CountCallsFragment fragment1 = new CountCallsFragment();
         int id = mFM.beginTransaction()
                 .add(R.id.fragmentContainer, fragment1)
@@ -212,7 +212,7 @@ public class FragmentOptimizationTest {
 
     // detaching, then attaching results in on change. Hide still functions
     @Test
-    public void optimizeAttach() throws Throwable {
+    public void removeRedundantAttach() throws Throwable {
         final CountCallsFragment fragment1 = new CountCallsFragment();
         int id = mFM.beginTransaction()
                 .add(R.id.fragmentContainer, fragment1)
@@ -256,7 +256,7 @@ public class FragmentOptimizationTest {
 
     // attaching, then detaching shouldn't result in a View being created
     @Test
-    public void optimizeDetach() throws Throwable {
+    public void removeRedundantDetach() throws Throwable {
         final CountCallsFragment fragment1 = new CountCallsFragment();
         int id = mFM.beginTransaction()
                 .add(R.id.fragmentContainer, fragment1)
@@ -304,7 +304,7 @@ public class FragmentOptimizationTest {
 
     // show, then hide should optimize out
     @Test
-    public void optimizeHide() throws Throwable {
+    public void removeRedundantHide() throws Throwable {
         final CountCallsFragment fragment1 = new CountCallsFragment();
         int id = mFM.beginTransaction()
                 .add(R.id.fragmentContainer, fragment1)
@@ -395,7 +395,7 @@ public class FragmentOptimizationTest {
 
     // hiding and showing the same view should optimize out
     @Test
-    public void optimizeShow() throws Throwable {
+    public void removeRedundantShow() throws Throwable {
         final CountCallsFragment fragment1 = new CountCallsFragment();
         int id = mFM.beginTransaction()
                 .add(R.id.fragmentContainer, fragment1)
@@ -428,7 +428,7 @@ public class FragmentOptimizationTest {
         assertEquals(0, fragment1.onHideCount);
     }
 
-    // The View order shouldn't be messed up by optimization -- a view that
+    // The View order shouldn't be messed up by reordering -- a view that
     // is optimized to not remove/add should be in its correct position after
     // the transaction completes.
     @Test
@@ -486,7 +486,7 @@ public class FragmentOptimizationTest {
     }
 
     // A non-back-stack transaction doesn't interfere with back stack add/pop
-    // optimization.
+    // reodering/removing of redundant operations.
     @Test
     public void popNonBackStack() throws Throwable {
         final CountCallsFragment fragment1 = new CountCallsFragment();
@@ -511,10 +511,10 @@ public class FragmentOptimizationTest {
         assertEquals(0, fragment1.onCreateViewCount);
     }
 
-    // When optimization is disabled, the transaction prior to the disabled optimization
-    // transaction should all be run prior to running the non-optimized transaction.
+    // When reordering is disabled, the transaction prior to the disabled reordering
+    // transaction should all be run prior to running the ordered transaction.
     @Test
-    public void noOptimization() throws Throwable {
+    public void noReordering() throws Throwable {
         final CountCallsFragment fragment1 = new CountCallsFragment();
         final CountCallsFragment fragment2 = new CountCallsFragment();
         mActivityRule.runOnUiThread(new Runnable() {
@@ -527,14 +527,14 @@ public class FragmentOptimizationTest {
                 mFM.beginTransaction()
                         .replace(R.id.fragmentContainer, fragment2)
                         .addToBackStack(null)
-                        .setAllowOptimization(false)
+                        .setReorderingAllowed(false)
                         .commit();
                 mFM.executePendingTransactions();
             }
         });
         FragmentTestUtil.assertChildren(mContainer, fragment2);
 
-        // No optimization, so fragment1 should have created its View
+        // No reordering, so fragment1 should have created its View
         assertEquals(1, fragment1.onCreateViewCount);
     }
 
