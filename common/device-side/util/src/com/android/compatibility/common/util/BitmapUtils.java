@@ -21,13 +21,19 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
 import android.graphics.Color;
+import android.util.Log;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.lang.reflect.Method;
 import java.util.Random;
 
 public class BitmapUtils {
+    private static final String TAG = "BitmapUtils";
+
     private BitmapUtils() {}
 
     // Compares two bitmaps by pixels.
@@ -67,11 +73,7 @@ public class BitmapUtils {
 
     public static Bitmap generateWhiteBitmap(int width, int height) {
         final Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                bmp.setPixel(x, y, Color.WHITE);
-            }
-        }
+        bmp.eraseColor(Color.WHITE);
         return bmp;
     }
 
@@ -88,5 +90,39 @@ public class BitmapUtils {
         bmp.compress(CompressFormat.PNG, 0 /*ignored for PNG*/, bos);
         byte[] bitmapData = bos.toByteArray();
         return new ByteArrayInputStream(bitmapData);
+    }
+
+    private static void logIfBitmapSolidColor(String fileName, Bitmap bitmap) {
+        int firstColor = bitmap.getPixel(0, 0);
+        for (int x = 0; x < bitmap.getWidth(); x++) {
+            for (int y = 0; y < bitmap.getHeight(); y++) {
+                if (bitmap.getPixel(x, y) != firstColor) {
+                    return;
+                }
+            }
+        }
+
+        Log.w(TAG, String.format("%s entire bitmap color is %x", fileName, firstColor));
+    }
+
+    public static void saveBitmap(Bitmap bitmap, String directoryName, String fileName) {
+        new File(directoryName).mkdirs(); // create dirs if needed
+
+        Log.d(TAG, "Saving file: " + fileName + " in directory: " + directoryName);
+
+        if (bitmap == null) {
+            Log.d(TAG, "File not saved, bitmap was null");
+            return;
+        }
+
+        logIfBitmapSolidColor(fileName, bitmap);
+
+        File file = new File(directoryName, fileName);
+        try (FileOutputStream fileStream = new FileOutputStream(file)) {
+            bitmap.compress(Bitmap.CompressFormat.PNG, 0 /* ignored for PNG */, fileStream);
+            fileStream.flush();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
