@@ -22,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -104,17 +105,25 @@ public class ObjectAnimatorTest {
         float endY = mActivity.mStartY + mActivity.mDeltaY;
         ObjectAnimator objAnimator = ObjectAnimator.ofFloat(object, property, startY, endY);
         assertTrue(objAnimator != null);
-        objAnimator.setDuration(mDuration);
+
+        ValueAnimator.AnimatorUpdateListener updateListener = ((animator) -> {
+            float y = (Float) animator.getAnimatedValue();
+            assertTrue(y >= startY);
+            assertTrue(y <= endY);
+        });
+        ValueAnimator.AnimatorUpdateListener mockListener =
+                mock(ValueAnimator.AnimatorUpdateListener.class);
+        objAnimator.addUpdateListener(mockListener);
+        objAnimator.addUpdateListener(updateListener);
+        objAnimator.setDuration(200);
         objAnimator.setRepeatCount(ValueAnimator.INFINITE);
         objAnimator.setInterpolator(new AccelerateInterpolator());
         objAnimator.setRepeatMode(ValueAnimator.REVERSE);
-        startAnimation(objAnimator);
+        mActivityRule.runOnUiThread(objAnimator::start);
         assertTrue(objAnimator != null);
-        SystemClock.sleep(100);
-        float x = mActivity.view.newBall.getX();
-        float y = mActivity.view.newBall.getY();
-        assertTrue( y >= startY);
-        assertTrue( y <= endY);
+
+        verify(mockListener, timeout(2000).atLeast(20)).onAnimationUpdate(objAnimator);
+        mActivityRule.runOnUiThread(objAnimator::cancel);
     }
 
     @Test
@@ -134,71 +143,86 @@ public class ObjectAnimatorTest {
     @Test
     public void testOfInt() throws Throwable {
         Object object = mActivity.view.newBall;
-        String property = "backgroundColor";
-        int startColor = mActivity.view.RED;
-        int endColor = mActivity.view.BLUE;
+        String property = "scrollY";
 
-        final ObjectAnimator colorAnimator = ObjectAnimator.ofInt(object, property,
-                startColor, endColor);
-        colorAnimator.setDuration(1000);
-        colorAnimator.setEvaluator(new ArgbEvaluator());
-        colorAnimator.setRepeatCount(1);
-        colorAnimator.setRepeatMode(ValueAnimator.REVERSE);
-        mActivityRule.runOnUiThread(colorAnimator::start);
-        mInstrumentation.waitForIdleSync();
-        startAnimation(mObjectAnimator, colorAnimator);
-        SystemClock.sleep(100);
-        Integer i = (Integer) colorAnimator.getAnimatedValue();
-        //We are going from less negative value to a more negative value
-        assertTrue(i.intValue() <= startColor);
-        assertTrue(endColor <= i.intValue());
+        final ObjectAnimator intAnimator = ObjectAnimator.ofInt(object, property, 200, 0);
+        ValueAnimator.AnimatorUpdateListener updateListener = ((animator) -> {
+            int value = (Integer) intAnimator.getAnimatedValue();
+            assertTrue(value <= 200);
+            assertTrue(value >= 0);
+        });
+        final Animator.AnimatorListener mockListener = mock(Animator.AnimatorListener.class);
+        intAnimator.addListener(mockListener);
+
+        intAnimator.addUpdateListener(updateListener);
+        intAnimator.setDuration(200);
+        intAnimator.setRepeatCount(1);
+        intAnimator.setRepeatMode(ValueAnimator.REVERSE);
+        mActivityRule.runOnUiThread(intAnimator::start);
+
+        verify(mockListener, timeout(400)).onAnimationRepeat(intAnimator);
+        verify(mockListener, timeout(400)).onAnimationEnd(intAnimator, false);
     }
 
     @Test
     public void testOfObject() throws Throwable {
         Object object = mActivity.view.newBall;
         String property = "backgroundColor";
-        int startColor = mActivity.view.RED;
-        int endColor = mActivity.view.BLUE;
+        int startColor = 0xFFFF8080;
+        int endColor = 0xFF8080FF;
+
         Object[] values = {new Integer(startColor), new Integer(endColor)};
         ArgbEvaluator evaluator = new ArgbEvaluator();
         final ObjectAnimator colorAnimator = ObjectAnimator.ofObject(object, property,
                 evaluator, values);
-        colorAnimator.setDuration(1000);
+        ValueAnimator.AnimatorUpdateListener updateListener = ((animator) -> {
+            int color = (Integer) colorAnimator.getAnimatedValue();
+            // Check that channel is interpolated separately.
+            assertEquals(0xFF, Color.alpha(color));
+            assertTrue(Color.red(color) <= Color.red(startColor));
+            assertTrue(Color.red(color) >= Color.red(endColor));
+            assertEquals(0x80, Color.green(color));
+            assertTrue(Color.blue(color) >= Color.blue(startColor));
+            assertTrue(Color.blue(color) <= Color.blue(endColor));
+        });
+        final Animator.AnimatorListener mockListener = mock(Animator.AnimatorListener.class);
+        colorAnimator.addListener(mockListener);
+
+        colorAnimator.addUpdateListener(updateListener);
+        colorAnimator.setDuration(200);
         colorAnimator.setRepeatCount(1);
         colorAnimator.setRepeatMode(ValueAnimator.REVERSE);
         mActivityRule.runOnUiThread(colorAnimator::start);
-        mInstrumentation.waitForIdleSync();
-        startAnimation(mObjectAnimator, colorAnimator);
-        SystemClock.sleep(100);
-        Integer i = (Integer) colorAnimator.getAnimatedValue();
-        //We are going from less negative value to a more negative value
-        assertTrue(i.intValue() <= startColor);
-        assertTrue(endColor <= i.intValue());
+
+        verify(mockListener, timeout(400)).onAnimationRepeat(colorAnimator);
+        verify(mockListener, timeout(400)).onAnimationEnd(colorAnimator, false);
     }
 
     @Test
     public void testOfPropertyValuesHolder() throws Throwable {
         Object object = mActivity.view.newBall;
-        String propertyName = "backgroundColor";
-        int startColor = mActivity.view.RED;
-        int endColor = mActivity.view.BLUE;
-        int values[] = {startColor, endColor};
-        ArgbEvaluator evaluator = new ArgbEvaluator();
+        String propertyName = "scrollX";
+        int startValue = 200;
+        int endValue = 0;
+        int[] values = {startValue, endValue};
         PropertyValuesHolder propertyValuesHolder = PropertyValuesHolder.ofInt(propertyName, values);
-        final ObjectAnimator colorAnimator = ObjectAnimator.ofPropertyValuesHolder(object,
+        final ObjectAnimator intAnimator = ObjectAnimator.ofPropertyValuesHolder(object,
             propertyValuesHolder);
-        colorAnimator.setDuration(1000);
-        colorAnimator.setRepeatCount(1);
-        colorAnimator.setRepeatMode(ValueAnimator.REVERSE);
-        mActivityRule.runOnUiThread(colorAnimator::start);
-        mInstrumentation.waitForIdleSync();
-        startAnimation(mObjectAnimator, colorAnimator);
-        SystemClock.sleep(100);
-        Integer i = (Integer) colorAnimator.getAnimatedValue();
-        //We are going from less negative value to a more negative value
-        assertTrue(i.intValue() <= startColor);
-        assertTrue(endColor <= i.intValue());
+
+        ValueAnimator.AnimatorUpdateListener updateListener = ((animator) -> {
+            int value = (Integer) intAnimator.getAnimatedValue();
+            // Check that each channel is interpolated separately.
+            assertTrue(value <= 200);
+            assertTrue(value >= 0);
+        });
+        final Animator.AnimatorListener mockListener = mock(Animator.AnimatorListener.class);
+        intAnimator.addListener(mockListener);
+
+        intAnimator.addUpdateListener(updateListener);
+        intAnimator.setDuration(200);
+        mActivityRule.runOnUiThread(intAnimator::start);
+
+        verify(mockListener, timeout(400)).onAnimationEnd(intAnimator, false);
     }
 
     @Test
@@ -212,35 +236,32 @@ public class ObjectAnimatorTest {
         int startBlue = Color.blue(start);
         int endRed = Color.red(end);
         int endBlue = Color.blue(end);
-        final ObjectAnimator animator = ObjectAnimator.ofArgb(object, property, start, end);
-        animator.setDuration(mDuration);
 
-        final CountDownLatch latch = new CountDownLatch(1);
-        animator.addUpdateListener((ValueAnimator animation) -> {
-            if (animation.getAnimatedFraction() > .05f) {
-                latch.countDown();
-            }
+        ValueAnimator.AnimatorUpdateListener updateListener = ((anim) -> {
+            Integer animatedValue = (Integer) anim.getAnimatedValue();
+            int alpha = Color.alpha(animatedValue);
+            int red = Color.red(animatedValue);
+            int green = Color.green(animatedValue);
+            int blue = Color.blue(animatedValue);
+            assertTrue(red <= startRed);
+            assertTrue(red >= endRed);
+            assertTrue(blue >= startBlue);
+            assertTrue(blue <= endBlue);
+            assertEquals(255, alpha);
+            assertEquals(0, green);
+
         });
 
+        final Animator.AnimatorListener mockListener = mock(Animator.AnimatorListener.class);
+        final ObjectAnimator animator = ObjectAnimator.ofArgb(object, property, start, end);
+        animator.setDuration(200);
+        animator.addListener(mockListener);
+        animator.addUpdateListener(updateListener);
+
         mActivityRule.runOnUiThread(animator::start);
-        boolean isRunning = animator.isRunning();
-        assertTrue(isRunning);
+        assertTrue(animator.isRunning());
 
-        assertTrue(latch.await(500, TimeUnit.MILLISECONDS));
-
-        Integer animatedValue = (Integer) animator.getAnimatedValue();
-        int alpha = Color.alpha(animatedValue);
-        int red = Color.red(animatedValue);
-        int green = Color.green(animatedValue);
-        int blue = Color.blue(animatedValue);
-        assertTrue(red < startRed);
-        assertTrue(red > endRed);
-        assertTrue(blue > startBlue);
-        assertTrue(blue < endBlue);
-        assertEquals(255, alpha);
-        assertEquals(0, green);
-
-        mActivityRule.runOnUiThread(animator::cancel);
+        verify(mockListener, timeout(400)).onAnimationEnd(animator, false);
     }
 
     @Test
@@ -283,6 +304,15 @@ public class ObjectAnimatorTest {
         float endY = mActivity.mStartY + mActivity.mDeltaY;
         float[] values = {startY, endY};
         ObjectAnimator objAnimator = new ObjectAnimator();
+        ValueAnimator.AnimatorUpdateListener updateListener = ((animator) -> {
+            float y = (Float) animator.getAnimatedValue();
+            assertTrue(y >= startY);
+            assertTrue(y <= endY);
+        });
+        ValueAnimator.AnimatorUpdateListener mockListener =
+                mock(ValueAnimator.AnimatorUpdateListener.class);
+        objAnimator.addUpdateListener(mockListener);
+        objAnimator.addUpdateListener(updateListener);
         objAnimator.setTarget(object);
         objAnimator.setPropertyName(property);
         objAnimator.setFloatValues(values);
@@ -290,11 +320,10 @@ public class ObjectAnimatorTest {
         objAnimator.setRepeatCount(ValueAnimator.INFINITE);
         objAnimator.setInterpolator(new AccelerateInterpolator());
         objAnimator.setRepeatMode(ValueAnimator.REVERSE);
-        startAnimation(objAnimator);
-        SystemClock.sleep(100);
-        float y = mActivity.view.newBall.getY();
-        assertTrue( y >= startY);
-        assertTrue( y <= endY);
+        mActivityRule.runOnUiThread(objAnimator::start);
+
+        verify(mockListener, timeout(2000).atLeast(20)).onAnimationUpdate(objAnimator);
+        mActivityRule.runOnUiThread(objAnimator::cancel);
     }
 
     @Test
@@ -741,7 +770,7 @@ public class ObjectAnimatorTest {
         });
 
         // Wait until both of the animations finish
-        assertTrue(endLatch.await(200, TimeUnit.MILLISECONDS));
+        assertTrue(endLatch.await(500, TimeUnit.MILLISECONDS));
     }
 
     @Test
