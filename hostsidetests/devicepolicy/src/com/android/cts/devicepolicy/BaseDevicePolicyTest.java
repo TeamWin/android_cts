@@ -138,7 +138,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         removeOwners();
         removeTestUsers();
         // Unlock keyguard before test
-        executeShellCommand("wm dismiss-keyguard");
+        wakeupAndDismissKeyguard();
     }
 
     @Override
@@ -763,5 +763,10 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
                 fail("Failed to clear user credential: " + commandOutput);
             }
         }
+    }
+
+    protected void wakeupAndDismissKeyguard() throws Exception {
+        executeShellCommand("input keyevent KEYCODE_WAKEUP");
+        executeShellCommand("wm dismiss-keyguard");
     }
 }
