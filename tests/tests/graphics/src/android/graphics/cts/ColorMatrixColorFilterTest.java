@@ -15,7 +15,9 @@
  */
 package android.graphics.cts;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
 
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
@@ -96,6 +98,27 @@ public class ColorMatrixColorFilterTest {
         paint.setColorFilter(new ColorMatrixColorFilter(transparentRedAddBlue));
         canvas.drawPoint(0, 0, paint);
         ColorUtils.verifyColor(Color.BLUE, bitmap.getPixel(0, 0));
+    }
+
+    @Test
+    public void testGetColorMatrix() {
+        ColorMatrixColorFilter filter = new ColorMatrixColorFilter(new ColorMatrix());
+        ColorMatrix getMatrix = new ColorMatrix();
+
+        filter.getColorMatrix(getMatrix);
+        assertEquals(new ColorMatrix(), getMatrix);
+
+        ColorMatrix scaleTranslate = new ColorMatrix(new float[] {
+                1, 0, 0, 0, 8,
+                0, 2, 0, 0, 7,
+                0, 0, 3, 0, 6,
+                0, 0, 0, 4, 5
+        });
+
+        filter = new ColorMatrixColorFilter(scaleTranslate);
+        filter.getColorMatrix(getMatrix);
+        assertEquals(scaleTranslate, getMatrix);
+        assertArrayEquals(scaleTranslate.getArray(), getMatrix.getArray(), 0);
     }
 }
 
