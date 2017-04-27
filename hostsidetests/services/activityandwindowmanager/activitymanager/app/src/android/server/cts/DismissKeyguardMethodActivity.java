@@ -25,12 +25,10 @@ import android.view.WindowManager;
 
 public class DismissKeyguardMethodActivity extends Activity {
 
-    private final String TAG = "DismissKeyguardMethodActivity";
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getSystemService(KeyguardManager.class).dismissKeyguard(this,
-                new KeyguardDismissLoggerCallback(), null);
+        getSystemService(KeyguardManager.class).requestDismissKeyguard(this,
+                new KeyguardDismissLoggerCallback());
     }
 }
