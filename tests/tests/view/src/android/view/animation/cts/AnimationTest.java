@@ -77,6 +77,8 @@ public class AnimationTest {
     /** It is defined in R.anim.decelerate_alpha */
     private static final int DECELERATE_ALPHA_DURATION = 2000;
 
+    private static final int CANCELATION_TIMEOUT = 1000;
+
     private Instrumentation mInstrumentation;
     private Activity mActivity;
 
@@ -658,7 +660,7 @@ public class AnimationTest {
         MyAnimation anim = new MyAnimation();
         final CountDownLatch latch1 = new CountDownLatch(1);
         runCanceledAnimation(anim, latch1, false, false);
-        assertTrue(latch1.await(200, TimeUnit.MILLISECONDS));
+        assertTrue(latch1.await(CANCELATION_TIMEOUT, TimeUnit.MILLISECONDS));
         assertFalse(anim.isStillAnimating());
     }
 
@@ -667,7 +669,7 @@ public class AnimationTest {
         MyAnimation anim = new MyAnimation();
         final CountDownLatch latch2 = new CountDownLatch(1);
         runCanceledAnimation(anim, latch2, true, false);
-        assertTrue(latch2.await(200, TimeUnit.MILLISECONDS));
+        assertTrue(latch2.await(CANCELATION_TIMEOUT, TimeUnit.MILLISECONDS));
         assertFalse(anim.isStillAnimating());
     }
 
@@ -676,7 +678,7 @@ public class AnimationTest {
         MyAnimation anim = new MyAnimation();
         final CountDownLatch latch3 = new CountDownLatch(1);
         runCanceledAnimation(anim, latch3, false, true);
-        assertTrue(latch3.await(250, TimeUnit.MILLISECONDS));
+        assertTrue(latch3.await(CANCELATION_TIMEOUT, TimeUnit.MILLISECONDS));
         assertFalse(anim.isStillAnimating());
     }
 
@@ -685,7 +687,7 @@ public class AnimationTest {
         MyAnimation anim = new MyAnimation();
         final CountDownLatch latch4 = new CountDownLatch(1);
         runCanceledAnimation(anim, latch4, true, true);
-        assertTrue(latch4.await(250, TimeUnit.MILLISECONDS));
+        assertTrue(latch4.await(CANCELATION_TIMEOUT, TimeUnit.MILLISECONDS));
         assertFalse(anim.isStillAnimating());
     }
 
