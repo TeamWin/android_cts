@@ -66,7 +66,7 @@ public class ChangeTransformTest extends BaseTransitionTest {
         verify(mListener, never()).onTransitionEnd(any()); // still running
         // There is no way to validate the intermediate matrix because it uses
         // hidden properties of the View to execute.
-        waitForEnd(400);
+        waitForEnd(800);
         assertEquals(500f, redSquare.getTranslationX(), 0.0f);
         assertEquals(600f, redSquare.getTranslationY(), 0.0f);
     }
@@ -86,7 +86,7 @@ public class ChangeTransformTest extends BaseTransitionTest {
         verify(mListener, never()).onTransitionEnd(any()); // still running
         // There is no way to validate the intermediate matrix because it uses
         // hidden properties of the View to execute.
-        waitForEnd(400);
+        waitForEnd(800);
         assertEquals(45f, redSquare.getRotation(), 0.0f);
     }
 
@@ -106,7 +106,7 @@ public class ChangeTransformTest extends BaseTransitionTest {
         verify(mListener, never()).onTransitionEnd(any()); // still running
         // There is no way to validate the intermediate matrix because it uses
         // hidden properties of the View to execute.
-        waitForEnd(400);
+        waitForEnd(800);
         assertEquals(2f, redSquare.getScaleX(), 0.0f);
         assertEquals(3f, redSquare.getScaleY(), 0.0f);
     }
@@ -117,7 +117,7 @@ public class ChangeTransformTest extends BaseTransitionTest {
         enterScene(R.layout.scene5);
         startTransition(R.layout.scene9);
         verify(mListener, never()).onTransitionEnd(any()); // still running
-        waitForEnd(400);
+        waitForEnd(800);
 
         resetListener();
         mChangeTransform.setReparent(false);
@@ -142,7 +142,7 @@ public class ChangeTransformTest extends BaseTransitionTest {
             mSceneRoot.getOverlay().remove(view);
             assertTrue(mActivity.findViewById(R.id.text).getVisibility() != View.VISIBLE);
         });
-        waitForEnd(400);
+        waitForEnd(800);
 
         mChangeTransform.setReparentWithOverlay(false);
         assertEquals(false, mChangeTransform.getReparentWithOverlay());
@@ -159,7 +159,7 @@ public class ChangeTransformTest extends BaseTransitionTest {
             mSceneRoot.getOverlay().remove(view);
             assertEquals(View.VISIBLE, mActivity.findViewById(R.id.text).getVisibility());
         });
-        waitForEnd(400);
+        waitForEnd(800);
     }
 }
 

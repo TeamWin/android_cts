@@ -54,7 +54,7 @@ public class TransitionManagerTest extends BaseTransitionTest {
         });
 
         waitForStart();
-        waitForEnd(300);
+        waitForEnd(800);
         verify(mListener, never()).onTransitionResume(any());
         verify(mListener, never()).onTransitionPause(any());
         verify(mListener, never()).onTransitionCancel(any());
@@ -109,7 +109,7 @@ public class TransitionManagerTest extends BaseTransitionTest {
     public void testGo() throws Throwable {
         startTransition(R.layout.scene1);
         waitForStart();
-        waitForEnd(300);
+        waitForEnd(800);
 
         verify(mListener, never()).onTransitionResume(any());
         verify(mListener, never()).onTransitionPause(any());
@@ -156,7 +156,7 @@ public class TransitionManagerTest extends BaseTransitionTest {
         });
 
         waitForStart();
-        waitForEnd(300);
+        waitForEnd(800);
         verify(mListener, never()).onTransitionResume(any());
         verify(mListener, never()).onTransitionPause(any());
         verify(mListener, never()).onTransitionCancel(any());
@@ -195,7 +195,7 @@ public class TransitionManagerTest extends BaseTransitionTest {
         mActivityRule.runOnUiThread(() -> transitionManager.transitionTo(scenes[1]));
 
         waitForStart();
-        waitForEnd(300);
+        waitForEnd(800);
         verify(mListener, never()).onTransitionResume(any());
         verify(mListener, never()).onTransitionPause(any());
         verify(mListener, never()).onTransitionCancel(any());
@@ -220,7 +220,7 @@ public class TransitionManagerTest extends BaseTransitionTest {
         startTransition(R.layout.scene1);
         waitForStart();
         endTransition();
-        waitForEnd(100);
+        waitForEnd(400);
     }
 
     @Test

@@ -61,19 +61,19 @@ public class VisibilityTest extends BaseTransitionTest {
         enterScene(R.layout.scene4);
         startTransition(R.layout.scene1);
         verify(mListener, never()).onTransitionEnd(any());
-        waitForEnd(400);
+        waitForEnd(800);
 
         resetListener();
         startTransition(R.layout.scene4);
         verify(mListener, never()).onTransitionEnd(any());
-        waitForEnd(400);
+        waitForEnd(800);
 
         // Now only animate in
         resetListener();
         mVisibilityTransition.setMode(Visibility.MODE_IN);
         startTransition(R.layout.scene1);
         verify(mListener, never()).onTransitionEnd(any());
-        waitForEnd(400);
+        waitForEnd(800);
 
         // No animation since it should only animate in
         resetListener();
@@ -90,7 +90,7 @@ public class VisibilityTest extends BaseTransitionTest {
         resetListener();
         startTransition(R.layout.scene4);
         verify(mListener, never()).onTransitionEnd(any());
-        waitForEnd(400);
+        waitForEnd(800);
     }
 
     @Test

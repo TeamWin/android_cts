@@ -88,18 +88,18 @@ public class ActivityTransitionTest extends BaseTransitionTest {
     }
 
     @After
-    public void cleanup() {
+    public void cleanup() throws Throwable {
         if (TargetActivity.sLastCreated != null) {
-            mInstrumentation.runOnMainSync(() -> TargetActivity.sLastCreated.finish());
+            mActivityRule.runOnUiThread(() -> TargetActivity.sLastCreated.finish());
         }
         TargetActivity.sLastCreated = null;
     }
 
     // When using ActivityOptions.makeBasic(), no transitions should run
     @Test
-    public void testMakeBasic() {
+    public void testMakeBasic() throws Throwable {
         assertFalse(mActivity.isActivityTransitionRunning());
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             Intent intent = new Intent(mActivity, TargetActivity.class);
             ActivityOptions activityOptions =
                     ActivityOptions.makeBasic();
@@ -110,7 +110,7 @@ public class ActivityTransitionTest extends BaseTransitionTest {
 
         TargetActivity targetActivity = waitForTargetActivity();
         assertFalse(targetActivity.isActivityTransitionRunning());
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             targetActivity.finish();
         });
 
@@ -123,7 +123,7 @@ public class ActivityTransitionTest extends BaseTransitionTest {
     @Test
     public void viewsNotStripped() throws Throwable {
         enterScene(R.layout.scene10);
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             View sharedElement = mActivity.findViewById(R.id.blueSquare);
             Bundle options = ActivityOptions.makeSceneTransitionAnimation(mActivity,
                     sharedElement, "holder").toBundle();
@@ -156,7 +156,7 @@ public class ActivityTransitionTest extends BaseTransitionTest {
         assertEquals(1, targetActivity.findViewById(R.id.greenSquare).getAlpha(), 0.01f);
         assertEquals(1, targetActivity.findViewById(R.id.holder).getAlpha(), 0.01f);
 
-        mInstrumentation.runOnMainSync(() -> targetActivity.finishAfterTransition());
+        mActivityRule.runOnUiThread(() -> targetActivity.finishAfterTransition());
         verify(mReenterListener, within(3000)).onTransitionEnd(any());
         verify(mSharedElementReenterListener, within(3000)).onTransitionEnd(any());
         verify(targetActivity.returnListener, times(1)).onTransitionEnd(any());
@@ -195,7 +195,7 @@ public class ActivityTransitionTest extends BaseTransitionTest {
     @Test
     public void viewsStripped() throws Throwable {
         enterScene(R.layout.scene13);
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             View sharedElement = mActivity.findViewById(R.id.redSquare);
             Bundle options = ActivityOptions.makeSceneTransitionAnimation(mActivity,
                     sharedElement, "redSquare").toBundle();
@@ -227,7 +227,7 @@ public class ActivityTransitionTest extends BaseTransitionTest {
         assertEquals(1, targetActivity.findViewById(R.id.greenSquare).getAlpha(), 0.01f);
         assertEquals(1, targetActivity.findViewById(R.id.holder).getAlpha(), 0.01f);
 
-        mInstrumentation.runOnMainSync(() -> targetActivity.finishAfterTransition());
+        mActivityRule.runOnUiThread(() -> targetActivity.finishAfterTransition());
         verify(mReenterListener, within(3000)).onTransitionEnd(any());
         verify(mSharedElementReenterListener, within(3000)).onTransitionEnd(any());
         verify(targetActivity.returnListener, times(1)).onTransitionEnd(any());
@@ -267,7 +267,7 @@ public class ActivityTransitionTest extends BaseTransitionTest {
         final View hello = mActivity.findViewById(R.id.hello);
         final View red = mActivity.findViewById(R.id.redSquare);
         final View green = mActivity.findViewById(R.id.greenSquare);
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             Fade fade = new Fade();
             fade.setDuration(10000);
             fade.addListener(mExitListener);
@@ -282,7 +282,7 @@ public class ActivityTransitionTest extends BaseTransitionTest {
         verify(targetActivity.enterListener, within(3000)).onTransitionEnd(any());
         verify(mExitListener, within(3000)).onTransitionEnd(any());
 
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             // Verify that the exited views have an alpha of 1 and are visible
             assertEquals(1.0f, hello.getAlpha(), 0.01f);
             assertEquals(1.0f, red.getAlpha(), 0.01f);
@@ -296,9 +296,9 @@ public class ActivityTransitionTest extends BaseTransitionTest {
     }
 
     @Test
-    public void testAnimationQuery() {
+    public void testAnimationQuery() throws Throwable {
         assertFalse(mActivity.isActivityTransitionRunning());
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             mActivity.getWindow().setExitTransition(new Fade());
             Intent intent = new Intent(mActivity, TargetActivity.class);
             ActivityOptions activityOptions =
@@ -310,12 +310,19 @@ public class ActivityTransitionTest extends BaseTransitionTest {
 
         TargetActivity targetActivity = waitForTargetActivity();
         assertTrue(targetActivity.isActivityTransitionRunning());
-        mInstrumentation.runOnMainSync(() -> {
-            targetActivity.finish();
+        mActivityRule.runOnUiThread(() -> { });
+        PollingCheck.waitFor(() -> !targetActivity.isActivityTransitionRunning());
+
+        assertFalse(mActivity.isActivityTransitionRunning());
+        mActivityRule.runOnUiThread(() -> {
+            targetActivity.finishAfterTransition();
+            // The target activity transition should start right away
+            assertTrue(targetActivity.isActivityTransitionRunning());
         });
 
-        assertTrue(targetActivity.isActivityTransitionRunning());
-        assertTrue(mActivity.isActivityTransitionRunning());
+        // The source activity transition should start sometime later
+        PollingCheck.waitFor(() -> mActivity.isActivityTransitionRunning());
+        PollingCheck.waitFor(() -> !mActivity.isActivityTransitionRunning());
     }
 
     // Views that are excluded from the exit/enter transition shouldn't change visibility
@@ -380,10 +387,10 @@ public class ActivityTransitionTest extends BaseTransitionTest {
         TargetActivity.sLastCreated = null;
     }
 
-    private TargetActivity waitForTargetActivity() {
+    private TargetActivity waitForTargetActivity() throws Throwable {
         PollingCheck.waitFor(() -> TargetActivity.sLastCreated != null);
         // Just make sure that we're not in the middle of running on the UI thread.
-        mInstrumentation.runOnMainSync(() -> {});
+        mActivityRule.runOnUiThread(() -> { });
         return TargetActivity.sLastCreated;
     }
 
