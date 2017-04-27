@@ -76,11 +76,11 @@ public class NotificationTest extends AndroidTestCase {
 
     public void testBuilderConstructor() {
         mNotification = new Notification.Builder(mContext, CHANNEL.getId()).build();
-        assertEquals(CHANNEL.getId(), mNotification.getChannel());
+        assertEquals(CHANNEL.getId(), mNotification.getChannelId());
         assertEquals(Notification.BADGE_ICON_NONE, mNotification.getBadgeIconType());
         assertNull(mNotification.getShortcutId());
         assertEquals(Notification.GROUP_ALERT_ALL, mNotification.getGroupAlertBehavior());
-        assertEquals((long) 0, mNotification.getTimeout());
+        assertEquals((long) 0, mNotification.getTimeoutAfter());
     }
 
     public void testDescribeContents() {
@@ -94,7 +94,7 @@ public class NotificationTest extends AndroidTestCase {
         mNotification = new Notification.Builder(mContext, CHANNEL.getId())
                 .setBadgeIconType(Notification.BADGE_ICON_SMALL)
                 .setShortcutId(SHORTCUT_ID)
-                .setTimeout(TIMEOUT)
+                .setTimeoutAfter(TIMEOUT)
                 .setSettingsText(SETTING_TEXT)
                 .setGroupAlertBehavior(Notification.GROUP_ALERT_CHILDREN)
                 .build();
@@ -149,8 +149,8 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(mNotification.iconLevel, result.iconLevel);
         assertEquals(mNotification.getShortcutId(), result.getShortcutId());
         assertEquals(mNotification.getBadgeIconType(), result.getBadgeIconType());
-        assertEquals(mNotification.getTimeout(), result.getTimeout());
-        assertEquals(mNotification.getChannel(), result.getChannel());
+        assertEquals(mNotification.getTimeoutAfter(), result.getTimeoutAfter());
+        assertEquals(mNotification.getChannelId(), result.getChannelId());
         assertEquals(mNotification.getSettingsText(), result.getSettingsText());
         assertEquals(mNotification.getGroupAlertBehavior(), result.getGroupAlertBehavior());
 
@@ -210,7 +210,7 @@ public class NotificationTest extends AndroidTestCase {
                 .setContentIntent(contentIntent)
                 .setBadgeIconType(Notification.BADGE_ICON_SMALL)
                 .setShortcutId(SHORTCUT_ID)
-                .setTimeout(TIMEOUT)
+                .setTimeoutAfter(TIMEOUT)
                 .setSettingsText(SETTING_TEXT)
                 .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY)
                 .build();
@@ -218,10 +218,10 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(CONTENT_TITLE, mNotification.extras.getString(Notification.EXTRA_TITLE));
         assertEquals(1, mNotification.icon);
         assertEquals(contentIntent, mNotification.contentIntent);
-        assertEquals(CHANNEL.getId(), mNotification.getChannel());
+        assertEquals(CHANNEL.getId(), mNotification.getChannelId());
         assertEquals(Notification.BADGE_ICON_SMALL, mNotification.getBadgeIconType());
         assertEquals(SHORTCUT_ID, mNotification.getShortcutId());
-        assertEquals(TIMEOUT, mNotification.getTimeout());
+        assertEquals(TIMEOUT, mNotification.getTimeoutAfter());
         assertEquals(SETTING_TEXT, mNotification.getSettingsText());
         assertEquals(Notification.GROUP_ALERT_SUMMARY, mNotification.getGroupAlertBehavior());
     }
