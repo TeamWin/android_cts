@@ -150,9 +150,11 @@ public class AnimatedVectorDrawableParameterizedTest {
             counter++;
             boolean isIdentical = isAlmostIdenticalInRect(screenShot, lastScreenShot, imageViewRect);
             if (isIdentical) {
-                DrawableTestUtils.saveVectorDrawableIntoPNG(screenShot, "screenshot_" + counter);
-                DrawableTestUtils.saveVectorDrawableIntoPNG(lastScreenShot, "screenshot_"
-                        + (counter - 1));
+                String outputFolder = mActivity.getExternalFilesDir(null).getAbsolutePath();
+                DrawableTestUtils.saveVectorDrawableIntoPNG(screenShot, outputFolder,
+                        "screenshot_" + counter);
+                DrawableTestUtils.saveVectorDrawableIntoPNG(lastScreenShot, outputFolder,
+                        "screenshot_" + (counter - 1));
                 fail("Two consecutive screenshots of AVD are identical, AVD is "
                         + "likely not animating");
             }
@@ -292,10 +294,11 @@ public class AnimatedVectorDrawableParameterizedTest {
                     .takeScreenshot();
             boolean isIdentical = isAlmostIdenticalInRect(screenShot, lastScreenShot, imageViewRect);
             if (isIdentical) {
-                DrawableTestUtils.saveVectorDrawableIntoPNG(screenShot, "inf_avd_screenshot_"
-                        + mLayerType + "_" +         counter);
-                DrawableTestUtils.saveVectorDrawableIntoPNG(lastScreenShot, "inf_avd_screenshot_"
-                        + mLayerType + "_" + (counter - 1));
+                String outputFolder = mActivity.getExternalFilesDir(null).getAbsolutePath();
+                DrawableTestUtils.saveVectorDrawableIntoPNG(screenShot, outputFolder,
+                        "inf_avd_screenshot_" + mLayerType + "_" + counter);
+                DrawableTestUtils.saveVectorDrawableIntoPNG(lastScreenShot, outputFolder,
+                        "inf_avd_screenshot_" + mLayerType + "_" + (counter - 1));
                 fail("Two consecutive screenshots of AVD are identical, AVD is "
                         + "likely not animating");
             }

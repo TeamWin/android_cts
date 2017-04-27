@@ -16,6 +16,7 @@
 
 package android.graphics.drawable.cts;
 
+import android.content.Context;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.XmlResourceParser;
@@ -23,6 +24,9 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.support.annotation.IntegerRes;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.Xml;
@@ -206,34 +210,40 @@ public class DrawableTestUtils {
         return pixel;
     }
 
-
     /**
      * Save a bitmap for debugging or golden image (re)generation purpose.
-     * The file name will be referred from the resource id and added "_golden".
+     * The file name will be referred from the resource id, plus optionally {@code extras}, and
+     * "_golden"
      */
-    static void saveVectorDrawableIntoPNG(Bitmap bitmap, int resId, Resources res) throws
-            IOException {
-        String originalFilePath = res.getString(resId);
+    static void saveAutoNamedVectorDrawableIntoPNG(@NonNull Context context, @NonNull Bitmap bitmap,
+            @IntegerRes int resId, @Nullable String extras)
+            throws IOException {
+        String originalFilePath = context.getResources().getString(resId);
         File originalFile = new File(originalFilePath);
         String fileFullName = originalFile.getName();
         String fileTitle = fileFullName.substring(0, fileFullName.lastIndexOf("."));
-        saveVectorDrawableIntoPNG(bitmap, fileTitle);
+        String outputFolder = context.getExternalFilesDir(null).getAbsolutePath();
+        if (extras != null) {
+            fileTitle += "_" + extras;
+        }
+        saveVectorDrawableIntoPNG(bitmap, outputFolder, fileTitle);
     }
 
     /**
-     * Save a bitmap to the given name plus "_golden" under /sdcard/temp/
+     * Save a {@code bitmap} to the {@code fileFullName} plus "_golden".
      */
-    static void saveVectorDrawableIntoPNG(Bitmap bitmap, String fileFullName)
+    static void saveVectorDrawableIntoPNG(@NonNull Bitmap bitmap, @NonNull String outputFolder,
+            @NonNull String fileFullName)
             throws IOException {
         // Save the image to the disk.
         FileOutputStream out = null;
         try {
-            String outputFolder = "/sdcard/temp/";
             File folder = new File(outputFolder);
             if (!folder.exists()) {
                 folder.mkdir();
             }
-            String outputFilename = outputFolder + fileFullName + "_golden.png";
+            String outputFilename = outputFolder + "/" + fileFullName + "_golden";
+            outputFilename +=".png";
             File outputFile = new File(outputFilename);
             if (!outputFile.exists()) {
                 outputFile.createNewFile();

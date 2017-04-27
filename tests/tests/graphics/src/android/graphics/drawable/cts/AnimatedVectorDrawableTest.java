@@ -105,7 +105,7 @@ public class AnimatedVectorDrawableTest {
         assertTrue(earthColor == 0xFF5656EA);
 
         if (DBG_DUMP_PNG) {
-            DrawableTestUtils.saveVectorDrawableIntoPNG(bitmap, mResId, mResources);
+            DrawableTestUtils.saveAutoNamedVectorDrawableIntoPNG(mActivity, bitmap, mResId, null);
         }
     }
 
