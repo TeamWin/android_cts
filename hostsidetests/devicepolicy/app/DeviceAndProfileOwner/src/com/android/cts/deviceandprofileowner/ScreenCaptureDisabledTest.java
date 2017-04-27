@@ -16,7 +16,7 @@
 package com.android.cts.deviceandprofileowner;
 
 import android.app.admin.DevicePolicyManager;
-import android.util.Log;
+import android.support.v4.content.LocalBroadcastManager;
 
 /**
  * Tests for {@link DevicePolicyManager#setScreenCaptureDisabled} and
@@ -25,6 +25,12 @@ import android.util.Log;
 public class ScreenCaptureDisabledTest extends BaseDeviceAdminTest {
 
     private static final String TAG = "ScreenCaptureDisabledTest";
+
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+    }
 
     public void testSetScreenCaptureDisabled_false() throws Exception {
         mDevicePolicyManager.setScreenCaptureDisabled(ADMIN_RECEIVER_COMPONENT, false);
