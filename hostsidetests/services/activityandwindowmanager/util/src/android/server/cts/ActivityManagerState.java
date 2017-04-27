@@ -607,6 +607,18 @@ class ActivityManagerState {
         public String getResizeMode() {
             return mResizeMode;
         }
+
+        /**
+         * @return whether this task contains the given activity.
+         */
+        public boolean containsActivity(String activityName) {
+            for (Activity activity : mActivities) {
+                if (activity.name.equals(activityName)) {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 
     static class Activity {
