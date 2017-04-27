@@ -1126,36 +1126,6 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
     }
 
     /**
-     * Tests that when activities that handle configuration changes are moved between displays,
-     * they receive onMovedToDisplay and onConfigurationChanged callbacks.
-     */
-    @Presubmit
-    public void testOnMovedToDisplayCallback() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
-
-        // Create new virtual display.
-        final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
-        mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
-
-        // Launch activity on new secondary display.
-        launchActivityOnDisplay(RESIZEABLE_ACTIVITY_NAME, newDisplay.mDisplayId);
-        mAmWmState.assertFocusedActivity("Focus must be on secondary display",
-                RESIZEABLE_ACTIVITY_NAME);
-
-        final String logSeparator = clearLogcat();
-        moveActivityToStack(RESIZEABLE_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID);
-        mAmWmState.waitForFocusedStack(mDevice, FULLSCREEN_WORKSPACE_STACK_ID);
-        mAmWmState.assertFocusedActivity("Focus must be on moved activity",
-                RESIZEABLE_ACTIVITY_NAME);
-        mAmWmState.assertFocusedStack("Focus must return to primary display",
-                FULLSCREEN_WORKSPACE_STACK_ID);
-
-        // Check if client received the callbacks.
-        assertMovedToDisplay(RESIZEABLE_ACTIVITY_NAME, logSeparator);
-        assertMovedToDisplay("LifecycleLogView", logSeparator);
-    }
-
-    /**
      * Tests that when an activity is launched with displayId specified and there is an existing
      * matching task on some other display - that task will moved to the target display.
      */
