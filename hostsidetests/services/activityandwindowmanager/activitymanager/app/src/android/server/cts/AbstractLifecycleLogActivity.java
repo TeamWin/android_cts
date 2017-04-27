@@ -27,12 +27,6 @@ import android.view.WindowManager;
 
 public abstract class AbstractLifecycleLogActivity extends Activity {
 
-    /**
-     * Used to check if we report same configurations in Activity#onMovedToDisplay and
-     * Activity#onConfigurationChanged.
-     */
-    private Configuration mConfigFromMoveToDisplay;
-
     @Override
     protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
@@ -49,23 +43,6 @@ public abstract class AbstractLifecycleLogActivity extends Activity {
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         Log.i(getTag(), "onConfigurationChanged");
-
-        // If there was a move to different display - check that we're reporting same config here.
-        if (mConfigFromMoveToDisplay != null) {
-            if (!mConfigFromMoveToDisplay.equals(newConfig)) {
-                throw new IllegalArgumentException(
-                        "Configuration reported in onConfigurationChanged() differs from one"
-                                + " reported in onMovedToDisplay()");
-            }
-            mConfigFromMoveToDisplay = null;
-        }
-    }
-
-    @Override
-    public void onMovedToDisplay(int displayId, Configuration config) {
-        super.onMovedToDisplay(displayId, config);
-        Log.i(getTag(), "onMovedToDisplay");
-        mConfigFromMoveToDisplay = config;
     }
 
     @Override
