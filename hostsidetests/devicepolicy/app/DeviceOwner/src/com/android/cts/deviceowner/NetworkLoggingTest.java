@@ -25,14 +25,12 @@ import android.content.IntentFilter;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;
-import java.net.MalformedURLException;
-import java.net.UnknownHostException;
 import java.net.URL;
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -127,13 +125,13 @@ public class NetworkLoggingTest extends BaseDeviceOwnerTest {
         mCurrentBatchToken = FAKE_BATCH_TOKEN;
         mGenerateNetworkTraffic = true;
         // register a receiver that listens for DeviceAdminReceiver#onNetworkLogsAvailable()
-        IntentFilter filterNetworkLogsAvailable = new IntentFilter(
+        final IntentFilter filterNetworkLogsAvailable = new IntentFilter(
                 BaseDeviceOwnerTest.ACTION_NETWORK_LOGS_AVAILABLE);
         LocalBroadcastManager.getInstance(mContext).registerReceiver(mNetworkLogsReceiver,
                 filterNetworkLogsAvailable);
 
         // visit websites that shouldn't be logged as network logging isn't enabled yet
-        for (String url : NOT_LOGGED_URLS_LIST) {
+        for (final String url : NOT_LOGGED_URLS_LIST) {
             connectToWebsite(url);
         }
 
@@ -146,7 +144,7 @@ public class NetworkLoggingTest extends BaseDeviceOwnerTest {
         // visit websites in a loop to generate enough network traffic
         int iterationsDone = 0;
         while (mGenerateNetworkTraffic && iterationsDone < MAX_VISITING_WEBPAGES_ITERATIONS) {
-            for (String url : LOGGED_URLS_LIST) {
+            for (final String url : LOGGED_URLS_LIST) {
                 connectToWebsite(url);
             }
             iterationsDone++;
@@ -162,7 +160,7 @@ public class NetworkLoggingTest extends BaseDeviceOwnerTest {
         }
 
         // retrieve and verify network logs
-        List<NetworkEvent> networkEvents = mDevicePolicyManager.retrieveNetworkLogs(getWho(),
+        final List<NetworkEvent> networkEvents = mDevicePolicyManager.retrieveNetworkLogs(getWho(),
                 mCurrentBatchToken);
         if (networkEvents == null) {
             fail("Failed to retrieve batch of network logs with batch token " + mCurrentBatchToken);
@@ -176,10 +174,10 @@ public class NetworkLoggingTest extends BaseDeviceOwnerTest {
         int ctsPackageNameCounter = 0;
         // allow a small down margin for verification, to avoid flakyness
         final int iterationsDoneWithMargin = iterationsDone - 5;
-        int[] visitedFrequencies = new int[LOGGED_URLS_LIST.length];
+        final int[] visitedFrequencies = new int[LOGGED_URLS_LIST.length];
 
         for (int i = 0; i < networkEvents.size(); i++) {
-            NetworkEvent currentEvent = networkEvents.get(i);
+            final NetworkEvent currentEvent = networkEvents.get(i);
             // verify that the events are in chronological order
             if (i > 0) {
                 assertTrue(currentEvent.getTimestamp() >= networkEvents.get(i - 1).getTimestamp());
@@ -188,7 +186,7 @@ public class NetworkLoggingTest extends BaseDeviceOwnerTest {
             if (CTS_APP_PACKAGE_NAME.equals(currentEvent.getPackageName())) {
                 ctsPackageNameCounter++;
                 if (currentEvent instanceof DnsEvent) {
-                    DnsEvent dnsEvent = (DnsEvent) currentEvent;
+                    final DnsEvent dnsEvent = (DnsEvent) currentEvent;
                     // verify that we didn't log a hostname lookup when network logging was disabled
                     if (dnsEvent.getHostname().contains(NOT_LOGGED_URLS_LIST[0])
                             || dnsEvent.getHostname().contains(NOT_LOGGED_URLS_LIST[1])) {
@@ -203,18 +201,19 @@ public class NetworkLoggingTest extends BaseDeviceOwnerTest {
                         }
                     }
                     // verify that as many IP addresses were logged as were reported (max 10)
-                    String[] ips = dnsEvent.getIpAddresses();
+                    final InetAddress[] ips = dnsEvent.getInetAddresses();
                     assertTrue(ips.length <= MAX_IP_ADDRESSES_LOGGED);
-                    assertEquals(Math.min(MAX_IP_ADDRESSES_LOGGED, dnsEvent.getIpAddressesCount()),
-                            ips.length);
+                    final int expectedAddressCount = Math.min(MAX_IP_ADDRESSES_LOGGED,
+                            dnsEvent.getTotalResolvedAddressCount());
+                    assertEquals(expectedAddressCount, ips.length);
                     // verify the IP addresses are valid IPv4 or IPv6 addresses
-                    for (String ipAddress : ips) {
-                        assertTrue(isValidIpv4OrIpv6Address(ipAddress));
+                    for (final InetAddress ipAddress : ips) {
+                        assertTrue(isIpv4OrIpv6Address(ipAddress));
                     }
                 } else if (currentEvent instanceof ConnectEvent) {
-                    ConnectEvent connectEvent = (ConnectEvent) currentEvent;
+                    final ConnectEvent connectEvent = (ConnectEvent) currentEvent;
                     // verify the IP address is a valid IPv4 or IPv6 address
-                    assertTrue(isValidIpv4OrIpv6Address(connectEvent.getIpAddress()));
+                    assertTrue(isIpv4OrIpv6Address(connectEvent.getInetAddress()));
                     // verify that the port is a valid port
                     assertTrue(connectEvent.getPort() >= 0 && connectEvent.getPort() <= 65535);
                 } else {
@@ -236,13 +235,11 @@ public class NetworkLoggingTest extends BaseDeviceOwnerTest {
     private void connectToWebsite(String urlString) {
         HttpURLConnection urlConnection = null;
         try {
-            URL url = new URL("http://" + urlString);
+            final URL url = new URL("http://" + urlString);
             urlConnection = (HttpURLConnection) url.openConnection();
             urlConnection.setConnectTimeout(2000);
             urlConnection.setReadTimeout(2000);
             urlConnection.getResponseCode();
-        } catch (MalformedURLException e) {
-            Log.w(TAG, "Failed to connect to " + urlString, e);
         } catch (IOException e) {
             Log.w(TAG, "Failed to connect to " + urlString, e);
         } finally {
@@ -252,12 +249,7 @@ public class NetworkLoggingTest extends BaseDeviceOwnerTest {
         }
     }
 
-    private boolean isValidIpv4OrIpv6Address(String ipAddress) {
-        try {
-            InetAddress addr = InetAddress.getByName(ipAddress);
-            return (addr instanceof Inet4Address) || (addr instanceof Inet6Address);
-        } catch (UnknownHostException e) {
-            return false;
-        }
+    private boolean isIpv4OrIpv6Address(InetAddress addr) {
+        return ((addr instanceof Inet4Address) || (addr instanceof Inet6Address));
     }
 }
