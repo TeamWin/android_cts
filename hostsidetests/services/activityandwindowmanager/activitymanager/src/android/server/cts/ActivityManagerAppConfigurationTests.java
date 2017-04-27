@@ -40,6 +40,11 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     private static final String NIGHT_MODE_ACTIVITY = "NightModeActivity";
     private static final String DIALOG_WHEN_LARGE_ACTIVITY = "DialogWhenLargeActivity";
 
+    private static final String TRANSLUCENT_ACTIVITY =
+            "android.server.translucentapp.TranslucentLandscapeActivity";
+    private static final String TRANSLUCENT_SDK_25_PACKAGE = "android.server.translucentapp25";
+    private static final String TRANSLUCENT_CURRENT_PACKAGE = "android.server.translucentapp";
+
     private static final String EXTRA_LAUNCH_NEW_TASK = "launch_new_task";
 
     private static final int SMALL_WIDTH_DP = 426;
@@ -280,6 +285,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     /**
      * Test that device handles consequent requested orientations and displays the activities.
      */
+    @Presubmit
     public void testFullscreenAppOrientationRequests() throws Exception {
         launchActivity(PORTRAIT_ACTIVITY_NAME);
         mAmWmState.assertVisibility(PORTRAIT_ACTIVITY_NAME, true /* visible */);
@@ -295,6 +301,44 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         mAmWmState.assertVisibility(PORTRAIT_ACTIVITY_NAME, true /* visible */);
         assertEquals("Fullscreen app requested portrait orientation",
                 1 /* portrait */, mAmWmState.getWmState().getLastOrientation());
+    }
+
+    public void testNonfullscreenAppOrientationRequests() throws Exception {
+        String logSeparator = clearLogcat();
+        launchActivity(PORTRAIT_ACTIVITY_NAME);
+        final ReportedSizes initialReportedSizes =
+                getLastReportedSizesForActivity(PORTRAIT_ACTIVITY_NAME, logSeparator);
+        assertEquals("portrait activity should be in portrait",
+                1 /* portrait */, initialReportedSizes.orientation);
+        logSeparator = clearLogcat();
+        launchActivityInComponent(TRANSLUCENT_SDK_25_PACKAGE, TRANSLUCENT_ACTIVITY);
+        assertEquals("Legacy non-fullscreen activity requested landscape orientation",
+                0 /* landscape */, mAmWmState.getWmState().getLastOrientation());
+
+        // TODO(b/36897968): uncomment once we can suppress unsupported configurations
+        // final ReportedSizes updatedReportedSizes =
+        //      getLastReportedSizesForActivity(PORTRAIT_ACTIVITY_NAME, logSeparator);
+        // assertEquals("portrait activity should not have moved from portrait",
+        //         1 /* portrait */, updatedReportedSizes.orientation);
+    }
+
+    public void testNonFullscreenActivityProhibited() throws Exception {
+        setComponentName(TRANSLUCENT_CURRENT_PACKAGE);
+        launchActivity(TRANSLUCENT_ACTIVITY);
+        mAmWmState.assertNotResumedActivity(
+                "target SDK > 25 non-fullscreen activity should not reach onResume",
+                TRANSLUCENT_ACTIVITY);
+    }
+
+    public void testLegacyNonFullscreenActivityPermitted() throws Exception {
+        setComponentName(TRANSLUCENT_SDK_25_PACKAGE);
+        setDeviceRotation(0);
+        launchActivity(TRANSLUCENT_ACTIVITY);
+        mAmWmState.assertResumedActivity(
+                "target SDK <= 25 non-fullscreen activitiy should be allowed to launch",
+                TRANSLUCENT_ACTIVITY);
+        assertEquals("non-fullscreen activitiy requested landscape orientation",
+                0 /* landscape */, mAmWmState.getWmState().getLastOrientation());
     }
 
     /**
