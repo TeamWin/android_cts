@@ -29,16 +29,20 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.cts.R;
 import android.graphics.drawable.AnimatedVectorDrawable;
+import android.support.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.LargeTest;
 import android.support.test.filters.MediumTest;
 import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
 import android.util.Log;
+import android.view.PixelCopy;
 import android.view.View;
 import android.widget.ImageView;
 
+import com.android.compatibility.common.util.SynchronousPixelCopy;
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -116,39 +120,44 @@ public class AnimatedVectorDrawableParameterizedTest {
     public void testAnimationOnLayer() throws Throwable {
         final AnimatedVectorDrawableTest.MyCallback callback
                 = new AnimatedVectorDrawableTest.MyCallback();
-        final Rect imageViewRect = new Rect();
-        final int size = mResources.getDimensionPixelSize(R.dimen.imageview_fixed_size);
+        // Can't simply use final here, b/c it needs to be initialized and referred later in UI
+        // thread.
+        final ImageView[] imageView = new ImageView[1];
         mActivityRule.runOnUiThread(() -> {
             mActivity.setContentView(R.layout.fixed_sized_imageview);
-            final ImageView imageView = (ImageView) mActivity.findViewById(R.id.imageview);
-            imageView.setLayerType(mLayerType, null);
-            AnimatedVectorDrawable avd = (AnimatedVectorDrawable) imageView.getDrawable();
-            avd.registerAnimationCallback(callback);
-            int[] locationOnScreen = new int[2];
-            imageView.getLocationOnScreen(locationOnScreen);
-            imageViewRect.set(locationOnScreen[0], locationOnScreen[1],
-                    locationOnScreen[0] + size, locationOnScreen[1] + size);
-            avd.start();
+            imageView[0] = (ImageView) mActivity.findViewById(R.id.imageview);
         });
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, imageView[0],
+                (Runnable) () -> {
+                    imageView[0].setImageDrawable(
+                            mResources.getDrawable(R.drawable.animated_vector_favorite));
+                    imageView[0].setLayerType(mLayerType, null);
+                    AnimatedVectorDrawable avd =
+                            (AnimatedVectorDrawable) imageView[0].getDrawable();
+                    avd.registerAnimationCallback(callback);
+                    avd.start();
+                });
         callback.waitForStart();
+        waitWhilePumpingFrames(5, imageView[0], 200);
 
-        // Wait another few frames to make sure that RT has started and rendered the animation, and
-        // the frame buffer with the started animation is being rendered on screen.
-        waitWhilePumpingFrames(5, mActivity.findViewById(R.id.imageview), 200);
         Bitmap lastScreenShot = null;
+        final Rect srcRect = new Rect();
+        mActivityRule.runOnUiThread(() -> {
+            imageView[0].getGlobalVisibleRect(srcRect);
+        });
+
         int counter = 0;
         while (!callback.endIsCalled()) {
             // Take a screen shot every 50ms, and compare with previous screenshot for the ImageView
             // content, to make sure the AVD is animating when set on HW layer.
-            Bitmap screenShot = InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                    .takeScreenshot();
+            Bitmap screenShot = takeScreenshot(srcRect);
             if (callback.endIsCalled()) {
                 // Animation already ended, the screenshot may not contain valid animation content,
                 // skip the comparison.
                 break;
             }
             counter++;
-            boolean isIdentical = isAlmostIdenticalInRect(screenShot, lastScreenShot, imageViewRect);
+            boolean isIdentical = isAlmostIdenticalInRect(screenShot, lastScreenShot);
             if (isIdentical) {
                 String outputFolder = mActivity.getExternalFilesDir(null).getAbsolutePath();
                 DrawableTestUtils.saveVectorDrawableIntoPNG(screenShot, outputFolder,
@@ -168,6 +177,11 @@ public class AnimatedVectorDrawableParameterizedTest {
         }
         // In this test, we want to make sure that we at least have 5 screenshots.
         assertTrue(counter >= 5);
+
+        mActivityRule.runOnUiThread(() -> {
+            AnimatedVectorDrawable avd = (AnimatedVectorDrawable) imageView[0].getDrawable();
+            avd.stop();
+        });
     }
 
     // Pump frames by repeatedly invalidating the given view. Return true if successfully pumped
@@ -237,12 +251,19 @@ public class AnimatedVectorDrawableParameterizedTest {
         callback.assertAVDRuntime(0, TimeUnit.MILLISECONDS.toNanos(64)); // 4 frames
     }
 
-    // Does a fuzzy comparison between two images in the given rect. Returns true if the rect area
-    // is within acceptable delta, false otherwise.
-    private static boolean isAlmostIdenticalInRect(Bitmap image1, Bitmap image2, Rect rangeRect) {
+    // Does a fuzzy comparison between two images.
+    private static boolean isAlmostIdenticalInRect(Bitmap image1, Bitmap image2) {
         if (image1 == null || image2 == null) {
             return false;
         }
+
+        if (image1.getWidth() != image2.getWidth() || image1.getHeight() != image2.getHeight()) {
+            throw new IllegalArgumentException("Images size are not the same. image1:" + image1
+                    + "image2:" + image2);
+        }
+
+        Rect rangeRect = new Rect(0, 0, image1.getWidth(), image1.getHeight());
+
         for (int x = rangeRect.left; x < rangeRect.right; x++) {
             for (int y = rangeRect.top; y < rangeRect.bottom; y++) {
                 if (image1.getPixel(x, y) != image2.getPixel(x, y)) {
@@ -265,34 +286,36 @@ public class AnimatedVectorDrawableParameterizedTest {
     public void testInfiniteAVD() throws Throwable {
         final AnimatedVectorDrawableTest.MyCallback callback
                 = new AnimatedVectorDrawableTest.MyCallback();
-        final Rect imageViewRect = new Rect();
-        final int size = mResources.getDimensionPixelSize(R.dimen.imageview_fixed_size);
+        // Can't simply use final here, b/c it needs to be initialized and referred later in UI
+        // thread.
+        final ImageView[] imageView = new ImageView[1];
         mActivityRule.runOnUiThread(() -> {
             mActivity.setContentView(R.layout.fixed_sized_imageview);
-            final ImageView imageView = (ImageView) mActivity.findViewById(R.id.imageview);
-            imageView.setImageDrawable(mResources.getDrawable(R.drawable.infinite_avd));
-            imageView.setLayerType(mLayerType, null);
-            AnimatedVectorDrawable avd = (AnimatedVectorDrawable) imageView.getDrawable();
-            avd.registerAnimationCallback(callback);
-            int[] locationOnScreen = new int[2];
-            imageView.getLocationOnScreen(locationOnScreen);
-            imageViewRect.set(locationOnScreen[0], locationOnScreen[1],
-                    locationOnScreen[0] + size, locationOnScreen[1] + size);
-            avd.start();
+            imageView[0] = (ImageView) mActivity.findViewById(R.id.imageview);
         });
-        callback.waitForStart();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, imageView[0],
+                (Runnable) () -> {
+                    imageView[0].setImageDrawable(mResources.getDrawable(R.drawable.infinite_avd));
+                    imageView[0].setLayerType(mLayerType, null);
+                    AnimatedVectorDrawable avd = (AnimatedVectorDrawable) imageView[0].getDrawable();
+                    avd.registerAnimationCallback(callback);
 
-        // Wait another few frames to make sure that RT has started and rendered the animation, and
-        // the frame buffer with the started animation is being rendered on screen.
-        waitWhilePumpingFrames(5, mActivity.findViewById(R.id.imageview), 200);
+                    avd.start();
+                });
+
+        callback.waitForStart();
+        waitWhilePumpingFrames(5, imageView[0], 200);
         Bitmap lastScreenShot = null;
+        final Rect srcRect = new Rect();
+        mActivityRule.runOnUiThread(() -> {
+            mActivity.findViewById(R.id.imageview).getGlobalVisibleRect(srcRect);
+        });
 
         for (int counter = 0; counter < 10; counter++) {
             // Take a screen shot every 100ms, and compare with previous screenshot for the ImageView
             // content, to make sure the AVD is animating when set on HW layer.
-            Bitmap screenShot = InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                    .takeScreenshot();
-            boolean isIdentical = isAlmostIdenticalInRect(screenShot, lastScreenShot, imageViewRect);
+            Bitmap screenShot = takeScreenshot(srcRect);
+            boolean isIdentical = isAlmostIdenticalInRect(screenShot, lastScreenShot);
             if (isIdentical) {
                 String outputFolder = mActivity.getExternalFilesDir(null).getAbsolutePath();
                 DrawableTestUtils.saveVectorDrawableIntoPNG(screenShot, outputFolder,
@@ -313,10 +336,18 @@ public class AnimatedVectorDrawableParameterizedTest {
         }
         Assert.assertFalse(callback.endIsCalled());
         mActivityRule.runOnUiThread(() -> {
-            ImageView imageView = (ImageView) mActivity.findViewById(R.id.imageview);
-            AnimatedVectorDrawable avd = (AnimatedVectorDrawable) imageView.getDrawable();
+            AnimatedVectorDrawable avd = (AnimatedVectorDrawable) imageView[0].getDrawable();
             avd.stop();
         });
     }
 
+    // Copy the source rectangle from the screen into the returned bitmap.
+    private Bitmap takeScreenshot(Rect srcRect) {
+        SynchronousPixelCopy copy = new SynchronousPixelCopy();
+        Bitmap dest = Bitmap.createBitmap(
+                srcRect.width(), srcRect.height(), Bitmap.Config.ARGB_8888);
+        int copyResult = copy.request(mActivity.getWindow(), srcRect, dest);
+        Assert.assertEquals(PixelCopy.SUCCESS, copyResult);
+        return dest;
+    }
 }

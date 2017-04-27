@@ -32,7 +32,8 @@
         </activity>
 
         <activity android:name="android.graphics.drawable.cts.DrawableStubActivity"
-                  android:theme="@style/WhiteBackgroundNoWindowAnimation"/>
+                  android:theme="@style/WhiteBackgroundNoWindowAnimation"
+                  android:screenOrientation="locked"/>
 
         <activity android:name="android.graphics.fonts.cts.MockActivity"/>
     </application>
