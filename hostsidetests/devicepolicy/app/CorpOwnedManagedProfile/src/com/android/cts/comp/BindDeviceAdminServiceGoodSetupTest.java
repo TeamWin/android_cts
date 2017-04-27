@@ -33,7 +33,6 @@ import android.os.Looper;
 import android.os.Process;
 import android.os.RemoteException;
 import android.os.UserHandle;
-import android.os.UserManager;
 import android.test.AndroidTestCase;
 import android.test.MoreAsserts;
 import android.util.Log;
@@ -107,16 +106,17 @@ public class BindDeviceAdminServiceGoodSetupTest extends AndroidTestCase {
     }
 
     /**
-     * Make sure we cannot bind exported service.
+     * Make sure we cannot bind unprotected service.
      */
-    public void testCannotBind_exportedCrossUserService() throws Exception {
-        final Intent serviceIntent = new Intent(mContext, ExportedCrossUserService.class);
+    public void testCannotBind_unprotectedCrossUserService() throws Exception {
+        final Intent serviceIntent = new Intent(mContext, UnprotectedCrossUserService.class);
         for (UserHandle targetUser : mTargetUsers) {
             try {
                 bind(serviceIntent, EMPTY_SERVICE_CONNECTION, targetUser);
                 fail("SecurityException should be thrown for target user " + targetUser);
             } catch (SecurityException ex) {
-                MoreAsserts.assertContainsRegex("must be unexported", ex.getMessage());
+                MoreAsserts.assertContainsRegex(
+                        "must be protected by BIND_DEVICE_ADMIN", ex.getMessage());
             }
         }
     }
@@ -126,7 +126,7 @@ public class BindDeviceAdminServiceGoodSetupTest extends AndroidTestCase {
      */
     public void testCheckCannotBind_nonManagingPackage() throws Exception {
         final Intent serviceIntent = new Intent();
-        serviceIntent.setClassName(NON_MANAGING_PACKAGE, CrossUserService.class.getName());
+        serviceIntent.setClassName(NON_MANAGING_PACKAGE, ProtectedCrossUserService.class.getName());
         for (UserHandle targetUser : mTargetUsers) {
             try {
                 bind(serviceIntent, EMPTY_SERVICE_CONNECTION, targetUser);
@@ -142,7 +142,7 @@ public class BindDeviceAdminServiceGoodSetupTest extends AndroidTestCase {
      */
     public void testCannotBind_sameUser() throws Exception {
         try {
-            final Intent serviceIntent = new Intent(mContext, CrossUserService.class);
+            final Intent serviceIntent = new Intent(mContext, ProtectedCrossUserService.class);
             bind(serviceIntent, EMPTY_SERVICE_CONNECTION, Process.myUserHandle());
             fail("IllegalArgumentException should be thrown");
         } catch (IllegalArgumentException ex) {
@@ -199,7 +199,7 @@ public class BindDeviceAdminServiceGoodSetupTest extends AndroidTestCase {
                 Log.d(TAG, "onServiceDisconnected is called");
             }
         };
-        final Intent serviceIntent = new Intent(mContext, CrossUserService.class);
+        final Intent serviceIntent = new Intent(mContext, ProtectedCrossUserService.class);
         assertTrue(bind(serviceIntent, serviceConnection, targetUserHandle));
         IInterface service = queue.poll(5, TimeUnit.SECONDS);
         assertNotNull("binding to the target service timed out", service);

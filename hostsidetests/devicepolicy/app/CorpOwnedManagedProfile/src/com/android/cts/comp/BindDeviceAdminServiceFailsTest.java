@@ -66,7 +66,7 @@ public class BindDeviceAdminServiceFailsTest extends AndroidTestCase {
     private void checkCannotBind(String targetPackageName, UserHandle otherProfile) {
         try {
             final Intent serviceIntent = new Intent();
-            serviceIntent.setClassName(targetPackageName, CrossUserService.class.getName());
+            serviceIntent.setClassName(targetPackageName, ProtectedCrossUserService.class.getName());
             bind(serviceIntent, EMPTY_SERVICE_CONNECTION, otherProfile);
             fail("SecurityException should be thrown");
         } catch (SecurityException ex) {
