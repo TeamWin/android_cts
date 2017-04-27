@@ -78,6 +78,36 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
         executeDeviceTestMethod(".ScreenCaptureDisabledTest", "testScreenCapturePossible");
     }
 
+    public void testScreenCaptureDisabled_assist_allowedPrimaryUser() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        // disable screen capture in profile
+        executeDeviceTestMethod(".ScreenCaptureDisabledTest", "testSetScreenCaptureDisabled_true");
+        try {
+            // Install and enable assistant in personal side.
+            installAppAsUser(ASSIST_APP_APK, mParentUserId);
+            setVoiceInteractionService(ASSIST_INTERACTION_SERVICE);
+
+            // Start an activity in parent user.
+            installAppAsUser(DEVICE_ADMIN_APK, mParentUserId);
+            startSimpleActivityAsUser(mParentUserId);
+
+            // Verify assistant app can't take a screenshot.
+            runDeviceTestsAsUser(
+                    DEVICE_ADMIN_PKG,
+                    ".AssistScreenCaptureDisabledTest",
+                    "testScreenCapturePossible_assist",
+                    mPrimaryUserId);
+        } finally {
+            // enable screen capture in profile
+            executeDeviceTestMethod(
+                    ".ScreenCaptureDisabledTest",
+                    "testSetScreenCaptureDisabled_false");
+            clearVoiceInteractionService();
+        }
+    }
+
     @Override
     public void testDisallowSetWallpaper_allowed() throws Exception {
         // Managed profile doesn't have wallpaper.
