@@ -19,6 +19,7 @@ package android.preference2.cts;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.AdditionalMatchers.or;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
@@ -35,9 +36,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.preference.PreferenceDataStore;
 import android.preference.PreferenceManager;
@@ -147,6 +150,40 @@ public class PreferenceDataStoreTest {
         mScreen.addPreference(mPreference);
         mSharedPref.edit().remove(KEY).commit();
         assertEquals(TEST_DEFAULT_STR, mPreference.defaultValue);
+    }
+
+    /**
+     * Test that the initial value is taken from the data store (before the preference gets assigned
+     * to the preference hierarchy).
+     */
+    @Test
+    public void testInitialValueIsTakenFromDSOnPref() {
+        when(mDataStore.getBoolean(anyString(), anyBoolean())).thenReturn(true);
+
+        CheckBoxPreference pref = new CheckBoxPreference(mActivityRule.getActivity());
+        pref.setKey("CheckboxTestPref");
+        pref.setPreferenceDataStore(mDataStore);
+
+        mScreen.addPreference(pref);
+
+        assertTrue(pref.isChecked());
+    }
+
+    /**
+     * Test that the initial value is taken from the data store (before the preference gets assigned
+     * to the preference hierarchy).
+     */
+    @Test
+    public void testInitialValueIsTakenFromDSOnMgr() {
+        when(mDataStore.getBoolean(anyString(), anyBoolean())).thenReturn(true);
+        mManager.setPreferenceDataStore(mDataStore);
+
+        CheckBoxPreference pref = new CheckBoxPreference(mActivityRule.getActivity());
+        pref.setKey("CheckboxTestPref");
+
+        mScreen.addPreference(pref);
+
+        assertTrue(pref.isChecked());
     }
 
     @Test
