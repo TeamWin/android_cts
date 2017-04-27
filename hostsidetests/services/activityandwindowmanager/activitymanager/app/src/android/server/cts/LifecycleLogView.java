@@ -25,12 +25,6 @@ import android.view.View;
 public class LifecycleLogView extends View {
     private final String TAG = "LifecycleLogView";
 
-    /**
-     * Used to check if we report same configurations in View#onMovedToDisplay and
-     * View#onConfigurationChanged.
-     */
-    private Configuration mConfigFromMoveToDisplay;
-
     public LifecycleLogView(Context context) {
         super(context);
     }
@@ -52,22 +46,5 @@ public class LifecycleLogView extends View {
     protected void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         Log.i(TAG, "onConfigurationChanged");
-
-        // If there was a move to different display - check that we're reporting same config here.
-        if (mConfigFromMoveToDisplay != null) {
-            if (!mConfigFromMoveToDisplay.equals(newConfig)) {
-                throw new IllegalArgumentException(
-                        "Configuration reported in onConfigurationChanged() differs from one"
-                                + " reported in onMovedToDisplay()");
-            }
-            mConfigFromMoveToDisplay = null;
-        }
-    }
-
-    @Override
-    public void onMovedToDisplay(int displayId, Configuration config) {
-        super.onMovedToDisplay(displayId, config);
-        Log.i(TAG, "onMovedToDisplay");
-        mConfigFromMoveToDisplay = config;
     }
 }
