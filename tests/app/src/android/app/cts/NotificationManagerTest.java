@@ -359,7 +359,7 @@ public class NotificationManagerTest extends AndroidTestCase {
                         .setSmallIcon(R.drawable.black)
                         .setContentTitle("notify#" + id)
                         .setContentText("This is #" + id + "notification  ")
-                        .setTimeout(timeout)
+                        .setTimeoutAfter(timeout)
                         .build();
         mNotificationManager.notify(id, notification);
 
