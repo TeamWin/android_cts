@@ -41,7 +41,7 @@ import java.util.List;
 public final class EventProvider extends ContentProvider {
 
     private static final String TAG = EventProvider.class.getSimpleName();
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     private static final String DB_NAME = "database";
     private static final int DB_VERSION = 1;

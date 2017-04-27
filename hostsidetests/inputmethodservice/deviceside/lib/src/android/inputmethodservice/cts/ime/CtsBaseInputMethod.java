@@ -36,7 +36,7 @@ import java.util.function.Consumer;
 
 public abstract class CtsBaseInputMethod extends InputMethodService implements ImeCommandCallbacks {
 
-    protected static final boolean DEBUG = true;
+    protected static final boolean DEBUG = false;
 
     private final ImeCommandReceiver<CtsBaseInputMethod> mImeCommandReceiver =
             new ImeCommandReceiver<>();
