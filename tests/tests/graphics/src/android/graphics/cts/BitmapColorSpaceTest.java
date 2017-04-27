@@ -122,6 +122,18 @@ public class BitmapColorSpaceTest {
         assertSame(sRGB, cs);
     }
 
+    @Test
+    public void createDefaultColorSpace() {
+        ColorSpace sRGB = ColorSpace.get(ColorSpace.Named.SRGB);
+        Bitmap.Config[] configs = new Bitmap.Config[] {
+                Bitmap.Config.ALPHA_8, Bitmap.Config.RGB_565, Bitmap.Config.ARGB_8888
+        };
+        for (Bitmap.Config config : configs) {
+            Bitmap bitmap = Bitmap.createBitmap(32, 32, config, true);
+            assertSame(sRGB, bitmap.getColorSpace());
+        }
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void createWithoutColorSpace() {
         Bitmap.createBitmap(32, 32, Bitmap.Config.ARGB_8888, true, null);
