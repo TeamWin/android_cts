@@ -101,9 +101,9 @@ public class FragmentAnimatorTest {
     }
 
     // Ensure that showing and popping a Fragment uses the enter and popExit animators
-    // This tests optimized transactions
+    // This tests reordered transactions
     @Test
-    public void showAnimatorsOptimized() throws Throwable {
+    public void showAnimatorsReordered() throws Throwable {
         final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
 
         // One fragment with a view
@@ -133,9 +133,9 @@ public class FragmentAnimatorTest {
     }
 
     // Ensure that showing and popping a Fragment uses the enter and popExit animators
-    // This tests unoptimized transactions
+    // This tests ordered transactions
     @Test
-    public void showAnimatorsUnoptimized() throws Throwable {
+    public void showAnimatorsOrdered() throws Throwable {
         final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
 
         // One fragment with a view
@@ -143,7 +143,7 @@ public class FragmentAnimatorTest {
         fm.beginTransaction()
                 .add(R.id.fragmentContainer, fragment)
                 .hide(fragment)
-                .setAllowOptimization(false)
+                .setReorderingAllowed(false)
                 .commit();
         FragmentTestUtil.waitForExecution(mActivityRule);
 
@@ -154,7 +154,7 @@ public class FragmentAnimatorTest {
         fm.beginTransaction()
                 .setCustomAnimations(ENTER, EXIT, POP_ENTER, POP_EXIT)
                 .show(fragment)
-                .setAllowOptimization(false)
+                .setReorderingAllowed(false)
                 .addToBackStack(null)
                 .commit();
         FragmentTestUtil.waitForExecution(mActivityRule);

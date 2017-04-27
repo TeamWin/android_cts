@@ -23,9 +23,7 @@ import static org.junit.Assert.fail;
 
 import android.app.Fragment;
 import android.app.FragmentManager;
-import android.app.Instrumentation;
 import android.os.Bundle;
-import android.os.Debug;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
@@ -34,7 +32,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -930,11 +927,11 @@ public class FragmentViewTests {
         FragmentTestUtil.assertChildren(container, fragment3);
     }
 
-    // Ensure that non-optimized transactions are executed individually rather than together.
+    // Ensure that ordered transactions are executed individually rather than together.
     // This forces references from one fragment to another that should be executed earlier
     // to work.
     @Test
-    public void nonOptimizeTogether() throws Throwable {
+    public void orderedOperationsTogether() throws Throwable {
         FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
         ViewGroup container = (ViewGroup)
                 mActivityRule.getActivity().findViewById(R.id.fragmentContainer);
@@ -950,12 +947,12 @@ public class FragmentViewTests {
             public void run() {
                 fm.beginTransaction()
                         .add(R.id.fragmentContainer, fragment1)
-                        .setAllowOptimization(false)
+                        .setReorderingAllowed(false)
                         .addToBackStack(null)
                         .commit();
                 fm.beginTransaction()
                         .add(R.id.squareContainer, fragment2)
-                        .setAllowOptimization(false)
+                        .setReorderingAllowed(false)
                         .addToBackStack(null)
                         .commit();
                 fm.executePendingTransactions();
@@ -992,7 +989,7 @@ public class FragmentViewTests {
         FragmentTestUtil.assertChildren(innerContainer, fragment2);
     }
 
-    // Popping the backstack with non-optimized fragments should execute the operations together.
+    // Popping the backstack with ordered fragments should execute the operations together.
     // When a non-backstack fragment will be raised, it should not be destroyed.
     @Test
     public void popToNonBackStackFragment() throws Throwable {
