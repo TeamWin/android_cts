@@ -35,6 +35,10 @@ import org.junit.runner.RunWith;
 public class LightingColorFilterTest {
     private static final int TOLERANCE = 2;
 
+    private void verifyColor(int expected, int actual) {
+        ColorUtils.verifyColor(expected, actual, TOLERANCE);
+    }
+
     @Test
     public void testLightingColorFilter() {
         Bitmap bitmap = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
@@ -86,7 +90,22 @@ public class LightingColorFilterTest {
         verifyColor(Color.argb(0x80, 30, 30, 30), bitmap.getPixel(0, 0));
     }
 
-    private void verifyColor(int expected, int actual) {
-        ColorUtils.verifyColor(expected, actual, TOLERANCE);
+    @Test
+    public void testGetColorAdd() {
+        LightingColorFilter filter = new LightingColorFilter(Color.WHITE, Color.BLACK);
+        ColorUtils.verifyColor(Color.BLACK, filter.getColorAdd());
+
+        filter = new LightingColorFilter(0x87654321, 0x12345678);
+        ColorUtils.verifyColor(0x12345678, filter.getColorAdd());
+    }
+
+
+    @Test
+    public void testGetColorMultiply() {
+        LightingColorFilter filter = new LightingColorFilter(Color.WHITE, Color.BLACK);
+        ColorUtils.verifyColor(Color.WHITE, filter.getColorMultiply());
+
+        filter = new LightingColorFilter(0x87654321, 0x12345678);
+        ColorUtils.verifyColor(0x87654321, filter.getColorMultiply());
     }
 }
