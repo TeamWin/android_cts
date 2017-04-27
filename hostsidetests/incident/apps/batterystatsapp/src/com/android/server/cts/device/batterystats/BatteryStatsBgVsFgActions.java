@@ -203,25 +203,35 @@ public class BatteryStatsBgVsFgActions {
     }
 
     private static void doWifiDownload(Context ctx, String requestCode) {
+        CountDownLatch latch = new CountDownLatch(1);
+
         new AsyncTask<Void, Void, Void>() {
             @Override
             protected Void doInBackground(Void... params) {
                 BatteryStatsWifiTransferTests.download(requestCode);
-                tellHostActionFinished(ACTION_WIFI_DOWNLOAD, requestCode);
+                latch.countDown();
                 return null;
             }
         }.execute();
+
+        waitForReceiver(null, 60_000, latch, null);
+        tellHostActionFinished(ACTION_WIFI_DOWNLOAD, requestCode);
     }
 
     private static void doWifiUpload(Context ctx, String requestCode) {
+        CountDownLatch latch = new CountDownLatch(1);
+
         new AsyncTask<Void, Void, Void>() {
             @Override
             protected Void doInBackground(Void... params) {
                 BatteryStatsWifiTransferTests.upload();
-                tellHostActionFinished(ACTION_WIFI_UPLOAD, requestCode);
+                latch.countDown();
                 return null;
             }
         }.execute();
+
+        waitForReceiver(null, 60_000, latch, null);
+        tellHostActionFinished(ACTION_WIFI_UPLOAD, requestCode);
     }
 
     /** Register receiver to determine when given action is complete. */
