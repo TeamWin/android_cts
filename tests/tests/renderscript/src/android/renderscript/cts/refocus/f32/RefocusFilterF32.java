@@ -56,6 +56,11 @@ public class RefocusFilterF32 extends
     super(rs);
   }
 
+  public void destroy() {
+    buffers.destroy();
+    scriptC.destroy();
+  }
+
   @Override
   protected void initializeScriptAndBuffers(Bitmap inputImage,
       LayerInfo focalLayer) {
@@ -96,6 +101,7 @@ public class RefocusFilterF32 extends
     scriptC.forEach_PackSharpImage(mAllocation);
 
     mAllocation.copyTo(mBitmap);
+    mAllocation.destroy();
     MediaStoreSaver.savePNG(mBitmap, "sharpF32", name, renderScript.getApplicationContext());
     mAllocation.destroy();
   }
@@ -110,6 +116,7 @@ public class RefocusFilterF32 extends
     scriptC.forEach_PackFuzzyImage(mAllocation);
 
     mAllocation.copyTo(mBitmap);
+    mAllocation.destroy();
     MediaStoreSaver.savePNG(mBitmap, "fuzzyF32", name, renderScript.getApplicationContext());
     mAllocation.destroy();
   }
