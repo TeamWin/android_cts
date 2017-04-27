@@ -22,6 +22,7 @@ import static com.android.cts.storageapp.Utils.CACHE_INT;
 import static com.android.cts.storageapp.Utils.DATA_EXT;
 import static com.android.cts.storageapp.Utils.DATA_INT;
 import static com.android.cts.storageapp.Utils.MB_IN_BYTES;
+import static com.android.cts.storageapp.Utils.PKG_B;
 import static com.android.cts.storageapp.Utils.TAG;
 import static com.android.cts.storageapp.Utils.assertMostlyEquals;
 import static com.android.cts.storageapp.Utils.getSizeManual;
@@ -29,11 +30,15 @@ import static com.android.cts.storageapp.Utils.makeUniqueFile;
 import static com.android.cts.storageapp.Utils.shouldHaveQuota;
 import static com.android.cts.storageapp.Utils.useSpace;
 
+import android.app.usage.StorageStats;
+import android.app.usage.StorageStatsManager;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
+import android.os.UserHandle;
 import android.os.storage.StorageManager;
 import android.system.Os;
 import android.test.InstrumentationTestCase;
@@ -47,7 +52,6 @@ import java.util.UUID;
  * Client app for verifying storage behaviors.
  */
 public class StorageTest extends InstrumentationTestCase {
-
     private Context getContext() {
         return getInstrumentation().getContext();
     }
@@ -85,6 +89,7 @@ public class StorageTest extends InstrumentationTestCase {
      */
     public void testVerifySpaceApi() throws Exception {
         final StorageManager sm = getContext().getSystemService(StorageManager.class);
+        final StorageStatsManager stats = getContext().getSystemService(StorageStatsManager.class);
 
         final long cacheSize = sm.getCacheSizeBytes(
                 sm.getUuidForPath(getContext().getCacheDir()));
@@ -95,6 +100,40 @@ public class StorageTest extends InstrumentationTestCase {
         } else {
             assertMostlyEquals(CACHE_INT, cacheSize);
             assertMostlyEquals(CACHE_EXT, extCacheSize);
+        }
+
+        // Verify APIs that don't require any special permissions
+        assertTrue(stats.getTotalBytes(StorageManager.UUID_DEFAULT) >= Environment
+                .getDataDirectory().getTotalSpace());
+        assertTrue(stats.getFreeBytes(StorageManager.UUID_DEFAULT) >= Environment
+                .getDataDirectory().getUsableSpace());
+
+        // Verify that we can see our own stats, and that they look sane
+        ApplicationInfo ai = getContext().getApplicationInfo();
+        final StorageStats pstats = stats.queryStatsForPackage(ai.storageUuid, ai.packageName,
+                UserHandle.getUserHandleForUid(ai.uid));
+        final StorageStats ustats = stats.queryStatsForUid(ai.storageUuid, ai.uid);
+        assertEquals(cacheSize, pstats.getCacheBytes());
+        assertEquals(cacheSize, ustats.getCacheBytes());
+
+        // Verify that other packages are off-limits
+        ai = getContext().getPackageManager().getApplicationInfo(PKG_B, 0);
+        try {
+            stats.queryStatsForPackage(ai.storageUuid, ai.packageName,
+                    UserHandle.getUserHandleForUid(ai.uid));
+            fail("Unexpected access");
+        } catch (SecurityException expected) {
+        }
+        try {
+            stats.queryStatsForUid(ai.storageUuid, ai.uid);
+            fail("Unexpected access");
+        } catch (SecurityException expected) {
+        }
+        try {
+            stats.queryExternalStatsForUser(StorageManager.UUID_DEFAULT,
+                    android.os.Process.myUserHandle());
+            fail("Unexpected access");
+        } catch (SecurityException expected) {
         }
     }
 
@@ -116,19 +155,19 @@ public class StorageTest extends InstrumentationTestCase {
         final UUID extUuid = sm.getUuidForPath(extDir);
 
         assertTrue("Apps must be able to allocate internal space",
-                sm.getAllocatableBytes(filesUuid, 0) > 10 * MB_IN_BYTES);
+                sm.getAllocatableBytes(filesUuid) > 10 * MB_IN_BYTES);
         assertTrue("Apps must be able to allocate external space",
-                sm.getAllocatableBytes(extUuid, 0) > 10 * MB_IN_BYTES);
+                sm.getAllocatableBytes(extUuid) > 10 * MB_IN_BYTES);
 
         // Should always be able to allocate 1MB indirectly
-        sm.allocateBytes(filesUuid, 1 * MB_IN_BYTES, 0);
+        sm.allocateBytes(filesUuid, 1 * MB_IN_BYTES);
 
         // Should always be able to allocate 1MB directly
         final File filesFile = makeUniqueFile(filesDir);
         assertEquals(0L, filesFile.length());
         try (ParcelFileDescriptor pfd = ParcelFileDescriptor.open(filesFile,
                 ParcelFileDescriptor.parseMode("rwt"))) {
-            sm.allocateBytes(pfd.getFileDescriptor(), 1 * MB_IN_BYTES, 0);
+            sm.allocateBytes(pfd.getFileDescriptor(), 1 * MB_IN_BYTES);
         }
         assertEquals(1 * MB_IN_BYTES, filesFile.length());
     }
