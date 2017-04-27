@@ -15,12 +15,16 @@
  */
 package android.app.cts;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
-import android.app.ActivityManager;
+import android.app.Activity;
+import android.app.Instrumentation;
 import android.support.test.filters.SmallTest;
+import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -32,9 +36,20 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class PictureInPictureActionsTest {
 
+    private Activity mActivity;
+
+    @Rule
+    public ActivityTestRule<PictureInPictureActivity> mActivityRule =
+            new ActivityTestRule<>(PictureInPictureActivity.class);
+
+    @Before
+    public void setup() {
+        mActivity = mActivityRule.getActivity();
+    }
+
     @Test
     public void testNumPictureInPictureActions() throws Exception {
-        // Currently enforce that there are a max of three actions
-        assertEquals(ActivityManager.getMaxNumPictureInPictureActions(), 3);
+        // Currently enforce that there are at least 3 actions
+        assertTrue(mActivity.getMaxNumPictureInPictureActions() >= 3);
     }
 }

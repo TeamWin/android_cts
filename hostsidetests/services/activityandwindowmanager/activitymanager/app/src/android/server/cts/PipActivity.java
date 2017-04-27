@@ -21,8 +21,8 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
 import android.app.Activity;
 import android.app.ActivityOptions;
+import android.app.PictureInPictureParams;
 import android.content.BroadcastReceiver;
-import android.app.PictureInPictureArgs;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -32,6 +32,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.util.Log;
+import android.util.Rational;
 import android.view.WindowManager;
 
 public class PipActivity extends AbstractLifecycleLogActivity {
@@ -58,12 +59,23 @@ public class PipActivity extends AbstractLifecycleLogActivity {
     // Calls enterPictureInPicture() on creation
     private static final String EXTRA_ENTER_PIP = "enter_pip";
     // Used with EXTRA_AUTO_ENTER_PIP, value specifies the aspect ratio to enter PIP with
-    private static final String EXTRA_ENTER_PIP_ASPECT_RATIO = "enter_pip_aspect_ratio";
+    private static final String EXTRA_ENTER_PIP_ASPECT_RATIO_NUMERATOR =
+            "enter_pip_aspect_ratio_numerator";
+    // Used with EXTRA_AUTO_ENTER_PIP, value specifies the aspect ratio to enter PIP with
+    private static final String EXTRA_ENTER_PIP_ASPECT_RATIO_DENOMINATOR =
+            "enter_pip_aspect_ratio_denominator";
     // Calls setPictureInPictureAspectRatio with the aspect ratio specified in the value
-    private static final String EXTRA_SET_ASPECT_RATIO = "set_aspect_ratio";
+    private static final String EXTRA_SET_ASPECT_RATIO_NUMERATOR = "set_aspect_ratio_numerator";
+    // Calls setPictureInPictureAspectRatio with the aspect ratio specified in the value
+    private static final String EXTRA_SET_ASPECT_RATIO_DENOMINATOR = "set_aspect_ratio_denominator";
     // Calls setPictureInPictureAspectRatio with the aspect ratio specified in the value with a
     // fixed delay
-    private static final String EXTRA_SET_ASPECT_RATIO_WITH_DELAY = "set_aspect_ratio_with_delay";
+    private static final String EXTRA_SET_ASPECT_RATIO_WITH_DELAY_NUMERATOR =
+            "set_aspect_ratio_with_delay_numerator";
+    // Calls setPictureInPictureAspectRatio with the aspect ratio specified in the value with a
+    // fixed delay
+    private static final String EXTRA_SET_ASPECT_RATIO_WITH_DELAY_DENOMINATOR =
+            "set_aspect_ratio_with_delay_denominator";
     // Adds a click listener to finish this activity when it is clicked
     private static final String EXTRA_TAP_TO_FINISH = "tap_to_finish";
     // Calls requestAutoEnterPictureInPicture() with the value provided
@@ -102,14 +114,17 @@ public class PipActivity extends AbstractLifecycleLogActivity {
                         startIntent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                         startActivity(startIntent);
 
-                        if (intent.hasExtra(EXTRA_SET_ASPECT_RATIO_WITH_DELAY)) {
+                        if (intent.hasExtra(EXTRA_SET_ASPECT_RATIO_WITH_DELAY_NUMERATOR)
+                                && intent.hasExtra(EXTRA_SET_ASPECT_RATIO_WITH_DELAY_DENOMINATOR)) {
                             // Ugly, but required to wait for the startActivity to actually start
                             // the activity...
                             mHandler.postDelayed(() -> {
-                                PictureInPictureArgs args = new PictureInPictureArgs();
-                                args.setAspectRatio(Float.valueOf(intent.getStringExtra(
-                                        EXTRA_SET_ASPECT_RATIO_WITH_DELAY)));
-                                setPictureInPictureArgs(args);
+                                final PictureInPictureParams.Builder builder =
+                                        new PictureInPictureParams.Builder();
+                                builder.setAspectRatio(getAspectRatio(intent,
+                                        EXTRA_SET_ASPECT_RATIO_WITH_DELAY_NUMERATOR,
+                                        EXTRA_SET_ASPECT_RATIO_WITH_DELAY_DENOMINATOR));
+                                setPictureInPictureParams(builder.build());
                             }, 100);
                         }
                         break;
@@ -142,26 +157,33 @@ public class PipActivity extends AbstractLifecycleLogActivity {
 
         // Enter picture in picture with the given aspect ratio if provided
         if (getIntent().hasExtra(EXTRA_ENTER_PIP)) {
-            if (getIntent().hasExtra(EXTRA_ENTER_PIP_ASPECT_RATIO)) {
+            if (getIntent().hasExtra(EXTRA_ENTER_PIP_ASPECT_RATIO_NUMERATOR)
+                    && getIntent().hasExtra(EXTRA_ENTER_PIP_ASPECT_RATIO_DENOMINATOR)) {
                 try {
-                    final float aspectRatio = Float.valueOf(getIntent().getStringExtra(
-                            EXTRA_ENTER_PIP_ASPECT_RATIO));
-                    enterPictureInPictureMode(new PictureInPictureArgs(aspectRatio, null));
+                    final PictureInPictureParams.Builder builder =
+                            new PictureInPictureParams.Builder();
+                    builder.setAspectRatio(getAspectRatio(getIntent(),
+                            EXTRA_ENTER_PIP_ASPECT_RATIO_NUMERATOR,
+                            EXTRA_ENTER_PIP_ASPECT_RATIO_DENOMINATOR));
+                    enterPictureInPictureMode(builder.build());
                 } catch (Exception e) {
                     // This call can fail intentionally if the aspect ratio is too extreme
                 }
             } else {
-                enterPictureInPictureMode();
+                enterPictureInPictureMode(new PictureInPictureParams.Builder().build());
             }
         }
 
         // We need to wait for either enterPictureInPicture() or requestAutoEnterPictureInPicture()
         // to be called before setting the aspect ratio
-        if (getIntent().hasExtra(EXTRA_SET_ASPECT_RATIO)) {
-            final float aspectRatio = Float.valueOf(getIntent().getStringExtra(
-                    EXTRA_SET_ASPECT_RATIO));
+        if (getIntent().hasExtra(EXTRA_SET_ASPECT_RATIO_NUMERATOR)
+                && getIntent().hasExtra(EXTRA_SET_ASPECT_RATIO_DENOMINATOR)) {
+            final PictureInPictureParams.Builder builder =
+                    new PictureInPictureParams.Builder();
+            builder.setAspectRatio(getAspectRatio(getIntent(),
+                    EXTRA_SET_ASPECT_RATIO_NUMERATOR, EXTRA_SET_ASPECT_RATIO_DENOMINATOR));
             try {
-                setPictureInPictureArgs(new PictureInPictureArgs(aspectRatio, null));
+                setPictureInPictureParams(builder.build());
             } catch (Exception e) {
                 // This call can fail intentionally if the aspect ratio is too extreme
             }
@@ -214,7 +236,7 @@ public class PipActivity extends AbstractLifecycleLogActivity {
 
         // Enter PIP on move to background
         if (getIntent().hasExtra(EXTRA_ENTER_PIP_ON_PAUSE)) {
-            enterPictureInPictureMode();
+            enterPictureInPictureMode(new PictureInPictureParams.Builder().build());
         }
     }
 
@@ -223,7 +245,7 @@ public class PipActivity extends AbstractLifecycleLogActivity {
         super.onStop();
 
         if (getIntent().hasExtra(EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP) && !mEnteredPictureInPicture) {
-            Log.w("PipActivity", "Unexpected onStop() called before entering picture-in-picture");
+            Log.w(TAG, "Unexpected onStop() called before entering picture-in-picture");
             finish();
         }
     }
@@ -239,6 +261,13 @@ public class PipActivity extends AbstractLifecycleLogActivity {
     public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode);
 
+        // Fail early if the activity state does not match the dispatched state
+        if (isInPictureInPictureMode() != isInPictureInPictureMode) {
+            Log.w(TAG, "Received onPictureInPictureModeChanged mode=" + isInPictureInPictureMode
+                    + " activityState=" + isInPictureInPictureMode());
+            finish();
+        }
+
         // Mark that we've entered picture-in-picture so that we can stop checking for
         // EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP
         if (isInPictureInPictureMode) {
@@ -250,7 +279,7 @@ public class PipActivity extends AbstractLifecycleLogActivity {
             // checking that the stacks ever changed). Therefor, we need to delay here slightly to
             // allow the tests to verify that the stacks have changed before re-entering.
             mHandler.postDelayed(() -> {
-                enterPictureInPictureMode();
+                enterPictureInPictureMode(new PictureInPictureParams.Builder().build());
             }, 1000);
         }
     }
@@ -283,5 +312,14 @@ public class PipActivity extends AbstractLifecycleLogActivity {
     @Override
     protected String getTag() {
         return TAG;
+    }
+
+    /**
+     * @return a {@link Rational} aspect ratio from the given intent and extras.
+     */
+    private Rational getAspectRatio(Intent intent, String extraNum, String extraDenom) {
+        return new Rational(
+                Integer.valueOf(intent.getStringExtra(extraNum)),
+                Integer.valueOf(intent.getStringExtra(extraDenom)));
     }
 }
