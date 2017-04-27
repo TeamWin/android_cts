@@ -19,6 +19,7 @@ package android.graphics.drawable.cts;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.Resources.Theme;
 import android.content.res.XmlResourceParser;
@@ -32,6 +33,7 @@ import android.graphics.PorterDuffColorFilter;
 import android.graphics.cts.R;
 import android.graphics.drawable.Drawable.ConstantState;
 import android.graphics.drawable.VectorDrawable;
+import android.support.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -170,9 +172,9 @@ public class VectorDrawableTest {
                     R.drawable.vector_icon_state_list_2_golden
             },
             {
-                    R.drawable.vector_icon_state_list_golden_pressed,
-                    R.drawable.vector_icon_state_list_golden_pressed,
-                    R.drawable.vector_icon_state_list_2_golden_pressed
+                    R.drawable.vector_icon_state_list_pressed_golden,
+                    R.drawable.vector_icon_state_list_pressed_golden,
+                    R.drawable.vector_icon_state_list_2_pressed_golden
             }
     };
 
@@ -189,6 +191,7 @@ public class VectorDrawableTest {
     private Resources mResources;
     private Bitmap mBitmap;
     private Canvas mCanvas;
+    private Context mContext;
 
     @Before
     public void setup() {
@@ -197,7 +200,8 @@ public class VectorDrawableTest {
 
         mBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         mCanvas = new Canvas(mBitmap);
-        mResources = InstrumentationRegistry.getTargetContext().getResources();
+        mContext = InstrumentationRegistry.getTargetContext();
+        mResources = mContext.getResources();
     }
 
     @Test
@@ -234,7 +238,6 @@ public class VectorDrawableTest {
             VectorDrawable vectorDrawable = new VectorDrawable();
             vectorDrawable.setBounds(0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
 
-
             // Setup VectorDrawable from xml file and draw into the bitmap.
             XmlPullParser parser = mResources.getXml(resIds[i]);
             AttributeSet attrs = Xml.asAttributeSet(parser);
@@ -261,7 +264,9 @@ public class VectorDrawableTest {
             vectorDrawable.draw(mCanvas);
 
             if (DBG_DUMP_PNG) {
-                saveVectorDrawableIntoPNG(mBitmap, resIds, i, stateSet);
+                String stateSetTitle = getTitleForStateSet(stateSet);
+                DrawableTestUtils.saveAutoNamedVectorDrawableIntoPNG(mContext, mBitmap, resIds[i],
+                        stateSetTitle);
             } else {
                 // Start to compare
                 Bitmap golden = BitmapFactory.decodeResource(mResources, goldenImages[i]);
@@ -274,59 +279,23 @@ public class VectorDrawableTest {
         }
     }
 
-    // This is only for debugging or golden image (re)generation purpose.
-    private void saveVectorDrawableIntoPNG(Bitmap bitmap, int[] resIds, int index, int[] stateSet)
-            throws IOException {
-        // Save the image to the disk.
-        FileOutputStream out = null;
-        try {
-            String outputFolder = "/sdcard/temp/";
-            File folder = new File(outputFolder);
-            if (!folder.exists()) {
-                folder.mkdir();
-            }
-            String originalFilePath = mResources.getString(resIds[index]);
-            File originalFile = new File(originalFilePath);
-            String fileFullName = originalFile.getName();
-            String fileTitle = fileFullName.substring(0, fileFullName.lastIndexOf("."));
-            String stateSetTitle = getTitleForStateSet(stateSet);
-            String outputFilename = outputFolder + fileTitle + "_golden" + stateSetTitle + ".png";
-            File outputFile = new File(outputFilename);
-            if (!outputFile.exists()) {
-                outputFile.createNewFile();
-            }
-
-            out = new FileOutputStream(outputFile, false);
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
-            Log.v(LOGTAG, "Write test No." + index + " to file successfully.");
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (out != null) {
-                out.close();
-            }
-        }
-    }
-
     /**
      * Generates an underline-delimited list of states in a given state set.
      * <p>
      * For example, the array {@code {R.attr.state_pressed}} would return
-     * {@code "_pressed"}.
+     * {@code "pressed"}.
      *
      * @param stateSet a state set
-     * @return a string representing the state set, or the empty string if the
-     *         state set is empty or {@code null}
+     * @return a string representing the state set, or {@code null} if the state set is empty or
+     * {@code null}
      */
-    private String getTitleForStateSet(int[] stateSet) {
+    private @Nullable String getTitleForStateSet(int[] stateSet) {
         if (stateSet == null || stateSet.length == 0) {
-            return "";
+            return null;
         }
 
         final StringBuilder builder = new StringBuilder();
         for (int i = 0; i < stateSet.length; i++) {
-            builder.append('_');
-
             final String state = mResources.getResourceName(stateSet[i]);
             final int stateIndex = state.indexOf("state_");
             if (stateIndex >= 0) {
