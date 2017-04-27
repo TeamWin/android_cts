@@ -152,14 +152,6 @@
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
                   android:exported="true"
         />
-        <activity android:name=".LaunchImeWithPipActivity"
-                  android:resizeableActivity="false"
-                  android:supportsPictureInPicture="true"
-                  androidprv:alwaysFocusable="true"
-                  android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
-                  android:exported="true"
-                  android:windowSoftInputMode="stateAlwaysVisible"
-        />
         <activity android:name=".FreeformActivity"
                   android:resizeableActivity="true"
                   android:taskAffinity="nobody.but.FreeformActivity"

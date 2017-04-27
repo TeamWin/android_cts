@@ -45,7 +45,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     private static final String ALWAYS_FOCUSABLE_PIP_ACTIVITY = "AlwaysFocusablePipActivity";
     private static final String LAUNCH_INTO_PINNED_STACK_PIP_ACTIVITY =
             "LaunchIntoPinnedStackPipActivity";
-    private static final String LAUNCH_IME_WITH_PIP_ACTIVITY = "LaunchImeWithPipActivity";
     private static final String LAUNCH_ENTER_PIP_ACTIVITY = "LaunchEnterPipActivity";
     private static final String PIP_ON_STOP_ACTIVITY = "PipOnStopActivity";
 
@@ -243,24 +242,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         setDeviceRotation(ROTATION_270);
         assertPinnedStackActivityIsInDisplayBounds(PIP_ACTIVITY);
         setDeviceRotation(ROTATION_0);
-    }
-
-    public void testPinnedStackOffsetForIME() throws Exception {
-        if (!supportsPip()) return;
-
-        // Launch an activity which shows an IME
-        launchActivity(LAUNCH_IME_WITH_PIP_ACTIVITY);
-        mAmWmState.waitForValidState(mDevice, PIP_ACTIVITY, PINNED_STACK_ID);
-
-        setDeviceRotation(0 /* ROTATION_0 */);
-        assertPinnedStackDoesNotIntersectIME();
-        setDeviceRotation(1 /* ROTATION_90 */);
-        assertPinnedStackDoesNotIntersectIME();
-        setDeviceRotation(2 /* ROTATION_180 */);
-        assertPinnedStackDoesNotIntersectIME();
-        setDeviceRotation(3 /* ROTATION_270 */);
-        assertPinnedStackDoesNotIntersectIME();
-        setDeviceRotation(0 /* ROTATION_0 */);
     }
 
     public void testEnterPipToOtherOrientation() throws Exception {
