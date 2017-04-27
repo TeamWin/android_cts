@@ -27,7 +27,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.ParcelFileDescriptor;
 import android.provider.Settings;
-
+import com.google.android.collect.Lists;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -87,44 +87,77 @@ public class Utils {
 
     protected static void toggleNotificationPolicyAccess(String packageName,
             Instrumentation instrumentation, boolean on) throws IOException {
-        Context context = instrumentation.getContext();
+
+        // Read the setting listing the package allowed to manage notification policy configuration
+        String alreadyEnabledServices = querryNotificationPolicyAccessPakages(instrumentation);
+
+        // The property is a list of : separated package
+        List<String> enabledServices = Lists.newArrayList(alreadyEnabledServices.split(":"));
+
+        // Actually add or remove the package from the list
+        if (on) {
+            // Only add the package if it is not already in the list
+            if (!enabledServices.contains(packageName)) {
+                enabledServices.add(packageName);
+                setNotificationPolicyAccessPackages(enabledServices, instrumentation);
+            }
+        } else {
+            // Remove all instance of the package in the list
+            if (enabledServices.removeIf(packageName::equals)) {
+                // Only update the settings if there was a change
+                setNotificationPolicyAccessPackages(enabledServices, instrumentation);
+            }
+        }
+    }
+
+    /** Read the setting listing the package allowed to manage notification policy configuration */
+    private static String querryNotificationPolicyAccessPakages(Instrumentation instrumentation) {
+        ContentResolver cr = instrumentation.getContext().getContentResolver();
+        String enabledService = Settings.Secure.getString(
+                cr,Settings.Secure.ENABLED_NOTIFICATION_POLICY_ACCESS_PACKAGES);
+
+        // A non existing property is equivalent to no package listed
+        if (enabledService == null) {
+            enabledService = "";
+        }
+        return enabledService;
+    }
+
+    private static void setNotificationPolicyAccessPackages(final List<String> enabledServicesList,
+            final Instrumentation instrumentation) throws IOException {
+        // Format the list back to a string
+        String enabledServices = String.join(":", enabledServicesList);
+
+        // If the list is empty, remove the property by setting it to null
+        String enabledServicesStrOrNull = enabledServices.isEmpty() ? "null" : enabledServices;
+
+        // Write back the property to the settings database
+        String command = "settings --user cur put secure "
+                + Settings.Secure.ENABLED_NOTIFICATION_POLICY_ACCESS_PACKAGES + "  "
+                + enabledServicesStrOrNull;
 
         // Get permission to enable accessibility
         UiAutomation uiAutomation = instrumentation.getUiAutomation();
 
-        ContentResolver cr = context.getContentResolver();
-        String alreadyEnabledServices = Settings.Secure.getString(
-                cr, Settings.Secure.ENABLED_NOTIFICATION_POLICY_ACCESS_PACKAGES);
-        ParcelFileDescriptor fd = null;
-        if (on) {
-            if ((alreadyEnabledServices == null) || !alreadyEnabledServices.contains(packageName)) {
-                // Change the settings to enable the media cts package
-                final String newEnabledServices = (alreadyEnabledServices == null) ? packageName
-                        : alreadyEnabledServices + ":" + packageName;
-                fd = uiAutomation.executeShellCommand(
-                        "settings --user cur put secure "
-                                + Settings.Secure.ENABLED_NOTIFICATION_POLICY_ACCESS_PACKAGES + " "
-                                + newEnabledServices);
+        // Execute command
+        try (ParcelFileDescriptor fd = uiAutomation.executeShellCommand(command)) {
+            Assert.assertNotNull("Failed to execute shell command: " + command, fd);
+            // Wait for the command to finish by reading until EOF
+            try (InputStream in = new FileInputStream(fd.getFileDescriptor())) {
+                byte[] buffer = new byte[4096];
+                while (in.read(buffer) > 0) {}
+            } catch (IOException e) {
+                throw new IOException("Could not read stdout of command: " + command, e);
             }
-        } else if (alreadyEnabledServices != null) {
-            int index =  alreadyEnabledServices.indexOf(":" + packageName);
-            if (index >= 0) {
-                fd = uiAutomation.executeShellCommand(
-                        "settings --user cur put secure "
-                                + Settings.Secure.ENABLED_NOTIFICATION_POLICY_ACCESS_PACKAGES + " "
-                                + alreadyEnabledServices.substring(0, index));
-            } else if (alreadyEnabledServices.equals(packageName)) {
-                // "packageName" is the only enabled service
-                fd = uiAutomation.executeShellCommand("settings --user cur put secure "
-                        + Settings.Secure.ENABLED_NOTIFICATION_POLICY_ACCESS_PACKAGES + "  null");
-            }
+        } finally {
+            uiAutomation.destroy();
         }
-        if (fd != null) {
-            InputStream in = new FileInputStream(fd.getFileDescriptor());
-            byte[] buffer = new byte[4096];
-            while (in.read(buffer) > 0) ;
-        }
-        uiAutomation.destroy();
+
+        // Read the settings again to make sure it is updated
+        String nowEnabledServices = querryNotificationPolicyAccessPakages(instrumentation);
+        Assert.assertEquals("Wrote setting should be the same as the read one",
+                enabledServices, nowEnabledServices);
+
     }
 
     /**
