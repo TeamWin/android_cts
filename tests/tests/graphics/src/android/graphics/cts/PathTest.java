@@ -16,6 +16,11 @@
 
 package android.graphics.cts;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -25,10 +30,9 @@ import android.graphics.Path;
 import android.graphics.RectF;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import static org.junit.Assert.*;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -438,6 +442,41 @@ public class PathTest {
         RectF offsettedRect = new RectF();
         path.computeBounds(offsettedRect, false);
         assertEquals(expectedRect, offsettedRect);
+    }
+
+    @Test
+    public void testApproximate_rect_cw() {
+        Path path = new Path();
+        path.addRect(0, 0, 100, 100, Path.Direction.CW);
+        assertArrayEquals(new float[] {
+                0, 0, 0,
+                0.25f, 100, 0,
+                0.50f, 100, 100,
+                0.75f, 0, 100,
+                1, 0, 0,
+        }, path.approximate(1f), 0);
+    }
+
+    @Test
+    public void testApproximate_rect_ccw() {
+        Path path = new Path();
+        path.addRect(0, 0, 100, 100, Path.Direction.CCW);
+        assertArrayEquals(new float[] {
+                0, 0, 0,
+                0.25f, 0, 100,
+                0.50f, 100, 100,
+                0.75f, 100, 0,
+                1, 0, 0,
+        }, path.approximate(1f), 0);
+    }
+
+    @Test
+    public void testApproximate_empty() {
+        Path path = new Path();
+        assertArrayEquals(new float[] {
+                0, 0, 0,
+                1, 0, 0,
+        }, path.approximate(0.5f), 0);
     }
 
     private static void verifyPathsAreEquivalent(Path actual, Path expected) {
