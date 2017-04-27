@@ -134,8 +134,8 @@
                         <xsl:for-each select="Result/Module">
                             <tr>
                                 <td>
-                                    <xsl:variable name="href"><xsl:value-of select="@name"/> - <xsl:value-of select="@abi"/></xsl:variable>
-                                    <a href="#{$href}"><xsl:value-of select="@name"/> - <xsl:value-of select="@abi"/></a>
+                                    <xsl:variable name="href"><xsl:value-of select="@abi"/>&#xA0;<xsl:value-of select="@name"/></xsl:variable>
+                                    <a href="#{$href}"><xsl:value-of select="@abi"/>&#xA0;<xsl:value-of select="@name"/></a>
                                 </td>
                                 <td>
                                     <xsl:value-of select="count(TestCase/Test[@result = 'pass'])"/>
@@ -193,8 +193,8 @@
                     <table class="testdetails">
                         <tr>
                             <td class="module" colspan="3">
-                                <xsl:variable name="href"><xsl:value-of select="@name"/> - <xsl:value-of select="@abi"/></xsl:variable>
-                                <a name="{$href}"><xsl:value-of select="@name"/> - <xsl:value-of select="@abi"/></a>
+                                <xsl:variable name="href"><xsl:value-of select="@abi"/>&#xA0;<xsl:value-of select="@name"/></xsl:variable>
+                                <a name="{$href}"><xsl:value-of select="@abi"/>&#xA0;<xsl:value-of select="@name"/></a>
                             </td>
                         </tr>
 
