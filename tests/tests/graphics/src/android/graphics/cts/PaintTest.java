@@ -903,7 +903,7 @@ public class PaintTest {
     }
 
     @Test
-    public void testSetGetFontVariationSettings() throws FontVariationAxis.InvalidFormatException {
+    public void testSetGetFontVariationSettings() {
         Paint p = new Paint();
         Context context = InstrumentationRegistry.getTargetContext();
         Typeface typeface = Typeface.createFromAsset(context.getAssets(), "multiaxis.ttf");
