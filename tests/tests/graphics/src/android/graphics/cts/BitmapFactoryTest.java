@@ -794,11 +794,22 @@ public class BitmapFactoryTest {
             readThread.join(500);
             fail("Read timed out");
         }
-        assertTrue(Os.fcntlVoid(readFd, OsConstants.F_GETFD) != -1);
-        assertTrue(Os.fcntlVoid(writeFd, OsConstants.F_GETFD) != -1);
+        assertValidFd("readFd", readFd);
+        assertValidFd("writeFd", writeFd);
         Os.close(readFd);
         Os.close(writeFd);
         return decodedResult[0];
+    }
+
+    private static void assertValidFd(String name, FileDescriptor fd) {
+        try {
+            assertTrue(fd.valid());
+            // Hacky check to test that the underlying FD is still valid without using
+            // the private fcntlVoid to do F_GETFD
+            Os.close(Os.dup(fd));
+        } catch (ErrnoException ex) {
+            fail(name + " is invalid: " + ex.getMessage());
+        }
     }
 
     private void decodeConfigs(int id, int width, int height, boolean hasAlpha, boolean isGray,
