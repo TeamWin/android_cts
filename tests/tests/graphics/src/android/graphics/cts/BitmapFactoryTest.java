@@ -760,7 +760,7 @@ public class BitmapFactoryTest {
             @Override
             public void run() {
                 try {
-                    FileOutputStream output = new FileOutputStream(writeFd, false);
+                    FileOutputStream output = new FileOutputStream(writeFd);
                     source.compress(format, 100, output);
                     output.close();
                 } catch (Throwable t) {
