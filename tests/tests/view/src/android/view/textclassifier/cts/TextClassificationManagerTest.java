@@ -53,8 +53,8 @@ public class TextClassificationManagerTest {
     }
 
     @Test
-    public void testTextClassificationResultDoesNotThrowException() {
-        mClassifier.getTextClassificationResult("text", 2, 3, LOCALES);
+    public void testClassifyTextDoesNotThrowException() {
+        mClassifier.classifyText("text", 2, 3, LOCALES);
     }
 
     @Test
