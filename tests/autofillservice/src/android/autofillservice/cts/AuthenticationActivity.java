@@ -58,7 +58,7 @@ public class AuthenticationActivity extends AbstractAutoFillActivity {
         assertWithMessage("structure not called").that(structure).isNotNull();
 
         // and the bundle
-        sData = getIntent().getBundleExtra(AutofillManager.EXTRA_DATA_EXTRAS);
+        sData = getIntent().getBundleExtra(AutofillManager.EXTRA_CLIENT_STATE);
 
         final Parcelable result;
         if (sResponse != null) {
