@@ -108,7 +108,7 @@ def main():
             g_means.append(rgb_means[1] * request_result_ratio)
             b_means.append(rgb_means[2] * request_result_ratio)
             # do same in RAW space if possible
-            if process_raw:
+            if process_raw and debug:
                 aaw, aah = get_raw_active_array_size(props)
                 raw_cap = cam.do_capture(req,
                                          {'format': 'rawStats',
@@ -142,7 +142,7 @@ def main():
     pylab.ylim([0, 1])
     matplotlib.pyplot.savefig('%s_plot_means.png' % (NAME))
 
-    if process_raw:
+    if process_raw and debug:
         pylab.figure('raw data')
         pylab.plot(mults, raw_r_means, 'ro-', label='R')
         pylab.plot(mults, raw_gr_means, 'go-', label='GR')
@@ -171,7 +171,7 @@ def main():
         for v in values:
             assert v > THRESHOLD_MIN_LEVEL and v < THRESHOLD_MAX_LEVEL
             assert abs(v - b) < THRESHOLD_MAX_OUTLIER_DIFF
-    if process_raw:
+    if process_raw and debug:
         for chan in xrange(4):
             values = [raw_r_means, raw_gr_means, raw_gb_means,
                       raw_b_means][chan]
