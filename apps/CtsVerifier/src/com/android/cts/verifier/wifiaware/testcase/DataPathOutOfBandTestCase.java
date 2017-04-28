@@ -273,7 +273,7 @@ public class DataPathOutOfBandTestCase extends BaseTestCase {
                                 WifiAwareManager.WIFI_AWARE_DATA_PATH_ROLE_RESPONDER, peerMac,
                                 PASSPHRASE)).build();
         CallbackUtils.NetworkCb networkCb = new CallbackUtils.NetworkCb();
-        cm.requestNetwork(nr, CALLBACK_TIMEOUT_SEC * 1000, networkCb);
+        cm.requestNetwork(nr, networkCb, CALLBACK_TIMEOUT_SEC * 1000);
         mListener.onTestMsgReceived(mContext.getString(R.string.aware_status_network_requested));
         if (DBG) Log.d(TAG, "executeTestResponder: requested network");
         boolean networkAvailable = networkCb.waitForNetwork();
@@ -405,7 +405,7 @@ public class DataPathOutOfBandTestCase extends BaseTestCase {
                                 WifiAwareManager.WIFI_AWARE_DATA_PATH_ROLE_INITIATOR, peerMac,
                                 PASSPHRASE)).build();
         CallbackUtils.NetworkCb networkCb = new CallbackUtils.NetworkCb();
-        cm.requestNetwork(nr, CALLBACK_TIMEOUT_SEC * 1000, networkCb);
+        cm.requestNetwork(nr, networkCb, CALLBACK_TIMEOUT_SEC * 1000);
         mListener.onTestMsgReceived(mContext.getString(R.string.aware_status_network_requested));
         if (DBG) Log.d(TAG, "executeTestInitiator: requested network");
         boolean networkAvailable = networkCb.waitForNetwork();
