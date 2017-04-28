@@ -21,6 +21,8 @@ import static android.os.storage.StorageManager.UUID_DEFAULT;
 import static com.android.cts.storageapp.Utils.CACHE_ALL;
 import static com.android.cts.storageapp.Utils.DATA_ALL;
 import static com.android.cts.storageapp.Utils.MB_IN_BYTES;
+import static com.android.cts.storageapp.Utils.PKG_A;
+import static com.android.cts.storageapp.Utils.PKG_B;
 import static com.android.cts.storageapp.Utils.TAG;
 import static com.android.cts.storageapp.Utils.assertAtLeast;
 import static com.android.cts.storageapp.Utils.assertMostlyEquals;
@@ -64,9 +66,6 @@ import java.util.concurrent.TimeUnit;
  * Tests to verify {@link StorageStatsManager} behavior.
  */
 public class StorageStatsTest extends InstrumentationTestCase {
-
-    private static final String PKG_A = "com.android.cts.storageapp_a";
-    private static final String PKG_B = "com.android.cts.storageapp_b";
 
     private Context getContext() {
         return getInstrumentation().getContext();
@@ -230,7 +229,7 @@ public class StorageStatsTest extends InstrumentationTestCase {
         final File filesDir = context.getFilesDir();
         final UUID filesUuid = sm.getUuidForPath(filesDir);
 
-        final long beforeAllocatable = sm.getAllocatableBytes(filesUuid, 0);
+        final long beforeAllocatable = sm.getAllocatableBytes(filesUuid);
         final long beforeFree = stats.getFreeBytes(UUID_DEFAULT);
         final long beforeRaw = filesDir.getUsableSpace();
 
@@ -250,12 +249,12 @@ public class StorageStatsTest extends InstrumentationTestCase {
         // disk space.
         if (stats.isQuotaSupported(UUID_DEFAULT)) {
             assertMostlyEquals(beforeAllocatable,
-                    sm.getAllocatableBytes(filesUuid, 0), 10 * MB_IN_BYTES);
+                    sm.getAllocatableBytes(filesUuid), 10 * MB_IN_BYTES);
             assertMostlyEquals(beforeFree,
                     stats.getFreeBytes(UUID_DEFAULT), 10 * MB_IN_BYTES);
         } else {
             assertMostlyEquals(beforeAllocatable - totalAllocated,
-                    sm.getAllocatableBytes(filesUuid, 0), 10 * MB_IN_BYTES);
+                    sm.getAllocatableBytes(filesUuid), 10 * MB_IN_BYTES);
             assertMostlyEquals(beforeFree - totalAllocated,
                     stats.getFreeBytes(UUID_DEFAULT), 10 * MB_IN_BYTES);
         }
@@ -268,7 +267,7 @@ public class StorageStatsTest extends InstrumentationTestCase {
         // Allocate some space for ourselves, which should trim away at
         // over-quota app first, even though its files are newer.
         final long clear1 = filesDir.getUsableSpace() + (targetB / 2);
-        sm.allocateBytes(filesUuid, clear1, 0);
+        sm.allocateBytes(filesUuid, clear1);
 
         assertMostlyEquals(targetA, getCacheBytes(PKG_A, user));
         assertMostlyEquals(targetB / 2, getCacheBytes(PKG_B, user), 2 * MB_IN_BYTES);
@@ -278,7 +277,7 @@ public class StorageStatsTest extends InstrumentationTestCase {
         // they're tied for cache ratios, we expect to clear about half of the
         // remaining space from each of them.
         final long clear2 = filesDir.getUsableSpace() + (targetB / 2);
-        sm.allocateBytes(filesUuid, clear2, 0);
+        sm.allocateBytes(filesUuid, clear2);
 
         assertMostlyEquals(targetA / 2, getCacheBytes(PKG_A, user), 2 * MB_IN_BYTES);
         assertMostlyEquals(targetA / 2, getCacheBytes(PKG_B, user), 2 * MB_IN_BYTES);
@@ -322,7 +321,7 @@ public class StorageStatsTest extends InstrumentationTestCase {
         tomb.setLastModified(tombTime);
 
         final long clear1 = group.getUsableSpace() + (8 * MB_IN_BYTES);
-        sm.allocateBytes(sm.getUuidForPath(group), clear1, 0);
+        sm.allocateBytes(sm.getUuidForPath(group), clear1);
 
         assertTrue(a.exists());
         assertTrue(b.exists());
