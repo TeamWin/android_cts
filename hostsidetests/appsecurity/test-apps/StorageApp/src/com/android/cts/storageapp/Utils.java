@@ -16,7 +16,6 @@
 
 package com.android.cts.storageapp;
 
-import android.app.usage.StorageStatsManager;
 import android.content.Context;
 import android.system.Os;
 import android.system.OsConstants;
@@ -40,6 +39,9 @@ import java.util.regex.Pattern;
 
 public class Utils {
     public static final String TAG = "StorageApp";
+
+    public static final String PKG_A = "com.android.cts.storageapp_a";
+    public static final String PKG_B = "com.android.cts.storageapp_b";
 
     // You will pry my kibibytes from my cold dead hands! But to make test
     // results easier to debug, we'll use kilobytes...
