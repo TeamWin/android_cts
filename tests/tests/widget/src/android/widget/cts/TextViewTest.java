@@ -162,7 +162,6 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 import java.lang.annotation.Retention;
-import java.util.Arrays;
 import java.util.Locale;
 
 /**
@@ -6988,13 +6987,6 @@ public class TextViewTest {
                 (int) (0.5f + TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PT, 10f, m)),
                 (int) (0.5f + TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_IN, 10f, m)),
                 (int) (0.5f + TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_MM, 10f, m))};
-        expectedSizesInPx = Arrays.stream(expectedSizesInPx)
-                .filter(x -> x > 0)
-                .distinct()
-                .sorted()
-                .toArray();
-        assertArrayEquals(expectedSizesInPx,
-                autoSizeTextViewUniform.getAutoSizeTextAvailableSizes());
 
         boolean containsValueFromExpectedSizes = false;
         int textSize = (int) autoSizeTextViewUniform.getTextSize();
