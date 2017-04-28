@@ -290,7 +290,7 @@ public class DataPathInBandTestCase extends BaseTestCase {
                         : discoverySession.createNetworkSpecifierPassphrase(peerHandle,
                                 PASSPHRASE)).build();
         CallbackUtils.NetworkCb networkCb = new CallbackUtils.NetworkCb();
-        cm.requestNetwork(nr, CALLBACK_TIMEOUT_SEC * 1000, networkCb);
+        cm.requestNetwork(nr, networkCb, CALLBACK_TIMEOUT_SEC * 1000);
         mListener.onTestMsgReceived(mContext.getString(R.string.aware_status_network_requested));
         if (DBG) Log.d(TAG, "executeTestSubscriber: requested network");
         boolean networkAvailable = networkCb.waitForNetwork();
@@ -378,7 +378,7 @@ public class DataPathInBandTestCase extends BaseTestCase {
                         : discoverySession.createNetworkSpecifierPassphrase(peerHandle,
                                 PASSPHRASE)).build();
         CallbackUtils.NetworkCb networkCb = new CallbackUtils.NetworkCb();
-        cm.requestNetwork(nr, CALLBACK_TIMEOUT_SEC * 1000, networkCb);
+        cm.requestNetwork(nr, networkCb, CALLBACK_TIMEOUT_SEC * 1000);
         mListener.onTestMsgReceived(mContext.getString(R.string.aware_status_network_requested));
         if (DBG) Log.d(TAG, "executeTestPublisher: requested network");
 
