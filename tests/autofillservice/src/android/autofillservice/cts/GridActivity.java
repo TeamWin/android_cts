@@ -108,6 +108,18 @@ public class GridActivity extends AbstractAutoFillActivity {
         onCell(row, column, (c) -> c.setText(text));
     }
 
+    public void forceAutofill(int row, int column) {
+        onCell(row, column, (c) -> getAutofillManager().requestAutofill(c));
+    }
+
+    public void triggerAutofill(boolean manually, int row, int column) {
+        if (manually) {
+            forceAutofill(row, column);
+        } else {
+            focusCell(row, column);
+        }
+    }
+
     public String getText(int row, int column) throws InterruptedException {
         final BlockingQueue<String> queue = new LinkedBlockingQueue<>(1);
         onCell(row, column, (c) -> queue.offer(c.getText().toString()));
