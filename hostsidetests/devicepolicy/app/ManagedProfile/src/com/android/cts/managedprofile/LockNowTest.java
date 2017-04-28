@@ -27,7 +27,7 @@ import com.android.cts.managedprofile.BaseManagedProfileTest.BasicAdminReceiver;
 public class LockNowTest extends BaseManagedProfileTest {
 
   public void testLockNowWithKeyEviction() throws InterruptedException {
-        mDevicePolicyManager.lockNow(DevicePolicyManager.FLAG_EVICT_CE_KEY);
+        mDevicePolicyManager.lockNow(DevicePolicyManager.FLAG_EVICT_CREDENTIAL_ENCRYPTION_KEY);
         // The test that the managed profile was locked is done in the host
     }
 
