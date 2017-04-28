@@ -683,7 +683,12 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
         public void onChange(boolean selfChange, Uri uri) {
             try (Cursor cursor = mContext.getContentResolver()
                     .query(uri, new String[] {Sms.TYPE}, null, null, null)) {
-                cursor.moveToFirst();
+                if (cursor == null){
+                    return;
+                }
+                if (!cursor.moveToFirst()){
+                    return;
+                }
                 if (cursor.getInt(0) == Sms.MESSAGE_TYPE_SENT) {
                     mFuture.complete(true);
                 }
