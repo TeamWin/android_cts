@@ -53,10 +53,8 @@ static ::testing::AssertionResult CheckAHardwareBufferMatchesDesc(
         return BuildFailureMessage(desc.height, bufferDesc.height, "heights");
     if (bufferDesc.layers != desc.layers)
         return BuildFailureMessage(desc.layers, bufferDesc.layers, "layers");
-    if (bufferDesc.usage0 != desc.usage0)
-        return BuildHexFailureMessage(desc.usage0, bufferDesc.usage0, "usage0");
-    if (bufferDesc.usage1 != desc.usage1)
-        return BuildHexFailureMessage(desc.usage1, bufferDesc.usage1, "usage1");
+    if (bufferDesc.usage != desc.usage)
+        return BuildHexFailureMessage(desc.usage, bufferDesc.usage, "usage");
     if (bufferDesc.format != desc.format)
         return BuildFailureMessage(desc.format, bufferDesc.format, "formats");
     return ::testing::AssertionSuccess();
@@ -80,13 +78,12 @@ TEST(AHardwareBufferTest, AHardwareBuffer_allocate_FailsWithNullInput) {
 // Test that passing in NULL values to allocate works as expected.
 TEST(AHardwareBufferTest, AHardwareBuffer_allocate_BlobFormatRequiresHeight1) {
     AHardwareBuffer* buffer;
-    AHardwareBuffer_Desc desc;
+    AHardwareBuffer_Desc desc = {};
 
     desc.width = 2;
     desc.height = 4;
     desc.layers = 1;
-    desc.usage0 = AHARDWAREBUFFER_USAGE0_CPU_READ;
-    desc.usage1 = 0;
+    desc.usage = AHARDWAREBUFFER_USAGE_CPU_READ_RARELY;
     desc.format = AHARDWAREBUFFER_FORMAT_BLOB;
     int res = AHardwareBuffer_allocate(&desc, &buffer);
     EXPECT_EQ(BAD_VALUE, res);
@@ -102,13 +99,12 @@ TEST(AHardwareBufferTest, AHardwareBuffer_allocate_BlobFormatRequiresHeight1) {
 // Test that allocate can create an AHardwareBuffer correctly.
 TEST(AHardwareBufferTest, AHardwareBuffer_allocate_Succeeds) {
     AHardwareBuffer* buffer = NULL;
-    AHardwareBuffer_Desc desc;
+    AHardwareBuffer_Desc desc = {};
 
     desc.width = 2;
     desc.height = 4;
     desc.layers = 1;
-    desc.usage0 = AHARDWAREBUFFER_USAGE0_GPU_SAMPLED_IMAGE;
-    desc.usage1 = 0;
+    desc.usage = AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE;
     desc.format = AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM;
     int res = AHardwareBuffer_allocate(&desc, &buffer);
     EXPECT_EQ(NO_ERROR, res);
@@ -119,8 +115,7 @@ TEST(AHardwareBufferTest, AHardwareBuffer_allocate_Succeeds) {
     desc.width = 4;
     desc.height = 12;
     desc.layers = 1;
-    desc.usage0 = AHARDWAREBUFFER_USAGE0_GPU_SAMPLED_IMAGE;
-    desc.usage1 = 0;
+    desc.usage = AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE;
     desc.format = AHARDWAREBUFFER_FORMAT_R5G6B5_UNORM;
     res = AHardwareBuffer_allocate(&desc, &buffer);
     EXPECT_EQ(NO_ERROR, res);
@@ -130,13 +125,12 @@ TEST(AHardwareBufferTest, AHardwareBuffer_allocate_Succeeds) {
 
 TEST(AHardwareBufferTest, AHardwareBuffer_describe_Succeeds) {
     AHardwareBuffer* buffer = NULL;
-    AHardwareBuffer_Desc desc;
+    AHardwareBuffer_Desc desc = {};
 
     desc.width = 2;
     desc.height = 4;
     desc.layers = 1;
-    desc.usage0 = AHARDWAREBUFFER_USAGE0_GPU_SAMPLED_IMAGE;
-    desc.usage1 = 0;
+    desc.usage = AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE;
     desc.format = AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM;
     int res = AHardwareBuffer_allocate(&desc, &buffer);
     EXPECT_EQ(NO_ERROR, res);
@@ -170,13 +164,12 @@ static void* clientFunction(void* data) {
 
 TEST(AHardwareBufferTest, AHardwareBuffer_SendAndRecv_Succeeds) {
     AHardwareBuffer* buffer = NULL;
-    AHardwareBuffer_Desc desc;
+    AHardwareBuffer_Desc desc = {};
 
     desc.width = 2;
     desc.height = 4;
     desc.layers = 1;
-    desc.usage0 = AHARDWAREBUFFER_USAGE0_GPU_SAMPLED_IMAGE;
-    desc.usage1 = 0;
+    desc.usage = AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE;
     desc.format = AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM;
 
     // Test that an invalid buffer fails.
@@ -219,14 +212,12 @@ TEST(AHardwareBufferTest, AHardwareBuffer_SendAndRecv_Succeeds) {
 
 TEST(AHardwareBufferTest, AHardwareBuffer_Lock_and_Unlock_Succeed) {
     AHardwareBuffer* buffer = NULL;
-    AHardwareBuffer_Desc desc;
+    AHardwareBuffer_Desc desc = {};
 
     desc.width = 2;
     desc.height = 4;
     desc.layers = 1;
-    desc.usage0 = AHARDWAREBUFFER_USAGE0_GPU_SAMPLED_IMAGE |
-            AHARDWAREBUFFER_USAGE0_CPU_READ;
-    desc.usage1 = 0;
+    desc.usage = AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE | AHARDWAREBUFFER_USAGE_CPU_READ_RARELY;
     desc.format = AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM;
 
     // Test that an invalid buffer fails.
@@ -238,7 +229,7 @@ TEST(AHardwareBufferTest, AHardwareBuffer_Lock_and_Unlock_Succeed) {
     err = AHardwareBuffer_allocate(&desc, &buffer);
     EXPECT_EQ(NO_ERROR, err);
     void* bufferData = NULL;
-    err = AHardwareBuffer_lock(buffer, AHARDWAREBUFFER_USAGE0_CPU_READ, -1,
+    err = AHardwareBuffer_lock(buffer, AHARDWAREBUFFER_USAGE_CPU_READ_RARELY, -1,
           NULL, &bufferData);
     EXPECT_EQ(NO_ERROR, err);
     EXPECT_TRUE(bufferData != NULL);

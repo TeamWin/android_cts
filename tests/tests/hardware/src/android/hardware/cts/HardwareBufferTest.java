@@ -99,33 +99,33 @@ public class HardwareBufferTest {
     @Test
     public void testCreate() {
         HardwareBuffer buffer = HardwareBuffer.create(2, 4, HardwareBuffer.RGBA_8888, 1,
-                HardwareBuffer.USAGE0_CPU_READ);
+                HardwareBuffer.USAGE_CPU_READ_RARELY);
         assertTrue(buffer != null);
         assertEquals(2, buffer.getWidth());
         assertEquals(4, buffer.getHeight());
         assertEquals(HardwareBuffer.RGBA_8888, buffer.getFormat());
         assertEquals(1, buffer.getLayers());
-        assertEquals(HardwareBuffer.USAGE0_CPU_READ, buffer.getUsage());
+        assertEquals(HardwareBuffer.USAGE_CPU_READ_RARELY, buffer.getUsage());
 
         buffer = HardwareBuffer.create(2, 4, HardwareBuffer.RGBX_8888, 1,
-                HardwareBuffer.USAGE0_CPU_READ);
+                HardwareBuffer.USAGE_CPU_READ_RARELY);
         assertEquals(HardwareBuffer.RGBX_8888, buffer.getFormat());
         buffer = HardwareBuffer.create(2, 4, HardwareBuffer.RGB_888, 1,
-                HardwareBuffer.USAGE0_CPU_READ);
+                HardwareBuffer.USAGE_CPU_READ_RARELY);
         assertEquals(HardwareBuffer.RGB_888, buffer.getFormat());
         buffer = HardwareBuffer.create(2, 4, HardwareBuffer.RGB_565, 1,
-                HardwareBuffer.USAGE0_CPU_READ);
+                HardwareBuffer.USAGE_CPU_READ_RARELY);
         assertEquals(HardwareBuffer.RGB_565, buffer.getFormat());
         buffer = HardwareBuffer.create(2, 1, HardwareBuffer.BLOB, 1,
-                HardwareBuffer.USAGE0_CPU_READ);
+                HardwareBuffer.USAGE_CPU_READ_RARELY);
         assertEquals(HardwareBuffer.BLOB, buffer.getFormat());
 
         if (sHasFloatBuffers) {
             buffer = HardwareBuffer.create(2, 4, HardwareBuffer.RGBA_FP16, 1,
-                    HardwareBuffer.USAGE0_CPU_READ);
+                    HardwareBuffer.USAGE_CPU_READ_RARELY);
             assertEquals(HardwareBuffer.RGBA_FP16, buffer.getFormat());
             buffer = HardwareBuffer.create(2, 4, HardwareBuffer.RGBA_1010102, 1,
-                    HardwareBuffer.USAGE0_CPU_READ);
+                    HardwareBuffer.USAGE_CPU_READ_RARELY);
             assertEquals(HardwareBuffer.RGBA_1010102, buffer.getFormat());
         }
     }
@@ -136,40 +136,40 @@ public class HardwareBufferTest {
         HardwareBuffer buffer = null;
         try {
             buffer = HardwareBuffer.create(0, 4, HardwareBuffer.RGB_888, 1,
-                    HardwareBuffer.USAGE0_CPU_READ);
+                    HardwareBuffer.USAGE_CPU_READ_RARELY);
         } catch (IllegalArgumentException e) {}
         assertEquals(null, buffer);
         try {
             buffer = HardwareBuffer.create(2, 0, HardwareBuffer.RGB_888, 1,
-                    HardwareBuffer.USAGE0_CPU_READ);
+                    HardwareBuffer.USAGE_CPU_READ_RARELY);
         } catch (IllegalArgumentException e) {}
         assertEquals(null, buffer);
         try {
             buffer = HardwareBuffer.create(2, 4, 0, 1,
-                    HardwareBuffer.USAGE0_CPU_READ);
+                    HardwareBuffer.USAGE_CPU_READ_RARELY);
         } catch (IllegalArgumentException e) {}
         assertEquals(null, buffer);
         try {
             buffer = HardwareBuffer.create(2, 4, HardwareBuffer.RGB_888, -1,
-                    HardwareBuffer.USAGE0_CPU_READ);
+                    HardwareBuffer.USAGE_CPU_READ_RARELY);
         } catch (IllegalArgumentException e) {}
         assertEquals(null, buffer);
         try {
             buffer = HardwareBuffer.create(2, 2, HardwareBuffer.BLOB, 1,
-                    HardwareBuffer.USAGE0_CPU_READ);
+                    HardwareBuffer.USAGE_CPU_READ_RARELY);
         } catch (IllegalArgumentException e) {}
         assertEquals(null, buffer);
 
         if (sHasFloatBuffers) {
             try {
                 buffer = HardwareBuffer.create(0, 4, HardwareBuffer.RGBA_FP16, 1,
-                        HardwareBuffer.USAGE0_CPU_READ);
+                        HardwareBuffer.USAGE_CPU_READ_RARELY);
             } catch (IllegalArgumentException e) {
             }
             assertEquals(null, buffer);
             try {
                 buffer = HardwareBuffer.create(0, 4, HardwareBuffer.RGBA_1010102, 1,
-                        HardwareBuffer.USAGE0_CPU_READ);
+                        HardwareBuffer.USAGE_CPU_READ_RARELY);
             } catch (IllegalArgumentException e) {
             }
             assertEquals(null, buffer);
@@ -179,13 +179,13 @@ public class HardwareBufferTest {
     @Test
     public void testCreateFromNativeObject() {
         HardwareBuffer buffer = nativeCreateHardwareBuffer(2, 4, HardwareBuffer.RGBA_8888, 1,
-                    HardwareBuffer.USAGE0_CPU_READ);
+                    HardwareBuffer.USAGE_CPU_READ_RARELY);
         assertTrue(buffer != null);
         assertEquals(2, buffer.getWidth());
         assertEquals(4, buffer.getHeight());
         assertEquals(HardwareBuffer.RGBA_8888, buffer.getFormat());
         assertEquals(1, buffer.getLayers());
-        assertEquals(HardwareBuffer.USAGE0_CPU_READ, buffer.getUsage());
+        assertEquals(HardwareBuffer.USAGE_CPU_READ_RARELY, buffer.getUsage());
         nativeReleaseHardwareBuffer(buffer);
     }
 }
