@@ -27,13 +27,12 @@
 static jobject android_hardware_HardwareBuffer_nativeCreateHardwareBuffer(JNIEnv* env, jclass,
         jint width, jint height, jint format, jint layers, jlong usage) {
     AHardwareBuffer* buffer = NULL;
-    AHardwareBuffer_Desc desc;
+    AHardwareBuffer_Desc desc = {};
 
     desc.width = width;
     desc.height = height;
     desc.layers = layers;
-    desc.usage0 = usage;
-    desc.usage1 = 0;
+    desc.usage = usage;
     desc.format = format;
     int res = AHardwareBuffer_allocate(&desc, &buffer);
     if (res == android::NO_ERROR) {
