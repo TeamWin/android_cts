@@ -14,7 +14,6 @@
 
 package android.accessibilityservice.cts;
 
-import static android.accessibilityservice.GestureDescription.StrokeDescription.INVALID_STROKE_ID;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.any;
 import static org.hamcrest.CoreMatchers.both;
@@ -356,10 +355,12 @@ public class AccessibilityGestureDispatchTest extends
         Point end = new Point(20, 30);
         int gestureTime = 500;
 
-        StrokeDescription s1 =
-                lineStrokeInViewBounds(start, mid1, gestureTime, INVALID_STROKE_ID, true);
-        StrokeDescription s2 = lineStrokeInViewBounds(mid1, mid2, gestureTime, s1.getId(), true);
-        StrokeDescription s3 = lineStrokeInViewBounds(mid2, end, gestureTime, s2.getId(), false);
+        StrokeDescription s1 = new StrokeDescription(
+                linePathInViewBounds(start, mid1), 0, gestureTime, true);
+        StrokeDescription s2 = s1.continueStroke(
+                linePathInViewBounds(mid1, mid2), 0, gestureTime, true);
+        StrokeDescription s3 = s2.continueStroke(
+                linePathInViewBounds(mid2, end), 0, gestureTime, false);
         GestureDescription gesture1 = new GestureDescription.Builder().addStroke(s1).build();
         GestureDescription gesture2 = new GestureDescription.Builder().addStroke(s2).build();
         GestureDescription gesture3 = new GestureDescription.Builder().addStroke(s3).build();
@@ -392,15 +393,15 @@ public class AccessibilityGestureDispatchTest extends
         Point endPoint = new Point(20, 30);
         int gestureTime = 500;
 
-        StrokeDescription stroke1 = lineStrokeInViewBounds(
-                startPoint, midPoint, gestureTime, INVALID_STROKE_ID, true);
+        StrokeDescription stroke1 = new StrokeDescription(
+                linePathInViewBounds(startPoint, midPoint), 0, gestureTime, true);
         GestureDescription gesture1 = new GestureDescription.Builder().addStroke(stroke1).build();
         mService.runOnServiceSync(() -> mService.doDispatchGesture(gesture1, mCallback, null));
         mCallback.assertGestureCompletes(gestureTime + GESTURE_COMPLETION_TIMEOUT);
         waitForMotionEvents(both(IS_ACTION_MOVE).and(isAtPoint(midPoint)), 1);
 
-        StrokeDescription stroke2 = lineStrokeInViewBounds(endPoint, midPoint, gestureTime,
-                stroke1.getId(), false);
+        StrokeDescription stroke2 = stroke1.continueStroke(
+                linePathInViewBounds(endPoint, midPoint), 0, gestureTime, false);
         GestureDescription gesture2 = new GestureDescription.Builder().addStroke(stroke2).build();
         mCallback.reset();
         mMotionEvents.clear();
@@ -421,14 +422,14 @@ public class AccessibilityGestureDispatchTest extends
         Point endPoint = new Point(20, 30);
         int gestureTime = 500;
 
-        StrokeDescription stroke1 = lineStrokeInViewBounds(
-                startPoint, midPoint, gestureTime, INVALID_STROKE_ID, true);
+        StrokeDescription stroke1 = new StrokeDescription(
+                linePathInViewBounds(startPoint, midPoint), 0, gestureTime, true);
         GestureDescription gesture1 = new GestureDescription.Builder().addStroke(stroke1).build();
         mService.runOnServiceSync(() -> mService.doDispatchGesture(gesture1, mCallback, null));
         mCallback.assertGestureCompletes(gestureTime + GESTURE_COMPLETION_TIMEOUT);
 
-        StrokeDescription stroke2 = lineStrokeInViewBounds(
-                midPoint, endPoint, gestureTime, INVALID_STROKE_ID, false);
+        StrokeDescription stroke2 = new StrokeDescription(
+                linePathInViewBounds(midPoint, endPoint), 0, gestureTime, false);
         GestureDescription gesture2 = new GestureDescription.Builder().addStroke(stroke2).build();
         mCallback.reset();
         mService.runOnServiceSync(() -> mService.doDispatchGesture(gesture2, mCallback, null));
@@ -456,17 +457,14 @@ public class AccessibilityGestureDispatchTest extends
         Point endPoint = new Point(20, 30);
         int gestureTime = 500;
 
-        StrokeDescription stroke1 = lineStrokeInViewBounds(
-                startPoint, midPoint, gestureTime, INVALID_STROKE_ID, false);
-        GestureDescription gesture1 = new GestureDescription.Builder().addStroke(stroke1).build();
-        mService.runOnServiceSync(() -> mService.doDispatchGesture(gesture1, mCallback, null));
-        mCallback.assertGestureCompletes(gestureTime + GESTURE_COMPLETION_TIMEOUT);
+        StrokeDescription stroke1 = new StrokeDescription(
+                linePathInViewBounds(startPoint, midPoint), 0, gestureTime, true);
 
-        StrokeDescription stroke2 = lineStrokeInViewBounds(
-                midPoint, endPoint, gestureTime, stroke1.getId(), false);
-        GestureDescription gesture2 = new GestureDescription.Builder().addStroke(stroke2).build();
+        StrokeDescription stroke2 = stroke1.continueStroke(
+                linePathInViewBounds(midPoint, endPoint), 0, gestureTime, false);
+        GestureDescription gesture = new GestureDescription.Builder().addStroke(stroke2).build();
         mCallback.reset();
-        mService.runOnServiceSync(() -> mService.doDispatchGesture(gesture2, mCallback, null));
+        mService.runOnServiceSync(() -> mService.doDispatchGesture(gesture, mCallback, null));
         mCallback.assertGestureCancels(gestureTime + GESTURE_COMPLETION_TIMEOUT);
     }
 
@@ -607,8 +605,8 @@ public class AccessibilityGestureDispatchTest extends
     }
 
     private GestureDescription createSwipeInViewBounds(Point start, Point end, long duration) {
-        return new GestureDescription.Builder()
-                .addStroke(lineStrokeInViewBounds(start, end, duration, INVALID_STROKE_ID, false))
+        return new GestureDescription.Builder().addStroke(
+                new StrokeDescription(linePathInViewBounds(start, end), 0, duration, false))
                 .build();
     }
 
@@ -658,12 +656,11 @@ public class AccessibilityGestureDispatchTest extends
         return swipeBuilder.build();
     }
 
-    StrokeDescription lineStrokeInViewBounds(Point startPoint, Point endPoint, long duration,
-            int continuedStroke, boolean isContinued) {
+    Path linePathInViewBounds(Point startPoint, Point endPoint) {
         Path path = new Path();
         path.moveTo(startPoint.x + mViewBounds.left, startPoint.y + mViewBounds.top);
         path.lineTo(endPoint.x + mViewBounds.left, endPoint.y + mViewBounds.top);
-        return new StrokeDescription(path, 0, duration, continuedStroke, isContinued);
+        return path;
     }
 
     private static class MotionEventActionMatcher extends TypeSafeMatcher<MotionEvent> {

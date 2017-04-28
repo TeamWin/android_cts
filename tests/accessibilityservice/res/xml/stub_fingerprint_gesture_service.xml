@@ -19,6 +19,6 @@
                        android:description="@string/stub_fprint_a11y_service_description"
                        android:accessibilityEventTypes="typeAllMask"
                        android:accessibilityFeedbackType="feedbackGeneric"
-                       android:accessibilityFlags="flagCaptureFingerprintGestures"
-                       android:canCaptureFingerprintGestures="true"
+                       android:accessibilityFlags="flagRequestFingerprintGestures"
+                       android:canRequestFingerprintGestures="true"
                        android:notificationTimeout="0" />
