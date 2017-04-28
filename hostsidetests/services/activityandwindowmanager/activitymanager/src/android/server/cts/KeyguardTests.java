@@ -17,6 +17,7 @@
 package android.server.cts;
 
 import android.server.cts.WindowManagerState.WindowState;
+import android.server.cts.ActivityManagerState.ActivityStack;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
@@ -149,6 +150,26 @@ public class KeyguardTests extends KeyguardTestBase {
         mAmWmState.assertVisibility("ShowWhenLockedDialogActivity", true);
         assertWallpaperShowing();
         assertShowingAndOccluded();
+        pressHomeButton();
+        unlockDevice();
+    }
+
+    /**
+     * Test that showWhenLocked activity is fullscreen when shown over keyguard
+     */
+    public void testShowWhenLockedActivityWhileSplit() throws Exception {
+        if (!isHandheld() || !supportsSplitScreenMultiWindow()) {
+            return;
+        }
+        launchActivityInDockStack(LAUNCHING_ACTIVITY);
+        launchActivityToSide(true, false, "ShowWhenLockedActivity");
+        mAmWmState.assertVisibility("ShowWhenLockedActivity", true);
+        gotoKeyguard();
+        mAmWmState.computeState(mDevice, new String[] { "ShowWhenLockedActivity" });
+        mAmWmState.assertVisibility("ShowWhenLockedActivity", true);
+        assertShowingAndOccluded();
+        mAmWmState.assertDoesNotContainStack("Activity must be full screen.",
+                ActivityManagerTestBase.DOCKED_STACK_ID);
         pressHomeButton();
         unlockDevice();
     }
