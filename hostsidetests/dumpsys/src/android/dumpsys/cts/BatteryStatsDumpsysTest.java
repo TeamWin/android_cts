@@ -612,12 +612,13 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
     }
 
     private void checkBluetoothMisc(String[] parts) {
-        assertEquals(9, parts.length);
+        assertEquals(10, parts.length);
         assertInteger(parts[4]); // totalTime
         assertInteger(parts[5]); // count
         assertInteger(parts[6]); // countBg
         assertInteger(parts[7]); // actualTime
         assertInteger(parts[8]); // actualTimeBg
+        assertInteger(parts[9]); // resultsCount
     }
 
     /**
