@@ -18,8 +18,6 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class PathTests extends ActivityTestBase {
 
-    private static final double REGULAR_THRESHOLD = 0.92;
-
     @Test
     public void testTextPathWithOffset() {
         createTest()
@@ -36,6 +34,63 @@ public class PathTests extends ActivityTestBase {
                     canvas.drawPath(path, paint);
                 })
                 .runWithVerifier(new GoldenImageVerifier(getActivity(),
-                        R.drawable.text_path_with_offset, new MSSIMComparer(REGULAR_THRESHOLD)));
+                        R.drawable.text_path_with_offset, new MSSIMComparer(0.92)));
+    }
+
+    @Test
+    public void testPathApproximate_circle() {
+        final Path path = new Path();
+        path.addCircle(45, 45, 40, Path.Direction.CW);
+        verifyPathApproximation(path, R.drawable.pathtest_path_approximate_circle);
+    }
+
+    @Test
+    public void testPathApproximate_rect() {
+        final Path path = new Path();
+        path.addRect(5, 5, 85, 85, Path.Direction.CW);
+        verifyPathApproximation(path, R.drawable.pathtest_path_approximate_rect);
+    }
+
+    @Test
+    public void testPathApproximate_quads() {
+        final Path path = new Path();
+        path.moveTo(5, 5);
+        path.quadTo(45, 45, 85, 5);
+        path.quadTo(45, 45, 85, 85);
+        path.quadTo(45, 45, 5, 85);
+        path.quadTo(45, 45, 5, 5);
+        verifyPathApproximation(path, R.drawable.pathtest_path_approximate_quads);
+    }
+
+    @Test
+    public void testPathApproximate_cubics() {
+        final Path path = new Path();
+        path.moveTo(5, 5);
+        path.cubicTo(45, 45, 45, 45, 85, 5);
+        path.cubicTo(45, 45, 45, 45, 85, 85);
+        path.cubicTo(45, 45, 45, 45, 5, 85);
+        path.cubicTo(45, 45, 45, 45, 5, 5);
+        verifyPathApproximation(path, R.drawable.pathtest_path_approximate_cubics);
+    }
+
+    private void verifyPathApproximation(Path path, int goldenResourceId) {
+        float[] approx = path.approximate(0.5f);
+        final Paint paint = new Paint();
+        paint.setAntiAlias(true);
+        paint.setStrokeWidth(2);
+        createTest()
+                .addCanvasClient((canvas, width, height) -> {
+                    float lastX = approx[1];
+                    float lastY = approx[2];
+                    for (int i = 3; i < approx.length; i += 3) {
+                        float x = approx[i + 1];
+                        float y = approx[i + 2];
+                        canvas.drawLine(lastX, lastY, x, y, paint);
+                        lastX = x;
+                        lastY = y;
+                    }
+                })
+                .runWithVerifier(new GoldenImageVerifier(getActivity(),
+                        goldenResourceId, new MSSIMComparer(0.98)));
     }
 }
