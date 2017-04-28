@@ -201,11 +201,11 @@ public class NetworkLoggingTest extends BaseDeviceOwnerTest {
                         }
                     }
                     // verify that as many IP addresses were logged as were reported (max 10)
-                    final InetAddress[] ips = dnsEvent.getInetAddresses();
-                    assertTrue(ips.length <= MAX_IP_ADDRESSES_LOGGED);
+                    final List<InetAddress> ips = dnsEvent.getInetAddresses();
+                    assertTrue(ips.size() <= MAX_IP_ADDRESSES_LOGGED);
                     final int expectedAddressCount = Math.min(MAX_IP_ADDRESSES_LOGGED,
                             dnsEvent.getTotalResolvedAddressCount());
-                    assertEquals(expectedAddressCount, ips.length);
+                    assertEquals(expectedAddressCount, ips.size());
                     // verify the IP addresses are valid IPv4 or IPv6 addresses
                     for (final InetAddress ipAddress : ips) {
                         assertTrue(isIpv4OrIpv6Address(ipAddress));
