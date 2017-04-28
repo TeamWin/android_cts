@@ -332,8 +332,8 @@ public class SensorDirectReportTest extends SensorTestCase {
 
         hardwareBuffer = HardwareBuffer.create(
                 SHARED_MEMORY_SIZE, 1 /* height */, HardwareBuffer.BLOB, 1 /* layer */,
-                HardwareBuffer.USAGE0_CPU_READ_OFTEN | HardwareBuffer.USAGE0_GPU_DATA_BUFFER
-                    | HardwareBuffer.USAGE0_SENSOR_DIRECT_DATA);
+                HardwareBuffer.USAGE_CPU_READ_OFTEN | HardwareBuffer.USAGE_GPU_DATA_BUFFER
+                    | HardwareBuffer.USAGE_SENSOR_DIRECT_DATA);
         return hardwareBuffer;
     }
 

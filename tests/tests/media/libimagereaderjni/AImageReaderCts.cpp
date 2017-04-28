@@ -51,11 +51,11 @@ static constexpr int kTestImageHeight = 480;
 static constexpr int kTestImageFormat = AIMAGE_FORMAT_JPEG;
 
 static constexpr int supportedUsage[] = {
-    AHARDWAREBUFFER_USAGE0_CPU_READ,
-    AHARDWAREBUFFER_USAGE0_CPU_READ_OFTEN,
-    AHARDWAREBUFFER_USAGE0_GPU_SAMPLED_IMAGE,
-    AHARDWAREBUFFER_USAGE0_GPU_DATA_BUFFER,
-    AHARDWAREBUFFER_USAGE0_VIDEO_ENCODE,
+    AHARDWAREBUFFER_USAGE_CPU_READ_RARELY,
+    AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN,
+    AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE,
+    AHARDWAREBUFFER_USAGE_GPU_DATA_BUFFER,
+    AHARDWAREBUFFER_USAGE_VIDEO_ENCODE,
 };
 
 class CameraHelper {
@@ -394,16 +394,16 @@ class ImageReaderTestCase {
             }
         }
 
-        if ((outDesc.usage0 & mUsage) != mUsage) {
+        if ((outDesc.usage & mUsage) != mUsage) {
             ALOGE("Mismatched output buffer usage: actual (%" PRIu64 "), expected (%" PRIu64 ")",
-                  outDesc.usage0, mUsage);
+                  outDesc.usage, mUsage);
             return;
         }
 
         uint8_t* data = nullptr;
         int dataLength = 0;
         ret = AImage_getPlaneData(img.get(), 0, &data, &dataLength);
-        if (mUsage & AHARDWAREBUFFER_USAGE0_CPU_READ_OFTEN) {
+        if (mUsage & AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN) {
             // When we have CPU_READ_OFTEN usage bits, we can lock the image.
             if (ret != AMEDIA_OK || data == nullptr || dataLength < 0) {
                 ALOGE("Failed to access CPU data, ret=%d, data=%p, dataLength=%d", ret, data,
@@ -518,12 +518,12 @@ testSucceedsWithSupportedUsageNative(JNIEnv* /*env*/, jclass /*clazz*/) {
 extern "C" jboolean Java_android_media_cts_NativeImageReaderTest_\
 testTakePicturesNative(JNIEnv* /*env*/, jclass /*clazz*/) {
     for (auto& readerUsage :
-         {AHARDWAREBUFFER_USAGE0_CPU_READ_OFTEN, AHARDWAREBUFFER_USAGE0_GPU_DATA_BUFFER}) {
+         {AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN, AHARDWAREBUFFER_USAGE_GPU_DATA_BUFFER}) {
         for (auto& readerMaxImages : {1, 4, 8}) {
             for (auto& readerAsync : {true, false}) {
                 for (auto& pictureCount : {1, 8, 16}) {
                     if (takePictures(readerUsage, readerMaxImages, readerAsync, pictureCount)) {
-                        ALOGE("Test takePictures failed for test case usage=%d, maxImages=%d, "
+                        ALOGE("Test takePictures failed for test case usage=%" PRIu64 ", maxImages=%d, "
                               "async=%d, pictureCount=%d",
                               readerUsage, readerMaxImages, readerAsync, pictureCount);
                         return false;
@@ -537,7 +537,7 @@ testTakePicturesNative(JNIEnv* /*env*/, jclass /*clazz*/) {
 
 extern "C" jobject Java_android_media_cts_NativeImageReaderTest_\
 testCreateSurfaceNative(JNIEnv* env, jclass /*clazz*/) {
-    static constexpr uint64_t kTestImageUsage = AHARDWAREBUFFER_USAGE0_CPU_READ_OFTEN;
+    static constexpr uint64_t kTestImageUsage = AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN;
     static constexpr int kTestImageCount = 8;
 
     ImageReaderTestCase testCase(

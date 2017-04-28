@@ -163,16 +163,15 @@ TestSharedMemory::TestSharedMemory(int type, size_t size)
                 .width = static_cast<uint32_t>(size),
                 .height = 1,
                 .layers = 1,
-                .usage0 = AHARDWAREBUFFER_USAGE0_SENSOR_DIRECT_DATA
-                        | AHARDWAREBUFFER_USAGE0_CPU_READ_OFTEN,
-                .usage1 = 0,
+                .usage = AHARDWAREBUFFER_USAGE_SENSOR_DIRECT_DATA
+                         | AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN,
                 .format = AHARDWAREBUFFER_FORMAT_BLOB
             };
 
             // allocate
             if (AHardwareBuffer_allocate(&desc, &mHardwareBuffer) == 0) {
                 // lock
-                if (AHardwareBuffer_lock(mHardwareBuffer, AHARDWAREBUFFER_USAGE0_CPU_READ,
+                if (AHardwareBuffer_lock(mHardwareBuffer, AHARDWAREBUFFER_USAGE_CPU_READ_RARELY,
                                          -1, nullptr, reinterpret_cast<void **>(&mBuffer)) == 0) {
                     if (mBuffer != nullptr) {
                         mSize = size;

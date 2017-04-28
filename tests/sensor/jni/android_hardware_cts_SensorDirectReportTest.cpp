@@ -43,7 +43,7 @@ jboolean readHardwareBuffer(JNIEnv* env, jclass,
     void *address;
     int32_t fence = -1;
     jboolean ret = false;
-    if (AHardwareBuffer_lock(hardwareBuffer, AHARDWAREBUFFER_USAGE0_CPU_READ,
+    if (AHardwareBuffer_lock(hardwareBuffer, AHARDWAREBUFFER_USAGE_CPU_READ_RARELY,
                              fence, nullptr, &address) == 0) {
         if (address != nullptr) {
             env->SetByteArrayRegion(
