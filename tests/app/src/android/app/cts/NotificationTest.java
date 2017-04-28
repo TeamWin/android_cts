@@ -71,7 +71,7 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(notificationTime, mNotification.when);
         assertEquals(0, mNotification.icon);
         assertEquals(TICKER_TEXT, mNotification.tickerText);
-        assertEquals(1, mNotification.number);
+        assertEquals(0, mNotification.number);
     }
 
     public void testBuilderConstructor() {
