@@ -76,6 +76,8 @@ public class ColorSpaceTest {
             assertNotNull(colorSpace.getName());
             assertNotNull(colorSpace);
             assertEquals(named.ordinal(), colorSpace.getId());
+            assertTrue(colorSpace.getComponentCount() >= 1);
+            assertTrue(colorSpace.getComponentCount() <= 4);
         }
     }
 
@@ -296,6 +298,17 @@ public class ColorSpaceTest {
         for (int i = 0; i < 9; i++) {
             assertEquals(XYZ_TO_SRGB[i], xyzToRGB[i], 1e-5f);
         }
+    }
+
+    @Test
+    public void testGetComponentCount() {
+        assertEquals(3, ColorSpace.get(ColorSpace.Named.SRGB).getComponentCount());
+        assertEquals(3, ColorSpace.get(ColorSpace.Named.LINEAR_SRGB).getComponentCount());
+        assertEquals(3, ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB).getComponentCount());
+        assertEquals(3, ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB).getComponentCount());
+        assertEquals(3, ColorSpace.get(ColorSpace.Named.DISPLAY_P3).getComponentCount());
+        assertEquals(3, ColorSpace.get(ColorSpace.Named.CIE_LAB).getComponentCount());
+        assertEquals(3, ColorSpace.get(ColorSpace.Named.CIE_XYZ).getComponentCount());
     }
 
     @Test
