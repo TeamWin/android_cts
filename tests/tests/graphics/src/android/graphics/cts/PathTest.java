@@ -444,6 +444,11 @@ public class PathTest {
         assertEquals(expectedRect, offsettedRect);
     }
 
+    @Test(expected=IllegalArgumentException.class)
+    public void testApproximate_lowError() {
+        new Path().approximate(-0.1f);
+    }
+
     @Test
     public void testApproximate_rect_cw() {
         Path path = new Path();
@@ -477,6 +482,13 @@ public class PathTest {
                 0, 0, 0,
                 1, 0, 0,
         }, path.approximate(0.5f), 0);
+    }
+
+    @Test
+    public void testApproximate_circle() {
+        Path path = new Path();
+        path.addCircle(0, 0, 50, Path.Direction.CW);
+        assertTrue(path.approximate(0.25f).length > 20);
     }
 
     private static void verifyPathsAreEquivalent(Path actual, Path expected) {
