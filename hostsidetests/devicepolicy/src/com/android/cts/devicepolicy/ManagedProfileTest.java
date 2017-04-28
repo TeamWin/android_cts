@@ -20,7 +20,6 @@ import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 
-import java.lang.System;
 import junit.framework.AssertionFailedError;
 
 import java.util.concurrent.Callable;
@@ -449,8 +448,8 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
 
     // Test the bluetooth API from a managed profile.
     public void testBluetooth() throws Exception {
-        boolean mHasBluetooth = hasDeviceFeature(FEATURE_BLUETOOTH);
-        if (!mHasFeature || !mHasBluetooth) {
+        boolean hasBluetooth = hasDeviceFeature(FEATURE_BLUETOOTH);
+        if (!mHasFeature || !hasBluetooth) {
             return ;
         }
 
@@ -879,6 +878,21 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         // Install SimpleApp in work profile only and check activity in it can be launched.
         installAppAsUser(SIMPLE_APP_APK, mProfileUserId);
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".SanityTest", mProfileUserId);
+    }
+
+    public void testBluetoothSharingRestriction() throws Exception {
+        final boolean hasBluetooth = hasDeviceFeature(FEATURE_BLUETOOTH);
+        if (!mHasFeature || !hasBluetooth) {
+            return;
+        }
+
+        // Primary profile should be able to use bluetooth sharing.
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".BluetoothSharingRestrictionPrimaryProfileTest",
+                "testBluetoothSharingAvailable", mPrimaryUserId);
+
+        // Managed profile owner should be able to control it via DISALLOW_BLUETOOTH_SHARING.
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".BluetoothSharingRestrictionTest",
+                "testOppDisabledWhenRestrictionSet", mProfileUserId);
     }
 
     private void disableActivityForUser(String activityName, int userId)

@@ -16,7 +16,6 @@
 
 package com.android.cts.deviceowner;
 
-import android.app.admin.DevicePolicyManager;
 import android.bluetooth.BluetoothAdapter;
 import android.content.ComponentName;
 import android.content.pm.PackageManager;
@@ -103,7 +102,8 @@ public class BluetoothRestrictionTest extends BaseDeviceOwnerTest {
     }
 
     /**
-     * Tests that BluetoothOppLauncherActivity gets disabled when Bluetooth is disallowed.
+     * Tests that BluetoothOppLauncherActivity gets disabled when Bluetooth itself or Bluetooth
+     * sharing is disallowed.
      *
      * <p> It also checks the state of the activity is set back to default if Bluetooth is not
      * disallowed anymore.
@@ -113,15 +113,24 @@ public class BluetoothRestrictionTest extends BaseDeviceOwnerTest {
             return;
         }
 
+        // First verify DISALLOW_BLUETOOTH.
+        testOppDisabledWhenRestrictionSet(UserManager.DISALLOW_BLUETOOTH);
+        // Verify DISALLOW_BLUETOOTH_SHARING which leaves bluetooth workable but the sharing
+        // component should be disabled.
+        testOppDisabledWhenRestrictionSet(UserManager.DISALLOW_BLUETOOTH_SHARING);
+    }
+
+    /** Verifies that a given restriction disables the bluetooth sharing component. */
+    private void testOppDisabledWhenRestrictionSet(String restriction) {
         // Add the user restriction.
-        mDevicePolicyManager.addUserRestriction(getWho(), UserManager.DISALLOW_BLUETOOTH);
+        mDevicePolicyManager.addUserRestriction(getWho(), restriction);
 
         // The BluetoothOppLauncherActivity's component should be disabled.
         assertComponentStateAfterTimeout(
                 OPP_LAUNCHER_COMPONENT, PackageManager.COMPONENT_ENABLED_STATE_DISABLED);
 
         // Remove the user restriction.
-        mDevicePolicyManager.clearUserRestriction(getWho(), UserManager.DISALLOW_BLUETOOTH);
+        mDevicePolicyManager.clearUserRestriction(getWho(), restriction);
 
         // The BluetoothOppLauncherActivity's component should be in the default state.
         assertComponentStateAfterTimeout(
