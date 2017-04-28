@@ -21,6 +21,15 @@ import static android.autofillservice.cts.FatActivity.ID_IMAGE;
 import static android.autofillservice.cts.FatActivity.ID_IMPORTANT_IMAGE;
 import static android.autofillservice.cts.FatActivity.ID_INPUT;
 import static android.autofillservice.cts.FatActivity.ID_INPUT_CONTAINER;
+import static android.autofillservice.cts.FatActivity.ID_IMPORTANT_CONTAINER_EXCLUDING_DESCENDANTS;
+import static android.autofillservice.cts.FatActivity.ID_IMPORTANT_CONTAINER_EXCLUDING_DESCENDANTS_CHILD;
+import static android.autofillservice.cts.FatActivity.ID_IMPORTANT_CONTAINER_EXCLUDING_DESCENDANTS_GRAND_CHILD;
+import static android.autofillservice.cts.FatActivity.ID_NOT_IMPORTANT_CONTAINER_MIXED_DESCENDANTS;
+import static android.autofillservice.cts.FatActivity.ID_NOT_IMPORTANT_CONTAINER_MIXED_DESCENDANTS_CHILD;
+import static android.autofillservice.cts.FatActivity.ID_NOT_IMPORTANT_CONTAINER_MIXED_DESCENDANTS_GRAND_CHILD;
+import static android.autofillservice.cts.FatActivity.ID_NOT_IMPORTANT_CONTAINER_EXCLUDING_DESCENDANTS;
+import static android.autofillservice.cts.FatActivity.ID_NOT_IMPORTANT_CONTAINER_EXCLUDING_DESCENDANTS_CHILD;
+import static android.autofillservice.cts.FatActivity.ID_NOT_IMPORTANT_CONTAINER_EXCLUDING_DESCENDANTS_GRAND_CHILD;
 import static android.autofillservice.cts.Helper.assertNumberOfChildren;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.Helper.findNodeByText;
@@ -67,7 +76,7 @@ public class FatActivityTest extends AutoFillServiceTestCase {
         // TODO: should only have 5 children, but there is an extra
         // TextView that's probably coming from the title. For now we're just ignoring it, but
         // ideally we should change the .xml to exclude it.
-        assertNumberOfChildren(fillRequest.structure, 6);
+        assertNumberOfChildren(fillRequest.structure, 8);
 
         // Should not have ImageView...
         assertThat(findNodeByResourceId(fillRequest.structure, ID_IMAGE)).isNull();
@@ -88,5 +97,29 @@ public class FatActivityTest extends AutoFillServiceTestCase {
         assertThat(inputContainer.getChildCount()).isEqualTo(1);
         final ViewNode input = inputContainer.getChildAt(0);
         assertThat(input.getIdEntry()).isEqualTo(ID_INPUT);
+
+        // Make sure a non-important container can exclude descendants
+        assertThat(findNodeByResourceId(fillRequest.structure,
+                ID_NOT_IMPORTANT_CONTAINER_EXCLUDING_DESCENDANTS)).isNull();
+        assertThat(findNodeByResourceId(fillRequest.structure,
+                ID_NOT_IMPORTANT_CONTAINER_EXCLUDING_DESCENDANTS_CHILD)).isNull();
+        assertThat(findNodeByResourceId(fillRequest.structure,
+                ID_NOT_IMPORTANT_CONTAINER_EXCLUDING_DESCENDANTS_GRAND_CHILD)).isNull();
+
+        // Make sure an important container can exclude descendants
+        assertThat(findNodeByResourceId(fillRequest.structure,
+                ID_IMPORTANT_CONTAINER_EXCLUDING_DESCENDANTS)).isNotNull();
+        assertThat(findNodeByResourceId(fillRequest.structure,
+                ID_IMPORTANT_CONTAINER_EXCLUDING_DESCENDANTS_CHILD)).isNull();
+        assertThat(findNodeByResourceId(fillRequest.structure,
+                ID_IMPORTANT_CONTAINER_EXCLUDING_DESCENDANTS_GRAND_CHILD)).isNull();
+
+        // Make sure an intermediary descendant can be excluded
+        assertThat(findNodeByResourceId(fillRequest.structure,
+                ID_NOT_IMPORTANT_CONTAINER_MIXED_DESCENDANTS)).isNull();
+        assertThat(findNodeByResourceId(fillRequest.structure,
+                ID_NOT_IMPORTANT_CONTAINER_MIXED_DESCENDANTS_CHILD)).isNotNull();
+        assertThat(findNodeByResourceId(fillRequest.structure,
+                ID_NOT_IMPORTANT_CONTAINER_MIXED_DESCENDANTS_GRAND_CHILD)).isNull();
     }
 }
