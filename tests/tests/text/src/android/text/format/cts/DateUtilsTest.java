@@ -19,6 +19,7 @@ package android.text.format.cts;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
@@ -34,6 +35,8 @@ import org.junit.runner.RunWith;
 import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Formatter;
+import java.util.GregorianCalendar;
 import java.util.Locale;
 import java.util.TimeZone;
 
@@ -126,6 +129,33 @@ public class DateUtilsTest {
                 mBaseTime, DateUtils.MINUTE_IN_MILLIS, DateUtils.FORMAT_NUMERIC_DATE));
     }
 
+    @Test
+    public void test_getRelativeTimeSpanString_withContext() {
+        if (!LocaleUtils.isCurrentLocale(mContext, Locale.US)) {
+            return;
+        }
+
+        final GregorianCalendar cal = new GregorianCalendar();
+        cal.setTimeInMillis(mBaseTime);
+        cal.set(Calendar.HOUR_OF_DAY, 10);
+        cal.set(Calendar.MINUTE, 0);
+        final long today10am = cal.getTimeInMillis();
+
+        final CharSequence withPrep = DateUtils.getRelativeTimeSpanString(mContext, today10am,
+                true /* with preposition */);
+        final CharSequence noPrep = DateUtils.getRelativeTimeSpanString(mContext, today10am,
+                false /* no preposition */);
+        assertEquals(noPrep, DateUtils.getRelativeTimeSpanString(mContext, today10am));
+
+        if (android.text.format.DateFormat.is24HourFormat(mContext)) {
+            assertEquals("at 10:00", withPrep);
+            assertEquals("10:00", noPrep);
+        } else {
+            assertEquals("at 10:00 AM", withPrep);
+            assertEquals("10:00 AM", noPrep);
+        }
+    }
+
     // Similar to test_getRelativeTimeSpanString(). The function here is to
     // test the mapping between DateUtils's public API and libcore/icu4c's
     // implementation. More tests, in different locales, are in libcore's
@@ -206,11 +236,55 @@ public class DateUtilsTest {
             return;
         }
 
-        Date date = new Date(109, 0, 19, 3, 30, 15);
-        long fixedTime = date.getTime();
-        final long HOUR_DURATION = 2 * 60 * 60 * 1000;
+        final Date date = new Date(109, 0, 19, 3, 30, 15);
+        final long fixedTime = date.getTime();
+        final long hourDuration = 2 * 60 * 60 * 1000;
         assertEquals("Monday", DateUtils.formatDateRange(mContext, fixedTime,
-                fixedTime + HOUR_DURATION, DateUtils.FORMAT_SHOW_WEEKDAY));
+                fixedTime + hourDuration, DateUtils.FORMAT_SHOW_WEEKDAY));
+    }
+
+    @Test
+    public void testFormatDateRange_withFormatter() {
+        if (!LocaleUtils.isCurrentLocale(mContext, Locale.US)) {
+            return;
+        }
+
+        final Date date = new Date(109, 0, 19, 3, 30, 15);
+        final long fixedTime = date.getTime();
+        final long hourDuration = 2 * 60 * 60 * 1000;
+        final Formatter formatter = new Formatter();
+        final Formatter result = DateUtils.formatDateRange(mContext, formatter, fixedTime,
+                fixedTime + hourDuration, DateUtils.FORMAT_SHOW_WEEKDAY);
+        assertEquals("Monday", result.toString());
+        assertSame(result, formatter);
+    }
+
+    @Test
+    public void testFormatDateRange_withFormatterAndTimezone() {
+        if (!LocaleUtils.isCurrentLocale(mContext, Locale.US)) {
+            return;
+        }
+
+        final Date date = new Date(109, 0, 19, 3, 30, 15);
+        final long fixedTime = date.getTime();
+        final long hourDuration = 2 * 60 * 60 * 1000;
+        final Formatter formatter = new Formatter();
+        final Formatter result = DateUtils.formatDateRange(mContext, formatter, fixedTime,
+                fixedTime + hourDuration, DateUtils.FORMAT_SHOW_WEEKDAY, null /* local */);
+        assertEquals("Monday", result.toString());
+        assertSame(result, formatter);
+    }
+
+    @Test
+    public void testFormatDateTime() {
+        if (!LocaleUtils.isCurrentLocale(mContext, Locale.US)) {
+            return;
+        }
+
+        final Date date = new Date(109, 0, 19, 3, 30, 15);
+        final long fixedTime = date.getTime();
+        assertEquals("Monday", DateUtils.formatDateTime(mContext, fixedTime,
+                DateUtils.FORMAT_SHOW_WEEKDAY));
     }
 
     @Test
