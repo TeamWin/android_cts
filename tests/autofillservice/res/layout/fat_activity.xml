@@ -66,4 +66,74 @@
         android:importantForAutofill="yes"
         android:src="@drawable/android" />
 
+    <LinearLayout
+         android:id="@+id/not_important_container_excluding_descendants"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:importantForAutofill="noExcludeDescendants">
+
+        <FrameLayout
+            android:id="@+id/not_important_container_excluding_descendants_child"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:importantForAutofill="yes">
+
+            <View
+                android:id="@+id/not_important_container_excluding_descendants_grand_child"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/android">
+            </View>
+
+        </FrameLayout>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/important_container_excluding_descendants"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:importantForAutofill="yesExcludeDescendants">
+
+        <FrameLayout
+            android:id="@+id/important_container_excluding_descendants_child"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:importantForAutofill="yes">
+
+            <View
+                android:id="@+id/important_container_excluding_descendants_grand_child"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/android">
+            </View>
+
+        </FrameLayout>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/not_important_container_mixed_descendants"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:importantForAutofill="no">
+
+        <FrameLayout
+            android:id="@+id/not_important_container_mixed_descendants_child"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:importantForAutofill="yes">
+
+            <ImageView
+                android:id="@+id/not_important_container_mixed_descendants_grand_child"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/android"
+                android:importantForAutofill="no">
+            </ImageView>
+
+        </FrameLayout>
+
+    </LinearLayout>
+
 </LinearLayout>
