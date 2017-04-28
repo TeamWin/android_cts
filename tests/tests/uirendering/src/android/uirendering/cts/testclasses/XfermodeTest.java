@@ -17,12 +17,14 @@ package android.uirendering.cts.testclasses;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.RectF;
-import android.support.test.filters.MediumTest;
+import android.graphics.drawable.ColorDrawable;
+import android.support.test.filters.LargeTest;
 import android.uirendering.cts.bitmapverifiers.SamplePointVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.uirendering.cts.testinfrastructure.CanvasClient;
@@ -34,7 +36,7 @@ import org.junit.runners.Parameterized;
 import java.util.ArrayList;
 import java.util.List;
 
-@MediumTest
+@LargeTest // Temporarily hidden from presubmit
 @RunWith(Parameterized.class)
 public class XfermodeTest extends ActivityTestBase {
     /**
@@ -137,6 +139,17 @@ public class XfermodeTest extends ActivityTestBase {
         mConfig = config;
     }
 
+
+    @Override
+    public void setUp() {
+        super.setUp();
+
+        // temporary - ensure test isn't capturing window bg only
+        getInstrumentation().runOnMainSync(() -> getActivity().getWindow().setBackgroundDrawable(
+                        new ColorDrawable(Color.GREEN)));
+
+    }
+
     private CanvasClient mCanvasClient = new CanvasClient() {
         final Paint mPaint = new Paint();
         private final RectF mSrcRect = new RectF(30, 30, 80, 80);
@@ -146,6 +159,8 @@ public class XfermodeTest extends ActivityTestBase {
 
         @Override
         public void draw(Canvas canvas, int width, int height) {
+            canvas.drawColor(Color.WHITE); // temporary - ensure test isn't capturing window bg only
+
             int sc = canvas.saveLayer(0, 0, TEST_WIDTH, TEST_HEIGHT, null);
 
             canvas.drawBitmap(mDstBitmap, 0, 0, null);
