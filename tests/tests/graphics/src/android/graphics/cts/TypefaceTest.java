@@ -282,7 +282,7 @@ public class TypefaceTest {
     }
 
     @Test
-    public void testTypefaceBuilder_AssetSource() throws FontVariationAxis.InvalidFormatException {
+    public void testTypefaceBuilder_AssetSource() {
         Typeface typeface1 = new Typeface.Builder(mContext.getAssets(), "samplefont.ttf").build();
         assertNotNull(typeface1);
 
@@ -337,7 +337,7 @@ public class TypefaceTest {
             assertNotSame(typeface2, typeface3);
 
             // TODO: Add ttc index case. Need TTC file for CTS.
-        } catch (IOException | FontVariationAxis.InvalidFormatException e) {
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
