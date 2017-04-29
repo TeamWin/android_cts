@@ -36,13 +36,13 @@ public class FontVariationAxisTest {
     };
 
     @Test
-    public void testConstruction() throws FontVariationAxis.InvalidFormatException {
+    public void testConstruction() {
         new FontVariationAxis("wght", 1.0f);
         new FontVariationAxis("PRIV", -1.0f);
     }
 
     @Test
-    public void testGetterTest() throws FontVariationAxis.InvalidFormatException {
+    public void testGetterTest() {
         FontVariationAxis axis = new FontVariationAxis("wght", 1.0f);
         assertEquals("wght", axis.getTag());
         assertEquals(1.0f, axis.getStyleValue(), FLOT_EQUALITY_PREC);
@@ -58,15 +58,14 @@ public class FontVariationAxisTest {
             try {
                 new FontVariationAxis(invalidTag, 0.0f);
                 fail(invalidTag + " should be treated as invalid tag");
-            } catch (FontVariationAxis.InvalidFormatException e) {
+            } catch (IllegalArgumentException e) {
                 // pass
             }
         }
     }
 
     @Test
-    public void testFromFontVariationSetting_Single()
-            throws FontVariationAxis.InvalidFormatException {
+    public void testFromFontVariationSetting_Single() {
         FontVariationAxis[] axes = FontVariationAxis.fromFontVariationSettings("");
         assertNull(axes);
 
@@ -132,7 +131,7 @@ public class FontVariationAxisTest {
             try {
                 FontVariationAxis.fromFontVariationSettings("'" + invalidTag + "' : 1.0");
                 fail(invalidTag + " should be treated as invalid settings");
-            } catch (FontVariationAxis.InvalidFormatException e) {
+            } catch (IllegalArgumentException e) {
                 // pass
             }
         }
@@ -141,14 +140,14 @@ public class FontVariationAxisTest {
                 FontVariationAxis.fromFontVariationSettings(
                         "'" + invalidTag + "' : 1.0, 'wdth' 10");
                 fail(invalidTag + " should be treated as invalid settings");
-            } catch (FontVariationAxis.InvalidFormatException e) {
+            } catch (IllegalArgumentException e) {
                 // pass
             }
         }
     }
 
     @Test
-    public void testtoFontVariationSettings() throws FontVariationAxis.InvalidFormatException {
+    public void testtoFontVariationSettings() {
         assertEquals("", FontVariationAxis.toFontVariationSettings(null));
         assertEquals("", FontVariationAxis.toFontVariationSettings(new FontVariationAxis[0]));
 
