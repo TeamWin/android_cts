@@ -15,6 +15,9 @@
  */
 package android.uirendering.cts.testclasses;
 
+import static org.junit.Assume.assumeNotNull;
+
+import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -39,8 +42,15 @@ public class AutofillHighlightTests extends ActivityTestBase {
         goldenBitmap.eraseColor(Color.WHITE);
         Canvas canvas = new Canvas(goldenBitmap);
 
-        Drawable autofilledDrawable = getActivity().getDrawable(
-                android.R.drawable.autofilled_highlight);
+        TypedArray a = getActivity().getTheme().obtainStyledAttributes(
+                new int[]{android.R.attr.autofilledHighlight});
+        int attributeResourceId = a.getResourceId(0, 0);
+        Drawable autofilledDrawable = getActivity().getDrawable(attributeResourceId);
+        a.recycle();
+
+        // Test does not make sense if autofill highlight is not set
+        assumeNotNull(autofilledDrawable);
+
         autofilledDrawable.setBounds(0, 0, ActivityTestBase.TEST_WIDTH,
                 ActivityTestBase.TEST_HEIGHT);
         autofilledDrawable.draw(canvas);
