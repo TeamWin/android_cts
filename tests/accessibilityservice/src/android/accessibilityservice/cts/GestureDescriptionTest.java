@@ -20,9 +20,6 @@ import android.graphics.Path;
 import android.graphics.PathMeasure;
 import android.test.InstrumentationTestCase;
 
-import static android.accessibilityservice.GestureDescription.StrokeDescription.INVALID_STROKE_ID;
-import static android.test.MoreAsserts.assertNotEqual;
-
 /**
  * Tests for creating gesture descriptions.
  */
@@ -119,27 +116,22 @@ public class GestureDescriptionTest extends InstrumentationTestCase {
         }
     }
 
-    public void testStrokeDescriptionGettersForContinuation() {
+    public void testStrokeDescriptionWillContinue() {
         StrokeDescription strokeDescription = new StrokeDescription(mNominalPath, 0, 100);
-        assertFalse(strokeDescription.isContinued());
+        assertFalse(strokeDescription.willContinue());
 
-        strokeDescription = new StrokeDescription(mNominalPath, 0, 100, INVALID_STROKE_ID, true);
-        assertTrue(strokeDescription.isContinued());
+        StrokeDescription continuedStroke = new StrokeDescription(mNominalPath, 0, 100, true);
+        assertTrue(continuedStroke.willContinue());
 
-        strokeDescription = new StrokeDescription(mNominalPath, 0, 100, INVALID_STROKE_ID, false);
-        assertFalse(strokeDescription.isContinued());
+        strokeDescription = new StrokeDescription(mNominalPath, 0, 100, false);
+        assertFalse(strokeDescription.willContinue());
 
-        int idOfContinuedStroke = strokeDescription.getId() - 1;
-        strokeDescription = new StrokeDescription(mNominalPath, 0, 100, idOfContinuedStroke, false);
-        assertEquals(idOfContinuedStroke, strokeDescription.getContinuedStrokeId());
-    }
+        StrokeDescription continuation =
+                continuedStroke.continueStroke(mNominalPath, 0, 100, false);
+        assertFalse(continuation.willContinue());
 
-    public void testStrokeDescriptionIds() {
-        StrokeDescription strokeDescription1 =
-                new StrokeDescription(mNominalPath, 0, 100);
-        StrokeDescription strokeDescription2 =
-                new StrokeDescription(mNominalPath, 0, 100);
-        assertNotEqual(strokeDescription1.getId(), strokeDescription2.getId());
+        continuation = continuedStroke.continueStroke(mNominalPath, 0, 100, true);
+        assertTrue(continuation.willContinue());
     }
 
     public void testAddStroke_allowUpToMaxPaths() {
