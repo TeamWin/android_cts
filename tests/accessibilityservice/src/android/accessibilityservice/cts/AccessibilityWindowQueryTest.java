@@ -649,7 +649,7 @@ public class AccessibilityWindowQueryTest
         final int windowCount = windows.size();
         for (int i = 0; i < windowCount; i++) {
             final AccessibilityWindowInfo window = windows.get(i);
-            if (window.inPictureInPicture()) {
+            if (window.isInPictureInPictureMode()) {
                 numPictureInPictureWindows++;
             }
         }
