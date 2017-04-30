@@ -137,7 +137,7 @@ import android.view.inputmethod.ExtractedText;
 import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
-import android.view.textclassifier.TextClassificationResult;
+import android.view.textclassifier.TextClassification;
 import android.view.textclassifier.TextClassifier;
 import android.view.textclassifier.TextSelection;
 import android.widget.EditText;
@@ -7423,9 +7423,9 @@ public class TextViewTest {
         when(mockClassifier.suggestSelection(
                 any(CharSequence.class), anyInt(), anyInt(), any(LocaleList.class)))
                 .thenReturn(new TextSelection.Builder(SMARTSELECT_START, SMARTSELECT_END).build());
-        when(mockClassifier.getTextClassificationResult(
+        when(mockClassifier.classifyText(
                 any(CharSequence.class), anyInt(), anyInt(), any(LocaleList.class)))
-                .thenReturn(new TextClassificationResult.Builder().build());
+                .thenReturn(new TextClassification.Builder().build());
         mActivityRule.runOnUiThread(() -> {
             mTextView.setTextIsSelectable(true);
             mTextView.setText(text, BufferType.EDITABLE);
