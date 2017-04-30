@@ -1142,7 +1142,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Can disable while connected.
         mActivity.runOnUiThread(() -> getContext().getSystemService(
-                AutofillManager.class).disableOwnedAutofillServices());
+                AutofillManager.class).disableAutofillServices());
 
         // Ensure disabled.
         assertServiceDisabled();
