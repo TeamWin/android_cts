@@ -18,6 +18,8 @@ package android.hardware.cts.helpers.sensorverification;
 
 import junit.framework.Assert;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
+
 import android.os.Build;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -66,7 +68,7 @@ public class EventBasicVerification extends AbstractSensorVerification {
         mNumEvent = 0;
         mWrongSensorObserved = false;
 
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
+        if (ApiLevelUtil.isAfter(Build.VERSION_CODES.M)) {
             NUM_EVENT_MERCY_FACTOR = 0;
         } else {
             NUM_EVENT_MERCY_FACTOR = 0.3f;

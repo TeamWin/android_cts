@@ -15,6 +15,8 @@
  */
 package android.media.cts;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
+
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.MediaCodec;
@@ -111,7 +113,7 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
 
     private boolean deviceHasMediaDrm() {
         // ClearKey is introduced after KitKat.
-        if (android.os.Build.VERSION.SDK_INT <= android.os.Build.VERSION_CODES.KITKAT) {
+        if (ApiLevelUtil.isAtMost(android.os.Build.VERSION_CODES.KITKAT)) {
             Log.i(TAG, "This test is designed to work after Android KitKat.");
             return false;
         }
@@ -295,7 +297,7 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
 
     public boolean isResolutionSupported(String mime, String[] features,
             int videoWidth, int videoHeight) {
-        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN) {
+        if (ApiLevelUtil.isBefore(android.os.Build.VERSION_CODES.JELLY_BEAN)) {
             if  (videoHeight <= 144) {
                 return CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_QCIF);
             } else if (videoHeight <= 240) {
