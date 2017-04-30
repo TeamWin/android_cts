@@ -15,6 +15,8 @@
  */
 package android.telecom.cts;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
+
 import android.app.Instrumentation;
 import android.content.ComponentName;
 import android.content.Context;

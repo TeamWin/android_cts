@@ -16,6 +16,8 @@
 
 package android.location.cts;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
+
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.GnssClock;
@@ -83,10 +85,10 @@ public final class TestMeasurementUtil {
                                                     String testTag,
                                                     int minHardwareYear,
                                                     boolean isCtsVerifier) {
-       if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+       if (ApiLevelUtil.isBefore(Build.VERSION_CODES.N)) {
             Log.i(TAG, "This test is designed to work on N or newer. " +
                     "Test is being skipped because the platform version is being run in " +
-                    Build.VERSION.SDK_INT);
+                    ApiLevelUtil.getApiLevel());
             return false;
         }
 

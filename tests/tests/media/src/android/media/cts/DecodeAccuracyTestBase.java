@@ -17,6 +17,8 @@ package android.media.cts;
 
 import android.media.cts.R;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
+
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
@@ -220,7 +222,7 @@ public class DecodeAccuracyTestBase
                 try {
                     int inputBufferIndex = decoder.dequeueInputBuffer(DEQUEUE_TIMEOUT_US);
                     if (inputBufferIndex >= 0) {
-                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+                        if (ApiLevelUtil.isBefore(Build.VERSION_CODES.LOLLIPOP)) {
                             inputBuffer = inputBufferArray[inputBufferIndex];
                         } else {
                             inputBuffer = decoder.getInputBuffer(inputBufferIndex);
@@ -276,7 +278,7 @@ public class DecodeAccuracyTestBase
             } catch (Exception exception) {
                 if (exception instanceof IOException) {
                     Log.e(TAG, "IOException in createDecoderByType", exception);
-                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP
+                } else if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.LOLLIPOP)
                         && exception instanceof CodecException) {
                     Log.e(TAG, "CodecException in createDecoderByType", exception);
                     decoder.reset();
@@ -293,7 +295,7 @@ public class DecodeAccuracyTestBase
             try {
                 decoder.start();
             } catch (Exception exception) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP
+                if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.LOLLIPOP)
                         && exception instanceof CodecException) {
                     Log.e(TAG, "CodecException in startDecoder", exception);
                     decoder.reset();
