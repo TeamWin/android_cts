@@ -24,6 +24,8 @@ import android.content.Intent;
 import android.jobscheduler.MockJobService.TestWorkItem;
 import android.net.Uri;
 
+import com.android.compatibility.common.util.SystemUtil;
+
 import java.util.ArrayList;
 
 /**
@@ -65,7 +67,7 @@ public class EnqueueJobWorkTest extends ConstraintTest {
         return i1.filterEquals(i2);
     }
 
-    private void compareWork(TestWorkItem[] expected, ArrayList<Intent> received) {
+    private void compareWork(TestWorkItem[] expected, ArrayList<JobWorkItem> received) {
         if (received == null) {
             fail("Didn't receive any expected work.");
         }
@@ -74,7 +76,7 @@ public class EnqueueJobWorkTest extends ConstraintTest {
             expectedArray.add(expected[i]);
         }
         for (int i = 0; i < received.size(); i++) {
-            Intent work = received.get(i);
+            JobWorkItem work = received.get(i);
             if (i < expected.length && expected[i].subitems != null) {
                 TestWorkItem[] sub = expected[i].subitems;
                 for (int j = 0; j < sub.length; j++) {
@@ -85,8 +87,13 @@ public class EnqueueJobWorkTest extends ConstraintTest {
                 fail("Received more than " + expected.length + " work items, first extra is "
                         + work);
             }
-            if (!intentEquals(work, expectedArray.get(i).intent)) {
-                fail("Received work #" + i + " " + work + " but expected " + expected[i]);
+            if (!intentEquals(work.getIntent(), expectedArray.get(i).intent)) {
+                fail("Received work #" + i + " " + work.getIntent() + " but expected " + expected[i]);
+            }
+            if (work.getDeliveryCount() != expectedArray.get(i).deliveryCount) {
+                fail("Received work #" + i + " " + work.getIntent() + " delivery count is "
+                        + work.getDeliveryCount() + " but expected "
+                        + expectedArray.get(i).deliveryCount);
             }
         }
         if (received.size() < expected.length) {
@@ -176,6 +183,58 @@ public class EnqueueJobWorkTest extends ConstraintTest {
         assertTrue("Job with work enqueued did not fire.",
                 kTestEnvironment.awaitExecution());
         compareWork(work, kTestEnvironment.getLastReceivedWork());
+    }
+
+    /**
+     * Test job getting stopped while processing work and that work being redelivered.
+     */
+    public void testEnqueueMultipleRedeliver() throws Exception {
+        Intent work1 = new Intent("work1");
+        Intent work2 = new Intent("work2");
+        Intent work3 = new Intent("work3");
+        Intent work4 = new Intent("work4");
+        Intent work5 = new Intent("work5");
+        Intent work6 = new Intent("work6");
+        TestWorkItem[] initialWork = new TestWorkItem[] {
+                new TestWorkItem(work1), new TestWorkItem(work2), new TestWorkItem(work3),
+                new TestWorkItem(work4, TestWorkItem.FLAG_WAIT_FOR_STOP, 1) };
+        kTestEnvironment.setExpectedExecutions(1);
+        kTestEnvironment.setExpectedWaitForStop();
+        kTestEnvironment.setExpectedWork(initialWork);
+        JobInfo ji = mBuilder.setOverrideDeadline(0).build();
+        mJobScheduler.enqueue(ji, new JobWorkItem(work1));
+        mJobScheduler.enqueue(ji, new JobWorkItem(work2));
+        mJobScheduler.enqueue(ji, new JobWorkItem(work3));
+        mJobScheduler.enqueue(ji, new JobWorkItem(work4));
+        kTestEnvironment.readyToWork();
+
+        // Now wait for the job to get to the point where it is processing the last
+        // work and waiting for it to be stopped.
+        assertFalse("Job with work enqueued did not wait to stop.",
+                kTestEnvironment.awaitWaitingForStop());
+
+        // Cause the job to timeout (stop) immediately, and wait for its execution to finish.
+        SystemUtil.runShellCommand(getInstrumentation(), "cmd jobscheduler timeout "
+                + kJobServiceComponent.getPackageName() + " " + ENQUEUE_WORK_JOB_ID);
+        assertTrue("Job with work enqueued did not finish.",
+                kTestEnvironment.awaitExecution());
+        compareWork(initialWork, kTestEnvironment.getLastReceivedWork());
+
+        // Now we are going to add some more work, restart the job, and see if it correctly
+        // redelivers the last work and delivers the new work.
+        TestWorkItem[] finalWork = new TestWorkItem[] {
+                new TestWorkItem(work4, 0, 2), new TestWorkItem(work5), new TestWorkItem(work6) };
+        kTestEnvironment.setExpectedExecutions(1);
+        kTestEnvironment.setExpectedWork(finalWork);
+        mJobScheduler.enqueue(ji, new JobWorkItem(work5));
+        mJobScheduler.enqueue(ji, new JobWorkItem(work6));
+        kTestEnvironment.readyToWork();
+        SystemUtil.runShellCommand(getInstrumentation(), "cmd jobscheduler run "
+                + kJobServiceComponent.getPackageName() + " " + ENQUEUE_WORK_JOB_ID);
+
+        assertTrue("Restarted with work enqueued did not execute.",
+                kTestEnvironment.awaitExecution());
+        compareWork(finalWork, kTestEnvironment.getLastReceivedWork());
     }
 
     /**
