@@ -55,11 +55,11 @@ public class CrossProfileNotificationListenerService extends NotificationListene
     }
 
     private void sendBroadcastForNotification(StatusBarNotification sbn, String action) {
-        if (NOTIFICATION_CHANNEL.equals(sbn.getNotification().getChannel())) {
+        if (NOTIFICATION_CHANNEL.equals(sbn.getNotification().getChannelId())) {
             LocalBroadcastManager.getInstance(this).sendBroadcast(new Intent(action));
         } else {
             Log.i(TAG, "Notification is for different channel "
-                    + sbn.getNotification().getChannel());
+                    + sbn.getNotification().getChannelId());
         }
     }
 }
