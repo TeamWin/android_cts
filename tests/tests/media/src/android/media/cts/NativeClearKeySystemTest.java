@@ -23,6 +23,7 @@ import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.MediaUtils;
 import com.google.android.collect.Lists;
 
@@ -94,7 +95,7 @@ public class NativeClearKeySystemTest extends MediaPlayerTestBase {
 
     private boolean deviceHasMediaDrm() {
         // ClearKey is introduced after KitKat.
-        if (android.os.Build.VERSION.SDK_INT <= android.os.Build.VERSION_CODES.KITKAT) {
+        if (ApiLevelUtil.isAtMost(android.os.Build.VERSION_CODES.KITKAT)) {
             Log.i(TAG, "This test is designed to work after Android KitKat.");
             return false;
         }

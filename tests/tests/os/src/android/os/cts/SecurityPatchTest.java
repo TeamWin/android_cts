@@ -16,6 +16,8 @@
 
 package android.os.cts;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
+
 import android.os.Build;
 import android.os.SystemProperties;
 import android.test.InstrumentationTestCase;
@@ -38,7 +40,7 @@ public class SecurityPatchTest extends InstrumentationTestCase {
 
     @Override
     protected void setUp() {
-        mSkipTests = (Build.VERSION.SDK_INT < Build.VERSION_CODES.M);
+        mSkipTests = (ApiLevelUtil.isBefore(Build.VERSION_CODES.M));
     }
 
     /** Security patch string must exist in M or higher **/

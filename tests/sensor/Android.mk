@@ -25,7 +25,7 @@ LOCAL_MODULE_TAGS := tests
 
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
-#LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util
+LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util
 
 LOCAL_JAVA_LIBRARIES := platform-test-annotations
 
@@ -79,6 +79,7 @@ LOCAL_COMPATIBILITY_SUITE := cts
 LOCAL_MULTILIB := both
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
+    compatibility-device-util \
     ctstestrunner \
     cts-sensors-tests \
 
