@@ -99,13 +99,13 @@ public class ClientTest {
                     is("com.android.cts.normalapp"));
             assertThat(resolveInfo.get(0).activityInfo.name,
                     is("com.android.cts.normalapp.ExposedActivity"));
-            assertThat(resolveInfo.get(0).instantAppAvailable,
+            assertThat(resolveInfo.get(0).isInstantAppAvailable,
                     is(false));
             assertThat(resolveInfo.get(1).activityInfo.packageName,
                     is("com.android.cts.normalapp"));
             assertThat(resolveInfo.get(1).activityInfo.name,
                     is("com.android.cts.normalapp.NormalActivity"));
-            assertThat(resolveInfo.get(1).instantAppAvailable,
+            assertThat(resolveInfo.get(1).isInstantAppAvailable,
                     is(false));
         }
 
@@ -124,13 +124,13 @@ public class ClientTest {
                     is("com.android.cts.normalapp"));
             assertThat(resolveInfo.get(0).activityInfo.name,
                     is("com.android.cts.normalapp.ExposedActivity"));
-            assertThat(resolveInfo.get(0).instantAppAvailable,
+            assertThat(resolveInfo.get(0).isInstantAppAvailable,
                     is(false));
             assertThat(resolveInfo.get(1).activityInfo.packageName,
                     is("com.android.cts.normalapp"));
             assertThat(resolveInfo.get(1).activityInfo.name,
                     is("com.android.cts.normalapp.NormalActivity"));
-            assertThat(resolveInfo.get(1).instantAppAvailable,
+            assertThat(resolveInfo.get(1).isInstantAppAvailable,
                     is(false));
         }
 
@@ -167,13 +167,13 @@ public class ClientTest {
                     is("com.android.cts.normalapp"));
             assertThat(resolveInfo.get(0).serviceInfo.name,
                     is("com.android.cts.normalapp.ExposedService"));
-            assertThat(resolveInfo.get(0).instantAppAvailable,
+            assertThat(resolveInfo.get(0).isInstantAppAvailable,
                     is(false));
             assertThat(resolveInfo.get(1).serviceInfo.packageName,
                     is("com.android.cts.normalapp"));
             assertThat(resolveInfo.get(1).serviceInfo.name,
                     is("com.android.cts.normalapp.NormalService"));
-            assertThat(resolveInfo.get(1).instantAppAvailable,
+            assertThat(resolveInfo.get(1).isInstantAppAvailable,
                     is(false));
         }
 
@@ -192,13 +192,13 @@ public class ClientTest {
                     is("com.android.cts.normalapp"));
             assertThat(resolveInfo.get(0).serviceInfo.name,
                     is("com.android.cts.normalapp.ExposedService"));
-            assertThat(resolveInfo.get(0).instantAppAvailable,
+            assertThat(resolveInfo.get(0).isInstantAppAvailable,
                     is(false));
             assertThat(resolveInfo.get(1).serviceInfo.packageName,
                     is("com.android.cts.normalapp"));
             assertThat(resolveInfo.get(1).serviceInfo.name,
                     is("com.android.cts.normalapp.NormalService"));
-            assertThat(resolveInfo.get(1).instantAppAvailable,
+            assertThat(resolveInfo.get(1).isInstantAppAvailable,
                     is(false));
         }
 
@@ -240,7 +240,7 @@ public class ClientTest {
                     is("com.android.cts.normalapp"));
             assertThat(resolveInfo.get(1).providerInfo.name,
                     is("com.android.cts.normalapp.NormalProvider"));
-            assertThat(resolveInfo.get(1).instantAppAvailable,
+            assertThat(resolveInfo.get(1).isInstantAppAvailable,
                     is(false));
         }
 
@@ -264,7 +264,7 @@ public class ClientTest {
                     is("com.android.cts.normalapp"));
             assertThat(resolveInfo.get(1).providerInfo.name,
                     is("com.android.cts.normalapp.NormalProvider"));
-            assertThat(resolveInfo.get(1).instantAppAvailable,
+            assertThat(resolveInfo.get(1).isInstantAppAvailable,
                     is(false));
         }
 

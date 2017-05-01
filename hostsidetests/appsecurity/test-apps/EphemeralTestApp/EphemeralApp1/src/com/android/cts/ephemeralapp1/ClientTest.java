@@ -150,13 +150,13 @@ public class ClientTest {
                     is("com.android.cts.ephemeralapp1"));
             assertThat(resolveInfo.get(0).activityInfo.name,
                     is("com.android.cts.ephemeralapp1.EphemeralActivity"));
-            assertThat(resolveInfo.get(0).instantAppAvailable,
+            assertThat(resolveInfo.get(0).isInstantAppAvailable,
                     is(true));
             assertThat(resolveInfo.get(1).activityInfo.packageName,
                     is("com.android.cts.normalapp"));
             assertThat(resolveInfo.get(1).activityInfo.name,
                     is("com.android.cts.normalapp.ExposedActivity"));
-            assertThat(resolveInfo.get(1).instantAppAvailable,
+            assertThat(resolveInfo.get(1).isInstantAppAvailable,
                     is(false));
         }
 
@@ -173,13 +173,13 @@ public class ClientTest {
                     is("com.android.cts.ephemeralapp1"));
             assertThat(resolveInfo.get(0).activityInfo.name,
                     is("com.android.cts.ephemeralapp1.EphemeralActivity"));
-            assertThat(resolveInfo.get(0).instantAppAvailable,
+            assertThat(resolveInfo.get(0).isInstantAppAvailable,
                     is(true));
             assertThat(resolveInfo.get(1).activityInfo.packageName,
                     is("com.android.cts.normalapp"));
             assertThat(resolveInfo.get(1).activityInfo.name,
                     is("com.android.cts.normalapp.ExposedActivity"));
-            assertThat(resolveInfo.get(1).instantAppAvailable,
+            assertThat(resolveInfo.get(1).isInstantAppAvailable,
                     is(false));
         }
 
@@ -196,13 +196,13 @@ public class ClientTest {
                     is("com.android.cts.ephemeralapp1"));
             assertThat(resolveInfo.get(0).activityInfo.name,
                     is("com.android.cts.ephemeralapp1.EphemeralActivity"));
-            assertThat(resolveInfo.get(0).instantAppAvailable,
+            assertThat(resolveInfo.get(0).isInstantAppAvailable,
                     is(true));
             assertThat(resolveInfo.get(1).activityInfo.packageName,
                     is("com.android.cts.normalapp"));
             assertThat(resolveInfo.get(1).activityInfo.name,
                     is("com.android.cts.normalapp.ExposedActivity"));
-            assertThat(resolveInfo.get(1).instantAppAvailable,
+            assertThat(resolveInfo.get(1).isInstantAppAvailable,
                     is(false));
         }
 
@@ -222,7 +222,7 @@ public class ClientTest {
                     is("com.android.cts.normalapp"));
             assertThat(resolveInfo.get(1).serviceInfo.name,
                     is("com.android.cts.normalapp.ExposedService"));
-            assertThat(resolveInfo.get(1).instantAppAvailable,
+            assertThat(resolveInfo.get(1).isInstantAppAvailable,
                     is(false));
         }
 
@@ -276,7 +276,7 @@ public class ClientTest {
                     is("com.android.cts.normalapp"));
             assertThat(resolveInfo.get(1).providerInfo.name,
                     is("com.android.cts.normalapp.ExposedProvider"));
-            assertThat(resolveInfo.get(1).instantAppAvailable,
+            assertThat(resolveInfo.get(1).isInstantAppAvailable,
                     is(false));
         }
 
