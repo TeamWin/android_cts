@@ -38,7 +38,6 @@ import android.service.autofill.FillResponse;
 import android.service.autofill.SaveCallback;
 import android.util.Log;
 
-import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -149,13 +148,13 @@ public class InstrumentedAutoFillService extends AutofillService {
      */
     static final class FillRequest {
         final AssistStructure structure;
-        final ArrayList<FillContext> contexts;
+        final List<FillContext> contexts;
         final Bundle data;
         final CancellationSignal cancellationSignal;
         final FillCallback callback;
         final int flags;
 
-        private FillRequest(ArrayList<FillContext> contexts, Bundle data,
+        private FillRequest(List<FillContext> contexts, Bundle data,
                 CancellationSignal cancellationSignal, FillCallback callback, int flags) {
             this.contexts = contexts;
             this.data = data;
@@ -282,7 +281,7 @@ public class InstrumentedAutoFillService extends AutofillService {
             mSaveRequests.clear();
         }
 
-        private void onFillRequest(ArrayList<FillContext> contexts, Bundle data,
+        private void onFillRequest(List<FillContext> contexts, Bundle data,
                 CancellationSignal cancellationSignal, FillCallback callback, int flags) {
             try {
                 CannedFillResponse response = null;
