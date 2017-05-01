@@ -15,6 +15,8 @@
  */
 package android.uirendering.cts.testinfrastructure;
 
+import static org.junit.Assert.fail;
+
 import android.app.Activity;
 import android.content.res.Configuration;
 import android.graphics.Point;
@@ -27,6 +29,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewStub;
 import android.view.ViewTreeObserver;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A generic activity that uses a view specified by the user.
@@ -77,7 +82,15 @@ public class DrawActivity extends Activity {
     }
 
     public void reset() {
-        mHandler.sendEmptyMessage(RenderSpecHandler.RESET_MSG);
+        CountDownLatch fence = new CountDownLatch(1);
+        mHandler.obtainMessage(RenderSpecHandler.RESET_MSG, fence).sendToTarget();
+        try {
+            if (!fence.await(10, TimeUnit.SECONDS)) {
+                fail("Timeout exception");
+            }
+        } catch (InterruptedException ex) {
+            fail(ex.getMessage());
+        }
     }
 
     private ViewInitializer mViewInitializer;
@@ -101,6 +114,7 @@ public class DrawActivity extends Activity {
         public void handleMessage(Message message) {
             if (message.what == RESET_MSG) {
                 ((ViewGroup)findViewById(android.R.id.content)).removeAllViews();
+                ((CountDownLatch)message.obj).countDown();
                 return;
             }
             setContentView(R.layout.test_container);
