@@ -1,17 +1,18 @@
-package android.graphics.drawable;
+package android.graphics.drawable.cts;
 
 import static org.junit.Assert.assertTrue;
 
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Path.Direction;
 import android.graphics.Rect;
 import android.graphics.Region;
+import android.graphics.drawable.AdaptiveIconDrawable;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.test.AndroidTestCase;
 import android.util.Log;
 import java.io.File;
