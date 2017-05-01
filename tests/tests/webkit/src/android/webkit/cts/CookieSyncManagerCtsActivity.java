@@ -18,6 +18,8 @@ package android.webkit.cts;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.webkit.CookieSyncManager;
 import android.webkit.WebView;
 
@@ -48,6 +50,18 @@ public class CookieSyncManagerCtsActivity extends Activity {
         } catch (Exception e) {
             // May throw on a device with no webview, OK to ignore at this point.
         }
+    }
+
+    @Override
+    public void onDestroy() {
+        if (mWebView != null) {
+            ViewParent parent =  mWebView.getParent();
+            if (parent instanceof ViewGroup) {
+                ((ViewGroup) parent).removeView(mWebView);
+            }
+            mWebView.destroy();
+        }
+        super.onDestroy();
     }
 
     @Override
