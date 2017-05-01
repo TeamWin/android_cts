@@ -215,7 +215,7 @@ public class TelephonyManagerPermissionTest {
             fail("SecurityException expected!");
         } catch (SecurityException e) {}
         try {
-            Intent intent = new Intent("android.intent.action.ACTION_DEFAULT_SUBSCRIPTION_CHANGED");
+            Intent intent = new Intent("android.telephony.action.DEFAULT_SUBSCRIPTION_CHANGED");
             getContext().sendBroadcast(intent);
             fail("SecurityException expected!");
         } catch (SecurityException e) {}
@@ -227,7 +227,7 @@ public class TelephonyManagerPermissionTest {
         } catch (SecurityException e) {}
         try {
             Intent intent = new Intent(
-                    "android.intent.action.ACTION_DEFAULT_SMS_SUBSCRIPTION_CHANGED");
+                    "android.telephony.action.DEFAULT_SMS_SUBSCRIPTION_CHANGED");
             getContext().sendBroadcast(intent);
             fail("SecurityException expected!");
         } catch (SecurityException e) {}
