@@ -27,7 +27,7 @@ public class TurnScreenOnDismissKeyguardActivity extends Activity {
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
                 | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
-        getSystemService(KeyguardManager.class).dismissKeyguard(this,
-                new KeyguardDismissLoggerCallback(), null);
+        getSystemService(KeyguardManager.class).requestDismissKeyguard(this,
+                new KeyguardDismissLoggerCallback());
     }
 }

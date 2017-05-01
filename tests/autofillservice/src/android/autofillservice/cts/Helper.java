@@ -16,34 +16,26 @@
 
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.Helper.dumpStructure;
-
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.assist.AssistStructure;
 import android.app.assist.AssistStructure.ViewNode;
 import android.app.assist.AssistStructure.WindowNode;
 import android.icu.util.Calendar;
-import android.os.Bundle;
 import android.os.UserManager;
-import android.service.autofill.Dataset;
 import android.service.autofill.FillContext;
-import android.service.autofill.FillResponse;
 import android.support.annotation.NonNull;
 import android.support.test.InstrumentationRegistry;
 import android.text.TextUtils;
-import android.text.format.DateUtils;
 import android.util.Log;
-import android.view.autofill.AutofillId;
-import android.view.autofill.AutofillValue;
 import android.view.View;
 import android.view.ViewStructure.HtmlInfo;
+import android.view.autofill.AutofillId;
+import android.view.autofill.AutofillValue;
 
 import com.android.compatibility.common.util.SystemUtil;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
 
 /**
@@ -239,7 +231,7 @@ final class Helper {
     /**
      * Gets a node given its Android resource id, or {@code null} if not found.
      */
-    static ViewNode findNodeByResourceId(ArrayList<FillContext> contexts, String resourceId) {
+    static ViewNode findNodeByResourceId(List<FillContext> contexts, String resourceId) {
         for (FillContext context : contexts) {
             ViewNode node = findNodeByResourceId(context.getStructure(), resourceId);
             if (node != null) {
