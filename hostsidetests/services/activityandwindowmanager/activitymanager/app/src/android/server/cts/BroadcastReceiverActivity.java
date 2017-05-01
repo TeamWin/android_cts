@@ -77,8 +77,8 @@ public class BroadcastReceiverActivity extends Activity {
                 getWindow().addFlags(FLAG_DISMISS_KEYGUARD);
             }
             if (extras.getBoolean("dismissKeyguardMethod")) {
-                getSystemService(KeyguardManager.class).dismissKeyguard(
-                        BroadcastReceiverActivity.this, new KeyguardDismissLoggerCallback(), null);
+                getSystemService(KeyguardManager.class).requestDismissKeyguard(
+                        BroadcastReceiverActivity.this, new KeyguardDismissLoggerCallback());
             }
 
             ActivityLauncher.launchActivityFromExtras(BroadcastReceiverActivity.this, extras);
