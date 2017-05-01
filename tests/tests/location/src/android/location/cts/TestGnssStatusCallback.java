@@ -72,6 +72,7 @@ class TestGnssStatusCallback extends GnssStatus.Callback {
     @Override
     public void onSatelliteStatusChanged(GnssStatus status) {
         Log.i(mTag, "Gnss Status Listener Received Status Update");
+        mGnssStatus = status;
         mLatchStatus.countDown();
     }
 
