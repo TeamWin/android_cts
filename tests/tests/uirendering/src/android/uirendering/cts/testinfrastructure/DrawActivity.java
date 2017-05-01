@@ -57,15 +57,15 @@ public class DrawActivity extends Activity {
             @Nullable ViewInitializer viewInitializer, boolean useHardware, boolean usePicture) {
         ((RenderSpecHandler) mHandler).setViewInitializer(viewInitializer);
         int arg2 = (useHardware ? View.LAYER_TYPE_NONE : View.LAYER_TYPE_SOFTWARE);
-        if (canvasClient != null) {
-            mHandler.obtainMessage(RenderSpecHandler.CANVAS_MSG, usePicture ? 1 : 0,
-                    arg2, canvasClient).sendToTarget();
-        } else {
-            mHandler.obtainMessage(RenderSpecHandler.LAYOUT_MSG, layoutId, arg2).sendToTarget();
-        }
-
         Point point = new Point();
         synchronized (mLock) {
+            if (canvasClient != null) {
+                mHandler.obtainMessage(RenderSpecHandler.CANVAS_MSG, usePicture ? 1 : 0,
+                        arg2, canvasClient).sendToTarget();
+            } else {
+                mHandler.obtainMessage(RenderSpecHandler.LAYOUT_MSG, layoutId, arg2).sendToTarget();
+            }
+
             try {
                 mLock.wait(TIME_OUT_MS);
                 point.set(mLock.x, mLock.y);
@@ -78,13 +78,6 @@ public class DrawActivity extends Activity {
 
     public void reset() {
         mHandler.sendEmptyMessage(RenderSpecHandler.RESET_MSG);
-        synchronized (mLock) {
-            try {
-                mLock.wait(TIME_OUT_MS);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     private ViewInitializer mViewInitializer;
@@ -108,10 +101,6 @@ public class DrawActivity extends Activity {
         public void handleMessage(Message message) {
             if (message.what == RESET_MSG) {
                 ((ViewGroup)findViewById(android.R.id.content)).removeAllViews();
-                synchronized (mLock) {
-                    mLock.set(-1, -1);
-                    mLock.notify();
-                }
                 return;
             }
             setContentView(R.layout.test_container);
