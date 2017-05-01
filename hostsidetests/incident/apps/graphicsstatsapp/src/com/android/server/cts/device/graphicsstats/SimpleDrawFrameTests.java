@@ -39,6 +39,7 @@ public class SimpleDrawFrameTests {
     @Test
     public void testDrawTenFrames() throws Throwable {
         DrawFramesActivity activity = mActivityRule.getActivity();
+        activity.waitForReady();
         assertEquals(1, activity.getRenderedFramesCount());
         assertEquals(0, activity.getDroppedReportsCount());
         activity.drawFrames(10);
@@ -49,6 +50,7 @@ public class SimpleDrawFrameTests {
     @Test
     public void testDrawJankyFrames() throws Throwable {
         DrawFramesActivity activity = mActivityRule.getActivity();
+        activity.waitForReady();
         assertEquals(1, activity.getRenderedFramesCount());
         assertEquals(0, activity.getDroppedReportsCount());
         int[] frames = new int[50];
@@ -67,6 +69,7 @@ public class SimpleDrawFrameTests {
     @Test
     public void testDrawDaveyFrames() throws Throwable {
         DrawFramesActivity activity = mActivityRule.getActivity();
+        activity.waitForReady();
         assertEquals(1, activity.getRenderedFramesCount());
         assertEquals(0, activity.getDroppedReportsCount());
         int[] frames = new int[40];
