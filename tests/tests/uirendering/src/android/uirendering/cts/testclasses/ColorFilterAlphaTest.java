@@ -17,12 +17,14 @@ package android.uirendering.cts.testclasses;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.PorterDuffXfermode;
-import android.support.test.filters.MediumTest;
+import android.graphics.drawable.ColorDrawable;
+import android.support.test.filters.LargeTest;
 import android.uirendering.cts.bitmapverifiers.SamplePointVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.uirendering.cts.testinfrastructure.CanvasClient;
@@ -33,7 +35,7 @@ import org.junit.runners.Parameterized;
 
 import java.util.List;
 
-@MediumTest
+@LargeTest // Temporarily hidden from presubmit
 @RunWith(Parameterized.class)
 public class ColorFilterAlphaTest extends ActivityTestBase {
     // We care about one point in each of the four rectangles of different alpha values, as well as
@@ -120,12 +122,25 @@ public class ColorFilterAlphaTest extends ActivityTestBase {
         return bitmap;
     }
 
+
+    @Override
+    public void setUp() {
+        super.setUp();
+
+        // temporary - ensure test isn't capturing window bg only
+        getInstrumentation().runOnMainSync(() -> getActivity().getWindow().setBackgroundDrawable(
+                        new ColorDrawable(Color.GREEN)));
+
+    }
+
     private CanvasClient mCanvasClient = new CanvasClient() {
         final Paint mPaint = new Paint();
         private final Bitmap mBitmap = createMultiRectBitmap();
 
         @Override
         public void draw(Canvas canvas, int width, int height) {
+            canvas.drawColor(Color.WHITE); // temporary - ensure test isn't capturing window bg only
+
             mPaint.setColorFilter(new PorterDuffColorFilter(FILTER_COLOR, mConfig.mode));
             canvas.drawBitmap(mBitmap, 0, 0, mPaint);
         }
