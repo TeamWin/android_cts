@@ -48,14 +48,22 @@ static constexpr int kCaptureWaitUs = 100 * 1000;
 static constexpr int kCaptureWaitRetry = 10;
 static constexpr int kTestImageWidth = 640;
 static constexpr int kTestImageHeight = 480;
-static constexpr int kTestImageFormat = AIMAGE_FORMAT_JPEG;
+static constexpr int kTestImageFormat = AIMAGE_FORMAT_YUV_420_888;
 
-static constexpr int supportedUsage[] = {
-    AHARDWAREBUFFER_USAGE_CPU_READ_RARELY,
-    AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN,
-    AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE,
-    AHARDWAREBUFFER_USAGE_GPU_DATA_BUFFER,
-    AHARDWAREBUFFER_USAGE_VIDEO_ENCODE,
+struct FormatUsageCombination {
+    uint64_t format;
+    uint64_t usage;
+};
+
+static constexpr FormatUsageCombination supportedFormatUsage[] = {
+    {AIMAGE_FORMAT_YUV_420_888, AHARDWAREBUFFER_USAGE_CPU_READ_RARELY},
+    {AIMAGE_FORMAT_YUV_420_888, AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN},
+    {AIMAGE_FORMAT_JPEG, AHARDWAREBUFFER_USAGE_CPU_READ_RARELY},
+    {AIMAGE_FORMAT_JPEG, AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN},
+    {AIMAGE_FORMAT_RGBA_8888, AHARDWAREBUFFER_USAGE_CPU_READ_RARELY},
+    {AIMAGE_FORMAT_RGBA_8888, AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN},
+    {AIMAGE_FORMAT_RGBA_8888, AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE},
+    {AIMAGE_FORMAT_RGBA_8888, AHARDWAREBUFFER_USAGE_VIDEO_ENCODE},
 };
 
 class CameraHelper {
@@ -283,7 +291,7 @@ class ImageReaderTestCase {
         }
 
         media_status_t ret = AImageReader_newWithUsage(
-                mWidth, mHeight, mFormat, mUsage, 0, mMaxImages, &mImgReader);
+                mWidth, mHeight, mFormat, mUsage, mMaxImages, &mImgReader);
         if (ret != AMEDIA_OK || mImgReader == nullptr) {
             ALOGE("Failed to create new AImageReader, ret=%d, mImgReader=%p", ret, mImgReader);
             return -1;
@@ -497,16 +505,17 @@ int takePictures(uint64_t readerUsage, int readerMaxImages, bool readerAsync, in
 
 // Test that newWithUsage can create AImageReader correctly.
 extern "C" jboolean Java_android_media_cts_NativeImageReaderTest_\
-testSucceedsWithSupportedUsageNative(JNIEnv* /*env*/, jclass /*clazz*/) {
+testSucceedsWithSupportedUsageFormatNative(JNIEnv* /*env*/, jclass /*clazz*/) {
     static constexpr int kTestImageCount = 8;
 
-    for (auto& usage : supportedUsage) {
+    for (auto& combination : supportedFormatUsage) {
         AImageReader* outReader;
         media_status_t ret = AImageReader_newWithUsage(
-                kTestImageWidth, kTestImageHeight, kTestImageFormat, usage, 0, kTestImageCount,
-                &outReader);
+                kTestImageWidth, kTestImageHeight, combination.format, combination.usage,
+                kTestImageCount, &outReader);
         if (ret != AMEDIA_OK || outReader == nullptr) {
-            ALOGE("AImageReader_newWithUsage failed with usage: %d", usage);
+            ALOGE("AImageReader_newWithUsage failed with format: %" PRId64 ", usage: %" PRId64 ".",
+                  combination.format, combination.usage);
             return false;
         }
         AImageReader_delete(outReader);
@@ -518,7 +527,7 @@ testSucceedsWithSupportedUsageNative(JNIEnv* /*env*/, jclass /*clazz*/) {
 extern "C" jboolean Java_android_media_cts_NativeImageReaderTest_\
 testTakePicturesNative(JNIEnv* /*env*/, jclass /*clazz*/) {
     for (auto& readerUsage :
-         {AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN, AHARDWAREBUFFER_USAGE_GPU_DATA_BUFFER}) {
+         {AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN}) {
         for (auto& readerMaxImages : {1, 4, 8}) {
             for (auto& readerAsync : {true, false}) {
                 for (auto& pictureCount : {1, 8, 16}) {
