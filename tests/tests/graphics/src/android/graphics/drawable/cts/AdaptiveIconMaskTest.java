@@ -33,7 +33,6 @@ import android.graphics.drawable.ColorDrawable;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
-import android.util.PathParser;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -60,9 +59,7 @@ public class AdaptiveIconMaskTest {
         mRedDrawable = new ColorDrawable(Color.RED);
         mDrawable = new AdaptiveIconDrawable( mBlueDrawable, mRedDrawable);
 
-        String path = Resources.getSystem().getString(com.android.internal.R.string.config_icon_mask);
-        L("config_icon_mask: " + path);
-        mMask = PathParser.createPathFromPathData(path);
+        mMask = mDrawable.getIconMask();
         int sInset = (int) (SAFEZONE_INSET * AdaptiveIconDrawable.MASK_SIZE);
         mSafeZone.addCircle(AdaptiveIconDrawable.MASK_SIZE/2, AdaptiveIconDrawable.MASK_SIZE/2,
             AdaptiveIconDrawable.MASK_SIZE/2/2 - sInset, Direction.CW);
@@ -75,7 +72,6 @@ public class AdaptiveIconMaskTest {
         // Bounds should be [100 x 100]
         RectF bounds = new RectF();
         mMask.computeBounds(bounds, true);
-        System.out.println("MERONG:" + bounds.toShortString());
         assertTrue("Mask top should be larger than or equal to 0", -DELTA <= bounds.top);
         assertTrue("Mask left should be larger than or equal to 0", -DELTA <= bounds.left);
         assertTrue("Mask bottom should be smaller than or equal to" +
