@@ -170,8 +170,10 @@ public class MockListener extends NotificationListenerService {
                 } else if (SERVICE_SNOOZE_DURATION.equals(action)) {
                     String tag = intent.getStringExtra(EXTRA_TAG);
                     String key = mNotificationKeys.get(tag);
-                    MockListener.this.snoozeNotification(key,
-                            intent.getLongExtra(EXTRA_LONG, (long) 0));
+                    if (key != null) {
+                        MockListener.this.snoozeNotification(key,
+                                intent.getLongExtra(EXTRA_LONG, (long) 0));
+                    }
                 } else if (SERVICE_GET_SNOOZED.equals(action)) {
                     mSnoozed.clear();
                     StatusBarNotification[] snoozed = MockListener.this.getSnoozedNotifications();

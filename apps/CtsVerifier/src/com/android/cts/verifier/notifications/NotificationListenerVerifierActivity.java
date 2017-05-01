@@ -84,11 +84,13 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         tests.add(new DismissOneWithReasonTest());
         tests.add(new DismissAllTest());
         tests.add(new SnoozeNotificationForTimeTest());
+        tests.add(new SnoozeNotificationForTimeCancelTest());
         tests.add(new GetSnoozedNotificationTest());
         tests.add(new EnableHintsTest());
         tests.add(new SnoozeTest());
         tests.add(new UnsnoozeTest());
         tests.add(new MessageBundleTest());
+        tests.add(new EnableHintsTest());
         tests.add(new IsDisabledTest());
         tests.add(new ServiceStoppedTest());
         tests.add(new NotificationNotReceivedTest());
@@ -792,6 +794,85 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         }
     }
 
+    /**
+     * Posts notifications, snoozes one of them. Verifies that it is snoozed. Cancels all
+     * notifications and reposts them. Confirms that the original notification is still snoozed.
+     */
+    private class SnoozeNotificationForTimeCancelTest extends InteractiveTestCase {
+
+        final static int READY_TO_SNOOZE = 0;
+        final static int SNOOZED = 1;
+        final static int READY_TO_CHECK_FOR_SNOOZE = 2;
+        int state = -1;
+        long snoozeTime = 10000;
+        private String tag;
+        @Override
+        View inflate(ViewGroup parent) {
+            return createAutoItem(parent, R.string.nls_snooze_one_time);
+        }
+
+        @Override
+        void setUp() {
+            createChannel();
+            sendNotifications();
+            tag = mTag1;
+            status = READY;
+            state = READY_TO_SNOOZE;
+            delay();
+        }
+
+        @Override
+        void test() {
+            status = RETEST;
+            if (state == READY_TO_SNOOZE) {
+                MockListener.snoozeOneFor(mContext, tag, snoozeTime);
+                state = SNOOZED;
+            } else if (state == SNOOZED){
+                MockListener.probeListenerSnoozed(mContext,
+                        new MockListener.StringListResultCatcher() {
+                            @Override
+                            public void accept(List<String> result) {
+                                if (result != null && result.size() >= 1
+                                        && result.contains(tag)) {
+                                    // cancel and repost
+                                    sendNotifications();
+                                    state = READY_TO_CHECK_FOR_SNOOZE;
+                                    delay();
+                                } else {
+                                    logFail();
+                                    status = FAIL;
+                                    next();
+                                }
+                            }
+                        });
+            } else {
+                MockListener.probeListenerSnoozed(mContext,
+                        new MockListener.StringListResultCatcher() {
+                            @Override
+                            public void accept(List<String> result) {
+                                if (result != null && result.size() >= 1
+                                        && result.contains(tag)) {
+                                    status = PASS;
+                                } else {
+                                    logFail();
+                                    status = FAIL;
+                                }
+                                next();
+                            }
+                        });
+            }
+            delay();
+        }
+
+        @Override
+        void tearDown() {
+            mNm.cancelAll();
+            deleteChannel();
+            MockListener.resetListenerData(mContext);
+            delay();
+        }
+    }
+
     private class GetSnoozedNotificationTest extends InteractiveTestCase {
         final static int READY_TO_SNOOZE = 0;
         final static int SNOOZED = 1;
@@ -858,7 +939,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
                         new MockListener.StringListResultCatcher() {
                             @Override
                             public void accept(List<String> result) {
-                                if (result != null && result.size() == 2
+                                if (result != null && result.size() >= 2
                                         && result.contains(mTag1)
                                         && result.contains(mTag2)) {
                                     status = PASS;
