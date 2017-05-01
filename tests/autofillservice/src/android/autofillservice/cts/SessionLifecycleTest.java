@@ -113,7 +113,7 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
                     .setExtras(extras).build());
 
             CannedFillResponse response = new CannedFillResponse.Builder()
-                    .setAuthentication(authentication)
+                    .setAuthentication(authentication, ID_USERNAME, ID_PASSWORD)
                     .setPresentation(createPresentation("authenticate"))
                     .build();
             sReplier.addResponse(response);

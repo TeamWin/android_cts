@@ -87,9 +87,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class LoginActivityTest extends AutoFillServiceTestCase {
 
-    // TODO(b/37424539): remove when fixed
-    private static final boolean SUPPORTS_PARTITIONED_AUTH = false;
-
     @Rule
     public final ActivityTestRule<LoginActivity> mActivityRule = new ActivityTestRule<LoginActivity>(
             LoginActivity.class);
@@ -955,7 +952,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Configure the service behavior
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setAuthentication(authentication)
+                .setAuthentication(authentication, ID_USERNAME, ID_PASSWORD)
                 .setPresentation(createPresentation("Tap to auth response"))
                 .setExtras(extras)
                 .build());
@@ -1019,7 +1016,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                                 .setField(ID_PASSWORD, "sweet")
                                 .setPresentation(createPresentation("Dataset"))
                                 .build())
-                        .setAuthenticationIds(ID_USERNAME)
                         .build());
 
         // Create the authentication intent
@@ -1028,7 +1024,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Configure the service behavior
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setAuthentication(authentication)
+                .setAuthentication(authentication, ID_USERNAME)
+                .setIgnoreFields(ID_PASSWORD)
                 .setPresentation(createPresentation("Tap to auth response"))
                 .setExtras(extras)
                 .build());
@@ -1045,29 +1042,13 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         callback.assertUiShownEvent(username);
         sUiBot.assertShownByText("Tap to auth response");
 
-        if (SUPPORTS_PARTITIONED_AUTH) {
-            // Make sure UI is not show on 2nd field
-            final View password = mActivity.getPassword();
-            mActivity.onPassword(View::requestFocus);
-            callback.assertUiHiddenEvent(username);
-            sUiBot.assertNotShownByText("Tap to auth response");
-            // Now tap on 1st field to show it again...
-            mActivity.onUsername(View::requestFocus);
-            callback.assertUiShownEvent(username);
-        } else {
-            // Make sure UI is show on 2nd field as well
-            final View password = mActivity.getPassword();
-            mActivity.onPassword(View::requestFocus);
-
-            callback.assertUiHiddenEvent(username);
-            callback.assertUiShownEvent(password);
-            sUiBot.assertShownByText("Tap to auth response");
-
-            // Now tap on 1st field to show it again...
-            mActivity.onUsername(View::requestFocus);
-            callback.assertUiHiddenEvent(password);
-            callback.assertUiShownEvent(username);
-        }
+        // Make sure UI is not show on 2nd field
+        mActivity.onPassword(View::requestFocus);
+        callback.assertUiHiddenEvent(username);
+        sUiBot.assertNotShownByText("Tap to auth response");
+        // Now tap on 1st field to show it again...
+        mActivity.onUsername(View::requestFocus);
+        callback.assertUiShownEvent(username);
 
         // ...and select it this time
         sUiBot.selectByText("Tap to auth response");
@@ -1090,7 +1071,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
-    public void testDatasetAuth() throws Exception {
+    public void testDatasetAuthTwoFields() throws Exception {
         // Set service.
         enableService();
         final MyAutofillCallback callback = mActivity.registerCallback();
@@ -1103,7 +1084,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 .build());
 
         // Create the authentication intent
-        IntentSender authentication = PendingIntent.getActivity(getContext(), 0,
+        final IntentSender authentication = PendingIntent.getActivity(getContext(), 0,
                 new Intent(getContext(), AuthenticationActivity.class), 0).getIntentSender();
 
         // Configure the service behavior
@@ -1585,7 +1566,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Set expectations.
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setAuthentication(sender)
+                .setAuthentication(sender, ID_USERNAME)
                 .setPresentation(presentation)
                 .build());
 
@@ -1678,7 +1659,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         sReplier.addResponse(new CannedFillResponse.Builder().setExtras(clientState)
                 .setPresentation(createPresentation("authentication"))
-                .setAuthentication(authentication)
+                .setAuthentication(authentication, ID_USERNAME)
                 .build());
 
         // Trigger autofill.
