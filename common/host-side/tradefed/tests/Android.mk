@@ -19,6 +19,7 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := $(call all-java-files-under, ../src)
 LOCAL_JAVA_RESOURCE_DIRS := ../res
+include cts/error_prone_rules.mk
 
 LOCAL_SUITE_BUILD_NUMBER := 2
 LOCAL_SUITE_TARGET_ARCH := $(TARGET_ARCH)
@@ -36,6 +37,7 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_JAVA_RESOURCE_DIRS := res
 
+include cts/error_prone_rules.mk
 LOCAL_MODULE := compatibility-tradefed-tests
 
 LOCAL_MODULE_TAGS := optional
