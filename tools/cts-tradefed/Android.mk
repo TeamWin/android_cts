@@ -28,7 +28,7 @@ LOCAL_SUITE_FULLNAME := "Compatibility Test Suite"
 LOCAL_SUITE_VERSION := 7.1_r2
 
 LOCAL_MODULE := cts-tradefed
-
+include cts/error_prone_rules.mk
 include $(BUILD_COMPATIBILITY_SUITE)
 
 # Build all sub-directories

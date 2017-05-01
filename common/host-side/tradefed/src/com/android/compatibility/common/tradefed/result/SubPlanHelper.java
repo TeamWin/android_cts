@@ -307,7 +307,7 @@ public class SubPlanHelper {
         Set<TestStatus> statusesToRun = new HashSet<TestStatus>();
         for (String resultType : mResultTypes) {
             // no test status exists for not-executed tests
-            if (resultType != NOT_EXECUTED) {
+            if (!NOT_EXECUTED.equals(resultType)) {
                 statusesToRun.add(STATUS_MAP.get(resultType));
             }
         }
