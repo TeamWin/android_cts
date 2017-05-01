@@ -65,7 +65,8 @@ public class SensorDirectReportTest extends SensorTestCase {
     private static final int TEST_RUN_TIME_PERIOD_MILLISEC = 5000;
     private static final int ALLOWED_SENSOR_INIT_TIME_MILLISEC = 500;
     private static final int SENSORS_EVENT_SIZE = 104;
-    private static final int SHARED_MEMORY_SIZE = 2000 * SENSORS_EVENT_SIZE;
+    private static final int SENSORS_EVENT_COUNT = 10240; // 800Hz * 2.2 * 5 sec + extra
+    private static final int SHARED_MEMORY_SIZE = SENSORS_EVENT_COUNT * SENSORS_EVENT_SIZE;
     private static final float MERCY_FACTOR = 0.1f;
 
     private static native boolean nativeReadHardwareBuffer(HardwareBuffer hardwareBuffer,

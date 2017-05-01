@@ -135,7 +135,7 @@ void SensorTest::testInvalidParameter(JNIEnv *env) {
 // Test sensor direct report functionality
 void SensorTest::testDirectReport(JNIEnv* env, int32_t sensorType, int32_t channelType, int32_t rateLevel) {
     constexpr size_t kEventSize = sizeof(ASensorEvent);
-    constexpr size_t kNEvent = 500;
+    constexpr size_t kNEvent = 4096; // enough to contain 1.5 * 800 * 2.2 events
     constexpr size_t kMemSize = kEventSize * kNEvent;
 
     // value check criterion
