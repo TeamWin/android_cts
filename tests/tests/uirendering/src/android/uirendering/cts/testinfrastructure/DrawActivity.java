@@ -20,13 +20,17 @@ import android.content.res.Configuration;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.Message;
 import android.support.annotation.Nullable;
 import android.uirendering.cts.R;
+import android.util.Log;
+import android.view.FrameMetrics;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewStub;
 import android.view.ViewTreeObserver;
+import android.view.Window;
 
 /**
  * A generic activity that uses a view specified by the user.
@@ -47,6 +51,33 @@ public class DrawActivity extends Activity {
         mHandler = new RenderSpecHandler();
         int uiMode = getResources().getConfiguration().uiMode;
         mOnTv = (uiMode & Configuration.UI_MODE_TYPE_MASK) == Configuration.UI_MODE_TYPE_TELEVISION;
+
+        // log frame metrics
+        HandlerThread handlerThread = new HandlerThread("FrameMetrics");
+        handlerThread.start();
+        getWindow().addOnFrameMetricsAvailableListener(
+                new Window.OnFrameMetricsAvailableListener() {
+                    int mRtFrameCount = 0;
+                    @Override
+                    public void onFrameMetricsAvailable(Window window, FrameMetrics frameMetrics,
+                            int dropCountSinceLastInvocation) {
+                        Log.d("UiRendering", "Window frame count " + mRtFrameCount
+                                + ", frame drops " + dropCountSinceLastInvocation);
+                        mRtFrameCount++;
+                    }
+                }, new Handler(handlerThread.getLooper()));
+
+        // log draw metrics
+        View view = new View(this);
+        setContentView(view);
+        view.getViewTreeObserver().addOnDrawListener(new ViewTreeObserver.OnDrawListener() {
+            int mFrameCount;
+            @Override
+            public void onDraw() {
+                Log.d("UiRendering", "View tree frame count " + mFrameCount);
+                mFrameCount++;
+            }
+        });
     }
 
     public boolean getOnTv() {
@@ -99,6 +130,7 @@ public class DrawActivity extends Activity {
         }
 
         public void handleMessage(Message message) {
+            Log.d("UiRendering", "message of type " + message.what);
             if (message.what == RESET_MSG) {
                 ((ViewGroup)findViewById(android.R.id.content)).removeAllViews();
                 return;
