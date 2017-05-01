@@ -25,7 +25,7 @@ LOCAL_MODULE_TAGS := tests
 LOCAL_SDK_VERSION := current
 LOCAL_STATIC_JAVA_LIBRARIES := android-support-test compatibility-device-util ctstestrunner
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts
+LOCAL_COMPATIBILITY_SUITE := cts general-tests
 LOCAL_PROGUARD_ENABLED := disabled
 LOCAL_DEX_PREOPT := false
 LOCAL_PACKAGE_NAME := CtsPrivilegedUpdateTests
@@ -46,7 +46,7 @@ LOCAL_MODULE_CLASS := APPS
 LOCAL_BUILT_MODULE_STEM := package.apk
 # Make sure the build system doesn't try to resign the APK
 LOCAL_CERTIFICATE := PRESIGNED
-LOCAL_COMPATIBILITY_SUITE := cts
+LOCAL_COMPATIBILITY_SUITE := cts general-tests
 
 LOCAL_SRC_FILES := CtsShimPrivUpgrade.apk
 
@@ -63,7 +63,7 @@ LOCAL_MODULE_CLASS := APPS
 LOCAL_BUILT_MODULE_STEM := package.apk
 # Make sure the build system doesn't try to resign the APK
 LOCAL_CERTIFICATE := PRESIGNED
-LOCAL_COMPATIBILITY_SUITE := cts
+LOCAL_COMPATIBILITY_SUITE := cts general-tests
 
 LOCAL_SRC_FILES := CtsShimPrivUpgradeWrongSHA.apk
 

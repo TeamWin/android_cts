@@ -29,7 +29,7 @@ LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_ETC)
 
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts
+LOCAL_COMPATIBILITY_SUITE := cts general-tests
 
 include $(BUILD_SYSTEM)/base_rules.mk
 $(LOCAL_BUILT_MODULE) : frameworks/base/api/current.txt | $(APICHECK)
@@ -48,7 +48,7 @@ LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_ETC)
 
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts
+LOCAL_COMPATIBILITY_SUITE := cts general-tests
 
 include $(BUILD_SYSTEM)/base_rules.mk
 $(LOCAL_BUILT_MODULE) : frameworks/base/api/system-current.txt | $(APICHECK)

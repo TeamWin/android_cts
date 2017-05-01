@@ -35,7 +35,7 @@ LOCAL_STATIC_LIBRARIES := \
 
 LOCAL_CTS_TEST_PACKAGE := android.nativehardware
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts
+LOCAL_COMPATIBILITY_SUITE := cts general-tests
 
 LOCAL_SDK_VERSION := current
 LOCAL_NDK_STL_VARIANT := c++_static

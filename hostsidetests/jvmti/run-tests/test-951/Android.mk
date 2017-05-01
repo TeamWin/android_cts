@@ -19,7 +19,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := CtsJvmtiRunTest951HostTestCases
 LOCAL_STATIC_JAVA_LIBRARIES := CtsJvmtiHostTestBase
 LOCAL_MODULE_TAGS := tests
-LOCAL_COMPATIBILITY_SUITE := cts
+LOCAL_COMPATIBILITY_SUITE := cts general-tests
 
 include $(BUILD_HOST_JAVA_LIBRARY)
 
