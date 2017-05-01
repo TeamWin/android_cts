@@ -124,10 +124,12 @@ final class CannedFillResponse {
         if (mIgnoredIds != null) {
             builder.setIgnoredIds(getAutofillIds(nodeResolver, mIgnoredIds));
         }
+        if (mAuthenticationIds != null) {
+            builder.setAuthentication(getAutofillIds(nodeResolver, mAuthenticationIds),
+                    mAuthentication, mPresentation);
+        }
         return builder
                 .setClientState(mExtras)
-                .setAuthentication(getAutofillIds(nodeResolver, mAuthenticationIds),
-                        mAuthentication, mPresentation)
                 .build();
     }
 
@@ -215,16 +217,9 @@ final class CannedFillResponse {
         /**
          * Sets the authentication intent.
          */
-        public Builder setAuthentication(IntentSender authentication) {
-            mAuthentication = authentication;
-            return this;
-        }
-
-        /**
-         * Sets the authentication ids.
-         */
-        public Builder setAuthenticationIds(String... ids) {
+        public Builder setAuthentication(IntentSender authentication, String... ids) {
             mAuthenticationIds = ids;
+            mAuthentication = authentication;
             return this;
         }
 
