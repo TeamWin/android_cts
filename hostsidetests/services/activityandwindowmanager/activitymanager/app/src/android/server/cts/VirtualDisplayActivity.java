@@ -102,6 +102,9 @@ public class VirtualDisplayActivity extends Activity implements SurfaceHolder.Ca
             case "destroy_display":
                 destroyVirtualDisplays();
                 break;
+            case "resize_display":
+                resizeDisplay();
+                break;
         }
     }
 
@@ -194,5 +197,13 @@ public class VirtualDisplayActivity extends Activity implements SurfaceHolder.Ca
 
     @Override
     public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
+    }
+
+    /** Resize virtual display to half of the surface frame size. */
+    private void resizeDisplay() {
+        final VirtualDisplayEntry vd = (VirtualDisplayEntry) mVirtualDisplays.values().toArray()[0];
+        final SurfaceHolder surfaceHolder = vd.surfaceView.getHolder();
+        vd.display.resize(surfaceHolder.getSurfaceFrame().width() / 2,
+                surfaceHolder.getSurfaceFrame().height() / 2, vd.density);
     }
 }
