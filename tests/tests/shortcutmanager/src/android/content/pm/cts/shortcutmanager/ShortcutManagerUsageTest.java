@@ -104,10 +104,6 @@ public class ShortcutManagerUsageTest extends ShortcutManagerCtsTestsBase {
         // Report usage.
         final long start = System.currentTimeMillis() - USAGE_STATS_RANGE_ALLOWANCE;
 
-        runWithCaller(mPackageContext1, () -> getManager().reportShortcutUsed(id1));
-        runWithCaller(mPackageContext1, () -> getManager().reportShortcutUsed(idManifest));
-        runWithCaller(mPackageContext1, () -> getManager().reportShortcutUsed(idNonexistance));
-
         runWithCaller(mPackageContext2, () -> getManager().reportShortcutUsed(id3));
 
         final long end = System.currentTimeMillis() + USAGE_STATS_RANGE_ALLOWANCE;
@@ -122,14 +118,18 @@ public class ShortcutManagerUsageTest extends ShortcutManagerCtsTestsBase {
                 mPackageContext2.getPackageName(), id3), "Events weren't populated");
 
         assertTrue(hasEvent(usm.queryEvents(start, end),
-                mPackageContext1.getPackageName(), id1));
+                    mPackageContext2.getPackageName(), id3));
 
+        runWithCaller(mPackageContext1, () -> getManager().reportShortcutUsed(id1));
         assertTrue(hasEvent(usm.queryEvents(start, end),
-                mPackageContext1.getPackageName(), idManifest));
+                    mPackageContext1.getPackageName(), id1));
+
+        runWithCaller(mPackageContext1, () -> getManager().reportShortcutUsed(idManifest));
+        assertTrue(hasEvent(usm.queryEvents(start, end),
+                    mPackageContext1.getPackageName(), idManifest));
+
+        runWithCaller(mPackageContext1, () -> getManager().reportShortcutUsed(idNonexistance));
         assertFalse(hasEvent(usm.queryEvents(start, end),
-                mPackageContext1.getPackageName(), idNonexistance));
-
-        assertTrue(hasEvent(usm.queryEvents(start, end),
-                mPackageContext2.getPackageName(), id3));
+                    mPackageContext1.getPackageName(), idNonexistance));
     }
 }
