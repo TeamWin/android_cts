@@ -71,7 +71,7 @@ public class TransitionFragment extends StrictViewFragment {
     }
 
     void waitForTransition() throws InterruptedException {
-        verify(mListener, within(300)).onTransitionEnd(any());
+        verify(mListener, within(500)).onTransitionEnd(any());
         reset(mListener);
     }
 
