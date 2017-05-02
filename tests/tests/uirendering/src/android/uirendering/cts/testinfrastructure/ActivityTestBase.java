@@ -127,6 +127,7 @@ public abstract class ActivityTestBase {
                     TEST_WIDTH, TEST_HEIGHT, Config.ARGB_8888);
             Rect srcRect = new Rect(testOffset.x, testOffset.y,
                     testOffset.x + TEST_WIDTH, testOffset.y + TEST_HEIGHT);
+            Log.d("UiRendering", "capturing screenshot of " + srcRect.toShortString());
             int copyResult = copy.request(getActivity().getWindow(), srcRect, dest);
             Assert.assertEquals(PixelCopy.SUCCESS, copyResult);
             return dest;
