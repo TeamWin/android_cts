@@ -47,7 +47,12 @@ public class DirectBootHostTest extends DeviceTestCase implements IAbiReceiver, 
     private static final String MODE_EMULATED = "emulated";
     private static final String MODE_NONE = "none";
 
+    private static final String FEATURE_DEVICE_ADMIN = "feature:android.software.device_admin\n";
+    private static final String FEATURE_AUTOMOTIVE = "feature:android.hardware.type.automotive\n";
+
     private static final long SHUTDOWN_TIME_MS = 30 * 1000;
+
+    private String mFeatureList = null;
 
     private IAbi mAbi;
     private IBuildInfo mCtsBuild;
@@ -79,6 +84,22 @@ public class DirectBootHostTest extends DeviceTestCase implements IAbiReceiver, 
 
         getDevice().uninstallPackage(PKG);
         getDevice().uninstallPackage(OTHER_PKG);
+    }
+
+    /**
+     * Automotive devices MUST support native FBE.
+     */
+    public void testAutomotiveNativeFbe() throws Exception {
+        if (!isSupportedDevice()) {
+            Log.v(TAG, "Device not supported; skipping test");
+            return;
+        } else if (!isAutomotiveDevice()) {
+            Log.v(TAG, "Device not automotive; skipping test");
+            return;
+        }
+
+        assertTrue("Automotive devices must support native FBE",
+            MODE_NATIVE.equals(getFbeMode()));
     }
 
     /**
@@ -227,9 +248,20 @@ public class DirectBootHostTest extends DeviceTestCase implements IAbiReceiver, 
         return "1".equals(output);
     }
 
+    private boolean hasSystemFeature(final String feature) throws Exception {
+        if (mFeatureList == null) {
+            mFeatureList = getDevice().executeShellCommand("pm list features");
+        }
+
+        return mFeatureList.contains(feature);
+    }
+
     private boolean isSupportedDevice() throws Exception {
-        final String featureList = getDevice().executeShellCommand("pm list features");
-        return featureList.contains("feature:android.software.device_admin\n");
+        return hasSystemFeature(FEATURE_DEVICE_ADMIN);
+    }
+
+    private boolean isAutomotiveDevice() throws Exception {
+        return hasSystemFeature(FEATURE_AUTOMOTIVE);
     }
 
     private void waitForBootCompleted() throws Exception {
