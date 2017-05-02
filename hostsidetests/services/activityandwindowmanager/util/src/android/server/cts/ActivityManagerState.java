@@ -34,6 +34,7 @@ import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
 import static android.server.cts.ActivityManagerTestBase.HOME_STACK_ID;
+import static android.server.cts.ActivityManagerTestBase.RECENTS_STACK_ID;
 import static android.server.cts.StateLogger.log;
 import static android.server.cts.StateLogger.logE;
 
@@ -309,6 +310,11 @@ class ActivityManagerState {
         return homeActivity != null && homeActivity.visible;
     }
 
+    boolean isRecentsActivityVisible() {
+        final Activity recentsActivity = getRecentsActivity();
+        return recentsActivity != null && recentsActivity.visible;
+    }
+
     String getHomeActivityName() {
         Activity activity = getHomeActivity();
         if (activity == null) {
@@ -330,9 +336,28 @@ class ActivityManagerState {
         return null;
     }
 
+    ActivityTask getRecentsTask() {
+        ActivityStack recentsStack = getStackById(RECENTS_STACK_ID);
+        if (recentsStack != null) {
+            for (ActivityTask task : recentsStack.mTasks) {
+                if (task.mTaskType == RECENTS_ACTIVITY_TYPE) {
+                    return task;
+                }
+            }
+            return null;
+        }
+        return null;
+    }
+
     private Activity getHomeActivity() {
         final ActivityTask homeTask = getHomeTask();
         return homeTask != null ? homeTask.mActivities.get(homeTask.mActivities.size() - 1) : null;
+    }
+
+    private Activity getRecentsActivity() {
+        final ActivityTask recentsTask = getRecentsTask();
+        return recentsTask != null ? recentsTask.mActivities.get(recentsTask.mActivities.size() - 1)
+                : null;
     }
 
     ActivityTask getTaskByActivityName(String activityName) {

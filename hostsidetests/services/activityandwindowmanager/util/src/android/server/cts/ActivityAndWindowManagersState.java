@@ -214,6 +214,13 @@ public class ActivityAndWindowManagersState extends Assert {
                 "***Waiting for home activity to be visible...");
     }
 
+    /** @return true if recents activity is visible. Devices without recents will return false */
+    boolean waitForRecentsActivityVisible(ITestDevice device) throws Exception {
+        waitForWithAmState(device, ActivityManagerState::isRecentsActivityVisible,
+                "***Waiting for recents activity to be visible...");
+        return mAmState.isRecentsActivityVisible();
+    }
+
     void waitForKeyguardShowingAndNotOccluded(ITestDevice device) throws Exception {
         waitForWithAmState(device, state -> state.getKeyguardControllerState().keyguardShowing
                         && !state.getKeyguardControllerState().keyguardOccluded,
