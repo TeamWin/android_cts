@@ -40,6 +40,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -60,10 +61,27 @@ public class FragmentTransactionTest {
             new ActivityTestRule<>(FragmentTestActivity.class);
 
     private FragmentTestActivity mActivity;
+    private int mOnBackStackChangedTimes;
+    private FragmentManager.OnBackStackChangedListener mOnBackStackChangedListener;
 
     @Before
     public void setUp() {
         mActivity = mActivityRule.getActivity();
+        mOnBackStackChangedTimes = 0;
+        mOnBackStackChangedListener = new FragmentManager.OnBackStackChangedListener() {
+            @Override
+            public void onBackStackChanged() {
+                mOnBackStackChangedTimes++;
+            }
+        };
+        mActivity.getFragmentManager().addOnBackStackChangedListener(mOnBackStackChangedListener);
+    }
+
+    @After
+    public void tearDown() {
+        mActivity.getFragmentManager()
+                .removeOnBackStackChangedListener(mOnBackStackChangedListener);
+        mOnBackStackChangedListener = null;
     }
 
     @Test
@@ -77,6 +95,7 @@ public class FragmentTransactionTest {
                         .addToBackStack(null)
                         .commit();
                 mActivity.getFragmentManager().executePendingTransactions();
+                assertEquals(1, mOnBackStackChangedTimes);
             }
         });
         InstrumentationRegistry.getInstrumentation().waitForIdleSync();
@@ -96,6 +115,7 @@ public class FragmentTransactionTest {
                             .addToBackStack(null)
                             .commit();
                     mActivity.getFragmentManager().executePendingTransactions();
+                    assertEquals(1, mOnBackStackChangedTimes);
                 } catch (IllegalStateException e) {
                     exceptionThrown = true;
                 } finally {
@@ -120,6 +140,7 @@ public class FragmentTransactionTest {
                             .addToBackStack(null)
                             .commit();
                     mActivity.getFragmentManager().executePendingTransactions();
+                    assertEquals(1, mOnBackStackChangedTimes);
                 } catch (IllegalStateException e) {
                     exceptionThrown = true;
                 } finally {
@@ -144,6 +165,7 @@ public class FragmentTransactionTest {
                             .addToBackStack(null)
                             .commit();
                     mActivity.getFragmentManager().executePendingTransactions();
+                    assertEquals(1, mOnBackStackChangedTimes);
                 } catch (IllegalStateException e) {
                     exceptionThrown = true;
                 } finally {
@@ -168,6 +190,7 @@ public class FragmentTransactionTest {
                             .addToBackStack(null)
                             .commit();
                     mActivity.getFragmentManager().executePendingTransactions();
+                    assertEquals(1, mOnBackStackChangedTimes);
                 } catch (IllegalStateException e) {
                     exceptionThrown = true;
                 } finally {
@@ -193,6 +216,7 @@ public class FragmentTransactionTest {
                     }
                 }).commit();
                 fm.executePendingTransactions();
+                assertEquals(0, mOnBackStackChangedTimes);
 
                 assertTrue("runOnCommit runnable never ran", ran[0]);
 
@@ -211,6 +235,7 @@ public class FragmentTransactionTest {
                 }
 
                 fm.executePendingTransactions();
+                assertEquals(0, mOnBackStackChangedTimes);
 
                 assertTrue("runOnCommit was allowed to be called for back stack transaction",
                         threw);
@@ -235,6 +260,7 @@ public class FragmentTransactionTest {
         Collection<Fragment> fragments = fm.getFragments();
         assertEquals(1, fragments.size());
         assertTrue(fragments.contains(fragment));
+        assertEquals(1, mOnBackStackChangedTimes);
 
         // Removed fragments shouldn't show
         fm.beginTransaction()
@@ -243,18 +269,22 @@ public class FragmentTransactionTest {
                 .commit();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
         assertTrue(fm.getFragments().isEmpty());
+        assertEquals(2, mOnBackStackChangedTimes);
 
         // Now try detached fragments
         FragmentTestUtil.popBackStackImmediate(mActivityRule);
+        assertEquals(3, mOnBackStackChangedTimes);
         fm.beginTransaction()
                 .detach(fragment)
                 .addToBackStack(null)
                 .commit();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
         assertTrue(fm.getFragments().isEmpty());
+        assertEquals(4, mOnBackStackChangedTimes);
 
         // Now try hidden fragments
         FragmentTestUtil.popBackStackImmediate(mActivityRule);
+        assertEquals(5, mOnBackStackChangedTimes);
         fm.beginTransaction()
                 .hide(fragment)
                 .addToBackStack(null)
@@ -263,15 +293,18 @@ public class FragmentTransactionTest {
         fragments = fm.getFragments();
         assertEquals(1, fragments.size());
         assertTrue(fragments.contains(fragment));
+        assertEquals(6, mOnBackStackChangedTimes);
 
         // And showing it again shouldn't change anything:
         FragmentTestUtil.popBackStackImmediate(mActivityRule);
         fragments = fm.getFragments();
         assertEquals(1, fragments.size());
         assertTrue(fragments.contains(fragment));
+        assertEquals(7, mOnBackStackChangedTimes);
 
         // Now pop back to the start state
         FragmentTestUtil.popBackStackImmediate(mActivityRule);
+        assertEquals(8, mOnBackStackChangedTimes);
 
         // We can't force concurrency, but we can do it lots of times and hope that
         // we hit it.
@@ -300,6 +333,7 @@ public class FragmentTransactionTest {
                 .add(fragment1, "1")
                 .commit();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
+        assertEquals(0, mOnBackStackChangedTimes);
         final FragmentManager fm = fragment1.getChildFragmentManager();
         mActivity.getFragmentManager()
                 .beginTransaction()
@@ -308,6 +342,7 @@ public class FragmentTransactionTest {
         FragmentTestUtil.executePendingTransactions(mActivityRule);
         assertEquals(0, mActivity.getFragmentManager().getFragments().size());
         assertEquals(0, fm.getFragments().size());
+        assertEquals(0, mOnBackStackChangedTimes);
 
         // Now the fragment1's fragment manager should allow commitAllowingStateLoss
         // by doing nothing since it has been detached.
@@ -317,6 +352,7 @@ public class FragmentTransactionTest {
                 .commitAllowingStateLoss();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
         assertEquals(0, fm.getFragments().size());
+        assertEquals(0, mOnBackStackChangedTimes);
 
         // It should also allow commitNowAllowingStateLoss by doing nothing
         mActivityRule.runOnUiThread(() -> {
@@ -326,6 +362,7 @@ public class FragmentTransactionTest {
                     .commitNowAllowingStateLoss();
             assertEquals(0, fm.getFragments().size());
         });
+        assertEquals(0, mOnBackStackChangedTimes);
     }
 
     /**
