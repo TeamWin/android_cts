@@ -7324,12 +7324,17 @@ public class TextViewTest {
         PollingCheck.waitFor(() -> mTextView.getSelectionStart() == SMARTSELECT_START
                 && mTextView.getSelectionEnd() == SMARTSELECT_END);
 
-        // Click to reset selection. Expect selection of original selection.
+        // Tap to reset selection. Expect tapped word to be selected.
+        startIndex = text.indexOf("Filip");
+        endIndex = startIndex + "Filip".length();
+        offset = getCenterPositionOfTextAt(mTextView, startIndex, endIndex);
         emulateClickOnView(mTextView, offset.x, offset.y);
-        PollingCheck.waitFor(() -> mTextView.getSelectionStart() == startIndex
-                && mTextView.getSelectionEnd() == endIndex);
+        final int selStart = startIndex;
+        final int selEnd = endIndex;
+        PollingCheck.waitFor(() -> mTextView.getSelectionStart() == selStart
+                && mTextView.getSelectionEnd() == selEnd);
 
-        // Click one more time to dismiss the selection.
+        // Tap one more time to dismiss the selection.
         emulateClickOnView(mTextView, offset.x, offset.y);
         assertFalse(mTextView.hasSelection());
     }
