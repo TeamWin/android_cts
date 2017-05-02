@@ -88,7 +88,7 @@ public class AudioFocusTest extends CtsAndroidTestCase {
         final AudioFocusRequest reqToCopy =
                 new AudioFocusRequest.Builder(focusGain)
                 .setAudioAttributes(ATTR_DRIVE_DIR)
-                .setOnAudioFocusChangeListener(focusListener, null)
+                .setOnAudioFocusChangeListener(focusListener)
                 .setAcceptsDelayedFocusGain(true)
                 .setWillPauseWhenDucked(true)
                 .build();
@@ -111,6 +111,34 @@ public class AudioFocusTest extends CtsAndroidTestCase {
         assertEquals("Delayed focus differs", true, newReq.acceptsDelayedFocusGain());
     }
 
+    public void testNullListenerHandlerNpe() throws Exception {
+        final AudioFocusRequest.Builder afBuilder =
+                new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN);
+        try {
+            afBuilder.setOnAudioFocusChangeListener(null);
+            fail("no NPE when setting a null listener");
+        } catch (NullPointerException e) {
+        }
+
+        final HandlerThread handlerThread = new HandlerThread(TAG);
+        handlerThread.start();
+        final Handler h = new Handler(handlerThread.getLooper());
+        final AudioFocusRequest.Builder afBuilderH =
+                new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN);
+        try {
+            afBuilderH.setOnAudioFocusChangeListener(null, h);
+            fail("no NPE when setting a null listener with non-null Handler");
+        } catch (NullPointerException e) {
+        }
+
+        final AudioFocusRequest.Builder afBuilderL =
+                new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN);
+        try {
+            afBuilderL.setOnAudioFocusChangeListener(new FocusChangeListener(), null);
+            fail("no NPE when setting a non-null listener with null Handler");
+        } catch (NullPointerException e) {
+        }
+    }
 
     public void testAudioFocusRequestGainLoss() throws Exception {
         final AudioAttributes[] attributes = { ATTR_DRIVE_DIR, ATTR_MEDIA };
@@ -188,10 +216,17 @@ public class AudioFocusTest extends CtsAndroidTestCase {
         try {
             for (int i = 0 ; i < NB_FOCUS_OWNERS ; i++) {
                 focusListeners[i] = new FocusChangeListener();
-                focusRequests[i] = new AudioFocusRequest.Builder(focusGains[i])
-                        .setAudioAttributes(attributes[i])
-                        .setOnAudioFocusChangeListener(focusListeners[i], h /*handler*/)
-                        .build();
+                if (h != null) {
+                    focusRequests[i] = new AudioFocusRequest.Builder(focusGains[i])
+                            .setAudioAttributes(attributes[i])
+                            .setOnAudioFocusChangeListener(focusListeners[i], h /*handler*/)
+                            .build();
+                } else {
+                    focusRequests[i] = new AudioFocusRequest.Builder(focusGains[i])
+                            .setAudioAttributes(attributes[i])
+                            .setOnAudioFocusChangeListener(focusListeners[i])
+                            .build();
+                }
             }
 
             // focus owner 0 requests focus with GAIN,
