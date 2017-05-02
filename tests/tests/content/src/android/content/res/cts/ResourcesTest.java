@@ -814,6 +814,30 @@ public class ResourcesTest extends AndroidTestCase {
         } catch (RuntimeException e) {
             // pass
         }
+
+        try {
+            mResources.getFont(R.font.invalid_xmlfont_nosource);
+            fail();
+        } catch (RuntimeException e) {
+            // pass
+        }
+
+    }
+
+    public void testGetFont_brokenFontFiles() {
+        try {
+            mResources.getFont(R.font.brokenfont);
+            fail();
+        } catch (RuntimeException e) {
+            // pass
+        }
+
+        try {
+            mResources.getFont(R.font.broken_xmlfont);
+            fail();
+        } catch (RuntimeException e) {
+            // pass
+        }
     }
 
     public void testGetFont_fontFileIsCached() {
