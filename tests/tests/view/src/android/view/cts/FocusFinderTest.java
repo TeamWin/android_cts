@@ -18,6 +18,7 @@ package android.view.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import android.graphics.Rect;
@@ -242,6 +243,19 @@ public class FocusFinderTest {
         // Going back from the tail of the split chain, it chooses an arbitrary head
         nextFocus = mFocusFinder.findNextFocus(mLayout, mTopRight, View.FOCUS_BACKWARD);
         assertTrue(nextFocus == mBottomRight || nextFocus == mBottomLeft);
+    }
+
+    @Test
+    public void testChainVisibility() {
+        mBottomRight.setNextFocusForwardId(mBottomLeft.getId());
+        mBottomLeft.setNextFocusForwardId(mTopRight.getId());
+        mBottomLeft.setVisibility(View.INVISIBLE);
+        View next = mFocusFinder.findNextFocus(mLayout, mBottomRight, View.FOCUS_FORWARD);
+        assertSame(mTopRight, next);
+
+        mBottomLeft.setNextFocusForwardId(View.NO_ID);
+        next = mFocusFinder.findNextFocus(mLayout, mBottomRight, View.FOCUS_FORWARD);
+        assertSame(mTopLeft, next);
     }
 
     private void verifyNextCluster(View currentCluster, int direction, View expectedNextCluster) {
