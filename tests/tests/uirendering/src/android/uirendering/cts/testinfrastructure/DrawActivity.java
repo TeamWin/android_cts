@@ -209,6 +209,7 @@ public class DrawActivity extends Activity {
         @Override
         public void onDraw() {
             mView.post(() -> {
+                Log.d("UiRendering", "notifying capture");
                 mView.getViewTreeObserver().removeOnDrawListener(this);
                 synchronized (mLock) {
                     mViewWrapper.getLocationOnScreen(mLocationOnScreen);
