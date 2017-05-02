@@ -47,18 +47,23 @@ static const std::string kVendorLibraryPath = "/vendor/lib";
 
 // This is not the complete list - just a small subset
 // of the libraries that should reside in /system/lib
+// for app-compatibility reasons.
 // (in addition to kSystemPublicLibraries)
 static std::vector<std::string> kSystemLibraries = {
     "libart.so",
     "libandroid_runtime.so",
     "libbinder.so",
+    "libcrypto.so",
     "libcutils.so",
+    "libexpat.so",
     "libgui.so",
     "libmedia.so",
     "libnativehelper.so",
     "libstagefright.so",
+    "libsqlite.so",
     "libui.so",
     "libutils.so",
+    "libvorbisidec.so",
   };
 
 static bool is_directory(const std::string& path) {
@@ -70,22 +75,20 @@ static bool is_directory(const std::string& path) {
   return false;
 }
 
-static bool already_loaded(const std::string& library, const std::string& err) {
-  // SELinux denials for /vendor libraries may return with library not found
-  if (err.find("dlopen failed: library \"" + library + "\"") == 0 &&
-      (err.find("not found") != std::string::npos ||
-      err.find("is not accessible for the namespace \"classloader-namespace\"") != std::string::npos)) {
-    return true;
-  }
-
-  return false;
+static bool not_accessible(const std::string& library, const std::string& err) {
+  return err.find("dlopen failed: library \"" + library + "\"") == 0 &&
+         err.find("is not accessible for the namespace \"classloader-namespace\"") != std::string::npos;
 }
 
-static bool wrong_arch(const std::string& err) {
+static bool not_found(const std::string& library, const std::string& err) {
+  return err == "dlopen failed: library \"" + library + "\" not found";
+}
+
+static bool wrong_arch(const std::string& library, const std::string& err) {
   // https://issuetracker.google.com/37428428
   // It's okay to not be able to load a library because it's for another
   // architecture (typically on an x86 device, when we come across an arm library).
-  return err.find("unexpected e_machine: ") != std::string::npos;
+  return err.find("dlopen failed: library \"" + library + "\" has unexpected e_machine: ") == 0;
 }
 
 static bool check_lib(const std::string& path,
@@ -114,7 +117,7 @@ static bool check_lib(const std::string& path,
   } else { // (handle == nullptr && !shouldBeAccessible(path))
     // Check the error message
     std::string err = dlerror();
-    if (!already_loaded(path, err) && !wrong_arch(err)) {
+    if (!not_accessible(path, err) && !not_found(path, err) && !wrong_arch(path, err)) {
       errors->push_back("unexpected dlerror: " + err);
       return false;
     }
@@ -240,9 +243,9 @@ extern "C" JNIEXPORT jstring JNICALL
     void* handle = dlopen(library.c_str(), RTLD_NOW);
     if (handle == nullptr) {
       std::string err = dlerror();
-      // If the library is already loaded, then dlopen failing is okay.
-      if (!already_loaded(library, err)) {
-          errors.push_back("Mandatory system library \"" + library + "\" failed to load: " + err);
+      // The libraries should be present and produce specific dlerror when inaccessible.
+      if (!not_accessible(library, err)) {
+          errors.push_back("Mandatory system library \"" + library + "\" failed to load with unexpected error: " + err);
           success = false;
       }
     } else {
