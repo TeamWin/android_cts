@@ -23,5 +23,5 @@ LOCAL_JAVA_LIBRARIES := junit-host kxml2-2.3.0 tradefed compatibility-common-uti
 LOCAL_MODULE := compatibility-common-util-tests
 
 LOCAL_MODULE_TAGS := optional
-
+include cts/error_prone_rules.mk
 include $(BUILD_HOST_JAVA_LIBRARY)

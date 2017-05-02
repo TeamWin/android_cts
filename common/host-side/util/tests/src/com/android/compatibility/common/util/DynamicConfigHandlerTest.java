@@ -33,7 +33,7 @@ import java.util.Map;
  */
 public class DynamicConfigHandlerTest extends TestCase {
 
-    private static final String localConfig =
+    private static final String LOCAL_CONFIG =
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<dynamicConfig>\n" +
             "    <entry key=\"test-config-1\">\n" +
@@ -61,7 +61,7 @@ public class DynamicConfigHandlerTest extends TestCase {
             "    </entry>\n" +
             "</dynamicConfig>\n";
 
-    private static final String overrideJson =
+    private static final String OVERRIDE_JSON =
             "{\n" +
             "  \"dynamicConfigEntries\": {\n" +
             "    \"override-config-1\": {\n" +
@@ -94,11 +94,11 @@ public class DynamicConfigHandlerTest extends TestCase {
 
     public void testDynamicConfigHandler() throws Exception {
         String module = "test1";
-        File localConfigFile = createFileFromStr(localConfig, module);
+        File localConfigFile = createFileFromStr(LOCAL_CONFIG, module);
         File mergedFile = null;
         try {
             mergedFile = DynamicConfigHandler
-                    .getMergedDynamicConfigFile(localConfigFile, overrideJson, module);
+                    .getMergedDynamicConfigFile(localConfigFile, OVERRIDE_JSON, module);
 
             Map<String, List<String>> configMap = DynamicConfig.createConfigMap(mergedFile);
 

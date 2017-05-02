@@ -28,7 +28,7 @@ LOCAL_SUITE_FULLNAME := "Compatibility Tests"
 LOCAL_SUITE_VERSION := 1
 
 LOCAL_MODULE := compatibility-mock-tradefed
-
+include cts/error_prone_rules.mk
 include $(BUILD_COMPATIBILITY_SUITE)
 
 # Make the tests
