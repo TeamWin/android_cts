@@ -147,6 +147,12 @@ public class DrawFramesActivity extends Activity implements Window.OnFrameMetric
         drawFrames(new int[frameCount]);
     }
 
+    public void waitForReady() throws InterruptedException, TimeoutException {
+        if (!mReady.await(4, TimeUnit.SECONDS)) {
+            throw new TimeoutException();
+        }
+    }
+
     public void drawFrames(final int[] framesToDraw) throws InterruptedException, TimeoutException {
         if (!mReady.await(4, TimeUnit.SECONDS)) {
             throw new TimeoutException();
