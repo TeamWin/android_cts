@@ -28,7 +28,7 @@ public class PropertyUtil {
      * Name of read-only property detailing the first API level for which the product was
      * shipped. Property should be undefined for factory ROM products.
      */
-    public static String FIRST_API_LEVEL = "ro.product.first_api_level";
+    public static final String FIRST_API_LEVEL = "ro.product.first_api_level";
 
     /** Returns whether the device build is the factory ROM */
     public static boolean isFactoryROM(ITestDevice device) throws DeviceNotAvailableException {

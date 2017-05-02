@@ -23,5 +23,5 @@ LOCAL_JAVA_LIBRARIES := compatibility-host-util junit-host json-prebuilt tradefe
 LOCAL_MODULE := compatibility-host-util-tests
 
 LOCAL_MODULE_TAGS := optional
-
+include cts/error_prone_rules.mk
 include $(BUILD_HOST_JAVA_LIBRARY)

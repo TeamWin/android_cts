@@ -17,6 +17,7 @@ LOCAL_ERROR_PRONE_FLAGS:= -Xep:ArrayToString:ERROR \
                           -Xep:BoxedPrimitiveConstructor:ERROR \
                           -Xep:ConstantField:ERROR \
                           -Xep:FormatString:ERROR \
+                          -Xep:GetClassOnClass:ERROR \
                           -Xep:JUnitAmbiguousTestClass:ERROR \
                           -Xep:MissingFail:ERROR \
                           -Xep:MissingOverride:ERROR \

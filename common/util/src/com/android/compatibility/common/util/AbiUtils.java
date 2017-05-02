@@ -15,11 +15,6 @@
  */
 package com.android.compatibility.common.util;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 /**
  * Utility class for handling device ABIs
  */
