@@ -48,9 +48,9 @@ public class ValidateTestsAbi {
      *  This particular module is shipping all it's dependencies in all abis with prebuilt stuff.
      *  Excluding it for now to have the test setup.
      */
-    private String MODULE_EXCEPTION = "CtsSplitApp";
+    private static final String MODULE_EXCEPTION = "CtsSplitApp";
 
-    private static Set<String> BINARY_EXCEPTIONS = new HashSet<>();
+    private static final Set<String> BINARY_EXCEPTIONS = new HashSet<>();
     static {
         /**
          * This binary is a host side helper, so we do not need to check it.

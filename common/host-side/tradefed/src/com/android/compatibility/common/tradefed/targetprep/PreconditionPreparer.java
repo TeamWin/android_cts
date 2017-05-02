@@ -49,7 +49,7 @@ public abstract class PreconditionPreparer implements ITargetPreparer {
                     + "\"<arg-name>:<arg-value>\"")
     private List<String> mPreconditionArgs = new ArrayList<>();
 
-    protected final String LOG_TAG = getClass().getSimpleName();
+    protected final String mLogTag = getClass().getSimpleName();
 
     @Override
     public void setUp(ITestDevice device, IBuildInfo buildInfo) throws TargetSetupError,
@@ -80,32 +80,32 @@ public abstract class PreconditionPreparer implements ITargetPreparer {
             throws TargetSetupError, BuildError, DeviceNotAvailableException;
 
     protected void logInfo(String info) {
-        LogUtil.printLog(Log.LogLevel.INFO, LOG_TAG, info);
+        LogUtil.printLog(Log.LogLevel.INFO, mLogTag, info);
     }
 
     protected void logInfo(String infoFormat, Object... args) {
-        LogUtil.printLog(Log.LogLevel.INFO, LOG_TAG, String.format(infoFormat, args));
+        LogUtil.printLog(Log.LogLevel.INFO, mLogTag, String.format(infoFormat, args));
     }
 
     protected void logWarning(String warning) {
-        LogUtil.printLog(Log.LogLevel.WARN, LOG_TAG, warning);
+        LogUtil.printLog(Log.LogLevel.WARN, mLogTag, warning);
     }
 
     protected void logWarning(String warningFormat, Object... args) {
-        LogUtil.printLog(Log.LogLevel.WARN, LOG_TAG, String.format(warningFormat, args));
+        LogUtil.printLog(Log.LogLevel.WARN, mLogTag, String.format(warningFormat, args));
     }
 
     protected void logError(String error) {
-        LogUtil.printLog(Log.LogLevel.ERROR, LOG_TAG, error);
+        LogUtil.printLog(Log.LogLevel.ERROR, mLogTag, error);
     }
 
     protected void logError(String errorFormat, Object... args) {
-        LogUtil.printLog(Log.LogLevel.ERROR, LOG_TAG, String.format(errorFormat, args));
+        LogUtil.printLog(Log.LogLevel.ERROR, mLogTag, String.format(errorFormat, args));
     }
 
     protected void logError(Throwable t) {
         if (t != null) {
-            Log.e(LOG_TAG, t);
+            Log.e(mLogTag, t);
         }
     }
 
