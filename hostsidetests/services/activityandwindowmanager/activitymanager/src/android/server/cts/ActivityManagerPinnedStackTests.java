@@ -35,11 +35,13 @@ import java.util.List;
  */
 public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     private static final String TEST_ACTIVITY = "TestActivity";
+    private static final String TEST_ACTIVITY_WITH_SAME_AFFINITY = "TestActivityWithSameAffinity";
     private static final String TRANSLUCENT_TEST_ACTIVITY = "TranslucentTestActivity";
     private static final String NON_RESIZEABLE_ACTIVITY = "NonResizeableActivity";
     private static final String RESUME_WHILE_PAUSING_ACTIVITY = "ResumeWhilePausingActivity";
     private static final String PIP_ACTIVITY = "PipActivity";
     private static final String PIP_ACTIVITY2 = "PipActivity2";
+    private static final String PIP_ACTIVITY_WITH_SAME_AFFINITY = "PipActivityWithSameAffinity";
     private static final String ALWAYS_FOCUSABLE_PIP_ACTIVITY = "AlwaysFocusablePipActivity";
     private static final String LAUNCH_INTO_PINNED_STACK_PIP_ACTIVITY =
             "LaunchIntoPinnedStackPipActivity";
@@ -912,6 +914,81 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 logSeparator);
         assertTrue(lifecycleCounts.mResumeCount == 0);
         assertTrue(lifecycleCounts.mPauseCount == 0);
+    }
+
+    public void testLaunchTaskByComponentMatchMultipleTasks() throws Exception {
+        if (!supportsPip()) return;
+
+        // Launch a fullscreen activity which will launch a PiP activity in a new task with the same
+        // affinity
+        launchActivity(TEST_ACTIVITY_WITH_SAME_AFFINITY);
+        launchActivityInStack(PIP_ACTIVITY_WITH_SAME_AFFINITY, PINNED_STACK_ID);
+        assertPinnedStackExists();
+
+        // Launch the root activity again...
+        int rootActivityTaskId = mAmWmState.getAmState().getTaskByActivityName(
+                TEST_ACTIVITY_WITH_SAME_AFFINITY).mTaskId;
+        launchHomeActivity();
+        launchActivity(TEST_ACTIVITY_WITH_SAME_AFFINITY);
+
+        // ...and ensure that the root activity task is found and reused, and that the pinned stack
+        // is unaffected
+        assertPinnedStackExists();
+        mAmWmState.assertFocusedActivity("Expected root activity focused",
+                TEST_ACTIVITY_WITH_SAME_AFFINITY);
+        assertTrue(rootActivityTaskId == mAmWmState.getAmState().getTaskByActivityName(
+                TEST_ACTIVITY_WITH_SAME_AFFINITY).mTaskId);
+    }
+
+    public void testLaunchTaskByAffinityMatchMultipleTasks() throws Exception {
+        if (!supportsPip()) return;
+
+        // Launch a fullscreen activity which will launch a PiP activity in a new task with the same
+        // affinity, and also launch another activity in the same task, while finishing itself. As
+        // a result, the task will not have a component matching the same activity as what it was
+        // started with
+        launchActivity(TEST_ACTIVITY_WITH_SAME_AFFINITY,
+                EXTRA_START_ACTIVITY, getActivityComponentName(TEST_ACTIVITY),
+                EXTRA_FINISH_SELF_ON_RESUME, "true");
+        mAmWmState.waitForValidState(mDevice, TEST_ACTIVITY, FULLSCREEN_WORKSPACE_STACK_ID);
+        launchActivityInStack(PIP_ACTIVITY_WITH_SAME_AFFINITY, PINNED_STACK_ID);
+        mAmWmState.waitForValidState(mDevice, PIP_ACTIVITY_WITH_SAME_AFFINITY, PINNED_STACK_ID);
+        assertPinnedStackExists();
+
+        // Launch the root activity again...
+        int rootActivityTaskId = mAmWmState.getAmState().getTaskByActivityName(
+                TEST_ACTIVITY).mTaskId;
+        launchHomeActivity();
+        launchActivity(TEST_ACTIVITY_WITH_SAME_AFFINITY);
+
+        // ...and ensure that even while matching purely by task affinity, the root activity task is
+        // found and reused, and that the pinned stack is unaffected
+        assertPinnedStackExists();
+        mAmWmState.assertFocusedActivity("Expected root activity focused", TEST_ACTIVITY);
+        assertTrue(rootActivityTaskId == mAmWmState.getAmState().getTaskByActivityName(
+                TEST_ACTIVITY).mTaskId);
+    }
+
+    public void testLaunchTaskByAffinityMatchSingleTask() throws Exception {
+        if (!supportsPip()) return;
+
+        // Launch an activity into the pinned stack with a fixed affinity
+        launchActivityInStack(TEST_ACTIVITY_WITH_SAME_AFFINITY, PINNED_STACK_ID,
+                EXTRA_START_ACTIVITY, getActivityComponentName(PIP_ACTIVITY),
+                EXTRA_FINISH_SELF_ON_RESUME, "true");
+        mAmWmState.waitForValidState(mDevice, PIP_ACTIVITY, PINNED_STACK_ID);
+        assertPinnedStackExists();
+
+        // Launch the root activity again, of the matching task and ensure that we expand to
+        // fullscreen
+        int activityTaskId = mAmWmState.getAmState().getTaskByActivityName(
+                PIP_ACTIVITY).mTaskId;
+        launchHomeActivity();
+        launchActivity(TEST_ACTIVITY_WITH_SAME_AFFINITY);
+        mAmWmState.waitForValidState(mDevice, PIP_ACTIVITY, FULLSCREEN_WORKSPACE_STACK_ID);
+        assertPinnedStackDoesNotExist();
+        assertTrue(activityTaskId == mAmWmState.getAmState().getTaskByActivityName(
+                PIP_ACTIVITY).mTaskId);
     }
 
     /**
