@@ -22,6 +22,7 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
+import android.Manifest;
 import android.annotation.Nullable;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
@@ -951,6 +952,20 @@ public class ClientTest {
             fail("Instant apps should not be able to access PackageInfo for another Instant App.");
         } catch (PackageManager.NameNotFoundException expected) {
         }
+    }
+
+    @Test
+    public void testInstallPermissionNotGranted() throws Exception {
+        assertThat(InstrumentationRegistry.getContext()
+                    .checkCallingOrSelfPermission(Manifest.permission.SET_ALARM),
+                is(PackageManager.PERMISSION_DENIED));
+    }
+
+    @Test
+    public void testInstallPermissionGranted() throws Exception {
+        assertThat(InstrumentationRegistry.getContext()
+                    .checkCallingOrSelfPermission(Manifest.permission.INTERNET),
+                is(PackageManager.PERMISSION_GRANTED));
     }
 
     @Test
