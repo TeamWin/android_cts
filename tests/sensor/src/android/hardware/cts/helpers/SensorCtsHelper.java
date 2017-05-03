@@ -38,31 +38,37 @@ public class SensorCtsHelper {
     private SensorCtsHelper() {}
 
     /**
-     * Get percentiles using nearest rank algorithm.
+     * Get low and high percentiles values of an array
      *
-     * @param percentiles List of percentiles interested. Its range is 0 to 1, instead of in %.
-     *        The value will be internally bounded.
+     * @param lowPercentile Lower boundary percentile, range [0, 1]
+     * @param highPercentile Higher boundary percentile, range [0, 1]
      *
-     * @throws IllegalArgumentException if the collection or percentiles is null or empty
+     * @throws IllegalArgumentException if the collection or percentiles is null or empty.
      */
     public static <TValue extends Comparable<? super TValue>> List<TValue> getPercentileValue(
-            Collection<TValue> collection, float[] percentiles) {
+            Collection<TValue> collection, float lowPecentile, float highPercentile) {
         validateCollection(collection);
-        if(percentiles == null || percentiles.length == 0) {
-            throw new IllegalStateException("percentiles cannot be null or empty");
+        if (lowPecentile > highPercentile || lowPecentile < 0 || highPercentile > 1) {
+            throw new IllegalStateException("percentile has to be in range [0, 1], and " +
+                    "lowPecentile has to be less than or equal to highPercentile");
         }
 
         List<TValue> arrayCopy = new ArrayList<TValue>(collection);
         Collections.sort(arrayCopy);
 
         List<TValue> percentileValues = new ArrayList<TValue>();
-        for (float p : percentiles) {
-            // zero-based array index
-            int arrayIndex = (int) Math.round(arrayCopy.size() * p - .5f);
-            // bound the index to avoid out of range error
-            arrayIndex = Math.min(Math.max(arrayIndex, 0), arrayCopy.size() - 1);
-            percentileValues.add(arrayCopy.get(arrayIndex));
-        }
+        // lower percentile: rounding upwards, index range 1 .. size - 1 for percentile > 0
+        // for percentile == 0, index will be 0.
+        int lowArrayIndex = Math.min(arrayCopy.size() - 1,
+                arrayCopy.size() - (int)(arrayCopy.size() * (1 - lowPecentile)));
+        percentileValues.add(arrayCopy.get(lowArrayIndex));
+
+        // upper percentile: rounding downwards, index range 0 .. size - 2 for percentile < 1
+        // for percentile == 1, index will be size - 1.
+        // Also, lower bound by lowerArrayIndex to avoid low percentile value being higher than
+        // high percentile value.
+        int highArrayIndex = Math.max(lowArrayIndex, (int)(arrayCopy.size() * highPercentile - 1));
+        percentileValues.add(arrayCopy.get(highArrayIndex));
         return percentileValues;
     }
 
