@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package android.server.am.tools;
+package android.server.am.util;
 
 import static android.content.Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
@@ -28,6 +28,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 import android.server.am.TestActivity;
+import android.text.TextUtils;
 import android.util.Log;
 
 /** Utility class which contains common code for launching activities. */
@@ -42,8 +43,11 @@ public class ActivityLauncher {
         Log.i(TAG, "launchActivityFromExtras: extras=" + extras);
 
         final Intent newIntent = new Intent();
+        final String targetComponent = extras.getString("target_component");
         final String targetActivity = extras.getString("target_activity");
-        if (targetActivity != null) {
+        if (!TextUtils.isEmpty(targetComponent)) {
+            newIntent.setComponent(ComponentName.unflattenFromString(targetComponent));
+        } else if (targetActivity != null) {
             final String extraPackageName = extras.getString("package_name");
             final String packageName = extraPackageName != null ? extraPackageName
                     : context.getApplicationContext().getPackageName();
@@ -81,10 +85,19 @@ public class ActivityLauncher {
             newIntent.addFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
         }
 
+        final Context launchContext = extras.getBoolean("use_application_context") ?
+                context.getApplicationContext() : context;
+
         try {
-            context.startActivity(newIntent, options != null ? options.toBundle() : null);
+            launchContext.startActivity(newIntent, options != null ? options.toBundle() : null);
         } catch (SecurityException e) {
             Log.e(TAG, "SecurityException launching activity");
+        } catch (Exception e) {
+            if (extras.getBoolean("suppress_exceptions")) {
+                Log.e(TAG, "Exception launching activity");
+            } else {
+                throw e;
+            }
         }
     }
 }
