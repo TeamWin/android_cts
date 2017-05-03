@@ -16,10 +16,12 @@
 
 package android.widget.cts;
 
-import android.test.suitebuilder.annotation.MediumTest;
 import android.widget.cts.R;
 
-
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.runner.RunWith;
+import org.junit.Test;
 import org.xmlpull.v1.XmlPullParser;
 
 import android.app.Activity;
@@ -29,9 +31,6 @@ import android.cts.util.PollingCheck;
 import android.database.DataSetObservable;
 import android.database.DataSetObserver;
 import android.graphics.Rect;
-import android.test.ActivityInstrumentationTestCase;
-import android.test.TouchUtils;
-import android.test.UiThreadTest;
 import android.test.ViewAsserts;
 import android.util.AttributeSet;
 import android.util.Xml;
@@ -40,6 +39,11 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.GridLayoutAnimationController.AnimationParameters;
+import android.support.test.filters.MediumTest;
+import android.support.test.filters.SmallTest;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.Filter;
@@ -50,36 +54,46 @@ import android.widget.ListAdapter;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.cts.util.ViewTestUtils;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 /**
  * Test {@link GridView}.
  */
-public class GridViewTest extends ActivityInstrumentationTestCase<GridViewCtsActivity> {
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class GridViewTest {
     private GridView mGridView;
     private Activity mActivity;
     private Instrumentation mInstrumentation;
-
-    public GridViewTest() {
-        super("android.widget.cts", GridViewCtsActivity.class);
-    }
 
     private GridView findGridViewById(int id) {
         return (GridView) mActivity.findViewById(id);
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Rule
+    public ActivityTestRule<GridViewCtsActivity> mActivityRule =
+            new ActivityTestRule<>(GridViewCtsActivity.class);
+
+    @Before
+    public void setUp() throws Exception {
         mGridView = null;
-        mActivity = getActivity();
+        mActivity = mActivityRule.getActivity();
         new PollingCheck() {
             @Override
             protected boolean check() {
                 return mActivity.hasWindowFocus();
             }
         }.run();
-        mInstrumentation = getInstrumentation();
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
     }
 
+    @Test
     public void testConstructor() {
         new GridView(mActivity);
 
@@ -111,6 +125,7 @@ public class GridViewTest extends ActivityInstrumentationTestCase<GridViewCtsAct
         }
     }
 
+    @Test
     public void testAccessAdapter() {
         mGridView = new GridView(mActivity);
         // set Adapter
@@ -122,6 +137,7 @@ public class GridViewTest extends ActivityInstrumentationTestCase<GridViewCtsAct
         assertNull(mGridView.getAdapter());
     }
 
+    @Test
     public void testSetSelection() {
         mGridView = new GridView(mActivity);
         mGridView.setSelection(0);
@@ -134,6 +150,7 @@ public class GridViewTest extends ActivityInstrumentationTestCase<GridViewCtsAct
         assertEquals(mGridView.getCount(), mGridView.getSelectedItemPosition());
     }
 
+    @Test
     public void testPressKey() {
         final int NUM_COLUMNS = 3;
         mGridView = findGridViewById(R.id.gridview);
@@ -182,6 +199,7 @@ public class GridViewTest extends ActivityInstrumentationTestCase<GridViewCtsAct
         assertTrue(listener.hasOnItemClickCalled());
     }
 
+    @Test
     public void testSetGravity() {
         mGridView = findGridViewById(R.id.gridview);
 
@@ -235,10 +253,12 @@ public class GridViewTest extends ActivityInstrumentationTestCase<GridViewCtsAct
         ViewAsserts.assertRightAligned(mGridView, child, mGridView.getListPaddingRight());
     }
 
+    @Test
     public void testSetHorizontalSpacing() {
         testSetHorizontalSpacing(View.LAYOUT_DIRECTION_LTR);
     }
 
+    @Test
     public void testSetHorizontalSpacingRTL() {
         testSetHorizontalSpacing(View.LAYOUT_DIRECTION_RTL);
     }
@@ -290,6 +310,7 @@ public class GridViewTest extends ActivityInstrumentationTestCase<GridViewCtsAct
         }
     }
 
+    @Test
     public void testSetVerticalSpacing() {
         mGridView = findGridViewById(R.id.gridview);
 
@@ -318,6 +339,7 @@ public class GridViewTest extends ActivityInstrumentationTestCase<GridViewCtsAct
         assertEquals(5, child1.getTop() - child0.getBottom());
     }
 
+    @Test
     public void testAccessStretchMode() {
         mGridView = findGridViewById(R.id.gridview);
         View child;
@@ -416,6 +438,7 @@ public class GridViewTest extends ActivityInstrumentationTestCase<GridViewCtsAct
                 < childRight[STRETCH_SPACING_UNIFORM][INDEX_1]);
     }
 
+    @Test
     public void testSetNumColumns() {
         mGridView = findGridViewById(R.id.gridview);
 
@@ -459,6 +482,7 @@ public class GridViewTest extends ActivityInstrumentationTestCase<GridViewCtsAct
         }
     }
 
+    @Test
     public void testGetNumColumns() {
         mGridView = new GridView(mActivity);
 
@@ -496,6 +520,7 @@ public class GridViewTest extends ActivityInstrumentationTestCase<GridViewCtsAct
         assertEquals(mGridView.getNumColumns(), 1);
     }
 
+    @Test
     public void testAttachLayoutAnimationParameters() {
         MockGridView mockGridView = new MockGridView(mActivity);
         ViewGroup.LayoutParams p = new ViewGroup.LayoutParams(320, 480);
@@ -505,33 +530,40 @@ public class GridViewTest extends ActivityInstrumentationTestCase<GridViewCtsAct
         assertEquals(2, animationParams.count);
     }
 
+    @Test
     public void testLayoutChildren() {
         MockGridView mockGridView = new MockGridView(mActivity);
         mockGridView.layoutChildren();
     }
 
-    @UiThreadTest
+    @Test
     public void testOnFocusChanged() {
-        final MockGridView mockGridView = new MockGridView(mActivity);
+        mActivity.runOnUiThread(new Runnable() {
+            public void run() {
+                final MockGridView mockGridView = new MockGridView(mActivity);
 
-        assertFalse(mockGridView.hasCalledOnFocusChanged());
-        mockGridView.setAdapter(new MockGridViewAdapter(10));
-        mockGridView.setFocusable(true);
-        mockGridView.requestFocus();
+                assertFalse(mockGridView.hasCalledOnFocusChanged());
+                mockGridView.setAdapter(new MockGridViewAdapter(10));
+                mockGridView.setFocusable(true);
+                mockGridView.requestFocus();
 
-        assertTrue(mockGridView.hasCalledOnFocusChanged());
-        mockGridView.reset();
-        assertFalse(mockGridView.hasCalledOnFocusChanged());
+                assertTrue(mockGridView.hasCalledOnFocusChanged());
+                mockGridView.reset();
+                assertFalse(mockGridView.hasCalledOnFocusChanged());
 
-        mockGridView.clearFocus();
+                mockGridView.clearFocus();
 
-        assertTrue(mockGridView.hasCalledOnFocusChanged());
+                assertTrue(mockGridView.hasCalledOnFocusChanged());
+            }
+        });
     }
 
+    @Test
     public void testOnMeasure() {
         // Do not test it. It's implementation detail.
     }
 
+    @Test
     public void testSetColumnWidth() {
         mGridView = findGridViewById(R.id.gridview);
 
@@ -568,22 +600,23 @@ public class GridViewTest extends ActivityInstrumentationTestCase<GridViewCtsAct
         assertEquals(child0.getLeft(), child1.getLeft());
     }
 
+    @Test
     @MediumTest
     public void testFullyDetachUnusedViewOnScroll() {
         mGridView = findGridViewById(R.id.gridview);
         final AttachDetachAwareView theView = new AttachDetachAwareView(mActivity);
-        ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mGridView, () -> {
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mGridView, () -> {
             mGridView.setAdapter(new DummyAdapter(1000, theView));
         });
         assertEquals("test sanity", 1, theView.mOnAttachCount);
         assertEquals("test sanity", 0, theView.mOnDetachCount);
-        ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mGridView, () -> {
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mGridView, () -> {
             mGridView.scrollListBy(mGridView.getHeight() * 2);
         });
         assertNull("test sanity, unused view should be removed", theView.getParent());
         assertEquals("unused view should be detached", 1, theView.mOnDetachCount);
         assertFalse(theView.isTemporarilyDetached());
-        ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mGridView, () -> {
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mGridView, () -> {
             mGridView.scrollListBy(-mGridView.getHeight() * 2);
             // listview limits scroll to 1 page which is why we call it twice here.
             mGridView.scrollListBy(-mGridView.getHeight() * 2);
@@ -594,22 +627,23 @@ public class GridViewTest extends ActivityInstrumentationTestCase<GridViewCtsAct
         assertFalse(theView.isTemporarilyDetached());
     }
 
+    @Test
     @MediumTest
     public void testFullyDetachUnusedViewOnReLayout() {
         mGridView = findGridViewById(R.id.gridview);
         final AttachDetachAwareView theView = new AttachDetachAwareView(mActivity);
-        ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mGridView, () -> {
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mGridView, () -> {
             mGridView.setAdapter(new DummyAdapter(1000, theView));
         });
         assertEquals("test sanity", 1, theView.mOnAttachCount);
         assertEquals("test sanity", 0, theView.mOnDetachCount);
-        ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mGridView, () -> {
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mGridView, () -> {
             mGridView.setSelection(800);
         });
         assertNull("test sanity, unused view should be removed", theView.getParent());
         assertEquals("unused view should be detached", 1, theView.mOnDetachCount);
         assertFalse(theView.isTemporarilyDetached());
-        ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mGridView, () -> {
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mGridView, () -> {
             mGridView.setSelection(0);
         });
         assertNotNull("test sanity, view should be re-added", theView.getParent());
@@ -618,25 +652,26 @@ public class GridViewTest extends ActivityInstrumentationTestCase<GridViewCtsAct
         assertFalse(theView.isTemporarilyDetached());
     }
 
+    @Test
     @MediumTest
     public void testFullyDetachUnusedViewOnScrollForFocus() {
         mGridView = findGridViewById(R.id.gridview);
         final AttachDetachAwareView theView = new AttachDetachAwareView(mActivity);
-        ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mGridView, () -> {
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mGridView, () -> {
             mGridView.setAdapter(new DummyAdapter(1000, theView));
         });
         assertEquals("test sanity", 1, theView.mOnAttachCount);
         assertEquals("test sanity", 0, theView.mOnDetachCount);
         while(theView.getParent() != null) {
             assertEquals("the view should NOT be detached", 0, theView.mOnDetachCount);
-            sendKeys(KeyEvent.KEYCODE_DPAD_DOWN);
-            ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mGridView, null);
+            mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_DOWN);
+            ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mGridView, null);
         }
         assertEquals("the view should be detached", 1, theView.mOnDetachCount);
         assertFalse(theView.isTemporarilyDetached());
         while(theView.getParent() == null) {
-            sendKeys(KeyEvent.KEYCODE_DPAD_UP);
-            ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mGridView, null);
+            mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_UP);
+            ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mGridView, null);
         }
         assertEquals("the view should be re-attached", 2, theView.mOnAttachCount);
         assertEquals("the view should not recieve another detach", 1, theView.mOnDetachCount);
