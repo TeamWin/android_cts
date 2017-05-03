@@ -76,22 +76,30 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
     public void testFail() throws Exception {
         // Sanity check that remote failure is host failure
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_23), false, false));
+        boolean didThrow = false;
         try {
             runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
                     "testFail");
-            fail("Expected remote failure");
         } catch (AssertionError expected) {
+            didThrow = true;
+        }
+        if (!didThrow) {
+            fail("Expected remote failure");
         }
     }
 
     public void testKill() throws Exception {
         // Sanity check that remote kill is host failure
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_23), false, false));
+        boolean didThrow = false;
         try {
             runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
                     "testKill");
-            fail("Expected remote failure");
         } catch (AssertionError expected) {
+            didThrow = true;
+        }
+        if (!didThrow) {
+            fail("Expected remote failure");
         }
     }
 
@@ -103,11 +111,15 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
 
     public void testCompatRevoked22() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_22), false, false));
+        boolean didThrow = false;
         try {
             runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest22",
                     "testCompatRevoked_part1");
-            fail("App must be killed on a permission revoke");
         } catch (AssertionError expected) {
+            didThrow = true;
+        }
+        if (!didThrow) {
+            fail("App must be killed on a permission revoke");
         }
         runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest22",
                 "testCompatRevoked_part2");
@@ -169,10 +181,15 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
 
     public void testRevokeAffectsWholeGroup23() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_23), false, false));
+        boolean didThrow = false;
         try {
             runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
                     "testRevokeAffectsWholeGroup_part1");
         } catch (AssertionError expected) {
+            didThrow = true;
+        }
+        if (!didThrow) {
+            fail("Should have thrown an exception.");
         }
         runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
                 "testRevokeAffectsWholeGroup_part2");
@@ -180,11 +197,15 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
 
     public void testGrantPreviouslyRevokedWithPrejudiceShowsPrompt23() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_23), false, false));
+        boolean didThrow = false;
         try {
             runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
                     "testGrantPreviouslyRevokedWithPrejudiceShowsPrompt_part1");
-            fail("App must be killed on a permission revoke");
         } catch (Throwable expected) {
+            didThrow = true;
+        }
+        if (!didThrow) {
+            fail("App must be killed on a permission revoke");
         }
         runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
                 "testGrantPreviouslyRevokedWithPrejudiceShowsPrompt_part2");
@@ -225,10 +246,14 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
 
     public void testNoDowngradePermissionModel() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_23), false, false));
+        boolean didThrow = false;
         try {
             assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_22), true, false));
-            fail("Permission mode downgrade not allowed");
         } catch (AssertionError expected) {
+            didThrow = true;
+        }
+        if (!didThrow) {
+            fail("Permission mode downgrade not allowed");
         }
     }
 
@@ -244,11 +269,15 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
 
     public void testRevokePropagatedOnUpgradeOldToNewModel() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_22), false, false));
+        boolean didThrow = false;
         try {
             runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest22",
                     "testRevokePropagatedOnUpgradeOldToNewModel_part1");
-            fail("App must be killed on a permission revoke");
         } catch (AssertionError expected) {
+            didThrow = true;
+        }
+        if (!didThrow) {
+            fail("App must be killed on a permission revoke");
         }
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_23), true, false));
         runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
