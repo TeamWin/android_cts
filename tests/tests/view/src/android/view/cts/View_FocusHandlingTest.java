@@ -227,6 +227,60 @@ public class View_FocusHandlingTest {
 
     @UiThreadTest
     @Test
+    public void testEnabledHandling() {
+        Activity activity = mActivityRule.getActivity();
+
+        View v1 = activity.findViewById(R.id.view1);
+        View v2 = activity.findViewById(R.id.view2);
+        View v3 = activity.findViewById(R.id.view3);
+        View v4 = activity.findViewById(R.id.view4);
+
+        for (View v : new View[]{v1, v2, v3, v4}) v.setFocusable(true);
+
+        assertTrue(v1.requestFocus());
+
+        // disabled view should not be focusable
+        assertTrue(v1.hasFocus());
+        v1.setEnabled(false);
+        assertFalse(v1.hasFocus());
+        v1.requestFocus();
+        assertFalse(v1.hasFocus());
+        v1.setEnabled(true);
+        v1.requestFocus();
+        assertTrue(v1.hasFocus());
+
+        // an enabled view should not take focus if not visible OR not enabled
+        v1.setEnabled(false);
+        v1.setVisibility(View.INVISIBLE);
+        assertFalse(v1.hasFocus());
+        v1.setEnabled(true);
+        v1.requestFocus();
+        assertFalse(v1.hasFocus());
+        v1.setEnabled(false);
+        v1.setVisibility(View.VISIBLE);
+        v1.requestFocus();
+        assertFalse(v1.hasFocus());
+        v1.setEnabled(true);
+        v1.requestFocus();
+        assertTrue(v1.hasFocus());
+
+        // test hasFocusable
+        ViewGroup parent = (ViewGroup) v1.getParent();
+        assertTrue(parent.hasFocusable());
+        for (View v : new View[]{v1, v2, v3, v4}) v.setEnabled(false);
+        assertFalse(v1.isFocused());
+        assertFalse(v2.isFocused());
+        assertFalse(v3.isFocused());
+        assertFalse(v4.isFocused());
+        assertFalse(parent.hasFocusable());
+
+        // a view enabled while nothing has focus should get focus.
+        for (View v : new View[]{v1, v2, v3, v4}) v.setEnabled(true);
+        assertEquals(true, v1.isFocused());
+    }
+
+    @UiThreadTest
+    @Test
     public void testFocusAuto() {
         Activity activity = mActivityRule.getActivity();
 
