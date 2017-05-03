@@ -190,6 +190,10 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     public void testWifiScans() throws Exception {
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
+        // Whitelist this app against background wifi scan throttling
+        getDevice().executeShellCommand(String.format(
+                "settings put global wifi_scan_background_throttle_package_whitelist %s",
+                DEVICE_SIDE_TEST_PACKAGE));
 
         // Foreground count test.
         executeForeground(ACTION_WIFI_SCAN, 60_000);
