@@ -387,7 +387,7 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
     }
 
     private void checkBattery(String[] parts) {
-        assertEquals(13, parts.length);
+        assertEquals(15, parts.length);
         if (!parts[4].equals("N/A")) {
             assertInteger(parts[4]);  // startCount
         }
@@ -399,6 +399,9 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
         long bOffReal = assertInteger(parts[10]); // batteryScreenOffRealtime
         long bOffUp = assertInteger(parts[11]); // batteryScreenOffUptime
         long bEstCap = assertInteger(parts[12]); // batteryEstimatedCapacity
+        assertInteger(parts[13]); // minLearnedBatteryCapacity
+        assertInteger(parts[14]); // maxLearnedBatteryCapacity
+
         // The device cannot be up more than there are real-world seconds.
         assertTrue("batteryRealtime must be >= batteryUptime", bReal >= bUp);
         assertTrue("totalRealtime must be >= totalUptime", tReal >= tUp);
