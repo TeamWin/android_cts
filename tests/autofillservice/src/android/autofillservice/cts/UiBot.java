@@ -88,14 +88,16 @@ final class UiBot {
      * Asserts the dataset chooser is not shown.
      */
     void assertNoDatasets() {
-        final UiObject2 ui;
+        final UiObject2 picker;
         try {
-            ui = findDatasetPicker();
+            picker = findDatasetPicker();
         } catch (Throwable t) {
             // Use a more elegant check than catching the expection because it's not showing...
             return;
         }
-        throw new RetryableException("floating ui is shown: %s", ui);
+        final StringBuilder error = new StringBuilder("Should not be showing datasets, but got [ ");
+        getAllText(picker, error);
+        throw new RetryableException(error.append("]").toString());
     }
 
     /**
@@ -107,9 +109,28 @@ final class UiBot {
         final UiObject2 picker = findDatasetPicker();
         for (String name : names) {
             final UiObject2 dataset = picker.findObject(By.text(name));
-            assertWithMessage("no dataset named %s", name).that(dataset).isNotNull();
+            if (dataset == null) {
+                final StringBuilder error = new StringBuilder("no dataset named ").append(name)
+                        .append(" on [ ");
+                getAllText(picker, error);
+                throw new AssertionError(error.append("]").toString()); // not retryable
+
+            }
         }
         return picker;
+    }
+
+    /**
+     * Gets the text from an object and all its descendants.
+     */
+    private static void getAllText(UiObject2 object, StringBuilder builder) {
+        final String text = object.getText();
+        if (text != null) {
+            builder.append(text).append(' ');
+        }
+        for (UiObject2 child : object.getChildren()) {
+            getAllText(child, builder);
+        }
     }
 
     /**
