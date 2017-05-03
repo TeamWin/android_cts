@@ -303,14 +303,17 @@ final class Helper {
       final CharSequence text = node.getText();
       final String resourceId = node.getIdEntry();
       if (!TextUtils.isEmpty(text)) {
-        throw new AssertionError("text on sanitized field " + resourceId + ": " + text);
+          throw new AssertionError("text on sanitized field " + resourceId + ": " + text);
       }
       assertNodeHasNoAutofillValue(node);
     }
 
     static void assertNodeHasNoAutofillValue(ViewNode node) {
         final AutofillValue value = node.getAutofillValue();
-        assertWithMessage("node.getAutofillValue()").that(value).isNull();
+        if (value != null) {
+            final String text = value.isText() ? value.getTextValue().toString() : "N/A";
+            throw new AssertionError("node has value: " + value + " text=" + text);
+        }
     }
 
     /**
