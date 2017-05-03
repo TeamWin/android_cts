@@ -246,6 +246,8 @@ public class FeatureSummaryActivity extends PassFailButtons.ListActivity {
             new Feature(PackageManager.FEATURE_NFC_HOST_CARD_EMULATION_NFCF, false),
             new Feature(PackageManager.FEATURE_PICTURE_IN_PICTURE, false),
             new Feature(PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT, false),
+            // FEATURE_FILE_BASED_ENCRYPTION is hide
+            new Feature("android.software.file_based_encryption", false),
     };
 
     @Override
