@@ -81,6 +81,8 @@ public class ActivityLauncher {
             newIntent.addFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
         }
 
-        context.startActivity(newIntent, options != null ? options.toBundle() : null);
+        final Context launchContext = extras.getBoolean("use_application_context") ?
+                context.getApplicationContext() : context;
+        launchContext.startActivity(newIntent, options != null ? options.toBundle() : null);
     }
 }
