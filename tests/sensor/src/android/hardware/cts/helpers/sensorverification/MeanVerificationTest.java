@@ -62,7 +62,7 @@ public class MeanVerificationTest extends TestCase {
         verification = getVerification(expected, threshold, values);
         try {
             verification.verify(stats);
-            fail("Expected an AssertionError");
+            throw new Error("Expected an AssertionError");
         } catch (AssertionError e) {
             // Expected;
         }
@@ -74,7 +74,7 @@ public class MeanVerificationTest extends TestCase {
         verification = getVerification(expected, threshold, values);
         try {
             verification.verify(stats);
-            fail("Expected an AssertionError");
+            throw new Error("Expected an AssertionError");
         } catch (AssertionError e) {
             // Expected;
         }
@@ -85,7 +85,7 @@ public class MeanVerificationTest extends TestCase {
         verification = getVerification(expected, threshold, values);
         try {
             verification.verify(stats);
-            fail("Expected an AssertionError");
+            throw new Error("Expected an AssertionError");
         } catch (AssertionError e) {
             // Expected;
         }
