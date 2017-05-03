@@ -105,68 +105,91 @@ public abstract class BaseDeviceAdminServiceTest extends BaseDevicePolicyTest {
         }
 
         // Install
+        CLog.i("Installing apk1...");
         installAppAsUser(OWNER_APK_1, getUserId());
+
+        CLog.i("Making it a device/profile owner...");
         setAsOwnerOrFail(OWNER_COMPONENT);
 
         withRetry(() -> assertServiceBound(OWNER_SERVICE));
 
         // Remove admin.
+        CLog.i("Removing admin...");
         removeAdmin(OWNER_COMPONENT, getUserId());
         withRetry(() -> assertServiceNotBound(OWNER_SERVICE));
 
         // Overwrite -> update.
+        CLog.i("Re-installing apk1...");
         installAppAsUser(OWNER_APK_1, getUserId());
+
+        CLog.i("Making it a device/profile owner...");
         setAsOwnerOrFail(OWNER_COMPONENT);
         withRetry(() -> assertServiceBound(OWNER_SERVICE));
 
+        CLog.i("Installing apk2...");
         installAppAsUser(OWNER_APK_2, getUserId());
         withRetry(() -> assertServiceBound(OWNER_SERVICE)); // Should still be bound.
 
         // Service exported -> not bound.
+        CLog.i("Installing apk3...");
         installAppAsUser(OWNER_APK_3, getUserId());
         withRetry(() -> assertServiceNotBound(OWNER_SERVICE));
 
         // Recover.
+        CLog.i("Installing apk2 again...");
         installAppAsUser(OWNER_APK_2, getUserId());
         withRetry(() -> assertServiceBound(OWNER_SERVICE));
 
         // Multiple service found -> not bound.
+        CLog.i("Installing apk4...");
         installAppAsUser(OWNER_APK_4, getUserId());
         withRetry(() -> assertServiceNotBound(OWNER_SERVICE));
         withRetry(() -> assertServiceNotBound(OWNER_SERVICE2));
 
         // Disable service1 -> now there's only one service, so should be bound.
+        CLog.i("Running testDisableService1...");
         executeDeviceTestMethod(".ComponentController", "testDisableService1");
         withRetry(() -> assertServiceNotBound(OWNER_SERVICE));
         withRetry(() -> assertServiceBound(OWNER_SERVICE2));
 
+        CLog.i("Running testDisableService2...");
         executeDeviceTestMethod(".ComponentController", "testDisableService2");
         withRetry(() -> assertServiceNotBound(OWNER_SERVICE));
         withRetry(() -> assertServiceNotBound(OWNER_SERVICE2));
 
+        CLog.i("Running testEnableService1...");
         executeDeviceTestMethod(".ComponentController", "testEnableService1");
         withRetry(() -> assertServiceBound(OWNER_SERVICE));
         withRetry(() -> assertServiceNotBound(OWNER_SERVICE2));
 
+        CLog.i("Running testEnableService2...");
         executeDeviceTestMethod(".ComponentController", "testEnableService2");
         withRetry(() -> assertServiceNotBound(OWNER_SERVICE));
         withRetry(() -> assertServiceNotBound(OWNER_SERVICE2));
 
         // Remove admin.
+        CLog.i("Removing admin again...");
         removeAdmin(OWNER_COMPONENT, getUserId());
         withRetry(() -> assertServiceNotBound(OWNER_SERVICE));
 
         // Retry with package 1 and remove admin.
+        CLog.i("Installing apk1 again...");
         installAppAsUser(OWNER_APK_1, getUserId());
+
+        CLog.i("Making it a device/profile owner again...");
         setAsOwnerOrFail(OWNER_COMPONENT);
         withRetry(() -> assertServiceBound(OWNER_SERVICE));
 
+        CLog.i("Removing admin again...");
         removeAdmin(OWNER_COMPONENT, getUserId());
         withRetry(() -> assertServiceNotBound(OWNER_SERVICE));
 
         // Now install package B and make it the owner.  OWNER_APK_1 still exists, but it shouldn't
         // interfere.
+        CLog.i("Installing apk B...");
         installAppAsUser(OWNER_APK_B, getUserId());
+
+        CLog.i("Making it a device/profile owner...");
         setAsOwnerOrFail(OWNER_COMPONENT_B);
         withRetry(() -> assertServiceNotBound(OWNER_SERVICE));
         withRetry(() -> assertServiceBound(OWNER_SERVICE_B));
