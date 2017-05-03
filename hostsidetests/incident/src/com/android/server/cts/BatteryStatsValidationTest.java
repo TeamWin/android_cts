@@ -53,6 +53,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     // Constants from BatteryStatsBgVsFgActions.java (not directly accessible here).
     public static final String KEY_ACTION = "action";
     public static final String ACTION_BLE_SCAN = "action.ble_scan";
+    public static final String ACTION_GPS = "action.gps";
     public static final String ACTION_JOB_SCHEDULE = "action.jobs";
     public static final String ACTION_SYNC = "action.sync";
     public static final String ACTION_WIFI_SCAN = "action.wifi_scan";
@@ -148,6 +149,28 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         executeBackground(ACTION_BLE_SCAN, 30_000);
         assertValueRange("blem", "", 5, 2, 2); // ble_scan_count
         assertValueRange("blem", "", 6, 1, 1); // ble_scan_count_bg
+
+        batteryOffScreenOn();
+    }
+
+    public void testGpsUpdates() throws Exception {
+        final String gpsSensorNumber = "-10000";
+        batteryOnScreenOff();
+        installPackage(DEVICE_SIDE_TEST_APK, true);
+        // Whitelist this app against background location request throttling
+        getDevice().executeShellCommand(String.format(
+                "settings put global location_background_throttle_package_whitelist %s",
+                DEVICE_SIDE_TEST_PACKAGE));
+
+        // Foreground test.
+        executeForeground(ACTION_GPS, 60_000);
+        assertValueRange("sr", gpsSensorNumber, 6, 1, 1); // count
+        assertValueRange("sr", gpsSensorNumber, 7, 0, 0); // background_count
+
+        // Background test.
+        executeBackground(ACTION_GPS, 60_000);
+        assertValueRange("sr", gpsSensorNumber, 6, 2, 2); // count
+        assertValueRange("sr", gpsSensorNumber, 7, 1, 1); // background_count
 
         batteryOffScreenOn();
     }
