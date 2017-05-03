@@ -32,7 +32,7 @@ LOCAL_JAVA_LIBRARIES := platform-test-annotations
 LOCAL_SDK_VERSION := current
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
-
+-include cts/error_prone_rules_tests.mk
 include $(BUILD_STATIC_JAVA_LIBRARY)
 
 #
