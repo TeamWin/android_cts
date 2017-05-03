@@ -29,6 +29,7 @@ import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.uirendering.cts.R;
 import android.uirendering.cts.bitmapcomparers.MSSIMComparer;
+import android.uirendering.cts.bitmapverifiers.GoldenImageVerifier;
 import android.uirendering.cts.bitmapverifiers.SamplePointVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.uirendering.cts.testinfrastructure.CanvasClient;
@@ -71,18 +72,38 @@ public class PathClippingTests extends ActivityTestBase {
         canvas.restore();
     };
 
+    // draw circle with hole in it, by path operations + path clipping
+    static final CanvasClient sTorusClipOutCanvasClient = (canvas, width, height) -> {
+        canvas.save();
+
+        Path path1 = new Path();
+        path1.addCircle(30, 30, 50, Path.Direction.CW);
+
+        Path path2 = new Path();
+        path2.addCircle(30, 30, 30, Path.Direction.CW);
+
+        canvas.clipPath(path1);
+        canvas.clipOutPath(path2);
+        canvas.drawColor(Color.BLUE);
+
+        canvas.restore();
+    };
+
     @Test
     public void testCircleWithCircle() {
         createTest()
                 .addCanvasClient("TorusDraw", sTorusDrawCanvasClient, false)
                 .addCanvasClient("TorusClip", sTorusClipCanvasClient)
-                .runWithComparer(new MSSIMComparer(0.90));
+                .addCanvasClient("TorusClipOut", sTorusClipOutCanvasClient)
+                .runWithVerifier(new GoldenImageVerifier(getActivity(),
+                        R.drawable.pathclippingtest_torus, new MSSIMComparer(0.95)));
     }
 
     @Test
     public void testCircleWithPoints() {
         createTest()
                 .addCanvasClient("TorusClip", sTorusClipCanvasClient)
+                .addCanvasClient("TorusClipOut", sTorusClipOutCanvasClient)
                 .runWithVerifier(new SamplePointVerifier(
                         new Point[] {
                                 // inside of circle

@@ -1153,6 +1153,13 @@ public class CanvasTest {
     }
 
     @Test
+    public void testClipOutPath() {
+        final Path p = new Path();
+        p.addRect(new RectF(5, 5, 10, 10), Direction.CW);
+        assertTrue(mCanvas.clipOutPath(p));
+    }
+
+    @Test
     public void testClipInversePath() {
         final Path p = new Path();
         p.addRoundRect(new RectF(0, 0, 10, 10), 0.5f, 0.5f, Direction.CW);
