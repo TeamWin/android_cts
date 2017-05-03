@@ -2808,12 +2808,18 @@ public class TextViewTest {
         mInstrumentation.waitForIdleSync();
         assertTrue(mTextView.isFocused());
 
-        // Arrows should not cause focus to leave the textfield
+        // Pure-keyboard arrows should not cause focus to leave the textfield
         CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTextView, KeyEvent.KEYCODE_DPAD_UP);
         mInstrumentation.waitForIdleSync();
         assertTrue(mTextView.isFocused());
 
-        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTextView, KeyEvent.KEYCODE_DPAD_DOWN);
+        // Non-pure-keyboard arrows, however, should.
+        int dpadRemote = InputDevice.SOURCE_DPAD | InputDevice.SOURCE_KEYBOARD;
+        sendSourceKeyDownUp(mInstrumentation, mTextView, KeyEvent.KEYCODE_DPAD_UP, dpadRemote);
+        mInstrumentation.waitForIdleSync();
+        assertFalse(mTextView.isFocused());
+
+        sendSourceKeyDownUp(mInstrumentation, mTextView, KeyEvent.KEYCODE_DPAD_DOWN, dpadRemote);
         mInstrumentation.waitForIdleSync();
         assertTrue(mTextView.isFocused());
 
@@ -2821,6 +2827,16 @@ public class TextViewTest {
         CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTextView, KeyEvent.KEYCODE_TAB);
         mInstrumentation.waitForIdleSync();
         assertFalse(mTextView.isFocused());
+    }
+
+    private void sendSourceKeyDownUp(Instrumentation instrumentation, View targetView, int key,
+            int source) {
+        KeyEvent event = new KeyEvent(KeyEvent.ACTION_DOWN, key);
+        event.setSource(source);
+        CtsKeyEventUtil.sendKey(instrumentation, targetView, event);
+        event = new KeyEvent(KeyEvent.ACTION_UP, key);
+        event.setSource(source);
+        CtsKeyEventUtil.sendKey(instrumentation, targetView, event);
     }
 
     @Test
