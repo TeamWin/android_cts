@@ -32,7 +32,6 @@ import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Email;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.provider.ContactsContract.CommonDataKinds.StructuredName;
-import android.provider.Settings;
 import android.service.notification.NotificationListenerService;
 import android.util.Log;
 import android.view.View;
@@ -101,7 +100,7 @@ public class AttentionManagementVerifierActivity
         tests.add(new SetModeAllTest());
         tests.add(new AllInterceptsNothingTest());
         tests.add(new DefaultOrderTest());
-        tests.add(new PrioritytOrderTest());
+        tests.add(new PriorityOrderTest());
         tests.add(new InterruptionOrderTest());
         tests.add(new AmbientBitsTest());
         tests.add(new LookupUriOrderTest());
@@ -113,13 +112,11 @@ public class AttentionManagementVerifierActivity
 
     private void createChannels() {
         NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL_ID,
-                NOTIFICATION_CHANNEL_ID, NotificationManager.IMPORTANCE_DEFAULT);
+                NOTIFICATION_CHANNEL_ID, NotificationManager.IMPORTANCE_MIN);
         mNm.createNotificationChannel(channel);
         NotificationChannel noisyChannel = new NotificationChannel(NOTIFICATION_CHANNEL_ID_NOISY,
                 NOTIFICATION_CHANNEL_ID_NOISY, NotificationManager.IMPORTANCE_HIGH);
         noisyChannel.enableVibration(true);
-        noisyChannel.setSound(
-                Settings.System.DEFAULT_RINGTONE_URI, Notification.AUDIO_ATTRIBUTES_DEFAULT);
         mNm.createNotificationChannel(noisyChannel);
     }
 
@@ -528,7 +525,7 @@ public class AttentionManagementVerifierActivity
     }
 
     // ordered by priority: B, C, A
-    protected class PrioritytOrderTest extends InteractiveTestCase {
+    protected class PriorityOrderTest extends InteractiveTestCase {
         @Override
         View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.attention_priority_order);
@@ -585,8 +582,8 @@ public class AttentionManagementVerifierActivity
         @Override
         void setUp() {
             createChannels();
-            // send B & C noisy
-            sendNotifications(SEND_B | SEND_C, MODE_NONE, false, true);
+            // send B & C noisy with contact affinity
+            sendNotifications(SEND_B | SEND_C, MODE_URI, false, true);
             status = READY;
             // wait for then to not be recently noisy any more
             delay(15000);
@@ -595,7 +592,7 @@ public class AttentionManagementVerifierActivity
         @Override
         void test() {
             if (status == READY) {
-                // send A noisy
+                // send A noisy but no contact affinity
                 sendNotifications(SEND_A, MODE_NONE, false, true);
                 status = RETEST;
                 delay();
@@ -650,7 +647,8 @@ public class AttentionManagementVerifierActivity
         @Override
         void setUp() {
             createChannels();
-            sendNotifications(MODE_NONE, true, false);
+            sendNotifications(SEND_B | SEND_C, MODE_NONE, true, true);
+            sendNotifications(SEND_A, MODE_NONE, true, false);
             status = READY;
             // wait for notifications to move through the system
             delay();
