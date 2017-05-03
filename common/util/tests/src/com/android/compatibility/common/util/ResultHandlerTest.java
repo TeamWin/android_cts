@@ -224,7 +224,7 @@ public class ResultHandlerTest extends TestCase {
             writer = new FileWriter(resultFile);
             String buildInfo = String.format(XML_BUILD_INFO, DEVICE_A,
                     EXAMPLE_BUILD_ID, EXAMPLE_BUILD_PRODUCT);
-            String summary = String.format(XML_SUMMARY, 2, 1, 1);
+            String summary = String.format(XML_SUMMARY, 2, 1);
             String moduleATest = String.format(XML_TEST_PASS, METHOD_1);
             String moduleACases = String.format(XML_CASE, CLASS_A, moduleATest);
             String moduleA = String.format(XML_MODULE, NAME_A, ABI, DEVICE_A, RUNTIME_A, DONE_A,

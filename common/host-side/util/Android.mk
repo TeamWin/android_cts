@@ -25,7 +25,7 @@ LOCAL_JAVA_LIBRARIES := json-prebuilt tradefed
 LOCAL_MODULE := compatibility-host-util
 
 LOCAL_MODULE_TAGS := optional
-
+include cts/error_prone_rules.mk
 include $(BUILD_HOST_JAVA_LIBRARY)
 
 include $(call all-makefiles-under,$(LOCAL_PATH))
