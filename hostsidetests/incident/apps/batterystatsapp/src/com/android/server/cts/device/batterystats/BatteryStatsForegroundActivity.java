@@ -16,10 +16,9 @@
 
 package com.android.server.cts.device.batterystats;
 
-import static com.android.server.cts.device.batterystats.BatteryStatsBgVsFgActions
-        .ACTION_JOB_SCHEDULE;
 import static com.android.server.cts.device.batterystats.BatteryStatsBgVsFgActions.ACTION_SYNC;
 import static com.android.server.cts.device.batterystats.BatteryStatsBgVsFgActions.KEY_ACTION;
+import static com.android.server.cts.device.batterystats.BatteryStatsBgVsFgActions.KEY_REQUEST_CODE;
 import static com.android.server.cts.device.batterystats.BatteryStatsBgVsFgActions.doAction;
 import static com.android.server.cts.device.batterystats.BatteryStatsBgVsFgActions.isAppInBackground;
 
@@ -53,7 +52,9 @@ public class BatteryStatsForegroundActivity extends Activity {
         }
 
         String action = intent.getStringExtra(KEY_ACTION);
-        doAction(this, action);
+        String requestCode = intent.getStringExtra(KEY_REQUEST_CODE);
+        Log.i(TAG, "Starting " + action + " from foreground activity as request " + requestCode);
+        doAction(this, action, requestCode);
 
         // ACTION_SYNC will finish itself. Others get finished here.
         if (!ACTION_SYNC.equals(action)) {

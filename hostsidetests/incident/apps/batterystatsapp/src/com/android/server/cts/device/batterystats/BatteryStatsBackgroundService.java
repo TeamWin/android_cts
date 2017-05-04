@@ -17,6 +17,7 @@
 package com.android.server.cts.device.batterystats;
 
 import static com.android.server.cts.device.batterystats.BatteryStatsBgVsFgActions.KEY_ACTION;
+import static com.android.server.cts.device.batterystats.BatteryStatsBgVsFgActions.KEY_REQUEST_CODE;
 import static com.android.server.cts.device.batterystats.BatteryStatsBgVsFgActions.doAction;
 import static com.android.server.cts.device.batterystats.BatteryStatsBgVsFgActions.isAppInBackground;
 
@@ -45,7 +46,9 @@ public class BatteryStatsBackgroundService extends IntentService {
             Log.w(TAG, "Couldn't determine if app is in background. Proceeding with test anyway.");
         }
 
-        Log.i(TAG, "Starting action from background service");
-        doAction(this, intent.getStringExtra(KEY_ACTION));
+        String action = intent.getStringExtra(KEY_ACTION);
+        String requestCode = intent.getStringExtra(KEY_REQUEST_CODE);
+        Log.i(TAG, "Starting " + action + " from background service as request " + requestCode);
+        doAction(this, action, requestCode);
     }
 }
