@@ -29,7 +29,7 @@ LOCAL_SRC_FILES := \
 LOCAL_MODULE := CtsCameraUtils
 
 LOCAL_SDK_VERSION := current
-
+-include cts/error_prone_rules_tests.mk
 include $(BUILD_STATIC_JAVA_LIBRARY)
 
 # CtsCameraTestCases package
