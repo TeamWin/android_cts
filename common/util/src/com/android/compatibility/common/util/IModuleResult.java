@@ -30,6 +30,8 @@ public interface IModuleResult extends Comparable<IModuleResult> {
 
     void addRuntime(long elapsedTime);
 
+    void resetRuntime();
+
     long getRuntime();
 
     /**
