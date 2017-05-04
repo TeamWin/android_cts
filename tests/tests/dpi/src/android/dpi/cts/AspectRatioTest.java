@@ -23,6 +23,7 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
 
@@ -30,7 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AspectRatioTest extends ActivityInstrumentationTestCase2<OrientationActivity> {
-
+    private static final String TAG = "AspectRatioTest";
     private static final int[] ORIENTATIONS = new int[] {
         ActivityInfo.SCREEN_ORIENTATION_PORTRAIT,
         ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE,
@@ -47,6 +48,7 @@ public class AspectRatioTest extends ActivityInstrumentationTestCase2<Orientatio
      */
     public void testAspectRatio() throws Exception {
         double aspectRatio = getRealAspectRatio(getActivity());
+        Log.i(TAG, "Aspect Ratio: " + aspectRatio);
         if (aspectRatio >= 1.333 && aspectRatio <= 1.86) {
             return;
         }
