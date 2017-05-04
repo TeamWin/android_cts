@@ -167,6 +167,7 @@ def main():
 
     # Make output directories to hold the generated files.
     topdir = tempfile.mkdtemp()
+    subprocess.call(['chmod', 'g+rx', topdir])
     print "Saving output files to:", topdir, "\n"
 
     device_id = its.device.get_device_id()
