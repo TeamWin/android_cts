@@ -19,8 +19,7 @@ package com.android.cts.apicoverage;
 import com.android.compatibility.common.util.CddTest;
 
 import org.jf.dexlib2.DexFileFactory;
-import org.jf.dexlib2.DexFileFactory.DexFileNotFound;
-import org.jf.dexlib2.DexFileFactory.MultipleDexFilesException;
+import org.jf.dexlib2.DexFileFactory.DexFileNotFoundException;
 import org.jf.dexlib2.Opcodes;
 import org.jf.dexlib2.iface.Annotation;
 import org.jf.dexlib2.iface.AnnotationElement;
@@ -264,9 +263,8 @@ public class CtsApiCoverage {
 
         DexFile dexFile = null;
         try {
-            dexFile = DexFileFactory.loadDexFile(
-                testSource, null /*dexEntry*/, Opcodes.forApi(api));
-        } catch (IOException | DexFileFactory.DexFileNotFound e) {
+            dexFile = DexFileFactory.loadDexFile(testSource, Opcodes.forApi(api));
+        } catch (IOException | DexFileFactory.DexFileNotFoundException e) {
             System.err.println("Unable to load dex file: " + testSource.getPath());
             return;
         }
