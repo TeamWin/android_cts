@@ -55,9 +55,10 @@ public class BatteryStatsBgVsFgActions {
     public static final String ACTION_WIFI_DOWNLOAD = "action.wifi_download";
     public static final String ACTION_WIFI_UPLOAD = "action.wifi_upload";
 
+    public static final String KEY_REQUEST_CODE = "request_code";
 
     /** Perform the action specified by the given action code (see constants above). */
-    public static void doAction(Context ctx, String actionCode) {
+    public static void doAction(Context ctx, String actionCode, String requestCode) {
         if (actionCode == null) {
             Log.e(TAG, "Intent was missing action.");
             return;
@@ -65,22 +66,22 @@ public class BatteryStatsBgVsFgActions {
         sleep(100);
         switch(actionCode) {
             case ACTION_BLE_SCAN:
-                doBleScan(ctx);
+                doBleScan(ctx, requestCode);
                 break;
             case ACTION_JOB_SCHEDULE:
-                doScheduleJob(ctx);
+                doScheduleJob(ctx, requestCode);
                 break;
             case ACTION_SYNC:
-                doSync(ctx);
+                doSync(ctx, requestCode);
                 break;
             case ACTION_WIFI_SCAN:
-                doWifiScan(ctx);
+                doWifiScan(ctx, requestCode);
                 break;
             case ACTION_WIFI_DOWNLOAD:
-                doWifiDownload(ctx);
+                doWifiDownload(ctx, requestCode);
                 break;
             case ACTION_WIFI_UPLOAD:
-                doWifiUpload(ctx);
+                doWifiUpload(ctx, requestCode);
                 break;
             default:
                 Log.e(TAG, "Intent had invalid action");
@@ -88,7 +89,7 @@ public class BatteryStatsBgVsFgActions {
         sleep(100);
     }
 
-    private static void doBleScan(Context ctx) {
+    private static void doBleScan(Context ctx, String requestCode) {
         BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (bluetoothAdapter == null) {
             Log.e(TAG, "Device does not support Bluetooth");
@@ -128,9 +129,10 @@ public class BatteryStatsBgVsFgActions {
         bleScanner.startScan(null, scanSettings, scanCallback);
         sleep(2_000);
         bleScanner.stopScan(scanCallback);
+        tellHostActionFinished(ACTION_BLE_SCAN, requestCode);
     }
 
-    private static void doScheduleJob(Context ctx) {
+    private static void doScheduleJob(Context ctx, String requestCode) {
         final ComponentName JOB_COMPONENT_NAME =
                 new ComponentName("com.android.server.cts.device.batterystats",
                         SimpleJobService.class.getName());
@@ -148,13 +150,14 @@ public class BatteryStatsBgVsFgActions {
         new AsyncTask<Void, Void, Void>() {
             @Override
             protected Void doInBackground(Void... params) {
-                waitForReceiver(null, 3_000, latch, null);
+                waitForReceiver(null, 60_000, latch, null);
+                tellHostActionFinished(ACTION_JOB_SCHEDULE, requestCode);
                 return null;
             }
         }.execute();
     }
 
-    private static void doSync(Context ctx) {
+    private static void doSync(Context ctx, String requestCode) {
         BatteryStatsAuthenticator.removeAllAccounts(ctx);
         final Account account = BatteryStatsAuthenticator.getTestAccount();
         // Create the test account.
@@ -185,36 +188,50 @@ public class BatteryStatsBgVsFgActions {
                 if(ctx instanceof Activity){
                     ((Activity) ctx).finish();
                 }
+                tellHostActionFinished(ACTION_SYNC, requestCode);
             }
         }.execute();
     }
 
-    private static void doWifiScan(Context ctx) {
+    private static void doWifiScan(Context ctx, String requestCode) {
         IntentFilter intentFilter = new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
         CountDownLatch onReceiveLatch = new CountDownLatch(1);
         BroadcastReceiver receiver = registerReceiver(ctx, onReceiveLatch, intentFilter);
         ctx.getSystemService(WifiManager.class).startScan();
-        waitForReceiver(ctx, 3_000, onReceiveLatch, receiver);
+        waitForReceiver(ctx, 60_000, onReceiveLatch, receiver);
+        tellHostActionFinished(ACTION_WIFI_SCAN, requestCode);
     }
 
-    private static void doWifiDownload(Context ctx) {
+    private static void doWifiDownload(Context ctx, String requestCode) {
+        CountDownLatch latch = new CountDownLatch(1);
+
         new AsyncTask<Void, Void, Void>() {
             @Override
             protected Void doInBackground(Void... params) {
-                BatteryStatsWifiTransferTests.download();
+                BatteryStatsWifiTransferTests.download(requestCode);
+                latch.countDown();
                 return null;
             }
         }.execute();
+
+        waitForReceiver(null, 60_000, latch, null);
+        tellHostActionFinished(ACTION_WIFI_DOWNLOAD, requestCode);
     }
 
-    private static void doWifiUpload(Context ctx) {
+    private static void doWifiUpload(Context ctx, String requestCode) {
+        CountDownLatch latch = new CountDownLatch(1);
+
         new AsyncTask<Void, Void, Void>() {
             @Override
             protected Void doInBackground(Void... params) {
                 BatteryStatsWifiTransferTests.upload();
+                latch.countDown();
                 return null;
             }
         }.execute();
+
+        waitForReceiver(null, 60_000, latch, null);
+        tellHostActionFinished(ACTION_WIFI_UPLOAD, requestCode);
     }
 
     /** Register receiver to determine when given action is complete. */
@@ -256,6 +273,12 @@ public class BatteryStatsBgVsFgActions {
         if (ctx != null && receiver != null) {
             ctx.unregisterReceiver(receiver);
         }
+    }
+
+    /** Communicates to hostside (via logcat) that action has completed (regardless of success). */
+    private static void tellHostActionFinished(String actionCode, String requestCode) {
+        String s = String.format("Completed performing %s for request %s", actionCode, requestCode);
+        Log.i(TAG, s);
     }
 
     /** Determines whether the package is running as a background process. */
