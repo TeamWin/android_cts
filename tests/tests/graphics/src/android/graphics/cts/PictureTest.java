@@ -150,6 +150,13 @@ public class PictureTest {
         verifyBitmap(bitmap);
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testBeginRecordingTwice() {
+        Picture picture = new Picture();
+        picture.beginRecording(10, 10);
+        picture.beginRecording(10, 10);
+    }
+
     private void verifySize(Picture picture) {
         assertEquals(TEST_WIDTH, picture.getWidth());
         assertEquals(TEST_HEIGHT, picture.getHeight());

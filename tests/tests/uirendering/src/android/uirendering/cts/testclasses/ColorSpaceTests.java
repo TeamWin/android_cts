@@ -64,7 +64,7 @@ public class ColorSpaceTests extends ActivityTestBase {
         createTest()
                 .addCanvasClient("Draw_DisplayP3_8888",
                         (c, w, h) -> drawAsset(c, bitmap8888), true)
-                .addCanvasClientWithoutUsingPicture(
+                .addCanvasClient(
                         (c, w, h) -> drawAsset(c, bitmapHardware), true)
                 .runWithVerifier(new SamplePointVerifier(
                         new Point[] {
@@ -96,7 +96,7 @@ public class ColorSpaceTests extends ActivityTestBase {
         createTest()
                 .addCanvasClient("Draw_ProPhotoRGB_8888",
                         (c, w, h) -> drawAsset(c, bitmap8888), true)
-                .addCanvasClientWithoutUsingPicture(
+                .addCanvasClient(
                         (c, w, h) -> drawAsset(c, bitmapHardware), true)
                 .runWithVerifier(new SamplePointVerifier(
                         new Point[] {
@@ -129,7 +129,7 @@ public class ColorSpaceTests extends ActivityTestBase {
         createTest()
                 .addCanvasClient("Draw_AdobeRGB_Translucent_8888",
                         (c, w, h) -> drawTranslucentAsset(c, bitmap8888), true)
-                .addCanvasClientWithoutUsingPicture(
+                .addCanvasClient(
                         (c, w, h) -> drawTranslucentAsset(c, bitmapHardware), true)
                 .runWithVerifier(new SamplePointVerifier(
                         new Point[] { point(0, 0) },
