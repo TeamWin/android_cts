@@ -308,7 +308,7 @@ public class FragmentViewTests {
         try {
             FragmentTestUtil.executePendingTransactions(mActivityRule);
             fail("Removing a fragment that isn't in should throw an exception");
-        } catch (Throwable t) {
+        } catch (Exception t) {
             // expected
         }
     }
@@ -356,7 +356,7 @@ public class FragmentViewTests {
         try {
             FragmentTestUtil.executePendingTransactions(mActivityRule);
             fail("Hiding a hidden fragment should throw an exception");
-        } catch (Throwable t) {
+        } catch (Exception t) {
             // expected
         }
     }
@@ -373,7 +373,7 @@ public class FragmentViewTests {
         try {
             FragmentTestUtil.executePendingTransactions(mActivityRule);
             fail("Hiding a non-existing fragment should throw an exception");
-        } catch (Throwable t) {
+        } catch (Exception t) {
             // expected
         }
     }
@@ -422,7 +422,7 @@ public class FragmentViewTests {
         try {
             FragmentTestUtil.executePendingTransactions(mActivityRule);
             fail("Showing a visible fragment should throw an exception");
-        } catch (Throwable t) {
+        } catch (Exception t) {
             // expected
         }
     }
@@ -439,7 +439,7 @@ public class FragmentViewTests {
         try {
             FragmentTestUtil.executePendingTransactions(mActivityRule);
             fail("Showing a non-existing fragment should throw an exception");
-        } catch (Throwable t) {
+        } catch (Exception t) {
             // expected
         }
     }
@@ -521,7 +521,7 @@ public class FragmentViewTests {
         try {
             FragmentTestUtil.executePendingTransactions(mActivityRule);
             fail("Detaching a detached fragment should throw an exception");
-        } catch (Throwable t) {
+        } catch (Exception t) {
             // expected
         }
     }
@@ -538,7 +538,7 @@ public class FragmentViewTests {
         try {
             FragmentTestUtil.executePendingTransactions(mActivityRule);
             fail("Detaching a non-existing fragment should throw an exception");
-        } catch (Throwable t) {
+        } catch (Exception t) {
             // expected
         }
     }
@@ -621,7 +621,7 @@ public class FragmentViewTests {
         try {
             FragmentTestUtil.executePendingTransactions(mActivityRule);
             fail("Attaching an attached fragment should throw an exception");
-        } catch (Throwable t) {
+        } catch (Exception t) {
             // expected
         }
     }
@@ -638,7 +638,7 @@ public class FragmentViewTests {
         try {
             FragmentTestUtil.executePendingTransactions(mActivityRule);
             fail("Attaching a non-existing fragment should throw an exception");
-        } catch (Throwable t) {
+        } catch (Exception t) {
             // expected
         }
     }
