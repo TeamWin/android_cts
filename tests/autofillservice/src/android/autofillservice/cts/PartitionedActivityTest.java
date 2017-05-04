@@ -405,6 +405,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
 
         // 2nd partition - manual
         // Prepare.
+        mActivity.setText(2, 1, "L2.."); // Must set before creating expectation.
         final CannedFillResponse response2 = new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                         .setPresentation(createPresentation("Partition 2"))
@@ -416,7 +417,6 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         final FillExpectation expectation2 = mActivity.expectAutofill()
                 .onCell(2, 1, "l2c1")
                 .onCell(2, 2, "l2c2");
-        mActivity.setText(2, 1, "L2..");
 
         // Trigger auto-fill.
         mActivity.forceAutofill(2, 1);
@@ -465,6 +465,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
 
         // 4th partition - manual
         // Prepare.
+        mActivity.setText(4, 1, "L4.."); // Must set before creating expectation.
         final CannedFillResponse response4 = new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                         .setPresentation(createPresentation("Partition 4"))
@@ -473,7 +474,6 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                         .build())
                 .build();
         sReplier.addResponse(response4);
-        mActivity.setText(4, 1, "L4..");
         final FillExpectation expectation4 = mActivity.expectAutofill()
                 .onCell(4, 1, "l4c1")
                 .onCell(4, 2, "l4c2");
