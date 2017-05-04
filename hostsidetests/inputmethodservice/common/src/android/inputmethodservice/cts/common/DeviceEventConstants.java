@@ -106,5 +106,15 @@ public final class DeviceEventConstants {
         /** Test start and end event types. */
         TEST_START,
         TEST_END,
+
+        /**
+         * {@link android.view.inputmethod.InputMethod#showSoftInput}
+         */
+        SHOW_SOFT_INPUT,
+
+        /**
+         * {@link android.view.inputmethod.InputMethod#hideSoftInput}
+         */
+        HIDE_SOFT_INPUT,
     }
 }

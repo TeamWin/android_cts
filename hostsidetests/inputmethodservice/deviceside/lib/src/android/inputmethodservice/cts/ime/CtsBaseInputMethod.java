@@ -16,18 +16,21 @@
 
 package android.inputmethodservice.cts.ime;
 
+import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.HIDE_SOFT_INPUT;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_CREATE;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_DESTROY;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_FINISH_INPUT;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_FINISH_INPUT_VIEW;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_START_INPUT;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_START_INPUT_VIEW;
+import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.SHOW_SOFT_INPUT;
 
 import android.content.Intent;
 import android.inputmethodservice.InputMethodService;
 import android.inputmethodservice.cts.DeviceEvent;
 import android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType;
 import android.inputmethodservice.cts.ime.ImeCommandReceiver.ImeCommandCallbacks;
+import android.os.ResultReceiver;
 import android.util.Log;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
@@ -41,6 +44,26 @@ public abstract class CtsBaseInputMethod extends InputMethodService implements I
     private final ImeCommandReceiver<CtsBaseInputMethod> mImeCommandReceiver =
             new ImeCommandReceiver<>();
     private String mLogTag;
+
+    private class CtsInputMethodImpl extends InputMethodImpl {
+        @Override
+        public void showSoftInput(int flags, ResultReceiver resultReceiver) {
+            sendEvent(SHOW_SOFT_INPUT);
+            if (DEBUG) {
+                Log.d(mLogTag, "showSoftInput called");
+            }
+            super.showSoftInput(flags, resultReceiver);
+        }
+
+        @Override
+        public void hideSoftInput(int flags, ResultReceiver resultReceiver) {
+            sendEvent(HIDE_SOFT_INPUT);
+            if (DEBUG) {
+                Log.d(mLogTag, "hideSoftInput called");
+            }
+            super.hideSoftInput(flags, resultReceiver);
+        }
+    }
 
     @Override
     public void onCreate() {
@@ -109,6 +132,16 @@ public abstract class CtsBaseInputMethod extends InputMethodService implements I
         super.onDestroy();
 
         unregisterReceiver(mImeCommandReceiver);
+    }
+
+    @Override
+    public AbstractInputMethodImpl onCreateInputMethodInterface() {
+        final CtsInputMethodImpl inputMethod = new CtsInputMethodImpl();
+        if (DEBUG) {
+            Log.d(mLogTag, "onCreateInputMethodInterface");
+        }
+
+        return inputMethod;
     }
 
     //
