@@ -357,6 +357,10 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Trigger auto-fill.
         mActivity.onUsername(View::requestFocus);
+
+        // Since this is a Presubmit test, wait for connection to avoid flakiness.
+        waitUntilConnected();
+
         sReplier.getNextFillRequest();
 
         // Auto-fill it.
