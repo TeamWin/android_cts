@@ -117,6 +117,21 @@ public class TestLocationManager {
     }
 
     /**
+     * See {@code LocationManager#requestNetworkLocationUpdates}.
+     *
+     * @param locationListener location listener for request
+     */
+    public void requestNetworkLocationUpdates(LocationListener locationListener) {
+        if (mLocationManager.getProvider(LocationManager.NETWORK_PROVIDER) != null) {
+            Log.i(TAG, "Request Network Location updates.");
+            mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
+                0 /* minTime*/,
+                0 /* minDistance */,
+                locationListener,
+                Looper.getMainLooper());
+        }
+    }
+    /**
      * See {@link android.location.LocationManager#addGpsStatusListener (GpsStatus.Listener)}.
      * @param listener the GpsStatus.Listener to add
      */
