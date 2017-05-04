@@ -146,7 +146,7 @@ public class SelfManagedIncomingCallTestActivity extends PassFailButtons.Activit
 
         });
 
-        mStep3Status = view.findViewById(R.id.step_2_status);
+        mStep3Status = view.findViewById(R.id.step_3_status);
         mConfirm = view.findViewById(R.id.telecom_incoming_self_mgd_confirm_answer_button);
         mConfirm.setOnClickListener(v -> {
             CtsConnectionService ctsConnectionService = CtsConnectionService.getConnectionService();
@@ -161,11 +161,16 @@ public class SelfManagedIncomingCallTestActivity extends PassFailButtons.Activit
             }
 
             if (connections.get(0).getState() == Connection.STATE_ACTIVE) {
+                connections
+                        .stream()
+                        .forEach((c) -> c.onDisconnect());
                 mStep3Status.setImageResource(R.drawable.fs_good);
                 getPassButton().setEnabled(true);
             } else {
                 mStep3Status.setImageResource(R.drawable.fs_error);
             }
+
+            PhoneAccountUtils.unRegisterTestSelfManagedPhoneAccount(this);
         });
 
         mShowUi.setEnabled(false);

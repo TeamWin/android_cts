@@ -102,7 +102,7 @@ public class PhoneAccountUtils {
     }
 
     /**
-     * Registers the test self-managed phone account.
+     * Registers the test self-managed phone accounts.
      * @param context The context.
      */
     public static void registerTestSelfManagedPhoneAccount(Context context) {
@@ -110,6 +110,17 @@ public class PhoneAccountUtils {
                 Context.TELECOM_SERVICE);
         telecomManager.registerPhoneAccount(TEST_SELF_MANAGED_PHONE_ACCOUNT);
         telecomManager.registerPhoneAccount(TEST_SELF_MANAGED_PHONE_ACCOUNT_2);
+    }
+
+    /**
+     * Unregisters the test self-managed phone accounts.
+     * @param context The context.
+     */
+    public static void unRegisterTestSelfManagedPhoneAccount(Context context) {
+        TelecomManager telecomManager = (TelecomManager) context.getSystemService(
+                Context.TELECOM_SERVICE);
+        telecomManager.unregisterPhoneAccount(TEST_SELF_MANAGED_PHONE_ACCOUNT_HANDLE);
+        telecomManager.unregisterPhoneAccount(TEST_SELF_MANAGED_PHONE_ACCOUNT_HANDLE_2);
     }
 
     /**
