@@ -15,35 +15,14 @@
  */
 package com.android.server.cts.device.batterystats;
 
-import static org.junit.Assert.assertTrue;
-
-import android.app.IntentService;
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.pm.PackageManager;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Arrays;
-import java.util.Random;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 
 public class BatteryStatsWifiTransferTests {
     private static final String TAG = "BatteryStatsWifiTransferTests";
@@ -53,7 +32,7 @@ public class BatteryStatsWifiTransferTests {
     /** Server to send requests to. */
     private static final String SERVER_URL = "https://developer.android.com/index.html";
 
-    public static String download() {
+    public static String download(String requestCode) {
         HttpURLConnection conn = null;
         try {
             URL url = new URL(SERVER_URL);
@@ -69,7 +48,7 @@ public class BatteryStatsWifiTransferTests {
             while ((count = in.read(data)) != -1) {
                 total += count;
             }
-            Log.i(TAG, Integer.toString(total));
+            Log.i(TAG, String.format("request %s d=%d", requestCode, total));
         } catch (IOException e) {
             Log.i(TAG, e.toString());
             return "Caught exception";
