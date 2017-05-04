@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,22 +11,23 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
+ * limitations under the License
  */
 
-package com.android.cts.verifier;
-
-import com.android.cts.verifier.backup.BackupTestActivity;
+package android.backup.cts.backuprestoreapp;
 
 import android.app.backup.BackupAgentHelper;
 
-public class VerifierBackupAgent extends BackupAgentHelper {
+public class CtsBackupRestoreBackupAgent extends BackupAgentHelper {
+    private static final String KEY_BACKUP_TEST_PREFS_PREFIX = "backup-test-prefs";
+    private static final String KEY_BACKUP_TEST_FILES_PREFIX = "backup-test-files";
 
     @Override
     public void onCreate() {
         super.onCreate();
-        addHelper("test-results", new TestResultsBackupHelper(this));
-        addHelper("backup-test-prefs", BackupTestActivity.getSharedPreferencesBackupHelper(this));
-        addHelper("backup-test-files", BackupTestActivity.getFileBackupHelper(this));
+        addHelper(KEY_BACKUP_TEST_PREFS_PREFIX,
+                KeyValueBackupRandomDataActivity.getSharedPreferencesBackupHelper(this));
+        addHelper(KEY_BACKUP_TEST_FILES_PREFIX,
+                KeyValueBackupRandomDataActivity.getFileBackupHelper(this));
     }
 }
