@@ -380,6 +380,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             // Forward module results to the master.
             mMasterResultReporter.mergeModuleResult(mCurrentModuleResult);
             mCurrentModuleResult.resetTestRuns();
+            mCurrentModuleResult.resetRuntime();
         }
     }
 
