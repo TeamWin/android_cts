@@ -1995,6 +1995,54 @@ public class TimeTest {
     }
 
     @Test
+    public void testGetJulianMondayFromWeeksSinceEpoch() {
+        final int mondayBeforeEpoch = Time.MONDAY_BEFORE_JULIAN_EPOCH;
+        assertEquals(mondayBeforeEpoch, Time.getJulianMondayFromWeeksSinceEpoch(0));
+        assertEquals(mondayBeforeEpoch + 7, Time.getJulianMondayFromWeeksSinceEpoch(1));
+        assertEquals(mondayBeforeEpoch + 14, Time.getJulianMondayFromWeeksSinceEpoch(2));
+        assertEquals(mondayBeforeEpoch - 7, Time.getJulianMondayFromWeeksSinceEpoch(-1));
+    }
+
+    @Test
+    public void testGetWeeksSinceEpochFromJulianDay() {
+        final int epoch = Time.EPOCH_JULIAN_DAY;  // a Thursday
+        assertEquals(0, Time.getWeeksSinceEpochFromJulianDay(epoch, Time.SUNDAY));
+        assertEquals(0, Time.getWeeksSinceEpochFromJulianDay(epoch, Time.MONDAY));
+        assertEquals(0, Time.getWeeksSinceEpochFromJulianDay(epoch, Time.TUESDAY));
+        assertEquals(0, Time.getWeeksSinceEpochFromJulianDay(epoch, Time.WEDNESDAY));
+        assertEquals(0, Time.getWeeksSinceEpochFromJulianDay(epoch, Time.THURSDAY));
+        assertEquals(0, Time.getWeeksSinceEpochFromJulianDay(epoch, Time.FRIDAY));
+        assertEquals(0, Time.getWeeksSinceEpochFromJulianDay(epoch, Time.SATURDAY));
+
+        final int epochFriday = epoch + 1;
+        assertEquals(0, Time.getWeeksSinceEpochFromJulianDay(epochFriday, Time.SUNDAY));
+        assertEquals(0, Time.getWeeksSinceEpochFromJulianDay(epochFriday, Time.MONDAY));
+        assertEquals(0, Time.getWeeksSinceEpochFromJulianDay(epochFriday, Time.TUESDAY));
+        assertEquals(0, Time.getWeeksSinceEpochFromJulianDay(epochFriday, Time.WEDNESDAY));
+        assertEquals(0, Time.getWeeksSinceEpochFromJulianDay(epochFriday, Time.THURSDAY));
+        assertEquals(1, Time.getWeeksSinceEpochFromJulianDay(epochFriday, Time.FRIDAY));
+        assertEquals(0, Time.getWeeksSinceEpochFromJulianDay(epochFriday, Time.SATURDAY));
+
+        final int epochSaturday = epoch + 2;
+        assertEquals(0, Time.getWeeksSinceEpochFromJulianDay(epochSaturday, Time.SUNDAY));
+        assertEquals(0, Time.getWeeksSinceEpochFromJulianDay(epochSaturday, Time.MONDAY));
+        assertEquals(0, Time.getWeeksSinceEpochFromJulianDay(epochSaturday, Time.TUESDAY));
+        assertEquals(0, Time.getWeeksSinceEpochFromJulianDay(epochSaturday, Time.WEDNESDAY));
+        assertEquals(0, Time.getWeeksSinceEpochFromJulianDay(epochSaturday, Time.THURSDAY));
+        assertEquals(1, Time.getWeeksSinceEpochFromJulianDay(epochSaturday, Time.FRIDAY));
+        assertEquals(1, Time.getWeeksSinceEpochFromJulianDay(epochSaturday, Time.SATURDAY));
+
+        final int tenWeeksLater = epochSaturday + 10 * 7;
+        assertEquals(10, Time.getWeeksSinceEpochFromJulianDay(tenWeeksLater, Time.SUNDAY));
+        assertEquals(10, Time.getWeeksSinceEpochFromJulianDay(tenWeeksLater, Time.MONDAY));
+        assertEquals(10, Time.getWeeksSinceEpochFromJulianDay(tenWeeksLater, Time.TUESDAY));
+        assertEquals(10, Time.getWeeksSinceEpochFromJulianDay(tenWeeksLater, Time.WEDNESDAY));
+        assertEquals(10, Time.getWeeksSinceEpochFromJulianDay(tenWeeksLater, Time.THURSDAY));
+        assertEquals(11, Time.getWeeksSinceEpochFromJulianDay(tenWeeksLater, Time.FRIDAY));
+        assertEquals(11, Time.getWeeksSinceEpochFromJulianDay(tenWeeksLater, Time.SATURDAY));
+    }
+
+    @Test
     public void testNormalize_utc() {
         Time t = new Time(Time.TIMEZONE_UTC);
         Time expected = new Time(Time.TIMEZONE_UTC);
