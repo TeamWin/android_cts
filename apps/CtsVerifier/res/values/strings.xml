@@ -144,6 +144,10 @@
         can be easily uninstalled from the application details screen in a way similar to other
         apps.
     </string>
+    <string name="da_tapjacking_test">Device Admin Tapjacking Test</string>
+    <string name="da_tapjacking_test_info">This test checks that an activity cannot tapjack the
+        user by obscuring the device admin details while prompting the user to activate the admin.
+    </string>
     <string name="car_dock_test">Car Dock Test</string>
     <string name="car_dock_test_desc">This test ensures that car mode opens the app associated with
         car dock when going into car mode.\n\n
@@ -198,6 +202,18 @@
         Wait till the app is uninstalled before returning to this page.
     </string>
     <string name="da_uninstall_admin_button_text">Launch settings</string>
+
+    <string name="da_tapjacking_overlay_app_description">This activity attempts to tapjack the activity below.\n
+        Any security sensitive controls below should not respond to taps as long as this activity is visible.</string>
+    <string name="da_tapjacking_instructions">
+        1. Launch the device admin add screen by pressing the button below.\n
+        2. Wait for an overlaying transparent activity to show up obscuring the device admin details window.\n
+        3. Attempt to activate the admin with the transparent activity still obscuring the window.
+        The button should discard any taps while showing a toast warning to the user.\n
+        4. Return to this screen and pass the test if the device admin could not be activated while the details
+        window was being obscured.
+    </string>
+    <string name="da_tapjacking_button_text">Enable device admin</string>
 
     <!-- Strings for lock bound keys test -->
     <string name="sec_lock_bound_key_test">Lock Bound Keys Test</string>
