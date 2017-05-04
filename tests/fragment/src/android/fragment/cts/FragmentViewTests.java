@@ -298,19 +298,14 @@ public class FragmentViewTests {
         FragmentTestUtil.assertChildren(container);
     }
 
-    // Removing a fragment that isn't in should throw
+    // Removing a fragment that isn't in should not throw
     @Test
-    public void removeNothThere() throws Throwable {
+    public void removeNotThere() throws Throwable {
         FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
         final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
         final StrictViewFragment fragment = new StrictViewFragment();
         fm.beginTransaction().remove(fragment).commit();
-        try {
-            FragmentTestUtil.executePendingTransactions(mActivityRule);
-            fail("Removing a fragment that isn't in should throw an exception");
-        } catch (Throwable t) {
-            // expected
-        }
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
     }
 
     // Hide a fragment and its View should be GONE. Then pop it and the View should be VISIBLE
@@ -342,7 +337,7 @@ public class FragmentViewTests {
         assertEquals(View.VISIBLE, fragment.getView().getVisibility());
     }
 
-    // Hiding a hidden fragment should throw
+    // Hiding a hidden fragment should not throw
     @Test
     public void doubleHide() throws Throwable {
         FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
@@ -353,15 +348,11 @@ public class FragmentViewTests {
                 .hide(fragment)
                 .hide(fragment)
                 .commit();
-        try {
-            FragmentTestUtil.executePendingTransactions(mActivityRule);
-            fail("Hiding a hidden fragment should throw an exception");
-        } catch (Throwable t) {
-            // expected
-        }
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
+        // should not throw
     }
 
-    // Hiding a non-existing fragment should throw
+    // Hiding a non-existing fragment should not throw
     @Test
     public void hideUnAdded() throws Throwable {
         FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
@@ -370,12 +361,8 @@ public class FragmentViewTests {
         fm.beginTransaction()
                 .hide(fragment)
                 .commit();
-        try {
-            FragmentTestUtil.executePendingTransactions(mActivityRule);
-            fail("Hiding a non-existing fragment should throw an exception");
-        } catch (Throwable t) {
-            // expected
-        }
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
+        // should not throw
     }
 
     // Show a hidden fragment and its View should be VISIBLE. Then pop it and the View should be
@@ -409,7 +396,7 @@ public class FragmentViewTests {
         assertEquals(View.GONE, fragment.getView().getVisibility());
     }
 
-    // Showing a shown fragment should throw
+    // Showing a shown fragment should not throw
     @Test
     public void showShown() throws Throwable {
         FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
@@ -419,15 +406,11 @@ public class FragmentViewTests {
                 .add(R.id.fragmentContainer, fragment)
                 .show(fragment)
                 .commit();
-        try {
-            FragmentTestUtil.executePendingTransactions(mActivityRule);
-            fail("Showing a visible fragment should throw an exception");
-        } catch (Throwable t) {
-            // expected
-        }
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
+        // should not throw
     }
 
-    // Showing a non-existing fragment should throw
+    // Showing a non-existing fragment should not throw
     @Test
     public void showUnAdded() throws Throwable {
         FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
@@ -436,12 +419,8 @@ public class FragmentViewTests {
         fm.beginTransaction()
                 .show(fragment)
                 .commit();
-        try {
-            FragmentTestUtil.executePendingTransactions(mActivityRule);
-            fail("Showing a non-existing fragment should throw an exception");
-        } catch (Throwable t) {
-            // expected
-        }
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
+        // should not throw
     }
 
     // Detaching a fragment should remove the View from the hierarchy. Then popping it should
@@ -507,7 +486,7 @@ public class FragmentViewTests {
         assertEquals(View.GONE, fragment.getView().getVisibility());
     }
 
-    // Detaching a detached fragment should throw
+    // Detaching a detached fragment should not throw
     @Test
     public void detachDetatched() throws Throwable {
         FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
@@ -518,15 +497,11 @@ public class FragmentViewTests {
                 .detach(fragment)
                 .detach(fragment)
                 .commit();
-        try {
-            FragmentTestUtil.executePendingTransactions(mActivityRule);
-            fail("Detaching a detached fragment should throw an exception");
-        } catch (Throwable t) {
-            // expected
-        }
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
+        // should not throw
     }
 
-    // Detaching a non-existing fragment should throw
+    // Detaching a non-existing fragment should not throw
     @Test
     public void detachUnAdded() throws Throwable {
         FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
@@ -535,12 +510,8 @@ public class FragmentViewTests {
         fm.beginTransaction()
                 .detach(fragment)
                 .commit();
-        try {
-            FragmentTestUtil.executePendingTransactions(mActivityRule);
-            fail("Detaching a non-existing fragment should throw an exception");
-        } catch (Throwable t) {
-            // expected
-        }
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
+        // should not throw
     }
 
     // Attaching a fragment should add the View back into the hierarchy. Then popping it should
@@ -608,7 +579,7 @@ public class FragmentViewTests {
         assertTrue(fragment.isHidden());
     }
 
-    // Attaching an attached fragment should throw
+    // Attaching an attached fragment should not throw
     @Test
     public void attachAttached() throws Throwable {
         FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
@@ -618,15 +589,11 @@ public class FragmentViewTests {
                 .add(R.id.fragmentContainer, fragment)
                 .attach(fragment)
                 .commit();
-        try {
-            FragmentTestUtil.executePendingTransactions(mActivityRule);
-            fail("Attaching an attached fragment should throw an exception");
-        } catch (Throwable t) {
-            // expected
-        }
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
+        // should not throw an exception
     }
 
-    // Attaching a non-existing fragment should throw
+    // Attaching a non-existing fragment should not throw
     @Test
     public void attachUnAdded() throws Throwable {
         FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
@@ -635,12 +602,8 @@ public class FragmentViewTests {
         fm.beginTransaction()
                 .attach(fragment)
                 .commit();
-        try {
-            FragmentTestUtil.executePendingTransactions(mActivityRule);
-            fail("Attaching a non-existing fragment should throw an exception");
-        } catch (Throwable t) {
-            // expected
-        }
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
+        // should not throw
     }
 
     // Simple replace of one fragment in a container. Popping should replace it back again
