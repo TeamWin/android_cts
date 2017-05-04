@@ -775,9 +775,9 @@ def flip_mirror_img_per_argv(img):
     """
     img_out = img
     if "flip" in sys.argv:
-        img_out = np.flipud(img_out)
+        img_out = numpy.flipud(img_out)
     if "mirror" in sys.argv:
-        img_out = np.fliplr(img_out)
+        img_out = numpy.fliplr(img_out)
     return img_out
 
 def stationary_lens_cap(cam, req, fmt):
