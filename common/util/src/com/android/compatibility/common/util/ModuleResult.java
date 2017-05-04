@@ -191,6 +191,14 @@ public class ModuleResult implements IModuleResult {
      * {@inheritDoc}
      */
     @Override
+    public void resetRuntime() {
+        mRuntime = 0;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public long getRuntime() {
         return mRuntime;
     }
