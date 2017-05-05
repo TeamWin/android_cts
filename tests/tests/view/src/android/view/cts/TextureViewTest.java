@@ -59,8 +59,9 @@ public class TextureViewTest {
 
     @Test
     public void testFirstFrames() throws Throwable {
+        mActivity.waitForEnterAnimationComplete();
+
         final Point center = new Point();
-        mInstrumentation.waitForIdleSync();
         mActivityRule.runOnUiThread(() -> {
             View content = mActivity.findViewById(android.R.id.content);
             int[] outLocation = new int[2];
