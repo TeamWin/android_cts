@@ -33,7 +33,8 @@ DEVICE_INFO_ACTIVITIES += \
   $(DEVICE_INFO_PACKAGE).PropertyDeviceInfo \
   $(DEVICE_INFO_PACKAGE).ScreenDeviceInfo \
   $(DEVICE_INFO_PACKAGE).StorageDeviceInfo \
-  $(DEVICE_INFO_PACKAGE).UserDeviceInfo
+  $(DEVICE_INFO_PACKAGE).UserDeviceInfo \
+  $(DEVICE_INFO_PACKAGE).VintfDeviceInfo
 
 ifeq ($(DEVICE_INFO_MIN_SDK),)
 DEVICE_INFO_MIN_SDK := 8
