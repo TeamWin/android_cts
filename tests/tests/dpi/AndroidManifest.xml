@@ -23,7 +23,8 @@
         <uses-library android:name="android.test.runner" />
 
         <activity android:name="android.dpi.cts.OrientationActivity"
-                android:configChanges="orientation" />
+                android:configChanges="orientation"
+                android:resizeableActivity="false" />
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
