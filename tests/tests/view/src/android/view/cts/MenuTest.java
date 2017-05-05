@@ -49,6 +49,7 @@ public class MenuTest {
     public ActivityTestRule<MenuTestActivity> mActivityRule =
             new ActivityTestRule<>(MenuTestActivity.class);
 
+    @UiThreadTest
     @Before
     public void setup() {
         mActivity = (MenuTestActivity) mActivityRule.getActivity();
