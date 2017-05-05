@@ -177,7 +177,8 @@
 
         <activity android:name="android.view.cts.PixelCopyViewProducerActivity"
                   android:label="PixelCopyViewProducerActivity"
-                  android:screenOrientation="locked"
+                  android:screenOrientation="portrait"
+                  android:rotationAnimation="jumpcut"
                   android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
                   android:configChanges="orientation|screenSize" />
 

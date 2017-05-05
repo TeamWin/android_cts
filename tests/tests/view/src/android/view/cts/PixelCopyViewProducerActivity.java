@@ -16,10 +16,11 @@
 
 package android.view.cts;
 
+import static org.junit.Assert.fail;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
-import android.content.res.Configuration;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -42,8 +43,7 @@ public class PixelCopyViewProducerActivity extends Activity implements OnDrawLis
     private int mCurrentOrientation = 0;
     private View mContent;
     private Rect mContentBounds = new Rect();
-    private CountDownLatch mFence = new CountDownLatch(1);
-    private boolean mListenForRotate = false;
+    private CountDownLatch mFence = new CountDownLatch(3);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,19 +55,65 @@ public class PixelCopyViewProducerActivity extends Activity implements OnDrawLis
     }
 
     @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        if (mListenForRotate) {
-            mListenForRotate = false;
-            mContent.getViewTreeObserver().addOnDrawListener(this);
+    public void onDraw() {
+        final int requestedOrientation = ORIENTATIONS[mCurrentOrientation];
+        boolean screenPortrait =
+                requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                || requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT;
+        boolean contentPortrait = mContent.getHeight() > mContent.getWidth();
+        if (screenPortrait != contentPortrait) {
+            return;
         }
+        mContent.post(() -> {
+            Point offset = new Point();
+            // We pass mContentBounds here just as a throwaway rect, we don't care about
+            // the visible rect just the global offset.
+            mContent.getGlobalVisibleRect(mContentBounds, offset);
+            mContentBounds.set(offset.x, offset.y,
+                    offset.x + mContent.getWidth(), offset.y + mContent.getHeight());
+            mFence.countDown();
+            if (mFence.getCount() > 0) {
+                mContent.invalidate();
+            }
+        });
+    }
+
+    public void waitForFirstDrawCompleted(int timeout, TimeUnit unit) {
+        try {
+            if (!mFence.await(timeout, unit)) {
+                fail("Timeout");
+            }
+        } catch (InterruptedException ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    public boolean rotate() {
+        mFence = new CountDownLatch(3);
+        runOnUiThread(() -> {
+            mCurrentOrientation = (mCurrentOrientation + 1) % ORIENTATIONS.length;
+            setRequestedOrientation(ORIENTATIONS[mCurrentOrientation]);
+        });
+        waitForFirstDrawCompleted(3, TimeUnit.SECONDS);
+        return mCurrentOrientation != 0;
+    }
+
+    // Convert a rect in normalized 0-100 dimensions to the bounds of the actual View.
+    public void normalizedToSurface(Rect inOut) {
+        float sx = mContentBounds.width() / 100.0f;
+        float sy = mContentBounds.height() / 100.0f;
+        inOut.left = (int) (inOut.left * sx);
+        inOut.top = (int) (inOut.top * sy);
+        inOut.right = (int) (inOut.right * sx + 0.5f);
+        inOut.bottom = (int) (inOut.bottom * sy + 0.5f);
+        inOut.offset(mContentBounds.left, mContentBounds.top);
     }
 
     private static final class ColoredGrid extends View {
         private Paint mPaint = new Paint();
         private Rect mRect = new Rect();
 
-        public ColoredGrid(Context context) {
+        ColoredGrid(Context context) {
             super(context);
             setWillNotDraw(false);
         }
@@ -95,54 +141,5 @@ public class PixelCopyViewProducerActivity extends Activity implements OnDrawLis
             mPaint.setColor(Color.BLACK);
             canvas.drawRect(mRect, mPaint);
         }
-    }
-
-    @Override
-    public void onDraw() {
-        mContent.post(() -> {
-            mContent.getViewTreeObserver().removeOnDrawListener(PixelCopyViewProducerActivity.this);
-            Point offset = new Point();
-            // We pass mContentBounds here just as a throwaway rect, we don't care about
-            // the visible rect just the global offset.
-            mContent.getGlobalVisibleRect(mContentBounds, offset);
-            mContentBounds.set(offset.x, offset.y,
-                    offset.x + mContent.getWidth(), offset.y + mContent.getHeight());
-            mFence.countDown();
-        });
-    }
-
-    public void waitForFirstDrawCompleted(int timeout, TimeUnit unit) {
-        boolean succeeded = false;
-        Exception reason = null;
-        try {
-            succeeded = mFence.await(timeout, unit);
-        } catch (Exception e) {
-            reason = e;
-        }
-        if (!succeeded) {
-            throw new AssertionError("Timed out waiting for fence", reason);
-        }
-    }
-
-    public boolean rotate() {
-        mFence = new CountDownLatch(1);
-        runOnUiThread(() -> {
-            mCurrentOrientation = (mCurrentOrientation + 1) % ORIENTATIONS.length;
-            mListenForRotate = true;
-            setRequestedOrientation(ORIENTATIONS[mCurrentOrientation]);
-        });
-        waitForFirstDrawCompleted(3, TimeUnit.SECONDS);
-        return mCurrentOrientation != 0;
-    }
-
-    // Convert a rect in normalized 0-100 dimensions to the bounds of the actual View.
-    public void normalizedToSurface(Rect inOut) {
-        float sx = mContentBounds.width() / 100.0f;
-        float sy = mContentBounds.height() / 100.0f;
-        inOut.left = (int) (inOut.left * sx);
-        inOut.top = (int) (inOut.top * sy);
-        inOut.right = (int) (inOut.right * sx + 0.5f);
-        inOut.bottom = (int) (inOut.bottom * sy + 0.5f);
-        inOut.offset(mContentBounds.left, mContentBounds.top);
     }
 }
