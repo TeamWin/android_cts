@@ -299,11 +299,11 @@ public class PipActivity extends AbstractLifecycleLogActivity {
     }
 
     /**
-     * Launches a new instance of the PipActivity that will automatically enter PiP.
+     * Launches a new instance of the PipActivity in the same task that will automatically enter
+     * PiP.
      */
     static void launchEnterPipActivity(Activity caller) {
         final Intent intent = new Intent(caller, PipActivity.class);
-        intent.setFlags(FLAG_ACTIVITY_CLEAR_TASK | FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra(EXTRA_ENTER_PIP, "true");
         intent.putExtra(EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP, "true");
         caller.startActivity(intent);
