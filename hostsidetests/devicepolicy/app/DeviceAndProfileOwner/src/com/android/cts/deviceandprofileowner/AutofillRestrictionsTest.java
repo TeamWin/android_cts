@@ -28,6 +28,10 @@ public class AutofillRestrictionsTest extends BaseDeviceAdminTest {
     private static final String AUTOFILL_PACKAGE_NAME = "com.android.cts.devicepolicy.autofillapp";
     private static final String AUTOFILL_ACTIVITY_NAME = AUTOFILL_PACKAGE_NAME + ".SimpleActivity";
 
+    // Currently, autofill_service is a cloned service, so it's only set in the default user.
+    // That might change, so we're using a guard to decide how to set it
+    private final boolean USES_CLONED_SETTINGS = true;
+
     int mUserId;
 
     @Override
@@ -76,26 +80,39 @@ public class AutofillRestrictionsTest extends BaseDeviceAdminTest {
     }
 
     private void enableService() throws Exception {
-        runShellCommand("settings put --user %d secure %s %s default",
-                mUserId, AUTOFILL_SERVICE, SERVICE_NAME);
+        if (USES_CLONED_SETTINGS) {
+            runShellCommand("settings put secure %s %s default", AUTOFILL_SERVICE, SERVICE_NAME);
+        } else {
+            runShellCommand("settings put --user %d secure %s %s default",
+                    mUserId, AUTOFILL_SERVICE, SERVICE_NAME);
+        }
         waitForServiceSettingSaved(SERVICE_NAME);
     }
 
     private void disableService() {
-        runShellCommand("settings delete --user %d secure %s", mUserId, AUTOFILL_SERVICE);
+        if (USES_CLONED_SETTINGS) {
+            runShellCommand("settings delete secure %s", AUTOFILL_SERVICE);
+        } else {
+            runShellCommand("settings delete --user %d secure %s", mUserId, AUTOFILL_SERVICE);
+        }
     }
 
     private void waitForServiceSettingSaved(String expected) throws Exception {
         String actual = null;
-        // Wait up to 0.5 second until setting is saved.
+        // Wait up to 0.5 seconds until setting is saved.
         for (int i = 0; i < 5; i++) {
-            actual = runShellCommand("settings get --user %d secure %s", mUserId, AUTOFILL_SERVICE);
+            if (USES_CLONED_SETTINGS) {
+                actual = runShellCommand("settings get secure %s", AUTOFILL_SERVICE);
+            } else {
+                actual = runShellCommand("settings get --user %d secure %s", mUserId,
+                        AUTOFILL_SERVICE);
+            }
             if (expected.equals(actual)) {
                 return;
             }
             Thread.sleep(100);
         }
-        fail("Expected service status: " + expected
+        fail("Expected service status for user " + mUserId + ": " + expected
                 + "; actual: " + actual + " after 0.5 seconds");
     }
 }
