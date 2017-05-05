@@ -38,8 +38,9 @@ public class GoldenImageVerifier extends BitmapVerifier {
     }
 
     @Override
-    public boolean verify(int[] bitmap, int width, int height) {
-        boolean success = mBitmapComparer.verifySame(mGoldenBitmapArray, bitmap, width, height);
+    public boolean verify(int[] bitmap, int offset, int stride, int width, int height) {
+        boolean success = mBitmapComparer.verifySame(mGoldenBitmapArray, bitmap, offset, stride,
+                width, height);
         if (!success) {
             mDifferenceBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
             int[] differences = new PassFailVisualizer().getDifferences(mGoldenBitmapArray, bitmap);

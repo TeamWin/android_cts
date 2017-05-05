@@ -29,7 +29,6 @@ import android.uirendering.cts.bitmapverifiers.SamplePointVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.uirendering.cts.testinfrastructure.CanvasClient;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -141,11 +140,14 @@ public class XfermodeTest extends ActivityTestBase {
     }
 
 
-    @Before
-    public void setup() {
+    @Override
+    public void setUp() {
+        super.setUp();
+
         // temporary - ensure test isn't capturing window bg only
         getInstrumentation().runOnMainSync(() -> getActivity().getWindow().setBackgroundDrawable(
                         new ColorDrawable(Color.GREEN)));
+
     }
 
     private CanvasClient mCanvasClient = new CanvasClient() {

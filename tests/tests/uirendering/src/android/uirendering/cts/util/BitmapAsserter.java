@@ -27,6 +27,7 @@ import android.uirendering.cts.differencevisualizers.PassFailVisualizer;
 
 public class BitmapAsserter {
     private DifferenceVisualizer mDifferenceVisualizer;
+    private Context mContext;
     private String mClassName;
 
     public BitmapAsserter(String className, String name) {
@@ -40,6 +41,11 @@ public class BitmapAsserter {
         if (name != null) {
             BitmapDumper.deleteFileInClassFolder(mClassName, name);
         }
+    }
+
+    public void setUp(Context context) {
+        mDifferenceVisualizer = new PassFailVisualizer();
+        mContext = context;
     }
 
     /**
@@ -60,7 +66,7 @@ public class BitmapAsserter {
         int[] pixels2 = new int[width * height];
         bitmap1.getPixels(pixels1, 0, width, 0, 0, width, height);
         bitmap2.getPixels(pixels2, 0, width, 0, 0, width, height);
-        success = comparer.verifySame(pixels1, pixels2, width, height);
+        success = comparer.verifySame(pixels1, pixels2, 0, width, width, height);
 
         if (!success) {
             BitmapDumper.dumpBitmaps(bitmap1, bitmap2, testName, mClassName, mDifferenceVisualizer);
@@ -79,7 +85,7 @@ public class BitmapAsserter {
         int height = bitmap.getHeight();
         int[] pixels = new int[width * height];
         bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
-        boolean success = bitmapVerifier.verify(pixels, width, height);
+        boolean success = bitmapVerifier.verify(pixels, 0, width, width, height);
         if (!success) {
             Bitmap croppedBitmap = Bitmap.createBitmap(bitmap, 0, 0, width, height);
             BitmapDumper.dumpBitmap(croppedBitmap, testName, mClassName);

@@ -30,13 +30,13 @@ public abstract class BitmapVerifier {
     /**
      * This will test if the bitmap is good or not.
      */
-    public abstract boolean verify(int[] bitmap, int width, int height);
+    public abstract boolean verify(int[] bitmap, int offset, int stride, int width, int height);
 
     /**
      * This calculates the position in an array that would represent a bitmap given the parameters.
      */
-    protected static int indexFromXAndY(int x, int y, int width) {
-        return x + (y * width);
+    protected static int indexFromXAndY(int x, int y, int stride, int offset) {
+        return x + (y * stride) + offset;
     }
 
     public Bitmap getDifferenceBitmap() {
