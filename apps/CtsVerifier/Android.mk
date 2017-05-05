@@ -51,7 +51,7 @@ LOCAL_PROGUARD_FLAG_FILES := proguard.flags
 LOCAL_SDK_VERSION := test_current
 
 LOCAL_DEX_PREOPT := false
-
+-include cts/error_prone_rules_tests.mk
 include $(BUILD_PACKAGE)
 
 # Build CTS verifier framework as a libary.

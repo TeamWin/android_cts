@@ -60,7 +60,7 @@ LOCAL_SHARED_LIBRARIES := libandroid liblog
 LOCAL_SDK_VERSION := current
 
 LOCAL_NDK_STL_VARIANT := c++_shared
-
+-include cts/error_prone_rules_tests.mk
 include $(BUILD_SHARED_LIBRARY)
 
 #
