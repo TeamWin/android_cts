@@ -39,6 +39,9 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     private static final String DOCKED_ACTIVITY_NAME = "DockedActivity";
     private static final String TURN_SCREEN_ON_ACTIVITY_NAME = "TurnScreenOnActivity";
     private static final String MOVE_TASK_TO_BACK_ACTIVITY_NAME = "MoveTaskToBackActivity";
+    private static final String SWIPE_REFRESH_ACTIVITY = "SwipeRefreshActivity";
+    private static final String NOHISTORY_ACTIVITY = "NoHistoryActivity";
+
 
     public void testTranslucentActivityOnTopOfPinnedStack() throws Exception {
         if (!supportsPip()) {
@@ -250,6 +253,24 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         // Ensure launching activity was brought forward.
         mAmWmState.assertFocusedActivity("Launching Activity must be focused",
                 LAUNCHING_ACTIVITY);
+    }
 
+    /**
+     * Asserts that a nohistory activity is stopped and removed immediately after a resumed activity
+     * above becomes visible and does not idle.
+     */
+    public void testNoHistoryActivityFinishedResumedActivityNotIdle() throws Exception {
+        // Start with home on top
+        launchHomeActivity();
+
+        // Launch no history activity
+        launchActivity(NOHISTORY_ACTIVITY);
+
+        // Launch an activity with a swipe refresh layout configured to prevent idle.
+        launchActivity(SWIPE_REFRESH_ACTIVITY);
+
+        pressBackButton();
+        mAmWmState.waitForHomeActivityVisible(mDevice);
+        mAmWmState.assertHomeActivityVisible(true);
     }
 }
