@@ -27,11 +27,11 @@ public class ColorCountVerifier extends BitmapVerifier {
     }
 
     @Override
-    public boolean verify(int[] bitmap, int offset, int stride, int width, int height) {
+    public boolean verify(int[] bitmap, int width, int height) {
         int count = 0;
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
-                if (bitmap[indexFromXAndY(x, y, stride, offset)] == mColor) {
+                if (bitmap[indexFromXAndY(x, y, width)] == mColor) {
                     count++;
                 }
             }
