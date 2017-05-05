@@ -18,6 +18,7 @@ LOCAL_ERROR_PRONE_FLAGS:= -Xep:ArrayToString:ERROR \
                           -Xep:ConstantField:ERROR \
                           -Xep:FormatString:ERROR \
                           -Xep:GetClassOnClass:ERROR \
+                          -Xep:JUnit3TestNotRun:ERROR \
                           -Xep:JUnitAmbiguousTestClass:ERROR \
                           -Xep:MissingFail:ERROR \
                           -Xep:MissingOverride:ERROR \
@@ -26,5 +27,6 @@ LOCAL_ERROR_PRONE_FLAGS:= -Xep:ArrayToString:ERROR \
                           -Xep:RemoveUnusedImports:ERROR \
                           -Xep:ReturnValueIgnored:ERROR \
                           -Xep:SelfEquals:ERROR \
-                          -Xep:SizeGreaterThanOrEqualsZero:ERROR
+                          -Xep:SizeGreaterThanOrEqualsZero:ERROR \
+                          -Xep:TryFailThrowable:ERROR
 
