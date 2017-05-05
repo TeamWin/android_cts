@@ -29,9 +29,9 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import static android.content.pm.PackageManager.FEATURE_FINGERPRINT;
+
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
@@ -76,20 +76,9 @@ public class AccessibilityFingerprintGestureTest {
     }
 
     @Test
-    public void testGetFingerprintManager_returnsManagerIfFeatureAvailable() {
-        if (!mIsHardwareAvailable) {
-            assertNull(mFingerprintGestureController);
-            return;
-        }
-        assertNotNull(mFingerprintGestureController);
-    }
-
-    @Test
     public void testGestureDetectionAvailable_initialState_shouldBeAvailable() {
-        if (!mIsHardwareAvailable) {
-            return;
-        }
-        assertTrue(mFingerprintGestureController.isGestureDetectionAvailable());
+        assertEquals(mIsHardwareAvailable,
+                mFingerprintGestureController.isGestureDetectionAvailable());
     }
 
     @Test
