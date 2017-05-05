@@ -41,6 +41,7 @@ import android.autofillservice.cts.GridActivity.FillExpectation;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.os.Bundle;
+import android.service.autofill.FillResponse;
 import android.support.test.rule.ActivityTestRule;
 
 import org.junit.Before;
@@ -933,5 +934,369 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         sUiBot.assertNoDatasets();
         mActivity.focusCell(2, 2);
         sUiBot.assertNoDatasets();
+    }
+
+    /**
+     * Tests scenario where each partition has more than one dataset, but they don't overlap, i.e.,
+     * each {@link FillResponse} only contain fields within the partition.
+     */
+    @Test
+    public void testAutofillMultipleDatasetsNoOverlap() throws Exception {
+        // Set service.
+        enableService();
+
+        /**
+         * 1st partition.
+         */
+        // Set expectations.
+        final CannedFillResponse response1 = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setPresentation(createPresentation("P1D1"))
+                        .setField(ID_L1C1, "l1c1")
+                        .setField(ID_L1C2, "l1c2")
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setPresentation(createPresentation("P1D2"))
+                        .setField(ID_L1C1, "L1C1")
+                        .build())
+                .build();
+        sReplier.addResponse(response1);
+        final FillExpectation expectation1 = mActivity.expectAutofill()
+                .onCell(1, 1, "l1c1")
+                .onCell(1, 2, "l1c2");
+
+        // Trigger partition.
+        mActivity.focusCell(1, 1);
+        sReplier.getNextFillRequest();
+
+
+        /**
+         * 2nd partition.
+         */
+        // Set expectations.
+        final CannedFillResponse response2 = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setPresentation(createPresentation("P2D1"))
+                        .setField(ID_L2C1, "l2c1")
+                        .setField(ID_L2C2, "l2c2")
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setPresentation(createPresentation("P2D2"))
+                        .setField(ID_L2C2, "L2C2")
+                        .build())
+                .build();
+        sReplier.addResponse(response2);
+        final FillExpectation expectation2 = mActivity.expectAutofill()
+                .onCell(2, 2, "L2C2");
+
+        // Trigger partition.
+        mActivity.focusCell(2, 1);
+        sReplier.getNextFillRequest();
+
+        /**
+         * 3rd partition.
+         */
+        // Set expectations.
+        final CannedFillResponse response3 = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setPresentation(createPresentation("P3D1"))
+                        .setField(ID_L3C1, "l3c1")
+                        .setField(ID_L3C2, "l3c2")
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setPresentation(createPresentation("P3D2"))
+                        .setField(ID_L3C1, "L3C1")
+                        .setField(ID_L3C2, "L3C2")
+                        .build())
+                .build();
+        sReplier.addResponse(response3);
+        final FillExpectation expectation3 = mActivity.expectAutofill()
+                .onCell(3, 1, "L3C1")
+                .onCell(3, 2, "L3C2");
+
+        // Trigger partition.
+        mActivity.focusCell(3, 1);
+        sReplier.getNextFillRequest();
+
+        /**
+         * 4th partition.
+         */
+        // Set expectations.
+        final CannedFillResponse response4 = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setPresentation(createPresentation("P4D1"))
+                        .setField(ID_L4C1, "l4c1")
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setPresentation(createPresentation("P4D2"))
+                        .setField(ID_L4C1, "L4C1")
+                        .setField(ID_L4C2, "L4C2")
+                        .build())
+                .build();
+        sReplier.addResponse(response4);
+        final FillExpectation expectation4 = mActivity.expectAutofill()
+                .onCell(4, 1, "l4c1");
+
+        // Trigger partition.
+        mActivity.focusCell(4, 1);
+        sReplier.getNextFillRequest();
+
+        /*
+         *  Now move focus around to make sure the proper values are displayed each time.
+         */
+        mActivity.focusCell(1, 1);
+        sUiBot.assertDatasets("P1D1", "P1D2");
+        mActivity.focusCell(1, 2);
+        sUiBot.assertDatasets("P1D1");
+
+        mActivity.focusCell(2, 1);
+        sUiBot.assertDatasets("P2D1");
+        mActivity.focusCell(2, 2);
+        sUiBot.assertDatasets("P2D1", "P2D2");
+
+        mActivity.focusCell(4, 1);
+        sUiBot.assertDatasets("P4D1", "P4D2");
+        mActivity.focusCell(4, 2);
+        sUiBot.assertDatasets("P4D2");
+
+        mActivity.focusCell(3, 2);
+        sUiBot.assertDatasets("P3D1", "P3D2");
+        mActivity.focusCell(3, 1);
+        sUiBot.assertDatasets("P3D1", "P3D2");
+
+        /*
+         *  Finally, autofill and check results.
+         */
+        mActivity.focusCell(4, 1);
+        sUiBot.selectDataset("P4D1");
+        expectation4.assertAutoFilled();
+
+        mActivity.focusCell(1, 1);
+        sUiBot.selectDataset("P1D1");
+        expectation1.assertAutoFilled();
+
+        mActivity.focusCell(3, 1);
+        sUiBot.selectDataset("P3D2");
+        expectation3.assertAutoFilled();
+
+        mActivity.focusCell(2, 2);
+        sUiBot.selectDataset("P2D2");
+        expectation2.assertAutoFilled();
+    }
+
+    /**
+     * Tests scenario where each partition has more than one dataset, but they overlap, i.e.,
+     * some fields are present in more than one partition.
+     *
+     * <p>Whenever a new partition defines a field previously present in another partittion, that
+     * partition will "own" that field.
+     *
+     * <p>In the end, 4th partition will one all fields in 2 datasets; and this test cases picks
+     * the first.
+     */
+    @Test
+    public void testAutofillMultipleDatasetsOverlappingPicksFirst() throws Exception {
+        autofillMultipleDatasetsOverlapping(true);
+    }
+
+    /**
+     * Tests scenario where each partition has more than one dataset, but they overlap, i.e.,
+     * some fields are present in more than one partition.
+     *
+     * <p>Whenever a new partition defines a field previously present in another partittion, that
+     * partition will "own" that field.
+     *
+     * <p>In the end, 4th partition will one all fields in 2 datasets; and this test cases picks
+     * the second.
+     */
+    @Test
+    public void testAutofillMultipleDatasetsOverlappingPicksSecond() throws Exception {
+        autofillMultipleDatasetsOverlapping(false);
+    }
+
+    private void autofillMultipleDatasetsOverlapping(boolean pickFirst) throws Exception {
+        // Set service.
+        enableService();
+
+        /**
+         * 1st partition.
+         */
+        // Set expectations.
+        final CannedFillResponse response1 = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setPresentation(createPresentation("P1D1"))
+                        .setField(ID_L1C1, "l1c1")
+                        .setField(ID_L1C2, "l1c2")
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setPresentation(createPresentation("P1D2"))
+                        .setField(ID_L1C1, "L1C1")
+                        .build())
+                .build();
+        sReplier.addResponse(response1);
+
+        // Trigger partition.
+        mActivity.focusCell(1, 1);
+        sReplier.getNextFillRequest();
+
+        // Asserts proper datasets are shown on each field defined so far.
+        mActivity.focusCell(1, 1);
+        sUiBot.assertDatasets("P1D1", "P1D2");
+        mActivity.focusCell(1, 2);
+        sUiBot.assertDatasets("P1D1");
+
+        /**
+         * 2nd partition.
+         */
+        // Set expectations.
+        final CannedFillResponse response2 = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setPresentation(createPresentation("P2D1"))
+                        .setField(ID_L1C1, "l1c1") // from previous partition
+                        .setField(ID_L2C1, "l2c1")
+                        .setField(ID_L2C2, "l2c2")
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setPresentation(createPresentation("P2D2"))
+                        .setField(ID_L2C2, "L2C2")
+                        .build())
+                .build();
+        sReplier.addResponse(response2);
+
+        // Trigger partition.
+        mActivity.focusCell(2, 1);
+        sReplier.getNextFillRequest();
+
+        // Asserts proper datasets are shown on each field defined so far.
+        mActivity.focusCell(1, 1);
+        sUiBot.assertDatasets("P2D1"); // changed
+        mActivity.focusCell(1, 2);
+        sUiBot.assertDatasets("P1D1");
+        mActivity.focusCell(2, 1);
+        sUiBot.assertDatasets("P2D1");
+        mActivity.focusCell(2, 2);
+        sUiBot.assertDatasets("P2D1", "P2D2");
+
+        /**
+         * 3rd partition.
+         */
+        // Set expectations.
+        final CannedFillResponse response3 = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setPresentation(createPresentation("P3D1"))
+                        .setField(ID_L1C2, "l1c2")
+                        .setField(ID_L3C1, "l3c1")
+                        .setField(ID_L3C2, "l3c2")
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setPresentation(createPresentation("P3D2"))
+                        .setField(ID_L2C2, "l2c2")
+                        .setField(ID_L3C1, "L3C1")
+                        .setField(ID_L3C2, "L3C2")
+                        .build())
+                .build();
+        sReplier.addResponse(response3);
+
+        // Trigger partition.
+        mActivity.focusCell(3, 1);
+        sReplier.getNextFillRequest();
+
+        // Asserts proper datasets are shown on each field defined so far.
+        mActivity.focusCell(1, 1);
+        sUiBot.assertDatasets("P2D1");
+        mActivity.focusCell(1, 2);
+        sUiBot.assertDatasets("P3D1"); // changed
+        mActivity.focusCell(2, 1);
+        sUiBot.assertDatasets("P2D1");
+        mActivity.focusCell(2, 2);
+        sUiBot.assertDatasets("P3D2"); // changed
+        mActivity.focusCell(3, 2);
+        sUiBot.assertDatasets("P3D1", "P3D2");
+        mActivity.focusCell(3, 1);
+        sUiBot.assertDatasets("P3D1", "P3D2");
+
+        /**
+         * 4th partition.
+         */
+        // Set expectations.
+        final CannedFillResponse response4 = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setPresentation(createPresentation("P4D1"))
+                        .setField(ID_L1C1, "l1c1")
+                        .setField(ID_L1C2, "l1c2")
+                        .setField(ID_L2C1, "l2c1")
+                        .setField(ID_L2C2, "l2c2")
+                        .setField(ID_L3C1, "l3c1")
+                        .setField(ID_L3C2, "l3c2")
+                        .setField(ID_L4C1, "l4c1")
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setPresentation(createPresentation("P4D2"))
+                        .setField(ID_L1C1, "L1C1")
+                        .setField(ID_L1C2, "L1C2")
+                        .setField(ID_L2C1, "L2C1")
+                        .setField(ID_L2C2, "L2C2")
+                        .setField(ID_L3C1, "L3C1")
+                        .setField(ID_L3C2, "L3C2")
+                        .setField(ID_L1C1, "L1C1")
+                        .setField(ID_L4C1, "L4C1")
+                        .setField(ID_L4C2, "L4C2")
+                        .build())
+                .build();
+        sReplier.addResponse(response4);
+
+        // Trigger partition.
+        mActivity.focusCell(4, 1);
+        sReplier.getNextFillRequest();
+
+        // Asserts proper datasets are shown on each field defined so far.
+        mActivity.focusCell(1, 1);
+        sUiBot.assertDatasets("P4D1", "P4D2");
+        mActivity.focusCell(1, 2);
+        sUiBot.assertDatasets("P4D1", "P4D2");
+        mActivity.focusCell(2, 1);
+        sUiBot.assertDatasets("P4D1", "P4D2");
+        mActivity.focusCell(2, 2);
+        sUiBot.assertDatasets("P4D1", "P4D2");
+        mActivity.focusCell(3, 2);
+        sUiBot.assertDatasets("P4D1", "P4D2");
+        mActivity.focusCell(3, 1);
+        sUiBot.assertDatasets("P4D1", "P4D2");
+        mActivity.focusCell(4, 1);
+        sUiBot.assertDatasets("P4D1", "P4D2");
+        mActivity.focusCell(4, 2);
+        sUiBot.assertDatasets("P4D2");
+
+        /*
+         * Finally, autofill and check results.
+         */
+        final FillExpectation expectation = mActivity.expectAutofill();
+        final String chosenOne;
+        if (pickFirst) {
+            expectation
+                .onCell(1, 1, "l1c1")
+                .onCell(1, 2, "l1c2")
+                .onCell(2, 1, "l2c1")
+                .onCell(2, 2, "l2c2")
+                .onCell(3, 1, "l3c1")
+                .onCell(3, 2, "l3c2")
+                .onCell(4, 1, "l4c1");
+            chosenOne = "P4D1";
+        } else {
+            expectation
+                .onCell(1, 1, "L1C1")
+                .onCell(1, 2, "L1C2")
+                .onCell(2, 1, "L2C1")
+                .onCell(2, 2, "L2C2")
+                .onCell(3, 1, "L3C1")
+                .onCell(3, 2, "L3C2")
+                .onCell(4, 1, "L4C1")
+                .onCell(4, 2, "L4C2");
+            chosenOne = "P4D2";
+        }
+
+          mActivity.focusCell(4, 1);
+          sUiBot.selectDataset(chosenOne);
+          expectation.assertAutoFilled();
     }
 }
