@@ -156,7 +156,7 @@ public class LoginActivity extends AbstractAutoFillActivity {
     }
 
     /**
-     * Sets the expectation for an auto-fill request, so it can be asserted through
+     * Sets the expectation for an autofill request (for all fields), so it can be asserted through
      * {@link #assertAutoFilled()} later.
      */
     void expectAutoFill(String username, String password) {
@@ -166,13 +166,24 @@ public class LoginActivity extends AbstractAutoFillActivity {
     }
 
     /**
+     * Sets the expectation for an autofill request (for username only), so it can be asserted
+     * through {@link #assertAutoFilled()} later.
+     */
+    void expectAutoFill(String username) {
+        mExpectation = new FillExpectation(username);
+        mUsernameEditText.addTextChangedListener(mExpectation.ccUsernameWatcher);
+    }
+
+    /**
      * Asserts the activity was auto-filled with the values passed to
      * {@link #expectAutoFill(String, String)}.
      */
     void assertAutoFilled() throws Exception {
         assertWithMessage("expectAutoFill() not called").that(mExpectation).isNotNull();
         mExpectation.ccUsernameWatcher.assertAutoFilled();
-        mExpectation.ccPasswordWatcher.assertAutoFilled();
+        if (mExpectation.ccPasswordWatcher != null) {
+            mExpectation.ccPasswordWatcher.assertAutoFilled();
+        }
     }
 
     /**
@@ -277,6 +288,11 @@ public class LoginActivity extends AbstractAutoFillActivity {
         private FillExpectation(String username, String password) {
             ccUsernameWatcher = new OneTimeTextWatcher("username", mUsernameEditText, username);
             ccPasswordWatcher = new OneTimeTextWatcher("password", mPasswordEditText, password);
+        }
+
+        private FillExpectation(String username) {
+            ccUsernameWatcher = new OneTimeTextWatcher("username", mUsernameEditText, username);
+            ccPasswordWatcher = null;
         }
     }
 }
