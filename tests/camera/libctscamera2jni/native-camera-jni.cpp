@@ -29,12 +29,12 @@
 
 #include <android/native_window_jni.h>
 
-#include "NdkCameraError.h"
-#include "NdkCameraManager.h"
-#include "NdkCameraDevice.h"
-#include "NdkCameraCaptureSession.h"
-#include "NdkImage.h"
-#include "NdkImageReader.h"
+#include "camera/NdkCameraError.h"
+#include "camera/NdkCameraManager.h"
+#include "camera/NdkCameraDevice.h"
+#include "camera/NdkCameraCaptureSession.h"
+#include "media/NdkImage.h"
+#include "media/NdkImageReader.h"
 
 #define LOG_ERROR(buf, ...) sprintf(buf, __VA_ARGS__); \
                             ALOGE("%s", buf);
