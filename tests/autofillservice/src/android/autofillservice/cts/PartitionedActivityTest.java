@@ -35,14 +35,18 @@ import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_USERNAME;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.app.PendingIntent;
 import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.GridActivity.FillExpectation;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
+import android.content.Intent;
+import android.content.IntentSender;
 import android.os.Bundle;
 import android.service.autofill.FillResponse;
 import android.support.test.rule.ActivityTestRule;
+import android.widget.RemoteViews;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -1299,4 +1303,193 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
           sUiBot.selectDataset(chosenOne);
           expectation.assertAutoFilled();
     }
+
+    @Test
+    public void testAutofillMultipleAuthDatasetsInSequence() throws Exception {
+        // Set service.
+        enableService();
+
+        // TODO: current API requires these fields...
+        final RemoteViews bogusPresentation = createPresentation("Whatever man, I'm not used...");
+        final String bogusValue = "Y U REQUIRE IT?";
+
+        /**
+         * 1st partition.
+         */
+        // Set expectations.
+        final IntentSender auth11 = AuthenticationActivity.createSender(getContext(), 11,
+                new CannedDataset.Builder()
+                        .setField(ID_L1C1, "l1c1")
+                        .setField(ID_L1C2, "l1c2")
+                        .setPresentation(bogusPresentation)
+                        .build());
+        final IntentSender auth12 = AuthenticationActivity.createSender(getContext(), 12);
+        final CannedFillResponse response1 = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setAuthentication(auth11)
+                        .setField(ID_L1C1, bogusValue)
+                        .setField(ID_L1C2, bogusValue)
+                        .setPresentation(createPresentation("P1D1"))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setAuthentication(auth12)
+                        .setField(ID_L1C1, bogusValue)
+                        .setPresentation(createPresentation("P1D2"))
+                        .build())
+                .build();
+        sReplier.addResponse(response1);
+        final FillExpectation expectation1 = mActivity.expectAutofill()
+                .onCell(1, 1, "l1c1")
+                .onCell(1, 2, "l1c2");
+
+        // Trigger partition.
+        mActivity.focusCell(1, 1);
+        sReplier.getNextFillRequest();
+
+        // Focus around different fields in the partition.
+        sUiBot.assertDatasets("P1D1", "P1D2");
+        mActivity.focusCell(1, 2);
+        sUiBot.assertDatasets("P1D1");
+
+        // Autofill it...
+        sUiBot.selectDataset("P1D1");
+        // ... and assert result
+        expectation1.assertAutoFilled();
+
+
+        /**
+         * 2nd partition.
+         */
+        // Set expectations.
+        final IntentSender auth21 = AuthenticationActivity.createSender(getContext(), 21, null);
+        final IntentSender auth22 = AuthenticationActivity.createSender(getContext(), 22,
+                new CannedDataset.Builder()
+                    .setField(ID_L2C2, "L2C2")
+                    .setPresentation(bogusPresentation)
+                    .build());
+        final CannedFillResponse response2 = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setAuthentication(auth21)
+                        .setPresentation(createPresentation("P2D1"))
+                        .setField(ID_L2C1, bogusValue)
+                        .setField(ID_L2C2, bogusValue)
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setAuthentication(auth22)
+                        .setPresentation(createPresentation("P2D2"))
+                        .setField(ID_L2C2, bogusValue)
+                        .build())
+                .build();
+        sReplier.addResponse(response2);
+        final FillExpectation expectation2 = mActivity.expectAutofill()
+                .onCell(2, 2, "L2C2");
+
+
+        // Trigger partition.
+        mActivity.focusCell(2, 1);
+        sReplier.getNextFillRequest();
+
+        // Focus around different fields in the partition.
+        sUiBot.assertDatasets("P2D1");
+        mActivity.focusCell(2, 2);
+        sUiBot.assertDatasets("P2D1", "P2D2");
+
+        // Autofill it...
+        sUiBot.selectDataset("P2D2");
+        // ... and assert result
+        expectation2.assertAutoFilled();
+
+        /**
+         * 3rd partition.
+         */
+        // Set expectations.
+        final IntentSender auth31 = AuthenticationActivity.createSender(getContext(), 31,
+                new CannedDataset.Builder()
+                        .setField(ID_L3C1, "l3c1")
+                        .setField(ID_L3C2, "l3c2")
+                        .setPresentation(bogusPresentation)
+                        .build());
+        final IntentSender auth32 = AuthenticationActivity.createSender(getContext(), 32);
+        final CannedFillResponse response3 = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setAuthentication(auth31)
+                        .setPresentation(createPresentation("P3D1"))
+                        .setField(ID_L3C1, bogusValue)
+                        .setField(ID_L3C2, bogusValue)
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setAuthentication(auth32)
+                        .setPresentation(createPresentation("P3D2"))
+                        .setField(ID_L3C1, bogusValue)
+                        .setField(ID_L3C2, bogusValue)
+                        .build())
+                .build();
+        sReplier.addResponse(response3);
+        final FillExpectation expectation3 = mActivity.expectAutofill()
+                .onCell(3, 1, "l3c1")
+                .onCell(3, 2, "l3c2");
+
+        // Trigger partition.
+        mActivity.focusCell(3, 2);
+        sReplier.getNextFillRequest();
+
+        // Focus around different fields in the partition.
+        sUiBot.assertDatasets("P3D1", "P3D2");
+        mActivity.focusCell(3, 1);
+        sUiBot.assertDatasets("P3D1", "P3D2");
+
+        // Autofill it...
+        sUiBot.selectDataset("P3D1");
+        // ... and assert result
+        expectation3.assertAutoFilled();
+
+        /**
+         * 4th partition.
+         */
+        // Set expectations.
+        final IntentSender auth41 = AuthenticationActivity.createSender(getContext(), 41, null);
+        final IntentSender auth42 = AuthenticationActivity.createSender(getContext(), 42,
+                new CannedDataset.Builder()
+                    .setField(ID_L4C1, "L4C1")
+                    .setField(ID_L4C2, "L4C2")
+                    .setPresentation(bogusPresentation)
+                    .build());
+        final CannedFillResponse response4 = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setAuthentication(auth41)
+                        .setPresentation(createPresentation("P4D1"))
+                        .setField(ID_L4C1, bogusValue)
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setAuthentication(auth42)
+                        .setPresentation(createPresentation("P4D2"))
+                        .setField(ID_L4C1, bogusValue)
+                        .setField(ID_L4C2, bogusValue)
+                        .build())
+                .build();
+        sReplier.addResponse(response4);
+        final FillExpectation expectation4 = mActivity.expectAutofill()
+                .onCell(4, 1, "L4C1")
+                .onCell(4, 2, "L4C2");
+
+        // Trigger partition.
+        mActivity.focusCell(4, 1);
+        sReplier.getNextFillRequest();
+
+        // Focus around different fields in the partition.
+        sUiBot.assertDatasets("P4D1", "P4D2");
+        mActivity.focusCell(4, 2);
+        sUiBot.assertDatasets("P4D2");
+
+        // Autofill it...
+        sUiBot.selectDataset("P4D2");
+        // ... and assert result
+        expectation4.assertAutoFilled();
+
+    }
+
+    // TODO(b/37424539): more scenarios:
+    // - overlapping instead of sequence
+    // - mixed of auth / no auth
+    // - overlapping 1st/2nd cases
 }

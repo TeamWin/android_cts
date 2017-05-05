@@ -1163,7 +1163,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Check the results.
         mActivity.assertAutoFilled();
-
         final Bundle data = AuthenticationActivity.getData();
         assertThat(data).isNotNull();
         final String extraValue = data.getString("numbers");
