@@ -17,7 +17,6 @@
 package android.server.cts;
 
 import static android.server.cts.ActivityManagerState.STATE_RESUMED;
-import static android.server.cts.ActivityManagerState.STATE_STOPPED;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
@@ -183,6 +182,34 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         assertAssistantStackExists();
         mAmWmState.assertVisibility(DOCKED_ACTIVITY, true);
         mAmWmState.assertVisibility(TEST_ACTIVITY, true);
+        disableAssistant();
+    }
+
+    public void testLaunchIntoSameTask() throws Exception {
+        enableAssistant();
+
+        // Launch the assistant
+        launchActivity(LAUNCH_ASSISTANT_ACTIVITY_FROM_SESSION);
+        assertAssistantStackExists();
+        mAmWmState.assertVisibility(ASSISTANT_ACTIVITY, true);
+        mAmWmState.assertFocusedStack("Expected assistant stack focused", ASSISTANT_STACK_ID);
+        assertEquals(1, mAmWmState.getAmState().getStackById(ASSISTANT_STACK_ID).getTasks().size());
+        final int taskId = mAmWmState.getAmState().getTaskByActivityName(ASSISTANT_ACTIVITY)
+                .mTaskId;
+
+        // Launch a new fullscreen activity
+        launchActivity(TEST_ACTIVITY);
+        mAmWmState.assertVisibility(ASSISTANT_ACTIVITY, false);
+
+        // Launch the assistant again and ensure that it goes into the same task
+        launchActivity(LAUNCH_ASSISTANT_ACTIVITY_FROM_SESSION);
+        assertAssistantStackExists();
+        mAmWmState.assertVisibility(ASSISTANT_ACTIVITY, true);
+        mAmWmState.assertFocusedStack("Expected assistant stack focused", ASSISTANT_STACK_ID);
+        assertEquals(1, mAmWmState.getAmState().getStackById(ASSISTANT_STACK_ID).getTasks().size());
+        assertEquals(taskId,
+                mAmWmState.getAmState().getTaskByActivityName(ASSISTANT_ACTIVITY).mTaskId);
+
         disableAssistant();
     }
 
