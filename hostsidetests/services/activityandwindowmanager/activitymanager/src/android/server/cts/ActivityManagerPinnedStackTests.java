@@ -916,6 +916,36 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         assertTrue(lifecycleCounts.mPauseCount == 0);
     }
 
+    public void testPinnedStackWithDockedStack() throws Exception {
+        if (!supportsPip() || !supportsSplitScreenMultiWindow()) return;
+
+        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
+        launchActivityInDockStack(LAUNCHING_ACTIVITY);
+        launchActivityToSide(true, false, TEST_ACTIVITY);
+        mAmWmState.assertVisibility(PIP_ACTIVITY, true);
+        mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true);
+        mAmWmState.assertVisibility(TEST_ACTIVITY, true);
+
+        // Launch the activities again to take focus and make sure nothing is hidden
+        launchActivityInDockStack(LAUNCHING_ACTIVITY);
+        mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true);
+        mAmWmState.assertVisibility(TEST_ACTIVITY, true);
+
+        launchActivityToSide(true, false, TEST_ACTIVITY);
+        mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true);
+        mAmWmState.assertVisibility(TEST_ACTIVITY, true);
+
+        // Go to recents to make sure that fullscreen stack is invisible
+        // Some devices do not support recents or implement it differently (instead of using a
+        // separate stack id or as an activity), for those cases the visibility asserts will be
+        // ignored
+        pressAppSwitchButton();
+        if (mAmWmState.waitForRecentsActivityVisible(mDevice)) {
+            mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true);
+            mAmWmState.assertVisibility(TEST_ACTIVITY, false);
+        }
+    }
+
     public void testLaunchTaskByComponentMatchMultipleTasks() throws Exception {
         if (!supportsPip()) return;
 
