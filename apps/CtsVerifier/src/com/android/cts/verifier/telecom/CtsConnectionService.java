@@ -26,35 +26,74 @@ import android.telecom.TelecomManager;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * CTS Verifier ConnectionService implementation.
  */
 public class CtsConnectionService extends ConnectionService {
+    static final int TIMEOUT_MILLIS = 10000;
 
     private CtsConnection.Listener mConnectionListener =
             new CtsConnection.Listener() {
                 @Override
                 void onDestroyed(CtsConnection connection) {
-                    mConnections.remove(connection);
+                    synchronized (mConnectionsLock) {
+                        mConnections.remove(connection);
+                    }
                 }
             };
 
     private static CtsConnectionService sConnectionService;
+    private static CountDownLatch sBindingLatch = new CountDownLatch(1);
 
     private List<CtsConnection> mConnections = new ArrayList<>();
+    private Object mConnectionsLock = new Object();
+    private CountDownLatch mConnectionLatch = new CountDownLatch(1);
 
     public static CtsConnectionService getConnectionService() {
+        return sConnectionService;
+    }
+
+    public static CtsConnectionService waitForAndGetConnectionService() {
+        if (sConnectionService == null) {
+            try {
+                sBindingLatch.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+            }
+        }
         return sConnectionService;
     }
 
     public CtsConnectionService() throws Exception {
         super();
         sConnectionService = this;
+        if (sBindingLatch != null) {
+            sBindingLatch.countDown();
+        }
+        sBindingLatch = new CountDownLatch(1);
     }
 
     public List<CtsConnection> getConnections() {
-        return mConnections;
+        synchronized (mConnectionsLock) {
+            return new ArrayList<CtsConnection>(mConnections);
+        }
+    }
+
+    public CtsConnection waitForAndGetConnection() {
+        try {
+            mConnectionLatch.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+        }
+        mConnectionLatch = new CountDownLatch(1);
+        synchronized (mConnectionsLock) {
+            if (mConnections.size() > 0) {
+                return mConnections.get(0);
+            } else {
+                return null;
+            }
+        }
     }
 
     @Override
@@ -109,7 +148,12 @@ public class CtsConnectionService extends ConnectionService {
         connection.putExtras(moreExtras);
         connection.setVideoState(request.getVideoState());
 
-        mConnections.add(connection);
+        synchronized (mConnectionsLock) {
+            mConnections.add(connection);
+        }
+        if (mConnectionLatch != null) {
+            mConnectionLatch.countDown();
+        }
         return connection;
     }
 }
