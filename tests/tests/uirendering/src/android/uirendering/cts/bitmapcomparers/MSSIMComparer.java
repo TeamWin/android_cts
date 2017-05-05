@@ -41,22 +41,21 @@ public class MSSIMComparer extends BitmapComparer {
     }
 
     @Override
-    public boolean verifySame(int[] ideal, int[] given, int offset, int stride, int width,
-            int height) {
+    public boolean verifySame(int[] ideal, int[] given, int width, int height) {
         double SSIMTotal = 0;
         int windows = 0;
 
         for (int currentWindowY = 0 ; currentWindowY < height ; currentWindowY += WINDOW_SIZE) {
             for (int currentWindowX = 0 ; currentWindowX < width ; currentWindowX += WINDOW_SIZE) {
-                int start = indexFromXAndY(currentWindowX, currentWindowY, stride, offset);
-                if (isWindowWhite(ideal, start, stride) && isWindowWhite(given, start, stride)) {
+                int start = indexFromXAndY(currentWindowX, currentWindowY, width);
+                if (isWindowWhite(ideal, start, width) && isWindowWhite(given, start, width)) {
                     continue;
                 }
                 windows++;
-                double[] means = getMeans(ideal, given, start, stride);
+                double[] means = getMeans(ideal, given, start, width);
                 double meanX = means[0];
                 double meanY = means[1];
-                double[] variances = getVariances(ideal, given, meanX, meanY, start, stride);
+                double[] variances = getVariances(ideal, given, meanX, meanY, start, width);
                 double varX = variances[0];
                 double varY = variances[1];
                 double stdBoth = variances[2];
@@ -76,10 +75,10 @@ public class MSSIMComparer extends BitmapComparer {
         return (SSIMTotal >= mThreshold);
     }
 
-    private boolean isWindowWhite(int[] colors, int start, int stride) {
+    private boolean isWindowWhite(int[] colors, int start, int width) {
         for (int y = 0 ; y < WINDOW_SIZE ; y++) {
             for (int x = 0 ; x < WINDOW_SIZE ; x++) {
-                if (colors[indexFromXAndY(x, y, stride, start)] != Color.WHITE) {
+                if (colors[start + indexFromXAndY(x, y, width)] != Color.WHITE) {
                     return false;
                 }
             }
@@ -101,12 +100,12 @@ public class MSSIMComparer extends BitmapComparer {
      * where the first double is the mean of the first set and the second double is the mean of the
      * second set.
      */
-    private double[] getMeans(int[] pixels0, int[] pixels1, int start, int stride) {
+    private double[] getMeans(int[] pixels0, int[] pixels1, int start, int width) {
         double avg0 = 0;
         double avg1 = 0;
         for (int y = 0 ; y < WINDOW_SIZE ; y++) {
             for (int x = 0 ; x < WINDOW_SIZE ; x++) {
-                int index = indexFromXAndY(x, y, stride, start);
+                int index = start + indexFromXAndY(x, y, width);
                 avg0 += getIntensity(pixels0[index]);
                 avg1 += getIntensity(pixels1[index]);
             }
@@ -122,13 +121,13 @@ public class MSSIMComparer extends BitmapComparer {
      * the second is the variance of the second set of pixels, and the third is the covariance.
      */
     private double[] getVariances(int[] pixels0, int[] pixels1, double mean0, double mean1,
-            int start, int stride) {
+            int start, int width) {
         double var0 = 0;
         double var1 = 0;
         double varBoth = 0;
         for (int y = 0 ; y < WINDOW_SIZE ; y++) {
             for (int x = 0 ; x < WINDOW_SIZE ; x++) {
-                int index = indexFromXAndY(x, y, stride, start);
+                int index = start + indexFromXAndY(x, y, width);
                 double v0 = getIntensity(pixels0[index]) - mean0;
                 double v1 = getIntensity(pixels1[index]) - mean1;
                 var0 += v0 * v0;
