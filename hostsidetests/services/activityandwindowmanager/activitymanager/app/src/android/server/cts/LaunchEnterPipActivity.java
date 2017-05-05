@@ -18,11 +18,12 @@ package android.server.cts;
 
 import android.app.Activity;
 import android.graphics.Rect;
+import android.os.Bundle;
 
 public class LaunchEnterPipActivity extends Activity {
     @Override
-    protected void onResume() {
-        super.onResume();
+    protected void onCreate(Bundle bundle) {
+        super.onCreate(bundle);
         PipActivity.launchEnterPipActivity(this);
     }
 }
