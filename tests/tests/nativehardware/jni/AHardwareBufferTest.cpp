@@ -14,36 +14,45 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "AHardwareBuffer_test"
-//#define LOG_NDEBUG 0
+#include "AHardwareBufferTest.h"
 
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <unistd.h>
+
+#include <sstream>
+#include <string>
 
 #include <android/hardware_buffer.h>
-#include <gtest/gtest.h>
+#define LOG_TAG "AHardwareBufferTest"
+#include "NativeTestHelper.h"
+
+namespace android {
+
+//#define LOG_NDEBUG 0
 
 #define BAD_VALUE -EINVAL
 #define NO_ERROR 0
 
-static ::testing::AssertionResult BuildHexFailureMessage(uint64_t expected,
+static std::string BuildHexFailureMessage(uint64_t expected,
         uint64_t actual, const char* type) {
     std::ostringstream ss;
     ss << type << " 0x" << std::hex << actual
             << " does not match expected " << type << " 0x" << std::hex
             << expected;
-    return ::testing::AssertionFailure() << ss.str();
+    return ss.str();
 }
 
-static ::testing::AssertionResult BuildFailureMessage(uint32_t expected,
+static std::string BuildFailureMessage(uint32_t expected,
         uint32_t actual, const char* type) {
-    return ::testing::AssertionFailure() << "Buffer " << type << " do not match"
-            << ": " << actual << " != " << expected;
+    std::ostringstream ss;
+    ss << "Buffer " << type << " do not match" << ": " << actual << " != " << expected;
+    return ss.str();
 }
 
-static ::testing::AssertionResult CheckAHardwareBufferMatchesDesc(
+static std::string CheckAHardwareBufferMatchesDesc(
         AHardwareBuffer* abuffer, const AHardwareBuffer_Desc& desc) {
     AHardwareBuffer_Desc bufferDesc;
     AHardwareBuffer_describe(abuffer, &bufferDesc);
@@ -57,26 +66,30 @@ static ::testing::AssertionResult CheckAHardwareBufferMatchesDesc(
         return BuildHexFailureMessage(desc.usage, bufferDesc.usage, "usage");
     if (bufferDesc.format != desc.format)
         return BuildFailureMessage(desc.format, bufferDesc.format, "formats");
-    return ::testing::AssertionSuccess();
+    return std::string();
 }
 
+bool AHardwareBufferTest::SetUp() { return true; }
+
+void AHardwareBufferTest::TearDown() {}
+
 // Test that passing in NULL values to allocate works as expected.
-TEST(AHardwareBufferTest, AHardwareBuffer_allocate_FailsWithNullInput) {
+void AHardwareBufferTest::testAHardwareBuffer_allocate_FailsWithNullInput(JNIEnv* env) {
     AHardwareBuffer* buffer;
     AHardwareBuffer_Desc desc;
 
     memset(&desc, 0, sizeof(AHardwareBuffer_Desc));
 
     int res = AHardwareBuffer_allocate(&desc, NULL);
-    EXPECT_EQ(BAD_VALUE, res);
+    ASSERT_EQ(BAD_VALUE, res);
     res = AHardwareBuffer_allocate(NULL, &buffer);
-    EXPECT_EQ(BAD_VALUE, res);
+    ASSERT_EQ(BAD_VALUE, res);
     res = AHardwareBuffer_allocate(NULL, NULL);
-    EXPECT_EQ(BAD_VALUE, res);
+    ASSERT_EQ(BAD_VALUE, res);
 }
 
 // Test that passing in NULL values to allocate works as expected.
-TEST(AHardwareBufferTest, AHardwareBuffer_allocate_BlobFormatRequiresHeight1) {
+void AHardwareBufferTest::testAHardwareBuffer_allocate_BlobFormatRequiresHeight1(JNIEnv* env) {
     AHardwareBuffer* buffer;
     AHardwareBuffer_Desc desc = {};
 
@@ -86,18 +99,18 @@ TEST(AHardwareBufferTest, AHardwareBuffer_allocate_BlobFormatRequiresHeight1) {
     desc.usage = AHARDWAREBUFFER_USAGE_CPU_READ_RARELY;
     desc.format = AHARDWAREBUFFER_FORMAT_BLOB;
     int res = AHardwareBuffer_allocate(&desc, &buffer);
-    EXPECT_EQ(BAD_VALUE, res);
+    ASSERT_EQ(BAD_VALUE, res);
 
     desc.height = 1;
     res = AHardwareBuffer_allocate(&desc, &buffer);
-    EXPECT_EQ(NO_ERROR, res);
-    EXPECT_TRUE(CheckAHardwareBufferMatchesDesc(buffer, desc));
+    ASSERT_EQ(NO_ERROR, res);
+    ASSERT_EQ(std::string(), CheckAHardwareBufferMatchesDesc(buffer, desc));
     AHardwareBuffer_release(buffer);
     buffer = NULL;
 }
 
 // Test that allocate can create an AHardwareBuffer correctly.
-TEST(AHardwareBufferTest, AHardwareBuffer_allocate_Succeeds) {
+void AHardwareBufferTest::testAHardwareBuffer_allocate_Succeeds(JNIEnv* env) {
     AHardwareBuffer* buffer = NULL;
     AHardwareBuffer_Desc desc = {};
 
@@ -107,8 +120,8 @@ TEST(AHardwareBufferTest, AHardwareBuffer_allocate_Succeeds) {
     desc.usage = AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE;
     desc.format = AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM;
     int res = AHardwareBuffer_allocate(&desc, &buffer);
-    EXPECT_EQ(NO_ERROR, res);
-    EXPECT_TRUE(CheckAHardwareBufferMatchesDesc(buffer, desc));
+    ASSERT_EQ(NO_ERROR, res);
+    ASSERT_EQ(std::string(), CheckAHardwareBufferMatchesDesc(buffer, desc));
     AHardwareBuffer_release(buffer);
     buffer = NULL;
 
@@ -118,12 +131,12 @@ TEST(AHardwareBufferTest, AHardwareBuffer_allocate_Succeeds) {
     desc.usage = AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE;
     desc.format = AHARDWAREBUFFER_FORMAT_R5G6B5_UNORM;
     res = AHardwareBuffer_allocate(&desc, &buffer);
-    EXPECT_EQ(NO_ERROR, res);
-    EXPECT_TRUE(CheckAHardwareBufferMatchesDesc(buffer, desc));
+    ASSERT_EQ(NO_ERROR, res);
+    ASSERT_EQ(std::string(), CheckAHardwareBufferMatchesDesc(buffer, desc));
     AHardwareBuffer_release(buffer);
 }
 
-TEST(AHardwareBufferTest, AHardwareBuffer_describe_Succeeds) {
+void AHardwareBufferTest::testAHardwareBuffer_describe_Succeeds(JNIEnv* env) {
     AHardwareBuffer* buffer = NULL;
     AHardwareBuffer_Desc desc = {};
 
@@ -133,36 +146,39 @@ TEST(AHardwareBufferTest, AHardwareBuffer_describe_Succeeds) {
     desc.usage = AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE;
     desc.format = AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM;
     int res = AHardwareBuffer_allocate(&desc, &buffer);
-    EXPECT_EQ(NO_ERROR, res);
+    ASSERT_EQ(NO_ERROR, res);
 
     AHardwareBuffer_Desc expected_desc;
     memset(&expected_desc, 0, sizeof(AHardwareBuffer_Desc));
     AHardwareBuffer_describe(NULL, &desc);
-    EXPECT_EQ(0U, expected_desc.width);
+    ASSERT_EQ(0U, expected_desc.width);
     AHardwareBuffer_describe(buffer, NULL);
-    EXPECT_EQ(0U, expected_desc.width);
+    ASSERT_EQ(0U, expected_desc.width);
     AHardwareBuffer_describe(buffer, &desc);
-    EXPECT_TRUE(CheckAHardwareBufferMatchesDesc(buffer, desc));
+    ASSERT_EQ(std::string(), CheckAHardwareBufferMatchesDesc(buffer, desc));
 
     AHardwareBuffer_release(buffer);
 }
 
 struct ClientData {
     int fd;
+    JNIEnv* env;
     AHardwareBuffer* buffer;
-    ClientData(int fd_in, AHardwareBuffer* buffer_in)
-            : fd(fd_in), buffer(buffer_in) {}
+    ClientData(int fd_in, JNIEnv* env_in, AHardwareBuffer* buffer_in)
+            : fd(fd_in), env(env_in), buffer(buffer_in) {}
 };
 
 static void* clientFunction(void* data) {
     ClientData* pdata = reinterpret_cast<ClientData*>(data);
     int err = AHardwareBuffer_sendHandleToUnixSocket(pdata->buffer, pdata->fd);
-    EXPECT_EQ(NO_ERROR, err);
+    if (err != NO_ERROR) {
+        fail(pdata->env, "Error sending handle to socket: %d", err);
+    }
     close(pdata->fd);
     return 0;
 }
 
-TEST(AHardwareBufferTest, AHardwareBuffer_SendAndRecv_Succeeds) {
+void AHardwareBufferTest::testAHardwareBuffer_SendAndRecv_Succeeds(JNIEnv* env) {
     AHardwareBuffer* buffer = NULL;
     AHardwareBuffer_Desc desc = {};
 
@@ -174,32 +190,32 @@ TEST(AHardwareBufferTest, AHardwareBuffer_SendAndRecv_Succeeds) {
 
     // Test that an invalid buffer fails.
     int err = AHardwareBuffer_sendHandleToUnixSocket(NULL, 0);
-    EXPECT_EQ(BAD_VALUE, err);
+    ASSERT_EQ(BAD_VALUE, err);
     err = 0;
     err = AHardwareBuffer_sendHandleToUnixSocket(buffer, 0);
-    EXPECT_EQ(BAD_VALUE, err);
+    ASSERT_EQ(BAD_VALUE, err);
 
     // Allocate the buffer.
     err = AHardwareBuffer_allocate(&desc, &buffer);
-    EXPECT_EQ(NO_ERROR, err);
+    ASSERT_EQ(NO_ERROR, err);
 
     int fds[2];
     err = socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, fds);
 
     // Launch a client that will send the buffer back.
-    ClientData data(fds[1], buffer);
+    ClientData data(fds[1], env, buffer);
     pthread_t thread;
     ASSERT_EQ(0, pthread_create(&thread, NULL, clientFunction, &data));
 
     // Receive the buffer.
     err = AHardwareBuffer_recvHandleFromUnixSocket(fds[0], NULL);
-    EXPECT_EQ(BAD_VALUE, err);
+    ASSERT_EQ(BAD_VALUE, err);
 
     AHardwareBuffer* received = NULL;
     err = AHardwareBuffer_recvHandleFromUnixSocket(fds[0], &received);
-    EXPECT_EQ(NO_ERROR, err);
+    ASSERT_EQ(NO_ERROR, err);
     ASSERT_TRUE(received != NULL);
-    EXPECT_TRUE(CheckAHardwareBufferMatchesDesc(received, desc));
+    ASSERT_EQ(std::string(), CheckAHardwareBufferMatchesDesc(received, desc));
 
     void* ret_val;
     ASSERT_EQ(0, pthread_join(thread, &ret_val));
@@ -210,7 +226,7 @@ TEST(AHardwareBufferTest, AHardwareBuffer_SendAndRecv_Succeeds) {
     AHardwareBuffer_release(received);
 }
 
-TEST(AHardwareBufferTest, AHardwareBuffer_Lock_and_Unlock_Succeed) {
+void AHardwareBufferTest::testAHardwareBuffer_Lock_and_Unlock_Succeed(JNIEnv* env) {
     AHardwareBuffer* buffer = NULL;
     AHardwareBuffer_Desc desc = {};
 
@@ -222,19 +238,21 @@ TEST(AHardwareBufferTest, AHardwareBuffer_Lock_and_Unlock_Succeed) {
 
     // Test that an invalid buffer fails.
     int err = AHardwareBuffer_lock(NULL, 0, -1, NULL, NULL);
-    EXPECT_EQ(BAD_VALUE, err);
+    ASSERT_EQ(BAD_VALUE, err);
     err = 0;
 
     // Allocate the buffer.
     err = AHardwareBuffer_allocate(&desc, &buffer);
-    EXPECT_EQ(NO_ERROR, err);
+    ASSERT_EQ(NO_ERROR, err);
     void* bufferData = NULL;
     err = AHardwareBuffer_lock(buffer, AHARDWAREBUFFER_USAGE_CPU_READ_RARELY, -1,
           NULL, &bufferData);
-    EXPECT_EQ(NO_ERROR, err);
-    EXPECT_TRUE(bufferData != NULL);
+    ASSERT_EQ(NO_ERROR, err);
+    ASSERT_TRUE(bufferData != NULL);
     int32_t fence = -1;
     err = AHardwareBuffer_unlock(buffer, &fence);
 
     AHardwareBuffer_release(buffer);
 }
+
+} // namespace android
