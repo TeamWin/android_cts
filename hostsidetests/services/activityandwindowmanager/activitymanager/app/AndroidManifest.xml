@@ -357,6 +357,14 @@
             android:theme="@style/SplashscreenTheme"
             android:exported="true" />
 
+
+        <activity android:name=".SwipeRefreshActivity"
+                  android:exported="true" />
+
+        <activity android:name=".NoHistoryActivity"
+                  android:noHistory="true"
+                  android:exported="true" />
+
         <service android:name="com.android.cts.verifier.vr.MockVrListenerService"
                  android:exported="true"
                  android:enabled="true"
