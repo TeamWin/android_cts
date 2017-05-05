@@ -102,8 +102,38 @@ public class EphemeralTest extends DeviceTestCase
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartNormal");
     }
 
-    public void testEphemeralStartExposed() throws Exception {
-        runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed");
+    // each connection to an exposed component needs to run in its own test to
+    // avoid sharing state. once an instant app is exposed to a component, it's
+    // exposed until the device restarts or the instant app is removed.
+    public void testEphemeralStartExposed01() throws Exception {
+        runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed01");
+    }
+    public void testEphemeralStartExposed02() throws Exception {
+        runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed02");
+    }
+    public void testEphemeralStartExposed03() throws Exception {
+        runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed03");
+    }
+    public void testEphemeralStartExposed04() throws Exception {
+        runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed04");
+    }
+    public void testEphemeralStartExposed05() throws Exception {
+        runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed05");
+    }
+    public void testEphemeralStartExposed06() throws Exception {
+        runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed06");
+    }
+    public void testEphemeralStartExposed07() throws Exception {
+        runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed07");
+    }
+    public void testEphemeralStartExposed08() throws Exception {
+        runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed08");
+    }
+    public void testEphemeralStartExposed09() throws Exception {
+        runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed09");
+    }
+    public void testEphemeralStartExposed10() throws Exception {
+        runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed10");
     }
 
     public void testEphemeralStartEphemeral() throws Exception {
