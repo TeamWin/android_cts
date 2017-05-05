@@ -22,6 +22,7 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import android.app.Activity;
 import android.app.ActivityOptions;
 import android.app.PictureInPictureParams;
+import android.content.res.Configuration;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -213,6 +214,11 @@ public class PipActivity extends AbstractLifecycleLogActivity {
         filter.addAction(ACTION_SET_REQUESTED_ORIENTATION);
         filter.addAction(ACTION_FINISH);
         registerReceiver(mReceiver, filter);
+
+        // Dump applied display metrics.
+        Configuration config = getResources().getConfiguration();
+        dumpDisplaySize(config);
+        dumpConfiguration(config);
     }
 
     @Override
@@ -282,6 +288,13 @@ public class PipActivity extends AbstractLifecycleLogActivity {
                 enterPictureInPictureMode(new PictureInPictureParams.Builder().build());
             }, 1000);
         }
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        dumpDisplaySize(newConfig);
+        dumpConfiguration(newConfig);
     }
 
     /**

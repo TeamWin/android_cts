@@ -81,10 +81,6 @@ public class TestActivity extends AbstractLifecycleLogActivity {
         dumpConfiguration(newConfig);
     }
 
-    private void dumpConfiguration(Configuration config) {
-        Log.i(getTag(), "Configuration: " + config);
-    }
-
     @Override
     protected String getTag() {
         return TAG;

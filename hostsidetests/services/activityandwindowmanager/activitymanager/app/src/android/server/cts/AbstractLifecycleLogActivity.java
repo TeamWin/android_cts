@@ -78,6 +78,10 @@ public abstract class AbstractLifecycleLogActivity extends Activity {
 
     protected abstract String getTag();
 
+    protected void dumpConfiguration(Configuration config) {
+        Log.i(getTag(), "Configuration: " + config);
+    }
+
     protected void dumpDisplaySize(Configuration config) {
         // Dump the display size as seen by this Activity.
         final WindowManager wm = getSystemService(WindowManager.class);
