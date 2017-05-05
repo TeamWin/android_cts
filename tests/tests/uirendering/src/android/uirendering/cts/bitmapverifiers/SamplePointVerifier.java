@@ -44,14 +44,14 @@ public class SamplePointVerifier extends BitmapVerifier {
     }
 
     @Override
-    public boolean verify(int[] bitmap, int offset, int stride, int width, int height) {
+    public boolean verify(int[] bitmap, int width, int height) {
         boolean success = true;
         int[] differenceMap = new int[bitmap.length];
         Arrays.fill(differenceMap, PASS_COLOR);
         for (int i = 0 ; i < mTestPoints.length ; i++) {
             int x = mTestPoints[i].x;
             int y = mTestPoints[i].y;
-            int index = indexFromXAndY(x, y, stride, offset);
+            int index = indexFromXAndY(x, y, width);
             if (!verifyPixel(bitmap[index], mExpectedColors[i])) {
                 Log.d(TAG, "Expected : " + Integer.toHexString(mExpectedColors[i]) +
                         " at position x = " + x + " y = " + y + " , tested color : " +
@@ -65,7 +65,7 @@ public class SamplePointVerifier extends BitmapVerifier {
         if (!success) {
             mDifferenceBitmap = Bitmap.createBitmap(ActivityTestBase.TEST_WIDTH,
                     ActivityTestBase.TEST_HEIGHT, Bitmap.Config.ARGB_8888);
-            mDifferenceBitmap.setPixels(differenceMap, offset, stride, 0, 0,
+            mDifferenceBitmap.setPixels(differenceMap, 0, width, 0, 0,
                     ActivityTestBase.TEST_WIDTH, ActivityTestBase.TEST_HEIGHT);
         }
         return success;

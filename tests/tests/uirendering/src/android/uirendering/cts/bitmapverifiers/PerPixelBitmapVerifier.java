@@ -53,12 +53,12 @@ public abstract class PerPixelBitmapVerifier extends BitmapVerifier {
         return Color.WHITE;
     }
 
-    public boolean verify(int[] bitmap, int offset, int stride, int width, int height) {
+    public boolean verify(int[] bitmap, int width, int height) {
         int failures = 0;
         int[] differenceMap = new int[bitmap.length];
         for (int y = 0 ; y < height ; y++) {
             for (int x = 0 ; x < width ; x++) {
-                int index = indexFromXAndY(x, y, stride, offset);
+                int index = indexFromXAndY(x, y, width);
                 if (!verifyPixel(x, y, bitmap[index])) {
                     if (failures < 50) {
                         Log.d(TAG, "Expected : " + Integer.toHexString(getExpectedColor(x, y))
@@ -77,10 +77,8 @@ public abstract class PerPixelBitmapVerifier extends BitmapVerifier {
         Log.d(TAG, failures + " failures observed out of "
                 + toleratedFailures + " tolerated failures");
         if (!success) {
-            mDifferenceBitmap = Bitmap.createBitmap(ActivityTestBase.TEST_WIDTH,
-                    ActivityTestBase.TEST_HEIGHT, Bitmap.Config.ARGB_8888);
-            mDifferenceBitmap.setPixels(differenceMap, offset, stride, 0, 0,
-                    ActivityTestBase.TEST_WIDTH, ActivityTestBase.TEST_HEIGHT);
+            mDifferenceBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+            mDifferenceBitmap.setPixels(differenceMap, 0, width, 0, 0, width, height);
         }
         return success;
     }

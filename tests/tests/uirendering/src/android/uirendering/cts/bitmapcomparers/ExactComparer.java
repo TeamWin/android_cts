@@ -26,13 +26,12 @@ public class ExactComparer extends BitmapComparer {
     /**
      * This method does an exact 1 to 1 comparison of the two bitmaps
      */
-    public boolean verifySame(int[] ideal, int[] given, int offset, int stride, int width,
-            int height) {
+    public boolean verifySame(int[] ideal, int[] given, int width, int height) {
         int count = 0;
 
         for (int y = 0 ; y < height ; y++) {
             for (int x = 0 ; x < width ; x++) {
-                int index = indexFromXAndY(x, y, stride, offset);
+                int index = indexFromXAndY(x, y, width);
                 if (ideal[index] != given[index]) {
                     if (count < 50) {
                         Log.d(TAG, "Failure on position x = " + x + " y = " + y);

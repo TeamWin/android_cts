@@ -96,11 +96,6 @@ public abstract class ActivityTestBase {
         }
     }
 
-    @Before
-    public void setUp() {
-        mBitmapAsserter.setUp(getActivity());
-    }
-
     @After
     public void tearDown() {
         if (mTestCaseBuilder != null) {
@@ -253,7 +248,7 @@ public abstract class ActivityTestBase {
         public void runWithoutVerification() {
             runWithVerifier(new BitmapVerifier() {
                 @Override
-                public boolean verify(int[] bitmap, int offset, int stride, int width, int height) {
+                public boolean verify(int[] bitmap, int width, int height) {
                     return true;
                 }
             });
