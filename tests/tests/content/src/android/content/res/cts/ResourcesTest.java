@@ -853,4 +853,18 @@ public class ResourcesTest extends AndroidTestCase {
 
         assertEquals(font, font2);
     }
+
+    public void testGetFont_resolveByFontTable() {
+        assertEquals(Typeface.NORMAL, mResources.getFont(R.font.sample_regular_font).getStyle());
+        assertEquals(Typeface.BOLD, mResources.getFont(R.font.sample_bold_font).getStyle());
+        assertEquals(Typeface.ITALIC, mResources.getFont(R.font.sample_italic_font).getStyle());
+        assertEquals(Typeface.BOLD_ITALIC,
+                mResources.getFont(R.font.sample_bolditalic_font).getStyle());
+
+        assertEquals(Typeface.NORMAL, mResources.getFont(R.font.sample_regular_family).getStyle());
+        assertEquals(Typeface.BOLD, mResources.getFont(R.font.sample_bold_family).getStyle());
+        assertEquals(Typeface.ITALIC, mResources.getFont(R.font.sample_italic_family).getStyle());
+        assertEquals(Typeface.BOLD_ITALIC,
+                mResources.getFont(R.font.sample_bolditalic_family).getStyle());
+    }
 }
