@@ -60,7 +60,7 @@ abstract class AutoFillServiceTestCase {
 
     @BeforeClass
     public static void setUiBot() throws Exception {
-        sUiBot = new UiBot(InstrumentationRegistry.getInstrumentation(), UI_TIMEOUT_MS);
+        sUiBot = new UiBot(InstrumentationRegistry.getInstrumentation());
     }
 
     @BeforeClass
