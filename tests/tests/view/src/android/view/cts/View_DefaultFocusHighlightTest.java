@@ -32,6 +32,7 @@ import android.support.test.runner.AndroidJUnit4;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 
@@ -101,6 +102,8 @@ public class View_DefaultFocusHighlightTest {
     public void testIsDefaultFocusHighlightNeeded() {
         Activity activity = mActivityRule.getActivity();
         final Button button = (Button) activity.findViewById(R.id.button_to_test_highlight_needed);
+        final ImageView imageView =
+                (ImageView) activity.findViewById(R.id.image_view_to_test_highlight_needed);
 
         final Drawable[] drawables = new Drawable[] {
                 null,  // null
@@ -127,6 +130,24 @@ public class View_DefaultFocusHighlightTest {
                 button.setDefaultFocusHighlightEnabled(false);
                 isNeeded = button.isDefaultFocusHighlightNeeded(drawables[i], drawables[j]);
                 assertFalse(isNeeded);
+            }
+        }
+
+        // ImageView
+        for (int k = 0; k < drawables.length; k++) {
+            imageView.setImageDrawable(drawables[k]);
+            for (int i = 0; i < drawables.length; i++) {
+                for (int j = 0; j < drawables.length; j++) {
+                    // Turn on default focus highlight.
+                    imageView.setDefaultFocusHighlightEnabled(true);
+                    isNeeded = imageView.isDefaultFocusHighlightNeeded(drawables[i], drawables[j]);
+                    expected = lackFocusState[i] && lackFocusState[j] && lackFocusState[k];
+                    assertTrue(isNeeded == expected);
+                    // Turn off default focus highlight.
+                    imageView.setDefaultFocusHighlightEnabled(false);
+                    isNeeded = imageView.isDefaultFocusHighlightNeeded(drawables[i], drawables[j]);
+                    assertFalse(isNeeded);
+                }
             }
         }
     }
