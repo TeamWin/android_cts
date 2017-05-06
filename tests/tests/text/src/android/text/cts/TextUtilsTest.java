@@ -259,8 +259,6 @@ public class TextUtilsTest  {
 
     @Test
     public void testConcat() {
-        // issue 1695243
-        // the javadoc for concat() doesn't describe the expected result when parameter is empty.
         assertEquals("", TextUtils.concat().toString());
 
         assertEquals("first", TextUtils.concat("first").toString());
@@ -291,14 +289,73 @@ public class TextUtilsTest  {
 
         assertEquals(string1, TextUtils.concat(string1));
 
-        // issue 1695243, the javadoc for concat() doesn't describe
-        // the expected result when parameters are null.
         assertEquals(null, TextUtils.concat((CharSequence) null));
     }
 
-    @Test(expected=NullPointerException.class)
-    public void testConcatNullArray() {
+    @Test(expected = NullPointerException.class)
+    public void testConcat_NullArray() {
         TextUtils.concat((CharSequence[]) null);
+    }
+
+    @Test
+    public void testConcat_NullParameters() {
+        assertEquals("nullA", TextUtils.concat(null, "A"));
+        assertEquals("Anull", TextUtils.concat("A", null));
+        assertEquals("AnullB", TextUtils.concat("A", null, "B"));
+
+        final SpannableString piece = new SpannableString("A");
+        final Object span = new Object();
+        piece.setSpan(span, 0, piece.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+        final Spanned result = (Spanned) TextUtils.concat(piece, null);
+        assertEquals("Anull", result.toString());
+        final Object[] spans = result.getSpans(0, result.length(), Object.class);
+        assertEquals(1, spans.length);
+        assertSame(span, spans[0]);
+        assertEquals(0, result.getSpanStart(spans[0]));
+        assertEquals(piece.length(), result.getSpanEnd(spans[0]));
+    }
+
+    @Test
+    public void testConcat_twoParagraphSpans() {
+        // Two paragraph spans. The first will get extended to cover the whole string and the second
+        // will be dropped.
+        final SpannableString string1 = new SpannableString("a");
+        final SpannableString string2 = new SpannableString("b");
+        final Object span1 = new Object();
+        final Object span2 = new Object();
+        string1.setSpan(span1, 0, string1.length(), Spanned.SPAN_PARAGRAPH);
+        string2.setSpan(span2, 0, string2.length(), Spanned.SPAN_PARAGRAPH);
+
+        final Spanned result = (Spanned) TextUtils.concat(string1, string2);
+        assertEquals("ab", result.toString());
+        final Object[] spans = result.getSpans(0, result.length(), Object.class);
+        assertEquals(1, spans.length);
+        assertSame(span1, spans[0]);
+        assertEquals(0, result.getSpanStart(spans[0]));
+        assertEquals(result.length(), result.getSpanEnd(spans[0]));
+    }
+
+    @Test
+    public void testConcat_oneParagraphSpanAndOneInclusiveSpan() {
+        // One paragraph span and one double-inclusive span. The first will get extended to cover
+        // the whole string and the second will be kept.
+        final SpannableString string1 = new SpannableString("a");
+        final SpannableString string2 = new SpannableString("b");
+        final Object span1 = new Object();
+        final Object span2 = new Object();
+        string1.setSpan(span1, 0, string1.length(), Spanned.SPAN_PARAGRAPH);
+        string2.setSpan(span2, 0, string2.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+
+        final Spanned result = (Spanned) TextUtils.concat(string1, string2);
+        assertEquals("ab", result.toString());
+        final Object[] spans = result.getSpans(0, result.length(), Object.class);
+        assertEquals(2, spans.length);
+        assertSame(span1, spans[0]);
+        assertEquals(0, result.getSpanStart(spans[0]));
+        assertEquals(result.length(), result.getSpanEnd(spans[0]));
+        assertSame(span2, spans[1]);
+        assertEquals(string1.length(), result.getSpanStart(spans[1]));
+        assertEquals(result.length(), result.getSpanEnd(spans[1]));
     }
 
     @Test
