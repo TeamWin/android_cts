@@ -19,6 +19,7 @@ package com.android.cts.storageapp;
 import static com.android.cts.storageapp.Utils.TAG;
 import static com.android.cts.storageapp.Utils.makeUniqueFile;
 import static com.android.cts.storageapp.Utils.useFallocate;
+import static com.android.cts.storageapp.Utils.useWrite;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -30,6 +31,8 @@ import android.system.Os;
 import android.util.Log;
 
 import java.io.File;
+import java.util.Objects;
+import java.util.UUID;
 
 public class UtilsReceiver extends BroadcastReceiver {
     public static final String EXTRA_FRACTION = "fraction";
@@ -52,15 +55,37 @@ public class UtilsReceiver extends BroadcastReceiver {
 
         long allocated = 0;
         try {
+            // When shared storage is backed by internal, then pivot our cache
+            // files between the two locations to ensure clearing logic works.
+            final File intDir = context.getCacheDir();
+            final File extDir = context.getExternalCacheDir();
+            final UUID intUuid = sm.getUuidForPath(intDir);
+            final UUID extUuid = sm.getUuidForPath(extDir);
+
+            Log.d(TAG, "Found internal " + intUuid + " and external " + extUuid);
+            final boolean doPivot = Objects.equals(intUuid, extUuid);
+
             final double fraction = extras.getDouble(EXTRA_FRACTION, 0);
-            final long quota = sm.getCacheQuotaBytes(sm.getUuidForPath(context.getCacheDir()));
+            final long quota = sm.getCacheQuotaBytes(intUuid);
             final long bytes = (long) (quota * fraction);
             final long time = extras.getLong(EXTRA_TIME, System.currentTimeMillis());
 
+            int i = 0;
             while (allocated < bytes) {
-                final File f = makeUniqueFile(context.getCacheDir());
+                final File target;
+                if (doPivot) {
+                    target = (i++ % 2) == 0 ? intDir : extDir;
+                } else {
+                    target = intDir;
+                }
+
+                final File f = makeUniqueFile(target);
                 final long size = 1024 * 1024;
-                useFallocate(f, size);
+                if (target == intDir) {
+                    useFallocate(f, size);
+                } else {
+                    useWrite(f, size);
+                }
                 f.setLastModified(time);
                 allocated += Os.stat(f.getAbsolutePath()).st_blocks * 512;
             }
