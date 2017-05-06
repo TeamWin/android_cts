@@ -89,5 +89,10 @@
         android:orientation="vertical">
     </LinearLayout>
 
+    <Button
+        android:id="@+id/button_to_test_highlight_needed"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/id_ok"/>
 </LinearLayout>
 

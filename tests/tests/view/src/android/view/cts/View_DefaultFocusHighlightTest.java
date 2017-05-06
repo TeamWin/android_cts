@@ -20,6 +20,11 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.RippleDrawable;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
@@ -89,5 +94,40 @@ public class View_DefaultFocusHighlightTest {
         assertTrue(editText.getDefaultFocusHighlightEnabled());
         assertFalse(button.getDefaultFocusHighlightEnabled());
         assertFalse(linearLayout.getDefaultFocusHighlightEnabled());
+    }
+
+    @UiThreadTest
+    @Test
+    public void testIsDefaultFocusHighlightNeeded() {
+        Activity activity = mActivityRule.getActivity();
+        final Button button = (Button) activity.findViewById(R.id.button_to_test_highlight_needed);
+
+        final Drawable[] drawables = new Drawable[] {
+                null,  // null
+                new ColorDrawable(Color.WHITE), // not stateful
+                new RippleDrawable(ColorStateList.valueOf(Color.WHITE), null, null) // stateful
+        };
+        final boolean[] lackFocusState = new boolean[]{
+                true, // for null
+                true, // for not stateful
+                false, // for stateful
+        };
+
+        boolean isNeeded, expected;
+
+        // View
+        for (int i = 0; i < drawables.length; i++) {
+            for (int j = 0; j < drawables.length; j++) {
+                // Turn on default focus highlight.
+                button.setDefaultFocusHighlightEnabled(true);
+                isNeeded = button.isDefaultFocusHighlightNeeded(drawables[i], drawables[j]);
+                expected = lackFocusState[i] && lackFocusState[j];
+                assertTrue(isNeeded == expected);
+                // Turn off default focus highlight.
+                button.setDefaultFocusHighlightEnabled(false);
+                isNeeded = button.isDefaultFocusHighlightNeeded(drawables[i], drawables[j]);
+                assertFalse(isNeeded);
+            }
+        }
     }
 }
