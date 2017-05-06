@@ -19,6 +19,7 @@ package com.android.cts.storagestatsapp;
 import static android.os.storage.StorageManager.UUID_DEFAULT;
 
 import static com.android.cts.storageapp.Utils.CACHE_ALL;
+import static com.android.cts.storageapp.Utils.CODE_ALL;
 import static com.android.cts.storageapp.Utils.DATA_ALL;
 import static com.android.cts.storageapp.Utils.MB_IN_BYTES;
 import static com.android.cts.storageapp.Utils.PKG_A;
@@ -49,6 +50,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.UserHandle;
 import android.os.storage.StorageManager;
+import android.support.test.uiautomator.UiDevice;
 import android.system.Os;
 import android.system.StructUtsname;
 import android.test.InstrumentationTestCase;
@@ -56,6 +58,8 @@ import android.util.Log;
 import android.util.MutableLong;
 
 import com.android.cts.storageapp.UtilsReceiver;
+
+import junit.framework.AssertionFailedError;
 
 import java.io.File;
 import java.util.UUID;
@@ -110,6 +114,10 @@ public class StorageStatsTest extends InstrumentationTestCase {
         final StorageStats afterApp = stats.queryStatsForUid(UUID_DEFAULT, uid);
         final StorageStats afterUser = stats.queryStatsForUser(UUID_DEFAULT, user);
 
+        final long deltaCode = CODE_ALL;
+        assertMostlyEquals(deltaCode, afterApp.getAppBytes() - beforeApp.getAppBytes());
+        assertMostlyEquals(deltaCode, afterUser.getAppBytes() - beforeUser.getAppBytes());
+
         final long deltaData = DATA_ALL;
         assertMostlyEquals(deltaData, afterApp.getDataBytes() - beforeApp.getDataBytes());
         assertMostlyEquals(deltaData, afterUser.getDataBytes() - beforeUser.getDataBytes());
@@ -134,6 +142,16 @@ public class StorageStatsTest extends InstrumentationTestCase {
 
         assertMostlyEquals(DATA_ALL, bs.getDataBytes());
         assertMostlyEquals(CACHE_ALL, bs.getCacheBytes());
+
+        // Since OBB storage space may be shared or isolated between users,
+        // we'll accept either expected or double usage.
+        try {
+            assertMostlyEquals(CODE_ALL * 2, as.getAppBytes(), 5 * MB_IN_BYTES);
+            assertMostlyEquals(CODE_ALL * 1, bs.getAppBytes(), 5 * MB_IN_BYTES);
+        } catch (AssertionFailedError e) {
+            assertMostlyEquals(CODE_ALL * 4, as.getAppBytes(), 5 * MB_IN_BYTES);
+            assertMostlyEquals(CODE_ALL * 2, bs.getAppBytes(), 5 * MB_IN_BYTES);
+        }
     }
 
     /**
@@ -205,7 +223,7 @@ public class StorageStatsTest extends InstrumentationTestCase {
         // TODO: remove this once 34723223 is fixed
         logCommand("sync");
 
-        final long manualSize = getSizeManual(Environment.getExternalStorageDirectory());
+        final long manualSize = getSizeManual(Environment.getExternalStorageDirectory(), true);
         final long statsSize = stats.queryExternalStatsForUser(UUID_DEFAULT, user).getTotalBytes();
 
         assertMostlyEquals(manualSize, statsSize);
@@ -228,9 +246,11 @@ public class StorageStatsTest extends InstrumentationTestCase {
 
         final File filesDir = context.getFilesDir();
         final UUID filesUuid = sm.getUuidForPath(filesDir);
+        final String pmUuid = filesUuid.equals(StorageManager.UUID_DEFAULT) ? "internal"
+                : filesUuid.toString();
 
         final long beforeAllocatable = sm.getAllocatableBytes(filesUuid);
-        final long beforeFree = stats.getFreeBytes(UUID_DEFAULT);
+        final long beforeFree = stats.getFreeBytes(filesUuid);
         final long beforeRaw = filesDir.getUsableSpace();
 
         Log.d(TAG, "Before raw " + beforeRaw + ", free " + beforeFree + ", allocatable "
@@ -247,16 +267,16 @@ public class StorageStatsTest extends InstrumentationTestCase {
         // Apps using up some cache space shouldn't change how much we can
         // allocate, or how much we think is free; but it should decrease real
         // disk space.
-        if (stats.isQuotaSupported(UUID_DEFAULT)) {
+        if (stats.isQuotaSupported(filesUuid)) {
             assertMostlyEquals(beforeAllocatable,
                     sm.getAllocatableBytes(filesUuid), 10 * MB_IN_BYTES);
             assertMostlyEquals(beforeFree,
-                    stats.getFreeBytes(UUID_DEFAULT), 10 * MB_IN_BYTES);
+                    stats.getFreeBytes(filesUuid), 10 * MB_IN_BYTES);
         } else {
             assertMostlyEquals(beforeAllocatable - totalAllocated,
                     sm.getAllocatableBytes(filesUuid), 10 * MB_IN_BYTES);
             assertMostlyEquals(beforeFree - totalAllocated,
-                    stats.getFreeBytes(UUID_DEFAULT), 10 * MB_IN_BYTES);
+                    stats.getFreeBytes(filesUuid), 10 * MB_IN_BYTES);
         }
         assertMostlyEquals(beforeRaw - totalAllocated,
                 filesDir.getUsableSpace(), 10 * MB_IN_BYTES);
@@ -267,7 +287,12 @@ public class StorageStatsTest extends InstrumentationTestCase {
         // Allocate some space for ourselves, which should trim away at
         // over-quota app first, even though its files are newer.
         final long clear1 = filesDir.getUsableSpace() + (targetB / 2);
-        sm.allocateBytes(filesUuid, clear1);
+        if (stats.isQuotaSupported(filesUuid)) {
+            sm.allocateBytes(filesUuid, clear1);
+        } else {
+            UiDevice.getInstance(getInstrumentation())
+                    .executeShellCommand("pm trim-caches " + clear1 + " " + pmUuid);
+        }
 
         assertMostlyEquals(targetA, getCacheBytes(PKG_A, user));
         assertMostlyEquals(targetB / 2, getCacheBytes(PKG_B, user), 2 * MB_IN_BYTES);
@@ -277,7 +302,12 @@ public class StorageStatsTest extends InstrumentationTestCase {
         // they're tied for cache ratios, we expect to clear about half of the
         // remaining space from each of them.
         final long clear2 = filesDir.getUsableSpace() + (targetB / 2);
-        sm.allocateBytes(filesUuid, clear2);
+        if (stats.isQuotaSupported(filesUuid)) {
+            sm.allocateBytes(filesUuid, clear2);
+        } else {
+            UiDevice.getInstance(getInstrumentation())
+                    .executeShellCommand("pm trim-caches " + clear2 + " " + pmUuid);
+        }
 
         assertMostlyEquals(targetA / 2, getCacheBytes(PKG_A, user), 2 * MB_IN_BYTES);
         assertMostlyEquals(targetA / 2, getCacheBytes(PKG_B, user), 2 * MB_IN_BYTES);
@@ -286,6 +316,11 @@ public class StorageStatsTest extends InstrumentationTestCase {
     public void testCacheBehavior() throws Exception {
         final Context context = getContext();
         final StorageManager sm = context.getSystemService(StorageManager.class);
+        final StorageStatsManager stats = context.getSystemService(StorageStatsManager.class);
+
+        final UUID filesUuid = sm.getUuidForPath(context.getFilesDir());
+        final String pmUuid = filesUuid.equals(StorageManager.UUID_DEFAULT) ? "internal"
+                : filesUuid.toString();
 
         final File normal = new File(context.getCacheDir(), "normal");
         final File group = new File(context.getCacheDir(), "group");
@@ -321,7 +356,12 @@ public class StorageStatsTest extends InstrumentationTestCase {
         tomb.setLastModified(tombTime);
 
         final long clear1 = group.getUsableSpace() + (8 * MB_IN_BYTES);
-        sm.allocateBytes(sm.getUuidForPath(group), clear1);
+        if (stats.isQuotaSupported(filesUuid)) {
+            sm.allocateBytes(filesUuid, clear1);
+        } else {
+            UiDevice.getInstance(getInstrumentation())
+                    .executeShellCommand("pm trim-caches " + clear1 + " " + pmUuid);
+        }
 
         assertTrue(a.exists());
         assertTrue(b.exists());

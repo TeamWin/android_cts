@@ -57,6 +57,8 @@ public class Utils {
     public static final long CACHE_EXT = (11) * MB_IN_BYTES;
     public static final long CACHE_ALL = CACHE_INT + CACHE_EXT; // 78MB
 
+    public static final long CODE_ALL = 29 * MB_IN_BYTES;
+
     public static void useSpace(Context c) throws Exception {
         // We use prime numbers for all values so that we can easily identify
         // which file(s) are missing from broken test results.
@@ -72,6 +74,8 @@ public class Utils {
         final File subdir = makeUniqueFile(c.getCacheDir());
         Os.mkdir(subdir.getAbsolutePath(), 0700);
         useFallocate(makeUniqueFile(subdir), 23 * MB_IN_BYTES);
+
+        useWrite(makeUniqueFile(c.getObbDir()), 29 * MB_IN_BYTES);
     }
 
     public static void assertAtLeast(long expected, long actual) {
@@ -125,10 +129,19 @@ public class Utils {
     }
 
     public static long getSizeManual(File dir) throws Exception {
+        return getSizeManual(dir, false);
+    }
+
+    public static long getSizeManual(File dir, boolean excludeObb) throws Exception {
         long size = getAllocatedSize(dir);
         for (File f : dir.listFiles()) {
             if (f.isDirectory()) {
-                size += getSizeManual(f);
+                if (excludeObb && f.getName().equalsIgnoreCase("obb")
+                        && f.getParentFile().getName().equalsIgnoreCase("Android")) {
+                    Log.d(TAG, "Ignoring OBB directory " + f);
+                } else {
+                    size += getSizeManual(f, excludeObb);
+                }
             } else {
                 size += getAllocatedSize(f);
             }
