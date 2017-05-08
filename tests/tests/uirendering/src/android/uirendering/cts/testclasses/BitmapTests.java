@@ -152,14 +152,14 @@ public class BitmapTests extends ActivityTestBase {
     public void testChangeDuringUiAnimation() {
         class BlueOrRedVerifier extends BitmapVerifier {
             @Override
-            public boolean verify(int[] bitmap, int width, int height) {
+            public boolean verify(int[] bitmap, int offset, int stride, int width, int height) {
                 MSSIMComparer comparer = new MSSIMComparer(0.99);
-                int[] red  = new int[width * height];
+                int[] red  = new int[offset + height * stride];
                 Arrays.fill(red, Color.RED);
-                int[] blue  = new int[width * height];
+                int[] blue  = new int[offset + height * stride];
                 Arrays.fill(blue, Color.BLUE);
-                boolean isRed = comparer.verifySame(red, bitmap, width, height);
-                boolean isBlue = comparer.verifySame(blue, bitmap, width, height);
+                boolean isRed = comparer.verifySame(red, bitmap, offset, stride, width, height);
+                boolean isBlue = comparer.verifySame(blue, bitmap, offset, stride, width, height);
                 return isRed || isBlue;
             }
         }
