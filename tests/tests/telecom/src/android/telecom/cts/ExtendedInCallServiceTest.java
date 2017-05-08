@@ -103,11 +103,14 @@ public class ExtendedInCallServiceTest extends BaseTelecomTestWithMockServices {
         assertCallState(call, Call.STATE_DIALING);
 
         final int currentInvokeCount = mOnCallAudioStateChangedCounter.getInvokeCount();
-
+        mOnCallAudioStateChangedCounter.waitForCount(WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
+        CallAudioState callAudioState =
+                (CallAudioState) mOnCallAudioStateChangedCounter.getArgs(0)[0];
 
         // We need to check what audio routes are available. If speaker and either headset or
         // earpiece aren't available, then we should skip this test.
-        int availableRoutes = connection.getCallAudioState().getSupportedRouteMask();
+
+        int availableRoutes = callAudioState.getSupportedRouteMask();
         if ((availableRoutes & CallAudioState.ROUTE_SPEAKER) == 0) {
             return;
         }
