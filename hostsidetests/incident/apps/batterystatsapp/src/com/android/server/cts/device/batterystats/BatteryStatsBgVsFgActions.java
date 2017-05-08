@@ -194,12 +194,21 @@ public class BatteryStatsBgVsFgActions {
     }
 
     private static void doWifiScan(Context ctx, String requestCode) {
+        // Sometimes a scan was already running (from a different uid), so the first scan doesn't
+        // start when requested. Therefore, additionally wait for whatever scan is currently running
+        // to finish, then request a scan again - at least one of these two scans should be
+        // attributed to this app.
+        doWifiScanOnce(ctx);
+        doWifiScanOnce(ctx);
+        tellHostActionFinished(ACTION_WIFI_SCAN, requestCode);
+    }
+
+    private static void doWifiScanOnce(Context ctx) {
         IntentFilter intentFilter = new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
         CountDownLatch onReceiveLatch = new CountDownLatch(1);
         BroadcastReceiver receiver = registerReceiver(ctx, onReceiveLatch, intentFilter);
         ctx.getSystemService(WifiManager.class).startScan();
         waitForReceiver(ctx, 60_000, onReceiveLatch, receiver);
-        tellHostActionFinished(ACTION_WIFI_SCAN, requestCode);
     }
 
     private static void doWifiDownload(Context ctx, String requestCode) {
