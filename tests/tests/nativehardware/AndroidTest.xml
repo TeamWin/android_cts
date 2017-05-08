@@ -14,14 +14,12 @@
      limitations under the License.
 -->
 <configuration description="Config for CTS Native Hardware test cases">
-    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
-        <option name="cleanup" value="true" />
-        <option name="push" value="CtsNativeHardwareTestCases->/data/local/tmp/CtsNativeHardwareTestCases" />
-        <option name="append-bitness" value="true" />
+    <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
+        <option name="cleanup-apks" value="true" />
+        <option name="test-file-name" value="CtsNativeHardwareTestCases.apk" />
     </target_preparer>
-    <test class="com.android.tradefed.testtype.GTest" >
-        <option name="native-test-device-path" value="/data/local/tmp" />
-        <option name="module-name" value="CtsNativeHardwareTestCases" />
-        <option name="runtime-hint" value="1s" />
+    <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
+        <option name="package" value="android.hardware.nativehardware.cts" />
+        <option name="runtime-hint" value="10s" />
     </test>
 </configuration>
