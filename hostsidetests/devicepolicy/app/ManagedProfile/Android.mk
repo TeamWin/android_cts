@@ -26,8 +26,14 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_JAVA_LIBRARIES := android.test.runner cts-junit
 
-LOCAL_STATIC_JAVA_LIBRARIES = android-support-v4 ctstestrunner compatibility-device-util \
-	ub-uiautomator android-support-test guava
+LOCAL_STATIC_JAVA_LIBRARIES = \
+	android-support-v4 \
+	ctstestrunner \
+	compatibility-device-util \
+	ub-uiautomator \
+	android-support-test \
+	guava \
+	legacy-android-test
 
 LOCAL_SDK_VERSION := test_current
 

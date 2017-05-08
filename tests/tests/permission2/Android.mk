@@ -26,7 +26,10 @@ LOCAL_COMPATIBILITY_SUITE := cts general-tests
 
 LOCAL_JAVA_LIBRARIES := telephony-common
 
-LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util ctstestrunner
+LOCAL_STATIC_JAVA_LIBRARIES := \
+	compatibility-device-util \
+	ctstestrunner \
+	legacy-android-test
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 

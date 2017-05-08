@@ -33,7 +33,8 @@ LOCAL_STATIC_JAVA_LIBRARIES += \
     mockito-target-minus-junit4 \
     android-common \
     compatibility-device-util \
-    ctstestrunner
+    ctstestrunner \
+    legacy-android-test
 #LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util android-support-test
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
@@ -43,4 +44,4 @@ LOCAL_COMPATIBILITY_SUITE := cts general-tests
 
 LOCAL_SDK_VERSION := current
 
-include $(BUILD_CTS_PACKAGE)
+include $(BUILD_PACKAGE)
