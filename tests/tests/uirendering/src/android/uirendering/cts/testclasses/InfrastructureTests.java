@@ -57,11 +57,14 @@ public class InfrastructureTests extends ActivityTestBase {
         };
         BitmapComparer inverseComparer = new BitmapComparer() {
             @Override
-            public boolean verifySame(int[] ideal, int[] given, int width, int height) {
+            public boolean verifySame(int[] ideal, int[] given, int offset, int stride, int width,
+                    int height) {
+
                 // Return true if the images aren't even 10% similar. They should be completely
                 // different, since they should both be completely different colors.
                 final float threshold = 0.1f;
-                return !(new MSSIMComparer(threshold)).verifySame(ideal, given, width, height);
+                return !(new MSSIMComparer(threshold)).verifySame(ideal, given, offset, stride,
+                        width, height);
             }
         };
         createTest()

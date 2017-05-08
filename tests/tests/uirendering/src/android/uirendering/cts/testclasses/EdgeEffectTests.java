@@ -70,6 +70,11 @@ public class EdgeEffectTests {
         return mActivityRule.getActivity();
     }
 
+    @Before
+    public void setUp() {
+        mBitmapAsserter.setUp(getActivity());
+    }
+
     private void assertEdgeEffect(EdgeEffectInitializer initializer, int goldenId) {
         Bitmap bitmap = Bitmap.createBitmap(WIDTH, HEIGHT, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
