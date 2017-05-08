@@ -12,83 +12,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Build the unit tests.
+
 LOCAL_PATH:= $(call my-dir)
 
-#
-# Reusable test classes and helpers.
-#
 include $(CLEAR_VARS)
-
-LOCAL_MODULE := cts-nativehardware-tests
-
-LOCAL_MODULE_TAGS := tests
-
-LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
-
-LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util
-
-LOCAL_JAVA_LIBRARIES := platform-test-annotations
-
-LOCAL_SDK_VERSION := current
-
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
-
-include $(BUILD_STATIC_JAVA_LIBRARY)
-
-#
-# JNI components for testing NDK.
-#
-include $(CLEAR_VARS)
-
-LOCAL_MODULE := libcts-nativehardware-ndk-jni
-
-LOCAL_CFLAGS += -Werror -Wall -Wextra
-
-LOCAL_MODULE_TAGS := tests
+LOCAL_MODULE:= CtsNativeHardwareTestCases
+LOCAL_MULTILIB := both
+LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE)32
+LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE)64
 
 LOCAL_SRC_FILES := \
-    jni/AHardwareBufferTest.cpp \
-    jni/android_hardware_cts_AHardwareBufferNativeTest.cpp \
-    jni/NativeTestHelper.cpp
+    src/AHardwareBufferTest.cpp \
 
-LOCAL_C_INCLUDES := $(JNI_H_INCLUDE)
+LOCAL_SHARED_LIBRARIES := \
+  libnativewindow \
+  liblog \
 
-LOCAL_SHARED_LIBRARIES := libandroid liblog
+LOCAL_STATIC_LIBRARIES := \
+  libgtest_ndk_c++ \
+  libgtest_main_ndk_c++ \
 
-LOCAL_SDK_VERSION := current
-
-LOCAL_NDK_STL_VARIANT := c++_shared
-
-include $(BUILD_SHARED_LIBRARY)
-
-#
-# CtsNativeHardwareTestCases package
-#
-include $(CLEAR_VARS)
-
-LOCAL_MODULE_TAGS := tests
-
-LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
-
+LOCAL_CTS_TEST_PACKAGE := android.nativehardware
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts
 
-# include both the 32 and 64 bit versions
-LOCAL_MULTILIB := both
-
-LOCAL_STATIC_JAVA_LIBRARIES := \
-    compatibility-device-util \
-    ctstestrunner \
-    cts-nativehardware-tests \
-
-LOCAL_JNI_SHARED_LIBRARIES := libcts-nativehardware-ndk-jni
-
-LOCAL_PACKAGE_NAME := CtsNativeHardwareTestCases
-
 LOCAL_SDK_VERSION := current
+LOCAL_NDK_STL_VARIANT := c++_static
 
-LOCAL_JAVA_LIBRARIES := android.test.runner
-
-LOCAL_NDK_STL_VARIANT := c++_shared
-
-include $(BUILD_CTS_PACKAGE)
+include $(BUILD_NATIVE_TEST)
