@@ -23,6 +23,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff.Mode;
 import android.os.Bundle;
+import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
@@ -74,6 +75,8 @@ public class SurfaceViewCtsActivity extends Activity {
         private int mOldWOnSizeChanged;
         private int mOldHOnSizeChanged;
         private int mVisibilityOnWindowVisibilityChanged;
+
+        Surface mSurface;
 
         public MockSurfaceView(Context context) {
             super(context);
@@ -173,6 +176,8 @@ public class SurfaceViewCtsActivity extends Activity {
 
         public void surfaceCreated(SurfaceHolder holder) {
             mSurfaceCreatedCalled = true;
+
+            mSurface = holder.getSurface();
 
             // Use mock canvas listening to the drawColor() calling.
             mCanvas = new Canvas(Bitmap.createBitmap( BITMAP_WIDTH,
