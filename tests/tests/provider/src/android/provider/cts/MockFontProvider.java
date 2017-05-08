@@ -21,25 +21,22 @@ import android.content.ContentProvider;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.database.MatrixCursor;
-import android.graphics.fonts.FontVariationAxis;
 import android.net.Uri;
-import android.os.CancellationSignal;
 import android.os.ParcelFileDescriptor;
-import android.util.SparseArray;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.HashMap;
 import java.io.File;
-import java.nio.file.Files;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.FileNotFoundException;
+import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MockFontProvider extends ContentProvider {
     final static String AUTHORITY = "android.provider.fonts.cts.font";
@@ -50,9 +47,20 @@ public class MockFontProvider extends ContentProvider {
     private static final int SAMPLE_FONT_FILE_0_ID = 0;
     private static final int SAMPLE_FONT_FILE_1_ID = 1;
 
+    static final String SINGLE_FONT_FAMILY_QUERY = "singleFontFamily";
+    static final String SINGLE_FONT_FAMILY2_QUERY = "singleFontFamily2";
+    static final String MULTIPLE_FAMILY_QUERY = "multipleFontFamily";
+    static final String NOT_FOUND_QUERY = "notFound";
+    static final String UNAVAILABLE_QUERY = "unavailable";
+    static final String MALFORMED_QUERY = "malformed";
+    static final String NOT_FOUND_SECOND_QUERY = "notFoundSecond";
+    static final String NOT_FOUND_THIRD_QUERY = "notFoundThird";
+    static final String NEGATIVE_ERROR_CODE_QUERY = "negativeCode";
+    static final String MANDATORY_FIELDS_ONLY_QUERY = "mandatoryFields";
+
     static class Font {
         public Font(int id, int fileId, int ttcIndex, String varSettings, int weight, int italic,
-                int resultCode) {
+                int resultCode, boolean returnAllFields) {
             mId = id;
             mFileId = fileId;
             mTtcIndex = ttcIndex;
@@ -60,6 +68,7 @@ public class MockFontProvider extends ContentProvider {
             mWeight = weight;
             mItalic = italic;
             mResultCode = resultCode;
+            mReturnAllFields = returnAllFields;
         }
 
         public int getId() {
@@ -90,6 +99,10 @@ public class MockFontProvider extends ContentProvider {
             return mFileId;
         }
 
+        public boolean isReturnAllFields() {
+            return mReturnAllFields;
+        }
+
         private int mId;
         private int mFileId;
         private int mTtcIndex;
@@ -97,6 +110,7 @@ public class MockFontProvider extends ContentProvider {
         private int mWeight;
         private int mItalic;
         private int mResultCode;
+        private final boolean mReturnAllFields;
     };
 
     private static Map<String, Font[]> QUERY_MAP;
@@ -104,21 +118,71 @@ public class MockFontProvider extends ContentProvider {
         HashMap<String, Font[]> map = new HashMap<>();
         int id = 0;
 
-        map.put("singleFontFamily", new Font[] {
-            new Font(id++, SAMPLE_FONT_FILE_0_ID, 0, null, 400, 0, Columns.RESULT_CODE_OK),
+        map.put(SINGLE_FONT_FAMILY_QUERY, new Font[] {
+            new Font(id++, SAMPLE_FONT_FILE_0_ID, 0, null, 400, 0, Columns.RESULT_CODE_OK, true),
         });
 
-        map.put("multipleFontFamily", new Font[] {
-            new Font(id++, SAMPLE_FONT_FILE_0_ID, 0, null, 400, 0, Columns.RESULT_CODE_OK),
-            new Font(id++, SAMPLE_FONT_FILE_1_ID, 0, null, 400, 0, Columns.RESULT_CODE_OK),
-            new Font(id++, SAMPLE_FONT_FILE_0_ID, 0, null, 700, 1, Columns.RESULT_CODE_OK),
-            new Font(id++, SAMPLE_FONT_FILE_1_ID, 0, null, 700, 1, Columns.RESULT_CODE_OK),
+        map.put(MULTIPLE_FAMILY_QUERY, new Font[] {
+            new Font(id++, SAMPLE_FONT_FILE_0_ID, 0, null, 400, 0, Columns.RESULT_CODE_OK, true),
+            new Font(id++, SAMPLE_FONT_FILE_1_ID, 0, null, 400, 0, Columns.RESULT_CODE_OK, true),
+            new Font(id++, SAMPLE_FONT_FILE_0_ID, 0, null, 700, 1, Columns.RESULT_CODE_OK, true),
+            new Font(id++, SAMPLE_FONT_FILE_1_ID, 0, null, 700, 1, Columns.RESULT_CODE_OK, true),
         });
+
+        map.put(SINGLE_FONT_FAMILY2_QUERY, new Font[] {
+                new Font(id++, SAMPLE_FONT_FILE_0_ID, 0, "'wght' 100", 700, 1,
+                        Columns.RESULT_CODE_OK, true),
+        });
+
+        map.put(NOT_FOUND_QUERY, new Font[] {
+                new Font(0, 0, 0, null, 400, 0, Columns.RESULT_CODE_FONT_NOT_FOUND, true),
+        });
+
+        map.put(UNAVAILABLE_QUERY, new Font[] {
+                new Font(0, 0, 0, null, 400, 0, Columns.RESULT_CODE_FONT_UNAVAILABLE, true),
+        });
+
+        map.put(MALFORMED_QUERY, new Font[] {
+                new Font(0, 0, 0, null, 400, 0, Columns.RESULT_CODE_MALFORMED_QUERY, true),
+        });
+
+        map.put(NOT_FOUND_SECOND_QUERY, new Font[] {
+                new Font(id++, SAMPLE_FONT_FILE_0_ID, 0, null, 700, 0, Columns.RESULT_CODE_OK,
+                        true),
+                new Font(0, 0, 0, null, 400, 0, Columns.RESULT_CODE_FONT_NOT_FOUND, true),
+        });
+
+        map.put(NOT_FOUND_THIRD_QUERY, new Font[] {
+                new Font(id++, SAMPLE_FONT_FILE_0_ID, 0, null, 700, 0, Columns.RESULT_CODE_OK,
+                        true),
+                new Font(0, 0, 0, null, 400, 0, Columns.RESULT_CODE_FONT_NOT_FOUND, true),
+                new Font(id++, SAMPLE_FONT_FILE_0_ID, 0, null, 700, 0, Columns.RESULT_CODE_OK,
+                        true),
+        });
+
+        map.put(NEGATIVE_ERROR_CODE_QUERY, new Font[] {
+                new Font(id++, SAMPLE_FONT_FILE_0_ID, 0, null, 700, 0, -5, true),
+        });
+
+        map.put(MANDATORY_FIELDS_ONLY_QUERY, new Font[] {
+                new Font(id++, SAMPLE_FONT_FILE_0_ID, 0, null, 400, 0,
+                        Columns.RESULT_CODE_OK, false),
+        });
+
 
         QUERY_MAP = Collections.unmodifiableMap(map);
     }
 
     private static Cursor buildCursor(Font[] in) {
+        if (!in[0].mReturnAllFields) {
+            MatrixCursor cursor = new MatrixCursor(new String[] { Columns._ID, Columns.FILE_ID });
+            for (Font font : in) {
+                MatrixCursor.RowBuilder builder = cursor.newRow();
+                builder.add(Columns._ID, font.getId());
+                builder.add(Columns.FILE_ID, font.getFileId());
+            }
+            return cursor;
+        }
         MatrixCursor cursor = new MatrixCursor(new String[] {
                 Columns._ID, Columns.TTC_INDEX, Columns.VARIATION_SETTINGS, Columns.WEIGHT,
                 Columns.ITALIC, Columns.RESULT_CODE, Columns.FILE_ID});
@@ -135,35 +199,42 @@ public class MockFontProvider extends ContentProvider {
         return cursor;
     }
 
-    public MockFontProvider() {
-    }
-
-    @Override
-    public ParcelFileDescriptor openFile(Uri uri, String mode) {
-        final int id = (int)ContentUris.parseId(uri);
-        final File targetFile = getCopiedFile(FONT_FILES[id]);
-        try {
-            return ParcelFileDescriptor.open(targetFile, ParcelFileDescriptor.MODE_READ_ONLY);
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public File getCopiedFile(String path) {
-        return new File(getContext().getFilesDir(), path);
-    }
-
-    @Override
-    public boolean onCreate() {
-        final AssetManager mgr = getContext().getAssets();
+    public static void prepareFontFiles(Context context) {
+        final AssetManager mgr = context.getAssets();
         for (String path : FONT_FILES) {
             try (InputStream is = mgr.open(path)) {
-                Files.copy(is, getCopiedFile(path).toPath(), StandardCopyOption.REPLACE_EXISTING);
+                Files.copy(is, getCopiedFile(context, path).toPath(),
+                        StandardCopyOption.REPLACE_EXISTING);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
-        // TODO: do we have good time to remove above files from files directory?
+    }
+
+    public static void cleanUpFontFiles(Context context) {
+        for (String file : FONT_FILES) {
+            getCopiedFile(context, file).delete();
+        }
+    }
+
+    public static File getCopiedFile(Context context, String path) {
+        return new File(context.getFilesDir(), path);
+    }
+
+    @Override
+    public ParcelFileDescriptor openFile(Uri uri, String mode) {
+        final int id = (int) ContentUris.parseId(uri);
+        final File targetFile = getCopiedFile(getContext(), FONT_FILES[id]);
+        try {
+            return ParcelFileDescriptor.open(targetFile, ParcelFileDescriptor.MODE_READ_ONLY);
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(
+                    "Failed to find font file. Did you forget to call prepareFontFiles in setUp?");
+        }
+    }
+
+    @Override
+    public boolean onCreate() {
         return true;
     }
 
