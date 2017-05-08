@@ -41,6 +41,7 @@ import android.view.autofill.AutofillManager;
 import android.view.autofill.AutofillValue;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -118,15 +119,24 @@ class VirtualContainerView extends View {
         super.onDraw(canvas);
 
         Log.d(TAG, "onDraw: " + mLines.size() + " lines; canvas:" + canvas);
-        final float x = mLeftMargin;
+        float x;
         float y = mTopMargin + mLineLength;
         for (int i = 0; i < mLines.size(); i++) {
+            x = mLeftMargin;
             final Line line = mLines.get(i);
             Log.v(TAG, "Drawing '" + line + "' at " + x + "x" + y);
             mTextPaint.setColor(line.focused ? mFocusedColor : mUnfocusedColor);
-            final String text = line.label.text + ":  [" + line.text.text + "]";
-            canvas.drawText(text, x, y, mTextPaint);
-            line.setBounds(x, y);
+            final String readOnlyText = line.label.text + ":  [";
+            final String writeText = line.text.text + "]";
+            // Paints the label first...
+            canvas.drawText(readOnlyText, x, y, mTextPaint);
+            // ...then paints the edit text and sets the proper boundary
+            final float deltaX = mTextPaint.measureText(readOnlyText);
+            x += deltaX;
+            line.bounds.set((int) x, (int) (y - mLineLength),
+                    (int) (x + mTextPaint.measureText(writeText)), (int) y);
+            Log.d(TAG, "setBounds(" + x + ", " + y + "): " + line.bounds);
+            canvas.drawText(writeText, x, y, mTextPaint);
             y += mLineLength;
         }
     }
@@ -243,8 +253,8 @@ class VirtualContainerView extends View {
 
         final Item label;
         final Item text;
-
-        Rect bounds;
+        // Boundaries of the text field, relative to the CustomView
+        final Rect bounds = new Rect();
 
         private boolean focused;
 
@@ -253,28 +263,28 @@ class VirtualContainerView extends View {
             this.text = new Item(this, ++nextId, textId, text, true, true);
         }
 
-        void setBounds(float x, float y) {
-            int left = (int) x;
-            int right = (int) (x + mTextPaint.getTextSize());
-            int top = (int) y;
-            int bottom = (int) (y + mTextHeight);
-            if (bounds == null) {
-                bounds = new Rect(left, top, right, bottom);
-            } else {
-                bounds.set(left, top, right, bottom);
-            }
-            Log.d(TAG, "setBounds(" + x + ", " + y + "): " + bounds);
-        }
-
         void changeFocus(boolean focused) {
-            // TODO: fix bounds values
-            Log.d(TAG, "changeFocus() on " + text.id + ": " + focused + " bounds: " + bounds);
             this.focused = focused;
             if (focused) {
-                mAfm.notifyViewEntered(VirtualContainerView.this, text.id, bounds);
+                final Rect absBounds = getAbsCoordinates();
+                Log.d(TAG, "focus gained on " + text.id + "; absBounds=" + absBounds);
+                mAfm.notifyViewEntered(VirtualContainerView.this, text.id, absBounds);
             } else {
+                Log.d(TAG, "focus lost on " + text.id);
                 mAfm.notifyViewExited(VirtualContainerView.this, text.id);
             }
+        }
+
+        Rect getAbsCoordinates() {
+            // Must offset the boundaries so they're relative to the CustomView.
+            final int offset[] = new int[2];
+            getLocationOnScreen(offset);
+            final Rect absBounds = new Rect(bounds.left + offset[0],
+                    bounds.top + offset[1],
+                    bounds.right + offset[0], bounds.bottom + offset[1]);
+            Log.v(TAG, "getAbsCoordinates() for " + text.id + ": bounds=" + bounds
+                    + " offset: " + Arrays.toString(offset) + " absBounds: " + absBounds);
+            return absBounds;
         }
 
         void setTextChangedListener(TextWatcher listener) {
