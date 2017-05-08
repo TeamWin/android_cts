@@ -41,4 +41,8 @@
         <option name="dest-file" value="vintf-files/vendor/compatibility_matrix.xml"/>
     </target_preparer>
 
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.DeviceFileCollector">
+        <option name="src-file" value="/proc/config.gz" />
+        <option name="dest-file" value="vintf-files/proc/config.gz"/>
+    </target_preparer>
 </configuration>
