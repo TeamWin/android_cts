@@ -29,6 +29,8 @@ LOCAL_PACKAGE_NAME := ProcessTests
 LOCAL_DEX_PREOPT := false
 LOCAL_PROGUARD_ENABLED := disabled
 
+LOCAL_STATIC_JAVA_LIBRARIES := legacy-android-test junit
+
 LOCAL_SDK_VERSION := current
 
 include $(BUILD_PACKAGE)
