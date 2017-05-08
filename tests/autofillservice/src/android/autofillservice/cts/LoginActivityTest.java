@@ -1171,6 +1171,43 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
+    public void testFillResponseAuthServiceHasNoData() throws Exception {
+        // Set service.
+        enableService();
+        final MyAutofillCallback callback = mActivity.registerCallback();
+
+        // Prepare the authenticated response
+        AuthenticationActivity.setResponse(
+                new CannedFillResponse.Builder()
+                        .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
+                        .build());
+
+        // Create the authentication intent
+        final IntentSender authentication = PendingIntent.getActivity(getContext(), 0,
+                new Intent(getContext(), AuthenticationActivity.class), 0).getIntentSender();
+
+        // Configure the service behavior
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setAuthentication(authentication, ID_USERNAME, ID_PASSWORD)
+                .setPresentation(createPresentation("Tap to auth response"))
+                .build());
+
+        // Trigger auto-fill.
+        mActivity.onUsername(View::requestFocus);
+
+        // Wait for onFill() before proceeding.
+        sReplier.getNextFillRequest();
+        final View username = mActivity.getUsername();
+        callback.assertUiShownEvent(username);
+
+        // Select the authentication dialog.
+        sUiBot.selectByText("Tap to auth response");
+        callback.assertUiHiddenEvent(username);
+        sUiBot.assertNotShownByText("Tap to auth response");
+        sUiBot.assertNoDatasets();
+    }
+
+    @Test
     public void testDatasetAuthTwoFields() throws Exception {
         // Set service.
         enableService();
