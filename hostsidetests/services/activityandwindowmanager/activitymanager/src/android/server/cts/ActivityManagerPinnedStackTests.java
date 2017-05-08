@@ -807,10 +807,10 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                     + " onStop() calls, expecting 1");
         } else if (lifecycleCounts.mPictureInPictureModeChangedCount != 1) {
             fail(PIP_ACTIVITY + " has received " + lifecycleCounts.mPictureInPictureModeChangedCount
-                    + " onMultiWindowModeChanged() calls, expecting 1");
+                    + " onPictureInPictureModeChanged() calls, expecting 1");
         } else if (lifecycleCounts.mMultiWindowModeChangedCount != 1) {
             fail(PIP_ACTIVITY + " has received " + lifecycleCounts.mMultiWindowModeChangedCount
-                    + " onPictureInPictureModeChanged() calls, expecting 1");
+                    + " onMultiWindowModeChanged() calls, expecting 1");
         } else {
             int lastStopLine = lifecycleCounts.mLastStopLineIndex;
             int lastPipLine = lifecycleCounts.mLastPictureInPictureModeChangedLineIndex;
@@ -1091,10 +1091,10 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                     + " onConfigurationChanged() calls, expecting 1");
         } else if (lifecycleCounts.mPictureInPictureModeChangedCount != 1) {
             fail(activityName + " has received " + lifecycleCounts.mPictureInPictureModeChangedCount
-                    + " onMultiWindowModeChanged() calls, expecting 1");
+                    + " onPictureInPictureModeChanged() calls, expecting 1");
         } else if (lifecycleCounts.mMultiWindowModeChangedCount != 1) {
             fail(activityName + " has received " + lifecycleCounts.mMultiWindowModeChangedCount
-                    + " onPictureInPictureModeChanged() calls, expecting 1");
+                    + " onMultiWindowModeChanged() calls, expecting 1");
         } else {
             int lastPipLine = lifecycleCounts.mLastPictureInPictureModeChangedLineIndex;
             int lastMwLine = lifecycleCounts.mLastMultiWindowModeChangedLineIndex;
