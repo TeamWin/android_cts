@@ -26,7 +26,7 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_MODULE := compatibility-common-util-devicesidelib
 
-LOCAL_STATIC_JAVA_LIBRARIES := guava
+LOCAL_STATIC_JAVA_LIBRARIES := guava junit
 
 LOCAL_SDK_VERSION := current
 
