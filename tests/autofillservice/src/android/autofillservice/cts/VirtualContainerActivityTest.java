@@ -34,6 +34,8 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
+import android.autofillservice.cts.VirtualContainerView.Line;
+import android.graphics.Rect;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.uiautomator.UiObject2;
 import android.view.autofill.AutofillManager;
@@ -74,12 +76,6 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         autofillTest(false);
     }
 
-    @Test
-    public void testAutofillOverrideDispatchProvideAutofillStructure() throws Exception {
-        mActivity.mCustomView.setOverrideDispatchProvideAutofillStructure(true);
-        autofillTest(true);
-    }
-
     /**
      * Tests autofilling the virtual views, using the sync / async version of ViewStructure.addChild
      */
@@ -98,6 +94,13 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
 
         // Trigger auto-fill.
         mActivity.mUsername.changeFocus(true);
+        assertDatasetShown(mActivity.mUsername, "The Dude");
+
+        // Play around with focus to make sure picker is properly drawn.
+        mActivity.mPassword.changeFocus(true);
+        assertDatasetShown(mActivity.mPassword, "The Dude");
+        mActivity.mUsername.changeFocus(true);
+        assertDatasetShown(mActivity.mUsername, "The Dude");
 
         // Make sure input was sanitized.
         final FillRequest request = sReplier.getNextFillRequest();
@@ -148,6 +151,50 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
+    public void testAutofillTwoDatasets() throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setField(ID_PASSWORD, "sweet")
+                        .setPresentation(createPresentation("The Dude"))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "DUDE")
+                        .setField(ID_PASSWORD, "SWEET")
+                        .setPresentation(createPresentation("THE DUDE"))
+                        .build())
+                .build());
+        mActivity.expectAutoFill("DUDE", "SWEET");
+
+        // Trigger auto-fill.
+        mActivity.mUsername.changeFocus(true);
+        sReplier.getNextFillRequest();
+        assertDatasetShown(mActivity.mUsername, "The Dude", "THE DUDE");
+
+        // Play around with focus to make sure picker is properly drawn.
+        mActivity.mPassword.changeFocus(true);
+        assertDatasetShown(mActivity.mPassword, "The Dude", "THE DUDE");
+        mActivity.mUsername.changeFocus(true);
+        assertDatasetShown(mActivity.mUsername, "The Dude", "THE DUDE");
+
+        // Auto-fill it.
+        sUiBot.selectDataset("THE DUDE");
+
+        // Check the results.
+        mActivity.assertAutoFilled();
+    }
+
+    @Test
+    public void testAutofillOverrideDispatchProvideAutofillStructure() throws Exception {
+        mActivity.mCustomView.setOverrideDispatchProvideAutofillStructure(true);
+        autofillTest(true);
+    }
+
+    @Test
     public void testAutofillManuallyOneDataset() throws Exception {
         // Set service.
         enableService();
@@ -161,8 +208,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger auto-fill.
-        mActivity.getSystemService(AutofillManager.class).requestAutofill(
-                mActivity.mCustomView, mActivity.mUsername.text.id, mActivity.mUsername.bounds);
+        mActivity.requestAutofill(mActivity.mUsername);
         sReplier.getNextFillRequest();
 
         // Should have been automatically filled.
@@ -295,5 +341,17 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
 
         // Assert callback was called
         callback.assertUiUnavailableEvent(mActivity.mCustomView, mActivity.mUsername.text.id);
+    }
+
+    /**
+     * Asserts the dataset picker is properly displayed in a give line.
+     */
+    private void assertDatasetShown(Line line, String... expectedDatasets) {
+        final Rect pickerBounds = sUiBot.assertDatasets(expectedDatasets).getVisibleBounds();
+        final Rect fieldBounds = line.getAbsCoordinates();
+        assertWithMessage("vertical coordinates don't match; picker=%s, field=%s", pickerBounds,
+                fieldBounds).that(pickerBounds.top).isEqualTo(fieldBounds.bottom);
+        assertWithMessage("horizontal coordinates don't match; picker=%s, field=%s", pickerBounds,
+                fieldBounds).that(pickerBounds.left).isEqualTo(fieldBounds.left);
     }
 }

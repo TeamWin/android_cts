@@ -26,6 +26,7 @@ import android.autofillservice.cts.VirtualContainerView.Line;
 import android.autofillservice.cts.VirtualContainerView.Line.OneTimeLineWatcher;
 import android.graphics.Canvas;
 import android.os.Bundle;
+import android.view.autofill.AutofillManager;
 
 /**
  * A custom activity that uses {@link Canvas} to draw the following fields:
@@ -56,6 +57,13 @@ public class VirtualContainerActivity extends AbstractAutoFillActivity {
 
         mUsername = mCustomView.addLine(ID_USERNAME_LABEL, "Username", ID_USERNAME, BLANK_VALUE);
         mPassword = mCustomView.addLine(ID_PASSWORD_LABEL, "Password", ID_PASSWORD, BLANK_VALUE);
+    }
+
+    /**
+     * Triggers manual autofill in a given line.
+     */
+    void requestAutofill(Line line) {
+        getAutofillManager().requestAutofill(mCustomView, line.text.id, line.bounds);
     }
 
     /**
