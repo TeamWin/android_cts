@@ -25,7 +25,10 @@ LOCAL_DEX_PREOPT := false
 
 LOCAL_PROGUARD_ENABLED := disabled
 
-LOCAL_STATIC_JAVA_LIBRARIES := android-support-test compatibility-device-preconditions
+LOCAL_STATIC_JAVA_LIBRARIES := \
+    android-support-test \
+    compatibility-device-preconditions \
+    legacy-android-test
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
