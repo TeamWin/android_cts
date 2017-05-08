@@ -173,7 +173,12 @@ final class UiBot {
      */
     public void assertNotShownByText(String text) {
         final UiObject2 uiObject = mDevice.findObject(By.text(text));
-        assertWithMessage(text).that(uiObject).isNull();
+        if (uiObject != null) {
+            final StringBuilder error = new StringBuilder("Should not find object with text '")
+                    .append(text).append("', but found: ");
+            getAllText(uiObject, error);
+            throw new AssertionError(error.toString()); // don't retry
+        }
     }
 
     /**
