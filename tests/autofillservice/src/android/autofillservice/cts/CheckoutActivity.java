@@ -28,7 +28,6 @@ import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
-import android.widget.SpinnerAdapter;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
