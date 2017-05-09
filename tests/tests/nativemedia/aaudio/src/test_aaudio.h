@@ -24,6 +24,4 @@
 
 #define DEFAULT_STATE_TIMEOUT  (500 * NANOS_PER_MILLISECOND)
 
-int64_t getNanoseconds(clockid_t clockId = CLOCK_MONOTONIC);
-
 #endif //CTS_MEDIA_TEST_AAUDIO_H
