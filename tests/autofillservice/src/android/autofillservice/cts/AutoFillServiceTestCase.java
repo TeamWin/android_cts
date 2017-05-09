@@ -66,7 +66,12 @@ abstract class AutoFillServiceTestCase {
     @BeforeClass
     @AfterClass
     public static void disableService() {
+        if (!isServiceEnabled()) return;
+
+        final OneTimeSettingsListener observer = new OneTimeSettingsListener(getContext(),
+                AUTOFILL_SERVICE);
         runShellCommand("settings delete secure %s", AUTOFILL_SERVICE);
+        observer.assertCalled();
         assertServiceDisabled();
     }
 
@@ -85,11 +90,15 @@ abstract class AutoFillServiceTestCase {
     }
 
     /**
-     * Enables the {@link InstrumentedAutoFillService} for auto-fill for the default user.
+     * Enables the {@link InstrumentedAutoFillService} for autofill for the current user.
      */
     protected void enableService() {
-        runShellCommand(
-                "settings put secure %s %s default", AUTOFILL_SERVICE, SERVICE_NAME);
+        if (isServiceEnabled()) return;
+
+        final OneTimeSettingsListener observer = new OneTimeSettingsListener(getContext(),
+                AUTOFILL_SERVICE);
+        runShellCommand("settings put secure %s %s default", AUTOFILL_SERVICE, SERVICE_NAME);
+        observer.assertCalled();
         assertServiceEnabled();
     }
 
@@ -133,6 +142,11 @@ abstract class AutoFillServiceTestCase {
                 .getPackageName(), R.layout.list_item);
         presentation.setTextViewText(R.id.text1, message);
         return presentation;
+    }
+
+    private static boolean isServiceEnabled() {
+        final String service = runShellCommand("settings get secure %s", AUTOFILL_SERVICE);
+        return SERVICE_NAME.equals(service);
     }
 
     private static void assertServiceStatus(boolean enabled) {
