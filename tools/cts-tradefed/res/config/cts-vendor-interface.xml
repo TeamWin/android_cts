@@ -13,7 +13,7 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="Runs a subset of CTS tests for the Treble 'CTS on AOSP' requirement">
+<configuration description="Runs a subset of CTS tests that can heavily exercise HALs">
 
     <include name="cts" />
 
