@@ -16,30 +16,72 @@
 
 package android.autofillservice.cts;
 
+import static com.google.common.truth.Truth.assertWithMessage;
+
+import android.app.PendingIntent;
 import android.app.assist.AssistStructure;
+import android.autofillservice.cts.CannedFillResponse.CannedDataset;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.util.SparseArray;
 import android.view.autofill.AutofillManager;
 
-import static com.google.common.truth.Truth.assertWithMessage;
+import com.google.common.base.Preconditions;
 
 /**
  * This class simulates authentication at the dataset at reponse level
  */
 public class AuthenticationActivity extends AbstractAutoFillActivity {
+
+    private static final String EXTRA_DATASET_ID = "dataset_id";
+
     private static CannedFillResponse sResponse;
     private static CannedFillResponse.CannedDataset sDataset;
     private static Bundle sData;
+    private static final SparseArray<CannedDataset> sDatasets = new SparseArray<>();
+
+    static void resetStaticState() {
+        sDatasets.clear();
+    }
 
     public static void setResponse(CannedFillResponse response) {
         sResponse = response;
         sDataset = null;
     }
 
-    public static void setDataset(CannedFillResponse.CannedDataset dataset) {
+    /**
+     * @deprecated should use {@link #createSender(Context, int, CannedDataset)} instead.
+     */
+    @Deprecated
+    public static void setDataset(CannedDataset dataset) {
         sDataset = dataset;
         sResponse = null;
+    }
+
+    /**
+     * Creates an {@link IntentSender} with the given unique id for the given dataset.
+     */
+    public static IntentSender createSender(Context context, int id,
+            CannedDataset dataset) {
+        Preconditions.checkArgument(id > 0, "id must be positive");
+        Preconditions.checkState(sDatasets.get(id) == null, "already have id");
+        sDatasets.put(id, dataset);
+        final Intent intent = new Intent(context, AuthenticationActivity.class);
+        intent.putExtra(EXTRA_DATASET_ID, id);
+        return PendingIntent.getActivity(context, id, intent, 0).getIntentSender();
+    }
+
+    /**
+     * Creates an {@link IntentSender} with the given unique id.
+     */
+    public static IntentSender createSender(Context context, int id) {
+        Preconditions.checkArgument(id > 0, "id must be positive");
+        return PendingIntent
+                .getActivity(context, id, new Intent(context, AuthenticationActivity.class), 0)
+                .getIntentSender();
     }
 
     public static Bundle getData() {
@@ -59,9 +101,13 @@ public class AuthenticationActivity extends AbstractAutoFillActivity {
 
         // and the bundle
         sData = getIntent().getBundleExtra(AutofillManager.EXTRA_CLIENT_STATE);
+        final CannedDataset dataset = sDatasets.get(getIntent().getIntExtra(EXTRA_DATASET_ID, 0));
 
         final Parcelable result;
-        if (sResponse != null) {
+
+        if (dataset != null) {
+            result = dataset.asDataset((id) -> Helper.findNodeByResourceId(structure, id));
+        } else if (sResponse != null) {
             result = sResponse.asFillResponse((id) -> Helper.findNodeByResourceId(structure, id));
         } else if (sDataset != null) {
             result = sDataset.asDataset((id) -> Helper.findNodeByResourceId(structure, id));

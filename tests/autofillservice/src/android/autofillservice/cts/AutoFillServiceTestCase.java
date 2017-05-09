@@ -75,6 +75,7 @@ abstract class AutoFillServiceTestCase {
         destroyAllSessions();
         sReplier.reset();
         InstrumentedAutoFillService.resetStaticState();
+        AuthenticationActivity.resetStaticState();
     }
 
     @After

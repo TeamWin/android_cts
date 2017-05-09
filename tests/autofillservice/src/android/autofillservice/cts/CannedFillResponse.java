@@ -17,8 +17,6 @@ package android.autofillservice.cts;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import static android.autofillservice.cts.Helper.dumpStructure;
-import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.Helper.getAutofillIds;
 import android.app.assist.AssistStructure;
 import android.app.assist.AssistStructure.ViewNode;
@@ -26,7 +24,6 @@ import android.content.IntentSender;
 import android.os.Bundle;
 import android.service.autofill.Dataset;
 import android.service.autofill.FillCallback;
-import android.service.autofill.FillContext;
 import android.service.autofill.FillResponse;
 import android.service.autofill.SaveInfo;
 import android.view.autofill.AutofillId;
