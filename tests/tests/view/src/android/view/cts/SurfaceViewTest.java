@@ -32,10 +32,12 @@ import android.support.test.runner.AndroidJUnit4;
 import android.view.KeyEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.ViewGroup;
 import android.view.cts.SurfaceViewCtsActivity.MockSurfaceView;
 
 import com.android.compatibility.common.util.CtsKeyEventUtil;
 import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -160,5 +162,16 @@ public class SurfaceViewTest {
         CtsKeyEventUtil.sendKeys(mInstrumentation, mMockSurfaceView, KeyEvent.KEYCODE_BACK);
         PollingCheck.waitFor(() -> mMockSurfaceView.isDetachedFromWindow() &&
                 !mMockSurfaceView.isShown());
+    }
+
+    @Test
+    public void surfaceInvalidatedWhileDetaching() throws Throwable {
+        assertTrue(mMockSurfaceView.mSurface.isValid());
+        assertFalse(mMockSurfaceView.isDetachedFromWindow());
+        WidgetTestUtils.runOnMainAndLayoutSync(mActivityRule, () -> {
+            ((ViewGroup)mMockSurfaceView.getParent()).removeView(mMockSurfaceView);
+        }, false);
+        assertTrue(mMockSurfaceView.isDetachedFromWindow());
+        assertFalse(mMockSurfaceView.mSurface.isValid());
     }
 }
