@@ -47,4 +47,6 @@ public final class DeviceTestConstants {
             = "testSearchView_giveFocusShowIme1";
     public static final String TEST_SEARCH_VIEW_SET_QUERY_HIDE_IME1
             = "testSearchView_setQueryHideIme1";
+    public static final String TEST_ON_START_INPUT_CALLED_ONCE_IME1
+            = "testOnStartInputCalledOnceIme1";
 }
