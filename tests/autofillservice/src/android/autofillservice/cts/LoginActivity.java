@@ -58,6 +58,7 @@ public class LoginActivity extends AbstractAutoFillActivity {
     private TextView mOutput;
     private Button mLoginButton;
     private Button mSaveButton;
+    private Button mCancelButton;
     private Button mClearButton;
     private FillExpectation mExpectation;
 
@@ -81,6 +82,7 @@ public class LoginActivity extends AbstractAutoFillActivity {
         mLoginButton = (Button) findViewById(R.id.login);
         mSaveButton = (Button) findViewById(R.id.save);
         mClearButton = (Button) findViewById(R.id.clear);
+        mCancelButton = (Button) findViewById(R.id.cancel);
         mUsernameLabel = (TextView) findViewById(R.id.username_label);
         mUsernameEditText = (EditText) findViewById(R.id.username);
         mPasswordLabel = (TextView) findViewById(R.id.password_label);
@@ -108,6 +110,7 @@ public class LoginActivity extends AbstractAutoFillActivity {
                 getAutofillManager().cancel();
             }
         });
+        mCancelButton.setOnClickListener((OnClickListener) v -> finish());
     }
 
     protected int getContentView() {
