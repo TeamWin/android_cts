@@ -15,38 +15,48 @@
  */
 package com.android.compatibility.common.tradefed.util;
 
-import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
-import com.android.tradefed.config.OptionSetter;
+import static org.junit.Assert.*;
 
-import junit.framework.TestCase;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Unit tests for {@link RetryFilterHelper}
  */
-public class RetryFilterHelperTest extends TestCase {
+@RunWith(JUnit4.class)
+public class RetryFilterHelperTest {
 
     private static final String TEST_STRING = "abcd";
     private static final RetryType TEST_RETRY_TYPE = RetryType.FAILED;
 
+    /**
+     * Tests that options can be internally copied using
+     * {@link RetryFilterHelper#setAllOptionsFrom(RetryFilterHelper)}.
+     */
+    @Test
     public void testSetAllOptionsFrom() throws Exception {
         RetryFilterHelper helper = new RetryFilterHelper(null, 0);
-        RetryFilterHelper otherObj = new RetryFilterHelper(null, 0);
-        OptionSetter otherObjSetter = new OptionSetter(otherObj);
-        otherObjSetter.setOptionValue(CompatibilityTest.SUBPLAN_OPTION, TEST_STRING);
+        RetryFilterHelper otherObj = new RetryFilterHelper(null, 0, TEST_STRING,
+                new HashSet<String>(), new HashSet<String>(), null ,null, null, null);
         helper.setAllOptionsFrom(otherObj);
         assertEquals(TEST_STRING, helper.mSubPlan);
     }
 
+    /**
+     * Tests that options can be cleared using {@link RetryFilterHelper#clearOptions()}.
+     */
+    @Test
     public void testClearOptions() throws Exception {
-        RetryFilterHelper helper = new RetryFilterHelper(null, 0);
-        OptionSetter setter = new OptionSetter(helper);
-        setter.setOptionValue(CompatibilityTest.SUBPLAN_OPTION, TEST_STRING);
-        setter.setOptionValue(CompatibilityTest.INCLUDE_FILTER_OPTION, TEST_STRING);
-        setter.setOptionValue(CompatibilityTest.EXCLUDE_FILTER_OPTION, TEST_STRING);
-        setter.setOptionValue(CompatibilityTest.ABI_OPTION, TEST_STRING);
-        setter.setOptionValue(CompatibilityTest.MODULE_OPTION, TEST_STRING);
-        setter.setOptionValue(CompatibilityTest.TEST_OPTION, TEST_STRING);
-        setter.setOptionValue(CompatibilityTest.TEST_OPTION, TEST_RETRY_TYPE.name());
+        Set<String> include = new HashSet<>();
+        include.add(TEST_STRING);
+        Set<String> exclude = new HashSet<>();
+        exclude.add(TEST_STRING);
+        RetryFilterHelper helper = new RetryFilterHelper(null, 0, TEST_STRING, include, exclude,
+                TEST_STRING, TEST_STRING, TEST_STRING, TEST_RETRY_TYPE);
         helper.clearOptions();
         assertTrue(helper.mSubPlan == null);
         assertTrue(helper.mIncludeFilters.isEmpty());
