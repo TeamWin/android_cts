@@ -16,7 +16,9 @@
 
 package android.autofillservice.cts;
 
+import static android.autofillservice.cts.Helper.NOT_SHOWING_TIMEOUT_MS;
 import static android.autofillservice.cts.Helper.SAVE_TIMEOUT_MS;
+import static android.autofillservice.cts.Helper.UI_TIMEOUT_MS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_ADDRESS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_CREDIT_CARD;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_EMAIL_ADDRESS;
@@ -73,13 +75,11 @@ final class UiBot {
     private static final String TAG = "AutoFillCtsUiBot";
 
     private final UiDevice mDevice;
-    private final long mTimeout;
     private final String mPackageName;
     private final UiAutomation mAutoman;
 
-    UiBot(Instrumentation instrumentation, long timeout) throws Exception {
+    UiBot(Instrumentation instrumentation) throws Exception {
         mDevice = UiDevice.getInstance(instrumentation);
-        mTimeout = timeout;
         mPackageName = instrumentation.getContext().getPackageName();
         mAutoman = instrumentation.getUiAutomation();
     }
@@ -90,7 +90,7 @@ final class UiBot {
     void assertNoDatasets() {
         final UiObject2 picker;
         try {
-            picker = findDatasetPicker();
+            picker = findDatasetPicker(NOT_SHOWING_TIMEOUT_MS);
         } catch (Throwable t) {
             // Use a more elegant check than catching the expection because it's not showing...
             return;
@@ -227,7 +227,14 @@ final class UiBot {
      * Asserts the save snackbar is showing and returns it.
      */
     UiObject2 assertSaveShowing(int type) {
-        return assertSaveShowing(null, type);
+        return assertSaveShowing(SAVE_TIMEOUT_MS, type);
+    }
+
+    /**
+     * Asserts the save snackbar is showing and returns it.
+     */
+    UiObject2 assertSaveShowing(long timeout, int type) {
+        return assertSaveShowing(null, timeout, type);
     }
 
     /**
@@ -242,7 +249,7 @@ final class UiBot {
      */
     void assertSaveNotShowing(int type) {
         try {
-            assertSaveShowing(type);
+            assertSaveShowing(NOT_SHOWING_TIMEOUT_MS, type);
         } catch (Throwable t) {
             // TODO: use a more elegant check than catching the expection because it's not showing
             // (in which case it wouldn't need a type as parameter).
@@ -276,12 +283,24 @@ final class UiBot {
     }
 
     UiObject2 assertSaveShowing(String description, int... types) {
-        return assertSaveShowing(SaveInfo.NEGATIVE_BUTTON_STYLE_CANCEL, description, types);
+        return assertSaveShowing(SaveInfo.NEGATIVE_BUTTON_STYLE_CANCEL, description,
+                SAVE_TIMEOUT_MS, types);
     }
 
-    UiObject2 assertSaveShowing(int negativeButtonStyle, String description, int... types) {
+    UiObject2 assertSaveShowing(String description, long timeout, int... types) {
+        return assertSaveShowing(SaveInfo.NEGATIVE_BUTTON_STYLE_CANCEL, description, timeout,
+                types);
+    }
+
+    UiObject2 assertSaveShowing(int negativeButtonStyle, String description,
+            int... types) {
+        return assertSaveShowing(negativeButtonStyle, description, SAVE_TIMEOUT_MS, types);
+    }
+
+    UiObject2 assertSaveShowing(int negativeButtonStyle, String description, long timeout,
+            int... types) {
         final UiObject2 snackbar = waitForObject(By.res("android", RESOURCE_ID_SAVE_SNACKBAR),
-                SAVE_TIMEOUT_MS);
+                timeout);
 
         final UiObject2 titleView = snackbar.findObject(By.res("android", RESOURCE_ID_SAVE_TITLE));
         assertWithMessage("save title (%s)", RESOURCE_ID_SAVE_TITLE).that(titleView).isNotNull();
@@ -340,7 +359,7 @@ final class UiBot {
      */
     void saveForAutofill(boolean yesDoIt, int... types) {
         final UiObject2 saveSnackBar = assertSaveShowing(
-                SaveInfo.NEGATIVE_BUTTON_STYLE_CANCEL,null, types);
+                SaveInfo.NEGATIVE_BUTTON_STYLE_CANCEL, null, types);
         saveForAutofill(saveSnackBar, yesDoIt);
     }
 
@@ -418,7 +437,7 @@ final class UiBot {
      * @param selector {@link BySelector} that identifies the object.
      */
     private UiObject2 waitForObject(BySelector selector) {
-        return waitForObject(selector, mTimeout);
+        return waitForObject(selector, UI_TIMEOUT_MS);
     }
 
     /**
@@ -439,7 +458,7 @@ final class UiBot {
             SystemClock.sleep(napTime);
         }
         throw new RetryableException("Object with selector '%s' not found in %d ms",
-                selector, mTimeout);
+                selector, UI_TIMEOUT_MS);
     }
 
     /**
@@ -448,7 +467,7 @@ final class UiBot {
      * @param selector {@link BySelector} that identifies the object.
      */
     private List<UiObject2> waitForObjects(BySelector selector) {
-        return waitForObjects(selector, mTimeout);
+        return waitForObjects(selector, UI_TIMEOUT_MS);
     }
 
     /**
@@ -469,11 +488,16 @@ final class UiBot {
             SystemClock.sleep(napTime);
         }
         throw new RetryableException("Objects with selector '%s' not found in %d ms",
-                selector, mTimeout);
+                selector, UI_TIMEOUT_MS);
     }
 
     private UiObject2 findDatasetPicker() {
-        final UiObject2 picker = waitForObject(By.res("android", RESOURCE_ID_DATASET_PICKER));
+        return findDatasetPicker(UI_TIMEOUT_MS);
+    }
+
+    private UiObject2 findDatasetPicker(long timeout) {
+        final UiObject2 picker = waitForObject(By.res("android", RESOURCE_ID_DATASET_PICKER),
+                timeout);
 
         final String expectedTitle = getString(RESOURCE_STRING_DATASET_PICKER_ACCESSIBILITY_TITLE);
         assertAccessibilityTitle(picker, expectedTitle);

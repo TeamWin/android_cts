@@ -81,6 +81,11 @@ final class Helper {
     static final long SAVE_TIMEOUT_MS = 5000;
 
     /**
+     * Time to wait if a UI change is not expected
+     */
+    static final long NOT_SHOWING_TIMEOUT_MS = 500;
+
+    /**
      * Timeout (in milliseconds) for UI operations. Typically used by {@link UiBot}.
      */
     static final int UI_TIMEOUT_MS = 2000;
