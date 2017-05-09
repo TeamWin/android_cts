@@ -21,9 +21,11 @@ import android.media.MediaPlayer;
 import android.media.MediaPlayer.TrackInfo;
 import android.media.TimedMetaData;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Looper;
 import android.os.PowerManager;
 import android.os.SystemClock;
+import android.test.InstrumentationTestRunner;
 import android.util.Log;
 import android.webkit.cts.CtsTestServer;
 
@@ -59,8 +61,23 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
 
     private CtsTestServer mServer;
 
+    private String mInputUrl;
+
     @Override
     protected void setUp() throws Exception {
+        // if launched with InstrumentationTestRunner to pass a command line argument
+        if (getInstrumentation() instanceof InstrumentationTestRunner) {
+            InstrumentationTestRunner testRunner =
+                    (InstrumentationTestRunner)getInstrumentation();
+
+            Bundle arguments = testRunner.getArguments();
+            mInputUrl = arguments.getString("url");
+            Log.v(TAG, "setUp: arguments: " + arguments);
+            if (mInputUrl != null) {
+                Log.v(TAG, "setUp: arguments[url] " + mInputUrl);
+            }
+        }
+
         super.setUp();
         dynamicConfig = new DynamicConfigDeviceSide(MODULE_NAME);
     }
@@ -199,6 +216,36 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
         // Play stream for 60 seconds
         playLiveVideoTest(uri, headers, cookies, 60 * 1000);
     }
+
+    public void testHlsSampleAes_bbb_audio_only_overridable() throws Exception {
+        if (!MediaUtils.checkDecoder(MediaFormat.MIMETYPE_VIDEO_AVC)) {
+            return; // skip
+        }
+
+        String defaultUrl = "http://storage.googleapis.com/wvmedia/cenc/hls/sample_aes/" +
+                            "bbb_1080p_30fps_11min/audio_only/prog_index.m3u8";
+
+        // if url override provided
+        String testUrl = (mInputUrl != null) ? mInputUrl : defaultUrl;
+
+        // Play stream for 60 seconds
+        playLiveVideoTest(
+                testUrl,
+                60 * 1000);
+    }
+
+    public void testHlsSampleAes_bbb_unmuxed_1500k() throws Exception {
+        if (!MediaUtils.checkDecoder(MediaFormat.MIMETYPE_VIDEO_AVC)) {
+            return; // skip
+        }
+
+        // Play stream for 60 seconds
+        playLiveVideoTest(
+                "http://storage.googleapis.com/wvmedia/cenc/hls/sample_aes/" +
+                "bbb_1080p_30fps_11min/unmuxed_1500k/prog_index.m3u8",
+                60 * 1000);
+    }
+
 
     // Streaming audio from local HTTP server
     public void testPlayMp3Stream1() throws Throwable {
