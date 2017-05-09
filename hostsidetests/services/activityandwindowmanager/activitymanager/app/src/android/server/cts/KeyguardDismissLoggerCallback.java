@@ -18,11 +18,18 @@ package android.server.cts;
 
 import android.app.KeyguardManager;
 import android.app.KeyguardManager.KeyguardDismissCallback;
+import android.content.Context;
 import android.util.Log;
 
 public class KeyguardDismissLoggerCallback extends KeyguardDismissCallback {
 
     private final String TAG = "KeyguardDismissLoggerCallback";
+
+    private final Context mContext;
+
+    public KeyguardDismissLoggerCallback(Context context) {
+        mContext = context;
+    }
 
     @Override
     public void onDismissError() {
@@ -31,7 +38,13 @@ public class KeyguardDismissLoggerCallback extends KeyguardDismissCallback {
 
     @Override
     public void onDismissSucceeded() {
-        Log.i(TAG, "onDismissSucceeded");
+        if (mContext.getSystemService(KeyguardManager.class).isDeviceLocked()) {
+            // Device is still locked? What a fail. Don't print "onDismissSucceded" such that the
+            // log fails.
+            Log.i(TAG, "dismiss succedded was called but device is still locked.");
+        } else {
+            Log.i(TAG, "onDismissSucceeded");
+        }
     }
 
     @Override

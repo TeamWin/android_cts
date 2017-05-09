@@ -28,6 +28,6 @@ public class TurnScreenOnDismissKeyguardActivity extends Activity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
                 | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
         getSystemService(KeyguardManager.class).requestDismissKeyguard(this,
-                new KeyguardDismissLoggerCallback());
+                new KeyguardDismissLoggerCallback(this));
     }
 }
