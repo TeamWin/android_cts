@@ -51,7 +51,7 @@ public class BaseMultiUserTest extends DeviceTestCase implements IBuildReceiver 
         mSupportsMultiUser = getDevice().getMaxNumberOfUsersSupported() > 1;
         mIsSplitSystemUser = checkIfSplitSystemUser();
         mPrimaryUserId = getDevice().getPrimaryUserId();
-        mFixedUsers = new ArrayList();
+        mFixedUsers = new ArrayList<>();
         mFixedUsers.add(mPrimaryUserId);
         if (mPrimaryUserId != USER_SYSTEM) {
             mFixedUsers.add(USER_SYSTEM);
@@ -62,6 +62,10 @@ public class BaseMultiUserTest extends DeviceTestCase implements IBuildReceiver 
 
     @Override
     protected void tearDown() throws Exception {
+        if (getDevice().getCurrentUser() != mPrimaryUserId) {
+            CLog.w("User changed during test. Switching back to " + mPrimaryUserId);
+            getDevice().switchUser(mPrimaryUserId);
+        }
         removeTestUsers();
         super.tearDown();
     }
