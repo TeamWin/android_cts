@@ -37,6 +37,7 @@ import android.transition.Transition;
 import android.transition.Transition.TransitionListener;
 import android.transition.TransitionListenerAdapter;
 import android.view.View;
+import android.view.ViewGroup;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.transition.TargetTracking;
@@ -384,6 +385,35 @@ public class ActivityTransitionTest extends BaseTransitionTest {
         assertTrue(targetActivity.transitionComplete.await(1, TimeUnit.SECONDS));
         verify(mReenterListener, within(3000)).onTransitionEnd(any());
 
+        TargetActivity.sLastCreated = null;
+    }
+
+    // Starting a shared element transition and then removing the view shouldn't cause problems.
+    @Test
+    public void removeSharedViews() throws Throwable {
+        enterScene(R.layout.scene1);
+
+        final View redSquare = mActivity.findViewById(R.id.redSquare);
+        final ViewGroup parent = (ViewGroup) redSquare.getParent();
+
+        mActivityRule.runOnUiThread(() -> {
+            Bundle options = ActivityOptions.makeSceneTransitionAnimation(mActivity,
+                    redSquare, "red").toBundle();
+            Intent intent = new Intent(mActivity, TargetActivity.class);
+            intent.putExtra(TargetActivity.EXTRA_LAYOUT_ID, R.layout.scene2);
+            intent.putExtra(TargetActivity.EXTRA_USE_ANIMATOR, true);
+            parent.removeView(redSquare);
+            mActivity.startActivity(intent, options);
+        });
+
+
+        TargetActivity targetActivity = waitForTargetActivity();
+        verify(targetActivity.enterListener, within(3000)).onTransitionEnd(any());
+
+        mActivityRule.runOnUiThread(() -> targetActivity.finishAfterTransition());
+        mActivityRule.runOnUiThread(() -> parent.removeAllViews());
+
+        verify(targetActivity.returnListener, times(1)).onTransitionEnd(any());
         TargetActivity.sLastCreated = null;
     }
 
