@@ -227,6 +227,16 @@ public class StaticLayoutTest {
         }
     }
 
+    @Test
+    public void testBuilder_setJustificationMode() {
+        StaticLayout.Builder builder = StaticLayout.Builder.obtain(LAYOUT_TEXT, 0,
+                LAYOUT_TEXT.length(), mDefaultPaint, DEFAULT_OUTER_WIDTH);
+        builder.setJustificationMode(Layout.JUSTIFICATION_MODE_INTER_WORD);
+        StaticLayout layout = builder.build();
+        // Hard to expect the justification result. Just make sure the final layout is created
+        // without causing any exceptions.
+        assertNotNull(layout);
+    }
     /*
      * Get the line number corresponding to the specified vertical position.
      *  If you ask for a position above 0, you get 0. above 0 means pixel above the fire line
