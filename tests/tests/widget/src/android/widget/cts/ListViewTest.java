@@ -305,6 +305,10 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
     public void testAccessHeaderView() {
         final TextView headerView1 = (TextView) mActivity.findViewById(R.id.headerview1);
         final TextView headerView2 = (TextView) mActivity.findViewById(R.id.headerview2);
+        mInstrumentation.runOnMainSync(() ->
+                ((ViewGroup) headerView1.getParent()).removeView(headerView1));
+        mInstrumentation.runOnMainSync(() ->
+                ((ViewGroup) headerView2.getParent()).removeView(headerView2));
 
         mInstrumentation.runOnMainSync(() -> mListView.setHeaderDividersEnabled(true));
         assertEquals(0, mListView.getHeaderViewsCount());
@@ -509,6 +513,7 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
     public void testFindViewTraversal() {
         MyListView listView = new MyListView(mActivity, mAttributeSet);
         TextView headerView = (TextView) mActivity.findViewById(R.id.headerview1);
+        ((ViewGroup) headerView.getParent()).removeView(headerView);
 
         assertNull(listView.findViewTraversal(R.id.headerview1));
 
@@ -521,6 +526,7 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
     public void testFindViewWithTagTraversal() {
         MyListView listView = new MyListView(mActivity, mAttributeSet);
         TextView headerView = (TextView) mActivity.findViewById(R.id.headerview1);
+        ((ViewGroup) headerView.getParent()).removeView(headerView);
 
         assertNull(listView.findViewWithTagTraversal("header"));
 
