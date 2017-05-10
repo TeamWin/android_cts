@@ -47,4 +47,6 @@ LOCAL_AAPT_FLAGS := \
         --extra-packages android.support.v17.leanback \
         --extra-packages android.support.v7.recyclerview
 
+LOCAL_PROGUARD_FLAG_FILES := proguard.flags
+
 include $(BUILD_CTS_SUPPORT_PACKAGE)
