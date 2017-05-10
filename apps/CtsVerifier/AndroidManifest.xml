@@ -80,7 +80,7 @@
             android:theme="@android:style/Theme.DeviceDefault">
 
         <meta-data android:name="SuiteName" android:value="CTS_VERIFIER" />
-        
+
         <meta-data android:name="android.telephony.HIDE_VOICEMAIL_SETTINGS_MENU"
             android:value="true"/>
         <uses-library android:name="android.test.runner"/>
@@ -3017,6 +3017,30 @@
                 android:name="test_required_features"
                 android:value="android.hardware.telephony"/>
         </activity>
+
+        <activity
+            android:name=".dialer.DialerIncomingCallTestActivity"
+            android:label="@string/dialer_incoming_call_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.cts.intent.category.MANUAL_TEST"/>
+            </intent-filter>
+
+            <meta-data
+                android:name="test_category"
+                android:value="@string/test_category_telephony"/>
+            <meta-data
+                android:name="test_required_features"
+                android:value="android.hardware.telephony"/>
+        </activity>
+
+        <service android:name=".dialer.DialerCallTestService"
+            android:permission="android.permission.BIND_INCALL_SERVICE">
+            <meta-data android:name="android.telecom.IN_CALL_SERVICE_UI" android:value="true" />
+            <intent-filter>
+                <action android:name="android.telecom.InCallService"/>
+            </intent-filter>
+        </service>
 
         <activity
             android:name=".voicemail.CallSettingsCheckActivity"
