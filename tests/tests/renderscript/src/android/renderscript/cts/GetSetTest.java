@@ -143,7 +143,7 @@ public class GetSetTest extends RSBaseCompute {
 
     private void verify(byte[] a1, byte[] a2, Allocation alloc, String s, int vsize) {
         alloc.copyTo(a2);
-        for (int i=0; i < gWidth; i++) {
+        for (int i=0; i < gCount; i++) {
             if (a1[i] != a2[i]) {
                 if ((vsize == 3) && ((i % 4) == 3)) {
                     continue;
@@ -157,7 +157,7 @@ public class GetSetTest extends RSBaseCompute {
 
     private void verify(short[] a1, short[] a2, Allocation alloc, String s, int vsize) {
         alloc.copyTo(a2);
-        for (int i=0; i < gWidth; i++) {
+        for (int i=0; i < gCount; i++) {
             if (a1[i] != a2[i]) {
                 if ((vsize == 3) && ((i % 4) == 3)) {
                     continue;
@@ -171,7 +171,7 @@ public class GetSetTest extends RSBaseCompute {
 
     private void verify(int[] a1, int[] a2, Allocation alloc, String s, int vsize) {
         alloc.copyTo(a2);
-        for (int i=0; i < gWidth; i++) {
+        for (int i=0; i < gCount; i++) {
             if (a1[i] != a2[i]) {
                 if ((vsize == 3) && ((i % 4) == 3)) {
                     continue;
@@ -185,7 +185,7 @@ public class GetSetTest extends RSBaseCompute {
 
     private void verify(long[] a1, long[] a2, Allocation alloc, String s, int vsize) {
         alloc.copyTo(a2);
-        for (int i=0; i < gWidth; i++) {
+        for (int i=0; i < gCount; i++) {
             if (a1[i] != a2[i]) {
                 if ((vsize == 3) && ((i % 4) == 3)) {
                     continue;
@@ -199,7 +199,7 @@ public class GetSetTest extends RSBaseCompute {
 
     private void verify(float[] a1, float[] a2, Allocation alloc, String s, int vsize) {
         alloc.copyTo(a2);
-        for (int i=0; i < gWidth; i++) {
+        for (int i=0; i < gCount; i++) {
             if (a1[i] != a2[i]) {
                 if ((vsize == 3) && ((i % 4) == 3)) {
                     continue;
@@ -213,7 +213,7 @@ public class GetSetTest extends RSBaseCompute {
 
     private void verify(double[] a1, double[] a2, Allocation alloc, String s, int vsize) {
         alloc.copyTo(a2);
-        for (int i=0; i < gWidth; i++) {
+        for (int i=0; i < gCount; i++) {
             if (a1[i] != a2[i]) {
                 if ((vsize == 3) && ((i % 4) == 3)) {
                     continue;
