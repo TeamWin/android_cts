@@ -296,6 +296,7 @@ public class InstrumentedAutoFillService extends AutofillService {
                     throw new IllegalStateException("No CannedResponse");
                 }
                 if (response == NO_RESPONSE) {
+                    Log.d(TAG, "onFillRequest(): replying with null");
                     callback.onSuccess(null);
                     return;
                 }
