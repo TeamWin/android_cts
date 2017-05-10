@@ -390,9 +390,11 @@ public class InstrumentationTest extends InstrumentationTestCase {
         assertTrue(mRunOnMainSyncResult);
     }
 
-    public void testCallActivityOnPause() throws Exception {
+    public void testCallActivityOnPause() throws Throwable {
         mActivity.setOnPauseCalled(false);
-        mInstrumentation.callActivityOnPause(mActivity);
+        runTestOnUiThread(() -> {
+            mInstrumentation.callActivityOnPause(mActivity);
+        });
         mInstrumentation.waitForIdleSync();
         assertTrue(mActivity.isOnPauseCalled());
     }
