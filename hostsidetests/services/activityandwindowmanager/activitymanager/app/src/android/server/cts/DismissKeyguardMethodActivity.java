@@ -18,10 +18,7 @@ package android.server.cts;
 
 import android.app.Activity;
 import android.app.KeyguardManager;
-import android.app.KeyguardManager.KeyguardDismissCallback;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.WindowManager;
 
 public class DismissKeyguardMethodActivity extends Activity {
 
@@ -29,6 +26,6 @@ public class DismissKeyguardMethodActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getSystemService(KeyguardManager.class).requestDismissKeyguard(this,
-                new KeyguardDismissLoggerCallback());
+                new KeyguardDismissLoggerCallback(this));
     }
 }
