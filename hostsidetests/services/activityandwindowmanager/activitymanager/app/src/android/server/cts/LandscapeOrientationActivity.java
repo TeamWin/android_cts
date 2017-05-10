@@ -16,7 +16,24 @@
 
 package android.server.cts;
 
-import android.app.Activity;
+import android.content.res.Configuration;
 
-public class LandscapeOrientationActivity extends Activity {
+public class LandscapeOrientationActivity extends AbstractLifecycleLogActivity {
+    @Override
+    protected String getTag() {
+        return "LandscapeOrientationActivity";
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        final Configuration config = getResources().getConfiguration();
+        dumpDisplaySize(config);
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        dumpDisplaySize(newConfig);
+    }
 }
