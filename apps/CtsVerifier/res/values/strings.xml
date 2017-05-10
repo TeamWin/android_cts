@@ -3791,6 +3791,14 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="voicemail_hidden">\"Voicemail\" does not exist</string>
     <string name="voicemail_not_hidden">\"Voicemail\" exists</string>
 
+    <!-- Strings for DialerIncomingCall test -->
+    <string name="dialer_incoming_call_test">Dialer Receives Incoming Call</string>
+    <string name="dialer_incoming_call_test_instructions">This test verifies that the default dialer
+      can receive incoming calls after it has been set.
+    </string>
+    <string name="dialer_incoming_call_detected">Detected the incoming call. Activity passed.</string>
+    <string name="dialer_check_incoming_call_explanation">Call the device.</string>
+    <string name="dialer_check_incoming_call">Verify Call Received</string>
 
     <!-- Strings for VoicemailSettingsCheck test -->
     <string name="ringtone_settings_check_test">Hide settings in voicemail test</string>
