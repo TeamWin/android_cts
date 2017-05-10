@@ -26,39 +26,36 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.util.Log;
 import android.util.SparseArray;
 import android.view.autofill.AutofillManager;
 
 import com.google.common.base.Preconditions;
+
+import java.util.ArrayList;
 
 /**
  * This class simulates authentication at the dataset at reponse level
  */
 public class AuthenticationActivity extends AbstractAutoFillActivity {
 
+    private static final String TAG = "AuthenticationActivity";
     private static final String EXTRA_DATASET_ID = "dataset_id";
+    private static final String EXTRA_RESPONSE_ID = "response_id";
 
-    private static CannedFillResponse sResponse;
-    private static CannedFillResponse.CannedDataset sDataset;
     private static Bundle sData;
     private static final SparseArray<CannedDataset> sDatasets = new SparseArray<>();
+    private static final SparseArray<CannedFillResponse> sResponses = new SparseArray<>();
+    private static final ArrayList<PendingIntent> sPendingIntents = new ArrayList<>();
 
     static void resetStaticState() {
         sDatasets.clear();
-    }
-
-    public static void setResponse(CannedFillResponse response) {
-        sResponse = response;
-        sDataset = null;
-    }
-
-    /**
-     * @deprecated should use {@link #createSender(Context, int, CannedDataset)} instead.
-     */
-    @Deprecated
-    public static void setDataset(CannedDataset dataset) {
-        sDataset = dataset;
-        sResponse = null;
+        sResponses.clear();
+        for (int i = 0; i < sPendingIntents.size(); i++) {
+            final PendingIntent pendingIntent = sPendingIntents.get(i);
+            Log.d(TAG, "Cancelling " + pendingIntent);
+            pendingIntent.cancel();
+        }
     }
 
     /**
@@ -69,9 +66,26 @@ public class AuthenticationActivity extends AbstractAutoFillActivity {
         Preconditions.checkArgument(id > 0, "id must be positive");
         Preconditions.checkState(sDatasets.get(id) == null, "already have id");
         sDatasets.put(id, dataset);
+        return createSender(context, EXTRA_DATASET_ID, id);
+    }
+
+    /**
+     * Creates an {@link IntentSender} with the given unique id for the given fill response.
+     */
+    public static IntentSender createSender(Context context, int id,
+            CannedFillResponse response) {
+        Preconditions.checkArgument(id > 0, "id must be positive");
+        Preconditions.checkState(sResponses.get(id) == null, "already have id");
+        sResponses.put(id, response);
+        return createSender(context, EXTRA_RESPONSE_ID, id);
+    }
+
+    private static IntentSender createSender(Context context, String extraName, int id) {
         final Intent intent = new Intent(context, AuthenticationActivity.class);
-        intent.putExtra(EXTRA_DATASET_ID, id);
-        return PendingIntent.getActivity(context, id, intent, 0).getIntentSender();
+        intent.putExtra(extraName, id);
+        final PendingIntent pendingIntent = PendingIntent.getActivity(context, id, intent, 0);
+        sPendingIntents.add(pendingIntent);
+        return pendingIntent.getIntentSender();
     }
 
     /**
@@ -101,16 +115,17 @@ public class AuthenticationActivity extends AbstractAutoFillActivity {
 
         // and the bundle
         sData = getIntent().getBundleExtra(AutofillManager.EXTRA_CLIENT_STATE);
-        final CannedDataset dataset = sDatasets.get(getIntent().getIntExtra(EXTRA_DATASET_ID, 0));
+        final CannedFillResponse response =
+                sResponses.get(getIntent().getIntExtra(EXTRA_RESPONSE_ID, 0));
+        final CannedDataset dataset =
+                sDatasets.get(getIntent().getIntExtra(EXTRA_DATASET_ID, 0));
 
         final Parcelable result;
 
-        if (dataset != null) {
+        if (response != null) {
+            result = response.asFillResponse((id) -> Helper.findNodeByResourceId(structure, id));
+        } else if (dataset != null) {
             result = dataset.asDataset((id) -> Helper.findNodeByResourceId(structure, id));
-        } else if (sResponse != null) {
-            result = sResponse.asFillResponse((id) -> Helper.findNodeByResourceId(structure, id));
-        } else if (sDataset != null) {
-            result = sDataset.asDataset((id) -> Helper.findNodeByResourceId(structure, id));
         } else {
             throw new IllegalStateException("no dataset or response");
         }
