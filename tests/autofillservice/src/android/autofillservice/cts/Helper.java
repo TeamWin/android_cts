@@ -16,6 +16,7 @@
 
 package android.autofillservice.cts;
 
+import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.assist.AssistStructure;
@@ -620,6 +621,21 @@ final class Helper {
         }
 
         throw new IllegalStateException("process not found");
+    }
+
+    /**
+     * Gets the maximum number of partitions per session.
+     */
+    public static int getMaxPartitions() {
+        return Integer.parseInt(runShellCommand("cmd autofill get max_partitions"));
+    }
+
+    /**
+     * Sets the maximum number of partitions per session.
+     */
+    public static void setMaxPartitions(int value) {
+        runShellCommand("cmd autofill set max_partitions %d", value);
+        assertThat(getMaxPartitions()).isEqualTo(value);
     }
 
     private Helper() {

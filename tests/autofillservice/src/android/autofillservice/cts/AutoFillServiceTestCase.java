@@ -16,7 +16,6 @@
 
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.Helper.UI_TIMEOUT_MS;
 import static android.autofillservice.cts.Helper.runShellCommand;
 import static android.provider.Settings.Secure.AUTOFILL_SERVICE;
 
