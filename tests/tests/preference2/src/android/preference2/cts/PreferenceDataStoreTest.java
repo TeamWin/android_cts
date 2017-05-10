@@ -61,6 +61,7 @@ import java.util.Set;
 @RunWith(AndroidJUnit4.class)
 public class PreferenceDataStoreTest {
 
+    private PreferenceFragmentActivity mActivity;
     private PreferenceWrapper mPreference;
     private PreferenceDataStore mDataStore;
     private PreferenceScreen mScreen;
@@ -79,12 +80,12 @@ public class PreferenceDataStoreTest {
 
     @Before
     public void setup() {
-        PreferenceFragmentActivity activity = mActivityRule.getActivity();
-        mPreference = new PreferenceWrapper(activity);
+        mActivity = mActivityRule.getActivity();
+        mPreference = new PreferenceWrapper(mActivity);
         mPreference.setKey(KEY);
 
         // Assign the Preference to the PreferenceFragment.
-        mScreen = activity.prefFragment.getPreferenceManager().createPreferenceScreen(activity);
+        mScreen = mActivity.prefFragment.getPreferenceManager().createPreferenceScreen(mActivity);
         mManager = mScreen.getPreferenceManager();
         mSharedPref = mManager.getSharedPreferences();
 
@@ -92,6 +93,63 @@ public class PreferenceDataStoreTest {
 
         // Make sure that the key is not present in SharedPreferences to ensure test correctness.
         mManager.getSharedPreferences().edit().remove(KEY).commit();
+    }
+
+    @Test
+    public void testThatDataStoreIsNullByDefault() {
+        Preference preference = new Preference(mActivity);
+        mScreen.addPreference(preference);
+
+        assertNull(preference.getPreferenceDataStore());
+        assertNotNull(preference.getSharedPreferences());
+
+        assertNull(mManager.getPreferenceDataStore());
+        assertNotNull(mManager.getSharedPreferences());
+    }
+
+    @Test
+    public void testSetGetOnPreference() {
+        Preference preference = new Preference(mActivity);
+        preference.setPreferenceDataStore(mDataStore);
+
+        assertEquals(mDataStore, preference.getPreferenceDataStore());
+        assertNull(preference.getSharedPreferences());
+    }
+
+    @Test
+    public void testSetGetOnPreferenceManager() {
+        mManager.setPreferenceDataStore(mDataStore);
+
+        assertEquals(mDataStore, mManager.getPreferenceDataStore());
+        assertNull(mManager.getSharedPreferences());
+    }
+
+    @Test
+    public void testSetOnPreferenceManagerGetOnPreference() {
+        Preference preference = new Preference(mActivity);
+        mScreen.addPreference(preference);
+        mManager.setPreferenceDataStore(mDataStore);
+
+        assertEquals(mDataStore, preference.getPreferenceDataStore());
+        assertNull(preference.getSharedPreferences());
+    }
+
+    @Test
+    public void testDataStoresHierarchy() {
+        mPreference.setPreferenceDataStore(mDataStore);
+        PreferenceDataStore secondaryDataStore = mock(PreferenceDataStore.class);
+        mScreen.addPreference(mPreference);
+        mManager.setPreferenceDataStore(secondaryDataStore);
+        mPreference.putString(TEST_STR);
+
+        // Check that the Preference returns the correct data store.
+        assertEquals(mDataStore, mPreference.getPreferenceDataStore());
+
+        // Check that the secondary data store assigned to the manager was NOT used.
+        verifyZeroInteractions(secondaryDataStore);
+
+        // Check that the primary data store assigned directly to the preference was used.
+        verify(mDataStore, atLeastOnce()).getString(eq(KEY), anyString());
     }
 
     @Test
@@ -157,7 +215,7 @@ public class PreferenceDataStoreTest {
      * to the preference hierarchy).
      */
     @Test
-    public void testInitialValueIsTakenFromDSOnPref() {
+    public void testInitialValueIsFromDataStoreOnPreference() {
         when(mDataStore.getBoolean(anyString(), anyBoolean())).thenReturn(true);
 
         CheckBoxPreference pref = new CheckBoxPreference(mActivityRule.getActivity());
@@ -174,7 +232,7 @@ public class PreferenceDataStoreTest {
      * to the preference hierarchy).
      */
     @Test
-    public void testInitialValueIsTakenFromDSOnMgr() {
+    public void testInitialValueIsFromDataStoreOnPreferenceManager() {
         when(mDataStore.getBoolean(anyString(), anyBoolean())).thenReturn(true);
         mManager.setPreferenceDataStore(mDataStore);
 
@@ -393,24 +451,6 @@ public class PreferenceDataStoreTest {
         mScreen.addPreference(mPreference);
         mPreference.getBoolean(true);
         verify(mDataStore, atLeastOnce()).getBoolean(eq(KEY), eq(true));
-    }
-
-    @Test
-    public void testDataStoresHierarchy() {
-        mPreference.setPreferenceDataStore(mDataStore);
-        PreferenceDataStore secondaryDataStore = mock(PreferenceDataStore.class);
-        mScreen.addPreference(mPreference);
-        mManager.setPreferenceDataStore(secondaryDataStore);
-        mPreference.putString(TEST_STR);
-
-        // Check that the Preference returns the correct data store.
-        assertEquals(mDataStore, mPreference.getPreferenceDataStore());
-
-        // Check that the secondary data store assigned to the manager was NOT used.
-        verifyZeroInteractions(secondaryDataStore);
-
-        // Check that the primary data store assigned directly to the preference was used.
-        verify(mDataStore, atLeast(0)).getString(eq(KEY), anyString());
     }
 
     /**

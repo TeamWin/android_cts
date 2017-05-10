@@ -108,7 +108,7 @@ public class TestUtils {
         } catch (IOException e) {
             throw new RuntimeException("Failed to get activity task id!", e);
         }
-        SystemClock.sleep(2000);
+        SystemClock.sleep(5000);
     }
 
     void leaveMultiWindow(Activity activity) {
@@ -118,7 +118,7 @@ public class TestUtils {
         } catch (IOException e) {
             throw new RuntimeException("Failed to get activity task id!", e);
         }
-        SystemClock.sleep(2000);
+        SystemClock.sleep(5000);
     }
 
     private int getActivityTaskId(Activity activity) throws IOException {
