@@ -1119,26 +1119,23 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         final MyAutofillCallback callback = mActivity.registerCallback();
 
         // Prepare the authenticated response
-        final Bundle extras = new Bundle();
-        extras.putString("numbers", "4815162342");
-        AuthenticationActivity.setResponse(
-                new CannedFillResponse.Builder()
-                        .addDataset(new CannedDataset.Builder()
+        final Bundle clientState = new Bundle();
+        clientState.putString("numbers", "4815162342");
+        final IntentSender authentication = AuthenticationActivity.createSender(getContext(), 1,
+                new CannedFillResponse.Builder().addDataset(
+                        new CannedDataset.Builder()
                                 .setField(ID_USERNAME, "dude")
                                 .setField(ID_PASSWORD, "sweet")
+                                .setId("name")
                                 .setPresentation(createPresentation("Dataset"))
                                 .build())
-                        .build());
-
-        // Create the authentication intent
-        final IntentSender authentication = PendingIntent.getActivity(getContext(), 0,
-                new Intent(getContext(), AuthenticationActivity.class), 0).getIntentSender();
+                        .setExtras(clientState).build());
 
         // Configure the service behavior
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .setAuthentication(authentication, ID_USERNAME, ID_PASSWORD)
                 .setPresentation(createPresentation("Tap to auth response"))
-                .setExtras(extras)
+                .setExtras(clientState)
                 .build());
 
         // Set expectation for the activity
@@ -1191,27 +1188,23 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         final MyAutofillCallback callback = mActivity.registerCallback();
 
         // Prepare the authenticated response
-        final Bundle extras = new Bundle();
-        extras.putString("numbers", "4815162342");
-        AuthenticationActivity.setResponse(
-                new CannedFillResponse.Builder()
-                        .addDataset(new CannedDataset.Builder()
+        final Bundle clientState = new Bundle();
+        clientState.putString("numbers", "4815162342");
+        final IntentSender authentication = AuthenticationActivity.createSender(getContext(), 1,
+                new CannedFillResponse.Builder().addDataset(
+                        new CannedDataset.Builder()
                                 .setField(ID_USERNAME, "dude")
                                 .setField(ID_PASSWORD, "sweet")
                                 .setPresentation(createPresentation("Dataset"))
                                 .build())
                         .build());
 
-        // Create the authentication intent
-        final IntentSender authentication = PendingIntent.getActivity(getContext(), 0,
-                new Intent(getContext(), AuthenticationActivity.class), 0).getIntentSender();
-
         // Configure the service behavior
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .setAuthentication(authentication, ID_USERNAME)
                 .setIgnoreFields(ID_PASSWORD)
                 .setPresentation(createPresentation("Tap to auth response"))
-                .setExtras(extras)
+                .setExtras(clientState)
                 .build());
 
         // Set expectation for the activity
@@ -1260,14 +1253,10 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         final MyAutofillCallback callback = mActivity.registerCallback();
 
         // Prepare the authenticated response
-        AuthenticationActivity.setResponse(
+        final IntentSender authentication = AuthenticationActivity.createSender(getContext(), 1,
                 new CannedFillResponse.Builder()
                         .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
                         .build());
-
-        // Create the authentication intent
-        final IntentSender authentication = PendingIntent.getActivity(getContext(), 0,
-                new Intent(getContext(), AuthenticationActivity.class), 0).getIntentSender();
 
         // Configure the service behavior
         sReplier.addResponse(new CannedFillResponse.Builder()
@@ -1297,15 +1286,12 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         final MyAutofillCallback callback = mActivity.registerCallback();
 
         // Prepare the authenticated response
-        AuthenticationActivity.setDataset(new CannedDataset.Builder()
-                .setField(ID_USERNAME, "dude")
-                .setField(ID_PASSWORD, "sweet")
-                .setPresentation(createPresentation("Dataset"))
-                .build());
-
-        // Create the authentication intent
-        final IntentSender authentication = PendingIntent.getActivity(getContext(), 0,
-                new Intent(getContext(), AuthenticationActivity.class), 0).getIntentSender();
+        final IntentSender authentication = AuthenticationActivity.createSender(getContext(), 1,
+                new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setField(ID_PASSWORD, "sweet")
+                        .setPresentation(createPresentation("Dataset"))
+                        .build());
 
         // Configure the service behavior
         sReplier.addResponse(new CannedFillResponse.Builder()
@@ -1344,17 +1330,14 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         final MyAutofillCallback callback = mActivity.registerCallback();
 
         // Prepare the authenticated response
-        AuthenticationActivity.setResponse(new CannedFillResponse.Builder().addDataset(
-                new CannedDataset.Builder()
-                        .setField(ID_USERNAME, "dude")
-                        .setField(ID_PASSWORD, "sweet")
-                        .setPresentation(createPresentation("Dataset"))
-                        .build())
-                .build());
-
-        // Create the authentication intent
-        final IntentSender authentication = PendingIntent.getActivity(getContext(), 0,
-                new Intent(getContext(), AuthenticationActivity.class), 0).getIntentSender();
+        final IntentSender authentication = AuthenticationActivity.createSender(getContext(), 1,
+                new CannedFillResponse.Builder().addDataset(
+                        new CannedDataset.Builder()
+                                .setField(ID_USERNAME, "dude")
+                                .setField(ID_PASSWORD, "sweet")
+                                .setPresentation(createPresentation("Dataset"))
+                                .build())
+                        .build());
 
         // Set up the authentication response client state
         final Bundle authentionClientState = new Bundle();
@@ -1407,16 +1390,13 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         enableService();
         final MyAutofillCallback callback = mActivity.registerCallback();
 
-        // Prepare the authenticated response
-        AuthenticationActivity.setDataset(new CannedDataset.Builder()
-                .setField(ID_USERNAME, "dude")
-                .setField(ID_PASSWORD, "sweet")
-                .setPresentation(createPresentation("Dataset"))
-                .build());
-
         // Create the authentication intent
-        final IntentSender authentication = PendingIntent.getActivity(getContext(), 0,
-                new Intent(getContext(), AuthenticationActivity.class), 0).getIntentSender();
+        final IntentSender authentication = AuthenticationActivity.createSender(getContext(), 1,
+                new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setField(ID_PASSWORD, "sweet")
+                        .setPresentation(createPresentation("Dataset"))
+                        .build());
 
         // Configure the service behavior
         sReplier.addResponse(new CannedFillResponse.Builder()
@@ -1450,34 +1430,36 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
     @Test
     public void testDatasetAuthTwoDatasets() throws Exception {
+        // TODO: current API requires these fields...
+        final RemoteViews bogusPresentation = createPresentation("Whatever man, I'm not used...");
+        final String bogusValue = "Y U REQUIRE IT?";
+
         // Set service.
         enableService();
         final MyAutofillCallback callback = mActivity.registerCallback();
 
-        // Prepare the authenticated response
-        AuthenticationActivity.setDataset(new CannedDataset.Builder()
+        // Create the authentication intents
+        final CannedDataset unlockedDataset = new CannedDataset.Builder()
                 .setField(ID_USERNAME, "dude")
                 .setField(ID_PASSWORD, "sweet")
-                .setPresentation(createPresentation("Dataset"))
-                .build());
-
-        // Create the authentication intents
-        final IntentSender authentication1 = PendingIntent.getActivity(getContext(), 1,
-                new Intent(getContext(), AuthenticationActivity.class), 0).getIntentSender();
-        final IntentSender authentication2 = PendingIntent.getActivity(getContext(), 2,
-                new Intent(getContext(), AuthenticationActivity.class), 0).getIntentSender();
+                .setPresentation(bogusPresentation)
+                .build();
+        final IntentSender authentication1 = AuthenticationActivity.createSender(getContext(), 1,
+                unlockedDataset);
+        final IntentSender authentication2 = AuthenticationActivity.createSender(getContext(), 2,
+                unlockedDataset);
 
         // Configure the service behavior
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
-                        .setField(ID_USERNAME, "dude")
-                        .setField(ID_PASSWORD, "sweet")
+                        .setField(ID_USERNAME, bogusValue)
+                        .setField(ID_PASSWORD, bogusValue)
                         .setPresentation(createPresentation("Tap to auth dataset 1"))
                         .setAuthentication(authentication1)
                         .build())
                 .addDataset(new CannedDataset.Builder()
-                        .setField(ID_USERNAME, "DUDE")
-                        .setField(ID_PASSWORD, "SWEET")
+                        .setField(ID_USERNAME, bogusValue)
+                        .setField(ID_PASSWORD, bogusValue)
                         .setPresentation(createPresentation("Tap to auth dataset 2"))
                         .setAuthentication(authentication2)
                         .build())
@@ -1521,15 +1503,12 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         final MyAutofillCallback callback = mActivity.registerCallback();
 
         // Prepare the authenticated response
-        AuthenticationActivity.setDataset(new CannedDataset.Builder()
-                .setField(ID_USERNAME, "dude")
-                .setField(ID_PASSWORD, "sweet")
-                .setPresentation(createPresentation("Dataset"))
-                .build());
-
-        // Create the authentication intents
-        final IntentSender authentication = PendingIntent.getActivity(getContext(), 0,
-                new Intent(getContext(), AuthenticationActivity.class), 0).getIntentSender();
+        final IntentSender authentication = AuthenticationActivity.createSender(getContext(), 1,
+                new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setField(ID_PASSWORD, "sweet")
+                        .setPresentation(createPresentation("Dataset"))
+                        .build());
 
         // Configure the service behavior
         sReplier.addResponse(new CannedFillResponse.Builder()
@@ -2190,14 +2169,12 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         clientState.putCharSequence("clientStateKey", "clientStateValue");
 
         // Prepare the authenticated response
-        AuthenticationActivity.setDataset(new CannedDataset.Builder()
-                .setField(ID_USERNAME, "dude")
-                .setField(ID_PASSWORD, "sweet")
-                .setPresentation(createPresentation("Dataset"))
-                .build());
-
-        IntentSender authentication = PendingIntent.getActivity(getContext(), 0,
-                new Intent(getContext(), AuthenticationActivity.class), 0).getIntentSender();
+        final IntentSender authentication = AuthenticationActivity.createSender(getContext(), 1,
+                new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setField(ID_PASSWORD, "sweet")
+                        .setPresentation(createPresentation("Dataset"))
+                        .build());
 
         sReplier.addResponse(new CannedFillResponse.Builder().addDataset(
                 new CannedDataset.Builder()
@@ -2238,16 +2215,14 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         clientState.putCharSequence("clientStateKey", "clientStateValue");
 
         // Prepare the authenticated response
-        AuthenticationActivity.setResponse(new CannedFillResponse.Builder().addDataset(
+        final IntentSender authentication = AuthenticationActivity.createSender(getContext(), 1,
+                new CannedFillResponse.Builder().addDataset(
                 new CannedDataset.Builder()
                         .setField(ID_USERNAME, "username")
                         .setId("name")
                         .setPresentation(createPresentation("dataset"))
                         .build())
                 .setExtras(clientState).build());
-
-        IntentSender authentication = PendingIntent.getActivity(getContext(), 0,
-                new Intent(getContext(), AuthenticationActivity.class), 0).getIntentSender();
 
         sReplier.addResponse(new CannedFillResponse.Builder().setExtras(clientState)
                 .setPresentation(createPresentation("authentication"))
