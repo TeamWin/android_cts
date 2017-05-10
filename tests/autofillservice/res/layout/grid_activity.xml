@@ -30,17 +30,17 @@
         android:columnCount="4"
         android:rowCount="4" >
 
-        <TextView android:text="l1c1"/><EditText android:maxLength="4" android:id="@+id/l1c1" />
-        <TextView android:text="l1c2"/><EditText android:maxLength="4" android:id="@+id/l1c2" />
+        <TextView android:text="l1c1"/><EditText android:maxLength="6" android:id="@+id/l1c1" />
+        <TextView android:text="l1c2"/><EditText android:maxLength="6" android:id="@+id/l1c2" />
 
-        <TextView android:text="l2c1"/><EditText android:maxLength="4" android:id="@+id/l2c1" />
-        <TextView android:text="l2c2"/><EditText android:maxLength="4" android:id="@+id/l2c2" />
+        <TextView android:text="l2c1"/><EditText android:maxLength="6" android:id="@+id/l2c1" />
+        <TextView android:text="l2c2"/><EditText android:maxLength="6" android:id="@+id/l2c2" />
 
-        <TextView android:text="l3c1"/><EditText android:maxLength="4" android:id="@+id/l3c1" />
-        <TextView android:text="l3c2"/><EditText android:maxLength="4" android:id="@+id/l3c2" />
+        <TextView android:text="l3c1"/><EditText android:maxLength="6" android:id="@+id/l3c1" />
+        <TextView android:text="l3c2"/><EditText android:maxLength="6" android:id="@+id/l3c2" />
 
-        <TextView android:text="l4c1"/><EditText android:maxLength="4" android:id="@+id/l4c1" />
-        <TextView android:text="l4c2"/><EditText android:maxLength="4" android:id="@+id/l4c2" />
+        <TextView android:text="l4c1"/><EditText android:maxLength="6" android:id="@+id/l4c1" />
+        <TextView android:text="l4c2"/><EditText android:maxLength="6" android:id="@+id/l4c2" />
 
     </GridLayout>
 
