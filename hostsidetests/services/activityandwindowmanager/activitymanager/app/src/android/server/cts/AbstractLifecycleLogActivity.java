@@ -86,12 +86,13 @@ public abstract class AbstractLifecycleLogActivity extends Activity {
         display.getSize(point);
         final DisplayMetrics metrics = getResources().getDisplayMetrics();
 
-        final String line = "config" +
-                " size=" + buildCoordString(config.screenWidthDp, config.screenHeightDp) +
-                " displaySize=" + buildCoordString(point.x, point.y) +
-                " metricsSize=" + buildCoordString(metrics.widthPixels, metrics.heightPixels) +
-                " smallestScreenWidth=" + config.smallestScreenWidthDp +
-                " densityDpi=" + config.densityDpi;
+        final String line = "config"
+                + " size=" + buildCoordString(config.screenWidthDp, config.screenHeightDp)
+                + " displaySize=" + buildCoordString(point.x, point.y)
+                + " metricsSize=" + buildCoordString(metrics.widthPixels, metrics.heightPixels)
+                + " smallestScreenWidth=" + config.smallestScreenWidthDp
+                + " densityDpi=" + config.densityDpi
+                + " orientation=" + config.orientation;
 
         Log.i(getTag(), line);
     }
