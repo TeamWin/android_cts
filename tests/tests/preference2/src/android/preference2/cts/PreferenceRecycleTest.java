@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import android.preference.Preference;
 import android.preference.PreferenceScreen;
 import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
@@ -59,9 +60,17 @@ public class PreferenceRecycleTest {
      */
     @Test
     @UiThreadTest
-    public void recycleByDefaultTest() {
+    public void recycleIsOnByDefaultTest() {
         CustomCheckBoxPreference pref = new CustomCheckBoxPreference(mActivity);
         assertTrue(pref.isRecycleEnabled());
+    }
+
+    @Test
+    @UiThreadTest
+    public void recycleSetGetTest() {
+        Preference pref = new Preference(mActivity);
+        pref.setRecycleEnabled(false);
+        assertFalse(pref.isRecycleEnabled());
     }
 
     /**
