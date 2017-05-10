@@ -167,4 +167,28 @@ public class Resources_ThemeTest extends AndroidTestCase {
         final Theme theme = res.newTheme();
         assertSame(res, theme.getResources());
     }
+
+    @SmallTest
+    public void testEmptyDoesNotGetOverriden() {
+        final Resources res = getContext().getResources();
+        final Theme theme = res.newTheme();
+
+        theme.applyStyle(R.style.Theme_Empty, false /*force*/);
+
+        final TypedValue tv = new TypedValue();
+        assertTrue(theme.resolveAttribute(R.attr.type1, tv, false));
+        assertEquals(TypedValue.TYPE_NULL, tv.type);
+        assertEquals(TypedValue.DATA_NULL_EMPTY, tv.data);
+
+        // @empty is treated just like a regular value. No override unless forced.
+        theme.applyStyle(R.style.Whatever, false /*force*/);
+        assertTrue(theme.resolveAttribute(R.attr.type1, tv, false));
+        assertEquals(TypedValue.TYPE_NULL, tv.type);
+        assertEquals(TypedValue.DATA_NULL_EMPTY, tv.data);
+
+        // Force the override now.
+        theme.applyStyle(R.style.Whatever, true /*force*/);
+        assertTrue(theme.resolveAttribute(R.attr.type1, tv, false));
+        assertNotSame(TypedValue.TYPE_NULL, tv.type);
+    }
 }

@@ -186,4 +186,8 @@
     <style name="Theme_InlineString">
         <item name="testString">"This is a string"</item>
     </style>
+
+    <style name="Theme_Empty">
+        <item name="type1">@empty</item>
+    </style>
 </resources>
