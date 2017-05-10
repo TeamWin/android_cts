@@ -32,8 +32,7 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_MODULE := compatibility-device-util
 
-# uncomment when b/13282254 is fixed
-#LOCAL_SDK_VERSION := current
+LOCAL_SDK_VERSION := current
 
 include $(BUILD_STATIC_JAVA_LIBRARY)
 
