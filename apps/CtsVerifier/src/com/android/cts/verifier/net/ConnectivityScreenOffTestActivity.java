@@ -74,6 +74,9 @@ import static android.net.NetworkCapabilities.TRANSPORT_WIFI;
  *     [3] If the device has a battery, the device must be disconnected from any power source.
  *     [4] The screen is put to sleep.
  *     [5] After two minutes, another IPv6 connectivity test is performed.
+ *
+ * Note that devices that would never go into "screen off" status regardless of the reported
+ * batter status, are allowed to skip the test.
  */
 public class ConnectivityScreenOffTestActivity extends PassFailButtons.Activity {
 
@@ -111,8 +114,13 @@ public class ConnectivityScreenOffTestActivity extends PassFailButtons.Activity 
         mIntentFilter = new IntentFilter();
         mIntentFilter.addAction(Intent.ACTION_SCREEN_ON);
         mIntentFilter.addAction(Intent.ACTION_SCREEN_OFF);
+        // note that in some cases, it is not possible to turn off the device screen and in that
+        // case the test may be skipped
+
         mIntentFilter.addAction(Intent.ACTION_POWER_CONNECTED);
         mIntentFilter.addAction(Intent.ACTION_POWER_DISCONNECTED);
+        // note that in some cases, it is not possible to keep the device running with the power
+        // disconnected, and in that case the test may be skipped
     }
 
     @Override
