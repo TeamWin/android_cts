@@ -17,7 +17,9 @@
 package com.android.compatibility.common.util;
 
 import android.os.Build;
-import android.os.SystemProperties;
+
+import java.io.IOException;
+import java.util.Scanner;
 
 /**
  * Device-side utility class for reading properties and gathering information for testing
@@ -54,6 +56,19 @@ public class PropertyUtil {
      * Retrieves the desired integer property, returning INT_VALUE_IF_UNSET if not found.
      */
     public static int getPropertyInt(String property) {
-        return SystemProperties.getInt(property, INT_VALUE_IF_UNSET);
+        Scanner scanner = null;
+        int val = INT_VALUE_IF_UNSET;
+        try {
+            Process process = new ProcessBuilder("getprop", property).start();
+            scanner = new Scanner(process.getInputStream());
+            val = Integer.parseInt(scanner.nextLine().trim());
+        } catch (IOException | NumberFormatException e) {
+            return val = INT_VALUE_IF_UNSET;
+        } finally {
+            if (scanner != null) {
+                scanner.close();
+            }
+        }
+        return val;
     }
 }
