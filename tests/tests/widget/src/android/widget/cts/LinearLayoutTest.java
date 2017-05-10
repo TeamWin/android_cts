@@ -448,10 +448,12 @@ public class LinearLayoutTest {
         mActivityRule.runOnUiThread(() -> parent.setLayoutDirection(View.LAYOUT_DIRECTION_LTR));
         mInstrumentation.waitForIdleSync();
 
+        int originalLeftViewLeft = leftView.getLeft();
         int originalLeftViewRight = leftView.getRight();
         int originalCenterViewLeft = centerView.getLeft();
         int originalCenterViewRight = centerView.getRight();
         int originalRightViewLeft = rightView.getLeft();
+        int originalRightViewRight = rightView.getRight();
 
         mActivityRule.runOnUiThread(() -> parent.setVerticalGravity(Gravity.CENTER_VERTICAL));
         mInstrumentation.waitForIdleSync();
@@ -467,7 +469,7 @@ public class LinearLayoutTest {
         int verticalOffset = (parentHeight - leftView.getHeight()) / 2;
         assertEquals(verticalOffset, leftView.getTop());
         assertEquals(verticalOffset + leftView.getHeight(), leftView.getBottom());
-        assertEquals(0, leftView.getLeft());
+        assertEquals(originalLeftViewLeft, leftView.getLeft());
         assertEquals(originalLeftViewRight, leftView.getRight());
 
         verticalOffset = (parentHeight - centerView.getHeight()) / 2;
@@ -480,7 +482,7 @@ public class LinearLayoutTest {
         assertEquals(verticalOffset, rightView.getTop());
         assertEquals(verticalOffset + rightView.getHeight(), rightView.getBottom());
         assertEquals(originalRightViewLeft, rightView.getLeft());
-        assertEquals(parent.getWidth(), rightView.getRight());
+        assertEquals(originalRightViewRight, rightView.getRight());
     }
 
     @Test
@@ -493,10 +495,12 @@ public class LinearLayoutTest {
         mActivityRule.runOnUiThread(() -> parent.setLayoutDirection(View.LAYOUT_DIRECTION_LTR));
         mInstrumentation.waitForIdleSync();
 
+        int originalLeftViewLeft = leftView.getLeft();
         int originalLeftViewRight = leftView.getRight();
         int originalCenterViewLeft = centerView.getLeft();
         int originalCenterViewRight = centerView.getRight();
         int originalRightViewLeft = rightView.getLeft();
+        int originalRightViewRight = rightView.getRight();
 
         mActivityRule.runOnUiThread(() -> parent.setVerticalGravity(Gravity.BOTTOM));
         mInstrumentation.waitForIdleSync();
@@ -511,7 +515,7 @@ public class LinearLayoutTest {
 
         assertEquals(parentHeight - leftView.getHeight(), leftView.getTop());
         assertEquals(parentHeight, leftView.getBottom());
-        assertEquals(0, leftView.getLeft());
+        assertEquals(originalLeftViewLeft, leftView.getLeft());
         assertEquals(originalLeftViewRight, leftView.getRight());
 
         assertEquals(parentHeight - centerView.getHeight(), centerView.getTop());
@@ -522,7 +526,7 @@ public class LinearLayoutTest {
         assertEquals(parentHeight - rightView.getHeight(), rightView.getTop());
         assertEquals(parentHeight, rightView.getBottom());
         assertEquals(originalRightViewLeft, rightView.getLeft());
-        assertEquals(parent.getWidth(), rightView.getRight());
+        assertEquals(originalRightViewRight, rightView.getRight());
     }
 
     @Test
@@ -537,10 +541,12 @@ public class LinearLayoutTest {
 
         final int parentWidth = parent.getHeight();
 
+        int originalTopViewTop = topView.getTop();
         int originalTopViewBottom = topView.getBottom();
         int originalCenterViewTop = centerView.getTop();
         int originalCenterViewBottom = centerView.getBottom();
         int originalBottomViewTop = bottomView.getTop();
+        int originalBottomViewBottom = bottomView.getBottom();
 
         mActivityRule.runOnUiThread(
                 () -> parent.setHorizontalGravity(Gravity.CENTER_HORIZONTAL));
@@ -554,7 +560,7 @@ public class LinearLayoutTest {
         ViewAsserts.assertHorizontalCenterAligned(parent, bottomView);
 
         int horizontalOffset = (parentWidth - topView.getWidth()) / 2;
-        assertEquals(0, topView.getTop());
+        assertEquals(originalTopViewTop, topView.getTop());
         assertEquals(originalTopViewBottom, topView.getBottom());
         assertEquals(horizontalOffset, topView.getLeft());
         assertEquals(horizontalOffset + topView.getWidth(), topView.getRight());
@@ -567,7 +573,7 @@ public class LinearLayoutTest {
 
         horizontalOffset = (parentWidth - bottomView.getWidth()) / 2;
         assertEquals(originalBottomViewTop, bottomView.getTop());
-        assertEquals(parent.getHeight(), bottomView.getBottom());
+        assertEquals(originalBottomViewBottom, bottomView.getBottom());
         assertEquals(horizontalOffset, bottomView.getLeft());
         assertEquals(horizontalOffset + bottomView.getWidth(), bottomView.getRight());
     }
@@ -584,10 +590,12 @@ public class LinearLayoutTest {
 
         final int parentWidth = parent.getHeight();
 
+        int originalTopViewTop = topView.getTop();
         int originalTopViewBottom = topView.getBottom();
         int originalCenterViewTop = centerView.getTop();
         int originalCenterViewBottom = centerView.getBottom();
         int originalBottomViewTop = bottomView.getTop();
+        int originalBottomViewBottom = bottomView.getBottom();
 
         mActivityRule.runOnUiThread(() -> parent.setHorizontalGravity(Gravity.RIGHT));
         mInstrumentation.waitForIdleSync();
@@ -598,7 +606,7 @@ public class LinearLayoutTest {
         ViewAsserts.assertRightAligned(parent, centerView);
         ViewAsserts.assertRightAligned(parent, bottomView);
 
-        assertEquals(0, topView.getTop());
+        assertEquals(originalTopViewTop, topView.getTop());
         assertEquals(originalTopViewBottom, topView.getBottom());
         assertEquals(parentWidth - topView.getWidth(), topView.getLeft());
         assertEquals(parentWidth, topView.getRight());
@@ -609,7 +617,7 @@ public class LinearLayoutTest {
         assertEquals(parentWidth, centerView.getRight());
 
         assertEquals(originalBottomViewTop, bottomView.getTop());
-        assertEquals(parent.getHeight(), bottomView.getBottom());
+        assertEquals(originalBottomViewBottom, bottomView.getBottom());
         assertEquals(parentWidth - bottomView.getWidth(), bottomView.getLeft());
         assertEquals(parentWidth, bottomView.getRight());
     }
