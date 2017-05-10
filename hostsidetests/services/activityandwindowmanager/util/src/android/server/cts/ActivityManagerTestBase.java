@@ -133,7 +133,9 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     private static final int INVALID_DISPLAY_ID = -1;
 
-    static String componentName = "android.server.cts";
+    private static final String DEFAULT_COMPONENT_NAME = "android.server.cts";
+
+    static String componentName = DEFAULT_COMPONENT_NAME;
 
     protected static final int INVALID_DEVICE_ROTATION = -1;
 
@@ -184,7 +186,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     }
 
     static String getActivityComponentName(final String packageName, final String activityName) {
-        return packageName + "/." + activityName;
+        return packageName + "/" + (activityName.contains(".") ? "" : ".") + activityName;
     }
 
     // A little ugly, but lets avoid having to strip static everywhere for
@@ -198,7 +200,11 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     }
 
     static String getBaseWindowName(final String packageName) {
-        return packageName + "/" + packageName + ".";
+        return getBaseWindowName(packageName, true /*prependPackageName*/);
+    }
+
+    static String getBaseWindowName(final String packageName, boolean prependPackageName) {
+        return packageName + "/" + (prependPackageName ? packageName + "." : "");
     }
 
     static String getWindowName(final String activityName) {
@@ -206,7 +212,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     }
 
     static String getWindowName(final String packageName, final String activityName) {
-        return getBaseWindowName(packageName) + activityName;
+        return getBaseWindowName(packageName, !activityName.contains(".")) + activityName;
     }
 
     protected ActivityAndWindowManagersState mAmWmState = new ActivityAndWindowManagersState();
@@ -241,6 +247,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        setComponentName(DEFAULT_COMPONENT_NAME);
 
         // Get the device, this gives a handle to run commands and install APKs.
         mDevice = getDevice();
@@ -302,6 +309,14 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
             fail("Failed to take screenshot of device");
         }
         return ImageIO.read(stream.createInputStream());
+    }
+
+    protected void launchActivityInComponent(final String componentName,
+            final String targetActivityName, final String... keyValuePairs) throws Exception {
+        final String originalComponentName = ActivityManagerTestBase.componentName;
+        setComponentName(componentName);
+        launchActivity(targetActivityName, keyValuePairs);
+        setComponentName(originalComponentName);
     }
 
     protected void launchActivity(final String targetActivityName, final String... keyValuePairs)
@@ -918,8 +933,9 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     private static final Pattern sPictureInPictureModeChangedPattern =
             Pattern.compile("(.+): onPictureInPictureModeChanged");
     private static final Pattern sNewConfigPattern = Pattern.compile(
-            "(.+): config size=\\((\\d+),(\\d+)\\) displaySize=\\((\\d+),(\\d+)\\)" +
-            " metricsSize=\\((\\d+),(\\d+)\\) smallestScreenWidth=(\\d+) densityDpi=(\\d+)");
+            "(.+): config size=\\((\\d+),(\\d+)\\) displaySize=\\((\\d+),(\\d+)\\)"
+            + " metricsSize=\\((\\d+),(\\d+)\\) smallestScreenWidth=(\\d+) densityDpi=(\\d+)"
+            + " orientation=(\\d+)");
     private static final Pattern sDisplayStatePattern =
             Pattern.compile("Display Power: state=(.+)");
 
@@ -932,13 +948,15 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         int metricsHeight;
         int smallestWidthDp;
         int densityDpi;
+        int orientation;
 
         @Override
         public String toString() {
-            return "ReportedSizes: {widthDp=" + widthDp + " heightDp=" + heightDp +
-                    " displayWidth=" + displayWidth + " displayHeight=" + displayHeight +
-                    " metricsWidth=" + metricsWidth + " metricsHeight=" + metricsHeight +
-                    " smallestWidthDp=" + smallestWidthDp + " densityDpi=" + densityDpi + "}";
+            return "ReportedSizes: {widthDp=" + widthDp + " heightDp=" + heightDp
+                    + " displayWidth=" + displayWidth + " displayHeight=" + displayHeight
+                    + " metricsWidth=" + metricsWidth + " metricsHeight=" + metricsHeight
+                    + " smallestWidthDp=" + smallestWidthDp + " densityDpi=" + densityDpi
+                    + " orientation=" + orientation + "}";
         }
 
         @Override
@@ -953,7 +971,8 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
                     && metricsWidth == that.metricsWidth
                     && metricsHeight == that.metricsHeight
                     && smallestWidthDp == that.smallestWidthDp
-                    && densityDpi == that.densityDpi;
+                    && densityDpi == that.densityDpi
+                    && orientation == that.orientation;
         }
     }
 
@@ -994,6 +1013,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
                 details.metricsHeight = Integer.parseInt(matcher.group(7));
                 details.smallestWidthDp = Integer.parseInt(matcher.group(8));
                 details.densityDpi = Integer.parseInt(matcher.group(9));
+                details.orientation = Integer.parseInt(matcher.group(10));
                 return details;
             }
         }
