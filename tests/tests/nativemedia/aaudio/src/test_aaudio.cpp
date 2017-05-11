@@ -22,15 +22,7 @@
 
 #include <aaudio/AAudio.h>
 #include "test_aaudio.h"
-
-int64_t getNanoseconds(clockid_t clockId) {
-    struct timespec time;
-    int result = clock_gettime(clockId, &time);
-    if (result < 0) {
-        return -errno;
-    }
-    return (time.tv_sec * NANOS_PER_SECOND) + time.tv_nsec;
-}
+#include "utils.h"
 
 // Test AAudioStreamBuilder
 TEST(test_aaudio, aaudio_stream_builder) {
@@ -131,19 +123,11 @@ TEST(test_aaudio, aaudio_stream_unspecified) {
 
 // Test Writing to an AAudioStream
 void runtest_aaudio_stream(aaudio_sharing_mode_t requestedSharingMode) {
-    const int32_t requestedSampleRate = 48000;
-    const int32_t requestedSamplesPerFrame = 2;
-    const aaudio_audio_format_t requestedDataFormat = AAUDIO_FORMAT_PCM_I16;
+    StreamBuilderHelper helper{requestedSharingMode};
 
-    int32_t actualSampleRate = -1;
-    int32_t actualSamplesPerFrame = -1;
-    aaudio_audio_format_t actualDataFormat = AAUDIO_FORMAT_INVALID;
-    aaudio_sharing_mode_t actualSharingMode;
-    int32_t framesPerBurst = -1;
     int writeLoops = 0;
 
     int32_t framesWritten = 0;
-    int32_t actualBufferSize = 0;
     int64_t framesTotal = 0;
     int64_t aaudioFramesRead = 0;
     int64_t aaudioFramesRead1 = 0;
@@ -153,110 +137,61 @@ void runtest_aaudio_stream(aaudio_sharing_mode_t requestedSharingMode) {
     int64_t timeoutNanos;
 
     aaudio_stream_state_t state = AAUDIO_STREAM_STATE_UNINITIALIZED;
-    AAudioStreamBuilder *aaudioBuilder = nullptr;
-    AAudioStream *aaudioStream = nullptr;
 
-    aaudio_result_t result = AAUDIO_OK;
+    helper.initBuilder();
 
-    // Use an AAudioStreamBuilder to define the stream.
-    result = AAudio_createStreamBuilder(&aaudioBuilder);
-    ASSERT_EQ(AAUDIO_OK, result);
-
-    // Request stream properties.
-    AAudioStreamBuilder_setDeviceId(aaudioBuilder, AAUDIO_DEVICE_UNSPECIFIED);
-    AAudioStreamBuilder_setDirection(aaudioBuilder, AAUDIO_DIRECTION_OUTPUT);
-    AAudioStreamBuilder_setSampleRate(aaudioBuilder, requestedSampleRate);
-    AAudioStreamBuilder_setSamplesPerFrame(aaudioBuilder, requestedSamplesPerFrame);
-    AAudioStreamBuilder_setFormat(aaudioBuilder, requestedDataFormat);
-    AAudioStreamBuilder_setSharingMode(aaudioBuilder, requestedSharingMode);
-    AAudioStreamBuilder_setBufferCapacityInFrames(aaudioBuilder, 2000);
-
-    // Create an AAudioStream using the Builder.
-    result = AAudioStreamBuilder_openStream(aaudioBuilder, &aaudioStream);
-    if (requestedSharingMode == AAUDIO_SHARING_MODE_EXCLUSIVE
-        && result != AAUDIO_OK) {
-        return; // EXCLUSIVE just may not be available. Should not crash.
-    }
-    ASSERT_EQ(AAUDIO_OK, result);
-    EXPECT_EQ(AAUDIO_OK, AAudioStreamBuilder_delete(aaudioBuilder));
-
-    EXPECT_EQ(AAUDIO_STREAM_STATE_OPEN, AAudioStream_getState(aaudioStream));
-    EXPECT_EQ(AAUDIO_DIRECTION_OUTPUT, AAudioStream_getDirection(aaudioStream));
-
-    // Check to see what kind of stream we actually got.
-    actualSampleRate = AAudioStream_getSampleRate(aaudioStream);
-    ASSERT_GE(actualSampleRate, 44100);
-    ASSERT_LE(actualSampleRate, 96000); // TODO what is min/max?
-
-    actualSamplesPerFrame = AAudioStream_getSamplesPerFrame(aaudioStream);
-    ASSERT_GE(actualSamplesPerFrame, 1);
-    ASSERT_LE(actualSamplesPerFrame, 16); // TODO what is min/max?
-
-    actualSharingMode = AAudioStream_getSharingMode(aaudioStream);
-    ASSERT_TRUE(actualSharingMode == AAUDIO_SHARING_MODE_EXCLUSIVE
-                || actualSharingMode == AAUDIO_SHARING_MODE_SHARED);
-
-    actualDataFormat = AAudioStream_getFormat(aaudioStream);
+    bool success = false;
+    helper.createAndVerifyStream(&success);
+    if (!success) return;
 
     // TODO test this on full build
     // ASSERT_NE(AAUDIO_DEVICE_UNSPECIFIED, AAudioStream_getDeviceId(aaudioStream));
 
-    framesPerBurst = AAudioStream_getFramesPerBurst(aaudioStream);
-    ASSERT_GE(framesPerBurst, 16);
-    ASSERT_LE(framesPerBurst, 10000); // TODO what is min/max?
-
     // Allocate a buffer for the audio data.
     // TODO handle possibility of other data formats
-    ASSERT_TRUE(actualDataFormat == AAUDIO_FORMAT_PCM_I16);
-    size_t dataSizeSamples = framesPerBurst * actualSamplesPerFrame;
+    ASSERT_TRUE(helper.actual().dataFormat == AAUDIO_FORMAT_PCM_I16);
+    size_t dataSizeSamples = helper.framesPerBurst() * helper.actual().samplesPerFrame;
     int16_t *data = (int16_t *) calloc(dataSizeSamples, sizeof(int16_t));
     ASSERT_TRUE(nullptr != data);
-
-    actualBufferSize = AAudioStream_getBufferSizeInFrames(aaudioStream);
-    actualBufferSize = AAudioStream_setBufferSizeInFrames(aaudioStream, actualBufferSize);
-    ASSERT_TRUE(actualBufferSize > 0);
 
     // Prime the buffer.
     timeoutNanos = 0;
     do {
-        framesWritten = AAudioStream_write(aaudioStream, data, framesPerBurst, timeoutNanos);
+        framesWritten = AAudioStream_write(
+                helper.stream(), data, helper.framesPerBurst(), timeoutNanos);
         // There should be some room for priming the buffer.
         framesTotal += framesWritten;
         ASSERT_GE(framesWritten, 0);
-        ASSERT_LE(framesWritten, framesPerBurst);
+        ASSERT_LE(framesWritten, helper.framesPerBurst());
     } while (framesWritten > 0);
     ASSERT_TRUE(framesTotal > 0);
 
     // Start/write/pause more than once to see if it fails after the first time.
     // Write some data and measure the rate to see if the timing is OK.
     for (int numLoops = 0; numLoops < 2; numLoops++) {
-        // Start and wait for server to respond.
-        ASSERT_EQ(AAUDIO_OK, AAudioStream_requestStart(aaudioStream));
-        ASSERT_EQ(AAUDIO_OK, AAudioStream_waitForStateChange(aaudioStream,
-                                                         AAUDIO_STREAM_STATE_STARTING,
-                                                         &state,
-                                                         DEFAULT_STATE_TIMEOUT));
-        EXPECT_EQ(AAUDIO_STREAM_STATE_STARTED, state);
+        helper.startStream();
 
         // Write some data while we are running. Read counter should be advancing.
-        writeLoops = 1 * actualSampleRate / framesPerBurst; // 1 second
+        writeLoops = 1 * helper.actual().sampleRate / helper.framesPerBurst(); // 1 second
         ASSERT_LT(2, writeLoops); // detect absurdly high framesPerBurst
-        timeoutNanos = 100 * (NANOS_PER_SECOND * framesPerBurst / actualSampleRate); // N bursts
+        timeoutNanos = 100 * (NANOS_PER_SECOND * helper.framesPerBurst() /
+                helper.actual().sampleRate); // N bursts
         framesWritten = 1;
-        aaudioFramesRead = AAudioStream_getFramesRead(aaudioStream);
+        aaudioFramesRead = AAudioStream_getFramesRead(helper.stream());
         aaudioFramesRead1 = aaudioFramesRead;
         int64_t beginTime = getNanoseconds(CLOCK_MONOTONIC);
         do {
-            framesWritten = AAudioStream_write(aaudioStream, data, framesPerBurst, timeoutNanos);
-            ASSERT_EQ(framesWritten, framesPerBurst);
+            framesWritten = AAudioStream_write(
+                    helper.stream(), data, helper.framesPerBurst(), timeoutNanos);
+            ASSERT_EQ(framesWritten, helper.framesPerBurst());
 
             framesTotal += framesWritten;
-            aaudioFramesWritten = AAudioStream_getFramesWritten(aaudioStream);
+            aaudioFramesWritten = AAudioStream_getFramesWritten(helper.stream());
             EXPECT_EQ(framesTotal, aaudioFramesWritten);
 
             // Try to get a more accurate measure of the sample rate.
             if (beginTime == 0) {
-                aaudioFramesRead = AAudioStream_getFramesRead(aaudioStream);
+                aaudioFramesRead = AAudioStream_getFramesRead(helper.stream());
                 if (aaudioFramesRead > aaudioFramesRead1) { // is read pointer advancing
                     beginTime = getNanoseconds(CLOCK_MONOTONIC);
                     aaudioFramesRead1 = aaudioFramesRead;
@@ -264,7 +199,7 @@ void runtest_aaudio_stream(aaudio_sharing_mode_t requestedSharingMode) {
             }
         } while (framesWritten > 0 && writeLoops-- > 0);
 
-        aaudioFramesRead2 = AAudioStream_getFramesRead(aaudioStream);
+        aaudioFramesRead2 = AAudioStream_getFramesRead(helper.stream());
         int64_t endTime = getNanoseconds(CLOCK_MONOTONIC);
         ASSERT_GT(aaudioFramesRead2, 0);
         EXPECT_GT(aaudioFramesRead2, aaudioFramesRead1);
@@ -276,26 +211,20 @@ void runtest_aaudio_stream(aaudio_sharing_mode_t requestedSharingMode) {
             // Calculate approximate sample rate and compare with stream rate.
             double seconds = (endTime - beginTime) / (double) NANOS_PER_SECOND;
             double measuredRate = (aaudioFramesRead2 - aaudioFramesRead1) / seconds;
-            ASSERT_NEAR(actualSampleRate, measuredRate, rateTolerance);
+            ASSERT_NEAR(helper.actual().sampleRate, measuredRate, rateTolerance);
         }
 
-        // Request async pause and wait for server to say that it has completed the pause.
-        ASSERT_EQ(AAUDIO_OK, AAudioStream_requestPause(aaudioStream));
-        EXPECT_EQ(AAUDIO_OK, AAudioStream_waitForStateChange(aaudioStream,
-                                                AAUDIO_STREAM_STATE_PAUSING,
-                                                &state,
-                                                DEFAULT_STATE_TIMEOUT));
-        EXPECT_EQ(AAUDIO_STREAM_STATE_PAUSED, state);
+        helper.pauseStream();
     }
 
     // Make sure the read counter is not advancing when we are paused.
-    aaudioFramesRead = AAudioStream_getFramesRead(aaudioStream);
+    aaudioFramesRead = AAudioStream_getFramesRead(helper.stream());
     ASSERT_GE(aaudioFramesRead, aaudioFramesRead2); // monotonic increase
 
     // Use this to sleep by waiting for a state that won't happen.
     timeoutNanos = 100 * NANOS_PER_MILLISECOND;
-    AAudioStream_waitForStateChange(aaudioStream, AAUDIO_STREAM_STATE_OPEN, &state, timeoutNanos);
-    aaudioFramesRead2 = AAudioStream_getFramesRead(aaudioStream);
+    AAudioStream_waitForStateChange(helper.stream(), AAUDIO_STREAM_STATE_OPEN, &state, timeoutNanos);
+    aaudioFramesRead2 = AAudioStream_getFramesRead(helper.stream());
     EXPECT_EQ(aaudioFramesRead, aaudioFramesRead2);
 
     // ------------------- TEST FLUSH -----------------
@@ -303,34 +232,29 @@ void runtest_aaudio_stream(aaudio_sharing_mode_t requestedSharingMode) {
     timeoutNanos = 0;
     writeLoops = 1000;
     do {
-        framesWritten = AAudioStream_write(aaudioStream, data, framesPerBurst, timeoutNanos);
+        framesWritten = AAudioStream_write(
+                helper.stream(), data, helper.framesPerBurst(), timeoutNanos);
         framesTotal += framesWritten;
     } while (framesWritten > 0 && writeLoops-- > 0);
     EXPECT_EQ(0, framesWritten);
 
-    // Flush and wait for server to respond.
-    ASSERT_EQ(AAUDIO_OK, AAudioStream_requestFlush(aaudioStream));
-    EXPECT_EQ(AAUDIO_OK, AAudioStream_waitForStateChange(aaudioStream,
-                                                     AAUDIO_STREAM_STATE_FLUSHING,
-                                                     &state,
-                                                     DEFAULT_STATE_TIMEOUT));
-    EXPECT_EQ(AAUDIO_STREAM_STATE_FLUSHED, state);
+    helper.flushStream();
 
     // After a flush, the read counter should be caught up with the write counter.
-    aaudioFramesWritten = AAudioStream_getFramesWritten(aaudioStream);
+    aaudioFramesWritten = AAudioStream_getFramesWritten(helper.stream());
     EXPECT_EQ(framesTotal, aaudioFramesWritten);
-    aaudioFramesRead = AAudioStream_getFramesRead(aaudioStream);
+    aaudioFramesRead = AAudioStream_getFramesRead(helper.stream());
     EXPECT_EQ(aaudioFramesRead, aaudioFramesWritten);
 
     sleep(1); // FIXME - The write returns 0 if we remove this sleep! Why?
 
     // The buffer should be empty after a flush so we should be able to write.
-    framesWritten = AAudioStream_write(aaudioStream, data, framesPerBurst, timeoutNanos);
+    framesWritten = AAudioStream_write(
+            helper.stream(), data, helper.framesPerBurst(), timeoutNanos);
     // There should be some room for priming the buffer.
     ASSERT_GT(framesWritten, 0);
-    ASSERT_LE(framesWritten, framesPerBurst);
+    ASSERT_LE(framesWritten, helper.framesPerBurst());
 
-    EXPECT_EQ(AAUDIO_OK, AAudioStream_close(aaudioStream));
     free(data);
 }
 
