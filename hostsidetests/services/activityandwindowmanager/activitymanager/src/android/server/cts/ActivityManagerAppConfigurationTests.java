@@ -42,7 +42,6 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
 
     private static final String TRANSLUCENT_ACTIVITY =
             "android.server.translucentapp.TranslucentLandscapeActivity";
-    private static final String TRANSLUCENT_SDK_25_PACKAGE = "android.server.translucentapp25";
     private static final String TRANSLUCENT_CURRENT_PACKAGE = "android.server.translucentapp";
 
     private static final String EXTRA_LAUNCH_NEW_TASK = "launch_new_task";
@@ -312,7 +311,9 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         assertEquals("portrait activity should be in portrait",
                 1 /* portrait */, initialReportedSizes.orientation);
         logSeparator = clearLogcat();
-        launchActivityInComponent(TRANSLUCENT_SDK_25_PACKAGE, TRANSLUCENT_ACTIVITY);
+
+        // TODO(b/38225467): Target SDK 26 specific package when SDK 27 released.
+        launchActivityInComponent(TRANSLUCENT_CURRENT_PACKAGE, TRANSLUCENT_ACTIVITY);
         assertEquals("Legacy non-fullscreen activity requested landscape orientation",
                 0 /* landscape */, mAmWmState.getWmState().getLastOrientation());
 
@@ -323,20 +324,22 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         //         1 /* portrait */, updatedReportedSizes.orientation);
     }
 
-    public void testNonFullscreenActivityProhibited() throws Exception {
-        setComponentName(TRANSLUCENT_CURRENT_PACKAGE);
-        launchActivity(TRANSLUCENT_ACTIVITY);
-        mAmWmState.assertNotResumedActivity(
-                "target SDK > 25 non-fullscreen activity should not reach onResume",
-                TRANSLUCENT_ACTIVITY);
-    }
+// TODO(b/38225467): Uncomment when SDK 27 is released.
+//    public void testNonFullscreenActivityProhibited() throws Exception {
+//        setComponentName(TRANSLUCENT_CURRENT_PACKAGE);
+//        launchActivity(TRANSLUCENT_ACTIVITY);
+//        mAmWmState.assertNotResumedActivity(
+//                "target SDK > 25 non-fullscreen activity should not reach onResume",
+//                TRANSLUCENT_ACTIVITY);
+//    }
 
     public void testLegacyNonFullscreenActivityPermitted() throws Exception {
-        setComponentName(TRANSLUCENT_SDK_25_PACKAGE);
+        // TODO(b/38225467): Target SDK 26 specific package when SDK 27 released.
+        setComponentName(TRANSLUCENT_CURRENT_PACKAGE);
         setDeviceRotation(0);
         launchActivity(TRANSLUCENT_ACTIVITY);
         mAmWmState.assertResumedActivity(
-                "target SDK <= 25 non-fullscreen activitiy should be allowed to launch",
+                "target SDK <= 26 non-fullscreen activitiy should be allowed to launch",
                 TRANSLUCENT_ACTIVITY);
         assertEquals("non-fullscreen activitiy requested landscape orientation",
                 0 /* landscape */, mAmWmState.getWmState().getLastOrientation());
