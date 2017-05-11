@@ -49,10 +49,7 @@ LOCAL_MULTILIB := both
 LOCAL_COMPATIBILITY_SUITE := cts
 
 LOCAL_JAVA_RESOURCE_FILES := \
-    libcore/expectations/brokentests.txt \
-    libcore/expectations/icebox.txt \
     libcore/expectations/knownfailures.txt \
-    libcore/expectations/taggedtests.txt \
     libcore/expectations/virtualdeviceknownfailures.txt
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)
