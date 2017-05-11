@@ -107,6 +107,14 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     private static final int MAX_ASPECT_RATIO_DENOMINATOR = 100;
     private static final int ABOVE_MAX_ASPECT_RATIO_NUMERATOR = MAX_ASPECT_RATIO_NUMERATOR + 1;
 
+    public void testMinimumDeviceSize() throws Exception {
+        if (!supportsPip()) return;
+
+        mAmWmState.assertDeviceDefaultDisplaySize(mDevice,
+                "Devices supporting picture-in-picture must be larger than the default minimum"
+                        + " task size");
+    }
+
     public void testEnterPictureInPictureMode() throws Exception {
         pinnedStackTester(getAmStartCmd(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true"), PIP_ACTIVITY,
                 false /* moveTopToPinnedStack */, false /* isFocusable */);

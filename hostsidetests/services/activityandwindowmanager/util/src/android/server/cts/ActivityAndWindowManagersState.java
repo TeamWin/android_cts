@@ -26,6 +26,7 @@ import static android.server.cts.StateLogger.log;
 
 import android.server.cts.ActivityManagerState.ActivityStack;
 import android.server.cts.ActivityManagerState.ActivityTask;
+import android.server.cts.WindowManagerState.Display;
 import android.server.cts.WindowManagerState.WindowStack;
 import android.server.cts.WindowManagerState.WindowState;
 import android.server.cts.WindowManagerState.WindowTask;
@@ -554,6 +555,19 @@ public class ActivityAndWindowManagersState extends Assert {
         String name = mAmState.getHomeActivityName();
         assertNotNull(name);
         assertVisibility(name, getWindowNameForActivityName(name), visible);
+    }
+
+    /**
+     * Asserts that the device default display minimim width is larger than the minimum task width.
+     */
+    void assertDeviceDefaultDisplaySize(ITestDevice device, String errorMessage) throws Exception {
+        computeState(device, null);
+        final int minTaskSizePx = defaultMinimalTaskSize(DEFAULT_DISPLAY_ID);
+        final Display display = getWmState().getDisplay(DEFAULT_DISPLAY_ID);
+        final Rectangle displayRect = display.getDisplayRect();
+        if (Math.min(displayRect.width, displayRect.height) < minTaskSizePx) {
+            fail(errorMessage);
+        }
     }
 
     private String getWindowNameForActivityName(String activityName) {
