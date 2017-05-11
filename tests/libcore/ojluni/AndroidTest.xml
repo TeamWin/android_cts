@@ -33,7 +33,6 @@
         <option name="instrumentation-arg" key="core-listener"
                 value="com.android.cts.runner.CtsTestRunListener"/>
         <option name="core-expectation" value="/knownfailures.txt" />
-        <option name="core-expectation" value="/expectations/cts-runner-specific-failures.txt" />
         <option name="runtime-hint" value="45m"/>
         <!-- 20x default timeout of 600sec -->
         <option name="shell-timeout" value="12000000"/>
