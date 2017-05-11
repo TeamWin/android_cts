@@ -25,6 +25,8 @@ import static android.autofillservice.cts.GridActivity.ID_L4C1;
 import static android.autofillservice.cts.GridActivity.ID_L4C2;
 import static android.autofillservice.cts.Helper.assertTextIsSanitized;
 import static android.autofillservice.cts.Helper.assertValue;
+import static android.autofillservice.cts.Helper.getMaxPartitions;
+import static android.autofillservice.cts.Helper.setMaxPartitions;
 import static android.service.autofill.FillRequest.FLAG_MANUAL_REQUEST;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_ADDRESS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_CREDIT_CARD;
@@ -2239,5 +2241,80 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         sUiBot.selectByText("Auth 1");
         sUiBot.selectDataset("Partition 1");
         expectation1.assertAutoFilled();
+    }
+
+    @Test
+    public void testNoMorePartitionsAfterLimitReached() throws Exception {
+        final int maxBefore = getMaxPartitions();
+        try {
+            setMaxPartitions(1);
+            // Set service.
+            enableService();
+
+            // Prepare 1st partition.
+            final CannedFillResponse response1 = new CannedFillResponse.Builder()
+                    .addDataset(new CannedDataset.Builder()
+                            .setField(ID_L1C1, "l1c1", createPresentation("l1c1"))
+                            .setField(ID_L1C2, "l1c2", createPresentation("l1c2"))
+                            .build())
+                    .build();
+            sReplier.addResponse(response1);
+
+            // Trigger autofill.
+            mActivity.focusCell(1, 1);
+            sReplier.getNextFillRequest();
+
+            // Make sure UI is shown, but don't tap it.
+            sUiBot.assertDatasets("l1c1");
+            mActivity.focusCell(1, 2);
+            sUiBot.assertDatasets("l1c2");
+
+            // Prepare 2nd partition.
+            final CannedFillResponse response2 = new CannedFillResponse.Builder()
+                    .addDataset(new CannedDataset.Builder()
+                            .setField(ID_L2C1, "l2c1", createPresentation("l2c1"))
+                            .build())
+                    .build();
+            sReplier.addResponse(response2);
+
+            // Trigger autofill on 2nd partition.
+            mActivity.focusCell(2, 1);
+
+            // Make sure it was ignored.
+            sUiBot.assertNoDatasets();
+
+            // Make sure 1st partition is still working.
+            mActivity.focusCell(1, 2);
+            sUiBot.assertDatasets("l1c2");
+            mActivity.focusCell(1, 1);
+            sUiBot.assertDatasets("l1c1");
+
+            // Prepare 3rd partition.
+            final CannedFillResponse response3 = new CannedFillResponse.Builder()
+                    .addDataset(new CannedDataset.Builder()
+                            .setField(ID_L3C2, "l3c2", createPresentation("l3c2"))
+                            .build())
+                    .build();
+            sReplier.addResponse(response3);
+            // Trigger autofill on 3rd partition.
+            mActivity.focusCell(3, 2);
+
+            // Make sure it was ignored.
+            sUiBot.assertNoDatasets();
+
+            // Make sure 1st partition is still working...
+            mActivity.focusCell(1, 2);
+            sUiBot.assertDatasets("l1c2");
+            mActivity.focusCell(1, 1);
+            sUiBot.assertDatasets("l1c1");
+
+            //...and can be autofilled.
+            final FillExpectation expectation = mActivity.expectAutofill()
+                    .onCell(1, 1, "l1c1");
+            sUiBot.selectDataset("l1c1");
+            expectation.assertAutoFilled();
+        } finally {
+            setMaxPartitions(maxBefore);
+        }
     }
 }
