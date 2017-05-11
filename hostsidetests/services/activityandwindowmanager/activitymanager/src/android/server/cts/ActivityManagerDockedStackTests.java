@@ -38,6 +38,17 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     private static final int TASK_SIZE = 600;
     private static final int STACK_SIZE = 300;
 
+    public void testMinimumDeviceSize() throws Exception {
+        if (!supportsSplitScreenMultiWindow()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no split multi-window support");
+            return;
+        }
+
+        mAmWmState.assertDeviceDefaultDisplaySize(mDevice,
+                "Devices supporting multi-window must be larger than the default minimum"
+                        + " task size");
+    }
+
     public void testStackList() throws Exception {
         if (!supportsSplitScreenMultiWindow()) {
             CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no split multi-window support");
