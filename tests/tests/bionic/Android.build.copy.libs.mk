@@ -117,6 +117,7 @@ my_bionic_testlib_files := \
 my_bionic_testlib_files_non_mips := \
   libgnu-hash-table-library.so \
   libtest_ifunc.so \
+  libtest_ifunc_variable.so \
 
 my_bionic_testlibs_src_dir := \
   $($(cts_bionic_tests_2nd_arch_prefix)TARGET_OUT_DATA_NATIVE_TESTS)/bionic-loader-test-libs
