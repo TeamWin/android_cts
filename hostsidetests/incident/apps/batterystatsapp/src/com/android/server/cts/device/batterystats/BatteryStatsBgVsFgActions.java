@@ -32,8 +32,12 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
@@ -49,6 +53,7 @@ public class BatteryStatsBgVsFgActions {
 
     public static final String KEY_ACTION = "action";
     public static final String ACTION_BLE_SCAN = "action.ble_scan";
+    public static final String ACTION_GPS = "action.gps";
     public static final String ACTION_JOB_SCHEDULE = "action.jobs";
     public static final String ACTION_SYNC = "action.sync";
     public static final String ACTION_WIFI_SCAN = "action.wifi_scan";
@@ -67,6 +72,9 @@ public class BatteryStatsBgVsFgActions {
         switch(actionCode) {
             case ACTION_BLE_SCAN:
                 doBleScan(ctx, requestCode);
+                break;
+            case ACTION_GPS:
+                doGpsUpdate(ctx, requestCode);
                 break;
             case ACTION_JOB_SCHEDULE:
                 doScheduleJob(ctx, requestCode);
@@ -93,16 +101,19 @@ public class BatteryStatsBgVsFgActions {
         BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (bluetoothAdapter == null) {
             Log.e(TAG, "Device does not support Bluetooth");
+            tellHostActionFinished(ACTION_BLE_SCAN, requestCode);
             return;
         }
         if (!bluetoothAdapter.isEnabled()) {
             Log.e(TAG, "Bluetooth is not enabled");
+            tellHostActionFinished(ACTION_BLE_SCAN, requestCode);
             return;
         }
 
         BluetoothLeScanner bleScanner = bluetoothAdapter.getBluetoothLeScanner();
         if (bleScanner == null) {
             Log.e(TAG, "Cannot access BLE scanner");
+            tellHostActionFinished(ACTION_BLE_SCAN, requestCode);
             return;
         }
 
@@ -132,6 +143,49 @@ public class BatteryStatsBgVsFgActions {
         tellHostActionFinished(ACTION_BLE_SCAN, requestCode);
     }
 
+    private static void doGpsUpdate(Context ctx, String requestCode) {
+        final LocationManager locManager = ctx.getSystemService(LocationManager.class);
+        if (!locManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            Log.e(TAG, "GPS provider is not enabled");
+            tellHostActionFinished(ACTION_GPS, requestCode);
+            return;
+        }
+        CountDownLatch latch = new CountDownLatch(1);
+
+        final LocationListener locListener = new LocationListener() {
+            public void onLocationChanged(Location location) {
+                Log.v(TAG, "onLocationChanged: location has been obtained");
+            }
+
+            public void onProviderDisabled(String provider) {
+                Log.w(TAG, "onProviderDisabled " + provider);
+            }
+
+            public void onProviderEnabled(String provider) {
+                Log.w(TAG, "onProviderEnabled " + provider);
+            }
+
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+                Log.w(TAG, "onStatusChanged " + provider + " " + status);
+            }
+        };
+
+        new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... params) {
+                Looper.prepare();
+                locManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 990, 0, locListener);
+                sleep(1_000);
+                locManager.removeUpdates(locListener);
+                latch.countDown();
+                return null;
+            }
+        }.execute();
+
+        waitForReceiver(ctx, 59_000, latch, null);
+        tellHostActionFinished(ACTION_GPS, requestCode);
+    }
+
     private static void doScheduleJob(Context ctx, String requestCode) {
         final ComponentName JOB_COMPONENT_NAME =
                 new ComponentName("com.android.server.cts.device.batterystats",
@@ -139,6 +193,7 @@ public class BatteryStatsBgVsFgActions {
         JobScheduler js = ctx.getSystemService(JobScheduler.class);
         if (js == null) {
             Log.e(TAG, "JobScheduler service not available");
+            tellHostActionFinished(ACTION_JOB_SCHEDULE, requestCode);
             return;
         }
         final JobInfo job = (new JobInfo.Builder(1, JOB_COMPONENT_NAME))
