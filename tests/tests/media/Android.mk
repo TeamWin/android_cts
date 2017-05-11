@@ -52,7 +52,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestserver \
     junit \
     legacy-android-test \
-    ndkaudio
+    ndkaudio \
+    testng
 
 LOCAL_JNI_SHARED_LIBRARIES := \
     libaudio_jni \
