@@ -39,10 +39,6 @@ LOCAL_MULTILIB := both
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts general-tests
 
-LOCAL_JAVA_RESOURCE_FILES := \
-    libcore/expectations/brokentests.txt \
-    libcore/expectations/icebox.txt \
-    libcore/expectations/knownfailures.txt \
-    libcore/expectations/taggedtests.txt
+LOCAL_JAVA_RESOURCE_FILES := libcore/expectations/knownfailures.txt
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)
