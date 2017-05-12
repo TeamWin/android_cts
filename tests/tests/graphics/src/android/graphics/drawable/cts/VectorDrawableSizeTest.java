@@ -21,7 +21,6 @@ import static org.junit.Assert.assertEquals;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.cts.R;
-import android.graphics.drawable.Drawable;
 import android.graphics.drawable.VectorDrawable;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
@@ -71,17 +70,5 @@ public class VectorDrawableSizeTest {
         VectorDrawable drawable = (VectorDrawable) mResources.getDrawable(mResId, null);
         assertEquals(Math.round(mDpSize * densityDpi / 160f),  drawable.getIntrinsicWidth());
         assertEquals(Math.round(mDpSize * densityDpi / 160f),  drawable.getIntrinsicHeight());
-
-        final Drawable.ConstantState constantState = drawable.getConstantState();
-
-        DrawableTestUtils.setResourcesDensity(mResources, densityDpi / 2);
-        final VectorDrawable halfDrawable =
-                (VectorDrawable) constantState.newDrawable(mResources);
-
-        assertEquals(Math.round(mDpSize * densityDpi / 320f),  halfDrawable.getIntrinsicWidth());
-        assertEquals(Math.round(mDpSize * densityDpi / 320f),  halfDrawable.getIntrinsicHeight());
-
-        // Reset the density
-        DrawableTestUtils.setResourcesDensity(mResources, densityDpi);
     }
 }
