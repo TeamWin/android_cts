@@ -126,7 +126,7 @@ static bool check_lib(const std::string& public_library_path,
       *error_msg = "The library \"" + path + "\" should be accessible but isn't: " + dlerror();
       return false;
     }
-  } else if (handle != nullptr) {
+  } else if (handle.get() != nullptr) {
     *error_msg = "The library \"" + path + "\" should not be accessible";
     return false;
   } else { // (handle == nullptr && !shouldBeAccessible(path))
@@ -178,17 +178,43 @@ static bool check_libs(const std::string& public_library_path,
   return true;
 }
 
-static void jobject_array_to_set(JNIEnv* env,
+static bool jobject_array_to_set(JNIEnv* env,
                                  jobjectArray java_libraries_array,
-                                 std::unordered_set<std::string>* libraries) {
+                                 std::unordered_set<std::string>* libraries,
+                                 std::string* error_msg) {
   size_t size = env->GetArrayLength(java_libraries_array);
   for (size_t i = 0; i<size; ++i) {
     ScopedLocalRef<jstring> java_soname(
         env, (jstring) env->GetObjectArrayElement(java_libraries_array, i));
+    std::string soname(ScopedUtfChars(env, java_soname.get()).c_str());
 
-    ScopedUtfChars soname(env, java_soname.get());
-    libraries->insert(soname.c_str());
+    // Check to see if the string ends in " 32" or " 64" to indicate the
+    // library is only public for one bitness.
+    size_t space_pos = soname.rfind(' ');
+    if (space_pos != std::string::npos) {
+      std::string type = soname.substr(space_pos + 1);
+      if (type != "32" && type != "64") {
+        *error_msg = "public library line is malformed: " + soname;
+        return false;
+      }
+#if defined(__LP64__)
+      if (type == "32") {
+        // Skip this, it's a 32 bit only public library.
+        continue;
+      }
+#else
+      if (type == "64") {
+        // Skip this, it's a 64 bit only public library.
+        continue;
+      }
+#endif
+      soname.resize(space_pos);
+    }
+
+    libraries->insert(soname);
   }
+
+  return true;
 }
 
 extern "C" JNIEXPORT jstring JNICALL
@@ -202,8 +228,12 @@ extern "C" JNIEXPORT jstring JNICALL
   std::unordered_set<std::string> vendor_public_libraries;
   std::unordered_set<std::string> system_public_libraries;
   std::unordered_set<std::string> empty_set;
-  jobject_array_to_set(env, java_vendor_public_libraries, &vendor_public_libraries);
-  jobject_array_to_set(env, java_system_public_libraries, &system_public_libraries);
+  if (!jobject_array_to_set(env, java_vendor_public_libraries, &vendor_public_libraries, &error)) {
+    return env->NewStringUTF(("Vendor " + error).c_str());
+  }
+  if (!jobject_array_to_set(env, java_system_public_libraries, &system_public_libraries, &error)) {
+    return env->NewStringUTF(("System " + error).c_str());
+  }
 
   if (!check_libs(kSystemLibraryPath, system_public_libraries, kSystemLibraries, &error) ||
       !check_libs(kVendorLibraryPath, vendor_public_libraries, empty_set, &error)) {
