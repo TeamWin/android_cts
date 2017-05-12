@@ -18,6 +18,9 @@ package com.android.server.cts;
 import android.service.pm.PackageProto;
 import android.service.pm.PackageServiceDumpProto;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /** Test for "dumpsys package --proto" */
 public class PackageIncidentTest extends ProtoDumpTestCase {
     // Use the test apk from the NetstatsIncidentTest
@@ -41,17 +44,21 @@ public class PackageIncidentTest extends ProtoDumpTestCase {
         fail(name + " expected to be zero or positive, but was: " + value);
     }
 
-    /** Parse the output of "dumpsys netstats --proto" and make sure all the values are probable. */
+    /** Parse the output of "dumpsys package --proto" and make sure the values are probable. */
     public void testPackageServiceDump() throws Exception {
         final long st = System.currentTimeMillis();
 
         installPackage(DEVICE_SIDE_TEST_APK, /* grantPermissions= */ true);
 
-        // Find the package UID.
-        final int uid =
-                Integer.parseInt(
-                        execCommandAndGetFirstGroup(
-                                "dumpsys package " + DEVICE_SIDE_TEST_PACKAGE, "userId=(\\d+)"));
+        // Find the package UID, version code, and version string.
+        final Matcher matcher =
+                execCommandAndFind(
+                        "dumpsys package " + DEVICE_SIDE_TEST_PACKAGE,
+                        "userId=(\\d+).*versionCode=(\\d+).*versionName=(\\w+)",
+                        Pattern.DOTALL);
+        final int uid = Integer.parseInt(matcher.group(1));
+        final int versionCode = Integer.parseInt(matcher.group(2));
+        final String versionString = matcher.group(3);
 
         final PackageServiceDumpProto dump =
                 getDump(PackageServiceDumpProto.parser(), "dumpsys package --proto");
@@ -77,8 +84,8 @@ public class PackageIncidentTest extends ProtoDumpTestCase {
         assertNotNull(testPackage);
         assertEquals(testPackage.getName(), DEVICE_SIDE_TEST_PACKAGE);
         assertEquals(testPackage.getUid(), uid);
-        assertEquals(testPackage.getVersionCode(), 25);
-        assertEquals(testPackage.getVersionString(), "O");
+        assertEquals(testPackage.getVersionCode(), versionCode);
+        assertEquals(testPackage.getVersionString(), versionString);
         assertPositive("install_time_ms", testPackage.getInstallTimeMs());
         assertEquals(testPackage.getInstallTimeMs(), testPackage.getUpdateTimeMs());
         assertEquals(testPackage.getSplits(0).getName(), "base");

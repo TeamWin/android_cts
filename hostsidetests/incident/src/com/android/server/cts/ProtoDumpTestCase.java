@@ -146,16 +146,25 @@ public class ProtoDumpTestCase extends DeviceTestCase implements IBuildReceiver 
     }
 
     /**
+     * Execute the given command, and find the given pattern with given flags and return the
+     * resulting {@link Matcher}.
+     */
+    protected Matcher execCommandAndFind(String command, String pattern, int patternFlags)
+            throws Exception {
+        final CollectingOutputReceiver receiver = new CollectingOutputReceiver();
+        getDevice().executeShellCommand(command, receiver);
+        final String output = receiver.getOutput();
+        final Matcher matcher = Pattern.compile(pattern, patternFlags).matcher(output);
+        assertTrue("Pattern '" + pattern + "' didn't match. Output=\n" + output, matcher.find());
+        return matcher;
+    }
+
+    /**
      * Execute the given command, and find the given pattern and return the resulting
      * {@link Matcher}.
      */
     protected Matcher execCommandAndFind(String command, String pattern) throws Exception {
-        final CollectingOutputReceiver receiver = new CollectingOutputReceiver();
-        getDevice().executeShellCommand(command, receiver);
-        final String output = receiver.getOutput();
-        final Matcher matcher = Pattern.compile(pattern).matcher(output);
-        assertTrue("Pattern '" + pattern + "' didn't match. Output=\n" + output, matcher.find());
-        return matcher;
+        return execCommandAndFind(command, pattern, 0);
     }
 
     /**
