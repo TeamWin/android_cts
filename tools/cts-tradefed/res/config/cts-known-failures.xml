@@ -187,4 +187,7 @@
     <!-- b/37105075 -->
     <option name="compatibility:exclude-filter" value="CtsIncidentHostTestCases com.android.server.cts.BatteryStatsValidationTest#testWifiUpload" />
 
+    <!-- b/37545399 -->
+    <option name="compatibility:exclude-filter" value="CtsSystemUiTestCases android.systemui.cts#testLightNavigationBar" />
+
 </configuration>
