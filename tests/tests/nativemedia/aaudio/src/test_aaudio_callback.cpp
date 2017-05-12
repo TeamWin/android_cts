@@ -17,11 +17,12 @@
 #define LOG_NDEBUG 0
 #define LOG_TAG "AAudioTest"
 
-#include <gtest/gtest.h>
 #include <atomic>
-#include <utils/Log.h>
 
 #include <aaudio/AAudio.h>
+#include <android/log.h>
+#include <gtest/gtest.h>
+
 #include "test_aaudio.h"
 #include "utils.h"
 
