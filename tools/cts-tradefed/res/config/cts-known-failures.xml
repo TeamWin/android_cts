@@ -206,4 +206,7 @@
     <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityFlowLandscapeTest#startWithFragmentAndInitTitleMultiWindowLandscapeTest" />
     <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityFlowLandscapeTest#startWithFragmentNoHeadersMultiWindowLandscapeTest" />
 
+    <!-- b/38224690 -->
+    <option name="compatibility:exclude-filter" value="CtsMediaTestCases android.media.cts.NativeEncoderTest" />
+
 </configuration>
