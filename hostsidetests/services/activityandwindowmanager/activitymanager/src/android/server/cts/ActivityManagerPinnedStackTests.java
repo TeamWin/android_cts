@@ -28,6 +28,8 @@ import java.lang.Exception;
 import java.lang.String;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
@@ -1008,6 +1010,61 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         assertPinnedStackDoesNotExist();
         assertTrue(activityTaskId == mAmWmState.getAmState().getTaskByActivityName(
                 PIP_ACTIVITY).mTaskId);
+    }
+
+    /** Test that reported display size corresponds to fullscreen after exiting PiP. */
+    public void testDisplayMetricsPinUnpin() throws Exception {
+        String logSeparator = clearLogcat();
+        launchActivity(TEST_ACTIVITY);
+        final int defaultDisplayStackId = mAmWmState.getAmState().getFocusedStackId();
+        final ReportedSizes initialSizes = getLastReportedSizesForActivity(TEST_ACTIVITY,
+                logSeparator);
+        final Rectangle initialAppBounds = readAppBounds(TEST_ACTIVITY, logSeparator);
+        assertNotNull("Must report display dimensions", initialSizes);
+        assertNotNull("Must report app bounds", initialAppBounds);
+
+        logSeparator = clearLogcat();
+        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
+        mAmWmState.waitForValidState(mDevice, PIP_ACTIVITY, PINNED_STACK_ID);
+        final ReportedSizes pinnedSizes = getLastReportedSizesForActivity(PIP_ACTIVITY,
+                logSeparator);
+        final Rectangle pinnedAppBounds = readAppBounds(PIP_ACTIVITY, logSeparator);
+        assertFalse("Reported display size when pinned must be different from default",
+                initialSizes.equals(pinnedSizes));
+        assertFalse("Reported app bounds when pinned must be different from default",
+                initialAppBounds.width == pinnedAppBounds.width
+                        && initialAppBounds.height == pinnedAppBounds.height);
+
+        logSeparator = clearLogcat();
+        launchActivityInStack(PIP_ACTIVITY, defaultDisplayStackId);
+        final ReportedSizes finalSizes = getLastReportedSizesForActivity(PIP_ACTIVITY,
+                logSeparator);
+        final Rectangle finalAppBounds = readAppBounds(PIP_ACTIVITY, logSeparator);
+        assertEquals("Must report default size after exiting PiP", initialSizes, finalSizes);
+        assertEquals("Must report default app width after exiting PiP", initialAppBounds.width,
+                finalAppBounds.width);
+        assertEquals("Must report default app height after exiting PiP", initialAppBounds.height,
+                finalAppBounds.height);
+    }
+
+    private static final Pattern sAppBoundsPattern = Pattern.compile(
+            "(.+)appBounds=Rect\\((\\d+), (\\d+) - (\\d+), (\\d+)\\)(.*)");
+
+    /** Read app bounds in last applied configuration from logs. */
+    private Rectangle readAppBounds(String activityName, String logSeparator) throws Exception {
+        final String[] lines = getDeviceLogsForComponent(activityName, logSeparator);
+        for (int i = lines.length - 1; i >= 0; i--) {
+            final String line = lines[i].trim();
+            final Matcher matcher = sAppBoundsPattern.matcher(line);
+            if (matcher.matches()) {
+                final int left = Integer.parseInt(matcher.group(2));
+                final int top = Integer.parseInt(matcher.group(3));
+                final int right = Integer.parseInt(matcher.group(4));
+                final int bottom = Integer.parseInt(matcher.group(5));
+                return new Rectangle(left, top, right - left, bottom - top);
+            }
+        }
+        return null;
     }
 
     /**
