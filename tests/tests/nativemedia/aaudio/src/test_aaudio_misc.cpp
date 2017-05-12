@@ -16,11 +16,10 @@
 
 #define LOG_NDEBUG 0
 #define LOG_TAG "AAudioTest"
-#include <utils/Log.h>
-
-#include <gtest/gtest.h>
 
 #include <aaudio/AAudio.h>
+#include <android/log.h>
+#include <gtest/gtest.h>
 
 // Make sure enums do not change value.
 TEST(test_aaudio_misc, aaudio_freeze_enums) {
