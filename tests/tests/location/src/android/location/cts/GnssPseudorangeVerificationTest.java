@@ -19,8 +19,10 @@ package android.location.cts;
 
 import android.location.GnssMeasurement;
 import android.location.GnssMeasurementsEvent;
+import android.location.GnssStatus;
 import android.util.Log;
 import com.android.compatibility.common.util.CddTest;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -30,9 +32,12 @@ import java.util.List;
  */
 public class GnssPseudorangeVerificationTest extends GnssTestCase {
   private static final String TAG = "GnssPseudorangeValTest";
-  private static final int LOCATION_TO_COLLECT_COUNT = 5;
+  private static final int LOCATION_TO_COLLECT_COUNT = 20;
+  private static final int MEASUREMENT_EVENTS_TO_COLLECT_COUNT = 50;
   private static final int MIN_SATELLITES_REQUIREMENT = 4;
   private static final double SECONDS_PER_NANO = 1.0e-9;
+  private static final double PSEUDORANGE_THRESHOLD_IN_SEC = 0.018;
+  private static final double PSEUDORANGE_THRESHOLD_BEIDOU_QZSS_IN_SEC = 0.073;
 
   private TestGnssMeasurementListener mMeasurementListener;
   private TestLocationListener mLocationListener;
@@ -73,10 +78,12 @@ public class GnssPseudorangeVerificationTest extends GnssTestCase {
     mLocationListener = new TestLocationListener(LOCATION_TO_COLLECT_COUNT);
     mTestLocationManager.requestLocationUpdates(mLocationListener);
 
-    mMeasurementListener = new TestGnssMeasurementListener(TAG);
+    mMeasurementListener = new TestGnssMeasurementListener(TAG,
+                                                MEASUREMENT_EVENTS_TO_COLLECT_COUNT);
     mTestLocationManager.registerGnssMeasurementCallback(mMeasurementListener);
 
     boolean success = mLocationListener.await();
+    success &= mMeasurementListener.await();
     SoftAssert.failOrWarning(isMeasurementTestStrict(),
         "Time elapsed without getting enough location fixes."
             + " Possibly, the test has been run deep indoors."
@@ -106,13 +113,14 @@ public class GnssPseudorangeVerificationTest extends GnssTestCase {
       // Verify Gnss Event mandatory fields are in required ranges
       assertNotNull("GnssMeasurementEvent cannot be null.", event);
 
-
       long timeInNs = event.getClock().getTimeNanos();
       TestMeasurementUtil.assertGnssClockFields(event.getClock(), softAssert, timeInNs);
 
+      ArrayList<GnssMeasurement> filteredMeasurements = filterMeasurements(event.getMeasurements());
+      validatePseudorange(filteredMeasurements, softAssert, timeInNs);
+
       // we need at least 4 satellites to calculate the pseudorange
       if(event.getMeasurements().size() >= MIN_SATELLITES_REQUIREMENT) {
-        validatePseudorange(event.getMeasurements(), softAssert, timeInNs);
         hasEventWithEnoughMeasurements = true;
       }
     }
@@ -125,6 +133,24 @@ public class GnssPseudorangeVerificationTest extends GnssTestCase {
     softAssert.assertAll();
   }
 
+  private ArrayList<GnssMeasurement> filterMeasurements(Collection<GnssMeasurement> measurements) {
+    ArrayList<GnssMeasurement> filteredMeasurement = new ArrayList<>();
+    for (GnssMeasurement measurement: measurements){
+      int constellationType = measurement.getConstellationType();
+      if (constellationType == GnssStatus.CONSTELLATION_GLONASS) {
+        if ((measurement.getState()
+            & (measurement.STATE_GLO_TOD_DECODED | measurement.STATE_GLO_TOD_KNOWN)) != 0) {
+          filteredMeasurement.add(measurement);
+        }
+      }
+      else if ((measurement.getState()
+            & (measurement.STATE_TOW_DECODED | measurement.STATE_TOW_KNOWN)) != 0) {
+          filteredMeasurement.add(measurement);
+        }
+    }
+    return filteredMeasurement;
+  }
+
   /**
    * Uses the common reception time approach to calculate pseudorange time
    * measurements reported by the receiver according to http://cdn.intechopen.com/pdfs-wm/27712.pdf.
@@ -134,21 +160,28 @@ public class GnssPseudorangeVerificationTest extends GnssTestCase {
     long largestReceivedSvTimeNanos = 0;
     for(GnssMeasurement measurement : measurements) {
       if (largestReceivedSvTimeNanos < measurement.getReceivedSvTimeNanos()) {
-        largestReceivedSvTimeNanos =  measurement.getReceivedSvTimeNanos();
+        largestReceivedSvTimeNanos = measurement.getReceivedSvTimeNanos();
       }
     }
     for (GnssMeasurement measurement : measurements) {
+      double threshold = PSEUDORANGE_THRESHOLD_IN_SEC;
+      int constellationType = measurement.getConstellationType();
+      // BEIDOU and QZSS's Orbit are higher, so the value of ReceivedSvTimeNanos should be small
+      if (constellationType == GnssStatus.CONSTELLATION_BEIDOU
+          || constellationType == GnssStatus.CONSTELLATION_QZSS) {
+        threshold = PSEUDORANGE_THRESHOLD_BEIDOU_QZSS_IN_SEC;
+      }
       double deltaiNanos = largestReceivedSvTimeNanos
                           - measurement.getReceivedSvTimeNanos();
       double deltaiSeconds = deltaiNanos * SECONDS_PER_NANO;
       // according to http://cdn.intechopen.com/pdfs-wm/27712.pdf
       // the pseudorange in time is 65-83 ms, which is 18 ms range,
       // deltaiSeconds should be in the range of [0.0, 0.018] seconds
-      softAssert.assertTrue("deltaiSeconds in Seconds." ,
+      softAssert.assertTrue("deltaiSeconds in Seconds.",
           timeInNs,
-          "0.0 <= deltaiSeconds <= 0.018",
+          "0.0 <= deltaiSeconds <= " + String.valueOf(threshold),
           String.valueOf(deltaiSeconds),
-          (deltaiSeconds >= 0.0 && deltaiSeconds <= 0.018));
+          (deltaiSeconds >= 0.0 && deltaiSeconds <= threshold));
     }
 
   }
