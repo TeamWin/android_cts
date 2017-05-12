@@ -128,4 +128,20 @@
     <!-- b/37545399 -->
     <option name="compatibility:exclude-filter" value="CtsSystemUiTestCases android.systemui.cts#testLightNavigationBar" />
 
+    <!-- b/37482372 -->
+    <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityFlowPortraitTest#multiWindowHistoryPreservePortraitTest" />
+    <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityFlowPortraitTest#multiWindowInOutPortraitTest" />
+    <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityFlowPortraitTest#multiWindowInitialHeaderOnBackPortraitTest" />
+    <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityFlowPortraitTest#multiWindowInnerFragmentInOutPortraitTest" />
+    <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityFlowPortraitTest#startWithFragmentAndInitTitleMultiWindowPortraitTest" />
+    <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityFlowPortraitTest#startWithFragmentNoHeadersMultiWindowPortraitTest" />
+
+    <!-- b/38177396 -->
+    <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityFlowLandscapeTest#multiWindowHistoryPreserveLandscapeTest" />
+    <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityFlowLandscapeTest#multiWindowInOutLandscapeTest" />
+    <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityFlowLandscapeTest#multiWindowInitialHeaderOnBackLandscapeTest" />
+    <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityFlowLandscapeTest#multiWindowInnerFragmentInOutLandscapeTest" />
+    <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityFlowLandscapeTest#startWithFragmentAndInitTitleMultiWindowLandscapeTest" />
+    <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityFlowLandscapeTest#startWithFragmentNoHeadersMultiWindowLandscapeTest" />
+
 </configuration>
