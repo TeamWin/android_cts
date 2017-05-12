@@ -149,7 +149,7 @@ public class PreferenceDataStoreTest {
         verifyZeroInteractions(secondaryDataStore);
 
         // Check that the primary data store assigned directly to the preference was used.
-        verify(mDataStore, atLeastOnce()).getString(eq(KEY), anyString());
+        verify(mDataStore, atLeastOnce()).getString(eq(KEY), any());
     }
 
     @Test
