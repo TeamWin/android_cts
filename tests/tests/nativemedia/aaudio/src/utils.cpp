@@ -81,7 +81,7 @@ void StreamBuilderHelper::createAndVerifyStream(bool *success) {
 
     mFramesPerBurst = AAudioStream_getFramesPerBurst(mStream);
     ASSERT_GE(mFramesPerBurst, 16);
-    ASSERT_LE(mFramesPerBurst, 1024); // TODO what is min/max?
+    ASSERT_LE(mFramesPerBurst, 3072); // on some devices, it can be 2052
 
     int32_t actualBufferSize = AAudioStream_getBufferSizeInFrames(mStream);
     ASSERT_GT(actualBufferSize, 0);
