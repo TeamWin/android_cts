@@ -122,6 +122,17 @@ public class InputMethodServiceLifecycleTest extends CompatibilityHostTestBase {
         assertTrue(runDeviceTestMethod(testSetQueryHideIme1));
     }
 
+    @Test
+    public void testOnStartInputCalledOnce() throws Exception {
+        installAndSetIme1();
+
+        final TestInfo testSetQueryHideIme1 = new TestInfo(DeviceTestConstants.PACKAGE,
+                DeviceTestConstants.TEST_CLASS,
+                DeviceTestConstants.TEST_ON_START_INPUT_CALLED_ONCE_IME1);
+        sendTestStartEvent(testSetQueryHideIme1);
+        assertTrue(runDeviceTestMethod(testSetQueryHideIme1));
+    }
+
     private void installAndSetIme1() throws Exception {
         final TestInfo testCreateIme1 = new TestInfo(DeviceTestConstants.PACKAGE,
             DeviceTestConstants.TEST_CLASS, DeviceTestConstants.TEST_CREATE_IME1);
