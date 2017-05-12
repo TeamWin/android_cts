@@ -15,6 +15,7 @@
  */
 package android.packageinstaller.admin.cts;
 
+import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -22,6 +23,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageInstaller;
 import android.os.ParcelFileDescriptor;
+import android.os.Process;
+import android.os.UserHandle;
+import android.text.TextUtils;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -35,7 +39,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class SessionCommitBroadcastTest extends BasePackageInstallTest {
 
-    private static final long BROADCAST_TIMEOUT_SECS = 10;
+    private static final long BROADCAST_TIMEOUT_SECS = 20;
 
     private ComponentName mDefaultLauncher;
     private ComponentName mThisAppLauncher;
@@ -81,8 +85,7 @@ public class SessionCommitBroadcastTest extends BasePackageInstallTest {
 
         verifySessionIntent(receiver.blockingGetIntent());
 
-        // Try installing again after uninstall
-        tryUninstallPackage();
+        forceUninstall();
         receiver = new SessionCommitReceiver();
         assertInstallPackage();
         verifySessionIntent(receiver.blockingGetIntent());
@@ -90,6 +93,41 @@ public class SessionCommitBroadcastTest extends BasePackageInstallTest {
         tryUninstallPackage();
         // Revert to default launcher
         setLauncher(mDefaultLauncher.flattenToString());
+    }
+
+    public void testBroadcastReceivedForEnablingApp() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        setLauncher(mThisAppLauncher.flattenToString());
+
+        ComponentName cn = new ComponentName(mContext, BasicAdminReceiver.class);
+        UserHandle user = mDevicePolicyManager.createAndManageUser(cn,
+                "Test User " + System.currentTimeMillis(), cn,
+                null, DevicePolicyManager.SKIP_SETUP_WIZARD);
+        int userId = user.getIdentifier();
+        assertTrue(TextUtils.join(" ", runShellCommand("am start-user " + userId))
+                .toLowerCase().contains("success"));
+
+        // Install app for the second user
+        assertTrue(TextUtils.join(" ", runShellCommand(
+                "pm install -r --user " + userId + "  " + TEST_APP_LOCATION))
+                .toLowerCase().contains("success"));
+
+        // Enable the app for this user
+        SessionCommitReceiver receiver = new SessionCommitReceiver();
+        runShellCommand("cmd package install-existing --user " +
+                Process.myUserHandle().getIdentifier() + "  " + TEST_APP_PKG);
+        verifySessionIntent(receiver.blockingGetIntent());
+
+        // Cleanup
+        setLauncher(mDefaultLauncher.flattenToString());
+        mDevicePolicyManager.removeUser(cn, user);
+        forceUninstall();
+    }
+
+    private void forceUninstall() throws Exception {
+        runShellCommand("pm uninstall " + TEST_APP_PKG);
     }
 
     private String getDefaultLauncher() throws Exception {
