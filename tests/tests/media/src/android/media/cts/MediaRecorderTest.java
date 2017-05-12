@@ -256,10 +256,11 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
                      VIDEO_BIT_RATE_IN_BPS + " got " + videoBitRate);
             }
 
-            // careful when comparing floating point numbers
-            double captureFrameRate = metrics.getDouble(MediaRecorder.MetricsConstants.CAPTURE_FPS, -1);
-            if (captureFrameRate < 0) {
-                fail("getMetrics() capture framerate reports " + captureFrameRate);
+            // valid values are -1.0 and >= 0;
+            // tolerate some floating point rounding variability
+            double captureFrameRate = metrics.getDouble(MediaRecorder.MetricsConstants.CAPTURE_FPS, -2);
+            if (captureFrameRate < 0.) {
+                assertEquals("getMetrics() capture framerate=" + captureFrameRate, -1.0, captureFrameRate, 0.001);
             }
         }
 
@@ -330,10 +331,11 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
                      VIDEO_BIT_RATE_IN_BPS + " got " + videoBitRate);
             }
 
-            // careful when comparing floating point numbers
-            double captureFrameRate = metrics.getDouble(MediaRecorder.MetricsConstants.CAPTURE_FPS, -1);
-            if (captureFrameRate < 0) {
-                fail("getMetrics() capture framerate reports " + captureFrameRate);
+            // valid values are -1.0 and >= 0;
+            // tolerate some floating point rounding variability
+            double captureFrameRate = metrics.getDouble(MediaRecorder.MetricsConstants.CAPTURE_FPS, -2);
+            if (captureFrameRate < 0.) {
+                assertEquals("getMetrics() capture framerate=" + captureFrameRate, -1.0, captureFrameRate, 0.001);
             }
         }
 
