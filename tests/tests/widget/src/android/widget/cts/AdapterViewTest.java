@@ -36,6 +36,7 @@ import static org.mockito.Mockito.when;
 import android.content.Context;
 import android.os.Parcelable;
 import android.provider.Settings;
+import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -290,6 +291,9 @@ public class AdapterViewTest {
                         ViewGroup.LayoutParams.MATCH_PARENT)), true);
 
         mActivityRule.runOnUiThread(() -> setArrayAdapter(mAdapterView));
+        // Wait for the UI to "settle down" since selection is fired asynchronously
+        // on the next layout pass, and we don't want to trigger the listener too early
+        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
 
         AdapterView.OnItemSelectedListener mockSelectedListener =
                 mock(AdapterView.OnItemSelectedListener.class);
