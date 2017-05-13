@@ -59,7 +59,8 @@ import java.util.StringTokenizer;
 import java.util.UUID;
 import java.util.Vector;
 import java.util.concurrent.CountDownLatch;
-
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import junit.framework.AssertionFailedError;
 
 /**
@@ -299,6 +300,42 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
             }
         } finally {
             mp.release();
+        }
+    }
+
+    public void testConcurentPlayAudio() throws Exception {
+        final int resid = R.raw.test1m1s; // MP3 longer than 1m are usualy offloaded
+        final int tolerance = 70;
+
+        List<MediaPlayer> mps = Stream.generate(() -> MediaPlayer.create(mContext, resid))
+                                      .limit(5).collect(Collectors.toList());
+
+        try {
+            for (MediaPlayer mp : mps) {
+                mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                mp.setWakeMode(mContext, PowerManager.PARTIAL_WAKE_LOCK);
+
+                assertFalse(mp.isPlaying());
+                mp.start();
+                assertTrue(mp.isPlaying());
+
+                assertFalse(mp.isLooping());
+                mp.setLooping(true);
+                assertTrue(mp.isLooping());
+
+                int pos = mp.getCurrentPosition();
+                assertTrue(pos >= 0);
+
+                Thread.sleep(SLEEP_TIME); // Delay each track to be able to ear them
+            }
+            // Check that all mp3 are playing concurrently here
+            for (MediaPlayer mp : mps) {
+                int pos = mp.getCurrentPosition();
+                Thread.sleep(SLEEP_TIME);
+                assertEquals(pos + SLEEP_TIME, mp.getCurrentPosition(), tolerance);
+            }
+        } finally {
+            mps.forEach(MediaPlayer::release);
         }
     }
 
