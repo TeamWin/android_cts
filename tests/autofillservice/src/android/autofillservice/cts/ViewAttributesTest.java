@@ -16,8 +16,6 @@
 
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.Helper.FILL_TIMEOUT_MS;
-import static android.autofillservice.cts.Helper.eventually;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -28,7 +26,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
-import android.util.Log;
 import android.view.View;
 import android.view.autofill.AutofillValue;
 import android.widget.EditText;
@@ -42,7 +39,6 @@ import java.util.function.Consumer;
 
 @RunWith(AndroidJUnit4.class)
 public class ViewAttributesTest extends AutoFillServiceTestCase {
-    private static final String LOG_TAG = ViewAttributesTest.class.getSimpleName();
     @Rule
     public final ActivityTestRule<ViewAttributesTestActivity> mActivityRule =
             new ActivityTestRule<>(ViewAttributesTestActivity.class);
@@ -93,7 +89,7 @@ public class ViewAttributesTest extends AutoFillServiceTestCase {
     public void checkSetAutoFill() {
         View v = mActivity.findViewById(R.id.editTextNoHint);
 
-        v.setAutofillHints(null);
+        v.setAutofillHints((String[]) null);
         assertThat(v.getAutofillHints()).isNull();
 
         v.setAutofillHints(new String[0]);
