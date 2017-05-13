@@ -137,6 +137,9 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testBleScans() throws Exception {
+        if (isTV()) {
+            return;
+        }
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
 
@@ -155,6 +158,10 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
 
     public void testGpsUpdates() throws Exception {
         final String gpsSensorNumber = "-10000";
+
+        if (isTV()) {
+            return;
+        }
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
         // Whitelist this app against background location request throttling
@@ -176,6 +183,9 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testJobBgVsFg() throws Exception {
+        if (isTV()) {
+            return;
+        }
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
 
@@ -193,6 +203,9 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testSyncBgVsFg() throws Exception {
+        if (isTV()) {
+            return;
+        }
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
 
@@ -211,6 +224,9 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testWifiScans() throws Exception {
+        if (isTV()) {
+            return;
+        }
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
         // Whitelist this app against background wifi scan throttling
@@ -300,6 +316,9 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
      * Tests the total bytes reported for downloading over wifi.
      */
     public void testWifiDownload() throws Exception {
+        if (isTV()) {
+            return;
+        }
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
 
@@ -338,6 +357,9 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
      * Tests the total bytes reported for uploading over wifi.
      */
     public void testWifiUpload() throws Exception {
+        if (isTV()) {
+            return;
+        }
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
 
@@ -561,5 +583,17 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
             }
         }
         return size;
+    }
+
+    /** Determine if device is just a TV and is not expected to have proper batterystats. */
+    private boolean isTV() throws Exception {
+        // Less noisy version of getDevice().hasFeature("android.software.leanback_only")
+        String tvFeature = "android.software.leanback_only";
+        final String features = getDevice().executeShellCommand("pm list features");
+        if (features.contains(tvFeature)) {
+            LogUtil.CLog.w("Device has feature " + tvFeature);
+            return true;
+        }
+        return false;
     }
 }
