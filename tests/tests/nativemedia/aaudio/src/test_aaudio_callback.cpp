@@ -177,7 +177,8 @@ void runtest_aaudio_callback(aaudio_sharing_mode_t requestedSharingMode,
         }
 
         EXPECT_GE(myTestData.minLatency, 1);   // Absurdly low
-        EXPECT_LE(myTestData.maxLatency, 200); // Absurdly high, should be < 30
+        EXPECT_LE(myTestData.maxLatency, 300); // Absurdly high, should be < 30
+                                               // Note that on some devices it's 200-something
         //printf("latency: %d, %d\n", myTestData.minLatency, myTestData.maxLatency);
     }
 

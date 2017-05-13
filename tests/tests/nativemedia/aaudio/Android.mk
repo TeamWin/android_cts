@@ -44,6 +44,6 @@ LOCAL_COMPATIBILITY_SUITE := cts
 LOCAL_CFLAGS := -Werror -Wall
 
 LOCAL_SDK_VERSION := current
-LOCAL_NDK_STL_VARIANT := c++_shared
+LOCAL_NDK_STL_VARIANT := c++_static
 
 include $(BUILD_CTS_EXECUTABLE)
