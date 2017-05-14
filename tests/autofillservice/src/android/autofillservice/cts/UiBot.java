@@ -392,6 +392,11 @@ final class UiBot {
     /**
      * Gets the AUTOFILL contextual menu by long pressing a text field.
      *
+     * <p><b>NOTE:</b> this method should only be called in scenarios where we explicitly want to
+     * test the overflow menu. For all other scenarios where we want to test manual autofill, it's
+     * better to call {@code AFM.requestAutofill()} directly, because it's less error-prone and
+     * faster.
+     *
      * @param id resource id of the field.
      */
     UiObject2 getAutofillMenuOption(String id) {

@@ -94,6 +94,9 @@ abstract class AutoFillServiceTestCase {
         AuthenticationActivity.resetStaticState();
     }
 
+    // TODO: we shouldn't throw exceptions on @After / @AfterClass because if the test failed, these
+    // exceptions would mask the real cause. A better approach might be using a @Rule or some other
+    // visitor pattern.
     @After
     public void assertNoPendingRequests() {
         sReplier.assertNumberUnhandledFillRequests(0);

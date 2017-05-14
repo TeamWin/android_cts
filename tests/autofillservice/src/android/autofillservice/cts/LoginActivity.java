@@ -123,7 +123,7 @@ public class LoginActivity extends AbstractAutoFillActivity {
     private void login() {
         final String username = mUsernameEditText.getText().toString();
         final String password = mPasswordEditText.getText().toString();
-        final boolean valid = username.equals(password);
+        final boolean valid = username.equals(password) || password.contains("pass");
 
         if (valid) {
             Log.d(TAG, "login ok: " + username);
@@ -189,22 +189,22 @@ public class LoginActivity extends AbstractAutoFillActivity {
         }
     }
 
+    void forceAutofillOnUsername() {
+        syncRunOnUiThread(() -> getAutofillManager().requestAutofill(mUsernameEditText));
+    }
+
     /**
      * Visits the {@code username_label} in the UiThread.
      */
     void onUsernameLabel(Visitor<TextView> v) {
-        syncRunOnUiThread(() -> {
-            v.visit(mUsernameLabel);
-        });
+        syncRunOnUiThread(() -> v.visit(mUsernameLabel));
     }
 
     /**
      * Visits the {@code username} in the UiThread.
      */
     void onUsername(Visitor<EditText> v) {
-        syncRunOnUiThread(() -> {
-            v.visit(mUsernameEditText);
-        });
+        syncRunOnUiThread(() -> v.visit(mUsernameEditText));
     }
 
     /**
@@ -218,18 +218,14 @@ public class LoginActivity extends AbstractAutoFillActivity {
      * Visits the {@code password_label} in the UiThread.
      */
     void onPasswordLabel(Visitor<TextView> v) {
-        syncRunOnUiThread(() -> {
-            v.visit(mPasswordLabel);
-        });
+        syncRunOnUiThread(() -> v.visit(mPasswordLabel));
     }
 
     /**
      * Visits the {@code password} in the UiThread.
      */
     void onPassword(Visitor<EditText> v) {
-        syncRunOnUiThread(() -> {
-            v.visit(mPasswordEditText);
-        });
+        syncRunOnUiThread(() -> v.visit(mPasswordEditText));
     }
 
     /**
@@ -244,9 +240,7 @@ public class LoginActivity extends AbstractAutoFillActivity {
      */
     String tapLogin() throws Exception {
         mLoginLatch = new CountDownLatch(1);
-        syncRunOnUiThread(() -> {
-            mLoginButton.performClick();
-        });
+        syncRunOnUiThread(() -> mLoginButton.performClick());
         boolean called = mLoginLatch.await(LOGIN_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         assertWithMessage("Timeout (%s ms) waiting for login", LOGIN_TIMEOUT_MS)
                 .that(called).isTrue();
@@ -257,18 +251,14 @@ public class LoginActivity extends AbstractAutoFillActivity {
      * Taps the save button in the UI thread.
      */
     void tapSave() throws Exception {
-        syncRunOnUiThread(() -> {
-            mSaveButton.performClick();
-        });
+        syncRunOnUiThread(() -> mSaveButton.performClick());
     }
 
     /**
      * Taps the clear button in the UI thread.
      */
     public void tapClear() {
-        syncRunOnUiThread(() -> {
-            mClearButton.performClick();
-        });
+        syncRunOnUiThread(() -> mClearButton.performClick());
     }
 
     /**
@@ -276,9 +266,7 @@ public class LoginActivity extends AbstractAutoFillActivity {
      */
     void setFlags(int flags) {
         Log.d(TAG, "setFlags():" + flags);
-        syncRunOnUiThread(() -> {
-            getWindow().setFlags(flags, flags);
-        });
+        syncRunOnUiThread(() -> getWindow().setFlags(flags, flags));
     }
 
     /**
