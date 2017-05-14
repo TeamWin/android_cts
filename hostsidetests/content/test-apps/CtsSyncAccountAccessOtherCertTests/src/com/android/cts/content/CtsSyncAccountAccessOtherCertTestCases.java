@@ -25,37 +25,54 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SyncRequest;
 import android.content.SyncResult;
+import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.os.Process;
 import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.Until;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 
+import com.android.compatibility.common.util.SystemUtil;
+
 /**
  * Tests whether a sync adapter can access accounts.
  */
 @RunWith(AndroidJUnit4.class)
 public class CtsSyncAccountAccessOtherCertTestCases {
-    private static final long SYNC_TIMEOUT_MILLIS = 10000; // 10 sec
+    private static final long SYNC_TIMEOUT_MILLIS = 20000; // 20 sec
     private static final long UI_TIMEOUT_MILLIS = 5000; // 5 sec
 
     public static final String TOKEN_TYPE_REMOVE_ACCOUNTS = "TOKEN_TYPE_REMOVE_ACCOUNTS";
 
+    @Before
+    public void setUp() throws Exception {
+        allowSyncAdapterRunInBackgroundAndDataInBackground();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        disallowSyncAdapterRunInBackgroundAndDataInBackground();
+    }
+
     @Test
     public void testAccountAccess_otherCertAsAuthenticatorCanNotSeeAccount() throws Exception {
-        if (!hasDataConnection()) {
+        if (!hasDataConnection() || !hasNotificationSupport()) {
             return;
         }
 
@@ -127,7 +144,7 @@ public class CtsSyncAccountAccessOtherCertTestCases {
     private void waitForSyncManagerAccountChangeUpdate() {
         // Wait for the sync manager to be notified for the new account.
         // Unfortunately, there is no way to detect this event, sigh...
-        SystemClock.sleep(5000);
+        SystemClock.sleep(10000);
     }
 
     private boolean hasDataConnection() {
@@ -135,5 +152,28 @@ public class CtsSyncAccountAccessOtherCertTestCases {
                 ConnectivityManager.class);
         NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
         return activeNetwork != null && activeNetwork.isConnectedOrConnecting();
+    }
+
+    private boolean hasNotificationSupport() {
+        return !getContext().getPackageManager()
+                .hasSystemFeature(PackageManager.FEATURE_LEANBACK);
+    }
+
+    private void allowSyncAdapterRunInBackgroundAndDataInBackground() throws IOException {
+        // Allow us to run in the background
+        SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(),
+                "cmd deviceidle whitelist +" + getContext().getPackageName());
+        // Allow us to use data in the background
+        SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(),
+                "cmd netpolicy add restrict-background-whitelist " + Process.myUid());
+    }
+
+    private void disallowSyncAdapterRunInBackgroundAndDataInBackground() throws IOException {
+        // Allow us to run in the background
+        SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(),
+                "cmd deviceidle whitelist -" + getContext().getPackageName());
+        // Allow us to use data in the background
+        SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(),
+                "cmd netpolicy remove restrict-background-whitelist " + Process.myUid());
     }
 }
