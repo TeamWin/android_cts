@@ -20,7 +20,11 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE_TAGS := tests
 
-LOCAL_STATIC_JAVA_LIBRARIES := android-support-test ctstestrunner ub-uiautomator
+LOCAL_STATIC_JAVA_LIBRARIES := \
+    android-support-test \
+    ctstestrunner \
+    ub-uiautomator \
+    compatibility-device-util
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src) \
   ../CtsSyncAccountAccessSameCertTests/src/com/android/cts/content/StubActivity.java \
