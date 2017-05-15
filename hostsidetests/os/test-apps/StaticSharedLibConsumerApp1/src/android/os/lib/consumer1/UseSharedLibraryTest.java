@@ -22,10 +22,13 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.app.AppOpsManager;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.content.pm.SharedLibraryInfo;
 import android.content.pm.VersionedPackage;
+import android.os.Debug;
 import android.os.lib.provider.StaticSharedLib;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
@@ -34,9 +37,13 @@ import org.junit.runner.RunWith;
 
 import java.util.List;
 
+import com.android.compatibility.common.util.SystemUtil;
+
 @RunWith(AndroidJUnit4.class)
 public class UseSharedLibraryTest {
     private static final String LIB_NAME = "foo.bar.lib";
+    private static final String RECURSIVE_LIB_NAME = "foo.bar.lib.recursive";
+    private static final String RECURSIVE_LIB_PROVIDER_NAME = "android.os.lib.provider.recursive";
     private static final String PLATFORM_PACKAGE = "android";
 
     private static final String STATIC_LIB_PROVIDER_PKG = "android.os.lib.provider";
@@ -50,88 +57,123 @@ public class UseSharedLibraryTest {
 
     @Test
     public void testSharedLibrariesProperlyReported() throws Exception {
-        List<SharedLibraryInfo> sharedLibs = InstrumentationRegistry.getContext()
-                .getPackageManager().getSharedLibraries(0);
+        SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(), "appops set "
+                + InstrumentationRegistry.getInstrumentation().getContext().getPackageName()
+                + " " + AppOpsManager.OP_REQUEST_INSTALL_PACKAGES + " " + "allow");
 
-        assertNotNull(sharedLibs);
+        try {
+            List<SharedLibraryInfo> sharedLibs = InstrumentationRegistry.getContext()
+                    .getPackageManager().getSharedLibraries(0);
 
-        boolean firstLibFound = false;
-        boolean secondLibFound = false;
-        boolean thirdLibFound = false;
+            assertNotNull(sharedLibs);
 
-        for (SharedLibraryInfo sharedLib : sharedLibs) {
-            assertNotNull(sharedLib.getName());
+            boolean firstLibFound = false;
+            boolean secondLibFound = false;
+            boolean thirdLibFound = false;
+            boolean fourthLibFound = false;
 
-            int typeCount = 0;
-            typeCount += sharedLib.isBuiltin() ? 1 : 0;
-            typeCount += sharedLib.isDynamic() ? 1 : 0;
-            typeCount += sharedLib.isStatic() ? 1 : 0;
+            for (SharedLibraryInfo sharedLib : sharedLibs) {
+                assertNotNull(sharedLib.getName());
 
-            if (typeCount != 1) {
-                fail("Library " + sharedLib.getName()
-                        + " must be either builtin or dynamic or static");
-            }
+                int typeCount = 0;
+                typeCount += sharedLib.isBuiltin() ? 1 : 0;
+                typeCount += sharedLib.isDynamic() ? 1 : 0;
+                typeCount += sharedLib.isStatic() ? 1 : 0;
 
-            if (sharedLib.isBuiltin()) {
-                assertSame(SharedLibraryInfo.VERSION_UNDEFINED, sharedLib.getVersion());
-                VersionedPackage declaringPackage = sharedLib.getDeclaringPackage();
-                assertEquals(PLATFORM_PACKAGE, declaringPackage.getPackageName());
-                assertSame(0, declaringPackage.getVersionCode());
-            }
+                if (typeCount != 1) {
+                    fail("Library " + sharedLib.getName()
+                            + " must be either builtin or dynamic or static");
+                }
 
-            if (sharedLib.isDynamic()) {
-                assertSame(SharedLibraryInfo.VERSION_UNDEFINED, sharedLib.getVersion());
-                VersionedPackage declaringPackage = sharedLib.getDeclaringPackage();
-                assertNotNull(declaringPackage.getPackageName());
-                assertTrue(declaringPackage.getVersionCode() >= 0);
-            }
+                if (sharedLib.isBuiltin()) {
+                    assertSame(SharedLibraryInfo.VERSION_UNDEFINED, sharedLib.getVersion());
+                    VersionedPackage declaringPackage = sharedLib.getDeclaringPackage();
+                    assertEquals(PLATFORM_PACKAGE, declaringPackage.getPackageName());
+                    assertSame(0, declaringPackage.getVersionCode());
+                }
 
-            if (sharedLib.isStatic()) {
-                assertTrue(sharedLib.getVersion() >= 0);
-                VersionedPackage declaringPackage = sharedLib.getDeclaringPackage();
-                assertNotNull(declaringPackage.getPackageName());
-                assertTrue(declaringPackage.getVersionCode() >= 0);
-            }
+                if (sharedLib.isDynamic()) {
+                    assertSame(SharedLibraryInfo.VERSION_UNDEFINED, sharedLib.getVersion());
+                    VersionedPackage declaringPackage = sharedLib.getDeclaringPackage();
+                    assertNotNull(declaringPackage.getPackageName());
+                    assertTrue(declaringPackage.getVersionCode() >= 0);
+                }
 
-            if (LIB_NAME.equals(sharedLib.getName())) {
-                assertTrue(sharedLib.isStatic());
+                if (sharedLib.isStatic()) {
+                    assertTrue(sharedLib.getVersion() >= 0);
+                    VersionedPackage declaringPackage = sharedLib.getDeclaringPackage();
+                    assertNotNull(declaringPackage.getPackageName());
+                    assertTrue(declaringPackage.getVersionCode() >= 0);
+                }
 
-                VersionedPackage declaringPackage = sharedLib.getDeclaringPackage();
-                assertEquals(STATIC_LIB_PROVIDER_PKG, declaringPackage.getPackageName());
+                boolean validLibName = false;
+                if (LIB_NAME.equals(sharedLib.getName())) {
+                    VersionedPackage declaringPackage = sharedLib.getDeclaringPackage();
+                    assertEquals(STATIC_LIB_PROVIDER_PKG, declaringPackage.getPackageName());
+                    validLibName = true;
+                }
+                if (RECURSIVE_LIB_NAME.equals(sharedLib.getName())) {
+                    VersionedPackage declaringPackage = sharedLib.getDeclaringPackage();
+                    assertEquals(RECURSIVE_LIB_PROVIDER_NAME, declaringPackage.getPackageName());
+                    validLibName = true;
+                }
 
-                List<VersionedPackage> dependentPackages = sharedLib.getDependentPackages();
+                if (validLibName) {
+                    assertTrue(sharedLib.isStatic());
 
-                switch ((int) sharedLib.getVersion()) {
-                    case 1: {
-                        firstLibFound = true;
-                        assertSame(1, declaringPackage.getVersionCode());
-                        assertSame(1, dependentPackages.size());
-                        VersionedPackage dependentPackage = dependentPackages.get(0);
-                        assertEquals(STATIC_LIB_CONSUMER1_PKG, dependentPackage.getPackageName());
-                        assertSame(1, dependentPackage.getVersionCode());
-                    } break;
+                    VersionedPackage declaringPackage = sharedLib.getDeclaringPackage();
+                    List<VersionedPackage> dependentPackages = sharedLib.getDependentPackages();
 
-                    case 2: {
-                        secondLibFound = true;
-                        assertSame(4, declaringPackage.getVersionCode());
-                        assertTrue(dependentPackages.isEmpty());
-                    } break;
+                    switch (sharedLib.getVersion()) {
+                        case 1: {
+                            firstLibFound = true;
+                            assertSame(1, declaringPackage.getVersionCode());
+                            assertSame(1, dependentPackages.size());
+                            VersionedPackage dependentPackage = dependentPackages.get(0);
+                            assertEquals(STATIC_LIB_CONSUMER1_PKG, dependentPackage.getPackageName());
+                            assertSame(1, dependentPackage.getVersionCode());
+                        }
+                        break;
 
-                    case 5: {
-                        thirdLibFound = true;
-                        assertSame(5, declaringPackage.getVersionCode());
-                        assertSame(1, dependentPackages.size());
-                        VersionedPackage dependentPackage = dependentPackages.get(0);
-                        assertEquals(STATIC_LIB_CONSUMER2_PKG, dependentPackage.getPackageName());
-                        assertSame(2, dependentPackage.getVersionCode());
-                    } break;
+                        case 2: {
+                            secondLibFound = true;
+                            assertSame(4, declaringPackage.getVersionCode());
+                            assertTrue(dependentPackages.isEmpty());
+                        }
+                        break;
+
+                        case 5: {
+                            thirdLibFound = true;
+                            assertSame(5, declaringPackage.getVersionCode());
+                            assertSame(1, dependentPackages.size());
+                            VersionedPackage dependentPackage = dependentPackages.get(0);
+                            assertEquals(STATIC_LIB_CONSUMER2_PKG, dependentPackage.getPackageName());
+                            assertSame(2, dependentPackage.getVersionCode());
+                        }
+                        break;
+
+                        case 6: {
+                            fourthLibFound = true;
+                            assertSame(1, declaringPackage.getVersionCode());
+                            assertSame(1, dependentPackages.size());
+                            VersionedPackage dependentPackage = dependentPackages.get(0);
+                            assertEquals(STATIC_LIB_PROVIDER_PKG, dependentPackage.getPackageName());
+                            assertSame(1, dependentPackage.getVersionCode());
+                        }
+                        break;
+                    }
                 }
             }
-        }
 
-        assertTrue("Did not find lib " + LIB_NAME + " version 1" , firstLibFound);
-        assertTrue("Did not find lib " + LIB_NAME + " version 4" , secondLibFound);
-        assertTrue("Did not find lib " + LIB_NAME + " version 5" , thirdLibFound);
+            assertTrue("Did not find lib " + LIB_NAME + " version 1", firstLibFound);
+            assertTrue("Did not find lib " + LIB_NAME + " version 4", secondLibFound);
+            assertTrue("Did not find lib " + LIB_NAME + " version 5", thirdLibFound);
+            assertTrue("Did not find lib " + RECURSIVE_LIB_NAME + " version 6", fourthLibFound);
+        } finally {
+            SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(), "appops set "
+                    + InstrumentationRegistry.getInstrumentation().getContext().getPackageName()
+                    + " " + AppOpsManager.OP_REQUEST_INSTALL_PACKAGES + " " + "default");
+        }
     }
 
     @Test
