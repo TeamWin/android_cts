@@ -18,6 +18,7 @@ import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.UiAutomation;
 import android.content.Context;
 import android.test.suitebuilder.annotation.MediumTest;
+import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityEvent;
@@ -303,8 +304,8 @@ public class AccessibilityViewTreeReportingTest
                                         == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED;
                                 int isSubTree = (event.getContentChangeTypes()
                                         & AccessibilityEvent.CONTENT_CHANGE_TYPE_SUBTREE);
-                                boolean isFromThisPackage = event.getPackageName()
-                                        .equals(getActivity().getPackageName());
+                                boolean isFromThisPackage = TextUtils.equals(event.getPackageName(),
+                                        getActivity().getPackageName());
                                 return isContentChanged && (isSubTree != 0) && isFromThisPackage;
                             }
                         },
