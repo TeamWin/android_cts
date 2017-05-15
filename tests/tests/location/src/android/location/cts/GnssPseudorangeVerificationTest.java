@@ -25,6 +25,7 @@ import com.android.compatibility.common.util.CddTest;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Test computing and verifying the pseudoranges based on the raw measurements
@@ -32,12 +33,27 @@ import java.util.List;
  */
 public class GnssPseudorangeVerificationTest extends GnssTestCase {
   private static final String TAG = "GnssPseudorangeValTest";
-  private static final int LOCATION_TO_COLLECT_COUNT = 20;
-  private static final int MEASUREMENT_EVENTS_TO_COLLECT_COUNT = 50;
+  private static final int LOCATION_TO_COLLECT_COUNT = 5;
+  private static final int MEASUREMENT_EVENTS_TO_COLLECT_COUNT = 10;
   private static final int MIN_SATELLITES_REQUIREMENT = 4;
   private static final double SECONDS_PER_NANO = 1.0e-9;
-  private static final double PSEUDORANGE_THRESHOLD_IN_SEC = 0.018;
-  private static final double PSEUDORANGE_THRESHOLD_BEIDOU_QZSS_IN_SEC = 0.073;
+  // GPS/GLONASS: according to http://cdn.intechopen.com/pdfs-wm/27712.pdf, the pseudorange in time
+  // is 65-83 ms, which is 18 ms range.
+  // GLONASS: orbit is a bit closer than GPS, so we add 0.003ms to the range, hence deltaiSeconds
+  // should be in the range of [0.0, 0.021] seconds.
+  // QZSS and BEIDOU: they have higher orbit, which will result in a small svTime, the deltai can be
+  // calculated as follows:
+  // assume a = QZSS/BEIDOU orbit Semi-Major Axis(42,164km for QZSS);
+  // b = GLONASS orbit Semi-Major Axis (25,508km);
+  // c = Speed of light (299,792km/s);
+  // e = earth radius (6,378km);
+  // in the extremely case of QZSS is on the horizon and GLONASS is on the 90 degree top
+  // max difference should be (sqrt(a^2-e^2) - (b-e))/c,
+  // which is around 0.076s.
+  private static final double PSEUDORANGE_THRESHOLD_IN_SEC = 0.021;
+  // Geosync constellations have a longer range vs typical MEO orbits
+  // that are the short end of the range.
+  private static final double PSEUDORANGE_THRESHOLD_BEIDOU_QZSS_IN_SEC = 0.076;
 
   private TestGnssMeasurementListener mMeasurementListener;
   private TestLocationListener mLocationListener;
@@ -127,7 +143,7 @@ public class GnssPseudorangeVerificationTest extends GnssTestCase {
 
     SoftAssert.failOrWarning(isMeasurementTestStrict(),
         "Should have at least one GnssMeasurementEvent with at least 4"
-            + "GnssMeasurement.  If failed, retry near window or outdoors?",
+            + "GnssMeasurement. If failed, retry near window or outdoors?",
         hasEventWithEnoughMeasurements);
 
     softAssert.assertAll();
@@ -157,10 +173,14 @@ public class GnssPseudorangeVerificationTest extends GnssTestCase {
    */
   private void validatePseudorange(Collection<GnssMeasurement> measurements,
       SoftAssert softAssert, long timeInNs) {
-    long largestReceivedSvTimeNanos = 0;
+    long largestReceivedSvTimeNanosTod = 0;
+    // closest satellite has largest time (closest to now), as of nano secs of the day
+    // so the largestReceivedSvTimeNanosTod will be the svTime we got from one of the GPS/GLONASS sv
     for(GnssMeasurement measurement : measurements) {
-      if (largestReceivedSvTimeNanos < measurement.getReceivedSvTimeNanos()) {
-        largestReceivedSvTimeNanos = measurement.getReceivedSvTimeNanos();
+      long receivedSvTimeNanosTod =  measurement.getReceivedSvTimeNanos()
+                                        % TimeUnit.DAYS.toNanos(1);
+      if (largestReceivedSvTimeNanosTod < receivedSvTimeNanosTod) {
+        largestReceivedSvTimeNanosTod = receivedSvTimeNanosTod;
       }
     }
     for (GnssMeasurement measurement : measurements) {
@@ -171,12 +191,10 @@ public class GnssPseudorangeVerificationTest extends GnssTestCase {
           || constellationType == GnssStatus.CONSTELLATION_QZSS) {
         threshold = PSEUDORANGE_THRESHOLD_BEIDOU_QZSS_IN_SEC;
       }
-      double deltaiNanos = largestReceivedSvTimeNanos
-                          - measurement.getReceivedSvTimeNanos();
+      double deltaiNanos = largestReceivedSvTimeNanosTod
+                          - (measurement.getReceivedSvTimeNanos() % TimeUnit.DAYS.toNanos(1));
       double deltaiSeconds = deltaiNanos * SECONDS_PER_NANO;
-      // according to http://cdn.intechopen.com/pdfs-wm/27712.pdf
-      // the pseudorange in time is 65-83 ms, which is 18 ms range,
-      // deltaiSeconds should be in the range of [0.0, 0.018] seconds
+
       softAssert.assertTrue("deltaiSeconds in Seconds.",
           timeInNs,
           "0.0 <= deltaiSeconds <= " + String.valueOf(threshold),
