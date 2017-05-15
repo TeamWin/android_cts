@@ -216,7 +216,7 @@ public class VLoadTest extends RSBaseCompute {
     }
 
     public void testVload_uchar() {
-        testSetup(Type.createX(mRS, Element.I8(mRS), w));
+        testSetup(Type.createX(mRS, Element.U8(mRS), w));
         byte tmp[] = randomByteArray(w);
         byte tmp2[] = new byte[w];
         script.forEach_copy2d_uchar(walkAlloc);
@@ -232,7 +232,7 @@ public class VLoadTest extends RSBaseCompute {
     }
 
     public void testVload_uchar_relaxed() {
-        testSetup(Type.createX(mRS, Element.I8(mRS), w));
+        testSetup(Type.createX(mRS, Element.U8(mRS), w));
         byte tmp[] = randomByteArray(w);
         byte tmp2[] = new byte[w];
         scriptRelaxed.forEach_copy2d_uchar(walkAlloc);
@@ -248,7 +248,7 @@ public class VLoadTest extends RSBaseCompute {
     }
 
     public void testVload_ushort() {
-        testSetup(Type.createX(mRS, Element.I16(mRS), w));
+        testSetup(Type.createX(mRS, Element.U16(mRS), w));
         short tmp[] = randomShortArray(w);
         short tmp2[] = new short[w];
         script.forEach_copy2d_ushort(walkAlloc);
@@ -264,7 +264,7 @@ public class VLoadTest extends RSBaseCompute {
     }
 
     public void testVload_ushort_relaxed() {
-        testSetup(Type.createX(mRS, Element.I16(mRS), w));
+        testSetup(Type.createX(mRS, Element.U16(mRS), w));
         short tmp[] = randomShortArray(w);
         short tmp2[] = new short[w];
         scriptRelaxed.forEach_copy2d_ushort(walkAlloc);
@@ -280,7 +280,7 @@ public class VLoadTest extends RSBaseCompute {
     }
 
     public void testVload_uint() {
-        testSetup(Type.createX(mRS, Element.I32(mRS), w));
+        testSetup(Type.createX(mRS, Element.U32(mRS), w));
         int tmp[] = randomIntArray(w);
         int tmp2[] = new int[w];
         script.forEach_copy2d_uint(walkAlloc);
@@ -296,7 +296,7 @@ public class VLoadTest extends RSBaseCompute {
     }
 
     public void testVload_uint_relaxed() {
-        testSetup(Type.createX(mRS, Element.I32(mRS), w));
+        testSetup(Type.createX(mRS, Element.U32(mRS), w));
         int tmp[] = randomIntArray(w);
         int tmp2[] = new int[w];
         scriptRelaxed.forEach_copy2d_uint(walkAlloc);
@@ -312,7 +312,7 @@ public class VLoadTest extends RSBaseCompute {
     }
 
     public void testVload_ulong() {
-        testSetup(Type.createX(mRS, Element.I64(mRS), w));
+        testSetup(Type.createX(mRS, Element.U64(mRS), w));
         long tmp[] = randomLongArray(w);
         long tmp2[] = new long[w];
         script.forEach_copy2d_ulong(walkAlloc);
@@ -326,7 +326,7 @@ public class VLoadTest extends RSBaseCompute {
         verify(tmp, tmp2, "Data mismatch relaxed long: ");
     }
     public void testVload_ulong_relaxed() {
-        testSetup(Type.createX(mRS, Element.I64(mRS), w));
+        testSetup(Type.createX(mRS, Element.U64(mRS), w));
         long tmp[] = randomLongArray(w);
         long tmp2[] = new long[w];
         scriptRelaxed.forEach_copy2d_ulong(walkAlloc);
