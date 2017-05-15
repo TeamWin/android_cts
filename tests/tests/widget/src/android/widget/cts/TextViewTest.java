@@ -6042,6 +6042,7 @@ public class TextViewTest {
             mTextView.setTextIsSelectable(true);
             mTextView.requestFocus();
             mTextView.setSelected(true);
+            mTextView.setTextClassifier(TextClassifier.NO_OP);
         });
         mInstrumentation.waitForIdleSync();
 
