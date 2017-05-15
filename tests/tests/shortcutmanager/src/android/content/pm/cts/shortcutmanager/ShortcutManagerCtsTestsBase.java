@@ -28,6 +28,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
 import android.content.res.Resources;
+import android.graphics.drawable.AdaptiveIconDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Icon;
 import android.os.Bundle;
@@ -478,6 +479,9 @@ public abstract class ShortcutManagerCtsTestsBase extends InstrumentationTestCas
         }
         final Drawable expected = expectedIcon.loadDrawable(getTestContext());
 
+        if (expected instanceof AdaptiveIconDrawable) {
+            assertTrue(actual instanceof AdaptiveIconDrawable);
+        }
         assertEquals(expected.getIntrinsicWidth(), actual.getIntrinsicWidth());
         assertEquals(expected.getIntrinsicHeight(), actual.getIntrinsicHeight());
     }
