@@ -19,6 +19,7 @@ package android.uirendering.cts.testclasses;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import android.content.res.Resources;
 import android.graphics.BitmapRegionDecoder;
@@ -44,6 +45,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -192,6 +195,38 @@ public class HardwareBitmapTests extends ActivityTestBase {
             canvas.drawBitmap(transformed, 0, 0, null);
         }, true).runWithVerifier(new GoldenImageVerifier(getActivity(),
                 R.drawable.golden_hardwaretest_create_transformed, new MSSIMComparer(0.9)));
+    }
+
+
+    @Test
+    public void testCompressHardware() {
+        Bitmap hardwareBitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot,
+                HARDWARE_OPTIONS);
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        assertTrue(hardwareBitmap.compress(Bitmap.CompressFormat.PNG, 50, stream));
+        Bitmap decoded = BitmapFactory.decodeStream(
+                new ByteArrayInputStream(stream.toByteArray()));
+        createTest().addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
+            canvas.drawColor(Color.CYAN);
+            canvas.drawBitmap(hardwareBitmap, 0, 0, null);
+        }, true).addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
+            canvas.drawColor(Color.CYAN);
+            canvas.drawBitmap(decoded, 0, 0, null);
+        }, true).runWithComparer(new MSSIMComparer(0.99));
+
+    }
+
+    @Test
+    public void testHardwareExtractAlpha() {
+        Bitmap bitmap = Bitmap.createBitmap(50, 50, Bitmap.Config.ARGB_8888);
+        bitmap.eraseColor(Color.argb(127, 250, 0, 0));
+        bitmap.setPixel(25, 25, Color.BLUE);
+
+        Bitmap hwBitmap = bitmap.copy(Bitmap.Config.HARDWARE, false);
+        Bitmap alphaBitmap = hwBitmap.extractAlpha();
+        assertEquals(Bitmap.Config.ALPHA_8, alphaBitmap.getConfig());
+        assertTrue(Color.alpha(alphaBitmap.getPixel(25, 25)) >= 254);
+        assertEquals(127, Color.alpha(alphaBitmap.getPixel(40, 40)));
     }
 
     private void testBitmapCopy(int id, Bitmap.Config from, Bitmap.Config to) {
