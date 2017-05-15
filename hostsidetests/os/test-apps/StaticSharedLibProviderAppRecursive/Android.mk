@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2016 The Android Open Source Project
+# Copyright (C) 2017 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ LOCAL_MODULE_TAGS := tests
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_PACKAGE_NAME := CtsStaticSharedLibProviderApp1
+LOCAL_PACKAGE_NAME := CtsStaticSharedLibProviderRecursive
 
 LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/keysets/cts-keyset-test-b
 
@@ -31,8 +31,6 @@ LOCAL_COMPATIBILITY_SUITE := cts
 LOCAL_PROGUARD_ENABLED := disabled
 
 LOCAL_AAPT_FLAGS := --shared-lib
-
-LOCAL_RES_LIBRARIES := CtsStaticSharedLibProviderRecursive
 
 LOCAL_EXPORT_PACKAGE_RESOURCES := true
 

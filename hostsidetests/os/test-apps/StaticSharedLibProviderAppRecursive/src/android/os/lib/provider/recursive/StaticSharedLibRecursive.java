@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package android.os.lib.provider;
+package android.os.lib.provider.recursive;
 
 import android.content.Context;
-import android.os.lib.provider.recursive.StaticSharedLibRecursive;
 
-public class StaticSharedLib {
-    public static int getVersion(Context context) {
-        return Math.min(StaticSharedLibRecursive.getVersionRecursive(context),
-                context.getResources().getInteger(android.os.lib.provider.R.integer.version));
+public class StaticSharedLibRecursive {
+    public static int getVersionRecursive(Context context) {
+        return context.getResources().getInteger(
+                android.os.lib.provider.recursive.R.integer.version);
     }
 }
