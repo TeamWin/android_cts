@@ -677,9 +677,10 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     void setupFilters() throws DeviceNotAvailableException {
         if (mRetrySessionId != null) {
             // Load the invocation result
-            RetryFilterHelper helper = new RetryFilterHelper(mBuildHelper, mRetrySessionId);
+            RetryFilterHelper helper = new RetryFilterHelper(mBuildHelper, mRetrySessionId,
+                    mSubPlan, mIncludeFilters, mExcludeFilters, mAbiName, mModuleName, mTestName,
+                    mRetryType);
             helper.validateBuildFingerprint(mDevice);
-            helper.setAllOptionsFrom(this);
             helper.setCommandLineOptionsFor(this);
             helper.populateRetryFilters();
             mIncludeFilters = helper.getIncludeFilters();

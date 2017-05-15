@@ -34,6 +34,8 @@ import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IDeviceTest;
 import com.android.tradefed.testtype.IRemoteTest;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -49,7 +51,7 @@ public class RetryFactoryTest implements IRemoteTest, IDeviceTest, IBuildReceive
         ISystemStatusCheckerReceiver {
 
     /**
-     * Mirror the {@link CompatibilityTest} options in order to pass them to the Helper.
+     * Mirror the {@link CompatibilityTest} options in order to create it.
      */
     public static final String RETRY_OPTION = "retry";
     @Option(name = RETRY_OPTION,
@@ -127,12 +129,12 @@ public class RetryFactoryTest implements IRemoteTest, IDeviceTest, IBuildReceive
     @Override
     public void run(ITestInvocationListener listener) throws DeviceNotAvailableException {
         // Create a compatibility test and set it to run only what we want.
-        CompatibilityTest test = new CompatibilityTest();
+        CompatibilityTest test = createTest();
 
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mBuildInfo);
-        RetryFilterHelper helper = new RetryFilterHelper(buildHelper, mRetrySessionId);
+        // Create the helper with all the options needed.
+        RetryFilterHelper helper = createFilterHelper(buildHelper);
         helper.validateBuildFingerprint(mDevice);
-        helper.setAllOptionsFrom(this);
         helper.setCommandLineOptionsFor(test);
         helper.setCommandLineOptionsFor(this);
         helper.populateRetryFilters();
@@ -157,5 +159,16 @@ public class RetryFactoryTest implements IRemoteTest, IDeviceTest, IBuildReceive
         helper.tearDown();
         // run the retry run.
         test.run(listener);
+    }
+
+    @VisibleForTesting
+    RetryFilterHelper createFilterHelper(CompatibilityBuildHelper buildHelper) {
+        return new RetryFilterHelper(buildHelper, mRetrySessionId, mSubPlan, mIncludeFilters,
+                mExcludeFilters, mAbiName, mModuleName, mTestName, mRetryType);
+    }
+
+    @VisibleForTesting
+    CompatibilityTest createTest() {
+        return new CompatibilityTest();
     }
 }
