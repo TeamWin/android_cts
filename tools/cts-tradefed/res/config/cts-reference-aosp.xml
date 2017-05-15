@@ -31,4 +31,6 @@
     <!-- Radio system of a reference AOSP system image is not checked -->
     <option name="compatibility:exclude-filter" value="CtsTelephonyTestCases" />
     <option name="compatibility:exclude-filter" value="CtsTelephony2TestCases" />
+    <option name="compatibility:exclude-filter" value="CtsIncidentHostTestCases com.android.server.cts.PackageIncidentTest#testPackageServiceDump" />
+    <option name="compatibility:exclude-filter" value="CtsAppTestCases android.app.cts.SystemFeaturesTest#testLocationFeatures" />
 </configuration>
