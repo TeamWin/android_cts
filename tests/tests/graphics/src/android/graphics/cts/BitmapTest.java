@@ -51,7 +51,6 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
-import java.util.Arrays;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -103,16 +102,6 @@ public class BitmapTest {
     @Test
     public void testCompress() {
         assertTrue(mBitmap.compress(CompressFormat.JPEG, 50, new ByteArrayOutputStream()));
-    }
-
-    @Test
-    public void testCompressHardware() {
-        Bitmap hwBitmap = mBitmap.copy(Config.HARDWARE, false);
-        ByteArrayOutputStream expectedStream = new ByteArrayOutputStream();
-        assertTrue(mBitmap.compress(CompressFormat.JPEG, 50, expectedStream));
-        ByteArrayOutputStream actualStream = new ByteArrayOutputStream();
-        assertTrue(hwBitmap.compress(CompressFormat.JPEG, 50, actualStream));
-        assertTrue(Arrays.equals(expectedStream.toByteArray(), actualStream.toByteArray()));
     }
 
     @Test(expected=IllegalStateException.class)
@@ -1376,19 +1365,6 @@ public class BitmapTest {
         mBitmap.copyPixelsToBuffer(intBuf1);
         Bitmap hwBitmap = BitmapFactory.decodeResource(mRes, R.drawable.start, HARDWARE_OPTIONS);
         hwBitmap.copyPixelsFromBuffer(intBuf1);
-    }
-
-    @Test
-    public void testHardwareExtractAlpha() {
-        Bitmap bitmap = Bitmap.createBitmap(50, 50, Config.ARGB_8888);
-        bitmap.eraseColor(Color.argb(127, 250, 0, 0));
-        bitmap.setPixel(25, 25, Color.BLUE);
-
-        Bitmap hwBitmap = bitmap.copy(Config.HARDWARE, false);
-        Bitmap alphaBitmap = hwBitmap.extractAlpha();
-        assertEquals(Config.ALPHA_8, alphaBitmap.getConfig());
-        assertEquals(255, Color.alpha(alphaBitmap.getPixel(25, 25)));
-        assertEquals(127, Color.alpha(alphaBitmap.getPixel(40, 40)));
     }
 
     @Test
