@@ -205,9 +205,15 @@ public class DrawActivity extends Activity {
 
     private class DrawCounterListener implements ViewTreeObserver.OnDrawListener {
         private final int[] mLocationOnScreen = new int[2];
+        private static final int DEBUG_REQUIRE_EXTRA_FRAMES = 1;
+        private int mDrawCount = 0;
 
         @Override
         public void onDraw() {
+            if (++mDrawCount <= DEBUG_REQUIRE_EXTRA_FRAMES) {
+                mView.postInvalidate();
+                return;
+            }
             mView.post(() -> {
                 Log.d("UiRendering", "notifying capture");
                 mView.getViewTreeObserver().removeOnDrawListener(this);
