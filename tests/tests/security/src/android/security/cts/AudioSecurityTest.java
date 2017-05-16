@@ -20,6 +20,8 @@ import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.media.audiofx.AudioEffect;
+import android.media.audiofx.Equalizer;
+import android.platform.test.annotations.SecurityTest;
 import android.util.Log;
 
 import java.nio.ByteBuffer;
@@ -72,10 +74,12 @@ public class AudioSecurityTest extends CtsAndroidTestCase {
                 testEffect.test(audioEffect);
                 Log.d(TAG, "effect " + testName + " " + descriptor.name + " success");
             } catch (Exception e) {
-                Log.e(TAG, "effect " + testName + " " + descriptor.name + " failed!");
+                Log.e(TAG, "effect " + testName + " " + descriptor.name + " exception failed!",
+                        e);
                 ++failures;
             } catch (AssertionError e) {
-                Log.e(TAG, "effect " + testName + " " + descriptor.name + " failed!");
+                Log.e(TAG, "effect " + testName + " " + descriptor.name + " assert failed!",
+                        e);
                 ++failures;
             }
         }
@@ -84,6 +88,7 @@ public class AudioSecurityTest extends CtsAndroidTestCase {
     }
 
     // b/28173666
+    @SecurityTest
     public void testAllEffectsGetParameterAttemptOffload_CVE_2016_3745() throws Exception {
         testAllEffects("get parameter attempt offload",
                 new TestEffect() {
@@ -97,6 +102,7 @@ public class AudioSecurityTest extends CtsAndroidTestCase {
     // b/32438594
     // b/32624850
     // b/32635664
+    @SecurityTest
     public void testAllEffectsGetParameter2AttemptOffload_CVE_2017_0398() throws Exception {
         testAllEffects("get parameter2 attempt offload",
                 new TestEffect() {
@@ -108,12 +114,25 @@ public class AudioSecurityTest extends CtsAndroidTestCase {
     }
 
     // b/30204301
+    @SecurityTest
     public void testAllEffectsSetParameterAttemptOffload_CVE_2016_3924() throws Exception {
         testAllEffects("set parameter attempt offload",
                 new TestEffect() {
             @Override
             public void test(AudioEffect audioEffect) throws Exception {
                 testAudioEffectSetParameter(audioEffect, true /* offload */);
+            }
+        });
+    }
+
+    // b/37536407
+    @SecurityTest
+    public void testAllEffectsEqualizer_CVE_2017_0401() throws Exception {
+        testAllEffects("equalizer get parameter name",
+                new TestEffect() {
+            @Override
+            public void test(AudioEffect audioEffect) throws Exception {
+                testAudioEffectEqualizerGetParameterName(audioEffect);
             }
         });
     }
@@ -297,12 +316,44 @@ public class AudioSecurityTest extends CtsAndroidTestCase {
         }
     }
 
+    private static void testAudioEffectEqualizerGetParameterName(
+            AudioEffect audioEffect) throws Exception {
+        if (audioEffect == null) {
+            return;
+        }
+        try {
+            // get parameter name with zero vsize
+            {
+                final int param = Equalizer.PARAM_GET_PRESET_NAME;
+                final int band = 0;
+                byte command[] = ByteBuffer.allocate(5 * 4 /* capacity */)
+                        .order(ByteOrder.nativeOrder())
+                        .putInt(0)          // status (unused)
+                        .putInt(8)          // psize (param, band)
+                        .putInt(0)          // vsize
+                        .putInt(param)      // equalizer param
+                        .putInt(band)       // equalizer band
+                        .array();
+                Integer ret = (Integer) AudioEffect.class.getDeclaredMethod(
+                        "command", int.class, byte[].class, byte[].class).invoke(
+                                audioEffect, EFFECT_CMD_GET_PARAM, command,
+                                new byte[5 * 4] /* reply - ignored */);
+                assertTrue("Audio server might have crashed", ret != ERROR_DEAD_OBJECT);
+            }
+        } catch (NoSuchMethodException e) {
+            Log.w(TAG, "AudioEffect.command() does not exist (ignoring)"); // OK
+        } finally {
+            audioEffect.release();
+        }
+    }
+
     // should match effect_visualizer.h (native)
     private static final String VISUALIZER_TYPE = "e46b26a0-dddd-11db-8afd-0002a5d5c51b";
     private static final int VISUALIZER_CMD_CAPTURE = 0x10000;
     private static final int VISUALIZER_PARAM_CAPTURE_SIZE = 0;
 
     // b/31781965
+    @SecurityTest
     public void testVisualizerCapture_CVE_2017_0396() throws Exception {
         // Capture params
         final int CAPTURE_SIZE = 1 << 24; // 16MB seems to be large enough to cause a SEGV.
