@@ -32,6 +32,8 @@ LOCAL_PROGUARD_ENABLED := disabled
 
 LOCAL_AAPT_FLAGS := --shared-lib
 
+LOCAL_RES_LIBRARIES := CtsStaticSharedLibProviderRecursive
+
 LOCAL_EXPORT_PACKAGE_RESOURCES := true
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)
