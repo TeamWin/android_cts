@@ -59,7 +59,7 @@ public class ResultHandler {
     private static final String NS = null;
     private static final String RESULT_FILE_VERSION = "5.0";
     public static final String TEST_RESULT_FILE_NAME = "test_result.xml";
-    private static final String FAILURE_REPORT_NAME = "test_result_failures.html";
+    public static final String FAILURE_REPORT_NAME = "test_result_failures.html";
     private static final String FAILURE_XSL_FILE_NAME = "compatibility_failures.xsl";
 
     public static final String[] RESULT_RESOURCES = {
