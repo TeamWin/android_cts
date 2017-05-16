@@ -211,8 +211,7 @@ public class ActivityAndWindowManagersState extends Assert {
     }
 
     void waitForHomeActivityVisible(ITestDevice device) throws Exception {
-        waitForWithAmState(device, ActivityManagerState::isHomeActivityVisible,
-                "***Waiting for home activity to be visible...");
+        waitForValidState(device, mAmState.getHomeActivityName());
     }
 
     /** @return true if recents activity is visible. Devices without recents will return false */
