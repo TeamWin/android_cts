@@ -85,7 +85,8 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
 
     private static final List<String> NOT_RETRY_FILES = Arrays.asList(
             ChecksumReporter.NAME,
-            ChecksumReporter.PREV_NAME);
+            ChecksumReporter.PREV_NAME,
+            ResultHandler.FAILURE_REPORT_NAME);
 
     @Option(name = CompatibilityTest.RETRY_OPTION,
             shortName = 'r',
