@@ -57,6 +57,7 @@ import com.android.cts.verifier.R;
 
 import org.junit.AssumptionViolatedException;
 
+import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
@@ -584,7 +585,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
 
             try {
                 finished = connection.requestWait();
-            } catch (IllegalArgumentException e) {
+            } catch (BufferOverflowException e) {
                 if (size > bufferSentSliced.limit() || size > bufferReceivedSliced.limit()) {
                     Log.e(LOG_TAG, "Expected failure", e);
                     continue;
