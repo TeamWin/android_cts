@@ -19,7 +19,14 @@
         package="android.os.lib.provider"
         android:versionCode="1"
         android:versionName="1.0">
+
     <application>
+        <uses-static-library
+                android:name="foo.bar.lib.recursive"
+                android:version="6"
+                android:certDigest="E4:95:82:FF:3A:0A:A4:C5:58:9F:C5:FE:AA:C6:B7:D6:E7:57:19:9D:D0:C6:74:2D:F7:BF:37:C2:FF:EF:95:F5">
+        </uses-static-library>
+
         <static-library android:name="foo.bar.lib" android:version="1"/>
     </application>
 </manifest>

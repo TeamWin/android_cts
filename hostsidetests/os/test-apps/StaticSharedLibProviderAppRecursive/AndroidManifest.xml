@@ -1,5 +1,6 @@
-/*
- * Copyright (C) 2016 The Android Open Source Project
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,16 +13,13 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ -->
 
-package android.os.lib.provider;
-
-import android.content.Context;
-import android.os.lib.provider.recursive.StaticSharedLibRecursive;
-
-public class StaticSharedLib {
-    public static int getVersion(Context context) {
-        return Math.min(StaticSharedLibRecursive.getVersionRecursive(context),
-                context.getResources().getInteger(android.os.lib.provider.R.integer.version));
-    }
-}
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        package="android.os.lib.provider.recursive"
+        android:versionCode="1"
+        android:versionName="1.0">
+    <application>
+        <static-library android:name="foo.bar.lib.recursive" android:version="6"/>
+    </application>
+</manifest>
