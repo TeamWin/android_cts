@@ -75,6 +75,9 @@ public class InsetDrawableTest {
 
         new InsetDrawable(null, -1);
         new InsetDrawable(null, -1, -1, -1, -1);
+
+        new InsetDrawable(mPassDrawable, .1f);
+        new InsetDrawable(mPassDrawable, .1f, .1f, .1f, .1f);
     }
 
     @Test
@@ -92,6 +95,7 @@ public class InsetDrawableTest {
             // expected, test success
         }
     }
+
 
     @Test(expected=NullPointerException.class)
     public void testInflateNull() throws Throwable {
@@ -374,9 +378,9 @@ public class InsetDrawableTest {
         expected = -1;
         assertEquals(expected, mPassDrawable.getIntrinsicWidth());
 
-        mInsetDrawable = new InsetDrawable(mPassDrawable, .2f);
+        mPassDrawable = mContext.getDrawable(R.drawable.inset_color_fraction);
         expected = (int)(mPassDrawable.getIntrinsicWidth() * (1.4f));
-        assertEquals(expected, mInsetDrawable.getIntrinsicWidth());
+        assertEquals(expected, mPassDrawable.getIntrinsicWidth());
     }
 
     @Test
@@ -400,9 +404,9 @@ public class InsetDrawableTest {
         expected = -1;
         assertEquals(expected, mPassDrawable.getIntrinsicHeight());
 
-        mInsetDrawable = new InsetDrawable(mPassDrawable, .2f);
+        mPassDrawable = mContext.getDrawable(R.drawable.inset_color_fraction);
         expected = (int)(mPassDrawable.getIntrinsicHeight() * (1.4f));
-        assertEquals(expected, mInsetDrawable.getIntrinsicHeight());
+        assertEquals(expected, mPassDrawable.getIntrinsicHeight());
     }
 
     @Test
