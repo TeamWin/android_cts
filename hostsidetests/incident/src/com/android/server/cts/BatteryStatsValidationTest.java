@@ -20,6 +20,7 @@ import com.android.tradefed.log.LogUtil;
 
 import com.google.common.base.Charsets;
 
+import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -82,6 +83,23 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         super.tearDown();
     }
 
+    protected void screenOff() throws Exception {
+        getDevice().executeShellCommand("dumpsys batterystats enable pretend-screen-off");
+    }
+
+    /**
+     * This will turn the screen on for real, not just disabling pretend-screen-off
+     */
+    protected void turnScreenOnForReal() throws Exception {
+        getDevice().executeShellCommand("input keyevent KEYCODE_WAKEUP");
+        getDevice().executeShellCommand("wm dismiss-keyguard");
+    }
+
+    protected void batteryOnScreenOn() throws Exception {
+        getDevice().executeShellCommand("dumpsys battery unplug");
+        getDevice().executeShellCommand("dumpsys batterystats disable pretend-screen-off");
+    }
+
     protected void batteryOnScreenOff() throws Exception {
         getDevice().executeShellCommand("dumpsys battery unplug");
         getDevice().executeShellCommand("dumpsys batterystats enable pretend-screen-off");
@@ -90,6 +108,14 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     protected void batteryOffScreenOn() throws Exception {
         getDevice().executeShellCommand("dumpsys battery reset");
         getDevice().executeShellCommand("dumpsys batterystats disable pretend-screen-off");
+    }
+
+    private void forceStop() throws Exception {
+        getDevice().executeShellCommand("am force-stop " + DEVICE_SIDE_TEST_PACKAGE);
+    }
+
+    private void resetBatteryStats() throws Exception {
+        getDevice().executeShellCommand("dumpsys batterystats --reset");
     }
 
     public void testAlarms() throws Exception {
@@ -350,6 +376,118 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         assertValueRange("nt", "", 6, min, max); // wifi_bytes_rx
         assertValueRange("nt", "", 10, min / HIGH_MTU, max / LOW_MTU); // wifi_packets_rx
 
+        batteryOffScreenOn();
+    }
+
+    public void testCpuFreqData() throws Exception {
+        batteryOnScreenOff();
+        final long[] actualCpuFreqs = CpuFreqDataHelper.getCpuFreqFromCheckinDump(getDevice());
+        final long[] expectedCpuFreqs = CpuFreqDataHelper.getCpuFreqFromProcFile(getDevice());
+        assertTrue("Unexpected cpu freqs, actual: " + Arrays.toString(actualCpuFreqs)
+                + ", expected: " + Arrays.toString(expectedCpuFreqs),
+                        Arrays.equals(actualCpuFreqs, expectedCpuFreqs));
+        batteryOffScreenOn();
+    }
+
+    public void testUidCpuFreqTimesData() throws Exception {
+        batteryOnScreenOn();
+        // Previous call will only disable the pretend-screen-off. Since we are interested in
+        // checking the uid times while the screen is on, turn it on for real.
+        turnScreenOnForReal();
+        installPackage(DEVICE_SIDE_TEST_APK, true);
+        final int uid = getUid();
+        final long[] initialSnapshot = CpuFreqDataHelper.getUidCpuFreqTimesFromProcFile(
+                getDevice(), uid);
+        forceStop();
+        resetBatteryStats();
+        assertNull(CpuFreqDataHelper.getUidCpuFreqTimesFromCheckinDump(getDevice(), uid));
+
+        // Do some work with screen on
+        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".BatteryStatsAlarmTest", "testAlarms");
+        // Now do some work with screen off
+        screenOff();
+        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".BatteryStatsJobDurationTests",
+                "testJobDuration");
+        forceStop();
+
+        final long[] uidTimesFromDump = CpuFreqDataHelper.getUidCpuFreqTimesFromCheckinDump(
+                getDevice(), uid);
+        final long[] finalSnapshot = CpuFreqDataHelper.getUidCpuFreqTimesFromProcFile(
+                getDevice(), uid);
+        final long[] uidTimesFromProcFile =
+                CpuFreqDataHelper.subtract(finalSnapshot, initialSnapshot);
+        final long[] totalUidTimesFromDump = CpuFreqDataHelper.getTotalCpuTimes(uidTimesFromDump);
+        assertTrue("Unexcepted total uid times, from dump: " + Arrays.toString(uidTimesFromDump)
+                        + ", from procFile: " + Arrays.toString(uidTimesFromProcFile),
+                Arrays.equals(totalUidTimesFromDump, uidTimesFromProcFile));
+        batteryOffScreenOn();
+    }
+
+    public void testUidCpuFreqTimesDataWithOnlyScreenOn() throws Exception {
+        batteryOnScreenOn();
+        // Previous call will only disable the pretend-screen-off. Since we are interested in
+        // checking the uid times while the screen is on, turn it on for real.
+        turnScreenOnForReal();
+        installPackage(DEVICE_SIDE_TEST_APK, true);
+        final int uid = getUid();
+        final long[] initialSnapshot = CpuFreqDataHelper.getUidCpuFreqTimesFromProcFile(
+                getDevice(), uid);
+        forceStop();
+        resetBatteryStats();
+        assertNull(CpuFreqDataHelper.getUidCpuFreqTimesFromCheckinDump(getDevice(), uid));
+
+        // Do some work
+        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".BatteryStatsAlarmTest", "testAlarms");
+        forceStop();
+
+        final long[] uidTimesFromDump = CpuFreqDataHelper.getUidCpuFreqTimesFromCheckinDump(
+                getDevice(), uid);
+        final long[] finalSnapshot = CpuFreqDataHelper.getUidCpuFreqTimesFromProcFile(
+                getDevice(), uid);
+        final long[] uidTimesFromProcFile =
+                CpuFreqDataHelper.subtract(finalSnapshot, initialSnapshot);
+        final long[] totalUidTimesFromDump = CpuFreqDataHelper.getTotalCpuTimes(uidTimesFromDump);
+        final long[] screenOnUidTimesFromDump = CpuFreqDataHelper.getScreenOnCpuTimes(
+                uidTimesFromDump);
+        assertTrue("Unexcepted total uid times, from dump: " + Arrays.toString(uidTimesFromDump)
+                + ", from procFile: " + Arrays.toString(uidTimesFromProcFile),
+                        Arrays.equals(totalUidTimesFromDump, uidTimesFromProcFile));
+        assertTrue("Unexcepted screen-on uid times, from dump: " + Arrays.toString(uidTimesFromDump)
+                + ", from procFile: " + Arrays.toString(uidTimesFromProcFile),
+                        Arrays.equals(screenOnUidTimesFromDump, uidTimesFromProcFile));
+        batteryOffScreenOn();
+    }
+
+    public void testUidCpuFreqTimesDataWithOnlyScreenOff() throws Exception {
+        batteryOnScreenOff();
+        installPackage(DEVICE_SIDE_TEST_APK, true);
+        final int uid = getUid();
+        final long[] initialSnapshot = CpuFreqDataHelper.getUidCpuFreqTimesFromProcFile(
+                getDevice(), uid);
+        forceStop();
+        resetBatteryStats();
+        assertNull(CpuFreqDataHelper.getUidCpuFreqTimesFromCheckinDump(getDevice(), uid));
+
+        // Do some work
+        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".BatteryStatsAlarmTest", "testAlarms");
+        forceStop();
+
+        final long[] uidTimesFromDump = CpuFreqDataHelper.getUidCpuFreqTimesFromCheckinDump(
+                getDevice(), uid);
+        final long[] finalSnapshot = CpuFreqDataHelper.getUidCpuFreqTimesFromProcFile(
+                getDevice(), uid);
+        final long[] uidTimesFromProcFile =
+                CpuFreqDataHelper.subtract(finalSnapshot, initialSnapshot);
+        final long[] totalUidTimesFromDump = CpuFreqDataHelper.getTotalCpuTimes(uidTimesFromDump);
+        final long[] screenOffUidTimesFromDump = CpuFreqDataHelper.getScreenOffCpuTimes(
+                uidTimesFromDump);
+        assertTrue("Unexcepted total uid times, from dump: " + Arrays.toString(uidTimesFromDump)
+                        + ", from procFile: " + Arrays.toString(uidTimesFromProcFile),
+                Arrays.equals(totalUidTimesFromDump, uidTimesFromProcFile));
+        assertTrue("Unexcepted screen-off uid times, from dump: "
+                + Arrays.toString(uidTimesFromDump) + ", from procFile: "
+                + Arrays.toString(uidTimesFromProcFile),
+                        Arrays.equals(screenOffUidTimesFromDump, uidTimesFromProcFile));
         batteryOffScreenOn();
     }
 
