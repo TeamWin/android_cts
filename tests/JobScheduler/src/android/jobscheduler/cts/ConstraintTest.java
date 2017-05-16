@@ -181,4 +181,25 @@ public abstract class ConstraintTest extends InstrumentationTestCase {
 
         fail("Timed out waiting for job scheduler: expected seq=" + seq + ", cur=" + curSeq);
     }
+
+    String getJobState(int jobId) throws Exception {
+        return SystemUtil.runShellCommand(getInstrumentation(),
+                "cmd jobscheduler get-job-state " + kJobServiceComponent.getPackageName()
+                        + " " + jobId).trim();
+    }
+
+    void assertJobReady(int jobId) throws Exception {
+        String state = getJobState(jobId);
+        assertTrue("Job unexpectedly not ready, in state: " + state, state.contains("ready"));
+    }
+
+    void assertJobWaiting(int jobId) throws Exception {
+        String state = getJobState(jobId);
+        assertTrue("Job unexpectedly not waiting, in state: " + state, state.contains("waiting"));
+    }
+
+    void assertJobNotReady(int jobId) throws Exception {
+        String state = getJobState(jobId);
+        assertTrue("Job unexpectedly ready, in state: " + state, !state.contains("ready"));
+    }
 }
