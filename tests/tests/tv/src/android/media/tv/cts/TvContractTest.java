@@ -991,9 +991,12 @@ public class TvContractTest extends AndroidTestCase {
         verifyOverlap(programStartMillis - hour, programStartMillis - hour / 2, 0,
                 channelId, channelUri);
 
-        // Non-overlap 2: starts too late
+        // Non-overlap 2: starts too late.
         verifyOverlap(programEndMillis + hour, programEndMillis + hour * 2, 0,
                 channelId, channelUri);
+
+        // Non-overlap 3: invalid start and end times.
+        verifyOverlap(programEndMillis, programStartMillis, 0, channelId, channelUri);
     }
 
     private void verifyRecordedProgram(Uri recordedProgramUri, ContentValues expectedValues,
