@@ -15,17 +15,17 @@
  */
 
 package android.hardware.input.cts.tests;
-
-import android.util.Log;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.view.KeyEvent;
 
-import java.io.Writer;
-import java.util.List;
-
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import android.hardware.cts.R;
 
+@SmallTest
+@RunWith(AndroidJUnit4.class)
 public class GamepadTestCase extends InputTestCase {
     private static final String TAG = "GamepadTests";
 

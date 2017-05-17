@@ -25,9 +25,7 @@ import android.hardware.input.cts.InputCallback;
 import android.hardware.input.cts.InputCtsActivity;
 import android.os.ParcelFileDescriptor;
 import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 
@@ -46,10 +44,7 @@ import libcore.io.IoUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
-import org.junit.runner.RunWith;
 
-@SmallTest
-@RunWith(AndroidJUnit4.class)
 public class InputTestCase {
     // hid executable expects "-" argument to read from stdin instead of a file
     private static final String HID_COMMAND = "hid -";
