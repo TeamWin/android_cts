@@ -88,7 +88,7 @@ public class MockJobService extends JobService {
         TestWorkItem[] expectedWork = TestEnvironment.getTestEnvironment().getExpectedWork();
         if (expectedWork != null) {
             try {
-                if (TestEnvironment.getTestEnvironment().awaitDoWork()) {
+                if (!TestEnvironment.getTestEnvironment().awaitDoWork()) {
                     TestEnvironment.getTestEnvironment().notifyExecution(params, permCheckRead,
                             permCheckWrite, null, "Spent too long waiting to start executing work");
                     return false;
@@ -200,15 +200,29 @@ public class MockJobService extends JobService {
             // stops itself.
             return true;
         } else {
+            boolean continueAfterStart
+                    = TestEnvironment.getTestEnvironment().handleContinueAfterStart();
+            try {
+                if (!TestEnvironment.getTestEnvironment().awaitDoJob()) {
+                    TestEnvironment.getTestEnvironment().notifyExecution(params, permCheckRead,
+                            permCheckWrite, null, "Spent too long waiting to start job");
+                    return false;
+                }
+            } catch (InterruptedException e) {
+                TestEnvironment.getTestEnvironment().notifyExecution(params, permCheckRead,
+                        permCheckWrite, null, "Failed waiting to start job: " + e);
+                return false;
+            }
             TestEnvironment.getTestEnvironment().notifyExecution(params, permCheckRead,
                     permCheckWrite, null, null);
-            return false;  // No work to do.
+            return continueAfterStart;
         }
     }
 
     @Override
     public boolean onStopJob(JobParameters params) {
         Log.i(TAG, "Received stop callback");
+        TestEnvironment.getTestEnvironment().notifyStopped();
         return mWaitingForStop;
     }
 
@@ -282,8 +296,11 @@ public class MockJobService extends JobService {
 
         private CountDownLatch mLatch;
         private CountDownLatch mWaitingForStopLatch;
+        private CountDownLatch mDoJobLatch;
+        private CountDownLatch mStoppedLatch;
         private CountDownLatch mDoWorkLatch;
         private TestWorkItem[] mExpectedWork;
+        private boolean mContinueAfterStart;
         private JobParameters mExecutedJobParameters;
         private int mExecutedPermCheckRead;
         private int mExecutedPermCheckWrite;
@@ -326,7 +343,11 @@ public class MockJobService extends JobService {
          * job on this service.
          */
         public boolean awaitExecution() throws InterruptedException {
-            final boolean executed = mLatch.await(DEFAULT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+            return awaitExecution(DEFAULT_TIMEOUT_MILLIS);
+        }
+
+        public boolean awaitExecution(long timeoutMillis) throws InterruptedException {
+            final boolean executed = mLatch.await(timeoutMillis, TimeUnit.MILLISECONDS);
             if (getLastErrorMessage() != null) {
                 Assert.fail(getLastErrorMessage());
             }
@@ -343,11 +364,22 @@ public class MockJobService extends JobService {
         }
 
         public boolean awaitWaitingForStop() throws InterruptedException {
-            return !mWaitingForStopLatch.await(DEFAULT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+            return mWaitingForStopLatch.await(DEFAULT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
         }
 
         public boolean awaitDoWork() throws InterruptedException {
-            return !mDoWorkLatch.await(DEFAULT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+            return mDoWorkLatch.await(DEFAULT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        }
+
+        public boolean awaitDoJob() throws InterruptedException {
+            if (mDoJobLatch == null) {
+                return true;
+            }
+            return mDoJobLatch.await(DEFAULT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        }
+
+        public boolean awaitStopped() throws InterruptedException {
+            return mStoppedLatch.await(DEFAULT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
         }
 
         private void notifyExecution(JobParameters params, int permCheckRead, int permCheckWrite,
@@ -365,6 +397,12 @@ public class MockJobService extends JobService {
             mWaitingForStopLatch.countDown();
         }
 
+        private void notifyStopped() {
+            if (mStoppedLatch != null) {
+                mStoppedLatch.countDown();
+            }
+        }
+
         public void setExpectedExecutions(int numExecutions) {
             // For no executions expected, set count to 1 so we can still block for the timeout.
             if (numExecutions == 0) {
@@ -372,6 +410,12 @@ public class MockJobService extends JobService {
             } else {
                 mLatch = new CountDownLatch(numExecutions);
             }
+            mWaitingForStopLatch = null;
+            mDoJobLatch = null;
+            mStoppedLatch = null;
+            mDoWorkLatch = null;
+            mExpectedWork = null;
+            mContinueAfterStart = false;
         }
 
         public void setExpectedWaitForStop() {
@@ -383,8 +427,30 @@ public class MockJobService extends JobService {
             mDoWorkLatch = new CountDownLatch(1);
         }
 
+        public void setExpectedStopped() {
+            mStoppedLatch = new CountDownLatch(1);
+        }
+
         public void readyToWork() {
             mDoWorkLatch.countDown();
+        }
+
+        public void setExpectedWaitForRun() {
+            mDoJobLatch = new CountDownLatch(1);
+        }
+
+        public void readyToRun() {
+            mDoJobLatch.countDown();
+        }
+
+        public void setContinueAfterStart() {
+            mContinueAfterStart = true;
+        }
+
+        public boolean handleContinueAfterStart() {
+            boolean res = mContinueAfterStart;
+            mContinueAfterStart = false;
+            return res;
         }
 
         /** Called in each testCase#setup */

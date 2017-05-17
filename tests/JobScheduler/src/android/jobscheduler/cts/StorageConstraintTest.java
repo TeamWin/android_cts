@@ -48,6 +48,22 @@ public class StorageConstraintTest extends ConstraintTest {
         mJobScheduler.cancel(STORAGE_JOB_ID);
     }
 
+    String getJobState() throws Exception {
+        return getJobState(STORAGE_JOB_ID);
+    }
+
+    void assertJobReady() throws Exception {
+        assertJobReady(STORAGE_JOB_ID);
+    }
+
+    void assertJobWaiting() throws Exception {
+        assertJobWaiting(STORAGE_JOB_ID);
+    }
+
+    void assertJobNotReady() throws Exception {
+        assertJobNotReady(STORAGE_JOB_ID);
+    }
+
     // --------------------------------------------------------------------------------------------
     // Positives - schedule jobs under conditions that require them to pass.
     // --------------------------------------------------------------------------------------------
@@ -59,7 +75,10 @@ public class StorageConstraintTest extends ConstraintTest {
         setStorageState(false);
 
         kTestEnvironment.setExpectedExecutions(1);
+        kTestEnvironment.setExpectedWaitForRun();
         mJobScheduler.schedule(mBuilder.setRequiresStorageNotLow(true).build());
+        assertJobReady();
+        kTestEnvironment.readyToRun();
 
         assertTrue("Job with storage not low constraint did not fire when storage not low.",
                 kTestEnvironment.awaitExecution());
@@ -76,14 +95,21 @@ public class StorageConstraintTest extends ConstraintTest {
         setStorageState(true);
 
         kTestEnvironment.setExpectedExecutions(0);
+        kTestEnvironment.setExpectedWaitForRun();
         mJobScheduler.schedule(mBuilder.setRequiresStorageNotLow(true).build());
+        assertJobWaiting();
+        assertJobNotReady();
+        kTestEnvironment.readyToRun();
 
         assertFalse("Job with storage now low constraint fired while low.",
-                kTestEnvironment.awaitExecution());
+                kTestEnvironment.awaitExecution(250));
 
         // And for good measure, ensure the job runs once storage is okay.
         kTestEnvironment.setExpectedExecutions(1);
+        kTestEnvironment.setExpectedWaitForRun();
         setStorageState(false);
+        assertJobReady();
+        kTestEnvironment.readyToRun();
         assertTrue("Job with storage not low constraint did not fire when storage not low.",
                 kTestEnvironment.awaitExecution());
     }
