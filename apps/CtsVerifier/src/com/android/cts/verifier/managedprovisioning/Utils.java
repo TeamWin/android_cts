@@ -19,6 +19,7 @@ package com.android.cts.verifier.managedprovisioning;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.admin.DevicePolicyManager;
 import android.content.ActivityNotFoundException;
@@ -28,7 +29,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.util.Log;
 import android.widget.Toast;
-
 import com.android.cts.verifier.IntentDrivenTestActivity;
 import com.android.cts.verifier.IntentDrivenTestActivity.ButtonInfo;
 import com.android.cts.verifier.R;
@@ -38,6 +38,7 @@ public class Utils {
 
     private static final String TAG = "CtsVerifierByodUtils";
     static final int BUGREPORT_NOTIFICATION_ID = 12345;
+    private static final String CHANNEL_ID = "BugReport";
 
     static TestListItem createInteractiveTestItem(Activity activity, String id, int titleRes,
             int infoRes, ButtonInfo[] buttonInfos) {
@@ -80,7 +81,12 @@ public class Utils {
     static void showBugreportNotification(Context context, String msg, int notificationId) {
         NotificationManager mNotificationManager =
                 (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+
+        NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
+                CHANNEL_ID, NotificationManager.IMPORTANCE_HIGH);
+        mNotificationManager.createNotificationChannel(channel);
         Notification notification = new Notification.Builder(context)
+                .setChannelId(CHANNEL_ID)
                 .setSmallIcon(R.drawable.icon)
                 .setContentTitle(context.getString(
                         R.string.device_owner_requesting_bugreport_tests))
