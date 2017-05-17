@@ -62,6 +62,7 @@ public class AutoFinishSessionTest extends AutoFillServiceTestCase {
         assertThat(mFragment).isNotNull();
     }
 
+    // firstRemove and secondRemove run in the UI Thread; firstCheck doesn't
     private void removeViewsBaseTest(@NonNull Runnable firstRemove, @Nullable Runnable firstCheck,
             @Nullable Runnable secondRemove, String... viewsToSave)
             throws Exception {
@@ -74,8 +75,10 @@ public class AutoFinishSessionTest extends AutoFillServiceTestCase {
 
             // Trigger autofill
             eventually(() -> {
-                mActivity.syncRunOnUiThread(() -> mEditText2.requestFocus());
-                mActivity.syncRunOnUiThread(() -> mEditText1.requestFocus());
+                mActivity.syncRunOnUiThread(() -> {
+                    mEditText2.requestFocus();
+                    mEditText1.requestFocus();
+                });
 
                 try {
                     sReplier.getNextFillRequest();
@@ -90,8 +93,8 @@ public class AutoFinishSessionTest extends AutoFillServiceTestCase {
             mActivity.syncRunOnUiThread(() -> {
                 mEditText1.setText("editText1-filled");
                 mEditText2.setText("editText2-filled");
+                firstRemove.run();
             });
-            firstRemove.run();
 
             // Check state between remove operations
             if (firstCheck != null) {
@@ -100,7 +103,7 @@ public class AutoFinishSessionTest extends AutoFillServiceTestCase {
 
             // remove second set of views
             if (secondRemove != null) {
-                secondRemove.run();
+                mActivity.syncRunOnUiThread(secondRemove);
             }
 
             // Save should be shows after all remove operations were executed
@@ -119,23 +122,21 @@ public class AutoFinishSessionTest extends AutoFillServiceTestCase {
     @Test
     public void removeBothViewsToFinishSession() throws Exception {
         removeViewsBaseTest(
-                () -> mActivity.syncRunOnUiThread(
-                        () -> ((ViewGroup) mEditText1.getParent()).removeView(mEditText1)),
+                () -> ((ViewGroup) mEditText1.getParent()).removeView(mEditText1),
                 () -> sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC),
-                () -> mActivity.syncRunOnUiThread(
-                        () -> ((ViewGroup) mEditText2.getParent()).removeView(mEditText2)),
+                () -> ((ViewGroup) mEditText2.getParent()).removeView(mEditText2),
                 "editText1", "editText2");
     }
 
     @Test
     public void removeOneViewToFinishSession() throws Exception {
         removeViewsBaseTest(
-                () -> mActivity.syncRunOnUiThread(() -> {
+                () -> {
                     // Do not trigger new partition when switching to editText2
                     mEditText2.setFocusable(false);
 
                     mParent.removeView(mEditText1);
-                }),
+                },
                 null,
                 null,
                 "editText1");
@@ -144,12 +145,12 @@ public class AutoFinishSessionTest extends AutoFillServiceTestCase {
     @Test
     public void hideOneViewToFinishSession() throws Exception {
         removeViewsBaseTest(
-                () -> mActivity.syncRunOnUiThread(() -> {
+                () -> {
                     // Do not trigger new partition when switching to editText2
                     mEditText2.setFocusable(false);
 
                     mEditText1.setVisibility(ViewGroup.INVISIBLE);
-                }),
+                },
                 null,
                 null,
                 "editText1");
@@ -158,9 +159,8 @@ public class AutoFinishSessionTest extends AutoFillServiceTestCase {
     @Test
     public void removeFragmentToFinishSession() throws Exception {
         removeViewsBaseTest(
-                () -> mActivity.syncRunOnUiThread(
-                        () -> mActivity.getFragmentManager().beginTransaction().remove(
-                                mFragment).commitNow()),
+                () -> mActivity.getFragmentManager().beginTransaction().remove(
+                        mFragment).commitNow(),
                 null,
                 null,
                 "editText1", "editText2");
@@ -169,8 +169,7 @@ public class AutoFinishSessionTest extends AutoFillServiceTestCase {
     @Test
     public void removeParentToFinishSession() throws Exception {
         removeViewsBaseTest(
-                () -> mActivity.syncRunOnUiThread(
-                        () -> ((ViewGroup) mParent.getParent()).removeView(mParent)),
+                () -> ((ViewGroup) mParent.getParent()).removeView(mParent),
                 null,
                 null,
                 "editText1", "editText2");
@@ -179,7 +178,7 @@ public class AutoFinishSessionTest extends AutoFillServiceTestCase {
     @Test
     public void hideParentToFinishSession() throws Exception {
         removeViewsBaseTest(
-                () -> mActivity.syncRunOnUiThread(() -> mParent.setVisibility(ViewGroup.INVISIBLE)),
+                () -> mParent.setVisibility(ViewGroup.INVISIBLE),
                 null,
                 null,
                 "editText1", "editText2");
@@ -188,6 +187,8 @@ public class AutoFinishSessionTest extends AutoFillServiceTestCase {
     /**
      * An activity that is currently getting autofilled might go into the background. While the
      * tracked views are not visible on the screen anymore, this should not trigger a save.
+     *
+     * <p>The {@link Runnable}s are synchronously run in the UI thread.
      */
     public void activityToBackgroundShouldNotTriggerSave(@Nullable Runnable removeInBackGround,
             @Nullable Runnable removeInForeGroup) throws Exception {
@@ -200,8 +201,10 @@ public class AutoFinishSessionTest extends AutoFillServiceTestCase {
 
             // Trigger autofill
             eventually(() -> {
-                mActivity.syncRunOnUiThread(() -> mEditText2.requestFocus());
-                mActivity.syncRunOnUiThread(() -> mEditText1.requestFocus());
+                mActivity.syncRunOnUiThread(() -> {
+                    mEditText2.requestFocus();
+                    mEditText1.requestFocus();
+                });
 
                 try {
                     sReplier.getNextFillRequest();
@@ -223,7 +226,7 @@ public class AutoFinishSessionTest extends AutoFillServiceTestCase {
             mActivity.waitUntilStopped();
 
             if (removeInBackGround != null) {
-                removeInBackGround.run();
+                mActivity.syncRunOnUiThread(removeInBackGround);
             }
 
             sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
@@ -235,7 +238,7 @@ public class AutoFinishSessionTest extends AutoFillServiceTestCase {
             if (removeInForeGroup != null) {
                 sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
 
-                removeInForeGroup.run();
+                mActivity.syncRunOnUiThread(removeInForeGroup);
             }
 
             // Save should be shows after all remove operations were executed
@@ -263,41 +266,35 @@ public class AutoFinishSessionTest extends AutoFillServiceTestCase {
 
     @Test
     public void hideViewInBackground() throws Exception {
-        activityToBackgroundShouldNotTriggerSave(
-                () -> mActivity.syncRunOnUiThread(() -> {
+        activityToBackgroundShouldNotTriggerSave(() -> {
                     // Do not trigger new partition when switching to editText2
                     mEditText2.setFocusable(false);
 
                     mEditText1.setVisibility(ViewGroup.INVISIBLE);
-                }),
+                },
                 null);
     }
 
     @Test
     public void hideParentInBackground() throws Exception {
-        activityToBackgroundShouldNotTriggerSave(
-                () -> mActivity.syncRunOnUiThread(() -> mParent.setVisibility(ViewGroup.INVISIBLE)),
+        activityToBackgroundShouldNotTriggerSave(() -> mParent.setVisibility(ViewGroup.INVISIBLE),
                 null);
     }
 
     @Test
     public void removeParentInBackground() throws Exception {
         activityToBackgroundShouldNotTriggerSave(
-                () -> mActivity.syncRunOnUiThread(
-                        () -> ((ViewGroup) mParent.getParent()).removeView(mParent)),
+                () -> ((ViewGroup) mParent.getParent()).removeView(mParent),
                 null);
     }
 
     @Test
     public void removeViewAfterBackground() throws Exception {
-        activityToBackgroundShouldNotTriggerSave(
-                () -> mActivity.syncRunOnUiThread(() -> {
+        activityToBackgroundShouldNotTriggerSave(() -> {
                     // Do not trigger new fill request when closing activity
                     mEditText1.setFocusable(false);
                     mEditText2.setFocusable(false);
-                }),
-                () -> mActivity.syncRunOnUiThread(() -> {
-                    mParent.removeView(mEditText1);
-                }));
+                },
+                () -> mParent.removeView(mEditText1));
     }
 }
