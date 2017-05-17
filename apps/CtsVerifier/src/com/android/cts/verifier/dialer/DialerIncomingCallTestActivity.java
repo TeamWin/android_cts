@@ -52,10 +52,12 @@ public class DialerIncomingCallTestActivity extends PassFailButtons.Activity imp
 
   @Override
   public void update(Observable observable, Object data) {
-    getPassButton().setEnabled(true);
-    mDialerIncomingCallStatusIcon.setImageDrawable(getDrawable(R.drawable.fs_good));
-    mDialerIncomingCallInstructions.setText(R.string.dialer_incoming_call_detected);
-    mDefaultDialerChanger.setRestorePending(true);
+    if (DialerCallTestService.getObservable().getOnIncoming()) {
+      getPassButton().setEnabled(true);
+      mDialerIncomingCallStatusIcon.setImageDrawable(getDrawable(R.drawable.fs_good));
+      mDialerIncomingCallInstructions.setText(R.string.dialer_incoming_call_detected);
+      mDefaultDialerChanger.setRestorePending(true);
+    }
   }
 
   @Override
