@@ -19,7 +19,11 @@ import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.drm.DrmConvertedStatus;
 import android.drm.DrmManagerClient;
+import android.graphics.ImageFormat;
+import android.media.Image;
+import android.media.Image.Plane;
 import android.media.MediaCodec;
+import android.media.MediaCodec.BufferInfo;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecInfo.CodecCapabilities;
 import android.media.MediaCodecInfo.VideoCapabilities;
@@ -35,10 +39,14 @@ import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 
 import java.lang.reflect.Method;
+import java.nio.ByteBuffer;
+import java.security.MessageDigest;
+
 import static java.lang.reflect.Modifier.isPublic;
 import static java.lang.reflect.Modifier.isStatic;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import static junit.framework.Assert.assertTrue;
@@ -425,16 +433,7 @@ public class MediaUtils {
     public static boolean hasCodecsForPath(Context context, String path) {
         MediaExtractor ex = null;
         try {
-            ex = new MediaExtractor();
-            Uri uri = Uri.parse(path);
-            String scheme = uri.getScheme();
-            if (scheme == null) { // file
-                ex.setDataSource(path);
-            } else if (scheme.equalsIgnoreCase("file")) {
-                ex.setDataSource(uri.getPath());
-            } else {
-                ex.setDataSource(context, uri, null);
-            }
+            ex = getExtractorForPath(context, path);
             return hasCodecsForMedia(ex);
         } catch (IOException e) {
             Log.i(TAG, "could not open path " + path);
@@ -444,6 +443,26 @@ public class MediaUtils {
             }
         }
         return true;
+    }
+
+    private static MediaExtractor getExtractorForPath(Context context, String path)
+            throws IOException {
+        Uri uri = Uri.parse(path);
+        String scheme = uri.getScheme();
+        MediaExtractor ex = new MediaExtractor();
+        try {
+            if (scheme == null) { // file
+                ex.setDataSource(path);
+            } else if (scheme.equalsIgnoreCase("file")) {
+                ex.setDataSource(uri.getPath());
+            } else {
+                ex.setDataSource(context, uri, null);
+            }
+        } catch (IOException e) {
+            ex.release();
+            throw e;
+        }
+        return ex;
     }
 
     public static boolean checkCodecsForPath(Context context, String path) {
@@ -573,32 +592,44 @@ public class MediaUtils {
     }
 
     public static MediaFormat getTrackFormatForResource(
-            Context context, int resourceId, String mimeTypePrefix)
-            throws IOException {
-        MediaFormat format = null;
+            Context context,
+            int resourceId,
+            String mimeTypePrefix) throws IOException {
         MediaExtractor extractor = new MediaExtractor();
         AssetFileDescriptor afd = context.getResources().openRawResourceFd(resourceId);
         try {
-            extractor.setDataSource(
-                    afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
+            extractor.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
         } finally {
             afd.close();
         }
-        int trackIndex;
-        for (trackIndex = 0; trackIndex < extractor.getTrackCount(); trackIndex++) {
-            MediaFormat trackMediaFormat = extractor.getTrackFormat(trackIndex);
-            if (trackMediaFormat.getString(MediaFormat.KEY_MIME).startsWith(mimeTypePrefix)) {
-                format = trackMediaFormat;
-                break;
-            }
-        }
-        extractor.release();
-        afd.close();
-        if (format == null) {
-            throw new RuntimeException("couldn't get a track for " + mimeTypePrefix);
-        }
+        return getTrackFormatForExtractor(extractor, mimeTypePrefix);
+    }
 
-        return format;
+    public static MediaFormat getTrackFormatForPath(
+            Context context, String path, String mimeTypePrefix)
+            throws IOException {
+      MediaExtractor extractor = getExtractorForPath(context, path);
+      return getTrackFormatForExtractor(extractor, mimeTypePrefix);
+    }
+
+    private static MediaFormat getTrackFormatForExtractor(
+            MediaExtractor extractor,
+            String mimeTypePrefix) {
+      int trackIndex;
+      MediaFormat format = null;
+      for (trackIndex = 0; trackIndex < extractor.getTrackCount(); trackIndex++) {
+          MediaFormat trackMediaFormat = extractor.getTrackFormat(trackIndex);
+          if (trackMediaFormat.getString(MediaFormat.KEY_MIME).startsWith(mimeTypePrefix)) {
+              format = trackMediaFormat;
+              break;
+          }
+      }
+      extractor.release();
+      if (format == null) {
+          throw new RuntimeException("couldn't get a track for " + mimeTypePrefix);
+      }
+
+      return format;
     }
 
     public static MediaExtractor createMediaExtractorForMimeType(
@@ -1003,6 +1034,177 @@ public class MediaUtils {
         } finally {
             drmClient.close();
         }
+    }
+
+    /**
+     * @param decoder new MediaCodec object
+     * @param ex MediaExtractor after setDataSource and selectTrack
+     * @param frameMD5Sums reference MD5 checksum for decoded frames
+     * @return true if decoded frames checksums matches reference checksums
+     * @throws IOException
+     */
+    public static boolean verifyDecoder(
+            MediaCodec decoder, MediaExtractor ex, List<String> frameMD5Sums)
+            throws IOException {
+
+        int trackIndex = ex.getSampleTrackIndex();
+        MediaFormat format = ex.getTrackFormat(trackIndex);
+        decoder.configure(format, null /* surface */, null /* crypto */, 0 /* flags */);
+        decoder.start();
+
+        boolean sawInputEOS = false;
+        boolean sawOutputEOS = false;
+        final long kTimeOutUs = 5000; // 5ms timeout
+        int decodedFrameCount = 0;
+        int expectedFrameCount = frameMD5Sums.size();
+        MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
+
+        while (!sawOutputEOS) {
+            // handle input
+            if (!sawInputEOS) {
+                int inIdx = decoder.dequeueInputBuffer(kTimeOutUs);
+                if (inIdx >= 0) {
+                    ByteBuffer buffer = decoder.getInputBuffer(inIdx);
+                    int sampleSize = ex.readSampleData(buffer, 0);
+                    if (sampleSize < 0) {
+                        final int flagEOS = MediaCodec.BUFFER_FLAG_END_OF_STREAM;
+                        decoder.queueInputBuffer(inIdx, 0, 0, 0, flagEOS);
+                        sawInputEOS = true;
+                    } else {
+                        decoder.queueInputBuffer(inIdx, 0, sampleSize, ex.getSampleTime(), 0);
+                        ex.advance();
+                    }
+                }
+            }
+
+            // handle output
+            int outputBufIndex = decoder.dequeueOutputBuffer(info, kTimeOutUs);
+            if (outputBufIndex >= 0) {
+                try {
+                    if (info.size > 0) {
+                        // Disregard 0-sized buffers at the end.
+                        String md5CheckSum = "";
+                        Image image = decoder.getOutputImage(outputBufIndex);
+                        md5CheckSum = getImageMD5Checksum(image);
+
+                        if (!md5CheckSum.equals(frameMD5Sums.get(decodedFrameCount))) {
+                            Log.d(TAG,
+                                    String.format(
+                                            "Frame %d md5sum mismatch: %s(actual) vs %s(expected)",
+                                            decodedFrameCount, md5CheckSum,
+                                            frameMD5Sums.get(decodedFrameCount)));
+                            return false;
+                        }
+
+                        decodedFrameCount++;
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "getOutputImage md5CheckSum failed", e);
+                    return false;
+                } finally {
+                    decoder.releaseOutputBuffer(outputBufIndex, false /* render */);
+                }
+                if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+                    sawOutputEOS = true;
+                }
+            } else if (outputBufIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+                MediaFormat decOutputFormat = decoder.getOutputFormat();
+                Log.d(TAG, "output format " + decOutputFormat);
+            } else if (outputBufIndex == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
+                Log.i(TAG, "Skip handling MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED");
+            } else if (outputBufIndex == MediaCodec.INFO_TRY_AGAIN_LATER) {
+                continue;
+            } else {
+                Log.w(TAG, "decoder.dequeueOutputBuffer() unrecognized index: " + outputBufIndex);
+                return false;
+            }
+        }
+
+        if (decodedFrameCount != expectedFrameCount) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public static String getImageMD5Checksum(Image image) throws Exception {
+        int format = image.getFormat();
+        if (ImageFormat.YUV_420_888 != format) {
+            Log.w(TAG, "unsupported image format");
+            return "";
+        }
+
+        MessageDigest md = MessageDigest.getInstance("MD5");
+
+        int imageWidth = image.getWidth();
+        int imageHeight = image.getHeight();
+
+        Image.Plane[] planes = image.getPlanes();
+        for (int i = 0; i < planes.length; ++i) {
+            ByteBuffer buf = planes[i].getBuffer();
+
+            int width, height, rowStride, pixelStride, x, y;
+            rowStride = planes[i].getRowStride();
+            pixelStride = planes[i].getPixelStride();
+            if (i == 0) {
+                width = imageWidth;
+                height = imageHeight;
+            } else {
+                width = imageWidth / 2;
+                height = imageHeight /2;
+            }
+            // local contiguous pixel buffer
+            byte[] bb = new byte[width * height];
+            if (buf.hasArray()) {
+                byte b[] = buf.array();
+                int offs = buf.arrayOffset();
+                if (pixelStride == 1) {
+                    for (y = 0; y < height; ++y) {
+                        System.arraycopy(bb, y * width, b, y * rowStride + offs, width);
+                    }
+                } else {
+                    // do it pixel-by-pixel
+                    for (y = 0; y < height; ++y) {
+                        int lineOffset = offs + y * rowStride;
+                        for (x = 0; x < width; ++x) {
+                            bb[y * width + x] = b[lineOffset + x * pixelStride];
+                        }
+                    }
+                }
+            } else { // almost always ends up here due to direct buffers
+                int pos = buf.position();
+                if (pixelStride == 1) {
+                    for (y = 0; y < height; ++y) {
+                        buf.position(pos + y * rowStride);
+                        buf.get(bb, y * width, width);
+                    }
+                } else {
+                    // local line buffer
+                    byte[] lb = new byte[rowStride];
+                    // do it pixel-by-pixel
+                    for (y = 0; y < height; ++y) {
+                        buf.position(pos + y * rowStride);
+                        // we're only guaranteed to have pixelStride * (width - 1) + 1 bytes
+                        buf.get(lb, 0, pixelStride * (width - 1) + 1);
+                        for (x = 0; x < width; ++x) {
+                            bb[y * width + x] = lb[x * pixelStride];
+                        }
+                    }
+                }
+                buf.position(pos);
+            }
+            md.update(bb, 0, width * height);
+        }
+
+        return convertByteArrayToHEXString(md.digest());
+    }
+
+    private static String convertByteArrayToHEXString(byte[] ba) throws Exception {
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < ba.length; i++) {
+            result.append(Integer.toString((ba[i] & 0xff) + 0x100, 16).substring(1));
+        }
+        return result.toString();
     }
 
 
