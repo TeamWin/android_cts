@@ -210,7 +210,7 @@ public class EnqueueJobWorkTest extends ConstraintTest {
 
         // Now wait for the job to get to the point where it is processing the last
         // work and waiting for it to be stopped.
-        assertFalse("Job with work enqueued did not wait to stop.",
+        assertTrue("Job with work enqueued did not wait to stop.",
                 kTestEnvironment.awaitWaitingForStop());
 
         // Cause the job to timeout (stop) immediately, and wait for its execution to finish.
