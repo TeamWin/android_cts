@@ -26,9 +26,9 @@ public class Poc17_06 extends SecurityTestCase {
      */
     @SecurityTest
     public void testPocBug_34328139() throws Exception {
+	enableAdbRoot(getDevice());
         if(containsDriver(getDevice(), "/dev/mdss_rotator")) {
-            enableAdbRoot(getDevice());
-            AdbUtils.runPoc("Bug_34328139", getDevice(), 60);
+            AdbUtils.runPoc("Bug-34328139", getDevice(), 60);
         }
     }
 }
