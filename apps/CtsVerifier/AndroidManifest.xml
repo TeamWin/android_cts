@@ -3043,6 +3043,22 @@
         </service>
 
         <activity
+            android:name=".dialer.DialerShowsHunOnIncomingCallActivity"
+            android:label="@string/dialer_shows_hun_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.cts.intent.category.MANUAL_TEST"/>
+            </intent-filter>
+
+            <meta-data
+                android:name="test_category"
+                android:value="@string/test_category_telephony"/>
+            <meta-data
+                android:name="test_required_features"
+                android:value="android.hardware.telephony"/>
+        </activity>
+
+        <activity
             android:name=".voicemail.CallSettingsCheckActivity"
             android:label="@string/call_settings_check_test">
             <intent-filter>

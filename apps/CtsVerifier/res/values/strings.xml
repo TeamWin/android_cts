@@ -3818,6 +3818,20 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="ringtone_hidden">Ringtone settings does not exist</string>
     <string name="ringtone_not_hidden">Ringtone settings exists</string>
 
+    <!-- Strings for DialerShowsHunOnIncomingCallActivity test -->
+    <string name="dialer_shows_hun_test">Dialer Shows HUN on Incoming Call</string>
+    <string name="dialer_shows_hun_test_instructions">This test verifies that the default dialer
+        shows a heads up notification on incoming call, and that only one notification is shown.
+    </string>
+    <string name="dialer_shows_hun_explanation">Call the device.
+        Check the box if the heads up notification was shown containing the text
+        \"CTS Incoming Call Notification\", and only one incoming call notification was shown.
+    </string>
+    <string name="dialer_shows_hun_check_box">HUN shown and meets criteria specified above.</string>
+    <string name="dialer_incoming_call_hun_teaser">Incoming Call</string>
+    <string name="dialer_incoming_call_hun_desc">CTS Incoming Call Notification</string>
+
+
     <!-- USB Audio Peripheral Tests -->
     <string name="usbaudio_results_text">Results...</string>
 
