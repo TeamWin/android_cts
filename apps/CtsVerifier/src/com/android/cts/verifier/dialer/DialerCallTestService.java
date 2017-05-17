@@ -20,6 +20,7 @@ import android.content.Intent;
 import android.os.IBinder;
 import android.telecom.InCallService;
 import java.util.Observable;
+import android.telecom.Call;
 
 public class DialerCallTestService extends InCallService {
 
@@ -28,7 +29,6 @@ public class DialerCallTestService extends InCallService {
 
   @Override
   public IBinder onBind(Intent intent) {
-    getObservable().setValue(true);
     return super.onBind(intent);
   }
 
@@ -37,12 +37,24 @@ public class DialerCallTestService extends InCallService {
   }
 
   public static class DialerCallTestServiceObservable extends Observable {
-    private boolean onBind;
+    private boolean onIncoming;
 
-    public void setValue(boolean value) {
-      this.onBind = value;
+    public void setOnIncoming(boolean value) {
+      this.onIncoming = value;
       setChanged();
       notifyObservers(value);
     }
+
+    public boolean getOnIncoming() {
+      return this.onIncoming;
+    }
   }
+
+  @Override
+  public void onCallAdded(Call call) {
+    if (call.getState() == Call.STATE_RINGING) {
+      getObservable().setOnIncoming(true);
+    }
+  }
+
 }
