@@ -675,6 +675,7 @@ public class KeyAttestationTest extends AndroidTestCase {
                     break;
 
                 case 2:
+                case 3:
                     assertThat(teeEnforcedDigests, is(expectedDigests));
                     break;
 
@@ -703,7 +704,8 @@ public class KeyAttestationTest extends AndroidTestCase {
 
     @SuppressWarnings("unchecked")
     private void checkAttestationSecurityLevelDependentParams(Attestation attestation) {
-        assertEquals("Attestation version must be 1", 1, attestation.getAttestationVersion());
+        assertThat("Attestation version must be 1 or 2", attestation.getAttestationVersion(),
+                either(is(1)).or(is(2)));
 
         AuthorizationList teeEnforced = attestation.getTeeEnforced();
         AuthorizationList softwareEnforced = attestation.getSoftwareEnforced();
@@ -716,7 +718,7 @@ public class KeyAttestationTest extends AndroidTestCase {
                 assertThat("TEE attestation can only come from TEE keymaster",
                         attestation.getKeymasterSecurityLevel(),
                         is(KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT));
-                assertThat(attestation.getKeymasterVersion(), is(2));
+                assertThat(attestation.getKeymasterVersion(), either(is(2)).or(is(3)));
 
                 checkRootOfTrust(attestation);
                 assertThat(teeEnforced.getOsVersion(), is(systemOsVersion));
@@ -729,8 +731,8 @@ public class KeyAttestationTest extends AndroidTestCase {
                     assertThat("TEE KM version must be 0 or 1 with software attestation",
                             attestation.getKeymasterVersion(), either(is(0)).or(is(1)));
                 } else {
-                    assertThat("Software KM is version 2", attestation.getKeymasterVersion(),
-                            is(2));
+                    assertThat("Software KM is version 3", attestation.getKeymasterVersion(),
+                            is(3));
                     assertThat(softwareEnforced.getOsVersion(), is(systemOsVersion));
                     assertThat(softwareEnforced.getOsPatchLevel(), is(systemPatchLevel));
                 }
