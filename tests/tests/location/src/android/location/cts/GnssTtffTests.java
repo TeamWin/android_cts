@@ -3,6 +3,7 @@ package android.location.cts;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.SystemClock;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import com.android.compatibility.common.util.CddTest;
@@ -19,8 +20,11 @@ public class GnssTtffTests extends GnssTestCase {
   private static final int STATUS_TO_COLLECT_COUNT = 3;
   private static final int AIDING_DATA_RESET_DELAY_SECS = 10;
   // Threshold values
+  private static final int TTFF_HOT_TH_SECS = 5;
   private static final int TTFF_WITH_WIFI_CELLUAR_WARM_TH_SECS = 7;
-  private static final int TTFF_WITH_WIFI_CELLUAR_HOT_TH_SECS = 5;
+  // The worst case we saw in the Nexus 6p device is 15sec,
+  // adding 20% margin to the threshold
+  private static final int TTFF_WITH_WIFI_ONLY_WARM_TH_SECS = 18;
 
   @Override
   protected void setUp() throws Exception {
@@ -29,66 +33,78 @@ public class GnssTtffTests extends GnssTestCase {
   }
 
   /**
-   * Test the TTFF in the case where there is a network connection for both
-   * warm and hot start TTFF cases.
+   * Test the TTFF in the case where there is a network connection for both warm and hot start TTFF
+   * cases.
+   * We first test the "WARM" start where different TTFF thresholds are chosen based on network
+   * connection (cellular vs Wifi). Then we test the "HOT" start where the type of network
+   * connection should not matter hence one threshold is used.
    * @throws Exception
    */
   @CddTest(requirement="7.3.3")
   public void testTtffWithNetwork() throws Exception {
-    checkTtffWarmWithCellularAndWifiOn();
-    checkTtffHotWithCellularAndWifiOn();
+    ensureNetworkStatus();
+    if (hasCellularData()) {
+      checkTtffWarmWithWifiOn(TTFF_WITH_WIFI_CELLUAR_WARM_TH_SECS);
+    }
+    else {
+      checkTtffWarmWithWifiOn(TTFF_WITH_WIFI_ONLY_WARM_TH_SECS);
+    }
+    checkTtffHotWithWifiOn(TTFF_HOT_TH_SECS);
   }
 
   /**
    * Test Scenario 1
-   * check whether TTFF is below the threshold on the warm start, without any network
-   * 1) Turn on wifi, turn on mobile data
+   * Check whether TTFF is below the threshold on the warm start with Wifi ON
+   * 1) Delete the aiding data.
    * 2) Get GPS, check the TTFF value
+   * @param threshold, the threshold for the TTFF value
    */
-  public void checkTtffWarmWithCellularAndWifiOn() throws Exception {
-    ensureNetworkStatus();
+  private void checkTtffWarmWithWifiOn(long threshold) throws Exception {
     SoftAssert softAssert = new SoftAssert(TAG);
     mTestLocationManager.sendExtraCommand("delete_aiding_data");
     Thread.sleep(TimeUnit.SECONDS.toMillis(AIDING_DATA_RESET_DELAY_SECS));
-    checkTtffByThreshold("checkTtffWarmWithCellularAndWifiOn",
-        TimeUnit.SECONDS.toMillis(TTFF_WITH_WIFI_CELLUAR_WARM_TH_SECS), softAssert);
+    checkTtffByThreshold("checkTtffWarmWithWifiOn",
+        TimeUnit.SECONDS.toMillis(threshold), softAssert);
     softAssert.assertAll();
   }
 
   /**
    * Test Scenario 2
-   * check whether TTFF is below the threhold on the hot start, without any network
-   * 1) Turn on wifi, turn on mobile data
-   * 2) Get GPS, check the TTFF value
+   * Check whether TTFF is below the threhold on the hot start with wifi ON
+   * TODO(tccyp): to test the hot case with network connection off
+   * @param threshold, the threshold for the TTFF value
    */
-  public void checkTtffHotWithCellularAndWifiOn() throws Exception {
-    ensureNetworkStatus();
+  private void checkTtffHotWithWifiOn(long threshold) throws Exception {
     SoftAssert softAssert = new SoftAssert(TAG);
-    checkTtffByThreshold("checkTtffHotWithCellularAndWifiOn",
-        TimeUnit.SECONDS.toMillis(TTFF_WITH_WIFI_CELLUAR_HOT_TH_SECS), softAssert);
+    checkTtffByThreshold("checkTtffHotWithWifiOn",
+        TimeUnit.SECONDS.toMillis(threshold), softAssert);
     softAssert.assertAll();
-
   }
 
   /**
-   * Make sure the device has mobile data and wifi connection
+   * Make sure the device has either wifi data or cellular connection
    */
   private void ensureNetworkStatus(){
-    assertTrue("Device has to connect to Wifi to complete this test.",
-        isConnectedToWifi(getContext()));
-    ConnectivityManager connManager = getConnectivityManager(getContext());
-    NetworkInfo mobileNetworkInfo = connManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
-    // check whether the mobile data is ON if the device has cellular capability
-    if (mobileNetworkInfo != null) {
-      TelephonyManager telephonyManager = (TelephonyManager) getContext().getApplicationContext()
-          .getSystemService(getContext().TELEPHONY_SERVICE);
-      assertTrue("Device has to have mobile data ON to complete this test.",
-          telephonyManager.isDataEnabled());
-    }
-    else {
-      Log.i(TAG, "This is a wifi only device.");
-    }
+    assertTrue("Device has to connect to Wifi or Cellular to complete this test.",
+        isConnectedToWifiOrCellular(getContext()));
 
+  }
+
+  private boolean hasCellularData() {
+    ConnectivityManager connManager = getConnectivityManager(getContext());
+    NetworkInfo cellularNetworkInfo = connManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
+    // check whether the cellular data is ON if the device has cellular capability
+    if (cellularNetworkInfo == null) {
+      Log.i(TAG, "This is a wifi only device.");
+      return false;
+    }
+    TelephonyManager telephonyManager = (TelephonyManager) getContext().getApplicationContext()
+        .getSystemService(getContext().TELEPHONY_SERVICE);
+    if (!telephonyManager.isDataEnabled()) {
+      Log.i(TAG, "Device doesn't have cellular data.");
+      return false;
+    }
+    return true;
   }
 
   /*
@@ -112,9 +128,9 @@ public class GnssTtffTests extends GnssTestCase {
     mTestLocationManager.requestLocationUpdates(locationListener);
 
 
-    long startTimeMillis = System.currentTimeMillis();
+    long startTimeMillis = SystemClock.elapsedRealtime();
     boolean success = testGnssStatusCallback.awaitTtff();
-    long ttffTimeMillis = System.currentTimeMillis() - startTimeMillis;
+    long ttffTimeMillis = SystemClock.elapsedRealtime() - startTimeMillis;
 
     SoftAssert.failOrWarning(isMeasurementTestStrict(),
             "Test case:" + testName
@@ -129,16 +145,17 @@ public class GnssTtffTests extends GnssTestCase {
   }
 
   /**
-   * Returns whether the device is currently connected to a wifi.
+   * Returns whether the device is currently connected to a wifi or cellular.
    *
    * @param context {@link Context} object
-   * @return {@code true} if connected to Wifi; {@code false} otherwise
+   * @return {@code true} if connected to Wifi or Cellular; {@code false} otherwise
    */
-  public static boolean isConnectedToWifi(Context context) {
+  public static boolean isConnectedToWifiOrCellular(Context context) {
     NetworkInfo info = getActiveNetworkInfo(context);
     return info != null
         && info.isConnected()
-        && info.getType() == ConnectivityManager.TYPE_WIFI;
+        && (info.getType() == ConnectivityManager.TYPE_WIFI
+                 || info.getType() == ConnectivityManager.TYPE_MOBILE);
   }
 
   /**
