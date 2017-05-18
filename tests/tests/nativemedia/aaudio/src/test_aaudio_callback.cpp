@@ -110,8 +110,8 @@ static aaudio_data_callback_result_t MyDataCallbackProc(
 }
 
 // Test Writing to an AAudioStream using a Callback
-void runtest_aaudio_callback(aaudio_sharing_mode_t requestedSharingMode,
-                             int32_t framesPerDataCallback) {
+static void runtest_aaudio_callback(aaudio_sharing_mode_t requestedSharingMode,
+                                    int32_t framesPerDataCallback) {
     AAudioCallbackTestData myTestData;
     StreamBuilderHelper helper{requestedSharingMode};
 
