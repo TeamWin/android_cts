@@ -3831,6 +3831,18 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="dialer_incoming_call_hun_teaser">Incoming Call</string>
     <string name="dialer_incoming_call_hun_desc">CTS Incoming Call Notification</string>
 
+    <!-- Strings for DialerImplementsTelecomIntentsActivity test -->
+    <string name="dialer_telecom_intents_test">System Implements Telecom Intents</string>
+    <string name="dialer_telecom_intents_test_instructions">This test verifies that the system handles
+        the specified Telecom Intents.
+    </string>
+    <string name="dialer_check_intents_implemented_explanation">Press the buttons below to launch settings activities.
+    Check the associated box if the activity loads and was launched succesfully.</string>
+    <string name="dialer_telecom_intents_call_settings">Launch call settings</string>
+    <string name="dialer_telecom_intents_short_sms">Launch short sms answer settings</string>
+    <string name="dialer_telecom_intents_calling_accounts">Launch calling accounts settings</string>
+    <string name="dialer_telecom_intents_accessibility_settings">Launch accessibility settings</string>
+    <string name="dialer_check_intents_check_box">Setting Launched</string>
 
     <!-- USB Audio Peripheral Tests -->
     <string name="usbaudio_results_text">Results...</string>
