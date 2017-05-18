@@ -40,8 +40,8 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     private static final String NIGHT_MODE_ACTIVITY = "NightModeActivity";
     private static final String DIALOG_WHEN_LARGE_ACTIVITY = "DialogWhenLargeActivity";
 
-    private static final String TRANSLUCENT_ACTIVITY =
-            "android.server.translucentapp.TranslucentLandscapeActivity";
+    private static final String TRANSLUCENT_ACTIVITY = "TranslucentLandscapeActivity";
+
     private static final String TRANSLUCENT_CURRENT_PACKAGE = "android.server.translucentapp";
 
     private static final String EXTRA_LAUNCH_NEW_TASK = "launch_new_task";
@@ -333,15 +333,17 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
 //                TRANSLUCENT_ACTIVITY);
 //    }
 
-    public void testLegacyNonFullscreenActivityPermitted() throws Exception {
+    // TODO(b/38225467): rename to testLegacyNonFullscreenActivityPermitted
+    public void testNonFullscreenActivityPermitted() throws Exception {
         // TODO(b/38225467): Target SDK 26 specific package when SDK 27 released.
         setComponentName(TRANSLUCENT_CURRENT_PACKAGE);
         setDeviceRotation(0);
+
         launchActivity(TRANSLUCENT_ACTIVITY);
         mAmWmState.assertResumedActivity(
-                "target SDK <= 26 non-fullscreen activitiy should be allowed to launch",
+                "target SDK <= 26 non-fullscreen activity should be allowed to launch",
                 TRANSLUCENT_ACTIVITY);
-        assertEquals("non-fullscreen activitiy requested landscape orientation",
+        assertEquals("non-fullscreen activity requested landscape orientation",
                 0 /* landscape */, mAmWmState.getWmState().getLastOrientation());
     }
 
