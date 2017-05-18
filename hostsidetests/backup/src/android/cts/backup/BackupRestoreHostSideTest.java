@@ -50,16 +50,27 @@ public class BackupRestoreHostSideTest extends BaseBackupHostSideTest {
     private static final String PACKAGE_UNDER_TEST = "android.backup.cts.backuprestoreapp";
 
     /** The class name of the main activity in the APK */
-    private static final String CLASS_UNDER_TEST = "KeyValueBackupRandomDataActivity";
+    private static final String RANDOM_DATA_ACTIVITY = "KeyValueBackupRandomDataActivity";
 
-    /** The command to launch the main activity */
-    private static final String START_ACTIVITY_UNDER_TEST_COMMAND = String.format(
+    /** Class name of the shared preferences test activity */
+    private static final String SHARED_PREFS_ACTIVITY = "SharedPrefsRestoreTestActivity";
+
+    /** The command to launch the random-data backup test activity */
+    private static final String CMD_START_RANDOM_DATA_ACTIVITY = String.format(
             "am start -W -a android.intent.action.MAIN -n %s/%s.%s", PACKAGE_UNDER_TEST,
             PACKAGE_UNDER_TEST,
-            CLASS_UNDER_TEST);
+            RANDOM_DATA_ACTIVITY);
+
+    /** Shell commands to launch the shared prefs restore test activity */
+    private static final String CMD_START_SHARED_PREFS_ACTIVITY = String.format(
+            "am start -W -n %s/%s.%s", PACKAGE_UNDER_TEST, PACKAGE_UNDER_TEST,
+            SHARED_PREFS_ACTIVITY);
+
+    /** Shared prefs restore test logging tag */
+    private static final String SHARED_PREFS_TAG = "SharedPrefsTest";
 
     /** The command to clear the user data of the package */
-    private static final String CLEAR_DATA_IN_PACKAGE_UNDER_TEST_COMMAND = String.format(
+    private static final String CMD_CLEAR_DATA_IN_PACKAGE = String.format(
             "pm clear %s", PACKAGE_UNDER_TEST);
 
     /**
@@ -98,6 +109,13 @@ public class BackupRestoreHostSideTest extends BaseBackupHostSideTest {
     private static final String DEFAULT_STRING_STRING = "null";
     private static final String DEFAULT_FILE_STRING = "empty";
 
+    /*
+     *  Shared prefs test activity actions
+     */
+    static final String INIT_ACTION = "android.backup.cts.backuprestore.INIT";
+    static final String UPDATE_ACTION = "android.backup.cts.backuprestore.UPDATE";
+    static final String TEST_ACTION = "android.backup.cts.backuprestore.TEST";
+
     private boolean mIsBackupSupported;
     private boolean mWasBackupEnabled;
     private String mOldTransport;
@@ -111,11 +129,11 @@ public class BackupRestoreHostSideTest extends BaseBackupHostSideTest {
     @Test
     public void testKeyValueBackupAndRestore() throws Exception {
         // Clear app data if any
-        mDevice.executeShellCommand(CLEAR_DATA_IN_PACKAGE_UNDER_TEST_COMMAND);
+        mDevice.executeShellCommand(CMD_CLEAR_DATA_IN_PACKAGE);
         // Clear logcat
         mDevice.executeAdbCommand("logcat", "-c");
         // Start the main activity of the app
-        mDevice.executeShellCommand(START_ACTIVITY_UNDER_TEST_COMMAND);
+        mDevice.executeShellCommand(CMD_START_RANDOM_DATA_ACTIVITY);
 
         // The app will generate some random values onCreate. Save them to mSavedValues
         saveDataValuesReportedByApp();
@@ -136,7 +154,7 @@ public class BackupRestoreHostSideTest extends BaseBackupHostSideTest {
         mDevice.executeAdbCommand("logcat", "-c");
 
         // Start the reinstalled app
-        mDevice.executeShellCommand(START_ACTIVITY_UNDER_TEST_COMMAND);
+        mDevice.executeShellCommand(CMD_START_RANDOM_DATA_ACTIVITY);
 
         // If the app data was restored successfully, the app should not generate new values and
         // the values reported by the app should match values saved in mSavedValues
@@ -206,13 +224,13 @@ public class BackupRestoreHostSideTest extends BaseBackupHostSideTest {
         // repeatedly until we read VALUES_LOADED_MESSAGE, which is the last message the app logs.
         search:
         while (timeout >= System.currentTimeMillis()) {
-            String logs = getLogcatForClass(CLASS_UNDER_TEST);
+            String logs = getLogcatForClass(RANDOM_DATA_ACTIVITY);
 
             Scanner in = new Scanner(logs);
             while (in.hasNextLine()) {
                 String line = in.nextLine();
                 // Filter by TAG.
-                if (line.startsWith("I/" + CLASS_UNDER_TEST)) {
+                if (line.startsWith("I/" + RANDOM_DATA_ACTIVITY)) {
                     // Get rid of the TAG.
                     String message = line.split(":", 2)[1].trim();
 
@@ -237,6 +255,77 @@ public class BackupRestoreHostSideTest extends BaseBackupHostSideTest {
         }
         assertTrue("Timeout while reading the app values", timeout > System.currentTimeMillis());
         return result;
+    }
+
+    @Test
+    public void testSharedPreferencesRestore() throws Exception {
+        // Clear app data if any
+        mDevice.executeShellCommand(CMD_CLEAR_DATA_IN_PACKAGE);
+        // Clear logcat
+        mDevice.executeAdbCommand("logcat", "-c");
+
+        // Start the main test activity and generate some data in shared prefs.
+        mDevice.executeShellCommand(
+                CMD_START_SHARED_PREFS_ACTIVITY + " -a " + INIT_ACTION);
+        waitForLogcat(SHARED_PREFS_TAG, "processLaunchCommand: " + INIT_ACTION);
+
+        // Back up that shared prefs state
+        backupNow(PACKAGE_UNDER_TEST);
+
+        // Update the shared-prefs contents via the activity, post-backup
+        mDevice.executeAdbCommand("logcat", "-c");
+        mDevice.executeShellCommand(
+                CMD_START_SHARED_PREFS_ACTIVITY + " -a " + UPDATE_ACTION);
+        waitForLogcat(SHARED_PREFS_TAG, "processLaunchCommand: " + UPDATE_ACTION);
+
+        // Issue a restore operation for the package, which will rewrite shared prefs
+        // out from under the activity's live SharedPreferences instance
+        restore(PACKAGE_UNDER_TEST);
+
+        // Tell the activity to report its shared prefs state, and evaluate.
+        mDevice.executeAdbCommand("logcat", "-c");
+        mDevice.executeShellCommand(
+                CMD_START_SHARED_PREFS_ACTIVITY + " -a " + TEST_ACTION);
+        final String result = waitForLogcat(SHARED_PREFS_TAG, "Shared prefs changed:");
+        assertTrue("Shared prefs instance not reinitialized from disk", result.contains("true"));
+    }
+
+    /**
+     * Watch logcat until we see a string from Log.i() under the given tag that contains
+     * the stated string, and return the line.
+     */
+    private String waitForLogcat(String tag, String contents)
+            throws InterruptedException, DeviceNotAvailableException {
+        final long timeout = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(30);
+
+        // Read the shared prefs restore result from the activity
+        while (timeout >= System.currentTimeMillis()) {
+            String logs = getLogcatForClass(tag);
+
+            Scanner in = new Scanner(logs);
+            try {
+                while (in.hasNextLine()) {
+                    String line = in.nextLine();
+                    // Filter by TAG.
+                    if (line.startsWith("I/" + tag)) {
+                        // Get rid of the TAG.
+                        line = line.split(":", 2)[1].trim();
+                        if (line.contains(contents)) {
+                            return line;
+                        }
+                    }
+                }
+            } finally {
+                in.close();
+            }
+
+            // In case the key has not been found, wait for the log to update before
+            // performing the next search.
+            Thread.sleep(SMALL_LOGCAT_DELAY_MS);
+        }
+        assertTrue("Timeout while waiting for logged string: I/" + tag + " : " + contents,
+                timeout > System.currentTimeMillis());
+        return null;
     }
 
     /**

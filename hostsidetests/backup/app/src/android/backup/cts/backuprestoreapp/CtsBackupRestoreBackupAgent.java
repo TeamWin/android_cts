@@ -19,6 +19,7 @@ package android.backup.cts.backuprestoreapp;
 import android.app.backup.BackupAgentHelper;
 
 public class CtsBackupRestoreBackupAgent extends BackupAgentHelper {
+
     private static final String KEY_BACKUP_TEST_PREFS_PREFIX = "backup-test-prefs";
     private static final String KEY_BACKUP_TEST_FILES_PREFIX = "backup-test-files";
 

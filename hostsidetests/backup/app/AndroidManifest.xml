@@ -19,7 +19,9 @@
     package="android.backup.cts.backuprestoreapp">
 
     <application
-        android:backupAgent="CtsBackupRestoreBackupAgent">
+        android:backupAgent="CtsBackupRestoreBackupAgent"
+        android:killAfterRestore="false" >
+
         <uses-library android:name="android.test.runner" />
 
         <activity
@@ -28,6 +30,15 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".SharedPrefsRestoreTestActivity"
+            android:launchMode="singleInstance">
+            <intent-filter>
+                <action android:name="android.backup.cts.backuprestore.INIT" />
+                <action android:name="android.backup.cts.backuprestore.UPDATE" />
+                <action android:name="android.backup.cts.backuprestore.TEST" />
             </intent-filter>
         </activity>
 
