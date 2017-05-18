@@ -352,8 +352,11 @@ public class AccessibilityTextActionTest extends
         new Thread() {
             @Override
             public void run() {
-                assertTrue("Refresh failed", text.refreshWithExtraData(
-                        EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY, getTextArgs));
+                /*
+                 * Don't worry about the return value, as we're timing out. We're just making
+                 * sure that we don't hang the system.
+                 */
+                text.refreshWithExtraData(EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY, getTextArgs);
                 mockRunnableForData.run();
             }
         }.start();
