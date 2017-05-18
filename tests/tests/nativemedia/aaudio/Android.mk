@@ -27,6 +27,7 @@ LOCAL_SRC_FILES := \
     src/test_aaudio.cpp \
     src/test_aaudio_misc.cpp \
     src/test_aaudio_callback.cpp \
+    src/test_aaudio_stream_builder.cpp \
     src/utils.cpp \
 
 LOCAL_SHARED_LIBRARIES := \
