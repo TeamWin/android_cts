@@ -14,22 +14,17 @@
  * limitations under the License
  */
 
-package android.backup.cts.backup;
+package android.cts.backup;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNull;
 import static junit.framework.Assert.assertTrue;
 
-import static org.junit.Assume.assumeTrue;
-
-import com.android.compatibility.common.tradefed.testtype.CompatibilityHostTestBase;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.log.LogUtil.CLog;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.junit.Test;
 
@@ -37,8 +32,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Test for checking that key/value backup and restore works correctly.
@@ -49,14 +42,7 @@ import java.util.regex.Pattern;
  * NB: The tests uses "bmgr backupnow" for backup, which works on N+ devices.
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class BackupRestoreHostSideTest extends CompatibilityHostTestBase {
-
-    /** Value of PackageManager.FEATURE_BACKUP */
-    private static final String FEATURE_BACKUP = "android.software.backup";
-
-    private static final String LOCAL_TRANSPORT =
-            "android/com.android.internal.backup.LocalTransport";
-
+public class BackupRestoreHostSideTest extends BaseBackupHostSideTest {
     /** The name of the APK of the app under test */
     private static final String TEST_APP_APK = "CtsBackupRestoreDeviceApp.apk";
 
@@ -122,24 +108,6 @@ public class BackupRestoreHostSideTest extends CompatibilityHostTestBase {
      */
     private Map<String, String> mSavedValues;
 
-    @Before
-    public void setUp() throws DeviceNotAvailableException, Exception {
-        mIsBackupSupported = mDevice.hasFeature("feature:" + FEATURE_BACKUP);
-        assumeTrue(mIsBackupSupported);
-        // Enable backup and select local backup transport
-        assertTrue("LocalTransport should be available.", hasBackupTransport(LOCAL_TRANSPORT));
-        mWasBackupEnabled = enableBackup(true);
-        mOldTransport = setBackupTransport(LOCAL_TRANSPORT);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        if (mIsBackupSupported) {
-            setBackupTransport(mOldTransport);
-            enableBackup(mWasBackupEnabled);
-        }
-    }
-
     @Test
     public void testKeyValueBackupAndRestore() throws Exception {
         // Clear app data if any
@@ -157,10 +125,9 @@ public class BackupRestoreHostSideTest extends CompatibilityHostTestBase {
 
         // Run backup
         // TODO: make this compatible with N-, potentially by replacing 'backupnow' with 'run'.
-        String backupnowOutput = mDevice.executeShellCommand(
-                "bmgr backupnow " + PACKAGE_UNDER_TEST);
+        String backupnowOutput = backupNow(PACKAGE_UNDER_TEST);
 
-        assertBackupIsSuccessful(backupnowOutput);
+        assertBackupIsSuccessful(PACKAGE_UNDER_TEST, backupnowOutput);
 
         assertNull(uninstallPackage(PACKAGE_UNDER_TEST));
 
@@ -199,27 +166,6 @@ public class BackupRestoreHostSideTest extends CompatibilityHostTestBase {
                 && mSavedValues.get(TEST_FILE_2).equals(DEFAULT_FILE_STRING);
 
         assertFalse("The values were not changed from default.", allValuesAreDefault);
-    }
-
-    /**
-     * Parsing the output of "bmgr backupnow" command and checking that the package under test
-     * was backed up successfully.
-     *
-     * Expected format: "Package android.backup.cts.backuprestoreapp with result: Success"
-     */
-    private void assertBackupIsSuccessful(String backupnowOutput) {
-        // Assert backup was successful.
-        Scanner in = new Scanner(backupnowOutput);
-        while (in.hasNextLine()) {
-            String line = in.nextLine();
-
-            if (line.contains(PACKAGE_UNDER_TEST)) {
-                String result = line.split(":")[1].trim();
-
-                assertEquals(result, "Success");
-            }
-        }
-        in.close();
     }
 
     /**
@@ -297,46 +243,6 @@ public class BackupRestoreHostSideTest extends CompatibilityHostTestBase {
      * Returns the logcat string with the tag {@param className} and clears everything else.
      */
     private String getLogcatForClass(String className) throws DeviceNotAvailableException {
-        return mDevice.executeAdbCommand("logcat", "-v", "brief", "-d",
-                className + ":I", "*:S");
-    }
-
-    // Copied over from BackupQuotaTest
-    private boolean enableBackup(boolean enable) throws Exception {
-        boolean previouslyEnabled;
-        String output = mDevice.executeShellCommand("bmgr enabled");
-        Pattern pattern = Pattern.compile("^Backup Manager currently (enabled|disabled)$");
-        Matcher matcher = pattern.matcher(output.trim());
-        if (matcher.find()) {
-            previouslyEnabled = "enabled".equals(matcher.group(1));
-        } else {
-            throw new RuntimeException("non-parsable output setting bmgr enabled: " + output);
-        }
-
-        mDevice.executeShellCommand("bmgr enable " + enable);
-        return previouslyEnabled;
-    }
-
-    // Copied over from BackupQuotaTest
-    private String setBackupTransport(String transport) throws Exception {
-        String output = mDevice.executeShellCommand("bmgr transport " + transport);
-        Pattern pattern = Pattern.compile("\\(formerly (.*)\\)$");
-        Matcher matcher = pattern.matcher(output);
-        if (matcher.find()) {
-            return matcher.group(1);
-        } else {
-            throw new RuntimeException("non-parsable output setting bmgr transport: " + output);
-        }
-    }
-
-    // Copied over from BackupQuotaTest
-    private boolean hasBackupTransport(String transport) throws Exception {
-        String output = mDevice.executeShellCommand("bmgr list transports");
-        for (String t : output.split(" ")) {
-            if (transport.equals(t.trim())) {
-                return true;
-            }
-        }
-        return false;
+        return mDevice.executeAdbCommand("logcat", "-v", "brief", "-d", className + ":I", "*:S");
     }
 }
