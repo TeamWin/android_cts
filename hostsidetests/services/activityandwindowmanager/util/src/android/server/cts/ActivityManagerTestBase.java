@@ -185,8 +185,13 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         return getActivityComponentName(componentName, activityName);
     }
 
+    private static boolean isFullyQualifiedActivityName(String name) {
+        return name != null && name.contains(".");
+    }
+
     static String getActivityComponentName(final String packageName, final String activityName) {
-        return packageName + "/" + (activityName.contains(".") ? "" : ".") + activityName;
+        return packageName + "/" + (isFullyQualifiedActivityName(activityName) ? "" : ".") +
+                activityName;
     }
 
     // A little ugly, but lets avoid having to strip static everywhere for
@@ -212,7 +217,8 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     }
 
     static String getWindowName(final String packageName, final String activityName) {
-        return getBaseWindowName(packageName, !activityName.contains(".")) + activityName;
+        return getBaseWindowName(packageName, !isFullyQualifiedActivityName(activityName))
+                + activityName;
     }
 
     protected ActivityAndWindowManagersState mAmWmState = new ActivityAndWindowManagersState();
