@@ -56,5 +56,4 @@ public class DialerCallTestService extends InCallService {
       getObservable().setOnIncoming(true);
     }
   }
-
 }
