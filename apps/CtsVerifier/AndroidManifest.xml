@@ -3090,6 +3090,21 @@
                 android:value="android.hardware.telephony"/>
         </activity>
 
+        <activity
+            android:name=".dialer.DialerImplementsTelecomIntentsActivity"
+            android:label="@string/dialer_telecom_intents_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.cts.intent.category.MANUAL_TEST"/>
+            </intent-filter>
+
+            <meta-data
+                android:name="test_category"
+                android:value="@string/test_category_telephony"/>
+            <meta-data
+                android:name="test_required_features"
+                android:value="android.hardware.telephony"/>
+        </activity>
 
         <service
             android:name=".voicemail.CtsVisualVoicemailService"
