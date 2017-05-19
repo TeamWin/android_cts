@@ -379,6 +379,27 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         batteryOffScreenOn();
     }
 
+    /**
+     * Tests the total bytes reported for uploading over wifi.
+     */
+    public void testWifiUpload() throws Exception {
+        if (isTV()) {
+            return;
+        }
+        batteryOnScreenOff();
+        installPackage(DEVICE_SIDE_TEST_APK, true);
+
+        executeForeground(ACTION_WIFI_UPLOAD, 60_000);
+        int min = MIN_HTTP_HEADER_BYTES + (2 * 1024);
+        int max = min + (6 * 1024); // Add some fuzzing.
+        assertValueRange("nt", "", 7, min, max); // wifi_bytes_tx
+
+        executeBackground(ACTION_WIFI_UPLOAD, 60_000);
+        assertValueRange("nt", "", 21, min * 2, max * 2); // wifi_bytes_bg_tx
+
+        batteryOffScreenOn();
+    }
+
     public void testCpuFreqData() throws Exception {
         batteryOnScreenOff();
         final long[] actualCpuFreqs = CpuFreqDataHelper.getCpuFreqFromCheckinDump(getDevice());
@@ -488,27 +509,6 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
                 + Arrays.toString(uidTimesFromDump) + ", from procFile: "
                 + Arrays.toString(uidTimesFromProcFile),
                         Arrays.equals(screenOffUidTimesFromDump, uidTimesFromProcFile));
-        batteryOffScreenOn();
-    }
-
-    /**
-     * Tests the total bytes reported for uploading over wifi.
-     */
-    public void testWifiUpload() throws Exception {
-        if (isTV()) {
-            return;
-        }
-        batteryOnScreenOff();
-        installPackage(DEVICE_SIDE_TEST_APK, true);
-
-        executeForeground(ACTION_WIFI_UPLOAD, 60_000);
-        int min = MIN_HTTP_HEADER_BYTES + (2 * 1024);
-        int max = min + (6 * 1024); // Add some fuzzing.
-        assertValueRange("nt", "", 7, min, max); // wifi_bytes_tx
-
-        executeBackground(ACTION_WIFI_UPLOAD, 60_000);
-        assertValueRange("nt", "", 21, min * 2, max * 2); // wifi_bytes_bg_tx
-
         batteryOffScreenOn();
     }
 
