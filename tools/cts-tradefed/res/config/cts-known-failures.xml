@@ -64,21 +64,6 @@
     <option name="compatibility:exclude-filter" value="CtsJobSchedulerTestCases android.jobscheduler.cts.ConnectivityConstraintTest#testConnectivityConstraintExecutes_withMobile" />
     <option name="compatibility:exclude-filter" value="CtsJobSchedulerTestCases android.jobscheduler.cts.ConnectivityConstraintTest#testUnmeteredConstraintFails_withMobile" />
 
-    <!-- b/30932589 -->
-    <option name="compatibility:exclude-filter" value="CtsMediaTestCases android.media.cts.ExifInterfaceTest#testReadExifDataFromExifByteOrderIIJpeg" />
-    <option name="compatibility:exclude-filter" value="CtsMediaTestCases android.media.cts.ExifInterfaceTest#testReadExifDataFromExifByteOrderMMJpeg" />
-    <option name="compatibility:exclude-filter" value="CtsMediaTestCases android.media.cts.ExifInterfaceTest#testReadExifDataFromLgG4Iso800Dng" />
-    <option name="compatibility:exclude-filter" value="CtsMediaTestCases android.media.cts.ExifInterfaceTest#testReadExifDataFromVolantisJpg" />
-    <option name="compatibility:exclude-filter" value="CtsMediaTestCases android.media.cts.ExifInterfaceTest#testReadExifDataFromSonyRX100Arw" />
-    <option name="compatibility:exclude-filter" value="CtsMediaTestCases android.media.cts.ExifInterfaceTest#testReadExifDataFromCanonG7XCr2" />
-    <option name="compatibility:exclude-filter" value="CtsMediaTestCases android.media.cts.ExifInterfaceTest#testReadExifDataFromFujiX20Raf" />
-    <option name="compatibility:exclude-filter" value="CtsMediaTestCases android.media.cts.ExifInterfaceTest#testReadExifDataFromNikon1AW1Nef" />
-    <option name="compatibility:exclude-filter" value="CtsMediaTestCases android.media.cts.ExifInterfaceTest#testReadExifDataFromNikonP330Nrw" />
-    <option name="compatibility:exclude-filter" value="CtsMediaTestCases android.media.cts.ExifInterfaceTest#testReadExifDataFromOlympusEPL3Orf" />
-    <option name="compatibility:exclude-filter" value="CtsMediaTestCases android.media.cts.ExifInterfaceTest#testReadExifDataFromPanasonicGM5Rw2" />
-    <option name="compatibility:exclude-filter" value="CtsMediaTestCases android.media.cts.ExifInterfaceTest#testReadExifDataFromPentaxK5Pef" />
-    <option name="compatibility:exclude-filter" value="CtsMediaTestCases android.media.cts.ExifInterfaceTest#testReadExifDataFromSamsungNX3000Srw" />
-
     <!-- b/18682315 -->
     <option name="compatibility:exclude-filter" value="CtsNetTestCases android.net.cts.SSLCertificateSocketFactoryTest#test_createSocket_bind" />
     <option name="compatibility:exclude-filter" value="CtsNetTestCases android.net.cts.SSLCertificateSocketFactoryTest#test_createSocket_simple" />
