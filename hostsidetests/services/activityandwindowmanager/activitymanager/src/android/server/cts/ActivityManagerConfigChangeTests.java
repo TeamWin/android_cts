@@ -61,13 +61,13 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
         testRotation(NO_RELAUNCH_ACTIVITY_NAME, 2, 0, 0);
     }
 
-    @Presubmit
+    //@Presubmit TODO: Add back to presubmit once b/38445524 is fixed.
     public void testChangeFontScaleRelaunch() throws Exception {
         // Should relaunch and receive no onConfigurationChanged()
         testChangeFontScale(FONT_SCALE_ACTIVITY_NAME, true /* relaunch */);
     }
 
-    @Presubmit
+    //@Presubmit TODO: Add back to presubmit once b/38445524 is fixed.
     public void testChangeFontScaleNoRelaunch() throws Exception {
         // Should receive onConfigurationChanged() and no relaunch
         testChangeFontScale(FONT_SCALE_NO_RELAUNCH_ACTIVITY_NAME, false /* relaunch */);
