@@ -1459,6 +1459,15 @@ public class PopupWindowTest {
         // Check alignment while overlapping the anchor.
         subPopup.setOverlapAnchor(true);
 
+        final int anchorHeight = mActivity.findViewById(R.id.anchor_lower_right).getHeight();
+        // To simplify the math assert that all three lower anchors are the same height.
+        assertEquals(anchorHeight, mActivity.findViewById(R.id.anchor_lower_left).getHeight());
+        assertEquals(anchorHeight, mActivity.findViewById(R.id.anchor_lower).getHeight());
+
+        final int verticalSpaceBelowAnchor = anchorHeight * 2;
+        // Ensure that the subpopup is flipped vertically.
+        subPopup.setHeight(verticalSpaceBelowAnchor + 1);
+
         verifySubPopupPosition(subPopup, R.id.anchor_upper_left, R.id.anchor_lower_right,
                 LEFT, EQUAL_TO, LEFT, TOP, EQUAL_TO, TOP);
         verifySubPopupPosition(subPopup, R.id.anchor_middle_left, R.id.anchor_lower_right,
@@ -1479,6 +1488,16 @@ public class PopupWindowTest {
                 RIGHT, EQUAL_TO, RIGHT, TOP, EQUAL_TO, TOP);
         verifySubPopupPosition(subPopup, R.id.anchor_lower_right, R.id.anchor_lower_right,
                 RIGHT, EQUAL_TO, RIGHT, BOTTOM, EQUAL_TO, TOP);
+
+        // Re-test for the bottom anchor row ensuring that the subpopup not flipped vertically.
+        subPopup.setHeight(verticalSpaceBelowAnchor - 1);
+
+        verifySubPopupPosition(subPopup, R.id.anchor_lower_left, R.id.anchor_lower_right,
+                LEFT, EQUAL_TO, LEFT, TOP, EQUAL_TO, TOP);
+        verifySubPopupPosition(subPopup, R.id.anchor_lower, R.id.anchor_lower_right,
+                LEFT, EQUAL_TO, LEFT, TOP, EQUAL_TO, TOP);
+        verifySubPopupPosition(subPopup, R.id.anchor_lower_right, R.id.anchor_lower_right,
+                RIGHT, EQUAL_TO, RIGHT, TOP, EQUAL_TO, TOP);
 
         // Check that scrolling scrolls the sub popup along with the main popup.
         showPopup(R.id.anchor_middle);
