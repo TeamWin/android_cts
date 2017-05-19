@@ -26,6 +26,11 @@ import java.util.regex.Pattern;
 
 public class CpuFreqDataHelper {
 
+    static boolean doesProcFileExists(ITestDevice device) throws Exception {
+        final String output = device.executeShellCommand("ls /proc/uid_time_in_state");
+        return output != null && !output.contains("No such file or directory");
+    }
+
     static long[] getCpuFreqFromProcFile(ITestDevice device) throws Exception {
         final String output = getProcFileContents(device);
         final String line = output.substring(0, output.indexOf('\n'));
