@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package android.server.cts;
+package android.server.cts.debuggable;
 
 import android.app.Activity;
 

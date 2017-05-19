@@ -16,7 +16,7 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.server.cts">
+          package="android.server.cts.debuggable">
 
     <!--
      * Security policy requires that only debuggable processes can be profiled

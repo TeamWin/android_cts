@@ -33,6 +33,7 @@ import java.lang.StringBuilder;
  */
 public class ActivityManagerAmProfileTests extends ActivityManagerTestBase {
 
+    private static final String TEST_PACKAGE_NAME = "android.server.cts.debuggable";
     private static final String TEST_ACTIVITY_NAME = "DebuggableAppActivity";
     private static final String OUTPUT_FILE_PATH = "/data/local/tmp/profile.trace";
     private static final String FIRST_WORD_NO_STREAMING = "*version\n";
@@ -44,6 +45,7 @@ public class ActivityManagerAmProfileTests extends ActivityManagerTestBase {
     protected void setUp() throws Exception {
         super.setUp();
         mDevice = getDevice();
+        setComponentName(TEST_PACKAGE_NAME);
     }
 
     /**
@@ -114,7 +116,7 @@ public class ActivityManagerAmProfileTests extends ActivityManagerTestBase {
         if (activityAlreadyStarted) {
             builder.append(" profile start");
         } else {
-            builder.append(String.format(" start -n %s/.%s -W --start-profiler %s",
+            builder.append(String.format(" start -n %s/.%s -W -S --start-profiler %s",
                                          componentName, activityName, OUTPUT_FILE_PATH));
         }
         if (sampling) {
