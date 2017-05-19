@@ -28,14 +28,12 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
 import android.app.Instrumentation;
-import android.app.UiAutomation;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.text.TextUtils;
-import android.view.accessibility.AccessibilityEvent;
 import android.widget.NumberPicker;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
@@ -52,10 +50,8 @@ public class NumberPickerTest {
     private static final String[] NUMBER_NAMES3 = {"One", "Two", "Three"};
     private static final String[] NUMBER_NAMES_ALT3 = {"Three", "Four", "Five"};
     private static final String[] NUMBER_NAMES5 = {"One", "Two", "Three", "Four", "Five"};
-    private static final long TIMEOUT_ACCESSIBILITY_EVENT = 5 * 1000;
 
     private Instrumentation mInstrumentation;
-    private UiAutomation mUiAutomation;
     private NumberPickerCtsActivity mActivity;
     private NumberPicker mNumberPicker;
 
@@ -66,7 +62,6 @@ public class NumberPickerTest {
     @Before
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
-        mUiAutomation = mInstrumentation.getUiAutomation();
         mActivity = mActivityRule.getActivity();
         mNumberPicker = (NumberPicker) mActivity.findViewById(R.id.number_picker);
     }
@@ -265,41 +260,32 @@ public class NumberPickerTest {
                 mNumberPicker.getDisplayedValueForCurrentSelection()));
     }
 
+    @UiThreadTest
     @Test
-    public void testAccessValue() throws Throwable {
+    public void testAccessValue() {
+        mNumberPicker.setMinValue(20);
+        mNumberPicker.setMaxValue(22);
+        mNumberPicker.setDisplayedValues(NUMBER_NAMES3);
+
         final NumberPicker.OnValueChangeListener mockValueChangeListener =
                 mock(NumberPicker.OnValueChangeListener.class);
+        mNumberPicker.setOnValueChangedListener(mockValueChangeListener);
 
-        mInstrumentation.runOnMainSync(() -> {
-            mNumberPicker.setMinValue(20);
-            mNumberPicker.setMaxValue(22);
-            mNumberPicker.setDisplayedValues(NUMBER_NAMES3);
+        mNumberPicker.setValue(21);
+        assertEquals(21, mNumberPicker.getValue());
 
-            mNumberPicker.setOnValueChangedListener(mockValueChangeListener);
-        });
+        mNumberPicker.setValue(20);
+        assertEquals(20, mNumberPicker.getValue());
 
-        mUiAutomation.executeAndWaitForEvent(() ->
-                    mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(21)),
-                (AccessibilityEvent event) ->
-                        event.getEventType() == AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED,
-                TIMEOUT_ACCESSIBILITY_EVENT);
+        mNumberPicker.setValue(22);
+        assertEquals(22, mNumberPicker.getValue());
 
-        mInstrumentation.runOnMainSync(() -> {
-            assertEquals(21, mNumberPicker.getValue());
+        // Check trying to set value out of min/max range
+        mNumberPicker.setValue(10);
+        assertEquals(20, mNumberPicker.getValue());
 
-            mNumberPicker.setValue(20);
-            assertEquals(20, mNumberPicker.getValue());
-
-            mNumberPicker.setValue(22);
-            assertEquals(22, mNumberPicker.getValue());
-
-            // Check trying to set value out of min/max range
-            mNumberPicker.setValue(10);
-            assertEquals(20, mNumberPicker.getValue());
-
-            mNumberPicker.setValue(100);
-            assertEquals(22, mNumberPicker.getValue());
-        });
+        mNumberPicker.setValue(100);
+        assertEquals(22, mNumberPicker.getValue());
 
         // Since all changes to value are via API calls, we should have no interactions /
         // callbacks on our listener.
@@ -376,15 +362,11 @@ public class NumberPickerTest {
         final int[] numberPickerLocationOnScreen = new int[2];
         mNumberPicker.getLocationOnScreen(numberPickerLocationOnScreen);
 
-        mUiAutomation.executeAndWaitForEvent(() ->
-                CtsTouchUtils.emulateDragGesture(mInstrumentation,
-                        numberPickerLocationOnScreen[0] + mNumberPicker.getWidth() / 2,
-                        numberPickerLocationOnScreen[1] + mNumberPicker.getHeight() - 1,
-                        0,
-                        -(mNumberPicker.getHeight() - 2)),
-                (AccessibilityEvent event) ->
-                        event.getEventType() == AccessibilityEvent.TYPE_VIEW_SCROLLED,
-                TIMEOUT_ACCESSIBILITY_EVENT);
+        CtsTouchUtils.emulateDragGesture(mInstrumentation,
+                numberPickerLocationOnScreen[0] + mNumberPicker.getWidth() / 2,
+                numberPickerLocationOnScreen[1] + mNumberPicker.getHeight() - 1,
+                0,
+                - (mNumberPicker.getHeight() - 2));
 
         // At this point we expect that the drag-up gesture has selected the value
         // that was "below" the previously selected one, and that our value change listener
