@@ -117,7 +117,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * Same as {@link #testConfigurationUpdatesWhenRotatingWhileFullscreen()} but when the Activity
      * is in the docked stack.
      */
-    @Presubmit
+    //@Presubmit TODO: Add back to presubmit once b/38445524 is fixed.
     public void testConfigurationUpdatesWhenRotatingWhileDocked() throws Exception {
         if (!supportsSplitScreenMultiWindow()) {
             CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no multi-window support");
@@ -196,7 +196,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     /**
      * Same as {@link #testSameConfigurationFullSplitFullRelaunch} but without relaunch.
      */
-    @Presubmit
+    //@Presubmit TODO: Add back to presubmit once b/38445524 is fixed.
     public void testSameConfigurationFullSplitFullNoRelaunch() throws Exception {
         moveActivityFullSplitFull(RESIZEABLE_ACTIVITY_NAME);
     }
@@ -265,7 +265,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * Tests that an activity with the DialogWhenLarge theme can transform properly when in split
      * screen.
      */
-    @Presubmit
+    //@Presubmit TODO: Add back to presubmit once b/38445524 is fixed.
     public void testDialogWhenLargeSplitSmall() throws Exception {
         launchActivityInStack(DIALOG_WHEN_LARGE_ACTIVITY, DOCKED_STACK_ID);
         final ActivityManagerState.ActivityStack stack = mAmWmState.getAmState()
@@ -284,7 +284,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     /**
      * Test that device handles consequent requested orientations and displays the activities.
      */
-    @Presubmit
+    //@Presubmit TODO: Add back to presubmit once b/38445524 is fixed.
     public void testFullscreenAppOrientationRequests() throws Exception {
         launchActivity(PORTRAIT_ACTIVITY_NAME);
         mAmWmState.assertVisibility(PORTRAIT_ACTIVITY_NAME, true /* visible */);

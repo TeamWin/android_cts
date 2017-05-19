@@ -122,7 +122,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         mAmWmState.assertVisibility(TRANSLUCENT_ACTIVITY_NAME, true);
     }
 
-    @Presubmit
+    //@Presubmit TODO: Add back to presubmit once b/38445524 is fixed.
     public void testTurnScreenOnActivity() throws Exception {
         sleepDevice();
         launchActivity(TURN_SCREEN_ON_ACTIVITY_NAME);
