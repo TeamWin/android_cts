@@ -103,6 +103,9 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
                     case "wl":
                         checkWakelock(parts);
                         break;
+                    case "awl":
+                        checkAggregatedWakelock(parts);
+                        break;
                     case "sy":
                         checkSync(parts);
                         break;
@@ -300,6 +303,12 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
         assertTrue("full wakelock count must be >= 0", full_count >= 0);
         assertTrue("partial wakelock count must be >= 0", partial_count >= 0);
         assertTrue("window wakelock count must be >= 0", window_count >= 0);
+    }
+
+    private void checkAggregatedWakelock(String[] parts) {
+        assertEquals(6, parts.length);
+        assertInteger(parts[4]); // total time
+        assertInteger(parts[5]); // background time
     }
 
     private void checkSync(String[] parts) {
