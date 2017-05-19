@@ -380,6 +380,11 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testCpuFreqData() throws Exception {
+        if (!CpuFreqDataHelper.doesProcFileExists(getDevice())) {
+            LogUtil.CLog.i("Proc file not found, skipping test %s#%s.\n",
+                    getClass().getName(), getName());
+            return;
+        }
         batteryOnScreenOff();
         final long[] actualCpuFreqs = CpuFreqDataHelper.getCpuFreqFromCheckinDump(getDevice());
         final long[] expectedCpuFreqs = CpuFreqDataHelper.getCpuFreqFromProcFile(getDevice());
@@ -390,6 +395,11 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testUidCpuFreqTimesData() throws Exception {
+        if (!CpuFreqDataHelper.doesProcFileExists(getDevice())) {
+            LogUtil.CLog.i("Proc file not found, skipping test %s#%s.\n",
+                    getClass().getName(), getName());
+            return;
+        }
         batteryOnScreenOn();
         // Previous call will only disable the pretend-screen-off. Since we are interested in
         // checking the uid times while the screen is on, turn it on for real.
@@ -424,6 +434,11 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testUidCpuFreqTimesDataWithOnlyScreenOn() throws Exception {
+        if (!CpuFreqDataHelper.doesProcFileExists(getDevice())) {
+            LogUtil.CLog.i("Proc file not found, skipping test %s#%s.\n",
+                    getClass().getName(), getName());
+            return;
+        }
         batteryOnScreenOn();
         // Previous call will only disable the pretend-screen-off. Since we are interested in
         // checking the uid times while the screen is on, turn it on for real.
@@ -459,6 +474,11 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testUidCpuFreqTimesDataWithOnlyScreenOff() throws Exception {
+        if (!CpuFreqDataHelper.doesProcFileExists(getDevice())) {
+            LogUtil.CLog.i("Proc file not found, skipping test %s#%s.\n",
+                    getClass().getName(), getName());
+            return;
+        }
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
         final int uid = getUid();
