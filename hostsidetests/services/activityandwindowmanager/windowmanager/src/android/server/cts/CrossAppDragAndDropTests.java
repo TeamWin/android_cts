@@ -102,7 +102,7 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
     private static final String RESULT_NULL_DROP_PERMISSIONS = "Null DragAndDropPermissions";
 
     private static final String AM_SUPPORTS_SPLIT_SCREEN_MULTIWINDOW =
-            "am supports-split-screen-multiwindow";
+            "am supports-split-screen-multi-window";
 
     private ITestDevice mDevice;
 
