@@ -19,22 +19,21 @@
 #include <aaudio/AAudio.h>
 
 int64_t getNanoseconds(clockid_t clockId = CLOCK_MONOTONIC);
+const char* sharingModeToString(aaudio_sharing_mode_t mode);
 
 class StreamBuilderHelper {
   public:
-    // Used to ensure that helper gets closed properly.
-    // class ScopedGuard {
-    //   public:
-    //     explicit ScopedGuard(StreamBuilderHelper& helper) : mHelper{helper} {}
-    //     ~ScopedGuard() { mHelper.close(); }
-    //   private:
-    //     StreamBuilderHelper& mHelper;
-    // }
+    struct Parameters {
+        int32_t sampleRate;
+        int32_t samplesPerFrame;
+        aaudio_audio_format_t dataFormat;
+        aaudio_sharing_mode_t sharingMode;
+    };
 
-    explicit StreamBuilderHelper(aaudio_sharing_mode_t requestedSharingMode);
-    ~StreamBuilderHelper();
     void initBuilder();
     void createAndVerifyStream(bool *success);
+    void close();
+
     void startStream() {
         streamCommand(&AAudioStream_requestStart,
                 AAUDIO_STREAM_STATE_STARTING, AAUDIO_STREAM_STATE_STARTED);
@@ -51,30 +50,39 @@ class StreamBuilderHelper {
         streamCommand(&AAudioStream_requestFlush,
                 AAUDIO_STREAM_STATE_FLUSHING, AAUDIO_STREAM_STATE_FLUSHED);
     }
-    void close();
-
-    struct Parameters {
-        int32_t sampleRate;
-        int32_t samplesPerFrame;
-        aaudio_audio_format_t dataFormat;
-        aaudio_sharing_mode_t sharingMode;
-    };
 
     AAudioStreamBuilder* builder() const { return mBuilder; }
     AAudioStream* stream() const { return mStream; }
     const Parameters& actual() const { return mActual; }
     int32_t framesPerBurst() const { return mFramesPerBurst; }
 
-  private:
+  protected:
+    StreamBuilderHelper(aaudio_direction_t direction, int32_t sampleRate,
+            int32_t samplesPerFrame, aaudio_audio_format_t dataFormat,
+            aaudio_sharing_mode_t sharingMode);
+    ~StreamBuilderHelper();
+
     typedef aaudio_result_t (StreamCommand)(AAudioStream*);
     void streamCommand(
             StreamCommand cmd, aaudio_stream_state_t fromState, aaudio_stream_state_t toState);
 
+    const aaudio_direction_t mDirection;
     const Parameters mRequested;
     Parameters mActual;
     int32_t mFramesPerBurst;
     AAudioStreamBuilder *mBuilder;
     AAudioStream *mStream;
+};
+
+class InputStreamBuilderHelper : public StreamBuilderHelper {
+  public:
+    explicit InputStreamBuilderHelper(aaudio_sharing_mode_t requestedSharingMode);
+};
+
+class OutputStreamBuilderHelper : public StreamBuilderHelper {
+  public:
+    explicit OutputStreamBuilderHelper(aaudio_sharing_mode_t requestedSharingMode);
+    void initBuilder();
 };
 
 #endif  // CTS_MEDIA_TEST_AAUDIO_UTILS_H
