@@ -104,6 +104,11 @@ public class ModuleDefTest extends TestCase {
         }
 
         @Override
+        public IAbi getAbi() {
+            return null;
+        }
+
+        @Override
         public long getRuntimeHint() {
             return 1L;
         }

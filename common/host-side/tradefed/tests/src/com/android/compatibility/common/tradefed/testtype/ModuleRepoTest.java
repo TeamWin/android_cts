@@ -430,6 +430,8 @@ public class ModuleRepoTest extends TestCase {
         public void setCollectTestsOnly(boolean arg0) {}
         @Override
         public void setAbi(IAbi arg0) {}
+        @Override
+        public IAbi getAbi() {return null;}
     }
 
     /**
