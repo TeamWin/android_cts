@@ -74,7 +74,9 @@ def main():
             "test_ev_compensation_basic",
             "test_yuv_plus_jpeg"
             ],
-        "scene2": [],
+        "scene2": [
+            "test_num_faces",
+            ],
         "scene3": [
             "test_3a_consistency",
             "test_lens_movement_reporting",
