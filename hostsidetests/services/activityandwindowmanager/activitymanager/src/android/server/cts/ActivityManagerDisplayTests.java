@@ -348,7 +348,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
     /**
      * Tests launching an activity on virtual display.
      */
-    //@Presubmit TODO: Add back to presubmit once b/38445524 is fixed.
+    @Presubmit
     public void testLaunchActivityOnSecondaryDisplay() throws Exception {
         if (!supportsMultiDisplay()) { return; }
 
@@ -473,7 +473,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * command and without specifying the display id - the second activity must appear on the
      * primary display.
      */
-    //@Presubmit TODO: Add back to presubmit once b/38445524 is fixed.
+    @Presubmit
     public void testConsequentLaunchActivity() throws Exception {
         if (!supportsMultiDisplay()) { return; }
 
@@ -506,7 +506,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * Tests launching an activity on virtual display and then launching another activity from the
      * first one - it must appear on the secondary display, because it was launched from there.
      */
-    //@Presubmit TODO: Add back to presubmit once b/38445524 is fixed.
+    @Presubmit
     public void testConsequentLaunchActivityFromSecondaryDisplay() throws Exception {
         if (!supportsMultiDisplay()) { return; }
 
@@ -563,7 +563,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * Tests launching activities on secondary and then on primary display to see if the stack
      * visibility is not affected.
      */
-    //@Presubmit TODO: Add back to presubmit once b/38445524 is fixed.
+    @Presubmit
     public void testLaunchActivitiesAffectsVisibility() throws Exception {
         if (!supportsMultiDisplay()) { return; }
 
@@ -589,7 +589,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
     /**
      * Test that move-task works when moving between displays.
      */
-    //@Presubmit TODO: Add back to presubmit once b/38445524 is fixed.
+    @Presubmit
     public void testMoveTaskBetweenDisplays() throws Exception {
         if (!supportsMultiDisplay()) { return; }
 
@@ -627,7 +627,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * is moved correctly.
      * This version launches virtual display creator to fullscreen stack in split-screen.
      */
-    //@Presubmit TODO: Add back to presubmit once b/38445524 is fixed.
+    @Presubmit
     public void testStackFocusSwitchOnDisplayRemoved() throws Exception {
         if (!supportsMultiDisplay() || !supportsSplitScreenMultiWindow()) { return; }
 
@@ -1029,7 +1029,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
     /**
      * Test that all activities that were on the private display are destroyed on display removal.
      */
-    //@Presubmit TODO: Add back to presubmit once b/38445524 is fixed.
+    @Presubmit
     public void testContentDestroyOnDisplayRemoved() throws Exception {
         if (!supportsMultiDisplay()) { return; }
 
@@ -1084,7 +1084,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
     /**
      * Test that the update of display metrics updates all its content.
      */
-    //@Presubmit TODO: Add back to presubmit once b/38445524 is fixed.
+    @Presubmit
     public void testDisplayResize() throws Exception {
         if (!supportsMultiDisplay()) { return; }
 
@@ -1351,7 +1351,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * This sets overrides to display size and density, initiates a display changed event by locking
      * and unlocking the phone and verifies that overrides are kept.
      */
-    //@Presubmit TODO: Add back to presubmit once b/38445524 is fixed.
+    @Presubmit
     public void testForceDisplayMetrics() throws Exception {
         launchHomeActivity();
 
