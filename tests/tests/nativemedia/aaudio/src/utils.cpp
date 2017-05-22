@@ -28,11 +28,23 @@ int64_t getNanoseconds(clockid_t clockId) {
     return (time.tv_sec * NANOS_PER_SECOND) + time.tv_nsec;
 }
 
-StreamBuilderHelper::StreamBuilderHelper(aaudio_sharing_mode_t requestedSharingMode)
-        : mRequested{48000, 2, AAUDIO_FORMAT_PCM_I16, requestedSharingMode},
-          mActual{0, 0, AAUDIO_FORMAT_INVALID, -1}, mFramesPerBurst{-1},
-          mBuilder{nullptr}, mStream{nullptr} {
+const char* sharingModeToString(aaudio_sharing_mode_t mode) {
+    switch (mode) {
+        case AAUDIO_SHARING_MODE_SHARED: return "SHARED";
+        case AAUDIO_SHARING_MODE_EXCLUSIVE: return "EXCLUSIVE";
+    }
+    return "UNKNOWN";
 }
+
+
+StreamBuilderHelper::StreamBuilderHelper(
+        aaudio_direction_t direction, int32_t sampleRate,
+        int32_t samplesPerFrame, aaudio_audio_format_t dataFormat,
+        aaudio_sharing_mode_t sharingMode)
+        : mDirection{direction},
+          mRequested{sampleRate, samplesPerFrame, dataFormat, sharingMode},
+          mActual{0, 0, AAUDIO_FORMAT_INVALID, -1}, mFramesPerBurst{-1},
+          mBuilder{nullptr}, mStream{nullptr} {}
 
 StreamBuilderHelper::~StreamBuilderHelper() {
     close();
@@ -46,12 +58,11 @@ void StreamBuilderHelper::initBuilder() {
 
     // Request stream properties.
     AAudioStreamBuilder_setDeviceId(mBuilder, AAUDIO_DEVICE_UNSPECIFIED);
-    AAudioStreamBuilder_setDirection(mBuilder, AAUDIO_DIRECTION_OUTPUT);
+    AAudioStreamBuilder_setDirection(mBuilder, mDirection);
     AAudioStreamBuilder_setSampleRate(mBuilder, mRequested.sampleRate);
     AAudioStreamBuilder_setSamplesPerFrame(mBuilder, mRequested.samplesPerFrame);
     AAudioStreamBuilder_setFormat(mBuilder, mRequested.dataFormat);
     AAudioStreamBuilder_setSharingMode(mBuilder, mRequested.sharingMode);
-    AAudioStreamBuilder_setBufferCapacityInFrames(mBuilder, 2000);
 }
 
 // Needs to be a 'void' function due to ASSERT requirements.
@@ -65,7 +76,7 @@ void StreamBuilderHelper::createAndVerifyStream(bool *success) {
     ASSERT_EQ(AAUDIO_OK, result);
     ASSERT_TRUE(mStream != nullptr);
     ASSERT_EQ(AAUDIO_STREAM_STATE_OPEN, AAudioStream_getState(mStream));
-    ASSERT_EQ(AAUDIO_DIRECTION_OUTPUT, AAudioStream_getDirection(mStream));
+    ASSERT_EQ(mDirection, AAudioStream_getDirection(mStream));
 
     // Check to see what kind of stream we actually got.
     mActual.sampleRate = AAudioStream_getSampleRate(mStream);
@@ -77,7 +88,7 @@ void StreamBuilderHelper::createAndVerifyStream(bool *success) {
     ASSERT_LE(mActual.samplesPerFrame, 16); // TODO what is min/max?
 
     mActual.dataFormat = AAudioStream_getFormat(mStream);
-    // Asserted by the client code.
+    ASSERT_EQ(AAUDIO_FORMAT_PCM_I16, mActual.dataFormat);
 
     mFramesPerBurst = AAudioStream_getFramesPerBurst(mStream);
     ASSERT_GE(mFramesPerBurst, 16);
@@ -90,6 +101,15 @@ void StreamBuilderHelper::createAndVerifyStream(bool *success) {
     *success = true;
 }
 
+void StreamBuilderHelper::close() {
+    if (mBuilder != nullptr) {
+        ASSERT_EQ(AAUDIO_OK, AAudioStreamBuilder_delete(mBuilder));
+    }
+    if (mStream != nullptr) {
+        ASSERT_EQ(AAUDIO_OK, AAudioStream_close(mStream));
+    }
+}
+
 void StreamBuilderHelper::streamCommand(
         StreamCommand cmd, aaudio_stream_state_t fromState, aaudio_stream_state_t toState) {
     ASSERT_EQ(AAUDIO_OK, cmd(mStream));
@@ -99,11 +119,17 @@ void StreamBuilderHelper::streamCommand(
     ASSERT_EQ(toState, state);
 }
 
-void StreamBuilderHelper::close() {
-    if (mBuilder != nullptr) {
-        ASSERT_EQ(AAUDIO_OK, AAudioStreamBuilder_delete(mBuilder));
-    }
-    if (mStream != nullptr) {
-        ASSERT_EQ(AAUDIO_OK, AAudioStream_close(mStream));
-    }
+
+InputStreamBuilderHelper::InputStreamBuilderHelper(aaudio_sharing_mode_t requestedSharingMode)
+        : StreamBuilderHelper{AAUDIO_DIRECTION_INPUT,
+            48000, 2, AAUDIO_FORMAT_PCM_I16, requestedSharingMode} {}
+
+
+OutputStreamBuilderHelper::OutputStreamBuilderHelper(aaudio_sharing_mode_t requestedSharingMode)
+        : StreamBuilderHelper{AAUDIO_DIRECTION_OUTPUT,
+            48000, 2, AAUDIO_FORMAT_PCM_I16, requestedSharingMode} {}
+
+void OutputStreamBuilderHelper::initBuilder() {
+    StreamBuilderHelper::initBuilder();
+    AAudioStreamBuilder_setBufferCapacityInFrames(mBuilder, 2000);
 }
