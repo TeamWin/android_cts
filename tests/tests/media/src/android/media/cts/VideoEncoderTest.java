@@ -193,6 +193,7 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
         protected boolean mEncoderIsActive;
         protected boolean mEncodeOutputFormatUpdated;
         protected final Object mCondition = new Object();
+        protected final Object mCodecLock = new Object();
 
         protected MediaFormat mDecFormat;
         protected MediaCodec mDecoder, mEncoder;
@@ -300,13 +301,15 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
         }
 
         protected void close() {
-            if (mDecoder != null) {
-                mDecoder.release();
-                mDecoder = null;
-            }
-            if (mEncoder != null) {
-                mEncoder.release();
-                mEncoder = null;
+            synchronized (mCodecLock) {
+                if (mDecoder != null) {
+                    mDecoder.release();
+                    mDecoder = null;
+                }
+                if (mEncoder != null) {
+                    mEncoder.release();
+                    mEncoder = null;
+                }
             }
             if (mExtractor != null) {
                 mExtractor.release();
@@ -406,10 +409,33 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
             mBitRate = bitRate;
         }
 
+        @Override
+        public void onInputBufferAvailable(MediaCodec mediaCodec, int ix) {
+            synchronized (mCodecLock) {
+                if (mEncoder != null && mDecoder != null) {
+                    onInputBufferAvailableLocked(mediaCodec, ix);
+                }
+            }
+        }
+
+        @Override
+        public void onOutputBufferAvailable(
+                MediaCodec mediaCodec, int ix, BufferInfo info) {
+            synchronized (mCodecLock) {
+                if (mEncoder != null && mDecoder != null) {
+                    onOutputBufferAvailableLocked(mediaCodec, ix, info);
+                }
+            }
+        }
+
         public abstract boolean processLoop(
                 String path, String outMime, String videoEncName,
                 int width, int height, boolean optional);
-    };
+        protected abstract void onInputBufferAvailableLocked(
+                MediaCodec mediaCodec, int ix);
+        protected abstract void onOutputBufferAvailableLocked(
+                MediaCodec mediaCodec, int ix, BufferInfo info);
+    }
 
     class VideoProcessor extends VideoProcessorBase {
         private static final String TAG = "VideoProcessor";
@@ -499,7 +525,7 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
         }
 
         @Override
-        public void onInputBufferAvailable(MediaCodec mediaCodec, int ix) {
+        public void onInputBufferAvailableLocked(MediaCodec mediaCodec, int ix) {
             if (mediaCodec == mDecoder) {
                 // fill input buffer from extractor
                 fillDecoderInputBuffer(ix);
@@ -517,7 +543,7 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
         }
 
         @Override
-        public void onOutputBufferAvailable(
+        public void onOutputBufferAvailableLocked(
                 MediaCodec mediaCodec, int ix, BufferInfo info) {
             if (mediaCodec == mDecoder) {
                 if (DEBUG) Log.v(TAG, "decoder received output #" + ix
@@ -747,7 +773,7 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
         }
 
         @Override
-        public void onInputBufferAvailable(MediaCodec mediaCodec, int ix) {
+        public void onInputBufferAvailableLocked(MediaCodec mediaCodec, int ix) {
             if (mediaCodec == mDecoder) {
                 // fill input buffer from extractor
                 fillDecoderInputBuffer(ix);
@@ -757,7 +783,7 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
         }
 
         @Override
-        public void onOutputBufferAvailable(
+        public void onOutputBufferAvailableLocked(
                 MediaCodec mediaCodec, int ix, BufferInfo info) {
             if (mediaCodec == mDecoder) {
                 if (DEBUG) Log.v(TAG, "decoder received output #" + ix
