@@ -42,4 +42,15 @@ public class Poc17_06 extends SecurityTestCase {
             AdbUtils.runPoc("Bug-33452365", getDevice(), 60);
 	}
     }
+
+    /**
+     *  b/34125463
+     */
+    @SecurityTest
+    public void testPocCVE_2017_0579() throws Exception {
+	enableAdbRoot(getDevice());
+        if(containsDriver(getDevice(), "/dev/graphics/fb0")) {
+            AdbUtils.runPoc("CVE-2017-0579", getDevice(), 60);
+        }
+    }
 }
