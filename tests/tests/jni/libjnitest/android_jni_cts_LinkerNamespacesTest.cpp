@@ -88,7 +88,7 @@ static bool wrong_arch(const std::string& library, const std::string& err) {
   // https://issuetracker.google.com/37428428
   // It's okay to not be able to load a library because it's for another
   // architecture (typically on an x86 device, when we come across an arm library).
-  return err.find("dlopen failed: library \"" + library + "\" has unexpected e_machine: ") == 0;
+  return err.find("dlopen failed: \"" + library + "\" has unexpected e_machine: ") == 0;
 }
 
 static bool check_lib(const std::string& path,
