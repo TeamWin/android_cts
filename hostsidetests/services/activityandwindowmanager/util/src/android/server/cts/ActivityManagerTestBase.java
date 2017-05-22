@@ -1129,6 +1129,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         private int mDisplayId = INVALID_DISPLAY_ID;
         private String mLaunchingActivityName = LAUNCHING_ACTIVITY;
         private boolean mReorderToFront;
+        private boolean mUseApplicationContext;
 
         public LaunchActivityBuilder(ActivityAndWindowManagersState amWmState,
                                      ITestDevice device) {
@@ -1171,6 +1172,11 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
             return this;
         }
 
+        public LaunchActivityBuilder setUseApplicationContext(boolean useApplicationContext) {
+            mUseApplicationContext = useApplicationContext;
+            return this;
+        }
+
         public LaunchActivityBuilder setLaunchingActivityName(String name) {
             mLaunchingActivityName = name;
             return this;
@@ -1201,6 +1207,9 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
             }
             if (mDisplayId != INVALID_DISPLAY_ID) {
                 commandBuilder.append(" --ei display_id ").append(mDisplayId);
+            }
+            if (mUseApplicationContext) {
+                commandBuilder.append(" --ez use_application_context true");
             }
             executeShellCommand(mDevice, commandBuilder.toString());
 
