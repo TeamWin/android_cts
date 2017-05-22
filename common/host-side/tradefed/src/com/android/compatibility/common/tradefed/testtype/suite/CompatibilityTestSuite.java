@@ -60,14 +60,13 @@ public class CompatibilityTestSuite extends ITestSuite {
     private static final String SUBPLAN_OPTION = "subplan";
     private static final String MODULE_OPTION = "module";
     private static final String TEST_OPTION = "test";
-    private static final String PRECONDITION_ARG_OPTION = "precondition-arg";
     private static final String MODULE_ARG_OPTION = "module-arg";
     private static final String TEST_ARG_OPTION = "test-arg";
     private static final String ABI_OPTION = "abi";
     private static final String SKIP_HOST_ARCH_CHECK = "skip-host-arch-check";
     private static final String PRIMARY_ABI_RUN = "primary-abi-only";
     private static final String PRODUCT_CPU_ABI_KEY = "ro.product.cpu.abi";
-    
+
     @Option(name = SUBPLAN_OPTION,
             description = "the subplan to run",
             importance = Importance.IF_UNSET)
@@ -94,12 +93,6 @@ public class CompatibilityTestSuite extends ITestSuite {
             description = "the test to run.",
             importance = Importance.IF_UNSET)
     private String mTestName = null;
-
-    @Option(name = PRECONDITION_ARG_OPTION,
-            description = "the arguments to pass to a precondition. The expected format is "
-                    + "\"<arg-name>:<arg-value>\"",
-            importance = Importance.ALWAYS)
-    private List<String> mPreconditionArgs = new ArrayList<>();
 
     @Option(name = MODULE_ARG_OPTION,
             description = "the arguments to pass to a module. The expected format is "
