@@ -18,7 +18,6 @@ package android.security.cts;
 
 import android.platform.test.annotations.SecurityTest;
 
-@SecurityTest
 public class Poc17_04 extends SecurityTestCase {
 
     /**
@@ -41,5 +40,16 @@ public class Poc17_04 extends SecurityTestCase {
         if(containsDriver(getDevice(), "/dev/touch_fwu")) {
             AdbUtils.runPoc("CVE-2017-0580", getDevice(), 60);
         }
+    }
+
+    /**
+     *  b/33353601
+     */
+    @SecurityTest
+    public void testPocCVE_2017_0462() throws Exception {
+	enableAdbRoot(getDevice());
+        if(containsDriver(getDevice(), "/dev/seemplog")) {
+            AdbUtils.runPoc("CVE-2017-0462", getDevice(), 60);
+	}
     }
 }
