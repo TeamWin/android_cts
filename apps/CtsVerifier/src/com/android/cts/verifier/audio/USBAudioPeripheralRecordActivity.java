@@ -146,9 +146,10 @@ public class USBAudioPeripheralRecordActivity extends USBAudioPeripheralPlayerAc
             case R.id.uap_recordRecordBtn:
                 Log.i(TAG, "Record Button Pressed");
                 if (!isPlaying()) {
-                    startRecording(false);
-                    mRecordBtn.setText(getString(R.string.audio_uap_record_stopBtn));
-                    mRecordLoopbackBtn.setEnabled(false);
+                    if (startRecording(false)) {
+                        mRecordBtn.setText(getString(R.string.audio_uap_record_stopBtn));
+                        mRecordLoopbackBtn.setEnabled(false);
+                    }
                 } else {
                     stopRecording();
                     mRecordBtn.setText(getString(R.string.audio_uap_record_recordBtn));
