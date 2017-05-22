@@ -40,6 +40,7 @@ import android.hardware.cts.helpers.sensorverification.ISensorVerification;
 import android.hardware.cts.helpers.sensorverification.JitterVerification;
 import android.hardware.cts.helpers.sensorverification.MagnitudeVerification;
 import android.hardware.cts.helpers.sensorverification.MeanVerification;
+import android.hardware.cts.helpers.sensorverification.InitialValueVerification;
 import android.hardware.cts.helpers.sensorverification.StandardDeviationVerification;
 import android.os.Handler;
 import android.os.SystemClock;
@@ -110,6 +111,7 @@ public class TestSensorOperation extends SensorOperation {
         addVerification(MeanVerification.getDefault(mEnvironment));
         addVerification(StandardDeviationVerification.getDefault(mEnvironment));
         addVerification(EventTimestampSynchronizationVerification.getDefault(mEnvironment));
+        addVerification(InitialValueVerification.getDefault(mEnvironment));
     }
 
     public void addVerification(ISensorVerification verification) {
