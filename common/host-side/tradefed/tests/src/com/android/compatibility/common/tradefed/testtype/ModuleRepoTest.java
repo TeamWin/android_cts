@@ -41,6 +41,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -85,6 +86,7 @@ public class ModuleRepoTest extends TestCase {
     private static final String MODULE_NAME_A = "FooModuleA";
     private static final String MODULE_NAME_B = "FooModuleB";
     private static final String MODULE_NAME_C = "FooModuleC";
+    private static final String NON_EXISTS_MODULE_NAME = "NonExistModule";
     private static final String ID_A_32 = AbiUtils.createId(ABI_32, MODULE_NAME_A);
     private static final String ID_A_64 = AbiUtils.createId(ABI_64, MODULE_NAME_A);
     private static final String ID_B_32 = AbiUtils.createId(ABI_32, MODULE_NAME_B);
@@ -323,6 +325,22 @@ public class ModuleRepoTest extends TestCase {
         IModuleDef module = modules.get(0);
         assertEquals("Incorrect ID", ID_A_64, module.getId());
         checkArgs(module);
+    }
+
+    /**
+     * Test that excluded module shouldn't be loaded.
+     */
+    public void testInitialization_ExcludeModule_SkipLoadingConfig() {
+        try {
+            Set<String> excludeFilters = new HashSet<String>() {{
+                    add(NON_EXISTS_MODULE_NAME);
+            }};
+            mRepo.initialize(1, null, mTestsDir, ABIS, DEVICE_TOKENS, TEST_ARGS,
+                    MODULE_ARGS, Collections.emptySet(), excludeFilters,
+                    mMockBuildInfo);
+        } catch (Exception e) {
+            fail("Initialization should not fail if non-existing module is excluded");
+        }
     }
 
     /**
