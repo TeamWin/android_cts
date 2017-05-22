@@ -54,11 +54,11 @@ public class PackageIncidentTest extends ProtoDumpTestCase {
         final Matcher matcher =
                 execCommandAndFind(
                         "dumpsys package " + DEVICE_SIDE_TEST_PACKAGE,
-                        "userId=(\\d+).*versionCode=(\\d+).*versionName=(\\w+)",
+                        "userId=(\\d+).*versionCode=(\\d+).*versionName=([^\\n]*)",
                         Pattern.DOTALL);
         final int uid = Integer.parseInt(matcher.group(1));
         final int versionCode = Integer.parseInt(matcher.group(2));
-        final String versionString = matcher.group(3);
+        final String versionString = matcher.group(3).trim();
 
         final PackageServiceDumpProto dump =
                 getDump(PackageServiceDumpProto.parser(), "dumpsys package --proto");
