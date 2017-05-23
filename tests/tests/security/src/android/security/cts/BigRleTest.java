@@ -23,6 +23,7 @@ import android.test.AndroidTestCase;
 import java.io.InputStream;
 
 import com.android.cts.security.R;
+import com.android.cts.util.SecurityTest;
 
 public class BigRleTest extends AndroidTestCase {
     /**
@@ -31,6 +32,7 @@ public class BigRleTest extends AndroidTestCase {
      * This image reports that its encoded length is over 4 gigs. Prior to fixing issue 33251605,
      * we attempted to allocate space for all the encoded data at once, resulting in OOM.
      */
+    @SecurityTest
     public void test_android_bug_33251605() {
         InputStream exploitImage = mContext.getResources().openRawResource(R.raw.bug_33251605);
         Bitmap bitmap = BitmapFactory.decodeStream(exploitImage);

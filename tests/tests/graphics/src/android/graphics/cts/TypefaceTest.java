@@ -25,6 +25,8 @@ import android.graphics.Typeface;
 import android.os.ParcelFileDescriptor;
 import android.test.AndroidTestCase;
 
+import com.android.cts.util.SecurityTest;
+
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
@@ -181,6 +183,7 @@ public class TypefaceTest extends AndroidTestCase {
         return (file.getPath());
     }
 
+    @SecurityTest
     public void testBadFont() {
         Typeface typeface = Typeface.createFromAsset(getContext().getAssets(), "ft45987.ttf");
         assertNotNull(typeface);
