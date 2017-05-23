@@ -15,6 +15,7 @@
  */
 package com.android.compatibility.common.deviceinfo;
 
+import android.os.Build;
 import android.os.VintfObject;
 import android.os.VintfRuntimeInfo;
 
@@ -33,6 +34,10 @@ public final class VintfDeviceInfo extends DeviceInfo {
 
     @Override
     protected void collectDeviceInfo(DeviceInfoStore store) throws Exception {
+        // VintfRuntimeInfo is available Android O onward.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+           return;
+        }
         store.addResult("cpu_info", VintfRuntimeInfo.getCpuInfo());
         store.addResult("os_name", VintfRuntimeInfo.getOsName());
         store.addResult("node_name", VintfRuntimeInfo.getNodeName());
