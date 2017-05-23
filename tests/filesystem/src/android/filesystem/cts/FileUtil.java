@@ -147,8 +147,9 @@ public class FileUtil {
         byte[] data = generateRandomData(BUFFER_SIZE);
         long written = 0;
         while (written < length) {
-            out.write(data);
-            written += BUFFER_SIZE;
+            int toWrite = (int) Math.min(BUFFER_SIZE, length - written);
+            out.write(data, 0, toWrite);
+            written += toWrite;
         }
         out.flush();
         out.close();
