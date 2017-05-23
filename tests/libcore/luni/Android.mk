@@ -48,6 +48,8 @@ LOCAL_MULTILIB := both
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts general-tests
 
+# NOTE: virtualdeviceknownfailures.txt is only used for simulated/cloud-based
+# continuous build configurations, so it's not referenced in AndroidTest.xml
 LOCAL_JAVA_RESOURCE_FILES := \
     libcore/expectations/knownfailures.txt \
     libcore/expectations/virtualdeviceknownfailures.txt
