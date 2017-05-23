@@ -50,7 +50,6 @@ import static org.junit.Assert.fail;
  * Build: mmma -j32 cts/tests/app
  * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsAppTestCases android.app.cts.AspectRatioTests
  */
-@Presubmit
 @RunWith(AndroidJUnit4.class)
 public class AspectRatioTests {
     private static final String TAG = "AspectRatioTests";
@@ -106,6 +105,7 @@ public class AspectRatioTests {
     }
 
     @Test
+    @Presubmit
     public void testDeviceAspectRatio() throws Exception {
         final Context context = InstrumentationRegistry.getInstrumentation().getContext();
         final WindowManager wm = (WindowManager) context.getSystemService(WINDOW_SERVICE);
@@ -126,6 +126,7 @@ public class AspectRatioTests {
     }
 
     @Test
+    @Presubmit
     public void testMaxAspectRatio() throws Exception {
         runTest(launchActivity(mMaxAspectRatioActivity),
                 actual -> {
@@ -135,6 +136,7 @@ public class AspectRatioTests {
     }
 
     @Test
+    // TODO: Currently 10% flaky so not part of pre-submit for now
     public void testMaxAspectRatioResizeableActivity() throws Exception {
         final Context context = InstrumentationRegistry.getInstrumentation().getContext();
         final float expected = getAspectRatio(context);
@@ -148,6 +150,7 @@ public class AspectRatioTests {
     }
 
     @Test
+    @Presubmit
     public void testMaxAspectRatioUnsetActivity() throws Exception {
         final Context context = InstrumentationRegistry.getInstrumentation().getContext();
         final float expected = getAspectRatio(context);
