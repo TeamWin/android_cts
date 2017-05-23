@@ -37,6 +37,7 @@ import android.support.test.runner.AndroidJUnit4;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.util.Xml;
+import android.view.ContextThemeWrapper;
 import android.view.Gravity;
 import android.view.InflateException;
 import android.view.LayoutInflater;
@@ -393,6 +394,22 @@ public class LayoutInflaterTest {
         final Context targetContext = target.getContext();
         final CharSequence expectedValue = targetContext.getString(valueResId);
         assertEquals(tagId + " has tag " + expectedValue, expectedValue, tag);
+    }
+
+    @Test
+    public void testInclude() {
+        final Context themedContext = new ContextThemeWrapper(mContext, R.style.Test_Theme);
+        final LayoutInflater inflater = LayoutInflater.from(themedContext);
+
+        final View container = inflater.inflate(R.layout.inflater_layout_include, null);
+        assertNotNull(container.findViewById(R.id.include_layout_explicit));
+        assertNotNull(container.findViewById(R.id.include_layout_from_attr));
+    }
+
+    @Test(expected = InflateException.class)
+    public void testIncludeMissingAttr() {
+        final View container = mLayoutInflater.inflate(R.layout.inflater_layout_include, null);
+        assertNotNull(container.findViewById(R.id.include_layout_from_attr));
     }
 
     static class MockLayoutInflater extends LayoutInflater {
