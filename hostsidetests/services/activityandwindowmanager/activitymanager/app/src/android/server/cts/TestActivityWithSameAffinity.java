@@ -16,6 +16,7 @@
 
 package android.server.cts;
 
+import android.app.PictureInPictureParams;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -29,6 +30,8 @@ public class TestActivityWithSameAffinity extends TestActivity {
 
     private static final String TAG = TestActivityWithSameAffinity.class.getSimpleName();
 
+    // Calls enterPictureInPicture() on creation
+    private static final String EXTRA_ENTER_PIP = "enter_pip";
     // Starts the activity (component name) provided by the value at the end of onCreate
     private static final String EXTRA_START_ACTIVITY = "start_activity";
     // Finishes the activity at the end of onResume (after EXTRA_START_ACTIVITY is handled)
@@ -37,6 +40,11 @@ public class TestActivityWithSameAffinity extends TestActivity {
     @Override
     protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
+
+        // Enter picture in picture if requested
+        if (getIntent().hasExtra(EXTRA_ENTER_PIP)) {
+            enterPictureInPictureMode(new PictureInPictureParams.Builder().build());
+        }
 
         // Launch a new activity if requested
         String launchActivityComponent = getIntent().getStringExtra(EXTRA_START_ACTIVITY);
