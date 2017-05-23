@@ -19,6 +19,8 @@
 
 #include <memory>
 
+#include <unistd.h>
+
 #include <aaudio/AAudio.h>
 #include <android/log.h>
 #include <gtest/gtest.h>
@@ -72,19 +74,69 @@ TEST_P(AAudioInputStreamTest, testReading) {
     if (!mSetupSuccesful) return;
 
     const int32_t framesToRecord = actual().sampleRate;  // 1 second
-    const int64_t timeoutNanos = 100 * NANOS_PER_MILLISECOND;
     EXPECT_EQ(0, AAudioStream_getFramesRead(stream()));
     EXPECT_EQ(0, AAudioStream_getFramesWritten(stream()));
     mHelper->startStream();
     for (int32_t framesLeft = framesToRecord; framesLeft > 0; ) {
         aaudio_result_t result = AAudioStream_read(
-                stream(), &mData[0], std::min(framesToRecord, mFramesPerRead), timeoutNanos);
+                stream(), &mData[0], std::min(framesToRecord, mFramesPerRead),
+                DEFAULT_READ_TIMEOUT);
         ASSERT_GT(result, 0);
         framesLeft -= result;
     }
     mHelper->stopStream();
     EXPECT_GE(AAudioStream_getFramesRead(stream()), framesToRecord);
     EXPECT_GE(AAudioStream_getFramesWritten(stream()), framesToRecord);
+}
+
+TEST_P(AAudioInputStreamTest, testStartReadStop) {
+    if (!mSetupSuccesful) return;
+
+    // Use 1/8 second as start-stops take a lot more time than just recording.
+    const int32_t framesToRecord = actual().sampleRate / 8;
+    EXPECT_EQ(0, AAudioStream_getFramesRead(stream()));
+    EXPECT_EQ(0, AAudioStream_getFramesWritten(stream()));
+    for (int32_t framesLeft = framesToRecord; framesLeft > 0; ) {
+        mHelper->startStream();
+        aaudio_result_t result = AAudioStream_read(
+                stream(), &mData[0], std::min(framesToRecord, mFramesPerRead),
+                DEFAULT_READ_TIMEOUT);
+        ASSERT_GT(result, 0);
+        framesLeft -= result;
+        mHelper->stopStream();
+    }
+    EXPECT_GE(AAudioStream_getFramesRead(stream()), framesToRecord);
+    EXPECT_GE(AAudioStream_getFramesWritten(stream()), framesToRecord);
+}
+
+TEST_P(AAudioInputStreamTest, testReadCounterFreezeAfterStop) {
+    if (!mSetupSuccesful) return;
+
+    const int32_t framesToRecord = actual().sampleRate / 10;  // 1/10 second
+    EXPECT_EQ(0, AAudioStream_getFramesRead(stream()));
+    EXPECT_EQ(0, AAudioStream_getFramesWritten(stream()));
+    mHelper->startStream();
+    for (int32_t framesLeft = framesToRecord; framesLeft > 0; ) {
+        aaudio_result_t result = AAudioStream_read(
+                stream(), &mData[0], std::min(framesToRecord, mFramesPerRead),
+                DEFAULT_READ_TIMEOUT);
+        ASSERT_GT(result, 0);
+        framesLeft -= result;
+    }
+    mHelper->stopStream();
+    const int32_t framesReadAtStop = AAudioStream_getFramesRead(stream());
+    const int32_t framesWrittenAtStop = AAudioStream_getFramesWritten(stream());
+    ASSERT_EQ(0, TEMP_FAILURE_RETRY(usleep(100 * MICROS_PER_MILLISECOND)));
+    EXPECT_EQ(framesReadAtStop, AAudioStream_getFramesRead(stream()));
+    EXPECT_EQ(framesWrittenAtStop, AAudioStream_getFramesWritten(stream()));
+}
+
+TEST_P(AAudioInputStreamTest, testPauseAndFlushNotSupported) {
+    if (!mSetupSuccesful) return;
+    mHelper->startStream();
+    EXPECT_EQ(AAUDIO_ERROR_UNIMPLEMENTED, AAudioStream_requestPause(stream()));
+    EXPECT_EQ(AAUDIO_ERROR_UNIMPLEMENTED, AAudioStream_requestFlush(stream()));
+    mHelper->stopStream();
 }
 
 INSTANTIATE_TEST_CASE_P(SM, AAudioInputStreamTest,
@@ -194,14 +246,9 @@ TEST_P(AAudioOutputStreamTest, testWriting) {
     // Make sure the read counter is not advancing when we are paused.
     aaudioFramesRead = AAudioStream_getFramesRead(stream());
     ASSERT_GE(aaudioFramesRead, aaudioFramesReadFinal); // monotonic increase
-
-    // Use this to sleep by waiting for a state that won't happen.
-    aaudio_stream_state_t state = AAUDIO_STREAM_STATE_UNINITIALIZED;
-    timeoutNanos = 100 * NANOS_PER_MILLISECOND;
-    AAudioStream_waitForStateChange(
-            stream(), AAUDIO_STREAM_STATE_OPEN, &state, timeoutNanos);
-    aaudioFramesReadFinal = AAudioStream_getFramesRead(stream());
-    EXPECT_EQ(aaudioFramesRead, aaudioFramesReadFinal);
+    // Currently not possible to enforce for AAudio over AudioTrack (b/33354715).
+    // ASSERT_EQ(0, TEMP_FAILURE_RETRY(usleep(100 * MICROS_PER_MILLISECOND)));
+    // EXPECT_EQ(aaudioFramesRead, AAudioStream_getFramesRead(stream()));
 
     // ------------------- TEST FLUSH -----------------
     // Prime the buffer.
