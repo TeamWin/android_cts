@@ -53,7 +53,13 @@ public class FontCoverageTest {
             + "&[:^Block=Ancient_Greek_Numbers:]&[:^Block=Ancient_Symbols:]]");
 
     private static final UnicodeSet MIN_EXTRAS = new UnicodeSet(
-            "[\u0301" // COMBINING ACUTE ACCENT
+            "[\u0300" // COMBINING GRAVE ACCENT
+            + "\u0301" // COMBINING ACUTE ACCENT
+            + "\u0307" // COMBINING DOT ABOVE
+            + "\u0308" // COMBINING DIAERESIS
+            + "\u0313" // COMBINING COMMA ABOVE
+            + "\u0342" // COMBINING GREEK PERISPOMENI
+            + "\u0345" // COMBINING GREEK YPOGEGRAMMENI
             + "\u2010" // HYPHEN
             + "\u2013" // EN DASH
             + "\u2014" // EM DASH
@@ -75,10 +81,12 @@ public class FontCoverageTest {
     // Characters outside of MIN_COVERAGE that are needed for some locales.
     private static final HashMap<String, UnicodeSet> EXEMPLAR_MAP = new HashMap();
     static {
-        EXEMPLAR_MAP.put("agq", new UnicodeSet("[{\u0254\u0300}{\u0254\u0302}{\u0254\u0304}"
-                + "{\u0254\u030C}{\u025B\u0300}{\u025B\u0302}{\u025B\u0304}{\u025B\u030C}"
-                + "{\u0268\u0300}{\u0268\u0302}{\u0268\u0304}{\u0268\u030C}{\u0289\u0300}"
-                + "{\u0289\u0302}{\u0289\u0304}{\u0289\u030C}]"));
+        EXEMPLAR_MAP.put("agq", new UnicodeSet("[{\u0186\u0302}{\u0186\u0304}{\u0186\u030C}"
+                + "{\u0190\u0302}{\u0190\u0304}{\u0190\u030C}{\u0197\u0302}{\u0197\u0304}"
+                + "{\u0197\u030C}{\u0244\u0302}{\u0244\u0304}{\u0244\u030C}{\u0254\u0302}"
+                + "{\u0254\u0304}{\u0254\u030C}{\u025B\u0302}{\u025B\u0304}{\u025B\u030C}"
+                + "{\u0268\u0302}{\u0268\u0304}{\u0268\u030C}{\u0289\u0302}{\u0289\u0304}"
+                + "{\u0289\u030C}]"));
         EXEMPLAR_MAP.put("am", new UnicodeSet("[\u1200-\u1206\u1208-\u1246\u1248\u124A-\u124D"
                 + "\u1260-\u1286\u1288\u128A-\u128D\u1290-\u12AE\u12B0\u12B2-\u12B5\u12B8-\u12BE"
                 + "\u12C8-\u12CE\u12D0-\u12D6\u12D8-\u12EE\u12F0-\u12F7\u1300-\u130E\u1310"
@@ -105,12 +113,14 @@ public class FontCoverageTest {
                 + "\u0993-\u09A8\u09AA-\u09AF\u09B2\u09B6-\u09B9\u09BC\u09BE-\u09C3\u09C7\u09C8"
                 + "\u09CB-\u09CD\u09E6-\u09F2{\u0995\u09CD\u09B7}{\u09A1\u09BC}"
                 + "{\u09A2\u09BC}{\u09AF\u09BC}]"));
-        EXEMPLAR_MAP.put("bas", new UnicodeSet("[{a\u1DC6}{a\u1DC7}{e\u1DC6}{e\u1DC7}{i\u1DC6}"
-                + "{i\u1DC7}{o\u1DC6}{o\u1DC7}{u\u1DC6}{u\u1DC7}{\u0254\u0300}{\u0254\u0302}"
-                + "{\u0254\u0304}{\u0254\u030C}{\u0254\u1DC6}{\u0254\u1DC7}{\u025B\u0300}"
-                + "{\u025B\u0302}{\u025B\u0304}{\u025B\u030C}{\u025B\u1DC6}{\u025B\u1DC7}]"));
-        EXEMPLAR_MAP.put("bg", new UnicodeSet("[\u2116{\u0430\u0300}{\u043E\u0300}{\u0443\u0300}"
-                + "{\u044A\u0300}{\u044E\u0300}{\u044F\u0300}]"));
+        EXEMPLAR_MAP.put("bas", new UnicodeSet("[{A\u1DC6}{A\u1DC7}{E\u1DC6}{E\u1DC7}{I\u1DC6}"
+                + "{I\u1DC7}{O\u1DC6}{O\u1DC7}{U\u1DC6}{U\u1DC7}{a\u1DC6}{a\u1DC7}{e\u1DC6}"
+                + "{e\u1DC7}{i\u1DC6}{i\u1DC7}{o\u1DC6}{o\u1DC7}{u\u1DC6}{u\u1DC7}{\u0186\u0302}"
+                + "{\u0186\u0304}{\u0186\u030C}{\u0186\u1DC6}{\u0186\u1DC7}{\u0190\u0302}"
+                + "{\u0190\u0304}{\u0190\u030C}{\u0190\u1DC6}{\u0190\u1DC7}{\u0254\u0302}"
+                + "{\u0254\u0304}{\u0254\u030C}{\u0254\u1DC6}{\u0254\u1DC7}{\u025B\u0302}"
+                + "{\u025B\u0304}{\u025B\u030C}{\u025B\u1DC6}{\u025B\u1DC7}]"));
+        EXEMPLAR_MAP.put("bg", new UnicodeSet("[\u2116]"));
         EXEMPLAR_MAP.put("bn", new UnicodeSet("[\u0981-\u0983\u0985-\u098C\u098F\u0990"
                 + "\u0993-\u09A8\u09AA-\u09B0\u09B2\u09B6-\u09B9\u09BC-\u09C4\u09C7\u09C8"
                 + "\u09CB-\u09CE\u09D7\u09E0-\u09E3\u09E6-\u09FA{\u0995\u09CD\u09B7}{\u09A1\u09BC}"
@@ -122,23 +132,22 @@ public class FontCoverageTest {
                 + "{\u0F4C\u0FB7}{\u0F51\u0FB7}{\u0F56\u0FB7}{\u0F5B\u0FB7}{\u0F71\u0F72}"
                 + "{\u0F71\u0F74}{\u0F71\u0F80}{\u0F90\u0FB5}{\u0F92\u0FB7}{\u0F9C\u0FB7}"
                 + "{\u0FA1\u0FB7}{\u0FA6\u0FB7}{\u0FAB\u0FB7}{\u0FB2\u0F80}{\u0FB3\u0F80}]"));
-        EXEMPLAR_MAP.put("br", new UnicodeSet("[{c\u02BCh}]"));
+        EXEMPLAR_MAP.put("br", new UnicodeSet("[{C\u02BCH}{C\u02BCh}{c\u02BCh}]"));
         EXEMPLAR_MAP.put("brx", new UnicodeSet("[\u0901\u0902\u0905-\u090A\u090D\u090F-\u0911"
                 + "\u0913-\u0918\u091A-\u0928\u092A-\u0930\u0932\u0933\u0935-\u0939\u093C"
                 + "\u093E-\u0943\u0945\u0947-\u0949\u094B-\u094D{\u0921\u093C}]"));
-        EXEMPLAR_MAP.put("chr", new UnicodeSet("[\u13A0\u13A6\u13AD\u13B3\u13B9\u13BE\u13C6\u13CC"
-                + "\u13D3\u13DC\u13E3\u13E9\u13EF\u13F8-\u13FC\uAB70-\uABBF]"));
+        EXEMPLAR_MAP.put("chr", new UnicodeSet("[\u13A0-\u13F4\u13F8-\u13FC\uAB70-\uABBF]"));
         EXEMPLAR_MAP.put("dz", new UnicodeSet("[\u0F04-\u0F06\u0F08-\u0F0A\u0F0C-\u0F12\u0F14"
                 + "\u0F20-\u0F29\u0F34\u0F36\u0F3C\u0F3D\u0F40-\u0F42\u0F44-\u0F47\u0F49-\u0F4C"
                 + "\u0F4E-\u0F51\u0F53-\u0F56\u0F58-\u0F5B\u0F5D-\u0F68\u0F72\u0F74\u0F7A-\u0F7E"
                 + "\u0F80\u0F84\u0F90-\u0F92\u0F94\u0F97\u0F99-\u0F9C\u0F9E-\u0FA1\u0FA3-\u0FA6"
                 + "\u0FA8-\u0FAB\u0FAD\u0FB1-\u0FB3\u0FB5-\u0FB7\u0FBA-\u0FBC\u0FBE\u0FBF"
                 + "\u0FD0-\u0FD4]"));
-        EXEMPLAR_MAP.put("ee", new UnicodeSet("[{\u0254\u0300}{\u0254\u0303}{\u025B\u0300}"
+        EXEMPLAR_MAP.put("ee", new UnicodeSet("[{\u0186\u0303}{\u0190\u0303}{\u0254\u0303}"
                 + "{\u025B\u0303}]"));
-        EXEMPLAR_MAP.put("ewo", new UnicodeSet("[{\u0254\u0300}{\u0254\u0302}{\u0254\u030C}"
-                + "{\u0259\u0300}{\u0259\u0302}{\u0259\u030C}{\u025B\u0300}{\u025B\u0302}"
-                + "{\u025B\u030C}]"));
+        EXEMPLAR_MAP.put("ewo", new UnicodeSet("[{\u0186\u0302}{\u0186\u030C}{\u018F\u0302}"
+                + "{\u018F\u030C}{\u0190\u0302}{\u0190\u030C}{\u0254\u0302}{\u0254\u030C}"
+                + "{\u0259\u0302}{\u0259\u030C}{\u025B\u0302}{\u025B\u030C}]"));
         EXEMPLAR_MAP.put("fa-AF", new UnicodeSet("[\u060C\u061B\u061F\u0621-\u063A\u0641-\u0652"
                 + "\u0654\u0656\u066A-\u066C\u0670\u067C\u067E\u0681\u0685\u0686\u0689\u0693\u0696"
                 + "\u0698\u069A\u06A9\u06AB\u06AF\u06BC\u06CC\u06F0-\u06F9\u2039\u203A]"));
@@ -149,20 +158,21 @@ public class FontCoverageTest {
                 + "\u0A93-\u0AA8\u0AAA-\u0AB0\u0AB2\u0AB3\u0AB5-\u0AB9\u0ABC-\u0AC5\u0AC7-\u0AC9"
                 + "\u0ACB-\u0ACD\u0AD0\u0AE0\u0AF0{\u0A85\u0A82}{\u0A85\u0A83}"
                 + "{\u0A95\u0ACD\u0AB7}{\u0A9C\u0ACD\u0A9E}{\u0AA4\u0ACD\u0AB0}]"));
-        EXEMPLAR_MAP.put("ha", new UnicodeSet("[\u02BC{r\u0303}{\u02BCY}{\u02BCy}]"));
+        EXEMPLAR_MAP.put("ha", new UnicodeSet("[\u02BC{R\u0303}{r\u0303}{\u02BCY}{\u02BCy}]"));
         EXEMPLAR_MAP.put("haw", new UnicodeSet("[\u02BB]"));
-        EXEMPLAR_MAP.put("iw", new UnicodeSet("[\u05B0-\u05B9\u05BB-\u05BF\u05C1\u05C2\u05C4"
+        EXEMPLAR_MAP.put("he", new UnicodeSet("[\u05B0-\u05B9\u05BB-\u05BF\u05C1\u05C2\u05C4"
                 + "\u05D0-\u05EA\u05F3\u05F4]"));
         EXEMPLAR_MAP.put("hi", new UnicodeSet("[\u0901-\u0903\u0905-\u090D\u090F-\u0911"
                 + "\u0913-\u0928\u092A-\u0930\u0932\u0933\u0935-\u0939\u093C-\u0945\u0947-\u0949"
                 + "\u094B-\u094D\u0950\u0970]"));
         EXEMPLAR_MAP.put("hu", new UnicodeSet("[\u2052\u27E8\u27E9]"));
-        EXEMPLAR_MAP.put("hy", new UnicodeSet("[\u055A-\u055F\u0561-\u0587\u058A]"));
+        EXEMPLAR_MAP.put("hy", new UnicodeSet("[\u0531-\u0556\u055A-\u055F\u0561-\u0587\u058A]"));
         EXEMPLAR_MAP.put("ii", new UnicodeSet("[\uA000-\uA48C]"));
-        EXEMPLAR_MAP.put("jgo", new UnicodeSet("[\u2039\u203A{m\u0300}{m\u0304}{n\u0304}"
-                + "{\u014B\u0300}{\u014B\u0304}{\u0244\u0308}{\u0254\u0302}{\u0254\u030C}"
-                + "{\u025B\u0300}{\u025B\u0302}{\u025B\u0304}{\u025B\u030C}{\u0289\u0302}"
-                + "{\u0289\u0308}{\u0289\u030C}]"));
+        EXEMPLAR_MAP.put("jgo", new UnicodeSet("[\u2039\u203A{M\u0304}{N\u0304}{m\u0304}{n\u0304}"
+                + "{\u014A\u0304}{\u014B\u0304}{\u0186\u0302}{\u0186\u030C}{\u0190\u0302}"
+                + "{\u0190\u0304}{\u0190\u030C}{\u0244\u0302}{\u0244\u030C}{\u0254\u0302}"
+                + "{\u0254\u030C}{\u025B\u0302}{\u025B\u0304}{\u025B\u030C}{\u0289\u0302}"
+                + "{\u0289\u030C}]"));
         EXEMPLAR_MAP.put("ja", new UnicodeSet("[\u2015\u2016\u2025\u2030\u203B\u203E\u3001-\u3003"
                 + "\u3005\u3008-\u3011\u3014\u3015\u301C\u3041-\u3093\u309D\u309E\u30A1-\u30F6"
                 + "\u30FB-\u30FE\u4E00\u4E01\u4E03\u4E07-\u4E0B\u4E0D\u4E0E\u4E11\u4E14\u4E16\u4E18"
@@ -355,11 +365,10 @@ public class FontCoverageTest {
                 + "\u9CEF\u9CF4\u9D8F\u9E7F\u9E97\u9EA6\u9EBB\u9EC4\u9ED2\u9ED9"
                 + "\u9F13\u9F20\u9F3B\u9F62\uFF01-\uFF03\uFF05-\uFF0A\uFF0C-\uFF0F"
                 + "\uFF1A\uFF1B\uFF1F\uFF20\uFF3B-\uFF3D\uFF3F\uFF5B\uFF5D\uFF61-\uFF65]"));
-        EXEMPLAR_MAP.put("ka", new UnicodeSet("[\u10D0-\u10FB\u2116\u2D00-\u2D25]"));
-        EXEMPLAR_MAP.put("kea", new UnicodeSet("[{n\u0308}]"));
-        EXEMPLAR_MAP.put("kkj", new UnicodeSet("[\u2039\u203A{I\u0327}{U\u0327}{a\u0327}{i\u0327}"
-                + "{u\u0327}{\u0186\u0327}{\u0254\u0300}{\u0254\u0302}{\u0254\u0327}{\u025B\u0300}"
-                + "{\u025B\u0302}{\u025B\u0327}]"));
+        EXEMPLAR_MAP.put("ka", new UnicodeSet("[\u10A0-\u10C5\u10D0-\u10FB\u2116\u2D00-\u2D25]"));
+        EXEMPLAR_MAP.put("kkj", new UnicodeSet("[\u2039\u203A{A\u0327}{I\u0327}{U\u0327}{a\u0327}"
+                + "{i\u0327}{u\u0327}{\u0186\u0302}{\u0186\u0327}{\u0190\u0302}{\u0190\u0327}"
+                + "{\u0254\u0302}{\u0254\u0327}{\u025B\u0302}{\u025B\u0327}]"));
         EXEMPLAR_MAP.put("km", new UnicodeSet("[\u1780-\u17A2\u17A5-\u17A7\u17A9-\u17B3"
                 + "\u17B6-\u17D2\u17D4-\u17D6\u17D9\u17DA\u200B{\u17A2\u17B6}{\u17A7\u1780}]"));
         EXEMPLAR_MAP.put("kn", new UnicodeSet("[\u0C82\u0C83\u0C85-\u0C8C\u0C8E-\u0C90"
@@ -453,19 +462,19 @@ public class FontCoverageTest {
         EXEMPLAR_MAP.put("ksh", new UnicodeSet("[\u2E17]"));
         EXEMPLAR_MAP.put("lkt", new UnicodeSet("[\u02BC{k\u02BC}{p\u02BC}{s\u02BC}{t\u02BC}"
                 + "{\u010D\u02BC}{\u0161\u02BC}{\u021F\u02BC}]"));
-        EXEMPLAR_MAP.put("ln", new UnicodeSet("[{\u0254\u0302}{\u0254\u030C}{\u025B\u0302}"
-                + "{\u025B\u030C}]"));
+        EXEMPLAR_MAP.put("ln", new UnicodeSet("[{\u0186\u0302}{\u0186\u030C}{\u0190\u0302}"
+                + "{\u0190\u030C}{\u0254\u0302}{\u0254\u030C}{\u025B\u0302}{\u025B\u030C}]"));
         EXEMPLAR_MAP.put("lo", new UnicodeSet("[\u0E81\u0E82\u0E84\u0E87\u0E88\u0E8A\u0E8D"
                 + "\u0E94-\u0E97\u0E99-\u0E9F\u0EA1-\u0EA3\u0EA5\u0EA7\u0EAA\u0EAB\u0EAD-\u0EB9"
                 + "\u0EBB-\u0EBD\u0EC0-\u0EC4\u0EC6\u0EC8-\u0ECD\u0ED0-\u0ED9\u0EDC\u0EDD\u200B"
                 + "{\u0EAB\u0E87}{\u0EAB\u0E8D}{\u0EAB\u0E99}{\u0EAB\u0EA1}{\u0EAB\u0EA5}"
                 + "{\u0EAB\u0EA7}]"));
-        EXEMPLAR_MAP.put("lt", new UnicodeSet("[{i\u0307\u0300}{i\u0307\u0301}"
-                + "{i\u0307\u0303}{j\u0303}{j\u0307\u0303}{l\u0303}{m\u0303}{r\u0303}{\u0105\u0303}"
-                + "{\u0117\u0303}{\u0119\u0303}{\u012F\u0303}{\u012F\u0307\u0301}"
-                + "{\u012F\u0307\u0303}{\u016B\u0303}{\u0173\u0303}]"));
-        EXEMPLAR_MAP.put("lu", new UnicodeSet("[{\u0254\u0300}{\u025B\u0300}]"));
-        EXEMPLAR_MAP.put("mgo", new UnicodeSet("[\u02BC{\u0254\u0300}{\u0259\u0300}]"));
+        EXEMPLAR_MAP.put("lt", new UnicodeSet("[{I\u0303}{I\u0307\u0303}{J\u0303}{J\u0307\u0303}"
+                + "{L\u0303}{M\u0303}{R\u0303}{i\u0307\u0303}{j\u0303}{j\u0307\u0303}{l\u0303}"
+                + "{m\u0303}{r\u0303}{\u0104\u0303}{\u0105\u0303}{\u0116\u0303}{\u0117\u0303}"
+                + "{\u0118\u0303}{\u0119\u0303}{\u012E\u0303}{\u012E\u0307\u0303}{\u012F\u0303}"
+                + "{\u012F\u0307\u0303}{\u016A\u0303}{\u016B\u0303}{\u0172\u0303}{\u0173\u0303}]"));
+        EXEMPLAR_MAP.put("mgo", new UnicodeSet("[\u02BC]"));
         EXEMPLAR_MAP.put("ml", new UnicodeSet("[\u0D02\u0D03\u0D05-\u0D0C\u0D0E-\u0D10"
                 + "\u0D12-\u0D28\u0D2A-\u0D39\u0D3E-\u0D43\u0D46-\u0D48\u0D4A-\u0D4D\u0D57\u0D60"
                 + "\u0D61\u0D7A-\u0D7F]"));
@@ -479,14 +488,16 @@ public class FontCoverageTest {
         EXEMPLAR_MAP.put("ne", new UnicodeSet("[\u0901-\u0903\u0905-\u090D\u090F-\u0911"
                 + "\u0913-\u0928\u092A-\u0930\u0932\u0933\u0935-\u0939\u093C-\u0945\u0947-\u0949"
                 + "\u094B-\u094D\u0950\u0966-\u096F]"));
-        EXEMPLAR_MAP.put("nmg", new UnicodeSet("[{\u01DD\u0302}{\u01DD\u0304}{\u01DD\u030C}"
-                + "{\u0254\u0302}{\u0254\u0304}{\u0254\u030C}{\u025B\u0302}{\u025B\u0304}"
-                + "{\u025B\u030C}]"));
-        EXEMPLAR_MAP.put("nnh", new UnicodeSet("[\u02BC{\u0254\u0300}{\u0254\u0302}{\u0254\u030C}"
-                + "{\u025B\u0300}{\u025B\u0302}{\u025B\u030C}{\u0289\u0300}{\u0289\u0302}"
-                + "{\u0289\u030C}]"));
-        EXEMPLAR_MAP.put("nus", new UnicodeSet("[{a\u0331}{e\u0331}{i\u0331}{o\u0331}"
-                + "{\u0254\u0308}{\u0254\u0331}{\u025B\u0308}{\u025B\u0331}{\u025B\u0331\u0308}]"));
+        EXEMPLAR_MAP.put("nmg", new UnicodeSet("[{\u0186\u0302}{\u0186\u0304}{\u0186\u030C}"
+                + "{\u018E\u0302}{\u018E\u0304}{\u018E\u030C}{\u0190\u0302}{\u0190\u0304}"
+                + "{\u0190\u030C}{\u01DD\u0302}{\u01DD\u0304}{\u01DD\u030C}{\u0254\u0302}"
+                + "{\u0254\u0304}{\u0254\u030C}{\u025B\u0302}{\u025B\u0304}{\u025B\u030C}]"));
+        EXEMPLAR_MAP.put("nnh", new UnicodeSet("[\u02BC{\u0186\u0302}{\u0186\u030C}{\u0190\u0302}"
+                + "{\u0190\u030C}{\u0244\u0302}{\u0244\u030C}{\u0254\u0302}{\u0254\u030C}"
+                + "{\u025B\u0302}{\u025B\u030C}{\u0289\u0302}{\u0289\u030C}]"));
+        EXEMPLAR_MAP.put("nus", new UnicodeSet("[{A\u0331}{E\u0331}{I\u0331}{O\u0331}{a\u0331}"
+                + "{e\u0331}{i\u0331}{o\u0331}{\u0186\u0331}{\u0190\u0331}{\u0190\u0331\u0308}"
+                + "{\u0254\u0331}{\u025B\u0331}{\u025B\u0331\u0308}]"));
         EXEMPLAR_MAP.put("or", new UnicodeSet("[\u0B01-\u0B03\u0B05-\u0B0B\u0B0F\u0B10"
                 + "\u0B13-\u0B28\u0B2A-\u0B30\u0B32\u0B33\u0B35-\u0B39\u0B3C\u0B3E-\u0B43\u0B47"
                 + "\u0B48\u0B4B-\u0B4D\u0B5F\u0B71{\u0B15\u0B4D\u0B37}{\u0B21\u0B3C}"
@@ -502,7 +513,8 @@ public class FontCoverageTest {
                 + "\u0644-\u0648\u064A-\u0652\u0654\u066A-\u066C\u0670\u067C\u067E\u0681\u0685"
                 + "\u0686\u0689\u0693\u0696\u0698\u069A\u06A9\u06AB\u06AF\u06BC\u06CC\u06CD\u06D0"
                 + "\u06F0-\u06F9]"));
-        EXEMPLAR_MAP.put("qu", new UnicodeSet("[{ch\u02BC}{k\u02BC}{p\u02BC}{q\u02BC}{t\u02BC}]"));
+        EXEMPLAR_MAP.put("qu", new UnicodeSet("[{CH\u02BC}{Ch\u02BC}{K\u02BC}{P\u02BC}{Q\u02BC}"
+                + "{T\u02BC}{ch\u02BC}{k\u02BC}{p\u02BC}{q\u02BC}{t\u02BC}]"));
         EXEMPLAR_MAP.put("si", new UnicodeSet("[\u0D82\u0D83\u0D85-\u0D96\u0D9A-\u0DB1"
                 + "\u0DB3-\u0DBB\u0DBD\u0DC0-\u0DC6\u0DCA\u0DCF-\u0DD4\u0DD6\u0DD8-\u0DDF\u0DF2"
                 + "\u0DF3\u200B-\u200D]"));
@@ -536,7 +548,6 @@ public class FontCoverageTest {
                 + "\u0686\u0689\u0693\u0696\u0698\u069A\u06A9\u06AB\u06AF\u06BC\u06C7\u06C9\u06CC"
                 + "\u06CD\u06D0\u06F0-\u06F9]"));
         EXEMPLAR_MAP.put("uz-Latn", new UnicodeSet("[\u02BC{G\u02BB}{O\u02BB}{g\u02BB}{o\u02BB}]"));
-        EXEMPLAR_MAP.put("yav", new UnicodeSet("[{\u0254\u0300}{\u025B\u0300}]"));
         EXEMPLAR_MAP.put("yue", new UnicodeSet("[\u2025\u2027\u2030\u2035\u203B\u203E"
                 + "\u3001-\u3003\u3008-\u3011\u3014\u3015\u301D\u301E\u4E00\u4E01\u4E03"
                 + "\u4E08-\u4E0D\u4E11\u4E14\u4E16\u4E18\u4E19\u4E1E\u4E1F\u4E26\u4E2D\u4E32\u4E38"
@@ -752,7 +763,6 @@ public class FontCoverageTest {
                 + "\uFE30-\uFE44\uFE49-\uFE52\uFE54-\uFE61\uFE63\uFE68\uFE6A\uFE6B"
                 + "\uFF01-\uFF03\uFF05-\uFF0A\uFF0C-\uFF0F\uFF1A\uFF1B\uFF1F\uFF20"
                 + "\uFF3B-\uFF3D\uFF3F\uFF5B\uFF5D]"));
-        EXEMPLAR_MAP.put("yo", new UnicodeSet("[{\u0254\u0300}{\u025B\u0300}]"));
         EXEMPLAR_MAP.put("zgh", new UnicodeSet("[\u2D30\u2D31\u2D33\u2D37\u2D39\u2D3B-\u2D3D"
                 + "\u2D40\u2D43-\u2D45\u2D47\u2D49\u2D4A\u2D4D-\u2D4F\u2D53-\u2D56\u2D59-\u2D5C"
                 + "\u2D5F\u2D61-\u2D63\u2D65{\u2D33\u2D6F}{\u2D3D\u2D6F}]"));
