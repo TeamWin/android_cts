@@ -229,7 +229,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
         String testUrl = (mInputUrl != null) ? mInputUrl : defaultUrl;
 
         // Play stream for 60 seconds
-        playLiveVideoTest(
+        playLiveAudioOnlyTest(
                 testUrl,
                 60 * 1000);
     }

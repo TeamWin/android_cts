@@ -194,6 +194,10 @@ public class MediaPlayerTestBase extends ActivityInstrumentationTestCase2<MediaS
         playVideoWithRetries(path, null, null, playTime);
     }
 
+    protected void playLiveAudioOnlyTest(String path, int playTime) throws Exception {
+        playVideoWithRetries(path, -1, -1, playTime);
+    }
+
     protected void playVideoTest(String path, int width, int height) throws Exception {
         playVideoWithRetries(path, width, height, 0);
     }
@@ -265,6 +269,9 @@ public class MediaPlayerTestBase extends ActivityInstrumentationTestCase2<MediaS
         final float leftVolume = 0.5f;
         final float rightVolume = 0.5f;
 
+        boolean audioOnly = (width != null && width.intValue() == -1) ||
+                (height != null && height.intValue() == -1);
+
         mMediaPlayer.setDisplay(mActivity.getSurfaceHolder());
         mMediaPlayer.setScreenOnWhilePlaying(true);
         mMediaPlayer.setOnVideoSizeChangedListener(new MediaPlayer.OnVideoSizeChangedListener() {
@@ -308,8 +315,10 @@ public class MediaPlayerTestBase extends ActivityInstrumentationTestCase2<MediaS
         }
 
         mMediaPlayer.start();
-        mOnVideoSizeChangedCalled.waitForSignal();
-        mOnVideoRenderingStartCalled.waitForSignal();
+        if (!audioOnly) {
+            mOnVideoSizeChangedCalled.waitForSignal();
+            mOnVideoRenderingStartCalled.waitForSignal();
+        }
         mMediaPlayer.setVolume(leftVolume, rightVolume);
 
         // waiting to complete
