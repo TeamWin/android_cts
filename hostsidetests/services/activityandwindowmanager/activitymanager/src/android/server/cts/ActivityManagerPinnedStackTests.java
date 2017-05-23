@@ -943,7 +943,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // Launch a fullscreen activity which will launch a PiP activity in a new task with the same
         // affinity
         launchActivity(TEST_ACTIVITY_WITH_SAME_AFFINITY);
-        launchActivityInStack(PIP_ACTIVITY_WITH_SAME_AFFINITY, PINNED_STACK_ID);
+        launchActivity(PIP_ACTIVITY_WITH_SAME_AFFINITY);
         assertPinnedStackExists();
 
         // Launch the root activity again...
@@ -972,7 +972,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 EXTRA_START_ACTIVITY, getActivityComponentName(TEST_ACTIVITY),
                 EXTRA_FINISH_SELF_ON_RESUME, "true");
         mAmWmState.waitForValidState(mDevice, TEST_ACTIVITY, FULLSCREEN_WORKSPACE_STACK_ID);
-        launchActivityInStack(PIP_ACTIVITY_WITH_SAME_AFFINITY, PINNED_STACK_ID);
+        launchActivity(PIP_ACTIVITY_WITH_SAME_AFFINITY);
         mAmWmState.waitForValidState(mDevice, PIP_ACTIVITY_WITH_SAME_AFFINITY, PINNED_STACK_ID);
         assertPinnedStackExists();
 
@@ -994,7 +994,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         if (!supportsPip()) return;
 
         // Launch an activity into the pinned stack with a fixed affinity
-        launchActivityInStack(TEST_ACTIVITY_WITH_SAME_AFFINITY, PINNED_STACK_ID,
+        launchActivity(TEST_ACTIVITY_WITH_SAME_AFFINITY,
+                EXTRA_ENTER_PIP, "true",
                 EXTRA_START_ACTIVITY, getActivityComponentName(PIP_ACTIVITY),
                 EXTRA_FINISH_SELF_ON_RESUME, "true");
         mAmWmState.waitForValidState(mDevice, PIP_ACTIVITY, PINNED_STACK_ID);
