@@ -91,14 +91,13 @@ public class ModuleRepoSuite {
                 // Need to generate a different config for each ABI as we cannot guarantee the
                 // configs are idempotent. This however means we parse the same file multiple times
                 for (IAbi abi : abis) {
-                    IConfiguration config = mConfigFactory.createConfigurationFromArgs(pathArg);
                     String id = AbiUtils.createId(abi.getName(), name);
                     if (!shouldRunModule(id)) {
                         // If the module should not run tests based on the state of filters,
                         // skip this name/abi combination.
                         continue;
                     }
-
+                    IConfiguration config = mConfigFactory.createConfigurationFromArgs(pathArg);
                     Map<String, List<String>> args = new HashMap<>();
                     if (mModuleArgs.containsKey(name)) {
                         args.putAll(mModuleArgs.get(name));
