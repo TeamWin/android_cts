@@ -542,7 +542,7 @@ public class FragmentAnimatorTest {
         assertEquals(animatorResourceId, fragment.resourceId);
         assertNotNull(fragment.animator);
         assertTrue(fragment.wasStarted);
-        assertTrue(fragment.endLatch.await(200, TimeUnit.MILLISECONDS));
+        assertTrue(fragment.endLatch.await(1, TimeUnit.SECONDS));
     }
 
     private void assertPostponed(AnimatorFragment fragment, int expectedAnimators)
