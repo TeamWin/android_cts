@@ -26,6 +26,9 @@ import hashlib
 import numpy
 import string
 
+CMD_DELAY = 1  # seconds
+
+
 class ItsSession(object):
     """Controls a device over adb to run ITS scripts.
 
@@ -200,6 +203,10 @@ class ItsSession(object):
 
         # TODO: Figure out why "--user 0" is needed, and fix the problem.
         _run('%s shell am force-stop --user 0 %s' % (self.adb, self.PACKAGE))
+        _run(('%s shell am start --user 0 '
+              'com.android.cts.verifier/.camera.its.ItsTestActivity '
+              '--activity-brought-to-front') % self.adb)
+        time.sleep(CMD_DELAY)
         _run(('%s shell am startservice --user 0 -t text/plain '
               '-a %s') % (self.adb, self.INTENT_START))
 
