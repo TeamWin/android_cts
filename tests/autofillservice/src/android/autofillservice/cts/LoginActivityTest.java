@@ -16,6 +16,8 @@
 
 package android.autofillservice.cts;
 
+import static android.app.Activity.RESULT_CANCELED;
+import static android.app.Activity.RESULT_OK;
 import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
 import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_PASSWORD_LABEL;
@@ -1264,6 +1266,15 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
     @Test
     public void testFillResponseAuthBothFields() throws Exception {
+        fillResponseAuthBothFields(false);
+    }
+
+    @Test
+    public void testFillResponseAuthBothFieldsUserCancelsFirstAttempt() throws Exception {
+        fillResponseAuthBothFields(true);
+    }
+
+    private void fillResponseAuthBothFields(boolean cancelFirstAttempt) throws Exception {
         // Set service.
         enableService();
         final MyAutofillCallback callback = mActivity.registerCallback();
@@ -1298,29 +1309,49 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
         final View username = mActivity.getUsername();
         callback.assertUiShownEvent(username);
-        sUiBot.assertShownByText("Tap to auth response");
+        sUiBot.assertDatasets("Tap to auth response");
 
         // Make sure UI is show on 2nd field as well
         final View password = mActivity.getPassword();
         mActivity.onPassword(View::requestFocus);
         callback.assertUiHiddenEvent(username);
         callback.assertUiShownEvent(password);
-        sUiBot.assertShownByText("Tap to auth response");
+        sUiBot.assertDatasets("Tap to auth response");
 
         // Now tap on 1st field to show it again...
         mActivity.onUsername(View::requestFocus);
         callback.assertUiHiddenEvent(password);
         callback.assertUiShownEvent(username);
-        sUiBot.selectByText("Tap to auth response");
-        callback.assertUiHiddenEvent(username);
-        sUiBot.assertNotShownByText("Tap to auth response");
+
+        if (cancelFirstAttempt) {
+            // Trigger the auth dialog, but emulate cancel.
+            AuthenticationActivity.setResultCode(RESULT_CANCELED);
+            sUiBot.selectDataset("Tap to auth response");
+            callback.assertUiHiddenEvent(username);
+            callback.assertUiShownEvent(username);
+            sUiBot.assertDatasets("Tap to auth response");
+
+            // Make sure it's still shown on other fields...
+            mActivity.onPassword(View::requestFocus);
+            callback.assertUiHiddenEvent(username);
+            callback.assertUiShownEvent(password);
+            sUiBot.assertDatasets("Tap to auth response");
+
+            // Tap on 1st field to show it again...
+            mActivity.onUsername(View::requestFocus);
+            callback.assertUiHiddenEvent(password);
+            callback.assertUiShownEvent(username);
+        }
 
         // ...and select it this time
+        AuthenticationActivity.setResultCode(RESULT_OK);
+        sUiBot.selectDataset("Tap to auth response");
+        callback.assertUiHiddenEvent(username);
         callback.assertUiShownEvent(username);
+        sUiBot.assertNotShownByText("Tap to auth response");
         sUiBot.selectDataset("Dataset");
         callback.assertUiHiddenEvent(username);
         sUiBot.assertNoDatasets();
-        sUiBot.assertNotShownByText("Tap to auth response");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -1367,18 +1398,18 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
         final View username = mActivity.getUsername();
         callback.assertUiShownEvent(username);
-        sUiBot.assertShownByText("Tap to auth response");
+        sUiBot.assertDatasets("Tap to auth response");
 
         // Make sure UI is not show on 2nd field
         mActivity.onPassword(View::requestFocus);
         callback.assertUiHiddenEvent(username);
-        sUiBot.assertNotShownByText("Tap to auth response");
+        sUiBot.assertNoDatasets();
         // Now tap on 1st field to show it again...
         mActivity.onUsername(View::requestFocus);
         callback.assertUiShownEvent(username);
 
         // ...and select it this time
-        sUiBot.selectByText("Tap to auth response");
+        sUiBot.selectDataset("Tap to auth response");
         callback.assertUiHiddenEvent(username);
         sUiBot.assertNotShownByText("Tap to auth response");
 
@@ -1386,7 +1417,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sUiBot.selectDataset("Dataset");
         callback.assertUiHiddenEvent(username);
         sUiBot.assertNoDatasets();
-        sUiBot.assertNotShownByText("Tap to auth response");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -1423,9 +1453,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         callback.assertUiShownEvent(username);
 
         // Select the authentication dialog.
-        sUiBot.selectByText("Tap to auth response");
+        sUiBot.selectDataset("Tap to auth response");
         callback.assertUiHiddenEvent(username);
-        sUiBot.assertNotShownByText("Tap to auth response");
         sUiBot.assertNoDatasets();
     }
 
@@ -1462,12 +1491,27 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Wait for onFill() before proceeding.
         sReplier.getNextFillRequest();
         final View username = mActivity.getUsername();
-
-        // Authenticate
         callback.assertUiShownEvent(username);
-        sUiBot.selectByText("Tap to auth dataset");
+        sUiBot.assertDatasets("Tap to auth dataset");
+
+        // Make sure UI is show on 2nd field as well
+        final View password = mActivity.getPassword();
+        mActivity.onPassword(View::requestFocus);
         callback.assertUiHiddenEvent(username);
-        sUiBot.assertNotShownByText("Tap to auth dataset");
+        callback.assertUiShownEvent(password);
+        sUiBot.assertDatasets("Tap to auth dataset");
+
+        // Now tap on 1st field to show it again...
+        mActivity.onUsername(View::requestFocus);
+        callback.assertUiHiddenEvent(password);
+        callback.assertUiShownEvent(username);
+        sUiBot.assertDatasets("Tap to auth dataset");
+
+        // ...and select it this time
+        AuthenticationActivity.setResultCode(RESULT_OK);
+        sUiBot.selectDataset("Tap to auth dataset");
+        callback.assertUiHiddenEvent(username);
+        sUiBot.assertNoDatasets();
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -1516,14 +1560,14 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Authenticate
         callback.assertUiShownEvent(username);
-        sUiBot.selectByText("Tap to auth dataset");
+        sUiBot.selectDataset("Tap to auth dataset");
         callback.assertUiHiddenEvent(username);
 
         // Select a dataset from the new response
         callback.assertUiShownEvent(username);
-        sUiBot.selectByText("Dataset");
+        sUiBot.selectDataset("Dataset");
         callback.assertUiHiddenEvent(username);
-        sUiBot.assertNotShownByText("Dataset");
+        sUiBot.assertNoDatasets();
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -1570,9 +1614,9 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Authenticate
         callback.assertUiShownEvent(username);
-        sUiBot.selectByText("Tap to auth dataset");
+        sUiBot.selectDataset("Tap to auth dataset");
         callback.assertUiHiddenEvent(username);
-        sUiBot.assertNotShownByText("Tap to auth dataset");
+        sUiBot.assertNoDatasets();
 
         // Check the results.
         mActivity.assertAutoFilled();
