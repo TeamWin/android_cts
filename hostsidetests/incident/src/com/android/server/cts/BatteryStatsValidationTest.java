@@ -53,7 +53,8 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
 
     // Constants from BatteryStatsBgVsFgActions.java (not directly accessible here).
     public static final String KEY_ACTION = "action";
-    public static final String ACTION_BLE_SCAN = "action.ble_scan";
+    public static final String ACTION_BLE_SCAN_OPTIMIZED = "action.ble_scan_optimized";
+    public static final String ACTION_BLE_SCAN_UNOPTIMIZED = "action.ble_scan_unoptimized";
     public static final String ACTION_GPS = "action.gps";
     public static final String ACTION_JOB_SCHEDULE = "action.jobs";
     public static final String ACTION_SYNC = "action.sync";
@@ -170,14 +171,65 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         installPackage(DEVICE_SIDE_TEST_APK, true);
 
         // Foreground test.
-        executeForeground(ACTION_BLE_SCAN, 30_000);
+        executeForeground(ACTION_BLE_SCAN_UNOPTIMIZED, 30_000);
         assertValueRange("blem", "", 5, 1, 1); // ble_scan_count
         assertValueRange("blem", "", 6, 0, 0); // ble_scan_count_bg
 
         // Background test.
-        executeBackground(ACTION_BLE_SCAN, 30_000);
+        executeBackground(ACTION_BLE_SCAN_UNOPTIMIZED, 30_000);
         assertValueRange("blem", "", 5, 2, 2); // ble_scan_count
         assertValueRange("blem", "", 6, 1, 1); // ble_scan_count_bg
+
+        batteryOffScreenOn();
+    }
+
+
+    public void testUnoptimizedBleScans() throws Exception {
+        if (isTV()) {
+            return;
+        }
+        batteryOnScreenOff();
+        installPackage(DEVICE_SIDE_TEST_APK, true);
+
+        // Ble scan time in BatteryStatsBgVsFgActions is 2 seconds, but be lenient.
+        final int minTime = 1500; // min single scan time in ms
+        final int maxTime = 3000; // max single scan time in ms
+
+        // Optimized - Foreground.
+        executeForeground(ACTION_BLE_SCAN_OPTIMIZED, 30_000);
+        assertValueRange("blem", "", 7, 1*minTime, 1*maxTime); // actualTime
+        assertValueRange("blem", "", 8, 0, 0); // actualTimeBg
+        assertValueRange("blem", "", 11, 0, 0); // unoptimizedScanTotalTime
+        assertValueRange("blem", "", 12, 0, 0); // unoptimizedScanTotalTimeBg
+        assertValueRange("blem", "", 13, 0, 0); // unoptimizedScanMaxTime
+        assertValueRange("blem", "", 14, 0, 0); // unoptimizedScanMaxTimeBg
+
+        // Optimized - Background.
+        executeBackground(ACTION_BLE_SCAN_OPTIMIZED, 30_000);
+        assertValueRange("blem", "", 7, 2*minTime, 2*maxTime); // actualTime
+        assertValueRange("blem", "", 8, 1*minTime, 1*maxTime); // actualTimeBg
+        assertValueRange("blem", "", 11, 0, 0); // unoptimizedScanTotalTime
+        assertValueRange("blem", "", 12, 0, 0); // unoptimizedScanTotalTimeBg
+        assertValueRange("blem", "", 13, 0, 0); // unoptimizedScanMaxTime
+        assertValueRange("blem", "", 14, 0, 0); // unoptimizedScanMaxTimeBg
+
+        // Unoptimized - Foreground.
+        executeForeground(ACTION_BLE_SCAN_UNOPTIMIZED, 30_000);
+        assertValueRange("blem", "", 7, 3*minTime, 3*maxTime); // actualTime
+        assertValueRange("blem", "", 8, 1*minTime, 1*maxTime); // actualTimeBg
+        assertValueRange("blem", "", 11, 1*minTime, 1*maxTime); // unoptimizedScanTotalTime
+        assertValueRange("blem", "", 12, 0, 0); // unoptimizedScanTotalTimeBg
+        assertValueRange("blem", "", 13, 1*minTime, 1*maxTime); // unoptimizedScanMaxTime
+        assertValueRange("blem", "", 14, 0, 0); // unoptimizedScanMaxTimeBg
+
+        // Unoptimized - Background.
+        executeBackground(ACTION_BLE_SCAN_UNOPTIMIZED, 30_000);
+        assertValueRange("blem", "", 7, 4*minTime, 4*maxTime); // actualTime
+        assertValueRange("blem", "", 8, 2*minTime, 2*maxTime); // actualTimeBg
+        assertValueRange("blem", "", 11, 2*minTime, 2*maxTime); // unoptimizedScanTotalTime
+        assertValueRange("blem", "", 12, 1*minTime, 1*maxTime); // unoptimizedScanTotalTimeBg
+        assertValueRange("blem", "", 13, 1*minTime, 1*maxTime); // unoptimizedScanMaxTime
+        assertValueRange("blem", "", 14, 1*minTime, 1*maxTime); // unoptimizedScanMaxTimeBg
 
         batteryOffScreenOn();
     }

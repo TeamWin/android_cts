@@ -52,7 +52,8 @@ public class BatteryStatsBgVsFgActions {
     private static final String TAG = BatteryStatsBgVsFgActions.class.getSimpleName();
 
     public static final String KEY_ACTION = "action";
-    public static final String ACTION_BLE_SCAN = "action.ble_scan";
+    public static final String ACTION_BLE_SCAN_OPTIMIZED = "action.ble_scan_optimized";
+    public static final String ACTION_BLE_SCAN_UNOPTIMIZED = "action.ble_scan_unoptimized";
     public static final String ACTION_GPS = "action.gps";
     public static final String ACTION_JOB_SCHEDULE = "action.jobs";
     public static final String ACTION_SYNC = "action.sync";
@@ -70,8 +71,11 @@ public class BatteryStatsBgVsFgActions {
         }
         sleep(100);
         switch(actionCode) {
-            case ACTION_BLE_SCAN:
-                doBleScan(ctx, requestCode);
+            case ACTION_BLE_SCAN_OPTIMIZED:
+                doOptimizedBleScan(ctx, requestCode);
+                break;
+            case ACTION_BLE_SCAN_UNOPTIMIZED:
+                doUnoptimizedBleScan(ctx, requestCode);
                 break;
             case ACTION_GPS:
                 doGpsUpdate(ctx, requestCode);
@@ -97,23 +101,34 @@ public class BatteryStatsBgVsFgActions {
         sleep(100);
     }
 
-    private static void doBleScan(Context ctx, String requestCode) {
+    private static void doOptimizedBleScan(Context ctx, String requestCode) {
+        ScanSettings scanSettings = new ScanSettings.Builder()
+                .setScanMode(ScanSettings.SCAN_MODE_OPPORTUNISTIC).build();
+        performBleScan(scanSettings);
+        tellHostActionFinished(ACTION_BLE_SCAN_OPTIMIZED, requestCode);
+    }
+
+    private static void doUnoptimizedBleScan(Context ctx, String requestCode) {
+        ScanSettings scanSettings = new ScanSettings.Builder()
+                .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build();
+        performBleScan(scanSettings);
+        tellHostActionFinished(ACTION_BLE_SCAN_UNOPTIMIZED, requestCode);
+    }
+
+    private static void performBleScan(ScanSettings scanSettings) {
         BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (bluetoothAdapter == null) {
             Log.e(TAG, "Device does not support Bluetooth");
-            tellHostActionFinished(ACTION_BLE_SCAN, requestCode);
             return;
         }
         if (!bluetoothAdapter.isEnabled()) {
             Log.e(TAG, "Bluetooth is not enabled");
-            tellHostActionFinished(ACTION_BLE_SCAN, requestCode);
             return;
         }
 
         BluetoothLeScanner bleScanner = bluetoothAdapter.getBluetoothLeScanner();
         if (bleScanner == null) {
             Log.e(TAG, "Cannot access BLE scanner");
-            tellHostActionFinished(ACTION_BLE_SCAN, requestCode);
             return;
         }
 
@@ -131,16 +146,12 @@ public class BatteryStatsBgVsFgActions {
             @Override
             public void onBatchScanResults(List<ScanResult> results) {
                 Log.v(TAG, "called onBatchScanResults");
-
             }
         };
-        ScanSettings scanSettings = new ScanSettings.Builder()
-                .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build();
 
         bleScanner.startScan(null, scanSettings, scanCallback);
         sleep(2_000);
         bleScanner.stopScan(scanCallback);
-        tellHostActionFinished(ACTION_BLE_SCAN, requestCode);
     }
 
     private static void doGpsUpdate(Context ctx, String requestCode) {
