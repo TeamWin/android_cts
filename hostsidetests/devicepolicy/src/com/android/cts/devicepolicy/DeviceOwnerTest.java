@@ -372,6 +372,35 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
+    public void testLockTaskAfterReboot_deviceOwnerUser() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        try {
+            // Just start kiosk mode
+            runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".LockTaskHostDrivenTest", "startLockTask",
+                    mPrimaryUserId);
+
+            // Reboot while in kiosk mode and then unlock the device
+            getDevice().reboot();
+
+            // Check that kiosk mode is working and can't be interrupted
+            runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".LockTaskHostDrivenTest",
+                    "testLockTaskIsActiveAndCantBeInterrupted", mPrimaryUserId);
+
+            // Try to open settings via adb
+            executeShellCommand("am start -a android.settings.SETTINGS");
+
+            // Check again
+            runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".LockTaskHostDrivenTest",
+                    "testLockTaskIsActiveAndCantBeInterrupted", mPrimaryUserId);
+        } finally {
+            runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".LockTaskHostDrivenTest",
+                    "clearDefaultHomeIntentReceiver", mPrimaryUserId);
+        }
+    }
+
     public void testLockTask_unaffiliatedUser() throws Exception {
         if (!mHasFeature || !canCreateAdditionalUsers(1)) {
             return;
