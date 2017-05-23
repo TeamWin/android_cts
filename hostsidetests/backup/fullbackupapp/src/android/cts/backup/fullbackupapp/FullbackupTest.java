@@ -36,7 +36,7 @@ import java.io.IOException;
 import java.util.Random;
 
 /**
- * Device side routines to be invoked by the host side NoBackupFolderHostSideTest. These are not
+ * Device side routines to be invoked by the host side FullbackupRulesHostSideTest. These are not
  * designed to be called in any other way, as they rely on state set up by the host side test.
  */
 @RunWith(AndroidJUnit4.class)
@@ -98,7 +98,7 @@ public class FullbackupTest {
         // Delete test data
         deleteAllFiles();
 
-        // No there should be no files left
+        // Now there should be no files left
         checkNoFilesExist();
     }
 
