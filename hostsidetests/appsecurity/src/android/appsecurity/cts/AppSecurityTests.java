@@ -110,7 +110,8 @@ public class AppSecurityTests extends DeviceTestCase implements IAbiReceiver, IB
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        // ensure build has been set before test is run
+
+        Utils.prepareSingleUser(getDevice());
         assertNotNull(mCtsBuild);
     }
 

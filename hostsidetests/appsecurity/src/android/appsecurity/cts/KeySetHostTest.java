@@ -236,10 +236,13 @@ public class KeySetHostTest extends DeviceTestCase implements IBuildReceiver {
     }
 
     @Override
-        protected void setUp() throws Exception {
+    protected void setUp() throws Exception {
         super.setUp();
-        mDevice = getDevice();
+
+        Utils.prepareSingleUser(getDevice());
         assertNotNull(mCtsBuild);
+
+        mDevice = getDevice();
     }
 
     /**

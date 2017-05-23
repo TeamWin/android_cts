@@ -16,6 +16,11 @@
 
 package android.appsecurity.cts;
 
+import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.testtype.DeviceTestCase;
+import com.android.tradefed.testtype.IBuildReceiver;
+
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -23,12 +28,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Locale;
-
-import com.android.tradefed.build.IBuildInfo;
-import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.testtype.DeviceTestCase;
-import com.android.tradefed.testtype.IBuildReceiver;
 
 /**
  * Tests for APK signature verification during installation.
@@ -44,10 +43,6 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
     private static final String[] RSA_KEY_NAMES_2048_AND_LARGER =
             {"2048", "3072", "4096", "8192", "16384"};
 
-
-    /** Device under test. */
-    private ITestDevice mDevice;
-
     private IBuildInfo mCtsBuild;
 
     @Override
@@ -58,7 +53,8 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        mDevice = getDevice();
+
+        Utils.prepareSingleUser(getDevice());
         assertNotNull(mCtsBuild);
         uninstallPackage();
     }
@@ -582,9 +578,9 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
                 }
             }
             if (ephemeral) {
-                return mDevice.installPackage(apkFile, true, "--ephemeral");
+                return getDevice().installPackage(apkFile, true, "--ephemeral");
             } else {
-                return mDevice.installPackage(apkFile, true);
+                return getDevice().installPackage(apkFile, true);
             }
         } finally {
             apkFile.delete();
@@ -602,6 +598,6 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
     }
 
     private String uninstallPackage() throws DeviceNotAvailableException {
-        return mDevice.uninstallPackage(TEST_PKG);
+        return getDevice().uninstallPackage(TEST_PKG);
     }
 }

@@ -43,6 +43,8 @@ public class IsolatedSplitsTests extends DeviceTestCase implements IBuildReceive
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+
+        Utils.prepareSingleUser(getDevice());
         getDevice().uninstallPackage(PKG);
     }
 
