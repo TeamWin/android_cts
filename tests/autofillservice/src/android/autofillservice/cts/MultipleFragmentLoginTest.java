@@ -16,6 +16,7 @@
 
 package android.autofillservice.cts;
 
+import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
 import static android.autofillservice.cts.FragmentContainerActivity.FRAGMENT_TAG;
 import static android.autofillservice.cts.Helper.FILL_TIMEOUT_MS;
 import static android.autofillservice.cts.Helper.eventually;
@@ -118,8 +119,7 @@ public class MultipleFragmentLoginTest extends AutoFillServiceTestCase {
                     () -> mActivity.getFragmentManager().beginTransaction().replace(
                             R.id.rootContainer, new FragmentWithMoreEditTexts(),
                             FRAGMENT_TAG).commitNow());
-            EditText mEditText5 = mActivity.findViewById(R.id.editText5);
-
+            EditText editText5 = mActivity.findViewById(R.id.editText5);
             fillRequest[0] = sReplier.getNextFillRequest();
 
             // The fillRequest should have a fillContext for each partition. The first partition
@@ -159,7 +159,7 @@ public class MultipleFragmentLoginTest extends AutoFillServiceTestCase {
             sUiBot.assertShownByText("editText4-autofilled");
 
             // Manually fill view
-            mActivity.syncRunOnUiThread(() -> mEditText5.setText("editText5-manually-filled"));
+            mActivity.syncRunOnUiThread(() -> editText5.setText("editText5-manually-filled"));
 
             // Finish activity and save data
             mActivity.finish();
@@ -198,4 +198,53 @@ public class MultipleFragmentLoginTest extends AutoFillServiceTestCase {
             disableService();
         }
     }
+
+    @Test
+    public void uiDismissedWhenNonSavableFragmentIsGone() throws Exception {
+        uiDismissedWhenFragmentIsGoneText(false);
+    }
+
+    @Test
+    public void uiDismissedWhenSavableFragmentIsGone() throws Exception {
+        uiDismissedWhenFragmentIsGoneText(true);
+    }
+
+    private void uiDismissedWhenFragmentIsGoneText(boolean savable) throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        final CannedFillResponse.Builder response = new CannedFillResponse.Builder()
+                .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                        .setField("editText1", "whatever")
+                        .setPresentation(createPresentation("dataset1"))
+                        .build());
+        if (savable) {
+            response.setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, "editText2");
+        }
+
+        sReplier.addResponse(response.build());
+
+        // Trigger autofill
+        mActivity.syncRunOnUiThread(() -> {
+            mEditText2.requestFocus();
+            mEditText1.requestFocus();
+        });
+
+        // Check UI is shown, but don't select it.
+        sReplier.getNextFillRequest();
+        sUiBot.assertDatasets("dataset1");
+
+        // Switch fragments
+        sReplier.addResponse(NO_RESPONSE);
+        mActivity.syncRunOnUiThread(
+                () -> mActivity.getFragmentManager().beginTransaction().replace(
+                        R.id.rootContainer, new FragmentWithMoreEditTexts(),
+                        FRAGMENT_TAG).commitNow());
+        // Make sure UI is gone.
+        sReplier.getNextFillRequest();
+        sUiBot.assertNoDatasets();
+    }
+
+    // TODO: add similar tests for fragment with virtual view
 }
