@@ -2223,22 +2223,22 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
 
         // Finally, autofill and check them.
         mActivity.focusCell(2, 1);
-        sUiBot.selectByText("Auth 2");
+        sUiBot.selectDataset("Auth 2");
         sUiBot.selectDataset("Partition 2");
         expectation2.assertAutoFilled();
 
         mActivity.focusCell(4, 1);
-        sUiBot.selectByText("Auth 4");
+        sUiBot.selectDataset("Auth 4");
         sUiBot.selectDataset("Partition 4");
         expectation4.assertAutoFilled();
 
         mActivity.focusCell(3, 1);
-        sUiBot.selectByText("Auth 3");
+        sUiBot.selectDataset("Auth 3");
         sUiBot.selectDataset("Partition 3");
         expectation3.assertAutoFilled();
 
         mActivity.focusCell(1, 1);
-        sUiBot.selectByText("Auth 1");
+        sUiBot.selectDataset("Auth 1");
         sUiBot.selectDataset("Partition 1");
         expectation1.assertAutoFilled();
     }

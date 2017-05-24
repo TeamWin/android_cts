@@ -18,6 +18,7 @@ package android.autofillservice.cts;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.app.Activity;
 import android.app.PendingIntent;
 import android.app.assist.AssistStructure;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
@@ -48,7 +49,13 @@ public class AuthenticationActivity extends AbstractAutoFillActivity {
     private static final SparseArray<CannedFillResponse> sResponses = new SparseArray<>();
     private static final ArrayList<PendingIntent> sPendingIntents = new ArrayList<>();
 
+    private static Object sLock = new Object();
+
+    // Guarded by sLock
+    private static int sResultCode;
+
     static void resetStaticState() {
+        setResultCode(RESULT_OK);
         sDatasets.clear();
         sResponses.clear();
         for (int i = 0; i < sPendingIntents.size(); i++) {
@@ -83,7 +90,8 @@ public class AuthenticationActivity extends AbstractAutoFillActivity {
     private static IntentSender createSender(Context context, String extraName, int id) {
         final Intent intent = new Intent(context, AuthenticationActivity.class);
         intent.putExtra(extraName, id);
-        final PendingIntent pendingIntent = PendingIntent.getActivity(context, id, intent, 0);
+        final PendingIntent pendingIntent = PendingIntent.getActivity(context, id, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT);
         sPendingIntents.add(pendingIntent);
         return pendingIntent.getIntentSender();
     }
@@ -102,6 +110,16 @@ public class AuthenticationActivity extends AbstractAutoFillActivity {
         final Bundle data = sData;
         sData = null;
         return data;
+    }
+
+    /**
+     * Sets the value that's passed to {@link Activity#setResult(int, Intent)} when on
+     * {@link Activity#onCreate(Bundle)}.
+     */
+    public static void setResultCode(int resultCode) {
+        synchronized (sLock) {
+            sResultCode = resultCode;
+        }
     }
 
     @Override
@@ -133,7 +151,12 @@ public class AuthenticationActivity extends AbstractAutoFillActivity {
         // Pass on the auth result
         final Intent intent = new Intent();
         intent.putExtra(AutofillManager.EXTRA_AUTHENTICATION_RESULT, result);
-        setResult(RESULT_OK, intent);
+        final int resultCode;
+        synchronized (sLock) {
+            resultCode = sResultCode;
+        }
+        Log.d(TAG, "Returning code " + resultCode);
+        setResult(resultCode, intent);
 
         // Done
         finish();
