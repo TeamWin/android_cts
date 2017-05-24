@@ -39,6 +39,8 @@ import android.provider.Settings;
 import android.test.InstrumentationTestCase;
 import android.test.UiThreadTest;
 
+import com.android.cts.util.SecurityTest;
+
 import java.util.List;
 
 /**
@@ -620,6 +622,7 @@ public class LocationManagerTest extends InstrumentationTestCase {
      * Test case for bug 33091107, where a malicious app used to be able to fool a real provider
      * into providing a mock location that isn't marked as being mock.
      */
+    @SecurityTest
     public void testLocationShouldStillBeMarkedMockWhenProvidersDoNotMatch()
             throws InterruptedException {
         double latitude = 20;
