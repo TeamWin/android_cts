@@ -152,6 +152,9 @@ final class UiBot {
 
     /**
      * Selects a view by text.
+     *
+     * <p><b>NOTE:</b> when selecting an option in dataset picker is shown, prefer
+     * {@link #selectDataset(String)}.
      */
     void selectByText(String name) {
         Log.v(TAG, "selectByText(): " + name);
@@ -161,7 +164,10 @@ final class UiBot {
     }
 
     /**
-     * Asserts a text is not shown.
+     * Asserts a text is shown.
+     *
+     * <p><b>NOTE:</b> when asserting the dataset picker is shown, prefer
+     * {@link #assertDatasets(String...)}.
      */
     public void assertShownByText(String text) {
         final UiObject2 object = waitForObject(By.text(text));
@@ -169,7 +175,10 @@ final class UiBot {
     }
 
     /**
-     * Asserts a text is now shown.
+     * Asserts a text is not shown.
+     *
+     * <p><b>NOTE:</b> when asserting the dataset picker is not shown, prefer
+     * {@link #assertNoDatasets()}.
      */
     public void assertNotShownByText(String text) {
         final UiObject2 uiObject = mDevice.findObject(By.text(text));
