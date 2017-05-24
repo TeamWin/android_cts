@@ -1904,7 +1904,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="pca_info">This tests whether or not OpenGL projection works.\n
         You should see two "tumbling cubes." Tapping the screen should cause the cubes to explode.</string>
     <string name="pca_test">Projection Cube Test</string>
-    <string name="pwa_info">This tests whether or displaying widets and keyfocus navigation works.\n
+    <string name="pwa_info">This tests whether or displaying widgets and keyfocus navigation works.\n
         You should see four buttons on the bottom of the screen.\n
         Pressing the "up" and "down" buttons should highlight different buttons.\n
         Furthermore, the highlight should disappear when any button is touched, and the touched button should behave as usual.\n</string>
