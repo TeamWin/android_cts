@@ -22,6 +22,8 @@ import android.net.Uri;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
+import com.android.cts.util.SecurityTest;
+
 import java.io.IOException;
 
 /**
@@ -30,6 +32,10 @@ import java.io.IOException;
 public class ContentProviderCursorWindowTest extends AndroidTestCase {
     private static final String TAG = "ContentProviderCursorWindowTest";
 
+    /**
+    * test for b/34128677
+    */
+    @SecurityTest
     public void testQuery() throws IOException {
         Cursor cursor = getContext().getContentResolver().query(
                 Uri.parse("content://cursorwindow.provider/hello"),
