@@ -75,10 +75,27 @@ public abstract class BaseBackupHostSideTest extends CompatibilityHostTestBase {
     }
 
     /**
+     * Execute shell command "bmgr backupnow <packageName>" and assert success.
+     */
+    protected void backupNowAndAssertSuccess(String packageName)
+            throws DeviceNotAvailableException {
+        String backupnowOutput = backupNow(packageName);
+
+        assertBackupIsSuccessful(packageName, backupnowOutput);
+    }
+
+    /**
      * Execute shell command "bmgr restore <packageName>" and return output from this command.
      */
     protected String restore(String packageName) throws DeviceNotAvailableException {
         return mDevice.executeShellCommand("bmgr restore " + packageName);
+    }
+
+    /**
+     * Attempts to clear the device log.
+     */
+    protected void clearLogcat() throws DeviceNotAvailableException {
+        mDevice.executeAdbCommand("logcat", "-c");
     }
 
     /**
@@ -123,6 +140,24 @@ public abstract class BaseBackupHostSideTest extends CompatibilityHostTestBase {
      */
     protected void assertRestoreIsSuccessful(String restoreOutput) {
         assertTrue("Restore not successful", restoreOutput.contains("restoreFinished: 0"));
+    }
+
+    protected void startActivityInPackageAndWait(String packageName, String className)
+            throws DeviceNotAvailableException {
+        mDevice.executeShellCommand(String.format(
+                "am start -W -a android.intent.action.MAIN -n %s/%s.%s", packageName,
+                packageName,
+                className));
+    }
+
+    /**
+     * Clears backup data stored in Local Transport for a package.
+     * NB: 'bmgr wipe' does not produce any useful output if the package or transport not found,
+     * so we cannot really check the success of the operation
+      */
+    protected void clearBackupDataInLocalTransport(String packageName)
+            throws DeviceNotAvailableException {
+        mDevice.executeShellCommand(String.format("bmgr wipe %s %s", LOCAL_TRANSPORT, packageName));
     }
 
     // Copied over from BackupQuotaTest
