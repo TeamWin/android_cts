@@ -766,7 +766,7 @@ public class ResourcesTest extends AndroidTestCase {
     }
 
     public void testGetFont_fontFile() {
-        Typeface font = mResources.getFont(R.font.samplefont);
+        Typeface font = mResources.getFont(R.font.sample_regular_font);
 
         assertNotNull(font);
         assertNotSame(Typeface.DEFAULT, font);
@@ -841,8 +841,8 @@ public class ResourcesTest extends AndroidTestCase {
     }
 
     public void testGetFont_fontFileIsCached() {
-        Typeface font = mResources.getFont(R.font.samplefont);
-        Typeface font2 = mResources.getFont(R.font.samplefont);
+        Typeface font = mResources.getFont(R.font.sample_regular_font);
+        Typeface font2 = mResources.getFont(R.font.sample_regular_font);
 
         assertEquals(font, font2);
     }
