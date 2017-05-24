@@ -55,15 +55,6 @@
 
         <activity android:name="android.app.stubs.ActionBarActivity" />
 
-        <activity android:name="android.app.stubs.DialogStubActivity"
-            android:label="DialogStubActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
-            </intent-filter>
-        </activity>
-
         <activity android:name="android.app.stubs.MockActivity" android:label="MockActivity">
             <meta-data android:name="android.app.alias"
                 android:resource="@xml/alias" />
