@@ -15,6 +15,9 @@
 import re
 import subprocess
 import sys
+import time
+
+TURN_OFF_DELAY = 1  # seconds. Needed for back to back runs
 
 
 def main():
@@ -38,5 +41,7 @@ def main():
     else:
         pwrdn = ('adb -s %s shell input keyevent POWER' % screen_id)
         subprocess.Popen(pwrdn.split())
+        time.sleep(TURN_OFF_DELAY)
+
 if __name__ == '__main__':
     main()
