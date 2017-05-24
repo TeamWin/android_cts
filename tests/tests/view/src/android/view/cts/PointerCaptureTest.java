@@ -34,7 +34,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import android.app.Instrumentation;
-import android.hardware.input.InputManager;
 import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
@@ -122,12 +121,17 @@ public class PointerCaptureTest {
         view.setOnCapturedPointerListener(null);
     }
 
-    private static void injectMotionEvent(MotionEvent event) {
-        InputManager.getInstance().injectInputEvent(event,
-                InputManager.INJECT_INPUT_EVENT_MODE_WAIT_FOR_FINISH);
+    private void injectMotionEvent(MotionEvent event) {
+        if ((event.getSource() & InputDevice.SOURCE_CLASS_POINTER) != 0) {
+            // Regular mouse event.
+            mInstrumentation.sendPointerSync(event);
+        } else {
+            // Relative mouse event belongs to SOURCE_CLASS_TRACKBALL.
+            mInstrumentation.sendTrackballEventSync(event);
+        }
     }
 
-    private static void injectRelativeMouseEvent(int action, int x, int y) {
+    private void injectRelativeMouseEvent(int action, int x, int y) {
         injectMotionEvent(obtainRelativeMouseEvent(action, x, y));
     }
 
