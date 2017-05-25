@@ -37,6 +37,8 @@ import com.android.tradefed.config.OptionCopier;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.DeviceUnresponsiveException;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.invoker.IInvocationContext;
+import com.android.tradefed.invoker.InvocationContext;
 import com.android.tradefed.log.ITestLogger;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.ITestInvocationListener;
@@ -48,6 +50,7 @@ import com.android.tradefed.testtype.Abi;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IDeviceTest;
+import com.android.tradefed.testtype.IInvocationContextReceiver;
 import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.IShardableTest;
 import com.android.tradefed.testtype.IStrictShardableTest;
@@ -79,7 +82,8 @@ import java.util.concurrent.TimeUnit;
  */
 @OptionClass(alias = "compatibility")
 public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildReceiver,
-        IStrictShardableTest, ISystemStatusCheckerReceiver, ITestCollector {
+        IStrictShardableTest, ISystemStatusCheckerReceiver, ITestCollector,
+        IInvocationContextReceiver {
 
     public static final String INCLUDE_FILTER_OPTION = "include-filter";
     public static final String EXCLUDE_FILTER_OPTION = "exclude-filter";
@@ -275,6 +279,8 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     private boolean mIsLocalSharding = false;
     private boolean mIsSharded = false;
 
+    private IInvocationContext mInvocationContext;
+
     /**
      * Create a new {@link CompatibilityTest} that will run the default list of
      * modules.
@@ -468,6 +474,12 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                 if (checkers != null && !checkers.isEmpty()) {
                     runPreModuleCheck(module.getName(), checkers, mDevice, listener);
                 }
+                IInvocationContext moduleContext = new InvocationContext();
+                moduleContext.setConfigurationDescriptor(module.getConfigurationDescriptor());
+                moduleContext.addInvocationAttribute(IModuleDef.MODULE_NAME, module.getName());
+                moduleContext.addInvocationAttribute(IModuleDef.MODULE_ABI,
+                        module.getAbi().getName());
+                mInvocationContext.setModuleInvocationContext(moduleContext);
                 try {
                     module.run(listener);
                 } catch (DeviceUnresponsiveException due) {
@@ -481,6 +493,10 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                             stack.toString());
                     CLog.w("This may be due to incorrect timeout setting on module %s",
                             module.getName());
+                } finally {
+                    // clear out module invocation context since we are now done with module
+                    // execution
+                    mInvocationContext.setModuleInvocationContext(null);
                 }
                 long duration = System.currentTimeMillis() - start;
                 long expected = module.getRuntimeHint();
@@ -807,5 +823,10 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
      */
     public void setExcludeFilter(Set<String> excludeFilters) {
         mExcludeFilters.addAll(excludeFilters);
+    }
+
+    @Override
+    public void setInvocationContext(IInvocationContext invocationContext) {
+        mInvocationContext = invocationContext;
     }
 }
