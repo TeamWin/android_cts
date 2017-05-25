@@ -29,7 +29,6 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import android.annotation.NonNull;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -44,6 +43,7 @@ import android.graphics.Region;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Parcelable;
 import android.os.SystemClock;
+import android.support.annotation.NonNull;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.LargeTest;
