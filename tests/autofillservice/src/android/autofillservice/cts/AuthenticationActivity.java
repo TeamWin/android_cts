@@ -90,8 +90,7 @@ public class AuthenticationActivity extends AbstractAutoFillActivity {
     private static IntentSender createSender(Context context, String extraName, int id) {
         final Intent intent = new Intent(context, AuthenticationActivity.class);
         intent.putExtra(extraName, id);
-        final PendingIntent pendingIntent = PendingIntent.getActivity(context, id, intent,
-                PendingIntent.FLAG_UPDATE_CURRENT);
+        final PendingIntent pendingIntent = PendingIntent.getActivity(context, id, intent, 0);
         sPendingIntents.add(pendingIntent);
         return pendingIntent.getIntentSender();
     }
