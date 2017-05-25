@@ -16,6 +16,7 @@
 package com.android.compatibility.common.tradefed;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelperTest;
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildProviderTest;
 import com.android.compatibility.common.tradefed.command.CompatibilityConsoleTest;
 import com.android.compatibility.common.tradefed.config.ConfigurationFactoryTest;
 import com.android.compatibility.common.tradefed.presubmit.ApkPackageNameCheck;
@@ -56,6 +57,7 @@ import org.junit.runners.Suite.SuiteClasses;
 @SuiteClasses({
     // build
     CompatibilityBuildHelperTest.class,
+    CompatibilityBuildProviderTest.class,
 
     // command
     CompatibilityConsoleTest.class,
