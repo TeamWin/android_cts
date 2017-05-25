@@ -36,7 +36,7 @@
         <View
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginHorizontal="10dp"
+                android:layout_marginHorizontal="@dimen/marginHorizontal"
                 android:id="@+id/view2"/>
     </LinearLayout>
 
@@ -47,7 +47,7 @@
         <View
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginVertical="10dp"
+                android:layout_marginVertical="@dimen/marginVertical"
                 android:id="@+id/view3"/>
     </LinearLayout>
 
@@ -58,8 +58,8 @@
         <View
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginHorizontal="10dp"
-                android:layout_marginVertical="10dp"
+                android:layout_marginHorizontal="@dimen/marginHorizontal"
+                android:layout_marginVertical="@dimen/marginVertical"
                 android:id="@+id/view4"/>
     </LinearLayout>
 
@@ -70,15 +70,14 @@
         <View
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginHorizontal="10dp"
-                android:layout_marginLeft="5dp"
-                android:layout_marginRight="2dp"
-                android:layout_marginVertical="10dp"
-                android:layout_marginTop="5dp"
-                android:layout_marginBottom="2dp"
+                android:layout_marginHorizontal="@dimen/marginHorizontal"
+                android:layout_marginLeft="@dimen/marginLeft"
+                android:layout_marginRight="@dimen/marginRight"
+                android:layout_marginVertical="@dimen/marginVertical"
+                android:layout_marginTop="@dimen/marginTop"
+                android:layout_marginBottom="@dimen/marginBottom"
                 android:id="@+id/view5"/>
     </LinearLayout>
-
 
     <LinearLayout
             android:orientation="horizontal"
@@ -87,11 +86,25 @@
         <View
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginHorizontal="10dp"
-                android:layout_marginStart="5dp"
-                android:layout_marginEnd="2dp"
-                android:layout_marginVertical="10dp"
+                android:layout_marginHorizontal="@dimen/marginHorizontal"
+                android:layout_marginStart="@dimen/marginStart"
+                android:layout_marginEnd="@dimen/marginEnd"
+                android:layout_marginVertical="@dimen/marginVertical"
                 android:id="@+id/view6"/>
+    </LinearLayout>
+
+    <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="100dp">
+        <View
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="@dimen/marginAll"
+                android:layout_marginStart="@dimen/marginStart"
+                android:layout_marginEnd="@dimen/marginEnd"
+                android:layout_marginVertical="@dimen/marginVertical"
+                android:id="@+id/view7"/>
     </LinearLayout>
 
 </LinearLayout>
