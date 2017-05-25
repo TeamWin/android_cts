@@ -377,27 +377,6 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     }
 
     /**
-     * Asserts that the actual file contents are equal to the expected file
-     * contents.
-     *
-     * @param expectedFile
-     *  The file with the expected contents.
-     * @param actualFile
-     *  The actual file being checked.
-     */
-    private void assertFileEquals(File expectedFile, File actualFile) throws Exception {
-        BufferedReader expectedReader = new BufferedReader(new FileReader(expectedFile.getAbsolutePath()));
-        BufferedReader actualReader = new BufferedReader(new FileReader(actualFile.getAbsolutePath()));
-        String expectedLine, actualLine;
-        while ((expectedLine = expectedReader.readLine()) != null) {
-            actualLine = actualReader.readLine();
-            assertEquals("Lines do not match:", expectedLine, actualLine);
-        }
-        actualLine = actualReader.readLine();
-        assertTrue("Extra lines starting with: " + actualLine, (actualLine == null));
-    }
-
-    /**
      * Asserts that the actual file contents starts with the expected file
      * contents.
      *
@@ -434,7 +413,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         /* retrieve the AOSP seapp_contexts file from jar */
         aospSeappFile = copyResourceToTempFile("/plat_seapp_contexts");
 
-        assertFileEquals(aospSeappFile, devicePlatSeappFile);
+        assertFileStartsWith(aospSeappFile, devicePlatSeappFile);
     }
 
     /**
@@ -497,7 +476,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         // Android devices. See build script of this CTS module.
         aospPcFile = copyResourceToTempFile("/plat_property_contexts");
 
-        assertFileEquals(aospPcFile, devicePcFile);
+        assertFileStartsWith(aospPcFile, devicePcFile);
     }
 
     /**
@@ -519,7 +498,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         /* retrieve the AOSP service_contexts file from jar */
         aospSvcFile = copyResourceToTempFile("/plat_service_contexts");
 
-        assertFileEquals(aospSvcFile, deviceSvcFile);
+        assertFileStartsWith(aospSvcFile, deviceSvcFile);
     }
 
     /**
