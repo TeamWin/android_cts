@@ -22,8 +22,10 @@ import com.android.compatibility.SuiteInfo;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.result.ResultReporter;
 import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
+import com.android.compatibility.common.tradefed.testtype.IModuleDef;
 import com.android.compatibility.common.util.IInvocationResult;
 import com.android.compatibility.common.util.TestStatus;
+import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.ConfigurationFactory;
 import com.android.tradefed.config.OptionSetter;
@@ -36,6 +38,7 @@ import com.android.tradefed.result.ITestInvocationListener;
 import com.android.tradefed.result.ResultForwarder;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IDeviceTest;
+import com.android.tradefed.testtype.IInvocationContextReceiver;
 import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.util.AbiUtils;
 import com.android.tradefed.util.FileUtil;
@@ -67,6 +70,7 @@ public class IntegrationTest {
 
     private static final String CONFIG =
             "<configuration description=\"Auto Generated File\">\n" +
+            "<option name=\"config-descriptor:metadata\" key=\"component\" value=\"%s\" />\n" +
             "<test class=\"com.android.compatibility.common.tradefed.testtype.%s\">\n" +
             "    <option name=\"report-test\" value=\"%s\" />\n" +
             "    <option name=\"run-complete\" value=\"%s\" />\n" +
@@ -75,7 +79,8 @@ public class IntegrationTest {
             "</test>\n" +
             "</configuration>";
     private static final String FILENAME = "%s.config";
-    private static final String TEST_STUB = "TestStub"; // Trivial test stub
+    private static final String TEST_STUB = "TestStub"; // Test stub
+    private static final String SIMPLE_TEST_STUB = "SimpleTestStub"; // Simple test stub
     private static final String TEST_STUB_SHARDABLE = "TestStubShardable";
     private static final String COMMAND_LINE = "run cts";
 
@@ -134,6 +139,7 @@ public class IntegrationTest {
         mContext = new InvocationContext();
         mContext.addAllocatedDevice("default", mMockDevice);
         mContext.addDeviceBuildInfo("default", mMockBuildInfo);
+        mTest.setInvocationContext(mContext);
     }
 
     @After
@@ -155,13 +161,33 @@ public class IntegrationTest {
     private void createConfig(File testsDir, String name, String moduleClass, boolean reportTest,
             boolean runComplete, boolean doesOneTestFail, boolean internalRetry)
                     throws IOException {
+        createConfig(testsDir, name, moduleClass, reportTest, runComplete, doesOneTestFail,
+                internalRetry, "foo");
+
+    }
+
+    /**
+     * Create a CTS configuration with a fake tests to exercise all cases.
+     *
+     * @param testsDir The testcases/ dir where to put the module
+     * @param name the name of the module.
+     * @param moduleClass the fake test class to use.
+     * @param reportTest True if the test report some tests
+     * @param runComplete True if the test run is complete
+     * @param doesOneTestFail True if one of the test is going to fail
+     * @param internalRetry True if the test will retry the module itself once
+     * @param component the platform component name that the module can be categorized under
+     */
+    private void createConfig(File testsDir, String name, String moduleClass, boolean reportTest,
+            boolean runComplete, boolean doesOneTestFail, boolean internalRetry, String component)
+                    throws IOException {
         File config = new File(testsDir, String.format(FILENAME, name));
         FileUtil.deleteFile(config);
         if (!config.createNewFile()) {
             throw new IOException(String.format("Failed to create '%s'", config.getAbsolutePath()));
         }
 
-        FileUtil.writeToFile(String.format(CONFIG, moduleClass, reportTest, runComplete,
+        FileUtil.writeToFile(String.format(CONFIG, component, moduleClass, reportTest, runComplete,
                 doesOneTestFail, internalRetry), config);
     }
 
@@ -189,6 +215,83 @@ public class IntegrationTest {
         assertEquals(1, result.countResults(TestStatus.FAIL));
         assertEquals(1, result.getModules().size());
         assertEquals(1, result.getModuleCompleteCount());
+    }
+
+    /**
+     * Verify that result reporters test run ended callback can receive component name as configured
+     * in module config metadata field.
+     */
+    @Test
+    public void testSingleModuleRun_checkMetadata() throws Exception {
+        final String moduleName = "AwsomeModule";
+        final String mAbi = "arm64-v8a";
+        final String component = "CriticalComponent";
+        final List<String> receivedComponentsTestEnded = new ArrayList<>();
+        final List<String> receivedModuleNameTestEnded = new ArrayList<>();
+        final List<String> receivedAbiTestEnded = new ArrayList<>();
+        final List<String> receivedComponentsTestRunEnded = new ArrayList<>();
+        final List<String> receivedModuleNameTestRunEnded = new ArrayList<>();
+        final List<String> receivedAbiTestRunEnded = new ArrayList<>();
+        createConfig(mTestDir, moduleName, SIMPLE_TEST_STUB, true, true, true, false, component);
+        EasyMock.expect(mMockDevice.getProperty("ro.product.cpu.abilist")).andReturn(mAbi);
+
+        mMockBuildInfo.addBuildAttribute(EasyMock.eq(CompatibilityBuildHelper.MODULE_IDS),
+                EasyMock.eq(AbiUtils.createId(mAbi, moduleName)));
+        EasyMock.expectLastCall();
+
+        EasyMock.replay(mMockDevice, mMockBuildInfo);
+        ITestInvocationListener myListener = new ITestInvocationListener() {
+            private IInvocationContext myContext;
+            @Override
+            public void invocationStarted(IInvocationContext context) {
+                myContext = context;
+            }
+            @Override
+            public void testRunEnded(long elapsedTimeMillis, Map<String, String> runMetrics) {
+                receivedComponentsTestRunEnded.addAll(myContext.getModuleInvocationContext()
+                        .getConfigurationDescriptor().getMetaData("component"));
+                receivedModuleNameTestRunEnded.addAll(myContext.getModuleInvocationContext()
+                        .getAttributes().get(IModuleDef.MODULE_NAME));
+                receivedAbiTestRunEnded.addAll(myContext.getModuleInvocationContext()
+                        .getAttributes().get(IModuleDef.MODULE_ABI));
+            }
+            @Override
+            public void testEnded(TestIdentifier test, long endTime,
+                    Map<String, String> testMetrics) {
+                receivedComponentsTestEnded.addAll(myContext.getModuleInvocationContext()
+                        .getConfigurationDescriptor().getMetaData("component"));
+                receivedModuleNameTestEnded.addAll(myContext.getModuleInvocationContext()
+                        .getAttributes().get(IModuleDef.MODULE_NAME));
+                receivedAbiTestEnded.addAll(myContext.getModuleInvocationContext()
+                        .getAttributes().get(IModuleDef.MODULE_ABI));
+            }
+        };
+        myListener.invocationStarted(mContext);
+        mTest.run(myListener);
+        myListener.invocationEnded(500);
+        EasyMock.verify(mMockDevice, mMockBuildInfo);
+        // verify metadata was retrieved during testRunEnded callbacks
+        assertEquals("[testRunEnded] wrong number of metadata collected",
+                1, receivedComponentsTestRunEnded.size());
+        assertEquals("[testRunEnded] wrong component metadata field received",
+                component, receivedComponentsTestRunEnded.get(0));
+        assertEquals("[testRunEnded] wrong number of module name collected",
+                1, receivedModuleNameTestRunEnded.size());
+        assertEquals(moduleName, receivedModuleNameTestRunEnded.get(0));
+        assertEquals("[testEnded] wrong number of module abi collected",
+                1, receivedAbiTestRunEnded.size());
+        assertEquals(mAbi, receivedAbiTestRunEnded.get(0));
+        // verify metadata was retrieved during testEnded callbacks
+        assertEquals("[testEnded] wrong number of metadata collected",
+                1, receivedComponentsTestEnded.size());
+        assertEquals("[testEnded] wrong component metadata field received",
+                component, receivedComponentsTestEnded.get(0));
+        assertEquals("[testEnded] wrong number of module name collected",
+                1, receivedModuleNameTestEnded.size());
+        assertEquals(moduleName, receivedModuleNameTestEnded.get(0));
+        assertEquals("[testEnded] wrong number of module abi collected",
+                1, receivedAbiTestEnded.size());
+        assertEquals(mAbi, receivedAbiTestEnded.get(0));
     }
 
     /**
@@ -297,6 +400,7 @@ public class IntegrationTest {
         };
         mTest.setDevice(mMockDevice);
         mTest.setBuild(mMockBuildInfo);
+        mTest.setInvocationContext(mContext);
         OptionSetter setter = new OptionSetter(mTest, mReporter);
         setter.setOptionValue("retry", "0");
 
@@ -370,6 +474,7 @@ public class IntegrationTest {
         };
         mTest.setDevice(mMockDevice);
         mTest.setBuild(mMockBuildInfo);
+        mTest.setInvocationContext(mContext);
         OptionSetter setter = new OptionSetter(mTest, mReporter);
         setter.setOptionValue("retry", "0");
 
@@ -426,6 +531,7 @@ public class IntegrationTest {
             ITestInvocationListener listener = getShardListener(mMasterReporter);
             ((IBuildReceiver)mShardTest).setBuild(mBuild);
             ((IDeviceTest)mShardTest).setDevice(mDevice);
+            ((IInvocationContextReceiver)mShardTest).setInvocationContext(mContext);
             listener.invocationStarted(mShardContext);
             try {
                 mShardTest.run(listener);
@@ -572,6 +678,7 @@ public class IntegrationTest {
 
         ((IBuildReceiver)tests.get(0)).setBuild(mMockBuildInfo);
         ((IDeviceTest)tests.get(0)).setDevice(mMockDevice);
+        ((IInvocationContextReceiver)tests.get(0)).setInvocationContext(mContext);
         mReporter.invocationStarted(mContext);
         try {
             tests.get(0).run(mReporter);
