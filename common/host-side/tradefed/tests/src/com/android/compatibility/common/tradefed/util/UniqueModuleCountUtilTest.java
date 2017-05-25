@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import com.android.compatibility.common.tradefed.testtype.IModuleDef;
 import com.android.compatibility.common.tradefed.testtype.ModuleDef;
 import com.android.compatibility.common.tradefed.testtype.TestStub;
+import com.android.tradefed.config.ConfigurationDescriptor;
 import com.android.tradefed.targetprep.ITargetPreparer;
 import com.android.tradefed.testtype.Abi;
 
@@ -43,9 +44,9 @@ public class UniqueModuleCountUtilTest {
     public void testCount_2uniquesModules() {
         List<IModuleDef> list = new ArrayList<>();
         list.add(new ModuleDef("moduleA", new Abi("arm64", "64"), new TestStub(),
-                new ArrayList<ITargetPreparer>()));
+                new ArrayList<ITargetPreparer>(), new ConfigurationDescriptor()));
         list.add(new ModuleDef("moduleA", new Abi("arm32", "32"), new TestStub(),
-                new ArrayList<ITargetPreparer>()));
+                new ArrayList<ITargetPreparer>(), new ConfigurationDescriptor()));
         assertEquals(2, UniqueModuleCountUtil.countUniqueModules(list));
     }
 
@@ -53,9 +54,9 @@ public class UniqueModuleCountUtilTest {
     public void testCount_2subModules() {
         List<IModuleDef> list = new ArrayList<>();
         list.add(new ModuleDef("moduleA", new Abi("arm32", "32"), new TestStub(),
-                new ArrayList<ITargetPreparer>()));
+                new ArrayList<ITargetPreparer>(), new ConfigurationDescriptor()));
         list.add(new ModuleDef("moduleA", new Abi("arm32", "32"), new TestStub(),
-                new ArrayList<ITargetPreparer>()));
+                new ArrayList<ITargetPreparer>(), new ConfigurationDescriptor()));
         assertEquals(1, UniqueModuleCountUtil.countUniqueModules(list));
     }
 
@@ -63,21 +64,21 @@ public class UniqueModuleCountUtilTest {
     public void testCount_mix() {
         List<IModuleDef> list = new ArrayList<>();
         list.add(new ModuleDef("moduleA", new Abi("arm64", "64"), new TestStub(),
-                new ArrayList<ITargetPreparer>()));
+                new ArrayList<ITargetPreparer>(), new ConfigurationDescriptor()));
         list.add(new ModuleDef("moduleA", new Abi("arm32", "32"), new TestStub(),
-                new ArrayList<ITargetPreparer>()));
+                new ArrayList<ITargetPreparer>(), new ConfigurationDescriptor()));
         list.add(new ModuleDef("moduleC", new Abi("arm32", "32"), new TestStub(),
-                new ArrayList<ITargetPreparer>()));
+                new ArrayList<ITargetPreparer>(), new ConfigurationDescriptor()));
         list.add(new ModuleDef("moduleB", new Abi("arm64", "64"), new TestStub(),
-                new ArrayList<ITargetPreparer>()));
+                new ArrayList<ITargetPreparer>(), new ConfigurationDescriptor()));
         list.add(new ModuleDef("moduleB", new Abi("arm32", "32"), new TestStub(),
-                new ArrayList<ITargetPreparer>()));
+                new ArrayList<ITargetPreparer>(), new ConfigurationDescriptor()));
         list.add(new ModuleDef("moduleC", new Abi("arm64", "64"), new TestStub(),
-                new ArrayList<ITargetPreparer>()));
+                new ArrayList<ITargetPreparer>(), new ConfigurationDescriptor()));
         list.add(new ModuleDef("moduleA", new Abi("arm32", "32"), new TestStub(),
-                new ArrayList<ITargetPreparer>()));
+                new ArrayList<ITargetPreparer>(), new ConfigurationDescriptor()));
         list.add(new ModuleDef("moduleC", new Abi("arm32", "32"), new TestStub(),
-                new ArrayList<ITargetPreparer>()));
+                new ArrayList<ITargetPreparer>(), new ConfigurationDescriptor()));
         assertEquals(6, UniqueModuleCountUtil.countUniqueModules(list));
     }
 }

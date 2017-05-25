@@ -21,6 +21,7 @@ import com.android.compatibility.common.tradefed.targetprep.DynamicConfigPusher;
 import com.android.compatibility.common.tradefed.targetprep.PreconditionPreparer;
 import com.android.compatibility.common.tradefed.targetprep.TokenRequirement;
 import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.config.ConfigurationDescriptor;
 import com.android.tradefed.config.ConfigurationException;
 import com.android.tradefed.config.OptionSetter;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -66,13 +67,15 @@ public class ModuleDef implements IModuleDef {
     private IBuildInfo mBuild;
     private ITestDevice mDevice;
     private Set<String> mPreparerWhitelist = new HashSet<>();
+    private ConfigurationDescriptor mConfigurationDescriptor;
 
     public ModuleDef(String name, IAbi abi, IRemoteTest test,
-            List<ITargetPreparer> preparers) {
+            List<ITargetPreparer> preparers, ConfigurationDescriptor configurationDescriptor) {
         mId = AbiUtils.createId(abi.getName(), name);
         mName = name;
         mAbi = abi;
         mTest = test;
+        mConfigurationDescriptor = configurationDescriptor;
         boolean hasAbiReceiver = false;
         for (ITargetPreparer preparer : preparers) {
             if (preparer instanceof IAbiReceiver) {
@@ -353,5 +356,10 @@ public class ModuleDef implements IModuleDef {
                 mListener.testRunEnded(0, Collections.emptyMap());
             }
         }
+    }
+
+    @Override
+    public ConfigurationDescriptor getConfigurationDescriptor() {
+        return mConfigurationDescriptor;
     }
 }
