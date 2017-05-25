@@ -156,6 +156,14 @@ public class EphemeralTest extends DeviceTestCase
         runDeviceTests(EPHEMERAL_1_PKG, WEBVIEW_TEST_CLASS, "testWebViewLoads");
     }
 
+    public void testInstallPermissionNotGranted() throws Exception {
+        runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testInstallPermissionNotGranted");
+    }
+
+    public void testInstallPermissionGranted() throws Exception {
+        runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testInstallPermissionGranted");
+    }
+
     private void runDeviceTests(String packageName, String testClassName, String testMethodName)
             throws DeviceNotAvailableException {
         Utils.runDeviceTests(getDevice(), packageName, testClassName, testMethodName);
