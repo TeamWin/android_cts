@@ -32,10 +32,13 @@ public class PackageVisibilityTest extends BaseAppSecurityTest {
     private static final boolean MATCH_UNINSTALLED = true;
     private static final boolean MATCH_NORMAL = false;
 
+    private int[] mUsers;
     private String mOldVerifierValue;
 
     public void setUp() throws Exception {
         super.setUp();
+
+        mUsers = Utils.prepareMultipleUsers(getDevice());
         mOldVerifierValue =
                 getDevice().executeShellCommand("settings get global package_verifier_enable");
         getDevice().executeShellCommand("settings put global package_verifier_enable 0");
@@ -54,7 +57,7 @@ public class PackageVisibilityTest extends BaseAppSecurityTest {
             return;
         }
 
-        int userId = createUser();
+        int userId = mUsers[1];
         assertTrue(userId > 0);
         getDevice().startUser(userId);
         installTestAppForUser(TEST_APK, userId);
@@ -67,23 +70,23 @@ public class PackageVisibilityTest extends BaseAppSecurityTest {
         assertTrue(isAppVisibleForUser(TINY_PKG, mPrimaryUserId, MATCH_UNINSTALLED));
 
         // Try the same from an app
-        assertTrue(runDeviceTestsAsUser(TEST_PKG,
-                ".PackageAccessTest", "testPackageAccess_inUser", mPrimaryUserId));
-        assertTrue(runDeviceTestsAsUser(TEST_PKG,
-                ".PackageAccessTest", "testPackageAccess_inUserUninstalled", mPrimaryUserId));
+        Utils.runDeviceTests(getDevice(), TEST_PKG,
+                ".PackageAccessTest", "testPackageAccess_inUser", mPrimaryUserId);
+        Utils.runDeviceTests(getDevice(), TEST_PKG,
+                ".PackageAccessTest", "testPackageAccess_inUserUninstalled", mPrimaryUserId);
 
         // It is not visible for the other user using shell commands
         assertFalse(isAppVisibleForUser(TINY_PKG, userId, MATCH_NORMAL));
         assertFalse(isAppVisibleForUser(TINY_PKG, userId, MATCH_UNINSTALLED));
 
         // Try the same from an app
-        assertTrue(runDeviceTestsAsUser(TEST_PKG,
-                ".PackageAccessTest", "testPackageAccess_notInOtherUser", userId));
-        assertTrue(runDeviceTestsAsUser(TEST_PKG,
-                ".PackageAccessTest", "testPackageAccess_notInOtherUserUninstalled", userId));
+        Utils.runDeviceTests(getDevice(), TEST_PKG,
+                ".PackageAccessTest", "testPackageAccess_notInOtherUser", userId);
+        Utils.runDeviceTests(getDevice(), TEST_PKG,
+                ".PackageAccessTest", "testPackageAccess_notInOtherUserUninstalled", userId);
 
-        assertTrue(runDeviceTestsAsUser(TEST_PKG,
-                ".PackageAccessTest", "testPackageAccess_getPackagesCantSeeTiny", userId));
+        Utils.runDeviceTests(getDevice(), TEST_PKG,
+                ".PackageAccessTest", "testPackageAccess_getPackagesCantSeeTiny", userId);
 
         getDevice().uninstallPackage(TINY_PKG);
 
@@ -105,14 +108,14 @@ public class PackageVisibilityTest extends BaseAppSecurityTest {
         assertFalse(isAppVisibleForUser(TINY_PKG, userId, MATCH_NORMAL));
         assertTrue(isAppVisibleForUser(TINY_PKG, userId, MATCH_UNINSTALLED));
 
-        assertTrue(runDeviceTestsAsUser(TEST_PKG,
-                ".PackageAccessTest", "testPackageAccess_getPackagesCanSeeTiny", userId));
+        Utils.runDeviceTests(getDevice(), TEST_PKG,
+                ".PackageAccessTest", "testPackageAccess_getPackagesCanSeeTiny", userId);
 
-        assertTrue(runDeviceTestsAsUser(TEST_PKG,
+        Utils.runDeviceTests(getDevice(), TEST_PKG,
                 ".PackageAccessTest", "testPackageAccess_notInOtherUserUninstalled",
-                mPrimaryUserId));
-        assertTrue(runDeviceTestsAsUser(TEST_PKG,
-                ".PackageAccessTest", "testPackageAccess_getPackagesCantSeeTiny", mPrimaryUserId));
+                mPrimaryUserId);
+        Utils.runDeviceTests(getDevice(), TEST_PKG,
+                ".PackageAccessTest", "testPackageAccess_getPackagesCantSeeTiny", mPrimaryUserId);
 
         getDevice().uninstallPackage(TINY_PKG);
         getDevice().uninstallPackage(TEST_PKG);

@@ -17,29 +17,17 @@
 package android.appsecurity.cts;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
-import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
-import com.android.ddmlib.testrunner.TestIdentifier;
-import com.android.ddmlib.testrunner.TestResult;
-import com.android.ddmlib.testrunner.TestRunResult;
-import com.android.ddmlib.testrunner.TestResult.TestStatus;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.log.LogUtil.CLog;
-import com.android.tradefed.result.CollectingTestListener;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
 
 import java.util.ArrayList;
-import java.util.Map;
 
 /**
  * Base class.
  */
 public class BaseAppSecurityTest extends DeviceTestCase implements IBuildReceiver {
-    protected static final int USER_SYSTEM = 0; // From the UserHandle class.
-
-    private static final String RUNNER = "android.support.test.runner.AndroidJUnitRunner";
-
     protected IBuildInfo mBuildInfo;
 
     /** Whether multi-user is supported. */
@@ -62,49 +50,12 @@ public class BaseAppSecurityTest extends DeviceTestCase implements IBuildReceive
         mSupportsMultiUser = getDevice().getMaxNumberOfUsersSupported() > 1;
         mIsSplitSystemUser = checkIfSplitSystemUser();
         mPrimaryUserId = getDevice().getPrimaryUserId();
-        mFixedUsers = new ArrayList();
+        mFixedUsers = new ArrayList<>();
         mFixedUsers.add(mPrimaryUserId);
-        if (mPrimaryUserId != USER_SYSTEM) {
-            mFixedUsers.add(USER_SYSTEM);
+        if (mPrimaryUserId != Utils.USER_SYSTEM) {
+            mFixedUsers.add(Utils.USER_SYSTEM);
         }
         getDevice().switchUser(mPrimaryUserId);
-        removeTestUsers();
-    }
-
-    @Override
-    protected void tearDown() throws Exception {
-        removeTestUsers();
-        super.tearDown();
-    }
-
-    /**
-     * @return the userid of the created user
-     */
-    protected int createUser() throws DeviceNotAvailableException, IllegalStateException {
-        final String command = "pm create-user "
-                + "TestUser_" + System.currentTimeMillis();
-        CLog.d("Starting command: " + command);
-        final String output = getDevice().executeShellCommand(command);
-        CLog.d("Output for command " + command + ": " + output);
-
-        if (output.startsWith("Success")) {
-            try {
-                return Integer.parseInt(output.substring(output.lastIndexOf(" ")).trim());
-            } catch (NumberFormatException e) {
-                CLog.e("Failed to parse result: %s", output);
-            }
-        } else {
-            CLog.e("Failed to create user: %s", output);
-        }
-        throw new IllegalStateException();
-    }
-
-    private void removeTestUsers() throws Exception {
-        for (int userId : getDevice().listUsers()) {
-            if (!mFixedUsers.contains(userId)) {
-                getDevice().removeUser(userId);
-            }
-        }
     }
 
     private boolean checkIfSplitSystemUser() throws DeviceNotAvailableException {
@@ -130,38 +81,5 @@ public class BaseAppSecurityTest extends DeviceTestCase implements IBuildReceive
         if (matchUninstalled) command += " -u";
         String output = getDevice().executeShellCommand(command);
         return output.contains(packageName);
-    }
-
-    private void printTestResult(TestRunResult runResult) {
-        for (Map.Entry<TestIdentifier, TestResult> testEntry :
-                runResult.getTestResults().entrySet()) {
-            TestResult testResult = testEntry.getValue();
-            CLog.d("Test " + testEntry.getKey() + ": " + testResult.getStatus());
-            if (testResult.getStatus() != TestStatus.PASSED) {
-                CLog.d(testResult.getStackTrace());
-            }
-        }
-    }
-
-    protected boolean runDeviceTestsAsUser(String packageName,
-            String testClassName, String testMethodName, int userId) throws Exception {
-        if (testClassName != null && testClassName.startsWith(".")) {
-            testClassName = packageName + testClassName;
-        }
-
-        RemoteAndroidTestRunner testRunner = new RemoteAndroidTestRunner(
-                packageName, RUNNER, getDevice().getIDevice());
-        if (testClassName != null && testMethodName != null) {
-            testRunner.setMethodName(testClassName, testMethodName);
-        } else if (testClassName != null) {
-            testRunner.setClassName(testClassName);
-        }
-
-        CollectingTestListener listener = new CollectingTestListener();
-        assertTrue(getDevice().runInstrumentationTestsAsUser(testRunner, userId, listener));
-
-        TestRunResult runResult = listener.getCurrentRunResults();
-        printTestResult(runResult);
-        return !runResult.hasFailedTests() && runResult.getNumTestsInState(TestStatus.PASSED) > 0;
     }
 }

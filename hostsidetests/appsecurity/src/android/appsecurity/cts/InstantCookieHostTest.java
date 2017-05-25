@@ -39,6 +39,8 @@ public class InstantCookieHostTest extends DeviceTestCase implements IBuildRecei
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+
+        Utils.prepareSingleUser(getDevice());
         uninstallPackage(INSTANT_COOKIE_APP_PKG);
         clearUserData(INSTANT_COOKIE_APP_PKG);
     }

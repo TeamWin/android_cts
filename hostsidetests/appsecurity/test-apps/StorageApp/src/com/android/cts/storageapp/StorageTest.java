@@ -23,7 +23,6 @@ import static com.android.cts.storageapp.Utils.DATA_EXT;
 import static com.android.cts.storageapp.Utils.DATA_INT;
 import static com.android.cts.storageapp.Utils.MB_IN_BYTES;
 import static com.android.cts.storageapp.Utils.PKG_B;
-import static com.android.cts.storageapp.Utils.TAG;
 import static com.android.cts.storageapp.Utils.assertMostlyEquals;
 import static com.android.cts.storageapp.Utils.getSizeManual;
 import static com.android.cts.storageapp.Utils.makeUniqueFile;
@@ -42,7 +41,6 @@ import android.os.UserHandle;
 import android.os.storage.StorageManager;
 import android.system.Os;
 import android.test.InstrumentationTestCase;
-import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
@@ -62,9 +60,19 @@ public class StorageTest extends InstrumentationTestCase {
 
     public void testFullDisk() throws Exception {
         if (shouldHaveQuota(Os.uname())) {
-            Hoarder.doBlocks(getContext().getDataDir(), true);
+            final File dataDir = getContext().getDataDir();
+
+            // Pre-flight to see if we have enough disk space to test with
+            final long total = dataDir.getTotalSpace();
+            final long free = dataDir.getFreeSpace();
+            final long required = ((total * 9) / 10) + MB_IN_BYTES;
+            if (free < required) {
+                fail("Skipping full disk test; only found " + free + " free out of " + total);
+            }
+
+            Hoarder.doBlocks(dataDir, true);
         } else {
-            Log.d(TAG, "Skipping full disk test due to missing quota support");
+            fail("Skipping full disk test due to missing quota support");
         }
     }
 

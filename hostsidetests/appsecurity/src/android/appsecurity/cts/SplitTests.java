@@ -96,6 +96,7 @@ public class SplitTests extends DeviceTestCase implements IAbiReceiver, IBuildRe
     protected void setUp() throws Exception {
         super.setUp();
 
+        Utils.prepareSingleUser(getDevice());
         assertNotNull(mAbi);
         assertNotNull(mCtsBuild);
 

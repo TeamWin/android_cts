@@ -70,6 +70,7 @@ public class EphemeralTest extends DeviceTestCase
     public void setUp() throws Exception {
         super.setUp();
 
+        Utils.prepareSingleUser(getDevice());
         assertNotNull(mAbi);
         assertNotNull(mBuildInfo);
 
