@@ -2611,6 +2611,10 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
 
     @UiThreadTest
     public void testGetWebViewClient() throws Exception {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+
         // getWebViewClient should return a default WebViewClient if it hasn't been set yet
         WebView webView = new WebView(getActivity());
         WebViewClient client = webView.getWebViewClient();
@@ -2626,6 +2630,10 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
 
     @UiThreadTest
     public void testGetWebChromeClient() throws Exception {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+
         // getWebChromeClient should return null if the client hasn't been set yet
         WebView webView = new WebView(getActivity());
         WebChromeClient client = webView.getWebChromeClient();
