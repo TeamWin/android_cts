@@ -16,6 +16,8 @@
 
 package android.server.cts;
 
+import android.platform.test.annotations.Presubmit;
+
 import static android.server.cts.WindowManagerState.TRANSIT_ACTIVITY_CLOSE;
 import static android.server.cts.WindowManagerState.TRANSIT_ACTIVITY_OPEN;
 import static android.server.cts.WindowManagerState.TRANSIT_TASK_CLOSE;
@@ -38,6 +40,7 @@ import static android.server.cts.WindowManagerState.TRANSIT_WALLPAPER_OPEN;
  * Build: mmma -j32 cts/hostsidetests/services
  * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsServicesHostTestCases android.server.cts.ActivityManagerTransitionSelectionTests
  */
+@Presubmit
 public class ActivityManagerTransitionSelectionTests extends ActivityManagerTestBase {
 
     private static final String BOTTOM_ACTIVITY_NAME = "BottomActivity";
