@@ -22,6 +22,7 @@ import static org.junit.Assert.fail;
 
 import android.content.Context;
 import android.content.res.XmlResourceParser;
+import android.graphics.Rect;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -234,27 +235,32 @@ public class ViewGroup_MarginLayoutParamsTest {
         View view4 = viewGroup.findViewById(R.id.view4);
         View view5 = viewGroup.findViewById(R.id.view5);
         View view6 = viewGroup.findViewById(R.id.view6);
+        View view7 = viewGroup.findViewById(R.id.view7);
 
-        int defaultWidth = view1.getWidth();
-        int defaultHeight = view1.getHeight();
-        int marginPixels = (int) (mContext.getResources().getDisplayMetrics().density * 10 + .5f);
+        Rect defaultBounds = new Rect(view1.getLeft(), view1.getTop(), view1.getRight(),
+                view1.getBottom());
+        int marginStart = mContext.getResources().getDimensionPixelSize(R.dimen.marginStart);
+        int marginEnd = mContext.getResources().getDimensionPixelSize(R.dimen.marginEnd);
+        int marginAll = mContext.getResources().getDimensionPixelSize(R.dimen.marginAll);
+        int marginHorizontal =
+                mContext.getResources().getDimensionPixelSize(R.dimen.marginHorizontal);
+        int marginVertical = mContext.getResources().getDimensionPixelSize(R.dimen.marginVertical);
 
-        assertEquals("Width value", defaultWidth, view1.getWidth());
-        assertEquals("Height value", defaultHeight, view1.getHeight());
+        checkBounds(view2, defaultBounds, marginHorizontal, 0, marginHorizontal, 0);
+        checkBounds(view3, defaultBounds, 0, marginVertical, 0, marginVertical);
+        checkBounds(view4, defaultBounds, marginHorizontal, marginVertical,
+                marginHorizontal, marginVertical);
+        checkBounds(view5, defaultBounds, marginHorizontal, marginVertical,
+                marginHorizontal, marginVertical);
+        checkBounds(view6, defaultBounds, marginStart, marginVertical, marginEnd, marginVertical);
+        checkBounds(view7, defaultBounds, marginAll, marginAll, marginAll, marginAll);
+    }
 
-        assertEquals("Width value", defaultWidth - 2 * marginPixels, view2.getWidth());
-        assertEquals("Height value", defaultHeight, view2.getHeight());
-
-        assertEquals("Width value", defaultWidth, view3.getWidth());
-        assertEquals("Height value", defaultHeight - 2 * marginPixels, view3.getHeight());
-
-        assertEquals("Width value", defaultWidth - 2 * marginPixels, view4.getWidth());
-        assertEquals("Height value", defaultHeight - 2 * marginPixels, view4.getHeight());
-
-        assertEquals("Width value", defaultWidth - 2 * marginPixels, view5.getWidth());
-        assertEquals("Height value", defaultHeight - 2 * marginPixels, view5.getHeight());
-
-        assertEquals("Width value", defaultWidth - 2 * marginPixels, view6.getWidth());
-        assertEquals("Height value", defaultHeight - 2 * marginPixels, view6.getHeight());
+    private void checkBounds(View view, Rect defaultBounds,
+            int insetLeft, int insetTop, int insetRight, int insetBottom) {
+        assertEquals("Left", defaultBounds.left + insetLeft, view.getLeft());
+        assertEquals("Top", defaultBounds.top + insetTop, view.getTop());
+        assertEquals("Right", defaultBounds.right - insetRight, view.getRight());
+        assertEquals("Bottom", defaultBounds.bottom - insetBottom, view.getBottom());
     }
 }
