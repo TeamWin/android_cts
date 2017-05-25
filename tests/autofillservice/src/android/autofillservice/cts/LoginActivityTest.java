@@ -66,7 +66,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.os.Bundle;
-import android.platform.test.annotations.Presubmit;
 import android.service.autofill.FillEventHistory;
 import android.service.autofill.SaveInfo;
 import android.support.test.rule.ActivityTestRule;
@@ -498,7 +497,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
-    @Presubmit
     public void testAutoFillOneDatasetAndSave() throws Exception {
         // Set service.
         enableService();
