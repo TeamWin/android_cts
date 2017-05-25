@@ -77,6 +77,7 @@ class StreamBuilderHelper {
 class InputStreamBuilderHelper : public StreamBuilderHelper {
   public:
     explicit InputStreamBuilderHelper(aaudio_sharing_mode_t requestedSharingMode);
+    void createAndVerifyStream(bool *success);
 };
 
 class OutputStreamBuilderHelper : public StreamBuilderHelper {
