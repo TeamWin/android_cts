@@ -86,9 +86,6 @@ public class ClientTest {
      * Intents that we expect the system to expose activities to ephemeral apps to handle.
      */
     private static final Intent[] EXPECTED_EXPOSED_SYSTEM_INTENTS = new Intent[] {
-        // Camera
-        makeIntent(MediaStore.ACTION_IMAGE_CAPTURE, null, null, null),
-        makeIntent(MediaStore.ACTION_VIDEO_CAPTURE, null, null, null),
         // Contacts
         makeIntent(Intent.ACTION_PICK, null, ContactsContract.Contacts.CONTENT_TYPE, null),
         makeIntent(Intent.ACTION_PICK, null,
@@ -107,6 +104,14 @@ public class ClientTest {
         makeIntent(Intent.ACTION_CREATE_DOCUMENT, null, "text/plain", null),
         // Framework
         makeIntent(Intent.ACTION_CHOOSER, null, null, null),
+    };
+
+    /**
+     * Camera Intents that we expect the system to expose (if the system has FEATURE_CAMERA).
+     */
+    private static final Intent[] EXPECTED_EXPOSED_CAMERA_INTENTS = new Intent[] {
+        makeIntent(MediaStore.ACTION_IMAGE_CAPTURE, null, null, null),
+        makeIntent(MediaStore.ACTION_VIDEO_CAPTURE, null, null, null),
     };
 
     private BroadcastReceiver mReceiver;
@@ -957,6 +962,12 @@ public class ClientTest {
     public void testExposedSystemActivities() throws Exception {
         for (Intent queryIntent : EXPECTED_EXPOSED_SYSTEM_INTENTS) {
             assertIntentHasExposedActivities(queryIntent);
+        }
+        if (InstrumentationRegistry.getContext().getPackageManager()
+                .hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
+            for (Intent queryIntent : EXPECTED_EXPOSED_CAMERA_INTENTS) {
+                assertIntentHasExposedActivities(queryIntent);
+            }
         }
     }
 
