@@ -16,18 +16,22 @@
 
 package android.appsecurity.cts;
 
-import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
-import com.android.tradefed.build.IBuildInfo;
+import com.android.compatibility.common.tradefed.testtype.CompatibilityHostTestBase;
 import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.testtype.DeviceTestCase;
-import com.android.tradefed.testtype.IAbi;
-import com.android.tradefed.testtype.IAbiReceiver;
-import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+
+import junit.framework.AssertionFailedError;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * Tests that exercise various storage APIs.
  */
-public class StorageHostTest extends DeviceTestCase implements IAbiReceiver, IBuildReceiver {
+@RunWith(DeviceJUnit4ClassRunner.class)
+public class StorageHostTest extends CompatibilityHostTestBase {
     private static final String PKG_STATS = "com.android.cts.storagestatsapp";
     private static final String PKG_A = "com.android.cts.storageapp_a";
     private static final String PKG_B = "com.android.cts.storageapp_b";
@@ -37,49 +41,15 @@ public class StorageHostTest extends DeviceTestCase implements IAbiReceiver, IBu
     private static final String CLASS_STATS = "com.android.cts.storagestatsapp.StorageStatsTest";
     private static final String CLASS = "com.android.cts.storageapp.StorageTest";
 
-    private IAbi mAbi;
-    private IBuildInfo mCtsBuild;
-
     private int[] mUsers;
 
-    @Override
-    public void setAbi(IAbi abi) {
-        mAbi = abi;
-    }
+    @Before
+    public void setUp() throws Exception {
+        mUsers = Utils.prepareMultipleUsers(getDevice());
 
-    @Override
-    public void setBuild(IBuildInfo buildInfo) {
-        mCtsBuild = buildInfo;
-    }
-
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        mUsers = Utils.createUsersForTest(getDevice());
-    }
-
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
-
-        getDevice().uninstallPackage(PKG_STATS);
-        getDevice().uninstallPackage(PKG_A);
-        getDevice().uninstallPackage(PKG_B);
-
-        Utils.removeUsersForTest(getDevice(), mUsers);
-        mUsers = null;
-    }
-
-    private void prepareTestApps() throws Exception {
-        getDevice().uninstallPackage(PKG_STATS);
-        getDevice().uninstallPackage(PKG_A);
-        getDevice().uninstallPackage(PKG_B);
-
-        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
-        assertNull(getDevice().installPackage(buildHelper.getTestFile(APK_STATS), false));
-        assertNull(getDevice().installPackage(buildHelper.getTestFile(APK_A), false));
-        assertNull(getDevice().installPackage(buildHelper.getTestFile(APK_B), false));
+        installPackage(APK_STATS);
+        installPackage(APK_A);
+        installPackage(APK_B);
 
         for (int user : mUsers) {
             getDevice().executeShellCommand("appops set --user " + user + " " + PKG_STATS
@@ -87,26 +57,20 @@ public class StorageHostTest extends DeviceTestCase implements IAbiReceiver, IBu
         }
     }
 
-    public void testEverything() throws Exception {
-        prepareTestApps(); doVerifyQuota();
-        prepareTestApps(); doVerifyAppStats();
-        prepareTestApps(); doVerifyAppQuota();
-        prepareTestApps(); doVerifyAppAllocate();
-        prepareTestApps(); doVerifySummary();
-        prepareTestApps(); doVerifyStats();
-        prepareTestApps(); doVerifyStatsMultiple();
-        prepareTestApps(); doVerifyStatsExternal();
-        prepareTestApps(); doVerifyStatsExternalConsistent();
-        prepareTestApps(); doVerifyCategory();
-        prepareTestApps(); doCache();
-        prepareTestApps(); doFullDisk();
+    @After
+    public void tearDown() throws Exception {
+        getDevice().uninstallPackage(PKG_STATS);
+        getDevice().uninstallPackage(PKG_A);
+        getDevice().uninstallPackage(PKG_B);
     }
 
-    public void doVerifyQuota() throws Exception {
-        runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyQuota", Utils.USER_OWNER);
+    @Test
+    public void testVerifyQuota() throws Exception {
+        Utils.runDeviceTests(getDevice(), PKG_STATS, CLASS_STATS, "testVerifyQuota");
     }
 
-    public void doVerifyAppStats() throws Exception {
+    @Test
+    public void testVerifyAppStats() throws Exception {
         for (int user : mUsers) {
             runDeviceTests(PKG_A, CLASS, "testAllocate", user);
         }
@@ -120,31 +84,36 @@ public class StorageHostTest extends DeviceTestCase implements IAbiReceiver, IBu
         }
     }
 
-    public void doVerifyAppQuota() throws Exception {
+    @Test
+    public void testVerifyAppQuota() throws Exception {
         for (int user : mUsers) {
             runDeviceTests(PKG_A, CLASS, "testVerifyQuotaApi", user);
         }
     }
 
-    public void doVerifyAppAllocate() throws Exception {
+    @Test
+    public void testVerifyAppAllocate() throws Exception {
         for (int user : mUsers) {
             runDeviceTests(PKG_A, CLASS, "testVerifyAllocateApi", user);
         }
     }
 
-    public void doVerifySummary() throws Exception {
+    @Test
+    public void testVerifySummary() throws Exception {
         for (int user : mUsers) {
             runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifySummary", user);
         }
     }
 
-    public void doVerifyStats() throws Exception {
+    @Test
+    public void testVerifyStats() throws Exception {
         for (int user : mUsers) {
             runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyStats", user);
         }
     }
 
-    public void doVerifyStatsMultiple() throws Exception {
+    @Test
+    public void testVerifyStatsMultiple() throws Exception {
         for (int user : mUsers) {
             runDeviceTests(PKG_A, CLASS, "testAllocate", user);
             runDeviceTests(PKG_A, CLASS, "testAllocate", user);
@@ -157,25 +126,29 @@ public class StorageHostTest extends DeviceTestCase implements IAbiReceiver, IBu
         }
     }
 
-    public void doVerifyStatsExternal() throws Exception {
+    @Test
+    public void testVerifyStatsExternal() throws Exception {
         for (int user : mUsers) {
             runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyStatsExternal", user);
         }
     }
 
-    public void doVerifyStatsExternalConsistent() throws Exception {
+    @Test
+    public void testVerifyStatsExternalConsistent() throws Exception {
         for (int user : mUsers) {
             runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyStatsExternalConsistent", user);
         }
     }
 
-    public void doVerifyCategory() throws Exception {
+    @Test
+    public void testVerifyCategory() throws Exception {
         for (int user : mUsers) {
             runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyCategory", user);
         }
     }
 
-    public void doCache() throws Exception {
+    @Test
+    public void testCache() throws Exception {
         // To make the cache clearing logic easier to verify, ignore any cache
         // and low space reserved space.
         getDevice().executeShellCommand("settings put global sys_storage_threshold_max_bytes 0");
@@ -197,7 +170,8 @@ public class StorageHostTest extends DeviceTestCase implements IAbiReceiver, IBu
         }
     }
 
-    public void doFullDisk() throws Exception {
+    @Test
+    public void testFullDisk() throws Exception {
         waitForIdle();
 
         // Clear all other cached and external storage data to give ourselves a
@@ -209,9 +183,18 @@ public class StorageHostTest extends DeviceTestCase implements IAbiReceiver, IBu
         final String lastEvent = getDevice().executeShellCommand("logcat -d -b events -t 1");
         final String sinceTime = lastEvent.trim().substring(0, 18);
 
-        // Try our hardest to fill up the entire disk
-        runDeviceTests(PKG_A, CLASS, "testFullDisk", Utils.USER_OWNER);
-        runDeviceTests(PKG_A, CLASS, "testTweakComponent", Utils.USER_OWNER);
+        try {
+            // Try our hardest to fill up the entire disk
+            Utils.runDeviceTests(getDevice(), PKG_A, CLASS, "testFullDisk");
+        } catch (Throwable t) {
+            // If we had trouble filling the disk, don't bother going any
+            // further; we failed because we either don't have quota support, or
+            // because disk was more than 10% full.
+            return;
+        }
+
+        // Tweak something that causes PackageManager to persist data
+        Utils.runDeviceTests(getDevice(), PKG_A, CLASS, "testTweakComponent");
 
         // Try poking around a couple of settings apps
         getDevice().executeShellCommand("input keyevent KEY_HOME");
@@ -234,7 +217,7 @@ public class StorageHostTest extends DeviceTestCase implements IAbiReceiver, IBu
         troubleLogs = troubleLogs.trim().replaceAll("\\-+ beginning of [a-z]+", "");
 
         if (troubleLogs.length() > 4) {
-            fail("Unexpected crashes while disk full: " + troubleLogs);
+            throw new AssertionFailedError("Unexpected crashes while disk full: " + troubleLogs);
         }
     }
 

@@ -19,8 +19,6 @@ package android.appsecurity.cts;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IAbiReceiver;
@@ -73,8 +71,9 @@ public class InstantAppUserTest extends DeviceTestCase
         assertNotNull(mAbi);
         assertNotNull(mBuildInfo);
 
-        mSupportsMultiUser =
-                getDevice().getMaxNumberOfUsersSupported() - getDevice().listUsers().size() >= 2;
+        // This test only runs when we have at least 3 users to work with
+        final int[] users = Utils.prepareMultipleUsers(getDevice(), 3);
+        mSupportsMultiUser = (users.length == 3);
         if (mSupportsMultiUser) {
             mPrimaryUserId = getDevice().getPrimaryUserId();
             mFixedUsers = new ArrayList<>();
@@ -83,8 +82,9 @@ public class InstantAppUserTest extends DeviceTestCase
                 mFixedUsers.add(USER_SYSTEM);
             }
             getDevice().switchUser(mPrimaryUserId);
-            removeTestUsers();
-            createTestUsers();
+
+            mTestUser[0] = users[1];
+            mTestUser[1] = users[2];
 
             uninstallTestPackages();
             installTestPackages();
@@ -93,7 +93,6 @@ public class InstantAppUserTest extends DeviceTestCase
 
     public void tearDown() throws Exception {
         if (mSupportsMultiUser) {
-            removeTestUsers();
             uninstallTestPackages();
         }
         super.tearDown();
@@ -178,19 +177,6 @@ public class InstantAppUserTest extends DeviceTestCase
     private void uninstallTestPackages() throws Exception {
         getDevice().uninstallPackage(USER_TEST_PKG);
         getDevice().uninstallPackage(USER_PKG);
-    }
-
-    private void createTestUsers() throws Exception {
-        mTestUser[0] = getDevice().createUser("TestUser_" + System.currentTimeMillis());
-        mTestUser[1] = getDevice().createUser("TestUser_" + System.currentTimeMillis());
-    }
-
-    private void removeTestUsers() throws Exception {
-        for (int userId : getDevice().listUsers()) {
-            if (!mFixedUsers.contains(userId)) {
-                getDevice().removeUser(userId);
-            }
-        }
     }
 
     private void runDeviceTests(String packageName, String testClassName, String testMethodName)

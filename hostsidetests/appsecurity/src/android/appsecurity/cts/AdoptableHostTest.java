@@ -55,6 +55,7 @@ public class AdoptableHostTest extends DeviceTestCase implements IAbiReceiver, I
     protected void setUp() throws Exception {
         super.setUp();
 
+        Utils.prepareSingleUser(getDevice());
         assertNotNull(mAbi);
         assertNotNull(mCtsBuild);
 

@@ -22,15 +22,12 @@ import android.content.pm.PackageManager;
 import android.net.TrafficStats;
 import android.net.Uri;
 import android.os.StrictMode;
-import android.os.SystemClock;
+import android.os.StrictMode.ViolationListener;
 import android.system.Os;
 import android.system.OsConstants;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
 
-import libcore.io.Streams;
-
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
@@ -38,8 +35,8 @@ import java.io.FileOutputStream;
 import java.net.HttpURLConnection;
 import java.net.Socket;
 import java.net.URL;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests for {@link StrictMode}
@@ -66,6 +63,10 @@ public class StrictModeTest extends InstrumentationTestCase {
         StrictMode.setVmPolicy(mVmPolicy);
     }
 
+    public interface ThrowingRunnable {
+        public void run() throws Exception;
+    }
+
     /**
      * Insecure connection should be detected
      */
@@ -80,10 +81,10 @@ public class StrictModeTest extends InstrumentationTestCase {
                 .penaltyLog()
                 .build());
 
-        long mark = System.currentTimeMillis();
-        ((HttpURLConnection) new URL("http://example.com/").openConnection()).getResponseCode();
-        assertLogged("Detected cleartext network traffic from UID "
-                + android.os.Process.myUid(), mark, 5000);
+        assertViolation("Detected cleartext network traffic from UID", () -> {
+            ((HttpURLConnection) new URL("http://example.com/").openConnection())
+                    .getResponseCode();
+        });
     }
 
     /**
@@ -100,10 +101,10 @@ public class StrictModeTest extends InstrumentationTestCase {
                 .penaltyLog()
                 .build());
 
-        long mark = System.currentTimeMillis();
-        ((HttpURLConnection) new URL("https://example.com/").openConnection()).getResponseCode();
-        assertNotLogged("Detected cleartext network traffic from UID "
-                + android.os.Process.myUid(), mark, 5000);
+        assertNoViolation(() -> {
+            ((HttpURLConnection) new URL("https://example.com/").openConnection())
+                    .getResponseCode();
+        });
     }
 
     public void testFileUriExposure() throws Exception {
@@ -112,19 +113,21 @@ public class StrictModeTest extends InstrumentationTestCase {
                 .penaltyLog()
                 .build());
 
-        long mark = System.currentTimeMillis();
-        Uri uri = Uri.fromFile(new File("/sdcard/meow.jpg"));
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setDataAndType(uri, "image/jpeg");
-        getContext().startActivity(intent);
-        assertLogged(uri + " exposed beyond app", mark);
+        final Uri badUri = Uri.fromFile(new File("/sdcard/meow.jpg"));
+        assertViolation(badUri + " exposed beyond app", () -> {
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.setDataAndType(badUri, "image/jpeg");
+            getContext().startActivity(intent);
+        });
 
-        mark = System.currentTimeMillis();
-        uri = Uri.parse("content://com.example/foobar");
-        intent = new Intent(Intent.ACTION_VIEW);
-        intent.setDataAndType(uri, "image/jpeg");
-        getContext().startActivity(intent);
-        assertNotLogged(uri + " exposed beyond app", mark);
+        final Uri goodUri = Uri.parse("content://com.example/foobar");
+        assertNoViolation(() -> {
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.setDataAndType(goodUri, "image/jpeg");
+            getContext().startActivity(intent);
+        });
     }
 
     public void testContentUriWithoutPermission() throws Exception {
@@ -133,19 +136,21 @@ public class StrictModeTest extends InstrumentationTestCase {
                 .penaltyLog()
                 .build());
 
-        long mark = System.currentTimeMillis();
         final Uri uri = Uri.parse("content://com.example/foobar");
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setDataAndType(uri, "image/jpeg");
-        getContext().startActivity(intent);
-        assertLogged(uri + " exposed beyond app", mark);
+        assertViolation(uri + " exposed beyond app", () -> {
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.setDataAndType(uri, "image/jpeg");
+            getContext().startActivity(intent);
+        });
 
-        mark = System.currentTimeMillis();
-        intent = new Intent(Intent.ACTION_VIEW);
-        intent.setDataAndType(uri, "image/jpeg");
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        getContext().startActivity(intent);
-        assertNotLogged(uri + " exposed beyond app", mark);
+        assertNoViolation(() -> {
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.setDataAndType(uri, "image/jpeg");
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            getContext().startActivity(intent);
+        });
     }
 
     public void testUntaggedSocketsHttp() throws Exception {
@@ -159,18 +164,20 @@ public class StrictModeTest extends InstrumentationTestCase {
                 .penaltyLog()
                 .build());
 
-        long mark = System.currentTimeMillis();
-        ((HttpURLConnection) new URL("http://example.com/").openConnection()).getResponseCode();
-        assertLogged("Untagged socket detected", mark);
+        assertViolation("Untagged socket detected", () -> {
+            ((HttpURLConnection) new URL("http://example.com/").openConnection())
+                    .getResponseCode();
+        });
 
-        mark = System.currentTimeMillis();
-        TrafficStats.setThreadStatsTag(0xDECAFBAD);
-        try {
-            ((HttpURLConnection) new URL("http://example.com/").openConnection()).getResponseCode();
-        } finally {
-            TrafficStats.clearThreadStatsTag();
-        }
-        assertNotLogged("Untagged socket detected", mark);
+        assertNoViolation(() -> {
+            TrafficStats.setThreadStatsTag(0xDECAFBAD);
+            try {
+                ((HttpURLConnection) new URL("http://example.com/").openConnection())
+                        .getResponseCode();
+            } finally {
+                TrafficStats.clearThreadStatsTag();
+            }
+        });
     }
 
     public void testUntaggedSocketsRaw() throws Exception {
@@ -184,99 +191,95 @@ public class StrictModeTest extends InstrumentationTestCase {
                 .penaltyLog()
                 .build());
 
-        long mark = System.currentTimeMillis();
-        TrafficStats.setThreadStatsTag(0xDECAFBAD);
-        try (Socket socket = new Socket("example.com", 80)) {
-            socket.getOutputStream().close();
-        } finally {
-            TrafficStats.clearThreadStatsTag();
-        }
-        assertNotLogged("Untagged socket detected", mark);
+        assertNoViolation(() -> {
+            TrafficStats.setThreadStatsTag(0xDECAFBAD);
+            try (Socket socket = new Socket("example.com", 80)) {
+                socket.getOutputStream().close();
+            } finally {
+                TrafficStats.clearThreadStatsTag();
+            }
+        });
 
-        mark = System.currentTimeMillis();
-        try (Socket socket = new Socket("example.com", 80)) {
-            socket.getOutputStream().close();
-        }
-        assertLogged("Untagged socket detected", mark);
+        assertViolation("Untagged socket detected", () -> {
+            try (Socket socket = new Socket("example.com", 80)) {
+                socket.getOutputStream().close();
+            }
+        });
     }
 
     public void testRead() throws Exception {
         final File test = File.createTempFile("foo", "bar");
         final File dir = test.getParentFile();
 
-        FileInputStream is = null;
-        FileDescriptor fd = null;
+        final FileInputStream is = new FileInputStream(test);
+        final FileDescriptor fd = Os.open(test.getAbsolutePath(), OsConstants.O_RDONLY, 0600);
 
         StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
                 .detectDiskReads()
                 .penaltyLog()
                 .build());
 
-        SystemClock.sleep(1500);
-
-        try (AssertDiskReadLogged l = new AssertDiskReadLogged()) {
+        assertViolation("StrictModeDiskReadViolation", () -> {
             test.exists();
-        }
-        try (AssertDiskReadLogged l = new AssertDiskReadLogged()) {
+        });
+        assertViolation("StrictModeDiskReadViolation", () -> {
             test.length();
-        }
-        try (AssertDiskReadLogged l = new AssertDiskReadLogged()) {
+        });
+        assertViolation("StrictModeDiskReadViolation", () -> {
             dir.list();
-        }
-        try (AssertDiskReadLogged l = new AssertDiskReadLogged()) {
-            is = new FileInputStream(test);
-        }
-        try (AssertDiskReadLogged l = new AssertDiskReadLogged()) {
+        });
+        assertViolation("StrictModeDiskReadViolation", () -> {
+            new FileInputStream(test);
+        });
+        assertViolation("StrictModeDiskReadViolation", () -> {
             is.read();
-        }
-        try (AssertDiskReadLogged l = new AssertDiskReadLogged()) {
-            fd = Os.open(test.getAbsolutePath(), OsConstants.O_RDONLY, 0600);
-        }
-        try (AssertDiskReadLogged l = new AssertDiskReadLogged()) {
+        });
+        assertViolation("StrictModeDiskReadViolation", () -> {
+            Os.open(test.getAbsolutePath(), OsConstants.O_RDONLY, 0600);
+        });
+        assertViolation("StrictModeDiskReadViolation", () -> {
             Os.read(fd, new byte[10], 0, 1);
-        }
+        });
     }
 
     public void testWrite() throws Exception {
-        File file = null;
+        File file = File.createTempFile("foo", "bar");
 
-        FileOutputStream os = null;
-        FileDescriptor fd = null;
+        final FileOutputStream os = new FileOutputStream(file);
+        final FileDescriptor fd = Os.open(file.getAbsolutePath(), OsConstants.O_RDWR, 0600);
 
         StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
                 .detectDiskWrites()
                 .penaltyLog()
                 .build());
 
-        SystemClock.sleep(1500);
-
-        try (AssertDiskWriteLogged l = new AssertDiskWriteLogged()) {
-            file = File.createTempFile("foo", "bar");
-        }
-        try (AssertDiskWriteLogged l = new AssertDiskWriteLogged()) {
+        assertViolation("StrictModeDiskWriteViolation", () -> {
+            File.createTempFile("foo", "bar");
+        });
+        assertViolation("StrictModeDiskWriteViolation", () -> {
             file.delete();
-        }
-        try (AssertDiskWriteLogged l = new AssertDiskWriteLogged()) {
+        });
+        assertViolation("StrictModeDiskWriteViolation", () -> {
             file.createNewFile();
-        }
-        try (AssertDiskWriteLogged l = new AssertDiskWriteLogged()) {
-            os = new FileOutputStream(file);
-        }
-        try (AssertDiskWriteLogged l = new AssertDiskWriteLogged()) {
+        });
+        assertViolation("StrictModeDiskWriteViolation", () -> {
+            new FileOutputStream(file);
+        });
+        assertViolation("StrictModeDiskWriteViolation", () -> {
             os.write(32);
-        }
-        try (AssertDiskWriteLogged l = new AssertDiskWriteLogged()) {
-            fd = Os.open(file.getAbsolutePath(), OsConstants.O_RDWR, 0600);
-        }
-        try (AssertDiskWriteLogged l = new AssertDiskWriteLogged()) {
+        });
+        assertViolation("StrictModeDiskWriteViolation", () -> {
+            Os.open(file.getAbsolutePath(), OsConstants.O_RDWR, 0600);
+        });
+        assertViolation("StrictModeDiskWriteViolation", () -> {
             Os.write(fd, new byte[10], 0, 1);
-        }
-        try (AssertDiskWriteLogged l = new AssertDiskWriteLogged()) {
+        });
+        assertViolation("StrictModeDiskWriteViolation", () -> {
             Os.fsync(fd);
-        }
-        try (AssertDiskWriteLogged l = new AssertDiskWriteLogged()) {
+        });
+        assertViolation("StrictModeDiskWriteViolation", () -> {
             file.renameTo(new File(file.getParent(), "foobar"));
-        }
+        });
     }
 
     public void testNetwork() throws Exception {
@@ -290,73 +293,64 @@ public class StrictModeTest extends InstrumentationTestCase {
                 .penaltyLog()
                 .build());
 
-        long mark = System.currentTimeMillis();
-        try (Socket socket = new Socket("example.com", 80)) {
-            socket.getOutputStream().close();
-        }
-        assertLogged("StrictModeNetworkViolation", mark);
+        assertViolation("StrictModeNetworkViolation", () -> {
+            try (Socket socket = new Socket("example.com", 80)) {
+                socket.getOutputStream().close();
+            }
+        });
 
-        mark = System.currentTimeMillis();
-        ((HttpURLConnection) new URL("http://example.com/").openConnection()).getResponseCode();
-        assertLogged("StrictModeNetworkViolation", mark);
+        assertViolation("StrictModeNetworkViolation", () -> {
+            ((HttpURLConnection) new URL("http://example.com/").openConnection())
+                    .getResponseCode();
+        });
     }
 
-    private static class AssertLogged implements AutoCloseable {
-        private final String mMessage;
-        private final long mStart;
+    private static void assertViolation(String expected, ThrowingRunnable r) throws Exception {
+        final LinkedBlockingQueue<String> violations = new LinkedBlockingQueue<>();
+        StrictMode.setViolationListener(new ViolationListener() {
+            @Override
+            public void onViolation(String message) {
+                violations.add(message);
+            }
+        });
 
-        public AssertLogged(String message) {
-            mMessage = message;
-            mStart = System.currentTimeMillis();
-        }
-
-        @Override
-        public void close() throws Exception {
-            assertLogged(mMessage, mStart);
-        }
-    }
-
-    private static class AssertDiskReadLogged extends AssertLogged {
-        public AssertDiskReadLogged() {
-            super("StrictModeDiskReadViolation");
-        }
-    }
-
-    private static class AssertDiskWriteLogged extends AssertLogged {
-        public AssertDiskWriteLogged() {
-            super("StrictModeDiskWriteViolation");
+        try {
+            r.run();
+            while (true) {
+                final String violation = violations.poll(5, TimeUnit.SECONDS);
+                if (violation == null) {
+                    fail("Expected violation not found: " + expected);
+                } else if (violation.contains(expected)) {
+                    return;
+                }
+            }
+        } finally {
+            StrictMode.setViolationListener(null);
         }
     }
 
-    private static void assertLogged(String msg, long since) throws Exception {
-        assertLogged(msg, since, 1100);
-    }
+    private static void assertNoViolation(ThrowingRunnable r) throws Exception {
+        final LinkedBlockingQueue<String> violations = new LinkedBlockingQueue<>();
+        StrictMode.setViolationListener(new ViolationListener() {
+            @Override
+            public void onViolation(String message) {
+                violations.add(message);
+            }
+        });
 
-    private static void assertLogged(String msg, long since, long wait) throws Exception {
-        SystemClock.sleep(wait);
-        assertTrue("Expected message not found: " + msg, readLogSince(since).contains(msg));
-    }
-
-    private static void assertNotLogged(String msg, long since) throws Exception {
-        assertNotLogged(msg, since, 1100);
-    }
-
-    private static void assertNotLogged(String msg, long since, long wait) throws Exception {
-        SystemClock.sleep(wait);
-        assertFalse("Unexpected message found: " + msg, readLogSince(since).contains(msg));
-    }
-
-    private static String readLogSince(long millis) throws Exception {
-        final SimpleDateFormat format = new SimpleDateFormat("MM-dd HH:mm:ss.SSS");
-        final Process proc = new ProcessBuilder("logcat", "-t", format.format(new Date(millis)))
-                .redirectErrorStream(true).start();
-
-        final ByteArrayOutputStream buf = new ByteArrayOutputStream();
-        Streams.copy(proc.getInputStream(), buf);
-        final int res = proc.waitFor();
-
-        Log.d(TAG, "Log output was " + buf.size() + " bytes, exit code " + res);
-        return new String(buf.toByteArray());
+        try {
+            r.run();
+            while (true) {
+                final String violation = violations.poll(5, TimeUnit.SECONDS);
+                if (violation == null) {
+                    return;
+                } else {
+                    fail("Unexpected violation found: " + violation);
+                }
+            }
+        } finally {
+            StrictMode.setViolationListener(null);
+        }
     }
 
     private boolean hasInternetConnection() {

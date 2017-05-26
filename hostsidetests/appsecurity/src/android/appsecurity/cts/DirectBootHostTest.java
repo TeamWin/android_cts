@@ -54,6 +54,7 @@ public class DirectBootHostTest extends DeviceTestCase implements IAbiReceiver, 
 
     private String mFeatureList = null;
 
+    private int[] mUsers;
     private IAbi mAbi;
     private IBuildInfo mCtsBuild;
 
@@ -71,6 +72,7 @@ public class DirectBootHostTest extends DeviceTestCase implements IAbiReceiver, 
     protected void setUp() throws Exception {
         super.setUp();
 
+        mUsers = Utils.prepareSingleUser(getDevice());
         assertNotNull(mAbi);
         assertNotNull(mCtsBuild);
 
@@ -148,11 +150,8 @@ public class DirectBootHostTest extends DeviceTestCase implements IAbiReceiver, 
     }
 
     public void doDirectBootTest(String mode) throws Exception {
-        int[] users = {};
         boolean doTest = true;
         try {
-            users = createUsersForTest();
-
             // Set up test app and secure lock screens
             new InstallMultiple().addApk(APK).run();
             new InstallMultiple().addApk(OTHER_APK).run();
@@ -164,7 +163,7 @@ public class DirectBootHostTest extends DeviceTestCase implements IAbiReceiver, 
             // Give enough time for PackageManager to persist stopped state
             Thread.sleep(15000);
 
-            runDeviceTests(PKG, CLASS, "testSetUp", users);
+            runDeviceTests(PKG, CLASS, "testSetUp", mUsers);
 
             // Give enough time for vold to update keys
             Thread.sleep(15000);
@@ -184,19 +183,18 @@ public class DirectBootHostTest extends DeviceTestCase implements IAbiReceiver, 
 
             if (doTest) {
                 if (MODE_NONE.equals(mode)) {
-                    runDeviceTests(PKG, CLASS, "testVerifyUnlockedAndDismiss", users);
+                    runDeviceTests(PKG, CLASS, "testVerifyUnlockedAndDismiss", mUsers);
                 } else {
-                    runDeviceTests(PKG, CLASS, "testVerifyLockedAndDismiss", users);
+                    runDeviceTests(PKG, CLASS, "testVerifyLockedAndDismiss", mUsers);
                 }
             }
 
         } finally {
             try {
                 // Remove secure lock screens and tear down test app
-                runDeviceTests(PKG, CLASS, "testTearDown", users);
+                runDeviceTests(PKG, CLASS, "testTearDown", mUsers);
             } finally {
                 getDevice().uninstallPackage(PKG);
-                removeUsersForTest(users);
 
                 // Get ourselves back into a known-good state
                 if (MODE_EMULATED.equals(mode)) {
@@ -209,16 +207,6 @@ public class DirectBootHostTest extends DeviceTestCase implements IAbiReceiver, 
                 getDevice().waitForDeviceAvailable();
             }
         }
-    }
-
-    private int[] createUsersForTest() throws DeviceNotAvailableException {
-        // TODO: enable test for multiple users
-        return new int[] { 0 };
-//        return Utils.createUsersForTest(getDevice());
-    }
-
-    private void removeUsersForTest(int[] users) throws DeviceNotAvailableException {
-        Utils.removeUsersForTest(getDevice(), users);
     }
 
     private void runDeviceTests(String packageName, String testClassName, String testMethodName,

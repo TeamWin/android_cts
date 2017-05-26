@@ -63,6 +63,7 @@ public class PrivilegedUpdateTests extends DeviceTestCase implements IAbiReceive
     protected void setUp() throws Exception {
         super.setUp();
 
+        Utils.prepareSingleUser(getDevice());
         assertNotNull(mAbi);
         assertNotNull(mBuildHelper);
 

@@ -58,6 +58,7 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
     protected void setUp() throws Exception {
         super.setUp();
 
+        Utils.prepareSingleUser(getDevice());
         assertNotNull(mAbi);
         assertNotNull(mBuildHelper);
 
