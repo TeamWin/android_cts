@@ -108,7 +108,8 @@ def manual_capture_request(
         "android.colorCorrection.gains": [1,1,1,1],
         "android.lens.focusDistance" : f_distance,
         "android.tonemap.mode": 1,
-        "android.shading.mode": 1
+        "android.shading.mode": 1,
+        "android.lens.opticalStabilizationMode": 0
         }
     if linear_tonemap:
         assert(props is not None)
