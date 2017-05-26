@@ -132,10 +132,12 @@
     <LinearLayout
             android:orientation="horizontal"
             android:padding="@dimen/insetAll"
-            android:paddingLeft="0dp"
-            android:paddingTop="0dp"
-            android:paddingRight="0dp"
-            android:paddingBottom="0dp"
+            android:paddingHorizontal="@dimen/insetHorizontal"
+            android:paddingVertical="@dimen/insetVertical"
+            android:paddingLeft="@dimen/insetLeft"
+            android:paddingTop="@dimen/insetTop"
+            android:paddingRight="@dimen/insetRight"
+            android:paddingBottom="@dimen/insetBottom"
             android:layout_width="match_parent"
             android:layout_height="100dp">
         <View
@@ -143,6 +145,33 @@
                 android:layout_height="match_parent"
                 android:id="@+id/view10"/>
     </LinearLayout>
+
+    <LinearLayout
+            android:orientation="horizontal"
+            android:padding="@dimen/insetAll"
+            android:paddingStart="@dimen/insetStart"
+            android:paddingEnd="@dimen/insetEnd"
+            android:layout_width="match_parent"
+            android:layout_height="100dp">
+        <View
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:id="@+id/view11"/>
+    </LinearLayout>
+
+    <LinearLayout
+            android:orientation="horizontal"
+            android:paddingHorizontal="@dimen/insetHorizontal"
+            android:paddingStart="@dimen/insetStart"
+            android:paddingEnd="@dimen/insetEnd"
+            android:layout_width="match_parent"
+            android:layout_height="100dp">
+        <View
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:id="@+id/view12"/>
+    </LinearLayout>
+
 
 </LinearLayout>
 

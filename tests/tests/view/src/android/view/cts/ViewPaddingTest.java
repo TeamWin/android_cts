@@ -61,6 +61,8 @@ public class ViewPaddingTest {
         View view8 = viewGroup.findViewById(R.id.view8);
         View view9 = viewGroup.findViewById(R.id.view9);
         View view10 = viewGroup.findViewById(R.id.view10);
+        View view11 = viewGroup.findViewById(R.id.view11);
+        View view12 = viewGroup.findViewById(R.id.view12);
 
         Rect defaultBounds = new Rect(view1.getLeft(), view1.getTop(), view1.getRight(),
                 view1.getBottom());
@@ -68,6 +70,8 @@ public class ViewPaddingTest {
         int insetRight = mContext.getResources().getDimensionPixelSize(R.dimen.insetRight);
         int insetTop = mContext.getResources().getDimensionPixelSize(R.dimen.insetTop);
         int insetBottom = mContext.getResources().getDimensionPixelSize(R.dimen.insetBottom);
+        int insetStart = mContext.getResources().getDimensionPixelSize(R.dimen.insetStart);
+        int insetEnd = mContext.getResources().getDimensionPixelSize(R.dimen.insetEnd);
         int insetAll = mContext.getResources().getDimensionPixelSize(R.dimen.insetAll);
         int insetHorizontal =
                 mContext.getResources().getDimensionPixelSize(R.dimen.insetHorizontal);
@@ -84,6 +88,8 @@ public class ViewPaddingTest {
         checkBounds(view9, defaultBounds, insetHorizontal, insetVertical, insetHorizontal,
                 insetVertical);
         checkBounds(view10, defaultBounds, insetAll, insetAll, insetAll, insetAll);
+        checkBounds(view11, defaultBounds, insetStart, insetAll, insetEnd, insetAll);
+        checkBounds(view12, defaultBounds, insetStart, 0, insetEnd, 0);
     }
 
     private void checkBounds(View view, Rect defaultBounds,
