@@ -7447,7 +7447,6 @@ public class TextViewTest {
 
     private void initializeTextForSmartSelection(CharSequence text) throws Throwable {
         assertTrue(text.length() >= SMARTSELECT_END);
-        initTextViewForTypingOnUiThread();
         TextClassifier mockClassifier = mock(TextClassifier.class);
         when(mockClassifier.suggestSelection(
                 any(CharSequence.class), anyInt(), anyInt(), any(LocaleList.class)))
@@ -7457,8 +7456,9 @@ public class TextViewTest {
                 .thenReturn(new TextClassification.Builder().build());
         mActivityRule.runOnUiThread(() -> {
             mTextView.setTextIsSelectable(true);
-            mTextView.setText(text, BufferType.EDITABLE);
+            mTextView.setText(text);
             mTextView.setTextClassifier(mockClassifier);
+            mTextView.requestFocus();
         });
         mInstrumentation.waitForIdleSync();
     }
