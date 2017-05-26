@@ -16,16 +16,25 @@
 
 package android.provider.cts.contacts;
 
+import android.app.Instrumentation;
 import android.content.ContentProviderClient;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
 import android.provider.VoicemailContract;
 import android.provider.VoicemailContract.Status;
 import android.provider.VoicemailContract.Voicemails;
 import android.test.InstrumentationTestCase;
+import android.text.TextUtils;
+
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 
 /**
  * CTS tests for voicemail provider accessed through {@link VoicemailContract}.
@@ -37,6 +46,15 @@ public class VoicemailContractTest extends InstrumentationTestCase {
     private Uri mVoicemailContentUri;
     private Uri mStatusContentUri;
     private String mSourcePackageName;
+
+    private String mPreviousDefaultDialer;
+
+    private static final String COMMAND_SET_DEFAULT_DIALER = "telecom set-default-dialer ";
+    private static final String COMMAND_GET_DEFAULT_DIALER = "telecom get-default-dialer";
+
+    private static final String PACKAGE = "android.provider.cts";
+
+    private final String FOREIGN_SOURCE = "android.provider.cts.contacts.foreign_source";
 
     @Override
     protected void setUp() throws Exception {
@@ -56,6 +74,9 @@ public class VoicemailContractTest extends InstrumentationTestCase {
         // entries inserted by this package.
         mStatusProvider.delete(mStatusContentUri, null, null);
         mVoicemailProvider.delete(mVoicemailContentUri, null, null);
+        if (!TextUtils.isEmpty(mPreviousDefaultDialer)) {
+            setDefaultDialer(getInstrumentation(), mPreviousDefaultDialer);
+        }
         super.tearDown();
     }
 
@@ -169,8 +190,7 @@ public class VoicemailContractTest extends InstrumentationTestCase {
         assertEquals(updateDate, cursor.getLong(DATE_INDEX));
         assertEquals(updateCallsDuration, cursor.getLong(DURATION_INDEX));
         assertEquals(updateSourceData, cursor.getString(SOURCE_DATA_INDEX));
-        // Self modifying so DIRTY should be overridden to 0
-        assertEquals(0,cursor.getInt(DIRTY_INDEX));
+        assertEquals(1,cursor.getInt(DIRTY_INDEX));
         assertEquals(1,cursor.getInt(DELETED_INDEX));
         assertEquals(1,cursor.getInt(BACKED_UP_INDEX));
         assertEquals(1,cursor.getInt(RESTORED_INDEX));
@@ -185,6 +205,95 @@ public class VoicemailContractTest extends InstrumentationTestCase {
         assertEquals(0, cursor.getCount());
         cursor.close();
     }
+
+    public void testForeignUpdate_dirty() throws Exception {
+        // only the default dialer has WRITE_VOICEMAIL permission, which can modify voicemails of
+        // a foreign source package.
+        setTestAsDefaultDialer();
+        ContentValues values = new ContentValues();
+        values.put(Voicemails.SOURCE_PACKAGE, FOREIGN_SOURCE);
+
+        Uri uri = mVoicemailProvider.insert(Voicemails.buildSourceUri(FOREIGN_SOURCE), values);
+
+        mVoicemailProvider.update(uri, new ContentValues(), null, null);
+
+        try (Cursor cursor = mVoicemailProvider
+                .query(uri, new String[] {Voicemails.DIRTY}, null, null, null)) {
+            cursor.moveToFirst();
+            assertEquals(1, cursor.getInt(0));
+        }
+    }
+
+    public void testForeignUpdate_explicitNotDirty() throws Exception {
+        setTestAsDefaultDialer();
+        ContentValues values = new ContentValues();
+        values.put(Voicemails.SOURCE_PACKAGE, FOREIGN_SOURCE);
+
+        Uri uri = mVoicemailProvider.insert(Voicemails.buildSourceUri(FOREIGN_SOURCE), values);
+
+        ContentValues updateValues = new ContentValues();
+        updateValues.put(Voicemails.DIRTY,0);
+        mVoicemailProvider.update(uri, updateValues, null, null);
+
+        try (Cursor cursor = mVoicemailProvider
+                .query(uri, new String[] {Voicemails.DIRTY}, null, null, null)) {
+            cursor.moveToFirst();
+            assertEquals(0, cursor.getInt(0));
+        }
+    }
+
+    public void testForeignUpdate_null_dirty() throws Exception {
+        setTestAsDefaultDialer();
+        ContentValues values = new ContentValues();
+        values.put(Voicemails.SOURCE_PACKAGE, FOREIGN_SOURCE);
+
+        Uri uri = mVoicemailProvider.insert(Voicemails.buildSourceUri(FOREIGN_SOURCE), values);
+
+        ContentValues updateValues = new ContentValues();
+        updateValues.put(Voicemails.DIRTY, (Integer) null);
+        mVoicemailProvider.update(uri, updateValues, null, null);
+
+        try (Cursor cursor = mVoicemailProvider
+                .query(uri, new String[] {Voicemails.DIRTY}, null, null, null)) {
+            cursor.moveToFirst();
+            assertEquals(1, cursor.getInt(0));
+        }
+    }
+
+    public void testForeignUpdate_NotNormalized_normalized() throws Exception {
+        setTestAsDefaultDialer();
+        ContentValues values = new ContentValues();
+        values.put(Voicemails.SOURCE_PACKAGE, FOREIGN_SOURCE);
+
+        Uri uri = mVoicemailProvider.insert(Voicemails.buildSourceUri(FOREIGN_SOURCE), values);
+
+        ContentValues updateValues = new ContentValues();
+        updateValues.put(Voicemails.DIRTY, 2);
+        mVoicemailProvider.update(uri, updateValues, null, null);
+
+        try (Cursor cursor = mVoicemailProvider
+                .query(uri, new String[] {Voicemails.DIRTY}, null, null, null)) {
+            cursor.moveToFirst();
+            assertEquals(1, cursor.getInt(0));
+        }
+    }
+
+    public void testLocalUpdate_notDirty() throws Exception {
+
+        ContentValues values = new ContentValues();
+        values.put(Voicemails.DIRTY,1);
+
+        Uri uri = mVoicemailProvider.insert(Voicemails.buildSourceUri(mSourcePackageName), values);
+
+        mVoicemailProvider.update(uri, new ContentValues(), null, null);
+
+        try (Cursor cursor = mVoicemailProvider
+                .query(uri, new String[] {Voicemails.DIRTY}, null, null, null)) {
+            cursor.moveToFirst();
+            assertEquals(cursor.getInt(0), 0);
+        }
+    }
+
 
     // Data column should be automatically generated during insert.
     public void testInsert_doesNotUpdateDataColumn() throws Exception {
@@ -354,6 +463,59 @@ public class VoicemailContractTest extends InstrumentationTestCase {
             fail("Expected SecurityException. None thrown.");
         } catch (SecurityException e) {
             // Expected result.
+        }
+    }
+
+    private void setTestAsDefaultDialer() throws Exception{
+        assertTrue(mPreviousDefaultDialer == null);
+        mPreviousDefaultDialer = getDefaultDialer(getInstrumentation());
+        setDefaultDialer(getInstrumentation(),PACKAGE);
+    }
+
+    private static String setDefaultDialer(Instrumentation instrumentation, String packageName)
+            throws Exception {
+        return executeShellCommand(instrumentation, COMMAND_SET_DEFAULT_DIALER + packageName);
+    }
+
+    private static String getDefaultDialer(Instrumentation instrumentation) throws Exception {
+        return executeShellCommand(instrumentation, COMMAND_GET_DEFAULT_DIALER);
+    }
+
+    /**
+     * Executes the given shell command and returns the output in a string. Note that even if we
+     * don't care about the output, we have to read the stream completely to make the command
+     * execute.
+     */
+    private static String executeShellCommand(Instrumentation instrumentation,
+            String command) throws Exception {
+        final ParcelFileDescriptor parcelFileDescriptor =
+                instrumentation.getUiAutomation().executeShellCommand(command);
+        BufferedReader bufferedReader = null;
+        try (InputStream in = new FileInputStream(parcelFileDescriptor.getFileDescriptor())) {
+            bufferedReader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+            String string = null;
+            StringBuilder out = new StringBuilder();
+            while ((string = bufferedReader.readLine()) != null) {
+                out.append(string);
+            }
+            return out.toString();
+        } finally {
+            if (bufferedReader != null) {
+                closeQuietly(bufferedReader);
+            }
+            closeQuietly(parcelFileDescriptor);
+        }
+    }
+
+    private static void closeQuietly(AutoCloseable closeable) {
+        if (closeable != null) {
+            try {
+                closeable.close();
+            } catch (RuntimeException rethrown) {
+                throw rethrown;
+            } catch (Exception ignored) {
+                // Quietly.
+            }
         }
     }
 }
