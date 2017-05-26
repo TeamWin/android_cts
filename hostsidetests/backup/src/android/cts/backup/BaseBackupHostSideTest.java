@@ -115,7 +115,6 @@ public abstract class BaseBackupHostSideTest extends CompatibilityHostTestBase {
      * Expected format: "Package <packageName> with result: Success"
      */
     protected void assertBackupIsSuccessful(String packageName, String backupnowOutput) {
-        // Assert backup was successful.
         Scanner in = new Scanner(backupnowOutput);
         boolean success = false;
         while (in.hasNextLine()) {
@@ -130,6 +129,29 @@ public abstract class BaseBackupHostSideTest extends CompatibilityHostTestBase {
         }
         in.close();
         assertTrue(success);
+    }
+
+    /**
+     * Parsing the output of "bmgr backupnow" command and checking that the package under test
+     * wasn't backed up because backup is not allowed
+     *
+     * Expected format: "Package <packageName> with result:  Backup is not allowed"
+     */
+    protected void assertBackupIsNotAllowed(String packageName, String backupnowOutput) {
+        Scanner in = new Scanner(backupnowOutput);
+        boolean found = false;
+        while (in.hasNextLine()) {
+            String line = in.nextLine();
+
+            if (line.contains(packageName)) {
+                String result = line.split(":")[1].trim();
+                if ("Backup is not allowed".equals(result)) {
+                    found = true;
+                }
+            }
+        }
+        in.close();
+        assertTrue("Didn't find \'Backup not allowed\' in the output", found);
     }
 
     /**
