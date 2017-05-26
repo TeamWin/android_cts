@@ -16,12 +16,16 @@
 
 package android.autofillservice.cts;
 
+import static android.autofillservice.cts.Helper.runShellCommand;
+import static android.provider.Settings.Secure.AUTOFILL_SERVICE;
+
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.assist.AssistStructure;
 import android.app.assist.AssistStructure.ViewNode;
 import android.app.assist.AssistStructure.WindowNode;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.icu.util.Calendar;
 import android.os.UserManager;
@@ -46,6 +50,9 @@ import java.util.function.Function;
 final class Helper {
 
     private static final String TAG = "AutoFillCtsHelper";
+
+    // TODO: should static import Settings.Secure instead, but that's not a @TestApi
+    private static String USER_SETUP_COMPLETE = "user_setup_complete";
 
     static final boolean VERBOSE = false;
 
@@ -185,6 +192,38 @@ final class Helper {
      */
     static void setUserRestrictionForAutofill(boolean restricted) {
         runShellCommand("pm set-user-restriction no_autofill %d", restricted ? 1 : 0);
+    }
+
+    /**
+     * Sets whether the user completed the initial setup.
+     */
+    static void setUserComplete(Context context, boolean complete) {
+        if (isUserComplete() == complete) return;
+
+        final OneTimeSettingsListener observer = new OneTimeSettingsListener(context,
+                USER_SETUP_COMPLETE);
+        final String newValue = complete ? "1" : null;
+        runShellCommand("settings put secure %s %s default", USER_SETUP_COMPLETE, newValue);
+        observer.assertCalled();
+
+        assertIsUserComplete(complete);
+    }
+
+    /**
+     * Gets whether the user completed the initial setup.
+     */
+    static boolean isUserComplete() {
+        final String isIt = runShellCommand("settings get secure %s", USER_SETUP_COMPLETE);
+        return "1".equals(isIt);
+    }
+
+    /**
+     * Assets that user completed (or not) the initial setup.
+     */
+    static void assertIsUserComplete(boolean expected) {
+        final boolean actual = isUserComplete();
+        assertWithMessage("Invalid value for secure setting %s", USER_SETUP_COMPLETE)
+                .that(actual).isEqualTo(expected);
     }
 
     private static void dump(StringBuffer buffer, ViewNode node, String prefix, int childId) {

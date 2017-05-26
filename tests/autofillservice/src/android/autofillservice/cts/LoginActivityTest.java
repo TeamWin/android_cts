@@ -30,6 +30,7 @@ import static android.autofillservice.cts.Helper.dumpStructure;
 import static android.autofillservice.cts.Helper.eventually;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.Helper.runShellCommand;
+import static android.autofillservice.cts.Helper.setUserComplete;
 import static android.autofillservice.cts.Helper.setUserRestrictionForAutofill;
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilConnected;
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilDisconnected;
@@ -2570,6 +2571,23 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             assertThat(afm.hasEnabledAutofillServices()).isTrue();
         } finally {
             disableService();
+        }
+    }
+
+    @Test
+    public void testSetupComplete() throws Exception {
+        enableService();
+
+        // Sanity check.
+        final AutofillManager afm = mActivity.getAutofillManager();
+        assertThat(afm.isEnabled()).isTrue();
+
+        // Now disable user_complete and try again.
+        try {
+            setUserComplete(getContext(), false);
+            assertThat(afm.isEnabled()).isFalse();
+        } finally {
+            setUserComplete(getContext(), true);
         }
     }
 }
