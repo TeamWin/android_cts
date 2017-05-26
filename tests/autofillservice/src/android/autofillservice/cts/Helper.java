@@ -128,7 +128,11 @@ final class Helper {
                     if (VERBOSE) Log.v(TAG, "Ignoring", e);
                     Thread.sleep(RETRY_MS);
                 } else {
-                    throw new Exception("Timedout out after " + timeout + " ms", e);
+                    if (e instanceof RetryableException) {
+                        throw e;
+                    } else {
+                        throw new Exception("Timedout out after " + timeout + " ms", e);
+                    }
                 }
             }
         }
@@ -639,6 +643,9 @@ final class Helper {
         assertThat(getMaxPartitions()).isEqualTo(value);
     }
 
+    /**
+     * Checks if device supports the Autofill feature.
+     */
     public static boolean hasAutofillFeature() {
         return RequiredFeatureRule.hasFeature(PackageManager.FEATURE_AUTOFILL);
     }
