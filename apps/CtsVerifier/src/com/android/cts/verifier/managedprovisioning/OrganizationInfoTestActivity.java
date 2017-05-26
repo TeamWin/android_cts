@@ -19,6 +19,7 @@ package com.android.cts.verifier.managedprovisioning;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -46,6 +47,7 @@ public class OrganizationInfoTestActivity extends PassFailButtons.Activity
     }
 
     private void setButtonClickListeners() {
+        findViewById(R.id.organization_info_settings_button).setOnClickListener(this);
         findViewById(R.id.organization_info_set_button).setOnClickListener(this);
         findViewById(R.id.go_button).setOnClickListener(this);
     }
@@ -64,7 +66,11 @@ public class OrganizationInfoTestActivity extends PassFailButtons.Activity
         } else if (view.getId() == R.id.go_button) {
             Intent intent = new Intent(ByodHelperActivity.ACTION_LAUNCH_CONFIRM_WORK_CREDENTIALS);
             startActivity(intent);
+        } else if (view.getId() == R.id.organization_info_settings_button) {
+            Intent intent = new Intent(Settings.ACTION_SETTINGS);
+            startActivity(intent);
         }
+
     }
 
     private boolean isOrganizationColorSet() {
