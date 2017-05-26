@@ -39,7 +39,7 @@ const char* sharingModeToString(aaudio_sharing_mode_t mode) {
 
 StreamBuilderHelper::StreamBuilderHelper(
         aaudio_direction_t direction, int32_t sampleRate,
-        int32_t samplesPerFrame, aaudio_audio_format_t dataFormat,
+        int32_t samplesPerFrame, aaudio_format_t dataFormat,
         aaudio_sharing_mode_t sharingMode)
         : mDirection{direction},
           mRequested{sampleRate, samplesPerFrame, dataFormat, sharingMode},
