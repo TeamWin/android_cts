@@ -52,6 +52,7 @@ public class ExternalStorageHostTest extends DeviceTestCase
     private static final String MULTIUSER_PKG = "com.android.cts.multiuserstorageapp";
     private static final String MULTIUSER_CLASS = ".MultiUserStorageTest";
 
+    private int[] mUsers;
     private IAbi mAbi;
     private IBuildInfo mCtsBuild;
 
@@ -74,6 +75,7 @@ public class ExternalStorageHostTest extends DeviceTestCase
     protected void setUp() throws Exception {
         super.setUp();
 
+        mUsers = Utils.prepareMultipleUsers(getDevice());
         assertNotNull(mAbi);
         assertNotNull(mCtsBuild);
     }
@@ -87,7 +89,6 @@ public class ExternalStorageHostTest extends DeviceTestCase
      * Verify that app with no external storage permissions works correctly.
      */
     public void testExternalStorageNone() throws Exception {
-        final int[] users = createUsersForTest();
         try {
             wipePrimaryExternalStorage();
 
@@ -95,13 +96,12 @@ public class ExternalStorageHostTest extends DeviceTestCase
             String[] options = {AbiUtils.createAbiFlag(mAbi.getName())};
             assertNull(getDevice().installPackage(getTestAppFile(NONE_APK), false, options));
 
-            for (int user : users) {
+            for (int user : mUsers) {
                 runDeviceTests(NONE_PKG, COMMON_CLASS, user);
                 runDeviceTests(NONE_PKG, NONE_CLASS, user);
             }
         } finally {
             getDevice().uninstallPackage(NONE_PKG);
-            removeUsersForTest(users);
         }
     }
 
@@ -111,7 +111,6 @@ public class ExternalStorageHostTest extends DeviceTestCase
      * correctly.
      */
     public void testExternalStorageRead() throws Exception {
-        final int[] users = createUsersForTest();
         try {
             wipePrimaryExternalStorage();
 
@@ -119,13 +118,12 @@ public class ExternalStorageHostTest extends DeviceTestCase
             String[] options = {AbiUtils.createAbiFlag(mAbi.getName())};
             assertNull(getDevice().installPackage(getTestAppFile(READ_APK), false, options));
 
-            for (int user : users) {
+            for (int user : mUsers) {
                 runDeviceTests(READ_PKG, COMMON_CLASS, user);
                 runDeviceTests(READ_PKG, READ_CLASS, user);
             }
         } finally {
             getDevice().uninstallPackage(READ_PKG);
-            removeUsersForTest(users);
         }
     }
 
@@ -135,7 +133,6 @@ public class ExternalStorageHostTest extends DeviceTestCase
      * correctly.
      */
     public void testExternalStorageWrite() throws Exception {
-        final int[] users = createUsersForTest();
         try {
             wipePrimaryExternalStorage();
 
@@ -143,13 +140,12 @@ public class ExternalStorageHostTest extends DeviceTestCase
             String[] options = {AbiUtils.createAbiFlag(mAbi.getName())};
             assertNull(getDevice().installPackage(getTestAppFile(WRITE_APK), false, options));
 
-            for (int user : users) {
+            for (int user : mUsers) {
                 runDeviceTests(WRITE_PKG, COMMON_CLASS, user);
                 runDeviceTests(WRITE_PKG, WRITE_CLASS, user);
             }
         } finally {
             getDevice().uninstallPackage(WRITE_PKG);
-            removeUsersForTest(users);
         }
     }
 
@@ -158,7 +154,6 @@ public class ExternalStorageHostTest extends DeviceTestCase
      * directories belonging to other apps, and those apps can read.
      */
     public void testExternalStorageGifts() throws Exception {
-        final int[] users = createUsersForTest();
         try {
             wipePrimaryExternalStorage();
 
@@ -170,13 +165,13 @@ public class ExternalStorageHostTest extends DeviceTestCase
             // We purposefully delay the installation of the reading apps to
             // verify that the daemon correctly invalidates any caches.
             assertNull(getDevice().installPackage(getTestAppFile(WRITE_APK), false, options));
-            for (int user : users) {
+            for (int user : mUsers) {
                 runDeviceTests(WRITE_PKG, ".WriteGiftTest", user);
             }
 
             assertNull(getDevice().installPackage(getTestAppFile(NONE_APK), false, options));
             assertNull(getDevice().installPackage(getTestAppFile(READ_APK), false, options));
-            for (int user : users) {
+            for (int user : mUsers) {
                 runDeviceTests(READ_PKG, ".ReadGiftTest", user);
                 runDeviceTests(NONE_PKG, ".GiftTest", user);
             }
@@ -184,7 +179,6 @@ public class ExternalStorageHostTest extends DeviceTestCase
             getDevice().uninstallPackage(NONE_PKG);
             getDevice().uninstallPackage(READ_PKG);
             getDevice().uninstallPackage(WRITE_PKG);
-            removeUsersForTest(users);
         }
     }
 
@@ -193,15 +187,14 @@ public class ExternalStorageHostTest extends DeviceTestCase
      * isolated storage.
      */
     public void testMultiUserStorageIsolated() throws Exception {
-        final int[] users = createUsersForTest();
         try {
-            if (users.length == 1) {
+            if (mUsers.length == 1) {
                 Log.d(TAG, "Single user device; skipping isolated storage tests");
                 return;
             }
 
-            final int owner = users[0];
-            final int secondary = users[1];
+            final int owner = mUsers[0];
+            final int secondary = mUsers[1];
 
             // Install our test app
             getDevice().uninstallPackage(MULTIUSER_PKG);
@@ -231,7 +224,6 @@ public class ExternalStorageHostTest extends DeviceTestCase
             runDeviceTests(MULTIUSER_PKG, MULTIUSER_CLASS, "testMediaProviderUserIsolation", secondary);
         } finally {
             getDevice().uninstallPackage(MULTIUSER_PKG);
-            removeUsersForTest(users);
         }
     }
 
@@ -240,7 +232,6 @@ public class ExternalStorageHostTest extends DeviceTestCase
      * when apps with r/w permission levels move around their files.
      */
     public void testMultiViewMoveConsistency() throws Exception {
-        final int[] users = createUsersForTest();
         try {
             wipePrimaryExternalStorage();
 
@@ -252,37 +243,35 @@ public class ExternalStorageHostTest extends DeviceTestCase
             assertNull(getDevice().installPackage(getTestAppFile(WRITE_APK), false, options));
             assertNull(getDevice().installPackage(getTestAppFile(READ_APK), false, options));
 
-            for (int user : users) {
+            for (int user : mUsers) {
                 runDeviceTests(READ_PKG, ".ReadMultiViewTest", "testFolderSetup", user);
             }
-            for (int user : users) {
+            for (int user : mUsers) {
                 runDeviceTests(READ_PKG, ".ReadMultiViewTest", "testRWAccess", user);
             }
 
-            for (int user : users) {
+            for (int user : mUsers) {
                 runDeviceTests(WRITE_PKG, ".WriteMultiViewTest", "testMoveAway", user);
             }
-            for (int user : users) {
+            for (int user : mUsers) {
                 runDeviceTests(READ_PKG, ".ReadMultiViewTest", "testROAccess", user);
             }
 
-            for (int user : users) {
+            for (int user : mUsers) {
                 runDeviceTests(WRITE_PKG, ".WriteMultiViewTest", "testMoveBack", user);
             }
-            for (int user : users) {
+            for (int user : mUsers) {
                 runDeviceTests(READ_PKG, ".ReadMultiViewTest", "testRWAccess", user);
             }
         } finally {
             getDevice().uninstallPackage(NONE_PKG);
             getDevice().uninstallPackage(READ_PKG);
             getDevice().uninstallPackage(WRITE_PKG);
-            removeUsersForTest(users);
         }
     }
 
     /** Verify that app without READ_EXTERNAL can play default URIs in external storage. */
     public void testExternalStorageReadDefaultUris() throws Exception {
-        final int[] users = createUsersForTest();
         try {
             wipePrimaryExternalStorage();
 
@@ -293,7 +282,7 @@ public class ExternalStorageHostTest extends DeviceTestCase
             assertNull(getDevice().installPackage(getTestAppFile(WRITE_APK), false, options));
             assertNull(getDevice().installPackage(getTestAppFile(NONE_APK), false, options));
 
-            for (int user : users) {
+            for (int user : mUsers) {
                 enableWriteSettings(WRITE_PKG, user);
                 runDeviceTests(
                         WRITE_PKG, WRITE_PKG + ".ChangeDefaultUris", "testChangeDefaultUris", user);
@@ -303,13 +292,12 @@ public class ExternalStorageHostTest extends DeviceTestCase
             }
         } finally {
             // Make sure the provider and uris are reset on failure.
-            for (int user : users) {
+            for (int user : mUsers) {
                 runDeviceTests(
                         WRITE_PKG, WRITE_PKG + ".ChangeDefaultUris", "testResetDefaultUris", user);
             }
             getDevice().uninstallPackage(NONE_PKG);
             getDevice().uninstallPackage(WRITE_PKG);
-            removeUsersForTest(users);
         }
     }
 
@@ -332,14 +320,6 @@ public class ExternalStorageHostTest extends DeviceTestCase
         getDevice().executeShellCommand("rm -rf /sdcard/Android");
         getDevice().executeShellCommand("rm -rf /sdcard/DCIM");
         getDevice().executeShellCommand("rm -rf /sdcard/MUST_*");
-    }
-
-    private int[] createUsersForTest() throws DeviceNotAvailableException {
-        return Utils.createUsersForTest(getDevice());
-    }
-
-    private void removeUsersForTest(int[] users) throws DeviceNotAvailableException {
-        Utils.removeUsersForTest(getDevice(), users);
     }
 
     private void runDeviceTests(String packageName, String testClassName, int userId)
