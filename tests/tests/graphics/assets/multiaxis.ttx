@@ -162,28 +162,21 @@
 
   <fvar>
     <Axis>
-      <AxisTag>aaaa</AxisTag>
+      <AxisTag>wght</AxisTag>
+      <MinValue>0</MinValue>
+      <DefaultValue>400</DefaultValue>
+      <MaxValue>700</MaxValue>
+      <NameID>256</NameID>
+    </Axis>
+    <Axis>
+      <AxisTag>PRIV</AxisTag>
       <MinValue>-1.0</MinValue>
       <DefaultValue>0.0</DefaultValue>
       <MaxValue>1.0</MaxValue>
       <NameID>256</NameID>
     </Axis>
     <Axis>
-      <AxisTag>BBBB</AxisTag>
-      <MinValue>-1.0</MinValue>
-      <DefaultValue>0.0</DefaultValue>
-      <MaxValue>1.0</MaxValue>
-      <NameID>256</NameID>
-    </Axis>
-    <Axis>
-      <AxisTag>a b </AxisTag>
-      <MinValue>-1.0</MinValue>
-      <DefaultValue>0.0</DefaultValue>
-      <MaxValue>1.0</MaxValue>
-      <NameID>256</NameID>
-    </Axis>
-    <Axis>
-      <AxisTag> C D</AxisTag>
+      <AxisTag>PR12</AxisTag>
       <MinValue>-1.0</MinValue>
       <DefaultValue>0.0</DefaultValue>
       <MaxValue>1.0</MaxValue>
@@ -215,6 +208,9 @@
     </namerecord>
     <namerecord nameID="6" platformID="3" platEncID="1" langID="0x409">
       MultiAxisFontTest-Regular
+    </namerecord>
+    <namerecord nameID="256" platformID="3" platEncID="1" langID="0x409">
+      Axis Name
     </namerecord>
   </name>
 
