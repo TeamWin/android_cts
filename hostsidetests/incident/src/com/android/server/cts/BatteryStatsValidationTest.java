@@ -46,6 +46,13 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
             = "com.android.server.cts.device.batterystats.provider/"
             + "com.android.server.cts.device.batterystats";
 
+    // These constants are those in PackageManager.
+    public static final String FEATURE_BLUETOOTH_LE = "android.hardware.bluetooth_le";
+    public static final String FEATURE_LEANBACK_ONLY = "android.software.leanback_only";
+    public static final String FEATURE_LOCATION_GPS = "android.hardware.location.gps";
+    public static final String FEATURE_WIFI = "android.hardware.wifi";
+
+
     // Low end of packet size. TODO: Get exact packet size
     private static final int LOW_MTU = 1500;
     // High end of packet size. TODO: Get exact packet size
@@ -163,9 +170,10 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testBleScans() throws Exception {
-        if (isTV()) {
+        if (isTV() || !hasFeature(FEATURE_BLUETOOTH_LE, true)) {
             return;
         }
+
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
 
@@ -183,11 +191,12 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testGpsUpdates() throws Exception {
-        final String gpsSensorNumber = "-10000";
-
-        if (isTV()) {
+        if (isTV() || !hasFeature(FEATURE_LOCATION_GPS, true)) {
             return;
         }
+
+        final String gpsSensorNumber = "-10000";
+
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
         // Whitelist this app against background location request throttling
@@ -250,9 +259,10 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testWifiScans() throws Exception {
-        if (isTV()) {
+        if (isTV() || !hasFeature(FEATURE_WIFI, true)) {
             return;
         }
+
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
         // Whitelist this app against background wifi scan throttling
@@ -342,9 +352,10 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
      * Tests the total bytes reported for downloading over wifi.
      */
     public void testWifiDownload() throws Exception {
-        if (isTV()) {
+        if (isTV() || !hasFeature(FEATURE_WIFI, true)) {
             return;
         }
+
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
 
@@ -383,9 +394,10 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
      * Tests the total bytes reported for uploading over wifi.
      */
     public void testWifiUpload() throws Exception {
-        if (isTV()) {
+        if (isTV() || !hasFeature(FEATURE_WIFI, true)) {
             return;
         }
+
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
 
@@ -745,13 +757,20 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
 
     /** Determine if device is just a TV and is not expected to have proper batterystats. */
     private boolean isTV() throws Exception {
-        // Less noisy version of getDevice().hasFeature("android.software.leanback_only")
-        String tvFeature = "android.software.leanback_only";
+        return hasFeature(FEATURE_LEANBACK_ONLY, false);
+    }
+
+    /**
+     * Determines if the device has the given feature.
+     * Prints a warning if its value differs from requiredAnswer.
+     */
+    private boolean hasFeature(String featureName, boolean requiredAnswer) throws Exception {
         final String features = getDevice().executeShellCommand("pm list features");
-        if (features.contains(tvFeature)) {
-            LogUtil.CLog.w("Device has feature " + tvFeature);
-            return true;
+        boolean hasIt = features.contains(featureName);
+        if (hasIt != requiredAnswer) {
+            LogUtil.CLog.w("Device does " + (requiredAnswer ? "not " : "") + "have feature "
+                    + featureName);
         }
-        return false;
+        return hasIt;
     }
 }
