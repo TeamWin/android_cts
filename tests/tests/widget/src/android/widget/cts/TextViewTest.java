@@ -45,6 +45,7 @@ import static org.mockito.Mockito.when;
 import static java.lang.annotation.RetentionPolicy.SOURCE;
 
 import android.annotation.IntDef;
+import android.annotation.Nullable;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.Instrumentation.ActivityMonitor;
@@ -112,6 +113,7 @@ import android.text.style.ImageSpan;
 import android.text.style.URLSpan;
 import android.text.style.UnderlineSpan;
 import android.text.util.Linkify;
+import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.SparseArray;
 import android.util.TypedValue;
@@ -6609,6 +6611,46 @@ public class TextViewTest {
                 TextUtils.equals(nonHintText, info.getText()));
         assertTrue("Hint text not provided to accessibility",
                 TextUtils.equals(hintText, info.getHintText()));
+    }
+
+    @Test
+    public void testAutosizeWithMaxLines_shouldNotThrowException() throws Throwable {
+        // the layout contains an instance of CustomTextViewWithTransformationMethod
+        final TextView textView = (TextView) mActivity.getLayoutInflater()
+                .inflate(R.layout.textview_autosize_maxlines, null);
+        assertTrue(textView instanceof CustomTextViewWithTransformationMethod);
+        assertEquals(1, textView.getMaxLines());
+        assertEquals(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM, textView.getAutoSizeTextType());
+        assertTrue(textView.getTransformationMethod() instanceof SingleLineTransformationMethod);
+    }
+
+    public static class CustomTextViewWithTransformationMethod extends TextView {
+        public CustomTextViewWithTransformationMethod(Context context) {
+            super(context);
+            init();
+        }
+
+        public CustomTextViewWithTransformationMethod(Context context,
+                @Nullable AttributeSet attrs) {
+            super(context, attrs);
+            init();
+        }
+
+        public CustomTextViewWithTransformationMethod(Context context,
+                @Nullable AttributeSet attrs, int defStyleAttr) {
+            super(context, attrs, defStyleAttr);
+            init();
+        }
+
+        public CustomTextViewWithTransformationMethod(Context context,
+                @Nullable AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+            super(context, attrs, defStyleAttr, defStyleRes);
+            init();
+        }
+
+        private void init() {
+            setTransformationMethod(new SingleLineTransformationMethod());
+        }
     }
 
     @Test
