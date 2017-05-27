@@ -24,6 +24,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.GestureDescription;
 import android.accessibilityservice.GestureDescription.StrokeDescription;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Matrix;
@@ -38,6 +39,7 @@ import android.util.DisplayMetrics;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.WindowManager;
 import android.widget.TextView;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
@@ -300,8 +302,10 @@ public class AccessibilityGestureDispatchTest extends
             return;
         }
 
-        final Resources res = getInstrumentation().getTargetContext().getResources();
-        final DisplayMetrics metrics = res.getDisplayMetrics();
+        final WindowManager wm = (WindowManager) getInstrumentation().getContext().getSystemService(
+                Context.WINDOW_SERVICE);
+        final DisplayMetrics metrics = new DisplayMetrics();
+        wm.getDefaultDisplay().getMetrics(metrics);
         final float centerX = metrics.widthPixels / 2;
         final float centerY = metrics.heightPixels / 2;
         final PointF clickPoint = new PointF(
