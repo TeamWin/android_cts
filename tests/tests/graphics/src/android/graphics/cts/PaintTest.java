@@ -18,6 +18,7 @@ package android.graphics.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -903,34 +904,45 @@ public class PaintTest {
     }
 
     @Test
+    public void testSetFontVariationSettings_defaultTypeface() {
+        new Paint().setFontVariationSettings("'wght' 400");
+    }
+
+    @Test
     public void testSetGetFontVariationSettings() {
+        final Paint defaultPaint = new Paint();
+
         Paint p = new Paint();
         Context context = InstrumentationRegistry.getTargetContext();
         Typeface typeface = Typeface.createFromAsset(context.getAssets(), "multiaxis.ttf");
         p.setTypeface(typeface);
 
-        // multiaxis.ttf supports "aaaa", "BBBB", "a b ", " C D" axes.
+        // multiaxis.ttf supports "wght", "PRIV", "PR12" axes.
 
         // The default variation settings should be null.
         assertNull(p.getFontVariationSettings());
 
         final String[] nonEffectiveSettings = {
-                "'bbbb' 1.0",  // unsupported tag
-                "'    ' 1.0",  // unsupported tag
-                "'AAAA' 0.7",  // unsupported tag (case sensitive)
-                "' a b' 1.3",  // unsupported tag (white space should not be ignored)
-                "'C D ' 1.3",  // unsupported tag (white space should not be ignored)
-                "'bbbb' 1.0, 'cccc' 2.0",  // none of them are supported.
+                "'slnt' 30",  // unsupported tag
+                "'BBBB' 1.0",  // unsupported tag
+                "'A   ' 1.0",  // unsupported tag
+                "'PR0 ' 1.3",  // unsupported tag
+                "'WGHT' 0.7",  // unsupported tag (case sensitive)
+                "'BBBB' 1.0, 'CCCC' 2.0",  // none of them are supported.
         };
 
         for (String notEffectiveSetting : nonEffectiveSettings) {
-            assertFalse("Must return false for " + notEffectiveSetting,
-                    p.setFontVariationSettings(notEffectiveSetting));
-            assertNull("Must not change settings for " + notEffectiveSetting,
-                    p.getFontVariationSettings());
+            if (!defaultPaint.setFontVariationSettings(notEffectiveSetting)) {
+                // Test only when the system font don't support the above axes. OEMs may add
+                // their fonts and these font may support above axes.
+                assertFalse("Must return false for " + notEffectiveSetting,
+                        p.setFontVariationSettings(notEffectiveSetting));
+                assertNull("Must not change settings for " + notEffectiveSetting,
+                        p.getFontVariationSettings());
+            }
         }
 
-        String retainSettings = "'aaaa' 1.0";
+        String retainSettings = "'wght' 400";
         assertTrue(p.setFontVariationSettings(retainSettings));
         for (String notEffectiveSetting : nonEffectiveSettings) {
             assertFalse(p.setFontVariationSettings(notEffectiveSetting));
@@ -940,15 +952,14 @@ public class PaintTest {
 
         // At least one axis is supported, the settings should be applied.
         final String[] effectiveSettings = {
-                "'aaaa' 1.0",  // supported tag
-                "'a b ' .7",  // supported tag (contains whitespace)
-                "'aaaa' 1.0, 'BBBB' 0.5",  // both are supported
-                "'aaaa' 1.0, ' C D' 0.5",  // both are supported
-                "'aaaa' 1.0, 'bbbb' 0.4",  // 'bbbb' is unspported.
+                "'wght' 300",  // supported tag
+                "'wght' 300, 'PRIV' 0.5",  // both are supported
+                "'PRIV' 1.0, 'BBBB' 0.4",  // 'BBBB' is unsupported
         };
 
         for (String effectiveSetting : effectiveSettings) {
-            assertTrue(p.setFontVariationSettings(effectiveSetting));
+            assertTrue("Must return true for " + effectiveSetting,
+                    p.setFontVariationSettings(effectiveSetting));
             assertEquals(effectiveSetting, p.getFontVariationSettings());
         }
 
