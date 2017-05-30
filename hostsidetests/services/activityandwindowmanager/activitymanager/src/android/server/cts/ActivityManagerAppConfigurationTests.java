@@ -81,6 +81,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * Same as {@link #testConfigurationUpdatesWhenResizedFromFullscreen()} but resizing
      * from docked state to fullscreen (reverse).
      */
+    @Presubmit
     public void testConfigurationUpdatesWhenResizedFromDockedStack() throws Exception {
         if (!supportsSplitScreenMultiWindow()) {
             CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no multi-window support");

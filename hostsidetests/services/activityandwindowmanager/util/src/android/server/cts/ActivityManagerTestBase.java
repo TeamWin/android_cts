@@ -258,6 +258,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         // Get the device, this gives a handle to run commands and install APKs.
         mDevice = getDevice();
         wakeUpAndUnlockDevice();
+        pressHomeButton();
         // Remove special stacks.
         removeStacks(ALL_STACK_IDS_BUT_HOME_AND_FULLSCREEN);
         // Store rotation settings.
@@ -280,6 +281,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
             // Remove special stacks.
             removeStacks(ALL_STACK_IDS_BUT_HOME_AND_FULLSCREEN);
             wakeUpAndUnlockDevice();
+            pressHomeButton();
         } catch (DeviceNotAvailableException e) {
         }
     }
