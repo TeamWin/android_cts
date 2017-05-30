@@ -211,8 +211,8 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         mActivity.requestAutofill(mActivity.mUsername);
         sReplier.getNextFillRequest();
 
-        // Should have been automatically filled.
-        sUiBot.assertNoDatasets();
+        // Select datatest.
+        sUiBot.selectDataset("The Dude");
 
         // Check the results.
         mActivity.assertAutoFilled();
