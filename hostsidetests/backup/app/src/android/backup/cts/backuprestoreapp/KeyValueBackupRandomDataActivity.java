@@ -32,6 +32,8 @@ import java.io.PrintWriter;
 import java.util.Random;
 import java.util.Scanner;
 
+import static android.backup.cts.backuprestoreapp.Constants.*;
+
 /**
  * Test activity that reads/writes to shared preferences and files.
  *
@@ -49,25 +51,7 @@ import java.util.Scanner;
  * Migrated from BackupTestActivity in former BackupTest CTS Verfifier test.
  */
 public class KeyValueBackupRandomDataActivity extends Activity {
-    private static final String TAG = KeyValueBackupRandomDataActivity.class.getSimpleName();
-
-    private static final String TEST_PREFS_1 = "test-prefs-1";
-    private static final String INT_PREF = "int-pref";
-    private static final String BOOL_PREF = "bool-pref";
-
-    private static final String TEST_PREFS_2 = "test-prefs-2";
-    private static final String FLOAT_PREF = "float-pref";
-    private static final String LONG_PREF = "long-pref";
-    private static final String STRING_PREF = "string-pref";
-
-    private static final String TEST_FILE_1 = "test-file-1";
-    private static final String TEST_FILE_2 = "test-file-2";
-
-    private static final int DEFAULT_INT_VALUE = 0;
-    private static final boolean DEFAULT_BOOL_VALUE = false;
-    private static final float DEFAULT_FLOAT_VALUE = 0.0f;
-    private static final long DEFAULT_LONG_VALUE = 0L;
-    private static final String DEFAULT_STRING_VALUE = null;
+    static final String TAG = KeyValueBackupRandomDataActivity.class.getSimpleName();
 
     private static final String VALUES_LOADED_MESSAGE = "ValuesLoaded";
     private static final String EMPTY_STRING_LOG = "empty";
@@ -76,7 +60,7 @@ public class KeyValueBackupRandomDataActivity extends Activity {
     private boolean mValuesWereGenerated;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         new LoadBackupItemsTask().execute();
