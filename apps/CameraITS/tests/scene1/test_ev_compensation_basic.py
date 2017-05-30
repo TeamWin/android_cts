@@ -12,29 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import its.image
+import os.path
+
 import its.caps
 import its.device
+import its.image
 import its.objects
-import os.path
-from matplotlib import pylab
 import matplotlib
-import matplotlib.pyplot
+from matplotlib import pylab
 import numpy as np
 
-#AE must converge within this number of auto requests for EV
-THRESH_CONVERGE_FOR_EV = 8
+NAME = os.path.basename(__file__).split('.')[0]
+LOCKED = 3
+LUMA_LOCKED_TOL = 0.05
+THRESH_CONVERGE_FOR_EV = 8  # AE must converge within this num
 YUV_FULL_SCALE = 255.0
 YUV_SATURATION_MIN = 253.0
 YUV_SATURATION_TOL = 1.0
 
 
 def main():
-    """Tests that EV compensation is applied.
-    """
-    LOCKED = 3
-
-    NAME = os.path.basename(__file__).split(".")[0]
+    """Tests that EV compensation is applied."""
 
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
@@ -50,7 +48,7 @@ def main():
             fmt = its.objects.get_smallest_yuv_format(props, match_ar=match_ar)
 
         ev_per_step = its.objects.rational_to_float(
-                props['android.control.aeCompensationStep'])
+            props['android.control.aeCompensationStep'])
         steps_per_ev = int(1.0 / ev_per_step)
         evs = range(-2 * steps_per_ev, 2 * steps_per_ev + 1, steps_per_ev)
         lumas = []
@@ -64,31 +62,37 @@ def main():
         cam.do_3a(ev_comp=0, lock_ae=True, do_af=False)
 
         for ev in evs:
-
             # Capture a single shot with the same EV comp and locked AE.
             req = its.objects.auto_capture_request()
             req['android.control.aeExposureCompensation'] = ev
-            req["android.control.aeLock"] = True
+            req['android.control.aeLock'] = True
             caps = cam.do_capture([req]*THRESH_CONVERGE_FOR_EV, fmt)
-            for cap in caps:
-                if (cap['metadata']['android.control.aeState'] == LOCKED):
+            luma_locked = []
+            for i, cap in enumerate(caps):
+                if cap['metadata']['android.control.aeState'] == LOCKED:
                     y = its.image.convert_capture_to_planes(cap)[0]
-                    tile = its.image.get_image_patch(y, 0.45,0.45,0.1,0.1)
-                    lumas.append(its.image.compute_image_means(tile)[0])
-                    rgb = its.image.convert_capture_to_rgb_image(cap)
-                    rgb_tile = its.image.get_image_patch(rgb,
-                                                       0.45, 0.45, 0.1, 0.1)
-                    rgb_means = its.image.compute_image_means(rgb_tile)
-                    reds.append(rgb_means[0])
-                    greens.append(rgb_means[1])
-                    blues.append(rgb_means[2])
-                    break
-            assert(cap['metadata']['android.control.aeState'] == LOCKED)
+                    tile = its.image.get_image_patch(y, 0.45, 0.45, 0.1, 0.1)
+                    luma = its.image.compute_image_means(tile)[0]
+                    luma_locked.append(luma)
+                    if i == THRESH_CONVERGE_FOR_EV-1:
+                        lumas.append(luma)
+                        rgb = its.image.convert_capture_to_rgb_image(cap)
+                        rgb_tile = its.image.get_image_patch(rgb,
+                                                             0.45, 0.45,
+                                                             0.1, 0.1)
+                        rgb_means = its.image.compute_image_means(rgb_tile)
+                        reds.append(rgb_means[0])
+                        greens.append(rgb_means[1])
+                        blues.append(rgb_means[2])
+                        print 'lumas in AE locked captures: ', luma_locked
+                        assert np.isclose(min(luma_locked), max(luma_locked),
+                                          rtol=LUMA_LOCKED_TOL)
+            assert caps[THRESH_CONVERGE_FOR_EV-1]['metadata']['android.control.aeState'] == LOCKED
 
         pylab.plot(evs, lumas, '-ro')
         pylab.xlabel('EV Compensation')
         pylab.ylabel('Mean Luma (Normalized)')
-        matplotlib.pyplot.savefig("%s_plot_means.png" % (NAME))
+        matplotlib.pyplot.savefig('%s_plot_means.png' % (NAME))
 
         # Trim extra saturated images
         while lumas and lumas[-1] >= YUV_SATURATION_MIN/YUV_FULL_SCALE:
@@ -104,13 +108,13 @@ def main():
             else:
                 break
         # Only allow positive EVs to give saturated image
-        assert(len(lumas) > 2)
+        assert len(lumas) > 2
         luma_diffs = np.diff(lumas)
         min_luma_diffs = min(luma_diffs)
-        print "Min of the luma value difference between adjacent ev comp: ", \
-                min_luma_diffs
+        print 'Min of the luma value difference between adjacent ev comp: ',
+        print min_luma_diffs
         # All luma brightness should be increasing with increasing ev comp.
-        assert(min_luma_diffs > 0)
+        assert min_luma_diffs > 0
 
 if __name__ == '__main__':
     main()
