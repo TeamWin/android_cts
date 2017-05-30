@@ -30,6 +30,8 @@ LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/cts-testkey1
 
 LOCAL_PACKAGE_NAME := CtsAccountManagerTestCases
 
+LOCAL_MIN_SDK_VERSION  := 1
+
 LOCAL_SDK_VERSION := current
 
 # Tag this module as a cts test artifact
