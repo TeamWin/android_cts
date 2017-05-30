@@ -26,18 +26,19 @@ LOCAL_JNI_SHARED_LIBRARIES := libnativecursorwindow_jni libnativehelper_compat_l
 
 LOCAL_JAVA_LIBRARIES := android.test.runner
 
-LOCAL_STATIC_JAVA_LIBRARIES :=  android-support-v4 \
-                                android-support-multidex \
-                                compatibility-device-util \
-                                ctstestrunner \
-                                services.core \
-                                junit \
-                                legacy-android-test \
-                                truth-prebuilt
+LOCAL_STATIC_JAVA_LIBRARIES :=  \
+    compatibility-device-util \
+    ctstestrunner \
+    services.core \
+    junit \
+    legacy-android-test \
+    truth-prebuilt
+
+LOCAL_STATIC_ANDROID_LIBRARIES := android-support-v4
 
 # Use multi-dex as the compatibility-common-util-devicesidelib dependency
 # on compatibility-device-util pushes us beyond 64k methods.
-LOCAL_JACK_FLAGS := --multi-dex legacy
+LOCAL_JACK_FLAGS := --multi-dex native
 LOCAL_DX_FLAGS := --multi-dex
 
 # Resource unit tests use a private locale and some densities
