@@ -41,6 +41,20 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+/*
+ * TODO: refactor this class.
+ *
+ * It has 2 types of tests:
+ *  1. unit tests that asserts AutofillValue methods
+ *  2. integrationg tests that uses a the InstrumentedAutofillService
+ *
+ *  The unit tests (createXxxx*() should either be moved to the CtsViewTestCases module or to a
+ *  class that does not need to extend AutoFillServiceTestCase.
+ *
+ *  Most integration tests overlap the tests on CheckoutActivityTest - we should remove the
+ *  redundant tests and add more tests (like triggering autofill using different views) to
+ *  CheckoutActivityTest.
+ */
 public class AutofillValueTest extends AutoFillServiceTestCase {
     @Rule
     public final ActivityTestRule<AllAutofillableViewsActivity> mActivityRule =
@@ -145,25 +159,22 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
     }
 
     /**
-     * Trigger autofill on a view. This might have to be tried multiple times as the service might
-     * not be completely initialized yet and therefor autofill is not enabled while the focus is
-     * changed.
+     * Trigger autofill on a view.
      *
      * @param view The view to trigger the autofill on
      */
     private void startAutoFill(@NonNull View view) throws Exception {
-        eventually(() -> {
-            mActivity.syncRunOnUiThread(() -> {
-                view.clearFocus();
-                view.requestFocus();
-            });
+        mActivity.syncRunOnUiThread(() -> {
+            view.clearFocus();
+            view.requestFocus();
+        });
 
-            try {
-                sReplier.getNextFillRequest();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }, (int) (FILL_TIMEOUT_MS * 3));
+        // NOTE: This method to require multiple attempts as the service could not be completely
+        // initialized yet (and therefore autofill would not enabled when the focus was changed),
+        // but now enableService() uses a Settings listener to wait until the setting is effect, so
+        // that flakiness should be gone if it still happens, then it could be fixed by calling
+        // InstrumentedAutoFillService.waitUntilConnected() here...
+        sReplier.getNextFillRequest();
     }
 
     private void autofillEditText(@Nullable AutofillValue value, String expectedText,
@@ -172,28 +183,27 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
 
         // Set service.
         enableService();
-        try {
-            // Set expectations.
-            sReplier.addResponse(new CannedFillResponse.CannedDataset.Builder().setField("editText",
-                    value).setPresentation(createPresentation("dataset")).build());
-            OneTimeTextWatcher textWatcher = new OneTimeTextWatcher("editText", mEditText,
-                    expectedText);
-            mEditText.addTextChangedListener(textWatcher);
 
-            // Trigger autofill.
-            startAutoFill(mEditText);
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.CannedDataset.Builder()
+                .setField("editText", value)
+                .setPresentation(createPresentation("dataset"))
+                .build());
+        OneTimeTextWatcher textWatcher = new OneTimeTextWatcher("editText", mEditText,
+                expectedText);
+        mEditText.addTextChangedListener(textWatcher);
 
-            // Autofill it.
-            sUiBot.selectDataset("dataset");
+        // Trigger autofill.
+        startAutoFill(mEditText);
 
-            if (expectAutoFill) {
-                // Check the results.
-                textWatcher.assertAutoFilled();
-            } else {
-                assertThat(mEditText.getText().toString()).isEqualTo(expectedText);
-            }
-        } finally {
-            disableService();
+        // Autofill it.
+        sUiBot.selectDataset("dataset");
+
+        if (expectAutoFill) {
+            // Check the results.
+            textWatcher.assertAutoFilled();
+        } else {
+            assertThat(mEditText.getText().toString()).isEqualTo(expectedText);
         }
     }
 
@@ -227,28 +237,26 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
 
         // Set service.
         enableService();
-        try {
-            // Set expectations.
-            sReplier.addResponse(new CannedFillResponse.CannedDataset.Builder().setField(
-                    "compoundButton", value).setPresentation(
-                    createPresentation("dataset")).build());
-            OneTimeCompoundButtonListener checkedWatcher = new OneTimeCompoundButtonListener(
-                        "compoundButton", mCompoundButton, expectedValue);
-            mCompoundButton.setOnCheckedChangeListener(checkedWatcher);
 
-            startAutoFill(mCompoundButton);
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.CannedDataset.Builder()
+                .setField("compoundButton", value)
+                .setPresentation(createPresentation("dataset"))
+                .build());
+        OneTimeCompoundButtonListener checkedWatcher = new OneTimeCompoundButtonListener(
+                    "compoundButton", mCompoundButton, expectedValue);
+        mCompoundButton.setOnCheckedChangeListener(checkedWatcher);
 
-            // Autofill it.
-            sUiBot.selectDataset("dataset");
+        startAutoFill(mCompoundButton);
 
-            if (expectAutoFill) {
-                // Check the results.
-                checkedWatcher.assertAutoFilled();
-            } else {
-                assertThat(mCompoundButton.isChecked()).isEqualTo(expectedValue);
-            }
-        } finally {
-            disableService();
+        // Autofill it.
+        sUiBot.selectDataset("dataset");
+
+        if (expectAutoFill) {
+            // Check the results.
+            checkedWatcher.assertAutoFilled();
+        } else {
+            assertThat(mCompoundButton.isChecked()).isEqualTo(expectedValue);
         }
     }
 
@@ -282,27 +290,26 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
 
         // Set service.
         enableService();
-        try {
-            // Set expectations.
-            sReplier.addResponse(new CannedFillResponse.CannedDataset.Builder().setField("spinner",
-                    value).setPresentation(createPresentation("dataset")).build());
-            OneTimeSpinnerListener spinnerWatcher = new OneTimeSpinnerListener(
-                    "spinner", mSpinner, expectedValue);
-            mSpinner.setOnItemSelectedListener(spinnerWatcher);
 
-            startAutoFill(mSpinner);
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.CannedDataset.Builder()
+                .setField("spinner", value)
+                .setPresentation(createPresentation("dataset"))
+                .build());
+        OneTimeSpinnerListener spinnerWatcher = new OneTimeSpinnerListener(
+                "spinner", mSpinner, expectedValue);
+        mSpinner.setOnItemSelectedListener(spinnerWatcher);
 
-            // Autofill it.
-            sUiBot.selectDataset("dataset");
+        startAutoFill(mSpinner);
 
-            if (expectAutoFill) {
-                // Check the results.
-                spinnerWatcher.assertAutoFilled();
-            } else {
-                assertThat(mSpinner.getSelectedItemPosition()).isEqualTo(expectedValue);
-            }
-        } finally {
-            disableService();
+        // Autofill it.
+        sUiBot.selectDataset("dataset");
+
+        if (expectAutoFill) {
+            // Check the results.
+            spinnerWatcher.assertAutoFilled();
+        } else {
+            assertThat(mSpinner.getSelectedItemPosition()).isEqualTo(expectedValue);
         }
     }
 
@@ -337,40 +344,40 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
 
     private void autofillDateValueToDatePicker(@Nullable AutofillValue value,
             boolean expectAutoFill) throws Exception {
-        mActivity.syncRunOnUiThread(() -> mEditText.setVisibility(View.VISIBLE));
-        mActivity.syncRunOnUiThread(() -> mDatePicker.setVisibility(View.VISIBLE));
+        mActivity.syncRunOnUiThread(() -> {
+            mEditText.setVisibility(View.VISIBLE);
+            mDatePicker.setVisibility(View.VISIBLE);
+        });
 
         // Set service.
         enableService();
-        try {
-            // Set expectations.
-            sReplier.addResponse(new CannedFillResponse.CannedDataset.Builder().setField(
-                    "datePicker", value).setField("editText",
-                    AutofillValue.forText("filled")).setPresentation(
-                    createPresentation("dataset")).build());
-            OneTimeDateListener dateWatcher = new OneTimeDateListener("datePicker", mDatePicker,
-                    2017, 3, 7);
-            mDatePicker.setOnDateChangedListener(dateWatcher);
 
-            int nonAutofilledYear = mDatePicker.getYear();
-            int nonAutofilledMonth = mDatePicker.getMonth();
-            int nonAutofilledDay = mDatePicker.getDayOfMonth();
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.CannedDataset.Builder()
+                .setField("datePicker", value)
+                .setField("editText", "filled")
+                .setPresentation(createPresentation("dataset"))
+                .build());
+        OneTimeDateListener dateWatcher = new OneTimeDateListener("datePicker", mDatePicker,
+                2017, 3, 7);
+        mDatePicker.setOnDateChangedListener(dateWatcher);
 
-            // Trigger autofill.
-            startAutoFill(mEditText);
+        int nonAutofilledYear = mDatePicker.getYear();
+        int nonAutofilledMonth = mDatePicker.getMonth();
+        int nonAutofilledDay = mDatePicker.getDayOfMonth();
 
-            // Autofill it.
-            sUiBot.selectDataset("dataset");
+        // Trigger autofill.
+        startAutoFill(mEditText);
 
-            if (expectAutoFill) {
-                // Check the results.
-                dateWatcher.assertAutoFilled();
-            } else {
-                Helper.assertDateValue(mDatePicker, nonAutofilledYear, nonAutofilledMonth,
-                        nonAutofilledDay);
-            }
-        } finally {
-            disableService();
+        // Autofill it.
+        sUiBot.selectDataset("dataset");
+
+        if (expectAutoFill) {
+            // Check the results.
+            dateWatcher.assertAutoFilled();
+        } else {
+            Helper.assertDateValue(mDatePicker, nonAutofilledYear, nonAutofilledMonth,
+                    nonAutofilledDay);
         }
     }
 
@@ -406,39 +413,39 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
 
     private void autofillDateValueToTimePicker(@Nullable AutofillValue value,
             boolean expectAutoFill) throws Exception {
-        mActivity.syncRunOnUiThread(() -> mEditText.setVisibility(View.VISIBLE));
-        mActivity.syncRunOnUiThread(() -> mTimePicker.setIs24HourView(true));
-        mActivity.syncRunOnUiThread(() -> mTimePicker.setVisibility(View.VISIBLE));
+        mActivity.syncRunOnUiThread(() -> {
+            mEditText.setVisibility(View.VISIBLE);
+            mTimePicker.setIs24HourView(true);
+            mTimePicker.setVisibility(View.VISIBLE);
+        });
 
         // Set service.
         enableService();
-        try {
-            // Set expectations.
-            sReplier.addResponse(new CannedFillResponse.CannedDataset.Builder().setField(
-                    "timePicker", value).setField("editText",
-                    AutofillValue.forText("filled")).setPresentation(
-                    createPresentation("dataset")).build());
-            MultipleTimesTimeListener timeWatcher = new MultipleTimesTimeListener("timePicker", 2,
-                    mTimePicker, 12, 32);
-            mTimePicker.setOnTimeChangedListener(timeWatcher);
 
-            int nonAutofilledHour = mTimePicker.getHour();
-            int nonAutofilledMinute = mTimePicker.getMinute();
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.CannedDataset.Builder()
+                .setField("timePicker", value)
+                .setField("editText", "filled")
+                .setPresentation(createPresentation("dataset"))
+                .build());
+        MultipleTimesTimeListener timeWatcher = new MultipleTimesTimeListener("timePicker", 2,
+                mTimePicker, 12, 32);
+        mTimePicker.setOnTimeChangedListener(timeWatcher);
 
-            // Trigger autofill.
-            startAutoFill(mEditText);
+        int nonAutofilledHour = mTimePicker.getHour();
+        int nonAutofilledMinute = mTimePicker.getMinute();
 
-            // Autofill it.
-            sUiBot.selectDataset("dataset");
+        // Trigger autofill.
+        startAutoFill(mEditText);
 
-            if (expectAutoFill) {
-                // Check the results.
-                timeWatcher.assertAutoFilled();
-            } else {
-                Helper.assertTimeValue(mTimePicker, nonAutofilledHour, nonAutofilledMinute);
-            }
-        } finally {
-            disableService();
+        // Autofill it.
+        sUiBot.selectDataset("dataset");
+
+        if (expectAutoFill) {
+            // Check the results.
+            timeWatcher.assertAutoFilled();
+        } else {
+            Helper.assertTimeValue(mTimePicker, nonAutofilledHour, nonAutofilledMinute);
         }
     }
 
@@ -455,8 +462,10 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
 
     @Test
     public void getTimePickerAutoFillValue() throws Exception {
-        mActivity.syncRunOnUiThread(() -> mTimePicker.setHour(12));
-        mActivity.syncRunOnUiThread(() -> mTimePicker.setMinute(32));
+        mActivity.syncRunOnUiThread(() -> {
+            mTimePicker.setHour(12);
+            mTimePicker.setMinute(32);
+        });
 
         Helper.assertTimeValue(mTimePicker, 12, 32);
 
@@ -471,37 +480,35 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
 
         // Set service.
         enableService();
-        try {
-            // Set expectations.
-            sReplier.addResponse(new CannedFillResponse.CannedDataset.Builder().setField(
-                    "radioGroup", value).setField("editText",
-                    AutofillValue.forText("filled")).setPresentation(
-                    createPresentation("dataset")).build());
-            MultipleTimesRadioGroupListener radioGroupWatcher = new MultipleTimesRadioGroupListener(
-                    "radioGroup", 2, mRadioGroup, expectedValue);
-            mRadioGroup.setOnCheckedChangeListener(radioGroupWatcher);
 
-            // Trigger autofill.
-            startAutoFill(mEditText);
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.CannedDataset.Builder()
+                .setField("radioGroup", value)
+                .setField("editText", "filled")
+                .setPresentation(createPresentation("dataset"))
+                .build());
+        MultipleTimesRadioGroupListener radioGroupWatcher = new MultipleTimesRadioGroupListener(
+                "radioGroup", 2, mRadioGroup, expectedValue);
+        mRadioGroup.setOnCheckedChangeListener(radioGroupWatcher);
 
-            // Autofill it.
-            sUiBot.selectDataset("dataset");
+        // Trigger autofill.
+        startAutoFill(mEditText);
 
-            if (expectAutoFill) {
-                // Check the results.
-                radioGroupWatcher.assertAutoFilled();
+        // Autofill it.
+        sUiBot.selectDataset("dataset");
+
+        if (expectAutoFill) {
+            // Check the results.
+            radioGroupWatcher.assertAutoFilled();
+        } else {
+            if (expectedValue == 0) {
+                assertThat(mRadioButton1.isChecked()).isEqualTo(true);
+                assertThat(mRadioButton2.isChecked()).isEqualTo(false);
             } else {
-                if (expectedValue == 0) {
-                    assertThat(mRadioButton1.isChecked()).isEqualTo(true);
-                    assertThat(mRadioButton2.isChecked()).isEqualTo(false);
-                } else {
-                    assertThat(mRadioButton1.isChecked()).isEqualTo(false);
-                    assertThat(mRadioButton2.isChecked()).isEqualTo(true);
+                assertThat(mRadioButton1.isChecked()).isEqualTo(false);
+                assertThat(mRadioButton2.isChecked()).isEqualTo(true);
 
-                }
             }
-        } finally {
-            disableService();
         }
     }
 
