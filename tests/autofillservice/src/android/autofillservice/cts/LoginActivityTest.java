@@ -166,8 +166,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         final FillRequest fillRequest = sReplier.getNextFillRequest();
         assertThat(fillRequest.flags).isEqualTo(FLAG_MANUAL_REQUEST);
 
-        // Should have been automatically filled.
-        sUiBot.assertNoDatasets();
+        // Selects the dataset.
+        sUiBot.selectDataset("The Dude");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -1972,7 +1972,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertThat(fillRequest.flags).isEqualTo(FLAG_MANUAL_REQUEST);
 
         // Should have been automatically filled.
-        sUiBot.assertNoDatasets();
+        sUiBot.selectDataset("The Dude");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -2053,8 +2053,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // ... but password didn't
         assertTextIsSanitized(fillRequest.structure, ID_PASSWORD);
 
-        // Should have been automatically filled.
-        sUiBot.assertNoDatasets();
+        // Selects the dataset.
+        sUiBot.selectDataset("The Dude");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -2113,8 +2113,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertValue(fillRequest2.structure, ID_USERNAME, "dude");
         assertTextIsSanitized(fillRequest2.structure, ID_PASSWORD);
 
-        // Should have been automatically filled.
-        sUiBot.assertNoDatasets();
+        // Select it.
+        sUiBot.selectDataset("THE DUDE");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -2145,8 +2145,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertValue(fillRequest1.structure, ID_USERNAME, "");
         assertTextIsSanitized(fillRequest1.structure, ID_PASSWORD);
 
-        // Should have been automatically filled.
-        sUiBot.assertNoDatasets();
+        // Select it.
+        sUiBot.selectDataset("The Dude");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -2173,8 +2173,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertValue(fillRequest2.structure, ID_USERNAME, "dude");
         assertTextIsSanitized(fillRequest2.structure, ID_PASSWORD);
 
-        // Should have been automatically filled.
-        sUiBot.assertNoDatasets();
+        // Select it.
+        sUiBot.selectDataset("THE DUDE");
 
         // Check the results.
         mActivity.assertAutoFilled();
