@@ -21,14 +21,14 @@ import android.platform.test.annotations.SecurityTest;
 public class Poc17_04 extends SecurityTestCase {
 
     /**
-     *  b/33842951
+     *  b/33544431
      */
     @SecurityTest
-    public void testPocCVE_2017_0577() throws Exception {
+    public void testPocCVE_2017_0576() throws Exception {
 	enableAdbRoot(getDevice());
-        if(containsDriver(getDevice(), "/dev/touch_fwu")) {
-            AdbUtils.runPoc("CVE-2017-0577", getDevice(), 60);
-	}
+        if(containsDriver(getDevice(), "/dev/qce")) {
+            AdbUtils.runPoc("CVE-2017-0576", getDevice(), 60);
+        }
     }
 
     /**
@@ -51,5 +51,27 @@ public class Poc17_04 extends SecurityTestCase {
         if(containsDriver(getDevice(), "/dev/seemplog")) {
             AdbUtils.runPoc("CVE-2017-0462", getDevice(), 60);
 	}
+    }
+
+    /**
+     *  b/33842951
+     */
+    @SecurityTest
+    public void testPocCVE_2017_0577() throws Exception {
+      enableAdbRoot(getDevice());
+        if(containsDriver(getDevice(), "/dev/touch_fwu")) {
+            AdbUtils.runPoc("CVE-2017-0577", getDevice(), 60);
+        }
+    }
+
+    /**
+     *  b/33966912
+     */
+    @SecurityTest
+    public void testPocCVE_2016_10231() throws Exception {
+	enableAdbRoot(getDevice());
+        if(containsDriver(getDevice(), "/dev/snd/controlC0")) {
+            AdbUtils.runPoc("CVE-2016-10231", getDevice(), 60);
+        }
     }
 }
