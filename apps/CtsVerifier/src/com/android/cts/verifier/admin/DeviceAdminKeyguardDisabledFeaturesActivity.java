@@ -60,10 +60,13 @@ public class DeviceAdminKeyguardDisabledFeaturesActivity extends KeyguardDisable
         if (hasTrustAgents()) {
             setupDisableTrustAgentsTest(adapter);
         }
-        adapter.add(new DialogTestListItem(this, R.string.device_admin_keyguard_disable_camera,
-                getTestIdPrefix()+"KeyguardDisableCamera",
-                R.string.device_admin_keyguard_disable_camera_instruction,
-                new Intent(ByodHelperActivity.ACTION_LOCKNOW)));
+
+        if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
+            adapter.add(new DialogTestListItem(this, R.string.device_admin_keyguard_disable_camera,
+                    getTestIdPrefix()+"KeyguardDisableCamera",
+                    R.string.device_admin_keyguard_disable_camera_instruction,
+                    new Intent(ByodHelperActivity.ACTION_LOCKNOW)));
+        }
 
         adapter.add(new DialogTestListItem(this, R.string.device_admin_disable_notifications,
                 "DeviceAdmin_DisableNotifications",
