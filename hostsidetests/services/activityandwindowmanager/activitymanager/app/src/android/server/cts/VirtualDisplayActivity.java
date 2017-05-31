@@ -24,6 +24,7 @@ import android.content.Intent;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.os.Bundle;
+import android.server.cts.tools.ActivityLauncher;
 import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
@@ -42,6 +43,7 @@ public class VirtualDisplayActivity extends Activity implements SurfaceHolder.Ca
     private static final String KEY_DENSITY_DPI = "density_dpi";
     private static final String KEY_PUBLIC_DISPLAY = "public_display";
     private static final String KEY_RESIZE_DISPLAY = "resize_display";
+    private static final String KEY_LAUNCH_TARGET_ACTIVITY = "launch_target_activity";
     private static final String KEY_COUNT = "count";
 
     private DisplayManager mDisplayManager;
@@ -155,6 +157,7 @@ public class VirtualDisplayActivity extends Activity implements SurfaceHolder.Ca
 
         final int densityDpi = entry.extras.getInt(KEY_DENSITY_DPI, DEFAULT_DENSITY_DPI);
         final boolean resizeDisplay = entry.extras.getBoolean(KEY_RESIZE_DISPLAY);
+        final String launchActivityName = entry.extras.getString(KEY_LAUNCH_TARGET_ACTIVITY);
         final Surface surface = surfaceHolder.getSurface();
 
         // Initially, the surface will not have a set width or height so rely on the parent.
@@ -178,6 +181,12 @@ public class VirtualDisplayActivity extends Activity implements SurfaceHolder.Ca
             mVirtualDisplays.put(surface,
                     new VirtualDisplayEntry(virtualDisplay, entry.surfaceView, densityDpi,
                             resizeDisplay));
+            if (launchActivityName != null) {
+                final int displayId = virtualDisplay.getDisplay().getDisplayId();
+                Log.d(TAG, "Launch activity after display created: activityName="
+                        + launchActivityName + ", displayId=" + displayId);
+                launchActivity(launchActivityName, displayId);
+            }
         } catch (IllegalArgumentException e) {
             final ViewGroup root = (ViewGroup) findViewById(android.R.id.content);
             // This is expected when trying to create show-when-locked public display.
@@ -205,5 +214,13 @@ public class VirtualDisplayActivity extends Activity implements SurfaceHolder.Ca
         final SurfaceHolder surfaceHolder = vd.surfaceView.getHolder();
         vd.display.resize(surfaceHolder.getSurfaceFrame().width() / 2,
                 surfaceHolder.getSurfaceFrame().height() / 2, vd.density);
+    }
+
+    private void launchActivity(String activityName, int displayId) {
+        final Bundle extras = new Bundle();
+        extras.putBoolean("launch_activity", true);
+        extras.putString("target_activity", activityName);
+        extras.putInt("display_id", displayId);
+        ActivityLauncher.launchActivityFromExtras(this, extras);
     }
 }
