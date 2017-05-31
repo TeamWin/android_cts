@@ -22,6 +22,8 @@ import android.media.MediaPlayer;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
 
+import com.android.cts.util.SecurityTest;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
@@ -40,44 +42,52 @@ public class EffectBundleTest extends InstrumentationTestCase {
     private static final int MEDIA_LONG = 1;
 
     //Testing security bug: 32436341
+    @SecurityTest
     public void testEqualizer_getParamCenterFreq() throws Exception {
         testGetParam(MEDIA_SHORT, Equalizer.PARAM_CENTER_FREQ, INVALID_BAND_ARRAY, mValue0,
                 mValue1);
     }
 
     //Testing security bug: 32588352
+    @SecurityTest
     public void testEqualizer_getParamCenterFreq_long() throws Exception {
         testGetParam(MEDIA_LONG, Equalizer.PARAM_CENTER_FREQ, INVALID_BAND_ARRAY, mValue0, mValue1);
     }
 
     //Testing security bug: 32438598
+    @SecurityTest
     public void testEqualizer_getParamBandLevel() throws Exception {
         testGetParam(MEDIA_SHORT, Equalizer.PARAM_BAND_LEVEL, INVALID_BAND_ARRAY, mValue0, mValue1);
     }
 
     //Testing security bug: 32584034
+    @SecurityTest
     public void testEqualizer_getParamBandLevel_long() throws Exception {
         testGetParam(MEDIA_LONG, Equalizer.PARAM_BAND_LEVEL, INVALID_BAND_ARRAY, mValue0, mValue1);
     }
 
     //Testing security bug: 32247948
+    @SecurityTest
     public void testEqualizer_getParamFreqRange() throws Exception {
         testGetParam(MEDIA_SHORT, Equalizer.PARAM_BAND_FREQ_RANGE, INVALID_BAND_ARRAY, mValue0,
                 mValue1);
     }
 
     //Testing security bug: 32588756
+    @SecurityTest
     public void testEqualizer_getParamFreqRange_long() throws Exception {
         testGetParam(MEDIA_LONG, Equalizer.PARAM_BAND_FREQ_RANGE, INVALID_BAND_ARRAY, mValue0,
                 mValue1);
     }
 
     //Testing security bug: 32448258
+    @SecurityTest
     public void testEqualizer_getParamPresetName() throws Exception {
         testParamPresetName(MEDIA_SHORT);
     }
 
     //Testing security bug: 32588016
+    @SecurityTest
     public void testEqualizer_getParamPresetName_long() throws Exception {
         testParamPresetName(MEDIA_LONG);
     }
@@ -115,6 +125,7 @@ public class EffectBundleTest extends InstrumentationTestCase {
     }
 
     //testing security bug: 32095626
+    @SecurityTest
     public void testEqualizer_setParamBandLevel() throws Exception {
         final int command = Equalizer.PARAM_BAND_LEVEL;
         short[] value = { 1000 };
@@ -127,6 +138,7 @@ public class EffectBundleTest extends InstrumentationTestCase {
     }
 
     //testing security bug: 32585400
+    @SecurityTest
     public void testEqualizer_setParamBandLevel_long() throws Exception {
         final int command = Equalizer.PARAM_BAND_LEVEL;
         short[] value = { 1000 };
@@ -139,12 +151,14 @@ public class EffectBundleTest extends InstrumentationTestCase {
     }
 
     //testing security bug: 32705438
+    @SecurityTest
     public void testEqualizer_getParamFreqRangeCommand_short() throws Exception {
         assertTrue("testEqualizer_getParamFreqRangeCommand_short did not complete successfully",
                 eqGetParamFreqRangeCommand(MEDIA_SHORT));
     }
 
     //testing security bug: 32703959
+    @SecurityTest
     public void testEqualizer_getParamFreqRangeCommand_long() throws Exception {
         assertTrue("testEqualizer_getParamFreqRangeCommand_long did not complete successfully",
                 eqGetParamFreqRangeCommand(MEDIA_LONG));
