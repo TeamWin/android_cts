@@ -18,18 +18,39 @@ package com.android.cts.deviceandprofileowner;
 
 public class ResetPasswordWithTokenTest extends BaseDeviceAdminTest {
 
-    private static final String TAG = "ResetPasswordWithTokenTest";
-
     private static final String PASSWORD = "1234";
 
     private static final byte[] TOKEN0 = "abcdefghijklmnopqrstuvwxyz0123456789".getBytes();
     private static final byte[] TOKEN1 = "abcdefghijklmnopqrstuvwxyz012345678*".getBytes();
 
     public void testResetPasswordWithToken() {
+        testResetPasswordWithToken(false);
+    }
+
+    public void testResetPasswordWithTokenMayFail() {
+        // If this test is executed on a device with password token disabled, allow the test to
+        // pass.
+        testResetPasswordWithToken(true);
+    }
+
+    private void testResetPasswordWithToken(boolean acceptFailure) {
         try {
             // set up a token
             assertFalse(mDevicePolicyManager.isResetPasswordTokenActive(ADMIN_RECEIVER_COMPONENT));
-            assertTrue(mDevicePolicyManager.setResetPasswordToken(ADMIN_RECEIVER_COMPONENT, TOKEN0));
+
+            try {
+                // On devices with password token disabled, calling this method will throw
+                // a security exception. If that's anticipated, then return early without failing.
+                assertTrue(mDevicePolicyManager.setResetPasswordToken(ADMIN_RECEIVER_COMPONENT,
+                        TOKEN0));
+            } catch (SecurityException e) {
+                if (acceptFailure &&
+                        e.getMessage().equals("Escrow token is disabled on the current user")) {
+                    return;
+                } else {
+                    throw e;
+                }
+            }
             assertTrue(mDevicePolicyManager.isResetPasswordTokenActive(ADMIN_RECEIVER_COMPONENT));
 
             // resetting password with wrong token should fail
