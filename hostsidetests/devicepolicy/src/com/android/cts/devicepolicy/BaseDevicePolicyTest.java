@@ -38,8 +38,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
 
@@ -228,11 +226,17 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         return 0;
     }
 
-    protected void stopUser(int userId) throws Exception  {
+    protected void stopUser(int userId) throws Exception {
+        // Wait for the broadcast queue to be idle first to workaround the stop-user timeout issue.
+        waitForBroadcastIdle();
         String stopUserCommand = "am stop-user -w -f " + userId;
         CLog.d("starting command \"" + stopUserCommand + "\" and waiting.");
         CLog.d("Output for command " + stopUserCommand + ": "
                 + getDevice().executeShellCommand(stopUserCommand));
+    }
+
+    private void waitForBroadcastIdle() throws Exception {
+        getDevice().executeShellCommand("am wait-for-broadcast-idle");
     }
 
     protected void removeUser(int userId) throws Exception  {
