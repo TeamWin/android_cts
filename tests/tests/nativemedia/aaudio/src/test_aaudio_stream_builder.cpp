@@ -63,7 +63,7 @@ static void runtest_aaudio_devices(int32_t deviceId, Expect expect) {
 }
 
 TEST(test_aaudio, aaudio_stream_device_unspecified) {
-    runtest_aaudio_devices(AAUDIO_DEVICE_UNSPECIFIED, Expect::NOT_CRASH);
+    runtest_aaudio_devices(AAUDIO_UNSPECIFIED, Expect::NOT_CRASH);
 }
 
 /* FIXME - why can we open this device? What is an illegal deviceId?

@@ -116,7 +116,7 @@ TEST_P(AAudioOutputStreamTest, testWriting) {
     if (!mSetupSuccesful) return;
 
     // TODO test this on full build
-    // ASSERT_NE(AAUDIO_DEVICE_UNSPECIFIED, AAudioStream_getDeviceId(aaudioStream));
+    // ASSERT_NE(AAUDIO_UNSPECIFIED, AAudioStream_getDeviceId(aaudioStream));
 
     // Prime the buffer.
     int32_t framesWritten = 0;
