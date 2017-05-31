@@ -55,6 +55,8 @@ public class StorageHostTest extends CompatibilityHostTestBase {
             getDevice().executeShellCommand("appops set --user " + user + " " + PKG_STATS
                     + " android:get_usage_stats allow");
         }
+
+        waitForIdle();
     }
 
     @After
@@ -155,8 +157,6 @@ public class StorageHostTest extends CompatibilityHostTestBase {
         getDevice().executeShellCommand("settings put global sys_storage_cache_max_bytes 0");
         try {
             for (int user : mUsers) {
-                waitForIdle();
-
                 // Clear all other cached data to give ourselves a clean slate
                 getDevice().executeShellCommand("pm trim-caches 4096G");
                 runDeviceTests(PKG_STATS, CLASS_STATS, "testCacheClearing", user);
@@ -172,8 +172,6 @@ public class StorageHostTest extends CompatibilityHostTestBase {
 
     @Test
     public void testFullDisk() throws Exception {
-        waitForIdle();
-
         // Clear all other cached and external storage data to give ourselves a
         // clean slate to test against
         getDevice().executeShellCommand("pm trim-caches 4096G");
@@ -223,9 +221,9 @@ public class StorageHostTest extends CompatibilityHostTestBase {
 
     public void waitForIdle() throws Exception {
         // Try getting all pending events flushed out
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 4; i++) {
             getDevice().executeShellCommand("am wait-for-broadcast-idle");
-            Thread.sleep(1000);
+            Thread.sleep(500);
         }
     }
 
