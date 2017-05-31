@@ -170,7 +170,7 @@ public class TypedArrayTest extends AndroidTestCase {
         }
 
         final Typeface font = t.getFont(R.styleable.style1_type18);
-        assertEquals(mContext.getResources().getFont(R.font.samplefont), font);
+        assertEquals(mContext.getResources().getFont(R.font.sample_regular_font), font);
 
         // NOTE: order does not matter here.
         // R.styleable.style1_typeUndefined is not expected because TYPE_NULL values do not get
