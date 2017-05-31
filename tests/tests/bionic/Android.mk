@@ -45,9 +45,11 @@ LOCAL_CTS_TEST_PACKAGE := android.bionic
 
 cts_bionic_tests_2nd_arch_prefix :=
 include $(LOCAL_PATH)/Android.build.copy.libs.mk
-ifneq ($(TARGET_2ND_ARCH),)
-  cts_bionic_tests_2nd_arch_prefix := $(TARGET_2ND_ARCH_VAR_PREFIX)
-  include $(LOCAL_PATH)/Android.build.copy.libs.mk
+ifneq ($(TARGET_TRANSLATE_2ND_ARCH),true)
+  ifneq ($(TARGET_2ND_ARCH),)
+    cts_bionic_tests_2nd_arch_prefix := $(TARGET_2ND_ARCH_VAR_PREFIX)
+    include $(LOCAL_PATH)/Android.build.copy.libs.mk
+  endif
 endif
 
 include $(BUILD_CTS_EXECUTABLE)
