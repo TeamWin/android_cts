@@ -24,6 +24,7 @@ import com.android.tradefed.testtype.IDeviceTest;
 import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.IRuntimeHintProvider;
 import com.android.tradefed.testtype.ITestCollector;
+import com.android.tradefed.testtype.suite.ModuleDefinition;
 
 import java.util.List;
 import java.util.Set;
@@ -35,8 +36,10 @@ public interface IModuleDef extends Comparable<IModuleDef>, IBuildReceiver, IDev
         IRemoteTest, IRuntimeHintProvider, ITestCollector {
 
     /** key names used for saving module info into {@link IInvocationContext} */
-    public static String MODULE_NAME = "module-name";
-    public static String MODULE_ABI = "module-abi";
+    // This currently references ModuleDefinition so that there's only once source for String
+    // literals and making it easier to converge IModuleDef and ModuleDefinition later
+    public static String MODULE_NAME = ModuleDefinition.MODULE_NAME;
+    public static String MODULE_ABI = ModuleDefinition.MODULE_ABI;
 
     /**
      * @return The name of this module.
