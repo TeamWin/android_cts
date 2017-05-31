@@ -95,10 +95,13 @@ public class StorageStatsTest extends InstrumentationTestCase {
     public void testVerifySummary() throws Exception {
         final StorageStatsManager stats = getContext().getSystemService(StorageStatsManager.class);
 
-        assertAtLeast(Environment.getDataDirectory().getTotalSpace(),
-                stats.getTotalBytes(UUID_DEFAULT));
-        assertAtLeast(Environment.getDataDirectory().getUsableSpace(),
-                stats.getFreeBytes(UUID_DEFAULT));
+        final long actualTotal = stats.getTotalBytes(UUID_DEFAULT);
+        final long expectedTotal = Environment.getDataDirectory().getTotalSpace();
+        assertAtLeast(expectedTotal, actualTotal);
+
+        final long actualFree = stats.getFreeBytes(UUID_DEFAULT);
+        final long expectedFree = Environment.getDataDirectory().getUsableSpace();
+        assertAtLeast(expectedFree, actualFree);
     }
 
     public void testVerifyStats() throws Exception {
