@@ -25,7 +25,7 @@ LOCAL_JNI_SHARED_LIBRARIES := libnativecursorwindow_jni libnativehelper_compat_l
 
 LOCAL_JAVA_LIBRARIES := android.test.runner
 
-LOCAL_STATIC_JAVA_LIBRARIES := ctsdeviceutil ctstestrunner services.core
+LOCAL_STATIC_JAVA_LIBRARIES := ctsdeviceutil ctstestrunner services.core guava ctstestserver
 
 # Resource unit tests use a private locale and some densities
 LOCAL_AAPT_FLAGS = -c xx_YY -c cs -c small -c normal -c large -c xlarge \

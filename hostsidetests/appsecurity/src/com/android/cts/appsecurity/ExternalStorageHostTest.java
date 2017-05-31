@@ -25,6 +25,7 @@ import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IAbiReceiver;
 import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.cts.util.SecurityTest;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -186,6 +187,7 @@ public class ExternalStorageHostTest extends DeviceTestCase
      * Test multi-user emulated storage environment, ensuring that each user has
      * isolated storage.
      */
+    @SecurityTest
     public void testMultiUserStorageIsolated() throws Exception {
         final int[] users = createUsersForTest();
         try {
