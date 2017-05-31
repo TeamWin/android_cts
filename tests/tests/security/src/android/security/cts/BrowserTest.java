@@ -21,6 +21,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.StrictMode;
+import android.platform.test.annotations.SecurityTest;
 import android.test.AndroidTestCase;
 import android.webkit.cts.CtsTestServer;
 
@@ -69,6 +70,7 @@ public class BrowserTest extends AndroidTestCase {
      * See commits  096bae248453abe83cbb2e5a2c744bd62cdb620b and
      * afa4ab1e4c1d645e34bd408ce04cadfd2e5dae1e for patches for above vulnerability.
      */
+    @SecurityTest
     public void testTabReuse() throws InterruptedException {
         List<Intent> intents = getAllJavascriptIntents();
         for (Intent i : intents) {
@@ -107,6 +109,7 @@ public class BrowserTest extends AndroidTestCase {
      * See commits  096bae248453abe83cbb2e5a2c744bd62cdb620b and
      * afa4ab1e4c1d645e34bd408ce04cadfd2e5dae1e for patches for above vulnerability.
      */
+    @SecurityTest
     public void testTabExhaustion() throws InterruptedException {
         List<Intent> intents = getAllJavascriptIntents();
         for (Intent i : intents) {
@@ -136,6 +139,7 @@ public class BrowserTest extends AndroidTestCase {
     /**
      * See Bug 6212665 for detailed information about this issue.
      */
+    @SecurityTest
     public void testBrowserPrivateDataAccess() throws Throwable {
         // Yucky workaround to let us launch file:// Uris
         StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder().build());

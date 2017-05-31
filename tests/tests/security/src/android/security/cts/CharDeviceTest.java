@@ -16,6 +16,8 @@
 
 package android.security.cts;
 
+import android.platform.test.annotations.SecurityTest;
+
 import junit.framework.TestCase;
 
 public class CharDeviceTest extends TestCase {
@@ -29,6 +31,7 @@ public class CharDeviceTest extends TestCase {
      *
      * Reference: http://forum.xda-developers.com/showthread.php?t=2048511
      */
+    @SecurityTest
     public void testExynosRootingVuln() throws Exception {
         assertTrue(doExynosWriteTest());
     }
@@ -38,6 +41,7 @@ public class CharDeviceTest extends TestCase {
      *
      * Reference: http://forum.xda-developers.com/showthread.php?t=2048511
      */
+    @SecurityTest
     public void testExynosKernelMemoryRead() throws Exception {
         assertTrue(doExynosReadTest());
     }
