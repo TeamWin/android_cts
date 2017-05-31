@@ -253,9 +253,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         assertTextIsSanitized(fillRequest1.structure, ID_L1C2);
 
         // Auto-fill it.
-        if (!manually) {
-            sUiBot.selectDataset("Partition 1");
-        }
+        sUiBot.selectDataset("Partition 1");
 
         // Check the results.
         expectation1.assertAutoFilled();
@@ -289,9 +287,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         assertTextIsSanitized(fillRequest2.structure, ID_L2C2);
 
         // Auto-fill it.
-        if (!manually) {
-            sUiBot.selectDataset("Partition 2");
-        }
+        sUiBot.selectDataset("Partition 2");
 
         // Check the results.
         expectation2.assertAutoFilled();
@@ -327,9 +323,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         assertTextIsSanitized(fillRequest3.structure, ID_L3C2);
 
         // Auto-fill it.
-        if (!manually) {
-            sUiBot.selectDataset("Partition 3");
-        }
+        sUiBot.selectDataset("Partition 3");
 
         // Check the results.
         expectation3.assertAutoFilled();
@@ -367,9 +361,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         assertTextIsSanitized(fillRequest4.structure, ID_L4C2);
 
         // Auto-fill it.
-        if (!manually) {
-            sUiBot.selectDataset("Partition 4");
-        }
+        sUiBot.selectDataset("Partition 4");
 
         // Check the results.
         expectation4.assertAutoFilled();
@@ -409,8 +401,10 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         expectation1.assertAutoFilled();
 
         // 2nd partition - manual
-        // Prepare.
-        mActivity.setText(2, 1, "L2.."); // Must set before creating expectation.
+        // Prepare
+        // Must set text before creating expectation, and it must be a subset of the dataset values,
+        // otherwise the UI won't be shown because of filtering
+        mActivity.setText(2, 1, "l2");
         final CannedFillResponse response2 = new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                         .setPresentation(createPresentation("Partition 2"))
@@ -430,8 +424,11 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
 
         assertValue(fillRequest2.structure, ID_L1C1, "l1c1");
         assertValue(fillRequest2.structure, ID_L1C2, "l1c2");
-        assertValue(fillRequest2.structure, ID_L2C1, "L2..");
+        assertValue(fillRequest2.structure, ID_L2C1, "l2");
         assertTextIsSanitized(fillRequest2.structure, ID_L2C2);
+
+        // Auto-fill it.
+        sUiBot.selectDataset("Partition 2");
 
         // Check the results.
         expectation2.assertAutoFilled();
@@ -469,8 +466,9 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         expectation3.assertAutoFilled();
 
         // 4th partition - manual
-        // Prepare.
-        mActivity.setText(4, 1, "L4.."); // Must set before creating expectation.
+        // Must set text before creating expectation, and it must be a subset of the dataset values,
+        // otherwise the UI won't be shown because of filtering
+        mActivity.setText(4, 1, "l4");
         final CannedFillResponse response4 = new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                         .setPresentation(createPresentation("Partition 4"))
@@ -494,8 +492,11 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         assertValue(fillRequest4.structure, ID_L2C2, "l2c2");
         assertValue(fillRequest4.structure, ID_L3C1, "l3c1");
         assertValue(fillRequest4.structure, ID_L3C2, "l3c2");
-        assertValue(fillRequest4.structure, ID_L4C1, "L4..");
+        assertValue(fillRequest4.structure, ID_L4C1, "l4");
         assertTextIsSanitized(fillRequest4.structure, ID_L4C2);
+
+        // Auto-fill it.
+        sUiBot.selectDataset("Partition 4");
 
         // Check the results.
         expectation4.assertAutoFilled();

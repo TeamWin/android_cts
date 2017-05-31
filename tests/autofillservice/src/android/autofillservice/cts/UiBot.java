@@ -137,7 +137,7 @@ final class UiBot {
      * Selects a dataset that should be visible in the floating UI.
      */
     void selectDataset(String name) {
-        final UiObject2 picker = findDatasetPicker();
+        final UiObject2 picker = assertDatasets(name);
         selectDataset(picker, name);
     }
 
