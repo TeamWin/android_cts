@@ -29,7 +29,7 @@ LOCAL_PACKAGE_NAME := CtsUiDeviceTestCases
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts general-tests
 
-LOCAL_SDK_VERSION := 16
+LOCAL_SDK_VERSION := current
 
 include $(BUILD_CTS_PACKAGE)
 
