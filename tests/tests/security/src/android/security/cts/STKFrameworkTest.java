@@ -18,6 +18,7 @@ package android.security.cts;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.platform.test.annotations.SecurityTest;
 import android.test.AndroidTestCase;
 
 public class STKFrameworkTest extends AndroidTestCase {
@@ -39,6 +40,7 @@ public class STKFrameworkTest extends AndroidTestCase {
      * Verifies commands Intercepting which has been sent from SIM card to Telephony using
      * zero-permission malicious application
      */
+    @SecurityTest
     public void testInterceptedSIMCommandsToTelephony() {
         if (!mHasTelephony) {
             return;

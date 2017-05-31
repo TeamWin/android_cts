@@ -23,11 +23,12 @@ import android.graphics.Movie;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
+import android.platform.test.annotations.SecurityTest;
 import android.test.AndroidTestCase;
+import android.security.cts.R;
 
 import java.io.InputStream;
 
-import android.security.cts.R;
 
 public class Movie33897722 extends AndroidTestCase {
     /**
@@ -37,6 +38,7 @@ public class Movie33897722 extends AndroidTestCase {
      * larger than 2. Ensure that we do not attempt to read colors from beyond the end of the
      * color map, which would be reading memory that we do not control, and may be uninitialized.
      */
+    @SecurityTest
     public void test_android_bug_33897722() {
         InputStream exploitImage = mContext.getResources().openRawResource(R.raw.bug_33897722);
         Movie movie = Movie.decodeStream(exploitImage);

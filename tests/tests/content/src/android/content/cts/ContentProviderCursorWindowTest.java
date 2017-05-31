@@ -19,6 +19,7 @@ package android.content.cts;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteException;
 import android.net.Uri;
+import android.platform.test.annotations.SecurityTest;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
