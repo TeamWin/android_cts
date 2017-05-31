@@ -154,7 +154,7 @@ TEST_P(AAudioInputStreamCallbackTest, testRecording) {
     if (!mSetupSuccesful) return;
 
     // TODO Why does getDeviceId() always return 0?
-    // EXPECT_NE(AAUDIO_DEVICE_UNSPECIFIED, AAudioStream_getDeviceId(stream));
+    // EXPECT_NE(AAUDIO_UNSPECIFIED, AAudioStream_getDeviceId(stream));
 
     const int32_t framesPerDataCallback = std::get<1>(GetParam());
     const int32_t actualFramesPerDataCallback = AAudioStream_getFramesPerDataCallback(stream());
@@ -242,7 +242,7 @@ TEST_P(AAudioOutputStreamCallbackTest, testPlayback) {
     ASSERT_TRUE(mSetupSuccesful);
 
     // TODO Why does getDeviceId() always return 0?
-    // EXPECT_NE(AAUDIO_DEVICE_UNSPECIFIED, AAudioStream_getDeviceId(stream));
+    // EXPECT_NE(AAUDIO_UNSPECIFIED, AAudioStream_getDeviceId(stream));
 
     const int32_t framesPerDataCallback = std::get<1>(GetParam());
     const int32_t actualFramesPerDataCallback = AAudioStream_getFramesPerDataCallback(stream());

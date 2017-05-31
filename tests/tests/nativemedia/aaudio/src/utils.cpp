@@ -63,7 +63,7 @@ void StreamBuilderHelper::initBuilder() {
     ASSERT_TRUE(mBuilder != nullptr);
 
     // Request stream properties.
-    AAudioStreamBuilder_setDeviceId(mBuilder, AAUDIO_DEVICE_UNSPECIFIED);
+    AAudioStreamBuilder_setDeviceId(mBuilder, AAUDIO_UNSPECIFIED);
     AAudioStreamBuilder_setDirection(mBuilder, mDirection);
     AAudioStreamBuilder_setSampleRate(mBuilder, mRequested.sampleRate);
     AAudioStreamBuilder_setSamplesPerFrame(mBuilder, mRequested.samplesPerFrame);
