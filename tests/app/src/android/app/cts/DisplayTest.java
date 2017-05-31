@@ -62,12 +62,15 @@ public class DisplayTest extends ActivityInstrumentationTestCase2<DisplayTestAct
         // Get a {@link Display} instance after rotation.
         final Display updatedDisplay = mActivity.getDisplay();
 
-        // Ensure that the width and height of the original instance no longer are the same. Note
-        // that this will be false if the device width and height are identical.
-        assertFalse("width from original display instance should have changed",
-                origWidth == origDisplay.getWidth());
-        assertFalse("height from original display instance should have changed",
-                origHeight == origDisplay.getHeight());
+        // For square sreens the following assertions do not make sense and will always fail.
+        if (origWidth != origHeight) {
+            // Ensure that the width and height of the original instance no longer are the same. Note
+            // that this will be false if the device width and height are identical.
+            assertFalse("width from original display instance should have changed",
+                    origWidth == origDisplay.getWidth());
+            assertFalse("height from original display instance should have changed",
+                    origHeight == origDisplay.getHeight());
+        }
 
         // Ensure that the width and height of the original instance have been updated to match the
         // values that would be found in a new instance.
