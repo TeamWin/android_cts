@@ -29,6 +29,8 @@ import android.os.Environment;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
+import com.android.cts.util.SecurityTest;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 
@@ -146,6 +148,7 @@ public class MultiUserStorageTest extends AndroidTestCase {
     /**
      * Verify that files cannot be accessed through media provider.
      */
+    @SecurityTest
     public void testMediaProviderUserIsolation() throws Exception {
         final File myPath = Environment.getExternalStorageDirectory();
         final int myId = android.os.Process.myUid() / 100000;

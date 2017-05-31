@@ -23,6 +23,8 @@ import android.support.test.runner.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import com.android.cts.util.SecurityTest;
+
 import static org.junit.Assert.assertSame;
 
 import com.android.cts.escalate.permission.Manifest;
@@ -30,6 +32,7 @@ import com.android.cts.escalate.permission.Manifest;
 @RunWith(AndroidJUnit4.class)
 public class PermissionEscalationTest {
     @Test
+    @SecurityTest
     public void testCannotEscalateNonRuntimePermissionsToRuntime() throws Exception {
         Context context = InstrumentationRegistry.getTargetContext();
 
