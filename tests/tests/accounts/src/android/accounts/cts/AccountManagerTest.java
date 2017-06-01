@@ -840,6 +840,12 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
         visibilities = am.getAccountsAndVisibilityForPackage(PACKAGE_NAME_1, ACCOUNT_TYPE);
         assertEquals((int) visibilities.get(ACCOUNT), AccountManager.VISIBILITY_VISIBLE);
         assertEquals(am.getAccountsByTypeForPackage(ACCOUNT_TYPE, PACKAGE_NAME_1).length, 2);
+
+        // VISIBILITY_USER MANAGED_NOT_VISIBLE accounts are not returned when type is null.
+        // It should be equivalent to callling am.getAccounts() which doesn't return
+        // VISIBILITY_USER MANAGED_NOT_VISIBLE accounts.
+        assertEquals(am.getAccountsByTypeForPackage(null, PACKAGE_NAME_1).length,
+            am.getAccounts().length);
     }
 
     /**
