@@ -56,15 +56,6 @@ public class RestoreAnyVersionTest {
     private static final int NEW_VERSION = 200;
 
     private Context mContext;
-    private CountDownLatch mLatch;
-
-    private final BroadcastReceiver mSharedPrefencesReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Log.i(TAG, "received broadcast");
-            mLatch.countDown();
-        }
-    };
 
     @Before
     public void setUp() {
