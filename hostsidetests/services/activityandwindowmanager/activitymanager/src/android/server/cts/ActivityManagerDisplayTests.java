@@ -56,7 +56,6 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
     private static final String THIRD_PACKAGE_NAME = "android.server.cts.third";
     private static final int INVALID_DENSITY_DPI = -1;
     private static final int CUSTOM_DENSITY_DPI = 222;
-    private static final int SIZE_VALUE_SHIFT = 50;
     private static final int VR_VIRTUAL_DISPLAY_WIDTH = 70;
     private static final int VR_VIRTUAL_DISPLAY_HEIGHT = 90;
     private static final int VR_VIRTUAL_DISPLAY_DPI = 320;
@@ -1235,6 +1234,16 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
                 initialSizes, testActivitySizes);
     }
 
+    private void rotateAndCheckSameSizes(String activityName) throws Exception {
+        for (int rotation = 3; rotation >= 0; --rotation) {
+            final String logSeparator = clearLogcat();
+            setDeviceRotation(rotation);
+            final ReportedSizes rotatedSizes = getLastReportedSizesForActivity(activityName,
+                    logSeparator);
+            assertNull("Sizes must not change after rotation", rotatedSizes);
+        }
+    }
+
     /**
      * Tests that task affinity does affect what display an activity is launched on but that
      * matching the task component root does.
@@ -1336,16 +1345,6 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
                 2, secondFrontStack.getTasks().size());
     }
 
-    private void rotateAndCheckSameSizes(String activityName) throws Exception {
-        for (int rotation = 3; rotation >= 0; --rotation) {
-            final String logSeparator = clearLogcat();
-            setDeviceRotation(rotation);
-            final ReportedSizes rotatedSizes = getLastReportedSizesForActivity(activityName,
-                    logSeparator);
-            assertNull("Sizes must not change after rotation", rotatedSizes);
-        }
-    }
-
     /**
      * Test that display overrides apply correctly and won't be affected by display changes.
      * This sets overrides to display size and density, initiates a display changed event by locking
@@ -1384,6 +1383,28 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         assertEquals(overrideDensity, displayMetrics.overrideDensity);
 
         // All overrides will be cleared in tearDown.
+    }
+
+    /**
+     * Tests than an immediate launch after new display creation is handled correctly.
+     */
+    public void testImmediateLaunchOnNewDisplay() throws Exception {
+        if (!supportsMultiDisplay()) { return; }
+
+        // Create new virtual display and immediately launch an activity on it.
+        final DisplayState newDisplay = new VirtualDisplayBuilder(this)
+                .setLaunchActivity(TEST_ACTIVITY_NAME).build();
+
+        // Check that activity is launched and placed correctly.
+        mAmWmState.waitForActivityState(mDevice, TEST_ACTIVITY_NAME, STATE_RESUMED);
+        mAmWmState.assertResumedActivity("Test activity must be launched on a new display",
+                TEST_ACTIVITY_NAME);
+        final int frontStackId = mAmWmState.getAmState().getFrontStackId(newDisplay.mDisplayId);
+        final ActivityManagerState.ActivityStack firstFrontStack =
+                mAmWmState.getAmState().getStackById(frontStackId);
+        assertEquals("Activity launched on secondary display must be resumed",
+                getActivityComponentName(TEST_ACTIVITY_NAME), firstFrontStack.mResumedActivity);
+        mAmWmState.assertFocusedStack("Focus must be on secondary display", frontStackId);
     }
 
     /** Get physical and override display metrics from WM. */
@@ -1525,13 +1546,13 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * @param launchInSplitScreen start {@link VirtualDisplayActivity} to side from
      *                            {@link LaunchingActivity} on primary display.
      * @param publicDisplay make display public.
-     * @param mustBeCreated should assert if the display was or wasn't created.
      * @param resizeDisplay should resize display when surface size changes.
+     * @param launchActivity should launch test activity immediately after display creation.
      * @return {@link DisplayState} of newly created display.
      * @throws Exception
      */
     private List<DisplayState> createVirtualDisplays(int densityDpi, boolean launchInSplitScreen,
-            boolean publicDisplay, boolean mustBeCreated, boolean resizeDisplay, int displayCount)
+            boolean publicDisplay, boolean resizeDisplay, String launchActivity, int displayCount)
             throws Exception {
         // Start an activity that is able to create virtual displays.
         if (launchInSplitScreen) {
@@ -1547,20 +1568,14 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
 
         // Create virtual display with custom density dpi.
         executeShellCommand(getCreateVirtualDisplayCommand(densityDpi, publicDisplay, resizeDisplay,
-                displayCount));
+                launchActivity, displayCount));
         mVirtualDisplayCreated = true;
 
         // Wait for the virtual display to be created and get configurations.
         final ReportedDisplays ds =
                 getDisplayStateAfterChange(originalDisplayCount + displayCount);
-        if (mustBeCreated) {
-            assertEquals("New virtual display must be created",
-                    originalDisplayCount + displayCount, ds.mDisplayStates.size());
-        } else {
-            assertEquals("New virtual display must not be created",
-                    originalDisplayCount, ds.mDisplayStates.size());
-            return null;
-        }
+        assertEquals("New virtual display must be created",
+                originalDisplayCount + displayCount, ds.mDisplayStates.size());
 
         // Find the newly added display.
         final List<DisplayState> newDisplays = findNewDisplayStates(originalDS, ds);
@@ -1749,8 +1764,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         private int mDensityDpi = CUSTOM_DENSITY_DPI;
         private boolean mLaunchInSplitScreen = false;
         private boolean mPublicDisplay = false;
-        private boolean mMustBeCreated = true;
         private boolean mResizeDisplay = true;
+        private String mLaunchActivity = null;
 
         public VirtualDisplayBuilder(ActivityManagerDisplayTests tests) {
             mTests = tests;
@@ -1771,15 +1786,16 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
             return this;
         }
 
-        public VirtualDisplayBuilder setMustBeCreated(boolean mustBeCreated) {
-            mMustBeCreated = mustBeCreated;
-            return this;
-        }
-
         public VirtualDisplayBuilder setResizeDisplay(boolean resizeDisplay) {
             mResizeDisplay = resizeDisplay;
             return this;
         }
+
+        public VirtualDisplayBuilder setLaunchActivity(String launchActivity) {
+            mLaunchActivity = launchActivity;
+            return this;
+        }
+
         public DisplayState build() throws Exception {
             final List<DisplayState> displays = build(1);
             return displays != null && !displays.isEmpty() ? displays.get(0) : null;
@@ -1787,12 +1803,12 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
 
         public List<DisplayState> build(int count) throws Exception {
             return mTests.createVirtualDisplays(mDensityDpi, mLaunchInSplitScreen, mPublicDisplay,
-                    mMustBeCreated, mResizeDisplay, count);
+                    mResizeDisplay, mLaunchActivity, count);
         }
     }
 
     private static String getCreateVirtualDisplayCommand(int densityDpi, boolean publicDisplay,
-            boolean resizeDisplay, int displayCount) {
+            boolean resizeDisplay, String launchActivity, int displayCount) {
         final StringBuilder commandBuilder
                 = new StringBuilder(getAmStartCmd(VIRTUAL_DISPLAY_ACTIVITY));
         commandBuilder.append(" -f 0x20000000");
@@ -1803,6 +1819,9 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         commandBuilder.append(" --ei count ").append(displayCount);
         commandBuilder.append(" --ez public_display ").append(publicDisplay);
         commandBuilder.append(" --ez resize_display ").append(resizeDisplay);
+        if (launchActivity != null) {
+            commandBuilder.append(" --es launch_target_activity ").append(launchActivity);
+        }
         return commandBuilder.toString();
     }
 
