@@ -110,6 +110,7 @@ public class MainInteractionSession extends VoiceInteractionSession {
         mDisplayHeight = args.getInt(Utils.DISPLAY_HEIGHT_KEY);
         mDisplayWidth = args.getInt(Utils.DISPLAY_WIDTH_KEY);
         super.onShow(args, showFlags);
+        if (mContentView == null) return; // Happens when ui is not enabled.
         mContentView.getViewTreeObserver().addOnPreDrawListener(
                 new ViewTreeObserver.OnPreDrawListener() {
                 @Override
@@ -218,6 +219,7 @@ public class MainInteractionSession extends VoiceInteractionSession {
             Log.wtf(TAG, "layout inflater was null");
         }
         mContentView = f.inflate(R.layout.assist_layer,null);
+        Log.i(TAG, "onCreateContentView");
         return mContentView;
     }
 }
