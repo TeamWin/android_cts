@@ -75,19 +75,9 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
         // There must be at least some events, e.g. PackageManager logs all process launches.
         assertTrue("Unable to get events", events != null && events.size() > 0);
 
-        // We don't know much about the events, so just call public API methods and do a simple
-        // sanity check of timestamps.
-
-        // Check that timestamps are between system start and current time.
-        long systemStartedNanos = TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis())
-                - SystemClock.elapsedRealtimeNanos();
-        long nowNanos = TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis() + 1);
-
+        // We don't know much about the events, so just call public API methods.
         for (int i = 0; i < events.size(); i++) {
             SecurityEvent event = events.get(i);
-            long currentTimestampNanos = event.getTimeNanos();
-            assertTrue("Logged event predates boot", currentTimestampNanos >= systemStartedNanos);
-            assertTrue("Last logged event is in future", currentTimestampNanos <= nowNanos);
 
             // Test parcelling: flatten to a parcel.
             Parcel p = Parcel.obtain();
