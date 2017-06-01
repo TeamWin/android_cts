@@ -435,7 +435,7 @@ public class NdefTest extends TestCase {
         NdefRecord r;
 
         // single short record
-        assertEquals(new byte[] {(byte)0xD0, 0, 0},
+        assertEquals(new byte[] {(byte)0xD8, 0, 0, 0},
                 new NdefMessage(
                         new NdefRecord(NdefRecord.TNF_EMPTY, null, null, null)).toByteArray());
 
@@ -456,7 +456,7 @@ public class NdefTest extends TestCase {
 
         // 3 records
         r = new NdefRecord(NdefRecord.TNF_EMPTY, null, null, null);
-        assertEquals(new byte[] {(byte)0x90, 0, 0, (byte)0x10, 0, 0, (byte)0x50, 0, 0},
+        assertEquals(new byte[] {(byte)0x98, 0, 0, 0, (byte)0x18, 0, 0, 0, (byte)0x58, 0, 0, 0},
                 new NdefMessage(r, r, r).toByteArray());
 
         // 256 byte payload
