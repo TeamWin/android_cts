@@ -20,6 +20,8 @@ import android.app.Instrumentation;
 import android.content.ContentProviderClient;
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Context;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
@@ -29,6 +31,7 @@ import android.provider.VoicemailContract.Status;
 import android.provider.VoicemailContract.Voicemails;
 import android.test.InstrumentationTestCase;
 import android.text.TextUtils;
+import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -40,6 +43,9 @@ import java.nio.charset.StandardCharsets;
  * CTS tests for voicemail provider accessed through {@link VoicemailContract}.
  */
 public class VoicemailContractTest extends InstrumentationTestCase {
+
+    private static final String TAG = "VoicemailContractTest";
+
     private ContentResolver mContentResolver;
     private ContentProviderClient mVoicemailProvider;
     private ContentProviderClient mStatusProvider;
@@ -207,6 +213,10 @@ public class VoicemailContractTest extends InstrumentationTestCase {
     }
 
     public void testForeignUpdate_dirty() throws Exception {
+        if(!hasTelephony(getInstrumentation().getContext())){
+            Log.d(TAG, "skipping test that requires telephony feature");
+            return;
+        }
         // only the default dialer has WRITE_VOICEMAIL permission, which can modify voicemails of
         // a foreign source package.
         setTestAsDefaultDialer();
@@ -225,6 +235,10 @@ public class VoicemailContractTest extends InstrumentationTestCase {
     }
 
     public void testForeignUpdate_explicitNotDirty() throws Exception {
+        if(!hasTelephony(getInstrumentation().getContext())){
+            Log.d(TAG, "skipping test that requires telephony feature");
+            return;
+        }
         setTestAsDefaultDialer();
         ContentValues values = new ContentValues();
         values.put(Voicemails.SOURCE_PACKAGE, FOREIGN_SOURCE);
@@ -243,6 +257,10 @@ public class VoicemailContractTest extends InstrumentationTestCase {
     }
 
     public void testForeignUpdate_null_dirty() throws Exception {
+        if(!hasTelephony(getInstrumentation().getContext())){
+            Log.d(TAG, "skipping test that requires telephony feature");
+            return;
+        }
         setTestAsDefaultDialer();
         ContentValues values = new ContentValues();
         values.put(Voicemails.SOURCE_PACKAGE, FOREIGN_SOURCE);
@@ -261,6 +279,10 @@ public class VoicemailContractTest extends InstrumentationTestCase {
     }
 
     public void testForeignUpdate_NotNormalized_normalized() throws Exception {
+        if(!hasTelephony(getInstrumentation().getContext())){
+            Log.d(TAG, "skipping test that requires telephony feature");
+            return;
+        }
         setTestAsDefaultDialer();
         ContentValues values = new ContentValues();
         values.put(Voicemails.SOURCE_PACKAGE, FOREIGN_SOURCE);
@@ -464,6 +486,12 @@ public class VoicemailContractTest extends InstrumentationTestCase {
         } catch (SecurityException e) {
             // Expected result.
         }
+    }
+
+    private static boolean hasTelephony(Context context) {
+        final PackageManager packageManager = context.getPackageManager();
+        return packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY) &&
+                packageManager.hasSystemFeature(PackageManager.FEATURE_CONNECTION_SERVICE);
     }
 
     private void setTestAsDefaultDialer() throws Exception{
