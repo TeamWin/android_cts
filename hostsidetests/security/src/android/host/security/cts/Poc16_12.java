@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-package android.security.cts;
+//package android.security.cts;
+package android.host.security.cts;
 
+import com.android.cts.util.SecurityTest;
 import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
@@ -33,6 +35,7 @@ public class Poc16_12 extends SecurityTestCase {
     /**
      *  b/32225180
      */
+    @SecurityTest
     public void testPocCVE_2016_8430() throws Exception {
         if(containsDriver(getDevice(), "/dev/nvhost-vic")) {
             AdbUtils.runPoc("CVE-2016-8430", getDevice(), 60);
