@@ -55,12 +55,6 @@ public class BackupRestoreHostSideTest extends BaseBackupHostSideTest {
     /** Class name of the shared preferences test activity */
     private static final String SHARED_PREFS_ACTIVITY = "SharedPrefsRestoreTestActivity";
 
-    /** The command to launch the random-data backup test activity */
-    private static final String CMD_START_RANDOM_DATA_ACTIVITY = String.format(
-            "am start -W -a android.intent.action.MAIN -n %s/%s.%s", PACKAGE_UNDER_TEST,
-            PACKAGE_UNDER_TEST,
-            RANDOM_DATA_ACTIVITY);
-
     /** Shell commands to launch the shared prefs restore test activity */
     private static final String CMD_START_SHARED_PREFS_ACTIVITY = String.format(
             "am start -W -n %s/%s.%s", PACKAGE_UNDER_TEST, PACKAGE_UNDER_TEST,
@@ -130,10 +124,11 @@ public class BackupRestoreHostSideTest extends BaseBackupHostSideTest {
     public void testKeyValueBackupAndRestore() throws Exception {
         // Clear app data if any
         mDevice.executeShellCommand(CMD_CLEAR_DATA_IN_PACKAGE);
-        // Clear logcat
-        mDevice.executeAdbCommand("logcat", "-c");
+
+        clearLogcat();
+
         // Start the main activity of the app
-        mDevice.executeShellCommand(CMD_START_RANDOM_DATA_ACTIVITY);
+        startActivityInPackageAndWait(PACKAGE_UNDER_TEST, RANDOM_DATA_ACTIVITY);
 
         // The app will generate some random values onCreate. Save them to mSavedValues
         saveDataValuesReportedByApp();
@@ -151,10 +146,10 @@ public class BackupRestoreHostSideTest extends BaseBackupHostSideTest {
 
         installPackage(TEST_APP_APK);
 
-        mDevice.executeAdbCommand("logcat", "-c");
+        clearLogcat();
 
         // Start the reinstalled app
-        mDevice.executeShellCommand(CMD_START_RANDOM_DATA_ACTIVITY);
+        startActivityInPackageAndWait(PACKAGE_UNDER_TEST, RANDOM_DATA_ACTIVITY);
 
         // If the app data was restored successfully, the app should not generate new values and
         // the values reported by the app should match values saved in mSavedValues
