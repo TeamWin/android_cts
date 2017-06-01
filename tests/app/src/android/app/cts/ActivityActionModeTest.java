@@ -23,6 +23,7 @@ import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.view.ActionMode;
+import android.view.Window;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -51,6 +52,10 @@ public class ActivityActionModeTest {
     @Test
     @UiThreadTest
     public void testStartPrimaryActionMode() {
+        if (!mActivityRule.getActivity().getWindow().hasFeature(Window.FEATURE_ACTION_BAR)) {
+            return;
+        }
+
         final ActionMode mode = mActivityRule.getActivity().startActionMode(
                 mCallback, ActionMode.TYPE_PRIMARY);
 
@@ -61,6 +66,10 @@ public class ActivityActionModeTest {
     @Test
     @UiThreadTest
     public void testStartFloatingActionMode() {
+        if (!mActivityRule.getActivity().getWindow().hasFeature(Window.FEATURE_ACTION_BAR)) {
+            return;
+        }
+
         final ActionMode mode = mActivityRule.getActivity().startActionMode(
                 mCallback, ActionMode.TYPE_FLOATING);
 
@@ -71,6 +80,10 @@ public class ActivityActionModeTest {
     @Test
     @UiThreadTest
     public void testStartTypelessActionMode() {
+        if (!mActivityRule.getActivity().getWindow().hasFeature(Window.FEATURE_ACTION_BAR)) {
+            return;
+        }
+
         final ActionMode mode = mActivityRule.getActivity().startActionMode(mCallback);
 
         assertNotNull(mode);
