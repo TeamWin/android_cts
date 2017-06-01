@@ -18,6 +18,9 @@ package android.media.cts;
 import android.media.MediaPlayer;
 import android.util.Log;
 import android.webkit.cts.CtsTestServer;
+
+import com.android.cts.util.SecurityTest;
+
 import java.io.IOException;
 
 
@@ -281,6 +284,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
         }
     }
 
+    @SecurityTest
     public void testNoSSLv3Fallback() throws Exception {
         mServer = new CtsTestServer(mContext, true);
         try {
