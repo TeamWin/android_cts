@@ -517,14 +517,14 @@ public class AnimatorSetTest {
         verify(listener2, never()).onAnimationStart(a2, false);
 
         verify(listener1, within(400)).onAnimationStart(a1, false);
-        // Sleep for part of a2's start delay and verify that a2 is still in the delayed stage. This
-        // is to make sure child animator's start delay is also properly scaled.
-        SystemClock.sleep(400);
+        // Verify that a1 finish in ~300ms (3x its defined duration)
+        verify(listener1, within(500)).onAnimationEnd(a1, false);
+
+        // a2 should be in the delayed stage after a1 is finished
         assertTrue(a2.isStarted());
         assertFalse(a2.isRunning());
 
-        // Sleep past the start delay
-        SystemClock.sleep(350);
+        verify(listener2, within(800)).onAnimationStart(a2, false);
         assertTrue(a2.isRunning());
 
         // Verify that the AnimatorSet has finished within 1650ms since the start of the animation.
