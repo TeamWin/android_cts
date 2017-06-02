@@ -193,6 +193,17 @@ public class GridViewTest {
         mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_LEFT);
         assertEquals(0, mGridView.getSelectedItemPosition());
 
+        mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_TAB);
+        assertEquals(1, mGridView.getSelectedItemPosition());
+
+        event = new KeyEvent(0, 0, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_TAB, 0,
+                KeyEvent.META_SHIFT_LEFT_ON);
+        mInstrumentation.sendKeySync(event);
+        event = new KeyEvent(0, 0, KeyEvent.ACTION_UP, KeyEvent.KEYCODE_TAB, 0,
+                KeyEvent.META_SHIFT_LEFT_ON);
+        mInstrumentation.sendKeySync(event);
+        assertEquals(0, mGridView.getSelectedItemPosition());
+
         mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_DOWN);
         assertEquals(NUM_COLUMNS, mGridView.getSelectedItemPosition());
 
