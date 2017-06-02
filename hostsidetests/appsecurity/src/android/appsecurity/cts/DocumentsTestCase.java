@@ -27,7 +27,7 @@ import com.android.tradefed.testtype.IBuildReceiver;
 /**
  * Base class for {@link android.provider.DocumentsContract} and related test cases.
  */
-abstract  class DocumentsTestCase extends DeviceTestCase implements IAbiReceiver, IBuildReceiver {
+abstract class DocumentsTestCase extends DeviceTestCase implements IAbiReceiver, IBuildReceiver {
     protected static final String CLIENT_PKG = "com.android.cts.documentclient";
     protected static final String CLIENT_APK = "CtsDocumentClient.apk";
 
