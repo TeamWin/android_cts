@@ -15,8 +15,7 @@
 -->
 <configuration description="Config for AutoFill Framework CTS tests.">
 
-  <target_preparer
-    class="com.android.compatibility.common.tradefed.targetprep.ApkInstaller">
+  <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
     <option name="cleanup-apks" value="true" />
     <option name="test-file-name" value="CtsAutoFillServiceTestCases.apk" />
   </target_preparer>
