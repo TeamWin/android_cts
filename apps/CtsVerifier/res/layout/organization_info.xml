@@ -53,6 +53,11 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
+            <Button android:id="@+id/organization_info_settings_button"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/provisioning_byod_settings_button_text"
+                    android:layout_weight="1"/>
             <Button android:id="@+id/organization_info_set_button"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"

@@ -1994,18 +1994,23 @@ You should be prompted to select credentials; choose the ones you just installed
     </string>
 
     <string name="provisioning_byod_organization_info">Organization Info</string>
+    <string name="provisioning_byod_settings_button_text">Settings</string>
     <string name="provisioning_byod_organization_name_hint">Name</string>
     <string name="provisioning_byod_organization_color_hint">#FF00FF</string>
     <string name="provisioning_byod_set_organization_info_button_text">Set</string>
     <string name="provisioning_byod_organization_info_instructions">
-    This test verifies that the Organization Info was set correctly.
-    You can only do this test after you have done "select work lock" test.\n
-        1. Enter your organization name.\n
-        2. Enter a valid color code.\n
-        3. Press the Set button to set organization Info.\n
-        4. Press the Go button to open a dialog to confirm work credentials.\n
-        5. Verify that the background color of the resulting dialog is as set by you.\n
-        6. Verify that the header text has organization name as set by you.\n
+    This test verifies that the Organization Info was set correctly.\n
+        1. Press the Settings button.\n
+        2. Select separate lock for work profile (e.g. pattern).
+        To do that you may need to disable using one lock in security settings.\n
+        3. Return to CTS verifier using recents.\n
+        4. Enter your organization name.\n
+        5. Enter a valid color code.\n
+        6. Press the Set button to set organization Info.\n
+        7. Dissmiss the lockscreen by entering previously selected lock and return to CTS Verifier using recents.\n
+        8. Press the Go button to open a dialog to confirm work credentials.\n
+        9. Verify that the background color of the resulting dialog is as set by you.\n
+        10. Verify that the header text has organization name as set by you.\n
     </string>
     <string name="provisioning_byod_parent_profile_password">Personal password test</string>
     <string name="provisioning_byod_parent_profile_password_description">
