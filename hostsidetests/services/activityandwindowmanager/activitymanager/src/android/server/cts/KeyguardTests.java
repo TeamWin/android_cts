@@ -25,6 +25,22 @@ import android.server.cts.ActivityManagerState.ActivityStack;
  */
 public class KeyguardTests extends KeyguardTestBase {
 
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
+
+        // Set screen lock (swipe)
+        mDevice.executeShellCommand("locksettings set-disabled false");
+    }
+
+    @Override
+    public void tearDown() throws Exception {
+        super.tearDown();
+
+        // Remove screen lock
+        mDevice.executeShellCommand("locksettings set-disabled true");
+    }
+
     public void testKeyguardHidesActivity() throws Exception {
         if (!isHandheld()) {
             return;
