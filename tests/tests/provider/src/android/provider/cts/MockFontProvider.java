@@ -42,13 +42,14 @@ public class MockFontProvider extends ContentProvider {
     final static String AUTHORITY = "android.provider.fonts.cts.font";
 
     final static String[] FONT_FILES = {
-        "samplefont1.ttf", "samplefont2.ttf",
+        "samplefont1.ttf", "samplefont2.ttf", "samplefont.ttc",
     };
     private static final int SAMPLE_FONT_FILE_0_ID = 0;
     private static final int SAMPLE_FONT_FILE_1_ID = 1;
+    private static final int SAMPLE_TTC_FONT_FILE_ID = 2;
 
     static final String SINGLE_FONT_FAMILY_QUERY = "singleFontFamily";
-    static final String SINGLE_FONT_FAMILY2_QUERY = "singleFontFamily2";
+    static final String ALL_ATTRIBUTE_VALUES_QUERY = "allAttributeValues";
     static final String MULTIPLE_FAMILY_QUERY = "multipleFontFamily";
     static final String NOT_FOUND_QUERY = "notFound";
     static final String UNAVAILABLE_QUERY = "unavailable";
@@ -129,8 +130,10 @@ public class MockFontProvider extends ContentProvider {
             new Font(id++, SAMPLE_FONT_FILE_1_ID, 0, null, 700, 1, Columns.RESULT_CODE_OK, true),
         });
 
-        map.put(SINGLE_FONT_FAMILY2_QUERY, new Font[] {
-                new Font(id++, SAMPLE_FONT_FILE_0_ID, 0, "'wght' 100", 700, 1,
+        map.put(ALL_ATTRIBUTE_VALUES_QUERY, new Font[] {
+                new Font(id++, SAMPLE_TTC_FONT_FILE_ID, 0, "'wght' 100", 400, 0,
+                        Columns.RESULT_CODE_OK, true),
+                new Font(id++, SAMPLE_TTC_FONT_FILE_ID, 1, "'wght' 100", 700, 1,
                         Columns.RESULT_CODE_OK, true),
         });
 
