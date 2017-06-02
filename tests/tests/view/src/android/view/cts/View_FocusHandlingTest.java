@@ -34,7 +34,9 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewRootImpl;
+import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 
 import org.junit.Assume;
 import org.junit.Rule;
@@ -366,5 +368,31 @@ public class View_FocusHandlingTest {
         Activity activity = mActivityRule.getActivity();
         View[] result = getInitialAndFirstFocus(R.layout.focus_handling_initial_focus);
         assertSame(result[0], activity.findViewById(R.id.focusable3));
+    }
+
+    @UiThreadTest
+    @Test
+    public void testFocusAfterDescendantsTransfer() throws Throwable {
+        final Activity activity = mActivityRule.getActivity();
+        final ViewGroup group = (ViewGroup) activity.findViewById(R.id.auto_test_area);
+        ViewGroup root = (ViewGroup) activity.findViewById(R.id.main_view);
+        group.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
+        group.setFocusableInTouchMode(true);
+        group.setKeyboardNavigationCluster(true);
+        group.requestFocus();
+        assertTrue(group.isFocused());
+
+        LinearLayout mid = new LinearLayout(activity);
+        Button but = new Button(activity);
+        but.setFocusableInTouchMode(true);
+        mid.addView(but, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+
+        group.addView(mid, ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        assertSame(root.findFocus(), but);
+        assertFalse(group.isFocused());
+
+        assertFalse(root.restoreFocusNotInCluster());
+        assertSame(root.findFocus(), but);
     }
 }
