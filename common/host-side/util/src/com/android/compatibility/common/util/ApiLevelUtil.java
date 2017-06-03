@@ -23,7 +23,7 @@ import com.android.tradefed.device.ITestDevice;
  */
 public class ApiLevelUtil {
 
-    public static String CODENAME = "ro.build.version.codename";
+    public static final String CODENAME = "ro.build.version.codename";
 
     public static boolean isBefore(ITestDevice device, int version)
             throws DeviceNotAvailableException {
