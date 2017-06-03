@@ -270,10 +270,14 @@ public class AdoptableHostTest extends DeviceTestCase implements IAbiReceiver, I
             // Kick through a remount cycle, which should purge the adopted app
             getDevice().executeShellCommand("sm mount " + vol.volId);
             runDeviceTests(PKG, CLASS, "testDataInternal");
+            boolean didThrow = false;
             try {
                 runDeviceTests(PKG, CLASS, "testDataRead");
-                fail("Unexpected data from adopted volume picked up");
             } catch (AssertionError expected) {
+                didThrow = true;
+            }
+            if (!didThrow) {
+                fail("Unexpected data from adopted volume picked up");
             }
             getDevice().executeShellCommand("sm unmount " + vol.volId);
 
