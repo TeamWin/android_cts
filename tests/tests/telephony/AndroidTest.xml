@@ -18,6 +18,7 @@
         <option name="apk" value="CtsTelephonyPreparerApp.apk" />
         <option name="package" value="android.telephony.cts.preconditions.app" />
     </target_preparer>
+    <option name="config-descriptor:metadata" key="component" value="telecom" />
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.TokenRequirement">
         <option name="token" value="sim-card" />
     </target_preparer>

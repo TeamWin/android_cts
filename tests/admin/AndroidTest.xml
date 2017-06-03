@@ -14,6 +14,7 @@
      limitations under the License.
 -->
 <configuration description="Config for the CTS device admin tests">
+    <option name="config-descriptor:metadata" key="component" value="framework" />
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
         <option name="install-arg" value="-t" />

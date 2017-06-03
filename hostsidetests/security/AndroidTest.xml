@@ -14,6 +14,7 @@
      limitations under the License.
 -->
 <configuration description="Config for the CTS Security host tests">
+    <option name="config-descriptor:metadata" key="component" value="security" />
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
         <option name="cleanup" value="true" />
         <option name="push" value="CVE-2016-8412->/data/local/tmp/CVE-2016-8412" />
