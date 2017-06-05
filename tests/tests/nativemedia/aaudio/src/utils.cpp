@@ -34,6 +34,15 @@ int64_t getNanoseconds(clockid_t clockId) {
     return (time.tv_sec * NANOS_PER_SECOND) + time.tv_nsec;
 }
 
+const char* performanceModeToString(aaudio_performance_mode_t mode) {
+    switch (mode) {
+        case AAUDIO_PERFORMANCE_MODE_NONE: return "DEFAULT";
+        case AAUDIO_PERFORMANCE_MODE_POWER_SAVING: return "POWER_SAVING";
+        case AAUDIO_PERFORMANCE_MODE_LOW_LATENCY: return "LOW_LATENCY";
+    }
+    return "UNKNOWN";
+}
+
 const char* sharingModeToString(aaudio_sharing_mode_t mode) {
     switch (mode) {
         case AAUDIO_SHARING_MODE_SHARED: return "SHARED";
@@ -46,10 +55,10 @@ const char* sharingModeToString(aaudio_sharing_mode_t mode) {
 StreamBuilderHelper::StreamBuilderHelper(
         aaudio_direction_t direction, int32_t sampleRate,
         int32_t samplesPerFrame, aaudio_format_t dataFormat,
-        aaudio_sharing_mode_t sharingMode)
+        aaudio_sharing_mode_t sharingMode, aaudio_performance_mode_t perfMode)
         : mDirection{direction},
-          mRequested{sampleRate, samplesPerFrame, dataFormat, sharingMode},
-          mActual{0, 0, AAUDIO_FORMAT_INVALID, -1}, mFramesPerBurst{-1},
+          mRequested{sampleRate, samplesPerFrame, dataFormat, sharingMode, perfMode},
+          mActual{0, 0, AAUDIO_FORMAT_INVALID, -1, -1}, mFramesPerBurst{-1},
           mBuilder{nullptr}, mStream{nullptr} {}
 
 StreamBuilderHelper::~StreamBuilderHelper() {
@@ -69,6 +78,7 @@ void StreamBuilderHelper::initBuilder() {
     AAudioStreamBuilder_setSamplesPerFrame(mBuilder, mRequested.samplesPerFrame);
     AAudioStreamBuilder_setFormat(mBuilder, mRequested.dataFormat);
     AAudioStreamBuilder_setSharingMode(mBuilder, mRequested.sharingMode);
+    AAudioStreamBuilder_setPerformanceMode(mBuilder, mRequested.perfMode);
 }
 
 // Needs to be a 'void' function due to ASSERT requirements.
@@ -77,12 +87,22 @@ void StreamBuilderHelper::createAndVerifyStream(bool *success) {
 
     aaudio_result_t result = AAudioStreamBuilder_openStream(mBuilder, &mStream);
     if (mRequested.sharingMode == AAUDIO_SHARING_MODE_EXCLUSIVE && result != AAUDIO_OK) {
+        __android_log_write(ANDROID_LOG_WARN, LOG_TAG, "Could not open a stream in EXCLUSIVE mode");
         return;
     }
     ASSERT_EQ(AAUDIO_OK, result);
     ASSERT_TRUE(mStream != nullptr);
     ASSERT_EQ(AAUDIO_STREAM_STATE_OPEN, AAudioStream_getState(mStream));
     ASSERT_EQ(mDirection, AAudioStream_getDirection(mStream));
+
+    mActual.sharingMode = AAudioStream_getSharingMode(mStream);
+    if (mActual.sharingMode != mRequested.sharingMode) {
+        // Since we are covering all possible values, the "actual" mode
+        // will also be tested, so no need to run the same test twice.
+        __android_log_print(ANDROID_LOG_WARN, LOG_TAG, "Sharing mode %s is not available",
+                sharingModeToString(mRequested.sharingMode));
+        return;
+    }
 
     // Check to see what kind of stream we actually got.
     mActual.sampleRate = AAudioStream_getSampleRate(mStream);
@@ -95,6 +115,16 @@ void StreamBuilderHelper::createAndVerifyStream(bool *success) {
 
     mActual.dataFormat = AAudioStream_getFormat(mStream);
     ASSERT_EQ(AAUDIO_FORMAT_PCM_I16, mActual.dataFormat);
+
+    mActual.perfMode = AAudioStream_getPerformanceMode(mStream);
+    if (mRequested.perfMode != AAUDIO_PERFORMANCE_MODE_NONE
+            && mRequested.perfMode != mActual.perfMode) {
+        // Since we are covering all possible values, the "actual" mode
+        // will also be tested, so no need to run the same test twice.
+        __android_log_print(ANDROID_LOG_WARN, LOG_TAG, "Performance mode %s is not available",
+                performanceModeToString(mRequested.sharingMode));
+        return;
+    }
 
     mFramesPerBurst = AAudioStream_getFramesPerBurst(mStream);
     ASSERT_GE(mFramesPerBurst, 16);
@@ -126,9 +156,10 @@ void StreamBuilderHelper::streamCommand(
 }
 
 
-InputStreamBuilderHelper::InputStreamBuilderHelper(aaudio_sharing_mode_t requestedSharingMode)
+InputStreamBuilderHelper::InputStreamBuilderHelper(
+        aaudio_sharing_mode_t requestedSharingMode, aaudio_performance_mode_t requestedPerfMode)
         : StreamBuilderHelper{AAUDIO_DIRECTION_INPUT,
-            48000, 2, AAUDIO_FORMAT_PCM_I16, requestedSharingMode} {}
+            48000, 1, AAUDIO_FORMAT_PCM_I16, requestedSharingMode, requestedPerfMode} {}
 
 // Native apps don't have permissions, thus recording can
 // only be tested when running as root.
@@ -147,9 +178,10 @@ void InputStreamBuilderHelper::createAndVerifyStream(bool *success) {
 }
 
 
-OutputStreamBuilderHelper::OutputStreamBuilderHelper(aaudio_sharing_mode_t requestedSharingMode)
+OutputStreamBuilderHelper::OutputStreamBuilderHelper(
+        aaudio_sharing_mode_t requestedSharingMode, aaudio_performance_mode_t requestedPerfMode)
         : StreamBuilderHelper{AAUDIO_DIRECTION_OUTPUT,
-            48000, 2, AAUDIO_FORMAT_PCM_I16, requestedSharingMode} {}
+            48000, 2, AAUDIO_FORMAT_PCM_I16, requestedSharingMode, requestedPerfMode} {}
 
 void OutputStreamBuilderHelper::initBuilder() {
     StreamBuilderHelper::initBuilder();
