@@ -150,6 +150,61 @@ public class EffectBundleTest extends InstrumentationTestCase {
                 eqGetParamFreqRangeCommand(MEDIA_LONG));
     }
 
+    //testing security bug: 37563371 (short media)
+    public void testEqualizer_setParamProperties_short() throws Exception {
+        assertTrue("testEqualizer_setParamProperties_long did not complete successfully",
+                eqSetParamProperties(MEDIA_SHORT));
+    }
+
+    //testing security bug: 37563371 (long media)
+    public void testEqualizer_setParamProperties_long() throws Exception {
+        assertTrue("testEqualizer_setParamProperties_long did not complete successfully",
+                eqSetParamProperties(MEDIA_LONG));
+    }
+
+    private boolean eqSetParamProperties(int media) {
+        MediaPlayer mp = null;
+        Equalizer eq = null;
+        boolean status = false;
+        try {
+            mp = MediaPlayer.create(getInstrumentation().getContext(),  getMediaId(media));
+            eq = new Equalizer(0 /*priority*/, mp.getAudioSessionId());
+
+            int intSize = 4; //bytes
+            int shortSize = 2; //bytes
+
+            int cmdCode = 5; // EFFECT_CMD_SET_PARAM
+            byte command[] = concatArrays(/*status*/ intToByteArray(0),
+                    /*psize*/ intToByteArray(1 * intSize),
+                    /*vsize*/ intToByteArray(2 * shortSize),
+                    /*data[0]*/ intToByteArray((int) 9 /*EQ_PARAM_PROPERTIES*/),
+                    /*data[4]*/ shortToByteArray((short)-1 /*preset*/),
+                    /*data[6]*/ shortToByteArray((short)5 /*FIVEBAND_NUMBANDS*/));
+            byte reply[] = new byte[ 4 /*command.length*/];
+
+            AudioEffect af = eq;
+            Object o = AudioEffect.class.getDeclaredMethod("command", int.class, byte[].class,
+                    byte[].class).invoke(af, cmdCode, command, reply);
+
+            int replyValue = byteArrayToInt(reply, 0 /*offset*/);
+            if (replyValue >= 0) {
+                Log.w(TAG, "Reply Value: " + replyValue);
+            }
+            assertTrue("Negative replyValue was expected ", replyValue < 0);
+            status = true;
+        } catch (Exception e) {
+            Log.w(TAG,"Problem setting parameter in equalizer");
+        } finally {
+            if (eq != null) {
+                eq.release();
+            }
+            if (mp != null) {
+                mp.release();
+            }
+        }
+        return status;
+    }
+
     private boolean eqGetParamFreqRangeCommand(int media) {
         MediaPlayer mp = null;
         Equalizer eq = null;
@@ -314,6 +369,12 @@ public class EffectBundleTest extends InstrumentationTestCase {
         converter.order(ByteOrder.nativeOrder());
         converter.putInt(value);
         return converter.array();
+    }
+
+    public static int byteArrayToInt(byte[] valueBuf, int offset) {
+        ByteBuffer converter = ByteBuffer.wrap(valueBuf);
+        converter.order(ByteOrder.nativeOrder());
+        return converter.getInt(offset);
     }
 
     private static byte[] shortToByteArray(short value) {
