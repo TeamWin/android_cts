@@ -178,13 +178,13 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
 
-        // Foreground test.
-        executeForeground(ACTION_BLE_SCAN_UNOPTIMIZED, 30_000);
-        assertValueRange("blem", "", 5, 1, 1); // ble_scan_count
-        assertValueRange("blem", "", 6, 0, 0); // ble_scan_count_bg
-
         // Background test.
         executeBackground(ACTION_BLE_SCAN_UNOPTIMIZED, 30_000);
+        assertValueRange("blem", "", 5, 1, 1); // ble_scan_count
+        assertValueRange("blem", "", 6, 1, 1); // ble_scan_count_bg
+
+        // Foreground test.
+        executeForeground(ACTION_BLE_SCAN_UNOPTIMIZED, 30_000);
         assertValueRange("blem", "", 5, 2, 2); // ble_scan_count
         assertValueRange("blem", "", 6, 1, 1); // ble_scan_count_bg
 
@@ -203,17 +203,17 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         final int minTime = 1500; // min single scan time in ms
         final int maxTime = 3000; // max single scan time in ms
 
-        // Optimized - Foreground.
-        executeForeground(ACTION_BLE_SCAN_OPTIMIZED, 30_000);
+        // Optimized - Background.
+        executeBackground(ACTION_BLE_SCAN_OPTIMIZED, 30_000);
         assertValueRange("blem", "", 7, 1*minTime, 1*maxTime); // actualTime
-        assertValueRange("blem", "", 8, 0, 0); // actualTimeBg
+        assertValueRange("blem", "", 8, 1*minTime, 1*maxTime); // actualTimeBg
         assertValueRange("blem", "", 11, 0, 0); // unoptimizedScanTotalTime
         assertValueRange("blem", "", 12, 0, 0); // unoptimizedScanTotalTimeBg
         assertValueRange("blem", "", 13, 0, 0); // unoptimizedScanMaxTime
         assertValueRange("blem", "", 14, 0, 0); // unoptimizedScanMaxTimeBg
 
-        // Optimized - Background.
-        executeBackground(ACTION_BLE_SCAN_OPTIMIZED, 30_000);
+        // Optimized - Foreground.
+        executeForeground(ACTION_BLE_SCAN_OPTIMIZED, 30_000);
         assertValueRange("blem", "", 7, 2*minTime, 2*maxTime); // actualTime
         assertValueRange("blem", "", 8, 1*minTime, 1*maxTime); // actualTimeBg
         assertValueRange("blem", "", 11, 0, 0); // unoptimizedScanTotalTime
@@ -221,17 +221,17 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         assertValueRange("blem", "", 13, 0, 0); // unoptimizedScanMaxTime
         assertValueRange("blem", "", 14, 0, 0); // unoptimizedScanMaxTimeBg
 
-        // Unoptimized - Foreground.
-        executeForeground(ACTION_BLE_SCAN_UNOPTIMIZED, 30_000);
-        assertValueRange("blem", "", 7, 3*minTime, 3*maxTime); // actualTime
-        assertValueRange("blem", "", 8, 1*minTime, 1*maxTime); // actualTimeBg
-        assertValueRange("blem", "", 11, 1*minTime, 1*maxTime); // unoptimizedScanTotalTime
-        assertValueRange("blem", "", 12, 0, 0); // unoptimizedScanTotalTimeBg
-        assertValueRange("blem", "", 13, 1*minTime, 1*maxTime); // unoptimizedScanMaxTime
-        assertValueRange("blem", "", 14, 0, 0); // unoptimizedScanMaxTimeBg
-
         // Unoptimized - Background.
         executeBackground(ACTION_BLE_SCAN_UNOPTIMIZED, 30_000);
+        assertValueRange("blem", "", 7, 3*minTime, 3*maxTime); // actualTime
+        assertValueRange("blem", "", 8, 2*minTime, 2*maxTime); // actualTimeBg
+        assertValueRange("blem", "", 11, 1*minTime, 1*maxTime); // unoptimizedScanTotalTime
+        assertValueRange("blem", "", 12, 1*minTime, 1*maxTime); // unoptimizedScanTotalTimeBg
+        assertValueRange("blem", "", 13, 1*minTime, 1*maxTime); // unoptimizedScanMaxTime
+        assertValueRange("blem", "", 14, 1*minTime, 1*maxTime); // unoptimizedScanMaxTimeBg
+
+        // Unoptimized - Foreground.
+        executeForeground(ACTION_BLE_SCAN_UNOPTIMIZED, 30_000);
         assertValueRange("blem", "", 7, 4*minTime, 4*maxTime); // actualTime
         assertValueRange("blem", "", 8, 2*minTime, 2*maxTime); // actualTimeBg
         assertValueRange("blem", "", 11, 2*minTime, 2*maxTime); // unoptimizedScanTotalTime
@@ -256,13 +256,13 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
                 "settings put global location_background_throttle_package_whitelist %s",
                 DEVICE_SIDE_TEST_PACKAGE));
 
-        // Foreground test.
-        executeForeground(ACTION_GPS, 60_000);
-        assertValueRange("sr", gpsSensorNumber, 6, 1, 1); // count
-        assertValueRange("sr", gpsSensorNumber, 7, 0, 0); // background_count
-
         // Background test.
         executeBackground(ACTION_GPS, 60_000);
+        assertValueRange("sr", gpsSensorNumber, 6, 1, 1); // count
+        assertValueRange("sr", gpsSensorNumber, 7, 1, 1); // background_count
+
+        // Foreground test.
+        executeForeground(ACTION_GPS, 60_000);
         assertValueRange("sr", gpsSensorNumber, 6, 2, 2); // count
         assertValueRange("sr", gpsSensorNumber, 7, 1, 1); // background_count
 
@@ -276,13 +276,13 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
 
-        // Foreground test.
-        executeForeground(ACTION_JOB_SCHEDULE, 60_000);
-        assertValueRange("jb", "", 6, 1, 1); // count
-        assertValueRange("jb", "", 8, 0, 0); // background_count
-
         // Background test.
         executeBackground(ACTION_JOB_SCHEDULE, 60_000);
+        assertValueRange("jb", "", 6, 1, 1); // count
+        assertValueRange("jb", "", 8, 1, 1); // background_count
+
+        // Foreground test.
+        executeForeground(ACTION_JOB_SCHEDULE, 60_000);
         assertValueRange("jb", "", 6, 2, 2); // count
         assertValueRange("jb", "", 8, 1, 1); // background_count
 
@@ -296,14 +296,14 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
 
-        // Foreground test.
-        executeForeground(ACTION_SYNC, 60_000);
-        // Allow one or two syncs in this time frame (not just one) due to unpredictable syncs.
-        assertValueRange("sy", DEVICE_SIDE_SYNC_COMPONENT, 6, 1, 2); // count
-        assertValueRange("sy", DEVICE_SIDE_SYNC_COMPONENT, 8, 0, 0); // background_count
-
         // Background test.
         executeBackground(ACTION_SYNC, 60_000);
+        // Allow one or two syncs in this time frame (not just one) due to unpredictable syncs.
+        assertValueRange("sy", DEVICE_SIDE_SYNC_COMPONENT, 6, 1, 2); // count
+        assertValueRange("sy", DEVICE_SIDE_SYNC_COMPONENT, 8, 1, 2); // background_count
+
+        // Foreground test.
+        executeForeground(ACTION_SYNC, 60_000);
         assertValueRange("sy", DEVICE_SIDE_SYNC_COMPONENT, 6, 2, 4); // count
         assertValueRange("sy", DEVICE_SIDE_SYNC_COMPONENT, 8, 1, 2); // background_count
 
@@ -322,16 +322,16 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
                 "settings put global wifi_scan_background_throttle_package_whitelist %s",
                 DEVICE_SIDE_TEST_PACKAGE));
 
-        // Foreground count test.
-        executeForeground(ACTION_WIFI_SCAN, 120_000);
+        // Background count test.
+        executeBackground(ACTION_WIFI_SCAN, 120_000);
         // Allow one or two scans because we try scanning twice and because we allow for the
         // possibility that, when the test is started, a scan from a different uid was already being
         // performed (causing the test to 'miss' a scan).
         assertValueRange("wfl", "", 7, 1, 2); // scan_count
-        assertValueRange("wfl", "", 11, 0, 0); // scan_count_bg
+        assertValueRange("wfl", "", 11, 1, 2); // scan_count_bg
 
-        // Background count test.
-        executeBackground(ACTION_WIFI_SCAN, 120_000);
+        // Foreground count test.
+        executeForeground(ACTION_WIFI_SCAN, 120_000);
         assertValueRange("wfl", "", 7, 2, 4); // scan_count
         assertValueRange("wfl", "", 11, 1, 2); // scan_count_bg
 
@@ -453,13 +453,13 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
 
-        executeForeground(ACTION_WIFI_UPLOAD, 60_000);
+        executeBackground(ACTION_WIFI_UPLOAD, 60_000);
         int min = MIN_HTTP_HEADER_BYTES + (2 * 1024);
         int max = min + (6 * 1024); // Add some fuzzing.
-        assertValueRange("nt", "", 7, min, max); // wifi_bytes_tx
+        assertValueRange("nt", "", 21, min, max); // wifi_bytes_bg_tx
 
-        executeBackground(ACTION_WIFI_UPLOAD, 60_000);
-        assertValueRange("nt", "", 21, min * 2, max * 2); // wifi_bytes_bg_tx
+        executeForeground(ACTION_WIFI_UPLOAD, 60_000);
+        assertValueRange("nt", "", 7, min * 2, max * 2); // wifi_bytes_tx
 
         batteryOffScreenOn();
     }
