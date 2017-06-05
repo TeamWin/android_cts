@@ -64,8 +64,7 @@ public class AdbRootDependentCompilationTest extends DeviceTestCase {
     }
 
     private ITestDevice mDevice;
-    private byte[] profileBytes;
-    private File localProfileFile;
+    private File textProfileFile;
     private String odexFilePath;
     private byte[] initialOdexFileContents;
     private File apkFile;
@@ -95,12 +94,13 @@ public class AdbRootDependentCompilationTest extends DeviceTestCase {
         mDevice.uninstallPackage(APPLICATION_PACKAGE); // in case it's still installed
         mDevice.installPackage(apkFile, false);
 
-        // Load snapshot of file contents from {@link ProfileLocation#CUR} after
-        // manually running the target application manually for a few minutes.
-        profileBytes = ByteStreams.toByteArray(getClass().getResourceAsStream("/primary.prof"));
-        localProfileFile = File.createTempFile("compilationtest", "prof");
-        Files.write(profileBytes, localProfileFile);
+        // Write the text profile to a temporary file so that we can run profman on it to create a
+        // real profile.
+        byte[] profileBytes = ByteStreams.toByteArray(
+                getClass().getResourceAsStream("/primary.prof.txt"));
         assertTrue("empty profile", profileBytes.length > 0); // sanity check
+        textProfileFile = File.createTempFile("compilationtest", "prof.txt");
+        Files.write(profileBytes, textProfileFile);
 
         if (mIsRoot) {
             // ensure no profiles initially present
@@ -110,10 +110,24 @@ public class AdbRootDependentCompilationTest extends DeviceTestCase {
                     executeAdbCommand(0, "shell", "rm", clientPath);
                 }
             }
-            executeCompile(/* force */ true);
+            executeCompile(/* force */ true, "speed");
             this.odexFilePath = getOdexFilePath();
-            this.initialOdexFileContents = readFileOnClient(odexFilePath);
+            byte[] speedContents = readFileOnClient(odexFilePath);
+            assertTrue("empty odex file", speedContents.length > 0); // sanity check
+            // Confirm the compiler-filter used in creating the odex file
+            String compilerFilter = getCompilerFilter(odexFilePath);
+            assertEquals("compiler-filter", "speed", compilerFilter);
+
+            // Recompile with speed-profile and an empty profile.
+            executeCompile(/* force */ true, "speed-profile");
+            initialOdexFileContents = readFileOnClient(odexFilePath);
             assertTrue("empty odex file", initialOdexFileContents.length > 0); // sanity check
+            // Confirm the compiler-filter used in creating the odex file
+            compilerFilter = getCompilerFilter(odexFilePath);
+            assertEquals("compiler-filter", "speed-profile", compilerFilter);
+            assertTrue("speed-profile should be smaller " + initialOdexFileContents.length + " " +
+                               speedContents.length,
+                       initialOdexFileContents.length < speedContents.length);
         }
     }
 
@@ -123,7 +137,7 @@ public class AdbRootDependentCompilationTest extends DeviceTestCase {
             mDevice.executeAdbCommand("unroot");
         }
         apkFile.delete();
-        localProfileFile.delete();
+        textProfileFile.delete();
         mDevice.uninstallPackage(APPLICATION_PACKAGE);
         super.tearDown();
     }
@@ -202,7 +216,7 @@ public class AdbRootDependentCompilationTest extends DeviceTestCase {
     }
 
     /**
-     * Places {@link #profileBytes} in the specified locations, recompiles (without -f)
+     * Places the profile in the specified locations, recompiles (without -f)
      * and checks the compiler-filter in the odex file.
      */
     private void compileWithProfilesAndCheckFilter(Set<ProfileLocation> profileLocations)
@@ -210,7 +224,7 @@ public class AdbRootDependentCompilationTest extends DeviceTestCase {
         for (ProfileLocation profileLocation : profileLocations) {
             writeProfile(profileLocation);
         }
-        executeCompile(/* force */ false);
+        executeCompile(/* force */ false, "speed-profile");
 
         // Confirm the compiler-filter used in creating the odex file
         String compilerFilter = getCompilerFilter(odexFilePath);
@@ -221,9 +235,9 @@ public class AdbRootDependentCompilationTest extends DeviceTestCase {
     /**
      * Invokes the dex2oat compiler on the client.
      */
-    private void executeCompile(boolean force) throws Exception {
+    private void executeCompile(boolean force, String filter) throws Exception {
         List<String> command = new ArrayList<>(Arrays.asList("shell", "cmd", "package", "compile",
-                "-m", "speed-profile"));
+                "-m", filter));
         if (force) {
             command.add("-f");
         }
@@ -233,7 +247,8 @@ public class AdbRootDependentCompilationTest extends DeviceTestCase {
     }
 
     /**
-     * Copies {@link #localProfileFile} to the specified location on the client device.
+     * Copies {@link #textProfileFile} to the device and convert it to a binary profile on the
+     * client device.
      */
     private void writeProfile(ProfileLocation location) throws Exception {
         String targetPath = location.getPath();
@@ -248,12 +263,35 @@ public class AdbRootDependentCompilationTest extends DeviceTestCase {
         while (owner.startsWith(" ")) {
             owner = owner.substring(1);
         }
-        mDevice.executeAdbCommand("push", localProfileFile.getAbsolutePath(), targetPath);
+
+        String targetPathTemp = targetPath + ".tmp";
+        mDevice.executeAdbCommand("push", textProfileFile.getAbsolutePath(), targetPathTemp);
+        assertTrue("Failed to push text profile", mDevice.doesFileExist(targetPathTemp));
+
+        String targetPathApk = targetPath + ".apk";
+        mDevice.executeAdbCommand("push", apkFile.getAbsolutePath(), targetPathApk);
+        assertTrue("Failed to push APK from ", mDevice.doesFileExist(targetPathApk));
+        // Run profman to create the real profile on device.
+        try {
+            String pathSpec = executeAdbCommand(1, "shell", "pm", "path", APPLICATION_PACKAGE)[0];
+            pathSpec = pathSpec.replace("package:", "");
+            assertTrue("Failed find APK " + pathSpec, mDevice.doesFileExist(pathSpec));
+            executeAdbCommand(
+                "shell",
+                "profman",
+                "--create-profile-from=" + targetPathTemp,
+                "--apk=" + pathSpec,
+                "--dex-location=" + pathSpec,
+                "--reference-profile-file=" + targetPath);
+        } catch (Exception e) {
+            assertEquals("", e.toString());
+        }
         executeAdbCommand(0, "shell", "chown", owner, targetPath);
         // Verify that the file was written successfully
         assertTrue("failed to create profile file", mDevice.doesFileExist(targetPath));
-        assertEquals(Integer.toString(profileBytes.length),
-                executeAdbCommand(1, "shell", "stat", "-c", "%s", targetPath)[0]);
+        String[] result = executeAdbCommand(1, "shell", "stat", "-c", "%s", targetPath);
+        assertTrue("profile " + targetPath + " is " + Integer.parseInt(result[0]) + " bytes",
+                   Integer.parseInt(result[0]) > 0);
     }
 
     /**
