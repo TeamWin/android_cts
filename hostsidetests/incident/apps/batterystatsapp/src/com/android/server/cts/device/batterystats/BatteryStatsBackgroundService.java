@@ -19,13 +19,10 @@ package com.android.server.cts.device.batterystats;
 import static com.android.server.cts.device.batterystats.BatteryStatsBgVsFgActions.KEY_ACTION;
 import static com.android.server.cts.device.batterystats.BatteryStatsBgVsFgActions.KEY_REQUEST_CODE;
 import static com.android.server.cts.device.batterystats.BatteryStatsBgVsFgActions.doAction;
-import static com.android.server.cts.device.batterystats.BatteryStatsBgVsFgActions.isAppInBackground;
 
 import android.app.IntentService;
 import android.content.Intent;
 import android.util.Log;
-
-import org.junit.Assert;
 
 /** An service (to be run as a background process) which performs one of a number of actions. */
 public class BatteryStatsBackgroundService extends IntentService {
@@ -37,18 +34,13 @@ public class BatteryStatsBackgroundService extends IntentService {
 
     @Override
     public void onHandleIntent(Intent intent) {
-        try {
-            if (!isAppInBackground(this)) {
-                Log.e(TAG, "BackgroundService is not a background process!");
-                Assert.fail("Test requires BackgroundService to be in background.");
-            }
-        } catch(ReflectiveOperationException ex) {
-            Log.w(TAG, "Couldn't determine if app is in background. Proceeding with test anyway.");
-        }
-
         String action = intent.getStringExtra(KEY_ACTION);
         String requestCode = intent.getStringExtra(KEY_REQUEST_CODE);
         Log.i(TAG, "Starting " + action + " from background service as request " + requestCode);
+
+        // Check that app is in background; crash if it isn't.
+        BatteryStatsBgVsFgActions.checkAppState(this, true, action, requestCode);
+
         doAction(this, action, requestCode);
     }
 }
