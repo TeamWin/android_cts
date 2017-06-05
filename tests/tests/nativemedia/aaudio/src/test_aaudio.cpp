@@ -18,6 +18,7 @@
 #define LOG_TAG "AAudioTest"
 
 #include <memory>
+#include <tuple>
 
 #include <unistd.h>
 
@@ -28,12 +29,19 @@
 #include "test_aaudio.h"
 #include "utils.h"
 
-static std::string getTestName(const ::testing::TestParamInfo<aaudio_sharing_mode_t>& info) {
-    return sharingModeToString(info.param);
+using StreamTestParams = std::tuple<aaudio_sharing_mode_t, aaudio_performance_mode_t>;
+enum {
+    PARAM_SHARING_MODE = 0,
+    PARAM_PERF_MODE
+};
+
+static std::string getTestName(const ::testing::TestParamInfo<StreamTestParams>& info) {
+    return std::string() + sharingModeToString(std::get<PARAM_SHARING_MODE>(info.param)) +
+            "__" + performanceModeToString(std::get<PARAM_PERF_MODE>(info.param));
 }
 
 template<typename T>
-class AAudioStreamTest : public ::testing::TestWithParam<aaudio_sharing_mode_t> {
+class AAudioStreamTest : public ::testing::TestWithParam<StreamTestParams> {
   protected:
     AAudioStreamBuilder* builder() const { return mHelper->builder(); }
     AAudioStream* stream() const { return mHelper->stream(); }
@@ -54,7 +62,9 @@ class AAudioInputStreamTest : public AAudioStreamTest<InputStreamBuilderHelper> 
 };
 
 void AAudioInputStreamTest::SetUp() {
-    mHelper.reset(new InputStreamBuilderHelper(GetParam()));
+    mHelper.reset(new InputStreamBuilderHelper(
+                    std::get<PARAM_SHARING_MODE>(GetParam()),
+                    std::get<PARAM_PERF_MODE>(GetParam())));
     mHelper->initBuilder();
     mSetupSuccesful = false;
     mHelper->createAndVerifyStream(&mSetupSuccesful);
@@ -139,8 +149,16 @@ TEST_P(AAudioInputStreamTest, testPauseAndFlushNotSupported) {
     mHelper->stopStream();
 }
 
-INSTANTIATE_TEST_CASE_P(SM, AAudioInputStreamTest,
-        ::testing::Values(AAUDIO_SHARING_MODE_SHARED, AAUDIO_SHARING_MODE_EXCLUSIVE),
+INSTANTIATE_TEST_CASE_P(SPM, AAudioInputStreamTest,
+        ::testing::Values(
+                std::make_tuple(AAUDIO_SHARING_MODE_SHARED, AAUDIO_PERFORMANCE_MODE_NONE),
+                // Recording in POWER_SAVING mode isn't supported, b/62291775.
+                std::make_tuple(AAUDIO_SHARING_MODE_SHARED, AAUDIO_PERFORMANCE_MODE_LOW_LATENCY),
+                std::make_tuple(AAUDIO_SHARING_MODE_EXCLUSIVE, AAUDIO_PERFORMANCE_MODE_NONE),
+                std::make_tuple(
+                        AAUDIO_SHARING_MODE_EXCLUSIVE, AAUDIO_PERFORMANCE_MODE_POWER_SAVING),
+                std::make_tuple(
+                        AAUDIO_SHARING_MODE_EXCLUSIVE, AAUDIO_PERFORMANCE_MODE_LOW_LATENCY)),
         &getTestName);
 
 
@@ -150,7 +168,9 @@ class AAudioOutputStreamTest : public AAudioStreamTest<OutputStreamBuilderHelper
 };
 
 void AAudioOutputStreamTest::SetUp() {
-    mHelper.reset(new OutputStreamBuilderHelper(GetParam()));
+    mHelper.reset(new OutputStreamBuilderHelper(
+                    std::get<PARAM_SHARING_MODE>(GetParam()),
+                    std::get<PARAM_PERF_MODE>(GetParam())));
     mHelper->initBuilder();
 
     mSetupSuccesful = false;
@@ -232,7 +252,7 @@ TEST_P(AAudioOutputStreamTest, testWriting) {
            even EXCLUSIVE mode may fall back to legacy
         const int64_t endTime = getNanoseconds(CLOCK_MONOTONIC);
         const double rateTolerance = 200.0; // arbitrary tolerance for sample rate
-        if (GetParam() != AAUDIO_SHARING_MODE_SHARED) {
+        if (std::get<PARAM_SHARING_MODE>(GetParam()) != AAUDIO_SHARING_MODE_SHARED) {
             // Calculate approximate sample rate and compare with stream rate.
             double seconds = (endTime - beginTime) / (double) NANOS_PER_SECOND;
             double measuredRate = (aaudioFramesReadFinal - aaudioFramesReadPrev) / seconds;
@@ -280,8 +300,16 @@ TEST_P(AAudioOutputStreamTest, testWriting) {
 
 // Note that the test for EXCLUSIVE sharing mode may fail gracefully if
 // this mode isn't supported by the platform.
-INSTANTIATE_TEST_CASE_P(SM, AAudioOutputStreamTest,
-        ::testing::Values(AAUDIO_SHARING_MODE_SHARED, AAUDIO_SHARING_MODE_EXCLUSIVE),
+INSTANTIATE_TEST_CASE_P(SPM, AAudioOutputStreamTest,
+        ::testing::Values(
+                std::make_tuple(AAUDIO_SHARING_MODE_SHARED, AAUDIO_PERFORMANCE_MODE_NONE),
+                std::make_tuple(AAUDIO_SHARING_MODE_SHARED, AAUDIO_PERFORMANCE_MODE_POWER_SAVING),
+                // No test for SHARED / LOW_LATENCY, see b/62101041
+                std::make_tuple(AAUDIO_SHARING_MODE_EXCLUSIVE, AAUDIO_PERFORMANCE_MODE_NONE),
+                std::make_tuple(
+                        AAUDIO_SHARING_MODE_EXCLUSIVE, AAUDIO_PERFORMANCE_MODE_POWER_SAVING),
+                std::make_tuple(
+                        AAUDIO_SHARING_MODE_EXCLUSIVE, AAUDIO_PERFORMANCE_MODE_LOW_LATENCY)),
         &getTestName);
 
 

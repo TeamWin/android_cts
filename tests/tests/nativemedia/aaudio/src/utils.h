@@ -19,6 +19,7 @@
 #include <aaudio/AAudio.h>
 
 int64_t getNanoseconds(clockid_t clockId = CLOCK_MONOTONIC);
+const char* performanceModeToString(aaudio_performance_mode_t mode);
 const char* sharingModeToString(aaudio_sharing_mode_t mode);
 
 class StreamBuilderHelper {
@@ -28,6 +29,7 @@ class StreamBuilderHelper {
         int32_t samplesPerFrame;
         aaudio_format_t dataFormat;
         aaudio_sharing_mode_t sharingMode;
+        aaudio_performance_mode_t perfMode;
     };
 
     void initBuilder();
@@ -59,7 +61,7 @@ class StreamBuilderHelper {
   protected:
     StreamBuilderHelper(aaudio_direction_t direction, int32_t sampleRate,
             int32_t samplesPerFrame, aaudio_format_t dataFormat,
-            aaudio_sharing_mode_t sharingMode);
+            aaudio_sharing_mode_t sharingMode, aaudio_performance_mode_t perfMode);
     ~StreamBuilderHelper();
 
     typedef aaudio_result_t (StreamCommand)(AAudioStream*);
@@ -76,13 +78,17 @@ class StreamBuilderHelper {
 
 class InputStreamBuilderHelper : public StreamBuilderHelper {
   public:
-    explicit InputStreamBuilderHelper(aaudio_sharing_mode_t requestedSharingMode);
+    InputStreamBuilderHelper(
+            aaudio_sharing_mode_t requestedSharingMode,
+            aaudio_performance_mode_t requestedPerfMode);
     void createAndVerifyStream(bool *success);
 };
 
 class OutputStreamBuilderHelper : public StreamBuilderHelper {
   public:
-    explicit OutputStreamBuilderHelper(aaudio_sharing_mode_t requestedSharingMode);
+    OutputStreamBuilderHelper(
+            aaudio_sharing_mode_t requestedSharingMode,
+            aaudio_performance_mode_t requestedPerfMode);
     void initBuilder();
 };
 
