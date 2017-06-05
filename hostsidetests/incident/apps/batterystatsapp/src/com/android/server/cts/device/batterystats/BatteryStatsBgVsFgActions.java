@@ -44,6 +44,8 @@ import android.os.Looper;
 import android.util.Log;
 
 
+import org.junit.Assert;
+
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -63,6 +65,9 @@ public class BatteryStatsBgVsFgActions {
 
     public static final String KEY_REQUEST_CODE = "request_code";
 
+    /** Number of times to check that app is in correct state before giving up. */
+    public static final int PROC_STATE_CHECK_ATTEMPTS = 10;
+
     /** Perform the action specified by the given action code (see constants above). */
     public static void doAction(Context ctx, String actionCode, String requestCode) {
         if (actionCode == null) {
@@ -70,7 +75,7 @@ public class BatteryStatsBgVsFgActions {
             return;
         }
         sleep(100);
-        switch(actionCode) {
+        switch (actionCode) {
             case ACTION_BLE_SCAN_OPTIMIZED:
                 doOptimizedBleScan(ctx, requestCode);
                 break;
@@ -185,7 +190,8 @@ public class BatteryStatsBgVsFgActions {
             @Override
             protected Void doInBackground(Void... params) {
                 Looper.prepare();
-                locManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 990, 0, locListener);
+                locManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 990, 0,
+                        locListener);
                 sleep(1_000);
                 locManager.removeUpdates(locListener);
                 latch.countDown();
@@ -251,7 +257,7 @@ public class BatteryStatsBgVsFgActions {
                 super.onPostExecute(aVoid);
                 Log.v(TAG, "Finished sync method");
                 // If ctx is an Activity, finish it when sync is done. If it's a service, don't.
-                if(ctx instanceof Activity){
+                if (ctx instanceof Activity) {
                     ((Activity) ctx).finish();
                 }
                 tellHostActionFinished(ACTION_SYNC, requestCode);
@@ -357,14 +363,14 @@ public class BatteryStatsBgVsFgActions {
     }
 
     /** Determines whether the package is running as a background process. */
-    public static boolean isAppInBackground(Context context) throws ReflectiveOperationException {
+    private static boolean isAppInBackground(Context context) throws ReflectiveOperationException {
         String pkgName = context.getPackageName();
         ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
         List<ActivityManager.RunningAppProcessInfo> processes = am.getRunningAppProcesses();
         if (processes == null) {
             return false;
         }
-        for (ActivityManager.RunningAppProcessInfo r : processes){
+        for (ActivityManager.RunningAppProcessInfo r : processes) {
             // BatteryStatsImpl treats as background if procState is >=
             // Activitymanager.PROCESS_STATE_IMPORTANT_BACKGROUND (corresponding
             // to BatteryStats.PROCESS_STATE_BACKGROUND).
@@ -391,6 +397,35 @@ public class BatteryStatsBgVsFgActions {
             }
         }
         return true;
+    }
+
+    /**
+     * Makes sure app is in desired state, either background (if shouldBeBg = true) or foreground
+     * (if shouldBeBg = false).
+     * Tries for up to PROC_STATE_CHECK_ATTEMPTS seconds. If app is still not in the correct state,
+     * throws an AssertionError failure to crash the app.
+     */
+    public static void checkAppState(
+            Context context, boolean shouldBeBg, String actionCode, String requestCode) {
+        final String errMsg = "App is " + (shouldBeBg ? "not " : "") + "a background process!";
+        try {
+            for (int attempt = 0; attempt < PROC_STATE_CHECK_ATTEMPTS; attempt++) {
+                if (shouldBeBg == isAppInBackground(context)) {
+                    return; // No problems.
+                } else {
+                    if (attempt < PROC_STATE_CHECK_ATTEMPTS - 1) {
+                        Log.w(TAG, errMsg + " Trying again in 1s.");
+                        sleep(1_000);
+                    } else {
+                        Log.e(TAG, errMsg + " Quiting app.");
+                        BatteryStatsBgVsFgActions.tellHostActionFinished(actionCode, requestCode);
+                        Assert.fail(errMsg + " Test requires app to be in the correct state.");
+                    }
+                }
+            }
+        } catch(ReflectiveOperationException ex) {
+            Log.w(TAG, "Couldn't determine if app is in background. Proceeding with test anyway.");
+        }
     }
 
     /** Puts the current thread to sleep. */
