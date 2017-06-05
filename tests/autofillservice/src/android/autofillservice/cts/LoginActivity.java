@@ -89,26 +89,13 @@ public class LoginActivity extends AbstractAutoFillActivity {
         mPasswordEditText = (EditText) findViewById(R.id.password);
         mOutput = (TextView) findViewById(R.id.output);
 
-        mLoginButton.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                login();
-            }
-        });
-        mSaveButton.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                save();
-            }
-        });
-        mClearButton.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mUsernameEditText.setText("");
-                mPasswordEditText.setText("");
-                mOutput.setText("");
-                getAutofillManager().cancel();
-            }
+        mLoginButton.setOnClickListener((v) -> login());
+        mSaveButton.setOnClickListener((v) -> save());
+        mClearButton.setOnClickListener((v) -> {
+            mUsernameEditText.setText("");
+            mPasswordEditText.setText("");
+            mOutput.setText("");
+            getAutofillManager().cancel();
         });
         mCancelButton.setOnClickListener((OnClickListener) v -> finish());
     }
