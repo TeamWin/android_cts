@@ -77,7 +77,7 @@ void AAudioInputStreamTest::SetUp() {
     while (mFramesPerRead < framesPerMsec) {
         mFramesPerRead *= 2;
     }
-    mData.reset(new int16_t[mFramesPerRead * actual().samplesPerFrame]);
+    mData.reset(new int16_t[mFramesPerRead * actual().channelCount]);
 }
 
 TEST_P(AAudioInputStreamTest, testReading) {
@@ -87,6 +87,9 @@ TEST_P(AAudioInputStreamTest, testReading) {
     EXPECT_EQ(0, AAudioStream_getFramesRead(stream()));
     EXPECT_EQ(0, AAudioStream_getFramesWritten(stream()));
     mHelper->startStream();
+    // See b/62090113. For legacy path, the device is only known after
+    // the stream has been started.
+    ASSERT_NE(AAUDIO_UNSPECIFIED, AAudioStream_getDeviceId(stream()));
     for (int32_t framesLeft = framesToRecord; framesLeft > 0; ) {
         aaudio_result_t result = AAudioStream_read(
                 stream(), &mData[0], std::min(framesToRecord, mFramesPerRead),
@@ -97,6 +100,7 @@ TEST_P(AAudioInputStreamTest, testReading) {
     mHelper->stopStream();
     EXPECT_GE(AAudioStream_getFramesRead(stream()), framesToRecord);
     EXPECT_GE(AAudioStream_getFramesWritten(stream()), framesToRecord);
+    EXPECT_GE(AAudioStream_getXRunCount(stream()), 0);
 }
 
 TEST_P(AAudioInputStreamTest, testStartReadStop) {
@@ -179,16 +183,13 @@ void AAudioOutputStreamTest::SetUp() {
 
     // Allocate a buffer for the audio data.
     // TODO handle possibility of other data formats
-    size_t dataSizeSamples = framesPerBurst() * actual().samplesPerFrame;
+    size_t dataSizeSamples = framesPerBurst() * actual().channelCount;
     mData.reset(new int16_t[dataSizeSamples]);
     memset(&mData[0], 0, dataSizeSamples);
 }
 
 TEST_P(AAudioOutputStreamTest, testWriting) {
     if (!mSetupSuccesful) return;
-
-    // TODO test this on full build
-    // ASSERT_NE(AAUDIO_UNSPECIFIED, AAudioStream_getDeviceId(aaudioStream));
 
     // Prime the buffer.
     int32_t framesWritten = 0;
@@ -213,6 +214,9 @@ TEST_P(AAudioOutputStreamTest, testWriting) {
     // Write some data and measure the rate to see if the timing is OK.
     for (int numLoops = 0; numLoops < 2; numLoops++) {
         mHelper->startStream();
+        // See b/62090113. For legacy path, the device is only known after
+        // the stream has been started.
+        ASSERT_NE(AAUDIO_UNSPECIFIED, AAudioStream_getDeviceId(stream()));
 
         // Write some data while we are running. Read counter should be advancing.
         writeLoops = 1 * actual().sampleRate / framesPerBurst(); // 1 second
@@ -262,6 +266,7 @@ TEST_P(AAudioOutputStreamTest, testWriting) {
 
         mHelper->pauseStream();
     }
+    EXPECT_GE(AAudioStream_getXRunCount(stream()), 0);
 
     // Make sure the read counter is not advancing when we are paused.
     aaudioFramesRead = AAudioStream_getFramesRead(stream());
