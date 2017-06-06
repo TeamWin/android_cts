@@ -38,13 +38,13 @@ TEST(test_aaudio_misc, aaudio_freeze_enums) {
     static_assert(-900 == AAUDIO_ERROR_BASE, ENUM_CANNOT_CHANGE);
     static_assert(-899 == AAUDIO_ERROR_DISCONNECTED, ENUM_CANNOT_CHANGE);
     static_assert(-898 == AAUDIO_ERROR_ILLEGAL_ARGUMENT, ENUM_CANNOT_CHANGE);
-    static_assert(-897 == AAUDIO_ERROR_INCOMPATIBLE, ENUM_CANNOT_CHANGE);
+    // reserved
     static_assert(-896 == AAUDIO_ERROR_INTERNAL, ENUM_CANNOT_CHANGE);
     static_assert(-895 == AAUDIO_ERROR_INVALID_STATE, ENUM_CANNOT_CHANGE);
-    static_assert(-894 == AAUDIO_ERROR_UNEXPECTED_STATE, ENUM_CANNOT_CHANGE);
-    static_assert(-893 == AAUDIO_ERROR_UNEXPECTED_VALUE, ENUM_CANNOT_CHANGE);
+    // reserved
+    // reserved
     static_assert(-892 == AAUDIO_ERROR_INVALID_HANDLE, ENUM_CANNOT_CHANGE);
-    static_assert(-891 == AAUDIO_ERROR_INVALID_QUERY, ENUM_CANNOT_CHANGE);
+    // reserved
     static_assert(-890 == AAUDIO_ERROR_UNIMPLEMENTED, ENUM_CANNOT_CHANGE);
     static_assert(-889 == AAUDIO_ERROR_UNAVAILABLE, ENUM_CANNOT_CHANGE);
     static_assert(-888 == AAUDIO_ERROR_NO_FREE_HANDLES, ENUM_CANNOT_CHANGE);
