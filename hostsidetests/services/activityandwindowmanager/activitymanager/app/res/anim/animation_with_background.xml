@@ -13,12 +13,14 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License
   -->
+<!-- Duration is set higher than the wait for state checks (once per second) to avoid races to make
+     sure that the check occurs during the animation is running. -->
 <translate
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:fromYDelta="100%" android:toYDelta="0"
     android:interpolator="@android:interpolator/linear"
     android:fillEnabled="true"
     android:fillBefore="true" android:fillAfter="true"
-    android:duration="500"
+    android:duration="2000"
     android:background="#ff0000">
 </translate>
