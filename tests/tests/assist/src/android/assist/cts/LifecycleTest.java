@@ -73,8 +73,6 @@ public class LifecycleTest extends AssistTestBase {
 
     @Override
     public void tearDown() throws Exception {
-        mContext.sendBroadcast(new Intent(Utils.HIDE_LIFECYCLE_ACTIVITY));
-        waitForDestroy();
         super.tearDown();
         if (mLifecycleTestBroadcastReceiver != null) {
             mContext.unregisterReceiver(mLifecycleTestBroadcastReceiver);
@@ -140,6 +138,8 @@ public class LifecycleTest extends AssistTestBase {
         // calling the above (RACY!!!).
         waitForLostFocus();
         waitAndSeeIfLifecycleMethodsAreTriggered();
+        mContext.sendBroadcast(new Intent(Utils.HIDE_LIFECYCLE_ACTIVITY));
+        waitForDestroy();
     }
 
     public void testNoUiLayerDoesNotTriggerLifecycleMethods() throws Exception {
@@ -158,6 +158,8 @@ public class LifecycleTest extends AssistTestBase {
         // Do this after waitForContext(), since we don't start looking for context until
         // calling the above (RACY!!!).
         waitAndSeeIfLifecycleMethodsAreTriggered();
+        mContext.sendBroadcast(new Intent(Utils.HIDE_LIFECYCLE_ACTIVITY));
+        waitForDestroy();
     }
 
     private class LifecycleTestReceiver extends BroadcastReceiver {
