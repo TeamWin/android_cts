@@ -14,6 +14,7 @@
      limitations under the License.
 -->
 <configuration description="Config for CTS Carrier APIs test cases">
+    <option name="config-descriptor:metadata" key="component" value="telecom" />
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.TokenRequirement">
         <option name="token" value="sim-card-with-certs" />
     </target_preparer>

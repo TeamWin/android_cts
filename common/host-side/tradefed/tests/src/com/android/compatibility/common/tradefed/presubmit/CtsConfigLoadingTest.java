@@ -21,6 +21,7 @@ import static org.junit.Assert.fail;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.targetprep.ApkInstaller;
 import com.android.tradefed.build.FolderBuildInfo;
+import com.android.tradefed.config.ConfigurationDescriptor;
 import com.android.tradefed.config.ConfigurationException;
 import com.android.tradefed.config.ConfigurationFactory;
 import com.android.tradefed.config.IConfiguration;
@@ -28,15 +29,52 @@ import com.android.tradefed.targetprep.ITargetPreparer;
 import com.android.tradefed.testtype.HostTest;
 import com.android.tradefed.testtype.IRemoteTest;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Test that configuration in CTS can load and have expected properties.
  */
 public class CtsConfigLoadingTest {
+
+    private static final String METADATA_COMPONENT = "component";
+    private static final Set<String> KNOWN_COMPONENTS = new HashSet<>(Arrays.asList(
+            // modifications to the list below must be reviewed
+            "abuse",
+            "art",
+            "auth",
+            "auto",
+            "backup",
+            "bionic",
+            "bluetooth",
+            "camera",
+            "deqp",
+            "devtools",
+            "framework",
+            "graphics",
+            "libcore",
+            "location",
+            "media",
+            "metrics",
+            "misc",
+            "networking",
+            "renderscript",
+            "security",
+            "systems",
+            "sysui",
+            "telecom",
+            "tv",
+            "uitoolkit",
+            "vr",
+            "webview"
+    ));
 
     /**
      * Test that configuration shipped in Tradefed can be parsed.
@@ -92,6 +130,22 @@ public class CtsConfigLoadingTest {
                     }
                 }
             }
+            ConfigurationDescriptor cd = c.getConfigurationDescription();
+            Assert.assertNotNull(config + ": configuration descriptor is null", cd);
+            List<String> component = cd.getMetaData(METADATA_COMPONENT);
+            Assert.assertNotNull(String.format("Missing module metadata field \"component\", "
+                    + "please add the following line to your AndroidTest.xml:\n"
+                    + "<option name=\"config-descriptor:metadata\" key=\"component\" "
+                    + "value=\"...\" />\nwhere \"value\" must be one of: %s\n"
+                    + "config: %s", KNOWN_COMPONENTS, config),
+                    component);
+            Assert.assertEquals(String.format("Module config contains more than one \"component\" "
+                    + "metadata field: %s\nconfig: %s", component, config),
+                    1, component.size());
+            String cmp = component.get(0);
+            Assert.assertTrue(String.format("Module config contains unknown \"component\" metadata "
+                    + "field \"%s\", supported ones are: %s\nconfig: %s",
+                    cmp, KNOWN_COMPONENTS, config), KNOWN_COMPONENTS.contains(cmp));
         }
     }
 }
