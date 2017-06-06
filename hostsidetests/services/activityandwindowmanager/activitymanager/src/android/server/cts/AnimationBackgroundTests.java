@@ -24,11 +24,16 @@ public class AnimationBackgroundTests extends ActivityManagerTestBase {
 
     public void testAnimationBackground_duringAnimation() throws Exception {
         launchActivity(LAUNCHING_ACTIVITY);
-        getLaunchActivityBuilder().setTargetActivityName("AnimationTestActivity").execute();
+        getLaunchActivityBuilder()
+                .setTargetActivityName("AnimationTestActivity")
+                .setWaitForLaunched(false)
+                .execute();
 
         // Make sure we are in the middle of the animation.
-        Thread.sleep(250);
-        mAmWmState.computeState(mDevice, null);
+        mAmWmState.waitForWithWmState(mDevice, state -> state
+                .getStack(FULLSCREEN_WORKSPACE_STACK_ID)
+                        .isWindowAnimationBackgroundSurfaceShowing(),
+                "***Waiting for animation background showing");
         assertTrue("window animation background needs to be showing", mAmWmState.getWmState()
                 .getStack(FULLSCREEN_WORKSPACE_STACK_ID)
                 .isWindowAnimationBackgroundSurfaceShowing());

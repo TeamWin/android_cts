@@ -1131,11 +1131,13 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         private int mDisplayId = INVALID_DISPLAY_ID;
         private String mLaunchingActivityName = LAUNCHING_ACTIVITY;
         private boolean mReorderToFront;
+        private boolean mWaitForLaunched;
 
         public LaunchActivityBuilder(ActivityAndWindowManagersState amWmState,
                                      ITestDevice device) {
             mAmWmState = amWmState;
             mDevice = device;
+            mWaitForLaunched = true;
         }
 
         public LaunchActivityBuilder setToSide(boolean toSide) {
@@ -1178,6 +1180,11 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
             return this;
         }
 
+        public LaunchActivityBuilder setWaitForLaunched(boolean shouldWait) {
+            mWaitForLaunched = shouldWait;
+            return this;
+        }
+
         public void execute() throws Exception {
             StringBuilder commandBuilder = new StringBuilder(getAmStartCmd(mLaunchingActivityName));
             commandBuilder.append(" -f 0x20000000");
@@ -1206,8 +1213,10 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
             }
             executeShellCommand(mDevice, commandBuilder.toString());
 
-            mAmWmState.waitForValidState(mDevice, new String[]{mTargetActivityName},
-                    null /* stackIds */, false /* compareTaskAndStackBounds */, mTargetPackage);
+            if (mWaitForLaunched) {
+                mAmWmState.waitForValidState(mDevice, new String[]{mTargetActivityName},
+                        null /* stackIds */, false /* compareTaskAndStackBounds */, mTargetPackage);
+            }
         }
     }
 }
