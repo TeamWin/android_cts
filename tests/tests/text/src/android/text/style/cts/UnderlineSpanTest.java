@@ -175,26 +175,6 @@ public class UnderlineSpanTest {
         assertEquals(origLineWidth, underlinedLineWidth, 0.0f);
     }
 
-    private class RedUnderlineSpan extends UnderlineSpan {
-        @Override
-        public void updateDrawState(TextPaint ds) {
-            ds.setUnderlineText(android.graphics.Color.RED, 1.0f);
-        }
-    }
-
-    // Identical to the normal UnderlineSpan test, except that a subclass of UnderlineSpan is used
-    // that draws a red underline. This shouldn't affect width either.
-    @Test
-    public void testDoesntAffectWidth_colorUnderlineSubclass() {
-        // Roboto kerns between "P" and "."
-        final SpannableString text = new SpannableString("P.");
-        final float origLineWidth = textWidth(text);
-        // Underline just the "P".
-        text.setSpan(new RedUnderlineSpan(), 0, 1, Spanned.SPAN_INCLUSIVE_INCLUSIVE);
-        final float underlinedLineWidth = textWidth(text);
-        assertEquals(origLineWidth, underlinedLineWidth, 0.0f);
-    }
-
     private class ElegantUnderlineSpan extends UnderlineSpan {
         @Override
         public void updateDrawState(TextPaint ds) {
