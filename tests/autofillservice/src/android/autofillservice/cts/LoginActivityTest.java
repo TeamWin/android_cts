@@ -1011,6 +1011,62 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
+    public void filterTextDifferentPrefixes() throws Exception {
+        final String A = "aaa";
+        final String B = "bra";
+        final String C = "cadabra";
+
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, A)
+                        .setPresentation(createPresentation(A))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, B)
+                        .setPresentation(createPresentation(B))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, C)
+                        .setPresentation(createPresentation(C))
+                        .build())
+                .build());
+
+        // Trigger auto-fill.
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+
+        // With no filter text all datasets should be shown
+        eventually(() -> {
+            assertThat(sUiBot.hasViewWithText(A)).isTrue();
+            assertThat(sUiBot.hasViewWithText(B)).isTrue();
+            assertThat(sUiBot.hasViewWithText(C)).isTrue();
+        });
+
+        mActivity.onUsername((v) -> v.setText("a"));
+        eventually(() -> {
+            assertThat(sUiBot.hasViewWithText(A)).isTrue();
+            assertThat(sUiBot.hasViewWithText(B)).isFalse();
+            assertThat(sUiBot.hasViewWithText(C)).isFalse();
+        });
+
+        mActivity.onUsername((v) -> v.setText("b"));
+        eventually(() -> {
+            assertThat(sUiBot.hasViewWithText(A)).isFalse();
+            assertThat(sUiBot.hasViewWithText(B)).isTrue();
+            assertThat(sUiBot.hasViewWithText(C)).isFalse();
+        });
+
+        mActivity.onUsername((v) -> v.setText("c"));
+        eventually(() -> {
+            assertThat(sUiBot.hasViewWithText(A)).isFalse();
+            assertThat(sUiBot.hasViewWithText(B)).isFalse();
+            assertThat(sUiBot.hasViewWithText(C)).isTrue();
+        });
+    }
+    @Test
     public void testSaveOnly() throws Exception {
         saveOnlyTest(false);
     }
