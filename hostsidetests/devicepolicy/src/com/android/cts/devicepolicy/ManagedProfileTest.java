@@ -831,6 +831,9 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         if (!shouldRunTelecomTest()) {
             return;
         }
+        getDevice().setSetting(
+            mProfileUserId, "secure", "dialer_default_application", MANAGED_PROFILE_PKG);
+
         // Place a outgoing call through work phone account using TelecomManager and verify the
         // call is inserted properly.
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".PhoneAccountTest",
@@ -860,6 +863,16 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".PhoneAccountTest",
                 "testEnsureCallNotInserted",
                 mParentUserId);
+
+        // Add an incoming missed call with parent user's phone account and verify the call is
+        // inserted properly.
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".PhoneAccountTest",
+            "testIncomingMissedCall",
+            mProfileUserId);
+        // Make sure the call is not inserted into parent user.
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".PhoneAccountTest",
+            "testEnsureCallNotInserted",
+            mParentUserId);
     }
 
     private void givePackageWriteSettingsPermission(int userId, String pkg) throws Exception {
