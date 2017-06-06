@@ -25,6 +25,8 @@
     </test>
     <logger class="com.android.tradefed.log.FileLogger" />
 
-    <result_reporter class="com.android.tradefed.result.ConsoleResultReporter" />
+    <result_reporter class="com.android.tradefed.result.ConsoleResultReporter">
+        <option name="suppress-passed-tests" value="true" />
+    </result_reporter>
     <template-include name="reporters" default="empty" />
 </configuration>
