@@ -211,15 +211,14 @@ public class ContactsContract_ContactsTest extends AndroidTestCase {
 
         final long now = System.currentTimeMillis();
 
-        // TIMES_CONTACTED will be ignored, so this will be the same thing as markAsContacted().
         ContentValues values = new ContentValues();
         values.clear();
-        values.put(Contacts.TIMES_CONTACTED, 99999);
+        values.put(Contacts.TIMES_CONTACTED, 3);
         values.put(Contacts.LAST_TIME_CONTACTED, now);
         ContactUtil.update(mResolver, contact.getId(), values);
 
         contact.load();
-        assertEquals(1L, contact.getLong(Contacts.TIMES_CONTACTED));
+        assertEquals(3L, contact.getLong(Contacts.TIMES_CONTACTED));
         assertEquals(now / 86400 * 86400, contact.getLong(Contacts.LAST_TIME_CONTACTED));
 
         // This is also the same as markAsContacted().
@@ -228,17 +227,16 @@ public class ContactsContract_ContactsTest extends AndroidTestCase {
         ContactUtil.update(mResolver, contact.getId(), values);
 
         contact.load();
-        assertEquals(2L, contact.getLong(Contacts.TIMES_CONTACTED));
+        assertEquals(4L, contact.getLong(Contacts.TIMES_CONTACTED));
         assertEquals(now / 86400 * 86400, contact.getLong(Contacts.LAST_TIME_CONTACTED));
 
-        // This will just be ignored.
         values.clear();
-        values.put(Contacts.TIMES_CONTACTED, 99999);
+        values.put(Contacts.TIMES_CONTACTED, 10);
 
         ContactUtil.update(mResolver, contact.getId(), values);
 
         contact.load();
-        assertEquals(2L, contact.getLong(Contacts.TIMES_CONTACTED));
+        assertEquals(10L, contact.getLong(Contacts.TIMES_CONTACTED));
         assertEquals(now / 86400 * 86400, contact.getLong(Contacts.LAST_TIME_CONTACTED));
     }
 
