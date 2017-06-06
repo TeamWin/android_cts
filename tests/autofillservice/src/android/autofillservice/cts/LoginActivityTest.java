@@ -194,7 +194,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Try again, forcing it
         saveOnlyTest(true);
-   }
+    }
 
     @Test
     public void testAutoFillOneDataset() throws Exception {
@@ -455,6 +455,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     public void testAutofillCallbackDisabled() throws Exception {
         // Set service.
         disableService();
+
         final MyAutofillCallback callback = mActivity.registerCallback();
 
         // Trigger auto-fill.
@@ -873,58 +874,29 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // With no filter text all datasets should be shown
-        eventually(() -> {
-            assertThat(sUiBot.hasViewWithText(AA)).isTrue();
-            assertThat(sUiBot.hasViewWithText(AB)).isTrue();
-            assertThat(sUiBot.hasViewWithText(B)).isTrue();
-        });
-
-        runShellCommand("input keyevent KEYCODE_A");
+        sUiBot.assertDatasets(AA, AB, B);
 
         // Only two datasets start with 'a'
-        eventually(() -> {
-            assertThat(sUiBot.hasViewWithText(AA)).isTrue();
-            assertThat(sUiBot.hasViewWithText(AB)).isTrue();
-            assertThat(sUiBot.hasViewWithText(B)).isFalse();
-        });
-
         runShellCommand("input keyevent KEYCODE_A");
+        sUiBot.assertDatasets(AA, AB);
 
-        // Only one datasets start with 'aa'
-        eventually(() -> {
-            assertThat(sUiBot.hasViewWithText(AA)).isTrue();
-            assertThat(sUiBot.hasViewWithText(AB)).isFalse();
-            assertThat(sUiBot.hasViewWithText(B)).isFalse();
-        });
-
-        runShellCommand("input keyevent KEYCODE_DEL");
+        // Only one dataset start with 'aa'
+        runShellCommand("input keyevent KEYCODE_A");
+        sUiBot.assertDatasets(AA);
 
         // Only two datasets start with 'a'
-        eventually(() -> {
-            assertThat(sUiBot.hasViewWithText(AA)).isTrue();
-            assertThat(sUiBot.hasViewWithText(AB)).isTrue();
-            assertThat(sUiBot.hasViewWithText(B)).isFalse();
-        });
-
         runShellCommand("input keyevent KEYCODE_DEL");
+        sUiBot.assertDatasets(AA, AB);
 
         // With no filter text all datasets should be shown
-        eventually(() -> {
-            assertThat(sUiBot.hasViewWithText(AA)).isTrue();
-            assertThat(sUiBot.hasViewWithText(AB)).isTrue();
-            assertThat(sUiBot.hasViewWithText(B)).isTrue();
-        });
-
-        runShellCommand("input keyevent KEYCODE_A");
-        runShellCommand("input keyevent KEYCODE_A");
-        runShellCommand("input keyevent KEYCODE_A");
+        runShellCommand("input keyevent KEYCODE_DEL");
+        sUiBot.assertDatasets(AA, AB, B);
 
         // No dataset start with 'aaa'
-        eventually(() -> {
-            assertThat(sUiBot.hasViewWithText(AA)).isFalse();
-            assertThat(sUiBot.hasViewWithText(AB)).isFalse();
-            assertThat(sUiBot.hasViewWithText(B)).isFalse();
-        });
+        runShellCommand("input keyevent KEYCODE_A");
+        runShellCommand("input keyevent KEYCODE_A");
+        runShellCommand("input keyevent KEYCODE_A");
+        sUiBot.assertNoDatasets();
     }
 
     @Test
@@ -956,58 +928,29 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // With no filter text all datasets should be shown
-        eventually(() -> {
-            assertThat(sUiBot.hasViewWithText(AA)).isTrue();
-            assertThat(sUiBot.hasViewWithText(AB)).isTrue();
-            assertThat(sUiBot.hasViewWithText(B)).isTrue();
-        });
-
-        runShellCommand("input keyevent KEYCODE_A");
+        sUiBot.assertDatasets(AA, AB, B);
 
         // Two datasets start with 'a' and one with null value always shown
-        eventually(() -> {
-            assertThat(sUiBot.hasViewWithText(AA)).isTrue();
-            assertThat(sUiBot.hasViewWithText(AB)).isTrue();
-            assertThat(sUiBot.hasViewWithText(B)).isTrue();
-        });
-
         runShellCommand("input keyevent KEYCODE_A");
+        sUiBot.assertDatasets(AA, AB, B);
 
-        // One datasets start with 'aa' and one with null value always shown
-        eventually(() -> {
-            assertThat(sUiBot.hasViewWithText(AA)).isTrue();
-            assertThat(sUiBot.hasViewWithText(AB)).isFalse();
-            assertThat(sUiBot.hasViewWithText(B)).isTrue();
-        });
-
-        runShellCommand("input keyevent KEYCODE_DEL");
+        // One dataset start with 'aa' and one with null value always shown
+        runShellCommand("input keyevent KEYCODE_A");
+        sUiBot.assertDatasets(AA, B);
 
         // Two datasets start with 'a' and one with null value always shown
-        eventually(() -> {
-            assertThat(sUiBot.hasViewWithText(AA)).isTrue();
-            assertThat(sUiBot.hasViewWithText(AB)).isTrue();
-            assertThat(sUiBot.hasViewWithText(B)).isTrue();
-        });
-
         runShellCommand("input keyevent KEYCODE_DEL");
+        sUiBot.assertDatasets(AA, AB, B);
 
         // With no filter text all datasets should be shown
-        eventually(() -> {
-            assertThat(sUiBot.hasViewWithText(AA)).isTrue();
-            assertThat(sUiBot.hasViewWithText(AB)).isTrue();
-            assertThat(sUiBot.hasViewWithText(B)).isTrue();
-        });
-
-        runShellCommand("input keyevent KEYCODE_A");
-        runShellCommand("input keyevent KEYCODE_A");
-        runShellCommand("input keyevent KEYCODE_A");
+        runShellCommand("input keyevent KEYCODE_DEL");
+        sUiBot.assertDatasets(AA, AB, B);
 
         // No dataset start with 'aaa' and one with null value always shown
-        eventually(() -> {
-            assertThat(sUiBot.hasViewWithText(AA)).isFalse();
-            assertThat(sUiBot.hasViewWithText(AB)).isFalse();
-            assertThat(sUiBot.hasViewWithText(B)).isTrue();
-        });
+        runShellCommand("input keyevent KEYCODE_A");
+        runShellCommand("input keyevent KEYCODE_A");
+        runShellCommand("input keyevent KEYCODE_A");
+        sUiBot.assertDatasets(B);
     }
 
     @Test
@@ -1039,33 +982,18 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // With no filter text all datasets should be shown
-        eventually(() -> {
-            assertThat(sUiBot.hasViewWithText(A)).isTrue();
-            assertThat(sUiBot.hasViewWithText(B)).isTrue();
-            assertThat(sUiBot.hasViewWithText(C)).isTrue();
-        });
+        sUiBot.assertDatasets(A, B, C);
 
         mActivity.onUsername((v) -> v.setText("a"));
-        eventually(() -> {
-            assertThat(sUiBot.hasViewWithText(A)).isTrue();
-            assertThat(sUiBot.hasViewWithText(B)).isFalse();
-            assertThat(sUiBot.hasViewWithText(C)).isFalse();
-        });
+        sUiBot.assertDatasets(A);
 
         mActivity.onUsername((v) -> v.setText("b"));
-        eventually(() -> {
-            assertThat(sUiBot.hasViewWithText(A)).isFalse();
-            assertThat(sUiBot.hasViewWithText(B)).isTrue();
-            assertThat(sUiBot.hasViewWithText(C)).isFalse();
-        });
+        sUiBot.assertDatasets(B);
 
         mActivity.onUsername((v) -> v.setText("c"));
-        eventually(() -> {
-            assertThat(sUiBot.hasViewWithText(A)).isFalse();
-            assertThat(sUiBot.hasViewWithText(B)).isFalse();
-            assertThat(sUiBot.hasViewWithText(C)).isTrue();
-        });
+        sUiBot.assertDatasets(C);
     }
+
     @Test
     public void testSaveOnly() throws Exception {
         saveOnlyTest(false);
@@ -1452,8 +1380,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sUiBot.selectDataset("Tap to auth response");
         callback.assertUiHiddenEvent(username);
         callback.assertUiShownEvent(username);
-        sUiBot.assertNotShownByText("Tap to auth response");
-        sUiBot.selectDataset("Dataset");
+        final UiObject2 picker = sUiBot.assertDatasets("Dataset");
+        sUiBot.selectDataset(picker, "Dataset");
         callback.assertUiHiddenEvent(username);
         sUiBot.assertNoDatasets();
 
@@ -1515,10 +1443,10 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // ...and select it this time
         sUiBot.selectDataset("Tap to auth response");
         callback.assertUiHiddenEvent(username);
-        sUiBot.assertNotShownByText("Tap to auth response");
+        final UiObject2 picker = sUiBot.assertDatasets("Dataset");
 
         callback.assertUiShownEvent(username);
-        sUiBot.selectDataset("Dataset");
+        sUiBot.selectDataset(picker, "Dataset");
         callback.assertUiHiddenEvent(username);
         sUiBot.assertNoDatasets();
 
@@ -2338,6 +2266,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 waitUntilDisconnected();
                 assertNoDanglingSessions();
 
+            } catch (RetryableException e) {
+                throw e;
             } catch (Throwable t) {
                 throw new Throwable("Error on step " + i, t);
             }
@@ -2379,7 +2309,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
                 waitUntilDisconnected();
                 assertNoDanglingSessions();
-
+            } catch (RetryableException e) {
+                throw e;
             } catch (Throwable t) {
                 throw new Throwable("Error on step " + i, t);
             }
@@ -2542,12 +2473,12 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Prepare the authenticated response
         final IntentSender authentication = AuthenticationActivity.createSender(getContext(), 1,
                 new CannedFillResponse.Builder().addDataset(
-                new CannedDataset.Builder()
-                        .setField(ID_USERNAME, "username")
-                        .setId("name")
-                        .setPresentation(createPresentation("dataset"))
-                        .build())
-                .setExtras(clientState).build());
+                        new CannedDataset.Builder()
+                                .setField(ID_USERNAME, "username")
+                                .setId("name")
+                                .setPresentation(createPresentation("dataset"))
+                                .build())
+                        .setExtras(clientState).build());
 
         sReplier.addResponse(new CannedFillResponse.Builder().setExtras(clientState)
                 .setPresentation(createPresentation("authentication"))
@@ -2666,7 +2597,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     @Test
     public void testIsServiceEnabled() throws Exception {
         disableService();
-
         final AutofillManager afm = mActivity.getAutofillManager();
         assertThat(afm.hasEnabledAutofillServices()).isFalse();
         try {
