@@ -31,6 +31,7 @@ import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipFile;
 
 /**
@@ -80,6 +81,8 @@ public class JvmtiHostTest extends DeviceTestCase implements IBuildReceiver, IAb
 
         RemoteAndroidTestRunner runner = new RemoteAndroidTestRunner(mTestPackageName, RUNNER,
                 device.getIDevice());
+        // set a max deadline limit to avoid hanging forever
+        runner.setMaxTimeToOutputResponse(2, TimeUnit.MINUTES);
 
         TestResults tr = new TestResults(new AttachAgent(device, mTestPackageName, mTestApk));
 
