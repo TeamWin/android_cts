@@ -5181,8 +5181,14 @@ public class TextViewTest {
     public void testSelectAllJustAfterTap() throws Throwable {
         // Prepare an EditText with focus.
         mActivityRule.runOnUiThread(() -> {
+            // Make a dummy focusable so that initial focus doesn't go to our test textview
+            LinearLayout top = new LinearLayout(mActivity);
+            TextView dummy = new TextView(mActivity);
+            dummy.setFocusableInTouchMode(true);
+            top.addView(dummy, LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
             mTextView = new EditText(mActivity);
-            mActivity.setContentView(mTextView);
+            top.addView(mTextView, LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+            mActivity.setContentView(top);
 
             assertFalse(mTextView.didTouchFocusSelect());
             mTextView.setFocusable(true);
@@ -6422,11 +6428,17 @@ public class TextViewTest {
         final View.OnClickListener mockOnClickListener = mock(View.OnClickListener.class);
         final int safeDoubleTapTimeout = ViewConfiguration.getDoubleTapTimeout() + 1;
         mActivityRule.runOnUiThread(() -> {
+            // set up a dummy focusable so that initial focus doesn't go to our test textview
+            LinearLayout top = new LinearLayout(mActivity);
+            TextView dummy = new TextView(mActivity);
+            dummy.setFocusableInTouchMode(true);
+            top.addView(dummy, LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
             mTextView = new TextView(mActivity);
             mTextView.setText("...text 11:11. some more text is in here...");
             mTextView.setFocusable(true);
             mTextView.setOnClickListener(mockOnClickListener);
-            mActivity.setContentView(mTextView);
+            top.addView(mTextView, LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+            mActivity.setContentView(top);
         });
         mInstrumentation.waitForIdleSync();
         assertTrue(mTextView.isFocusable());
