@@ -24,7 +24,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
-import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
@@ -32,7 +31,6 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Toast;
 
-import com.android.compatibility.common.util.PropertyUtil;
 import com.android.cts.verifier.ArrayTestListAdapter;
 import com.android.cts.verifier.DialogTestListActivity;
 import com.android.cts.verifier.R;
@@ -426,11 +424,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 policyTransparencyTestIntent, null);
 
         adapter.add(mProfileOwnerInstalled);
-        if (PropertyUtil.getFirstApiLevel() >= VERSION_CODES.N_MR1) {
-            // Previous devices were not required to entangle the disk encryption key with lock
-            // screen credentials.
-            adapter.add(mDiskEncryptionTest);
-        }
+        adapter.add(mDiskEncryptionTest);
 
         // Badge related tests
         adapter.add(mWorkAppVisibleTest);
