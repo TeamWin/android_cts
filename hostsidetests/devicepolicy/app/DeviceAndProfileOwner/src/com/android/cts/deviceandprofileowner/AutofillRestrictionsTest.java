@@ -28,6 +28,9 @@ public class AutofillRestrictionsTest extends BaseDeviceAdminTest {
     private static final String AUTOFILL_PACKAGE_NAME = "com.android.cts.devicepolicy.autofillapp";
     private static final String AUTOFILL_ACTIVITY_NAME = AUTOFILL_PACKAGE_NAME + ".SimpleActivity";
 
+    // TODO: should static import Settings.Secure instead, but that's not a @TestApi
+    private static String USER_SETUP_COMPLETE = "user_setup_complete";
+
     // Currently, autofill_service is a cloned service, so it's only set in the default user.
     // That might change, so we're using a guard to decide how to set it
     private final boolean USES_CLONED_SETTINGS = true;
@@ -80,6 +83,9 @@ public class AutofillRestrictionsTest extends BaseDeviceAdminTest {
     }
 
     private void enableService() throws Exception {
+        runShellCommand("settings put secure --user %d %s %s default", mUserId, USER_SETUP_COMPLETE,
+                1);
+
         if (USES_CLONED_SETTINGS) {
             runShellCommand("settings put secure %s %s default", AUTOFILL_SERVICE, SERVICE_NAME);
         } else {
