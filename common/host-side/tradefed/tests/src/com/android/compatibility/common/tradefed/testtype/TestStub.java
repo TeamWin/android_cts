@@ -132,6 +132,11 @@ public class TestStub implements IRemoteTest, IAbiReceiver, IRuntimeHintProvider
     }
 
     @Override
+    public IAbi getAbi() {
+        return null;
+    }
+
+    @Override
     public long getRuntimeHint() {
         return 1L;
     }
