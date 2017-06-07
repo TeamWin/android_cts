@@ -193,6 +193,11 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.cve_2016_2429_b_27211885);
     }
 
+    public void testStagefright_bug_34031018() throws Exception {
+        doStagefrightTest(R.raw.bug_34031018_32bit);
+        doStagefrightTest(R.raw.bug_34031018_64bit);
+    }
+
     private void doStagefrightTest(final int rid) throws Exception {
         doStagefrightTestMediaPlayer(rid);
         doStagefrightTestMediaCodec(rid);
@@ -587,7 +592,7 @@ public class StagefrightTest extends InstrumentationTestCase {
             try {
                 retriever.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
                 fd.close();
-            } catch (IllegalArgumentException e) {
+            } catch (Exception e) {
                 // ignore
             } finally {
                 closeQuietly(fd);
