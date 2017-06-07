@@ -385,10 +385,12 @@ public class View_FocusHandlingTest {
         LinearLayout mid = new LinearLayout(activity);
         Button but = new Button(activity);
         but.setFocusableInTouchMode(true);
+        but.setVisibility(View.INVISIBLE);
         mid.addView(but, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 
         group.addView(mid, ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
+        but.setVisibility(View.VISIBLE);
         assertSame(root.findFocus(), but);
         assertFalse(group.isFocused());
 
