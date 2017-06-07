@@ -184,7 +184,7 @@ public class EncryptionAppTest extends InstrumentationTestCase {
 
         // Yes, we really want "none" if prompted again
         view = new UiObject(new UiSelector()
-                .resourceId("com.android.settings:id/lock_none"));
+                .resourceId(mEncryptionSettingPackage + ":id/lock_none"));
         if (view.waitForExists(TIMEOUT)) {
             view.click();
             mDevice.waitForIdle();
