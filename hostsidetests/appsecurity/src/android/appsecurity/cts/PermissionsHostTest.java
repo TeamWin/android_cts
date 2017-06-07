@@ -29,11 +29,17 @@ import com.android.tradefed.testtype.IBuildReceiver;
  * dynamic granting and behavior of legacy apps.
  */
 public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver, IBuildReceiver {
-    private static final String PKG = "com.android.cts.usepermission";
+    private static final String USES_PERMISSION_PKG = "com.android.cts.usepermission";
+    private static final String ESCALATE_PERMISSION_PKG = "com.android.cts.escalate.permission";
 
     private static final String APK_22 = "CtsUsePermissionApp22.apk";
     private static final String APK_23 = "CtsUsePermissionApp23.apk";
     private static final String APK_24 = "CtsUsePermissionApp24.apk";
+
+    private static final String APK_DECLARE_NON_RUNTIME_PERMISSIONS =
+            "CtsDeclareNonRuntimePermissions.apk";
+    private static final String APK_ESCLATE_TO_RUNTIME_PERMISSIONS =
+            "CtsEscalateToRuntimePermissions.apk";
 
     private IAbi mAbi;
     private IBuildInfo mCtsBuild;
@@ -55,14 +61,16 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
         assertNotNull(mAbi);
         assertNotNull(mCtsBuild);
 
-        getDevice().uninstallPackage(PKG);
+        getDevice().uninstallPackage(USES_PERMISSION_PKG);
+        getDevice().uninstallPackage(ESCALATE_PERMISSION_PKG);
     }
 
     @Override
     protected void tearDown() throws Exception {
         super.tearDown();
 
-        getDevice().uninstallPackage(PKG);
+        getDevice().uninstallPackage(USES_PERMISSION_PKG);
+        getDevice().uninstallPackage(ESCALATE_PERMISSION_PKG);
     }
 
     public void testFail() throws Exception {
@@ -70,7 +78,7 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
         assertNull(getDevice().installPackage(
                 MigrationHelper.getTestFile(mCtsBuild, APK_23), false, false));
         try {
-            runDeviceTests(PKG, "com.android.cts.usepermission.UsePermissionTest23",
+            runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
                     "testFail");
             fail("Expected remote failure");
         } catch (AssertionError expected) {
@@ -82,7 +90,7 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
         assertNull(getDevice().installPackage(
                 MigrationHelper.getTestFile(mCtsBuild, APK_23), false, false));
         try {
-            runDeviceTests(PKG, "com.android.cts.usepermission.UsePermissionTest23",
+            runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
                     "testKill");
             fail("Expected remote failure");
         } catch (AssertionError expected) {
@@ -93,7 +101,7 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
         assertNull(getDevice().installPackage(
                 MigrationHelper.getTestFile(mCtsBuild, APK_22),
                 false, false));
-        runDeviceTests(PKG, "com.android.cts.usepermission.UsePermissionTest22",
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest22",
                 "testCompatDefault");
     }
 
@@ -102,12 +110,12 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
                 MigrationHelper.getTestFile(mCtsBuild, APK_22),
                 false, false));
         try {
-            runDeviceTests(PKG, "com.android.cts.usepermission.UsePermissionTest22",
+            runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest22",
                     "testCompatRevoked_part1");
             fail("App must be killed on a permission revoke");
         } catch (AssertionError expected) {
         }
-        runDeviceTests(PKG, "com.android.cts.usepermission.UsePermissionTest22",
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest22",
                 "testCompatRevoked_part2");
     }
 
@@ -115,63 +123,63 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
         assertNull(getDevice().installPackage(
                 MigrationHelper.getTestFile(mCtsBuild, APK_22),
                 false, false));
-        runDeviceTests(PKG, "com.android.cts.usepermission.UsePermissionTest22",
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest22",
                 "testNoRuntimePrompt");
     }
 
     public void testDefault23() throws Exception {
         assertNull(getDevice().installPackage(
                 MigrationHelper.getTestFile(mCtsBuild, APK_23), false, false));
-        runDeviceTests(PKG, "com.android.cts.usepermission.UsePermissionTest23",
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
                 "testDefault");
     }
 
     public void testGranted23() throws Exception {
         assertNull(getDevice().installPackage(
                 MigrationHelper.getTestFile(mCtsBuild, APK_23), false, false));
-        runDeviceTests(PKG, "com.android.cts.usepermission.UsePermissionTest23",
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
                 "testGranted");
     }
 
     public void testInteractiveGrant23() throws Exception {
         assertNull(getDevice().installPackage(
                 MigrationHelper.getTestFile(mCtsBuild, APK_23), false, false));
-        runDeviceTests(PKG, "com.android.cts.usepermission.UsePermissionTest23",
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
                 "testInteractiveGrant");
     }
 
     public void testRuntimeGroupGrantSpecificity23() throws Exception {
         assertNull(getDevice().installPackage(
                 MigrationHelper.getTestFile(mCtsBuild, APK_23), false, false));
-        runDeviceTests(PKG, "com.android.cts.usepermission.UsePermissionTest23",
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
                 "testRuntimeGroupGrantSpecificity");
     }
 
     public void testRuntimeGroupGrantExpansion23() throws Exception {
         assertNull(getDevice().installPackage(
                 MigrationHelper.getTestFile(mCtsBuild, APK_23), false, false));
-        runDeviceTests(PKG, "com.android.cts.usepermission.UsePermissionTest23",
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
                 "testRuntimeGroupGrantExpansion");
     }
 
     public void testCancelledPermissionRequest23() throws Exception {
         assertNull(getDevice().installPackage(
                 MigrationHelper.getTestFile(mCtsBuild, APK_23), false, false));
-        runDeviceTests(PKG, "com.android.cts.usepermission.UsePermissionTest23",
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
                 "testCancelledPermissionRequest");
     }
 
     public void testRequestGrantedPermission23() throws Exception {
         assertNull(getDevice().installPackage(
                 MigrationHelper.getTestFile(mCtsBuild, APK_23), false, false));
-        runDeviceTests(PKG, "com.android.cts.usepermission.UsePermissionTest23",
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
                 "testRequestGrantedPermission");
     }
 
     public void testDenialWithPrejudice23() throws Exception {
         assertNull(getDevice().installPackage(
                 MigrationHelper.getTestFile(mCtsBuild, APK_23), false, false));
-        runDeviceTests(PKG, "com.android.cts.usepermission.UsePermissionTest23",
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
                 "testDenialWithPrejudice");
     }
 
@@ -179,11 +187,11 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
         assertNull(getDevice().installPackage(
                 MigrationHelper.getTestFile(mCtsBuild, APK_23), false, false));
         try {
-            runDeviceTests(PKG, "com.android.cts.usepermission.UsePermissionTest23",
+            runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
                     "testRevokeAffectsWholeGroup_part1");
         } catch (AssertionError expected) {
         }
-        runDeviceTests(PKG, "com.android.cts.usepermission.UsePermissionTest23",
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
                 "testRevokeAffectsWholeGroup_part2");
     }
 
@@ -191,51 +199,51 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
         assertNull(getDevice().installPackage(
                 MigrationHelper.getTestFile(mCtsBuild, APK_23), false, false));
         try {
-            runDeviceTests(PKG, "com.android.cts.usepermission.UsePermissionTest23",
+            runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
                     "testGrantPreviouslyRevokedWithPrejudiceShowsPrompt_part1");
             fail("App must be killed on a permission revoke");
         } catch (Throwable expected) {
         }
-        runDeviceTests(PKG, "com.android.cts.usepermission.UsePermissionTest23",
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
                 "testGrantPreviouslyRevokedWithPrejudiceShowsPrompt_part2");
     }
 
     public void testRequestNonRuntimePermission23() throws Exception {
         assertNull(getDevice().installPackage(
                 MigrationHelper.getTestFile(mCtsBuild, APK_23), false, false));
-        runDeviceTests(PKG, "com.android.cts.usepermission.UsePermissionTest23",
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
                 "testRequestNonRuntimePermission");
     }
 
     public void testRequestNonExistentPermission23() throws Exception {
         assertNull(getDevice().installPackage(
                 MigrationHelper.getTestFile(mCtsBuild, APK_23), false, false));
-        runDeviceTests(PKG, "com.android.cts.usepermission.UsePermissionTest23",
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
                 "testRequestNonExistentPermission");
     }
 
     public void testRequestPermissionFromTwoGroups23() throws Exception {
         assertNull(getDevice().installPackage(
                 MigrationHelper.getTestFile(mCtsBuild, APK_23), false, false));
-        runDeviceTests(PKG, "com.android.cts.usepermission.UsePermissionTest23",
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
                 "testRequestPermissionFromTwoGroups");
     }
 
 //    public void testOnlyRequestedPermissionsGranted24() throws Exception {
 //        assertNull(getDevice().installPackage(
 //                MigrationHelper.getTestFile(mCtsBuild, APK_24), false, false));
-//        runDeviceTests(PKG, "com.android.cts.usepermission.UsePermissionTest24",
+//        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest24",
 //                "testOnlyRequestedPermissionsGranted");
 //    }
 
     public void testUpgradeKeepsPermissions() throws Exception {
         assertNull(getDevice().installPackage(
                 MigrationHelper.getTestFile(mCtsBuild, APK_22), false, false));
-        runDeviceTests(PKG, "com.android.cts.usepermission.UsePermissionTest22",
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest22",
                 "testAllPermissionsGrantedByDefault");
         assertNull(getDevice().installPackage(
                 MigrationHelper.getTestFile(mCtsBuild, APK_23), true, false));
-        runDeviceTests(PKG, "com.android.cts.usepermission.UsePermissionTest23",
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
                 "testAllPermissionsGrantedOnUpgrade");
     }
 
@@ -253,12 +261,12 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
     public void testNoResidualPermissionsOnUninstall() throws Exception {
         assertNull(getDevice().installPackage(
                 MigrationHelper.getTestFile(mCtsBuild, APK_23), false, false));
-        runDeviceTests(PKG, "com.android.cts.usepermission.UsePermissionTest23",
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
                 "testNoResidualPermissionsOnUninstall_part1");
-        assertNull(getDevice().uninstallPackage(PKG));
+        assertNull(getDevice().uninstallPackage(USES_PERMISSION_PKG));
         assertNull(getDevice().installPackage(
                 MigrationHelper.getTestFile(mCtsBuild, APK_23), false, false));
-        runDeviceTests(PKG, "com.android.cts.usepermission.UsePermissionTest23",
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
                 "testNoResidualPermissionsOnUninstall_part2");
     }
 
@@ -266,26 +274,36 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
         assertNull(getDevice().installPackage(
                 MigrationHelper.getTestFile(mCtsBuild, APK_22), false, false));
         try {
-            runDeviceTests(PKG, "com.android.cts.usepermission.UsePermissionTest22",
+            runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest22",
                     "testRevokePropagatedOnUpgradeOldToNewModel_part1");
             fail("App must be killed on a permission revoke");
         } catch (AssertionError expected) {
         }
         assertNull(getDevice().installPackage(
                 MigrationHelper.getTestFile(mCtsBuild, APK_23), true, false));
-        runDeviceTests(PKG, "com.android.cts.usepermission.UsePermissionTest23",
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
                 "testRevokePropagatedOnUpgradeOldToNewModel_part2");
     }
 
     public void testRevokePropagatedOnUpgradeNewToNewModel() throws Exception {
         assertNull(getDevice().installPackage(
                 MigrationHelper.getTestFile(mCtsBuild, APK_23), false, false));
-        runDeviceTests(PKG, "com.android.cts.usepermission.UsePermissionTest23",
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
                 "testRevokePropagatedOnUpgradeNewToNewModel_part1");
         assertNull(getDevice().installPackage(
                 MigrationHelper.getTestFile(mCtsBuild, APK_23), true, false));
-        runDeviceTests(PKG, "com.android.cts.usepermission.UsePermissionTest23",
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
                 "testRevokePropagatedOnUpgradeNewToNewModel_part2");
+    }
+
+    public void testNoPermissionEscalation() throws Exception {
+        assertNull(getDevice().installPackage(MigrationHelper.getTestFile(
+                mCtsBuild, APK_DECLARE_NON_RUNTIME_PERMISSIONS), false, false));
+        assertNull(getDevice().installPackage(MigrationHelper.getTestFile(
+                mCtsBuild, APK_ESCLATE_TO_RUNTIME_PERMISSIONS), true, false));
+        runDeviceTests(ESCALATE_PERMISSION_PKG,
+                "com.android.cts.escalatepermission.PermissionEscalationTest",
+                "testCannotEscalateNonRuntimePermissionsToRuntime");
     }
 
     private void runDeviceTests(String packageName, String testClassName, String testMethodName)
