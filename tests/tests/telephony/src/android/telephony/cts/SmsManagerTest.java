@@ -107,6 +107,7 @@ public class SmsManagerTest extends AndroidTestCase {
                     "310260",    // Republic Wireless US
                     "310026",     // T-Mobile US
                     "330120", // OpenMobile communication
+                    "334100",   // Mexsat
                     // Verizon
                     "310004",
                     "310012",
@@ -147,6 +148,7 @@ public class SmsManagerTest extends AndroidTestCase {
                     "45002",     // SKT Mobility
                     "45006",    // LGT
                     "310260",   // Republic Wireless US
+                    "334100",   // Mexsat
                     // Verizon
                     "310004",
                     "310012",
@@ -183,7 +185,8 @@ public class SmsManagerTest extends AndroidTestCase {
                     "302370",   // Fido
                     "30237",    // Fido
                     "45006",    // LGT
-                    "45008"     // KT
+                    "45008",    // KT
+                    "334100"    // Mexsat
             );
 
     private TelephonyManager mTelephonyManager;
