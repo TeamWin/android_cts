@@ -82,7 +82,7 @@ public class Poc17_04 extends SecurityTestCase {
     public void testPocCVE_2017_0564() throws Exception {
 	enableAdbRoot(getDevice());
         if(containsDriver(getDevice(), "/dev/ion")) {
-            AdbUtils.runPoc("CVE-2017-0564", getDevice(), 60);
+            AdbUtils.runPocNoOutput("CVE-2017-0564", getDevice(), 60);
         }
     }
 }
