@@ -30,6 +30,9 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 LOCAL_DEX_PREOPT := false
 LOCAL_JACK_FLAGS := --multi-dex native
 
+# Keep META-INF/ resources from LOCAL_STATIC_JAVA_LIBRARIES. http://b/62231394
+LOCAL_DONT_DELETE_JAR_META_INF := true
+
 LOCAL_PROGUARD_ENABLED := disabled
 
 # Include both the 32 and 64 bit versions of libjavacoretests,
