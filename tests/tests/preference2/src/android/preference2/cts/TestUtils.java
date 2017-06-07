@@ -26,6 +26,7 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject;
 import android.support.test.uiautomator.UiObjectNotFoundException;
+import android.support.test.uiautomator.UiScrollable;
 import android.support.test.uiautomator.UiSelector;
 
 import com.android.compatibility.common.util.SystemUtil;
@@ -61,22 +62,37 @@ public class TestUtils {
         return bt;
     }
 
-    void tapOnViewWithText(String text) {
-        UiObject obj = device.findObject(new UiSelector().textMatches(text));
-        try {
-            obj.click();
-        } catch (UiObjectNotFoundException e) {
-            throw new AssertionError("View with text '" + text + "' was not found!", e);
+    void tapOnViewWithText(String searchText) {
+        if (searchText == null) {
+            return;
         }
-        device.waitForIdle();
+
+        UiScrollable textScroll =  new UiScrollable(new UiSelector().scrollable(true));
+        try {
+            textScroll.scrollIntoView(new UiSelector().text(searchText));
+            UiObject text = new UiObject(new UiSelector().text(searchText));
+            text.click();
+        } catch (UiObjectNotFoundException e) {
+            throw new AssertionError("View with text '" + searchText + "' was not found!", e);
+        }
     }
 
-    boolean isTextShown(String text) {
-        UiObject obj = device.findObject(new UiSelector().textMatches(text));
-        if (obj.exists()) {
+    boolean isTextShown(String searchText) {
+        if (searchText == null) {
+            return false;
+        }
+
+        UiObject text = new UiObject(new UiSelector().text(searchText));
+        if (text.exists() || text.waitForExists(1000)) {
             return true;
         }
-        return obj.waitForExists(1000);
+
+        UiScrollable textScroll = new UiScrollable(new UiSelector().scrollable(true));
+        try {
+            return textScroll.scrollIntoView(new UiSelector().text(searchText));
+        } catch (UiObjectNotFoundException e) {
+            return false;
+        }
     }
 
     boolean isTextHidden(String text) {
