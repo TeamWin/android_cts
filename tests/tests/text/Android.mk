@@ -37,7 +37,7 @@ LOCAL_PACKAGE_NAME := CtsTextTestCases
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts general-tests
 
-# uncomment when dalvik.annotation.Test* are removed or part of SDK
-#LOCAL_SDK_VERSION := current
+# Enforce public / test api only
+LOCAL_SDK_VERSION := test_current
 
 include $(BUILD_CTS_PACKAGE)
