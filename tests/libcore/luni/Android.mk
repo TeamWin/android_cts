@@ -38,7 +38,8 @@ LOCAL_JACK_FLAGS := --multi-dex native
 LOCAL_DX_FLAGS := --multi-dex
 
 LOCAL_PROGUARD_ENABLED := disabled
-
+# Keep META-INF/ resources from LOCAL_STATIC_JAVA_LIBRARIES. http://b/62341677
+LOCAL_DONT_DELETE_JAR_META_INF := true
 LOCAL_JNI_SHARED_LIBRARIES := libjavacoretests libsqlite_jni libnativehelper_compat_libc++ libc++
 
 # Include both the 32 and 64 bit versions of libjavacoretests,
