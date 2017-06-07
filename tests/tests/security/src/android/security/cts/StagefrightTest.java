@@ -198,6 +198,11 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.cve_2016_2429_b_27211885);
     }
 
+    public void testStagefright_bug_34031018() throws Exception {
+        doStagefrightTest(R.raw.bug_34031018_32bit);
+        doStagefrightTest(R.raw.bug_34031018_64bit);
+    }
+
     /***********************************************************
      to prevent merge conflicts, add M tests below this comment,
      before any existing test methods
@@ -723,7 +728,7 @@ public class StagefrightTest extends InstrumentationTestCase {
             try {
                 retriever.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
                 fd.close();
-            } catch (RuntimeException e) {
+            } catch (Exception e) {
                 // ignore
             } finally {
                 closeQuietly(fd);
