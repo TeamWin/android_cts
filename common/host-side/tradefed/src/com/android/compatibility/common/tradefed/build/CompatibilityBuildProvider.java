@@ -15,17 +15,18 @@
  */
 package com.android.compatibility.common.tradefed.build;
 
+import com.android.annotations.VisibleForTesting;
 import com.android.compatibility.SuiteInfo;
 import com.android.tradefed.build.BuildInfo;
 import com.android.tradefed.build.BuildRetrievalError;
 import com.android.tradefed.build.DeviceBuildInfo;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.build.IBuildProvider;
+import com.android.tradefed.build.IDeviceBuildInfo;
 import com.android.tradefed.build.IDeviceBuildProvider;
-import com.android.tradefed.build.IFolderBuildInfo;
 import com.android.tradefed.config.Option;
-import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.config.Option.Importance;
+import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 
@@ -56,6 +57,14 @@ public class CompatibilityBuildProvider implements IDeviceBuildProvider {
     @Option(name="branch", description="build branch name to supply.")
     private String mBranch = null;
 
+    @Option(name = "build-id",
+            description =
+                    "build version number to supply. Override the default cts version number.")
+    private String mBuildId = null;
+
+    @Option(name="build-flavor", description="build flavor name to supply.")
+    private String mBuildFlavor = null;
+
     @Option(name="use-device-build-info", description="Bootstrap build info from device")
     private boolean mUseDeviceBuildInfo = false;
 
@@ -78,13 +87,21 @@ public class CompatibilityBuildProvider implements IDeviceBuildProvider {
     @Override
     public IBuildInfo getBuild() {
         // Create a blank BuildInfo which will get populated later.
-        String version = getSuiteInfoBuildNumber();
-        if (version == null) {
-            version = IBuildInfo.UNKNOWN_BUILD_ID;
+        String version = null;
+        if (mBuildId != null) {
+            version = mBuildId;
+        } else {
+            version = getSuiteInfoBuildNumber();
+            if (version == null) {
+                version = IBuildInfo.UNKNOWN_BUILD_ID;
+            }
         }
-        IBuildInfo ctsBuild = new BuildInfo(version, mTestTag, mTestTag);
+        IBuildInfo ctsBuild = new BuildInfo(version, mTestTag);
         if (mBranch  != null) {
             ctsBuild.setBuildBranch(mBranch);
+        }
+        if (mBuildFlavor != null) {
+            ctsBuild.setBuildFlavor(mBuildFlavor);
         }
         addCompatibilitySuiteInfo(ctsBuild);
         return ctsBuild;
@@ -103,7 +120,7 @@ public class CompatibilityBuildProvider implements IDeviceBuildProvider {
         } else {
             String buildId = device.getBuildId();
             String buildFlavor = device.getBuildFlavor();
-            IBuildInfo info = new DeviceBuildInfo(buildId, mTestTag, buildFlavor);
+            IBuildInfo info = new DeviceBuildInfo(buildId, mTestTag);
             if (mBranch == null) {
                 // if branch is not specified via param, make a pseudo branch name based on platform
                 // version and product info from device
@@ -149,14 +166,7 @@ public class CompatibilityBuildProvider implements IDeviceBuildProvider {
         info.addBuildAttribute(SUITE_PLAN, mSuitePlan);
         info.addBuildAttribute(START_TIME_MS, Long.toString(startTimeMs));
         info.addBuildAttribute(RESULT_DIR, getDirSuffix(startTimeMs));
-        String rootDirPath = null;
-        if (info instanceof IFolderBuildInfo) {
-            File rootDir = ((IFolderBuildInfo) info).getRootDir();
-            if (rootDir != null) {
-                rootDirPath = rootDir.getAbsolutePath();
-            }
-        }
-        rootDirPath = System.getProperty(String.format("%s_ROOT", getSuiteInfoName()), rootDirPath);
+        String rootDirPath = getRootDirPath();
         if (rootDirPath == null || rootDirPath.trim().equals("")) {
             throw new IllegalArgumentException(
                     String.format("Missing install path property %s_ROOT", getSuiteInfoName()));
@@ -167,10 +177,24 @@ public class CompatibilityBuildProvider implements IDeviceBuildProvider {
                     String.format("Root directory doesn't exist %s", rootDir.getAbsolutePath()));
         }
         info.addBuildAttribute(ROOT_DIR, rootDir.getAbsolutePath());
+        // For DeviceBuildInfo we populate the testsDir folder of the build info.
+        if (info instanceof IDeviceBuildInfo) {
+            File testDir =  new File(rootDir, String.format("android-%s/testcases/",
+                    getSuiteInfoName().toLowerCase()));
+            ((IDeviceBuildInfo) info).setTestsDir(testDir, "0");
+        }
         if (mURL != null && !mURL.isEmpty()) {
             info.addBuildAttribute(DYNAMIC_CONFIG_OVERRIDE_URL,
                     mURL.replace("{suite-name}", getSuiteInfoName()));
         }
+    }
+
+    /**
+     * Returns the CTS_ROOT variable that the harness was started with.
+     */
+    @VisibleForTesting
+    String getRootDirPath() {
+        return System.getProperty(String.format("%s_ROOT", getSuiteInfoName()));
     }
 
     /**

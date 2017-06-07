@@ -37,7 +37,8 @@ public class NetworkConnectivityChecker implements ISystemStatusChecker {
     public boolean postExecutionCheck(ITestDevice device) throws DeviceNotAvailableException {
         if (!MonitoringUtils.checkDeviceConnectivity(device)) {
             if (mIsFailed) {
-                CLog.w("NetworkConnectivityChecker is still failing.");
+                CLog.w("NetworkConnectivityChecker is still failing on %s.",
+                        device.getSerialNumber());
                 return true;
             }
             mIsFailed = true;
