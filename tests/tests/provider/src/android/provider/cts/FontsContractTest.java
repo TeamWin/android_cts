@@ -218,20 +218,30 @@ public class FontsContractTest {
     @Test
     public void queryAttributes() throws NameNotFoundException {
         FontRequest request = new FontRequest(AUTHORITY, PACKAGE,
-                MockFontProvider.SINGLE_FONT_FAMILY2_QUERY, SIGNATURE);
+                MockFontProvider.ALL_ATTRIBUTE_VALUES_QUERY, SIGNATURE);
         FontFamilyResult result = FontsContract.fetchFonts(
                 mContext, null /* cancellation signal */, request);
         assertNotNull(result);
         assertEquals(FontFamilyResult.STATUS_OK, result.getStatusCode());
 
         FontInfo[] fonts = result.getFonts();
-        assertEquals(1, fonts.length);
+        assertEquals(2, fonts.length);
         FontInfo font = fonts[0];
+        assertNotNull(font.getUri());
+        assertEquals(400, font.getWeight());
+        assertEquals(1, font.getAxes().length);
+        assertEquals(0, font.getTtcIndex());
+        assertFalse(font.isItalic());
+        assertEquals(Columns.RESULT_CODE_OK, font.getResultCode());
+
+        font = fonts[1];
         assertNotNull(font.getUri());
         assertEquals(700, font.getWeight());
         assertEquals(1, font.getAxes().length);
+        assertEquals(1, font.getTtcIndex());
         assertTrue(font.isItalic());
         assertEquals(Columns.RESULT_CODE_OK, font.getResultCode());
+
         assertNotNull(FontsContract.buildTypeface(mContext, null /* cancellation signal */, fonts));
     }
 
