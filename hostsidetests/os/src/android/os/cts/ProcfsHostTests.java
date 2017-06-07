@@ -16,16 +16,22 @@
 
 package android.os.cts;
 
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceTestCase;
+import com.android.tradefed.testtype.IBuildReceiver;
+
+import java.io.File;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ProcfsHostTests extends DeviceTestCase {
+public class ProcfsHostTests extends DeviceTestCase implements IBuildReceiver {
   // We need a running test app to test /proc/[PID]/* files.
   private static final String TEST_APP_PACKAGE = "android.os.procfs";
   private static final String TEST_APP_CLASS = "ProcfsTest";
+  private static final String APK_NAME = "CtsHostProcfsTestApp.apk";
   private static final String START_TEST_APP_COMMAND =
       String.format(
           "am start -W -a android.intent.action.MAIN -n %s/%s.%s",
@@ -57,23 +63,20 @@ public class ProcfsHostTests extends DeviceTestCase {
   // A reference to the device under test, which gives us a handle to run commands.
   private ITestDevice mDevice;
 
-  // Process ID of test app.
-  //
-  // Technically it doesn't need to be static in the master branch because a single object will be
-  // created to run different tests (calling various test* methods). However, this piece of code
-  // may be ported to older branches (e.g., mnc-dev) to test compatibility where a single object
-  // is created for each test. In these older branches it is useful to make this field static, so
-  // we don't have to kill and restart the app between tests.
-  private static int mTestAppPid = -1;
+  private int mTestAppPid = -1;
+
+  private IBuildInfo mBuild;
+
+  @Override
+  public void setBuild(IBuildInfo buildInfo) {
+      mBuild = buildInfo;
+  }
 
   @Override
   protected synchronized void setUp() throws Exception {
     super.setUp();
     mDevice = getDevice();
-    // Start the test app if not already.
-    if (mTestAppPid == -1) {
-      mTestAppPid = startTestApp();
-    }
+    mTestAppPid = startTestApp();
   }
 
   /**
@@ -145,6 +148,14 @@ public class ProcfsHostTests extends DeviceTestCase {
    * @throws Exception
    */
   private int startTestApp() throws Exception {
+
+    // Uninstall+install the app
+    mDevice.uninstallPackage(TEST_APP_PACKAGE);
+    CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mBuild);
+    File app = buildHelper.getTestFile(APK_NAME);
+    String[] options = {};
+    mDevice.installPackage(app, false, options);
+
     // Clear logcat.
     mDevice.executeAdbCommand("logcat", "-c");
     // Start the app activity and wait for it to complete.
