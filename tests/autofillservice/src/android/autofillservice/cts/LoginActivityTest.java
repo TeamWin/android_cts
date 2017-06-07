@@ -1139,6 +1139,55 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
+    public void testSaveOnlyTwoRequiredFieldsOnePrefilled() throws Exception {
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
+                .build());
+
+        // Set activity
+        mActivity.onUsername((v) -> v.setText("I_AM_USER"));
+
+        // Trigger auto-fill.
+        mActivity.onPassword(View::requestFocus);
+
+        // Wait for onFill() before changing value, otherwise the fields might be changed before
+        // the session started
+        sReplier.getNextFillRequest();
+        sUiBot.assertNoDatasets();
+
+        // Set credentials...
+        mActivity.onPassword((v) -> v.setText("thou should pass")); // contains pass
+
+        // ...and login
+        final String expectedMessage = getWelcomeMessage("I_AM_USER"); // contains pass
+        final String actualMessage = mActivity.tapLogin();
+        assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
+
+        // Assert the snack bar is shown and tap "Save".
+        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+        sReplier.assertNumberUnhandledSaveRequests(0);
+
+        // Assert value of expected fields - should not be sanitized.
+        try {
+            final ViewNode username = findNodeByResourceId(saveRequest.structure, ID_USERNAME);
+            assertTextAndValue(username, "I_AM_USER");
+            final ViewNode password = findNodeByResourceId(saveRequest.structure, ID_PASSWORD);
+            assertTextAndValue(password, "thou should pass");
+        } catch (AssertionError | RuntimeException e) {
+            dumpStructure("saveOnlyTest() failed", saveRequest.structure);
+            throw e;
+        }
+
+        // Sanity check: once saved, the session should be finsihed.
+        assertNoDanglingSessions();
+    }
+
+    @Test
     public void testSaveOnlyOptionalField() throws Exception {
         enableService();
 
