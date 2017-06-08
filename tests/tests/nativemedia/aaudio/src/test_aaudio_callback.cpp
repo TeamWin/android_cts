@@ -178,7 +178,7 @@ TEST_P(AAudioInputStreamCallbackTest, testRecording) {
     mHelper->startStream();
     sleep(2); // let the stream run
 
-    ASSERT_EQ(mCbData->callbackError, AAUDIO_OK);
+    ASSERT_EQ(AAUDIO_OK, mCbData->callbackError);
     ASSERT_GT(mCbData->callbackCount, 10);
 
     mHelper->stopStream();
@@ -192,7 +192,7 @@ TEST_P(AAudioInputStreamCallbackTest, testRecording) {
         ASSERT_EQ(framesPerDataCallback, mCbData->actualFramesPerCallback);
     }
 
-    ASSERT_EQ(mCbData->callbackError, AAUDIO_OK);
+    ASSERT_EQ(AAUDIO_OK, mCbData->callbackError);
 }
 
 INSTANTIATE_TEST_CASE_P(SPM, AAudioInputStreamCallbackTest,
@@ -280,7 +280,7 @@ TEST_P(AAudioOutputStreamCallbackTest, testPlayback) {
         mHelper->startStream();
         sleep(2); // let the stream run
 
-        ASSERT_EQ(mCbData->callbackError, AAUDIO_OK);
+        ASSERT_EQ(AAUDIO_OK, mCbData->callbackError);
         ASSERT_GT(mCbData->callbackCount, 10);
 
         // For more coverage, alternate pausing and stopping.
@@ -305,7 +305,7 @@ TEST_P(AAudioOutputStreamCallbackTest, testPlayback) {
         //printf("latency: %d, %d\n", mCbData->minLatency, mCbData->maxLatency);
     }
 
-    ASSERT_EQ(mCbData->callbackError, AAUDIO_OK);
+    ASSERT_EQ(AAUDIO_OK, mCbData->callbackError);
 }
 
 INSTANTIATE_TEST_CASE_P(SPM, AAudioOutputStreamCallbackTest,
