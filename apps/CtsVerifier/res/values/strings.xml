@@ -1685,7 +1685,7 @@ You should be prompted to select credentials; choose the ones you just installed
         2. If \'Cts Verifier\' is not allowed to install apps, a warning dialog will appear
         blocking the install. In this case go to step 3, else skip to step 4.\n
         3. Allow \'Cts Verifier\' to install apps. Return to package installer.\n
-        4. Accept the package and verify that it installs.
+        4. Accept the installation and verify that it succeeds (no error message is displayed).
     </string>
 
     <string name="provisioning_byod_nonmarket_deny">Disable non-market apps</string>
@@ -2850,7 +2850,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="disallow_outgoing_beam">Disallow outgoing beam</string>
     <string name="disallow_outgoing_beam_action">Switching on android beam</string>
     <string name="disallow_remove_user">Disallow remove user</string>
-    <string name="disallow_remove_user_action">Removing other users</string>
+    <string name="disallow_remove_user_action">Removing other users (please create a user and attempt to remove it to verify)</string>
     <string name="disallow_remove_managed_profile">Disallow remove managed profile</string>
     <string name="disallow_remove_managed_profile_action">Removing the work profile. It shouldn\'t be possible neither from the Accounts screen nor the Device Administrators screen (after selecting the Device Administrator that corresponds to the badged version of \"CTS Verifier\")</string>
     <string name="disallow_share_location">Disallow share location</string>
