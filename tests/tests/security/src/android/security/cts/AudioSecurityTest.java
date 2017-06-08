@@ -20,6 +20,7 @@ import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.media.audiofx.AudioEffect;
+import android.platform.test.annotations.SecurityTest;
 import android.util.Log;
 
 import java.nio.ByteBuffer;
