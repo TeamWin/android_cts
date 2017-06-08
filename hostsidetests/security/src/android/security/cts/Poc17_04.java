@@ -85,4 +85,15 @@ public class Poc17_04 extends SecurityTestCase {
             AdbUtils.runPocNoOutput("CVE-2017-0564", getDevice(), 60);
         }
     }
+
+    /**
+     *  b/33649808
+     */
+    @SecurityTest
+    public void testPocCVE_2017_0586() throws Exception {
+	enableAdbRoot(getDevice());
+        if(containsDriver(getDevice(), "/dev/snd/controlC0")) {
+	    AdbUtils.runPoc("CVE-2017-0586", getDevice(), 60);
+	}
+    }
 }
