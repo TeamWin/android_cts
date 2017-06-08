@@ -31,6 +31,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.hamcrest.MockitoHamcrest.argThat;
 
 import android.app.Instrumentation;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
@@ -45,6 +46,7 @@ import android.print.PrintDocumentAdapter;
 import android.print.PrintDocumentAdapter.LayoutResultCallback;
 import android.print.PrintDocumentAdapter.WriteResultCallback;
 import android.print.PrintDocumentInfo;
+import android.print.PrintManager;
 import android.print.PrinterId;
 import android.print.cts.services.PrintServiceCallbacks;
 import android.print.cts.services.PrinterDiscoverySessionCallbacks;
@@ -53,6 +55,8 @@ import android.print.cts.services.StubbablePrinterDiscoverySession;
 import android.print.pdf.PrintedPdfDocument;
 import android.printservice.CustomPrinterIconCallback;
 import android.printservice.PrintJob;
+import android.printservice.PrintServiceInfo;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
@@ -187,6 +191,9 @@ public abstract class BasePrintTest {
         sInstrumentation = InstrumentationRegistry.getInstrumentation();
         sUiDevice = UiDevice.getInstance(sInstrumentation);
 
+        assumeTrue(sInstrumentation.getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_PRINTING));
+
         // Make sure we start with a clean slate.
         Log.d(LOG_TAG, "clearPrintSpoolerData()");
         clearPrintSpoolerData();
@@ -230,6 +237,25 @@ public abstract class BasePrintTest {
             sAnimatiorDurationScaleBefore = Float.NaN;
         }
 
+        final PrintManager printManager = sInstrumentation.getContext()
+                .getSystemService(PrintManager.class);
+        final List<PrintServiceInfo> services = printManager.getPrintServices(
+                PrintManager.ALL_SERVICES);
+        final String targetPackageName = sInstrumentation.getTargetContext().getPackageName();
+        StringBuilder builder = new StringBuilder();
+        for (PrintServiceInfo service : services) {
+            final ComponentName serviceComponent = service.getComponentName();
+            if (targetPackageName.equals(serviceComponent.getPackageName())) {
+                continue;
+            }
+            if (builder.length() > 0) {
+                builder.append(":");
+            }
+            builder.append(serviceComponent.flattenToString());
+            SystemUtil.runShellCommand(sInstrumentation, "settings put secure "
+                    + Settings.Secure.DISABLED_PRINT_SERVICES + " " + builder);
+        }
+
         Log.d(LOG_TAG, "setUpClass() done");
     }
 
@@ -238,8 +264,6 @@ public abstract class BasePrintTest {
         Log.d(LOG_TAG, "setUp()");
 
         sInstrumentation = InstrumentationRegistry.getInstrumentation();
-        assumeTrue(sInstrumentation.getContext().getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_PRINTING));
 
         // Initialize the latches.
         Log.d(LOG_TAG, "init counters");
@@ -303,6 +327,8 @@ public abstract class BasePrintTest {
             SystemUtil.runShellCommand(sInstrumentation,
                     "settings put global animator_duration_scale " + sAnimatiorDurationScaleBefore);
         }
+        SystemUtil.runShellCommand(sInstrumentation, "settings put secure "
+                    + Settings.Secure.DISABLED_PRINT_SERVICES + " null");
 
         Log.d(LOG_TAG, "tearDownClass() done");
     }
