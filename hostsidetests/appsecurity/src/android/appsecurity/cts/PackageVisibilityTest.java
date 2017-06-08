@@ -42,11 +42,14 @@ public class PackageVisibilityTest extends BaseAppSecurityTest {
         mOldVerifierValue =
                 getDevice().executeShellCommand("settings get global package_verifier_enable");
         getDevice().executeShellCommand("settings put global package_verifier_enable 0");
+        getDevice().uninstallPackage(TEST_PKG);
+        getDevice().uninstallPackage(TINY_PKG);
         installTestAppForUser(TEST_APK, mPrimaryUserId);
     }
 
     public void tearDown() throws Exception {
         getDevice().uninstallPackage(TEST_PKG);
+        getDevice().uninstallPackage(TINY_PKG);
         getDevice().executeShellCommand("settings put global package_verifier_enable "
                 + mOldVerifierValue);
         super.tearDown();
