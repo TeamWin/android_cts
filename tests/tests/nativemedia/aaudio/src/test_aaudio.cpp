@@ -226,7 +226,7 @@ TEST_P(AAudioOutputStreamTest, testWriting) {
         do {
             framesWritten = AAudioStream_write(
                     stream(), &mData[0], framesPerBurst(), timeoutNanos);
-            ASSERT_EQ(framesWritten, framesPerBurst());
+            EXPECT_EQ(framesPerBurst(), framesWritten);
 
             framesTotal += framesWritten;
             aaudioFramesWritten = AAudioStream_getFramesWritten(stream());
@@ -287,7 +287,7 @@ TEST_P(AAudioOutputStreamTest, testWriting) {
     aaudioFramesWritten = AAudioStream_getFramesWritten(stream());
     EXPECT_EQ(framesTotal, aaudioFramesWritten);
     aaudioFramesRead = AAudioStream_getFramesRead(stream());
-    EXPECT_EQ(aaudioFramesRead, aaudioFramesWritten);
+    EXPECT_EQ(aaudioFramesWritten, aaudioFramesRead);
 
     sleep(1); // FIXME - The write returns 0 if we remove this sleep! Why?
 
