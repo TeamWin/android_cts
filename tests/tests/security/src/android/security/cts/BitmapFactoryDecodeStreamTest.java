@@ -17,6 +17,7 @@
 package android.security.cts;
 
 import android.graphics.BitmapFactory;
+import android.platform.test.annotations.SecurityTest;
 import android.test.AndroidTestCase;
 
 import android.security.cts.R;
@@ -31,6 +32,7 @@ public class BitmapFactoryDecodeStreamTest extends AndroidTestCase {
      * to heap corruption by trying to open a crafted PNG image with incorrect
      * npTc chunk.
      */
+    @SecurityTest
     public void testNinePatchHeapOverflow() throws Exception {
         InputStream inStream = new BufferedInputStream(mContext.getResources().openRawResource(
                 R.raw.cve_2015_1532));

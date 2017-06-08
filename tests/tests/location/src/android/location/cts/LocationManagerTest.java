@@ -33,6 +33,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
 import android.location.OnNmeaMessageListener;
+import android.platform.test.annotations.SecurityTest;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
