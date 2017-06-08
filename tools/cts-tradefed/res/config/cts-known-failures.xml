@@ -140,6 +140,9 @@
     <!-- b/38224690 -->
     <option name="compatibility:exclude-filter" value="CtsMediaTestCases android.media.cts.NativeEncoderTest" />
 
+    <!-- b/38463882 -->
+    <option name="compatibility:exclude-filter" value="x86_64 CtsLiblogTestCases liblog#event_log_tags" />
+
     <!-- b/38464828 -->
     <option name="compatibility:exclude-filter" value="CtsFileSystemTestCases android.filesystem.cts.AlmostFullTest" />
 
