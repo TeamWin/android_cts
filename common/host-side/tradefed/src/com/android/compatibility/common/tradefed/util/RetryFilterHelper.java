@@ -18,7 +18,6 @@ package com.android.compatibility.common.tradefed.util;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.result.SubPlanHelper;
-import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
 import com.android.compatibility.common.tradefed.testtype.ISubPlan;
 import com.android.compatibility.common.tradefed.testtype.ModuleRepo;
 import com.android.compatibility.common.util.IInvocationResult;
@@ -27,13 +26,11 @@ import com.android.compatibility.common.util.ResultHandler;
 import com.android.compatibility.common.util.TestFilter;
 import com.android.tradefed.config.ArgsOptionParser;
 import com.android.tradefed.config.ConfigurationException;
-import com.android.tradefed.config.Option;
-import com.android.tradefed.config.Option.Importance;
-import com.android.tradefed.config.OptionCopier;
-import com.android.tradefed.config.OptionSetter;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.util.ArrayUtil;
+
+import com.google.common.annotations.VisibleForTesting;
 
 import java.io.FileNotFoundException;
 import java.util.HashSet;
@@ -45,44 +42,12 @@ import java.util.Set;
  */
 public class RetryFilterHelper {
 
-    @Option(name = CompatibilityTest.SUBPLAN_OPTION,
-            description = "the subplan to run",
-            importance = Importance.IF_UNSET)
     protected String mSubPlan;
-
-    @Option(name = CompatibilityTest.INCLUDE_FILTER_OPTION,
-            description = "the include module filters to apply.",
-            importance = Importance.ALWAYS)
     protected Set<String> mIncludeFilters = new HashSet<>();
-
-    @Option(name = CompatibilityTest.EXCLUDE_FILTER_OPTION,
-            description = "the exclude module filters to apply.",
-            importance = Importance.ALWAYS)
     protected Set<String> mExcludeFilters = new HashSet<>();
-
-    @Option(name = CompatibilityTest.ABI_OPTION,
-            shortName = 'a',
-            description = "the abi to test.",
-            importance = Importance.IF_UNSET)
     protected String mAbiName = null;
-
-    @Option(name = CompatibilityTest.MODULE_OPTION,
-            shortName = 'm',
-            description = "the test module to run.",
-            importance = Importance.IF_UNSET)
     protected String mModuleName = null;
-
-    @Option(name = CompatibilityTest.TEST_OPTION,
-            shortName = CompatibilityTest.TEST_OPTION_SHORT_NAME,
-            description = "the test run.",
-            importance = Importance.IF_UNSET)
     protected String mTestName = null;
-
-    @Option(name = CompatibilityTest.RETRY_TYPE_OPTION,
-            description = "used with " + CompatibilityTest.RETRY_OPTION
-            + ", retry tests of a certain status. Possible values include \"failed\", "
-            + "\"not_executed\", and \"custom\".",
-            importance = Importance.IF_UNSET)
     protected RetryType mRetryType = null;
 
     /* Instance variables handy for retreiving the result to be retried */
@@ -93,6 +58,8 @@ public class RetryFilterHelper {
     private Set<String> mRetryIncludes;
     private Set<String> mRetryExcludes;
 
+    public RetryFilterHelper() {}
+
     /**
      * Constructor for a {@link RetryFilterHelper}. Requires a CompatibilityBuildHelper for
      * retrieving previous sessions and the ID of the session to retry.
@@ -100,6 +67,32 @@ public class RetryFilterHelper {
     public RetryFilterHelper(CompatibilityBuildHelper build, int sessionId) {
         mBuild = build;
         mSessionId = sessionId;
+    }
+
+    /**
+     * Constructor for a {@link RetryFilterHelper}.
+     *
+     * @param build a {@link CompatibilityBuildHelper} describing the build.
+     * @param sessionId The ID of the session to retry.
+     * @param subPlan The name of a subPlan to be used. Can be null.
+     * @param includeFilters The include module filters to apply
+     * @param excludeFilters The exclude module filters to apply
+     * @param abiName The name of abi to use. Can be null.
+     * @param moduleName The name of the module to run. Can be null.
+     * @param testName The name of the test to run. Can be null.
+     * @param retryType The type of results to retry. Can be null.
+     */
+    public RetryFilterHelper(CompatibilityBuildHelper build, int sessionId, String subPlan,
+            Set<String> includeFilters, Set<String> excludeFilters, String abiName,
+            String moduleName, String testName, RetryType retryType) {
+        this(build, sessionId);
+        mSubPlan = subPlan;
+        mIncludeFilters.addAll(includeFilters);
+        mExcludeFilters.addAll(excludeFilters);
+        mAbiName = abiName;
+        mModuleName = moduleName;
+        mTestName = testName;
+        mRetryType = retryType;
     }
 
     /**
@@ -119,18 +112,16 @@ public class RetryFilterHelper {
     /**
      * Copy all applicable options from an input object to this instance of RetryFilterHelper.
      */
-    public void setAllOptionsFrom(Object obj) {
+    @VisibleForTesting
+    void setAllOptionsFrom(RetryFilterHelper obj) {
         clearOptions(); // Remove existing options first
-        OptionCopier.copyOptionsNoThrow(obj, this);
-    }
-
-    /**
-     * Set a single option on this instance of RetryFilterHelper
-     * @throws {@link ConfigurationException} if the option cannot be set.
-     */
-    public void setOption(String option, String value) throws ConfigurationException {
-        OptionSetter setter = new OptionSetter(this);
-        setter.setOptionValue(option, value);
+        mSubPlan = obj.mSubPlan;
+        mIncludeFilters.addAll(obj.mIncludeFilters);
+        mExcludeFilters.addAll(obj.mExcludeFilters);
+        mAbiName = obj.mAbiName;
+        mModuleName = obj.mModuleName;
+        mTestName = obj.mTestName;
+        mRetryType = obj.mRetryType;
     }
 
     /**
@@ -138,8 +129,8 @@ public class RetryFilterHelper {
      */
     public void clearOptions() {
         mSubPlan = null;
-        mIncludeFilters = new HashSet<>();
-        mExcludeFilters = new HashSet<>();
+        mIncludeFilters.clear();
+        mExcludeFilters.clear();
         mModuleName = null;
         mTestName = null;
         mRetryType = null;
@@ -222,7 +213,7 @@ public class RetryFilterHelper {
     /* Generation of filters based on previous sessions is implemented thoroughly in SubPlanHelper,
      * and retry filter generation is just a subset of the use cases for the subplan retry logic.
      * Use retry type to determine which result types SubPlanHelper targets. */
-    private void populateFiltersBySubPlan() {
+    public void populateFiltersBySubPlan() {
         SubPlanHelper retryPlanCreator = new SubPlanHelper();
         retryPlanCreator.setResult(getResult());
         if (RetryType.FAILED.equals(mRetryType)) {

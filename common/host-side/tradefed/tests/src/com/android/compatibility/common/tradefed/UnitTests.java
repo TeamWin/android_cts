@@ -35,6 +35,7 @@ import com.android.compatibility.common.tradefed.testtype.JarHostTestTest;
 import com.android.compatibility.common.tradefed.testtype.ModuleDefTest;
 import com.android.compatibility.common.tradefed.testtype.ModuleRepoTest;
 import com.android.compatibility.common.tradefed.testtype.SubPlanTest;
+import com.android.compatibility.common.tradefed.testtype.retry.RetryFactoryTestTest;
 import com.android.compatibility.common.tradefed.testtype.suite.CompatibilityTestSuiteTest;
 import com.android.compatibility.common.tradefed.util.CollectorUtilTest;
 import com.android.compatibility.common.tradefed.util.OptionHelperTest;
@@ -85,6 +86,9 @@ import org.junit.runners.Suite.SuiteClasses;
     ModuleDefTest.class,
     ModuleRepoTest.class,
     SubPlanTest.class,
+
+    // testtype.retry
+    RetryFactoryTestTest.class,
 
     // testype.suite
     CompatibilityTestSuiteTest.class,
