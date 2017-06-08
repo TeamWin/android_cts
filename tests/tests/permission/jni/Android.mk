@@ -30,4 +30,6 @@ LOCAL_C_INCLUDES := $(JNI_H_INCLUDE)
 LOCAL_SHARED_LIBRARIES := libnativehelper_compat_libc++ liblog
 LOCAL_SDK_VERSION := 23
 
+LOCAL_CFLAGS := -Wno-unused-parameter
+
 include $(BUILD_SHARED_LIBRARY)
