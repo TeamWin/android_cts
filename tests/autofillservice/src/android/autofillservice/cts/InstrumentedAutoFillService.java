@@ -62,6 +62,8 @@ public class InstrumentedAutoFillService extends AutofillService {
     private static final Replier sReplier = new Replier();
     private static final BlockingQueue<String> sConnectionStates = new LinkedBlockingQueue<>();
 
+    private static boolean sIgnoreUnexpectedRequests = false;
+
     public InstrumentedAutoFillService() {
         sInstance.set(this);
     }
@@ -96,6 +98,15 @@ public class InstrumentedAutoFillService extends AutofillService {
             SaveCallback callback) {
         if (DUMP_SAVE_REQUESTS) dumpStructure("onSaveRequest()", request.getFillContexts());
         sReplier.onSaveRequest(request.getFillContexts(), request.getClientState(), callback);
+    }
+
+    /**
+     * Sets whether unexpected calls to
+     * {@link #onFillRequest(android.service.autofill.FillRequest, CancellationSignal, FillCallback)}
+     * should throw an exception.
+     */
+    public static void setIgnoreUnexpectedRequests(boolean ignore) {
+        sIgnoreUnexpectedRequests = ignore;
     }
 
     /**
@@ -283,6 +294,10 @@ public class InstrumentedAutoFillService extends AutofillService {
 
         private void onFillRequest(List<FillContext> contexts, Bundle data,
                 CancellationSignal cancellationSignal, FillCallback callback, int flags) {
+            if (sIgnoreUnexpectedRequests) {
+                Log.w(TAG, "Ignoring fillRequest()");
+                return;
+            }
             try {
                 CannedFillResponse response = null;
                 try {
@@ -290,6 +305,7 @@ public class InstrumentedAutoFillService extends AutofillService {
                 } catch (InterruptedException e) {
                     Log.w(TAG, "Interrupted getting CannedResponse: " + e);
                     Thread.currentThread().interrupt();
+                    return;
                 }
                 if (response == null) {
                     dumpStructure("onFillRequest() without response", contexts);
