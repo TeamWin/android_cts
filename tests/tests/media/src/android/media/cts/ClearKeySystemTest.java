@@ -58,9 +58,9 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
     private static final String TAG = ClearKeySystemTest.class.getSimpleName();
 
     // Add additional keys here if the content has more keys.
-    private static final byte[] CLEAR_KEY_CENC =
-        { 0x1a, (byte)0x8a, 0x20, (byte)0x95, (byte)0xe4, (byte)0xde, (byte)0xb2, (byte)0xd2,
-          (byte)0x9e, (byte)0xc8, 0x16, (byte)0xac, 0x7b, (byte)0xae, 0x20, (byte)0x82 };
+    private static final byte[] CLEAR_KEY_CENC = {
+            (byte)0x3f, (byte)0x0a, (byte)0x33, (byte)0xf3, (byte)0x40, (byte)0x98, (byte)0xb9, (byte)0xe2,
+            (byte)0x2b, (byte)0xc0, (byte)0x78, (byte)0xe0, (byte)0xa1, (byte)0xb5, (byte)0xe8, (byte)0x54 };
 
     private static final byte[] CLEAR_KEY_WEBM = "_CLEAR_KEY_WEBM_".getBytes();
 
@@ -77,9 +77,9 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
     private static final String MIME_VIDEO_VP8 = MediaFormat.MIMETYPE_VIDEO_VP8;
 
     private static final Uri CENC_AUDIO_URL = Uri.parse(
-            "http://yt-dash-mse-test.commondatastorage.googleapis.com/media/car_cenc-20120827-8c.mp4");
+            "https://storage.googleapis.com/wvmedia/clear/h264/llama/llama_aac_audio.mp4");
     private static final Uri CENC_VIDEO_URL = Uri.parse(
-            "http://yt-dash-mse-test.commondatastorage.googleapis.com/media/car_cenc-20120827-88.mp4");
+            "https://storage.googleapis.com/wvmedia/clearkey/llama_h264_main_720p_8000.mp4");
     private static final Uri WEBM_URL = Uri.parse(
             "android.resource://android.media.cts/" + R.raw.video_320x240_webm_vp8_800kbps_30fps_vorbis_stereo_128kbps_44100hz_crypt);
     private static final Uri MPEG2TS_SCRAMBLED_URL = Uri.parse(
