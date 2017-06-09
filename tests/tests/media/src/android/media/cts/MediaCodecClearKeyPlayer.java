@@ -88,15 +88,18 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
     private Resources mResources;
 
     private static final byte[] PSSH = hexStringToByteArray(
-            "0000003470737368" +  // BMFF box header (4 bytes size + 'pssh')
-            "01000000" +          // Full box header (version = 1 flags = 0)
-            "1077efecc0b24d02" +  // SystemID
-            "ace33c1e52e2fb4b" +
-            "00000001" +          // Number of key ids
-            "60061e017e477e87" +  // Key id
-            "7e57d00d1ed00d1e" +
-            "00000000"            // Size of Data, must be zero
-            );
+            // BMFF box header (4 bytes size + 'pssh')
+            "0000003470737368" +
+            // Full box header (version = 1 flags = 0
+            "01000000" +
+            // SystemID
+            "1077efecc0b24d02ace33c1e52e2fb4b" +
+            // Number of key ids
+            "00000001" +
+            // Key id
+            "30303030303030303030303030303030" +
+            // size of data, must be zero
+            "00000000");
 
     // ClearKey CAS/Descrambler test provision string
     private static final String sProvisionStr =
@@ -181,11 +184,11 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
             if (drmInitData != null) {
                 DrmInitData.SchemeInitData schemeInitData = drmInitData.get(CLEARKEY_SCHEME_UUID);
                 if (schemeInitData != null && schemeInitData.data != null) {
-                    return schemeInitData.data;
+                    // llama content still does not contain pssh data, return hard coded PSSH
+                    return (schemeInitData.data.length > 1)? schemeInitData.data : PSSH;
                 }
             }
         }
-        // TODO
         // Should not happen after we get content that has the clear key system id.
         return PSSH;
     }
