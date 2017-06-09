@@ -598,13 +598,20 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
     }
 
     private void checkPowerUseItem(String[] parts) {
-        assertEquals(6, parts.length);
+        assertEquals(9, parts.length);
         assertNotNull(parts[4]); // label
-        double mAH = assertDouble(parts[5]);  // mAh
+        final double totalPowerMah = assertDouble(parts[5]);  // totalPowerMah
+        final long shouldHide = assertInteger(parts[6]);  // shouldHide (0 or 1)
+        final double screenPowerMah = assertDouble(parts[7]);  // screenPowerMah
+        final double proportionalSmearMah = assertDouble(parts[8]);  // proportionalSmearMah
 
-        assertTrue("powerUseItem mAH must be >= 0", mAH >= 0);
+        assertTrue("powerUseItem totalPowerMah must be >= 0", totalPowerMah >= 0);
+        assertTrue("powerUseItem screenPowerMah must be >= 0", screenPowerMah >= 0);
+        assertTrue("powerUseItem proportionalSmearMah must be >= 0", proportionalSmearMah >= 0);
+        assertTrue("powerUseItem shouldHide must be 0 or 1", shouldHide == 0 || shouldHide == 1);
+
         // Largest current Android battery is ~5K. 100K shouldn't get made for a while.
-        assertTrue("powerUseItem mAH is expected to be <= 100000", mAH <= 100000);
+        assertTrue("powerUseItem totalPowerMah is expected to be <= 100000", totalPowerMah <= 100000);
     }
 
     private void checkChargeDischargeStep(String[] parts) {
