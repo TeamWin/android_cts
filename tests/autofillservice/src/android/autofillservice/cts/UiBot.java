@@ -43,6 +43,7 @@ import android.text.Html;
 import android.util.Log;
 import android.view.accessibility.AccessibilityWindowInfo;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -95,9 +96,8 @@ final class UiBot {
             // Use a more elegant check than catching the expection because it's not showing...
             return;
         }
-        final StringBuilder error = new StringBuilder("Should not be showing datasets, but got [ ");
-        getAllText(picker, error);
-        throw new RetryableException(error.append("]").toString());
+        throw new RetryableException(
+                "Should not be showing datasets, but got " + getChildrenAsText(picker));
     }
 
     /**
@@ -107,29 +107,27 @@ final class UiBot {
      */
     UiObject2 assertDatasets(String...names) {
         final UiObject2 picker = findDatasetPicker();
-        for (String name : names) {
-            final UiObject2 dataset = picker.findObject(By.text(name));
-            if (dataset == null) {
-                final StringBuilder error = new StringBuilder("no dataset named ").append(name)
-                        .append(" on [ ");
-                getAllText(picker, error);
-                throw new AssertionError(error.append("]").toString()); // not retryable
-
-            }
-        }
+        assertWithMessage("wrong dataset names").that(getChildrenAsText(picker))
+                .containsExactlyElementsIn(Arrays.asList(names));
         return picker;
     }
 
     /**
-     * Gets the text from an object and all its descendants.
+     * Gets the text of this object children.
      */
-    private static void getAllText(UiObject2 object, StringBuilder builder) {
+    List<String> getChildrenAsText(UiObject2 object) {
+        final List<String> list = new ArrayList<>();
+        getChildrenAsText(object, list);
+        return list;
+    }
+
+    private static void getChildrenAsText(UiObject2 object, List<String> children) {
         final String text = object.getText();
         if (text != null) {
-            builder.append(text).append(' ');
+            children.add(text);
         }
         for (UiObject2 child : object.getChildren()) {
-            getAllText(child, builder);
+            getChildrenAsText(child, children);
         }
     }
 
@@ -137,7 +135,7 @@ final class UiBot {
      * Selects a dataset that should be visible in the floating UI.
      */
     void selectDataset(String name) {
-        final UiObject2 picker = assertDatasets(name);
+        final UiObject2 picker = findDatasetPicker();
         selectDataset(picker, name);
     }
 
@@ -146,7 +144,9 @@ final class UiBot {
      */
     void selectDataset(UiObject2 picker, String name) {
         final UiObject2 dataset = picker.findObject(By.text(name));
-        assertWithMessage("no dataset named %s", name).that(dataset).isNotNull();
+        if (dataset == null) {
+            throw new AssertionError("no dataset " + name + " in " + getChildrenAsText(picker));
+        }
         dataset.click();
     }
 
@@ -172,22 +172,6 @@ final class UiBot {
     public void assertShownByText(String text) {
         final UiObject2 object = waitForObject(By.text(text));
         assertWithMessage(text).that(object).isNotNull();
-    }
-
-    /**
-     * Asserts a text is not shown.
-     *
-     * <p><b>NOTE:</b> when asserting the dataset picker is not shown, prefer
-     * {@link #assertNoDatasets()}.
-     */
-    public void assertNotShownByText(String text) {
-        final UiObject2 uiObject = mDevice.findObject(By.text(text));
-        if (uiObject != null) {
-            final StringBuilder error = new StringBuilder("Should not find object with text '")
-                    .append(text).append("', but found: ");
-            getAllText(uiObject, error);
-            throw new AssertionError(error.toString()); // don't retry
-        }
     }
 
     /**
