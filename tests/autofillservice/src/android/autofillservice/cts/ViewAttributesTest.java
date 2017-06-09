@@ -145,22 +145,19 @@ public class ViewAttributesTest extends AutoFillServiceTestCase {
 
         // Set service.
         enableService();
-        try {
-            // Set expectations.
-            sReplier.addResponse(new CannedFillResponse.CannedDataset.Builder()
-                    .setField("editTextNoHint", AutofillValue.forText("filled"))
-                    .setPresentation(createPresentation("dataset"))
-                    .build());
 
-            // Trigger autofill.
-            InstrumentedAutoFillService.FillRequest request = startAutoFill(forceAutofill,
-                    editTextNoHint);
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.CannedDataset.Builder()
+                .setField("editTextNoHint", AutofillValue.forText("filled"))
+                .setPresentation(createPresentation("dataset"))
+                .build());
 
-            assertThat(request.contexts.size()).isEqualTo(1);
-            test.accept(request.contexts.get(0).getStructure());
-        } finally {
-            disableService();
-        }
+        // Trigger autofill.
+        InstrumentedAutoFillService.FillRequest request = startAutoFill(forceAutofill,
+                editTextNoHint);
+
+        assertThat(request.contexts.size()).isEqualTo(1);
+        test.accept(request.contexts.get(0).getStructure());
     }
 
     @Test

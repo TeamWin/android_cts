@@ -17,8 +17,6 @@
 package android.autofillservice.cts;
 
 import static android.autofillservice.cts.FragmentContainerActivity.FRAGMENT_TAG;
-import static android.autofillservice.cts.Helper.FILL_TIMEOUT_MS;
-import static android.autofillservice.cts.Helper.eventually;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
 
@@ -67,55 +65,46 @@ public class AutoFinishSessionTest extends AutoFillServiceTestCase {
             @Nullable Runnable secondRemove, String... viewsToSave)
             throws Exception {
         enableService();
-        try {
-            // Set expectations.
-            sReplier.addResponse(new CannedFillResponse.Builder()
-                    .setFlags(SaveInfo.FLAG_SAVE_ON_ALL_VIEWS_INVISIBLE)
-                    .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, viewsToSave).build());
 
-            // Trigger autofill
-            eventually(() -> {
-                mActivity.syncRunOnUiThread(() -> {
-                    mEditText2.requestFocus();
-                    mEditText1.requestFocus();
-                });
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setFlags(SaveInfo.FLAG_SAVE_ON_ALL_VIEWS_INVISIBLE)
+                .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, viewsToSave).build());
 
-                try {
-                    sReplier.getNextFillRequest();
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-            }, (int) (FILL_TIMEOUT_MS * 2));
+        // Trigger autofill
+        mActivity.syncRunOnUiThread(() -> {
+            mEditText2.requestFocus();
+            mEditText1.requestFocus();
+        });
 
-            sUiBot.assertNoDatasets();
+        sReplier.getNextFillRequest();
 
-            // remove first set of views
-            mActivity.syncRunOnUiThread(() -> {
-                mEditText1.setText("editText1-filled");
-                mEditText2.setText("editText2-filled");
-                firstRemove.run();
-            });
+        sUiBot.assertNoDatasets();
 
-            // Check state between remove operations
-            if (firstCheck != null) {
-                firstCheck.run();
-            }
+        // remove first set of views
+        mActivity.syncRunOnUiThread(() -> {
+            mEditText1.setText("editText1-filled");
+            mEditText2.setText("editText2-filled");
+            firstRemove.run();
+        });
 
-            // remove second set of views
-            if (secondRemove != null) {
-                mActivity.syncRunOnUiThread(secondRemove);
-            }
+        // Check state between remove operations
+        if (firstCheck != null) {
+            firstCheck.run();
+        }
 
-            // Save should be shows after all remove operations were executed
-            sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_GENERIC);
+        // remove second set of views
+        if (secondRemove != null) {
+            mActivity.syncRunOnUiThread(secondRemove);
+        }
 
-            SaveRequest saveRequest = sReplier.getNextSaveRequest();
-            for (String view : viewsToSave) {
-                assertThat(findNodeByResourceId(saveRequest.structure, view)
-                        .getAutofillValue().getTextValue().toString()).isEqualTo(view + "-filled");
-            }
-        } finally {
-            disableService();
+        // Save should be shows after all remove operations were executed
+        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_GENERIC);
+
+        SaveRequest saveRequest = sReplier.getNextSaveRequest();
+        for (String view : viewsToSave) {
+            assertThat(findNodeByResourceId(saveRequest.structure, view)
+                    .getAutofillValue().getTextValue().toString()).isEqualTo(view + "-filled");
         }
     }
 
@@ -190,66 +179,57 @@ public class AutoFinishSessionTest extends AutoFillServiceTestCase {
      *
      * <p>The {@link Runnable}s are synchronously run in the UI thread.
      */
-    public void activityToBackgroundShouldNotTriggerSave(@Nullable Runnable removeInBackGround,
+    private void activityToBackgroundShouldNotTriggerSave(@Nullable Runnable removeInBackGround,
             @Nullable Runnable removeInForeGroup) throws Exception {
         enableService();
-        try {
-            // Set expectations.
-            sReplier.addResponse(new CannedFillResponse.Builder()
-                    .setFlags(SaveInfo.FLAG_SAVE_ON_ALL_VIEWS_INVISIBLE)
-                    .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, "editText1").build());
 
-            // Trigger autofill
-            eventually(() -> {
-                mActivity.syncRunOnUiThread(() -> {
-                    mEditText2.requestFocus();
-                    mEditText1.requestFocus();
-                });
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setFlags(SaveInfo.FLAG_SAVE_ON_ALL_VIEWS_INVISIBLE)
+                .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, "editText1").build());
 
-                try {
-                    sReplier.getNextFillRequest();
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-            }, (int) (FILL_TIMEOUT_MS * 2));
+        // Trigger autofill
+        mActivity.syncRunOnUiThread(() -> {
+            mEditText2.requestFocus();
+            mEditText1.requestFocus();
+        });
 
-            sUiBot.assertNoDatasets();
+        sReplier.getNextFillRequest();
 
-            mActivity.syncRunOnUiThread(() -> {
-                mEditText1.setText("editText1-filled");
-                mEditText2.setText("editText2-filled");
-            });
+        sUiBot.assertNoDatasets();
 
-            // Start activity on top
-            mActivity.startActivity(new Intent(getContext(),
-                    ManualAuthenticationActivity.class));
-            mActivity.waitUntilStopped();
+        mActivity.syncRunOnUiThread(() -> {
+            mEditText1.setText("editText1-filled");
+            mEditText2.setText("editText2-filled");
+        });
 
-            if (removeInBackGround != null) {
-                mActivity.syncRunOnUiThread(removeInBackGround);
-            }
+        // Start activity on top
+        mActivity.startActivity(new Intent(getContext(),
+                ManualAuthenticationActivity.class));
+        mActivity.waitUntilStopped();
 
+        if (removeInBackGround != null) {
+            mActivity.syncRunOnUiThread(removeInBackGround);
+        }
+
+        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
+
+        // Remove previously started activity from top
+        sUiBot.selectById("android.autofillservice.cts:id/button");
+        mActivity.waitUntilResumed();
+
+        if (removeInForeGroup != null) {
             sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
 
-            // Remove previously started activity from top
-            sUiBot.selectById("android.autofillservice.cts:id/button");
-            mActivity.waitUntilResumed();
-
-            if (removeInForeGroup != null) {
-                sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
-
-                mActivity.syncRunOnUiThread(removeInForeGroup);
-            }
-
-            // Save should be shows after all remove operations were executed
-            sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_GENERIC);
-
-            SaveRequest saveRequest = sReplier.getNextSaveRequest();
-            assertThat(findNodeByResourceId(saveRequest.structure, "editText1")
-                    .getAutofillValue().getTextValue().toString()).isEqualTo("editText1-filled");
-        } finally {
-            disableService();
+            mActivity.syncRunOnUiThread(removeInForeGroup);
         }
+
+        // Save should be shows after all remove operations were executed
+        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_GENERIC);
+
+        SaveRequest saveRequest = sReplier.getNextSaveRequest();
+        assertThat(findNodeByResourceId(saveRequest.structure, "editText1")
+                .getAutofillValue().getTextValue().toString()).isEqualTo("editText1-filled");
     }
 
     @Test

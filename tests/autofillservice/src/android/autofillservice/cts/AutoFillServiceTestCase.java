@@ -72,9 +72,13 @@ abstract class AutoFillServiceTestCase {
         sUiBot = new UiBot(InstrumentationRegistry.getInstrumentation());
     }
 
-    @BeforeClass
     @AfterClass
-    public static void disableService() {
+    public static void resetSettings() {
+        runShellCommand("settings delete secure %s", AUTOFILL_SERVICE);
+    }
+
+    @Before
+    public void disableService() {
         if (!hasAutofillFeature()) return;
 
         if (!isServiceEnabled()) return;
@@ -84,6 +88,8 @@ abstract class AutoFillServiceTestCase {
         runShellCommand("settings delete secure %s", AUTOFILL_SERVICE);
         observer.assertCalled();
         assertServiceDisabled();
+
+        InstrumentedAutoFillService.setIgnoreUnexpectedRequests(false);
     }
 
     @Before
@@ -101,6 +107,11 @@ abstract class AutoFillServiceTestCase {
     public void assertNoPendingRequests() {
         sReplier.assertNumberUnhandledFillRequests(0);
         sReplier.assertNumberUnhandledSaveRequests(0);
+    }
+
+    @After
+    public void ignoreFurtherRequests() {
+        InstrumentedAutoFillService.setIgnoreUnexpectedRequests(true);
     }
 
     /**
