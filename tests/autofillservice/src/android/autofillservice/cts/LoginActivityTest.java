@@ -1056,6 +1056,76 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertNoDanglingSessions();
     }
 
+    enum DismissType {
+        BACK_BUTTON,
+        HOME_BUTTON,
+        TOUCH_OUTSIDE
+    }
+
+    @Test
+    public void testSaveGoesAwayWhenTappingHomeButton() throws Exception {
+        saveGoesAway(DismissType.HOME_BUTTON);
+    }
+
+    /* TODO: add these when fixed.
+    @Test
+    public void testSaveGoesAwayWhenTappingBackButton() throws Exception {
+        saveGoesAway(DismissType.BACK_BUTTON);
+    }
+
+    @Test
+    public void testSaveGoesAwayWhenTouchingOutside() throws Exception {
+        saveGoesAway(DismissType.TOUCH_OUTSIDE);
+    }
+    */
+
+    private void saveGoesAway(DismissType dismissType) throws Exception {
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
+                .build());
+
+        // Trigger auto-fill.
+        mActivity.onUsername(View::requestFocus);
+
+        // Sanity check.
+        sUiBot.assertNoDatasets();
+
+        // Wait for onFill() before proceeding, otherwise the fields might be changed before
+        // the session started
+        sReplier.getNextFillRequest();
+
+        // Set credentials...
+        mActivity.onUsername((v) -> v.setText("malkovich"));
+        mActivity.onPassword((v) -> v.setText("malkovich"));
+
+        // ...and login
+        final String expectedMessage = getWelcomeMessage("malkovich");
+        final String actualMessage = mActivity.tapLogin();
+        assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
+
+        // Assert the snack bar is shown and tap "Save".
+        sUiBot.assertSaveShowing(SAVE_DATA_TYPE_PASSWORD);
+
+        // Then make sure it goes away when user doesn't want it..
+        switch (dismissType) {
+            case BACK_BUTTON:
+                sUiBot.pressBack();
+                break;
+            case HOME_BUTTON:
+                sUiBot.pressHome();
+                break;
+            case TOUCH_OUTSIDE:
+                sUiBot.assertShownByText(expectedMessage).click();
+                break;
+            default:
+                throw new IllegalArgumentException("invalid dismiss type: " + dismissType);
+        }
+        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+    }
+
     @Test
     public void testSaveOnlyPreFilled() throws Exception {
         saveOnlyTestPreFilled(false);

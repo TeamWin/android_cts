@@ -169,9 +169,10 @@ final class UiBot {
      * <p><b>NOTE:</b> when asserting the dataset picker is shown, prefer
      * {@link #assertDatasets(String...)}.
      */
-    public void assertShownByText(String text) {
+    public UiObject2 assertShownByText(String text) {
         final UiObject2 object = waitForObject(By.text(text));
         assertWithMessage(text).that(object).isNotNull();
+        return object;
     }
 
     /**
@@ -234,9 +235,17 @@ final class UiBot {
      * Presses the back button.
      */
     void pressBack() {
+        Log.d(TAG, "pressBack()");
         mDevice.pressBack();
     }
 
+    /**
+     * Presses the home button.
+     */
+    void pressHome() {
+        Log.d(TAG, "pressHome()");
+        mDevice.pressHome();
+    }
     /**
      * Asserts the save snackbar is not showing and returns it.
      */
