@@ -21,6 +21,7 @@ import static org.junit.Assert.fail;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -44,11 +45,20 @@ public class PixelCopyViewProducerActivity extends Activity implements OnDrawLis
     private View mContent;
     private Rect mContentBounds = new Rect();
     private CountDownLatch mFence = new CountDownLatch(3);
+    private boolean mSupportsRotation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setRequestedOrientation(ORIENTATIONS[mCurrentOrientation]);
+
+        // Check if the device supports both of portrait and landscape orientation screens.
+        final PackageManager pm = getPackageManager();
+        mSupportsRotation = pm.hasSystemFeature(PackageManager.FEATURE_SCREEN_LANDSCAPE)
+                    && pm.hasSystemFeature(PackageManager.FEATURE_SCREEN_PORTRAIT);
+        if (mSupportsRotation) {
+            setRequestedOrientation(ORIENTATIONS[mCurrentOrientation]);
+        }
+
         mContent = new ColoredGrid(this);
         setContentView(mContent);
         mContent.getViewTreeObserver().addOnDrawListener(this);
@@ -61,7 +71,7 @@ public class PixelCopyViewProducerActivity extends Activity implements OnDrawLis
                 requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
                 || requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT;
         boolean contentPortrait = mContent.getHeight() > mContent.getWidth();
-        if (screenPortrait != contentPortrait) {
+        if (mSupportsRotation && (screenPortrait != contentPortrait)) {
             return;
         }
         mContent.post(() -> {
@@ -89,6 +99,10 @@ public class PixelCopyViewProducerActivity extends Activity implements OnDrawLis
     }
 
     public boolean rotate() {
+        if (!mSupportsRotation) {
+            // Do not rotate the screen if it is not supported.
+            return false;
+        }
         mFence = new CountDownLatch(3);
         runOnUiThread(() -> {
             mCurrentOrientation = (mCurrentOrientation + 1) % ORIENTATIONS.length;
