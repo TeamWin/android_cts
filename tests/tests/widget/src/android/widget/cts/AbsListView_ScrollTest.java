@@ -26,6 +26,7 @@ import android.content.Context;
 import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.LargeTest;
+import android.support.test.filters.Suppress;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.view.LayoutInflater;
@@ -633,7 +634,10 @@ public class AbsListView_ScrollTest {
         }
     }
 
+    @Suppress
     @Test
+    // Disabled due to flakiness. CtsTouchUtils cannot guarantee the amount of scroll since it is
+    // using sleeps and it is unreliable on cloud devices.
     public void testFriction() throws Throwable {
         // Set an adapter with 100K items so that no matter how fast our fling is, we won't
         // get to the bottom of the list in one fling
