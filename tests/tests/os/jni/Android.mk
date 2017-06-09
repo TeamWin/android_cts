@@ -55,6 +55,7 @@ ifeq ($(ARCH_SUPPORTS_SECCOMP),1)
 	LOCAL_CFLAGS += -DARCH_SUPPORTS_SECCOMP
 endif
 
+LOCAL_CFLAGS := -Wno-unused-parameter
 LOCAL_CPPFLAGS_arm := -mcpu=generic
 
 include $(BUILD_SHARED_LIBRARY)
