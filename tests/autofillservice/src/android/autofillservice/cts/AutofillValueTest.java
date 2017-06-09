@@ -169,11 +169,6 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
             view.requestFocus();
         });
 
-        // NOTE: This method to require multiple attempts as the service could not be completely
-        // initialized yet (and therefore autofill would not enabled when the focus was changed),
-        // but now enableService() uses a Settings listener to wait until the setting is effect, so
-        // that flakiness should be gone if it still happens, then it could be fixed by calling
-        // InstrumentedAutoFillService.waitUntilConnected() here...
         sReplier.getNextFillRequest();
     }
 
