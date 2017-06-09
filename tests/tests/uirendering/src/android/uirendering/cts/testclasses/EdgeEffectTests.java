@@ -28,6 +28,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.support.test.filters.LargeTest;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -191,6 +192,7 @@ public class EdgeEffectTests {
         }
     }
 
+    @LargeTest
     @Test
     public void testOnAbsorb() {
         verifyAlpha(edgeEffect -> {
