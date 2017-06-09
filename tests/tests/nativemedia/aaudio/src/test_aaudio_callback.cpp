@@ -164,9 +164,6 @@ void AAudioInputStreamCallbackTest::SetUp() {
 TEST_P(AAudioInputStreamCallbackTest, testRecording) {
     if (!mSetupSuccesful) return;
 
-    // TODO Why does getDeviceId() always return 0?
-    // EXPECT_NE(AAUDIO_UNSPECIFIED, AAudioStream_getDeviceId(stream));
-
     const int32_t framesPerDataCallback = std::get<PARAM_FRAMES_PER_CB>(GetParam());
     const int32_t actualFramesPerDataCallback = AAudioStream_getFramesPerDataCallback(stream());
     if (framesPerDataCallback != AAUDIO_UNSPECIFIED) {
@@ -176,6 +173,9 @@ TEST_P(AAudioInputStreamCallbackTest, testRecording) {
     mCbData->reset(actualFramesPerDataCallback);
 
     mHelper->startStream();
+    // See b/62090113. For legacy path, the device is only known after
+    // the stream has been started.
+    EXPECT_NE(AAUDIO_UNSPECIFIED, AAudioStream_getDeviceId(stream()));
     sleep(2); // let the stream run
 
     ASSERT_EQ(AAUDIO_OK, mCbData->callbackError);
@@ -224,8 +224,8 @@ class AAudioOutputStreamCallbackTest : public AAudioStreamCallbackTest<OutputStr
 // Callback function that fills the audio output buffer.
 aaudio_data_callback_result_t AAudioOutputStreamCallbackTest::MyDataCallbackProc(
         AAudioStream *stream, void *userData, void *audioData, int32_t numFrames) {
-    int32_t samplesPerFrame = AAudioStream_getSamplesPerFrame(stream);
-    int32_t numSamples = samplesPerFrame * numFrames;
+    int32_t channelCount = AAudioStream_getChannelCount(stream);
+    int32_t numSamples = channelCount * numFrames;
     if (AAudioStream_getFormat(stream) == AAUDIO_FORMAT_PCM_I16) {
         int16_t *shortData = (int16_t *) audioData;
         for (int i = 0; i < numSamples; i++) *shortData++ = 0;
@@ -263,9 +263,6 @@ void AAudioOutputStreamCallbackTest::SetUp() {
 TEST_P(AAudioOutputStreamCallbackTest, testPlayback) {
     if (!mSetupSuccesful) return;
 
-    // TODO Why does getDeviceId() always return 0?
-    // EXPECT_NE(AAUDIO_UNSPECIFIED, AAudioStream_getDeviceId(stream));
-
     const int32_t framesPerDataCallback = std::get<PARAM_FRAMES_PER_CB>(GetParam());
     const int32_t actualFramesPerDataCallback = AAudioStream_getFramesPerDataCallback(stream());
     if (framesPerDataCallback != AAUDIO_UNSPECIFIED) {
@@ -278,6 +275,9 @@ TEST_P(AAudioOutputStreamCallbackTest, testPlayback) {
         mCbData->reset(actualFramesPerDataCallback);
 
         mHelper->startStream();
+        // See b/62090113. For legacy path, the device is only known after
+        // the stream has been started.
+        EXPECT_NE(AAUDIO_UNSPECIFIED, AAudioStream_getDeviceId(stream()));
         sleep(2); // let the stream run
 
         ASSERT_EQ(AAUDIO_OK, mCbData->callbackError);

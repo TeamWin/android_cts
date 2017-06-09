@@ -26,7 +26,7 @@ class StreamBuilderHelper {
   public:
     struct Parameters {
         int32_t sampleRate;
-        int32_t samplesPerFrame;
+        int32_t channelCount;
         aaudio_format_t dataFormat;
         aaudio_sharing_mode_t sharingMode;
         aaudio_performance_mode_t perfMode;
@@ -60,7 +60,7 @@ class StreamBuilderHelper {
 
   protected:
     StreamBuilderHelper(aaudio_direction_t direction, int32_t sampleRate,
-            int32_t samplesPerFrame, aaudio_format_t dataFormat,
+            int32_t channelCount, aaudio_format_t dataFormat,
             aaudio_sharing_mode_t sharingMode, aaudio_performance_mode_t perfMode);
     ~StreamBuilderHelper();
 
@@ -90,6 +90,10 @@ class OutputStreamBuilderHelper : public StreamBuilderHelper {
             aaudio_sharing_mode_t requestedSharingMode,
             aaudio_performance_mode_t requestedPerfMode);
     void initBuilder();
+    void createAndVerifyStream(bool *success);
+
+  private:
+    const int32_t kBufferCapacityFrames = 2000;
 };
 
 #endif  // CTS_MEDIA_TEST_AAUDIO_UTILS_H
