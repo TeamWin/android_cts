@@ -54,10 +54,10 @@ const char* sharingModeToString(aaudio_sharing_mode_t mode) {
 
 StreamBuilderHelper::StreamBuilderHelper(
         aaudio_direction_t direction, int32_t sampleRate,
-        int32_t samplesPerFrame, aaudio_format_t dataFormat,
+        int32_t channelCount, aaudio_format_t dataFormat,
         aaudio_sharing_mode_t sharingMode, aaudio_performance_mode_t perfMode)
         : mDirection{direction},
-          mRequested{sampleRate, samplesPerFrame, dataFormat, sharingMode, perfMode},
+          mRequested{sampleRate, channelCount, dataFormat, sharingMode, perfMode},
           mActual{0, 0, AAUDIO_FORMAT_INVALID, -1, -1}, mFramesPerBurst{-1},
           mBuilder{nullptr}, mStream{nullptr} {}
 
@@ -75,7 +75,7 @@ void StreamBuilderHelper::initBuilder() {
     AAudioStreamBuilder_setDeviceId(mBuilder, AAUDIO_UNSPECIFIED);
     AAudioStreamBuilder_setDirection(mBuilder, mDirection);
     AAudioStreamBuilder_setSampleRate(mBuilder, mRequested.sampleRate);
-    AAudioStreamBuilder_setSamplesPerFrame(mBuilder, mRequested.samplesPerFrame);
+    AAudioStreamBuilder_setChannelCount(mBuilder, mRequested.channelCount);
     AAudioStreamBuilder_setFormat(mBuilder, mRequested.dataFormat);
     AAudioStreamBuilder_setSharingMode(mBuilder, mRequested.sharingMode);
     AAudioStreamBuilder_setPerformanceMode(mBuilder, mRequested.perfMode);
@@ -109,9 +109,9 @@ void StreamBuilderHelper::createAndVerifyStream(bool *success) {
     ASSERT_GE(mActual.sampleRate, 44100);
     ASSERT_LE(mActual.sampleRate, 96000); // TODO what is min/max?
 
-    mActual.samplesPerFrame = AAudioStream_getSamplesPerFrame(mStream);
-    ASSERT_GE(mActual.samplesPerFrame, 1);
-    ASSERT_LE(mActual.samplesPerFrame, 16); // TODO what is min/max?
+    mActual.channelCount = AAudioStream_getChannelCount(mStream);
+    ASSERT_GE(mActual.channelCount, 1);
+    ASSERT_LE(mActual.channelCount, 16); // TODO what is min/max?
 
     mActual.dataFormat = AAudioStream_getFormat(mStream);
     ASSERT_EQ(AAUDIO_FORMAT_PCM_I16, mActual.dataFormat);
@@ -185,5 +185,12 @@ OutputStreamBuilderHelper::OutputStreamBuilderHelper(
 
 void OutputStreamBuilderHelper::initBuilder() {
     StreamBuilderHelper::initBuilder();
-    AAudioStreamBuilder_setBufferCapacityInFrames(mBuilder, 2000);
+    AAudioStreamBuilder_setBufferCapacityInFrames(mBuilder, kBufferCapacityFrames);
+}
+
+void OutputStreamBuilderHelper::createAndVerifyStream(bool *success) {
+    StreamBuilderHelper::createAndVerifyStream(success);
+    if (*success) {
+        ASSERT_GE(AAudioStream_getBufferCapacityInFrames(mStream), kBufferCapacityFrames);
+    }
 }
