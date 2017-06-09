@@ -17,12 +17,45 @@
 
 package libcore.java.util.tests;
 
+import com.google.common.collect.testing.MinimalCollection;
+import com.google.common.collect.testing.QueueTestSuiteBuilder;
+import com.google.common.collect.testing.TestStringQueueGenerator;
+import com.google.common.collect.testing.TestsForListsInJavaUtil;
 import com.google.common.collect.testing.TestsForQueuesInJavaUtil;
+import com.google.common.collect.testing.features.CollectionFeature;
+import com.google.common.collect.testing.features.CollectionSize;
 
+import java.util.LinkedList;
+import java.util.Queue;
 import junit.framework.Test;
 
 /**
  * Guava-testlib tests for {@code Queue} implementations from {@code java.util}.
  */
 public class AndroidTestsForQueuesInJavaUtil extends TestsForQueuesInJavaUtil {
+
+    /**
+     * Override and copy the super class's implementation in order to change the name to ensure
+     * that created tests are unique and do not clash with those created by
+     * {@link TestsForListsInJavaUtil#testsForLinkedList()}, see bug 62438629.
+     */
+    @Override
+    public Test testsForLinkedList() {
+        return QueueTestSuiteBuilder.using(
+                new TestStringQueueGenerator() {
+                    @Override
+                    public Queue<String> create(String[] elements) {
+                        return new LinkedList<String>(MinimalCollection.of(elements));
+                    }
+                })
+                .named("LinkedList as Queue")
+                .withFeatures(
+                        CollectionFeature.GENERAL_PURPOSE,
+                        CollectionFeature.ALLOWS_NULL_VALUES,
+                        CollectionFeature.KNOWN_ORDER,
+                        CollectionSize.ANY)
+                .skipCollectionTests() // already covered in TestsForListsInJavaUtil
+                .suppressing(suppressForLinkedList())
+                .createTestSuite();
+    }
 }
