@@ -51,6 +51,8 @@ import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_USERNAME;
 import static android.text.InputType.TYPE_NULL;
 import static android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD;
 import static android.view.View.IMPORTANT_FOR_AUTOFILL_NO;
+import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
+import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 import static android.view.WindowManager.LayoutParams.FLAG_SECURE;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -66,6 +68,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.service.autofill.FillEventHistory;
 import android.service.autofill.SaveInfo;
@@ -73,6 +76,8 @@ import android.support.test.rule.ActivityTestRule;
 import android.support.test.uiautomator.UiObject2;
 import android.view.View;
 import android.view.View.AccessibilityDelegate;
+import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityNodeProvider;
 import android.view.autofill.AutofillManager;
@@ -563,6 +568,121 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Sanity check: once saved, the session should be finished.
         assertNoDanglingSessions();
+    }
+
+    @Test
+    public void testAutoFillOneDatasetAndSaveHidingOverlays() throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        final Bundle extras = new Bundle();
+        extras.putString("numbers", "4815162342");
+
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setField(ID_PASSWORD, "sweet")
+                        .setPresentation(createPresentation("The Dude"))
+                        .build())
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
+                .setExtras(extras)
+                .build());
+        mActivity.expectAutoFill("dude", "sweet");
+
+        // Trigger auto-fill.
+        mActivity.onUsername(View::requestFocus);
+
+        // Since this is a Presubmit test, wait for connection to avoid flakiness.
+        waitUntilConnected();
+
+        sReplier.getNextFillRequest();
+
+        // Add an overlay on top of the whole screen
+        final View[] overlay = new View[1];
+        try {
+            // Allow ourselves to add overlays
+            runShellCommand("appops set " + getContext().getPackageName()
+                    + " SYSTEM_ALERT_WINDOW allow");
+
+            // Make sure the fill UI is shown.
+            sUiBot.assertDatasets("The Dude");
+
+            final CountDownLatch latch = new CountDownLatch(1);
+
+            mActivity.runOnUiThread(() -> {
+                // This overlay is focusable, full-screen, which should block interaction
+                // with the fill UI unless the platform successfully hides overlays.
+                final WindowManager.LayoutParams params = new WindowManager.LayoutParams();
+                params.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+                params.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN;
+                params.width = ViewGroup.LayoutParams.MATCH_PARENT;
+                params.height = ViewGroup.LayoutParams.MATCH_PARENT;
+
+                final View view = new View(getContext()) {
+                    @Override
+                    protected void onAttachedToWindow() {
+                        super.onAttachedToWindow();
+                        latch.countDown();
+                    }
+                };
+                view.setBackgroundColor(Color.RED);
+                WindowManager windowManager = getContext().getSystemService(WindowManager.class);
+                windowManager.addView(view, params);
+                overlay[0] = view;
+            });
+
+            // Wait for the window being added.
+            assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
+
+            // Auto-fill it.
+            sUiBot.selectDataset("The Dude");
+
+            // Check the results.
+            mActivity.assertAutoFilled();
+
+            // Try to login, it will fail.
+            final String loginMessage = mActivity.tapLogin();
+
+            assertWithMessage("Wrong login msg").that(loginMessage).isEqualTo(
+                    AUTHENTICATION_MESSAGE);
+
+            // Set right password...
+            mActivity.onPassword((v) -> v.setText("dude"));
+
+            // ... and try again
+            final String expectedMessage = getWelcomeMessage("dude");
+            final String actualMessage = mActivity.tapLogin();
+            assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
+
+            // Assert the snack bar is shown and tap "Save".
+            sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+
+            final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+
+            // Assert value of expected fields - should not be sanitized.
+            final ViewNode username = findNodeByResourceId(saveRequest.structure, ID_USERNAME);
+            assertTextAndValue(username, "dude");
+            final ViewNode password = findNodeByResourceId(saveRequest.structure, ID_USERNAME);
+            assertTextAndValue(password, "dude");
+
+            // Make sure extras were passed back on onSave()
+            assertThat(saveRequest.data).isNotNull();
+            final String extraValue = saveRequest.data.getString("numbers");
+            assertWithMessage("extras not passed on save").that(extraValue).isEqualTo("4815162342");
+
+            // Sanity check: once saved, the session should be finished.
+            assertNoDanglingSessions();
+        } finally {
+            // Make sure we can no longer add overlays
+            runShellCommand("appops set " + getContext().getPackageName()
+                    + " SYSTEM_ALERT_WINDOW ignore");
+            // Make sure the overlay is removed
+            mActivity.runOnUiThread(() -> {
+                WindowManager windowManager = getContext().getSystemService(WindowManager.class);
+                windowManager.removeView(overlay[0]);
+            });
+        }
     }
 
     @Test
