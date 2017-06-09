@@ -329,6 +329,11 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.bug_35467107);
     }
 
+    public void testStagefright_bug_34031018() throws Exception {
+        doStagefrightTest(R.raw.bug_34031018_32bit);
+        doStagefrightTest(R.raw.bug_34031018_64bit);
+    }
+
     private void doStagefrightTest(final int rid) throws Exception {
         doStagefrightTestMediaPlayer(rid);
         doStagefrightTestMediaCodec(rid);
@@ -723,7 +728,7 @@ public class StagefrightTest extends InstrumentationTestCase {
             AssetFileDescriptor fd = resources.openRawResourceFd(rid);
             try {
                 retriever.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
-            } catch (RuntimeException e) {
+            } catch (Exception e) {
                 // ignore
             } finally {
                 closeQuietly(fd);
