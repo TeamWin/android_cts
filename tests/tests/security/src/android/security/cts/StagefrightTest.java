@@ -83,14 +83,17 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.bug_22771132);
     }
 
+    @SecurityTest
     public void testStagefright_bug_21443020() throws Exception {
         doStagefrightTest(R.raw.bug_21443020_webm);
     }
 
+    @SecurityTest
     public void testStagefright_bug_34360591() throws Exception {
         doStagefrightTest(R.raw.bug_34360591);
     }
 
+    @SecurityTest
     public void testStagefright_bug_35763994() throws Exception {
         doStagefrightTest(R.raw.bug_35763994);
     }
@@ -265,26 +268,32 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.bug_25812590);
     }
 
+    @SecurityTest
     public void testStagefright_cve_2015_6600() throws Exception {
         doStagefrightTest(R.raw.cve_2015_6600);
     }
 
+    @SecurityTest
     public void testStagefright_cve_2015_6603() throws Exception {
         doStagefrightTest(R.raw.cve_2015_6603);
     }
 
+    @SecurityTest
     public void testStagefright_cve_2015_6604() throws Exception {
         doStagefrightTest(R.raw.cve_2015_6604);
     }
 
+    @SecurityTest
     public void testStagefright_cve_2015_3871() throws Exception {
         doStagefrightTest(R.raw.cve_2015_3871);
     }
 
+    @SecurityTest
     public void testStagefright_bug_26070014() throws Exception {
         doStagefrightTest(R.raw.bug_26070014);
     }
 
+    @SecurityTest
     public void testStagefright_bug_32915871() throws Exception {
         doStagefrightTest(R.raw.bug_32915871);
     }
