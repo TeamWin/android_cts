@@ -459,7 +459,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         devicePlatFcFile = File.createTempFile("file_contexts", ".tmp");
         devicePlatFcFile.deleteOnExit();
         if (!mDevice.pullFile("/system/etc/selinux/plat_file_contexts", devicePlatFcFile)) {
-            mDevice.pullFile("/file_contexts.bin", devicePlatFcFile);
+            mDevice.pullFile("/plat_file_contexts", devicePlatFcFile);
         }
 
         /* retrieve the AOSP file_contexts file from jar */
@@ -546,11 +546,12 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         deviceNonplatFcFile.deleteOnExit();
         if (mDevice.pullFile("/system/etc/selinux/plat_file_contexts", devicePlatFcFile)) {
             mDevice.pullFile("/vendor/etc/selinux/nonplat_file_contexts", deviceNonplatFcFile);
-            appendTo(devicePlatFcFile.getAbsolutePath(),
-                         deviceNonplatFcFile.getAbsolutePath());
         } else {
-            mDevice.pullFile("/file_contexts.bin", devicePlatFcFile);
+            mDevice.pullFile("/plat_file_contexts", devicePlatFcFile);
+            mDevice.pullFile("/nonplat_file_contexts", deviceNonplatFcFile);
         }
+        appendTo(devicePlatFcFile.getAbsolutePath(),
+                deviceNonplatFcFile.getAbsolutePath());
 
         /* run checkfc sepolicy file_contexts */
         ProcessBuilder pb = new ProcessBuilder(checkFc.getAbsolutePath(),
