@@ -36,6 +36,8 @@ import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.util.xml.AbstractXmlParser.ParseException;
 import com.android.tradefed.util.StreamUtil;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -57,6 +59,9 @@ import java.util.Set;
 public class SubPlanHelper {
 
     private static final String XML_EXT = ".xml";
+
+    // string signalling the beginning of the parameter in a test name
+    private static final String PARAM_START = "[";
 
     // result types
     public static final String PASSED = "passed";
@@ -210,7 +215,7 @@ public class SubPlanHelper {
         subPlan.addAllIncludeFilters(mIncludeFilters);
         subPlan.addAllExcludeFilters(mExcludeFilters);
         if (mModuleName != null) {
-            subPlan.addIncludeFilter(new TestFilter(mAbiName, mModuleName, mTestName).toString());
+            addIncludeToSubPlan(subPlan, new TestFilter(mAbiName, mModuleName, mTestName));
         }
         Set<TestStatus> statusesToRun = getStatusesToRun();
         for (IModuleResult module : mResult.getModules()) {
@@ -219,16 +224,16 @@ public class SubPlanHelper {
                             new TestFilter(module.getAbi(), module.getName(), null /*test*/);
                 if (shouldRunEntireModule(module)) {
                     // include entire module
-                    subPlan.addIncludeFilter(moduleInclude.toString());
+                    addIncludeToSubPlan(subPlan, moduleInclude);
                 } else if (mResultTypes.contains(NOT_EXECUTED) && !module.isDone()) {
                     // add module include and test excludes
-                    subPlan.addIncludeFilter(moduleInclude.toString());
+                    addIncludeToSubPlan(subPlan, moduleInclude);
                     for (ICaseResult caseResult : module.getResults()) {
                         for (ITestResult testResult : caseResult.getResults()) {
                             if (!statusesToRun.contains(testResult.getResultStatus())) {
                                 TestFilter testExclude = new TestFilter(module.getAbi(),
                                         module.getName(), testResult.getFullName());
-                                subPlan.addExcludeFilter(testExclude.toString());
+                                addExcludeToSubPlan(subPlan, testExclude);
                             }
                         }
                     }
@@ -240,7 +245,7 @@ public class SubPlanHelper {
                             if (statusesToRun.contains(testResult.getResultStatus())) {
                                 TestFilter testInclude = new TestFilter(module.getAbi(),
                                         module.getName(), testResult.getFullName());
-                                subPlan.addIncludeFilter(testInclude.toString());
+                                addIncludeToSubPlan(subPlan, testInclude);
                             }
                         }
                     }
@@ -249,10 +254,44 @@ public class SubPlanHelper {
                 // module should not run, exclude entire module
                 TestFilter moduleExclude =
                         new TestFilter(module.getAbi(), module.getName(), null /*test*/);
-                subPlan.addExcludeFilter(moduleExclude.toString());
+                addExcludeToSubPlan(subPlan, moduleExclude);
             }
         }
         return subPlan;
+    }
+
+    /**
+     * Add the include test filter to the subplan. For filters that specify the parameters of a
+     * test, strip the parameter suffix and add the include, which will run the test with all
+     * parameters. If JUnit test runners are extended to handle filtering by parameter, this
+     * special case may be removed.
+     */
+    @VisibleForTesting
+    static void addIncludeToSubPlan(ISubPlan subPlan, TestFilter include) {
+        String test = include.getTest();
+        String str = include.toString();
+        if (test == null || !test.contains(PARAM_START)) {
+            subPlan.addIncludeFilter(str);
+        } else if (test.contains(PARAM_START)) {
+            // filter applies to parameterized test, include test without parameter.
+            subPlan.addIncludeFilter(str.substring(0, str.lastIndexOf(PARAM_START)));
+        }
+    }
+
+    /**
+     * Add the exclude test filter to the subplan. For filters that specify the parameters of a
+     * test, do not add the exclude filter. This will prompt the test to run again with all
+     * parameters. If JUnit test runners are extended to handle filtering by parameter, this
+     * special case may be removed.
+     */
+    @VisibleForTesting
+    static void addExcludeToSubPlan(ISubPlan subPlan, TestFilter exclude) {
+        String test = exclude.getTest();
+        String str = exclude.toString();
+        if (test == null || !test.contains(PARAM_START)) {
+            subPlan.addExcludeFilter(str);
+        }
+        // don't add exclude for parameterized test, as runners do not support this.
     }
 
     /**
