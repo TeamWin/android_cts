@@ -80,7 +80,7 @@ public class AccessibilityGestureDetectorTest {
         WindowManager windowManager = (WindowManager) instrumentation.getContext()
                 .getSystemService(Context.WINDOW_SERVICE);
         final DisplayMetrics metrics = new DisplayMetrics();
-        windowManager.getDefaultDisplay().getMetrics(metrics);
+        windowManager.getDefaultDisplay().getRealMetrics(metrics);
         mCenter = new Point((int) metrics.widthPixels / 2, (int) metrics.heightPixels / 2);
         mStrokeLenPxX = (int)(GESTURE_LENGTH_INCHES * metrics.xdpi);
         mStrokeLenPxY = (int)(GESTURE_LENGTH_INCHES * metrics.ydpi);

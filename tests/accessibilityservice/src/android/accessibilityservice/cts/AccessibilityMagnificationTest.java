@@ -87,7 +87,7 @@ public class AccessibilityMagnificationTest extends InstrumentationTestCase {
         final WindowManager wm = (WindowManager) mInstrumentation.getContext().getSystemService(
                 Context.WINDOW_SERVICE);
         final DisplayMetrics metrics = new DisplayMetrics();
-        wm.getDefaultDisplay().getMetrics(metrics);
+        wm.getDefaultDisplay().getRealMetrics(metrics);
         final float scale = 2.0f;
         final float x = metrics.widthPixels / 4.0f;
         final float y = metrics.heightPixels / 4.0f;
