@@ -138,6 +138,16 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     }
 
     @Override
+    public void testAlwaysOnVpnUnsupportedPackage() throws Exception {
+        super.testAlwaysOnVpnUnsupportedPackage();
+    }
+
+    @Override
+    public void testAlwaysOnVpnUnsupportedPackageReplaced() throws Exception {
+        super.testAlwaysOnVpnUnsupportedPackageReplaced();
+    }
+
+    @Override
     public void testResetPasswordWithToken() throws Exception {
         if (!mHasFeature) {
             return;
