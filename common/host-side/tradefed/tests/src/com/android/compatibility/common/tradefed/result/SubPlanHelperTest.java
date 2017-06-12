@@ -18,6 +18,7 @@ package com.android.compatibility.common.tradefed.result;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.testtype.ISubPlan;
+import com.android.compatibility.common.tradefed.testtype.SubPlan;
 import com.android.compatibility.common.util.ICaseResult;
 import com.android.compatibility.common.util.IInvocationResult;
 import com.android.compatibility.common.util.IModuleResult;
@@ -74,6 +75,8 @@ public class SubPlanHelperTest extends TestCase {
     private static final String SP_RESULT_TYPE_FAILED = "failed";
     private static final String SP_RESULT_TYPE_NOT_EXECUTED = "not_executed";
 
+    private static final String PARAM_SUFFIX = "[0]";
+
     private CompatibilityBuildHelper mBuildHelper;
     private SubPlanHelper mSubPlanHelper;
 
@@ -119,6 +122,42 @@ public class SubPlanHelperTest extends TestCase {
         assertTrue(planIncludes.contains(mf1.toString())); // include module with not-executed test
         assertTrue(planExcludes.contains(tf1.toString())); // exclude passing test in that module
         assertTrue(planIncludes.contains(tf3.toString())); // include failure in executed module
+    }
+
+    public void testAddInclude() throws Exception {
+        ISubPlan subPlan = new SubPlan();
+        TestFilter tf = new TestFilter(ABI, NAME_A, String.format("%s#%s", CLASS_A, METHOD_1));
+        SubPlanHelper.addIncludeToSubPlan(subPlan, tf);
+        Set<String> includes = subPlan.getIncludeFilters();
+        assertTrue(includes.contains(tf.toString()));
+    }
+
+    public void testAddExclude() throws Exception {
+        ISubPlan subPlan = new SubPlan();
+        TestFilter tf = new TestFilter(ABI, NAME_A, String.format("%s#%s", CLASS_A, METHOD_1));
+        SubPlanHelper.addExcludeToSubPlan(subPlan, tf);
+        Set<String> excludes = subPlan.getExcludeFilters();
+        assertTrue(excludes.contains(tf.toString()));
+    }
+
+    public void testAddParameterizedInclude() throws Exception {
+        ISubPlan subPlan = new SubPlan();
+        TestFilter filterWithSuffix = new TestFilter(ABI, NAME_A,
+                String.format("%s#%s%s", CLASS_A, METHOD_1, PARAM_SUFFIX));
+        TestFilter filterWithoutSuffix = new TestFilter(ABI, NAME_A,
+                String.format("%s#%s", CLASS_A, METHOD_1));
+        SubPlanHelper.addIncludeToSubPlan(subPlan, filterWithSuffix);
+        Set<String> includes = subPlan.getIncludeFilters();
+        assertTrue(includes.contains(filterWithoutSuffix.toString()));
+    }
+
+    public void testAddParameterizedExclude() throws Exception {
+        ISubPlan subPlan = new SubPlan();
+        TestFilter filterWithSuffix = new TestFilter(ABI, NAME_A,
+                String.format("%s#%s%s", CLASS_A, METHOD_1, PARAM_SUFFIX));
+        SubPlanHelper.addExcludeToSubPlan(subPlan, filterWithSuffix);
+        Set<String> excludes = subPlan.getExcludeFilters();
+        assertTrue(excludes.isEmpty());
     }
 
     private void populateResults() throws Exception {
