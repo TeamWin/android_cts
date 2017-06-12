@@ -18,6 +18,7 @@ package android.security.cts;
 
 import android.app.ActivityManager;
 import android.content.Context;
+import android.platform.test.annotations.SecurityTest;
 import android.test.AndroidTestCase;
 
 import java.util.List;
@@ -28,7 +29,7 @@ public class RunningAppProcessInfoTest extends AndroidTestCase {
      * getRunningTasks()is fixed. The test tries to get current RunningAppProcessInfo and passes
      * the test if it is not able to get other process information.
      */
-
+    @SecurityTest
     public void testRunningAppProcessInfo() {
         ActivityManager amActivityManager =
                 (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
