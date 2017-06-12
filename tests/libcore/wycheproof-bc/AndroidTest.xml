@@ -13,14 +13,14 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="Config for CTS Libcore Wycheproof Conscrypt test cases">
+<configuration description="Config for CTS Libcore Wycheproof Bouncy Castle test cases">
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.ApkInstaller">
         <option name="cleanup-apks" value="true" />
         <!-- this has just the instrumentation which acts as the tests we want to run -->
-        <option name="test-file-name" value="CtsLibcoreWycheproofConscryptTestCases.apk" />
+        <option name="test-file-name" value="CtsLibcoreWycheproofBCTestCases.apk" />
     </target_preparer>
     <test class="com.android.compatibility.testtype.LibcoreTest" >
-        <option name="package" value="android.libcore.cts.wycheproof.conscrypt" />
+        <option name="package" value="android.libcore.cts.wycheproof.bouncycastle" />
         <!-- The individual test cases don't work unless they're run in the
              context of one of the suites, so we have to limit the test
              infrastructure to only running the test suites. -->
