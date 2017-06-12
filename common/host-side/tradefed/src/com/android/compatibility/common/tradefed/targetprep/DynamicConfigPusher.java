@@ -66,7 +66,7 @@ public class DynamicConfigPusher implements ITargetCleaner {
 
     @Option(name = "version", description = "The version of the configuration to retrieve " +
             "from the server, e.g. \"1.0\". Defaults to suite version string.")
-    private static String mVersion;
+    private String mVersion;
 
 
     private String mFilePushed;
