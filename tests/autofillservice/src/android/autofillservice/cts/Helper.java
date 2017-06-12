@@ -18,6 +18,7 @@ package android.autofillservice.cts;
 
 import static android.autofillservice.cts.Helper.runShellCommand;
 import static android.provider.Settings.Secure.AUTOFILL_SERVICE;
+import static android.provider.Settings.Secure.USER_SETUP_COMPLETE;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -50,9 +51,6 @@ import java.util.function.Function;
 final class Helper {
 
     private static final String TAG = "AutoFillCtsHelper";
-
-    // TODO: should static import Settings.Secure instead, but that's not a @TestApi
-    private static String USER_SETUP_COMPLETE = "user_setup_complete";
 
     static final boolean VERBOSE = false;
 
