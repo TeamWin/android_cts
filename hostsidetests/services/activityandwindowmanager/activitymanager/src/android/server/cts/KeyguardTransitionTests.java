@@ -103,4 +103,59 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
         assertEquals("Picked wrong transition", TRANSIT_ACTIVITY_OPEN,
                 mAmWmState.getWmState().getLastTransition());
     }
+
+    public void testOccludeManifestAttr() throws Exception {
+         if (!isHandheld()) {
+             return;
+         }
+
+         String activityName = "ShowWhenLockedAttrActivity";
+
+         gotoKeyguard();
+         final String logSeparator = clearLogcat();
+         launchActivity(activityName);
+         mAmWmState.computeState(mDevice, new String[] {activityName});
+         assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_OCCLUDE,
+                 mAmWmState.getWmState().getLastTransition());
+         assertSingleLaunch(activityName, logSeparator);
+    }
+
+    public void testOccludeAttrRemove() throws Exception {
+        if (!isHandheld()) {
+            return;
+        }
+
+        String activityName = "ShowWhenLockedAttrRemoveAttrActivity";
+
+        gotoKeyguard();
+        String logSeparator = clearLogcat();
+        launchActivity(activityName);
+        mAmWmState.computeState(mDevice, new String[] {activityName});
+        assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_OCCLUDE,
+                mAmWmState.getWmState().getLastTransition());
+        assertSingleLaunch(activityName, logSeparator);
+
+        gotoKeyguard();
+        logSeparator = clearLogcat();
+        launchActivity(activityName);
+        mAmWmState.computeState(mDevice, new String[] {activityName});
+        assertSingleStartAndStop(activityName, logSeparator);
+    }
+
+    public void testNewActivityDuringOccludedWithAttr() throws Exception {
+        if (!isHandheld()) {
+            return;
+        }
+
+        String activityName1 = "ShowWhenLockedAttrActivity";
+        String activityName2 = "ShowWhenLockedAttrWithDialogActivity";
+
+        launchActivity(activityName1);
+        gotoKeyguard();
+        launchActivity(activityName2);
+        mAmWmState.computeState(mDevice, new String[] { activityName2 });
+        assertEquals("Picked wrong transition", TRANSIT_ACTIVITY_OPEN,
+                mAmWmState.getWmState().getLastTransition());
+    }
+
 }

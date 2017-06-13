@@ -357,6 +357,42 @@
                   android:noHistory="true"
                   android:exported="true" />
 
+        <activity android:name=".ShowWhenLockedAttrActivity"
+                  android:showWhenLocked="true"
+                  android:exported="true" />
+
+        <activity android:name=".ShowWhenLockedAttrRemoveAttrActivity"
+                  android:showWhenLocked="true"
+                  android:exported="true" />
+
+        <activity android:name=".ShowWhenLockedAttrWithDialogActivity"
+                  android:showWhenLocked="true"
+                  android:exported="true" />
+
+        <activity android:name=".TurnScreenOnAttrActivity"
+                  android:turnScreenOn="true"
+                  android:exported="true" />
+
+        <activity android:name=".TurnScreenOnShowOnLockActivity"
+                  android:showWhenLocked="true"
+                  android:turnScreenOn="true"
+                  android:exported="true" />
+
+        <activity android:name=".TurnScreenOnAttrRemoveAttrActivity"
+                  android:turnScreenOn="true"
+                  android:showWhenLocked="true"
+                  android:exported="true" />
+
+        <activity android:name=".TurnScreenOnSingleTaskActivity"
+                  android:turnScreenOn="true"
+                  android:showWhenLocked="true"
+                  android:exported="true"
+                  android:launchMode="singleTask" />
+
+        <activity android:name=".TurnScreenOnAttrDismissKeyguardActivity"
+                  android:turnScreenOn="true"
+                  android:exported="true"/>
+
         <service android:name="com.android.cts.verifier.vr.MockVrListenerService"
                  android:exported="true"
                  android:enabled="true"
