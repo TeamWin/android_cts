@@ -34,6 +34,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-test \
     legacy-android-test
 
+LOCAL_JAVA_LIBRARIES := legacy-android-test
+
 LOCAL_SDK_VERSION := test_current
 
 include $(BUILD_CTS_PACKAGE)

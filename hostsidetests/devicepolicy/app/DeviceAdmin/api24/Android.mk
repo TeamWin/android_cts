@@ -31,6 +31,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util \
     legacy-android-test
 
+LOCAL_JAVA_LIBRARIES := legacy-android-test
+
 LOCAL_SDK_VERSION := current
 
 # tag this module as a cts test artifact
