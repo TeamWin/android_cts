@@ -2538,7 +2538,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         setUserRestrictionForAutofill(true);
         try {
             waitUntilDisconnected();
-            assertNoDanglingSessions();
+            eventually(() -> assertNoDanglingSessions());
             assertThat(afm.isEnabled()).isFalse();
             assertThat(afm.isAutofillSupported()).isFalse();
 
