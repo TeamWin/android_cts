@@ -26,7 +26,6 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject;
 import android.support.test.uiautomator.UiObjectNotFoundException;
-import android.support.test.uiautomator.UiScrollable;
 import android.support.test.uiautomator.UiSelector;
 
 import com.android.compatibility.common.util.SystemUtil;
@@ -62,37 +61,22 @@ public class TestUtils {
         return bt;
     }
 
-    void tapOnViewWithText(String searchText) {
-        if (searchText == null) {
-            return;
-        }
-
-        UiScrollable textScroll =  new UiScrollable(new UiSelector().scrollable(true));
+    void tapOnViewWithText(String text) {
+        UiObject obj = device.findObject(new UiSelector().textMatches(text));
         try {
-            textScroll.scrollIntoView(new UiSelector().text(searchText));
-            UiObject text = new UiObject(new UiSelector().text(searchText));
-            text.click();
+            obj.click();
         } catch (UiObjectNotFoundException e) {
-            throw new AssertionError("View with text '" + searchText + "' was not found!", e);
+            throw new AssertionError("View with text '" + text + "' was not found!", e);
         }
+        device.waitForIdle();
     }
 
-    boolean isTextShown(String searchText) {
-        if (searchText == null) {
-            return false;
-        }
-
-        UiObject text = new UiObject(new UiSelector().text(searchText));
-        if (text.exists() || text.waitForExists(1000)) {
+    boolean isTextShown(String text) {
+        UiObject obj = device.findObject(new UiSelector().textMatches(text));
+        if (obj.exists()) {
             return true;
         }
-
-        UiScrollable textScroll = new UiScrollable(new UiSelector().scrollable(true));
-        try {
-            return textScroll.scrollIntoView(new UiSelector().text(searchText));
-        } catch (UiObjectNotFoundException e) {
-            return false;
-        }
+        return obj.waitForExists(1000);
     }
 
     boolean isTextHidden(String text) {
