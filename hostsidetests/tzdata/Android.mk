@@ -23,7 +23,7 @@ LOCAL_MODULE := CtsHostTzDataTests
 
 LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed-prebuilt compatibility-host-util
 
-LOCAL_STATIC_JAVA_LIBRARIES := cts-migration-lib tzdata-testing-host tzdata_shared2-host tzdata_tools2-host
+LOCAL_STATIC_JAVA_LIBRARIES := cts-migration-lib tzdata-testing-host time_zone_distro-host time_zone_distro_tools-host
 
 LOCAL_CTS_TEST_PACKAGE := android.host.tzdata
 
