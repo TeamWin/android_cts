@@ -134,12 +134,7 @@ public class CalendarViewTest {
 
     @UiThreadTest
     @Test
-    public void testCalendarViewMinMaxRangeRestrictions() {
-        verifyMinMaxRangeRestrictions(mCalendarViewHolo);
-        verifyMinMaxRangeRestrictions(mCalendarViewMaterial);
-    }
-
-    private void verifyMinMaxRangeRestrictions(CalendarView calendarView) {
+    public void testMinMaxRangeRestrictionsHolo() {
         // Use a range of minus/plus one year as min/max dates.
         final Calendar minCalendar = new GregorianCalendar();
         minCalendar.set(Calendar.YEAR, minCalendar.get(Calendar.YEAR) - 1);
@@ -148,20 +143,51 @@ public class CalendarViewTest {
         final long minDate = minCalendar.getTime().getTime();
         final long maxDate = maxCalendar.getTime().getTime();
 
-        calendarView.setMinDate(minDate);
-        calendarView.setMaxDate(maxDate);
+        mCalendarViewHolo.setMinDate(minDate);
+        mCalendarViewHolo.setMaxDate(maxDate);
 
         try {
-            calendarView.setDate(minDate - 1);
+            mCalendarViewHolo.setDate(minDate - 1);
             fail("Should throw IllegalArgumentException, date is before minDate");
         } catch (IllegalArgumentException e) {
         }
 
         try {
-            calendarView.setDate(maxDate + 1);
+            mCalendarViewHolo.setDate(maxDate + 1);
             fail("Should throw IllegalArgumentException, date is after maxDate");
         } catch (IllegalArgumentException e) {
         }
+    }
+
+    @UiThreadTest
+    @Test
+    public void testMinMaxRangeClampingMaterial() {
+        // Use a range of minus/plus one year as min/max dates.
+        final Calendar minCalendar = new GregorianCalendar();
+        minCalendar.set(Calendar.YEAR, minCalendar.get(Calendar.YEAR) - 1);
+        final Calendar maxCalendar = new GregorianCalendar();
+        maxCalendar.set(Calendar.YEAR, maxCalendar.get(Calendar.YEAR) + 1);
+        final long minDate = minCalendar.getTime().getTime();
+        final long maxDate = maxCalendar.getTime().getTime();
+
+        mCalendarViewMaterial.setMinDate(minDate);
+        mCalendarViewMaterial.setMaxDate(maxDate);
+        mCalendarViewMaterial.setDate(minDate + 1);
+
+        assertEquals(minDate, mCalendarViewMaterial.getMinDate());
+        assertEquals(maxDate, mCalendarViewMaterial.getMaxDate());
+        assertEquals(minDate + 1, mCalendarViewMaterial.getDate());
+
+        mCalendarViewMaterial.setMinDate(minDate + 20);
+        assertEquals(minDate + 20, mCalendarViewMaterial.getMinDate());
+        assertEquals(maxDate, mCalendarViewMaterial.getMaxDate());
+        assertEquals(minDate + 20, mCalendarViewMaterial.getDate());
+
+        mCalendarViewMaterial.setMinDate(minDate);
+        mCalendarViewMaterial.setMaxDate(minDate + 10);
+        assertEquals(minDate, mCalendarViewMaterial.getMinDate());
+        assertEquals(minDate + 10, mCalendarViewMaterial.getMaxDate());
+        assertEquals(minDate + 10, mCalendarViewMaterial.getDate());
     }
 
     private void verifyOnDateChangeListener(CalendarView calendarView,
