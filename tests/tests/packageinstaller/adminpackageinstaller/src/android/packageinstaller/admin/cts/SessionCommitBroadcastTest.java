@@ -22,14 +22,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageInstaller;
-import android.os.ParcelFileDescriptor;
+import android.content.pm.ResolveInfo;
 import android.os.Process;
 import android.os.UserHandle;
 import android.text.TextUtils;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -55,8 +52,22 @@ public class SessionCommitBroadcastTest extends BasePackageInstallTest {
         if (!mHasFeature) {
             return;
         }
-        assertNotSame(mDefaultLauncher, mThisAppLauncher);
+        if (mDefaultLauncher.equals(mThisAppLauncher)) {
+            // Find a different launcher
+            Intent homeIntent = new Intent(Intent.ACTION_MAIN)
+                    .addCategory(Intent.CATEGORY_HOME)
+                    .addCategory(Intent.CATEGORY_DEFAULT);
+            for (ResolveInfo info : mPackageManager.queryIntentActivities(homeIntent, 0)) {
+                mDefaultLauncher =
+                        new ComponentName(info.activityInfo.packageName, info.activityInfo.name);
+                if (!mDefaultLauncher.equals(mThisAppLauncher)) {
+                    setLauncher(mDefaultLauncher.flattenToString());
+                    break;
+                }
+            }
+        }
 
+        assertFalse("No default launcher found", mDefaultLauncher.equals(mThisAppLauncher));
         SessionCommitReceiver receiver = new SessionCommitReceiver();
         // install the app
         assertInstallPackage();
@@ -126,10 +137,6 @@ public class SessionCommitBroadcastTest extends BasePackageInstallTest {
         forceUninstall();
     }
 
-    private void forceUninstall() throws Exception {
-        runShellCommand("pm uninstall " + TEST_APP_PKG);
-    }
-
     private String getDefaultLauncher() throws Exception {
         final String PREFIX = "Launcher: ComponentInfo{";
         final String POSTFIX = "}";
@@ -144,22 +151,6 @@ public class SessionCommitBroadcastTest extends BasePackageInstallTest {
     private void setLauncher(String component) throws Exception {
         runShellCommand("cmd package set-home-activity --user "
                 + getInstrumentation().getContext().getUserId() + " " + component);
-    }
-
-    public ArrayList<String> runShellCommand(String command) throws Exception {
-        ParcelFileDescriptor pfd = getInstrumentation().getUiAutomation()
-                .executeShellCommand(command);
-
-        ArrayList<String> ret = new ArrayList<>();
-        // Read the input stream fully.
-        try (BufferedReader r = new BufferedReader(
-                new InputStreamReader(new ParcelFileDescriptor.AutoCloseInputStream(pfd)))) {
-            String line;
-            while ((line = r.readLine()) != null) {
-                ret.add(line);
-            }
-        }
-        return ret;
     }
 
     private class SessionCommitReceiver extends BroadcastReceiver {
