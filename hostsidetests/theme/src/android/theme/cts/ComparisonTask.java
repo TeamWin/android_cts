@@ -35,8 +35,7 @@ import javax.imageio.ImageIO;
 public class ComparisonTask implements Callable<Pair<String, File>> {
     private static final String TAG = "ComparisonTask";
 
-    /** Maximum allowed LAB distance between two pixels. */
-    private static final double IMAGE_THRESHOLD = 0.76;
+    private static final int IMAGE_THRESHOLD = 4;
 
     /** Neutral gray for blending colors. */
     private static final int GRAY = 0xFF808080;
@@ -99,7 +98,7 @@ public class ComparisonTask implements Callable<Pair<String, File>> {
      * @return {@code true} if the images are similar, false otherwise
      */
     private static boolean compare(BufferedImage reference, BufferedImage generated,
-            double threshold) {
+            int threshold) {
         final int w = generated.getWidth();
         final int h = generated.getHeight();
         if (w != reference.getWidth() || h != reference.getHeight()) {
@@ -113,9 +112,15 @@ public class ComparisonTask implements Callable<Pair<String, File>> {
             for (int j = 0; j < h; j++) {
                 final int p1 = reference.getRGB(i, j);
                 final int p2 = generated.getRGB(i, j);
-                final double dist = computeLabDistance(p1, p2);
-                if (dist > threshold) {
-                    System.err.println("fail " + dist);
+
+                final int dr = getAlphaScaledRed(p1) - getAlphaScaledRed(p2);
+                final int dg = getAlphaScaledGreen(p1) - getAlphaScaledGreen(p2);
+                final int db = getAlphaScaledBlue(p1) - getAlphaScaledBlue(p2);
+
+                if (Math.abs(db) > threshold ||
+                    Math.abs(dg) > threshold ||
+                    Math.abs(dr) > threshold) {
+                    System.err.println("fail dr=" + dr+ " dg=" + dg+ " db=" + db);
 
                     consecutive++;
 
