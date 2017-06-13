@@ -174,20 +174,35 @@ public class CalendarViewTest {
         mCalendarViewMaterial.setMaxDate(maxDate);
         mCalendarViewMaterial.setDate(minDate + 1);
 
+        // Expecting to get back the same values because minDate < date < maxDate.
         assertEquals(minDate, mCalendarViewMaterial.getMinDate());
         assertEquals(maxDate, mCalendarViewMaterial.getMaxDate());
         assertEquals(minDate + 1, mCalendarViewMaterial.getDate());
 
+        // Set a new minDate after the current date.
         mCalendarViewMaterial.setMinDate(minDate + 20);
         assertEquals(minDate + 20, mCalendarViewMaterial.getMinDate());
         assertEquals(maxDate, mCalendarViewMaterial.getMaxDate());
+        // Verify date clamping when calling setMinDate().
         assertEquals(minDate + 20, mCalendarViewMaterial.getDate());
 
         mCalendarViewMaterial.setMinDate(minDate);
+        // Set a maxDate before the current date.
         mCalendarViewMaterial.setMaxDate(minDate + 10);
         assertEquals(minDate, mCalendarViewMaterial.getMinDate());
         assertEquals(minDate + 10, mCalendarViewMaterial.getMaxDate());
+        // Verify date clamping when calling setMaxDate().
         assertEquals(minDate + 10, mCalendarViewMaterial.getDate());
+
+        // Set a date before minDate.
+        mCalendarViewMaterial.setDate(mCalendarViewMaterial.getMinDate() - 1);
+        // Expect date clamped to minDate.
+        assertEquals(mCalendarViewMaterial.getMinDate(), mCalendarViewMaterial.getDate());
+
+        // Set a date after maxDate.
+        mCalendarViewMaterial.setDate(mCalendarViewMaterial.getMaxDate() + 1);
+        // Expect date clamped to maxDate.
+        assertEquals(mCalendarViewMaterial.getMaxDate(), mCalendarViewMaterial.getDate());
     }
 
     private void verifyOnDateChangeListener(CalendarView calendarView,
