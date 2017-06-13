@@ -28,8 +28,9 @@ LOCAL_RESOURCE_DIR += $(LOCAL_PATH)/../res
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestrunner \
-    compatibility-device-util \
-    legacy-android-test
+    compatibility-device-util
+
+LOCAL_JAVA_LIBRARIES := legacy-android-test
 
 LOCAL_SDK_VERSION := current
 
