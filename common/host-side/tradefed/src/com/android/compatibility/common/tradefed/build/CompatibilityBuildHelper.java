@@ -18,6 +18,8 @@ package com.android.compatibility.common.tradefed.build;
 import com.android.compatibility.common.util.DynamicConfigHostSide;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.build.IFolderBuildInfo;
+import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.util.FileUtil;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -44,6 +46,8 @@ public class CompatibilityBuildHelper {
     private static final String ROOT_DIR2 = "ROOT_DIR2";
     private static final String DYNAMIC_CONFIG_OVERRIDE_URL = "DYNAMIC_CONFIG_OVERRIDE_URL";
     private static final String RETRY_COMMAND_LINE_ARGS = "retry_command_line_args";
+    private static final String ALT_HOST_TESTCASE_DIR = "ANDROID_HOST_OUT_TESTCASES";
+    private static final String ALT_TARGET_TESTCASE_DIR = "ANDROID_TARGET_OUT_TESTCASES";
     private final IBuildInfo mBuildInfo;
 
     /**
@@ -203,12 +207,40 @@ public class CompatibilityBuildHelper {
      * @throws FileNotFoundException if the directory structure is not valid.
      */
     public File getTestsDir() throws FileNotFoundException {
-        File testsDir = new File(getDir(), "testcases");
+        // We have 3 options that can be the test modules dir (and we're going
+        // look for them in the following order):
+        //   1. ../android-*ts/testcases/
+        //   2. ALT_HOST_TESTCASE_DIR
+        //   3. ALT_TARGET_TESTCASE_DIR (we'll skip this since if #2 fails, this
+        //      will inevitably fail as well.)
+
+        File testsDir = null;
+        try {
+            testsDir = new File(getDir(), "testcases");
+        } catch (FileNotFoundException | NullPointerException e) {
+            // Ok, no root dir for us to get, moving on to the next option.
+            testsDir = null;
+        }
+
+        if (testsDir == null) {
+            String altTestsDir = System.getenv().get(ALT_HOST_TESTCASE_DIR);
+            if (altTestsDir != null) {
+                testsDir = new File(altTestsDir);
+            }
+        }
+
+        // This just means we have no signs of where to check for the test dir.
+        if (testsDir == null) {
+            throw new FileNotFoundException(
+                String.format("No Compatibility tests folder set, did you run lunch?"));
+        }
+
         if (!testsDir.exists()) {
             throw new FileNotFoundException(String.format(
                     "Compatibility tests folder %s does not exist",
                     testsDir.getAbsolutePath()));
         }
+        CLog.d("Compatibility test folder found: %s", testsDir.toString());
         return testsDir;
     }
 
@@ -217,12 +249,32 @@ public class CompatibilityBuildHelper {
      * @throws FileNotFoundException if the test file cannot be found
      */
     public File getTestFile(String filename) throws FileNotFoundException {
-        File testFile = new File(getTestsDir(), filename);
-        if (!testFile.exists()) {
-            throw new FileNotFoundException(String.format(
-                    "Compatibility test file %s does not exist", filename));
+        // We have a lot of places to check for the test file.
+        //   1. ../android-*ts/testcases/
+        //   2. ALT_HOST_TESTCASE_DIR/
+        //   3. ALT_TARGET_TESTCASE_DIR/
+
+        // Our search depends on our run env, if we're in *ts, then we only want
+        // to check #1.  If we're in gen tf, then we only want to check #2/3.
+        // In *ts mode, getTestsDir will return #1, in gen tf mode, it'll return
+        // #2.  In the event we're in *ts mode and the file isn't in #1, #2 or
+        // #3, then the user probably needs to run lunch to setup the env.
+        String altTargetTestDir = System.getenv().get(ALT_TARGET_TESTCASE_DIR);
+        if (altTargetTestDir == null) {
+            altTargetTestDir = "";
         }
-        return testFile;
+        String[] testDirs = {getTestsDir().toString(), altTargetTestDir};
+
+        File testFile;
+        for (String testDir: testDirs) {
+            testFile = FileUtil.findFile(new File(testDir), filename);
+            if (testFile != null) {
+                return testFile;
+            }
+        }
+
+        throw new FileNotFoundException(String.format(
+                "Compatibility test file %s does not exist", filename));
     }
 
     /**
