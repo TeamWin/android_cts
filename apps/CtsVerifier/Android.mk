@@ -40,6 +40,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := android-ex-camera2 \
                                compatibility-device-util \
                                platform-test-annotations
 
+LOCAL_JAVA_LIBRARIES := legacy-android-test
+
 LOCAL_PACKAGE_NAME := CtsVerifier
 
 LOCAL_JNI_SHARED_LIBRARIES := libctsverifier_jni \
