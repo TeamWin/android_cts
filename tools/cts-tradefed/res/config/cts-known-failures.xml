@@ -203,4 +203,7 @@
     <!-- b/38464828 -->
     <option name="compatibility:exclude-filter" value="CtsFileSystemTestCases android.filesystem.cts.AlmostFullTest" />
 
+    <!-- b/37271927 -->
+    <option name="compatibility:exclude-filter" value="CtsViewTestCases android.view.cts.ViewTest#testUpdateDragShadow" />
+
 </configuration>
