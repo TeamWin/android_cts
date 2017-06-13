@@ -22,7 +22,8 @@
 
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
 
-    <application>
+    <!-- These tests can interfere with the hardware accelerated renderer -->
+    <application android:hardwareAccelerated="false">
         <uses-library android:name="android.test.runner" />
         <activity android:name="com.android.opengl.cts.GLTestActivity"/>
     </application>
