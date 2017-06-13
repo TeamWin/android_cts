@@ -26,14 +26,18 @@ import android.content.IntentSender;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
+import android.os.ParcelFileDescriptor;
 import android.os.Process;
 import android.support.test.uiautomator.UiDevice;
 import android.test.InstrumentationTestCase;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.util.ArrayList;
 
 /**
  * Base test case for testing PackageInstaller.
@@ -51,7 +55,7 @@ public class BasePackageInstallTest extends InstrumentationTestCase {
     protected Context mContext;
     protected UiDevice mDevice;
     protected DevicePolicyManager mDevicePolicyManager;
-    private PackageManager mPackageManager;
+    protected PackageManager mPackageManager;
     private PackageInstaller mPackageInstaller;
     private PackageInstaller.Session mSession;
     protected boolean mCallbackReceived;
@@ -95,6 +99,7 @@ public class BasePackageInstallTest extends InstrumentationTestCase {
         mHasFeature = mPackageManager.hasSystemFeature(PackageManager.FEATURE_DEVICE_ADMIN);
 
         if (mHasFeature) {
+            forceUninstall();
             // check that app is not already installed
             assertFalse(isPackageInstalled(TEST_APP_PKG));
         }
@@ -206,5 +211,25 @@ public class BasePackageInstallTest extends InstrumentationTestCase {
 
     protected int getInstallReason(String packageName) {
         return mPackageManager.getInstallReason(packageName, Process.myUserHandle());
+    }
+
+    protected void forceUninstall() throws Exception {
+        runShellCommand("pm uninstall " + TEST_APP_PKG);
+    }
+
+    public ArrayList<String> runShellCommand(String command) throws Exception {
+        ParcelFileDescriptor pfd = getInstrumentation().getUiAutomation()
+                .executeShellCommand(command);
+
+        ArrayList<String> ret = new ArrayList<>();
+        // Read the input stream fully.
+        try (BufferedReader r = new BufferedReader(
+                new InputStreamReader(new ParcelFileDescriptor.AutoCloseInputStream(pfd)))) {
+            String line;
+            while ((line = r.readLine()) != null) {
+                ret.add(line);
+            }
+        }
+        return ret;
     }
 }
