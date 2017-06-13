@@ -238,12 +238,12 @@ public class ContactsContract_RawContactsTest extends AndroidTestCase {
             TestRawContact rawContact = mBuilder.newRawContact()
                     .with(RawContacts.ACCOUNT_TYPE, "test_type")
                     .with(RawContacts.ACCOUNT_NAME, "test_name")
-                    .with(RawContacts.TIMES_CONTACTED, 12345) // should be ignored.
+                    .with(RawContacts.TIMES_CONTACTED, 12345)
                     .with(RawContacts.LAST_TIME_CONTACTED, now)
                     .insert();
 
             rawContact.load();
-            assertEquals(0L, rawContact.getLong(RawContacts.TIMES_CONTACTED));
+            assertEquals(12340, rawContact.getLong(RawContacts.TIMES_CONTACTED));
             assertEquals(now / 86400 * 86400, rawContact.getLong(RawContacts.LAST_TIME_CONTACTED));
         }
 
@@ -251,11 +251,11 @@ public class ContactsContract_RawContactsTest extends AndroidTestCase {
             TestRawContact rawContact = mBuilder.newRawContact()
                     .with(RawContacts.ACCOUNT_TYPE, "test_type")
                     .with(RawContacts.ACCOUNT_NAME, "test_name")
-                    .with(RawContacts.TIMES_CONTACTED, 12345) // should be ignored.
+                    .with(RawContacts.TIMES_CONTACTED, 5)
                     .insert();
 
             rawContact.load();
-            assertEquals(0L, rawContact.getLong(RawContacts.TIMES_CONTACTED));
+            assertEquals(5L, rawContact.getLong(RawContacts.TIMES_CONTACTED));
             assertEquals(0, rawContact.getLong(RawContacts.LAST_TIME_CONTACTED));
         }
         {
@@ -278,21 +278,20 @@ public class ContactsContract_RawContactsTest extends AndroidTestCase {
         TestRawContact rawContact = mBuilder.newRawContact()
                 .with(RawContacts.ACCOUNT_TYPE, "test_type")
                 .with(RawContacts.ACCOUNT_NAME, "test_name")
-                .with(RawContacts.TIMES_CONTACTED, 12345) // should be ignored.
+                .with(RawContacts.TIMES_CONTACTED, 12345)
                 .with(RawContacts.LAST_TIME_CONTACTED, now)
                 .insert();
 
         rawContact.load();
-        assertEquals(0L, rawContact.getLong(RawContacts.TIMES_CONTACTED));
+        assertEquals(12340L, rawContact.getLong(RawContacts.TIMES_CONTACTED));
         assertEquals(now / 86400 * 86400, rawContact.getLong(RawContacts.LAST_TIME_CONTACTED));
 
         values.clear();
         values.put(RawContacts.TIMES_CONTACTED, 99999);
         RawContactUtil.update(mResolver, rawContact.getId(), values);
 
-        // Shouldn't change.
         rawContact.load();
-        assertEquals(0L, rawContact.getLong(RawContacts.TIMES_CONTACTED));
+        assertEquals(99990L, rawContact.getLong(RawContacts.TIMES_CONTACTED));
         assertEquals(now / 86400 * 86400, rawContact.getLong(RawContacts.LAST_TIME_CONTACTED));
 
         values.clear();
@@ -300,7 +299,7 @@ public class ContactsContract_RawContactsTest extends AndroidTestCase {
         RawContactUtil.update(mResolver, rawContact.getId(), values);
 
         rawContact.load();
-        assertEquals(0L, rawContact.getLong(RawContacts.TIMES_CONTACTED));
+        assertEquals(99990L, rawContact.getLong(RawContacts.TIMES_CONTACTED));
         assertEquals((now / 86400 * 86400) + 86400,
                 rawContact.getLong(RawContacts.LAST_TIME_CONTACTED));
     }
