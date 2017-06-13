@@ -19,7 +19,7 @@
     package="android.dpi.cts">
 
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
-    <application>
+    <application android:resizeableActivity="false">
         <uses-library android:name="android.test.runner" />
 
         <activity android:name="android.dpi.cts.OrientationActivity"
