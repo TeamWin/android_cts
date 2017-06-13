@@ -324,7 +324,7 @@ public class InstrumentedAutoFillService extends AutofillService {
                 }
                 if (response == null) {
                     dumpStructure("onFillRequest() without response", contexts);
-                    throw new IllegalStateException("No CannedResponse");
+                    throw new RetryableException("No CannedResponse");
                 }
                 if (response == NO_RESPONSE) {
                     Log.d(TAG, "onFillRequest(): replying with null");
