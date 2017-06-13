@@ -16,6 +16,7 @@
 
 package com.android.cts.ephemeralapp1;
 
+import android.content.pm.PackageManager;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
 
@@ -34,6 +35,9 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewTestAct
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        if (!hasWebViewFeature()) {
+            return;
+        }
         final WebViewTestActivity activity = getActivity();
         mWebView = activity.getWebView();
         mOnUiThread = new WebViewOnUiThread(this, mWebView);
@@ -41,12 +45,22 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewTestAct
 
     @Override
     protected void tearDown() throws Exception {
-        mOnUiThread.cleanUp();
+        if (mOnUiThread != null) {
+            mOnUiThread.cleanUp();
+        }
         super.tearDown();
     }
 
     @UiThreadTest
     public void testWebViewLoads() throws Exception {
+        // Webview is not supported on Watches
+        if (!hasWebViewFeature()) {
+            return;
+        }
         mOnUiThread.loadUrlAndWaitForCompletion("about:blank");
+    }
+
+    private boolean hasWebViewFeature() {
+        return getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_WEBVIEW);
     }
 }
