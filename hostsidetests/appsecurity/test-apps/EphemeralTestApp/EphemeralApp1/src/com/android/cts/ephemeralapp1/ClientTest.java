@@ -84,10 +84,10 @@ public class ClientTest {
             "com.android.cts.ephemeraltest.EXTRA_ACTIVITY_RESULT";
 
     /**
-     * Intents that we expect the system to expose activities to ephemeral apps to handle.
+     * Contact Intents that we expect the system to expose activities to ephemeral apps to handle
+     * (if the system does not have FEATURE_WATCH).
      */
-    private static final Intent[] EXPECTED_EXPOSED_SYSTEM_INTENTS = new Intent[] {
-        // Contacts
+    private static final Intent[] EXPECTED_EXPOSED_SYSTEM_CONTACT_INTENTS = new Intent[] {
         makeIntent(Intent.ACTION_PICK, null, ContactsContract.Contacts.CONTENT_TYPE, null),
         makeIntent(Intent.ACTION_PICK, null,
                 ContactsContract.CommonDataKinds.Phone.CONTENT_TYPE, null),
@@ -95,7 +95,13 @@ public class ClientTest {
                 ContactsContract.CommonDataKinds.Email.CONTENT_TYPE, null),
         makeIntent(Intent.ACTION_PICK, null,
                 ContactsContract.CommonDataKinds.StructuredPostal.CONTENT_TYPE, null),
-        // File Storage
+    };
+
+    /**
+     * File Storage Intents that we expect the system to expose activities to ephemeral apps to
+     * handle (if the system does not have FEATURE_WATCH).
+     */
+    private static final Intent[] EXPECTED_EXPOSED_SYSTEM_STORAGE_INTENTS = new Intent[] {
         makeIntent(Intent.ACTION_OPEN_DOCUMENT, Intent.CATEGORY_OPENABLE, "*/*", null),
         makeIntent(Intent.ACTION_OPEN_DOCUMENT, null, "*/*", null),
         makeIntent(Intent.ACTION_GET_CONTENT, Intent.CATEGORY_OPENABLE, "*/*", null),
@@ -103,7 +109,13 @@ public class ClientTest {
         makeIntent(Intent.ACTION_OPEN_DOCUMENT_TREE, null, null, null),
         makeIntent(Intent.ACTION_CREATE_DOCUMENT, Intent.CATEGORY_OPENABLE, "text/plain", null),
         makeIntent(Intent.ACTION_CREATE_DOCUMENT, null, "text/plain", null),
-        // Framework
+    };
+
+    /**
+     * Framework Intents that we expect the system to expose activities to ephemeral apps
+     * to handle.
+     */
+    private static final Intent[] EXPECTED_EXPOSED_SYSTEM_FRAMEWORK_INTENTS = new Intent[] {
         makeIntent(Intent.ACTION_CHOOSER, null, null, null),
     };
 
@@ -975,9 +987,23 @@ public class ClientTest {
 
     @Test
     public void testExposedSystemActivities() throws Exception {
-        for (Intent queryIntent : EXPECTED_EXPOSED_SYSTEM_INTENTS) {
+        for (Intent queryIntent : EXPECTED_EXPOSED_SYSTEM_FRAMEWORK_INTENTS) {
             assertIntentHasExposedActivities(queryIntent);
         }
+
+        PackageManager packageManager = InstrumentationRegistry.getContext().getPackageManager();
+        if (!(packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)
+                || packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK))) {
+
+            for (Intent queryIntent : EXPECTED_EXPOSED_SYSTEM_CONTACT_INTENTS) {
+                assertIntentHasExposedActivities(queryIntent);
+            }
+
+            for (Intent queryIntent : EXPECTED_EXPOSED_SYSTEM_STORAGE_INTENTS) {
+                assertIntentHasExposedActivities(queryIntent);
+            }
+        }
+
         if (InstrumentationRegistry.getContext().getPackageManager()
                 .hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
             for (Intent queryIntent : EXPECTED_EXPOSED_CAMERA_INTENTS) {
