@@ -360,7 +360,11 @@ public class MockJobService extends JobService {
          * @return True if the latch timed out waiting on an execution.
          */
         public boolean awaitTimeout() throws InterruptedException {
-            return !mLatch.await(DEFAULT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+            return awaitTimeout(DEFAULT_TIMEOUT_MILLIS);
+        }
+
+        public boolean awaitTimeout(long timeoutMillis) throws InterruptedException {
+            return !mLatch.await(timeoutMillis, TimeUnit.MILLISECONDS);
         }
 
         public boolean awaitWaitingForStop() throws InterruptedException {
