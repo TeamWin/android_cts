@@ -1029,6 +1029,9 @@ public class ItsService extends Service implements SensorEventListener {
                             CaptureRequest.CONTROL_AWB_MODE_AUTO);
                     req.set(CaptureRequest.CONTROL_AWB_LOCK, false);
                     req.set(CaptureRequest.CONTROL_AWB_REGIONS, regionAWB);
+                    // ITS only turns OIS on when it's explicitly requested
+                    req.set(CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                            CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF);
 
                     if (evComp != 0) {
                         req.set(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION, evComp);
