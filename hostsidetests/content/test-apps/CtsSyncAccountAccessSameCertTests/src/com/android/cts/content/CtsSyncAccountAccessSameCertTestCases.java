@@ -27,6 +27,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SyncRequest;
 import android.content.SyncResult;
+import android.content.cts.FlakyTestRule;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -37,7 +38,9 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
@@ -52,6 +55,9 @@ import com.android.compatibility.common.util.SystemUtil;
 @RunWith(AndroidJUnit4.class)
 public class CtsSyncAccountAccessSameCertTestCases {
     private static final long SYNC_TIMEOUT_MILLIS = 20000; // 20 sec
+
+    @Rule
+    public final TestRule mFlakyTestTRule = new FlakyTestRule(3);
 
     @Before
     public void setUp() throws Exception {
@@ -115,7 +121,7 @@ public class CtsSyncAccountAccessSameCertTestCases {
     private void waitForSyncManagerAccountChangeUpdate() {
         // Wait for the sync manager to be notified for the new account.
         // Unfortunately, there is no way to detect this event, sigh...
-        SystemClock.sleep(10000);
+        SystemClock.sleep(SYNC_TIMEOUT_MILLIS);
     }
 
     private boolean hasDataConnection() {
