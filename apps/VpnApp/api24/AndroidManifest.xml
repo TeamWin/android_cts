@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2016 The Android Open Source Project
+<!-- Copyright (C) 2017 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -15,13 +15,23 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.android.cts.vpnfirewall">
+        package="com.android.cts.vpnfirewall">
 
-    <uses-sdk android:minSdkVersion="22"/>
+    <uses-sdk android:minSdkVersion="22" android:targetSdkVersion="24"/>
 
-    <application>
+    <application android:label="@string/app">
+        <activity android:name=".VpnClient">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <action android:name="com.android.cts.vpnfirewall.action.CONNECT_AND_FINISH"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+
         <service android:name=".ReflectorVpnService"
                 android:permission="android.permission.BIND_VPN_SERVICE">
+            <!-- Dummy entry below to test the default value of always-on opt-opt flag -->
+            <meta-data android:name="dummy-name" android:value="dummy-value"/>
             <intent-filter>
                 <action android:name="android.net.VpnService"/>
             </intent-filter>

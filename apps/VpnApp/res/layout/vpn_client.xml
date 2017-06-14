@@ -14,18 +14,13 @@
      limitations under the License.
 -->
 
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.android.cts.vpnfirewall">
-
-    <uses-sdk android:minSdkVersion="22" android:targetSdkVersion="23"/>
-
-    <application>
-        <service android:name=".ReflectorVpnService"
-                android:permission="android.permission.BIND_VPN_SERVICE">
-            <intent-filter>
-                <action android:name="android.net.VpnService"/>
-            </intent-filter>
-        </service>
-    </application>
-
-</manifest>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+    <LinearLayout android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="3mm">
+        <Button style="@style/item" android:id="@+id/connect" android:text="@string/connect"/>
+    </LinearLayout>
+</ScrollView>

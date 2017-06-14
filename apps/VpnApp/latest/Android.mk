@@ -1,4 +1,4 @@
-# Copyright (C) 2017 The Android Open Source Project
+# Copyright (C) 2016 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_PACKAGE_NAME := CtsVpnFirewallAppApi24
+LOCAL_PACKAGE_NAME := CtsVpnFirewallApp
 
 LOCAL_MODULE_TAGS := optional
 
@@ -24,7 +24,7 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
 LOCAL_SRC_FILES := $(call all-java-files-under, ../src)
 
-LOCAL_JAVA_LIBRARIES := android.test.runner
+LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/../res
 
 LOCAL_SDK_VERSION := current
 
