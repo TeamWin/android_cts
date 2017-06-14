@@ -27,6 +27,7 @@ import java.io.IOException;
 /**
  * Test {@link CursorWindowContentProvider} .
  */
+@SecurityTest
 public class ContentProviderCursorWindowTest extends AndroidTestCase {
     private static final String TAG = "ContentProviderCursorWindowTest";
 
