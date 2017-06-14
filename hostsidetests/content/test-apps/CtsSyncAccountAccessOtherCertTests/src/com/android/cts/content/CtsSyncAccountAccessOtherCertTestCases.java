@@ -25,6 +25,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SyncRequest;
 import android.content.SyncResult;
+import android.content.cts.FlakyTestRule;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -38,7 +39,9 @@ import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.Until;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
@@ -59,6 +62,9 @@ public class CtsSyncAccountAccessOtherCertTestCases {
     private static final long UI_TIMEOUT_MILLIS = 5000; // 5 sec
 
     public static final String TOKEN_TYPE_REMOVE_ACCOUNTS = "TOKEN_TYPE_REMOVE_ACCOUNTS";
+
+    @Rule
+    public final TestRule mFlakyTestRule = new FlakyTestRule(3);
 
     @Before
     public void setUp() throws Exception {
@@ -144,7 +150,7 @@ public class CtsSyncAccountAccessOtherCertTestCases {
     private void waitForSyncManagerAccountChangeUpdate() {
         // Wait for the sync manager to be notified for the new account.
         // Unfortunately, there is no way to detect this event, sigh...
-        SystemClock.sleep(10000);
+        SystemClock.sleep(SYNC_TIMEOUT_MILLIS);
     }
 
     private boolean hasDataConnection() {
