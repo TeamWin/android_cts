@@ -189,7 +189,7 @@ public class CompatibilityConsole extends Console {
                 + LINE_SEPARATOR +
                 "\t\t\t--screenshot-on-failure: Capture a screenshot when a test fails"
                 + LINE_SEPARATOR +
-                "\t\t\t--shards <shards>: Shards a run into the given number of independent " +
+                "\t\t\t--shard-count <shards>: Shards a run into the given number of independent " +
                 "chunks, to run on multiple devices in parallel." + LINE_SEPARATOR;
         commandHelp.put(RUN_PATTERN, combinedRunHelp);
 
