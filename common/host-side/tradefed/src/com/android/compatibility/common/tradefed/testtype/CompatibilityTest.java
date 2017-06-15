@@ -173,7 +173,9 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     private String mAbiName = null;
 
     @Option(name = SHARD_OPTION,
-            description = "split the modules up to run on multiple devices concurrently.")
+            description = "split the modules up to run on multiple devices concurrently. "
+                    + "Deprecated, use --shard-count instead.")
+    @Deprecated
     private int mShards = 1;
 
     @Option(name = SKIP_DEVICE_INFO_OPTION,
