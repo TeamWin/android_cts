@@ -33,6 +33,10 @@
     <option name="test-tag" value="cts-suite" />
 
     <option name="enable-root" value="false" />
+    <!-- retain 200MB of host log -->
+    <option name="max-log-size" value="200" />
+    <!--  retain 200MB of logcat -->
+    <option name="max-tmp-logcat-file" value="209715200" />
 
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.PropertyCheck">
         <option name="property-name" value="ro.build.type" />
@@ -47,6 +51,9 @@
     </target_preparer>
 
     <template-include name="reporters" default="basic-reporters" />
+
+    <!-- Include additional test metadata output. -->
+    <template-include name="metadata-reporters" default="empty" />
 
     <result_reporter class="com.android.compatibility.common.tradefed.result.ResultReporter" />
     <result_reporter class="com.android.tradefed.result.suite.SuiteResultReporter" />
