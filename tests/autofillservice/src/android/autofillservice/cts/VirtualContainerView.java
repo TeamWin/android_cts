@@ -28,6 +28,7 @@ import android.graphics.Paint;
 import android.graphics.Paint.Style;
 import android.graphics.Rect;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -202,7 +203,9 @@ class VirtualContainerView extends View {
             // Must set "fake" idEntry because that's what the test cases use to find nodes.
             child.setId(1000 + index, packageName, "id", item.resourceId);
             child.setText(item.text);
-            child.setAutofillValue(AutofillValue.forText(item.text));
+            if (TextUtils.getTrimmedLength(item.text) > 0) {
+                child.setAutofillValue(AutofillValue.forText(item.text));
+            }
             child.setFocused(item.line.focused);
             child.setHtmlInfo(child.newHtmlInfoBuilder("TAGGY")
                     .addAttribute("a1", "v1")
