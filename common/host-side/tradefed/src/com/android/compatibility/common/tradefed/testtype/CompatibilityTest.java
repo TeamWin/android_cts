@@ -173,7 +173,9 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     private String mAbiName = null;
 
     @Option(name = SHARD_OPTION,
-            description = "split the modules up to run on multiple devices concurrently.")
+            description = "split the modules up to run on multiple devices concurrently. "
+                    + "Deprecated, use --shard-count instead.")
+    @Deprecated
     private int mShards = 1;
 
     @Option(name = SKIP_DEVICE_INFO_OPTION,
@@ -692,9 +694,11 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
      */
     void setupFilters() throws DeviceNotAvailableException {
         if (mRetrySessionId != null) {
-            RetryFilterHelper helper = new RetryFilterHelper(mBuildHelper, mRetrySessionId);
+            // Load the invocation result
+            RetryFilterHelper helper = new RetryFilterHelper(mBuildHelper, mRetrySessionId,
+                    mSubPlan, mIncludeFilters, mExcludeFilters, mAbiName, mModuleName, mTestName,
+                    mRetryType);
             helper.validateBuildFingerprint(mDevice);
-            helper.setAllOptionsFrom(this);
             helper.setCommandLineOptionsFor(this);
             helper.populateRetryFilters();
             mIncludeFilters = helper.getIncludeFilters();
@@ -807,6 +811,20 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     @Override
     public void setCollectTestsOnly(boolean collectTestsOnly) {
         mCollectTestsOnly = collectTestsOnly;
+    }
+
+    /**
+     * Sets include-filters for the compatibility test
+     */
+    public void setIncludeFilter(Set<String> includeFilters) {
+        mIncludeFilters.addAll(includeFilters);
+    }
+
+    /**
+     * Sets exclude-filters for the compatibility test
+     */
+    public void setExcludeFilter(Set<String> excludeFilters) {
+        mExcludeFilters.addAll(excludeFilters);
     }
 
     @Override
