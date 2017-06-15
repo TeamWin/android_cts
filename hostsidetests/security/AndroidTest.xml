@@ -44,19 +44,22 @@
         <option name="push" value="CVE-2016-8434->/data/local/tmp/CVE-2016-8434" />
         <option name="push" value="CVE-2016-8435->/data/local/tmp/CVE-2016-8435" />
         <option name="push" value="CVE-2016-9120->/data/local/tmp/CVE-2016-9120" />
-	<option name="push" value="Bug-34328139->/data/local/tmp/Bug-34328139" />
-	<option name="push" value="Bug-33452365->/data/local/tmp/Bug-33452365" />
-	<option name="push" value="CVE-2017-0451->/data/local/tmp/CVE-2017-0451" />
-	<option name="push" value="CVE-2017-0580->/data/local/tmp/CVE-2017-0580" />
-	<option name="push" value="CVE-2017-0462->/data/local/tmp/CVE-2017-0462" />
-	<option name="push" value="CVE-2017-0579->/data/local/tmp/CVE-2017-0579" />
-	<option name="push" value="CVE-2017-0577->/data/local/tmp/CVE-2017-0577" />
-	<option name="push" value="CVE-2016-10231->/data/local/tmp/CVE-2016-10231" />
-	<option name="push" value="CVE-2017-0564->/data/local/tmp/CVE-2017-0564" />
-	<option name="push" value="CVE-2017-7369->/data/local/tmp/CVE-2017-7369" />
-	<option name="push" value="CVE-2017-0576->/data/local/tmp/CVE-2017-0576" />
-	<option name="push" value="CVE-2017-0586->/data/local/tmp/CVE-2017-0586" />
+        <option name="push" value="Bug-34328139->/data/local/tmp/Bug-34328139" />
+        <option name="push" value="Bug-33452365->/data/local/tmp/Bug-33452365" />
+        <option name="push" value="CVE-2017-0451->/data/local/tmp/CVE-2017-0451" />
+        <option name="push" value="CVE-2017-0580->/data/local/tmp/CVE-2017-0580" />
+        <option name="push" value="CVE-2017-0462->/data/local/tmp/CVE-2017-0462" />
+        <option name="push" value="CVE-2017-0579->/data/local/tmp/CVE-2017-0579" />
+        <option name="push" value="CVE-2017-0577->/data/local/tmp/CVE-2017-0577" />
+        <option name="push" value="CVE-2016-10231->/data/local/tmp/CVE-2016-10231" />
+        <option name="push" value="CVE-2017-0564->/data/local/tmp/CVE-2017-0564" />
+        <option name="push" value="CVE-2017-7369->/data/local/tmp/CVE-2017-7369" />
+        <option name="push" value="CVE-2017-0576->/data/local/tmp/CVE-2017-0576" />
+        <option name="push" value="CVE-2017-0586->/data/local/tmp/CVE-2017-0586" />
         <option name="push" value="Bug-33863407->/data/local/tmp/Bug-33863407" />
+        <option name="push" value="Bug-35047780->/data/local/tmp/Bug-35047780" />
+        <option name="push" value="Bug-35048450->/data/local/tmp/Bug-35048450" />
+        <option name="push" value="Bug-35047217->/data/local/tmp/Bug-35047217" />
         <option name="append-bitness" value="true" />
     </target_preparer>
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
