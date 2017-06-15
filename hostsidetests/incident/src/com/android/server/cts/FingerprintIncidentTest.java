@@ -35,6 +35,11 @@ public class FingerprintIncidentTest extends ProtoDumpTestCase {
         final FingerprintServiceDumpProto dump = getDump(FingerprintServiceDumpProto.parser(),
                 "dumpsys fingerprint --proto");
 
+        // If the device doesn't support fingerprints, then pass.
+        if (!getDevice().hasFeature("android.hardware.fingerprint")) {
+            return;
+        }
+
         // One of them
         assertEquals(1, dump.getUsersCount());
 
