@@ -689,6 +689,20 @@ final class Helper {
         return RequiredFeatureRule.hasFeature(PackageManager.FEATURE_AUTOFILL);
     }
 
+    /**
+     * Uses Shell command to get the Autofill logging level.
+     */
+    public static String getLoggingLevel() {
+        return runShellCommand("cmd autofill get log_level");
+    }
+
+    /**
+     * Uses Shell command to set the Autofill logging level.
+     */
+    public static void setLoggingLevel(String level) {
+        runShellCommand("cmd autofill set log_level %s", level);
+    }
+
     private Helper() {
     }
 }

@@ -16,8 +16,10 @@
 
 package android.autofillservice.cts;
 
+import static android.autofillservice.cts.Helper.getLoggingLevel;
 import static android.autofillservice.cts.Helper.hasAutofillFeature;
 import static android.autofillservice.cts.Helper.runShellCommand;
+import static android.autofillservice.cts.Helper.setLoggingLevel;
 import static android.provider.Settings.Secure.AUTOFILL_SERVICE;
 
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -27,6 +29,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
+import android.util.Log;
 import android.widget.RemoteViews;
 
 import org.junit.After;
@@ -41,6 +44,7 @@ import org.junit.runner.RunWith;
  */
 @RunWith(AndroidJUnit4.class)
 abstract class AutoFillServiceTestCase {
+    private static final String TAG = "AutoFillServiceTestCase";
 
     private static final String SERVICE_NAME =
             InstrumentedAutoFillService.class.getPackage().getName()
@@ -56,6 +60,11 @@ abstract class AutoFillServiceTestCase {
     @Rule
     public final RequiredFeatureRule mRequiredFeatureRule =
             new RequiredFeatureRule(PackageManager.FEATURE_AUTOFILL);
+
+    /**
+     * Stores the previous logging level so it's restored after the test.
+     */
+    private String mLoggingLevel;
 
     @BeforeClass
     public static void removeLockScreen() {
@@ -98,6 +107,30 @@ abstract class AutoFillServiceTestCase {
         sReplier.reset();
         InstrumentedAutoFillService.resetStaticState();
         AuthenticationActivity.resetStaticState();
+    }
+
+    @Before
+    public void setVerboseLogging() {
+        try {
+            mLoggingLevel = getLoggingLevel();
+        } catch (Exception e) {
+            Log.w(TAG, "Could not get previous logging level: " + e);
+            mLoggingLevel = "debug";
+        }
+        try {
+            setLoggingLevel("verbose");
+        } catch (Exception e) {
+            Log.w(TAG, "Could not change logging level to verbose: " + e);
+        }
+    }
+
+    @After
+    public void resetVerboseLogging() {
+        try {
+            setLoggingLevel(mLoggingLevel);
+        } catch (Exception e) {
+            Log.w(TAG, "Could not restore logging level to " + mLoggingLevel + ": " + e);
+        }
     }
 
     // TODO: we shouldn't throw exceptions on @After / @AfterClass because if the test failed, these
