@@ -33,6 +33,8 @@ import com.android.tradefed.device.ITestDevice;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Pattern;
 /**
  * A simple {@link IBuildProvider} that uses a pre-existing Compatibility install.
@@ -65,6 +67,9 @@ public class CompatibilityBuildProvider implements IDeviceBuildProvider {
     @Option(name="build-flavor", description="build flavor name to supply.")
     private String mBuildFlavor = null;
 
+    @Option(name="build-attribute", description="build attributes to supply.")
+    private Map<String, String> mBuildAttributes = new HashMap<String,String>();
+
     @Option(name="use-device-build-info", description="Bootstrap build info from device")
     private boolean mUseDeviceBuildInfo = false;
 
@@ -80,6 +85,16 @@ public class CompatibilityBuildProvider implements IDeviceBuildProvider {
             description = "the test suite plan to run, such as \"everything\" or \"cts\"",
             importance = Importance.ALWAYS)
     private String mSuitePlan;
+
+    /**
+     * Util method to inject build attributes into supplied {@link IBuildInfo}
+     * @param buildInfo
+     */
+    private void injectBuildAttributes(IBuildInfo buildInfo) {
+        for (Map.Entry<String, String> entry : mBuildAttributes.entrySet()) {
+            buildInfo.addBuildAttribute(entry.getKey(), entry.getValue());
+        }
+    }
 
     /**
      * {@inheritDoc}
@@ -103,6 +118,7 @@ public class CompatibilityBuildProvider implements IDeviceBuildProvider {
         if (mBuildFlavor != null) {
             ctsBuild.setBuildFlavor(mBuildFlavor);
         }
+        injectBuildAttributes(ctsBuild);
         addCompatibilitySuiteInfo(ctsBuild);
         return ctsBuild;
     }
@@ -136,6 +152,7 @@ public class CompatibilityBuildProvider implements IDeviceBuildProvider {
             if (RELEASE_BUILD.matcher(buildAlias).matches()) {
                 info.addBuildAttribute("build_alias", buildAlias);
             }
+            injectBuildAttributes(info);
             addCompatibilitySuiteInfo(info);
             return info;
         }
