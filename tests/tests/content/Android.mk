@@ -21,6 +21,9 @@ LOCAL_MODULE_TAGS := optional
 # and when built explicitly put it in the data partition
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
+# Include both the 32 and 64 bit versions
+LOCAL_MULTILIB := both
+
 LOCAL_JNI_SHARED_LIBRARIES := libnativecursorwindow_jni libnativehelper_compat_libc++
 
 LOCAL_JAVA_LIBRARIES := android.test.runner
