@@ -62,7 +62,6 @@ abstract class AutoFillServiceTestCase {
         if (!hasAutofillFeature()) return;
 
         runShellCommand("input keyevent KEYCODE_WAKEUP");
-        runShellCommand("wm dismiss-keyguard");
     }
 
     @BeforeClass
