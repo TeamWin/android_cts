@@ -18,6 +18,9 @@ package com.android.cts.tzdata;
 
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceTestCase;
+import com.android.timezone.distro.DistroVersion;
+import com.android.timezone.distro.TimeZoneDistro;
+import com.android.timezone.distro.tools.TimeZoneDistroBuilder;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -28,10 +31,7 @@ import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.StringJoiner;
 import java.util.function.Consumer;
-import libcore.tzdata.shared2.DistroVersion;
-import libcore.tzdata.shared2.TimeZoneDistro;
 import libcore.tzdata.testing.ZoneInfoTestHelper;
-import libcore.tzdata.update2.tools.TimeZoneDistroBuilder;
 
 import static org.junit.Assert.assertArrayEquals;
 
