@@ -346,6 +346,141 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         }
     }
 
+    public void testBackgroundCheckStopsService() throws Exception {
+        final Parcel data = Parcel.obtain();
+        ServiceConnectionHandler conn = new ServiceConnectionHandler(mContext, mServiceIntent);
+        ServiceConnectionHandler conn2 = new ServiceConnectionHandler(mContext, mService2Intent);
+
+        ActivityManager am = mContext.getSystemService(ActivityManager.class);
+
+        String cmd = "pm grant " + STUB_PACKAGE_NAME + " "
+                + Manifest.permission.PACKAGE_USAGE_STATS;
+        String result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+        /*
+        Log.d("XXXX", "Invoke: " + cmd);
+        Log.d("XXXX", "Result: " + result);
+        Log.d("XXXX", SystemUtil.runShellCommand(getInstrumentation(), "dumpsys package "
+                + STUB_PACKAGE_NAME));
+        */
+
+        ApplicationInfo appInfo = mContext.getPackageManager().getApplicationInfo(
+                SIMPLE_PACKAGE_NAME, 0);
+
+        UidImportanceListener uidServiceListener = new UidImportanceListener(appInfo.uid);
+        am.addOnUidImportanceListener(uidServiceListener,
+                ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE);
+        UidImportanceListener uidGoneListener = new UidImportanceListener(appInfo.uid);
+        am.addOnUidImportanceListener(uidGoneListener,
+                ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED);
+
+        // First kill the process to start out in a stable state.
+        mContext.stopService(mServiceIntent);
+        mContext.stopService(mService2Intent);
+        conn.bind(WAIT_TIME);
+        conn2.bind(WAIT_TIME);
+        try {
+            conn.getServiceIBinder().transact(IBinder.FIRST_CALL_TRANSACTION, data, null, 0);
+        } catch (RemoteException e) {
+        }
+        try {
+            conn2.getServiceIBinder().transact(IBinder.FIRST_CALL_TRANSACTION, data, null, 0);
+        } catch (RemoteException e) {
+        }
+        conn.unbind(WAIT_TIME);
+        conn2.unbind(WAIT_TIME);
+
+        // Wait for uid's process to go away.
+        uidGoneListener.waitForValue(ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE,
+                ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE, WAIT_TIME);
+        assertEquals(ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE,
+                am.getPackageImportance(SIMPLE_PACKAGE_NAME));
+
+        cmd = "appops set " + SIMPLE_PACKAGE_NAME + " RUN_IN_BACKGROUND deny";
+        result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+
+        // We don't want to wait for the uid to actually go idle, we can force it now.
+        cmd = "am make-uid-idle " + SIMPLE_PACKAGE_NAME;
+        result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+
+        // Make sure app is not yet on whitelist
+        cmd = "cmd deviceidle whitelist -" + SIMPLE_PACKAGE_NAME;
+        result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+
+        // We will use this to monitor when the service is running.
+        conn.startMonitoring();
+
+        try {
+            // Try starting the service.  Should fail!
+            boolean failed = false;
+            try {
+                mContext.startService(mServiceIntent);
+            } catch (IllegalStateException e) {
+                failed = true;
+            }
+            if (!failed) {
+                fail("Service was allowed to start while in the background");
+            }
+
+            // First poke the process into the foreground, so we can avoid  background check.
+            conn2.bind(WAIT_TIME);
+            conn2.waitForConnect(WAIT_TIME);
+
+            // Wait for process state to reflect running service.
+            uidServiceListener.waitForValue(
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE,
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_PERCEPTIBLE, WAIT_TIME);
+            assertEquals(ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE,
+                    am.getPackageImportance(SIMPLE_PACKAGE_NAME));
+
+            conn2.unbind(WAIT_TIME);
+
+            // Wait for process to recover back down to being cached.
+            uidServiceListener.waitForValue(ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED,
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE, WAIT_TIME);
+            assertEquals(ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED,
+                    am.getPackageImportance(SIMPLE_PACKAGE_NAME));
+
+            // Try starting the service now that the app is waiting to idle...  should work!
+            mContext.startService(mServiceIntent);
+            conn.waitForConnect(WAIT_TIME);
+
+            // And also start the second service.
+            conn2.startMonitoring();
+            mContext.startService(mService2Intent);
+            conn2.waitForConnect(WAIT_TIME);
+
+            // Force app to go idle now
+            cmd = "am make-uid-idle " + SIMPLE_PACKAGE_NAME;
+            result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+
+            // Wait for services to be stopped by system.
+            uidServiceListener.waitForValue(ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED,
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE, WAIT_TIME);
+            assertEquals(ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED,
+                    am.getPackageImportance(SIMPLE_PACKAGE_NAME));
+
+            // And service should be stopped by system, so just make sure it is disconnected.
+            conn.waitForDisconnect(WAIT_TIME);
+            conn2.waitForDisconnect(WAIT_TIME);
+
+        } finally {
+            mContext.stopService(mServiceIntent);
+            mContext.stopService(mService2Intent);
+            conn.cleanup(WAIT_TIME);
+            conn2.cleanup(WAIT_TIME);
+
+            cmd = "appops set " + SIMPLE_PACKAGE_NAME + " RUN_IN_BACKGROUND allow";
+            result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+            cmd = "cmd deviceidle whitelist -" + SIMPLE_PACKAGE_NAME;
+            result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+
+            am.removeOnUidImportanceListener(uidGoneListener);
+            am.removeOnUidImportanceListener(uidServiceListener);
+
+            data.recycle();
+        }
+    }
+
     public void testBackgroundCheckBroadcastService() throws Exception {
         final Intent broadcastIntent = new Intent();
         broadcastIntent.setFlags(Intent.FLAG_RECEIVER_FOREGROUND);
