@@ -147,6 +147,16 @@ public final class ServiceConnectionHandler implements ServiceConnection {
         }
     }
 
+    public void cleanup(long timeout) {
+        synchronized (this) {
+            if (mBound) {
+                unbind(timeout);
+            } else if (mMonitoring) {
+                stopMonitoring();
+            }
+        }
+    }
+
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
         synchronized (this) {
