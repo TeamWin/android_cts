@@ -190,13 +190,6 @@ final class Helper {
     }
 
     /**
-     * Sets the {@link UserManager#DISALLOW_AUTOFILL} for the current user.
-     */
-    static void setUserRestrictionForAutofill(boolean restricted) {
-        runShellCommand("pm set-user-restriction no_autofill %d", restricted ? 1 : 0);
-    }
-
-    /**
      * Sets whether the user completed the initial setup.
      */
     static void setUserComplete(Context context, boolean complete) {
