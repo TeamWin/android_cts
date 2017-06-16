@@ -37,7 +37,7 @@ void tearDown(JNIEnv*, jclass, jlong instance) {
     delete reinterpret_cast<AHardwareBufferTest*>(instance);
 }
 
-void test(JNIEnv* env, jclass, jlong instance) {
+void test(JNIEnv* env, jclass, jlong instance, jboolean vrHighPerformanceSupported) {
     AHardwareBufferTest *test = reinterpret_cast<AHardwareBufferTest*>(instance);
     ASSERT_NOT_NULL(test);
 
@@ -64,12 +64,18 @@ void test(JNIEnv* env, jclass, jlong instance) {
     ALOGI("testAHardwareBuffer_Lock_and_Unlock_Succeed");
     test->testAHardwareBuffer_Lock_and_Unlock_Succeed(env);
     RETURN_ON_EXCEPTION();
+
+    if (vrHighPerformanceSupported == JNI_TRUE) {
+        ALOGI("testAHardwareBuffer_Lock_and_Unlock_Succeed");
+        test->testAHardwareBufferSupportsLayeredBuffersForVr(env);
+        RETURN_ON_EXCEPTION();
+    }
 }
 
 JNINativeMethod gMethods[] = {
     {"nativeSetUp", "()J", (void *)setUp},
     {"nativeTearDown", "(J)V", (void *)tearDown},
-    {"nativeTest", "(J)V", (void *)test},
+    {"nativeTest", "(JZ)V", (void *)test},
 };
 
 } // namespace
