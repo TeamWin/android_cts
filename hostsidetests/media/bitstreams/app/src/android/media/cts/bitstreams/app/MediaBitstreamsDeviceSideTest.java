@@ -62,11 +62,6 @@ public class MediaBitstreamsDeviceSideTest {
 
     private static final String KEY_SIZE = "size";
     private static final String UTF_8 = "utf-8";
-    private static final String DYNAMIC_CONFIG = "dynamicConfig";
-    private static final String DYNAMIC_CONFIG_ENTRY = "entry";
-    private static final String DYNAMIC_CONFIG_KEY = "key";
-    private static final String DYNAMIC_CONFIG_VALUE = "value";
-
     /** Instrumentation status code used to write resolution to metrics */
     private static final int INST_STATUS_IN_PROGRESS = 2;
 
@@ -104,14 +99,14 @@ public class MediaBitstreamsDeviceSideTest {
             XmlSerializer formats = Xml.newSerializer();
             formats.setOutput(out, UTF_8);
             formats.startDocument(UTF_8, true);
-            formats.startTag(null, DYNAMIC_CONFIG);
+            formats.startTag(null, MediaBitstreams.DYNAMIC_CONFIG);
 
             DynamicConfigDeviceSide config = new DynamicConfigDeviceSide(MediaBitstreams.K_MODULE);
             for (String path : config.keySet()) {
 
-                formats.startTag(null, DYNAMIC_CONFIG_ENTRY);
-                formats.attribute(null, DYNAMIC_CONFIG_KEY, path);
-                formats.startTag(null, DYNAMIC_CONFIG_VALUE);
+                formats.startTag(null, MediaBitstreams.DYNAMIC_CONFIG_ENTRY);
+                formats.attribute(null, MediaBitstreams.DYNAMIC_CONFIG_KEY, path);
+                formats.startTag(null, MediaBitstreams.DYNAMIC_CONFIG_VALUE);
 
                 String formatStr = config.getValue(path);
                 if (formatStr != null && !formatStr.isEmpty()) {
@@ -133,12 +128,12 @@ public class MediaBitstreamsDeviceSideTest {
                     formats.text(formatStringBuilder.toString());
                 }
 
-                formats.endTag(null, DYNAMIC_CONFIG_VALUE);
-                formats.endTag(null, DYNAMIC_CONFIG_ENTRY);
+                formats.endTag(null, MediaBitstreams.DYNAMIC_CONFIG_VALUE);
+                formats.endTag(null, MediaBitstreams.DYNAMIC_CONFIG_ENTRY);
 
             }
 
-            formats.endTag(null, DYNAMIC_CONFIG);
+            formats.endTag(null, MediaBitstreams.DYNAMIC_CONFIG);
             formats.endDocument();
 
         }
