@@ -42,4 +42,15 @@ public class Poc17_07 extends SecurityTestCase {
           AdbUtils.runCommandLine("cat /dev/port", getDevice());
         }
     }
+
+    /**
+     *  b/34973477
+     */
+    @SecurityTest
+    public void testPocCVE_2017_0705() throws Exception {
+        enableAdbRoot(getDevice());
+        if(containsDriver(getDevice(), "/proc/net/psched")) {
+            AdbUtils.runPoc("CVE-2017-0705", getDevice(), 60);
+        }
+    }
 }
