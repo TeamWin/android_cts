@@ -88,4 +88,14 @@ public class SecurityTestCase extends DeviceTestCase {
         //TODO(badash@): add ability to catch runtime restart
         getDevice().executeAdbCommand("unroot");
     }
+
+    /**
+     * Runs an info disclosure
+     **/
+    public void infoDisclosure(
+        String pocName, ITestDevice device, int timeout, String pattern ) throws Exception {
+
+        assertTrue("Pattern found. Info Disclosed.",
+                    AdbUtils.detectInformationDisclosure(pocName, device, timeout, pattern));
+     }
 }
