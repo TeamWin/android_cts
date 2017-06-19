@@ -343,6 +343,33 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         callback.assertUiUnavailableEvent(mActivity.mCustomView, mActivity.mUsername.text.id);
     }
 
+    @Test
+    public void testSaveDialogNotShownWhenBackIsPressed() throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setField(ID_PASSWORD, "sweet")
+                        .setPresentation(createPresentation("The Dude"))
+                        .build())
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
+                .build());
+        mActivity.expectAutoFill("dude", "sweet");
+
+        // Trigger auto-fill.
+        mActivity.mUsername.changeFocus(true);
+        sReplier.getNextFillRequest();
+        assertDatasetShown(mActivity.mUsername, "The Dude");
+
+        sUiBot.pressBack();
+
+        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+    }
+
+
     /**
      * Asserts the dataset picker is properly displayed in a give line.
      */
