@@ -19,10 +19,16 @@ package android.appsecurity.cts;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IAbiReceiver;
 import com.android.tradefed.testtype.IBuildReceiver;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Tests for ephemeral packages.
@@ -52,6 +58,47 @@ public class EphemeralTest extends DeviceTestCase
 
     private static final String TEST_CLASS = ".ClientTest";
     private static final String WEBVIEW_TEST_CLASS = ".WebViewTest";
+
+    private static final List<Map<String, String>> EXPECTED_EXPOSED_INTENTS =
+            new ArrayList<>();
+    static {
+        // Framework intents we expect the system to expose to instant applications
+        EXPECTED_EXPOSED_INTENTS.add(makeArgs(
+                "android.intent.action.CHOOSER",
+                null, null));
+        // Contact intents we expect the system to expose to instant applications
+        EXPECTED_EXPOSED_INTENTS.add(makeArgs(
+                "android.intent.action.PICK", null, "vnd.android.cursor.dir/contact"));
+        EXPECTED_EXPOSED_INTENTS.add(makeArgs(
+                "android.intent.action.PICK", null, "vnd.android.cursor.dir/phone_v2"));
+        EXPECTED_EXPOSED_INTENTS.add(makeArgs(
+                "android.intent.action.PICK", null, "vnd.android.cursor.dir/email_v2"));
+        EXPECTED_EXPOSED_INTENTS.add(makeArgs(
+                "android.intent.action.PICK", null, "vnd.android.cursor.dir/postal-address_v2"));
+        // Storage intents we expect the system to expose to instant applications
+        EXPECTED_EXPOSED_INTENTS.add(makeArgs(
+                "android.intent.action.OPEN_DOCUMENT",
+                "android.intent.category.OPENABLE", "\\*/\\*"));
+        EXPECTED_EXPOSED_INTENTS.add(makeArgs(
+                "android.intent.action.OPEN_DOCUMENT", null, "\\*/\\*"));
+        EXPECTED_EXPOSED_INTENTS.add(makeArgs(
+                "android.intent.action.GET_CONTENT",
+                "android.intent.category.OPENABLE", "\\*/\\*"));
+        EXPECTED_EXPOSED_INTENTS.add(makeArgs(
+                "android.intent.action.GET_CONTENT", null, "\\*/\\*"));
+        EXPECTED_EXPOSED_INTENTS.add(makeArgs(
+                "android.intent.action.OPEN_DOCUMENT_TREE", null, null));
+        EXPECTED_EXPOSED_INTENTS.add(makeArgs(
+                "android.intent.action.CREATE_DOCUMENT",
+                "android.intent.category.OPENABLE", "text/plain"));
+        EXPECTED_EXPOSED_INTENTS.add(makeArgs(
+                "android.intent.action.CREATE_DOCUMENT", null, "text/plain"));
+        /** Camera intents we expect the system to expose to instant applications */
+        EXPECTED_EXPOSED_INTENTS.add(makeArgs(
+                "android.media.action.IMAGE_CAPTURE", null, null));
+        EXPECTED_EXPOSED_INTENTS.add(makeArgs(
+                "android.media.action.VIDEO_CAPTURE", null, null));
+    }
 
     private String mOldVerifierValue;
     private IAbi mAbi;
@@ -142,7 +189,14 @@ public class EphemeralTest extends DeviceTestCase
     }
 
     public void testExposedSystemActivities() throws Exception {
-        runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testExposedSystemActivities");
+        for (Map<String, String> testArgs : EXPECTED_EXPOSED_INTENTS) {
+            final boolean exposed = isIntentExposed(testArgs);
+            if (exposed) {
+                runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testExposedActivity", testArgs);
+            } else {
+                CLog.i("Skip intent; " + dumpArgs(testArgs));
+            }
+        }
     }
 
     public void testBuildSerialUnknown() throws Exception {
@@ -165,9 +219,56 @@ public class EphemeralTest extends DeviceTestCase
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testInstallPermissionGranted");
     }
 
+    private static final HashMap<String, String> makeArgs(
+            String action, String category, String mimeType) {
+        if (action == null || action.length() == 0) {
+            fail("action not specified");
+        }
+        final HashMap<String, String> testArgs = new HashMap<>();
+        testArgs.put("action", action);
+        if (category != null && category.length() > 0) {
+            testArgs.put("category", category);
+        }
+        if (mimeType != null && mimeType.length() > 0) {
+            testArgs.put("mime_type", mimeType);
+        }
+        return testArgs;
+    }
+
+    private boolean isIntentExposed(Map<String, String> testArgs)
+            throws DeviceNotAvailableException {
+        final StringBuffer command = new StringBuffer();
+        command.append("cmd package query-activities");
+        command.append(" -a ").append(testArgs.get("action"));
+        if (testArgs.get("category") != null) {
+            command.append(" -c ").append(testArgs.get("category"));
+        }
+        if (testArgs.get("mime_type") != null) {
+            command.append(" -t ").append(testArgs.get("mime_type"));
+        }
+        return !"No activities found".equals(getDevice().executeShellCommand(command.toString()));
+    }
+
+    private static final String dumpArgs(Map<String, String> testArgs) {
+        final StringBuffer dump = new StringBuffer();
+        dump.append("action: ").append(testArgs.get("action"));
+        if (testArgs.get("category") != null) {
+            dump.append(", category: ").append(testArgs.get("category"));
+        }
+        if (testArgs.get("mime_type") != null) {
+            dump.append(", type: ").append(testArgs.get("mime_type"));
+        }
+        return dump.toString();
+    }
+
     private void runDeviceTests(String packageName, String testClassName, String testMethodName)
             throws DeviceNotAvailableException {
         Utils.runDeviceTests(getDevice(), packageName, testClassName, testMethodName);
+    }
+
+    private void runDeviceTests(String packageName, String testClassName, String testMethodName,
+            Map<String, String> testArgs) throws DeviceNotAvailableException {
+        Utils.runDeviceTests(getDevice(), packageName, testClassName, testMethodName, testArgs);
     }
 
     private void installApp(String apk) throws Exception {
