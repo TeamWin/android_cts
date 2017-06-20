@@ -61,6 +61,7 @@
         <option name="push" value="Bug-35048450->/data/local/tmp/Bug-35048450" />
         <option name="push" value="Bug-35047217->/data/local/tmp/Bug-35047217" />
         <option name="push" value="CVE-2017-0705->/data/local/tmp/CVE-2017-0705" />
+        <option name="push" value="CVE-2017-8263->/data/local/tmp/CVE-2017-8263" />
         <option name="append-bitness" value="true" />
     </target_preparer>
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
