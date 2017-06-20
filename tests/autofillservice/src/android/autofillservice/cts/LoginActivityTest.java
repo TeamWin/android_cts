@@ -1184,7 +1184,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         saveGoesAway(DismissType.HOME_BUTTON);
     }
 
-    /* TODO: add these when fixed.
     @Test
     public void testSaveGoesAwayWhenTappingBackButton() throws Exception {
         saveGoesAway(DismissType.BACK_BUTTON);
@@ -1194,7 +1193,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     public void testSaveGoesAwayWhenTouchingOutside() throws Exception {
         saveGoesAway(DismissType.TOUCH_OUTSIDE);
     }
-    */
 
     private void saveGoesAway(DismissType dismissType) throws Exception {
         enableService();
