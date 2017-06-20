@@ -138,6 +138,7 @@ def auto_capture_request():
         "android.control.afMode": 1,
         "android.colorCorrection.mode": 1,
         "android.tonemap.mode": 1,
+        "android.lens.opticalStabilizationMode": 0
         }
 
 def fastest_auto_capture_request(props):
