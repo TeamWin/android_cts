@@ -370,7 +370,7 @@ public class PixelCopyTest {
                 ActivityInfo.COLOR_MODE_WIDE_COLOR_GAMUT, window.getAttributes().getColorMode());
 
         // Early out if the device does not support wide color gamut rendering
-        if (!window.getDecorView().getDisplay().isWideColorGamut()) {
+        if (!window.isWideColorGamut()) {
             return;
         }
 
@@ -400,7 +400,7 @@ public class PixelCopyTest {
                 ActivityInfo.COLOR_MODE_WIDE_COLOR_GAMUT, window.getAttributes().getColorMode());
 
         // Early out if the device does not support wide color gamut rendering
-        if (!window.getDecorView().getDisplay().isWideColorGamut()) {
+        if (!window.isWideColorGamut()) {
             return;
         }
 
