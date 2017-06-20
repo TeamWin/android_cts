@@ -1127,6 +1127,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         private String mTargetPackage = componentName;
         private boolean mToSide;
         private boolean mRandomData;
+        private boolean mNewTask;
         private boolean mMultipleTask;
         private int mDisplayId = INVALID_DISPLAY_ID;
         private String mLaunchingActivityName = LAUNCHING_ACTIVITY;
@@ -1147,6 +1148,11 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
         public LaunchActivityBuilder setRandomData(boolean randomData) {
             mRandomData = randomData;
+            return this;
+        }
+
+        public LaunchActivityBuilder setNewTask(boolean newTask) {
+            mNewTask = newTask;
             return this;
         }
 
@@ -1197,6 +1203,9 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
             }
             if (mRandomData) {
                 commandBuilder.append(" --ez random_data true");
+            }
+            if (mNewTask) {
+                commandBuilder.append(" --ez new_task true");
             }
             if (mMultipleTask) {
                 commandBuilder.append(" --ez multiple_task true");
