@@ -37,11 +37,13 @@ import java.util.regex.Pattern;
  * Uses test app that creates large file and receives the callback.
  * {@link com.android.internal.backup.LocalTransport} is used, it has size quota 25MB.
  */
-public class BackupQuotaTest extends InstrumentationTestCase {
+public class FullBackupQuotaTest extends InstrumentationTestCase {
     private static final String APP_LOG_TAG = "BackupCTSApp";
 
     private static final String LOCAL_TRANSPORT =
             "android/com.android.internal.backup.LocalTransport";
+    // Should be the same as LocalTransport.FULL_BACKUP_SIZE_QUOTA
+    private static final int LOCAL_TRANSPORT_BACKUP_QUOTA = 25 * 1024 * 1024;
     private static final int LOCAL_TRANSPORT_EXCEEDING_FILE_SIZE = 30 * 1024 * 1024;
     private static final String BACKUP_APP_NAME = "android.backup.app";
 
@@ -92,6 +94,16 @@ public class BackupQuotaTest extends InstrumentationTestCase {
         // Request backup and wait for quota exceeded event in logcat
         exec("bmgr backupnow " + BACKUP_APP_NAME);
         assertTrue("Quota exceeded event is not received", waitForLogcat("Quota exceeded!", 10));
+    }
+
+    public void testQuotaReported() throws Exception {
+        if (!isBackupSupported) {
+            return;
+        }
+        exec("logcat --clear");
+        exec("bmgr backupnow " + BACKUP_APP_NAME);
+        assertTrue("Quota not reported correctly",
+                waitForLogcat("quota is " + LOCAL_TRANSPORT_BACKUP_QUOTA, 10));
     }
 
     private boolean enableBackup(boolean enable) throws Exception {

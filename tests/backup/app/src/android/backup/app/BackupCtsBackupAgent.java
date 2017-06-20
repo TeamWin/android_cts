@@ -46,7 +46,7 @@ public class BackupCtsBackupAgent extends BackupAgent {
 
     @Override
     public void onFullBackup(FullBackupDataOutput data) throws IOException {
-        Log.d(MainActivity.TAG, "Full backup requested");
+        Log.d(MainActivity.TAG, "Full backup requested, quota is " + data.getQuota());
         super.onFullBackup(data);
     }
 
