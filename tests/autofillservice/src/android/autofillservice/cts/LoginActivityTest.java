@@ -19,6 +19,7 @@ package android.autofillservice.cts;
 import static android.app.Activity.RESULT_CANCELED;
 import static android.app.Activity.RESULT_OK;
 import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
+import static android.autofillservice.cts.CheckoutActivity.ID_CC_NUMBER;
 import static android.autofillservice.cts.CannedFillResponse.DO_NOT_REPLY_RESPONSE;
 import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_PASSWORD_LABEL;
@@ -69,6 +70,7 @@ import android.content.IntentSender;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.service.autofill.FillEventHistory;
+import android.service.autofill.FillResponse;
 import android.service.autofill.SaveInfo;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.uiautomator.UiObject2;
@@ -2849,6 +2851,87 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                     .getFillEventHistory();
             assertThat(selection).isNull();
         });
+    }
+
+    private Bundle getBundle(String key, String value) {
+        final Bundle bundle = new Bundle();
+        bundle.putString(key, value);
+        return bundle;
+    }
+
+    /**
+     * Tests the following scenario:
+     *
+     * <ol>
+     *    <li>Activity A is launched.
+     *    <li>Activity A triggers autofill.
+     *    <li>Activity B is launched.
+     *    <li>Activity B triggers autofill.
+     *    <li>User goes back to Activity A.
+     *    <li>User triggers save on Activity A - at this point, service should have stats of
+     *        activity B, and stats for activity A should have beeen discarded.
+     * </ol>
+     */
+    @Test
+    public void checkFillSelectionFromPreviousSessionIsDiscarded() throws Exception {
+        enableService();
+
+        // Launch activity A
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setExtras(getBundle("activity", "A"))
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
+                .build());
+
+        // Trigger autofill on activity A
+        mActivity.onUsername(View::requestFocus);
+        waitUntilConnected();
+        sReplier.getNextFillRequest();
+
+        // Verify fill selection for Activity A
+        FillEventHistory selectionA = InstrumentedAutoFillService.peekInstance()
+                .getFillEventHistory();
+        assertThat(selectionA.getClientState().getString("activity")).isEqualTo("A");
+        assertThat(selectionA.getEvents()).isNull();
+
+        // Launch activity B
+        getContext().startActivity(new Intent(getContext(), CheckoutActivity.class));
+
+        // Trigger autofill on activity B
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setExtras(getBundle("activity", "B"))
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_CC_NUMBER, "4815162342")
+                        .setPresentation(createPresentation("datasetB"))
+                        .build())
+                .build());
+        sUiBot.focusByRelativeId(ID_CC_NUMBER);
+        sReplier.getNextFillRequest();
+
+        // Verify fill selection for Activity B
+        final FillEventHistory selectionB = InstrumentedAutoFillService.peekInstance()
+                .getFillEventHistory();
+        assertThat(selectionB.getClientState().getString("activity")).isEqualTo("B");
+        assertThat(selectionB.getEvents()).isNull();
+
+        // Now switch back to A...
+        sUiBot.pressBack(); // dismiss keyboard
+        sUiBot.pressBack(); // dismiss task
+        // ...and trigger save
+        // Set credentials...
+        mActivity.onUsername((v) -> v.setText("malkovich"));
+        mActivity.onPassword((v) -> v.setText("malkovich"));
+        final String expectedMessage = getWelcomeMessage("malkovich");
+        final String actualMessage = mActivity.tapLogin();
+        assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
+        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+        sReplier.getNextSaveRequest();
+
+        // Finally, make sure history is right
+        final FillEventHistory finalSelection = InstrumentedAutoFillService.peekInstance()
+                .getFillEventHistory();
+        assertThat(finalSelection.getClientState().getString("activity")).isEqualTo("B");
+        assertThat(finalSelection.getEvents()).isNull();
+
     }
 
     @Test
