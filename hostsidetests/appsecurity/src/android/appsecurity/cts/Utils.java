@@ -33,31 +33,43 @@ public class Utils {
 
     public static void runDeviceTests(ITestDevice device, String packageName)
             throws DeviceNotAvailableException {
-        runDeviceTests(device, packageName, null, null, USER_SYSTEM);
+        runDeviceTests(device, packageName, null, null, USER_SYSTEM, null);
     }
 
     public static void runDeviceTests(ITestDevice device, String packageName, int userId)
             throws DeviceNotAvailableException {
-        runDeviceTests(device, packageName, null, null, userId);
+        runDeviceTests(device, packageName, null, null, userId, null);
     }
 
     public static void runDeviceTests(ITestDevice device, String packageName, String testClassName)
             throws DeviceNotAvailableException {
-        runDeviceTests(device, packageName, testClassName, null, USER_SYSTEM);
+        runDeviceTests(device, packageName, testClassName, null, USER_SYSTEM, null);
     }
 
     public static void runDeviceTests(ITestDevice device, String packageName, String testClassName,
             int userId) throws DeviceNotAvailableException {
-        runDeviceTests(device, packageName, testClassName, null, userId);
+        runDeviceTests(device, packageName, testClassName, null, userId, null);
     }
 
     public static void runDeviceTests(ITestDevice device, String packageName, String testClassName,
             String testMethodName) throws DeviceNotAvailableException {
-        runDeviceTests(device, packageName, testClassName, testMethodName, USER_SYSTEM);
+        runDeviceTests(device, packageName, testClassName, testMethodName, USER_SYSTEM, null);
+    }
+
+    public static void runDeviceTests(ITestDevice device, String packageName, String testClassName,
+            String testMethodName, Map<String, String> testArgs)
+                    throws DeviceNotAvailableException {
+        runDeviceTests(device, packageName, testClassName, testMethodName, USER_SYSTEM, testArgs);
     }
 
     public static void runDeviceTests(ITestDevice device, String packageName, String testClassName,
             String testMethodName, int userId) throws DeviceNotAvailableException {
+        runDeviceTests(device, packageName, testClassName, testMethodName, userId, null);
+    }
+
+    public static void runDeviceTests(ITestDevice device, String packageName, String testClassName,
+            String testMethodName, int userId, Map<String, String> testArgs)
+                    throws DeviceNotAvailableException {
         if (testClassName != null && testClassName.startsWith(".")) {
             testClassName = packageName + testClassName;
         }
@@ -70,6 +82,12 @@ public class Utils {
             testRunner.setClassName(testClassName);
         }
 
+        if (testArgs != null && testArgs.size() > 0) {
+            for (String name : testArgs.keySet()) {
+                final String value = testArgs.get(name);
+                testRunner.addInstrumentationArg(name, value);
+            }
+        }
         final CollectingTestListener listener = new CollectingTestListener();
         device.runInstrumentationTestsAsUser(testRunner, userId, listener);
 
