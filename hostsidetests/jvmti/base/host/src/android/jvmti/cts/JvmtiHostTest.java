@@ -26,6 +26,7 @@ import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IAbiReceiver;
 import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.util.AbiUtils;
 import com.android.tradefed.util.ZipUtil;
 import java.io.File;
 import java.util.LinkedList;
@@ -75,6 +76,19 @@ public class JvmtiHostTest extends DeviceTestCase implements IBuildReceiver, IAb
     public void testJvmti() throws Exception {
         final ITestDevice device = getDevice();
 
+        String testingArch = AbiUtils.getBaseArchForAbi(mAbi.getName());
+        String deviceArch = getDeviceBaseArch(device);
+
+        //Only bypass if Base Archs are different
+        if (!testingArch.equals(deviceArch)) {
+            CLog.d(
+                    "Bypass as testing Base Arch:"
+                            + testingArch
+                            + " is different from DUT Base Arch:"
+                            + deviceArch);
+            return;
+        }
+
         if (mTestApk == null || mTestPackageName == null) {
             throw new IllegalStateException("Incorrect configuration");
         }
@@ -90,6 +104,12 @@ public class JvmtiHostTest extends DeviceTestCase implements IBuildReceiver, IAb
 
         assertTrue(tr.getErrors(), tr.hasStarted());
         assertFalse(tr.getErrors(), tr.hasFailed());
+    }
+
+    private String getDeviceBaseArch(ITestDevice device) throws Exception {
+        String abi = device.executeShellCommand("getprop ro.product.cpu.abi").replace("\n", "");
+        CLog.d("DUT abi:" + abi);
+        return AbiUtils.getBaseArchForAbi(abi);
     }
 
     private class AttachAgent implements Runnable {
