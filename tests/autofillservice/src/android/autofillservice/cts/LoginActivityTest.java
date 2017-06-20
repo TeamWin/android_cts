@@ -19,6 +19,7 @@ package android.autofillservice.cts;
 import static android.app.Activity.RESULT_CANCELED;
 import static android.app.Activity.RESULT_OK;
 import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
+import static android.autofillservice.cts.CannedFillResponse.DO_NOT_REPLY_RESPONSE;
 import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_PASSWORD_LABEL;
 import static android.autofillservice.cts.Helper.ID_USERNAME;
@@ -2722,6 +2723,131 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             FillEventHistory.Event event2 = selection.getEvents().get(1);
             assertThat(event2.getType()).isEqualTo(TYPE_SAVE_SHOWN);
             assertThat(event2.getDatasetId()).isNull();
+        });
+    }
+
+    @Test
+    public void checkFillSelectionIsResetAfterReturningNull() throws Exception {
+        enableService();
+
+        // First reset
+        sReplier.addResponse(new CannedFillResponse.Builder().addDataset(
+                new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "username")
+                        .setPresentation(createPresentation("dataset1"))
+                        .build())
+                .build());
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+        sUiBot.selectDataset("dataset1");
+
+        eventually(() -> {
+            // Verify fill selection
+            FillEventHistory selection = InstrumentedAutoFillService.peekInstance()
+                    .getFillEventHistory();
+            assertThat(selection.getClientState()).isNull();
+
+            assertThat(selection.getEvents().size()).isEqualTo(1);
+            FillEventHistory.Event event = selection.getEvents().get(0);
+            assertThat(event.getType()).isEqualTo(TYPE_DATASET_SELECTED);
+            assertThat(event.getDatasetId()).isNull();
+        });
+
+        // Second request
+        sReplier.addResponse(NO_RESPONSE);
+        mActivity.onPassword(View::requestFocus);
+        sReplier.getNextFillRequest();
+        sUiBot.assertNoDatasets();
+
+        eventually(() -> {
+            // Verify fill selection
+            FillEventHistory selection = InstrumentedAutoFillService.peekInstance()
+                    .getFillEventHistory();
+            assertThat(selection).isNull();
+        });
+    }
+
+    @Test
+    public void checkFillSelectionIsResetAfterReturningError() throws Exception {
+        enableService();
+
+        // First reset
+        sReplier.addResponse(new CannedFillResponse.Builder().addDataset(
+                new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "username")
+                        .setPresentation(createPresentation("dataset1"))
+                        .build())
+                .build());
+        mActivity.onUsername(View::requestFocus);
+        waitUntilConnected();
+        sReplier.getNextFillRequest();
+        sUiBot.selectDataset("dataset1");
+
+        eventually(() -> {
+            // Verify fill selection
+            FillEventHistory selection = InstrumentedAutoFillService.peekInstance()
+                    .getFillEventHistory();
+            assertThat(selection.getClientState()).isNull();
+
+            assertThat(selection.getEvents().size()).isEqualTo(1);
+            FillEventHistory.Event event = selection.getEvents().get(0);
+            assertThat(event.getType()).isEqualTo(TYPE_DATASET_SELECTED);
+            assertThat(event.getDatasetId()).isNull();
+        });
+
+        // Second request
+        sReplier.addResponse(new CannedFillResponse.Builder().returnFailure("D'OH!").build());
+        mActivity.onPassword(View::requestFocus);
+        sReplier.getNextFillRequest();
+        sUiBot.assertNoDatasets();
+
+        eventually(() -> {
+            // Verify fill selection
+            FillEventHistory selection = InstrumentedAutoFillService.peekInstance()
+                    .getFillEventHistory();
+            assertThat(selection).isNull();
+        });
+    }
+
+    @Test
+    public void checkFillSelectionIsResetAfterTimeout() throws Exception {
+        enableService();
+
+        // First reset
+        sReplier.addResponse(new CannedFillResponse.Builder().addDataset(
+                new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "username")
+                        .setPresentation(createPresentation("dataset1"))
+                        .build())
+                .build());
+        mActivity.onUsername(View::requestFocus);
+        waitUntilConnected();
+        sReplier.getNextFillRequest();
+        sUiBot.selectDataset("dataset1");
+
+        eventually(() -> {
+            // Verify fill selection
+            FillEventHistory selection = InstrumentedAutoFillService.peekInstance()
+                    .getFillEventHistory();
+            assertThat(selection.getClientState()).isNull();
+
+            assertThat(selection.getEvents().size()).isEqualTo(1);
+            FillEventHistory.Event event = selection.getEvents().get(0);
+            assertThat(event.getType()).isEqualTo(TYPE_DATASET_SELECTED);
+            assertThat(event.getDatasetId()).isNull();
+        });
+
+        // Second request
+        sReplier.addResponse(DO_NOT_REPLY_RESPONSE);
+        mActivity.onPassword(View::requestFocus);
+        sReplier.getNextFillRequest();
+        waitUntilDisconnected();
+
+        eventually(() -> {
+            // Verify fill selection
+            FillEventHistory selection = InstrumentedAutoFillService.peekInstance()
+                    .getFillEventHistory();
+            assertThat(selection).isNull();
         });
     }
 
