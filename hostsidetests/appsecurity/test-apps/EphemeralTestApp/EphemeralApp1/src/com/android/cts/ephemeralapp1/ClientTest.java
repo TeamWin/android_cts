@@ -38,6 +38,7 @@ import android.content.pm.ResolveInfo;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.os.ServiceManager.ServiceNotFoundException;
 import android.provider.CalendarContract;
@@ -82,50 +83,6 @@ public class ClientTest {
             "com.android.cts.ephemeraltest.EXTRA_ACTIVITY_NAME";
     private static final String EXTRA_ACTIVITY_RESULT =
             "com.android.cts.ephemeraltest.EXTRA_ACTIVITY_RESULT";
-
-    /**
-     * Contact Intents that we expect the system to expose activities to ephemeral apps to handle
-     * (if the system does not have FEATURE_WATCH).
-     */
-    private static final Intent[] EXPECTED_EXPOSED_SYSTEM_CONTACT_INTENTS = new Intent[] {
-        makeIntent(Intent.ACTION_PICK, null, ContactsContract.Contacts.CONTENT_TYPE, null),
-        makeIntent(Intent.ACTION_PICK, null,
-                ContactsContract.CommonDataKinds.Phone.CONTENT_TYPE, null),
-        makeIntent(Intent.ACTION_PICK, null,
-                ContactsContract.CommonDataKinds.Email.CONTENT_TYPE, null),
-        makeIntent(Intent.ACTION_PICK, null,
-                ContactsContract.CommonDataKinds.StructuredPostal.CONTENT_TYPE, null),
-    };
-
-    /**
-     * File Storage Intents that we expect the system to expose activities to ephemeral apps to
-     * handle (if the system does not have FEATURE_WATCH).
-     */
-    private static final Intent[] EXPECTED_EXPOSED_SYSTEM_STORAGE_INTENTS = new Intent[] {
-        makeIntent(Intent.ACTION_OPEN_DOCUMENT, Intent.CATEGORY_OPENABLE, "*/*", null),
-        makeIntent(Intent.ACTION_OPEN_DOCUMENT, null, "*/*", null),
-        makeIntent(Intent.ACTION_GET_CONTENT, Intent.CATEGORY_OPENABLE, "*/*", null),
-        makeIntent(Intent.ACTION_GET_CONTENT, null, "*/*", null),
-        makeIntent(Intent.ACTION_OPEN_DOCUMENT_TREE, null, null, null),
-        makeIntent(Intent.ACTION_CREATE_DOCUMENT, Intent.CATEGORY_OPENABLE, "text/plain", null),
-        makeIntent(Intent.ACTION_CREATE_DOCUMENT, null, "text/plain", null),
-    };
-
-    /**
-     * Framework Intents that we expect the system to expose activities to ephemeral apps
-     * to handle.
-     */
-    private static final Intent[] EXPECTED_EXPOSED_SYSTEM_FRAMEWORK_INTENTS = new Intent[] {
-        makeIntent(Intent.ACTION_CHOOSER, null, null, null),
-    };
-
-    /**
-     * Camera Intents that we expect the system to expose (if the system has FEATURE_CAMERA).
-     */
-    private static final Intent[] EXPECTED_EXPOSED_CAMERA_INTENTS = new Intent[] {
-        makeIntent(MediaStore.ACTION_IMAGE_CAPTURE, null, null, null),
-        makeIntent(MediaStore.ACTION_VIDEO_CAPTURE, null, null, null),
-    };
 
     private BroadcastReceiver mReceiver;
     private final SynchronousQueue<TestResult> mResultQueue = new SynchronousQueue<>();
@@ -986,35 +943,16 @@ public class ClientTest {
     }
 
     @Test
-    public void testExposedSystemActivities() throws Exception {
-        for (Intent queryIntent : EXPECTED_EXPOSED_SYSTEM_FRAMEWORK_INTENTS) {
-            assertIntentHasExposedActivities(queryIntent);
-        }
-
-        PackageManager packageManager = InstrumentationRegistry.getContext().getPackageManager();
-        if (!(packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)
-                || packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK))) {
-
-            for (Intent queryIntent : EXPECTED_EXPOSED_SYSTEM_CONTACT_INTENTS) {
-                assertIntentHasExposedActivities(queryIntent);
-            }
-
-            for (Intent queryIntent : EXPECTED_EXPOSED_SYSTEM_STORAGE_INTENTS) {
-                assertIntentHasExposedActivities(queryIntent);
-            }
-        }
-
-        if (InstrumentationRegistry.getContext().getPackageManager()
-                .hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
-            for (Intent queryIntent : EXPECTED_EXPOSED_CAMERA_INTENTS) {
-                assertIntentHasExposedActivities(queryIntent);
-            }
-        }
-    }
-
-    private void assertIntentHasExposedActivities(Intent queryIntent) throws Exception {
-        final List<ResolveInfo> resolveInfo = InstrumentationRegistry
-                .getContext().getPackageManager().queryIntentActivities(queryIntent, 0 /*flags*/);
+    public void testExposedActivity() throws Exception {
+        final Bundle testArgs = InstrumentationRegistry.getArguments();
+        assertThat(testArgs, is(notNullValue()));
+        final String action = testArgs.getString("action");
+        final String category = testArgs.getString("category");
+        final String mimeType = testArgs.getString("mime_type");
+        assertThat(action, is(notNullValue()));
+        final Intent queryIntent = makeIntent(action, category, mimeType);
+        final List<ResolveInfo> resolveInfo = InstrumentationRegistry.getContext()
+                .getPackageManager().queryIntentActivities(queryIntent, 0 /*flags*/);
         if (resolveInfo == null || resolveInfo.size() == 0) {
             fail("No activies found for Intent: " + queryIntent);
         }
@@ -1033,16 +971,13 @@ public class ClientTest {
         return result;
     }
 
-    private static Intent makeIntent(String action, String category, String mimeType, Uri data) {
+    private static Intent makeIntent(String action, String category, String mimeType) {
         Intent intent = new Intent(action);
         if (category != null) {
             intent.addCategory(category);
         }
         if (mimeType != null) {
             intent.setType(mimeType);
-        }
-        if (data != null) {
-            intent.setData(data);
         }
         return intent;
     }
