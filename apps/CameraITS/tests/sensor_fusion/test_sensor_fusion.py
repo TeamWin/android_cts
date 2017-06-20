@@ -68,7 +68,7 @@ NSEC_TO_MSEC = 1/(1000*1000.0)
 
 # Pass/fail thresholds.
 THRESH_MAX_CORR_DIST = 0.005
-THRESH_MAX_SHIFT_MS = 2
+THRESH_MAX_SHIFT_MS = 1
 THRESH_MIN_ROT = 0.001
 
 # lens facing
@@ -379,9 +379,7 @@ def collect_data():
         # Sleep a while for gyro events to stabilize.
         time.sleep(0.5)
 
-        # TODO: Ensure that OIS is disabled; set to DISABLE and wait some time.
-
-        # Capture the frames.
+        # Capture the frames. OIS is disabled for manual captures.
         facing = props['android.lens.facing']
         if facing != FACING_FRONT and facing != FACING_BACK:
             print "Unknown lens facing", facing
