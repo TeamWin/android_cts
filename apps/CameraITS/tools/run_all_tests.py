@@ -47,17 +47,24 @@ def main():
 
     Script should be run from the top-level CameraITS directory.
 
-    Command line Arguments:
-        camera: the camera(s) to be tested. Use comma to separate multiple
-                camera Ids. Ex: "camera=0,1" or "camera=1"
-        scenes: the test scene(s) to be executed. Use comma to separate multiple
-                scenes. Ex: "scenes=scene0,scene1" or "scenes=0,1,sensor_fusion"
-                (sceneX can be abbreviated by X where X is a integer)
-        chart: [Experimental] another android device served as test chart
-               display. When this argument presents, change of test scene will
-               be handled automatically. Note that this argument requires
-               special physical/hardware setup to work and may not work on
-               all android devices.
+    Command line arguments:
+        camera:  the camera(s) to be tested. Use comma to separate multiple
+                 camera Ids. Ex: "camera=0,1" or "camera=1"
+        device:  device id for adb
+        scenes:  the test scene(s) to be executed. Use comma to separate
+                 multiple scenes. Ex: "scenes=scene0,scene1" or
+                 "scenes=0,1,sensor_fusion" (sceneX can be abbreviated by X
+                 where X is a integer)
+        chart:   [Experimental] another android device served as test chart
+                 display. When this argument presents, change of test scene
+                 will be handled automatically. Note that this argument
+                 requires special physical/hardware setup to work and may not
+                 work on all android devices.
+        result:  Device ID to forward results to (in addition to the device
+                 that the tests are running on).
+        rot_rig: [Experimental] ID of the rotation rig being used (formatted as
+                 "<vendor ID>:<product ID>:<channel #>" or "default")
+        tmp_dir: location of temp directory for output files
     """
 
     # Not yet mandated tests
@@ -116,7 +123,7 @@ def main():
     chart_host_id = None
     result_device_id = None
     rot_rig_id = None
-
+    tmp_dir = None
     for s in sys.argv[1:]:
         if s[:7] == "camera=" and len(s) > 7:
             camera_ids = s[7:].split(',')
@@ -129,6 +136,8 @@ def main():
         elif s[:8] == 'rot_rig=' and len(s) > 8:
             rot_rig_id = s[8:]  # valid values: 'default' or '$VID:$PID:$CH'
             # The default '$VID:$PID:$CH' is '04d8:fc73:1'
+        elif s[:8] == 'tmp_dir=' and len(s) > 8:
+            tmp_dir = s[8:]
 
     auto_scene_switch = chart_host_id is not None
     merge_result_switch = result_device_id is not None
@@ -168,7 +177,7 @@ def main():
         results[s] = {result_key: ItsSession.RESULT_NOT_EXECUTED}
 
     # Make output directories to hold the generated files.
-    topdir = tempfile.mkdtemp()
+    topdir = tempfile.mkdtemp(dir=tmp_dir)
     subprocess.call(['chmod', 'g+rx', topdir])
     print "Saving output files to:", topdir, "\n"
 
