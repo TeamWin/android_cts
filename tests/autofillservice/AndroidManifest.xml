@@ -63,6 +63,8 @@
         <activity android:name=".OutOfProcessLoginActivity"
             android:process="android.autofillservice.cts.outside"/>
         <activity android:name=".FragmentContainerActivity" />
+        <activity android:name=".DuplicateIdActivity"
+            android:theme="@android:style/Theme.NoTitleBar" />
 
         <service
             android:name=".InstrumentedAutoFillService"
