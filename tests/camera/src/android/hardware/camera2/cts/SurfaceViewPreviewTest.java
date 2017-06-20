@@ -59,7 +59,7 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
     private static final int FRAME_TIMEOUT_MS = 1000;
     private static final int NUM_FRAMES_VERIFIED = 30;
     private static final int NUM_TEST_PATTERN_FRAMES_VERIFIED = 60;
-    private static final float FRAME_DURATION_ERROR_MARGIN = 0.005f; // 0.5 percent error margin.
+    private static final float FRAME_DURATION_ERROR_MARGIN = 0.01f; // 1 percent error margin.
     private static final int PREPARE_TIMEOUT_MS = 10000; // 10 s
 
     @Override
