@@ -255,4 +255,29 @@ void AHardwareBufferTest::testAHardwareBuffer_Lock_and_Unlock_Succeed(JNIEnv* en
     AHardwareBuffer_release(buffer);
 }
 
+void AHardwareBufferTest::testAHardwareBufferSupportsLayeredBuffersForVr(JNIEnv* env) {
+    AHardwareBuffer* buffer = NULL;
+    AHardwareBuffer_Desc desc = {};
+
+    desc.width = 2;
+    desc.height = 4;
+    desc.layers = 2;
+    desc.usage = AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE;
+    desc.format = AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM;
+    int res = AHardwareBuffer_allocate(&desc, &buffer);
+    ASSERT_EQ(NO_ERROR, res);
+    ASSERT_EQ(std::string(), CheckAHardwareBufferMatchesDesc(buffer, desc));
+    AHardwareBuffer_release(buffer);
+    buffer = NULL;
+
+    desc.width = 4;
+    desc.height = 12;
+    desc.layers = 3;
+    desc.usage = AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE;
+    desc.format = AHARDWAREBUFFER_FORMAT_R5G6B5_UNORM;
+    res = AHardwareBuffer_allocate(&desc, &buffer);
+    ASSERT_EQ(NO_ERROR, res);
+    ASSERT_EQ(std::string(), CheckAHardwareBufferMatchesDesc(buffer, desc));
+}
+
 } // namespace android
