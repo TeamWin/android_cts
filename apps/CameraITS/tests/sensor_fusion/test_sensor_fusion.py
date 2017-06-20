@@ -34,10 +34,10 @@ NAME = os.path.basename(__file__).split(".")[0]
 
 # Capture 210 VGA frames (which is 7s at 30fps)
 N = 210
-W,H = 640,480
-FEATURE_MARGIN = H * 0.20 / 2 # Only take feature points from the center 20%
-                              # so that the rotation measured have much less
-                              # of rolling shutter effect
+W, H = 640, 480
+FEATURE_MARGIN = 0.20  # Only take feature points from the center 20%
+                       # so that the rotation measured have much less of rolling
+                       # shutter effect
 
 MIN_FEATURE_PTS = 30          # Minimum number of feature points required to
                               # perform rotation analysis
@@ -82,22 +82,31 @@ def main():
     The instructions for running this test are in the SensorFusion.pdf file in
     the same directory as this test.
 
-    The command-line argument "replay" may be optionally provided. Without this
-    argument, the test will collect a new set of camera+gyro data from the
-    device and then analyze it (and it will also dump this data to files in the
-    current directory). If the "replay" argument is provided, then the script
-    will instead load the dumped data from a previous run and analyze that
-    instead. This can be helpful for developers who are digging for additional
-    information on their measurements.
+    Command line arguments:
+        replay:   Without this argument, the test will collect a new set of
+                  camera+gyro data from the device and then analyze it (and it
+                  will also dump this data to files in the current directory).  If
+                  the "replay" argument is provided, then the script will instead
+                  load the dumped data from a previous run and analyze that
+                  instead. This can be helpful for developers who are digging for
+                  additional information on their measurements.
+        img_size: Comma-separated dimensions of captured images (defaults to
+                  640x480). Ex: 'img_size=<width>,<height>'
     """
+
+    w, h = W, H
+    for s in sys.argv[1:]:
+        if s[:9] == "img_size=" and len(s) > 9:
+            # Split by comma and convert each dimension to int.
+            [w, h] = map(int, s[9:].split(','))
 
     # Collect or load the camera+gyro data. All gyro events as well as camera
     # timestamps are in the "events" dictionary, and "frames" is a list of
     # RGB images as numpy arrays.
     if "replay" not in sys.argv:
-        events, frames = collect_data()
+        events, frames = collect_data(w, h)
     else:
-        events, frames = load_data()
+        events, frames, _, h = load_data()
 
     # Sanity check camera timestamps are enclosed by sensor timestamps
     # This will catch bugs where camera and gyro timestamps go completely out
@@ -124,7 +133,7 @@ def main():
 
     # Compute the camera rotation displacements (rad) between each pair of
     # adjacent frames.
-    cam_rots = get_cam_rotations(frames, events["facing"])
+    cam_rots = get_cam_rotations(frames, events["facing"], h)
     if max(abs(cam_rots)) < THRESH_MIN_ROT:
         print "Device wasn't moved enough"
         assert(0)
@@ -270,7 +279,7 @@ def get_gyro_rotations(gyro_events, cam_times):
     gyro_rots = numpy.array(gyro_rots)
     return gyro_rots
 
-def get_cam_rotations(frames, facing):
+def get_cam_rotations(frames, facing, h):
     """Get the rotations of the camera between each pair of frames.
 
     Takes N frames and returns N-1 angular displacements corresponding to the
@@ -278,6 +287,8 @@ def get_cam_rotations(frames, facing):
 
     Args:
         frames: List of N images (as RGB numpy arrays).
+        facing: Direction camera is facing
+        h:      Pixel height of each frame
 
     Returns:
         Array of N-1 camera rotation measurements (rad).
@@ -287,8 +298,9 @@ def get_cam_rotations(frames, facing):
         frame = (frame * 255.0).astype(numpy.uint8)
         gframes.append(cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY))
     rots = []
-    ymin = H/2 - FEATURE_MARGIN
-    ymax = H/2 + FEATURE_MARGIN
+
+    ymin = h*(1-FEATURE_MARGIN)/2
+    ymax = h*(1+FEATURE_MARGIN)/2
     for i in range(1,len(gframes)):
         gframe0 = gframes[i-1]
         gframe1 = gframes[i]
@@ -346,6 +358,8 @@ def load_data():
     Returns:
         events: Dictionary containing all gyro events and cam timestamps.
         frames: List of RGB images as numpy arrays.
+        w:      Pixel width of frames
+        h:      Pixel height of frames
     """
     with open("%s_events.txt"%(NAME), "r") as f:
         events = json.loads(f.read())
@@ -355,13 +369,17 @@ def load_data():
         img = Image.open("%s_frame%03d.png"%(NAME,i))
         w,h = img.size[0:2]
         frames.append(numpy.array(img).reshape(h,w,3) / 255.0)
-    return events, frames
+    return events, frames, w, h
 
-def collect_data():
+def collect_data(w, h):
     """Capture a new set of data from the device.
 
     Captures both motion data and camera frames, while the user is moving
     the device in a proscribed manner.
+
+    Args:
+        w:   Pixel width of frames
+        h:   Pixel height of frames
 
     Returns:
         events: Dictionary containing all gyro events and cam timestamps.
@@ -387,13 +405,13 @@ def collect_data():
             print "Unknown lens facing", facing
             assert(0)
 
-        fmt = {"format":"yuv", "width":W, "height":H}
+        fmt = {"format":"yuv", "width":w, "height":h}
         s,e,_,_,_ = cam.do_3a(get_results=True, do_af=False)
         req = its.objects.manual_capture_request(s, e)
         fps = 30
         req["android.control.aeTargetFpsRange"] = [fps, fps]
         print "Capturing %dx%d with sens. %d, exp. time %.1fms" % (
-                W, H, s, e*NSEC_TO_MSEC)
+                w, h, s, e*NSEC_TO_MSEC)
         caps = cam.do_capture([req]*N, fmt)
 
         # Get the gyro events.

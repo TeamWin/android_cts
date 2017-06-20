@@ -20,9 +20,7 @@ import tempfile
 import time
 
 import its.device
-# from its.device import ItsSession
 
-NUM_RUNS = 2
 SCENE_NAME = 'sensor_fusion'
 SKIP_RET_CODE = 101
 TEST_NAME = 'test_sensor_fusion'
@@ -36,27 +34,40 @@ def main():
 
     Script should be run from the top-level CameraITS directory.
 
-    Command line Arguments:
-        camera:  the camera(s) to be tested. Use comma to separate multiple
-                 camera Ids. Ex: 'camera=0,1' or 'camera=1'
-        device:  the device id for adb
-        rotator: string for rotator id in for vid:pid:ch
+    Command line arguments:
+        camera:   camera(s) to be tested. Use comma to separate multiple
+                  camera Ids. Ex: 'camera=0,1' or 'camera=1'
+        device:   device id for adb
+        num_runs: number of times to repeat the test
+        rotator:  string for rotator id in for vid:pid:ch
+        tmp_dir:  location of temp directory for output files
+        img_size: Comma-separated dimensions of captured images (defaults to
+                  640x480). Ex: 'img_size=<width>,<height>'
     """
 
     camera_id = '0'
+    num_runs = 1
     rotator_ids = 'default'
+    tmp_dir = None
+    img_size = '640,480'
     for s in sys.argv[1:]:
         if s[:7] == 'camera=' and len(s) > 7:
             camera_id = s[7:]
+        elif s[:9] == 'num_runs=' and len(s) > 9:
+            num_runs = int(s[9:])
         elif s[:8] == 'rotator=' and len(s) > 8:
             rotator_ids = s[8:]
+        elif s[:8] == 'tmp_dir=' and len(s) > 8:
+            tmp_dir = s[8:]
+        elif s[:9] == 'img_size=' and len(s) > 9:
+            img_size = s[9:]
 
     if camera_id not in ['0', '1']:
         print 'Need to specify camera 0 or 1'
         sys.exit()
 
     # Make output directories to hold the generated files.
-    tmpdir = tempfile.mkdtemp()
+    tmpdir = tempfile.mkdtemp(dir=tmp_dir)
     print 'Saving output files to:', tmpdir, '\n'
 
     device_id = its.device.get_device_id()
@@ -68,18 +79,21 @@ def main():
         rotator_id_arg = 'rotator=' + rotator_ids
     print 'Preparing to run sensor_fusion on camera', camera_id
 
+    img_size_arg = 'size=' + img_size
+    print 'Image dimensions are ' + img_size
+
     os.mkdir(os.path.join(tmpdir, camera_id))
 
-    # Run test multiple times, capturing stdout and stderr.
+    # Run test "num_runs" times, capturing stdout and stderr.
     numpass = 0
     numfail = 0
     numskip = 0
-    for i in range(NUM_RUNS):
+    for i in range(num_runs):
         os.mkdir(os.path.join(tmpdir, camera_id, SCENE_NAME+'_'+str(i)))
         cmd = ('python tools/rotation_rig.py rotator=%s' % rotator_ids)
         subprocess.Popen(cmd.split())
         cmd = ['python', os.path.join(TEST_DIR, TEST_NAME+'.py'),
-               device_id_arg, camera_id_arg, rotator_id_arg]
+               device_id_arg, camera_id_arg, rotator_id_arg, img_size_arg]
         outdir = os.path.join(tmpdir, camera_id, SCENE_NAME+'_'+str(i))
         outpath = os.path.join(outdir, TEST_NAME+'_stdout.txt')
         errpath = os.path.join(outdir, TEST_NAME+'_stderr.txt')
@@ -102,7 +116,7 @@ def main():
         print msg
 
     test_result = '%d / %d tests passed (%.1f%%)' % (
-        numpass+numskip, NUM_RUNS, 100.0*float(numpass+numskip)/NUM_RUNS)
+        numpass+numskip, num_runs, 100*float(numpass+numskip)/num_runs)
     print test_result
 
 if __name__ == '__main__':
