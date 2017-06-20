@@ -134,13 +134,7 @@ public abstract class PreferenceActivityFlowTest {
 
         assertInitialState();
 
-        // Workaround for some focus bug in the framework that would ruin screenshot test.
-        mTestUtils.tapOnViewWithText(mActivity.getTitle().toString());
-
         CharSequence title = mActivity.getTitle();
-
-        // Take screenshot
-        Bitmap before = mTestUtils.takeScreenshot();
 
         tapOnPrefs2Header();
         assertHeadersHidden();
@@ -148,12 +142,14 @@ public abstract class PreferenceActivityFlowTest {
         pressBack();
         assertHeadersShown();
 
+        // Verify that no headers are focused.
+        assertHeadersNotFocused();
+
         // Verify that the title was properly restored.
         assertEquals(title, mActivity.getTitle());
 
-        // Compare screenshots
-        Bitmap after = mTestUtils.takeScreenshot();
-        assertScreenshotsAreEqual(before, after);
+        // Verify that everthing restores back to initial state again.
+        assertInitialState();
     }
 
     void backPressToExitInner() {
@@ -317,14 +313,14 @@ public abstract class PreferenceActivityFlowTest {
                 false /* noHeaders */, INITIAL_TITLE_RES_ID);
 
         assertInitialStateForFragment();
-        String testTitle = mActivity.getResources().getString(INITIAL_TITLE_RES_ID);
 
         if (mIsMultiPane) {
+            String testTitle = mActivity.getResources().getString(INITIAL_TITLE_RES_ID);
             // Title should not be shown.
             assertTextHidden(testTitle);
         } else {
             // Title should be shown.
-            assertTextShown(testTitle);
+            assertTitleShown();
         }
     }
 
@@ -389,8 +385,7 @@ public abstract class PreferenceActivityFlowTest {
         assertPanelPrefs1Hidden();
         assertPanelPrefs2Shown();
 
-        String testTitle = mActivity.getResources().getString(INITIAL_TITLE_RES_ID);
-        assertTextShown(testTitle);
+        assertTitleShown();
     }
 
     /**
@@ -742,6 +737,11 @@ public abstract class PreferenceActivityFlowTest {
         assertTextShown(PREFS2_HEADER_TITLE);
     }
 
+    private void assertHeadersNotFocused() {
+        assertFalse(mTestUtils.isTextFocused(PREFS1_HEADER_TITLE));
+        assertFalse(mTestUtils.isTextFocused(PREFS2_HEADER_TITLE));
+    }
+
     private void assertHeadersHidden() {
         // We check '&' instead of each individual separately because these headers are also part
         // of individual preference panels breadcrumbs so it would fail for one.
@@ -779,6 +779,14 @@ public abstract class PreferenceActivityFlowTest {
 
     private void assertTextHidden(String text) {
         assertTrue(mTestUtils.isTextHidden(text));
+    }
+
+    private void assertTitleShown() {
+        if (!mTestUtils.isOnWatchUiMode()) {
+            // On watch, activity title is not shown by default.
+            String testTitle = mActivity.getResources().getString(INITIAL_TITLE_RES_ID);
+            assertTextShown(testTitle);
+        }
     }
 
     private void recreate() {
