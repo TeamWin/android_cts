@@ -101,35 +101,37 @@ public class ShortcutManagerUsageTest extends ShortcutManagerCtsTestsBase {
             )));
         });
 
-        // Report usage.
-        final long start = System.currentTimeMillis() - USAGE_STATS_RANGE_ALLOWANCE;
-
-        runWithCaller(mPackageContext2, () -> getManager().reportShortcutUsed(id3));
-
-        final long end = System.currentTimeMillis() + USAGE_STATS_RANGE_ALLOWANCE;
-
-        // Check the log.
         final UsageStatsManager usm = getTestContext().getSystemService(UsageStatsManager.class);
 
-        // Note it's a bit silly, but because events are populated asynchronously,
-        // we need to wait until the last one is populated.
+        // Report usage.
+        final long start1 = System.currentTimeMillis() - USAGE_STATS_RANGE_ALLOWANCE;
+        runWithCaller(mPackageContext2, () -> getManager().reportShortcutUsed(id3));
+        final long end1 = System.currentTimeMillis() + USAGE_STATS_RANGE_ALLOWANCE;
 
-        retryUntil(() -> hasEvent(usm.queryEvents(start, end),
+        // Check the log.
+        retryUntil(() -> hasEvent(usm.queryEvents(start1, end1),
                 mPackageContext2.getPackageName(), id3), "Events weren't populated");
 
-        assertTrue(hasEvent(usm.queryEvents(start, end),
-                    mPackageContext2.getPackageName(), id3));
-
+        // Report usage.
+        final long start2 = System.currentTimeMillis() - USAGE_STATS_RANGE_ALLOWANCE;
         runWithCaller(mPackageContext1, () -> getManager().reportShortcutUsed(id1));
-        assertTrue(hasEvent(usm.queryEvents(start, end),
-                    mPackageContext1.getPackageName(), id1));
+        final long end2 = System.currentTimeMillis() + USAGE_STATS_RANGE_ALLOWANCE;
 
-        runWithCaller(mPackageContext1, () -> getManager().reportShortcutUsed(idManifest));
-        assertTrue(hasEvent(usm.queryEvents(start, end),
-                    mPackageContext1.getPackageName(), idManifest));
+        // Check the log.
+        retryUntil(() -> hasEvent(usm.queryEvents(start2, end2),
+                mPackageContext1.getPackageName(), id1), "Events weren't populated");
 
+        // Report usage.
+        final long start3 = System.currentTimeMillis() - USAGE_STATS_RANGE_ALLOWANCE;
         runWithCaller(mPackageContext1, () -> getManager().reportShortcutUsed(idNonexistance));
-        assertFalse(hasEvent(usm.queryEvents(start, end),
+        runWithCaller(mPackageContext1, () -> getManager().reportShortcutUsed(idManifest));
+        final long end3 = System.currentTimeMillis() + USAGE_STATS_RANGE_ALLOWANCE;
+
+        // Check the log.
+        retryUntil(() -> hasEvent(usm.queryEvents(start3, end3),
+                mPackageContext1.getPackageName(), idManifest), "Events weren't populated");
+        // Ensure that the nonexistent shortcut is not reported, even after the other one is.
+        assertFalse(hasEvent(usm.queryEvents(start3, end3),
                     mPackageContext1.getPackageName(), idNonexistance));
     }
 }
