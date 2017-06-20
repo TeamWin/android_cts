@@ -30,6 +30,8 @@ LOCAL_COMPATIBILITY_SUITE := cts
 
 LOCAL_SDK_VERSION := current
 
+LOCAL_JAVA_RESOURCE_FILES := $(LOCAL_PATH)/DynamicConfig.xml
+
 include $(BUILD_HOST_JAVA_LIBRARY)
 
 include $(call all-makefiles-under,$(LOCAL_PATH))
