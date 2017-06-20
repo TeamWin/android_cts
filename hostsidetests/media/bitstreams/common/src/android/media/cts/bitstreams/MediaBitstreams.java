@@ -50,6 +50,12 @@ public class MediaBitstreams {
     public static final String K_TEST_GET_SUPPORTED_BITSTREAMS = "testGetSupportedBitstreams";
     public static final String K_NATIVE_CRASH = "native crash";
 
+    public static final String DYNAMIC_CONFIG_XML = "DynamicConfig.xml";
+    public static final String DYNAMIC_CONFIG = "dynamicConfig";
+    public static final String DYNAMIC_CONFIG_ENTRY = "entry";
+    public static final String DYNAMIC_CONFIG_KEY = "key";
+    public static final String DYNAMIC_CONFIG_VALUE = "value";
+
     /* utilities */
     /**
      * @param bitstreamPath path of individual bitstream relative to bitstreams root,
@@ -72,6 +78,5 @@ public class MediaBitstreams {
     public static String generateCrashSignature(String path, String name) {
         return String.format("%s:%s", path, name);
     }
-
 
 }
