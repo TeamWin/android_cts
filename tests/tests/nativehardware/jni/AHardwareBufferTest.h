@@ -36,6 +36,7 @@ public:
     void testAHardwareBuffer_describe_Succeeds(JNIEnv *env);
     void testAHardwareBuffer_SendAndRecv_Succeeds(JNIEnv *env);
     void testAHardwareBuffer_Lock_and_Unlock_Succeed(JNIEnv *env);
+    void testAHardwareBufferSupportsLayeredBuffersForVr(JNIEnv *env);
 };
 
 } // namespace android
