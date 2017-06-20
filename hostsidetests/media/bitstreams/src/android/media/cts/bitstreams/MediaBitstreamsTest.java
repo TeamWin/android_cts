@@ -25,7 +25,6 @@ import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
-import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IAbiReceiver;
 import com.android.tradefed.testtype.IBuildReceiver;
@@ -34,25 +33,35 @@ import com.android.tradefed.util.FileUtil;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized.Parameters;
+import org.junit.runners.Parameterized.UseParametersRunnerFactory;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlPullParserFactory;
 
 /**
  * Test that verifies video bitstreams decode pixel perfectly
  */
 @OptionClass(alias="media-bitstreams-test")
-@RunWith(DeviceJUnit4ClassRunner.class)
+@RunWith(DeviceJUnit4Parameterized.class)
+@UseParametersRunnerFactory(DeviceJUnit4ClassRunnerWithParameters.RunnerFactory.class)
 public class MediaBitstreamsTest implements IDeviceTest, IBuildReceiver, IAbiReceiver {
 
     @Option(name = MediaBitstreams.OPT_HOST_BITSTEAMS_PATH,
@@ -93,12 +102,34 @@ public class MediaBitstreamsTest implements IDeviceTest, IBuildReceiver, IAbiRec
     private IAbi mAbi;
     private ITestDevice mDevice;
 
-    private MediaBitstreamsTest(String prefix) {
-        mPrefix = prefix;
+    @Parameters(name = "{0}")
+    public static Iterable<? extends Object> bitstreams() {
+        final String dynConfXml = new File("/", MediaBitstreams.DYNAMIC_CONFIG_XML).toString();
+        try (InputStream is = MediaBitstreamsTest.class.getResourceAsStream(dynConfXml)) {
+            List<String> entries = new ArrayList<>();
+            XmlPullParser parser = XmlPullParserFactory.newInstance().newPullParser();
+            parser.setInput(is, null);
+            parser.nextTag();
+            parser.require(XmlPullParser.START_TAG, null, MediaBitstreams.DYNAMIC_CONFIG);
+            while (parser.next() != XmlPullParser.END_DOCUMENT) {
+                if (parser.getEventType() != XmlPullParser.START_TAG) {
+                    continue;
+                }
+                String name = parser.getName();
+                if (name.equals(MediaBitstreams.DYNAMIC_CONFIG_ENTRY)) {
+                    final String key = MediaBitstreams.DYNAMIC_CONFIG_KEY;
+                    entries.add(parser.getAttributeValue(null, key));
+                }
+            }
+            return entries;
+        } catch (XmlPullParserException | IOException e) {
+            CLog.e(e);
+            return Collections.emptyList();
+        }
     }
 
-    public MediaBitstreamsTest() {
-        this("");
+    public MediaBitstreamsTest(String prefix) {
+        mPrefix = prefix;
     }
 
     @Override
@@ -319,312 +350,6 @@ public class MediaBitstreamsTest implements IDeviceTest, IBuildReceiver, IAbiRec
                 getCurrentMethod(), MediaBitstreams.KEY_BITSTREAMS_FORMATS_XML);
     }
 
-    @Test
-    public void testH264Yuv420_8bitBpBitrate() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/bp/bitrate");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitBpLevels() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/bp/levels");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitBpParamsCrowd_640x360p50f32() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/bp/params/crowd_640x360p50f32");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitBpParamsCrowd_854x480p50f32() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/bp/params/crowd_854x480p50f32");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitBpParamsCrowd_1280x720p50f32() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/bp/params/crowd_1280x720p50f32");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitBpParamsCrowd_1920x1080p50f32() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/bp/params/crowd_1920x1080p50f32");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitBpParamsCrowd_3840x2160p50f32() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/bp/params/crowd_3840x2160p50f32");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitBpResolutions() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/bp/resolutions");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitBpSlicesCrowd_640x360p50f32() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/bp/slices/crowd_640x360p50f32");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitBpSlicesCrowd_854x480p50f32() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/bp/slices/crowd_854x480p50f32");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitBpSlicesCrowd_1280x720p50f32() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/bp/slices/crowd_1280x720p50f32");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitBpSlicesCrowd_1920x1080p50f32() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/bp/slices/crowd_1920x1080p50f32");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitBpSlicesCrowd_3840x2160p50f32() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/bp/slices/crowd_3840x2160p50f32");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitMpBitrate() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/mp/bitrate");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitMpGopCrowd_640x360p50() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/mp/gop/crowd_640x360p50");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitMpGopCrowd_854x480p50() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/mp/gop/crowd_854x480p50");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitMpGopCrowd_1280x720p50() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/mp/gop/crowd_1280x720p50");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitMpGopCrowd_1920x1080p50() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/mp/gop/crowd_1920x1080p50");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitMpGopCrowd_3840x2160p50() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/mp/gop/crowd_3840x2160p50");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitMpLevels() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/mp/levels");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitMpParamsCrowd_640x360p50f32() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/mp/params/crowd_640x360p50f32");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitMpParamsCrowd_854x480p50f32() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/mp/params/crowd_854x480p50f32");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitMpParamsCrowd_1280x720p50f32() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/mp/params/crowd_1280x720p50f32");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitMpParamsCrowd_1920x1080p50f32() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/mp/params/crowd_1920x1080p50f32");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitMpParamsCrowd_3840x2160p50f32() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/mp/params/crowd_3840x2160p50f32");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitMpResolutions() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/mp/resolutions");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitMpSlicesCrowd_640x360p50f32() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/mp/slices/crowd_640x360p50f32");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitMpSlicesCrowd_854x480p50f32() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/mp/slices/crowd_854x480p50f32");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitMpSlicesCrowd_1280x720p50f32() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/mp/slices/crowd_1280x720p50f32");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitMpSlicesCrowd_1920x1080p50f32() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/mp/slices/crowd_1920x1080p50f32");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitMpSlicesCrowd_3840x2160p50f32() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/mp/slices/crowd_3840x2160p50f32");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitHpBitrate() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/hp/bitrate");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitHpGopCrowd_640x360p50() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/hp/gop/crowd_640x360p50");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitHpGopCrowd_854x480p50() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/hp/gop/crowd_854x480p50");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitHpGopCrowd_1280x720p50() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/hp/gop/crowd_1280x720p50");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitHpGopCrowd_1920x1080p50() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/hp/gop/crowd_1920x1080p50");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitHpGopCrowd_3840x2160p50() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/hp/gop/crowd_3840x2160p50");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitHpLevels() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/hp/levels");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitHpParamsCrowd_640x360p50f32() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/hp/params/crowd_640x360p50f32");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitHpParamsCrowd_854x480p50f32() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/hp/params/crowd_854x480p50f32");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitHpParamsCrowd_1280x720p50f32() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/hp/params/crowd_1280x720p50f32");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitHpParamsCrowd_1920x1080p50f32() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/hp/params/crowd_1920x1080p50f32");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitHpParamsCrowd_3840x2160p50f32() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/hp/params/crowd_3840x2160p50f32");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitHpResolutions() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/hp/resolutions");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitHpScalingmatrixCrowd_640x360p50f32() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/hp/scalingmatrix/crowd_640x360p50f32");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitHpScalingmatrixCrowd_854x480p50f32() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/hp/scalingmatrix/crowd_854x480p50f32");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitHpScalingmatrixCrowd_1280x720p50f32() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/hp/scalingmatrix/crowd_1280x720p50f32");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitHpScalingmatrixCrowd_1920x1080p50f32() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/hp/scalingmatrix/crowd_1920x1080p50f32");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitHpScalingmatrixCrowd_3840x2160p50f32() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/hp/scalingmatrix/crowd_3840x2160p50f32");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitHpSlicesCrowd_640x360p50f32() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/hp/slices/crowd_640x360p50f32");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitHpSlicesCrowd_854x480p50f32() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/hp/slices/crowd_854x480p50f32");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitHpSlicesCrowd_1280x720p50f32() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/hp/slices/crowd_1280x720p50f32");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitHpSlicesCrowd_1920x1080p50f32() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/hp/slices/crowd_1920x1080p50f32");
-    }
-
-    @Test
-    public void testH264Yuv420_8bitHpSlicesCrowd_3840x2160p50f32() throws Exception {
-        testBitstreamsConformance("h264/yuv420/8bit/hp/slices/crowd_3840x2160p50f32");
-    }
-
-    @Test
-    public void testVp8Yuv420_8bitBitrate() throws Exception {
-        testBitstreamsConformance("vp8/yuv420/8bit/bitrate");
-    }
-
-    @Test
-    public void testVp8Yuv420_8bitParamsCrowd_640x360p50f32() throws Exception {
-        testBitstreamsConformance("vp8/yuv420/8bit/params/crowd_640x360p50f32");
-    }
-
-    @Test
-    public void testVp8Yuv420_8bitParamsCrowd_854x480p50f32() throws Exception {
-        testBitstreamsConformance("vp8/yuv420/8bit/params/crowd_854x480p50f32");
-    }
-
-    @Test
-    public void testVp8Yuv420_8bitParamsCrowd_1280x720p50f32() throws Exception {
-        testBitstreamsConformance("vp8/yuv420/8bit/params/crowd_1280x720p50f32");
-    }
-
-    @Test
-    public void testVp8Yuv420_8bitParamsCrowd_1920x1080p50f32() throws Exception {
-        testBitstreamsConformance("vp8/yuv420/8bit/params/crowd_1920x1080p50f32");
-    }
-
-    @Test
-    public void testVp8Yuv420_8bitParamsCrowd_3840x2160p50f32() throws Exception {
-        testBitstreamsConformance("vp8/yuv420/8bit/params/crowd_3840x2160p50f32");
-    }
-
-    @Test
-    public void testVp8Yuv420_8bitResolution() throws Exception {
-        testBitstreamsConformance("vp8/yuv420/8bit/resolution");
-    }
-
-    @Ignore
     @Test
     public void testBitstreamsConformance()
             throws DeviceNotAvailableException, IOException {
