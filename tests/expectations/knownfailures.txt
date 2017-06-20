@@ -150,14 +150,6 @@
   bug: 18091590
 },
 {
-  description: "these tests require a good test scene, so they fail if run in random conditions",
-  names: [
-    "android.hardware.camera2.cts.AllocationTest#testBlackWhite",
-    "android.hardware.camera2.cts.AllocationTest#testParamSensitivity"
-  ],
-  bug: 17530117
-},
-{
   description: "Test is not yet properly implemented",
   names: [
     "android.voicesettings.cts.ZenModeTest#testAll"
