@@ -14,21 +14,20 @@
  * limitations under the License
  */
 
-package android.backup.cts.backuprestoreapp;
+package android.cts.backup.sharedprefrestoreapp;
 
 import android.app.backup.BackupAgentHelper;
+import android.app.backup.SharedPreferencesBackupHelper;
 
-public class CtsBackupRestoreBackupAgent extends BackupAgentHelper {
+public class SharedPreferencesBackupAgent extends BackupAgentHelper {
 
     private static final String KEY_BACKUP_TEST_PREFS_PREFIX = "backup-test-prefs";
-    private static final String KEY_BACKUP_TEST_FILES_PREFIX = "backup-test-files";
+    private static final String TEST_PREFS_1 = "test-prefs-1";
 
     @Override
     public void onCreate() {
         super.onCreate();
         addHelper(KEY_BACKUP_TEST_PREFS_PREFIX,
-                KeyValueBackupRandomDataActivity.getSharedPreferencesBackupHelper(this));
-        addHelper(KEY_BACKUP_TEST_FILES_PREFIX,
-                KeyValueBackupRandomDataActivity.getFileBackupHelper(this));
+                new SharedPreferencesBackupHelper(this, TEST_PREFS_1));
     }
 }
