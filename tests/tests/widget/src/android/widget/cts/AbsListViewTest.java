@@ -41,6 +41,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Rect;
@@ -140,6 +141,11 @@ public class AbsListViewTest {
                 android.R.layout.simple_list_item_1, COUNTRY_LIST);
 
         mListView = (ListView) activity.findViewById(R.id.listview_default);
+    }
+
+    private boolean isWatch() {
+        return (mContext.getResources().getConfiguration().uiMode
+                & Configuration.UI_MODE_TYPE_WATCH) == Configuration.UI_MODE_TYPE_WATCH;
     }
 
     @Test
@@ -959,32 +965,43 @@ public class AbsListViewTest {
 
         mActivityRule.runOnUiThread(() -> mListView.setItemChecked(2, true));
         verifyCheckedState(new long[] { 2 });
-        verify(mMultiChoiceModeListener, times(1)).onItemCheckedStateChanged(
-                any(ActionMode.class), eq(2), eq(2L), eq(true));
+        if (!isWatch()) {
+            verify(mMultiChoiceModeListener, times(1)).onItemCheckedStateChanged(
+                    any(ActionMode.class), eq(2), eq(2L), eq(true));
+        }
 
         reset(mMultiChoiceModeListener);
         mActivityRule.runOnUiThread(() -> mListView.setItemChecked(4, true));
         verifyCheckedState(new long[] { 2, 4 });
-        verify(mMultiChoiceModeListener, times(1)).onItemCheckedStateChanged(
-                any(ActionMode.class), eq(4), eq(4L), eq(true));
+        if (!isWatch()) {
+            verify(mMultiChoiceModeListener, times(1)).onItemCheckedStateChanged(
+                    any(ActionMode.class), eq(4), eq(4L), eq(true));
+        }
 
         reset(mMultiChoiceModeListener);
         mActivityRule.runOnUiThread(() -> mListView.setItemChecked(2, false));
         verifyCheckedState(new long[] { 4 });
-        verify(mMultiChoiceModeListener, times(1)).onItemCheckedStateChanged(
-                any(ActionMode.class), eq(2), eq(2L), eq(false));
+        if (!isWatch()) {
+            verify(mMultiChoiceModeListener, times(1)).onItemCheckedStateChanged(
+                    any(ActionMode.class), eq(2), eq(2L), eq(false));
+        }
 
         reset(mMultiChoiceModeListener);
         mActivityRule.runOnUiThread(() -> mListView.setItemChecked(4, false));
         verifyCheckedState(new long[] {});
         mListView.setMultiChoiceModeListener(mMultiChoiceModeListener);
-        verify(mMultiChoiceModeListener, times(1)).onItemCheckedStateChanged(
-                any(ActionMode.class), eq(4), eq(4L), eq(false));
+        if (!isWatch()) {
+            verify(mMultiChoiceModeListener, times(1)).onItemCheckedStateChanged(
+                    any(ActionMode.class), eq(4), eq(4L), eq(false));
+        }
     }
 
     @LargeTest
     @Test
     public void testMultiSelectionWithLongPressAndTaps() throws Throwable {
+        if (isWatch()) {
+            return; // watch type devices do not support multichoice action mode
+        }
         configureMultiChoiceModalState();
 
         final int firstVisiblePosition = mListView.getFirstVisiblePosition();
