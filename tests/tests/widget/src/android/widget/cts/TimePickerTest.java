@@ -29,6 +29,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.os.Parcelable;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
@@ -300,8 +301,16 @@ public class TimePickerTest {
         assertEquals(Integer.valueOf(expectMinute), dest.getCurrentMinute());
     }
 
+    private boolean isWatch() {
+        return (mActivity.getResources().getConfiguration().uiMode
+                & Configuration.UI_MODE_TYPE_WATCH) == Configuration.UI_MODE_TYPE_WATCH;
+    }
+
     @Test
     public void testKeyboardTabTraversalModeClock() throws Throwable {
+        if (isWatch()) {
+            return;
+        }
         mTimePicker = (TimePicker) mActivity.findViewById(R.id.timepicker_clock);
 
         mActivityRule.runOnUiThread(() -> mTimePicker.setIs24HourView(false));
@@ -325,6 +334,9 @@ public class TimePickerTest {
 
     @Test
     public void testKeyboardTabTraversalModeSpinner() throws Throwable {
+        if (isWatch()) {
+            return;
+        }
         mTimePicker = (TimePicker) mActivity.findViewById(R.id.timepicker_spinner);
 
         mActivityRule.runOnUiThread(() -> mTimePicker.setIs24HourView(false));
@@ -348,6 +360,9 @@ public class TimePickerTest {
 
     @Test
     public void testKeyboardInputModeClockAmPm() throws Throwable {
+        if (isWatch()) {
+            return;
+        }
         final int initialHour = 6;
         final int initialMinute = 59;
         prepareForKeyboardInput(initialHour, initialMinute, false /* is24hFormat */,
@@ -423,6 +438,9 @@ public class TimePickerTest {
 
     @Test
     public void testKeyboardInputModeClock24H() throws Throwable {
+        if (isWatch()) {
+            return;
+        }
         final int initialHour = 6;
         final int initialMinute = 59;
         prepareForKeyboardInput(initialHour, initialMinute, true /* is24hFormat */,
@@ -472,6 +490,9 @@ public class TimePickerTest {
 
     @Test
     public void testKeyboardInputModeSpinnerAmPm() throws Throwable {
+        if (isWatch()) {
+            return;
+        }
         final int initialHour = 6;
         final int initialMinute = 59;
         prepareForKeyboardInput(initialHour, initialMinute, false /* is24hFormat */,
@@ -581,6 +602,9 @@ public class TimePickerTest {
 
     @Test
     public void testKeyboardInputModeSpinner24H() throws Throwable {
+        if (isWatch()) {
+            return;
+        }
         final int initialHour = 6;
         final int initialMinute = 59;
         prepareForKeyboardInput(initialHour, initialMinute, true /* is24hFormat */,
