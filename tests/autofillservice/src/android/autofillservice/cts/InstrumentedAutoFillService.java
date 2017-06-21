@@ -16,11 +16,12 @@
 
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
+import static android.autofillservice.cts.CannedFillResponse.ResponseType.NULL;
+import static android.autofillservice.cts.CannedFillResponse.ResponseType.TIMEOUT;
 import static android.autofillservice.cts.Helper.CONNECTION_TIMEOUT_MS;
 import static android.autofillservice.cts.Helper.FILL_TIMEOUT_MS;
-import static android.autofillservice.cts.Helper.SAVE_TIMEOUT_MS;
 import static android.autofillservice.cts.Helper.IDLE_UNBIND_TIMEOUT_MS;
+import static android.autofillservice.cts.Helper.SAVE_TIMEOUT_MS;
 import static android.autofillservice.cts.Helper.dumpAutofillService;
 import static android.autofillservice.cts.Helper.dumpStructure;
 
@@ -39,11 +40,11 @@ import android.service.autofill.FillResponse;
 import android.service.autofill.SaveCallback;
 import android.util.Log;
 
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.List;
 
 /**
  * Implementation of {@link AutofillService} used in the tests.
@@ -326,9 +327,21 @@ public class InstrumentedAutoFillService extends AutofillService {
                     dumpStructure("onFillRequest() without response", contexts);
                     throw new RetryableException("No CannedResponse");
                 }
-                if (response == NO_RESPONSE) {
+                if (response.getResponseType() == NULL) {
                     Log.d(TAG, "onFillRequest(): replying with null");
                     callback.onSuccess(null);
+                    return;
+                }
+
+                if (response.getResponseType() == TIMEOUT) {
+                    Log.d(TAG, "onFillRequest(): not replying at all");
+                    return;
+                }
+
+                final String failureMessage = response.getFailureMessage();
+                if (failureMessage != null) {
+                    Log.v(TAG, "onFillRequest(): failureMessage = " + failureMessage);
+                    callback.onFailure(failureMessage);
                     return;
                 }
 
