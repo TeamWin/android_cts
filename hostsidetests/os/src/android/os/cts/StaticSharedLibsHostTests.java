@@ -56,11 +56,26 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
     private static final String STATIC_LIB_PROVIDER6_APK = "CtsStaticSharedLibProviderApp6.apk";
     private static final String STATIC_LIB_PROVIDER6_PKG = "android.os.lib.provider";
 
+    private static final String STATIC_LIB_NATIVE_PROVIDER_APK =
+            "CtsStaticSharedNativeLibProvider.apk";
+    private static final String STATIC_LIB_NATIVE_PROVIDER_PKG =
+            "android.os.lib.provider";
+
+    private static final String STATIC_LIB_NATIVE_PROVIDER_APK1 =
+            "CtsStaticSharedNativeLibProvider1.apk";
+    private static final String STATIC_LIB_NATIVE_PROVIDER_PKG1 =
+            "android.os.lib.provider";
+
     private static final String STATIC_LIB_CONSUMER1_APK = "CtsStaticSharedLibConsumerApp1.apk";
     private static final String STATIC_LIB_CONSUMER1_PKG = "android.os.lib.consumer1";
 
     private static final String STATIC_LIB_CONSUMER2_APK = "CtsStaticSharedLibConsumerApp2.apk";
     private static final String STATIC_LIB_CONSUMER2_PKG = "android.os.lib.consumer2";
+
+    private static final String STATIC_LIB_NATIVE_CONSUMER_APK
+            = "CtsStaticSharedNativeLibConsumer.apk";
+    private static final String STATIC_LIB_NATIVE_CONSUMER_PKG
+            = "android.os.lib.consumer";
 
     private CompatibilityBuildHelper mBuildHelper;
 
@@ -398,6 +413,37 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
             getDevice().uninstallPackage(STATIC_LIB_PROVIDER1_PKG);
             getDevice().uninstallPackage(STATIC_LIB_PROVIDER2_PKG);
             getDevice().uninstallPackage(STATIC_LIB_PROVIDER_RECURSIVE_PKG);
+        }
+    }
+
+    public void testLoadCodeFromNativeLib() throws Exception {
+        getDevice().uninstallPackage(STATIC_LIB_NATIVE_CONSUMER_PKG);
+        getDevice().uninstallPackage(STATIC_LIB_NATIVE_PROVIDER_PKG);
+        try {
+            // Install library
+            assertNull(getDevice().installPackage(mBuildHelper.getTestFile(
+                    STATIC_LIB_NATIVE_PROVIDER_APK), false, false));
+            // Install the library client
+            assertNull(getDevice().installPackage(mBuildHelper.getTestFile(
+                    STATIC_LIB_NATIVE_CONSUMER_APK), false, false));
+            // Ensure the client can load native code from the library
+            runDeviceTests(STATIC_LIB_NATIVE_CONSUMER_PKG,
+                    "android.os.lib.consumer.UseSharedLibraryTest",
+                    "testLoadNativeCode");
+        } finally {
+            getDevice().uninstallPackage(STATIC_LIB_NATIVE_CONSUMER_PKG);
+            getDevice().uninstallPackage(STATIC_LIB_NATIVE_PROVIDER_PKG);
+        }
+    }
+
+    public void testLoadCodeFromNativeLibMultiArchViolation() throws Exception {
+        getDevice().uninstallPackage(STATIC_LIB_NATIVE_PROVIDER_PKG1);
+        try {
+            // Cannot install the library with native code if not multi-arch
+            assertNotNull(getDevice().installPackage(mBuildHelper.getTestFile(
+                    STATIC_LIB_NATIVE_PROVIDER_APK1), false, false));
+        } finally {
+            getDevice().uninstallPackage(STATIC_LIB_NATIVE_PROVIDER_PKG1);
         }
     }
 
