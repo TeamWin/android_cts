@@ -191,9 +191,6 @@ public abstract class BasePrintTest {
         sInstrumentation = InstrumentationRegistry.getInstrumentation();
         sUiDevice = UiDevice.getInstance(sInstrumentation);
 
-        assumeTrue(sInstrumentation.getContext().getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_PRINTING));
-
         // Make sure we start with a clean slate.
         Log.d(LOG_TAG, "clearPrintSpoolerData()");
         clearPrintSpoolerData();
@@ -237,6 +234,18 @@ public abstract class BasePrintTest {
             sAnimatiorDurationScaleBefore = Float.NaN;
         }
 
+        Log.d(LOG_TAG, "setUpClass() done");
+    }
+
+    @Before
+    public void setUp() throws Exception {
+        Log.d(LOG_TAG, "setUp()");
+
+        sInstrumentation = InstrumentationRegistry.getInstrumentation();
+
+        assumeTrue(sInstrumentation.getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_PRINTING));
+
         final PrintManager printManager = sInstrumentation.getContext()
                 .getSystemService(PrintManager.class);
         final List<PrintServiceInfo> services = printManager.getPrintServices(
@@ -255,15 +264,6 @@ public abstract class BasePrintTest {
             SystemUtil.runShellCommand(sInstrumentation, "settings put secure "
                     + Settings.Secure.DISABLED_PRINT_SERVICES + " " + builder);
         }
-
-        Log.d(LOG_TAG, "setUpClass() done");
-    }
-
-    @Before
-    public void setUp() throws Exception {
-        Log.d(LOG_TAG, "setUp()");
-
-        sInstrumentation = InstrumentationRegistry.getInstrumentation();
 
         // Initialize the latches.
         Log.d(LOG_TAG, "init counters");
