@@ -26,7 +26,19 @@ from its.device import ItsSession
 
 CHART_DELAY = 1  # seconds
 FACING_EXTERNAL = 2
+NUM_TRYS = 2
 SKIP_RET_CODE = 101  # note this must be same as tests/scene*/test_*
+
+
+def evaluate_socket_failure(err_file_path):
+    """Determine if test fails due to socket FAIL."""
+    socket_fail = False
+    with open(err_file_path, 'r') as ferr:
+        for line in ferr:
+            if (line.find('socket.error') != -1 or
+                line.find('Problem with socket') != -1):
+                socket_fail = True
+    return socket_fail
 
 
 def skip_sensor_fusion():
@@ -288,7 +300,7 @@ def main():
                     if merge_result_switch and camera_ids[0] == '0':
                         # Send an input event to keep the screen not dimmed.
                         # Since we are not using camera of chart screen, FOCUS event
-                        # should does nothing but keep the screen from dimming.
+                        # should do nothing but keep the screen from dimming.
                         # The "sleep after x minutes of inactivity" display setting
                         # determines how long this command can keep screen bright.
                         # Setting it to something like 30 minutes should be enough.
@@ -296,26 +308,38 @@ def main():
                                % chart_host_id)
                         subprocess.call(cmd.split())
                 t0 = time.time()
-                outdir = os.path.join(topdir, camera_id, scene)
-                outpath = os.path.join(outdir, testname+'_stdout.txt')
-                errpath = os.path.join(outdir, testname+'_stderr.txt')
-                if scene == 'sensor_fusion':
-                    if skip_code is not SKIP_RET_CODE:
-                        if rot_rig_id:
-                            print 'Rotating phone w/ rig %s' % rot_rig_id
-                            rig = ('python tools/rotation_rig.py rotator=%s' %
-                                   rot_rig_id)
-                            subprocess.Popen(rig.split())
+                for num_try in range(NUM_TRYS):
+                    outdir = os.path.join(topdir, camera_id, scene)
+                    outpath = os.path.join(outdir, testname+'_stdout.txt')
+                    errpath = os.path.join(outdir, testname+'_stderr.txt')
+                    if scene == 'sensor_fusion':
+                        if skip_code is not SKIP_RET_CODE:
+                            if rot_rig_id:
+                                print 'Rotating phone w/ rig %s' % rot_rig_id
+                                rig = ('python tools/rotation_rig.py rotator=%s' %
+                                       rot_rig_id)
+                                subprocess.Popen(rig.split())
+                            else:
+                                print 'Rotate phone 15s as shown in SensorFusion.pdf'
                         else:
-                            print 'Rotate phone 15s as shown in SensorFusion.pdf'
+                            test_code = skip_code
+                    if skip_code is not SKIP_RET_CODE:
+                        cmd = ['python', os.path.join(os.getcwd(), testpath)]
+                        cmd += sys.argv[1:] + [camera_id_arg]
+                        with open(outpath, 'w') as fout, open(errpath, 'w') as ferr:
+                            test_code = subprocess.call(
+                                cmd, stderr=ferr, stdout=fout, cwd=outdir)
+                    if test_code == 0 or test_code == SKIP_RET_CODE:
+                        break
                     else:
-                        test_code = skip_code
-                if skip_code is not SKIP_RET_CODE:
-                    cmd = ['python', os.path.join(os.getcwd(), testpath)]
-                    cmd += sys.argv[1:] + [camera_id_arg]
-                    with open(outpath, 'w') as fout, open(errpath, 'w') as ferr:
-                        test_code = subprocess.call(
-                            cmd, stderr=ferr, stdout=fout, cwd=outdir)
+                        socket_fail = evaluate_socket_failure(errpath)
+                        if socket_fail:
+                            if num_try != NUM_TRYS-1:
+                                print ' Retry %s/%s' % (scene, testname)
+                            else:
+                                break
+                        else:
+                            break
                 t1 = time.time()
 
                 test_failed = False
