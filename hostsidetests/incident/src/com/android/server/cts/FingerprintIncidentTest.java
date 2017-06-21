@@ -20,7 +20,8 @@ import android.service.fingerprint.FingerprintActionStatsProto;
 import android.service.fingerprint.FingerprintServiceDumpProto;
 import android.service.fingerprint.FingerprintUserStatsProto;
 
-import java.util.Scanner;
+import com.android.tradefed.log.LogUtil.CLog;
+
 
 /**
  * Test to check that the fingerprint service properly outputs its dump state.
@@ -32,13 +33,14 @@ public class FingerprintIncidentTest extends ProtoDumpTestCase {
      * @throws Exception
      */
     public void testNoneRegistered() throws Exception {
-        final FingerprintServiceDumpProto dump = getDump(FingerprintServiceDumpProto.parser(),
-                "dumpsys fingerprint --proto");
-
         // If the device doesn't support fingerprints, then pass.
         if (!getDevice().hasFeature("android.hardware.fingerprint")) {
+            CLog.d("Bypass as android.hardware.fingerprint is not supported.");
             return;
         }
+
+        final FingerprintServiceDumpProto dump =
+                getDump(FingerprintServiceDumpProto.parser(), "dumpsys fingerprint --proto");
 
         // One of them
         assertEquals(1, dump.getUsersCount());
