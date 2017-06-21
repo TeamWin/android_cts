@@ -80,7 +80,7 @@ public class Camera2SurfaceViewTestCase extends
     protected static final String DEBUG_FILE_NAME_BASE =
             Environment.getExternalStorageDirectory().getPath();
     protected static final int WAIT_FOR_RESULT_TIMEOUT_MS = 3000;
-    protected static final float FRAME_DURATION_ERROR_MARGIN = 0.005f; // 0.5 percent error margin.
+    protected static final float FRAME_DURATION_ERROR_MARGIN = 0.01f; // 1 percent error margin.
     protected static final int NUM_RESULTS_WAIT_TIMEOUT = 100;
     protected static final int NUM_FRAMES_WAITED_FOR_UNKNOWN_LATENCY = 8;
     protected static final int MIN_FRAME_DURATION_ERROR_MARGIN = 100; // ns
