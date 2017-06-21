@@ -281,7 +281,12 @@ public class PopupMenuTest {
 
         for (int i = 0; i != menu.size(); i++) {
             MenuItem item = menu.getItem(i);
-            View itemView = menuItemList.getChildAt(i);
+            View itemView = null;
+            // On smaller screens, not all menu items will be visible.
+            if (i < menuItemList.getChildCount()) {
+                itemView = menuItemList.getChildAt(i);
+                assertNotNull(itemView);
+            }
 
             if (i < 2) {
                 assertNotNull(item.getContentDescription());
@@ -290,9 +295,11 @@ public class PopupMenuTest {
                 assertNull(item.getContentDescription());
                 assertNull(item.getTooltipText());
             }
-            // Tooltips are not set on list-based menus.
-            assertNull(itemView.getTooltipText());
-            assertEquals(item.getContentDescription(), itemView.getContentDescription());
+            if (itemView != null) {
+                // Tooltips are not set on list-based menus.
+                assertNull(itemView.getTooltipText());
+                assertEquals(item.getContentDescription(), itemView.getContentDescription());
+            }
         }
     }
 
