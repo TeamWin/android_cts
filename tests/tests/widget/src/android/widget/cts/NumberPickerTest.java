@@ -28,6 +28,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
 import android.app.Instrumentation;
+import android.content.res.Configuration;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.SmallTest;
@@ -292,6 +293,11 @@ public class NumberPickerTest {
         verifyZeroInteractions(mockValueChangeListener);
     }
 
+    private boolean isWatch() {
+        return (mActivity.getResources().getConfiguration().uiMode
+                & Configuration.UI_MODE_TYPE_WATCH) == Configuration.UI_MODE_TYPE_WATCH;
+    }
+
     @Test
     public void testInteractionWithSwipeDown() throws Throwable {
         mActivityRule.runOnUiThread(() -> {
@@ -332,8 +338,10 @@ public class NumberPickerTest {
         InOrder inOrder = inOrder(mockScrollListener);
         inOrder.verify(mockScrollListener).onScrollStateChange(mNumberPicker,
                 NumberPicker.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL);
-        inOrder.verify(mockScrollListener).onScrollStateChange(mNumberPicker,
-                NumberPicker.OnScrollListener.SCROLL_STATE_FLING);
+        if (!isWatch()) {
+            inOrder.verify(mockScrollListener).onScrollStateChange(mNumberPicker,
+                    NumberPicker.OnScrollListener.SCROLL_STATE_FLING);
+        }
         inOrder.verify(mockScrollListener).onScrollStateChange(mNumberPicker,
                 NumberPicker.OnScrollListener.SCROLL_STATE_IDLE);
         verifyNoMoreInteractions(mockScrollListener);
@@ -379,8 +387,10 @@ public class NumberPickerTest {
         InOrder inOrder = inOrder(mockScrollListener);
         inOrder.verify(mockScrollListener).onScrollStateChange(mNumberPicker,
                 NumberPicker.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL);
-        inOrder.verify(mockScrollListener).onScrollStateChange(mNumberPicker,
-                NumberPicker.OnScrollListener.SCROLL_STATE_FLING);
+        if (!isWatch()) {
+            inOrder.verify(mockScrollListener).onScrollStateChange(mNumberPicker,
+                    NumberPicker.OnScrollListener.SCROLL_STATE_FLING);
+        }
         inOrder.verify(mockScrollListener).onScrollStateChange(mNumberPicker,
                 NumberPicker.OnScrollListener.SCROLL_STATE_IDLE);
         verifyNoMoreInteractions(mockScrollListener);
