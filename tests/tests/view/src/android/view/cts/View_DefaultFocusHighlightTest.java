@@ -52,6 +52,11 @@ public class View_DefaultFocusHighlightTest {
     @Test
     public void testSettersAndGetters() {
         Activity activity = mActivityRule.getActivity();
+        if (!activity.getResources().getBoolean(
+                com.android.internal.R.bool.config_useDefaultFocusHighlight)) {
+            // Skip the test when config_useDefaultFocusHighlight is false
+            return;
+        }
 
         View view = activity.findViewById(R.id.view);
         ListView listView = (ListView) activity.findViewById(R.id.listview);
@@ -82,6 +87,11 @@ public class View_DefaultFocusHighlightTest {
     @Test
     public void testInflating() {
         Activity activity = mActivityRule.getActivity();
+        if (!activity.getResources().getBoolean(
+                com.android.internal.R.bool.config_useDefaultFocusHighlight)) {
+            // Skip the test when config_useDefaultFocusHighlight is false
+            return;
+        }
 
         View view = activity.findViewById(R.id.view_to_inflate);
         ListView listView = (ListView) activity.findViewById(R.id.listview_to_inflate);
@@ -101,6 +111,12 @@ public class View_DefaultFocusHighlightTest {
     @Test
     public void testIsDefaultFocusHighlightNeeded() {
         Activity activity = mActivityRule.getActivity();
+        if (!activity.getResources().getBoolean(
+                com.android.internal.R.bool.config_useDefaultFocusHighlight)) {
+            // Skip the test when config_useDefaultFocusHighlight is false
+            return;
+        }
+
         final Button button = (Button) activity.findViewById(R.id.button_to_test_highlight_needed);
         final ImageView imageView =
                 (ImageView) activity.findViewById(R.id.image_view_to_test_highlight_needed);
