@@ -53,6 +53,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.Resources.NotFoundException;
 import android.graphics.Color;
@@ -7476,8 +7477,16 @@ public class TextViewTest {
         // TODO: Test the floating toolbar content.
     }
 
+    private boolean isWatch() {
+        return (mActivity.getResources().getConfiguration().uiMode
+                & Configuration.UI_MODE_TYPE_WATCH) == Configuration.UI_MODE_TYPE_WATCH;
+    }
+
     @Test
     public void testSmartSelection_dragSelection() throws Throwable {
+        if (isWatch()) {
+            return;
+        }
         mTextView = findTextView(R.id.textview_text);
         String text = "The president-elect, Filip, is coming to town tomorrow.";
         int startIndex = text.indexOf("is coming to town");
