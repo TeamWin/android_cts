@@ -208,6 +208,9 @@ public class RemoteViewsWidgetTest {
 
     @After
     public void teardown() {
+        if (!mHasAppWidgets) {
+            return;
+        }
         mAppWidgetHost.deleteHost();
         revokeBindAppWidgetPermission();
     }
