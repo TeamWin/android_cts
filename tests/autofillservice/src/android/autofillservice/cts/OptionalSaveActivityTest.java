@@ -15,6 +15,7 @@
  */
 package android.autofillservice.cts;
 
+import static android.autofillservice.cts.Helper.assertNoDanglingSessions;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.OptionalSaveActivity.ID_ADDRESS1;
