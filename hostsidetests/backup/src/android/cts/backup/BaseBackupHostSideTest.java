@@ -85,6 +85,14 @@ public abstract class BaseBackupHostSideTest extends CompatibilityHostTestBase {
     }
 
     /**
+     * Execute shell command "bmgr restore <packageName>" and assert success.
+     */
+    protected void restoreAndAssertSuccess(String packageName) throws DeviceNotAvailableException {
+        String restoreOutput = restore(packageName);
+        assertRestoreIsSuccessful(restoreOutput);
+    }
+
+    /**
      * Execute shell command "bmgr restore <packageName>" and return output from this command.
      */
     protected String restore(String packageName) throws DeviceNotAvailableException {
@@ -180,6 +188,13 @@ public abstract class BaseBackupHostSideTest extends CompatibilityHostTestBase {
     protected void clearBackupDataInLocalTransport(String packageName)
             throws DeviceNotAvailableException {
         mDevice.executeShellCommand(String.format("bmgr wipe %s %s", LOCAL_TRANSPORT, packageName));
+    }
+
+    /**
+     * Clears package data
+     */
+    protected void clearPackageData(String packageName) throws DeviceNotAvailableException {
+        mDevice.executeShellCommand(String.format("pm clear %s", packageName));
     }
 
     // Copied over from BackupQuotaTest
