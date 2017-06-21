@@ -205,8 +205,15 @@ final class UiBot {
      * Gets the text set on a view.
      */
     String getTextById(String id) {
-        UiObject2 view = waitForObject(By.res(id));
-        return view.getText();
+        final UiObject2 obj = waitForObject(By.res(id));
+        return obj.getText();
+    }
+
+    /**
+     * Focus in the view with the given resource id.
+     */
+    void focusByRelativeId(String id) {
+        waitForObject(By.res(mPackageName, id)).click();
     }
 
     /**

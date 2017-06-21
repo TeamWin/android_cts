@@ -54,7 +54,9 @@ import java.util.function.Function;
  */
 final class CannedFillResponse {
 
+    private final ResponseType mResponseType;
     private final List<CannedDataset> mDatasets;
+    private final String mFailureMessage;
     private final int mSaveType;
     private final String[] mRequiredSavableIds;
     private final String[] mOptionalSavableIds;
@@ -69,7 +71,9 @@ final class CannedFillResponse {
     private final int mFlags;
 
     private CannedFillResponse(Builder builder) {
+        mResponseType = builder.mResponseType;
         mDatasets = builder.mDatasets;
+        mFailureMessage = builder.mFailureMessage;
         mRequiredSavableIds = builder.mRequiredSavableIds;
         mOptionalSavableIds = builder.mOptionalSavableIds;
         mSaveDescription = builder.mSaveDescription;
@@ -88,7 +92,23 @@ final class CannedFillResponse {
      * Constant used to pass a {@code null} response to the
      * {@link FillCallback#onSuccess(FillResponse)} method.
      */
-    static final CannedFillResponse NO_RESPONSE = new Builder().build();
+    static final CannedFillResponse NO_RESPONSE =
+            new Builder(ResponseType.NULL).build();
+
+    /**
+     * Constant used to emulate a timeout by not calling any method on {@link FillCallback}.
+     */
+    static final CannedFillResponse DO_NOT_REPLY_RESPONSE =
+            new Builder(ResponseType.TIMEOUT).build();
+
+
+    String getFailureMessage() {
+        return mFailureMessage;
+    }
+
+    ResponseType getResponseType() {
+        return mResponseType;
+    }
 
     /**
      * Creates a new response, replacing the dataset field ids by the real ids from the assist
@@ -132,10 +152,12 @@ final class CannedFillResponse {
 
     @Override
     public String toString() {
-        return "CannedFillResponse: [datasets=" + mDatasets
+        return "CannedFillResponse: [type=" + mResponseType
+                + ",datasets=" + mDatasets
                 + ", requiredSavableIds=" + Arrays.toString(mRequiredSavableIds)
                 + ", optionalSavableIds=" + Arrays.toString(mOptionalSavableIds)
-                + ", mFlags=" + mFlags
+                + ", flags=" + mFlags
+                + ", failureMessage=" + mFailureMessage
                 + ", saveDescription=" + mSaveDescription
                 + ", hasPresentation=" + (mPresentation != null)
                 + ", hasAuthentication=" + (mAuthentication != null)
@@ -144,8 +166,16 @@ final class CannedFillResponse {
                 + "]";
     }
 
+    enum ResponseType {
+        NORMAL,
+        NULL,
+        TIMEOUT
+    }
+
     static class Builder {
         private final List<CannedDataset> mDatasets = new ArrayList<>();
+        private final ResponseType mResponseType;
+        private String mFailureMessage;
         private String[] mRequiredSavableIds;
         private String[] mOptionalSavableIds;
         private String mSaveDescription;
@@ -159,7 +189,16 @@ final class CannedFillResponse {
         private IntentSender mNegativeActionListener;
         private int mFlags;
 
+        public Builder(ResponseType type) {
+            mResponseType = type;
+        }
+
+        public Builder() {
+            this(ResponseType.NORMAL);
+        }
+
         public Builder addDataset(CannedDataset dataset) {
+            assertWithMessage("already set failure").that(mFailureMessage).isNull();
             mDatasets.add(dataset);
             return this;
         }
@@ -231,8 +270,7 @@ final class CannedFillResponse {
         /**
          * Sets the negative action spec.
          */
-        public Builder setNegativeAction(int style,
-                IntentSender listener) {
+        public Builder setNegativeAction(int style, IntentSender listener) {
             mNegativeActionStyle = style;
             mNegativeActionListener = listener;
             return this;
@@ -240,6 +278,15 @@ final class CannedFillResponse {
 
         public CannedFillResponse build() {
             return new CannedFillResponse(this);
+        }
+
+        /**
+         * Sets the response to call {@link FillCallback#onFailure(CharSequence)}.
+         */
+        public Builder returnFailure(String message) {
+            assertWithMessage("already added datasets").that(mDatasets).isEmpty();
+            mFailureMessage = message;
+            return this;
         }
     }
 
