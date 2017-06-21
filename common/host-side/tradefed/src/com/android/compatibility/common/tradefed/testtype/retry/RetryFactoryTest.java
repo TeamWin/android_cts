@@ -27,11 +27,13 @@ import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.config.OptionSetter;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.invoker.IInvocationContext;
 import com.android.tradefed.result.ITestInvocationListener;
 import com.android.tradefed.suite.checker.ISystemStatusChecker;
 import com.android.tradefed.suite.checker.ISystemStatusCheckerReceiver;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IDeviceTest;
+import com.android.tradefed.testtype.IInvocationContextReceiver;
 import com.android.tradefed.testtype.IRemoteTest;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -48,7 +50,7 @@ import java.util.Set;
  */
 @OptionClass(alias = "compatibility")
 public class RetryFactoryTest implements IRemoteTest, IDeviceTest, IBuildReceiver,
-        ISystemStatusCheckerReceiver {
+        ISystemStatusCheckerReceiver, IInvocationContextReceiver {
 
     /**
      * Mirror the {@link CompatibilityTest} options in order to create it.
@@ -102,6 +104,7 @@ public class RetryFactoryTest implements IRemoteTest, IDeviceTest, IBuildReceive
     private List<ISystemStatusChecker> mStatusCheckers;
     private IBuildInfo mBuildInfo;
     private ITestDevice mDevice;
+    private IInvocationContext mContext;
 
     @Override
     public void setSystemStatusChecker(List<ISystemStatusChecker> systemCheckers) {
@@ -121,6 +124,11 @@ public class RetryFactoryTest implements IRemoteTest, IDeviceTest, IBuildReceive
     @Override
     public ITestDevice getDevice() {
         return mDevice;
+    }
+
+    @Override
+    public void setInvocationContext(IInvocationContext invocationContext) {
+        mContext = invocationContext;
     }
 
     /**
@@ -155,6 +163,7 @@ public class RetryFactoryTest implements IRemoteTest, IDeviceTest, IBuildReceive
         test.setDevice(mDevice);
         test.setBuild(mBuildInfo);
         test.setSystemStatusChecker(mStatusCheckers);
+        test.setInvocationContext(mContext);
         // clean the helper
         helper.tearDown();
         // run the retry run.
