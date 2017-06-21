@@ -35,7 +35,7 @@ import javax.imageio.ImageIO;
 public class ComparisonTask implements Callable<Pair<String, File>> {
     private static final String TAG = "ComparisonTask";
 
-    private static final int IMAGE_THRESHOLD = 4;
+    private static final int IMAGE_THRESHOLD = 8;
 
     /** Neutral gray for blending colors. */
     private static final int GRAY = 0xFF808080;
