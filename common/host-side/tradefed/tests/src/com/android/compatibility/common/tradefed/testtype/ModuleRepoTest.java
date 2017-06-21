@@ -19,7 +19,9 @@ package com.android.compatibility.common.tradefed.testtype;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.testtype.ModuleRepo.ConfigFilter;
 import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.config.Configuration;
 import com.android.tradefed.config.ConfigurationDescriptor;
+import com.android.tradefed.config.IConfiguration;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.result.ITestInvocationListener;
 import com.android.tradefed.targetprep.ITargetPreparer;
@@ -33,6 +35,7 @@ import com.android.tradefed.testtype.ITestCollector;
 import com.android.tradefed.testtype.ITestFilterReceiver;
 import com.android.tradefed.util.AbiUtils;
 import com.android.tradefed.util.FileUtil;
+import com.android.tradefed.util.MultiMap;
 
 import junit.framework.TestCase;
 
@@ -77,6 +80,8 @@ public class ModuleRepoTest extends TestCase {
     private static final List<String> MODULE_ARGS = new ArrayList<>();
     private static final Set<String> INCLUDES = new HashSet<>();
     private static final Set<String> EXCLUDES = new HashSet<>();
+    private static final MultiMap<String, String> METADATA_INCLUDES = new MultiMap<>();
+    private static final MultiMap<String, String> METADATA_EXCLUDES = new MultiMap<>();
     private static final Set<String> FILES = new HashSet<>();
     private static final String FILENAME = "%s.config";
     private static final String ROOT_DIR_ATTR = "ROOT_DIR";
@@ -185,7 +190,7 @@ public class ModuleRepoTest extends TestCase {
 
     public void testInitialization() throws Exception {
         mRepo.initialize(3, null, mTestsDir, ABIS, DEVICE_TOKENS, TEST_ARGS, MODULE_ARGS, INCLUDES,
-                EXCLUDES, mMockBuildInfo);
+                EXCLUDES, METADATA_INCLUDES, METADATA_EXCLUDES, mMockBuildInfo);
         assertTrue("Should be initialized", mRepo.isInitialized());
         assertEquals("Wrong number of shards", 3, mRepo.getNumberOfShards());
         Map<String, Set<String>> deviceTokens = mRepo.getDeviceTokens();
@@ -200,7 +205,7 @@ public class ModuleRepoTest extends TestCase {
 
     public void testGetModules() throws Exception {
         mRepo.initialize(1, null, mTestsDir, ABIS, DEVICE_TOKENS, TEST_ARGS, MODULE_ARGS, INCLUDES,
-                EXCLUDES, mMockBuildInfo);
+                EXCLUDES, METADATA_INCLUDES, METADATA_EXCLUDES, mMockBuildInfo);
         assertTrue("Should be initialized", mRepo.isInitialized());
         assertEquals("Wrong number of tokens", 2, mRepo.getTokenModules().size());
         assertEquals("Wrong number of tokens", 4, mRepo.getNonTokenModules().size());
@@ -211,7 +216,7 @@ public class ModuleRepoTest extends TestCase {
      */
     public void testGetModulesSharded() throws Exception {
         mRepo.initialize(2, null, mTestsDir, ABIS, new ArrayList<String>(), TEST_ARGS, MODULE_ARGS,
-                INCLUDES, EXCLUDES, mMockBuildInfo);
+                INCLUDES, EXCLUDES, METADATA_INCLUDES, METADATA_EXCLUDES, mMockBuildInfo);
         assertTrue("Should be initialized", mRepo.isInitialized());
         assertEquals("Wrong number of tokens", 2, mRepo.getTokenModules().size());
         assertEquals("Wrong number of tokens", 4, mRepo.getNonTokenModules().size());
@@ -233,7 +238,7 @@ public class ModuleRepoTest extends TestCase {
         Set<String> includes = new HashSet<>();
         includes.add(MODULE_NAME_C);
         mRepo.initialize(1, null, mTestsDir, ABIS, new ArrayList<String>(), TEST_ARGS, MODULE_ARGS,
-                includes, EXCLUDES, mMockBuildInfo);
+                includes, EXCLUDES, METADATA_INCLUDES, METADATA_EXCLUDES, mMockBuildInfo);
         assertTrue("Should be initialized", mRepo.isInitialized());
         assertEquals("Wrong number of tokens", 2, mRepo.getTokenModules().size());
         assertEquals("Wrong number of tokens", 0, mRepo.getNonTokenModules().size());
@@ -255,7 +260,7 @@ public class ModuleRepoTest extends TestCase {
         tokens.add(String.format("%s:%s", SERIAL1, FOOBAR_TOKEN));
         tokens.add(String.format("%s:%s", SERIAL2, "foobar2"));
         mRepo.initialize(2, null, mTestsDir, ABIS, tokens, TEST_ARGS, MODULE_ARGS,
-                includes, EXCLUDES, mMockBuildInfo);
+                includes, EXCLUDES, METADATA_INCLUDES, METADATA_EXCLUDES, mMockBuildInfo);
         assertTrue("Should be initialized", mRepo.isInitialized());
         assertEquals("Wrong number of tokens", 4, mRepo.getTokenModules().size());
         assertEquals("Wrong number of tokens", 0, mRepo.getNonTokenModules().size());
@@ -278,7 +283,7 @@ public class ModuleRepoTest extends TestCase {
     public void testGetModulesSharded_uneven() throws Exception {
         createConfig(mTestsDir, "FooModuleD", null);
         mRepo.initialize(4, null, mTestsDir, ABIS, new ArrayList<String>(), TEST_ARGS, MODULE_ARGS,
-                INCLUDES, EXCLUDES, mMockBuildInfo);
+                INCLUDES, EXCLUDES, METADATA_INCLUDES, METADATA_EXCLUDES, mMockBuildInfo);
         assertTrue("Should be initialized", mRepo.isInitialized());
         assertEquals("Wrong number of tokens", 2, mRepo.getTokenModules().size());
         assertEquals("Wrong number of tokens", 6, mRepo.getNonTokenModules().size());
@@ -320,7 +325,8 @@ public class ModuleRepoTest extends TestCase {
         excludeFilters.add(ID_A_32);
         excludeFilters.add(MODULE_NAME_B);
         mRepo.initialize(1, null, mTestsDir, ABIS, DEVICE_TOKENS, TEST_ARGS, MODULE_ARGS,
-                includeFilters, excludeFilters, mMockBuildInfo);
+                includeFilters, excludeFilters, METADATA_INCLUDES, METADATA_EXCLUDES,
+                mMockBuildInfo);
         List<IModuleDef> modules = mRepo.getModules(SERIAL1, 0);
         assertEquals("Incorrect number of modules", 1, modules.size());
         IModuleDef module = modules.get(0);
@@ -333,11 +339,11 @@ public class ModuleRepoTest extends TestCase {
      */
     public void testInitialization_ExcludeModule_SkipLoadingConfig() {
         try {
-            Set<String> excludeFilters = new HashSet<String>() {{
-                    add(NON_EXISTS_MODULE_NAME);
-            }};
+            Set<String> excludeFilters = new HashSet<String>();
+            excludeFilters.add(NON_EXISTS_MODULE_NAME);
             mRepo.initialize(1, null, mTestsDir, ABIS, DEVICE_TOKENS, TEST_ARGS,
                     MODULE_ARGS, Collections.emptySet(), excludeFilters,
+                    METADATA_INCLUDES, METADATA_EXCLUDES,
                     mMockBuildInfo);
         } catch (Exception e) {
             fail("Initialization should not fail if non-existing module is excluded");
@@ -354,14 +360,15 @@ public class ModuleRepoTest extends TestCase {
         excludeFilters.add(MODULE_NAME_B);
         excludeFilters.add(MODULE_NAME_C);
         mRepo.initialize(1, null, mTestsDir, ABIS, DEVICE_TOKENS, TEST_ARGS, MODULE_ARGS,
-                includeFilters, excludeFilters, mMockBuildInfo);
+                includeFilters, excludeFilters,
+                METADATA_INCLUDES, METADATA_EXCLUDES, mMockBuildInfo);
         List<IModuleDef> modules = mRepo.getModules(SERIAL1, 0);
         assertEquals("Incorrect number of modules", 0, modules.size());
     }
 
     public void testParsing() throws Exception {
         mRepo.initialize(1, null, mTestsDir, ABIS, DEVICE_TOKENS, TEST_ARGS, MODULE_ARGS, INCLUDES,
-                EXCLUDES, mMockBuildInfo);
+                EXCLUDES, METADATA_INCLUDES, METADATA_EXCLUDES, mMockBuildInfo);
         List<IModuleDef> modules = mRepo.getModules(SERIAL3, 0);
         Set<String> idSet = new HashSet<>();
         for (IModuleDef module : modules) {
@@ -396,7 +403,7 @@ public class ModuleRepoTest extends TestCase {
         ArrayList<String> emptyList = new ArrayList<>();
 
         mRepo.initialize(3, 0, mTestsDir, abis, DEVICE_TOKENS, emptyList, emptyList, INCLUDES,
-                         EXCLUDES, mMockBuildInfo);
+                         EXCLUDES, METADATA_INCLUDES, METADATA_EXCLUDES, mMockBuildInfo);
 
         List<IModuleDef> modules = new ArrayList<>();
         modules.addAll(mRepo.getNonTokenModules());
@@ -414,7 +421,7 @@ public class ModuleRepoTest extends TestCase {
 
     public void testGetModuleIds() {
         mRepo.initialize(3, null, mTestsDir, ABIS, DEVICE_TOKENS, TEST_ARGS, MODULE_ARGS, INCLUDES,
-                EXCLUDES, mMockBuildInfo);
+                EXCLUDES, METADATA_INCLUDES, METADATA_EXCLUDES, mMockBuildInfo);
         assertTrue("Should be initialized", mRepo.isInitialized());
 
         assertArrayEquals(EXPECTED_MODULE_IDS, mRepo.getModuleIds());
@@ -505,5 +512,260 @@ public class ModuleRepoTest extends TestCase {
         testList.add(mod1);
         List<IModuleDef> res = mRepo.getShard(testList, 1, 2);
         assertNull(res);
+    }
+
+    /**
+     * When there are no metadata based filters specified, config should be included
+     * @throws Exception
+     */
+    public void testMetadataFilter_emptyFilters() throws Exception {
+        IConfiguration config = new Configuration("foo", "bar");
+        assertTrue("config not included when metadata filters are empty",
+                mRepo.filterByConfigMetadata(config, METADATA_INCLUDES, METADATA_EXCLUDES));
+    }
+
+    /**
+     * When inclusion filter is specified, config matching the filter is included
+     * @throws Exception
+     */
+    public void testMetadataFilter_matchInclude() throws Exception {
+        IConfiguration config = new Configuration("foo", "bar");
+        ConfigurationDescriptor desc = config.getConfigurationDescription();
+        MultiMap<String, String> metadata = new MultiMap<>();
+        metadata.put("component", "foo");
+        desc.setMetaData(metadata);
+        MultiMap<String, String> includeFilter = new MultiMap<>();
+        includeFilter.put("component", "foo");
+        assertTrue("config not included with matching inclusion filter",
+                mRepo.filterByConfigMetadata(config, includeFilter, METADATA_EXCLUDES));
+    }
+
+    /**
+     * When inclusion filter is specified, config not matching the filter is excluded
+     * @throws Exception
+     */
+    public void testMetadataFilter_noMatchInclude_mismatchValue() throws Exception {
+        IConfiguration config = new Configuration("foo", "bar");
+        ConfigurationDescriptor desc = config.getConfigurationDescription();
+        MultiMap<String, String> metadata = new MultiMap<>();
+        metadata.put("component", "foo");
+        desc.setMetaData(metadata);
+        MultiMap<String, String> includeFilter = new MultiMap<>();
+        includeFilter.put("component", "bar");
+        assertFalse("config not excluded with mismatching inclusion filter",
+                mRepo.filterByConfigMetadata(config, includeFilter, METADATA_EXCLUDES));
+    }
+
+    /**
+     * When inclusion filter is specified, config not matching the filter is excluded
+     * @throws Exception
+     */
+    public void testMetadataFilter_noMatchInclude_mismatchKey() throws Exception {
+        IConfiguration config = new Configuration("foo", "bar");
+        ConfigurationDescriptor desc = config.getConfigurationDescription();
+        MultiMap<String, String> metadata = new MultiMap<>();
+        metadata.put("component", "foo");
+        desc.setMetaData(metadata);
+        MultiMap<String, String> includeFilter = new MultiMap<>();
+        includeFilter.put("group", "bar");
+        assertFalse("config not excluded with mismatching inclusion filter",
+                mRepo.filterByConfigMetadata(config, includeFilter, METADATA_EXCLUDES));
+    }
+
+    /**
+     * When exclusion filter is specified, config matching the filter is excluded
+     * @throws Exception
+     */
+    public void testMetadataFilter_matchExclude() throws Exception {
+        IConfiguration config = new Configuration("foo", "bar");
+        ConfigurationDescriptor desc = config.getConfigurationDescription();
+        MultiMap<String, String> metadata = new MultiMap<>();
+        metadata.put("component", "foo");
+        desc.setMetaData(metadata);
+        MultiMap<String, String> excludeFilter = new MultiMap<>();
+        excludeFilter.put("component", "foo");
+        assertFalse("config not excluded with matching exclusion filter",
+                mRepo.filterByConfigMetadata(config, METADATA_INCLUDES, excludeFilter));
+    }
+
+    /**
+     * When exclusion filter is specified, config not matching the filter is included
+     * @throws Exception
+     */
+    public void testMetadataFilter_noMatchExclude_mismatchKey() throws Exception {
+        IConfiguration config = new Configuration("foo", "bar");
+        ConfigurationDescriptor desc = config.getConfigurationDescription();
+        MultiMap<String, String> metadata = new MultiMap<>();
+        metadata.put("component", "foo");
+        desc.setMetaData(metadata);
+        MultiMap<String, String> excludeFilter = new MultiMap<>();
+        excludeFilter.put("component", "bar");
+        assertTrue("config not included with mismatching exclusion filter",
+                mRepo.filterByConfigMetadata(config, METADATA_INCLUDES, excludeFilter));
+    }
+
+    /**
+     * When exclusion filter is specified, config not matching the filter is included
+     * @throws Exception
+     */
+    public void testMetadataFilter_noMatchExclude_mismatchValue() throws Exception {
+        IConfiguration config = new Configuration("foo", "bar");
+        ConfigurationDescriptor desc = config.getConfigurationDescription();
+        MultiMap<String, String> metadata = new MultiMap<>();
+        metadata.put("component", "foo");
+        desc.setMetaData(metadata);
+        MultiMap<String, String> excludeFilter = new MultiMap<>();
+        excludeFilter.put("group", "bar");
+        assertTrue("config not included with mismatching exclusion filter",
+                mRepo.filterByConfigMetadata(config, METADATA_INCLUDES, excludeFilter));
+    }
+
+    /**
+     * When inclusion filter is specified, config with one of the metadata field matching the filter
+     * is included
+     * @throws Exception
+     */
+    public void testMetadataFilter_matchInclude_multipleMetadataField() throws Exception {
+        IConfiguration config = new Configuration("foo", "bar");
+        ConfigurationDescriptor desc = config.getConfigurationDescription();
+        MultiMap<String, String> metadata = new MultiMap<>();
+        metadata.put("component", "foo");
+        metadata.put("component", "bar");
+        desc.setMetaData(metadata);
+        MultiMap<String, String> includeFilter = new MultiMap<>();
+        includeFilter.put("component", "foo");
+        assertTrue("config not included with matching inclusion filter",
+                mRepo.filterByConfigMetadata(config, includeFilter, METADATA_EXCLUDES));
+    }
+
+    /**
+     * When exclusion filter is specified, config with one of the metadata field matching the filter
+     * is excluded
+     * @throws Exception
+     */
+    public void testMetadataFilter_matchExclude_multipleMetadataField() throws Exception {
+        IConfiguration config = new Configuration("foo", "bar");
+        ConfigurationDescriptor desc = config.getConfigurationDescription();
+        MultiMap<String, String> metadata = new MultiMap<>();
+        metadata.put("component", "foo");
+        metadata.put("component", "bar");
+        desc.setMetaData(metadata);
+        MultiMap<String, String> excludeFilter = new MultiMap<>();
+        excludeFilter.put("component", "foo");
+        assertFalse("config not excluded with matching exclusion filter",
+                mRepo.filterByConfigMetadata(config, METADATA_INCLUDES, excludeFilter));
+    }
+
+    /**
+     * When inclusion filters are specified, config with metadata field matching one of the filter
+     * is included
+     * @throws Exception
+     */
+    public void testMetadataFilter_matchInclude_multipleFilters() throws Exception {
+        IConfiguration config = new Configuration("foo", "bar");
+        ConfigurationDescriptor desc = config.getConfigurationDescription();
+        MultiMap<String, String> metadata = new MultiMap<>();
+        metadata.put("component", "foo");
+        desc.setMetaData(metadata);
+        MultiMap<String, String> includeFilter = new MultiMap<>();
+        includeFilter.put("component", "foo");
+        includeFilter.put("component", "bar");
+        assertTrue("config not included with matching inclusion filter",
+                mRepo.filterByConfigMetadata(config, includeFilter, METADATA_EXCLUDES));
+    }
+
+    /**
+     * When exclusion filters are specified, config with metadata field matching one of the filter
+     * is excluded
+     * @throws Exception
+     */
+    public void testMetadataFilter_matchExclude_multipleFilters() throws Exception {
+        IConfiguration config = new Configuration("foo", "bar");
+        ConfigurationDescriptor desc = config.getConfigurationDescription();
+        MultiMap<String, String> metadata = new MultiMap<>();
+        metadata.put("component", "foo");
+        desc.setMetaData(metadata);
+        MultiMap<String, String> excludeFilter = new MultiMap<>();
+        excludeFilter.put("component", "foo");
+        excludeFilter.put("component", "bar");
+        assertFalse("config not excluded with matching exclusion filter",
+                mRepo.filterByConfigMetadata(config, METADATA_INCLUDES, excludeFilter));
+    }
+
+    /**
+     * When inclusion filters are specified, config with metadata field matching one of the filter
+     * is included
+     * @throws Exception
+     */
+    public void testMetadataFilter_matchInclude_multipleMetadataAndFilters() throws Exception {
+        IConfiguration config = new Configuration("foo", "bar");
+        ConfigurationDescriptor desc = config.getConfigurationDescription();
+        MultiMap<String, String> metadata = new MultiMap<>();
+        metadata.put("component", "foo1");
+        metadata.put("group", "bar1");
+        desc.setMetaData(metadata);
+        MultiMap<String, String> includeFilter = new MultiMap<>();
+        includeFilter.put("component", "foo1");
+        includeFilter.put("group", "bar2");
+        assertTrue("config not included with matching inclusion filter",
+                mRepo.filterByConfigMetadata(config, includeFilter, METADATA_EXCLUDES));
+    }
+
+    /**
+     * When exclusion filters are specified, config with metadata field matching one of the filter
+     * is excluded
+     * @throws Exception
+     */
+    public void testMetadataFilter_matchExclude_multipleMetadataAndFilters() throws Exception {
+        IConfiguration config = new Configuration("foo", "bar");
+        ConfigurationDescriptor desc = config.getConfigurationDescription();
+        MultiMap<String, String> metadata = new MultiMap<>();
+        metadata.put("component", "foo1");
+        metadata.put("group", "bar1");
+        desc.setMetaData(metadata);
+        MultiMap<String, String> excludeFilter = new MultiMap<>();
+        excludeFilter.put("component", "foo1");
+        excludeFilter.put("group", "bar2");
+        assertFalse("config not excluded with matching exclusion filter",
+                mRepo.filterByConfigMetadata(config, METADATA_INCLUDES, excludeFilter));
+    }
+
+    /**
+     * When inclusion and exclusion filters are both specified, config can pass through the filters
+     * as expected.
+     * @throws Exception
+     */
+    public void testMetadataFilter_includeAndExclude() throws Exception {
+        IConfiguration config = new Configuration("foo", "bar");
+        ConfigurationDescriptor desc = config.getConfigurationDescription();
+        MultiMap<String, String> metadata = new MultiMap<>();
+        metadata.put("component", "foo");
+        metadata.put("group", "bar1");
+        desc.setMetaData(metadata);
+        MultiMap<String, String> includeFilter = new MultiMap<>();
+        includeFilter.put("component", "foo");
+        MultiMap<String, String> excludeFilter = new MultiMap<>();
+        excludeFilter.put("group", "bar2");
+        assertTrue("config not included with matching inclusion and mismatching exclusion filters",
+                mRepo.filterByConfigMetadata(config, includeFilter, excludeFilter));
+    }
+
+    /**
+     * When inclusion and exclusion filters are both specified, config be excluded as specified
+     * @throws Exception
+     */
+    public void testMetadataFilter_includeThenExclude() throws Exception {
+        IConfiguration config = new Configuration("foo", "bar");
+        ConfigurationDescriptor desc = config.getConfigurationDescription();
+        MultiMap<String, String> metadata = new MultiMap<>();
+        metadata.put("component", "foo");
+        metadata.put("group", "bar");
+        desc.setMetaData(metadata);
+        MultiMap<String, String> includeFilter = new MultiMap<>();
+        includeFilter.put("component", "foo");
+        MultiMap<String, String> excludeFilter = new MultiMap<>();
+        excludeFilter.put("group", "bar");
+        assertFalse("config not excluded with matching inclusion and exclusion filters",
+                mRepo.filterByConfigMetadata(config, includeFilter, excludeFilter));
     }
 }

@@ -17,6 +17,7 @@ package com.android.compatibility.common.tradefed.testtype;
 
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.testtype.IAbi;
+import com.android.tradefed.util.MultiMap;
 
 import java.io.File;
 import java.util.LinkedList;
@@ -38,7 +39,10 @@ public interface IModuleRepo {
      */
     void initialize(int shards, Integer shardIndex, File testsDir, Set<IAbi> abis,
             List<String> deviceTokens, List<String> testArgs, List<String> moduleArgs,
-            Set<String> mIncludeFilters, Set<String> mExcludeFilters, IBuildInfo buildInfo);
+            Set<String> mIncludeFilters, Set<String> mExcludeFilters,
+            MultiMap<String, String> metadataIncludeFilters,
+            MultiMap<String, String> metadataExcludeFilters,
+            IBuildInfo buildInfo);
 
     /**
      * @return a {@link LinkedList} of all modules to run on the device referenced by the given
