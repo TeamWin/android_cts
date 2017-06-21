@@ -16,6 +16,7 @@
 
 package android.hardware.cts;
 
+import android.content.pm.PackageManager;
 import android.test.AndroidTestCase;
 
 /**
@@ -26,7 +27,7 @@ import android.test.AndroidTestCase;
 public class AHardwareBufferNativeTest extends AndroidTestCase {
     protected native long nativeSetUp();
     protected native void nativeTearDown(long instance);
-    private native void nativeTest(long instance);
+    private native void nativeTest(long instance, boolean vrHighPerformanceSupported);
     private long mNativeInstance;
 
     static {
@@ -46,6 +47,8 @@ public class AHardwareBufferNativeTest extends AndroidTestCase {
     }
 
     public void testNative() throws AssertionError {
-        nativeTest(mNativeInstance);
+        PackageManager pm = getContext().getPackageManager();
+        nativeTest(mNativeInstance, pm.hasSystemFeature(
+                PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE));
     }
 }
