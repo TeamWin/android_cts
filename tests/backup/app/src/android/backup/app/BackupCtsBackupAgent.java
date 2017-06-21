@@ -23,6 +23,7 @@ import android.app.backup.FullBackupDataOutput;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
 
+import java.io.File;
 import java.io.IOException;
 
 /*
@@ -31,6 +32,11 @@ import java.io.IOException;
  * Logs callbacks into logcat.
  */
 public class BackupCtsBackupAgent extends BackupAgent {
+
+    @Override
+    public void onCreate() {
+        Log.d(MainActivity.TAG, "onCreate");
+    }
 
     @Override
     public void onBackup(ParcelFileDescriptor oldState, BackupDataOutput data,
@@ -45,6 +51,13 @@ public class BackupCtsBackupAgent extends BackupAgent {
     }
 
     @Override
+    public void onRestoreFile(ParcelFileDescriptor data, long size,
+            File destination, int type, long mode, long mtime) throws IOException {
+        Log.d(MainActivity.TAG, "onRestoreFile " + destination);
+        super.onRestoreFile(data, size, destination, type, mode, mtime);
+    }
+
+    @Override
     public void onFullBackup(FullBackupDataOutput data) throws IOException {
         Log.d(MainActivity.TAG, "Full backup requested, quota is " + data.getQuota());
         super.onFullBackup(data);
@@ -54,4 +67,15 @@ public class BackupCtsBackupAgent extends BackupAgent {
     public void onQuotaExceeded(long backupDataBytes, long quotaBytes) {
         Log.d(MainActivity.TAG, "Quota exceeded!");
     }
+
+    @Override
+    public void onRestoreFinished() {
+        Log.d(MainActivity.TAG, "onRestoreFinished");
+    }
+
+    @Override
+    public void onDestroy() {
+        Log.d(MainActivity.TAG, "onDestroy");
+    }
+
 }
