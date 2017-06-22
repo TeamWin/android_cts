@@ -211,4 +211,11 @@
 
     <!-- b/62481870 -->
     <option name="compatibility:exclude-filter" value="CtsNativeMediaAAudioTestCases android.nativemedia.aaudio.AAudioOutputStreamCallbackTest#testPlayback" />
+
+    <!-- b/62844160 -->
+    <option name="compatibility:exclude-filter" value="CtsWidgetTestCases android.widget.cts.TextViewTest#testAutoSizeCallers_setText" />
+    <option name="compatibility:exclude-filter" value="CtsWidgetTestCases android.widget.cts.TextViewTest#testGetOffsetForPositionSingleLineLtr" />
+    <option name="compatibility:exclude-filter" value="CtsWidgetTestCases android.widget.cts.TextViewTest#testGetOffsetForPositionMultiLineLtr" />
+    <option name="compatibility:exclude-filter" value="CtsWidgetTestCases android.widget.cts.TextViewTest#testGetOffsetForPositionMultiLineRtl" />
+
 </configuration>
