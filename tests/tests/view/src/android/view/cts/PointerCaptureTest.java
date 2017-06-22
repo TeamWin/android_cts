@@ -245,8 +245,6 @@ public class PointerCaptureTest {
         assertPointerCapture(false);
 
         activity.finish();
-        PollingCheck.waitFor(TIMEOUT_DELTA, () -> mActivity.hasWindowFocus());
-        assertPointerCapture(false);
     }
 
     @Test
