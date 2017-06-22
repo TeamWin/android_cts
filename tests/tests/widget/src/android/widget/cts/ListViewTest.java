@@ -931,10 +931,6 @@ public class ListViewTest {
         assertNotNull(childView1);
         assertNotNull(childView2);
 
-        // Make sure that the childView1 has focus.
-        mActivityRule.runOnUiThread(childView1::requestFocus);
-        PollingCheck.waitFor(1000, childView1::isFocused);
-
         // Make sure that ListView#requestLayout() is optimized when nothing is changed.
         WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mListView, mListView::requestLayout);
         assertEquals(childView0, mListView.getChildAt(0));
