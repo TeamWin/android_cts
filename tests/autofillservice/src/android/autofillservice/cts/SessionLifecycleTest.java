@@ -21,6 +21,7 @@ import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_USERNAME;
 import static android.autofillservice.cts.Helper.LANDSCAPE;
 import static android.autofillservice.cts.Helper.PORTRAIT;
+import static android.autofillservice.cts.Helper.assertNoDanglingSessions;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.eventually;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
@@ -54,11 +55,6 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
     private static final String LOGIN_FULL_ID = "android.autofillservice.cts:id/" + ID_LOGIN;
     private static final String BUTTON_FULL_ID = "android.autofillservice.cts:id/button";
     private static final String CANCEL_FULL_ID = "android.autofillservice.cts:id/cancel";
-
-    @Before
-    public void removeAllSessions() {
-        destroyAllSessions();
-    }
 
     /**
      * Prevents the screen to rotate by itself

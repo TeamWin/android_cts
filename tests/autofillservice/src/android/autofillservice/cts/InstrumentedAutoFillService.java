@@ -231,7 +231,18 @@ public class InstrumentedAutoFillService extends AutofillService {
         private final BlockingQueue<FillRequest> mFillRequests = new LinkedBlockingQueue<>();
         private final BlockingQueue<SaveRequest> mSaveRequests = new LinkedBlockingQueue<>();
 
+        private Exception mException;
+
         private Replier() {
+        }
+
+        /**
+         * Asserts no exception was asynchronously thrown.
+         */
+        void assertNoExceptions() throws Exception {
+            if (mException != null) {
+                throw mException;
+            }
         }
 
         /**
@@ -321,11 +332,14 @@ public class InstrumentedAutoFillService extends AutofillService {
                 } catch (InterruptedException e) {
                     Log.w(TAG, "Interrupted getting CannedResponse: " + e);
                     Thread.currentThread().interrupt();
+                    mException = e;
                     return;
                 }
                 if (response == null) {
-                    dumpStructure("onFillRequest() without response", contexts);
-                    throw new RetryableException("No CannedResponse");
+                    final String msg = "onFillRequest() received a CannedResponse was set";
+                    dumpStructure(msg, contexts);
+                    mException = new RetryableException(msg);
+                    return;
                 }
                 if (response.getResponseType() == NULL) {
                     Log.d(TAG, "onFillRequest(): replying with null");
@@ -350,6 +364,8 @@ public class InstrumentedAutoFillService extends AutofillService {
 
                 Log.v(TAG, "onFillRequest(): fillResponse = " + fillResponse);
                 callback.onSuccess(fillResponse);
+            } catch (Exception e) {
+                mException = e;
             } finally {
                 mFillRequests.offer(new FillRequest(contexts, data, cancellationSignal, callback,
                         flags));
