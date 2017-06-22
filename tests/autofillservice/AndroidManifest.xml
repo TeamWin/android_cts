@@ -74,6 +74,14 @@
                 <action android:name="android.service.autofill.AutofillService" />
             </intent-filter>
         </service>
+        <service
+            android:name=".NoOpAutofillService"
+            android:label="NoOpAutofillService"
+            android:permission="android.permission.BIND_AUTOFILL_SERVICE" >
+            <intent-filter>
+                <action android:name="android.service.autofill.AutofillService" />
+            </intent-filter>
+        </service>
     </application>
 
     <instrumentation
