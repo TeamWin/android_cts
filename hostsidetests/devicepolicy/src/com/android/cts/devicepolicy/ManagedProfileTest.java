@@ -47,7 +47,6 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     private static final String INTENT_RECEIVER_PKG = "com.android.cts.intent.receiver";
     private static final String INTENT_RECEIVER_APK = "CtsIntentReceiverApp.apk";
 
-    private static final String WIFI_CONFIG_CREATOR_PKG = "com.android.cts.wificonfigcreator";
     private static final String WIFI_CONFIG_CREATOR_APK = "CtsWifiConfigCreator.apk";
 
     private static final String WIDGET_PROVIDER_APK = "CtsWidgetProviderApp.apk";
@@ -65,8 +64,6 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     private static final String NOTIFICATION_APK = "CtsNotificationSenderApp.apk";
     private static final String NOTIFICATION_PKG =
             "com.android.cts.managedprofiletests.notificationsender";
-    private static final String NOTIFICATION_ACTIVITY =
-            NOTIFICATION_PKG + ".SendNotification";
 
     private static final String ADMIN_RECEIVER_TEST_CLASS =
             MANAGED_PROFILE_PKG + ".BaseManagedProfileTest$BasicAdminReceiver";
@@ -78,7 +75,6 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     private static final String FEATURE_CONNECTION_SERVICE = "android.software.connectionservice";
 
     private static final String SIMPLE_APP_APK = "CtsSimpleApp.apk";
-    private static final String SIMPLE_APP_PKG = "com.android.cts.launcherapps.simpleapp";
 
     private static final long TIMEOUT_USER_LOCKED_MILLIS = TimeUnit.SECONDS.toMillis(30);
 
@@ -87,11 +83,14 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     // Password needs to be in sync with ResetPasswordWithTokenTest.PASSWORD1
     private static final String RESET_PASSWORD_TEST_DEFAULT_PASSWORD = "123456";
 
+    private static final String PROFILE_CREDENTIAL = "1234";
+    // This should be sufficiently larger than ProfileTimeoutTestHelper.TIMEOUT_MS
+    private static final int PROFILE_TIMEOUT_DELAY_MS = 10_000;
+
     private int mParentUserId;
 
     // ID of the profile we'll create. This will always be a profile of the parent.
     private int mProfileUserId;
-    private String mPackageVerifier;
 
     private boolean mHasNfcFeature;
 
@@ -200,6 +199,84 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 "The managed profile has not been locked after calling "
                         + "lockNow(FLAG_SECURE_USER_DATA)",
                 TIMEOUT_USER_LOCKED_MILLIS);
+    }
+
+    /** Profile should get locked if it is not in foreground no matter what. */
+    public void testWorkProfileTimeoutBackground() throws Exception {
+        setUpWorkProfileTimeout();
+
+        startDummyActivity(mPrimaryUserId, true);
+        simulateUserInteraction(PROFILE_TIMEOUT_DELAY_MS);
+
+        verifyOnlyProfileLocked(true);
+    }
+
+    /** Profile should get locked if it is in foreground but with no user activity. */
+    public void testWorkProfileTimeoutIdleActivity() throws Exception {
+        setUpWorkProfileTimeout();
+
+        startDummyActivity(mProfileUserId, false);
+        Thread.sleep(PROFILE_TIMEOUT_DELAY_MS);
+
+        verifyOnlyProfileLocked(true);
+    }
+
+    /** User activity in profile should prevent it from locking. */
+    public void testWorkProfileTimeoutUserActivity() throws Exception {
+        setUpWorkProfileTimeout();
+
+        startDummyActivity(mProfileUserId, false);
+        simulateUserInteraction(PROFILE_TIMEOUT_DELAY_MS);
+
+        verifyOnlyProfileLocked(false);
+    }
+
+    /** Keep screen on window flag in the profile should prevent it from locking. */
+    public void testWorkProfileTimeoutKeepScreenOnWindow() throws Exception {
+        setUpWorkProfileTimeout();
+
+        startDummyActivity(mProfileUserId, true);
+        Thread.sleep(PROFILE_TIMEOUT_DELAY_MS);
+
+        verifyOnlyProfileLocked(false);
+    }
+
+    private void setUpWorkProfileTimeout() throws DeviceNotAvailableException {
+        // Set separate challenge.
+        changeUserCredential(PROFILE_CREDENTIAL, null, mProfileUserId);
+
+        // Make sure the profile is not prematurely locked.
+        verifyUserCredential(PROFILE_CREDENTIAL, mProfileUserId);
+        verifyOnlyProfileLocked(false);
+        // Set profile timeout to 5 seconds.
+        runProfileTimeoutTest("testSetWorkProfileTimeout", mProfileUserId);
+    }
+
+    private void verifyOnlyProfileLocked(boolean locked) throws DeviceNotAvailableException {
+        final String expectedResultTest = locked ? "testDeviceLocked" : "testDeviceNotLocked";
+        runProfileTimeoutTest(expectedResultTest, mProfileUserId);
+        // Primary profile shouldn't be locked.
+        runProfileTimeoutTest("testDeviceNotLocked", mPrimaryUserId);
+    }
+
+    private void simulateUserInteraction(int timeMs) throws Exception {
+        final UserActivityEmulator helper = new UserActivityEmulator(getDevice());
+        for (int i = 0; i < timeMs; i += timeMs/10) {
+            Thread.sleep(timeMs/10);
+            helper.tapScreenCenter();
+        }
+    }
+
+    private void runProfileTimeoutTest(String method, int userId)
+            throws DeviceNotAvailableException {
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".ProfileTimeoutTestHelper",
+                method, userId);
+    }
+
+    private void startDummyActivity(int profileUserId, boolean keepScreenOn) throws Exception {
+        getDevice().executeShellCommand(String.format(
+                "am start-activity -W --user %d --ez keep_screen_on %s %s/.TimeoutActivity",
+                profileUserId, keepScreenOn, MANAGED_PROFILE_PKG));
     }
 
     public void testMaxOneManagedProfile() throws Exception {

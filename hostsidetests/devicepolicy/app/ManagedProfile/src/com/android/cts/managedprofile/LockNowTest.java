@@ -18,8 +18,6 @@ package com.android.cts.managedprofile;
 
 import android.app.admin.DevicePolicyManager;
 
-import com.android.cts.managedprofile.BaseManagedProfileTest.BasicAdminReceiver;
-
 /**
  * Test lockNow() for use in a managed profile. If called from a managed profile. lockNow() can be
  * passed a flag to evict the CE key of the profile.
