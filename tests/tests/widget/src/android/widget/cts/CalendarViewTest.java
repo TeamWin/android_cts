@@ -220,8 +220,8 @@ public class CalendarViewTest {
                 () -> calendarView.setDate(calendar.getTime().getTime(), false, true));
         mInstrumentation.waitForIdleSync();
 
-        // Get bounds of 09/23/2008
-        calendar.set(Calendar.DAY_OF_MONTH, 23);
+        // Get bounds of 09/07/2008
+        calendar.set(Calendar.DAY_OF_MONTH, 7);
         final Rect dayBounds = new Rect();
         final boolean getDayBoundsSuccess = calendarView.getBoundsForDate(
                 calendar.getTime().getTime(), dayBounds);
@@ -231,13 +231,13 @@ public class CalendarViewTest {
             verifyZeroInteractions(mockDateChangeListener);
         }
 
-        // Use instrumentation to emulate a tap on 09/23/2008
+        // Use instrumentation to emulate a tap on 09/07/2008
         CtsTouchUtils.emulateTapOnView(mInstrumentation, calendarView,
                 dayBounds.left + dayBounds.width() / 2,
                 dayBounds.top + dayBounds.height() / 2);
 
         verify(mockDateChangeListener, times(1)).onSelectedDayChange(calendarView,
-                2008, Calendar.SEPTEMBER, 23);
+                2008, Calendar.SEPTEMBER, 7);
         if (onlyAllowOneChangeEvent) {
             verifyNoMoreInteractions(mockDateChangeListener);
         }
