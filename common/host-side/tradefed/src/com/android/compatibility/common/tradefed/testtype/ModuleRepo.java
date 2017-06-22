@@ -35,7 +35,10 @@ import com.android.tradefed.testtype.ITestFileFilterReceiver;
 import com.android.tradefed.testtype.ITestFilterReceiver;
 import com.android.tradefed.util.AbiUtils;
 import com.android.tradefed.util.FileUtil;
+import com.android.tradefed.util.MultiMap;
 import com.android.tradefed.util.TimeUtil;
+
+import com.google.common.annotations.VisibleForTesting;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -165,7 +168,10 @@ public class ModuleRepo implements IModuleRepo {
     @Override
     public void initialize(int totalShards, Integer shardIndex, File testsDir, Set<IAbi> abis,
             List<String> deviceTokens, List<String> testArgs, List<String> moduleArgs,
-            Set<String> includeFilters, Set<String> excludeFilters, IBuildInfo buildInfo) {
+            Set<String> includeFilters, Set<String> excludeFilters,
+            MultiMap<String, String> metadataIncludeFilters,
+            MultiMap<String, String> metadataExcludeFilters,
+            IBuildInfo buildInfo) {
         CLog.d("Initializing ModuleRepo\nShards:%d\nTests Dir:%s\nABIs:%s\nDevice Tokens:%s\n" +
                 "Test Args:%s\nModule Args:%s\nIncludes:%s\nExcludes:%s",
                 totalShards, testsDir.getAbsolutePath(), abis, deviceTokens, testArgs, moduleArgs,
@@ -225,6 +231,12 @@ public class ModuleRepo implements IModuleRepo {
                     }
 
                     IConfiguration config = mConfigFactory.createConfigurationFromArgs(pathArg);
+                    if (!filterByConfigMetadata(config,
+                            metadataIncludeFilters, metadataExcludeFilters)) {
+                        // if the module config did not pass the metadata filters, it's excluded
+                        // from execution
+                        continue;
+                    }
                     Map<String, List<String>> args = new HashMap<>();
                     if (mModuleArgs.containsKey(name)) {
                         args.putAll(mModuleArgs.get(name));
@@ -368,6 +380,47 @@ public class ModuleRepo implements IModuleRepo {
         if (!mdExcludes.isEmpty()) {
             addTestExcludes((ITestFilterReceiver) test, mdExcludes, name);
         }
+    }
+
+    @VisibleForTesting
+    protected boolean filterByConfigMetadata(IConfiguration config,
+            MultiMap<String, String> include, MultiMap<String, String> exclude) {
+        MultiMap<String, String> metadata = config.getConfigurationDescription().getAllMetaData();
+        boolean shouldInclude = false;
+        for (String key : include.keySet()) {
+            Set<String> filters = new HashSet<>(include.get(key));
+            if (metadata.containsKey(key)) {
+                filters.retainAll(metadata.get(key));
+                if (!filters.isEmpty()) {
+                    // inclusion filter is not empty and there's at least one matching inclusion
+                    // rule so there's no need to match other inclusion rules
+                    shouldInclude = true;
+                    break;
+                }
+            }
+        }
+        if (!include.isEmpty() && !shouldInclude) {
+            // if inclusion filter is not empty and we didn't find a match, the module will not be
+            // included
+            return false;
+        }
+        // Now evaluate exclusion rules, this ordering also means that exclusion rules may override
+        // inclusion rules: a config already matched for inclusion may still be excluded if matching
+        // rules exist
+        for (String key : exclude.keySet()) {
+            Set<String> filters = new HashSet<>(exclude.get(key));
+            if (metadata.containsKey(key)) {
+                filters.retainAll(metadata.get(key));
+                if (!filters.isEmpty()) {
+                    // we found at least one matching exclusion rules, so we are excluding this
+                    // this module
+                    return false;
+                }
+            }
+        }
+        // we've matched at least one inclusion rule (if there's any) AND we didn't match any of the
+        // exclusion rules (if there's any)
+        return true;
     }
 
     private boolean shouldRunModule(String moduleId) {
