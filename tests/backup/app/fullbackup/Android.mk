@@ -14,4 +14,21 @@
 
 LOCAL_PATH:= $(call my-dir)
 
-include $(call all-makefiles-under,$(LOCAL_PATH))
+include $(CLEAR_VARS)
+
+LOCAL_MODULE_TAGS := optional
+
+LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
+
+LOCAL_SRC_FILES := $(call all-java-files-under, ../src)
+
+LOCAL_PACKAGE_NAME := CtsFullBackupApp
+
+# Tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts general-tests
+
+LOCAL_STATIC_JAVA_LIBRARIES := \
+    compatibility-device-util \
+    ctstestrunner
+
+include $(BUILD_CTS_SUPPORT_PACKAGE)

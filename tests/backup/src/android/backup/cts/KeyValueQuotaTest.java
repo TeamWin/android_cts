@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,13 @@ package android.backup.cts;
  * Uses test app that creates large file and receives the callback.
  * {@link com.android.internal.backup.LocalTransport} is used, it has size quota 25MB.
  */
-public class FullBackupQuotaTest extends BaseBackupCtsTest {
+public class KeyValueQuotaTest extends BaseBackupCtsTest {
 
-    private static final String BACKUP_APP_NAME = "android.backup.app";
+    private static final String BACKUP_APP_NAME = "android.backup.kvapp";
 
-    // Should be the same as LocalTransport.FULL_BACKUP_SIZE_QUOTA
-    private static final int LOCAL_TRANSPORT_BACKUP_QUOTA = 25 * 1024 * 1024;
-    private static final int LOCAL_TRANSPORT_EXCEEDING_FILE_SIZE = 30 * 1024 * 1024;
+    // Should be the same as LocalTransport. KEY_VALUE_BACKUP_SIZE_QUOTA
+    private static final int LOCAL_TRANSPORT_BACKUP_QUOTA = 5 * 1024 * 1024;
+    private static final int LOCAL_TRANSPORT_EXCEEDING_FILE_SIZE = 6 * 1024 * 1024;
 
     public void testQuotaExceeded() throws Exception {
         if (!isBackupSupported()) {

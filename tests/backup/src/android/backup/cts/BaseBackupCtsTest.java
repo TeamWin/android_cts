@@ -41,7 +41,6 @@ public class BaseBackupCtsTest extends InstrumentationTestCase {
 
     private static final String LOCAL_TRANSPORT =
             "android/com.android.internal.backup.LocalTransport";
-    protected static final String BACKUP_APP_NAME = "android.backup.app";
 
     private static final int SMALL_LOGCAT_DELAY = 1000;
 
@@ -134,10 +133,10 @@ public class BaseBackupCtsTest extends InstrumentationTestCase {
         return false;
     }
 
-    protected void createTestFileOfSize(int size) throws Exception {
-        exec("am start -W -a android.intent.action.MAIN " +
+    protected void createTestFileOfSize(String packageName, int size) throws Exception {
+        exec("am start -a android.intent.action.MAIN " +
             "-c android.intent.category.LAUNCHER " +
-            "-n " + BACKUP_APP_NAME + "/" + BACKUP_APP_NAME +".MainActivity " +
+            "-n " + packageName + "/android.backup.app.MainActivity " +
             "-e file_size " + size);
         assertTrue("File was not created", waitForLogcat("File created!", 30));
     }
