@@ -60,11 +60,8 @@ public class NotificationListenerTest {
     private final LocalBroadcastReceiver mReceiver = new LocalBroadcastReceiver();
     private Context mContext;
     private DevicePolicyManager mDpm;
-    private NotificationManager mNotificationManager;
     private UiDevice mDevice;
     private int mProfileUserId;
-    private String mPreviousListeners;
-    private boolean mChangedListeners;
 
     @Before
     public void setUp() throws Exception {
@@ -82,16 +79,7 @@ public class NotificationListenerTest {
     @After
     public void tearDown() throws Exception {
         LocalBroadcastManager.getInstance(mContext).unregisterReceiver(mReceiver);
-        if (mChangedListeners) {
-            if (mPreviousListeners != null) {
-                mDevice.executeShellCommand(
-                        "settings put secure enabled_notification_listeners "
-                        + mPreviousListeners);
-            } else {
-                mDevice.executeShellCommand(
-                        "settings delete secure enabled_notification_listeners");
-            }
-        }
+        toggleNotificationListener(false);
     }
 
     @Test
@@ -116,7 +104,7 @@ public class NotificationListenerTest {
 
     @Test
     public void testCanReceiveNotifications() throws Exception {
-        enableNotificationListener();
+        toggleNotificationListener(true);
 
         sendProfileNotification();
         assertTrue(mReceiver.waitForNotificationPostedReceived());
@@ -133,7 +121,7 @@ public class NotificationListenerTest {
 
     @Test
     public void testCannotReceiveProfileNotifications() throws Exception {
-        enableNotificationListener();
+        toggleNotificationListener(true);
 
         sendProfileNotification();
         // Don't see notification or cancellation from work profile.
@@ -174,28 +162,14 @@ public class NotificationListenerTest {
                 + SENDER_COMPONENT);
     }
 
-    private void enableNotificationListener() throws Exception {
-        String listeners = mDevice.executeShellCommand(
-                "settings get secure enabled_notification_listeners").trim();
-        if (listeners.equals("null")) {
-            listeners = null;
-        }
+    private void toggleNotificationListener(boolean enable) throws Exception {
         String testListener = new ComponentName(
                 mContext, CrossProfileNotificationListenerService.class).flattenToString();
-
-        if (listeners == null || !listeners.contains(testListener)) {
-            mPreviousListeners = listeners;
-            mChangedListeners = true;
-            String newListeners;
-            if (listeners != null && listeners.length() > 0) {
-                newListeners = listeners + ":" + testListener;
-            } else {
-                newListeners = testListener;
-            }
-            mDevice.executeShellCommand(
-                    "settings put secure enabled_notification_listeners "
-                    + newListeners);
-            Log.i(TAG, "Enabled notification listener " + testListener);
+        mDevice.executeShellCommand("cmd notification "
+                + (enable ?  "allow_listener " : "disallow_listener ")
+                + testListener);
+        Log.i(TAG, "Toggled notification listener state" + testListener + " to state " + enable);
+        if (enable) {
             assertTrue(mReceiver.waitForListenerConnected());
         }
     }
