@@ -26,7 +26,7 @@ public class Poc17_06 extends SecurityTestCase {
      */
     @SecurityTest
     public void testPocBug_34328139() throws Exception {
-	enableAdbRoot(getDevice());
+        enableAdbRoot(getDevice());
         if(containsDriver(getDevice(), "/dev/mdss_rotator")) {
             AdbUtils.runPoc("Bug-34328139", getDevice(), 60);
         }
@@ -37,10 +37,10 @@ public class Poc17_06 extends SecurityTestCase {
      */
     @SecurityTest
     public void testPocBug_33452365() throws Exception {
-	enableAdbRoot(getDevice());
+        enableAdbRoot(getDevice());
         if(containsDriver(getDevice(), "/dev/snd/pcmC0D16c")) {
             AdbUtils.runPoc("Bug-33452365", getDevice(), 60);
-	}
+        }
     }
 
     /**
@@ -48,7 +48,7 @@ public class Poc17_06 extends SecurityTestCase {
      */
     @SecurityTest
     public void testPocCVE_2017_0579() throws Exception {
-	enableAdbRoot(getDevice());
+        enableAdbRoot(getDevice());
         if(containsDriver(getDevice(), "/dev/graphics/fb0")) {
             AdbUtils.runPoc("CVE-2017-0579", getDevice(), 60);
         }
@@ -63,5 +63,32 @@ public class Poc17_06 extends SecurityTestCase {
         if(containsDriver(getDevice(), "/dev/snd/controlC0")) {
           AdbUtils.runPoc("CVE-2017-7369", getDevice(), 60);
         }
+    }
+
+    /**
+     *  b/35047780
+     */
+    @SecurityTest
+    public void testPocBug_35047780() throws Exception {
+        enableAdbRoot(getDevice());
+        AdbUtils.runPoc("Bug-35047780", getDevice(), 60);
+    }
+
+    /**
+     *  b/35048450
+     */
+    @SecurityTest
+    public void testPocBug_35048450() throws Exception {
+        enableAdbRoot(getDevice());
+        AdbUtils.runPoc("Bug-35048450", getDevice(), 60);
+    }
+
+    /**
+     *  b/35047217
+     */
+    @SecurityTest
+    public void testPocBug_35047217() throws Exception {
+        enableAdbRoot(getDevice());
+        AdbUtils.runPoc("Bug-35047217", getDevice(), 60);
     }
 }
