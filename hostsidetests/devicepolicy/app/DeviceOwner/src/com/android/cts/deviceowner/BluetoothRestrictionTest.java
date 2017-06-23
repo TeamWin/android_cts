@@ -32,7 +32,7 @@ public class BluetoothRestrictionTest extends BaseDeviceOwnerTest {
     private static final int ENABLE_TIMEOUT_MS = 10000; // ms timeout for BT enable
     private static final int POLL_TIME_MS = 400;           // ms to poll BT state
     private static final int CHECK_WAIT_TIME_MS = 1000;    // ms to wait before enable/disable
-    private static final int COMPONENT_STATE_TIMEOUT_MS = 2000;
+    private static final int COMPONENT_STATE_TIMEOUT_MS = 10000;
     private static final ComponentName OPP_LAUNCHER_COMPONENT = new ComponentName(
             "com.android.bluetooth", "com.android.bluetooth.opp.BluetoothOppLauncherActivity");
 
@@ -50,6 +50,7 @@ public class BluetoothRestrictionTest extends BaseDeviceOwnerTest {
     protected void tearDown() throws Exception {
         super.tearDown();
         mDevicePolicyManager.clearUserRestriction(getWho(), UserManager.DISALLOW_BLUETOOTH);
+        enable();
     }
 
     public void testEnableBluetoothFailsWhenDisallowed() throws Exception {
