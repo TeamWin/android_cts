@@ -41,6 +41,8 @@ public class AdoptableHostTest extends DeviceTestCase implements IAbiReceiver, I
     private IAbi mAbi;
     private IBuildInfo mCtsBuild;
 
+    private int[] mUsers;
+
     @Override
     public void setAbi(IAbi abi) {
         mAbi = abi;
@@ -55,11 +57,12 @@ public class AdoptableHostTest extends DeviceTestCase implements IAbiReceiver, I
     protected void setUp() throws Exception {
         super.setUp();
 
-        Utils.prepareSingleUser(getDevice());
+        mUsers = Utils.prepareMultipleUsers(getDevice(), Integer.MAX_VALUE);
         assertNotNull(mAbi);
         assertNotNull(mCtsBuild);
 
         getDevice().uninstallPackage(PKG);
+        getDevice().executeShellCommand("sm set-virtual-disk true");
     }
 
     @Override
@@ -67,10 +70,10 @@ public class AdoptableHostTest extends DeviceTestCase implements IAbiReceiver, I
         super.tearDown();
 
         getDevice().uninstallPackage(PKG);
+        getDevice().executeShellCommand("sm set-virtual-disk false");
     }
 
     public void testApps() throws Exception {
-        if (!hasAdoptable()) return;
         final String diskId = getAdoptionDisk();
         try {
             final String abi = mAbi.getName();
@@ -79,10 +82,12 @@ public class AdoptableHostTest extends DeviceTestCase implements IAbiReceiver, I
 
             // Install simple app on internal
             new InstallMultiple().useNaturalAbi().addApk(APK).addApk(apk).run();
-            runDeviceTests(PKG, CLASS, "testDataInternal");
-            runDeviceTests(PKG, CLASS, "testDataWrite");
-            runDeviceTests(PKG, CLASS, "testDataRead");
-            runDeviceTests(PKG, CLASS, "testNative");
+            for (int user : mUsers) {
+                runDeviceTests(PKG, CLASS, "testDataInternal", user);
+                runDeviceTests(PKG, CLASS, "testDataWrite", user);
+                runDeviceTests(PKG, CLASS, "testDataRead", user);
+                runDeviceTests(PKG, CLASS, "testNative", user);
+            }
 
             // Adopt that disk!
             assertEmpty(getDevice().executeShellCommand("sm partition " + diskId + " private"));
@@ -91,28 +96,36 @@ public class AdoptableHostTest extends DeviceTestCase implements IAbiReceiver, I
             // Move app and verify
             assertSuccess(getDevice().executeShellCommand(
                     "pm move-package " + PKG + " " + vol.uuid));
-            runDeviceTests(PKG, CLASS, "testDataNotInternal");
-            runDeviceTests(PKG, CLASS, "testDataRead");
-            runDeviceTests(PKG, CLASS, "testNative");
+            for (int user : mUsers) {
+                runDeviceTests(PKG, CLASS, "testDataNotInternal", user);
+                runDeviceTests(PKG, CLASS, "testDataRead", user);
+                runDeviceTests(PKG, CLASS, "testNative", user);
+            }
 
             // Unmount, remount and verify
-            getDevice().executeShellCommand("sm unmount " + vol.volId);
-            getDevice().executeShellCommand("sm mount " + vol.volId);
-            runDeviceTests(PKG, CLASS, "testDataNotInternal");
-            runDeviceTests(PKG, CLASS, "testDataRead");
-            runDeviceTests(PKG, CLASS, "testNative");
+            unmount(vol);
+            mount(vol);
+            for (int user : mUsers) {
+                runDeviceTests(PKG, CLASS, "testDataNotInternal", user);
+                runDeviceTests(PKG, CLASS, "testDataRead", user);
+                runDeviceTests(PKG, CLASS, "testNative", user);
+            }
 
             // Move app back and verify
             assertSuccess(getDevice().executeShellCommand("pm move-package " + PKG + " internal"));
-            runDeviceTests(PKG, CLASS, "testDataInternal");
-            runDeviceTests(PKG, CLASS, "testDataRead");
-            runDeviceTests(PKG, CLASS, "testNative");
+            for (int user : mUsers) {
+                runDeviceTests(PKG, CLASS, "testDataInternal", user);
+                runDeviceTests(PKG, CLASS, "testDataRead", user);
+                runDeviceTests(PKG, CLASS, "testNative", user);
+            }
 
             // Un-adopt volume and app should still be fine
             getDevice().executeShellCommand("sm partition " + diskId + " public");
-            runDeviceTests(PKG, CLASS, "testDataInternal");
-            runDeviceTests(PKG, CLASS, "testDataRead");
-            runDeviceTests(PKG, CLASS, "testNative");
+            for (int user : mUsers) {
+                runDeviceTests(PKG, CLASS, "testDataInternal", user);
+                runDeviceTests(PKG, CLASS, "testDataRead", user);
+                runDeviceTests(PKG, CLASS, "testNative", user);
+            }
 
         } finally {
             cleanUp(diskId);
@@ -120,7 +133,6 @@ public class AdoptableHostTest extends DeviceTestCase implements IAbiReceiver, I
     }
 
     public void testPrimaryStorage() throws Exception {
-        if (!hasAdoptable()) return;
         final String diskId = getAdoptionDisk();
         try {
             final String originalVol = getDevice()
@@ -139,10 +151,12 @@ public class AdoptableHostTest extends DeviceTestCase implements IAbiReceiver, I
     private void verifyPrimaryInternal(String diskId) throws Exception {
         // Write some data to shared storage
         new InstallMultiple().addApk(APK).run();
-        runDeviceTests(PKG, CLASS, "testPrimaryOnSameVolume");
-        runDeviceTests(PKG, CLASS, "testPrimaryInternal");
-        runDeviceTests(PKG, CLASS, "testPrimaryDataWrite");
-        runDeviceTests(PKG, CLASS, "testPrimaryDataRead");
+        for (int user : mUsers) {
+            runDeviceTests(PKG, CLASS, "testPrimaryOnSameVolume", user);
+            runDeviceTests(PKG, CLASS, "testPrimaryInternal", user);
+            runDeviceTests(PKG, CLASS, "testPrimaryDataWrite", user);
+            runDeviceTests(PKG, CLASS, "testPrimaryDataRead", user);
+        }
 
         // Adopt that disk!
         assertEmpty(getDevice().executeShellCommand("sm partition " + diskId + " private"));
@@ -153,20 +167,28 @@ public class AdoptableHostTest extends DeviceTestCase implements IAbiReceiver, I
         getDevice().executeShellCommand("pm move-primary-storage " + vol.uuid, out, 2,
                 TimeUnit.HOURS, 1);
         assertSuccess(out.getOutput());
-        runDeviceTests(PKG, CLASS, "testPrimaryAdopted");
-        runDeviceTests(PKG, CLASS, "testPrimaryDataRead");
+        for (int user : mUsers) {
+            runDeviceTests(PKG, CLASS, "testPrimaryAdopted", user);
+            runDeviceTests(PKG, CLASS, "testPrimaryDataRead", user);
+        }
 
         // Unmount and verify
-        getDevice().executeShellCommand("sm unmount " + vol.volId);
-        runDeviceTests(PKG, CLASS, "testPrimaryUnmounted");
-        getDevice().executeShellCommand("sm mount " + vol.volId);
-        runDeviceTests(PKG, CLASS, "testPrimaryAdopted");
-        runDeviceTests(PKG, CLASS, "testPrimaryDataRead");
+        unmount(vol);
+        for (int user : mUsers) {
+            runDeviceTests(PKG, CLASS, "testPrimaryUnmounted", user);
+        }
+        mount(vol);
+        for (int user : mUsers) {
+            runDeviceTests(PKG, CLASS, "testPrimaryAdopted", user);
+            runDeviceTests(PKG, CLASS, "testPrimaryDataRead", user);
+        }
 
         // Move app and verify backing storage volume is same
         assertSuccess(getDevice().executeShellCommand("pm move-package " + PKG + " " + vol.uuid));
-        runDeviceTests(PKG, CLASS, "testPrimaryOnSameVolume");
-        runDeviceTests(PKG, CLASS, "testPrimaryDataRead");
+        for (int user : mUsers) {
+            runDeviceTests(PKG, CLASS, "testPrimaryOnSameVolume", user);
+            runDeviceTests(PKG, CLASS, "testPrimaryDataRead", user);
+        }
 
         // And move back to internal
         out = new CollectingOutputReceiver();
@@ -174,20 +196,26 @@ public class AdoptableHostTest extends DeviceTestCase implements IAbiReceiver, I
                 TimeUnit.HOURS, 1);
         assertSuccess(out.getOutput());
 
-        runDeviceTests(PKG, CLASS, "testPrimaryInternal");
-        runDeviceTests(PKG, CLASS, "testPrimaryDataRead");
+        for (int user : mUsers) {
+            runDeviceTests(PKG, CLASS, "testPrimaryInternal", user);
+            runDeviceTests(PKG, CLASS, "testPrimaryDataRead", user);
+        }
 
         assertSuccess(getDevice().executeShellCommand("pm move-package " + PKG + " internal"));
-        runDeviceTests(PKG, CLASS, "testPrimaryOnSameVolume");
-        runDeviceTests(PKG, CLASS, "testPrimaryDataRead");
+        for (int user : mUsers) {
+            runDeviceTests(PKG, CLASS, "testPrimaryOnSameVolume", user);
+            runDeviceTests(PKG, CLASS, "testPrimaryDataRead", user);
+        }
     }
 
     private void verifyPrimaryPhysical(String diskId) throws Exception {
         // Write some data to shared storage
         new InstallMultiple().addApk(APK).run();
-        runDeviceTests(PKG, CLASS, "testPrimaryPhysical");
-        runDeviceTests(PKG, CLASS, "testPrimaryDataWrite");
-        runDeviceTests(PKG, CLASS, "testPrimaryDataRead");
+        for (int user : mUsers) {
+            runDeviceTests(PKG, CLASS, "testPrimaryPhysical", user);
+            runDeviceTests(PKG, CLASS, "testPrimaryDataWrite", user);
+            runDeviceTests(PKG, CLASS, "testPrimaryDataRead", user);
+        }
 
         // Adopt that disk!
         assertEmpty(getDevice().executeShellCommand("sm partition " + diskId + " private"));
@@ -196,22 +224,30 @@ public class AdoptableHostTest extends DeviceTestCase implements IAbiReceiver, I
         // Move primary storage there, but since we just nuked primary physical
         // the storage device will be empty
         assertSuccess(getDevice().executeShellCommand("pm move-primary-storage " + vol.uuid));
-        runDeviceTests(PKG, CLASS, "testPrimaryAdopted");
-        runDeviceTests(PKG, CLASS, "testPrimaryDataWrite");
-        runDeviceTests(PKG, CLASS, "testPrimaryDataRead");
+        for (int user : mUsers) {
+            runDeviceTests(PKG, CLASS, "testPrimaryAdopted", user);
+            runDeviceTests(PKG, CLASS, "testPrimaryDataWrite", user);
+            runDeviceTests(PKG, CLASS, "testPrimaryDataRead", user);
+        }
 
         // Unmount and verify
-        getDevice().executeShellCommand("sm unmount " + vol.volId);
-        runDeviceTests(PKG, CLASS, "testPrimaryUnmounted");
-        getDevice().executeShellCommand("sm mount " + vol.volId);
-        runDeviceTests(PKG, CLASS, "testPrimaryAdopted");
-        runDeviceTests(PKG, CLASS, "testPrimaryDataRead");
+        unmount(vol);
+        for (int user : mUsers) {
+            runDeviceTests(PKG, CLASS, "testPrimaryUnmounted", user);
+        }
+        mount(vol);
+        for (int user : mUsers) {
+            runDeviceTests(PKG, CLASS, "testPrimaryAdopted", user);
+            runDeviceTests(PKG, CLASS, "testPrimaryDataRead", user);
+        }
 
         // And move to internal
         assertSuccess(getDevice().executeShellCommand("pm move-primary-storage internal"));
-        runDeviceTests(PKG, CLASS, "testPrimaryOnSameVolume");
-        runDeviceTests(PKG, CLASS, "testPrimaryInternal");
-        runDeviceTests(PKG, CLASS, "testPrimaryDataRead");
+        for (int user : mUsers) {
+            runDeviceTests(PKG, CLASS, "testPrimaryOnSameVolume", user);
+            runDeviceTests(PKG, CLASS, "testPrimaryInternal", user);
+            runDeviceTests(PKG, CLASS, "testPrimaryDataRead", user);
+        }
     }
 
     /**
@@ -219,7 +255,6 @@ public class AdoptableHostTest extends DeviceTestCase implements IAbiReceiver, I
      * adopted volumes.
      */
     public void testPackageInstaller() throws Exception {
-        if (!hasAdoptable()) return;
         final String diskId = getAdoptionDisk();
         try {
             assertEmpty(getDevice().executeShellCommand("sm partition " + diskId + " private"));
@@ -228,14 +263,18 @@ public class AdoptableHostTest extends DeviceTestCase implements IAbiReceiver, I
             // Install directly onto adopted volume
             new InstallMultiple().locationAuto().forceUuid(vol.uuid)
                     .addApk(APK).addApk(APK_mdpi).run();
-            runDeviceTests(PKG, CLASS, "testDataNotInternal");
-            runDeviceTests(PKG, CLASS, "testDensityBest1");
+            for (int user : mUsers) {
+                runDeviceTests(PKG, CLASS, "testDataNotInternal", user);
+                runDeviceTests(PKG, CLASS, "testDensityBest1", user);
+            }
 
             // Now splice in an additional split which offers better resources
             new InstallMultiple().locationAuto().inheritFrom(PKG)
                     .addApk(APK_xxhdpi).run();
-            runDeviceTests(PKG, CLASS, "testDataNotInternal");
-            runDeviceTests(PKG, CLASS, "testDensityBest2");
+            for (int user : mUsers) {
+                runDeviceTests(PKG, CLASS, "testDataNotInternal", user);
+                runDeviceTests(PKG, CLASS, "testDensityBest2", user);
+            }
 
         } finally {
             cleanUp(diskId);
@@ -247,7 +286,6 @@ public class AdoptableHostTest extends DeviceTestCase implements IAbiReceiver, I
      * returned at a later time.
      */
     public void testEjected() throws Exception {
-        if (!hasAdoptable()) return;
         final String diskId = getAdoptionDisk();
         try {
             assertEmpty(getDevice().executeShellCommand("sm partition " + diskId + " private"));
@@ -255,44 +293,48 @@ public class AdoptableHostTest extends DeviceTestCase implements IAbiReceiver, I
 
             // Install directly onto adopted volume, and write data there
             new InstallMultiple().locationAuto().forceUuid(vol.uuid).addApk(APK).run();
-            runDeviceTests(PKG, CLASS, "testDataNotInternal");
-            runDeviceTests(PKG, CLASS, "testDataWrite");
-            runDeviceTests(PKG, CLASS, "testDataRead");
+            for (int user : mUsers) {
+                runDeviceTests(PKG, CLASS, "testDataNotInternal", user);
+                runDeviceTests(PKG, CLASS, "testDataWrite", user);
+                runDeviceTests(PKG, CLASS, "testDataRead", user);
+            }
 
             // Now unmount and uninstall; leaving stale package on adopted volume
-            getDevice().executeShellCommand("sm unmount " + vol.volId);
+            unmount(vol);
             getDevice().uninstallPackage(PKG);
 
             // Install second copy on internal, but don't write anything
             new InstallMultiple().locationInternalOnly().addApk(APK).run();
-            runDeviceTests(PKG, CLASS, "testDataInternal");
+            for (int user : mUsers) {
+                runDeviceTests(PKG, CLASS, "testDataInternal", user);
+            }
 
             // Kick through a remount cycle, which should purge the adopted app
-            getDevice().executeShellCommand("sm mount " + vol.volId);
-            runDeviceTests(PKG, CLASS, "testDataInternal");
-            boolean didThrow = false;
-            try {
-                runDeviceTests(PKG, CLASS, "testDataRead");
-            } catch (AssertionError expected) {
-                didThrow = true;
+            mount(vol);
+            for (int user : mUsers) {
+                runDeviceTests(PKG, CLASS, "testDataInternal", user);
             }
-            if (!didThrow) {
-                fail("Unexpected data from adopted volume picked up");
+            for (int user : mUsers) {
+                boolean threw = false;
+                try {
+                    runDeviceTests(PKG, CLASS, "testDataRead", user);
+                } catch (AssertionError expected) {
+                    threw = true;
+                }
+                if (!threw) {
+                    fail("Unexpected data from adopted volume picked up from user " + user);
+                }
             }
-            getDevice().executeShellCommand("sm unmount " + vol.volId);
+            unmount(vol);
 
             // Uninstall the internal copy and remount; we should have no record of app
             getDevice().uninstallPackage(PKG);
-            getDevice().executeShellCommand("sm mount " + vol.volId);
+            mount(vol);
 
             assertEmpty(getDevice().executeShellCommand("pm list packages " + PKG));
         } finally {
             cleanUp(diskId);
         }
-    }
-
-    private boolean hasAdoptable() throws Exception {
-        return Boolean.parseBoolean(getDevice().executeShellCommand("sm has-adoptable").trim());
     }
 
     private String getAdoptionDisk() throws Exception {
@@ -330,14 +372,38 @@ public class AdoptableHostTest extends DeviceTestCase implements IAbiReceiver, I
         throw new AssertionError("Expected private volume; found " + Arrays.toString(lines));
     }
 
+    private void unmount(LocalVolumeInfo vol) throws Exception {
+        getDevice().executeShellCommand("sm unmount " + vol.volId);
+        for (int i = 0; i < 15; i++) {
+            final String raw = getDevice().executeShellCommand("dumpsys package volumes");
+            if (raw.contains("Loaded volumes:") && !raw.contains(vol.volId)) {
+                return;
+            }
+            Thread.sleep(1000);
+        }
+        throw new AssertionError("Private volume " + vol.volId + " failed to be unloaded");
+    }
+
+    private void mount(LocalVolumeInfo vol) throws Exception {
+        getDevice().executeShellCommand("sm mount " + vol.volId);
+        for (int i = 0; i < 15; i++) {
+            final String raw = getDevice().executeShellCommand("dumpsys package volumes");
+            if (raw.contains("Loaded volumes:") && raw.contains(vol.volId)) {
+                return;
+            }
+            Thread.sleep(1000);
+        }
+        throw new AssertionError("Private volume " + vol.volId + " failed to be loaded");
+    }
+
     private void cleanUp(String diskId) throws Exception {
         getDevice().executeShellCommand("sm partition " + diskId + " public");
         getDevice().executeShellCommand("sm forget all");
     }
 
-    private void runDeviceTests(String packageName, String testClassName, String testMethodName)
-            throws DeviceNotAvailableException {
-        Utils.runDeviceTests(getDevice(), packageName, testClassName, testMethodName);
+    private void runDeviceTests(String packageName, String testClassName, String testMethodName,
+            int userId) throws DeviceNotAvailableException {
+        Utils.runDeviceTests(getDevice(), packageName, testClassName, testMethodName, userId);
     }
 
     private static void assertSuccess(String str) {
