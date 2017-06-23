@@ -69,7 +69,7 @@ class androidDevice(object):
         return "Success" in result
 
     def runInstrumentationTest(self, option):
-        return self.runShellCommand("am instrument -w " + option)
+        return self.runShellCommand("am instrument -w --no-window-animation " + option)
 
     def isProcessAlive(self, processName):
         (out, err) = self.runShellCommand("ps")
