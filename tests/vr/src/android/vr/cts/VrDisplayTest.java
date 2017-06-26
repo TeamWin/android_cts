@@ -116,6 +116,6 @@ public class VrDisplayTest extends ActivityInstrumentationTestCase2<OpenGLESActi
         double diagonalLength = Math.sqrt(width * width + height * height);
 
         assertTrue(diagonalLength >= 4.7);
-        assertTrue(diagonalLength <= 6.);
+        assertTrue(diagonalLength <= 6.3);
     }
 }
