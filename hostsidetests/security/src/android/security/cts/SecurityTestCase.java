@@ -93,9 +93,11 @@ public class SecurityTestCase extends DeviceTestCase {
      * Runs an info disclosure
      **/
     public void infoDisclosure(
-        String pocName, ITestDevice device, int timeout, String pattern ) throws Exception {
+        String pocName, ITestDevice device, int timeout,
+        String pattern, boolean result) throws Exception {
 
-        assertTrue("Pattern found. Info Disclosed.",
-                    AdbUtils.detectInformationDisclosure(pocName, device, timeout, pattern));
+        assertTrue("Pattern found.",
+                    AdbUtils.detectInformationDisclosure
+                    (pocName, device, timeout, pattern)==result );
      }
 }
