@@ -228,8 +228,8 @@ public class TzDataCheckTest extends DeviceTestCase {
 
         // Create a current installed distro.
         PathPair dataCurrentDir = mDataDir.createSubPath(CURRENT_DIR_NAME);
-        TimeZoneDistro distro = createValidDistroBuilder().build();
-        unpackOnHost(dataCurrentDir, distro);
+        byte[] distroBytes = createValidDistroBuilder().buildBytes();
+        unpackOnHost(dataCurrentDir, distroBytes);
 
         // Push the host test directory and contents to the device.
         pushHostTestDirToDevice();
@@ -252,8 +252,8 @@ public class TzDataCheckTest extends DeviceTestCase {
 
         // Create a staged install.
         PathPair dataStagedDir = mDataDir.createSubPath(STAGED_DIR_NAME);
-        TimeZoneDistro distro = createValidDistroBuilder().build();
-        unpackOnHost(dataStagedDir, distro);
+        byte[] distroBytes = createValidDistroBuilder().buildBytes();
+        unpackOnHost(dataStagedDir, distroBytes);
 
         // Create a file with the same name as the directory that tzdatacheck expects.
         PathPair dataCurrentDir = mDataDir.createSubPath(CURRENT_DIR_NAME);
@@ -268,7 +268,7 @@ public class TzDataCheckTest extends DeviceTestCase {
 
         // Assert the device was left in a valid "installed" state.
         assertDevicePathDoesNotExist(dataStagedDir);
-        assertDeviceDirContainsDistro(dataCurrentDir, distro);
+        assertDeviceDirContainsDistro(dataCurrentDir, distroBytes);
     }
 
     // {dataDir}/staged contains an install, but there is nothing to replace.
@@ -282,8 +282,8 @@ public class TzDataCheckTest extends DeviceTestCase {
 
         // Create a staged install.
         PathPair dataStagedDir = mDataDir.createSubPath(STAGED_DIR_NAME);
-        TimeZoneDistro stagedDistro = createValidDistroBuilder().build();
-        unpackOnHost(dataStagedDir, stagedDistro);
+        byte[] stagedDistroBytes = createValidDistroBuilder().buildBytes();
+        unpackOnHost(dataStagedDir, stagedDistroBytes);
 
         // Push the host test directory and contents to the device.
         pushHostTestDirToDevice();
@@ -294,7 +294,7 @@ public class TzDataCheckTest extends DeviceTestCase {
 
         // Assert the device was left in a valid "installed" state.
         assertDevicePathDoesNotExist(dataStagedDir);
-        assertDeviceDirContainsDistro(dataCurrentDir, stagedDistro);
+        assertDeviceDirContainsDistro(dataCurrentDir, stagedDistroBytes);
     }
 
     // {dataDir}/staged contains an install, and there is something to replace.
@@ -311,17 +311,17 @@ public class TzDataCheckTest extends DeviceTestCase {
 
         // Create a staged uninstall.
         PathPair dataStagedDir = mDataDir.createSubPath(STAGED_DIR_NAME);
-        TimeZoneDistro stagedDistro = createValidDistroBuilder()
+        byte[] stagedDistroBytes = createValidDistroBuilder()
                 .setDistroVersion(stagedDistroVersion)
-                .build();
-        unpackOnHost(dataStagedDir, stagedDistro);
+                .buildBytes();
+        unpackOnHost(dataStagedDir, stagedDistroBytes);
 
         // Create a current installed distro.
         PathPair dataCurrentDir = mDataDir.createSubPath(CURRENT_DIR_NAME);
-        TimeZoneDistro currentDistro = createValidDistroBuilder()
+        byte[] currentDistroBytes = createValidDistroBuilder()
                 .setDistroVersion(currentDistroVersion)
-                .build();
-        unpackOnHost(dataCurrentDir, currentDistro);
+                .buildBytes();
+        unpackOnHost(dataCurrentDir, currentDistroBytes);
 
         // Push the host test directory and contents to the device.
         pushHostTestDirToDevice();
@@ -333,7 +333,7 @@ public class TzDataCheckTest extends DeviceTestCase {
         // Assert the device was left in a valid "installed" state.
         // The stagedDistro should now be the one in the current dir.
         assertDevicePathDoesNotExist(dataStagedDir);
-        assertDeviceDirContainsDistro(dataCurrentDir, stagedDistro);
+        assertDeviceDirContainsDistro(dataCurrentDir, stagedDistroBytes);
     }
 
     // {dataDir}/staged contains an invalid install, and there is something to replace.
@@ -347,15 +347,15 @@ public class TzDataCheckTest extends DeviceTestCase {
 
         // Create a staged uninstall which contains invalid.
         PathPair dataStagedDir = mDataDir.createSubPath(STAGED_DIR_NAME);
-        TimeZoneDistro stagedDistro = createValidDistroBuilder()
+        byte[] stagedDistroBytes = createValidDistroBuilder()
                 .clearVersionForTests()
-                .buildUnvalidated();
-        unpackOnHost(dataStagedDir, stagedDistro);
+                .buildUnvalidatedBytes();
+        unpackOnHost(dataStagedDir, stagedDistroBytes);
 
         // Create a current installed distro.
         PathPair dataCurrentDir = mDataDir.createSubPath(CURRENT_DIR_NAME);
-        TimeZoneDistro currentDistro = createValidDistroBuilder().build();
-        unpackOnHost(dataCurrentDir, currentDistro);
+        byte[] currentDistroBytes = createValidDistroBuilder().buildBytes();
+        unpackOnHost(dataCurrentDir, currentDistroBytes);
 
         // Push the host test directory and contents to the device.
         pushHostTestDirToDevice();
@@ -413,10 +413,10 @@ public class TzDataCheckTest extends DeviceTestCase {
 
         // Set up the /data directory structure on host.
         PathPair dataCurrentDir = mDataDir.createSubPath(CURRENT_DIR_NAME);
-        TimeZoneDistro distroWithoutAVersionFile = createValidDistroBuilder()
+        byte[] distroWithoutAVersionFileBytes = createValidDistroBuilder()
                 .clearVersionForTests()
-                .buildUnvalidated();
-        unpackOnHost(dataCurrentDir, distroWithoutAVersionFile);
+                .buildUnvalidatedBytes();
+        unpackOnHost(dataCurrentDir, distroWithoutAVersionFileBytes);
 
         // Push the host test directory and contents to the device.
         pushHostTestDirToDevice();
@@ -435,7 +435,7 @@ public class TzDataCheckTest extends DeviceTestCase {
 
         // Set up the /data directory structure on host.
         PathPair dataCurrentDir = mDataDir.createSubPath(CURRENT_DIR_NAME);
-        unpackOnHost(dataCurrentDir, createValidDistroBuilder().build());
+        unpackOnHost(dataCurrentDir, createValidDistroBuilder().buildBytes());
         // Replace the distro version file with a short file.
         Path distroVersionFile =
                 dataCurrentDir.hostPath.resolve(TimeZoneDistro.DISTRO_VERSION_FILE_NAME);
@@ -459,7 +459,7 @@ public class TzDataCheckTest extends DeviceTestCase {
 
         // Set up the /data directory structure on host.
         PathPair dataCurrentDir = mDataDir.createSubPath(CURRENT_DIR_NAME);
-        unpackOnHost(dataCurrentDir, createValidDistroBuilder().build());
+        unpackOnHost(dataCurrentDir, createValidDistroBuilder().buildBytes());
 
         // Replace the distro version file with junk.
         Path distroVersionFile =
@@ -489,10 +489,10 @@ public class TzDataCheckTest extends DeviceTestCase {
         PathPair dataCurrentDir = mDataDir.createSubPath(CURRENT_DIR_NAME);
         DistroVersion oldMajorDistroVersion = new DistroVersion(
                 DistroVersion.CURRENT_FORMAT_MAJOR_VERSION - 1, 1, VALID_RULES_VERSION, 1);
-        TimeZoneDistro distro = createValidDistroBuilder()
+        byte[] distroBytes = createValidDistroBuilder()
                 .setDistroVersion(oldMajorDistroVersion)
-                .build();
-        unpackOnHost(dataCurrentDir, distro);
+                .buildBytes();
+        unpackOnHost(dataCurrentDir, distroBytes);
 
         // Push the host test directory and contents to the device.
         pushHostTestDirToDevice();
@@ -515,10 +515,10 @@ public class TzDataCheckTest extends DeviceTestCase {
                 DistroVersion.CURRENT_FORMAT_MAJOR_VERSION + 1,
                 DistroVersion.CURRENT_FORMAT_MINOR_VERSION,
                 VALID_RULES_VERSION, VALID_REVISION);
-        TimeZoneDistro distro = createValidDistroBuilder()
+        byte[] distroBytes = createValidDistroBuilder()
                 .setDistroVersion(newMajorDistroVersion)
-                .build();
-        unpackOnHost(dataCurrentDir, distro);
+                .buildBytes();
+        unpackOnHost(dataCurrentDir, distroBytes);
 
         // Push the host test directory and contents to the device.
         pushHostTestDirToDevice();
@@ -541,10 +541,10 @@ public class TzDataCheckTest extends DeviceTestCase {
                 DistroVersion.CURRENT_FORMAT_MAJOR_VERSION,
                 DistroVersion.CURRENT_FORMAT_MINOR_VERSION - 1,
                 VALID_RULES_VERSION, 1);
-        TimeZoneDistro distro = createValidDistroBuilder()
+        byte[] distroBytes = createValidDistroBuilder()
                 .setDistroVersion(oldMinorDistroVersion)
-                .build();
-        unpackOnHost(dataCurrentDir, distro);
+                .buildBytes();
+        unpackOnHost(dataCurrentDir, distroBytes);
 
         // Push the host test directory and contents to the device.
         pushHostTestDirToDevice();
@@ -568,10 +568,10 @@ public class TzDataCheckTest extends DeviceTestCase {
                 DistroVersion.CURRENT_FORMAT_MAJOR_VERSION,
                 DistroVersion.CURRENT_FORMAT_MINOR_VERSION + 1,
                 VALID_RULES_VERSION, VALID_REVISION);
-        TimeZoneDistro distro = createValidDistroBuilder()
+        byte[] distroBytes = createValidDistroBuilder()
                 .setDistroVersion(newMajorDistroVersion)
-                .build();
-        unpackOnHost(dataCurrentDir, distro);
+                .buildBytes();
+        unpackOnHost(dataCurrentDir, distroBytes);
 
         // Push the host test directory and contents to the device.
         pushHostTestDirToDevice();
@@ -580,7 +580,7 @@ public class TzDataCheckTest extends DeviceTestCase {
         assertEquals(0, runTzDataCheckOnDevice());
 
         // Assert the current data directory was not touched.
-        assertDeviceDirContainsDistro(dataCurrentDir, distro);
+        assertDeviceDirContainsDistro(dataCurrentDir, distroBytes);
     }
 
     // {dataDir}/current is valid but the tzdata file in /system is missing.
@@ -589,8 +589,8 @@ public class TzDataCheckTest extends DeviceTestCase {
 
         // Set up the /data directory structure on host.
         PathPair dataCurrentDir = mDataDir.createSubPath(CURRENT_DIR_NAME);
-        TimeZoneDistro validDistro = createValidDistroBuilder().build();
-        unpackOnHost(dataCurrentDir, validDistro);
+        byte[] validDistroBytes = createValidDistroBuilder().buildBytes();
+        unpackOnHost(dataCurrentDir, validDistroBytes);
 
         // Push the host test directory and contents to the device.
         pushHostTestDirToDevice();
@@ -599,7 +599,7 @@ public class TzDataCheckTest extends DeviceTestCase {
         assertEquals(6, runTzDataCheckOnDevice());
 
         // Assert the current data directory was not touched.
-        assertDeviceDirContainsDistro(dataCurrentDir, validDistro);
+        assertDeviceDirContainsDistro(dataCurrentDir, validDistroBytes);
     }
 
     // {dataDir}/current is valid but the tzdata file in /system has an invalid header.
@@ -610,8 +610,8 @@ public class TzDataCheckTest extends DeviceTestCase {
 
         // Set up the /data directory structure on host.
         PathPair dataCurrentDir = mDataDir.createSubPath(CURRENT_DIR_NAME);
-        TimeZoneDistro validDistro = createValidDistroBuilder().build();
-        unpackOnHost(dataCurrentDir, validDistro);
+        byte[] validDistroBytes = createValidDistroBuilder().buildBytes();
+        unpackOnHost(dataCurrentDir, validDistroBytes);
 
         // Push the host test directory and contents to the device.
         pushHostTestDirToDevice();
@@ -620,7 +620,7 @@ public class TzDataCheckTest extends DeviceTestCase {
         assertEquals(7, runTzDataCheckOnDevice());
 
         // Assert the current data directory was not touched.
-        assertDeviceDirContainsDistro(dataCurrentDir, validDistro);
+        assertDeviceDirContainsDistro(dataCurrentDir, validDistroBytes);
     }
 
     // {dataDir}/current is valid and the tzdata file in /system is older.
@@ -635,11 +635,11 @@ public class TzDataCheckTest extends DeviceTestCase {
         DistroVersion distroVersion = new DistroVersion(
                 DistroVersion.CURRENT_FORMAT_MAJOR_VERSION,
                 DistroVersion.CURRENT_FORMAT_MINOR_VERSION, distroRulesVersion, VALID_REVISION);
-        TimeZoneDistro distro = createValidDistroBuilder()
+        byte[] distroBytes = createValidDistroBuilder()
                 .setDistroVersion(distroVersion)
                 .setTzDataFile(createValidTzDataBytes(distroRulesVersion))
-                .build();
-        unpackOnHost(dataCurrentDir, distro);
+                .buildBytes();
+        unpackOnHost(dataCurrentDir, distroBytes);
 
         // Push the host test directory and contents to the device.
         pushHostTestDirToDevice();
@@ -648,7 +648,7 @@ public class TzDataCheckTest extends DeviceTestCase {
         assertEquals(0, runTzDataCheckOnDevice());
 
         // Assert the current data directory was not touched.
-        assertDeviceDirContainsDistro(dataCurrentDir, distro);
+        assertDeviceDirContainsDistro(dataCurrentDir, distroBytes);
     }
 
     // {dataDir}/current is valid and the tzdata file in /system is the same (and should be kept).
@@ -662,11 +662,11 @@ public class TzDataCheckTest extends DeviceTestCase {
         DistroVersion distroVersion = new DistroVersion(
                 DistroVersion.CURRENT_FORMAT_MAJOR_VERSION,
                 DistroVersion.CURRENT_FORMAT_MINOR_VERSION, systemRulesVersion, VALID_REVISION);
-        TimeZoneDistro distro = createValidDistroBuilder()
+        byte[] distroBytes = createValidDistroBuilder()
                 .setDistroVersion(distroVersion)
                 .setTzDataFile(createValidTzDataBytes(systemRulesVersion))
-                .build();
-        unpackOnHost(dataCurrentDir, distro);
+                .buildBytes();
+        unpackOnHost(dataCurrentDir, distroBytes);
 
         // Push the host test directory and contents to the device.
         pushHostTestDirToDevice();
@@ -675,7 +675,7 @@ public class TzDataCheckTest extends DeviceTestCase {
         assertEquals(0, runTzDataCheckOnDevice());
 
         // Assert the current data directory was not touched.
-        assertDeviceDirContainsDistro(dataCurrentDir, distro);
+        assertDeviceDirContainsDistro(dataCurrentDir, distroBytes);
     }
 
     // {dataDir}/current is valid and the tzdata file in /system is the newer.
@@ -692,11 +692,11 @@ public class TzDataCheckTest extends DeviceTestCase {
                 DistroVersion.CURRENT_FORMAT_MINOR_VERSION,
                 distroRulesVersion,
                 VALID_REVISION);
-        TimeZoneDistro distro = createValidDistroBuilder()
+        byte[] distroBytes = createValidDistroBuilder()
                 .setDistroVersion(distroVersion)
                 .setTzDataFile(createValidTzDataBytes(distroRulesVersion))
-                .build();
-        unpackOnHost(dataCurrentDir, distro);
+                .buildBytes();
+        unpackOnHost(dataCurrentDir, distroBytes);
 
         // Push the host test directory and contents to the device.
         pushHostTestDirToDevice();
@@ -722,9 +722,9 @@ public class TzDataCheckTest extends DeviceTestCase {
         new FileOutputStream(uninstallTombstoneFile.hostFile()).close();
     }
 
-    private static void unpackOnHost(PathPair path, TimeZoneDistro distro) throws Exception {
+    private static void unpackOnHost(PathPair path, byte[] distroBytes) throws Exception {
         createHostDirectory(path);
-        distro.extractTo(path.hostFile());
+        new TimeZoneDistro(distroBytes).extractTo(path.hostFile());
     }
 
     private static TimeZoneDistroBuilder createValidDistroBuilder() throws Exception {
@@ -910,7 +910,7 @@ public class TzDataCheckTest extends DeviceTestCase {
         assertTrue(getDevice().doesFileExist(path.devicePath));
     }
 
-    private void assertDeviceDirContainsDistro(PathPair distroPath, TimeZoneDistro expectedDistro)
+    private void assertDeviceDirContainsDistro(PathPair distroPath, byte[] expectedDistroBytes)
             throws Exception {
         // Pull back just the version file and compare it.
         File localFile = mTestRootDir.createSubPath("temp.file").hostFile();
@@ -921,7 +921,8 @@ public class TzDataCheckTest extends DeviceTestCase {
                     getDevice().pullFile(remoteVersionFile, localFile));
 
             byte[] bytes = Files.readAllBytes(localFile.toPath());
-            assertArrayEquals(bytes, expectedDistro.getDistroVersion().toBytes());
+            assertArrayEquals(bytes,
+                    new TimeZoneDistro(expectedDistroBytes).getDistroVersion().toBytes());
         } finally {
             localFile.delete();
         }
