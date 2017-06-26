@@ -42,7 +42,7 @@ public class LinearLayout_LayoutParamsTest {
     @Test
     public void testConstructor() throws XmlPullParserException, IOException {
         final Context context = InstrumentationRegistry.getTargetContext();
-        XmlResourceParser p = context.getResources().getLayout(R.layout.linearlayout_layout);
+        XmlResourceParser p = context.getResources().getLayout(R.layout.linearlayout_layout2);
 
         XmlUtils.beginDocument(p, "LinearLayout");
         LinearLayout.LayoutParams linearLayoutParams =
