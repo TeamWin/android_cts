@@ -29,6 +29,8 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
 LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner legacy-android-test
 
+LOCAL_JNI_SHARED_LIBRARIES := libctsvrextensions_jni libnativehelper_compat_libc++
+
 LOCAL_SRC_FILES := $(call all-java-files-under, src) ../../apps/CtsVerifier/src/com/android/cts/verifier/vr/MockVrListenerService.java
 
 LOCAL_SDK_VERSION := test_current
@@ -37,3 +39,5 @@ LOCAL_SDK_VERSION := test_current
 LOCAL_COMPATIBILITY_SUITE := cts general-tests
 
 include $(BUILD_CTS_PACKAGE)
+
+include $(call all-makefiles-under,$(LOCAL_PATH))
