@@ -21,11 +21,11 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.WindowManager;
 
-import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class GetResultActivity extends Activity {
-    private static SynchronousQueue<Result> sResult;
+    private static LinkedBlockingQueue<Result> sResult;
 
     public static class Result {
         public final int requestCode;
@@ -58,7 +58,7 @@ public class GetResultActivity extends Activity {
     }
 
     public void clearResult() {
-        sResult = new SynchronousQueue<>();
+        sResult = new LinkedBlockingQueue<>();
     }
 
     public Result getResult() {
