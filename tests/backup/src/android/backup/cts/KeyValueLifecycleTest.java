@@ -19,9 +19,9 @@ package android.backup.cts;
 /**
  * Verifies that key methods are called in expected order during backup / restore.
  */
-public class FullBackupLifecycleTest extends BaseBackupCtsTest {
+public class KeyValueLifecycleTest extends BaseBackupCtsTest {
 
-    private static final String BACKUP_APP_NAME = "android.backup.app";
+    private static final String BACKUP_APP_NAME = "android.backup.kvapp";
 
     private static final int LOCAL_TRANSPORT_CONFORMING_FILE_SIZE = 5 * 1024;
 
@@ -41,7 +41,7 @@ public class FullBackupLifecycleTest extends BaseBackupCtsTest {
 
         verifyContainsInOrder(execLogcat(),
             "onCreate",
-            "Full backup requested",
+            "Backup requested",
             "onDestroy");
 
         exec("logcat --clear");
@@ -52,7 +52,7 @@ public class FullBackupLifecycleTest extends BaseBackupCtsTest {
 
         verifyContainsInOrder(execLogcat(),
             "onCreate",
-            "onRestoreFile",
+            "Restore requested",
             "onRestoreFinished",
             "onDestroy");
     }

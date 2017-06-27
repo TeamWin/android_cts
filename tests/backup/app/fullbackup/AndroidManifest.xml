@@ -20,7 +20,7 @@
 
     <application
         android:allowBackup="true"
-        android:backupAgent="BackupCtsBackupAgent"
+        android:backupAgent="FullBackupBackupAgent"
         android:label="Android Backup CTS App"
         android:fullBackupOnly="true">
         <activity
