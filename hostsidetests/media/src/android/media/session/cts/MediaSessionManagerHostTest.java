@@ -70,6 +70,10 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
 
     @Override
     public void tearDown() throws Exception {
+        if (!mHasManagedUsersFeature) {
+            return;
+        }
+
         // Cleanup
         for (int userId : mNotificationListeners.keySet()) {
             String notificationListener = mNotificationListeners.get(userId);
@@ -84,6 +88,10 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
      */
     @RequiresDevice
     public void testGetActiveSessions() throws Exception {
+        if (!mHasManagedUsersFeature) {
+            return;
+        }
+
         // Ensure that the previously running media session test helper app doesn't exist.
         getDevice().uninstallPackage(MEDIA_SESSION_TEST_HELPER_PKG);
 
@@ -126,6 +134,7 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
         installAppAsUser(DEVICE_SIDE_TEST_APK, newUser);
         allowGetActiveSessionForTest(newUser);
         runTestAsUser("testGetActiveSessions_noMediaSession", newUser);
+        removeUser(newUser);
     }
 
     private void runTest(String testMethodName) throws DeviceNotAvailableException {
