@@ -20,7 +20,6 @@ import android.app.Instrumentation;
 import android.content.pm.PackageManager;
 import android.os.ParcelFileDescriptor;
 import android.test.InstrumentationTestCase;
-import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -45,8 +44,6 @@ public class BaseBackupCtsTest extends InstrumentationTestCase {
     private static final int SMALL_LOGCAT_DELAY = 1000;
 
     private boolean isBackupSupported;
-    private boolean wasBackupEnabled;
-    private String oldTransport;
 
     @Override
     protected void setUp() throws Exception {
@@ -54,63 +51,25 @@ public class BaseBackupCtsTest extends InstrumentationTestCase {
         PackageManager packageManager = getInstrumentation().getContext().getPackageManager();
         isBackupSupported = packageManager != null
                 && packageManager.hasSystemFeature(PackageManager.FEATURE_BACKUP);
-        if (!isBackupSupported) {
-            return;
-        }
-        // Enable backup and select local backup transport
-        assertTrue("LocalTransport should be available.", hasBackupTransport(LOCAL_TRANSPORT));
-        wasBackupEnabled = enableBackup(true);
-        oldTransport = setBackupTransport(LOCAL_TRANSPORT);
-    }
 
-    @Override
-    protected void tearDown() throws Exception {
-        // Return old transport
         if (isBackupSupported) {
-            setBackupTransport(oldTransport);
-            enableBackup(wasBackupEnabled);
+            assertTrue("Backup not enabled", isBackupEnabled());
+            assertTrue("LocalTransport not selected", isLocalTransportSelected());
         }
-        super.tearDown();
     }
 
     public boolean isBackupSupported() {
         return isBackupSupported;
     }
 
-    private boolean enableBackup(boolean enable) throws Exception {
-        boolean previouslyEnabled;
+    private boolean isBackupEnabled() throws Exception {
         String output = exec("bmgr enabled");
-        Pattern pattern = Pattern.compile("^Backup Manager currently (enabled|disabled)$");
-        Matcher matcher = pattern.matcher(output.trim());
-        if (matcher.find()) {
-            previouslyEnabled = "enabled".equals(matcher.group(1));
-        } else {
-            throw new RuntimeException("non-parsable output setting bmgr enabled: " + output);
-        }
-
-        exec("bmgr enable " + enable);
-        return previouslyEnabled;
+        return output.contains("currently enabled");
     }
 
-    private String setBackupTransport(String transport) throws Exception {
-        String output = exec("bmgr transport " + transport);
-        Pattern pattern = Pattern.compile("\\(formerly (.*)\\)$");
-        Matcher matcher = pattern.matcher(output);
-        if (matcher.find()) {
-            return matcher.group(1);
-        } else {
-            throw new RuntimeException("non-parsable output setting bmgr transport: " + output);
-        }
-    }
-
-    private boolean hasBackupTransport(String transport) throws Exception {
+    private boolean isLocalTransportSelected() throws Exception {
         String output = exec("bmgr list transports");
-        for (String t : output.split(" ")) {
-            if (transport.equals(t)) {
-                return true;
-            }
-        }
-        return false;
+        return output.contains("* " + LOCAL_TRANSPORT);
     }
 
     protected boolean waitForLogcat(String logcatString, int maxTimeoutInSeconds) throws Exception {
