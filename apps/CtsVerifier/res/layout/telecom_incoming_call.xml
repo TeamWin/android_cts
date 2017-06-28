@@ -15,128 +15,135 @@
   ~ limitations under the License
   -->
 
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent">
-
-    <TextView
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/telecom_incoming_call_test_info"/>
+        android:layout_height="wrap_content">
 
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/js_padding"
-        android:layout_marginBottom="@dimen/js_padding">
-
-        <ImageView
-            android:id="@+id/step_1_status"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/fs_indeterminate"
-            android:layout_marginRight="@dimen/js_padding"
-            android:layout_alignParentStart="true"
-            android:layout_alignParentTop="true" />
         <TextView
-            android:id="@+id/step_1_instructions"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/telecom_incoming_call_step_1"
-            android:textSize="16dp"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentTop="true"
-            android:layout_toRightOf="@id/step_1_status" />
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
-            android:layout_below="@id/step_1_instructions"
-            android:layout_marginLeft="20dip"
-            android:layout_marginRight="20dip"
-            android:layout_toRightOf="@id/step_1_status"
-            android:id="@+id/telecom_incoming_call_register_enable_phone_account_button"
-            android:text="@string/telecom_incoming_call_register_enable_phone_account_button"/>
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
-            android:layout_below="@id/telecom_incoming_call_register_enable_phone_account_button"
-            android:layout_marginLeft="20dip"
-            android:layout_marginRight="20dip"
-            android:id="@+id/telecom_incoming_call_confirm_register_button"
-            android:text="@string/telecom_incoming_call_confirm_register_button"/>
-    </RelativeLayout>
+            android:text="@string/telecom_incoming_call_test_info"/>
 
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/js_padding"
-        android:layout_marginBottom="@dimen/js_padding">
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/js_padding"
+            android:layout_marginBottom="@dimen/js_padding">
 
-        <ImageView
-            android:id="@+id/step_2_status"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/fs_indeterminate"
-            android:layout_marginRight="@dimen/js_padding"
-            android:layout_alignParentStart="true"
-            android:layout_alignParentTop="true" />
-        <TextView
-            android:id="@+id/step_2_instructions"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/telecom_incoming_call_step_2"
-            android:textSize="16dp"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentTop="true"
-            android:layout_toRightOf="@id/step_2_status" />
-        <Button
-            android:id="@+id/telecom_incoming_call_dial_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
-            android:layout_below="@id/step_2_instructions"
-            android:layout_marginLeft="20dip"
-            android:layout_marginRight="20dip"
-            android:layout_toRightOf="@id/step_2_status"
-            android:text="@string/telecom_incoming_call_dial_button"/>
-    </RelativeLayout>
+            <ImageView
+                android:id="@+id/step_1_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/fs_indeterminate"
+                android:layout_marginRight="@dimen/js_padding"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true" />
+            <TextView
+                android:id="@+id/step_1_instructions"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/telecom_incoming_call_step_1"
+                android:textSize="16dp"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentTop="true"
+                android:layout_toRightOf="@id/step_1_status" />
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_below="@id/step_1_instructions"
+                android:layout_marginLeft="20dip"
+                android:layout_marginRight="20dip"
+                android:layout_toRightOf="@id/step_1_status"
+                android:id="@+id/telecom_incoming_call_register_enable_phone_account_button"
+                android:text="@string/telecom_incoming_call_register_enable_phone_account_button"/>
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_below="@id/telecom_incoming_call_register_enable_phone_account_button"
+                android:layout_marginLeft="20dip"
+                android:layout_marginRight="20dip"
+                android:id="@+id/telecom_incoming_call_confirm_register_button"
+                android:text="@string/telecom_incoming_call_confirm_register_button"/>
+        </RelativeLayout>
 
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/js_padding"
-        android:layout_marginBottom="@dimen/js_padding">
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/js_padding"
+            android:layout_marginBottom="@dimen/js_padding">
 
-        <ImageView
-            android:id="@+id/step_3_status"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/fs_indeterminate"
-            android:layout_marginRight="@dimen/js_padding"
-            android:layout_alignParentStart="true"
-            android:layout_alignParentTop="true" />
-        <TextView
-            android:id="@+id/step_3_instructions"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/telecom_incoming_call_step_3"
-            android:textSize="16dp"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentTop="true"
-            android:layout_toRightOf="@id/step_3_status" />
-        <Button
-            android:id="@+id/telecom_incoming_call_confirm_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
-            android:layout_below="@id/step_3_instructions"
-            android:layout_marginLeft="20dip"
-            android:layout_marginRight="20dip"
-            android:layout_toRightOf="@id/step_3_status"
-            android:text="@string/telecom_incoming_call_confirm_button"/>
-    </RelativeLayout>
+            <ImageView
+                android:id="@+id/step_2_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/fs_indeterminate"
+                android:layout_marginRight="@dimen/js_padding"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true" />
+            <TextView
+                android:id="@+id/step_2_instructions"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/telecom_incoming_call_step_2"
+                android:textSize="16dp"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentTop="true"
+                android:layout_toRightOf="@id/step_2_status" />
+            <Button
+                android:id="@+id/telecom_incoming_call_dial_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_below="@id/step_2_instructions"
+                android:layout_marginLeft="20dip"
+                android:layout_marginRight="20dip"
+                android:layout_toRightOf="@id/step_2_status"
+                android:text="@string/telecom_incoming_call_dial_button"/>
+        </RelativeLayout>
 
-    <include layout="@layout/pass_fail_buttons" />
-</LinearLayout>
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/js_padding"
+            android:layout_marginBottom="@dimen/js_padding">
+
+            <ImageView
+                android:id="@+id/step_3_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/fs_indeterminate"
+                android:layout_marginRight="@dimen/js_padding"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true" />
+            <TextView
+                android:id="@+id/step_3_instructions"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/telecom_incoming_call_step_3"
+                android:textSize="16dp"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentTop="true"
+                android:layout_toRightOf="@id/step_3_status" />
+            <Button
+                android:id="@+id/telecom_incoming_call_confirm_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_below="@id/step_3_instructions"
+                android:layout_marginLeft="20dip"
+                android:layout_marginRight="20dip"
+                android:layout_toRightOf="@id/step_3_status"
+                android:text="@string/telecom_incoming_call_confirm_button"/>
+        </RelativeLayout>
+
+        <include layout="@layout/pass_fail_buttons" />
+    </LinearLayout>
+</ScrollView>
