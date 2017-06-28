@@ -22,6 +22,10 @@
         <option name="test-file-name" value="CtsKeyValueBackupApp.apk" />
         <option name="test-file-name" value="CtsBackupTestCases.apk" />
     </target_preparer>
+    <target_preparer class="android.cts.backup.BackupPreparer">
+        <option name="enable-backup-if-needed" value="true" />
+        <option name="select-local-transport" value="true" />
+    </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.backup.cts" />
         <option name="runtime-hint" value="8m20s" />
