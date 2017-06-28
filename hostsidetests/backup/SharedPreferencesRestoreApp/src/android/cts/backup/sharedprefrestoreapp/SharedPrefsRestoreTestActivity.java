@@ -1,35 +1,16 @@
-/*
- * Copyright (C) 2017 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License
- */
-
-package android.backup.cts.backuprestoreapp;
+package android.cts.backup.sharedprefrestoreapp;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 
-import static android.backup.cts.backuprestoreapp.Constants.*;
-
 /**
  * Test activity that verifies SharedPreference restore behavior.
+ * The activity lifecycle is driven by KeyValueBackupRestoreTest and is roughly the following:
  *
- * Test logic:
- *   1. This activity is launched; it creates a new SharedPreferences instance and writes
+ * 1. This activity is launched; it creates a new SharedPreferences instance and writes
  *       a known value to the INT_PREF element's via that instance.  The instance is
  *       kept live.
  *   2. The app is backed up, storing this known value in the backup dataset.
@@ -44,9 +25,24 @@ import static android.backup.cts.backuprestoreapp.Constants.*;
  *       shared prefs instance's INT_PREF element with what was previously written.
  *       The test passes if these differ, i.e. if the live shared prefs instance picked
  *       up the newly-restored data.
+ *
  */
 public class SharedPrefsRestoreTestActivity extends Activity {
     static final String TAG = "SharedPrefsTest";
+
+    // Shared prefs test activity actions
+    static final String INIT_ACTION = "android.backup.cts.backuprestore.INIT";
+    static final String UPDATE_ACTION = "android.backup.cts.backuprestore.UPDATE";
+    static final String TEST_ACTION = "android.backup.cts.backuprestore.TEST";
+
+    static final String RESULT_ACTION = "android.backup.cts.backuprestore.RESULT";
+
+    private static final String TEST_PREFS_1 = "test-prefs-1";
+    private static final String INT_PREF = "int-pref";
+    private static final int INT_PREF_VALUE = 1;
+    private static final int INT_PREF_MODIFIED_VALUE = 99999;
+    private static final int INT_PREF_DEFAULT_VALUE = 0;
+    private static final String EXTRA_SUCCESS = "EXTRA_SUCCESS";
 
     SharedPreferences mPrefs;
     int mLastValue;
@@ -69,23 +65,39 @@ public class SharedPrefsRestoreTestActivity extends Activity {
     private void processLaunchCommand(Intent intent) {
         final String action = intent.getAction();
         Log.i(TAG, "processLaunchCommand: " + action);
+
+        boolean success = false;
+
         if (INIT_ACTION.equals(action)) {
             // We'll issue a backup after setting this value in shared prefs
-            setPrefValue(55);
+            success = setPrefValue(INT_PREF_VALUE);
         } else if (UPDATE_ACTION.equals(action)) {
             // We'll issue a *restore* after setting this value, which will send a broadcast
             // to our receiver to read from the live instance and ensure that the value is
             // different from what was just written.
-            setPrefValue(999);
+            success = setPrefValue(INT_PREF_MODIFIED_VALUE);
         } else if (TEST_ACTION.equals(action)) {
-            final int currentValue = mPrefs.getInt(INT_PREF, mLastValue);
-            Log.i(TAG, "Shared prefs changed: " + (currentValue != mLastValue));
+            final int currentValue = mPrefs.getInt(INT_PREF, INT_PREF_DEFAULT_VALUE);
+            Log.i(TAG, "current value: " + currentValue + " last value : " + mLastValue);
+
+            if (currentValue != mLastValue && currentValue != INT_PREF_DEFAULT_VALUE) {
+                success = true;
+            }
+        } else {
+            // Should never happen
+            Log.e(TAG, "Unexpected intent action");
+            return;
         }
+
+        sendBroadcast(new Intent().setAction(RESULT_ACTION).putExtra(EXTRA_SUCCESS, success));
     }
 
     // Write a known value prior to backup
-    private void setPrefValue(int value) {
+    private boolean setPrefValue(int value) {
+        Log.i(TAG, "mLastValue = " + mLastValue + " setPrefValue: " + value );
         mLastValue = value;
-        mPrefs.edit().putInt(INT_PREF, value).commit();
+        boolean success = mPrefs.edit().putInt(INT_PREF, value).commit();
+        Log.i(TAG, "setPrefValue success: " + success);
+        return success;
     }
 }
