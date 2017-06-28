@@ -57,12 +57,46 @@
         <option name="push" value="CVE-2017-7369->/data/local/tmp/CVE-2017-7369" />
         <option name="push" value="CVE-2017-0576->/data/local/tmp/CVE-2017-0576" />
         <option name="push" value="CVE-2017-0586->/data/local/tmp/CVE-2017-0586" />
-        <option name="push" value="Bug-33863407->/data/local/tmp/Bug-33863407" />
-        <option name="push" value="Bug-35047780->/data/local/tmp/Bug-35047780" />
-        <option name="push" value="Bug-35048450->/data/local/tmp/Bug-35048450" />
-        <option name="push" value="Bug-35047217->/data/local/tmp/Bug-35047217" />
         <option name="push" value="CVE-2017-0705->/data/local/tmp/CVE-2017-0705" />
         <option name="push" value="CVE-2017-8263->/data/local/tmp/CVE-2017-8263" />
+        <!--__________________-->
+        <!-- Bulletin 2017-01 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+
+        <!--__________________-->
+        <!-- Bulletin 2017-02 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+
+        <!--__________________-->
+        <!-- Bulletin 2017-03 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+
+        <!--__________________-->
+        <!-- Bulletin 2017-04 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+
+        <!--__________________-->
+        <!-- Bulletin 2017-05 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+
+        <!--__________________-->
+        <!-- Bulletin 2017-06 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+
+        <option name="push" value="Bug-35047780->/data/local/tmp/Bug-35047780" />
+        <option name="push" value="Bug-35047217->/data/local/tmp/Bug-35047217" />
+        <option name="push" value="Bug-35048450->/data/local/tmp/Bug-35048450" />
+
+        <!--__________________-->
+        <!-- Bulletin 2017-07 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+
+        <option name="push" value="Bug-33863407->/data/local/tmp/Bug-33863407" />
+
+        <!--__________________-->
+        <!-- Bulletin 2017-08 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+
         <option name="append-bitness" value="true" />
     </target_preparer>
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
