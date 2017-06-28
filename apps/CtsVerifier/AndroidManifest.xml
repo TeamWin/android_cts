@@ -2409,7 +2409,8 @@
             </intent-filter>
         </service>
 
-        <activity android:name=".managedprovisioning.AuthenticationBoundKeyTestActivity">
+        <activity android:name=".managedprovisioning.AuthenticationBoundKeyTestActivity"
+                android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="com.android.cts.verifier.managedprovisioning.action.AUTH_BOUND_KEY_TEST" />
                 <category android:name="android.intent.category.DEFAULT" />
