@@ -34,7 +34,9 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
 
     private static final String APK_22 = "CtsUsePermissionApp22.apk";
     private static final String APK_23 = "CtsUsePermissionApp23.apk";
-    private static final String APK_24 = "CtsUsePermissionApp24.apk";
+    private static final String APK_25 = "CtsUsePermissionApp25.apk";
+    private static final String APK_26 = "CtsUsePermissionApp26.apk";
+    private static final String APK_Latest = "CtsUsePermissionAppLatest.apk";
 
     private static final String APK_DECLARE_NON_RUNTIME_PERMISSIONS =
             "CtsDeclareNonRuntimePermissions.apk";
@@ -162,6 +164,24 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
                 "testRuntimeGroupGrantExpansion");
     }
 
+    public void testRuntimeGroupGrantExpansion25() throws Exception {
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_25), false, false));
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
+                "testRuntimeGroupGrantExpansion");
+    }
+
+    public void testRuntimeGroupGrantExpansion26() throws Exception {
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_26), false, false));
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest26",
+                "testRuntimeGroupGrantNoExpansion");
+    }
+
+    public void testRuntimeGroupGrantExpansionLatest() throws Exception {
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_Latest), false, false));
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest26",
+                "testRuntimeGroupGrantNoExpansion");
+    }
+
     public void testCancelledPermissionRequest23() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_23), false, false));
         runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
@@ -229,12 +249,6 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
         runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
                 "testRequestPermissionFromTwoGroups");
     }
-
-//    public void testOnlyRequestedPermissionsGranted24() throws Exception {
-//        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_24), false, false));
-//        runDeviceTests(PKG, "com.android.cts.usepermission.UsePermissionTest24",
-//                "testOnlyRequestedPermissionsGranted");
-//    }
 
     public void testUpgradeKeepsPermissions() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_22), false, false));
