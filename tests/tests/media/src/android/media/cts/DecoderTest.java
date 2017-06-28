@@ -1856,7 +1856,7 @@ public class DecoderTest extends MediaPlayerTestBase {
         if (checkTv()) {
             assertTrue(MediaUtils.canDecodeVideo(
                     MediaFormat.MIMETYPE_VIDEO_HEVC, 1920, 1080, 30,
-                    HEVCProfileMain, HEVCMainTierLevel41, 10000000));
+                    HEVCProfileMain, HEVCMainTierLevel41, 5000000));
         }
     }
 
