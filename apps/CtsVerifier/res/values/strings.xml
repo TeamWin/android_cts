@@ -2412,6 +2412,9 @@ You should be prompted to select credentials; choose the ones you just installed
         5. Verify that the background color of the resulting dialog is as set by you.\n
         6. Verify that the header text has organization name as set by you.\n
     </string>
+
+    <string name="provisioning_byod_no_secure_lockscreen">No work lockscreen password set. Please run \"Select work lock test\" and rerun this test</string>
+
     <string name="provisioning_byod_parent_profile_password">Personal password test</string>
     <string name="provisioning_byod_parent_profile_password_description">
         This test verifies that the password on the personal side can be chosen from within a managed profile.\n
