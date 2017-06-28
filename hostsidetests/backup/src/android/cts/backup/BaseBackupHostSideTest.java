@@ -72,6 +72,14 @@ public abstract class BaseBackupHostSideTest extends CompatibilityHostTestBase {
     }
 
     /**
+     * Execute shell command "bmgr restore <packageName>" and assert success.
+     */
+    protected void restoreAndAssertSuccess(String packageName) throws DeviceNotAvailableException {
+        String restoreOutput = restore(packageName);
+        assertRestoreIsSuccessful(restoreOutput);
+    }
+
+    /**
      * Execute shell command "bmgr restore <packageName>" and return output from this command.
      */
     protected String restore(String packageName) throws DeviceNotAvailableException {
