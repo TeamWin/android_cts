@@ -479,6 +479,7 @@
         including showing the dialog to the user to verify a device, as well as updating an internal
         record once the user made the choice and then removing it.\n\n
         Before proceeding, make sure you have a bluetooth device nearby and discoverable.
+        Also, make sure that bluetooth is turned on on this device.
         Once you press the button, wait for a dialog to pop up and select your device from the list.
     </string>
 
