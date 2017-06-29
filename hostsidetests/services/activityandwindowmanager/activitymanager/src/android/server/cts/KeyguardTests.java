@@ -39,6 +39,7 @@ public class KeyguardTests extends KeyguardTestBase {
 
         // Remove screen lock
         mDevice.executeShellCommand("locksettings set-disabled true");
+        tearDownLock();
     }
 
     public void testKeyguardHidesActivity() throws Exception {
@@ -310,4 +311,44 @@ public class KeyguardTests extends KeyguardTestBase {
         assertNotNull(wallpaper);
         assertTrue(wallpaper.isShown());
     }
+
+    public void testDismissKeyguardAttrActivity_method_turnScreenOn() throws Exception {
+        if (!isHandheld()) {
+            return;
+        }
+
+        final String activityName = "TurnScreenOnAttrDismissKeyguardActivity";
+        sleepDevice();
+
+        final String logSeparator = clearLogcat();
+        mAmWmState.computeState(mDevice, null);
+        assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
+        launchActivity(activityName);
+        mAmWmState.waitForKeyguardGone(mDevice);
+        mAmWmState.assertVisibility(activityName, true);
+        assertFalse(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
+        assertOnDismissSucceededInLogcat(logSeparator);
+        assertTrue(isDisplayOn());
+    }
+
+    public void testDismissKeyguardAttrActivity_method_turnScreenOn_withSecureKeyguard() throws Exception {
+        if (!isHandheld()) {
+            return;
+        }
+
+        final String activityName = "TurnScreenOnAttrDismissKeyguardActivity";
+
+        setUpLock();
+        sleepDevice();
+
+        final String logSeparator = clearLogcat();
+        mAmWmState.computeState(mDevice, null);
+        assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
+        launchActivity(activityName);
+        mAmWmState.waitForKeyguardShowingAndNotOccluded(mDevice);
+        mAmWmState.assertVisibility(activityName, false);
+        assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
+        assertTrue(isDisplayOn());
+    }
+
 }

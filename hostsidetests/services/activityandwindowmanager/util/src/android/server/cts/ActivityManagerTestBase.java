@@ -265,6 +265,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         mInitialAccelerometerRotation = getAccelerometerRotation();
         mUserRotation = getUserRotation();
         mFontScale = getFontScale();
+        tearDownLock();
     }
 
     @Override
@@ -585,7 +586,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         return result;
     }
 
-    private boolean isDisplayOn() throws DeviceNotAvailableException {
+    protected boolean isDisplayOn() throws DeviceNotAvailableException {
         final CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
         mDevice.executeShellCommand("dumpsys power", outputReceiver);
 
@@ -927,7 +928,124 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         return filteredResult;
     }
 
+    void assertSingleLaunch(String activityName, String logSeparator) throws DeviceNotAvailableException {
+        int retriesLeft = 5;
+        String resultString;
+        do {
+            resultString = validateLifecycleCounts(activityName, logSeparator, 1 /* createCount */,
+                    1 /* startCount */, 1 /* resumeCount */, 0 /* pauseCount */, 0 /* stopCount */,
+                    0 /* destroyCount */);
+            if (resultString != null) {
+                log("***Waiting for valid lifecycle state: " + resultString);
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    log(e.toString());
+                }
+            } else {
+                break;
+            }
+        } while (retriesLeft-- > 0);
+
+        assertNull(resultString, resultString);
+    }
+
+    public void assertSingleLaunchAndStop(String activityName, String logSeparator) throws DeviceNotAvailableException {
+        int retriesLeft = 5;
+        String resultString;
+        do {
+            resultString = validateLifecycleCounts(activityName, logSeparator, 1 /* createCount */,
+                    1 /* startCount */, 1 /* resumeCount */, 1 /* pauseCount */, 1 /* stopCount */,
+                    0 /* destroyCount */);
+            if (resultString != null) {
+                log("***Waiting for valid lifecycle state: " + resultString);
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    log(e.toString());
+                }
+            } else {
+                break;
+            }
+        } while (retriesLeft-- > 0);
+
+        assertNull(resultString, resultString);
+    }
+
+    public void assertSingleStartAndStop(String activityName, String logSeparator) throws DeviceNotAvailableException {
+        int retriesLeft = 5;
+        String resultString;
+        do {
+            resultString =  validateLifecycleCounts(activityName, logSeparator, 0 /* createCount */,
+                    1 /* startCount */, 1 /* resumeCount */, 1 /* pauseCount */, 1 /* stopCount */,
+                    0 /* destroyCount */);
+            if (resultString != null) {
+                log("***Waiting for valid lifecycle state: " + resultString);
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    log(e.toString());
+                }
+            } else {
+                break;
+            }
+        } while (retriesLeft-- > 0);
+
+        assertNull(resultString, resultString);
+    }
+
+    void assertSingleStart(String activityName, String logSeparator) throws DeviceNotAvailableException {
+        int retriesLeft = 5;
+        String resultString;
+        do {
+            resultString = validateLifecycleCounts(activityName, logSeparator, 0 /* createCount */,
+                    1 /* startCount */, 1 /* resumeCount */, 0 /* pauseCount */, 0 /* stopCount */,
+                    0 /* destroyCount */);
+            if (resultString != null) {
+                log("***Waiting for valid lifecycle state: " + resultString);
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    log(e.toString());
+                }
+            } else {
+                break;
+            }
+        } while (retriesLeft-- > 0);
+
+        assertNull(resultString, resultString);
+    }
+
+    private String validateLifecycleCounts(String activityName, String logSeparator,
+            int createCount, int startCount, int resumeCount, int pauseCount, int stopCount,
+            int destroyCount) throws DeviceNotAvailableException {
+
+        final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(activityName,
+                logSeparator);
+
+        if (lifecycleCounts.mCreateCount != createCount) {
+            return activityName + " created " + lifecycleCounts.mCreateCount + " times.";
+        }
+        if (lifecycleCounts.mStartCount != startCount) {
+            return activityName + " started " + lifecycleCounts.mStartCount + " times.";
+        }
+        if (lifecycleCounts.mResumeCount != resumeCount) {
+            return activityName + " resumed " + lifecycleCounts.mResumeCount + " times.";
+        }
+        if (lifecycleCounts.mPauseCount != pauseCount) {
+            return activityName + " paused " + lifecycleCounts.mPauseCount + " times.";
+        }
+        if (lifecycleCounts.mStopCount != stopCount) {
+            return activityName + " stopped " + lifecycleCounts.mStopCount + " times.";
+        }
+        if (lifecycleCounts.mDestroyCount != destroyCount) {
+            return activityName + " destroyed " + lifecycleCounts.mDestroyCount + " times.";
+        }
+        return null;
+    }
+
     private static final Pattern sCreatePattern = Pattern.compile("(.+): onCreate");
+    private static final Pattern sStartPattern = Pattern.compile("(.+): onStart");
     private static final Pattern sResumePattern = Pattern.compile("(.+): onResume");
     private static final Pattern sPausePattern = Pattern.compile("(.+): onPause");
     private static final Pattern sConfigurationChangedPattern =
@@ -1030,6 +1148,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     class ActivityLifecycleCounts {
         int mCreateCount;
+        int mStartCount;
         int mResumeCount;
         int mConfigurationChangedCount;
         int mLastConfigurationChangedLineIndex;
@@ -1053,6 +1172,12 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
                 Matcher matcher = sCreatePattern.matcher(line);
                 if (matcher.matches()) {
                     mCreateCount++;
+                    continue;
+                }
+
+                matcher = sStartPattern.matcher(line);
+                if (matcher.matches()) {
+                    mStartCount++;
                     continue;
                 }
 
@@ -1227,5 +1352,18 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
                         null /* stackIds */, false /* compareTaskAndStackBounds */, mTargetPackage);
             }
         }
+    }
+
+    void setUpLock() throws Exception {
+        setLockCredential();
+    }
+
+    void tearDownLock() throws Exception {
+        removeLockCredential();
+        // Dismiss active keyguard after credential is cleared, so
+        // keyguard doesn't ask for the stale credential.
+        pressBackButton();
+        sleepDevice();
+        wakeUpAndUnlockDevice();
     }
 }

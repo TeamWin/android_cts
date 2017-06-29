@@ -41,7 +41,10 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     private static final String MOVE_TASK_TO_BACK_ACTIVITY_NAME = "MoveTaskToBackActivity";
     private static final String SWIPE_REFRESH_ACTIVITY = "SwipeRefreshActivity";
     private static final String NOHISTORY_ACTIVITY = "NoHistoryActivity";
-
+    private static final String TURN_SCREEN_ON_ATTR_ACTIVITY_NAME = "TurnScreenOnAttrActivity";
+    private static final String TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY_NAME = "TurnScreenOnShowOnLockActivity";
+    private static final String TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY_NAME = "TurnScreenOnAttrRemoveAttrActivity";
+    private static final String TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME = "TurnScreenOnSingleTaskActivity";
 
     public void testTranslucentActivityOnTopOfPinnedStack() throws Exception {
         if (!supportsPip()) {
@@ -272,5 +275,69 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         pressBackButton();
         mAmWmState.waitForHomeActivityVisible(mDevice);
         mAmWmState.assertHomeActivityVisible(true);
+    }
+
+    public void testTurnScreenOnAttrNoLockScreen() throws Exception {
+        sleepDevice();
+        final String logSeparator = clearLogcat();
+        launchActivity(TURN_SCREEN_ON_ATTR_ACTIVITY_NAME);
+        mAmWmState.computeState(mDevice, new String[] { TURN_SCREEN_ON_ATTR_ACTIVITY_NAME });
+        mAmWmState.assertVisibility(TURN_SCREEN_ON_ATTR_ACTIVITY_NAME, true);
+        assertTrue(isDisplayOn());
+        assertSingleLaunch(TURN_SCREEN_ON_ATTR_ACTIVITY_NAME, logSeparator);
+    }
+
+    public void testTurnScreenOnAttrWithLockScreen() throws Exception {
+        setUpLock();
+        sleepDevice();
+        final String logSeparator = clearLogcat();
+        launchActivity(TURN_SCREEN_ON_ATTR_ACTIVITY_NAME);
+        mAmWmState.computeState(mDevice, new String[] { TURN_SCREEN_ON_ATTR_ACTIVITY_NAME });
+        assertFalse(isDisplayOn());
+        assertSingleLaunchAndStop(TURN_SCREEN_ON_ATTR_ACTIVITY_NAME, logSeparator);
+    }
+
+    public void testTurnScreenOnShowOnLockAttr() throws Exception {
+        sleepDevice();
+        final String logSeparator = clearLogcat();
+        launchActivity(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY_NAME);
+        mAmWmState.computeState(mDevice, new String[] { TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY_NAME });
+        mAmWmState.assertVisibility(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY_NAME, true);
+        assertTrue(isDisplayOn());
+        assertSingleLaunch(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY_NAME, logSeparator);
+    }
+
+    public void testTurnScreenOnAttrRemove() throws Exception {
+        sleepDevice();
+        String logSeparator = clearLogcat();
+        launchActivity(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY_NAME);
+        mAmWmState.computeState(mDevice, new String[] {
+                TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY_NAME});
+        assertTrue(isDisplayOn());
+        assertSingleLaunch(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY_NAME, logSeparator);
+
+        sleepDevice();
+        logSeparator = clearLogcat();
+        launchActivity(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY_NAME);
+        assertFalse(isDisplayOn());
+        assertSingleStartAndStop(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY_NAME, logSeparator);
+    }
+
+    public void testTurnScreenOnSingleTask() throws Exception {
+        sleepDevice();
+        String logSeparator = clearLogcat();
+        launchActivity(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME);
+        mAmWmState.computeState(mDevice, new String[] { TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME });
+        mAmWmState.assertVisibility(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME, true);
+        assertTrue(isDisplayOn());
+        assertSingleLaunch(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME, logSeparator);
+
+        sleepDevice();
+        logSeparator = clearLogcat();
+        launchActivity(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME);
+        mAmWmState.computeState(mDevice, new String[] { TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME });
+        mAmWmState.assertVisibility(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME, true);
+        assertTrue(isDisplayOn());
+        assertSingleStart(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME, logSeparator);
     }
 }
