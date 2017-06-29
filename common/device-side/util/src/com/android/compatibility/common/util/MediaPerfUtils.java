@@ -31,10 +31,10 @@ public class MediaPerfUtils {
     private static final int MOVING_AVERAGE_NUM_FRAMES = 10;
     private static final int MOVING_AVERAGE_WINDOW_MS = 1000;
 
-    // allow a variance of 2x for measured frame rates (e.g. half of lower-limit to double of
-    // upper-limit of the published values). Also allow an extra 10% margin. This also acts as
+    // allow a variance of 2.5x for measured frame rates (e.g. 40% of lower-limit to 2.5x of
+    // upper-limit of the published values). Also allow an extra 20% margin. This also acts as
     // a limit for the size of the published rates (e.g. upper-limit / lower-limit <= tolerance).
-    private static final double FRAMERATE_TOLERANCE = 2.0 * 1.1;
+    private static final double FRAMERATE_TOLERANCE = 2.5 * 1.2;
 
     /*
      *  ------------------ HELPER METHODS FOR ACHIEVABLE FRAME RATES ------------------
