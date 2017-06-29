@@ -22,7 +22,6 @@ import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.ITestInvocationListener;
 import com.android.tradefed.testtype.AndroidJUnitTest;
-import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -39,7 +38,6 @@ abstract class ReportProcessor {
     private final Map<String, String> mMetrics = new HashMap<>();
     private String mFailureStackTrace = null;
 
-    private static final String APP_APK = "CtsMediaBitstreamsDeviceSideTestApp.apk";
     private static final String APP_CLS_NAME = "MediaBitstreamsDeviceSideTest";
     private static final String APP_PKG_NAME = "android.media.cts.bitstreams.app";
 
@@ -123,12 +121,9 @@ abstract class ReportProcessor {
     }
 
     private boolean runDeviceTest(
-            ITestDevice device, File testDir, String method, String reportKey,
-            int testTimeout, long shellTimeout)
+            ITestDevice device, String method, String reportKey, int testTimeout,
+            long shellTimeout)
             throws DeviceNotAvailableException {
-
-        File apkFile = new File(testDir, APP_APK);
-        device.installPackage(apkFile, true, true);
 
         String fullTestName = String.format("%s.%s#%s", APP_PKG_NAME, APP_CLS_NAME, method);
         AndroidJUnitTest instrTest = new AndroidJUnitTest();
@@ -159,11 +154,11 @@ abstract class ReportProcessor {
     }
 
     void processDeviceReport(
-            ITestDevice device, File testDir, String method, String reportKey)
+            ITestDevice device, String method, String reportKey)
             throws DeviceNotAvailableException, IOException {
         try {
             setUp(device);
-            while (!runDeviceTest(device, testDir, method, reportKey, 0, 0)) {
+            while (!runDeviceTest(device, method, reportKey, 0, 0)) {
                 if (!recover(device, mMetrics.get(reportKey))) {
                     return;
                 }
