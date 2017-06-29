@@ -351,7 +351,11 @@ public class ByodHelperActivity extends LocationListenerActivity
             KeyguardManager keyguardManager =
                     (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
             Intent launchIntent = keyguardManager.createConfirmDeviceCredentialIntent(null, null);
-            startActivity(launchIntent);
+            if (launchIntent != null) {
+                startActivity(launchIntent);
+            } else {
+                showToast(R.string.provisioning_byod_no_secure_lockscreen);
+            }
         } else if (ACTION_SET_ORGANIZATION_INFO.equals(action)) {
             if(intent.hasExtra(OrganizationInfoTestActivity.EXTRA_ORGANIZATION_NAME)) {
                 final String organizationName = intent
