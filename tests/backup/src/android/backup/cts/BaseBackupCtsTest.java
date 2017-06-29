@@ -26,9 +26,8 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Base class for backup instrumentation tests.
@@ -36,7 +35,7 @@ import java.util.regex.Pattern;
  * Ensures that backup is enabled and local transport selected, and provides some utility methods.
  */
 public class BaseBackupCtsTest extends InstrumentationTestCase {
-    protected static final String APP_LOG_TAG = "BackupCTSApp";
+    private static final String APP_LOG_TAG = "BackupCTSApp";
 
     private static final String LOCAL_TRANSPORT =
             "android/com.android.internal.backup.LocalTransport";
@@ -55,6 +54,7 @@ public class BaseBackupCtsTest extends InstrumentationTestCase {
         if (isBackupSupported) {
             assertTrue("Backup not enabled", isBackupEnabled());
             assertTrue("LocalTransport not selected", isLocalTransportSelected());
+            exec("setprop log.tag." + APP_LOG_TAG +" VERBOSE");
         }
     }
 
@@ -72,16 +72,44 @@ public class BaseBackupCtsTest extends InstrumentationTestCase {
         return output.contains("* " + LOCAL_TRANSPORT);
     }
 
-    protected boolean waitForLogcat(String logcatString, int maxTimeoutInSeconds) throws Exception {
+    /**
+     * Attempts to clear logcat.
+     *
+     * Clearing logcat is known to be unreliable, so this methods also output a unique separator
+     * that can be used to find this point in the log even if clearing failed.
+     * @return a unique separator string
+     * @throws Exception
+     */
+    protected String clearLogcat() throws Exception {
+        exec("logcat -c");
+        String uniqueString = ":::" + UUID.randomUUID().toString();
+        exec("log -t " + APP_LOG_TAG + " " + uniqueString);
+        return uniqueString;
+    }
+
+    /**
+     * Wait for up to maxTimeoutInSeconds for the given strings to appear in the logcat in the given order.
+     * By passing the separator returned by {@link #clearLogcat} as the first string you can ensure that only
+     * logs emitted after that call to clearLogcat are found.
+     *
+     * @throws AssertionError if the strings are not found in the given time.
+     */
+    protected void waitForLogcat(int maxTimeoutInSeconds, String... logcatStrings)
+        throws Exception {
         long timeout = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(maxTimeoutInSeconds);
+        int stringIndex = 0;
         while (timeout >= System.currentTimeMillis()) {
             FileInputStream fis = executeStreamedShellCommand(getInstrumentation(),
                     "logcat -v brief -d " + APP_LOG_TAG + ":* *:S");
             BufferedReader log = new BufferedReader(new InputStreamReader(fis));
             String line;
+            stringIndex = 0;
             while ((line = log.readLine()) != null) {
-                if (line.contains(logcatString)) {
-                    return true;
+                if (line.contains(logcatStrings[stringIndex])) {
+                    stringIndex++;
+                    if (stringIndex >= logcatStrings.length) {
+                        return;
+                    }
                 }
             }
             closeQuietly(log);
@@ -89,7 +117,9 @@ public class BaseBackupCtsTest extends InstrumentationTestCase {
             // performing the next search.
             Thread.sleep(SMALL_LOGCAT_DELAY);
         }
-        return false;
+        fail("Couldn't find " + logcatStrings[stringIndex] +
+            (stringIndex > 0 ? " after " + logcatStrings[stringIndex - 1] : "") +
+            " within " + maxTimeoutInSeconds + " seconds ");
     }
 
     protected void createTestFileOfSize(String packageName, int size) throws Exception {
@@ -97,14 +127,14 @@ public class BaseBackupCtsTest extends InstrumentationTestCase {
             "-c android.intent.category.LAUNCHER " +
             "-n " + packageName + "/android.backup.app.MainActivity " +
             "-e file_size " + size);
-        assertTrue("File was not created", waitForLogcat("File created!", 30));
+        waitForLogcat(30, "File created!");
     }
 
     protected String exec(String command) throws Exception {
-        BufferedReader br = null;
         try (InputStream in = executeStreamedShellCommand(getInstrumentation(), command)) {
-            br = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
-            String str = null;
+            BufferedReader br = new BufferedReader(
+                    new InputStreamReader(in, StandardCharsets.UTF_8));
+            String str;
             StringBuilder out = new StringBuilder();
             while ((str = br.readLine()) != null) {
                 out.append(str);

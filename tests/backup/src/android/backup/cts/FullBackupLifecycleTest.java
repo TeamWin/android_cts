@@ -25,50 +25,37 @@ public class FullBackupLifecycleTest extends BaseBackupCtsTest {
 
     private static final int LOCAL_TRANSPORT_CONFORMING_FILE_SIZE = 5 * 1024;
 
+    private static final int TIMEOUT_SECONDS = 10;
+
     public void testExpectedMethodsCalledInOrder() throws Exception {
         if (!isBackupSupported()) {
             return;
         }
-        exec("logcat --clear");
-        exec("setprop log.tag." + APP_LOG_TAG +" VERBOSE");
+        String backupSeparator = clearLogcat();
 
         // Make sure there's something to backup
         createTestFileOfSize(BACKUP_APP_NAME, LOCAL_TRANSPORT_CONFORMING_FILE_SIZE);
 
         // Request backup and wait for it to complete
         exec("bmgr backupnow " + BACKUP_APP_NAME);
-        assertTrue("Backup agent not destroyed", waitForLogcat("onDestroy", 10));
 
-        verifyContainsInOrder(execLogcat(),
+        waitForLogcat(TIMEOUT_SECONDS,
+            backupSeparator,
             "onCreate",
             "Full backup requested",
             "onDestroy");
 
-        exec("logcat --clear");
+        String restoreSeparator = clearLogcat();
 
         // Now request restore and wait for it to complete
         exec("bmgr restore " + BACKUP_APP_NAME);
-        assertTrue("Backup agent not destroyed", waitForLogcat("onDestroy", 10));
 
-        verifyContainsInOrder(execLogcat(),
+        waitForLogcat(TIMEOUT_SECONDS,
+            restoreSeparator,
             "onCreate",
             "onRestoreFile",
             "onRestoreFinished",
             "onDestroy");
     }
 
-    private void verifyContainsInOrder(String message, String... substrings) {
-        int currentIndex = 0;
-        for (String substring : substrings) {
-            int substringIndex = message.indexOf(substring, currentIndex);
-            if (substringIndex < 0) {
-                fail("Didn't find '" + substring + "' in expected order");
-            }
-            currentIndex = substringIndex + substring.length();
-        }
-    };
-
-    private String execLogcat() throws Exception {
-        return exec("logcat -v brief -d " + APP_LOG_TAG + ":* *:S");
-    }
 }

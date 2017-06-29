@@ -30,28 +30,30 @@ public class FullBackupQuotaTest extends BaseBackupCtsTest {
     private static final int LOCAL_TRANSPORT_BACKUP_QUOTA = 25 * 1024 * 1024;
     private static final int LOCAL_TRANSPORT_EXCEEDING_FILE_SIZE = 30 * 1024 * 1024;
 
+    private static final int TIMEOUT_SECONDS = 10;
+
     public void testQuotaExceeded() throws Exception {
         if (!isBackupSupported()) {
             return;
         }
-        exec("logcat --clear");
-        exec("setprop log.tag." + APP_LOG_TAG +" VERBOSE");
+        String separator = clearLogcat();
         // Launch test app and create file exceeding limit for local transport
         createTestFileOfSize(BACKUP_APP_NAME, LOCAL_TRANSPORT_EXCEEDING_FILE_SIZE);
 
         // Request backup and wait for quota exceeded event in logcat
         exec("bmgr backupnow " + BACKUP_APP_NAME);
-        assertTrue("Quota exceeded event is not received", waitForLogcat("Quota exceeded!", 10));
+        waitForLogcat(TIMEOUT_SECONDS,separator,
+            "Quota exceeded!");
     }
 
     public void testQuotaReported() throws Exception {
         if (!isBackupSupported()) {
             return;
         }
-        exec("logcat --clear");
+        String separator = clearLogcat();
         exec("bmgr backupnow " + BACKUP_APP_NAME);
-        assertTrue("Quota not reported correctly",
-                waitForLogcat("quota is " + LOCAL_TRANSPORT_BACKUP_QUOTA, 10));
+        waitForLogcat(TIMEOUT_SECONDS,separator,
+            "quota is " + LOCAL_TRANSPORT_BACKUP_QUOTA);
     }
 
 }
