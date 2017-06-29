@@ -18,6 +18,7 @@ package android.cts.backup;
 
 import static junit.framework.Assert.assertTrue;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
 
 import com.android.compatibility.common.tradefed.testtype.CompatibilityHostTestBase;
@@ -29,6 +30,8 @@ import org.junit.Before;
 import org.junit.runner.RunWith;
 
 import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Base class for CTS backup/restore hostside tests
@@ -47,6 +50,12 @@ public abstract class BaseBackupHostSideTest extends CompatibilityHostTestBase {
     public void setUp() throws DeviceNotAvailableException, Exception {
         mIsBackupSupported = mDevice.hasFeature("feature:" + FEATURE_BACKUP);
         assumeTrue(mIsBackupSupported);
+
+        // Check that the backup wasn't disabled and the transport wasn't switched unexpectedly.
+        assertTrue("Backup was unexpectedly disabled during the module test run",
+                isBackupEnabled());
+        assertEquals("LocalTransport should be selected at this point", LOCAL_TRANSPORT,
+                getCurrentTransport());
     }
 
     @After
@@ -182,5 +191,29 @@ public abstract class BaseBackupHostSideTest extends CompatibilityHostTestBase {
      */
     protected void clearPackageData(String packageName) throws DeviceNotAvailableException {
         mDevice.executeShellCommand(String.format("pm clear %s", packageName));
+    }
+
+    private boolean isBackupEnabled() throws DeviceNotAvailableException {
+        boolean isEnabled;
+        String output = mDevice.executeShellCommand("bmgr enabled");
+        Pattern pattern = Pattern.compile("^Backup Manager currently (enabled|disabled)$");
+        Matcher matcher = pattern.matcher(output.trim());
+        if (matcher.find()) {
+            isEnabled = "enabled".equals(matcher.group(1));
+        } else {
+            throw new RuntimeException("non-parsable output setting bmgr enabled: " + output);
+        }
+        return isEnabled;
+    }
+
+    private String getCurrentTransport() throws DeviceNotAvailableException {
+        String output = mDevice.executeShellCommand("bmgr list transports");
+        Pattern pattern = Pattern.compile("\\* (.*)");
+        Matcher matcher = pattern.matcher(output);
+        if (matcher.find()) {
+            return matcher.group(1);
+        } else {
+            throw new RuntimeException("non-parsable output setting bmgr transport: " + output);
+        }
     }
 }
