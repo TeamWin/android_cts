@@ -27,6 +27,7 @@ import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IAbiReceiver;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.util.AbiUtils;
+import com.android.tradefed.util.FileUtil;
 import com.android.tradefed.util.ZipUtil;
 import java.io.File;
 import java.util.LinkedList;
@@ -124,6 +125,7 @@ public class JvmtiAttachingHostTest extends DeviceTestCase implements IBuildRece
             String library) throws Exception {
         ZipFile zf = null;
         File tmpFile = null;
+        String libInTmp = null;
         try {
             String libInDataData = dataData + "/" + library;
 
@@ -133,7 +135,7 @@ public class JvmtiAttachingHostTest extends DeviceTestCase implements IBuildRece
             String libPathInApk = "lib/" + mAbi.getName() + "/" + library;
             tmpFile = ZipUtil.extractFileFromZip(zf, libPathInApk);
 
-            String libInTmp = "/data/local/tmp/" + tmpFile.getName();
+            libInTmp = "/data/local/tmp/" + tmpFile.getName();
             if (!device.pushFile(tmpFile, libInTmp)) {
                 throw new RuntimeException("Could not push library " + library + " to device");
             }
@@ -152,14 +154,13 @@ public class JvmtiAttachingHostTest extends DeviceTestCase implements IBuildRece
 
             return libInDataData;
         } finally {
-            if (tmpFile != null) {
-                tmpFile.delete();
-            }
-            if (zf != null) {
+            FileUtil.deleteFile(tmpFile);
+            ZipUtil.closeZip(zf);
+            if (libInTmp != null) {
                 try {
-                    zf.close();
+                    device.executeShellCommand("rm " + libInTmp);
                 } catch (Exception e) {
-                    throw new RuntimeException("ZipFile close failed", e);
+                    CLog.e("Failed cleaning up library on device");
                 }
             }
         }
