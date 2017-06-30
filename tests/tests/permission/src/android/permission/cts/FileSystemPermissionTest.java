@@ -160,6 +160,24 @@ public class FileSystemPermissionTest extends AndroidTestCase {
         assertFalse(f.canExecute());
     }
 
+    /* b/26813932 */
+    @MediumTest
+    public void testProcInterruptsNotReadable() throws Exception {
+        File f = new File("/proc/interrupts");
+        assertFalse(f.canRead());
+        assertFalse(f.canWrite());
+        assertFalse(f.canExecute());
+    }
+
+    /* b/26813932 */
+    @MediumTest
+    public void testProcStatNotReadable() throws Exception {
+        File f = new File("/proc/stat");
+        assertFalse(f.canRead());
+        assertFalse(f.canWrite());
+        assertFalse(f.canExecute());
+    }
+
     @MediumTest
     public void testDevMemSane() throws Exception {
         File f = new File("/dev/mem");
