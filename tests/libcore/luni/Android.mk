@@ -25,7 +25,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     cts-core-test-runner \
     mockito-target \
     time_zone_distro-tests \
-    tzdata_update2-tests
+    time_zone_distro_installer-tests
 
 # Don't include this package in any target
 LOCAL_MODULE_TAGS := tests
