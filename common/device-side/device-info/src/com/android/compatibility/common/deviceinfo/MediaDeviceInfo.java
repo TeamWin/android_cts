@@ -81,9 +81,17 @@ public final class MediaDeviceInfo extends DeviceInfo {
                     store.addResult(
                             "supported_1080p_30fps",
                             videoCapabilities.areSizeAndRateSupported(1920, 1080, 30));
+                    // The QHD/WQHD 2560x1440 resolution is used to create YouTube and PlayMovies
+                    // 2k content, so use that resolution to determine if a device supports 2k.
+                    store.addResult(
+                            "supported_2k_30fps",
+                            videoCapabilities.areSizeAndRateSupported(2560, 1440, 30));
                     store.addResult(
                             "supported_4k_30fps",
                             videoCapabilities.areSizeAndRateSupported(3840, 2160, 30));
+                    store.addResult(
+                            "supported_8k_30fps",
+                            videoCapabilities.areSizeAndRateSupported(7680, 4320, 30));
                     store.addResult(
                             "supported_360p_60fps",
                             videoCapabilities.areSizeAndRateSupported(640, 360, 60));
@@ -97,8 +105,14 @@ public final class MediaDeviceInfo extends DeviceInfo {
                             "supported_1080p_60fps",
                             videoCapabilities.areSizeAndRateSupported(1920, 1080, 60));
                     store.addResult(
+                            "supported_2k_60fps",
+                            videoCapabilities.areSizeAndRateSupported(2560, 1440, 60));
+                    store.addResult(
                             "supported_4k_60fps",
                             videoCapabilities.areSizeAndRateSupported(3840, 2160, 60));
+                    store.addResult(
+                            "supported_8k_60fps",
+                            videoCapabilities.areSizeAndRateSupported(7680, 4320, 60));
                     store.endGroup(); // supported_resolutions
                 }
                 store.endGroup();
