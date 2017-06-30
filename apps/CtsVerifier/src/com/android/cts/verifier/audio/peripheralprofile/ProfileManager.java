@@ -60,6 +60,11 @@ public class ProfileManager {
               "<OutputDevInfo ChanCounts=\"2\" ChanPosMasks=\"12\" ChanIndexMasks=\"3\" Encodings=\"4\" SampleRates=\"44100,48000\" />" +
               "<InputDevInfo ChanCounts=\"1,2\" ChanPosMasks=\"12,16\" ChanIndexMasks=\"3\" Encodings=\"4\" SampleRates=\"44100,48000\" />" +
             "</PeripheralProfile>" +
+            "<PeripheralProfile ProfileName=\"gen1-headset\" ProfileDescription=\"Google Generation 1 USB Headset\" ProductName=\"USB-Audio - Skylab\">" +
+            "<OutputDevInfo ChanCounts=\"2\" ChanPosMasks=\"12\" ChanIndexMasks=\"3\" Encodings=\"2,4\" SampleRates=\"8000,16000,32000,44100,48000\" />" +
+            "<InputDevInfo ChanCounts=\"1,2\" ChanPosMasks=\"12,16\" ChanIndexMasks=\"1\" Encodings=\"2\" SampleRates=\"8000,16000,32000,44100,48000\" />" +
+            "<ButtonInfo HasBtnA=\"1\" HasBtnB=\"1\" HasBtnC=\"1\" HasBtnD=\"1\" />" +
+          "</PeripheralProfile>" +
           "</ProfileList>";
 
     // XML Tags and Attributes
