@@ -56,28 +56,28 @@ public class TzDataCheckTest extends DeviceTestCase {
 
     /**
      * The name of the directory containing the current time zone rules data beneath
-     * {@link #mDataDir}.  Also known to {@link libcore.tzdata.update2.TimeZoneDistroInstaller} and
+     * {@link #mDataDir}.  Also known to {@link com.android.timezone.distro.installer.TimeZoneDistroInstaller} and
      * tzdatacheck.cpp.
      */
     private static final String CURRENT_DIR_NAME = "current";
 
     /**
      * The name of the directory containing the staged time zone rules data beneath
-     * {@link #mDataDir}.  Also known to {@link libcore.tzdata.update2.TimeZoneDistroInstaller} and
+     * {@link #mDataDir}.  Also known to {@link com.android.timezone.distro.installer.TimeZoneDistroInstaller} and
      * tzdatacheck.cpp.
      */
     private static final String STAGED_DIR_NAME = "staged";
 
     /**
      * The name of the file inside the staged directory that indicates the staged operation is an
-     * uninstall. Also known to {@link libcore.tzdata.update2.TimeZoneDistroInstaller} and
+     * uninstall. Also known to {@link com.android.timezone.distro.installer.TimeZoneDistroInstaller} and
      * tzdatacheck.cpp.
      */
     private static final String UNINSTALL_TOMBSTONE_FILE_NAME = "STAGED_UNINSTALL_TOMBSTONE";
 
     /**
      * The name of the /system time zone data file. Also known to
-     * {@link libcore.tzdata.update2.TimeZoneDistroInstaller} and tzdatacheck.cpp.
+     * {@link com.android.timezone.distro.installer.TimeZoneDistroInstaller} and tzdatacheck.cpp.
      */
     private static final String SYSTEM_TZDATA_FILE_NAME = "tzdata";
 
