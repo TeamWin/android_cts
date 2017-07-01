@@ -25,6 +25,6 @@
     </target_preparer>
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
         <option name="jar" value="CtsMediaBitstreamsTestCases.jar" />
-        <option name="runtime-hint" value="6m" />
+        <option name="runtime-hint" value="4h50m" />
     </test>
 </configuration>
