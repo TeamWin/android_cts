@@ -39,6 +39,7 @@ import com.android.compatibility.common.tradefed.testtype.ModuleRepoTest;
 import com.android.compatibility.common.tradefed.testtype.SubPlanTest;
 import com.android.compatibility.common.tradefed.testtype.retry.RetryFactoryTestTest;
 import com.android.compatibility.common.tradefed.testtype.suite.CompatibilityTestSuiteTest;
+import com.android.compatibility.common.tradefed.testtype.suite.ModuleRepoSuiteTest;
 import com.android.compatibility.common.tradefed.util.CollectorUtilTest;
 import com.android.compatibility.common.tradefed.util.OptionHelperTest;
 import com.android.compatibility.common.tradefed.util.RetryFilterHelperTest;
@@ -96,6 +97,7 @@ import org.junit.runners.Suite.SuiteClasses;
 
     // testype.suite
     CompatibilityTestSuiteTest.class,
+    ModuleRepoSuiteTest.class,
 
     // util
     CollectorUtilTest.class,
