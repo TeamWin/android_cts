@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package android.signature.cts;
+package android.signature.cts.api;
 
 import static android.signature.cts.CurrentApi.CURRENT_API_FILE;
-import static android.signature.cts.CurrentApi.SYSTEM_CURRENT_API_FILE;
 import static android.signature.cts.CurrentApi.TAG_ROOT;
 import static android.signature.cts.CurrentApi.TAG_PACKAGE;
 import static android.signature.cts.CurrentApi.TAG_CLASS;
@@ -29,27 +28,16 @@ import static android.signature.cts.CurrentApi.TAG_PARAM;
 import static android.signature.cts.CurrentApi.TAG_EXCEPTION;
 import static android.signature.cts.CurrentApi.TAG_FIELD;
 
-import static android.signature.cts.CurrentApi.MODIFIER_ABSTRACT;
-import static android.signature.cts.CurrentApi.MODIFIER_FINAL;
-import static android.signature.cts.CurrentApi.MODIFIER_NATIVE;
-import static android.signature.cts.CurrentApi.MODIFIER_PRIVATE;
-import static android.signature.cts.CurrentApi.MODIFIER_PROTECTED;
-import static android.signature.cts.CurrentApi.MODIFIER_PUBLIC;
-import static android.signature.cts.CurrentApi.MODIFIER_STATIC;
-import static android.signature.cts.CurrentApi.MODIFIER_SYNCHRONIZED;
-import static android.signature.cts.CurrentApi.MODIFIER_TRANSIENT;
-import static android.signature.cts.CurrentApi.MODIFIER_VOLATILE;
-import static android.signature.cts.CurrentApi.MODIFIER_VISIBILITY;
-
 import static android.signature.cts.CurrentApi.ATTRIBUTE_NAME;
-import static android.signature.cts.CurrentApi.ATTRIBUTE_EXTENDS;
 import static android.signature.cts.CurrentApi.ATTRIBUTE_TYPE;
-import static android.signature.cts.CurrentApi.ATTRIBUTE_RETURN;
 
-import android.content.res.Resources;
+import android.signature.cts.CurrentApi;
+import android.signature.cts.FailureType;
+import android.signature.cts.JDiffClassDescription;
 import android.signature.cts.JDiffClassDescription.JDiffConstructor;
 import android.signature.cts.JDiffClassDescription.JDiffField;
 import android.signature.cts.JDiffClassDescription.JDiffMethod;
+import android.signature.cts.ResultObserver;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
@@ -60,12 +48,8 @@ import org.xmlpull.v1.XmlPullParserFactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Scanner;
 
 /**
  * Performs the signature check via a JUnit test.
