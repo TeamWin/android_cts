@@ -99,7 +99,7 @@ def main():
         rotator_id_arg = 'rotator=' + rotator_ids
     print 'Preparing to run sensor_fusion on camera', camera_id
 
-    img_size_arg = 'size=' + img_size
+    img_size_arg = 'img_size=' + img_size
     print 'Image dimensions are ' + 'x'.join(img_size.split(','))
 
     fps_arg = 'fps=' + fps
