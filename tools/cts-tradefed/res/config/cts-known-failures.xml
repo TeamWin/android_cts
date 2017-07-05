@@ -227,4 +227,7 @@
     <option name="compatibility:exclude-filter" value="x86_64 CtsMediaBitstreamsTestCases" />
     <option name="compatibility:exclude-filter" value="mips64 CtsMediaBitstreamsTestCases" />
 
+    <!-- b/38280830 -->
+    <option name="compatibility:exclude-filter" value="CtsMediaTestCases android.media.cts.VideoDecoderPerfTest#testVp8Goog0Perf1280x0720" />
+
 </configuration>
