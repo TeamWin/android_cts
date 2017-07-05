@@ -24,7 +24,7 @@
         <uses-library android:name="android.test.runner"/>
     </application>
 
-    <instrumentation android:name="android.test.InstrumentationTestRunner"
+    <instrumentation android:name="repackaged.android.test.InstrumentationTestRunner"
                      android:targetPackage="android.signature.cts.api"
                      android:label="API Signature Test"/>
 

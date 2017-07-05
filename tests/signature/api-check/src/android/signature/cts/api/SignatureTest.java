@@ -38,8 +38,9 @@ import android.signature.cts.JDiffClassDescription.JDiffConstructor;
 import android.signature.cts.JDiffClassDescription.JDiffField;
 import android.signature.cts.JDiffClassDescription.JDiffMethod;
 import android.signature.cts.ResultObserver;
-import android.test.AndroidTestCase;
 import android.util.Log;
+
+import repackaged.junit.framework.TestCase;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -54,7 +55,7 @@ import java.util.HashSet;
 /**
  * Performs the signature check via a JUnit test.
  */
-public class SignatureTest extends AndroidTestCase {
+public class SignatureTest extends TestCase {
 
     private static final String TAG = SignatureTest.class.getSimpleName();
 
