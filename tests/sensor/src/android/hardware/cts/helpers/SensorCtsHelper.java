@@ -16,6 +16,7 @@
 package android.hardware.cts.helpers;
 
 import android.hardware.Sensor;
+import android.util.Log;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -324,5 +325,97 @@ public class SensorCtsHelper {
                 return "hPa";
         };
         return "";
+    }
+
+    public static String sensorTypeShortString(int type) {
+        switch (type) {
+            case Sensor.TYPE_ACCELEROMETER:
+                return "Accel";
+            case Sensor.TYPE_GYROSCOPE:
+                return "Gyro";
+            case Sensor.TYPE_MAGNETIC_FIELD:
+                return "Mag";
+            case Sensor.TYPE_ACCELEROMETER_UNCALIBRATED:
+                return "UncalAccel";
+            case Sensor.TYPE_GYROSCOPE_UNCALIBRATED:
+                return "UncalGyro";
+            case Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED:
+                return "UncalMag";
+            default:
+                return "Type_" + type;
+        }
+    }
+
+    public static class TestResultCollector {
+        private List<AssertionError> mErrorList = new ArrayList<>();
+        private List<String> mErrorStringList = new ArrayList<>();
+        private String mTestName;
+        private String mTag;
+
+        public TestResultCollector() {
+            this("Test");
+        }
+
+        public TestResultCollector(String test) {
+            this(test, "SensorCtsTest");
+        }
+
+        public TestResultCollector(String test, String tag) {
+            mTestName = test;
+            mTag = tag;
+        }
+
+        public void perform(Runnable r) {
+            perform(r, "");
+        }
+
+        public void perform(Runnable r, String s) {
+            try {
+                Log.d(mTag, mTestName + " running " + (s.isEmpty() ? "..." : s));
+                r.run();
+            } catch (AssertionError e) {
+                mErrorList.add(e);
+                mErrorStringList.add(s);
+                Log.e(mTag, mTestName + " error: " + e.getMessage());
+            }
+        }
+
+        public void judge() throws AssertionError {
+            if (mErrorList.isEmpty() && mErrorStringList.isEmpty()) {
+                return;
+            }
+
+            if (mErrorList.size() != mErrorStringList.size()) {
+                throw new IllegalStateException("Mismatch error and error message");
+            }
+
+            StringBuffer buf = new StringBuffer();
+            for (int i = 0; i < mErrorList.size(); ++i) {
+                buf.append("Test (").append(mErrorStringList.get(i)).append(") - Error: ")
+                    .append(mErrorList.get(i).getMessage()).append("; ");
+            }
+            throw new AssertionError(buf.toString());
+        }
+    }
+
+    public static String bytesToHex(byte[] bytes, int offset, int length) {
+        if (offset == -1) {
+            offset = 0;
+        }
+
+        if (length == -1) {
+            length = bytes.length;
+        }
+
+        final char[] hexArray = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
+        char[] hexChars = new char[length * 3];
+        int v;
+        for (int i = 0; i < length; i++) {
+            v = bytes[offset + i] & 0xFF;
+            hexChars[i * 3] = hexArray[v >>> 4];
+            hexChars[i * 3 + 1] = hexArray[v & 0x0F];
+            hexChars[i * 3 + 2] = ' ';
+        }
+        return new String(hexChars);
     }
 }
