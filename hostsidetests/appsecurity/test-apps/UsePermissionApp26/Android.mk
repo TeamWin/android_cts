@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2016 The Android Open Source Project
+# Copyright (C) 2017 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,13 +19,18 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE_TAGS := tests
-LOCAL_STATIC_JAVA_LIBRARIES := android-support-test compatibility-device-util ctstestrunner ub-uiautomator
+LOCAL_STATIC_JAVA_LIBRARIES := \
+    android-support-test \
+    compatibility-device-util \
+    ctstestrunner \
+    ub-uiautomator
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src) \
     ../UsePermissionApp23/src/com/android/cts/usepermission/BasePermissionActivity.java \
     ../UsePermissionApp23/src/com/android/cts/usepermission/BasePermissionsTest.java
+LOCAL_RESOURCE_DIR := cts/hostsidetests/appsecurity/test-apps/UsePermissionApp23/res
 
-LOCAL_PACKAGE_NAME := CtsUsePermissionApp24
+LOCAL_PACKAGE_NAME := CtsUsePermissionApp26
 
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts general-tests
