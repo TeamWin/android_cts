@@ -25,7 +25,7 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_PACKAGE_NAME := CtsLeanbackJankApp
 
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 LOCAL_RESOURCE_DIR := \
     $(TOP)/frameworks/support/v17/leanback/res \

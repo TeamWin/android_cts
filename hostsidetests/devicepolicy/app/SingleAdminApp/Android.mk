@@ -37,6 +37,6 @@ LOCAL_STATIC_JAVA_LIBRARIES = \
 LOCAL_SDK_VERSION := test_current
 
 # tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 include $(BUILD_CTS_PACKAGE)
