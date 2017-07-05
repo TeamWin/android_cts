@@ -30,7 +30,7 @@ public class FullBackupQuotaTest extends BaseBackupCtsTest {
     private static final int LOCAL_TRANSPORT_BACKUP_QUOTA = 25 * 1024 * 1024;
     private static final int LOCAL_TRANSPORT_EXCEEDING_FILE_SIZE = 30 * 1024 * 1024;
 
-    private static final int TIMEOUT_SECONDS = 10;
+    private static final int TIMEOUT_SECONDS = 30;
 
     public void testQuotaExceeded() throws Exception {
         if (!isBackupSupported()) {

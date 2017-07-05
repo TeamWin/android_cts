@@ -25,7 +25,7 @@ public class KeyValueLifecycleTest extends BaseBackupCtsTest {
 
     private static final int LOCAL_TRANSPORT_CONFORMING_FILE_SIZE = 5 * 1024;
 
-    private static final int TIMEOUT_SECONDS = 10;
+    private static final int TIMEOUT_SECONDS = 30;
 
     public void testExpectedMethodsCalledInOrder() throws Exception {
         if (!isBackupSupported()) {
