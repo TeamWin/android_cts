@@ -305,7 +305,7 @@ public class AccessibilityGestureDispatchTest extends
         final WindowManager wm = (WindowManager) getInstrumentation().getContext().getSystemService(
                 Context.WINDOW_SERVICE);
         final DisplayMetrics metrics = new DisplayMetrics();
-        wm.getDefaultDisplay().getMetrics(metrics);
+        wm.getDefaultDisplay().getRealMetrics(metrics);
         final float centerX = metrics.widthPixels / 2;
         final float centerY = metrics.heightPixels / 2;
         final PointF clickPoint = new PointF(
