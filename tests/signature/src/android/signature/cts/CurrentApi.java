@@ -28,25 +28,25 @@ import org.xmlpull.v1.XmlPullParserFactory;
 /**
  * Helper methods and constants used for parsing the current api file.
  */
-class CurrentApi {
+public class CurrentApi {
 
     private CurrentApi() {}
 
-    static final String CURRENT_API_FILE =
+    public static final String CURRENT_API_FILE =
             "/data/local/tmp/signature-test/current.api";
-    static final String SYSTEM_CURRENT_API_FILE =
+    public static final String SYSTEM_CURRENT_API_FILE =
             "/data/local/tmp/signature-test/system-current.api";
 
-    static final String TAG_ROOT = "api";
-    static final String TAG_PACKAGE = "package";
-    static final String TAG_CLASS = "class";
-    static final String TAG_INTERFACE = "interface";
-    static final String TAG_IMPLEMENTS = "implements";
-    static final String TAG_CONSTRUCTOR = "constructor";
-    static final String TAG_METHOD = "method";
-    static final String TAG_PARAM = "parameter";
-    static final String TAG_EXCEPTION = "exception";
-    static final String TAG_FIELD = "field";
+    public static final String TAG_ROOT = "api";
+    public static final String TAG_PACKAGE = "package";
+    public static final String TAG_CLASS = "class";
+    public static final String TAG_INTERFACE = "interface";
+    public static final String TAG_IMPLEMENTS = "implements";
+    public static final String TAG_CONSTRUCTOR = "constructor";
+    public static final String TAG_METHOD = "method";
+    public static final String TAG_PARAM = "parameter";
+    public static final String TAG_EXCEPTION = "exception";
+    public static final String TAG_FIELD = "field";
 
     static final String MODIFIER_ABSTRACT = "abstract";
     static final String MODIFIER_FINAL = "final";
@@ -60,10 +60,10 @@ class CurrentApi {
     static final String MODIFIER_VOLATILE = "volatile";
     static final String MODIFIER_VISIBILITY = "visibility";
 
-    static final String ATTRIBUTE_NAME = "name";
+    public static final String ATTRIBUTE_NAME = "name";
     static final String ATTRIBUTE_VALUE = "value";
     static final String ATTRIBUTE_EXTENDS = "extends";
-    static final String ATTRIBUTE_TYPE = "type";
+    public static final String ATTRIBUTE_TYPE = "type";
     static final String ATTRIBUTE_RETURN = "return";
 
     /**
@@ -73,7 +73,7 @@ class CurrentApi {
      * @param parser The XmlPullParser which carries the xml information.
      * @return the new field
      */
-    static JDiffField loadFieldInfo(String className, XmlPullParser parser) {
+    public static JDiffField loadFieldInfo(String className, XmlPullParser parser) {
         String fieldName = parser.getAttributeValue(null, ATTRIBUTE_NAME);
         String fieldType = parser.getAttributeValue(null, ATTRIBUTE_TYPE);
         int modifier = jdiffModifierToReflectionFormat(className, parser);
@@ -88,7 +88,7 @@ class CurrentApi {
      * @param parser The XmlPullParser which carries the xml information.
      * @return the newly loaded method.
      */
-    static JDiffMethod loadMethodInfo(String className, XmlPullParser parser) {
+    public static JDiffMethod loadMethodInfo(String className, XmlPullParser parser) {
         String methodName = parser.getAttributeValue(null, ATTRIBUTE_NAME);
         String returnType = parser.getAttributeValue(null, ATTRIBUTE_RETURN);
         int modifier = jdiffModifierToReflectionFormat(className, parser);
@@ -102,8 +102,8 @@ class CurrentApi {
      * @param currentClass the current class being loaded.
      * @return the new constructor
      */
-    static JDiffConstructor loadConstructorInfo(
-                XmlPullParser parser, JDiffClassDescription currentClass) {
+    public static JDiffConstructor loadConstructorInfo(
+        XmlPullParser parser, JDiffClassDescription currentClass) {
         String name = currentClass.getClassName();
         int modifier = jdiffModifierToReflectionFormat(name, parser);
         return new JDiffConstructor(name, modifier);
@@ -117,9 +117,9 @@ class CurrentApi {
      * @param pkg the name of the java package this class can be found in.
      * @return the new class description.
      */
-    static JDiffClassDescription loadClassInfo(
-            XmlPullParser parser, boolean isInterface, String pkg,
-            ResultObserver resultObserver) {
+    public static JDiffClassDescription loadClassInfo(
+        XmlPullParser parser, boolean isInterface, String pkg,
+        ResultObserver resultObserver) {
         String className = parser.getAttributeValue(null, ATTRIBUTE_NAME);
         JDiffClassDescription currentClass;
         if (resultObserver != null) {

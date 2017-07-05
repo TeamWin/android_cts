@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.signature.cts;
+package android.signature.cts.intent;
 
 import static android.signature.cts.CurrentApi.CURRENT_API_FILE;
 import static android.signature.cts.CurrentApi.SYSTEM_CURRENT_API_FILE;
@@ -28,29 +28,12 @@ import static android.signature.cts.CurrentApi.TAG_PARAM;
 import static android.signature.cts.CurrentApi.TAG_EXCEPTION;
 import static android.signature.cts.CurrentApi.TAG_FIELD;
 
-import static android.signature.cts.CurrentApi.MODIFIER_ABSTRACT;
-import static android.signature.cts.CurrentApi.MODIFIER_FINAL;
-import static android.signature.cts.CurrentApi.MODIFIER_NATIVE;
-import static android.signature.cts.CurrentApi.MODIFIER_PRIVATE;
-import static android.signature.cts.CurrentApi.MODIFIER_PROTECTED;
-import static android.signature.cts.CurrentApi.MODIFIER_PUBLIC;
-import static android.signature.cts.CurrentApi.MODIFIER_STATIC;
-import static android.signature.cts.CurrentApi.MODIFIER_SYNCHRONIZED;
-import static android.signature.cts.CurrentApi.MODIFIER_TRANSIENT;
-import static android.signature.cts.CurrentApi.MODIFIER_VOLATILE;
-import static android.signature.cts.CurrentApi.MODIFIER_VISIBILITY;
-
 import static android.signature.cts.CurrentApi.ATTRIBUTE_NAME;
-import static android.signature.cts.CurrentApi.ATTRIBUTE_EXTENDS;
-import static android.signature.cts.CurrentApi.ATTRIBUTE_TYPE;
-import static android.signature.cts.CurrentApi.ATTRIBUTE_RETURN;
 
-import android.content.Context;
 import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
-import android.signature.cts.JDiffClassDescription.JDiffConstructor;
+import android.signature.cts.CurrentApi;
+import android.signature.cts.JDiffClassDescription;
 import android.signature.cts.JDiffClassDescription.JDiffField;
 import android.signature.cts.JDiffClassDescription.JDiffMethod;
 import android.support.test.InstrumentationRegistry;
@@ -71,9 +54,7 @@ import java.util.Set;
 
 import org.junit.Assert;
 import org.junit.runner.RunWith;
-import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -92,7 +73,7 @@ public class IntentTest {
             new File("/data/local/tmp/signature-test-packages");
     private static final String ANDROID_INTENT_PREFIX = "android.intent.action";
     private static final String ACTION_LINE_PREFIX = "          Action: ";
-    private static final String MODULE_NAME = "CtsSignatureTestCases";
+    private static final String MODULE_NAME = "CtsIntentSignatureTestCases";
 
     private PackageManager mPackageManager;
     private Set<String> intentWhitelist;
