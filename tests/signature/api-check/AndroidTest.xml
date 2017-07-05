@@ -29,6 +29,7 @@
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.signature.cts.api" />
         <option name="runner" value="repackaged.android.test.InstrumentationTestRunner" />
+        <option name="instrumentation-arg" key="expected-api-files" value="current.api" />
         <option name="runtime-hint" value="30s" />
     </test>
 </configuration>

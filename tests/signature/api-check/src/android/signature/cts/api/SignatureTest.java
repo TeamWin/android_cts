@@ -16,7 +16,7 @@
 
 package android.signature.cts.api;
 
-import static android.signature.cts.CurrentApi.CURRENT_API_FILE;
+import static android.signature.cts.CurrentApi.API_FILE_DIRECTORY;
 import static android.signature.cts.CurrentApi.TAG_ROOT;
 import static android.signature.cts.CurrentApi.TAG_PACKAGE;
 import static android.signature.cts.CurrentApi.TAG_CLASS;
@@ -31,6 +31,7 @@ import static android.signature.cts.CurrentApi.TAG_FIELD;
 import static android.signature.cts.CurrentApi.ATTRIBUTE_NAME;
 import static android.signature.cts.CurrentApi.ATTRIBUTE_TYPE;
 
+import android.os.Bundle;
 import android.signature.cts.CurrentApi;
 import android.signature.cts.FailureType;
 import android.signature.cts.JDiffClassDescription;
@@ -40,7 +41,8 @@ import android.signature.cts.JDiffClassDescription.JDiffMethod;
 import android.signature.cts.ResultObserver;
 import android.util.Log;
 
-import repackaged.junit.framework.TestCase;
+import repackaged.android.test.InstrumentationTestCase;
+import repackaged.android.test.InstrumentationTestRunner;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -55,12 +57,14 @@ import java.util.HashSet;
 /**
  * Performs the signature check via a JUnit test.
  */
-public class SignatureTest extends TestCase {
+public class SignatureTest extends InstrumentationTestCase {
 
     private static final String TAG = SignatureTest.class.getSimpleName();
 
     private HashSet<String> mKeyTagSet;
     private TestResultObserver mResultObserver;
+
+    private String[] expectedApiFiles;
 
     private class TestResultObserver implements ResultObserver {
         boolean mDidFail = false;
@@ -81,11 +85,17 @@ public class SignatureTest extends TestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        mKeyTagSet = new HashSet<String>();
-        mKeyTagSet.addAll(Arrays.asList(new String[] {
-                TAG_PACKAGE, TAG_CLASS, TAG_INTERFACE, TAG_IMPLEMENTS, TAG_CONSTRUCTOR,
-                TAG_METHOD, TAG_PARAM, TAG_EXCEPTION, TAG_FIELD }));
+        mKeyTagSet = new HashSet<>();
+        mKeyTagSet.addAll(Arrays.asList(TAG_PACKAGE, TAG_CLASS, TAG_INTERFACE, TAG_IMPLEMENTS,
+                TAG_CONSTRUCTOR, TAG_METHOD, TAG_PARAM, TAG_EXCEPTION, TAG_FIELD));
         mResultObserver = new TestResultObserver();
+
+        // Get the arguments passed to the instrumentation.
+        Bundle instrumentationArgs =
+                ((InstrumentationTestRunner) getInstrumentation()).getArguments();
+
+        String argument = instrumentationArgs.getString("expected-api-files");
+        expectedApiFiles = argument.split(",");
     }
 
     /**
@@ -97,8 +107,11 @@ public class SignatureTest extends TestCase {
         try {
             XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
             XmlPullParser parser = factory.newPullParser();
-            parser.setInput(new FileInputStream(new File(CURRENT_API_FILE)), null);
-            start(parser);
+            for (String expectedApiFile : expectedApiFiles) {
+                File file = new File(API_FILE_DIRECTORY + "/" + expectedApiFile);
+                parser.setInput(new FileInputStream(file), null);
+                start(parser);
+            }
         } catch (Exception e) {
             mResultObserver.notifyFailure(FailureType.CAUGHT_EXCEPTION, e.getMessage(),
                     e.getMessage());
@@ -111,8 +124,9 @@ public class SignatureTest extends TestCase {
     private void beginDocument(XmlPullParser parser, String firstElementName)
             throws XmlPullParserException, IOException {
         int type;
-        while ((type=parser.next()) != XmlPullParser.START_TAG
-                   && type != XmlPullParser.END_DOCUMENT) { }
+        do {
+            type = parser.next();
+        } while (type != XmlPullParser.START_TAG && type != XmlPullParser.END_DOCUMENT);
 
         if (type != XmlPullParser.START_TAG) {
             throw new XmlPullParserException("No start tag found");
@@ -141,12 +155,10 @@ public class SignatureTest extends TestCase {
         beginDocument(parser, TAG_ROOT);
         int type;
         while (true) {
-            type = XmlPullParser.START_DOCUMENT;
-            while ((type=parser.next()) != XmlPullParser.START_TAG
-                       && type != XmlPullParser.END_DOCUMENT
-                       && type != XmlPullParser.END_TAG) {
-
-            }
+            do {
+                type = parser.next();
+            } while (type != XmlPullParser.START_TAG && type != XmlPullParser.END_DOCUMENT
+                    && type != XmlPullParser.END_TAG);
 
             if (type == XmlPullParser.END_TAG) {
                 if (TAG_CLASS.equals(parser.getName())
@@ -208,11 +220,7 @@ public class SignatureTest extends TestCase {
         }
     }
 
-    public static void loge(String msg, Exception e) {
-        Log.e(TAG, msg, e);
-    }
-
-    public static void logd(String msg) {
+    private static void logd(String msg) {
         Log.d(TAG, msg);
     }
 }

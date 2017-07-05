@@ -32,10 +32,12 @@ public class CurrentApi {
 
     private CurrentApi() {}
 
+    public static final String API_FILE_DIRECTORY = "/data/local/tmp/signature-test";
+
     public static final String CURRENT_API_FILE =
-            "/data/local/tmp/signature-test/current.api";
+            API_FILE_DIRECTORY + "/current.api";
     public static final String SYSTEM_CURRENT_API_FILE =
-            "/data/local/tmp/signature-test/system-current.api";
+            API_FILE_DIRECTORY + "/system-current.api";
 
     public static final String TAG_ROOT = "api";
     public static final String TAG_PACKAGE = "package";
