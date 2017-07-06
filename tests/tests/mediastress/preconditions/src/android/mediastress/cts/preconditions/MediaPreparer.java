@@ -309,7 +309,7 @@ public class MediaPreparer extends PreconditionPreparer {
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(buildInfo);
         File apkFile = null;
         try {
-            apkFile = new File(buildHelper.getTestsDir(), APP_APK);
+            apkFile = buildHelper.getTestFile(APP_APK);
             if (!apkFile.exists()) {
                 // handle both missing tests dir and missing APK in catch block
                 throw new FileNotFoundException();
