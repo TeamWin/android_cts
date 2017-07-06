@@ -23,6 +23,7 @@ import android.test.InstrumentationTestCase;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -108,6 +109,7 @@ public class BaseBackupCtsTest extends InstrumentationTestCase {
                 if (line.contains(logcatStrings[stringIndex])) {
                     stringIndex++;
                     if (stringIndex >= logcatStrings.length) {
+                        drainAndClose(log);
                         return;
                     }
                 }
@@ -148,6 +150,16 @@ public class BaseBackupCtsTest extends InstrumentationTestCase {
         final ParcelFileDescriptor pfd =
                 instrumentation.getUiAutomation().executeShellCommand(command);
         return new ParcelFileDescriptor.AutoCloseInputStream(pfd);
+    }
+
+    private static void drainAndClose(BufferedReader reader) {
+        try {
+            while (reader.read() >= 0) {
+                // do nothing.
+            }
+        } catch (IOException ignored) {
+        }
+        closeQuietly(reader);
     }
 
     private static void closeQuietly(AutoCloseable closeable) {
