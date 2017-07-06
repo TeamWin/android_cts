@@ -808,6 +808,18 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestMethod(".ResetPasswordWithTokenTest", "testResetPasswordWithTokenMayFail");
     }
 
+    public void testClearApplicationData() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        installAppAsUser(INTENT_RECEIVER_APK, mUserId);
+        runDeviceTestsAsUser(INTENT_RECEIVER_PKG, INTENT_RECEIVER_PKG + ".ClearApplicationDataTest",
+                "testWriteToSharedPreference", mUserId);
+        executeDeviceTestMethod(".ClearApplicationDataTest", "testClearApplicationData");
+        runDeviceTestsAsUser(INTENT_RECEIVER_PKG, INTENT_RECEIVER_PKG + ".ClearApplicationDataTest",
+                "testSharedPreferenceCleared", mUserId);
+    }
+
     protected void executeDeviceTestClass(String className) throws Exception {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, className, mUserId);
     }
