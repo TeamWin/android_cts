@@ -29,6 +29,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
     private static final String TEST_ACTIVITY = "TestActivity";
     private static final String DOCKED_ACTIVITY = "DockedActivity";
     private static final String ASSISTANT_ACTIVITY = "AssistantActivity";
+    private static final String TRANSLUCENT_ASSISTANT_ACTIVITY = "TranslucentAssistantActivity";
     private static final String LAUNCH_ASSISTANT_ACTIVITY_FROM_SESSION =
             "LaunchAssistantActivityFromSession";
     private static final String LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK =
@@ -156,7 +157,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         launchHomeActivity();
         launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
                 EXTRA_IS_TRANSLUCENT, String.valueOf(true));
-        mAmWmState.waitForValidState(mDevice, ASSISTANT_ACTIVITY, ASSISTANT_STACK_ID);
+        mAmWmState.waitForValidState(mDevice, TRANSLUCENT_ASSISTANT_ACTIVITY, ASSISTANT_STACK_ID);
         assertAssistantStackExists();
         mAmWmState.assertHomeActivityVisible(true);
 
@@ -166,7 +167,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         launchActivity(TEST_ACTIVITY);
         launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
                 EXTRA_IS_TRANSLUCENT, String.valueOf(true));
-        mAmWmState.waitForValidState(mDevice, ASSISTANT_ACTIVITY, ASSISTANT_STACK_ID);
+        mAmWmState.waitForValidState(mDevice, TRANSLUCENT_ASSISTANT_ACTIVITY, ASSISTANT_STACK_ID);
         assertAssistantStackExists();
         mAmWmState.assertVisibility(TEST_ACTIVITY, true);
 
@@ -178,7 +179,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         mAmWmState.assertContainsStack("Must contain docked stack.", DOCKED_STACK_ID);
         launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
                 EXTRA_IS_TRANSLUCENT, String.valueOf(true));
-        mAmWmState.waitForValidState(mDevice, ASSISTANT_ACTIVITY, ASSISTANT_STACK_ID);
+        mAmWmState.waitForValidState(mDevice, TRANSLUCENT_ASSISTANT_ACTIVITY, ASSISTANT_STACK_ID);
         assertAssistantStackExists();
         mAmWmState.assertVisibility(DOCKED_ACTIVITY, true);
         mAmWmState.assertVisibility(TEST_ACTIVITY, true);
@@ -209,6 +210,26 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         assertEquals(1, mAmWmState.getAmState().getStackById(ASSISTANT_STACK_ID).getTasks().size());
         assertEquals(taskId,
                 mAmWmState.getAmState().getTaskByActivityName(ASSISTANT_ACTIVITY).mTaskId);
+
+        disableAssistant();
+    }
+
+    public void testPinnedStackWithAssistant() throws Exception {
+        if (!supportsPip() || !supportsSplitScreenMultiWindow()) return;
+
+        enableAssistant();
+
+        // Launch a fullscreen activity and a PIP activity, then launch the assistant, and ensure
+        // that the test activity is still visible
+        launchActivity(TEST_ACTIVITY);
+        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
+        launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
+                EXTRA_IS_TRANSLUCENT, String.valueOf(true));
+        mAmWmState.waitForValidState(mDevice, TRANSLUCENT_ASSISTANT_ACTIVITY, ASSISTANT_STACK_ID);
+        assertAssistantStackExists();
+        mAmWmState.assertVisibility(TRANSLUCENT_ASSISTANT_ACTIVITY, true);
+        mAmWmState.assertVisibility(PIP_ACTIVITY, true);
+        mAmWmState.assertVisibility(TEST_ACTIVITY, true);
 
         disableAssistant();
     }
