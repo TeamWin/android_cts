@@ -26,6 +26,7 @@ import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.result.CollectingTestListener;
 
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 import java.util.Map;
 
 public class Utils {
@@ -76,6 +77,8 @@ public class Utils {
 
         RemoteAndroidTestRunner testRunner = new RemoteAndroidTestRunner(packageName,
                 "android.support.test.runner.AndroidJUnitRunner", device.getIDevice());
+        // 60 min timeout per test
+        testRunner.setMaxTimeToOutputResponse(60L, TimeUnit.MINUTES);
         if (testClassName != null && testMethodName != null) {
             testRunner.setMethodName(testClassName, testMethodName);
         } else if (testClassName != null) {
