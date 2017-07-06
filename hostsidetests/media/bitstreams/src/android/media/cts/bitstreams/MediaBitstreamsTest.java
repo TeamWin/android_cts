@@ -46,6 +46,7 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -168,6 +169,29 @@ public class MediaBitstreamsTest implements IDeviceTest, IBuildReceiver, IAbiRec
         return Thread.currentThread().getStackTrace()[2].getMethodName();
     }
 
+    private MetricsReportLog createReport(String methodName) {
+        String className = MediaBitstreamsTest.class.getCanonicalName();
+        MetricsReportLog report = new MetricsReportLog(
+                mBuildHelper.getBuildInfo(), mAbi.getName(),
+                String.format("%s#%s", className, methodName),
+                MediaBitstreams.K_MODULE, "media_bitstreams_conformance");
+        return report;
+    }
+
+    /**
+     * @param method test method name in the form class#method
+     * @param p path to bitstream
+     * @param d decoder name
+     * @param s test status: unsupported, true, false, crash, or timeout.
+     */
+    private void addConformanceEntry(String method, String p, String d, String s) {
+        MetricsReportLog report = createReport(method);
+        report.addValue(MediaBitstreams.KEY_PATH, p, ResultType.NEUTRAL, ResultUnit.NONE);
+        report.addValue(MediaBitstreams.KEY_CODEC_NAME, d, ResultType.NEUTRAL, ResultUnit.NONE);
+        report.addValue(MediaBitstreams.KEY_STATUS, s, ResultType.NEUTRAL, ResultUnit.NONE);
+        report.submit();
+    }
+
     Map<String, String> getArgs() {
         Map<String, String> args = new HashMap<>();
         args.put(MediaBitstreams.OPT_DEBUG_TARGET_DEVICE, Boolean.toString(mDebugTargetDevice));
@@ -274,14 +298,9 @@ public class MediaBitstreamsTest implements IDeviceTest, IBuildReceiver, IAbiRec
 
                 String path = lines[i++];
                 mProcessedBitstreams.add(path);
-                String className = MediaBitstreamsTest.class.getCanonicalName();
-                MetricsReportLog report = new MetricsReportLog(
-                        mBuildHelper.getBuildInfo(), mAbi.getName(),
-                        String.format("%s#%s", className, mMethodName),
-                        getClass().getSimpleName(), path.replaceAll("[./]", "_"));
+                String errMsg;
 
                 boolean failedEarly;
-                String errMsg;
                 if (i < lines.length) {
                     failedEarly = Boolean.parseBoolean(lines[i++]);
                     errMsg = failedEarly ? lines[i++] : "";
@@ -291,27 +310,26 @@ public class MediaBitstreamsTest implements IDeviceTest, IBuildReceiver, IAbiRec
                     mLastCrash = MediaBitstreams.generateCrashSignature(path, "");
                     mProcessedBitstreams.removeLast();
                 }
+
                 if (failedEarly) {
-                    String keyErrMsg = MediaBitstreams.KEY_ERR_MSG;
-                    report.addValue(keyErrMsg, errMsg, ResultType.NEUTRAL, ResultUnit.NONE);
-                    report.submit();
+                    addConformanceEntry(mMethodName, path, null, errMsg);
                     continue;
                 }
 
                 int n = Integer.parseInt(lines[i++]);
                 for (int j = 0; j < n && i < lines.length; j++) {
-                    String name = lines[i++];
+                    String decoderName = lines[i++];
                     String result;
                     if (i < lines.length) {
                         result = lines[i++];
                     } else {
                         result = MediaBitstreams.K_NATIVE_CRASH;
-                        mLastCrash = MediaBitstreams.generateCrashSignature(path, name);
+                        mLastCrash = MediaBitstreams.generateCrashSignature(path, decoderName);
                         mProcessedBitstreams.removeLast();
                     }
-                    report.addValue(name, result, ResultType.NEUTRAL, ResultUnit.NONE);
+                    addConformanceEntry(mMethodName, path, decoderName, result);
                 }
-                report.submit();
+
 
             }
         }
@@ -365,6 +383,7 @@ public class MediaBitstreamsTest implements IDeviceTest, IBuildReceiver, IAbiRec
                 device,
                 MediaBitstreams.K_TEST_GET_SUPPORTED_BITSTREAMS,
                 MediaBitstreams.KEY_SUPPORTED_BITSTREAMS_TXT);
+        Set<String> bitstreams = preparer.getBitstreams();
         Set<String> supportedBitstreams = preparer.getSupportedBitstreams();
         CLog.i("%d supported bitstreams under %s", supportedBitstreams.size(), prefix);
 
@@ -372,35 +391,43 @@ public class MediaBitstreamsTest implements IDeviceTest, IBuildReceiver, IAbiRec
         long size = 0;
         long limit = device.getExternalStoreFreeSpace() * mUtilizationRate * 1024 / 100;
 
-        String currentMethod = getCurrentMethod();
-        Set<String> bitstreams = new LinkedHashSet<>();
-        Iterator<String> iter = supportedBitstreams.iterator();
+        String curMethod = getCurrentMethod();
+        Set<String> toPush = new LinkedHashSet<>();
+        Iterator<String> iter = bitstreams.iterator();
 
-        for (int i = 0; i < supportedBitstreams.size(); i++) {
+        for (int i = 0; i < bitstreams.size(); i++) {
 
             if (n >= mNumBatches) {
                 break;
             }
 
-            String bitstreamPath = iter.next();
-            File bitstreamFile = new File(mHostBitstreamsPath, bitstreamPath);
-            String md5Path = MediaBitstreams.getMd5Path(bitstreamPath);
-            File md5File = new File(mHostBitstreamsPath, md5Path);
-
-            if (md5File.exists() && bitstreamFile.exists()) {
-                size += md5File.length();
-                size += bitstreamFile.length();
-                bitstreams.add(bitstreamPath);
+            String p = iter.next();
+            Map<String, Boolean> decoderCapabilities;
+            decoderCapabilities = preparer.getDecoderCapabilitiesForPath(p);
+            for (Entry<String, Boolean> entry : decoderCapabilities.entrySet()) {
+                Boolean supported = entry.getValue();
+                if (supported) {
+                    File bitstreamFile = new File(mHostBitstreamsPath, p);
+                    String md5Path = MediaBitstreams.getMd5Path(p);
+                    File md5File = new File(mHostBitstreamsPath, md5Path);
+                    if (md5File.exists() && bitstreamFile.exists() && toPush.add(p)) {
+                        size += md5File.length();
+                        size += bitstreamFile.length();
+                    }
+                } else {
+                    String d = entry.getKey();
+                    addConformanceEntry(curMethod, p, d, MediaBitstreams.K_UNSUPPORTED);
+                }
             }
 
-            if (size > limit || i + 1 == supportedBitstreams.size()) {
+            if (size > limit || i + 1 == bitstreams.size()) {
                 ReportProcessor processor;
-                processor = new ProcessBitstreamsValidation(bitstreams, currentMethod);
+                processor = new ProcessBitstreamsValidation(toPush, curMethod);
                 processor.processDeviceReport(
                         device,
-                        currentMethod,
+                        curMethod,
                         MediaBitstreams.KEY_BITSTREAMS_VALIDATION_TXT);
-                bitstreams.clear();
+                toPush.clear();
                 size = 0;
                 n++;
             }
