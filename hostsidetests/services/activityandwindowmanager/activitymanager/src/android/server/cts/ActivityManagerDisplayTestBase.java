@@ -47,6 +47,7 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
     private static final int INVALID_DENSITY_DPI = -1;
 
     private boolean mVirtualDisplayCreated;
+    private boolean mDisplaySimulated;
 
     /** Temp storage used for parsing. */
     final LinkedList<String> mDumpLines = new LinkedList<>();
@@ -55,6 +56,7 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
     protected void tearDown() throws Exception {
         try {
             destroyVirtualDisplays();
+            destroySimulatedDisplays();
         } catch (DeviceNotAvailableException e) {
             logE(e.getMessage());
         }
@@ -242,23 +244,47 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
         mAmWmState.computeState(mDevice, new String[] {VIRTUAL_DISPLAY_ACTIVITY},
                 false /* compareTaskAndStackBounds */);
         final ActivityManagerDisplayTests.ReportedDisplays originalDS = getDisplaysStates();
-        final int originalDisplayCount = originalDS.mDisplayStates.size();
 
         // Create virtual display with custom density dpi.
         executeShellCommand(getCreateVirtualDisplayCommand(densityDpi, publicDisplay, resizeDisplay,
                 launchActivity, displayCount));
         mVirtualDisplayCreated = true;
 
-        // Wait for the virtual display to be created and get configurations.
-        final ActivityManagerDisplayTests.ReportedDisplays ds =
-                getDisplayStateAfterChange(originalDisplayCount + displayCount);
-        assertEquals("New virtual display must be created",
-                originalDisplayCount + displayCount, ds.mDisplayStates.size());
+        return assertAndGetNewDisplays(displayCount, originalDS);
+    }
 
-        // Find the newly added display.
+    /**
+     * Simulate new display.
+     * @param densityDpi provide custom density for the display.
+     * @return {@link ActivityManagerDisplayTests.DisplayState} of newly created display.
+     */
+    private List<ActivityManagerDisplayTests.DisplayState> simulateDisplay(int densityDpi)
+            throws Exception {
+        final ActivityManagerDisplayTests.ReportedDisplays originalDs = getDisplaysStates();
+
+        // Create virtual display with custom density dpi.
+        executeShellCommand(getSimulateDisplayCommand(densityDpi));
+        mDisplaySimulated = true;
+
+        return assertAndGetNewDisplays(1, originalDs);
+    }
+
+    /** Wait for desired number of displays to be created and get their properties. */
+    private List<ActivityManagerDisplayTests.DisplayState> assertAndGetNewDisplays(
+            int newDisplayCount, ActivityManagerDisplayTests.ReportedDisplays originalDS)
+            throws Exception {
+        final int originalDisplayCount = originalDS.mDisplayStates.size();
+
+        // Wait for the display(s) to be created and get configurations.
+        final ActivityManagerDisplayTests.ReportedDisplays ds =
+                getDisplayStateAfterChange(originalDisplayCount + newDisplayCount);
+        assertEquals("New virtual display must be created",
+                originalDisplayCount + newDisplayCount, ds.mDisplayStates.size());
+
+        // Find the newly added display(s).
         final List<ActivityManagerDisplayTests.DisplayState> newDisplays
                 = findNewDisplayStates(originalDS, ds);
-        assertTrue("New virtual display must be created", displayCount == newDisplays.size());
+        assertTrue("New virtual display must be created", newDisplayCount == newDisplays.size());
 
         return newDisplays;
     }
@@ -273,6 +299,16 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
         }
     }
 
+    /**
+     * Destroy existing simulated display.
+     */
+    private void destroySimulatedDisplays() throws Exception {
+        if (mDisplaySimulated) {
+            executeShellCommand(getDestroySimulatedDisplayCommand());
+            mDisplaySimulated = false;
+        }
+    }
+
     static class VirtualDisplayBuilder {
         private final ActivityManagerDisplayTestBase mTests;
 
@@ -281,6 +317,7 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
         private boolean mPublicDisplay = false;
         private boolean mResizeDisplay = true;
         private String mLaunchActivity = null;
+        private boolean mSimulateDisplay = false;
 
         public VirtualDisplayBuilder(ActivityManagerDisplayTestBase tests) {
             mTests = tests;
@@ -311,12 +348,21 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
             return this;
         }
 
+        public VirtualDisplayBuilder setSimulateDisplay(boolean simulateDisplay) {
+            mSimulateDisplay = simulateDisplay;
+            return this;
+        }
+
         public DisplayState build() throws Exception {
             final List<DisplayState> displays = build(1);
             return displays != null && !displays.isEmpty() ? displays.get(0) : null;
         }
 
         public List<DisplayState> build(int count) throws Exception {
+            if (mSimulateDisplay) {
+                return mTests.simulateDisplay(mDensityDpi);
+            }
+
             return mTests.createVirtualDisplays(mDensityDpi, mLaunchInSplitScreen, mPublicDisplay,
                     mResizeDisplay, mLaunchActivity, count);
         }
@@ -343,6 +389,14 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
     private static String getDestroyVirtualDisplayCommand() {
         return getAmStartCmd(VIRTUAL_DISPLAY_ACTIVITY) + " -f 0x20000000" +
                 " --es command destroy_display";
+    }
+
+    private static String getSimulateDisplayCommand(int densityDpi) {
+        return "settings put global overlay_display_devices 1024x768/" + densityDpi;
+    }
+
+    private static String getDestroySimulatedDisplayCommand() {
+        return "settings delete global overlay_display_devices";
     }
 
     /** Wait for provided number of displays and report their configurations. */
