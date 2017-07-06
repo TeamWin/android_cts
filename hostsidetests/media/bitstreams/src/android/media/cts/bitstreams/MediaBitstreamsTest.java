@@ -192,8 +192,7 @@ public class MediaBitstreamsTest implements IDeviceTest, IBuildReceiver, IAbiRec
         @Override
         void process(ITestDevice device, String reportPath)
                 throws DeviceNotAvailableException, IOException {
-            File testDir = mBuildHelper.getTestsDir();
-            File dynamicConfigFile = new File(testDir, MediaBitstreams.K_MODULE + ".dynamic");
+            File dynamicConfigFile = mBuildHelper.getTestFile(MediaBitstreams.K_MODULE + ".dynamic");
             device.pullFile(reportPath, dynamicConfigFile);
             CLog.i("Pulled bitstreams formats to %s", dynamicConfigFile.getPath());
         }
