@@ -17,25 +17,12 @@ package android.signature.cts.intent;
 
 import static android.signature.cts.CurrentApi.CURRENT_API_FILE;
 import static android.signature.cts.CurrentApi.SYSTEM_CURRENT_API_FILE;
-import static android.signature.cts.CurrentApi.TAG_ROOT;
-import static android.signature.cts.CurrentApi.TAG_PACKAGE;
-import static android.signature.cts.CurrentApi.TAG_CLASS;
-import static android.signature.cts.CurrentApi.TAG_INTERFACE;
-import static android.signature.cts.CurrentApi.TAG_IMPLEMENTS;
-import static android.signature.cts.CurrentApi.TAG_CONSTRUCTOR;
-import static android.signature.cts.CurrentApi.TAG_METHOD;
-import static android.signature.cts.CurrentApi.TAG_PARAM;
-import static android.signature.cts.CurrentApi.TAG_EXCEPTION;
-import static android.signature.cts.CurrentApi.TAG_FIELD;
-
-import static android.signature.cts.CurrentApi.ATTRIBUTE_NAME;
 
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
-import android.signature.cts.CurrentApi;
+import android.signature.cts.ApiDocumentParser;
 import android.signature.cts.JDiffClassDescription;
 import android.signature.cts.JDiffClassDescription.JDiffField;
-import android.signature.cts.JDiffClassDescription.JDiffMethod;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
@@ -47,7 +34,6 @@ import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.File;
 import java.io.FileInputStream;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -57,9 +43,7 @@ import org.junit.runner.RunWith;
 import org.junit.Before;
 import org.junit.Test;
 
-import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
-import org.xmlpull.v1.XmlPullParserFactory;
 
 /**
  * Validate that the android intents used by APKs on this device are part of the
@@ -128,96 +112,38 @@ public class IntentTest {
 
     private Set<String> lookupPlatformIntents() {
         try {
-            XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
-
             Set<String> intents = new HashSet<>();
-            XmlPullParser parser = factory.newPullParser();
-            parser.setInput(new FileInputStream(new File(CURRENT_API_FILE)), null);
-            intents.addAll(parse(parser));
-
-            parser = factory.newPullParser();
-            parser.setInput(new FileInputStream(new File(SYSTEM_CURRENT_API_FILE)), null);
-            intents.addAll(parse(parser));
+            intents.addAll(parse(CURRENT_API_FILE));
+            intents.addAll(parse(SYSTEM_CURRENT_API_FILE));
             return intents;
         } catch (XmlPullParserException | IOException e) {
             throw new RuntimeException("failed to parse", e);
         }
     }
 
-    private static Set<String> parse(XmlPullParser parser)
+    private static Set<String> parse(String apiFileName)
             throws XmlPullParserException, IOException {
-        JDiffClassDescription currentClass = null;
-        String currentPackage = "";
-        JDiffMethod currentMethod = null;
 
         Set<String> androidIntents = new HashSet<>();
-        Set<String> keyTagSet = new HashSet<String>();
-        keyTagSet.addAll(Arrays.asList(new String[] {
-                TAG_PACKAGE, TAG_CLASS, TAG_INTERFACE, TAG_IMPLEMENTS, TAG_CONSTRUCTOR,
-                TAG_METHOD, TAG_PARAM, TAG_EXCEPTION, TAG_FIELD }));
 
-        int type;
-        while ((type=parser.next()) != XmlPullParser.START_TAG
-                   && type != XmlPullParser.END_DOCUMENT) { }
-
-        if (type != XmlPullParser.START_TAG) {
-            throw new XmlPullParserException("No start tag found");
-        }
-
-        if (!parser.getName().equals(TAG_ROOT)) {
-            throw new XmlPullParserException(
-                  "Unexpected start tag: found " + parser.getName() + ", expected " + TAG_ROOT);
-        }
-
-        while (true) {
-            type = XmlPullParser.START_DOCUMENT;
-            while ((type=parser.next()) != XmlPullParser.START_TAG
-                       && type != XmlPullParser.END_DOCUMENT
-                       && type != XmlPullParser.END_TAG) {
-            }
-
-            if (type == XmlPullParser.END_TAG) {
-                if (TAG_PACKAGE.equals(parser.getName())) {
-                    currentPackage = "";
-                }
-                continue;
-            }
-
-            if (type == XmlPullParser.END_DOCUMENT) {
-                break;
-            }
-
-            String tagname = parser.getName();
-            if (!keyTagSet.contains(tagname)) {
-                continue;
-            }
-
-            if (type == XmlPullParser.START_TAG && tagname.equals(TAG_PACKAGE)) {
-                currentPackage = parser.getAttributeValue(null, ATTRIBUTE_NAME);
-            } else if (tagname.equals(TAG_CLASS)) {
-                currentClass = CurrentApi.loadClassInfo(
-                      parser, false, currentPackage, null /*resultObserver*/);
-            } else if (tagname.equals(TAG_INTERFACE)) {
-                currentClass = CurrentApi.loadClassInfo(
-                      parser, true, currentPackage, null /*resultObserver*/);
-            } else if (tagname.equals(TAG_FIELD)) {
-                JDiffField field =
-                    CurrentApi.loadFieldInfo(currentClass.getClassName(), parser);
-                currentClass.addField(field);
-            }
-
-            if (currentClass != null) {
-                for (JDiffField diffField : currentClass.getFieldList()) {
-                    String fieldValue = diffField.getValueString();
-                    if (fieldValue != null) {
-                        fieldValue = fieldValue.replace("\"", "");
-                        if (fieldValue.startsWith(ANDROID_INTENT_PREFIX)) {
-                            androidIntents.add(fieldValue);
+        ApiDocumentParser apiDocumentParser = new ApiDocumentParser(TAG,
+                new ApiDocumentParser.Listener() {
+                    @Override
+                    public void completedClass(JDiffClassDescription classDescription) {
+                        for (JDiffField diffField : classDescription.getFieldList()) {
+                            String fieldValue = diffField.getValueString();
+                            if (fieldValue != null) {
+                                fieldValue = fieldValue.replace("\"", "");
+                                if (fieldValue.startsWith(ANDROID_INTENT_PREFIX)) {
+                                    androidIntents.add(fieldValue);
+                                }
+                            }
                         }
+
                     }
-                }
-            }
-        }
+                });
+
+        apiDocumentParser.parse(new FileInputStream(new File(apiFileName)));
 
         return androidIntents;
     }

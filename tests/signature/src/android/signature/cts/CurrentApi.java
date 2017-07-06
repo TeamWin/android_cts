@@ -22,8 +22,6 @@ import android.signature.cts.JDiffClassDescription.JDiffMethod;
 import java.lang.reflect.Modifier;
 
 import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
-import org.xmlpull.v1.XmlPullParserFactory;
 
 /**
  * Helper methods and constants used for parsing the current api file.
@@ -39,34 +37,34 @@ public class CurrentApi {
     public static final String SYSTEM_CURRENT_API_FILE =
             API_FILE_DIRECTORY + "/system-current.api";
 
-    public static final String TAG_ROOT = "api";
-    public static final String TAG_PACKAGE = "package";
-    public static final String TAG_CLASS = "class";
-    public static final String TAG_INTERFACE = "interface";
-    public static final String TAG_IMPLEMENTS = "implements";
-    public static final String TAG_CONSTRUCTOR = "constructor";
-    public static final String TAG_METHOD = "method";
-    public static final String TAG_PARAM = "parameter";
-    public static final String TAG_EXCEPTION = "exception";
-    public static final String TAG_FIELD = "field";
+    static final String TAG_ROOT = "api";
+    static final String TAG_PACKAGE = "package";
+    static final String TAG_CLASS = "class";
+    static final String TAG_INTERFACE = "interface";
+    static final String TAG_IMPLEMENTS = "implements";
+    static final String TAG_CONSTRUCTOR = "constructor";
+    static final String TAG_METHOD = "method";
+    static final String TAG_PARAM = "parameter";
+    static final String TAG_EXCEPTION = "exception";
+    static final String TAG_FIELD = "field";
 
-    static final String MODIFIER_ABSTRACT = "abstract";
-    static final String MODIFIER_FINAL = "final";
-    static final String MODIFIER_NATIVE = "native";
-    static final String MODIFIER_PRIVATE = "private";
-    static final String MODIFIER_PROTECTED = "protected";
-    static final String MODIFIER_PUBLIC = "public";
-    static final String MODIFIER_STATIC = "static";
-    static final String MODIFIER_SYNCHRONIZED = "synchronized";
-    static final String MODIFIER_TRANSIENT = "transient";
-    static final String MODIFIER_VOLATILE = "volatile";
-    static final String MODIFIER_VISIBILITY = "visibility";
+    private static final String MODIFIER_ABSTRACT = "abstract";
+    private static final String MODIFIER_FINAL = "final";
+    private static final String MODIFIER_NATIVE = "native";
+    private static final String MODIFIER_PRIVATE = "private";
+    private static final String MODIFIER_PROTECTED = "protected";
+    private static final String MODIFIER_PUBLIC = "public";
+    private static final String MODIFIER_STATIC = "static";
+    private static final String MODIFIER_SYNCHRONIZED = "synchronized";
+    private static final String MODIFIER_TRANSIENT = "transient";
+    private static final String MODIFIER_VOLATILE = "volatile";
+    private static final String MODIFIER_VISIBILITY = "visibility";
 
-    public static final String ATTRIBUTE_NAME = "name";
-    static final String ATTRIBUTE_VALUE = "value";
-    static final String ATTRIBUTE_EXTENDS = "extends";
-    public static final String ATTRIBUTE_TYPE = "type";
-    static final String ATTRIBUTE_RETURN = "return";
+    static final String ATTRIBUTE_NAME = "name";
+    private static final String ATTRIBUTE_VALUE = "value";
+    private static final String ATTRIBUTE_EXTENDS = "extends";
+    static final String ATTRIBUTE_TYPE = "type";
+    private static final String ATTRIBUTE_RETURN = "return";
 
     /**
      * Load field information from xml to memory.
@@ -75,7 +73,7 @@ public class CurrentApi {
      * @param parser The XmlPullParser which carries the xml information.
      * @return the new field
      */
-    public static JDiffField loadFieldInfo(String className, XmlPullParser parser) {
+    static JDiffField loadFieldInfo(String className, XmlPullParser parser) {
         String fieldName = parser.getAttributeValue(null, ATTRIBUTE_NAME);
         String fieldType = parser.getAttributeValue(null, ATTRIBUTE_TYPE);
         int modifier = jdiffModifierToReflectionFormat(className, parser);
@@ -90,7 +88,7 @@ public class CurrentApi {
      * @param parser The XmlPullParser which carries the xml information.
      * @return the newly loaded method.
      */
-    public static JDiffMethod loadMethodInfo(String className, XmlPullParser parser) {
+    static JDiffMethod loadMethodInfo(String className, XmlPullParser parser) {
         String methodName = parser.getAttributeValue(null, ATTRIBUTE_NAME);
         String returnType = parser.getAttributeValue(null, ATTRIBUTE_RETURN);
         int modifier = jdiffModifierToReflectionFormat(className, parser);
@@ -104,8 +102,8 @@ public class CurrentApi {
      * @param currentClass the current class being loaded.
      * @return the new constructor
      */
-    public static JDiffConstructor loadConstructorInfo(
-        XmlPullParser parser, JDiffClassDescription currentClass) {
+    static JDiffConstructor loadConstructorInfo(
+            XmlPullParser parser, JDiffClassDescription currentClass) {
         String name = currentClass.getClassName();
         int modifier = jdiffModifierToReflectionFormat(name, parser);
         return new JDiffConstructor(name, modifier);
@@ -119,16 +117,10 @@ public class CurrentApi {
      * @param pkg the name of the java package this class can be found in.
      * @return the new class description.
      */
-    public static JDiffClassDescription loadClassInfo(
-        XmlPullParser parser, boolean isInterface, String pkg,
-        ResultObserver resultObserver) {
+    static JDiffClassDescription loadClassInfo(
+            XmlPullParser parser, boolean isInterface, String pkg) {
         String className = parser.getAttributeValue(null, ATTRIBUTE_NAME);
-        JDiffClassDescription currentClass;
-        if (resultObserver != null) {
-            currentClass = new JDiffClassDescription(pkg, className, resultObserver);
-        } else {
-            currentClass = new JDiffClassDescription(pkg, className);
-        }
+        JDiffClassDescription currentClass = new JDiffClassDescription(pkg, className);
 
         currentClass.setModifier(jdiffModifierToReflectionFormat(className, parser));
         currentClass.setType(isInterface ? JDiffClassDescription.JDiffType.INTERFACE :
@@ -145,7 +137,7 @@ public class CurrentApi {
      * @param value modifier value
      * @return converted modifier value
      */
-    static int modifierDescriptionToReflectedType(String name, String key, String value) {
+    private static int modifierDescriptionToReflectedType(String name, String key, String value) {
         if (key.equals(MODIFIER_ABSTRACT)) {
             return value.equals("true") ? Modifier.ABSTRACT : 0;
         } else if (key.equals(MODIFIER_FINAL)) {
@@ -185,7 +177,7 @@ public class CurrentApi {
      * @param parser XML resource parser
      * @return converted modifier
      */
-    static int jdiffModifierToReflectionFormat(String name, XmlPullParser parser){
+    private static int jdiffModifierToReflectionFormat(String name, XmlPullParser parser){
         int modifier = 0;
         for (int i = 0;i < parser.getAttributeCount();i++) {
             modifier |= modifierDescriptionToReflectedType(name, parser.getAttributeName(i),
