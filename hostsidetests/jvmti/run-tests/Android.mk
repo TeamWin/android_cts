@@ -75,6 +75,7 @@ LOCAL_SRC_FILES += \
   src/985-re-obsolete/src/art/Test985.java \
   src/986-native-method-bind/src/art/Test986.java \
   src/988-method-trace/src/art/Test988.java \
+    src/988-method-trace/src/art/Test988Intrinsics.java \
   src/989-method-trace-throw/src/art/Test989.java \
   src/990-field-trace/src/art/Test990.java \
   src/991-field-trace-2/src/art/Test991.java \
