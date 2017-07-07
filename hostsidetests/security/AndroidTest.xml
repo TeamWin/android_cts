@@ -98,6 +98,7 @@
 
         <option name="push" value="Bug-36266767->/data/local/tmp/Bug-36266767" />
         <option name="push" value="Bug-36591162->/data/local/tmp/Bug-36591162" />
+        <option name="push" value="CVE-2017-9678->/data/local/tmp/CVE-2017-9678" />
 
         <option name="append-bitness" value="true" />
     </target_preparer>
