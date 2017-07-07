@@ -16,6 +16,14 @@
 
 package android.view.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import android.app.Instrumentation;
 import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
@@ -51,13 +59,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
@@ -238,6 +239,30 @@ public class PixelCopyTest {
         assertEquals(Config.ARGB_8888, bitmap.getConfig());
         assertBitmapQuadColor(bitmap,
                 Color.RED, Color.GREEN, Color.BLUE, Color.BLACK);
+    }
+
+    @Test
+    public void testReuseBitmap() {
+        // Since we only sample mid-pixel of each qudrant, filtering
+        // quality isn't tested
+        PixelCopyGLProducerCtsActivity activity = waitForGlProducerActivity();
+        Bitmap bitmap = Bitmap.createBitmap(20, 20, Config.ARGB_8888);
+        int result = mCopyHelper.request(activity.getView(), bitmap);
+        // Make sure nothing messed with the bitmap
+        assertEquals(20, bitmap.getWidth());
+        assertEquals(20, bitmap.getHeight());
+        assertEquals(Config.ARGB_8888, bitmap.getConfig());
+        assertBitmapQuadColor(bitmap,
+                Color.RED, Color.GREEN, Color.BLUE, Color.BLACK);
+        int generationId = bitmap.getGenerationId();
+        result = mCopyHelper.request(activity.getView(), bitmap);
+        // Make sure nothing messed with the bitmap
+        assertEquals(20, bitmap.getWidth());
+        assertEquals(20, bitmap.getHeight());
+        assertEquals(Config.ARGB_8888, bitmap.getConfig());
+        assertBitmapQuadColor(bitmap,
+                Color.RED, Color.GREEN, Color.BLUE, Color.BLACK);
+        assertNotEquals(generationId, bitmap.getGenerationId());
     }
 
     private Window waitForWindowProducerActivity() {
