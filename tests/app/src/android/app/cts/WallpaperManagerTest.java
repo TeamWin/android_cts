@@ -80,7 +80,9 @@ public class WallpaperManagerTest {
 
         try {
             int which = WallpaperManager.FLAG_SYSTEM;
+            mWallpaperManager.setBitmap(tmpWallpaper);
             int oldWallpaperId = mWallpaperManager.getWallpaperId(which);
+            canvas.drawColor(Color.GREEN);
             mWallpaperManager.setBitmap(tmpWallpaper);
             int newWallpaperId = mWallpaperManager.getWallpaperId(which);
             Assert.assertNotEquals(oldWallpaperId, newWallpaperId);
@@ -121,10 +123,9 @@ public class WallpaperManagerTest {
         try {
             mWallpaperManager.setBitmap(tmpWallpaper);
 
-            // Wait for 5 sec since this is an async call.
+            // Wait for up to 5 sec since this is an async call.
             // Should fail if Intent.ACTION_WALLPAPER_CHANGED isn't delivered.
-            latch.await(5, TimeUnit.SECONDS);
-            if (latch.getCount() > 0) {
+            if (!latch.await(5, TimeUnit.SECONDS)) {
                 throw new AssertionError("Intent.ACTION_WALLPAPER_CHANGED not received.");
             }
         } catch (InterruptedException | IOException e) {
@@ -149,8 +150,7 @@ public class WallpaperManagerTest {
 
             // Wait for 5 sec since this is an async call.
             // Should fail if Intent.ACTION_WALLPAPER_CHANGED isn't delivered.
-            latch.await(5, TimeUnit.SECONDS);
-            if (latch.getCount() > 0) {
+            if (!latch.await(5, TimeUnit.SECONDS)) {
                 throw new AssertionError("Intent.ACTION_WALLPAPER_CHANGED not received.");
             }
         } catch (InterruptedException | IOException e) {
@@ -207,8 +207,7 @@ public class WallpaperManagerTest {
         mWallpaperManager.addOnColorsChangedListener(counter);
         try {
             mWallpaperManager.setResource(R.drawable.robot);
-            latch.await(5, TimeUnit.SECONDS);
-            if (latch.getCount() > 0) {
+            if (!latch.await(5, TimeUnit.SECONDS)) {
                 throw new AssertionError("Registered listener not invoked");
             }
         } catch (InterruptedException | IOException e) {
@@ -261,7 +260,7 @@ public class WallpaperManagerTest {
     }
 
     /**
-     * Helper to set a listener anc verify if it was called with the same flags.
+     * Helper to set a listener and verify if it was called with the same flags.
      * Executes operation synchronously.
      *
      * @param which FLAG_LOCK, FLAG_SYSTEM or a combination of both.
@@ -304,8 +303,7 @@ public class WallpaperManagerTest {
 
         try {
             mWallpaperManager.setResource(R.drawable.robot, which);
-            latch.await(5, TimeUnit.SECONDS);
-            if (latch.getCount() != 0) {
+            if (!latch.await(5, TimeUnit.SECONDS)) {
                 throw new AssertionError("Didn't receive all color events. Expected: " +
                         whichExpected + " received: " + received);
             }
@@ -358,7 +356,13 @@ public class WallpaperManagerTest {
      */
     private void ensureCleanState() {
         Bitmap bmp = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
-        int expectedEvents = 3; // Changed wallpaper, LOCK and SYSTEM
+        // We expect 5 events to happen when we change a wallpaper:
+        // • Wallpaper changed
+        // • System colors are null
+        // • Lock colors are null
+        // • System colors are known
+        // • Lock colors are known
+        final int expectedEvents = 5;
         CountDownLatch latch = new CountDownLatch(expectedEvents);
         if (DEBUG) {
             Log.d("WP", "Started latch expecting: " + latch.getCount());
@@ -389,9 +393,9 @@ public class WallpaperManagerTest {
         try {
             mWallpaperManager.setBitmap(bmp);
 
-            // Wait for up to 5 sec since this is an async call.
+            // Wait for up to 10 sec since this is an async call.
             // Will pass as soon as the expected callbacks are executed.
-            latch.await(5, TimeUnit.SECONDS);
+            latch.await(10, TimeUnit.SECONDS);
             if (latch.getCount() != 0) {
                 Log.w(TAG, "Did not receive all events! This is probably a bug.");
             }
