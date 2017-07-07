@@ -42,7 +42,7 @@ LOCAL_PROGUARD_ENABLED := disabled
 LOCAL_MULTILIB := both
 
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts
+LOCAL_COMPATIBILITY_SUITE := cts vts
 
 LOCAL_JAVA_RESOURCE_FILES := libcore/expectations/knownfailures.txt
 

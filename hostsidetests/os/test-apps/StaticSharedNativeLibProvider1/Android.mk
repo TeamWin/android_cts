@@ -24,7 +24,7 @@ LOCAL_JNI_SHARED_LIBRARIES := libstaticsharednativelibprovider
 
 LOCAL_PACKAGE_NAME := CtsStaticSharedNativeLibProvider1
 
-LOCAL_COMPATIBILITY_SUITE := cts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 LOCAL_PROGUARD_ENABLED := disabled
 
