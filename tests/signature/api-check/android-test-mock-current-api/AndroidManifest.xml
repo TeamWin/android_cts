@@ -16,16 +16,16 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.signature.cts.api">
+          package="android.signature.cts.api.android_test_mock_current">
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
 
     <application>
-        <uses-library android:name="android.test.runner"/>
+        <uses-library android:name="android.test.mock"/>
     </application>
 
     <instrumentation android:name="repackaged.android.test.InstrumentationTestRunner"
-                     android:targetPackage="android.signature.cts.api"
-                     android:label="API Signature Test"/>
+                     android:targetPackage="android.signature.cts.api.android_test_mock_current"
+                     android:label="Android Test Mock Current API Signature Test"/>
 
 </manifest>

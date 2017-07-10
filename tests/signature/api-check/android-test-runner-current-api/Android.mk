@@ -14,25 +14,12 @@
 
 LOCAL_PATH := $(call my-dir)
 
-# cts-api-signature-test java library
-# ===================================
-
 include $(CLEAR_VARS)
 
-# don't include this package in any target
-LOCAL_MODULE_TAGS := optional
+LOCAL_PACKAGE_NAME := CtsAndroidTestRunnerCurrentApiSignatureTestCases
 
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
+LOCAL_SIGNATURE_API_FILES := \
+    android-test-mock-current.api \
+    android-test-runner-current.api \
 
-LOCAL_MODULE := cts-api-signature-test
-
-LOCAL_SDK_VERSION := current
-
-LOCAL_STATIC_JAVA_LIBRARIES := \
-    cts-signature-common \
-    repackaged-legacy-test \
-    repackaged.android.test.runner \
-
-include $(BUILD_STATIC_JAVA_LIBRARY)
-
-include $(call all-makefiles-under,$(LOCAL_PATH))
+include $(LOCAL_PATH)/../build_signature_apk.mk

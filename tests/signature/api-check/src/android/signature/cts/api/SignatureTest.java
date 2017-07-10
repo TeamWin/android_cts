@@ -21,9 +21,16 @@ import android.signature.cts.ApiDocumentParser;
 import android.signature.cts.ApiComplianceChecker;
 import android.signature.cts.FailureType;
 import android.signature.cts.JDiffClassDescription;
+import android.signature.cts.ReflectionHelper;
 import android.signature.cts.ResultObserver;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.TreeSet;
+import org.xmlpull.v1.XmlPullParserException;
 import repackaged.android.test.InstrumentationTestCase;
 import repackaged.android.test.InstrumentationTestRunner;
 
@@ -36,9 +43,24 @@ public class SignatureTest extends InstrumentationTestCase {
 
     private static final String TAG = SignatureTest.class.getSimpleName();
 
+    /**
+     * A set of class names that are inaccessible for some reason.
+     */
+    private static final Set<String> KNOWN_INACCESSIBLE_CLASSES = new HashSet<>();
+
+    static {
+        // TODO(b/63383787) - These classes, which are nested annotations with @Retention(SOURCE)
+        // are removed from framework.dex for an as yet unknown reason.
+        KNOWN_INACCESSIBLE_CLASSES.add("android.content.pm.PackageManager.PermissionFlags");
+        KNOWN_INACCESSIBLE_CLASSES.add("android.os.UserManager.UserRestrictionSource");
+        KNOWN_INACCESSIBLE_CLASSES.add(
+                "android.service.persistentdata.PersistentDataBlockManager.FlashLockState");
+    }
+
     private TestResultObserver mResultObserver;
 
     private String[] expectedApiFiles;
+    private String[] unexpectedApiFiles;
 
     private class TestResultObserver implements ResultObserver {
 
@@ -67,8 +89,16 @@ public class SignatureTest extends InstrumentationTestCase {
         Bundle instrumentationArgs =
                 ((InstrumentationTestRunner) getInstrumentation()).getArguments();
 
-        String argument = instrumentationArgs.getString("expected-api-files");
-        expectedApiFiles = argument.split(",");
+        expectedApiFiles = getCommaSeparatedList(instrumentationArgs, "expected-api-files");
+        unexpectedApiFiles = getCommaSeparatedList(instrumentationArgs, "unexpected-api-files");
+    }
+
+    private String[] getCommaSeparatedList(Bundle instrumentationArgs, String key) {
+        String argument = instrumentationArgs.getString(key);
+        if (argument == null) {
+            return new String[0];
+        }
+        return argument.split(",");
     }
 
     /**
@@ -78,12 +108,31 @@ public class SignatureTest extends InstrumentationTestCase {
      */
     public void testSignature() {
         try {
+            Set<JDiffClassDescription> unexpectedClasses = loadUnexpectedClasses();
+            for (JDiffClassDescription classDescription : unexpectedClasses) {
+                Class<?> unexpectedClass = findUnexpectedClass(classDescription);
+                if (unexpectedClass != null) {
+                    mResultObserver.notifyFailure(
+                            FailureType.UNEXPECTED_CLASS,
+                            classDescription.getAbsoluteClassName(),
+                            "Class should not be accessible to this APK");
+                }
+            }
+
             ApiComplianceChecker complianceChecker = new ApiComplianceChecker(mResultObserver);
             ApiDocumentParser apiDocumentParser = new ApiDocumentParser(
                     TAG, new ApiDocumentParser.Listener() {
                 @Override
                 public void completedClass(JDiffClassDescription classDescription) {
-                    complianceChecker.checkSignatureCompliance(classDescription);
+                    // Ignore classes that are known to be inaccessible.
+                    if (KNOWN_INACCESSIBLE_CLASSES.contains(classDescription.getAbsoluteClassName())) {
+                        return;
+                    }
+
+                    // Ignore unexpected classes that are in the API definition.
+                    if (!unexpectedClasses.contains(classDescription)) {
+                        complianceChecker.checkSignatureCompliance(classDescription);
+                    }
                 }
             });
 
@@ -96,7 +145,41 @@ public class SignatureTest extends InstrumentationTestCase {
                     e.getMessage());
         }
         if (mResultObserver.mDidFail) {
-            fail(mResultObserver.mErrorString.toString());
+            StringBuilder errorString = mResultObserver.mErrorString;
+            ClassLoader classLoader = getClass().getClassLoader();
+            errorString.append("\nClassLoader hierarchy\n");
+            while (classLoader != null) {
+                errorString.append("    ").append(classLoader).append("\n");
+                classLoader = classLoader.getParent();
+            }
+            fail(errorString.toString());
         }
+    }
+
+    private Class<?> findUnexpectedClass(JDiffClassDescription classDescription) {
+        try {
+            return ReflectionHelper.findMatchingClass(classDescription);
+        } catch (ClassNotFoundException e) {
+            return null;
+        }
+    }
+
+    private Set<JDiffClassDescription> loadUnexpectedClasses()
+            throws IOException, XmlPullParserException {
+
+        Set<JDiffClassDescription> unexpectedClasses = new TreeSet<>(
+                Comparator.comparing(JDiffClassDescription::getAbsoluteClassName));
+        ApiDocumentParser apiDocumentParser = new ApiDocumentParser(TAG,
+                new ApiDocumentParser.Listener() {
+                    @Override
+                    public void completedClass(JDiffClassDescription classDescription) {
+                        unexpectedClasses.add(classDescription);
+                    }
+                });
+        for (String expectedApiFile : unexpectedApiFiles) {
+            File file = new File(API_FILE_DIRECTORY + "/" + expectedApiFile);
+            apiDocumentParser.parse(new FileInputStream(file));
+        }
+        return unexpectedClasses;
     }
 }

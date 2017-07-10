@@ -479,7 +479,7 @@ public class JDiffClassDescription {
      *
      * @return The package + short class name
      */
-    String getAbsoluteClassName() {
+    public String getAbsoluteClassName() {
         return mAbsoluteClassName;
     }
 
@@ -522,5 +522,10 @@ public class JDiffClassDescription {
         return paramType
             .replace("? extends java.lang.Object", "?")
             .replace("? super java.lang.Object", "? super ?");
+    }
+
+    @Override
+    public String toString() {
+        return mAbsoluteClassName;
     }
 }

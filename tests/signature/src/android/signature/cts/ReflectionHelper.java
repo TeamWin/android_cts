@@ -29,7 +29,7 @@ import java.util.List;
 /**
  * Uses reflection to obtain runtime representations of elements in the API.
  */
-class ReflectionHelper {
+public class ReflectionHelper {
 
     private static void loge(String message, Exception exception) {
         System.err.println(String.format("%s: %s", message, exception));
@@ -42,7 +42,7 @@ class ReflectionHelper {
      * @return the reflected class, or null if not found.
      */
     @SuppressWarnings("unchecked")
-    static Class<?> findMatchingClass(JDiffClassDescription classDescription)
+    public static Class<?> findMatchingClass(JDiffClassDescription classDescription)
             throws ClassNotFoundException {
         // even if there are no . in the string, split will return an
         // array of length 1

@@ -12,27 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-LOCAL_PATH := $(call my-dir)
-
-# cts-api-signature-test java library
-# ===================================
-
-include $(CLEAR_VARS)
+# Specify the following variables before including:
+#
+#     LOCAL_PACKAGE_NAME
+#         the name of the package
+#
+#     LOCAL_SIGNATURE_API_FILES
+#         the list of api files needed
 
 # don't include this package in any target
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
-
-LOCAL_MODULE := cts-api-signature-test
+# Tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts general-tests
 
 LOCAL_SDK_VERSION := current
 
-LOCAL_STATIC_JAVA_LIBRARIES := \
-    cts-signature-common \
-    repackaged-legacy-test \
-    repackaged.android.test.runner \
+LOCAL_STATIC_JAVA_LIBRARIES := cts-api-signature-test
 
-include $(BUILD_STATIC_JAVA_LIBRARY)
+LOCAL_ADDITIONAL_DEPENDENCIES += \
+    $(addprefix $(COMPATIBILITY_TESTCASES_OUT_cts)/,$(LOCAL_SIGNATURE_API_FILES))
 
-include $(call all-makefiles-under,$(LOCAL_PATH))
+include $(BUILD_CTS_PACKAGE)
+
+LOCAL_SIGNATURE_API_FILES :=
