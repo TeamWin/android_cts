@@ -103,7 +103,6 @@ import android.widget.LinearLayout;
 import com.android.compatibility.common.util.CtsMouseUtil;
 import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.compatibility.common.util.PollingCheck;
-import com.android.internal.view.menu.ContextMenuBuilder;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -1074,21 +1073,22 @@ public class ViewTest {
     }
 
     @Test
-    public void testCreateContextMenu() {
-        View.OnCreateContextMenuListener listener = mock(View.OnCreateContextMenuListener.class);
-        MockView view = new MockView(mActivity);
-        ContextMenu contextMenu = new ContextMenuBuilder(mActivity);
-        view.setParent(mMockParent);
-        view.setOnCreateContextMenuListener(listener);
-        assertFalse(view.hasCalledOnCreateContextMenu());
-        assertFalse(mMockParent.hasCreateContextMenu());
-        verifyZeroInteractions(listener);
+    public void testCreateContextMenu() throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            View.OnCreateContextMenuListener listener =
+                    mock(View.OnCreateContextMenuListener.class);
+            MockView view = new MockView(mActivity);
+            mActivity.setContentView(view);
+            mActivity.registerForContextMenu(view);
+            view.setOnCreateContextMenuListener(listener);
+            assertFalse(view.hasCalledOnCreateContextMenu());
+            verifyZeroInteractions(listener);
 
-        view.createContextMenu(contextMenu);
-        assertTrue(view.hasCalledOnCreateContextMenu());
-        assertTrue(mMockParent.hasCreateContextMenu());
-        verify(listener, times(1)).onCreateContextMenu(
-                eq(contextMenu), eq(view), any());
+            view.showContextMenu();
+            assertTrue(view.hasCalledOnCreateContextMenu());
+            verify(listener, times(1)).onCreateContextMenu(
+                    any(), eq(view), any());
+        });
     }
 
     @Test(expected=NullPointerException.class)
@@ -1226,32 +1226,36 @@ public class ViewTest {
     }
 
     @Test
-    public void testKeyboardNavigationClusterSearch() {
-        mMockParent.setIsRootNamespace(true);
-        View v1 = new MockView(mActivity);
-        v1.setFocusableInTouchMode(true);
-        View v2 = new MockView(mActivity);
-        v2.setFocusableInTouchMode(true);
-        mMockParent.addView(v1);
-        mMockParent.addView(v2);
+    public void testKeyboardNavigationClusterSearch() throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            ViewGroup decorView = (ViewGroup) mActivity.getWindow().getDecorView();
+            decorView.removeAllViews();
+            View v1 = new MockView(mActivity);
+            v1.setFocusableInTouchMode(true);
+            View v2 = new MockView(mActivity);
+            v2.setFocusableInTouchMode(true);
+            decorView.addView(v1);
+            decorView.addView(v2);
 
-        // Searching for clusters.
-        v1.setKeyboardNavigationCluster(true);
-        v2.setKeyboardNavigationCluster(true);
-        assertEquals(v2, mMockParent.keyboardNavigationClusterSearch(v1, View.FOCUS_FORWARD));
-        assertEquals(v1, mMockParent.keyboardNavigationClusterSearch(null, View.FOCUS_FORWARD));
-        assertEquals(v2, mMockParent.keyboardNavigationClusterSearch(null, View.FOCUS_BACKWARD));
-        assertEquals(v2, v1.keyboardNavigationClusterSearch(null, View.FOCUS_FORWARD));
-        assertEquals(mMockParent, v1.keyboardNavigationClusterSearch(null, View.FOCUS_BACKWARD));
-        assertEquals(mMockParent, v2.keyboardNavigationClusterSearch(null, View.FOCUS_FORWARD));
-        assertEquals(v1, v2.keyboardNavigationClusterSearch(null, View.FOCUS_BACKWARD));
+            // Searching for clusters.
+            v1.setKeyboardNavigationCluster(true);
+            v2.setKeyboardNavigationCluster(true);
+            assertEquals(v2, decorView.keyboardNavigationClusterSearch(v1, View.FOCUS_FORWARD));
+            assertEquals(v1, decorView.keyboardNavigationClusterSearch(null, View.FOCUS_FORWARD));
+            assertEquals(v2, decorView.keyboardNavigationClusterSearch(null, View.FOCUS_BACKWARD));
+            assertEquals(v2, v1.keyboardNavigationClusterSearch(null, View.FOCUS_FORWARD));
+            assertEquals(decorView, v1.keyboardNavigationClusterSearch(null, View.FOCUS_BACKWARD));
+            assertEquals(decorView, v2.keyboardNavigationClusterSearch(null, View.FOCUS_FORWARD));
+            assertEquals(v1, v2.keyboardNavigationClusterSearch(null, View.FOCUS_BACKWARD));
 
-        // Clusters in 3-level hierarchy.
-        ViewGroup root = new MockViewParent(mActivity);
-        root.setIsRootNamespace(true);
-        mMockParent.setIsRootNamespace(false);
-        root.addView(mMockParent);
-        assertEquals(root, v2.keyboardNavigationClusterSearch(null, View.FOCUS_FORWARD));
+            // Clusters in 3-level hierarchy.
+            decorView.removeAllViews();
+            LinearLayout middle = new LinearLayout(mActivity);
+            middle.addView(v1);
+            middle.addView(v2);
+            decorView.addView(middle);
+            assertEquals(decorView, v2.keyboardNavigationClusterSearch(null, View.FOCUS_FORWARD));
+        });
     }
 
     @Test
