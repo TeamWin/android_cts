@@ -32,7 +32,7 @@ LOCAL_RESOURCE_DIR := cts/hostsidetests/appsecurity/test-apps/UsePermissionApp23
 LOCAL_PACKAGE_NAME := CtsUsePermissionApp25
 
 # tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/cts-testkey2
 
