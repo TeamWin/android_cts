@@ -46,6 +46,7 @@ import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.util.Pair;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -956,6 +957,29 @@ public class FragmentLifecycleTest {
         });
     }
 
+    @Test
+    public void optionsMenu() throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            FragmentController fc = FragmentTestUtil.createController(mActivityRule);
+            FragmentTestUtil.resume(mActivityRule, fc, null);
+            FragmentManager fm = fc.getFragmentManager();
+
+            InvalidateOptionFragment fragment = new InvalidateOptionFragment();
+            fm.beginTransaction()
+                    .add(android.R.id.content, fragment)
+                    .commit();
+            fm.executePendingTransactions();
+
+            Menu menu = mock(Menu.class);
+            fc.dispatchPrepareOptionsMenu(menu);
+            assertTrue(fragment.onPrepareOptionsMenuCalled);
+            fragment.onPrepareOptionsMenuCalled = false;
+            FragmentTestUtil.destroy(mActivityRule, fc);
+            fc.dispatchPrepareOptionsMenu(menu);
+            assertFalse(fragment.onPrepareOptionsMenuCalled);
+        });
+    }
+
     private void executePendingTransactions(final FragmentManager fm) throws Throwable {
         mActivityRule.runOnUiThread(new Runnable() {
             @Override
@@ -1160,6 +1184,21 @@ public class FragmentLifecycleTest {
             if (fragment != null) {
                 getFragmentManager().beginTransaction().remove(fragment).commit();
             }
+        }
+    }
+
+    public static class InvalidateOptionFragment extends Fragment {
+        public boolean onPrepareOptionsMenuCalled;
+
+        public InvalidateOptionFragment() {
+            setHasOptionsMenu(true);
+        }
+
+        @Override
+        public void onPrepareOptionsMenu(Menu menu) {
+            onPrepareOptionsMenuCalled = true;
+            assertNotNull(getContext());
+            super.onPrepareOptionsMenu(menu);
         }
     }
 }
