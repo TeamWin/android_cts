@@ -779,7 +779,7 @@ public class MediaPlayerDrmTestBase extends ActivityInstrumentationTestCase2<Med
                     initData = CLEARKEY_PSSH;
                     Log.d(TAG, "setupDrm: CLEARKEY scheme not found in PSSH. Using default data.");
                 }
-                Log.d(TAG, "setupDrm: initData[" + drmScheme + "]: " + initData);
+                Log.d(TAG, "setupDrm: initData[" + drmScheme + "]: " + Arrays.toString(initData));
 
                 // diverging from GTS
                 mime = "cenc";
@@ -818,7 +818,7 @@ public class MediaPlayerDrmTestBase extends ActivityInstrumentationTestCase2<Med
             byte[] keySetId = mMediaPlayer.provideKeyResponse(
                     (keyType == MediaDrm.KEY_TYPE_RELEASE) ? mKeySetId : null,
                     response);
-            Log.d(TAG, "setupDrm: provideKeyResponse -> " + keySetId);
+            Log.d(TAG, "setupDrm: provideKeyResponse -> " + Arrays.toString(keySetId));
             // storing offline key for a later restore
             mKeySetId = (keyType == MediaDrm.KEY_TYPE_OFFLINE) ? keySetId : null;
 
