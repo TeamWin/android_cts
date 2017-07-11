@@ -22,6 +22,7 @@ import android.app.assist.AssistStructure;
 import android.app.assist.AssistStructure.ViewNode;
 import android.content.IntentSender;
 import android.os.Bundle;
+import android.service.autofill.CustomDescription;
 import android.service.autofill.Dataset;
 import android.service.autofill.FillCallback;
 import android.service.autofill.FillResponse;
@@ -61,6 +62,7 @@ final class CannedFillResponse {
     private final String[] mRequiredSavableIds;
     private final String[] mOptionalSavableIds;
     private final String mSaveDescription;
+    private final CustomDescription mCustomDescription;
     private final Bundle mExtras;
     private final RemoteViews mPresentation;
     private final IntentSender mAuthentication;
@@ -77,6 +79,7 @@ final class CannedFillResponse {
         mRequiredSavableIds = builder.mRequiredSavableIds;
         mOptionalSavableIds = builder.mOptionalSavableIds;
         mSaveDescription = builder.mSaveDescription;
+        mCustomDescription = builder.mCustomDescription;
         mSaveType = builder.mSaveType;
         mExtras = builder.mExtras;
         mPresentation = builder.mPresentation;
@@ -136,6 +139,10 @@ final class CannedFillResponse {
                 saveInfo.setDescription(mSaveDescription);
             }
             saveInfo.setNegativeAction(mNegativeActionStyle, mNegativeActionListener);
+
+            if (mCustomDescription != null) {
+                saveInfo.setCustomDescription(mCustomDescription);
+            }
             builder.setSaveInfo(saveInfo.build());
         }
         if (mIgnoredIds != null) {
@@ -159,6 +166,7 @@ final class CannedFillResponse {
                 + ", flags=" + mFlags
                 + ", failureMessage=" + mFailureMessage
                 + ", saveDescription=" + mSaveDescription
+                + ", mCustomDescription=" + mCustomDescription
                 + ", hasPresentation=" + (mPresentation != null)
                 + ", hasAuthentication=" + (mAuthentication != null)
                 + ", authenticationIds=" + Arrays.toString(mAuthenticationIds)
@@ -179,6 +187,7 @@ final class CannedFillResponse {
         private String[] mRequiredSavableIds;
         private String[] mOptionalSavableIds;
         private String mSaveDescription;
+        public CustomDescription mCustomDescription;
         public int mSaveType = -1;
         private Bundle mExtras;
         private RemoteViews mPresentation;
@@ -230,6 +239,14 @@ final class CannedFillResponse {
          */
         public Builder setSaveDescription(String description) {
             mSaveDescription = description;
+            return this;
+        }
+
+        /**
+         * Sets the description passed to the {@link SaveInfo}.
+         */
+        public Builder setCustomDescription(CustomDescription description) {
+            mCustomDescription = description;
             return this;
         }
 
