@@ -27,6 +27,7 @@ import android.text.method.Touch;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.MotionEvent;
+import android.view.ViewGroup;
 import android.widget.TextView;
 
 public class TouchTest extends ActivityInstrumentationTestCase2<CtsActivity> {
@@ -58,7 +59,11 @@ public class TouchTest extends ActivityInstrumentationTestCase2<CtsActivity> {
 
         runTestOnUiThread(new Runnable() {
             public void run() {
-                mActivity.setContentView(tv);
+                final float pixelPerSp =
+                    mActivity.getResources().getDisplayMetrics().scaledDensity;
+                // Explicitly set the width so that |LONG_TEXT| causes horizontal scroll.
+                mActivity.setContentView(tv, new ViewGroup.LayoutParams(
+                    (int)(100 * pixelPerSp), ViewGroup.LayoutParams.MATCH_PARENT));
                 tv.setSingleLine(true);
                 tv.setLines(2);
             }
