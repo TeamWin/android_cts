@@ -16,7 +16,9 @@
 
 package android.webkit.cts;
 
+import android.app.ActivityManager;
 import android.graphics.Bitmap;
+import android.os.Build;
 import android.os.Message;
 import android.test.ActivityInstrumentationTestCase2;
 import android.view.KeyEvent;
@@ -578,6 +580,12 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
 
     public void testOnRenderProcessGone() throws Throwable {
         if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+        if (Build.SUPPORTED_64_BIT_ABIS.length == 0 &&
+            getActivity().getSystemService(ActivityManager.class).isLowRamDevice()) {
+            // Renderer process crashes can only be handled when multiprocess is enabled,
+            // which is not the case for 32-bit lowram devices.
             return;
         }
         final MockWebViewClient webViewClient = new MockWebViewClient();
