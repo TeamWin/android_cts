@@ -96,6 +96,7 @@ public class LoaderTest {
     @Test
     public void startWhenReused() throws Throwable {
         LoaderActivity activity = mActivityRule.getActivity();
+        activity.waitForResume(mActivityRule);
 
         assertEquals("Loaded!", activity.textView.getText().toString());
 
