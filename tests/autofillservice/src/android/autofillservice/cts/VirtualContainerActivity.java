@@ -53,7 +53,7 @@ public class VirtualContainerActivity extends AbstractAutoFillActivity {
 
         setContentView(R.layout.virtual_container_activity);
 
-        mCustomView = (VirtualContainerView) findViewById(R.id.virtual_container_view);
+        mCustomView = findViewById(R.id.virtual_container_view);
 
         mUsername = mCustomView.addLine(ID_USERNAME_LABEL, "Username", ID_USERNAME, BLANK_VALUE);
         mPassword = mCustomView.addLine(ID_PASSWORD_LABEL, "Password", ID_PASSWORD, BLANK_VALUE);
