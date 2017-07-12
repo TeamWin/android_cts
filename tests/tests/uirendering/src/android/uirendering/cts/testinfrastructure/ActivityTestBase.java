@@ -130,7 +130,8 @@ public abstract class ActivityTestBase {
             SynchronousPixelCopy copy = new SynchronousPixelCopy();
             Bitmap dest = Bitmap.createBitmap(
                     TEST_WIDTH, TEST_HEIGHT,
-                    isWideColorGamut() ? Config.RGBA_F16 : Config.ARGB_8888);
+                    getActivity().getWindow().isWideColorGamut()
+                            ? Config.RGBA_F16 : Config.ARGB_8888);
             Rect srcRect = new Rect(testOffset.x, testOffset.y,
                     testOffset.x + TEST_WIDTH, testOffset.y + TEST_HEIGHT);
             Log.d("UiRendering", "capturing screenshot of " + srcRect.toShortString());
