@@ -6966,11 +6966,53 @@ public class TextViewTest {
     public void testAutoSizeCallers_setMaxLines() throws Throwable {
         final TextView autoSizeTextView = prepareAndRetrieveAutoSizeTestData(
                 R.id.textview_autosize_uniform, false);
-        final float initialTextSize = autoSizeTextView.getTextSize();
-        mActivityRule.runOnUiThread(() -> autoSizeTextView.setMaxLines(1));
+        // Configure layout params and auto-size both in pixels to dodge flakiness on different
+        // devices.
+        final LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                200, 200);
+        final String text = "one\ntwo\nthree\nfour\nfive\nsix\nseven\neight\nnine\nten";
+        mActivityRule.runOnUiThread(() -> {
+            autoSizeTextView.setLayoutParams(layoutParams);
+            autoSizeTextView.setAutoSizeTextTypeUniformWithConfiguration(
+                    1 /* autoSizeMinTextSize */,
+                    5000 /* autoSizeMaxTextSize */,
+                    1 /* autoSizeStepGranularity */,
+                    TypedValue.COMPLEX_UNIT_PX);
+            autoSizeTextView.setText(text);
+        });
         mInstrumentation.waitForIdleSync();
 
-        assertTrue(autoSizeTextView.getTextSize() < initialTextSize);
+        float initialSize = 0;
+        for (int i = 1; i < 10; i++) {
+            final int maxLines = i;
+            mActivityRule.runOnUiThread(() -> autoSizeTextView.setMaxLines(maxLines));
+            mInstrumentation.waitForIdleSync();
+            float expectedSmallerSize = autoSizeTextView.getTextSize();
+            if (i == 1) {
+                initialSize = expectedSmallerSize;
+            }
+
+            mActivityRule.runOnUiThread(() -> autoSizeTextView.setMaxLines(maxLines + 1));
+            mInstrumentation.waitForIdleSync();
+            assertTrue(expectedSmallerSize <= autoSizeTextView.getTextSize());
+        }
+        assertTrue(initialSize < autoSizeTextView.getTextSize());
+
+        initialSize = Integer.MAX_VALUE;
+        for (int i = 10; i > 1; i--) {
+            final int maxLines = i;
+            mActivityRule.runOnUiThread(() -> autoSizeTextView.setMaxLines(maxLines));
+            mInstrumentation.waitForIdleSync();
+            float expectedLargerSize = autoSizeTextView.getTextSize();
+            if (i == 10) {
+                initialSize = expectedLargerSize;
+            }
+
+            mActivityRule.runOnUiThread(() -> autoSizeTextView.setMaxLines(maxLines - 1));
+            mInstrumentation.waitForIdleSync();
+            assertTrue(expectedLargerSize >= autoSizeTextView.getTextSize());
+        }
+        assertTrue(initialSize > autoSizeTextView.getTextSize());
     }
 
     @Test
