@@ -6708,7 +6708,7 @@ public class TextViewTest {
         }
         assertTrue(initialSize > autoSizeTextView.getTextSize());
 
-        initialSize = 9999999;
+        initialSize = Integer.MAX_VALUE;
         // As we remove characters the text size expands.
         for (int i = 9; i >= 0; i--) {
             mActivityRule.runOnUiThread(() ->
