@@ -37,7 +37,7 @@ public class Poc17_07 extends SecurityTestCase {
      */
     @SecurityTest
     public void testPocBug_36604779() throws Exception {
-      enableAdbRoot(getDevice());
+        enableAdbRoot(getDevice());
         if(containsDriver(getDevice(), "/dev/port")) {
           AdbUtils.runCommandLine("cat /dev/port", getDevice());
         }
@@ -73,6 +73,15 @@ public class Poc17_07 extends SecurityTestCase {
         enableAdbRoot(getDevice());
         if(containsDriver(getDevice(), "/dev/ashmem")) {
            AdbUtils.runPoc("Bug-34173755", getDevice(), 60);
-      }
+        }
+    }
+
+     /**
+     *  b/35950388
+     */
+    @SecurityTest
+    public void testPocBug_35950388() throws Exception {
+        enableAdbRoot(getDevice());
+        AdbUtils.runPocNoOutput("Bug-35950388", getDevice(), 60);
     }
 }
