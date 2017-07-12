@@ -26,6 +26,7 @@ import android.service.autofill.Dataset;
 import android.service.autofill.FillCallback;
 import android.service.autofill.FillResponse;
 import android.service.autofill.SaveInfo;
+import android.service.autofill.Validator;
 import android.view.autofill.AutofillId;
 import android.view.autofill.AutofillValue;
 import android.widget.RemoteViews;
@@ -58,6 +59,7 @@ final class CannedFillResponse {
     private final List<CannedDataset> mDatasets;
     private final String mFailureMessage;
     private final int mSaveType;
+    private final Validator mValidator;
     private final String[] mRequiredSavableIds;
     private final String[] mOptionalSavableIds;
     private final String mSaveDescription;
@@ -74,6 +76,7 @@ final class CannedFillResponse {
         mResponseType = builder.mResponseType;
         mDatasets = builder.mDatasets;
         mFailureMessage = builder.mFailureMessage;
+        mValidator = builder.mValidator;
         mRequiredSavableIds = builder.mRequiredSavableIds;
         mOptionalSavableIds = builder.mOptionalSavableIds;
         mSaveDescription = builder.mSaveDescription;
@@ -129,6 +132,9 @@ final class CannedFillResponse {
 
             saveInfo.setFlags(mFlags);
 
+            if (mValidator != null) {
+                saveInfo.setValidator(mValidator);
+            }
             if (mOptionalSavableIds != null) {
                 saveInfo.setOptionalIds(getAutofillIds(nodeResolver, mOptionalSavableIds));
             }
@@ -176,6 +182,7 @@ final class CannedFillResponse {
         private final List<CannedDataset> mDatasets = new ArrayList<>();
         private final ResponseType mResponseType;
         private String mFailureMessage;
+        private Validator mValidator;
         private String[] mRequiredSavableIds;
         private String[] mOptionalSavableIds;
         private String mSaveDescription;
@@ -200,6 +207,14 @@ final class CannedFillResponse {
         public Builder addDataset(CannedDataset dataset) {
             assertWithMessage("already set failure").that(mFailureMessage).isNull();
             mDatasets.add(dataset);
+            return this;
+        }
+
+        /**
+         * Sets the validator for this request
+         */
+        public Builder setValidator(Validator validator) {
+            mValidator = validator;
             return this;
         }
 
