@@ -125,6 +125,9 @@ class VirtualContainerView extends View {
         for (int i = 0; i < mLines.size(); i++) {
             x = mLeftMargin;
             final Line line = mLines.get(i);
+            if (!line.visible) {
+                continue;
+            }
             Log.v(TAG, "Drawing '" + line + "' at " + x + "x" + y);
             mTextPaint.setColor(line.focused ? mFocusedColor : mUnfocusedColor);
             final String readOnlyText = line.label.text + ":  [";
@@ -260,6 +263,7 @@ class VirtualContainerView extends View {
         final Rect bounds = new Rect();
 
         private boolean focused;
+        private boolean visible = true;
 
         private Line(String labelId, String label, String textId, String text) {
             this.label = new Item(this, ++nextId, labelId, label, false, false);
@@ -278,6 +282,16 @@ class VirtualContainerView extends View {
             }
         }
 
+        void changeVisibility(boolean visible) {
+            if (this.visible == visible) {
+                return;
+            }
+            this.visible = visible;
+            mAfm.notifyViewVisibilityChanged(VirtualContainerView.this, text.id, visible);
+            Log.d(TAG, "visibility changed view: " + text.id + "; visible:" + visible);
+            invalidate();
+        }
+
         Rect getAbsCoordinates() {
             // Must offset the boundaries so they're relative to the CustomView.
             final int offset[] = new int[2];
@@ -290,13 +304,25 @@ class VirtualContainerView extends View {
             return absBounds;
         }
 
+        void setText(String value) {
+            text.text = value;
+            final AutofillManager autofillManager =
+                    getContext().getSystemService(AutofillManager.class);
+            if (autofillManager != null) {
+                autofillManager.notifyValueChanged(VirtualContainerView.this, text.id,
+                        AutofillValue.forText(text.text));
+            }
+            invalidate();
+        }
+
         void setTextChangedListener(TextWatcher listener) {
             text.listener = listener;
         }
 
         @Override
         public String toString() {
-            return "Label: " + label + " Text: " + text + " Focused: " + focused;
+            return "Label: " + label + " Text: " + text + " Focused: " + focused
+                    + " Visible: " + visible;
         }
 
         final class OneTimeLineWatcher implements TextWatcher {
