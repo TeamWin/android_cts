@@ -386,8 +386,8 @@ public class FocusFinderTest {
         FrameLayout layout = new FrameLayout(mLayout.getContext());
         Button button1 = new Button(mLayout.getContext());
         Button button2 = new Button(mLayout.getContext());
-        button1.setLeftTopRightBottom(0, 0, 10, 10);
-        button2.setLeftTopRightBottom(0, 0, 10, 10);
+        setViewBox(button1, 0, 0, 10, 10);
+        setViewBox(button2, 0, 0, 10, 10);
         layout.addView(button1);
         layout.addView(button2);
         View[] views = new View[]{button2, button1};
@@ -401,7 +401,7 @@ public class FocusFinderTest {
         assertEquals(button2, views[0]);
         assertEquals(button1, views[1]);
         // make sure it will actually mutate input array.
-        button2.setLeftTopRightBottom(20, 0, 30, 10);
+        setViewBox(button2, 20, 0, 30, 10);
         FocusFinder.sort(views, 0, 2, layout, false);
         assertEquals(button1, views[0]);
         assertEquals(button2, views[1]);
@@ -427,5 +427,12 @@ public class FocusFinderTest {
         verifyNextFocus(mTopLeft, View.FOCUS_FORWARD, mTopRight);
         verifyNextFocus(mTopRight, View.FOCUS_FORWARD, mBottomLeft);
         verifyNextFocus(mBottomLeft, View.FOCUS_FORWARD, mBottomRight);
+    }
+
+    private void setViewBox(View view, int left, int top, int right, int bottom) {
+        view.setLeft(left);
+        view.setTop(top);
+        view.setRight(right);
+        view.setBottom(bottom);
     }
 }
