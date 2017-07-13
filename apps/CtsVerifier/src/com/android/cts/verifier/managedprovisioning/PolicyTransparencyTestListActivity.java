@@ -154,6 +154,8 @@ public class PolicyTransparencyTestListActivity extends PassFailButtons.TestList
                 return pm.hasSystemFeature(PackageManager.FEATURE_INPUT_METHODS);
             case PolicyTransparencyTestActivity.TEST_CHECK_PERMITTED_ACCESSIBILITY_SERVICE:
                 return pm.hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT);
+            case PolicyTransparencyTestActivity.TEST_CHECK_LOCK_SCREEN_INFO:
+                return !pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
             default:
                 return true;
         }
