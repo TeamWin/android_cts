@@ -267,6 +267,12 @@ public class CompatibilityBuildHelper {
 
         File testFile;
         for (String testDir: testDirs) {
+            testFile = new File(getTestsDir(), filename);
+            if (testFile.exists()) {
+                return testFile;
+            }
+            // The file may be in a subdirectory so do a more through search
+            // if it did not exist.
             testFile = FileUtil.findFile(new File(testDir), filename);
             if (testFile != null) {
                 return testFile;
