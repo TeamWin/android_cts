@@ -31,6 +31,7 @@ import static android.autofillservice.cts.Helper.assertTextIsSanitized;
 import static android.autofillservice.cts.Helper.assertToggleIsSanitized;
 import static android.autofillservice.cts.Helper.assertToggleValue;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
+import static android.autofillservice.cts.Helper.getContext;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_CREDIT_CARD;
 import static android.view.View.AUTOFILL_TYPE_LIST;
 
@@ -41,7 +42,6 @@ import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
-import android.support.test.rule.ActivityTestRule;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 
@@ -58,8 +58,8 @@ import java.util.Arrays;
 public class CheckoutActivityTest extends AutoFillServiceTestCase {
 
     @Rule
-    public final ActivityTestRule<CheckoutActivity> mActivityRule =
-        new ActivityTestRule<CheckoutActivity>(CheckoutActivity.class);
+    public final AutofillActivityTestRule<CheckoutActivity> mActivityRule =
+        new AutofillActivityTestRule<CheckoutActivity>(CheckoutActivity.class);
 
     private CheckoutActivity mActivity;
 

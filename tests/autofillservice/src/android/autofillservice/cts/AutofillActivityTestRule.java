@@ -15,16 +15,23 @@
  */
 package android.autofillservice.cts;
 
-import org.junit.Rule;
+import android.app.Activity;
+import android.support.test.rule.ActivityTestRule;
 
-public class DatePickerSpinnerActivityTest extends DatePickerTestCase<DatePickerSpinnerActivity> {
+/**
+ * Custom {@link ActivityTestRule} that cleans up the autofill state before the activity is
+ * launched.
+ */
+public class AutofillActivityTestRule<T extends Activity> extends ActivityTestRule<T> {
 
-    @Rule
-    public final AutofillActivityTestRule<DatePickerSpinnerActivity> mActivityRule =
-        new AutofillActivityTestRule<DatePickerSpinnerActivity>(DatePickerSpinnerActivity.class);
+    public AutofillActivityTestRule(Class<T> activityClass) {
+        super(activityClass);
+    }
 
     @Override
-    protected DatePickerSpinnerActivity getDatePickerActivity() {
-        return mActivityRule.getActivity();
+    protected void beforeActivityLaunched() {
+        Helper.preTestCleanup();
+
+        super.beforeActivityLaunched();
     }
 }
