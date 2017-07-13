@@ -191,7 +191,7 @@ public class OpenGlEsVersionTest {
             "EGL_KHR_wait_sync",
         };
 
-        for (int i = 0; i < requiredList.length; ++i) {
+        for (int i = 0; i < requiredEglList.length; ++i) {
             assertTrue("Required EGL extension for VR high-performance is missing: " +
                 requiredEglList[i], hasExtension(extensions, requiredEglList[i]));
         }
