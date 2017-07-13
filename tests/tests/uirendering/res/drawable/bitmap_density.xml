@@ -16,6 +16,4 @@
 -->
 
 <bitmap xmlns:android="http://schemas.android.com/apk/res/android"
-        android:src="@drawable/bitmap_shader_density_internal"
-        android:tileModeX="repeat"
-        android:tileModeY="clamp" />
+        android:src="@drawable/icon_blue" />
