@@ -17,6 +17,7 @@
 package android.text.style.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 
@@ -201,5 +202,49 @@ public class TextAppearanceSpanTest {
         TextAppearanceSpan newSpan = new TextAppearanceSpan(p);
         assertEquals(family, newSpan.getFamily());
         p.recycle();
+    }
+
+    @Test
+    public void testCreateFromStyle_FontResource() {
+        final TextAppearanceSpan span = new TextAppearanceSpan(mContext,
+                android.text.cts.R.style.customFont);
+        final TextPaint tp = new TextPaint();
+        final float originalTextWidth = tp.measureText("a");
+        span.updateDrawState(tp);
+        assertNotEquals(originalTextWidth, tp.measureText("a"), 0.0f);
+    }
+
+    @Test
+    public void testWriteReadParcel_FontResource() {
+        final TextAppearanceSpan span = new TextAppearanceSpan(mContext,
+                android.text.cts.R.style.customFont);
+
+        final Parcel p = Parcel.obtain();
+        span.writeToParcel(p, 0);
+        p.setDataPosition(0);
+        final TextAppearanceSpan unparceledSpan = new TextAppearanceSpan(p);
+
+        final TextPaint tp = new TextPaint();
+        span.updateDrawState(tp);
+        final float originalSpanTextWidth = tp.measureText("a");
+        unparceledSpan.updateDrawState(tp);
+        assertEquals(originalSpanTextWidth, tp.measureText("a"), 0.0f);
+    }
+
+    @Test
+    public void testWriteReadParcel_FontResource_WithStyle() {
+        final TextAppearanceSpan span = new TextAppearanceSpan(mContext,
+                android.text.cts.R.style.customFontWithStyle);
+
+        final Parcel p = Parcel.obtain();
+        span.writeToParcel(p, 0);
+        p.setDataPosition(0);
+        final TextAppearanceSpan unparceledSpan = new TextAppearanceSpan(p);
+
+        final TextPaint tp = new TextPaint();
+        span.updateDrawState(tp);
+        final float originalSpanTextWidth = tp.measureText("a");
+        unparceledSpan.updateDrawState(tp);
+        assertEquals(originalSpanTextWidth, tp.measureText("a"), 0.0f);
     }
 }
