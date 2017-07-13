@@ -19,6 +19,7 @@ package android.autofillservice.cts;
 import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_USERNAME;
 import static android.autofillservice.cts.Helper.assertNoDanglingSessions;
+import static android.autofillservice.cts.Helper.getContext;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
 
 import android.service.autofill.CharSequenceTransformation;
@@ -26,7 +27,6 @@ import android.service.autofill.CustomDescription;
 import android.service.autofill.ImageTransformation;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.test.rule.ActivityTestRule;
 import android.view.View;
 import android.view.autofill.AutofillId;
 import android.widget.RemoteViews;
@@ -40,8 +40,8 @@ import java.util.function.BiFunction;
 
 public class CustomDescriptionTest extends AutoFillServiceTestCase {
     @Rule
-    public final ActivityTestRule<LoginActivity> mActivityRule = new ActivityTestRule<>(
-            LoginActivity.class);
+    public final AutofillActivityTestRule<LoginActivity> mActivityRule =
+        new AutofillActivityTestRule<>(LoginActivity.class);
 
     private LoginActivity mActivity;
 

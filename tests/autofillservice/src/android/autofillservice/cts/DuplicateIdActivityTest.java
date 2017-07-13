@@ -25,7 +25,6 @@ import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilD
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.assist.AssistStructure;
-import android.support.test.rule.ActivityTestRule;
 import android.util.Log;
 import android.view.autofill.AutofillId;
 
@@ -41,7 +40,7 @@ import org.junit.Test;
 public class DuplicateIdActivityTest extends AutoFillServiceTestCase {
     private static final String LOG_TAG = DuplicateIdActivityTest.class.getSimpleName();
     @Rule
-    public final ActivityTestRule<DuplicateIdActivity> mActivityRule = new ActivityTestRule<>(
+    public final AutofillActivityTestRule<DuplicateIdActivity> mActivityRule = new AutofillActivityTestRule<>(
             DuplicateIdActivity.class);
 
     private DuplicateIdActivity mActivity;

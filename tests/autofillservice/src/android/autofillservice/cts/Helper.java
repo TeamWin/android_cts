@@ -18,6 +18,7 @@ package android.autofillservice.cts;
 
 import static android.autofillservice.cts.Helper.hasAutofillFeature;
 import static android.autofillservice.cts.Helper.runShellCommand;
+import static android.autofillservice.cts.InstrumentedAutoFillService.SERVICE_NAME;
 import static android.provider.Settings.Secure.AUTOFILL_SERVICE;
 import static android.provider.Settings.Secure.USER_SETUP_COMPLETE;
 
@@ -756,6 +757,29 @@ final class Helper {
     public static void destroyAllSessions() {
         runShellCommand("cmd autofill destroy sessions");
         assertNoDanglingSessions();
+    }
+
+    /**
+     * Gets the instrumentation context.
+     */
+    public static Context getContext() {
+        return InstrumentationRegistry.getInstrumentation().getContext();
+    }
+
+    /**
+     * Cleans up the autofill state; should be called before pretty much any test.
+     */
+    public static void preTestCleanup() {
+        if (!hasAutofillFeature()) return;
+
+        Log.d(TAG, "preTestCleanup()");
+
+        disableAutofillService(getContext(), SERVICE_NAME);
+        InstrumentedAutoFillService.setIgnoreUnexpectedRequests(true);
+
+        destroyAllSessions();
+        InstrumentedAutoFillService.resetStaticState();
+        AuthenticationActivity.resetStaticState();
     }
 
     private Helper() {

@@ -29,7 +29,6 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.app.assist.AssistStructure;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
-import android.support.test.rule.ActivityTestRule;
 
 import org.junit.After;
 import org.junit.Before;
@@ -50,8 +49,8 @@ import org.junit.Test;
 public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
 
     @Rule
-    public final ActivityTestRule<OptionalSaveActivity> mActivityRule =
-        new ActivityTestRule<OptionalSaveActivity>(OptionalSaveActivity.class);
+    public final AutofillActivityTestRule<OptionalSaveActivity> mActivityRule =
+        new AutofillActivityTestRule<OptionalSaveActivity>(OptionalSaveActivity.class);
 
     private OptionalSaveActivity mActivity;
 
