@@ -16,16 +16,17 @@
 
 package android.autofillservice.cts;
 
+import static android.autofillservice.cts.Helper.getContext;
 import static android.autofillservice.cts.Helper.getLoggingLevel;
 import static android.autofillservice.cts.Helper.hasAutofillFeature;
 import static android.autofillservice.cts.Helper.runShellCommand;
 import static android.autofillservice.cts.Helper.setLoggingLevel;
+import static android.autofillservice.cts.InstrumentedAutoFillService.SERVICE_NAME;
 import static android.provider.Settings.Secure.AUTOFILL_SERVICE;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.autofillservice.cts.InstrumentedAutoFillService.Replier;
-import android.content.Context;
 import android.content.pm.PackageManager;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
@@ -39,16 +40,14 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.runner.RunWith;
 
+import java.util.List;
+
 /**
  * Base class for all other tests.
  */
 @RunWith(AndroidJUnit4.class)
 abstract class AutoFillServiceTestCase {
     private static final String TAG = "AutoFillServiceTestCase";
-
-    private static final String SERVICE_NAME =
-            InstrumentedAutoFillService.class.getPackage().getName()
-            + "/." + InstrumentedAutoFillService.class.getSimpleName();
 
     protected static UiBot sUiBot;
 
@@ -82,30 +81,16 @@ abstract class AutoFillServiceTestCase {
 
     @AfterClass
     public static void resetSettings() {
-        runShellCommand("settings delete secure %s", AUTOFILL_SERVICE);
-    }
-
-    @Before
-    public void disableService() {
         if (!hasAutofillFeature()) return;
 
-        if (!isServiceEnabled()) return;
-
-        final OneTimeSettingsListener observer = new OneTimeSettingsListener(getContext(),
-                AUTOFILL_SERVICE);
+        // Clean up only - no need to call disableService() because it doesn't need to fail if
+        // it's not reset.
         runShellCommand("settings delete secure %s", AUTOFILL_SERVICE);
-        observer.assertCalled();
-        assertServiceDisabled();
-
-        InstrumentedAutoFillService.setIgnoreUnexpectedRequests(false);
     }
 
     @Before
     public void reset() {
-        destroyAllSessions();
         sReplier.reset();
-        InstrumentedAutoFillService.resetStaticState();
-        AuthenticationActivity.resetStaticState();
     }
 
     @Before
@@ -136,9 +121,18 @@ abstract class AutoFillServiceTestCase {
     // exceptions would mask the real cause. A better approach might be using a @Rule or some other
     // visitor pattern.
     @After
-    public void assertNoPendingRequests() {
-        sReplier.assertNumberUnhandledFillRequests(0);
-        sReplier.assertNumberUnhandledSaveRequests(0);
+    public void assertNothingIsPending() throws Exception {
+        final MultipleExceptionsCatcher catcher = new MultipleExceptionsCatcher()
+            .run(() -> sReplier.assertNumberUnhandledFillRequests(0))
+            .run(() -> sReplier.assertNumberUnhandledSaveRequests(0));
+
+        final List<Exception> replierExceptions = sReplier.getExceptions();
+        if (replierExceptions != null) {
+            for (Exception e : replierExceptions) {
+                catcher.add(e);
+            }
+        }
+        catcher.throwIfAny();
     }
 
     @After
@@ -150,13 +144,18 @@ abstract class AutoFillServiceTestCase {
      * Enables the {@link InstrumentedAutoFillService} for autofill for the current user.
      */
     protected void enableService() {
-        if (isServiceEnabled()) return;
+        Helper.enableAutofillService(getContext(), SERVICE_NAME);
+        InstrumentedAutoFillService.setIgnoreUnexpectedRequests(false);
+    }
 
-        final OneTimeSettingsListener observer = new OneTimeSettingsListener(getContext(),
-                AUTOFILL_SERVICE);
-        runShellCommand("settings put secure %s %s default", AUTOFILL_SERVICE, SERVICE_NAME);
-        observer.assertCalled();
-        assertServiceEnabled();
+    /**
+     * Disables the {@link InstrumentedAutoFillService} for autofill for the current user.
+     */
+    protected void disableService() {
+        if (!hasAutofillFeature()) return;
+
+        Helper.disableAutofillService(getContext(), SERVICE_NAME);
+        InstrumentedAutoFillService.setIgnoreUnexpectedRequests(true);
     }
 
     /**
@@ -182,19 +181,7 @@ abstract class AutoFillServiceTestCase {
         assertWithMessage("Dangling sessions ('%s'): %s'", command, result).that(result).isEmpty();
     }
 
-    /**
-     * Destroys all sessions.
-     */
-    protected void destroyAllSessions() {
-        runShellCommand("cmd autofill destroy sessions");
-        assertNoDanglingSessions();
-    }
-
-    protected static Context getContext() {
-        return InstrumentationRegistry.getInstrumentation().getContext();
-    }
-
-    protected static RemoteViews createPresentation(String message) {
+    protected RemoteViews createPresentation(String message) {
         final RemoteViews presentation = new RemoteViews(getContext()
                 .getPackageName(), R.layout.list_item);
         presentation.setTextViewText(R.id.text1, message);
