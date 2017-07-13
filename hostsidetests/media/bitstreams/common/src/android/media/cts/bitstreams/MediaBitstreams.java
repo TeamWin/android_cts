@@ -23,8 +23,8 @@ package android.media.cts.bitstreams;
 public class MediaBitstreams {
 
     /* options */
-    public static final String OPT_HOST_BITSTEAMS_PATH = "host-bitsteams-path";
-    public static final String OPT_DEVICE_BITSTEAMS_PATH = "device-bitsteams-path";
+    public static final String OPT_HOST_BITSTREAMS_PATH = "host-bitstreams-path";
+    public static final String OPT_DEVICE_BITSTREAMS_PATH = "device-bitstreams-path";
     public static final String OPT_DOWNLOAD_BITSTREAMS = "download-bitstreams";
     public static final String OPT_DEBUG_TARGET_DEVICE = "debug-target-device";
     public static final String OPT_BITSTREAMS_TO_TEST_TXT = "bitstreams-to-test-txt";
