@@ -196,6 +196,13 @@
             </intent-filter>
         </activity>
 
+        <provider
+                android:name="android.content.cts.CursorWindowContentProvider"
+                android:authorities="cursorwindow.provider"
+                android:exported="true"
+                android:process=":providerProcess">
+        </provider>
+
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
