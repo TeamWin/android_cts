@@ -81,7 +81,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * Same as {@link #testConfigurationUpdatesWhenResizedFromFullscreen()} but resizing
      * from docked state to fullscreen (reverse).
      */
-    @Presubmit
+    // TODO: Flaky, add to presubmit when b/63404575 is fixed.
     public void testConfigurationUpdatesWhenResizedFromDockedStack() throws Exception {
         if (!supportsSplitScreenMultiWindow()) {
             CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no multi-window support");
@@ -118,7 +118,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * Same as {@link #testConfigurationUpdatesWhenRotatingWhileFullscreen()} but when the Activity
      * is in the docked stack.
      */
-    @Presubmit
+    // TODO: Flaky, add to presubmit when b/63404575 is fixed.
     public void testConfigurationUpdatesWhenRotatingWhileDocked() throws Exception {
         if (!supportsSplitScreenMultiWindow()) {
             CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no multi-window support");
