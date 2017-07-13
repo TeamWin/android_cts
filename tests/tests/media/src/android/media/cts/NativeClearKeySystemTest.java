@@ -45,11 +45,12 @@ public class NativeClearKeySystemTest extends MediaPlayerTestBase {
     private static final String ISO_BMFF_VIDEO_MIME_TYPE = "video/avc";
     private static final String ISO_BMFF_AUDIO_MIME_TYPE = "audio/avc";
     private static final Uri CENC_AUDIO_URL = Uri.parse(
-        "http://yt-dash-mse-test.commondatastorage.googleapis.com/media/" +
-        "car_cenc-20120827-8c.mp4");
+        "https://storage.googleapis.com/wvmedia/clear/h264/llama/" +
+        "llama_aac_audio.mp4");
+
     private static final Uri CENC_CLEARKEY_VIDEO_URL = Uri.parse(
-        "http://yt-dash-mse-test.commondatastorage.googleapis.com/media/" +
-        "car_cenc-20120827-88.mp4");
+        "https://storage.googleapis.com/wvmedia/clearkey/" +
+        "llama_h264_main_720p_8000.mp4");
 
     private static final int UUID_BYTE_SIZE = 16;
     private static final UUID CLEARKEY_SCHEME_UUID =
@@ -171,7 +172,7 @@ public class NativeClearKeySystemTest extends MediaPlayerTestBase {
         }
         connectionStatus.testConnection(videoUrl);
 
-        if (!MediaUtils.checkCodecsForPath(mContext, videoUrl.getPath())) {
+        if (!MediaUtils.checkCodecsForPath(mContext, videoUrl.toString())) {
             Log.i(TAG, "Device does not support " +
                   videoWidth + "x" + videoHeight + " resolution for " + mimeType);
             return;  // skip
