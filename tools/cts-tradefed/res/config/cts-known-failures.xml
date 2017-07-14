@@ -239,4 +239,7 @@
     <option name="compatibility:exclude-filter" value="CtsUiRenderingTestCases android.media.cts.android.uirendering.cts.testclasses.EdgeEffectTests#testOnPull" />
     <option name="compatibility:exclude-filter" value="CtsUiRenderingTestCases android.media.cts.android.uirendering.cts.testclasses.EdgeEffectTests#testSetColor" />
 
+    <!-- b/63566721 -->
+    <option name="compatibility:exclude-filter" value="CtsWrapWrapDebugTestCases android.wrap.cts.WrapTest" />
+
 </configuration>
