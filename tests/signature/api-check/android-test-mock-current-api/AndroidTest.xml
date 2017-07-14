@@ -13,7 +13,7 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="Config for CTS API Signature test cases">
+<configuration description="Config for CTS Android Test Mock Current API Signature test cases">
     <option name="config-descriptor:metadata" key="component" value="systems" />
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="mkdir -p /data/local/tmp/signature-test" />
