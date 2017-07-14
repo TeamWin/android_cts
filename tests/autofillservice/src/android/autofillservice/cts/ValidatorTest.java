@@ -26,7 +26,6 @@ import android.service.autofill.SimpleRegexValidator;
 import android.service.autofill.Validator;
 import android.service.autofill.Validators;
 import android.support.annotation.NonNull;
-import android.support.test.rule.ActivityTestRule;
 import android.view.View;
 import android.view.autofill.AutofillId;
 
@@ -39,8 +38,8 @@ import java.util.function.BiFunction;
 
 public class ValidatorTest extends AutoFillServiceTestCase {
     @Rule
-    public final ActivityTestRule<LoginActivity> mActivityRule = new ActivityTestRule<>(
-            LoginActivity.class);
+    public final AutofillActivityTestRule<LoginActivity> mActivityRule =
+        new AutofillActivityTestRule<>(LoginActivity.class);
 
     private LoginActivity mActivity;
 
