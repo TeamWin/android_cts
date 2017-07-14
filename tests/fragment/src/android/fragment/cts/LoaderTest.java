@@ -97,10 +97,12 @@ public class LoaderTest {
     public void startWhenReused() throws Throwable {
         LoaderActivity activity = mActivityRule.getActivity();
         activity.waitForResume(mActivityRule);
+        FragmentTestUtil.waitForExecution(mActivityRule);
 
         assertEquals("Loaded!", activity.textView.getText().toString());
 
         activity = FragmentTestUtil.recreateActivity(mActivityRule, activity);
+        FragmentTestUtil.waitForExecution(mActivityRule);
 
         // After orientation change, the text should still be loaded properly
         assertEquals("Loaded!", activity.textView.getText().toString());
