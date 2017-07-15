@@ -24,7 +24,7 @@ import android.support.test.rule.ActivityTestRule;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-public class RecreatedActivity extends Activity {
+public class RecreatedActivity extends FragmentTestActivity {
     // These must be cleared after each test using clearState()
     public static RecreatedActivity sActivity;
     public static CountDownLatch sResumed;
