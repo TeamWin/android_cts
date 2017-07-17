@@ -16,6 +16,8 @@
 
 package android.print.cts;
 
+import static android.content.pm.PackageManager.GET_META_DATA;
+import static android.content.pm.PackageManager.GET_SERVICES;
 import static android.print.cts.Utils.getPrintManager;
 
 import static org.junit.Assert.assertFalse;
@@ -35,6 +37,7 @@ import android.app.Instrumentation;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.graphics.pdf.PdfDocument;
 import android.os.Bundle;
@@ -47,7 +50,6 @@ import android.print.PrintDocumentAdapter;
 import android.print.PrintDocumentAdapter.LayoutResultCallback;
 import android.print.PrintDocumentAdapter.WriteResultCallback;
 import android.print.PrintDocumentInfo;
-import android.print.PrintManager;
 import android.print.PrinterId;
 import android.print.cts.services.PrintServiceCallbacks;
 import android.print.cts.services.PrinterDiscoverySessionCallbacks;
@@ -56,7 +58,6 @@ import android.print.cts.services.StubbablePrinterDiscoverySession;
 import android.print.pdf.PrintedPdfDocument;
 import android.printservice.CustomPrinterIconCallback;
 import android.printservice.PrintJob;
-import android.printservice.PrintServiceInfo;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -120,6 +121,8 @@ public abstract class BasePrintTest {
     private static final AtomicInteger sLastTestID = new AtomicInteger();
     private int mTestId;
     private PrintDocumentActivity mActivity;
+
+    private static String sDisabledPrintServicesBefore;
 
     private static final SparseArray<BasePrintTest> sIdToTest = new SparseArray<>();
 
@@ -198,6 +201,8 @@ public abstract class BasePrintTest {
         clearPrintSpoolerData();
         Log.d(LOG_TAG, "disableImes()");
         disableImes();
+        Log.d(LOG_TAG, "disablePrintServices()");
+        disablePrintServices(instrumentation.getTargetContext().getPackageName());
 
         // Workaround for dexmaker bug: https://code.google.com/p/dexmaker/issues/detail?id=2
         // Dexmaker is used by mockito.
@@ -207,33 +212,53 @@ public abstract class BasePrintTest {
         Log.d(LOG_TAG, "setUpClass() done");
     }
 
-    @Before
-    public void setUp() throws Exception {
-        Log.d(LOG_TAG, "setUp()");
-
+    /**
+     * Disable all print services beside the ones we want to leave enabled.
+     *
+     * @param packageToLeaveEnabled The package of the services to leave enabled.
+     */
+    private static void disablePrintServices(@NonNull String packageToLeaveEnabled)
+            throws IOException {
         Instrumentation instrumentation = getInstrumentation();
 
-        assumeTrue(instrumentation.getContext().getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_PRINTING));
+        sDisabledPrintServicesBefore = SystemUtil.runShellCommand(instrumentation,
+                "settings get secure " + Settings.Secure.DISABLED_PRINT_SERVICES);
 
-        final PrintManager printManager = instrumentation.getContext()
-                .getSystemService(PrintManager.class);
-        final List<PrintServiceInfo> services = printManager.getPrintServices(
-                PrintManager.ALL_SERVICES);
-        final String targetPackageName = instrumentation.getTargetContext().getPackageName();
+        Intent printServiceIntent = new Intent(android.printservice.PrintService.SERVICE_INTERFACE);
+        List<ResolveInfo> installedServices = instrumentation.getContext().getPackageManager()
+                .queryIntentServices(printServiceIntent, GET_SERVICES | GET_META_DATA);
+
         StringBuilder builder = new StringBuilder();
-        for (PrintServiceInfo service : services) {
-            final ComponentName serviceComponent = service.getComponentName();
-            if (targetPackageName.equals(serviceComponent.getPackageName())) {
+        for (ResolveInfo service : installedServices) {
+            if (packageToLeaveEnabled.equals(service.serviceInfo.packageName)) {
                 continue;
             }
             if (builder.length() > 0) {
                 builder.append(":");
             }
-            builder.append(serviceComponent.flattenToString());
-            SystemUtil.runShellCommand(instrumentation, "settings put secure "
-                    + Settings.Secure.DISABLED_PRINT_SERVICES + " " + builder);
+            builder.append(new ComponentName(service.serviceInfo.packageName,
+                    service.serviceInfo.name).flattenToString());
         }
+
+        SystemUtil.runShellCommand(instrumentation, "settings put secure "
+                + Settings.Secure.DISABLED_PRINT_SERVICES + " " + builder);
+    }
+
+    /**
+     * Revert {@link #disablePrintServices(String)}
+     */
+    private static  void enablePrintServices() throws IOException {
+        SystemUtil.runShellCommand(getInstrumentation(),
+                "settings put secure " + Settings.Secure.DISABLED_PRINT_SERVICES + " "
+                        + sDisabledPrintServicesBefore);
+    }
+
+    @Before
+    public void setUp() throws Exception {
+        Log.d(LOG_TAG, "setUp()");
+
+        assumeTrue(getInstrumentation().getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_PRINTING));
 
         // Initialize the latches.
         Log.d(LOG_TAG, "init counters");
@@ -274,6 +299,9 @@ public abstract class BasePrintTest {
         Log.d(LOG_TAG, "tearDownClass()");
 
         Instrumentation instrumentation = getInstrumentation();
+
+        Log.d(LOG_TAG, "enablePrintServices()");
+        enablePrintServices();
 
         Log.d(LOG_TAG, "enableImes()");
         enableImes();
