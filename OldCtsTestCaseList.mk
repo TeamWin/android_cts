@@ -291,6 +291,7 @@ cts_host_libraries := \
 cts_native_tests := \
     CtsNativeMediaSlTestCases \
     CtsNativeMediaXaTestCases \
+    CtsNativeNetTestCases \
 
 ifeq ($(HOST_OS)-$(HOST_ARCH),$(filter $(HOST_OS)-$(HOST_ARCH),linux-x86 linux-x86_64))
 cts_native_tests += CtsBionicTestCases
