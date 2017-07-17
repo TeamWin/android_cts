@@ -22,6 +22,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.only;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertThrows;
 
 import android.service.autofill.ImageTransformation;
 import android.service.autofill.ValueFinder;
@@ -36,29 +37,35 @@ import java.util.regex.PatternSyntaxException;
 
 @RunWith(AndroidJUnit4.class)
 public class ImageTransformationTest {
-    @Test(expected = NullPointerException.class)
+
+    @Test
     public void testAllNullBuilder() {
-        new ImageTransformation.Builder(null, null, 0);
+        assertThrows(NullPointerException.class,
+                () ->  new ImageTransformation.Builder(null, null, 0));
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testNullAutofillIdBuilder() {
-        new ImageTransformation.Builder(null, "", 1);
+        assertThrows(NullPointerException.class,
+                () ->  new ImageTransformation.Builder(null, "", 1));
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testNullRegexBuilder() {
-        new ImageTransformation.Builder(new AutofillId(1), null, 1);
+        assertThrows(NullPointerException.class,
+                () ->  new ImageTransformation.Builder(new AutofillId(1), null, 1));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testNullSubstBuilder() {
-        new ImageTransformation.Builder(new AutofillId(1), "", 0);
+        assertThrows(IllegalArgumentException.class,
+                () ->  new ImageTransformation.Builder(new AutofillId(1), "", 0));
     }
 
-    @Test(expected = PatternSyntaxException.class)
+    @Test
     public void testBadRegexBuilder() {
-        new ImageTransformation.Builder(new AutofillId(1), "(", 1);
+        assertThrows(PatternSyntaxException.class,
+                () ->  new ImageTransformation.Builder(new AutofillId(1), "(", 1));
     }
 
     @Test

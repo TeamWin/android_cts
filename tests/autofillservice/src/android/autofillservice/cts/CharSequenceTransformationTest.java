@@ -23,6 +23,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertThrows;
 
 import android.service.autofill.CharSequenceTransformation;
 import android.service.autofill.ValueFinder;
@@ -38,29 +39,35 @@ import java.util.regex.PatternSyntaxException;
 
 @RunWith(AndroidJUnit4.class)
 public class CharSequenceTransformationTest {
-    @Test(expected = NullPointerException.class)
+
+    @Test
     public void testAllNullBuilder() {
-        new CharSequenceTransformation.Builder(null, null, null);
+        assertThrows(NullPointerException.class,
+                () ->  new CharSequenceTransformation.Builder(null, null, null));
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testNullAutofillIdBuilder() {
-        new CharSequenceTransformation.Builder(null, "", "");
+        assertThrows(NullPointerException.class,
+                () -> new CharSequenceTransformation.Builder(null, "", ""));
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testNullRegexBuilder() {
-        new CharSequenceTransformation.Builder(new AutofillId(1), null, "");
+        assertThrows(NullPointerException.class,
+                () -> new CharSequenceTransformation.Builder(new AutofillId(1), null, ""));
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testNullSubstBuilder() {
-        new CharSequenceTransformation.Builder(new AutofillId(1), "", null);
+        assertThrows(NullPointerException.class,
+                () -> new CharSequenceTransformation.Builder(new AutofillId(1), "", null));
     }
 
-    @Test(expected = PatternSyntaxException.class)
+    @Test
     public void testBadRegexBuilder() {
-        new CharSequenceTransformation.Builder(new AutofillId(1), "(", "");
+        assertThrows(PatternSyntaxException.class,
+                () -> new CharSequenceTransformation.Builder(new AutofillId(1), "(", ""));
     }
 
     @Test

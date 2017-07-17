@@ -20,8 +20,8 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
-import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
@@ -50,6 +50,7 @@ public class LoginActivity extends AbstractAutoFillActivity {
 
     static final String ID_USERNAME_CONTAINER = "username_container";
     static final String AUTHENTICATION_MESSAGE = "Authentication failed. D'OH!";
+    static final String BACKDOOR_USERNAME = "LemmeIn";
 
     private TextView mUsernameLabel;
     private EditText mUsernameEditText;
@@ -110,7 +111,10 @@ public class LoginActivity extends AbstractAutoFillActivity {
     private void login() {
         final String username = mUsernameEditText.getText().toString();
         final String password = mPasswordEditText.getText().toString();
-        final boolean valid = username.equals(password) || password.contains("pass");
+        final boolean valid = username.equals(password)
+                || (TextUtils.isEmpty(username) && TextUtils.isEmpty(password))
+                || password.contains("pass")
+                || username.equals(BACKDOOR_USERNAME);
 
         if (valid) {
             Log.d(TAG, "login ok: " + username);

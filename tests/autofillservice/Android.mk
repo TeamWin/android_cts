@@ -28,7 +28,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestrunner \
     truth-prebuilt \
     ub-uiautomator \
-    testng
+    testng # TODO: remove once Android migrates to JUnit 4.12, which provide assertThrows
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 

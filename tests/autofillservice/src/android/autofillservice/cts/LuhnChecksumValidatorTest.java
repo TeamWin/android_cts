@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertThrows;
 
 import android.service.autofill.LuhnChecksumValidator;
 import android.service.autofill.ValueFinder;
@@ -31,14 +32,17 @@ import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 public class LuhnChecksumValidatorTest {
-    @Test(expected = NullPointerException.class)
+
+    @Test
     public void nullId() {
-        new LuhnChecksumValidator(null);
+        assertThrows(NullPointerException.class,
+                () -> new LuhnChecksumValidator((AutofillId[]) null));
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void nullAndOtherId() {
-        new LuhnChecksumValidator(new AutofillId(1), null);
+        assertThrows(NullPointerException.class,
+                () -> new LuhnChecksumValidator(new AutofillId(1), null));
     }
 
     @Test

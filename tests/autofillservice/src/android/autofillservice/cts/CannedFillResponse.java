@@ -130,8 +130,11 @@ final class CannedFillResponse {
             }
         }
         if (mRequiredSavableIds != null) {
-            final SaveInfo.Builder saveInfo = new SaveInfo.Builder(mSaveType,
-                    getAutofillIds(nodeResolver, mRequiredSavableIds));
+            final SaveInfo.Builder saveInfo =
+                    mRequiredSavableIds == null || mRequiredSavableIds.length == 0
+                        ? new SaveInfo.Builder(mSaveType)
+                            : new SaveInfo.Builder(mSaveType,
+                                    getAutofillIds(nodeResolver, mRequiredSavableIds));
 
             saveInfo.setFlags(mFlags);
 
