@@ -48,6 +48,7 @@ public class AnimationDrawableTest extends ActivityInstrumentationTestCase2<Imag
 
     private AnimationDrawable mAnimationDrawable;
     private Resources mResources;
+    private boolean mInitialOneShotValue;
 
     public AnimationDrawableTest() {
         super("android.graphics.cts", ImageViewCtsActivity.class);
@@ -64,11 +65,18 @@ public class AnimationDrawableTest extends ActivityInstrumentationTestCase2<Imag
                     ImageView imageView = (ImageView) activity.findViewById(R.id.imageview);
                     imageView.setBackgroundResource(R.drawable.animationdrawable);
                     mAnimationDrawable = (AnimationDrawable) imageView.getBackground();
+                    mInitialOneShotValue = mAnimationDrawable.isOneShot();
                 }
             });
         } catch (Throwable t) {
             throw new Exception(t);
         }
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        mAnimationDrawable.setOneShot(mInitialOneShotValue);
+        super.tearDown();
     }
 
     public void testConstructor() {
