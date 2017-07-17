@@ -24,6 +24,8 @@
 
   <test class="com.android.tradefed.testtype.AndroidJUnitTest">
     <option name="package" value="android.autofillservice.cts" />
+    <!-- 20x default timeout of 600sec -->
+    <option name="shell-timeout" value="12000000"/>
   </test>
 
 </configuration>
