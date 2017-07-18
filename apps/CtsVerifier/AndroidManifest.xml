@@ -2289,6 +2289,14 @@
             </intent-filter>
         </service>
 
+        <activity android:name=".managedprovisioning.AlwaysOnVpnSettingsTestActivity"
+                android:label="@string/provisioning_byod_always_on_vpn">
+            <intent-filter>
+                <action android:name="com.android.cts.verifier.managedprovisioning.action.ALWAYS_ON_VPN_SETTINGS_TEST" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
         <activity android:name=".managedprovisioning.PermissionLockdownTestActivity"
                 android:label="@string/device_profile_owner_permission_lockdown_test">
             <intent-filter>

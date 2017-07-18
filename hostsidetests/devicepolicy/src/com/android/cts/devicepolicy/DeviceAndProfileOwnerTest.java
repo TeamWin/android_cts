@@ -84,6 +84,9 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     private static final String VPN_APP_PKG = "com.android.cts.vpnfirewall";
     private static final String VPN_APP_APK = "CtsVpnFirewallApp.apk";
+    private static final String VPN_APP_API23_APK = "CtsVpnFirewallAppApi23.apk";
+    private static final String VPN_APP_API24_APK = "CtsVpnFirewallAppApi24.apk";
+    private static final String VPN_APP_NOT_ALWAYS_ON_APK = "CtsVpnFirewallAppNotAlwaysOn.apk";
 
     private static final String COMMAND_BLOCK_ACCOUNT_TYPE = "block-accounttype";
     private static final String COMMAND_UNBLOCK_ACCOUNT_TYPE = "unblock-accounttype";
@@ -123,6 +126,9 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             getDevice().uninstallPackage(DELEGATE_APP_PKG);
             getDevice().uninstallPackage(ACCOUNT_MANAGEMENT_PKG);
             getDevice().uninstallPackage(VPN_APP_PKG);
+            getDevice().uninstallPackage(VPN_APP_API23_APK);
+            getDevice().uninstallPackage(VPN_APP_API24_APK);
+            getDevice().uninstallPackage(VPN_APP_NOT_ALWAYS_ON_APK);
             getDevice().uninstallPackage(INTENT_RECEIVER_PKG);
             getDevice().uninstallPackage(INTENT_SENDER_PKG);
             getDevice().uninstallPackage(CUSTOMIZATION_APP_PKG);
@@ -291,6 +297,49 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             executeDeviceTestMethod(".AlwaysOnVpnMultiStageTest", "testSetNonExistingPackage");
         } finally {
             executeDeviceTestMethod(".AlwaysOnVpnMultiStageTest", "testCleanup");
+        }
+    }
+
+    @RequiresDevice
+    public void testAlwaysOnVpnUnsupportedPackage() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        try {
+            // Target SDK = 23: unsupported
+            installAppAsUser(VPN_APP_API23_APK, mUserId);
+            executeDeviceTestMethod(".AlwaysOnVpnUnsupportedTest", "testSetUnsupportedVpnAlwaysOn");
+
+            // Target SDK = 24: supported
+            installAppAsUser(VPN_APP_API24_APK, mUserId);
+            executeDeviceTestMethod(".AlwaysOnVpnUnsupportedTest", "testSetSupportedVpnAlwaysOn");
+            executeDeviceTestMethod(".AlwaysOnVpnUnsupportedTest", "testClearAlwaysOnVpn");
+
+            // Explicit opt-out: unsupported
+            installAppAsUser(VPN_APP_NOT_ALWAYS_ON_APK, mUserId);
+            executeDeviceTestMethod(".AlwaysOnVpnUnsupportedTest", "testSetUnsupportedVpnAlwaysOn");
+        } finally {
+            executeDeviceTestMethod(".AlwaysOnVpnUnsupportedTest", "testClearAlwaysOnVpn");
+        }
+    }
+
+    @RequiresDevice
+    public void testAlwaysOnVpnUnsupportedPackageReplaced() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        try {
+            // Target SDK = 24: supported
+            executeDeviceTestMethod(".AlwaysOnVpnUnsupportedTest", "testAssertNoAlwaysOnVpn");
+            installAppAsUser(VPN_APP_API24_APK, mUserId);
+            executeDeviceTestMethod(".AlwaysOnVpnUnsupportedTest", "testSetSupportedVpnAlwaysOn");
+            // Update the app to target higher API level, but with manifest opt-out
+            installAppAsUser(VPN_APP_NOT_ALWAYS_ON_APK, mUserId);
+            executeDeviceTestMethod(".AlwaysOnVpnUnsupportedTest", "testAssertNoAlwaysOnVpn");
+        } finally {
+            executeDeviceTestMethod(".AlwaysOnVpnUnsupportedTest", "testClearAlwaysOnVpn");
         }
     }
 

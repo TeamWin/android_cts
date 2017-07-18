@@ -1757,6 +1757,66 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="provisioning_byod_lockscreen_bound_key">Lockscreen-bound key test</string>
     <string name="provisioning_byod_fingerprint_bound_key">Fingerprint-bound key test</string>
     <string name="provisioning_byod_vpn">VPN test</string>
+    <string name="provisioning_byod_always_on_vpn">Always-on VPN Settings</string>
+    <string name="provisioning_byod_always_on_vpn_info">
+        In this test, you\'ll verify that the Settings UI for always-on VPN is correct for different
+        VPN apps.
+    </string>
+    <string name="provisioning_byod_always_on_vpn_instruction">
+        In this test, you\'ll verify the Settings UI for always-on VPN for different VPN apps.
+        You should have received three VPN app apks with this CTS Verifier package.
+        They\'re named in the form of \"CtsVpnFirewallApp*.apk\".\n
+
+        1. Before the test, make sure CtsVpnFirewallApp isn\'t installed on your device. You can
+           uninstall either by UI, or by\n
+           \"adb uninstall com.android.cts.vpnfirewall\"\n
+
+        2. Install the first test app, by running\n
+           \"adb install /path/to/CtsVpnFirewallAppApi23.apk\"\n
+
+        3. Tap \"Prepare VPN\" button below and consent to the VPN connection.\n
+
+        4. Finish all three test cases listed below.\n
+
+        5. Repeat step 1 to remove CtsVpnFirewallApp.
+    </string>
+    <string name="provisioning_byod_always_on_vpn_prepare_button">Prepare VPN</string>
+    <string name="provisioning_byod_always_on_vpn_vpn_not_found_note">
+        Can\'t find VPN app. Did you install it correctly?
+    </string>
+    <string name="provisioning_byod_always_on_vpn_api23">VPN app targeting SDK 23</string>
+    <string name="provisioning_byod_always_on_vpn_api23_instruction">
+        1. Re-install CtsVpnFirewallAppApi23.apk (skip this if you already have the correct version
+           installed):\n
+           \"adb install -r /path/to/CtsVpnFirewallAppApi23.apk\"\n
+        2. Tap \"Go\" button below to go to the VPN settings page.\n
+        3. Open configuration details page for CtsVpnFirewallApp.\n
+        4. Confirm the \"Always-on VPN\" and \"Block connections without VPN\" switches are both off
+           and disabled.\n
+    </string>
+    <string name="provisioning_byod_always_on_vpn_api24">VPN app targeting SDK 24</string>
+    <string name="provisioning_byod_always_on_vpn_api24_instruction">
+        1. Re-install CtsVpnFirewallAppApi24.apk (skip this if you already have the correct version
+           installed):\n
+           \"adb install -r /path/to/CtsVpnFirewallAppApi24.apk\"\n
+        2. Tap \"Go\" button below to go to the VPN settings page.\n
+        3. Open configuration details page for CtsVpnFirewallApp.\n
+        4. Confirm\n
+           4.1. \"Always-on VPN\" switch is enabled and in off position\n
+           4.2. \"Block connections without VPN\" switch is disabled and in off position\n
+           4.3. \"Block connections without VPN\" becomes enabled once the \"Always-on VPN\" switch
+                is turned on\n
+    </string>
+    <string name="provisioning_byod_always_on_vpn_not_always_on">VPN app with opt-out</string>
+    <string name="provisioning_byod_always_on_vpn_not_always_on_instruction">
+        1. Re-install CtsVpnFirewallAppNotAlwaysOn.apk (skip this if you already have the correct
+           version installed):\n
+           \"adb install -r /path/to/CtsVpnFirewallAppNotAlwaysOn.apk\"\n
+        2. Tap \"Go\" button below to go to the VPN settings page.\n
+        3. Open configuration details page for CtsVpnFirewallApp.\n
+        4. Confirm the \"Always-on VPN\" and \"Block connections without VPN\" switches are both off
+           and disabled.\n
+    </string>
     <string name="provisioning_byod_select_work_challenge">Select work lock test</string>
     <string name="provisioning_byod_select_work_challenge_description">
         This test verifies that a work lock can be chosen.\n
