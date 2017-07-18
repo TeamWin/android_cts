@@ -16,6 +16,7 @@ CtsSystemCurrentApiSignatureTestCases
 CtsAndroidTestMockCurrentApiSignatureTestCases
 CtsAndroidTestRunnerCurrentApiSignatureTestCases
 CtsLegacyTest26ApiSignatureTestCases
+CtsApacheHttpLegacyCurrentApiSignatureTestCases
 "
 else
     PACKAGES=${1+"$@"}

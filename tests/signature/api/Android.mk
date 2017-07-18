@@ -65,3 +65,12 @@ LOCAL_MODULE_STEM := android-test-runner-current.api
 LOCAL_SRC_FILES := frameworks/base/test-runner/api/android-test-runner-current.txt
 
 include $(LOCAL_PATH)/build_xml_api_file.mk
+
+# current apache-http-legacy api, in XML format.
+# ==============================================
+include $(CLEAR_VARS)
+LOCAL_MODULE := cts-apache-http-legacy-current-api
+LOCAL_MODULE_STEM := apache-http-legacy-current.api
+LOCAL_SRC_FILES := external/apache-http/api/apache-http-legacy-current.txt
+
+include $(LOCAL_PATH)/build_xml_api_file.mk
