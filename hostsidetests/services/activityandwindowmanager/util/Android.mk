@@ -23,7 +23,9 @@ LOCAL_SRC_FILES := \
 
 LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
 
-LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed
+LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed host-libprotobuf-java-full
+
+LOCAL_STATIC_JAVA_LIBRARIES := platformprotos
 
 LOCAL_MODULE := cts-amwm-util
 
