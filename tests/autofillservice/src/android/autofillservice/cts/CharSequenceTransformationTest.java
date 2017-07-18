@@ -93,14 +93,14 @@ public class CharSequenceTransformationTest {
         when(finder.findByAutofillId(id3)).thenReturn("c");
         when(finder.findByAutofillId(id4)).thenReturn("d");
 
-        trans.apply(finder, template, 0);
+        assertThrows(ArrayIndexOutOfBoundsException.class, () -> trans.apply(finder, template, 0));
 
-        // bad subst are ignored
-        verify(template).setCharSequence(eq(0), any(), argThat(new CharSequenceMatcher("1=a4=d")));
+        // fail one, fail all
+        verify(template, never()).setCharSequence(eq(0), any(), any());
     }
 
     @Test
-    public void testUnknownField() {
+    public void testUnknownField() throws Exception {
         AutofillId id1 = new AutofillId(1);
         AutofillId id2 = new AutofillId(2);
         AutofillId unknownId = new AutofillId(42);
@@ -129,7 +129,7 @@ public class CharSequenceTransformationTest {
     }
 
     @Test
-    public void testCreditCardObfuscator() {
+    public void testCreditCardObfuscator() throws Exception {
         AutofillId creditCardFieldId = new AutofillId(1);
         CharSequenceTransformation trans = new CharSequenceTransformation
                 .Builder(creditCardFieldId,
@@ -148,7 +148,7 @@ public class CharSequenceTransformationTest {
     }
 
     @Test
-    public void userNameObfuscator() {
+    public void userNameObfuscator() throws Exception {
         AutofillId userNameFieldId = new AutofillId(1);
         AutofillId passwordFieldId = new AutofillId(2);
         CharSequenceTransformation trans = new CharSequenceTransformation
