@@ -39,6 +39,7 @@ import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilC
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilDisconnected;
 import static android.autofillservice.cts.LoginActivity.AUTHENTICATION_MESSAGE;
 import static android.autofillservice.cts.LoginActivity.ID_USERNAME_CONTAINER;
+import static android.autofillservice.cts.LoginActivity.BACKDOOR_USERNAME;
 import static android.autofillservice.cts.LoginActivity.getWelcomeMessage;
 import static android.service.autofill.FillEventHistory.Event.TYPE_AUTHENTICATION_SELECTED;
 import static android.service.autofill.FillEventHistory.Event.TYPE_DATASET_AUTHENTICATION_SELECTED;
@@ -1401,6 +1402,88 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertTextAndValue(password, "malkovich");
 
         // Sanity check: once saved, the session should be finsihed.
+        assertNoDanglingSessions();
+    }
+
+    @Test
+    public void testSaveNoRequiredField_NoneFilled() throws Exception {
+        optionalOnlyTest(FilledFields.NONE);
+    }
+
+    @Test
+    public void testSaveNoRequiredField_OneFilled() throws Exception {
+        optionalOnlyTest(FilledFields.USERNAME_ONLY);
+    }
+
+    @Test
+    public void testSaveNoRequiredField_BothFilled() throws Exception {
+        optionalOnlyTest(FilledFields.BOTH);
+    }
+
+    enum FilledFields {
+        NONE,
+        USERNAME_ONLY,
+        BOTH
+    }
+
+    private void optionalOnlyTest(FilledFields filledFields) throws Exception {
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD)
+                .setOptionalSavableIds(ID_USERNAME, ID_PASSWORD)
+                .build());
+
+        // Trigger auto-fill.
+        mActivity.onUsername(View::requestFocus);
+
+        // Sanity check.
+        sUiBot.assertNoDatasets();
+
+        // Wait for onFill() before proceeding, otherwise the fields might be changed before
+        // the session started
+        sReplier.getNextFillRequest();
+
+        // Set credentials...
+        final String expectedUsername;
+        if (filledFields == FilledFields.USERNAME_ONLY || filledFields == FilledFields.BOTH) {
+            expectedUsername = BACKDOOR_USERNAME;
+            mActivity.onUsername((v) -> v.setText(BACKDOOR_USERNAME));
+        } else {
+            expectedUsername = "";
+        }
+        mActivity.onPassword(View::requestFocus);
+        if (filledFields == FilledFields.BOTH) {
+            mActivity.onPassword((v) -> v.setText("whatever"));
+        }
+
+        // ...and login
+        final String expectedMessage = getWelcomeMessage(expectedUsername);
+        final String actualMessage = mActivity.tapLogin();
+        assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
+
+        if (filledFields == FilledFields.NONE) {
+            sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+            assertNoDanglingSessions();
+            return;
+        }
+
+        // Assert the snack bar is shown and tap "Save".
+        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+
+        // Assert value of expected fields - should not be sanitized.
+        final ViewNode username = findNodeByResourceId(saveRequest.structure, ID_USERNAME);
+        assertTextAndValue(username, BACKDOOR_USERNAME);
+
+        if (filledFields == FilledFields.BOTH) {
+            final ViewNode password = findNodeByResourceId(saveRequest.structure, ID_PASSWORD);
+            assertTextAndValue(password, "whatever");
+        }
+
+        // Sanity check: once saved, the session should be finished.
         assertNoDanglingSessions();
     }
 

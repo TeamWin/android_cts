@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertThrows;
 
 import android.service.autofill.SimpleRegexValidator;
 import android.service.autofill.ValueFinder;
@@ -33,24 +34,27 @@ import java.util.regex.PatternSyntaxException;
 
 @RunWith(AndroidJUnit4.class)
 public class SimpleRegexValidatorTest {
-    @Test(expected = NullPointerException.class)
+
+    @Test
     public void allNullConstructor() {
-        new SimpleRegexValidator(null, null);
+        assertThrows(NullPointerException.class, () -> new SimpleRegexValidator(null, null));
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void nullRegexConstructor() {
-        new SimpleRegexValidator(new AutofillId(1), null);
+        assertThrows(NullPointerException.class,
+                () -> new SimpleRegexValidator(new AutofillId(1), null));
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void nullAutofillIdConstructor() {
-        new SimpleRegexValidator(null, ".");
+        assertThrows(NullPointerException.class, () -> new SimpleRegexValidator(null, "."));
     }
 
-    @Test(expected = PatternSyntaxException.class)
+    @Test
     public void badRegexBuilder() {
-        new SimpleRegexValidator(new AutofillId(1), "(");
+        assertThrows(PatternSyntaxException.class,
+                () -> new SimpleRegexValidator(new AutofillId(1), "("));
     }
 
     @Test
