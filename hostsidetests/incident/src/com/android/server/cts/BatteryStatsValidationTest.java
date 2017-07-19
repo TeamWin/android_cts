@@ -193,7 +193,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
 
 
     public void testUnoptimizedBleScans() throws Exception {
-        if (isTV()) {
+        if (isTV() || !hasFeature(FEATURE_BLUETOOTH_LE, true)) {
             return;
         }
         batteryOnScreenOff();
