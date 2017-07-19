@@ -35,6 +35,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.function.BiFunction;
+import java.util.regex.Pattern;
 
 public class ValidatorTest extends AutoFillServiceTestCase {
     @Rule
@@ -98,41 +99,41 @@ public class ValidatorTest extends AutoFillServiceTestCase {
     public void checkForInvalidField() throws Exception {
         testValidator((usernameId, passwordId) -> Validators.or(
                 new LuhnChecksumValidator(new AutofillId(-1)),
-                new SimpleRegexValidator(passwordId, "pass.*")), true);
+                new SimpleRegexValidator(passwordId, Pattern.compile("pass.*"))), true);
     }
 
     @Test
     public void checkBoth() throws Exception {
         testValidator((usernameId, passwordId) -> Validators.and(
                 new LuhnChecksumValidator(usernameId),
-                new SimpleRegexValidator(passwordId, "pass.*")), true);
+                new SimpleRegexValidator(passwordId, Pattern.compile("pass.*"))), true);
     }
 
     @Test
     public void checkEither1() throws Exception {
         testValidator((usernameId, passwordId) -> Validators.or(
-                new SimpleRegexValidator(usernameId, "7.*"),
-                new SimpleRegexValidator(passwordId, "pass.*")), true);
+                new SimpleRegexValidator(usernameId, Pattern.compile("7.*")),
+                new SimpleRegexValidator(passwordId, Pattern.compile("pass.*"))), true);
     }
 
     @Test
     public void checkEither2() throws Exception {
         testValidator((usernameId, passwordId) -> Validators.or(
-                new SimpleRegexValidator(usernameId, "invalid"),
-                new SimpleRegexValidator(passwordId, "pass.*")), true);
+                new SimpleRegexValidator(usernameId, Pattern.compile("invalid")),
+                new SimpleRegexValidator(passwordId, Pattern.compile("pass.*"))), true);
     }
 
     @Test
     public void checkBothButFail() throws Exception {
         testValidator((usernameId, passwordId) -> Validators.and(
-                new SimpleRegexValidator(usernameId, "7.*"),
-                new SimpleRegexValidator(passwordId, "invalid")), false);
+                new SimpleRegexValidator(usernameId, Pattern.compile("7.*")),
+                new SimpleRegexValidator(passwordId, Pattern.compile("invalid"))), false);
     }
 
     @Test
     public void checkEitherButFail() throws Exception {
         testValidator((usernameId, passwordId) -> Validators.or(
-                new SimpleRegexValidator(usernameId, "invalid"),
-                new SimpleRegexValidator(passwordId, "invalid")), false);
+                new SimpleRegexValidator(usernameId, Pattern.compile("invalid")),
+                new SimpleRegexValidator(passwordId, Pattern.compile("invalid"))), false);
     }
 }

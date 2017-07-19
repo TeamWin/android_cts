@@ -30,7 +30,7 @@ import android.view.autofill.AutofillId;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.regex.PatternSyntaxException;
+import java.util.regex.Pattern;
 
 @RunWith(AndroidJUnit4.class)
 public class SimpleRegexValidatorTest {
@@ -48,20 +48,15 @@ public class SimpleRegexValidatorTest {
 
     @Test
     public void nullAutofillIdConstructor() {
-        assertThrows(NullPointerException.class, () -> new SimpleRegexValidator(null, "."));
-    }
-
-    @Test
-    public void badRegexBuilder() {
-        assertThrows(PatternSyntaxException.class,
-                () -> new SimpleRegexValidator(new AutofillId(1), "("));
+        assertThrows(NullPointerException.class,
+                () -> new SimpleRegexValidator(null, Pattern.compile(".")));
     }
 
     @Test
     public void unknownField() {
         AutofillId unknownId = new AutofillId(42);
 
-        SimpleRegexValidator validator = new SimpleRegexValidator(unknownId, ".*");
+        SimpleRegexValidator validator = new SimpleRegexValidator(unknownId, Pattern.compile(".*"));
 
         ValueFinder finder = mock(ValueFinder.class);
 
@@ -73,7 +68,7 @@ public class SimpleRegexValidatorTest {
     public void singleFieldValid() {
         AutofillId creditCardFieldId = new AutofillId(1);
         SimpleRegexValidator validator = new SimpleRegexValidator(creditCardFieldId,
-                "^\\s*\\d{4}[\\s-]?\\d{4}[\\s-]?\\d{4}[\\s-]?(\\d{4})\\s*$");
+                Pattern.compile("^\\s*\\d{4}[\\s-]?\\d{4}[\\s-]?\\d{4}[\\s-]?(\\d{4})\\s*$"));
 
         ValueFinder finder = mock(ValueFinder.class);
 
@@ -87,7 +82,7 @@ public class SimpleRegexValidatorTest {
     @Test
     public void singleFieldInvalid() {
         AutofillId id = new AutofillId(1);
-        SimpleRegexValidator validator = new SimpleRegexValidator(id, "\\d*");
+        SimpleRegexValidator validator = new SimpleRegexValidator(id, Pattern.compile("\\d*"));
 
         ValueFinder finder = mock(ValueFinder.class);
 
