@@ -62,4 +62,17 @@ public class Poc17_08 extends SecurityTestCase {
             AdbUtils.runPoc("CVE-2017-9692", getDevice(), 60);
         }
     }
+
+    /**
+     *  b/35764875
+     */
+    @SecurityTest
+    public void testPocBug_35764875() throws Exception {
+      enableAdbRoot(getDevice());
+      if(containsDriver(getDevice(), "/dev/msm_aac")) {
+            infoDisclosure("Bug-35764875", getDevice(), 60,
+            "[\\s\\n\\S]*information leaked, trycount=[0-9]+, rc=-[0-9]+,"
+            +" event_type=[0-9]+[\\s][0-9]{80}[\\s\\n\\S]*", true);
+        }
+    }
 }
