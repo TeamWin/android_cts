@@ -33,4 +33,60 @@
     <option name="compatibility:exclude-filter" value="CtsTelephony2TestCases" />
     <option name="compatibility:exclude-filter" value="CtsIncidentHostTestCases com.android.server.cts.PackageIncidentTest#testPackageServiceDump" />
     <option name="compatibility:exclude-filter" value="CtsAppTestCases android.app.cts.SystemFeaturesTest#testLocationFeatures" />
+
+    <!-- Exclude telephony related testcases -->
+    <option name="compatibility:exclude-filter" value="CtsCarrierApiTestCases android.carrierapi.cts.CarrierApiTest#testGetIccAuthentication" />
+    <option name="compatibility:exclude-filter" value="CtsCarrierApiTestCases android.carrierapi.cts.CarrierApiTest#testHasCarrierPrivileges" />
+    <option name="compatibility:exclude-filter" value="CtsCarrierApiTestCases android.carrierapi.cts.CarrierApiTest#testSendDialerSpecialCode" />
+    <option name="compatibility:exclude-filter" value="CtsJobSchedulerTestCases android.jobscheduler.cts.ConnectivityConstraintTest#testConnectivityConstraintExecutes_metered" />
+    <option name="compatibility:exclude-filter" value="CtsNetTestCasesLegacyApi22 android.net.cts.legacy.api22.ConnectivityManagerLegacyTest#testStartUsingNetworkFeature_enableHipri" />
+    <option name="compatibility:exclude-filter" value="CtsPermission2TestCases android.permission2.cts.NoReceiveSmsPermissionTest#testAppSpecificSmsToken" />
+    <option name="compatibility:exclude-filter" value="CtsPermission2TestCases android.permission2.cts.NoReceiveSmsPermissionTest#testReceiveTextMessage" />
+    <option name="compatibility:exclude-filter" value="CtsPermissionTestCases android.permission.cts.NoSystemFunctionPermissionTest#testSendSms" />
+    <option name="compatibility:exclude-filter" value="CtsSecurityHostTest android.security.cts.SELinuxHostTest#testNoExemptionsForBinderInVendorBan" />
+    <option name="compatibility:exclude-filter" value="CtsSecurityHostTest android.security.cts.SELinuxHostTest#testNoExemptionsForSocketsBetweenCoreAndVendorBan" />
+    <option name="compatibility:exclude-filter" value="CtsSecurityHostTest android.security.cts.SELinuxHostTest#testNoExemptionsForVendorExecutingCore" />
+    <option name="compatibility:exclude-filter" value="CtsUsageStatsTestCases android.app.usage.cts.NetworkUsageStatsTest#testAppDetails" />
+    <option name="compatibility:exclude-filter" value="CtsUsageStatsTestCases android.app.usage.cts.NetworkUsageStatsTest#testAppSummary" />
+    <option name="compatibility:exclude-filter" value="CtsUsageStatsTestCases android.app.usage.cts.NetworkUsageStatsTest#testCallback" />
+    <option name="compatibility:exclude-filter" value="CtsUsageStatsTestCases android.app.usage.cts.NetworkUsageStatsTest#testDeviceSummary" />
+    <option name="compatibility:exclude-filter" value="CtsUsageStatsTestCases android.app.usage.cts.NetworkUsageStatsTest#testTagDetails" />
+    <option name="compatibility:exclude-filter" value="CtsUsageStatsTestCases android.app.usage.cts.NetworkUsageStatsTest#testUidDetails" />
+    <option name="compatibility:exclude-filter" value="CtsUsageStatsTestCases android.app.usage.cts.NetworkUsageStatsTest#testUserSummary" />
+
+    <!--
+        Exclude Webkit related testcases
+        TODO(jaekyun@): b/63600240, Webkit related testcases will be revived when the RRO packaging logic is revised so that we can selectively compose a RRO from overlays.
+    -->
+    <option name="compatibility:exclude-filter" value="CtsWebkitTestCases" />
+    <option name="compatibility:exclude-filter" value="CtsAppSecurityHostTestCases android.appsecurity.cts.EphemeralTest#testWebViewLoads" />
+    <option name="compatibility:exclude-filter" value="CtsAssistTestCases android.assist.cts.WebViewTest#testWebView" />
+    <option name="compatibility:exclude-filter" value="CtsHostsideWebViewTests com.android.cts.webkit.WebViewHostSideStartupTest#testCookieManager" />
+    <option name="compatibility:exclude-filter" value="CtsHostsideWebViewTests com.android.cts.webkit.WebViewHostSideStartupTest#testStrictMode" />
+    <option name="compatibility:exclude-filter" value="CtsHostsideWebViewTests com.android.cts.webkit.WebViewHostSideStartupTest#testWebViewVersionApi" />
+    <option name="compatibility:exclude-filter" value="CtsHostsideWebViewTests com.android.cts.webkit.WebViewHostSideStartupTest#testWebViewVersionApiOnUiThread" />
+    <option name="compatibility:exclude-filter" value="CtsTextTestCases android.text.cts.EmojiTest#testEmojiGlyph" />
+    <option name="compatibility:exclude-filter" value="CtsTextTestCases android.text.util.cts.LinkifyTest#testAddLinks_doesNotAddLinksForUrlWithoutProtocolAndWithoutKnownTld" />
+    <option name="compatibility:exclude-filter" value="CtsUiRenderingTestCases android.uirendering.cts.testclasses.PathClippingTests#testWebViewClipWithCircle" />
+    <option name="compatibility:exclude-filter" value="CtsWidgetTestCases android.widget.cts.TextViewTest#testAccessAutoLinkMask" />
+    <option name="compatibility:exclude-filter" value="CtsWidgetTestCases android.widget.cts.TextViewTest#testAppend_addsLinkIfAppendedTextCompletesPartialUrlAtTheEndOfExistingText" />
+    <option name="compatibility:exclude-filter" value="CtsWidgetTestCases android.widget.cts.TextViewTest#testAppend_addsLinkIfAppendedTextUpdatesUrlAtTheEndOfExistingText" />
+    <option name="compatibility:exclude-filter" value="CtsWidgetTestCases android.widget.cts.TextViewTest#testAppend_addsLinksEvenWhenThereAreUrlsSetBefore" />
+    <option name="compatibility:exclude-filter" value="CtsWidgetTestCases android.widget.cts.TextViewTest#testAppend_addsLinksWhenAutoLinkIsEnabled" />
+    <option name="compatibility:exclude-filter" value="CtsWidgetTestCases android.widget.cts.TextViewTest#testAppend_addsLinksWhenTextIsSpannableAndContainsUrlAndAutoLinkIsEnabled" />
+    <option name="compatibility:exclude-filter" value="CtsWidgetTestCases android.widget.cts.TextViewTest#testAppend_doesNotAddLinksWhenAppendedTextDoesNotContainLinks" />
+    <option name="compatibility:exclude-filter" value="CtsWidgetTestCases android.widget.cts.TextViewTest#testAppend_setsMovementMethodWhenTextContainsUrlAndAutoLinkIsEnabled" />
+
+    <!--
+        Exclude testcases failing on AOSP Pixel system.img
+        TODO(jaeshin@): b/63302562, Track future fixes to AOSP Pixel system.img and revive these testcases accordingly.
+    -->
+    <option name="compatibility:exclude-filter" value="CtsAppSecurityHostTestCases android.appsecurity.cts.EphemeralTest#testExposedSystemActivities" />
+    <option name="compatibility:exclude-filter" value="CtsContentTestCases android.content.cts.AvailableIntentsTest#testVoiceCommand" />
+    <option name="compatibility:exclude-filter" value="CtsContentTestCases android.content.cts.AvailableIntentsTest#testVoiceSearchHandsFree" />
+    <option name="compatibility:exclude-filter" value="CtsPermission2TestCases android.permission2.cts.PrivappPermissionsTest#testPrivappPermissionsEnforcement" />
+    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.IntentTest#shouldNotFindUnexpectedIntents" />
+    <option name="compatibility:exclude-filter" value="CtsVideoTestCases android.video.cts.VideoEncoderDecoderTest#testVp8Other0Qual1920x1080" />
+
 </configuration>
+
