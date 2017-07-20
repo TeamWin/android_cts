@@ -16,6 +16,8 @@
 
 package android.systemintents.cts;
 
+import static org.junit.Assert.assertTrue;
+
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -23,14 +25,17 @@ import android.content.res.Configuration;
 import android.net.Uri;
 import android.provider.Settings;
 import android.support.test.filters.MediumTest;
-import android.test.AndroidTestCase;
+import android.support.test.runner.AndroidJUnit4;
+import android.support.test.InstrumentationRegistry;
 import android.util.Log;
 
-import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 @MediumTest
-public class TestSystemIntents extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class TestSystemIntents {
+
     /*
      * List of activity intents defined by the system.  Activities to handle each of these
      * intents must all exist.
@@ -56,7 +61,6 @@ public class TestSystemIntents extends AndroidTestCase {
         }
     }
 
-    @Rule
     private final IntentEntry[] mTestIntents = {
             /* Settings-namespace intent actions */
             new IntentEntry(0, new Intent(Settings.ACTION_SETTINGS)),
@@ -76,7 +80,7 @@ public class TestSystemIntents extends AndroidTestCase {
 
     @Test
     public void testSystemIntents() {
-        final PackageManager pm = getContext().getPackageManager();
+        final PackageManager pm = InstrumentationRegistry.getContext().getPackageManager();
         int productFlags = 0;
 
         if (pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
@@ -87,7 +91,7 @@ public class TestSystemIntents extends AndroidTestCase {
             productFlags |= EXCLUDE_NON_TELEPHONY;
         }
 
-        final Configuration config = getContext().getResources().getConfiguration();
+        final Configuration config = InstrumentationRegistry.getContext().getResources().getConfiguration();
         if ((config.uiMode & Configuration.UI_MODE_TYPE_WATCH) != 0) {
             productFlags |= EXCLUDE_WATCH;
         }
