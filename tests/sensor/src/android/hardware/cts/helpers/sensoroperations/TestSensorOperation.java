@@ -376,7 +376,7 @@ public class TestSensorOperation extends SensorOperation {
             final long duration,
             final TimeUnit timeUnit) {
 
-        return createFlushOperation(environment, new int[] {(int)timeUnit.toMillis(duration)}, 0);
+        return createFlushOperation(environment, new int[] {(int)timeUnit.toMillis(duration)}, -1);
     }
 
     /**
