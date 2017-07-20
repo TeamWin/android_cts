@@ -243,21 +243,7 @@ public class ModuleRepo implements IModuleRepo {
                     if (mModuleArgs.containsKey(id)) {
                         args.putAll(mModuleArgs.get(id));
                     }
-                    for (Entry<String, List<String>> entry : args.entrySet()) {
-                        for (String entryValue : entry.getValue()) {
-                            // Collection-type options can be injected with multiple values
-                            String entryName = entry.getKey();
-                            if (entryValue.contains(":")) {
-                                // entryValue is key-value pair
-                                String key = entryValue.split(":")[0];
-                                String value = entryValue.split(":")[1];
-                                config.injectOptionValue(entryName, key, value);
-                            } else {
-                                // entryValue is just the argument value
-                                config.injectOptionValue(entryName, entryValue);
-                            }
-                        }
-                    }
+                    injectOptionsToConfig(args, config);
 
                     List<IRemoteTest> tests = config.getTests();
                     for (IRemoteTest test : tests) {
@@ -286,10 +272,10 @@ public class ModuleRepo implements IModuleRepo {
     /**
      * Prepare to run test classes.
      *
-     * @param name, module name
-     * @param abi, IAbi object that contains abi information
-     * @param config, IConfiguration object created from config file
-     * @param test, test class
+     * @param name module name
+     * @param abi IAbi object that contains abi information
+     * @param config IConfiguration object created from config file
+     * @param test test class
      * @throws ConfigurationException
      */
     protected void prepareTestClass(final String name, IAbi abi, IConfiguration config,
@@ -299,13 +285,23 @@ public class ModuleRepo implements IModuleRepo {
         if (mTestArgs.containsKey(className)) {
             testArgsMap.putAll(mTestArgs.get(className));
         }
-        for (Entry<String, List<String>> entry : testArgsMap.entrySet()) {
+        injectOptionsToConfig(testArgsMap, config);
+        addFiltersToTest(test, abi, name);
+    }
+
+    /**
+     * Helper to inject options to a config.
+     */
+    @VisibleForTesting
+    void injectOptionsToConfig(Map<String, List<String>> optionMap, IConfiguration config)
+            throws ConfigurationException{
+        for (Entry<String, List<String>> entry : optionMap.entrySet()) {
             for (String entryValue : entry.getValue()) {
                 String entryName = entry.getKey();
-                if (entryValue.contains(":")) {
+                if (entryValue.contains(":=")) {
                     // entryValue is key-value pair
-                    String key = entryValue.split(":")[0];
-                    String value = entryValue.split(":")[1];
+                    String key = entryValue.substring(0, entryValue.indexOf(":="));
+                    String value = entryValue.substring(entryValue.indexOf(":=") + 2);
                     config.injectOptionValue(entryName, key, value);
                 } else {
                     // entryValue is just the argument value
@@ -313,7 +309,6 @@ public class ModuleRepo implements IModuleRepo {
                 }
             }
         }
-        addFiltersToTest(test, abi, name);
     }
 
     private List<IRemoteTest> splitShardableTests(List<IRemoteTest> tests, IBuildInfo buildInfo) {
