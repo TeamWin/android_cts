@@ -63,7 +63,7 @@ public class ImageTransformationTest {
     }
 
     @Test
-    public void fieldCannotBeFound() {
+    public void fieldCannotBeFound() throws Exception {
         AutofillId unknownId = new AutofillId(42);
 
         ImageTransformation trans = new ImageTransformation
@@ -82,7 +82,7 @@ public class ImageTransformationTest {
     }
 
     @Test
-    public void theOneOptionsMatches() {
+    public void theOneOptionsMatches() throws Exception {
         AutofillId id = new AutofillId(1);
         ImageTransformation trans = new ImageTransformation
                 .Builder(id, Pattern.compile(".*"), 42)
@@ -99,7 +99,7 @@ public class ImageTransformationTest {
     }
 
     @Test
-    public void noOptionsMatches() {
+    public void noOptionsMatches() throws Exception {
         AutofillId id = new AutofillId(1);
         ImageTransformation trans = new ImageTransformation
                 .Builder(id, Pattern.compile("val"), 42)
@@ -116,7 +116,7 @@ public class ImageTransformationTest {
     }
 
     @Test
-    public void multipleOptionsOneMatches() {
+    public void multipleOptionsOneMatches() throws Exception {
         AutofillId id = new AutofillId(1);
         ImageTransformation trans = new ImageTransformation
                 .Builder(id, Pattern.compile(".*1"), 1)
@@ -134,7 +134,7 @@ public class ImageTransformationTest {
     }
 
     @Test
-    public void twoOptionsMatch() {
+    public void twoOptionsMatch() throws Exception {
         AutofillId id = new AutofillId(1);
         ImageTransformation trans = new ImageTransformation
                 .Builder(id, Pattern.compile(".*a.*"), 1)
