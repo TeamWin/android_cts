@@ -3636,30 +3636,31 @@ You should be prompted to select credentials; choose the ones you just installed
 
     <!-- Audio Frequency Microphone Test -->
     <string name="audio_frequency_mic_test">Audio Frequency Microphone Test</string>
-    <string name="audio_frequency_mic_info">
+    <string name="frequency_mic_info">
         This test requires an external USB reference microphone and external speakers.
-        Please use the headphone connector to connect external speakers. Position the device 40 cms
-        from the speakers and proceed with the instructions on the screen.
-        The system will measure frequency response of the built in microphone.
+        The test signals can be played from the device under test (DUT) or from a secondary device (e.g. when your DUT can’t support a USB microphone and external speakers simultaneously, or DUT does not have headphone output).
+Follow the instructions on the screen to measure the frequency response for the built in microphone.
        </string>
-    <string name="audio_frequency_mic_instructions">
-          Please connect external speakers using the headphone connector. Please unplug any USB audio device (if any)
+
+    <string name="frequency_mic_play">Play</string>
+    <string name="frequency_mic_stop">Stop</string>
+    <string name="frequency_mic_noise_instructions">TEST NOISE: Position speakers 40 cms from device under test.
+    Press [PLAY] to play broadband white noise. Press [TEST]
     </string>
-    <string name="audio_frequency_mic_speakers_ready_btn">External speakers ready</string>
-    <string name="audio_frequency_mic_speakers_ready_status">...</string>
-    <string name="audio_frequency_mic_instructions2">
-          Please position the speakers 40 cms from the device under test and press TEST 1
-    </string>
-    <string name="audio_frequency_mic_test1_btn">Test 1</string>
-    <string name="audio_frequency_mic_usb_status">Waiting for USB microphone...</string>
-    <string name="audio_frequency_mic_connect_mic">Please Connect USB microphone, position it next to
-    the built in microphone in the device and press USB reference microphone</string>
-    <string name="audio_frequency_mic_mic_ready_btn">USB Reference microphone ready</string>
-    <string name="audio_frequency_mic_mic_ready_text">USB Audio device detected\n\nPlease set up Device Under test
-    in quiet room, and Microphone 20 cms perpendicular to center of screen, then press TEST</string>
-    <string name="audio_frequency_mic_mic_not_ready_text">"No USB Audio device detected. Please reconnect."</string>
-    <string name="audio_frequency_mic_test2_btn">Test 2</string>
-    <string name="audio_frequency_mic_results_text">Results...</string>
+    <string name="frequency_mic_test_noise_btn">Test</string>
+    <string name="frequency_mic_test_noise_result">Results...</string>
+
+    <string name="frequency_mic_test_usb_background_instructions">TEST USB BACKGROUND: Connect USB microphone and position it right next to microphone under test.
+    No source of noise should be active during this test. Press [TEST]</string>
+    <string name="frequency_mic_test_usb_background_btn">Test</string>
+    <string name="frequency_mic_test_usb_background_result">Results...</string>
+
+    <string name="frequency_mic_test_usb_noise_instructions">TEST USB NOISE: Connect USB microphone and position it right next to microphone under test.
+    Position speakers 40 cms from device under test. Press [PLAY] to play broadband white noise. Press [TEST]</string>
+    <string name="frequency_mic_test_usb_noise_btn">Test</string>
+    <string name="frequency_mic_test_usb_noise_result">Results...</string>
+
+    <string name="frequency_mic_test_global_result">Global Results...</string>
 
      <!-- Audio Frequency Unprocessed Test -->
     <string name="audio_frequency_unprocessed_test">Audio Frequency Unprocessed Test</string>
