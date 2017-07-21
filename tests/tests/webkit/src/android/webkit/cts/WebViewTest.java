@@ -30,6 +30,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.CancellationSignal;
 import android.os.Handler;
+import android.os.LocaleList;
 import android.os.Looper;
 import android.os.Message;
 import android.os.ParcelFileDescriptor;
@@ -50,6 +51,9 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.textclassifier.TextClassification;
+import android.view.textclassifier.TextClassifier;
+import android.view.textclassifier.TextSelection;
 import android.webkit.ConsoleMessage;
 import android.webkit.CookieSyncManager;
 import android.webkit.DownloadListener;
@@ -2644,6 +2648,38 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         assertNotSame(client, client2);
         webView.setWebChromeClient(client2);
         assertSame(client2, webView.getWebChromeClient());
+    }
+
+    @UiThreadTest
+    public void testSetCustomTextClassifier() throws Exception {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+
+        class CustomTextClassifier implements TextClassifier {
+            @Override
+            public TextSelection suggestSelection(
+                CharSequence text,
+                int startIndex,
+                int endIndex,
+                LocaleList defaultLocales) {
+                return new TextSelection.Builder(0, 1).build();
+            }
+
+            @Override
+            public TextClassification classifyText(
+                CharSequence text,
+                int startIndex,
+                int endIndex,
+                LocaleList defaultLocales) {
+                return new TextClassification.Builder().build();
+            }
+        };
+
+        TextClassifier classifier = new CustomTextClassifier();
+        WebView webView = new WebView(getActivity());
+        webView.setTextClassifier(classifier);
+        assertSame(webView.getTextClassifier(), classifier);
     }
 
     private void savePrintedPage(final PrintDocumentAdapter adapter,
