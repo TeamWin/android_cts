@@ -1614,6 +1614,8 @@ public class TextUtilsTest  {
         spannableStringTokens.add(new SpannableString("span 2"));
         spannableStringTokens.add(new SpannableString("span 3"));
         assertEquals("span 1;span 2;span 3", TextUtils.join(";", spannableStringTokens));
+
+        assertEquals("", TextUtils.join("|", new ArrayList<CharSequence>()));
     }
 
     @Test(expected=NullPointerException.class)
@@ -1636,6 +1638,8 @@ public class TextUtilsTest  {
                 new SpannableString("span 2"),
                 new SpannableString("span 3") };
         assertEquals("span 1;span 2;span 3", TextUtils.join(";", spannableStringTokens));
+
+        assertEquals("", TextUtils.join("|", new String[0]));
     }
 
     @Test(expected=NullPointerException.class)
