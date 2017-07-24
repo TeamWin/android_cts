@@ -60,9 +60,6 @@
     <option name="compatibility:exclude-filter" value="CtsAssistTestCases android.assist.cts.TextViewTest#testTextView" />
     <option name="compatibility:exclude-filter" value="CtsAssistTestCases android.assist.cts.WebViewTest#testWebView" />
 
-    <!-- b/23776099 -->
-    <option name="compatibility:exclude-filter" value="CtsCallLogTestCases" />
-
     <!-- b/17530117 -->
     <option name="compatibility:exclude-filter" value="CtsCameraTestCases android.hardware.camera2.cts.AllocationTest#testBlackWhite" />
     <option name="compatibility:exclude-filter" value="CtsCameraTestCases android.hardware.camera2.cts.AllocationTest#testParamSensitivity" />
