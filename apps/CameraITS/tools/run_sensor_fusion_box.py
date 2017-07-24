@@ -104,6 +104,7 @@ def main():
 
     fps_arg = 'fps=' + fps
     test_length_arg = 'test_length=' + test_length
+    print 'Capturing at %sfps' % fps
 
     os.mkdir(os.path.join(tmpdir, camera_id))
 
