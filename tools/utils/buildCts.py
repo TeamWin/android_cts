@@ -493,9 +493,6 @@ def BuildCtsTemporarilyKnownFailureList():
           'android.assist.cts.TextViewTest',
           'android.assist.cts.WebViewTest',
       ],
-      'android.calllog' : [
-          'android.calllog.cts.CallLogBackupTest#testSingleCallBackup',
-      ],
       'android.dumpsys' : [
           'android.dumpsys.cts.DumpsysHostTest#testBatterystatsOutput',
           'android.dumpsys.cts.DumpsysHostTest#testGfxinfoFramestats',
