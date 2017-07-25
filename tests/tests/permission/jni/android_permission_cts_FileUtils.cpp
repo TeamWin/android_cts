@@ -25,9 +25,9 @@
 #include <grp.h>
 #include <pwd.h>
 #include <string.h>
-#include <ScopedLocalRef.h>
-#include <ScopedPrimitiveArray.h>
-#include <ScopedUtfChars.h>
+#include <nativehelper/ScopedLocalRef.h>
+#include <nativehelper/ScopedPrimitiveArray.h>
+#include <nativehelper/ScopedUtfChars.h>
 
 static jfieldID gFileStatusDevFieldID;
 static jfieldID gFileStatusInoFieldID;
