@@ -15,6 +15,7 @@
  */
 package android.speech.tts.cts;
 
+import android.os.ConditionVariable;
 import android.os.Environment;
 import android.speech.tts.TextToSpeech;
 import android.test.AndroidTestCase;
@@ -76,7 +77,7 @@ public class TextToSpeechServiceTest extends AndroidTestCase {
     }
 
     public void testSpeakStop() throws Exception {
-        final Object synthesizeTextWait = new Object();
+        final ConditionVariable synthesizeTextWait = new ConditionVariable();
         StubTextToSpeechService.sSynthesizeTextWait = synthesizeTextWait;
 
         getTts().stop();
@@ -89,9 +90,7 @@ public class TextToSpeechServiceTest extends AndroidTestCase {
         getTts().stop();
 
         // Wake up the Stubs #onSynthesizeSpeech (one that will be stopped in-progress)
-        synchronized (synthesizeTextWait) {
-          synthesizeTextWait.notify();
-        }
+        synthesizeTextWait.open();
 
         for (int i = 0; i < iterations; i++) {
             assertTrue("speak() stop callback timeout", mTts.waitForStop(
