@@ -516,7 +516,11 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         assertTrue("+ or - is not found", index != -1);
         assertTrue("+ or - is only found at the beginning", index != 0);
         float latitude = Float.parseFloat(location.substring(0, index - 1));
-        float longitude = Float.parseFloat(location.substring(index));
+        int lastIndex = location.lastIndexOf('/', index);
+        if (lastIndex == -1) {
+            lastIndex = location.length();
+        }
+        float longitude = Float.parseFloat(location.substring(index, lastIndex - 1));
         assertTrue("Incorrect latitude: " + latitude, Math.abs(latitude - LATITUDE) <= TOLERANCE);
         assertTrue("Incorrect longitude: " + longitude, Math.abs(longitude - LONGITUDE) <= TOLERANCE);
         retriever.release();
