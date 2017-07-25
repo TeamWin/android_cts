@@ -23,6 +23,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.graphics.Typeface;
+import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.text.Editable;
@@ -1202,6 +1203,91 @@ public class StaticLayoutTest {
                 .setIndents(null, new int[] {20})
                 .build();
         assertTrue(layout.getEllipsisStart(0) != 0);
+    }
+
+    @Test
+    public void testEllipsize_retryEnd() {
+        final float size = 100.0f;
+
+        final int allocatedWidth = (int) (3.4f * size);
+        final String text = "aaaa";
+        final StaticLayout layout = StaticLayout.Builder.obtain(text, 0, text.length(),
+                getTextPaintForEllipsize(size), allocatedWidth)
+                .setEllipsize(TextUtils.TruncateAt.END)
+                .setEllipsizedWidth(allocatedWidth)
+                .setMaxLines(1)
+                .build();
+        assertEquals(1, layout.getEllipsisStart(0)); // After the first 'a'
+        assertEquals(3, layout.getEllipsisCount(0));
+    }
+
+    @Test
+    public void testEllipsize_retryEndRtl() {
+        final float size = 100.0f;
+
+        final int allocatedWidth = (int) (3.4f * size);
+        final String text = "\u202Eaaaa"; // U+202E is the RIGHT-TO-LEFT OVERRIDE.
+        final StaticLayout layout = StaticLayout.Builder.obtain(text, 0, text.length(),
+                getTextPaintForEllipsize(size), allocatedWidth)
+                .setEllipsize(TextUtils.TruncateAt.END)
+                .setEllipsizedWidth(allocatedWidth)
+                .setMaxLines(1)
+                .build();
+        assertEquals(2, layout.getEllipsisStart(0)); // After the first 'a'
+        assertEquals(3, layout.getEllipsisCount(0));
+    }
+
+    @Test
+    public void testEllipsize_retryStart() {
+        final float size = 100.0f;
+
+        final int allocatedWidth = (int) (3.4f * size);
+        final String text = "aaaa";
+        final StaticLayout layout = StaticLayout.Builder.obtain(text, 0, text.length(),
+                getTextPaintForEllipsize(size), allocatedWidth)
+                .setEllipsize(TextUtils.TruncateAt.START)
+                .setEllipsizedWidth(allocatedWidth)
+                .setMaxLines(1)
+                .build();
+        assertEquals(0, layout.getEllipsisStart(0));
+        assertEquals(3, layout.getEllipsisCount(0));
+    }
+
+    @Test
+    public void testEllipsize_retryMiddle() {
+        final float size = 100.0f;
+
+        final int allocatedWidth = (int) (5.9f * size);
+        final String text = "aaaaaa";
+        final StaticLayout layout = StaticLayout.Builder.obtain(text, 0, text.length(),
+                getTextPaintForEllipsize(size), allocatedWidth)
+                .setEllipsize(TextUtils.TruncateAt.MIDDLE)
+                .setEllipsizedWidth(allocatedWidth)
+                .setMaxLines(1)
+                .build();
+        final int ellipsisStart = layout.getEllipsisStart(0);
+        assertTrue(ellipsisStart == 1 || ellipsisStart == 2);
+        assertEquals(3, layout.getEllipsisCount(0));
+    }
+
+    private TextPaint getTextPaintForEllipsize(float size) {
+        // The font used in this method has two glyphs defined for "a" and ellipsis. Both are one
+        // em wide. But the glyphs are kerned: whenever the "a" is followed or preceded by an
+        // ellipsis, half an em is added between them as kerning. This means that:
+        // "aaaa" is 4 ems wide,
+        // "aaa…" is 4.5 ems wide,
+        // "aa…" is 3.5 ems wide,
+        // "a…" is 2.5 ems wide,
+        // "aa…aa" is 6 ems wide,
+        // "aa…a" is 5 ems wide,
+        // "a…aa" is 5 ems wide,
+        // "a…a" is 4 ems wide,
+        // "…a" is 2.5 ems wide.
+        final TextPaint paint = new TextPaint();
+        paint.setTypeface(Typeface.createFromAsset(
+                InstrumentationRegistry.getTargetContext().getAssets(), "ellipsis_test_font.ttf"));
+        paint.setTextSize(size);
+        return paint;
     }
 
     @Test(expected = IndexOutOfBoundsException.class)

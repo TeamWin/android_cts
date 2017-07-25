@@ -111,12 +111,30 @@ public class DynamicLayoutTest {
                 DEFAULT_ALIGN,
                 SPACING_MULT_NO_SCALE,
                 SPACING_ADD_NO_SCALE,
-                true,
+                true /* include pad */,
                 TextUtils.TruncateAt.START,
                 DEFAULT_OUTER_WIDTH);
         assertEquals(0, dynamicLayout.getEllipsisCount(LINE1));
         assertEquals(ELLIPSIS_UNDEFINED, dynamicLayout.getEllipsisStart(LINE1));
         assertEquals(DEFAULT_OUTER_WIDTH, dynamicLayout.getEllipsizedWidth());
+    }
+
+    // This could cause a crash in an older version of ellipsization code.
+    @Test
+    public void testEllipsisWithReflow() {
+        final String text = "Ham & Cheese.sandwich";
+        final int width = 1 << 20;
+        final int ellipsizedWidth = 2 * (int) mDefaultPaint.getTextSize();
+        final DynamicLayout dynamicLayout = new DynamicLayout(text,
+                text,
+                mDefaultPaint,
+                width,
+                DEFAULT_ALIGN,
+                SPACING_MULT_NO_SCALE,
+                SPACING_ADD_NO_SCALE,
+                true /* include pad */,
+                TextUtils.TruncateAt.END,
+                ellipsizedWidth);
     }
 
     /*
