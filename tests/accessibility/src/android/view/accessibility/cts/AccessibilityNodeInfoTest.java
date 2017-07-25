@@ -42,8 +42,9 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
     /**
      * The number of properties that are purposely not marshalled
      * mOriginalText - Used when resolving clickable spans; intentionally not parceled
+     * mRecycled - Used to protect instances that are in a pool; intentionally not parceled
      */
-    private static final int NUM_NONMARSHALLED_PROPERTIES = 1;
+    private static final int NUM_NONMARSHALLED_PROPERTIES = 2;
 
     @SmallTest
     public void testMarshaling() throws Exception {
@@ -87,6 +88,16 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
 
         // recycle and obtain the same recycled instance
         populatedInfo.recycle();
+
+        // Accessing a recycled node should throw an exception
+        boolean exceptionThrown = false;
+        try {
+            populatedInfo.getChildCount();
+        } catch (IllegalStateException e) {
+            exceptionThrown = true;
+        }
+        assertTrue("Should be unable to interact with a recycled node", exceptionThrown);
+
         AccessibilityNodeInfo recycledInfo = AccessibilityNodeInfo.obtain();
 
         // check expectations
