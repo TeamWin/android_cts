@@ -17,7 +17,6 @@
 package android.server.cts;
 
 import android.server.cts.WindowManagerState.WindowState;
-import android.server.cts.ActivityManagerState.ActivityStack;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
@@ -38,8 +37,8 @@ public class KeyguardTests extends KeyguardTestBase {
         super.tearDown();
 
         // Remove screen lock
+        tearDownLockCredentials();
         mDevice.executeShellCommand("locksettings set-disabled true");
-        tearDownLock();
     }
 
     public void testKeyguardHidesActivity() throws Exception {
@@ -338,10 +337,9 @@ public class KeyguardTests extends KeyguardTestBase {
 
         final String activityName = "TurnScreenOnAttrDismissKeyguardActivity";
 
-        setUpLock();
+        setLockCredential();
         sleepDevice();
 
-        final String logSeparator = clearLogcat();
         mAmWmState.computeState(mDevice, null);
         assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
         launchActivity(activityName);
