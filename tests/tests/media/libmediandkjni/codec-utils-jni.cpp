@@ -24,8 +24,8 @@
 #include <sys/types.h>
 #include <jni.h>
 
-#include <ScopedLocalRef.h>
-#include <JNIHelp.h>
+#include <nativehelper/JNIHelp.h>
+#include <nativehelper/ScopedLocalRef.h>
 
 #include <math.h>
 

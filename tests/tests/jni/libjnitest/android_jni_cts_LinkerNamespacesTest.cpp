@@ -22,7 +22,6 @@
 #include <dlfcn.h>
 #include <fcntl.h>
 #include <jni.h>
-#include <JNIHelp.h>
 #include <libgen.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -34,8 +33,9 @@
 #include <unordered_set>
 #include <vector>
 
-#include "ScopedLocalRef.h"
-#include "ScopedUtfChars.h"
+#include <nativehelper/JNIHelp.h>
+#include <nativehelper/ScopedLocalRef.h>
+#include <nativehelper/ScopedUtfChars.h>
 
 #if defined(__LP64__)
 static const std::string kSystemLibraryPath = "/system/lib64";
