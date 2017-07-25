@@ -171,7 +171,6 @@ cts_test_packages := \
     CtsBackupTestCases \
     CtsBluetoothTestCases \
     CtsCalendarcommon2TestCases \
-    CtsCallLogTestCases \
     CtsCameraTestCases \
     CtsCarTestCases \
     CtsContentTestCases \
