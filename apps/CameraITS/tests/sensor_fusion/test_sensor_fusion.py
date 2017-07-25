@@ -112,7 +112,7 @@ def main():
             # Split by comma and convert each dimension to int.
             [w, h] = map(int, s[9:].split(","))
         elif s[:12] == "test_length=" and len(s) > 12:
-            test_length = int(s[12:])
+            test_length = float(s[12:])
 
     # Collect or load the camera+gyro data. All gyro events as well as camera
     # timestamps are in the "events" dictionary, and "frames" is a list of
@@ -442,9 +442,9 @@ def collect_data(fps, w, h, test_length):
         req = its.objects.manual_capture_request(s, e)
         req["android.control.aeTargetFpsRange"] = [fps, fps]
         req["android.sensor.frameDuration"] = int(1000.0/fps * MSEC_TO_NSEC);
-        print "Capturing %dx%d with sens. %d, exp. time %.1fms" % (
-            w, h, s, e*NSEC_TO_MSEC)
-        caps = cam.do_capture([req]*fps*test_length, fmt)
+        print "Capturing %dx%d with sens. %d, exp. time %.1fms at %dfps" % (
+            w, h, s, e*NSEC_TO_MSEC, fps)
+        caps = cam.do_capture([req]*int(fps*test_length), fmt)
 
         # Get the gyro events.
         print "Reading out sensor events"
