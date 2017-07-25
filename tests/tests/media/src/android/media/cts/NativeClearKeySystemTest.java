@@ -191,14 +191,52 @@ public class NativeClearKeySystemTest extends MediaPlayerTestBase {
         params.surface.release();
     }
 
-    private ArrayList<Integer> intVersion(String version) {
-        String versions[] = version.split("\\.");
+    /*
+     * Compare version strings
+     *
+     * @param actual Actual platform's Android version
+     * @param expected Minimum Android version
+     *
+     * @return 0 if the versions are identical
+     * @return +v if actual is greater than expected
+     * @return -ve if actual is less than expected
+     */
+    private static Integer compareVersion(String actual, String expected) {
+        String[] part1 = actual.split("\\.");
+        String[] part2 = expected.split("\\.");
 
-        ArrayList<Integer> versionNumbers = Lists.newArrayList();
-        for (String subVersion : versions) {
-            versionNumbers.add(Integer.parseInt(subVersion));
+        int idx = 0;
+        for (; idx < part1.length && idx < part2.length; idx++) {
+            String p1 = part1[idx];
+            String p2 = part2[idx];
+
+            int cmp;
+            if (p1.matches("\\d+") && p2.matches("\\d+")) {
+                cmp = new Integer(p1).compareTo(new Integer(p2));
+            } else {
+                cmp = part1[idx].compareTo(part2[idx]);
+            }
+            if (cmp != 0) return cmp;
         }
-        return versionNumbers;
+
+        if (part1.length == part2.length) {
+            return 0;
+        } else {
+            boolean left = part1.length > idx;
+            String[] parts = left ? part1 : part2;
+
+            for (; idx < parts.length; idx++) {
+                String p = parts[idx];
+                int cmp;
+                if (p.matches("\\d+")) {
+                    cmp = new Integer(p).compareTo(0);
+                } else {
+                    cmp = 1;
+                }
+                if (cmp != 0) return left ? cmp : -cmp;
+            }
+            return 0;
+        }
     }
 
     private static native boolean isCryptoSchemeSupportedNative(final byte[] uuid);
@@ -212,10 +250,14 @@ public class NativeClearKeySystemTest extends MediaPlayerTestBase {
     private static native boolean testPsshNative(final byte[] uuid, final String videoUrl);
 
     public void testClearKeyPlaybackCenc() throws Exception {
-        testClearKeyPlayback(
-                ISO_BMFF_VIDEO_MIME_TYPE,
-                CENC_AUDIO_URL,
-                CENC_CLEARKEY_VIDEO_URL,
-                VIDEO_WIDTH_CENC, VIDEO_HEIGHT_CENC);
+        if (compareVersion(Build.VERSION.RELEASE, "7.1.2") >= 0) {
+            testClearKeyPlayback(
+                    ISO_BMFF_VIDEO_MIME_TYPE,
+                    CENC_AUDIO_URL,
+                    CENC_CLEARKEY_VIDEO_URL,
+                    VIDEO_WIDTH_CENC, VIDEO_HEIGHT_CENC);
+        } else {
+            Log.i(TAG, "Skip test, which is intended for Android 7.1.2 and above.");
+        }
     }
 }
