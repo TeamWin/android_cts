@@ -24,7 +24,7 @@
 
 #include <assert.h>
 #include <jni.h>
-#include <JNIHelp.h>
+#include <nativehelper/JNIHelp.h>
 
 #include <android/native_window_jni.h>
 
