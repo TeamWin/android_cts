@@ -16,6 +16,8 @@
 
 package android.text.cts;
 
+import static android.text.Layout.Alignment.ALIGN_NORMAL;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -27,6 +29,8 @@ import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.text.DynamicLayout;
 import android.text.Layout;
+import android.text.SpannableStringBuilder;
+import android.text.StaticLayout;
 import android.text.TextPaint;
 import android.text.TextUtils;
 
@@ -189,5 +193,72 @@ public class DynamicLayoutTest {
         assertEquals(0, mDynamicLayout.getLineStart(LINE0));
         assertEquals(TEXT[0].length(), mDynamicLayout.getLineStart(LINE1));
         assertEquals(TEXT[0].length() + TEXT[1].length(), mDynamicLayout.getLineStart(LINE2));
+    }
+
+    @Test
+    public void testLineSpacing() {
+        SpannableStringBuilder text = new SpannableStringBuilder("a\nb\nc");
+        final float spacingMultiplier = 2f;
+        final float spacingAdd = 4;
+        final int width = 1000;
+        final TextPaint textPaint = new TextPaint();
+        // create the DynamicLayout
+        final DynamicLayout dynamicLayout = new DynamicLayout(text,
+                textPaint,
+                width,
+                ALIGN_NORMAL,
+                spacingMultiplier,
+                spacingAdd,
+                false /*includepad*/);
+
+        // create a StaticLayout with same text, this will define the expectations
+        Layout expected = createStaticLayout(text.toString(), textPaint, width, spacingAdd,
+                spacingMultiplier);
+        assertLineSpecs(expected, dynamicLayout);
+
+        // add a new line to the end, DynamicLayout will re-calculate
+        text = text.append("\nd");
+        expected = createStaticLayout(text.toString(), textPaint, width, spacingAdd,
+                spacingMultiplier);
+        assertLineSpecs(expected, dynamicLayout);
+
+        // insert a next line and a char as the new second line
+        text = text.insert(TextUtils.indexOf(text, '\n') + 1, "a1\n");
+        expected = createStaticLayout(text.toString(), textPaint, width, spacingAdd,
+                spacingMultiplier);
+        assertLineSpecs(expected, dynamicLayout);
+    }
+
+    private Layout createStaticLayout(CharSequence text, TextPaint textPaint, int width,
+            float spacingAdd, float spacingMultiplier) {
+        return StaticLayout.Builder.obtain(text, 0,
+                text.length(), textPaint, width)
+                .setAlignment(ALIGN_NORMAL)
+                .setIncludePad(false)
+                .setLineSpacing(spacingAdd, spacingMultiplier)
+                .build();
+    }
+
+    private void assertLineSpecs(Layout expected, DynamicLayout actual) {
+        final int lineCount = expected.getLineCount();
+        assertTrue(lineCount > 1);
+        assertEquals(lineCount, actual.getLineCount());
+
+        final int lastLineIndex = lineCount - 1;
+        for (int i = 0; i < lastLineIndex; i++) {
+            assertEquals(expected.getLineTop(i), actual.getLineTop(i));
+            assertEquals(expected.getLineDescent(i), actual.getLineDescent(i));
+            assertEquals(expected.getLineBaseline(i), actual.getLineBaseline(i));
+            assertEquals(expected.getLineBottom(i), actual.getLineBottom(i));
+        }
+
+        assertEquals(expected.getLineTop(lastLineIndex), actual.getLineTop(lastLineIndex));
+        // currently last line of DynamicLayout does include the spacing, it should be same as
+        // previous line height
+        final int expectedLineHeight = expected.getLineBottom(lastLineIndex - 1)
+                - expected.getLineTop(lastLineIndex - 1);
+        final int actualLineHeight = actual.getLineBottom(lastLineIndex) - actual.getLineTop(
+                lastLineIndex);
+        assertEquals(expectedLineHeight, actualLineHeight);
     }
 }
