@@ -24,7 +24,6 @@ import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.InputStreamSource;
 import com.android.tradefed.testtype.DeviceTestCase;
 
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.lang.Exception;
 import java.lang.Integer;
@@ -143,6 +142,8 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     protected ITestDevice mDevice;
 
     private HashSet<String> mAvailableFeatures;
+
+    private boolean mLockCredentialsSet;
 
     protected static String getAmStartCmd(final String activityName) {
         return "am start -n " + getActivityComponentName(activityName);
@@ -265,7 +266,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         mInitialAccelerometerRotation = getAccelerometerRotation();
         mUserRotation = getUserRotation();
         mFontScale = getFontScale();
-        tearDownLock();
+        mLockCredentialsSet = false;
     }
 
     @Override
@@ -659,6 +660,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     }
 
     protected void setLockCredential() throws DeviceNotAvailableException {
+        mLockCredentialsSet = true;
         runCommandAndPrintOutput("locksettings set-pin " + LOCK_CREDENTIAL);
     }
 
@@ -1354,11 +1356,11 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         }
     }
 
-    void setUpLock() throws Exception {
-        setLockCredential();
-    }
+    void tearDownLockCredentials() throws Exception {
+        if (!mLockCredentialsSet) {
+            return;
+        }
 
-    void tearDownLock() throws Exception {
         removeLockCredential();
         // Dismiss active keyguard after credential is cleared, so
         // keyguard doesn't ask for the stale credential.
