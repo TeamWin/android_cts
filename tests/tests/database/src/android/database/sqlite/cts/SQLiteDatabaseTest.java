@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Locale;
 import java.util.concurrent.Semaphore;
 
+import android.app.ActivityManager;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -31,16 +32,17 @@ import android.database.sqlite.SQLiteCursor;
 import android.database.sqlite.SQLiteCursorDriver;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
-import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteDebug;
 import android.database.sqlite.SQLiteQuery;
 import android.database.sqlite.SQLiteStatement;
 import android.database.sqlite.SQLiteTransactionListener;
 import android.test.AndroidTestCase;
 import android.test.MoreAsserts;
 import android.test.suitebuilder.annotation.LargeTest;
-import android.test.suitebuilder.annotation.SmallTest;
+import android.util.Log;
 
 public class SQLiteDatabaseTest extends AndroidTestCase {
+    private static final String TAG = "SQLiteDatabaseTest";
     private SQLiteDatabase mDatabase;
     private File mDatabaseFile;
     private String mDatabaseFilePath;
@@ -82,19 +84,17 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
 
     @Override
     protected void tearDown() throws Exception {
-        mDatabase.close();
-        mDatabaseFile.delete();
+        closeAndDeleteDatabase();
         super.tearDown();
     }
 
-    public void testOpenDatabase() {
-        CursorFactory factory = new CursorFactory() {
-            public Cursor newCursor(SQLiteDatabase db, SQLiteCursorDriver masterQuery,
-                    String editTable, SQLiteQuery query) {
-                return new MockSQLiteCursor(db, masterQuery, editTable, query);
-            }
-        };
+    private void closeAndDeleteDatabase() {
+        mDatabase.close();
+        SQLiteDatabase.deleteDatabase(mDatabaseFile);
+    }
 
+    public void testOpenDatabase() {
+        CursorFactory factory = MockSQLiteCursor::new;
         SQLiteDatabase db = SQLiteDatabase.openDatabase(mDatabaseFilePath,
                 factory, SQLiteDatabase.CREATE_IF_NECESSARY);
         assertNotNull(db);
@@ -1276,8 +1276,7 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
     @LargeTest
     public void testReaderGetsOldVersionOfDataWhenWriterIsInXact() throws InterruptedException {
         // redo setup to create WAL enabled database
-        mDatabase.close();
-        new File(mDatabase.getPath()).delete();
+        closeAndDeleteDatabase();
         mDatabase = SQLiteDatabase.openOrCreateDatabase(mDatabaseFile.getPath(), null, null);
         boolean rslt = mDatabase.enableWriteAheadLogging();
         assertTrue(rslt);
@@ -1350,8 +1349,7 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
     public void testExceptionsFromEnableWriteAheadLogging() {
         // attach a database
         // redo setup to create WAL enabled database
-        mDatabase.close();
-        new File(mDatabase.getPath()).delete();
+        closeAndDeleteDatabase();
         mDatabase = SQLiteDatabase.openOrCreateDatabase(mDatabaseFile.getPath(), null, null);
 
         // attach a database and call enableWriteAheadLogging - should not be allowed
@@ -1388,7 +1386,7 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
     }
 
     public void testEnableThenDisableWriteAheadLoggingUsingOpenFlag() {
-        new File(mDatabase.getPath()).delete();
+        closeAndDeleteDatabase();
         mDatabase = SQLiteDatabase.openDatabase(mDatabaseFile.getPath(), null,
                 SQLiteDatabase.CREATE_IF_NECESSARY | SQLiteDatabase.ENABLE_WRITE_AHEAD_LOGGING,
                 null);
@@ -1409,14 +1407,13 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
 
     public void testEnableWriteAheadLoggingFromContextUsingModeFlag() {
         // Without the MODE_ENABLE_WRITE_AHEAD_LOGGING flag, database opens without WAL.
-        getContext().deleteDatabase(DATABASE_FILE_NAME);
+        closeAndDeleteDatabase();
         mDatabase = getContext().openOrCreateDatabase(DATABASE_FILE_NAME,
                 Context.MODE_PRIVATE, null);
         assertFalse(mDatabase.isWriteAheadLoggingEnabled());
-        mDatabase.close();
 
         // With the MODE_ENABLE_WRITE_AHEAD_LOGGING flag, database opens with WAL.
-        getContext().deleteDatabase(DATABASE_FILE_NAME);
+        closeAndDeleteDatabase();
         mDatabase = getContext().openOrCreateDatabase(DATABASE_FILE_NAME,
                 Context.MODE_PRIVATE | Context.MODE_ENABLE_WRITE_AHEAD_LOGGING, null);
         assertTrue(mDatabase.isWriteAheadLoggingEnabled());
@@ -1492,5 +1489,54 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
         // Enable foreign keys should work again after transaction complete.
         mDatabase.setForeignKeyConstraintsEnabled(true);
         assertEquals(1, DatabaseUtils.longForQuery(mDatabase, "PRAGMA foreign_keys", null));
+    }
+
+    public void testOpenDatabaseLookasideConfig() {
+        // First check that lookaside is enabled (except low-RAM devices)
+        boolean expectDisabled = mContext.getSystemService(ActivityManager.class).isLowRamDevice();
+        verifyLookasideStats(expectDisabled);
+        // Reopen test db with lookaside disabled
+        mDatabase.close();
+        SQLiteDatabase.OpenParams params = new SQLiteDatabase.OpenParams.Builder()
+                .setLookasideConfig(0, 0).build();
+        mDatabase = SQLiteDatabase.openDatabase(mDatabaseFile.getPath(), params);
+        verifyLookasideStats(true);
+        // Reopen test db with custom lookaside config
+        mDatabase.close();
+        params = new SQLiteDatabase.OpenParams.Builder().setLookasideConfig(10000, 10).build();
+        mDatabase = SQLiteDatabase.openDatabase(mDatabaseFile.getPath(), params);
+        // Lookaside is always disabled on low-RAM devices
+        verifyLookasideStats(expectDisabled);
+    }
+
+    public void testOpenParamsSetLookasideConfigValidation() {
+        try {
+            new SQLiteDatabase.OpenParams.Builder().setLookasideConfig(-1, 0).build();
+            fail("Negative slot size should be rejected");
+        } catch (IllegalArgumentException expected) {
+        }
+        try {
+            new SQLiteDatabase.OpenParams.Builder().setLookasideConfig(0, -10).build();
+            fail("Negative slot count should be rejected");
+        } catch (IllegalArgumentException expected) {
+        }
+    }
+
+    private void verifyLookasideStats(boolean expectDisabled) {
+        boolean dbStatFound = false;
+        SQLiteDebug.PagerStats info = SQLiteDebug.getDatabaseInfo();
+        for (SQLiteDebug.DbStats dbStat : info.dbStats) {
+            if (dbStat.dbName.endsWith(mDatabaseFile.getName())) {
+                dbStatFound = true;
+                Log.i(TAG, "Lookaside for " + dbStat.dbName + " " + dbStat.lookaside);
+                if (expectDisabled) {
+                    assertTrue("lookaside slots count should be zero", dbStat.lookaside == 0);
+                } else {
+                    assertTrue("lookaside slots count should be greater than zero",
+                            dbStat.lookaside > 0);
+                }
+            }
+        }
+        assertTrue("No dbstat found for " + mDatabaseFile.getName(), dbStatFound);
     }
 }
