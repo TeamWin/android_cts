@@ -19,8 +19,6 @@ package android.cts.backup;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
 
-import static org.junit.Assume.assumeTrue;
-
 import com.android.cts.migration.MigrationHelper;
 import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
 import com.android.ddmlib.testrunner.TestIdentifier;
@@ -54,8 +52,8 @@ public abstract class BaseBackupHostSideTest extends DeviceTestCase implements I
             "android/com.android.internal.backup.LocalTransport";
 
     protected ITestDevice mDevice;
+    protected boolean mIsBackupSupported;
 
-    private boolean mIsBackupSupported;
     private boolean mWasBackupEnabled;
     private String mOldTransport;
     private HashSet<String> mAvailableFeatures;
@@ -70,7 +68,10 @@ public abstract class BaseBackupHostSideTest extends DeviceTestCase implements I
     public void setUp() throws DeviceNotAvailableException, Exception {
         mDevice = getDevice();
         mIsBackupSupported = hasDeviceFeature(FEATURE_BACKUP);
-        assumeTrue(mIsBackupSupported);
+        if (!mIsBackupSupported) {
+            CLog.i("android.software.backup feature is not supported on this device");
+            return;
+        }
         // Enable backup and select local backup transport
         assertTrue("LocalTransport should be available.", hasBackupTransport(LOCAL_TRANSPORT));
         mWasBackupEnabled = enableBackup(true);
