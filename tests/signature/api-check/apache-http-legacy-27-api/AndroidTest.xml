@@ -13,33 +13,23 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="Config for CTS System Current API Signature test cases">
+<configuration description="Config for CTS Apache Http Legacy 27 API Signature test cases">
     <option name="config-descriptor:metadata" key="component" value="systems" />
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="mkdir -p /data/local/tmp/signature-test" />
         <option name="teardown-command" value="rm -rf /data/local/tmp/signature-test" />
     </target_preparer>
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
-        <option name="push" value="system-current.api->/data/local/tmp/signature-test/system-current.api" />
-    </target_preparer>
-    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
-        <option name="push" value="android-test-mock-current.api->/data/local/tmp/signature-test/android-test-mock-current.api" />
-    </target_preparer>
-    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
-        <option name="push" value="android-test-runner-current.api->/data/local/tmp/signature-test/android-test-runner-current.api" />
-    </target_preparer>
-    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
         <option name="push" value="apache-http-legacy-minus-current.api->/data/local/tmp/signature-test/apache-http-legacy-minus-current.api" />
     </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
-        <option name="test-file-name" value="CtsSystemCurrentApiSignatureTestCases.apk" />
+        <option name="test-file-name" value="CtsApacheHttpLegacy27ApiSignatureTestCases.apk" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
-        <option name="package" value="android.signature.cts.api.system_current" />
+        <option name="package" value="android.signature.cts.api.apache_http_legacy_27" />
         <option name="runner" value="repackaged.android.test.InstrumentationTestRunner" />
-        <option name="instrumentation-arg" key="expected-api-files" value="system-current.api" />
-        <option name="instrumentation-arg" key="unexpected-api-files" value="android-test-mock-current.api,android-test-runner-current.api,apache-http-legacy-minus-current.api" />
-        <option name="runtime-hint" value="30s" />
+        <option name="instrumentation-arg" key="expected-api-files" value="apache-http-legacy-minus-current.api" />
+        <option name="runtime-hint" value="5s" />
     </test>
 </configuration>

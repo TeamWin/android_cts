@@ -16,16 +16,16 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.signature.cts.api.apache_http_legacy_current">
+          package="android.signature.cts.api.apache_http_legacy_27">
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
 
-    <application>
-        <uses-library android:name="org.apache.http.legacy"/>
-    </application>
+    <uses-sdk android:minSdkVersion="22" android:targetSdkVersion="27"/>
+
+    <application/>
 
     <instrumentation android:name="repackaged.android.test.InstrumentationTestRunner"
-                     android:targetPackage="android.signature.cts.api.apache_http_legacy_current"
-                     android:label="Apache Http Legacy Current API Signature Test"/>
+                     android:targetPackage="android.signature.cts.api.apache_http_legacy_27"
+                     android:label="Apache Http Legacy 27 API Signature Test"/>
 
 </manifest>
