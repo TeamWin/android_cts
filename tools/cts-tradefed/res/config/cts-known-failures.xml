@@ -111,6 +111,9 @@
     <!-- b/31803630 -->
     <option name="compatibility:exclude-filter" value="CtsSecurityTestCases android.security.cts.ListeningPortsTest" />
 
+    <!-- b/63115400 -->
+    <option name="compatibility:exclude-filter" value="CtsSecurityTestCases android.security.cts.SELinuxHostTest#testAospFileContexts" />
+
     <!-- b/36686383 -->
     <option name="compatibility:exclude-filter" value="CtsIncidentHostTestCases com.android.server.cts.ErrorsTest#testANR" />
 
