@@ -383,6 +383,44 @@
                 android:text="@string/sample_text"
                 android:justificationMode="inter_word" />
 
+            <TextView
+                android:id="@+id/textview_textappearance_attrs1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_text"
+                style="@null"
+                android:textAppearance="@style/TextAppearance.Xml1" />
+
+            <TextView
+                android:id="@+id/textview_textappearance_attrs2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_text"
+                style="@null"
+                android:textAppearance="@style/TextAppearance.Xml2" />
+
+            <TextView
+                android:id="@+id/textview_textappearance_attrs3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_text"
+                android:textAppearance="@style/TextAppearance.Xml2"
+                style="@style/TextAppearance.Xml3" />
+
+            <TextView
+                android:id="@+id/textview_textappearance_attrs4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_text"
+                style="@style/TextAppearance.Xml3" />
+
+            <TextView
+                android:id="@+id/textview_textappearance_attrs_allcaps_password"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_text"
+                style="@style/AllCapsPassword" />
+
         </LinearLayout>
 
 </ScrollView>
