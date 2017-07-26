@@ -55,6 +55,9 @@ public class SignatureTest extends InstrumentationTestCase {
         KNOWN_INACCESSIBLE_CLASSES.add("android.os.UserManager.UserRestrictionSource");
         KNOWN_INACCESSIBLE_CLASSES.add(
                 "android.service.persistentdata.PersistentDataBlockManager.FlashLockState");
+        KNOWN_INACCESSIBLE_CLASSES.add("android.hardware.radio.ProgramSelector.IdentifierType");
+        KNOWN_INACCESSIBLE_CLASSES.add("android.hardware.radio.ProgramSelector.ProgramType");
+        KNOWN_INACCESSIBLE_CLASSES.add("android.hardware.radio.RadioManager.Band");
     }
 
     private TestResultObserver mResultObserver;
