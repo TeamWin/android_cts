@@ -22,6 +22,7 @@ LOCAL_ERROR_PRONE_FLAGS:= -Xep:ArrayToString:ERROR \
                           -Xep:FormatString:ERROR \
                           -Xep:JUnit3TestNotRun:ERROR \
                           -Xep:JUnitAmbiguousTestClass:ERROR \
+                          -Xep:MissingFail:ERROR \
                           -Xep:SizeGreaterThanOrEqualsZero:ERROR \
                           -Xep:TryFailThrowable:ERROR
 

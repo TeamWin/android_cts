@@ -134,6 +134,7 @@ public class NativeClearKeySystemTest extends MediaPlayerTestBase {
             StringBuffer value = new StringBuffer();
             testGetPropertyStringNative(uuidByteArray(CLEARKEY_SCHEME_UUID),
                     "unknown-property", value);
+            fail("Should have thrown an exception");
         } catch (RuntimeException e) {
             Log.e(TAG, "testUnknownPropertyString error = '" + e.getMessage() + "'");
             assertThat(e.getMessage(), containsString("get property string returns"));
