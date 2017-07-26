@@ -18,6 +18,8 @@ package android.cts.backup;
 
 import static org.junit.Assert.assertTrue;
 
+import com.android.tradefed.log.LogUtil.CLog;
+
 /**
  * Test checking that files created by an app are restored successfully after a backup, but that
  * files put in the folder provided by getNoBackupFilesDir() [files/no_backup] are NOT backed up.
@@ -30,6 +32,10 @@ public class NoBackupFolderHostSideTest extends BaseBackupHostSideTest {
     private static final String DEVICE_TEST_CLASS_NAME = TESTS_APP_NAME + ".FullbackupTest";
 
     public void testNoBackupFolder() throws Exception {
+        if (!mIsBackupSupported) {
+            CLog.i("android.software.backup feature is not supported on this device");
+            return;
+        }
         // Generate the files that are going to be backed up.
         runDeviceTest(TESTS_APP_NAME, DEVICE_TEST_CLASS_NAME, "createFiles");
 
