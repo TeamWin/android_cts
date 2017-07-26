@@ -31,6 +31,7 @@
                   android:theme="@style/WhiteBackgroundTheme"
                   android:resizeableActivity="false" />
         <uses-library android:name="android.test.runner" />
+        <meta-data android:name="android.max_aspect" android:value="10.0" />
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
