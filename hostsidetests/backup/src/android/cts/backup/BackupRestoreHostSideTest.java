@@ -22,6 +22,7 @@ import static junit.framework.Assert.assertNull;
 import static junit.framework.Assert.assertTrue;
 
 import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.log.LogUtil.CLog;
 
 import java.io.FileNotFoundException;
 import java.util.HashMap;
@@ -93,7 +94,6 @@ public class BackupRestoreHostSideTest extends BaseBackupHostSideTest {
     private static final String DEFAULT_STRING_STRING = "null";
     private static final String DEFAULT_FILE_STRING = "empty";
 
-    private boolean mIsBackupSupported;
     private boolean mWasBackupEnabled;
     private String mOldTransport;
 
@@ -104,6 +104,10 @@ public class BackupRestoreHostSideTest extends BaseBackupHostSideTest {
     private Map<String, String> mSavedValues;
 
     public void testKeyValueBackupAndRestore() throws Exception {
+        if (!mIsBackupSupported) {
+            CLog.i("android.software.backup feature is not supported on this device");
+            return;
+        }
         // Clear app data if any
         mDevice.executeShellCommand(CLEAR_DATA_IN_PACKAGE_UNDER_TEST_COMMAND);
         // Clear logcat
