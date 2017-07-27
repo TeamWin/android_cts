@@ -229,6 +229,28 @@ public class DynamicLayoutTest {
         assertLineSpecs(expected, dynamicLayout);
     }
 
+    @Test
+    public void testLineSpacing_textEndingWithNextLine() {
+        final SpannableStringBuilder text = new SpannableStringBuilder("a\n");
+        final float spacingMultiplier = 2f;
+        final float spacingAdd = 4;
+        final int width = 1000;
+        final TextPaint textPaint = new TextPaint();
+        // create the DynamicLayout
+        final DynamicLayout dynamicLayout = new DynamicLayout(text,
+                textPaint,
+                width,
+                ALIGN_NORMAL,
+                spacingMultiplier,
+                spacingAdd,
+                false /*includepad*/);
+
+        // create a StaticLayout with same text, this will define the expectations
+        final Layout expected = createStaticLayout(text.toString(), textPaint, width, spacingAdd,
+                spacingMultiplier);
+        assertLineSpecs(expected, dynamicLayout);
+    }
+
     private Layout createStaticLayout(CharSequence text, TextPaint textPaint, int width,
             float spacingAdd, float spacingMultiplier) {
         return StaticLayout.Builder.obtain(text, 0,
@@ -244,21 +266,11 @@ public class DynamicLayoutTest {
         assertTrue(lineCount > 1);
         assertEquals(lineCount, actual.getLineCount());
 
-        final int lastLineIndex = lineCount - 1;
-        for (int i = 0; i < lastLineIndex; i++) {
+        for (int i = 0; i < lineCount; i++) {
             assertEquals(expected.getLineTop(i), actual.getLineTop(i));
             assertEquals(expected.getLineDescent(i), actual.getLineDescent(i));
             assertEquals(expected.getLineBaseline(i), actual.getLineBaseline(i));
             assertEquals(expected.getLineBottom(i), actual.getLineBottom(i));
         }
-
-        assertEquals(expected.getLineTop(lastLineIndex), actual.getLineTop(lastLineIndex));
-        // currently last line of DynamicLayout does include the spacing, it should be same as
-        // previous line height
-        final int expectedLineHeight = expected.getLineBottom(lastLineIndex - 1)
-                - expected.getLineTop(lastLineIndex - 1);
-        final int actualLineHeight = actual.getLineBottom(lastLineIndex) - actual.getLineTop(
-                lastLineIndex);
-        assertEquals(expectedLineHeight, actualLineHeight);
     }
 }

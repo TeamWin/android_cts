@@ -213,6 +213,38 @@ public class StaticLayoutTest {
     }
 
     @Test
+    public void testSetLineSpacing_whereLineEndsWithNextLine() {
+        final float spacingAdd = 10f;
+        final float spacingMult = 3f;
+
+        // two lines of text, with line spacing, first line will have the spacing, but last line
+        // wont have the spacing
+        final String tmpText = "a\nb";
+        StaticLayout.Builder builder = StaticLayout.Builder.obtain(tmpText, 0, tmpText.length(),
+                mDefaultPaint, DEFAULT_OUTER_WIDTH);
+        builder.setLineSpacing(spacingAdd, spacingMult).setIncludePad(false);
+        final StaticLayout comparisonLayout = builder.build();
+
+        assertEquals(2, comparisonLayout.getLineCount());
+        final int heightWithLineSpacing = comparisonLayout.getLineBottom(0)
+                - comparisonLayout.getLineTop(0);
+        final int heightWithoutLineSpacing = comparisonLayout.getLineBottom(1)
+                - comparisonLayout.getLineTop(1);
+        assertTrue(heightWithLineSpacing > heightWithoutLineSpacing);
+
+        final String text = "a\n";
+        // build the layout to be tested
+        builder = StaticLayout.Builder.obtain("a\n", 0, text.length(), mDefaultPaint,
+                DEFAULT_OUTER_WIDTH);
+        builder.setLineSpacing(spacingAdd, spacingMult).setIncludePad(false);
+        final StaticLayout layout = builder.build();
+
+        assertEquals(comparisonLayout.getLineCount(), layout.getLineCount());
+        assertEquals(heightWithLineSpacing, layout.getLineBottom(0) - layout.getLineTop(0));
+        assertEquals(heightWithoutLineSpacing, layout.getLineBottom(1) - layout.getLineTop(1));
+    }
+
+    @Test
     public void testBuilder_setJustificationMode() {
         StaticLayout.Builder builder = StaticLayout.Builder.obtain(LAYOUT_TEXT, 0,
                 LAYOUT_TEXT.length(), mDefaultPaint, DEFAULT_OUTER_WIDTH);
@@ -222,6 +254,7 @@ public class StaticLayoutTest {
         // without causing any exceptions.
         assertNotNull(layout);
     }
+
     /*
      * Get the line number corresponding to the specified vertical position.
      *  If you ask for a position above 0, you get 0. above 0 means pixel above the fire line
