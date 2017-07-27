@@ -1730,6 +1730,54 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
+    public void testFillResponseAuthWhenAppCallsCancel() throws Exception {
+        // Set service.
+        enableService();
+        final MyAutofillCallback callback = mActivity.registerCallback();
+
+        // Prepare the authenticated response
+        final IntentSender authentication = AuthenticationActivity.createSender(getContext(), 1,
+                new CannedFillResponse.Builder().addDataset(
+                        new CannedDataset.Builder()
+                                .setField(ID_USERNAME, "dude")
+                                .setField(ID_PASSWORD, "sweet")
+                                .setId("name")
+                                .setPresentation(createPresentation("Dataset"))
+                                .build())
+                        .build());
+
+        // Configure the service behavior
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setAuthentication(authentication, ID_USERNAME, ID_PASSWORD)
+                .setPresentation(createPresentation("Tap to auth response"))
+                .build());
+
+        // Trigger auto-fill.
+        mActivity.onUsername(View::requestFocus);
+
+        // Wait for onFill() before proceeding.
+        sReplier.getNextFillRequest();
+        final View username = mActivity.getUsername();
+        callback.assertUiShownEvent(username);
+        sUiBot.assertDatasets("Tap to auth response");
+
+        // Auto fill it.
+        final CountDownLatch latch = new CountDownLatch(1);
+        AuthenticationActivity.setResultCode(latch, RESULT_OK);
+
+        sUiBot.selectDataset("Tap to auth response");
+        callback.assertUiHiddenEvent(username);
+
+        // Cancel session...
+        mActivity.getAutofillManager().cancel();
+
+        // ...before finishing the Auth UI.
+        latch.countDown();
+
+        sUiBot.assertNoDatasets();
+    }
+
+    @Test
     public void testFillResponseAuthServiceHasNoData() throws Exception {
         // Set service.
         enableService();
