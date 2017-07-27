@@ -22,6 +22,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Parcel;
@@ -246,5 +247,19 @@ public class TextAppearanceSpanTest {
         final float originalSpanTextWidth = tp.measureText("a");
         unparceledSpan.updateDrawState(tp);
         assertEquals(originalSpanTextWidth, tp.measureText("a"), 0.0f);
+    }
+
+    @Test
+    public void testRestrictContext() throws PackageManager.NameNotFoundException {
+        final Context ctx = mContext.createPackageContext(mContext.getPackageName(),
+                Context.CONTEXT_RESTRICTED);
+        final TextAppearanceSpan span = new TextAppearanceSpan(ctx,
+                android.text.cts.R.style.customFont);
+        final TextPaint tp = new TextPaint();
+        final float originalTextWidth = tp.measureText("a");
+        span.updateDrawState(tp);
+        // Custom font must not be loaded with the restricted context.
+        assertEquals(originalTextWidth, tp.measureText("a"), 0.0f);
+
     }
 }
