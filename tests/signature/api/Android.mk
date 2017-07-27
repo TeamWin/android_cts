@@ -66,11 +66,28 @@ LOCAL_SRC_FILES := frameworks/base/test-runner/api/android-test-runner-current.t
 
 include $(LOCAL_PATH)/build_xml_api_file.mk
 
-# current apache-http-legacy api, in XML format.
-# ==============================================
+# current apache-http-legacy minus current api, in text format.
+# =============================================================
+# Removes any classes from the org.apache.http.legacy API description that are
+# also part of the Android API description.
 include $(CLEAR_VARS)
-LOCAL_MODULE := cts-apache-http-legacy-current-api
-LOCAL_MODULE_STEM := apache-http-legacy-current.api
-LOCAL_SRC_FILES := external/apache-http/api/apache-http-legacy-current.txt
+LOCAL_MODULE_CLASS := ETC
+LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_ETC)
 
-include $(LOCAL_PATH)/build_xml_api_file.mk
+# Tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+
+LOCAL_MODULE := cts-apache-http-legacy-minus-current-api
+LOCAL_MODULE_STEM := apache-http-legacy-minus-current.api
+
+include $(BUILD_SYSTEM)/base_rules.mk
+$(LOCAL_BUILT_MODULE) : \
+        frameworks/base/api/current.txt \
+        external/apache-http/api/apache-http-legacy-current.txt \
+        | $(APICHECK)
+	@echo "Generate unique Apache Http Legacy API file -> $@"
+	@mkdir -p $(dir $@)
+	$(hide) $(APICHECK_COMMAND) -new_api_no_strip \
+	        frameworks/base/api/current.txt \
+            external/apache-http/api/apache-http-legacy-current.txt \
+            $@
