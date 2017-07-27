@@ -75,6 +75,7 @@ import android.os.Bundle;
 import android.service.autofill.FillEventHistory;
 import android.service.autofill.SaveInfo;
 import android.support.test.uiautomator.UiObject2;
+import android.util.Log;
 import android.view.View;
 import android.view.View.AccessibilityDelegate;
 import android.view.ViewGroup;
@@ -99,6 +100,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * specific to that test's activity (for example, custom views).
  */
 public class LoginActivityTest extends AutoFillServiceTestCase {
+
+    private static final String TAG = "LoginActivityTest";
 
     @Rule
     public final AutofillActivityTestRule<LoginActivity> mActivityRule =
@@ -3152,5 +3155,45 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.onPassword((v) -> atomicBombToKillASmallInsect.set(v.getSelectionEnd()));
         assertWithMessage("Wrong position on password").that(atomicBombToKillASmallInsect.get())
                 .isEqualTo(5);
+    }
+
+    public void testAutofillLargeNumberOfDatasets() throws Exception {
+        // Set service.
+        enableService();
+
+        final StringBuilder bigStringBuilder = new StringBuilder();
+        for (int i = 0; i < 10_000 ; i++) {
+            bigStringBuilder.append("BigAmI");
+        }
+        final String bigString = bigStringBuilder.toString();
+
+        final int size = 100;
+        Log.d(TAG, "testAutofillLargeNumberOfDatasets(): " + size + " datasets with "
+                + bigString.length() +"-bytes id");
+
+        final CannedFillResponse.Builder response = new CannedFillResponse.Builder();
+        for (int i = 0; i < size; i++) {
+            final String suffix = "-" + (i + 1);
+            response.addDataset(new CannedDataset.Builder()
+                    .setField(ID_USERNAME, "user" + suffix)
+                    .setField(ID_PASSWORD, "pass" + suffix)
+                    .setId(bigString)
+                    .setPresentation(createPresentation("DS" + suffix))
+                    .build());
+        }
+
+        // Set expectations.
+        sReplier.addResponse(response.build());
+
+        // Trigger auto-fill.
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+
+        // Make sure all datasets are shown.
+        // TODO: improve assertDatasets() so it supports scrolling, and assert all of them are
+        // shown
+        sUiBot.assertDatasets("DS-1", "DS-2", "DS-3");
+
+        // TODO: once it supports scrolling, selects the last dataset and asserts it's filled.
     }
 }
