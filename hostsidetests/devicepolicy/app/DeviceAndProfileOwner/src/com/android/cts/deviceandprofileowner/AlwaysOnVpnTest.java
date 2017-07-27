@@ -62,7 +62,7 @@ public class AlwaysOnVpnTest extends BaseDeviceAdminTest {
         // test always-on is null by default
         assertNull(mDevicePolicyManager.getAlwaysOnVpnPackage(ADMIN_RECEIVER_COMPONENT));
 
-        VpnTestHelper.setAndWaitForVpn(mContext, VPN_PACKAGE, /* usable */ true);
+        VpnTestHelper.waitForVpn(mContext, VPN_PACKAGE, /* usable */ true);
         VpnTestHelper.checkPing(TEST_ADDRESS);
     }
 
@@ -83,7 +83,7 @@ public class AlwaysOnVpnTest extends BaseDeviceAdminTest {
         restrictions.putStringArray(RESTRICTION_ALLOWED, new String[] {mPackageName});
         mDevicePolicyManager.setApplicationRestrictions(ADMIN_RECEIVER_COMPONENT, VPN_PACKAGE,
                 restrictions);
-        VpnTestHelper.setAndWaitForVpn(mContext, VPN_PACKAGE, /* usable */ true);
+        VpnTestHelper.waitForVpn(mContext, VPN_PACKAGE, /* usable */ true);
         assertTrue(VpnTestHelper.isNetworkVpn(mContext));
     }
 
@@ -92,7 +92,7 @@ public class AlwaysOnVpnTest extends BaseDeviceAdminTest {
         restrictions.putStringArray(RESTRICTION_DISALLOWED, new String[] {mPackageName});
         mDevicePolicyManager.setApplicationRestrictions(ADMIN_RECEIVER_COMPONENT, VPN_PACKAGE,
                 restrictions);
-        VpnTestHelper.setAndWaitForVpn(mContext, VPN_PACKAGE, /* usable */ false);
+        VpnTestHelper.waitForVpn(mContext, VPN_PACKAGE, /* usable */ false);
         assertFalse(VpnTestHelper.isNetworkVpn(mContext));
     }
 
