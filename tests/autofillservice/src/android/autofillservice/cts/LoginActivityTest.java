@@ -92,6 +92,7 @@ import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This is the test case covering most scenarios - other test cases will cover characteristics
@@ -3116,5 +3117,40 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // ...and make sure popup's gone
         sUiBot.assertNoDatasets();
+    }
+
+    @Test
+    public void testAutofillMovesCursorToTheEnd() throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedDataset.Builder()
+                .setField(ID_USERNAME, "dude")
+                .setField(ID_PASSWORD, "sweet")
+                .setPresentation(createPresentation("The Dude"))
+                .build());
+        mActivity.expectAutoFill("dude", "sweet");
+
+        // Trigger auto-fill.
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+
+        // Auto-fill it.
+        sUiBot.selectDataset("The Dude");
+
+        // Check the results.
+        mActivity.assertAutoFilled();
+
+        // NOTE: need to call getSelectionEnd() inside the UI thread, otherwise it returns 0
+        final AtomicInteger atomicBombToKillASmallInsect = new AtomicInteger();
+
+        mActivity.onUsername((v) -> atomicBombToKillASmallInsect.set(v.getSelectionEnd()));
+        assertWithMessage("Wrong position on username").that(atomicBombToKillASmallInsect.get())
+                .isEqualTo(4);
+
+        mActivity.onPassword((v) -> atomicBombToKillASmallInsect.set(v.getSelectionEnd()));
+        assertWithMessage("Wrong position on password").that(atomicBombToKillASmallInsect.get())
+                .isEqualTo(5);
     }
 }
