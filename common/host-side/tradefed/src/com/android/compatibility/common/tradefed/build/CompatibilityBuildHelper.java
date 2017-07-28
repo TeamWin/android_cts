@@ -18,7 +18,6 @@ package com.android.compatibility.common.tradefed.build;
 import com.android.compatibility.common.util.DynamicConfigHostSide;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.build.IFolderBuildInfo;
-import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.util.FileUtil;
 
 import java.io.File;
@@ -240,7 +239,7 @@ public class CompatibilityBuildHelper {
                     "Compatibility tests folder %s does not exist",
                     testsDir.getAbsolutePath()));
         }
-        CLog.d("Compatibility test folder found: %s", testsDir.toString());
+
         return testsDir;
     }
 
