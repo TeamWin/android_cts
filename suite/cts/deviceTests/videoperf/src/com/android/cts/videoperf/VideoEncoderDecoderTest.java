@@ -106,12 +106,17 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
     private double mRmsErrorMargain = PIXEL_RMS_ERROR_MARGAIN;
     private Random mRandom;
 
+    private long MAX_TIME_MS = 600000;  // 5 minutes
+    private long DEFAULT_TIME_MS = 120000;  // 2 minutes
+    // we don't use decoder results as bitstream is too simplistic. Limit to 10 seconds
+    private long DECODE_TIME_MS = 10000;    // 10 seconds
+
     private class TestConfig {
         public boolean mTestPixels = true;
         public boolean mTestResult = false;
         public boolean mReportFrameTime = false;
         public int mTotalFrames = 300;
-        public int mMaxTimeMs = 120000;  // 2 minutes
+        public long mMaxTimeMs = DEFAULT_TIME_MS;
         public int mNumberOfRepeat = 10;
     }
 
@@ -374,20 +379,28 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
         }
     }
 
-    private void doTestGoog(String mimeType, int w, int h) throws Exception {
+    private void doTestGoog(String mimeType, int w, int h, long testTimeoutMs) throws Exception {
         mTestConfig.mTestPixels = false;
         mTestConfig.mTestResult = true;
         mTestConfig.mTotalFrames = 3000;
         mTestConfig.mNumberOfRepeat = 2;
-        doTest(true /* isGoog */, mimeType, w, h);
+        doTest(true /* isGoog */, mimeType, w, h, testTimeoutMs);
+    }
+
+    private void doTestGoog(String mimeType, int w, int h) throws Exception {
+        doTestGoog(mimeType, w, h, MAX_TIME_MS);
+    }
+
+    private void doTestOther(String mimeType, int w, int h, long testTimeoutMs) throws Exception {
+        mTestConfig.mTestPixels = false;
+        mTestConfig.mTestResult = true;
+        mTestConfig.mTotalFrames = 3000;
+        mTestConfig.mNumberOfRepeat = 2;
+        doTest(false /* isGoog */, mimeType, w, h, testTimeoutMs);
     }
 
     private void doTestOther(String mimeType, int w, int h) throws Exception {
-        mTestConfig.mTestPixels = false;
-        mTestConfig.mTestResult = true;
-        mTestConfig.mTotalFrames = 3000;
-        mTestConfig.mNumberOfRepeat = 2;
-        doTest(false /* isGoog */, mimeType, w, h);
+        doTestOther(mimeType, w, h, MAX_TIME_MS);
     }
 
     private void doTestDefault(String mimeType, int w, int h) throws Exception {
@@ -413,7 +426,7 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
      * @param w video width
      * @param h video height
      */
-    private void doTest(boolean isGoog, String mimeType, int w, int h)
+    private void doTest(boolean isGoog, String mimeType, int w, int h, long testTimeoutMs)
             throws Exception {
         String[] encoderNames = getEncoderName(mimeType, isGoog);
         if (encoderNames.length == 0) {
@@ -427,7 +440,15 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
             Log.i(TAG, isGoog ? "Google " : "Non-google "
                     + "decoder for " + mimeType + " not found");
             return;
+        } else {
+            // we only need one decoder for this test
+            decoderNames = Arrays.copyOf(decoderNames, 1);
         }
+
+        // Ensure we can finish this test within the test timeout. Allow 25% slack (4/5).
+        mTestConfig.mMaxTimeMs = Math.min(
+                testTimeoutMs / encoderNames.length / decoderNames.length * 4 / 5 /
+            mTestConfig.mNumberOfRepeat - DECODE_TIME_MS, mTestConfig.mMaxTimeMs);
 
         for (String encoderName: encoderNames) {
             for (String decoderName: decoderNames) {
@@ -465,6 +486,7 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
         double[] totalFpsResults = new double[mTestConfig.mNumberOfRepeat];
         double[] decoderRmsErrorResults = new double[mTestConfig.mNumberOfRepeat];
         boolean success = true;
+
         for (int i = 0; i < mTestConfig.mNumberOfRepeat && success; i++) {
             mCurrentTestRound = i;
             MediaFormat format = new MediaFormat();
@@ -478,6 +500,7 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
             format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, KEY_I_FRAME_INTERVAL);
 
             double encodingTime = runEncoder(encoderName, format, mTestConfig.mTotalFrames);
+            int numEncodedFrames = mEncodedOutputBuffer.size();
             // re-initialize format for decoder
             format = new MediaFormat();
             format.setString(MediaFormat.KEY_MIME, mimeType);
@@ -490,10 +513,10 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
             } else {
                 double decodingTime = decoderResult[0];
                 decoderRmsErrorResults[i] = decoderResult[1];
-                encoderFpsResults[i] = (double)mTestConfig.mTotalFrames / encodingTime * 1000.0;
-                decoderFpsResults[i] = (double)mTestConfig.mTotalFrames / decodingTime * 1000.0;
+                encoderFpsResults[i] = (double)numEncodedFrames / encodingTime * 1000.0;
+                decoderFpsResults[i] = (double)numEncodedFrames / decodingTime * 1000.0;
                 totalFpsResults[i] =
-                        (double)mTestConfig.mTotalFrames / (encodingTime + decodingTime) * 1000.0;
+                        (double)numEncodedFrames / (encodingTime + decodingTime) * 1000.0;
             }
 
             // clear things for re-start
@@ -955,7 +978,7 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
                     dstBuf.put(src.array(), 0, writeSize);
 
                     int flags = srcInfo.flags;
-                    if ((System.currentTimeMillis() - start) > mTestConfig.mMaxTimeMs) {
+                    if ((System.currentTimeMillis() - start) > DECODE_TIME_MS) {
                         flags |= MediaCodec.BUFFER_FLAG_END_OF_STREAM;
                     }
 
