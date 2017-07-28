@@ -17,6 +17,7 @@
 package android.autofillservice.cts;
 
 import static android.autofillservice.cts.Helper.runShellCommand;
+import static android.autofillservice.cts.InstrumentedAutoFillService.SERVICE_NAME;
 import static android.provider.Settings.Secure.AUTOFILL_SERVICE;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -694,6 +695,92 @@ final class Helper {
      */
     public static void setLoggingLevel(String level) {
         runShellCommand("cmd autofill set log_level %s", level);
+    }
+
+    /**
+     * Uses Settings to enable the given autofill service for the default user, and checks the
+     * value was properly check, throwing an exception if it was not.
+     */
+    public static void enableAutofillService(Context context, String serviceName) {
+        if (isAutofillServiceEnabled(serviceName)) return;
+
+        final OneTimeSettingsListener observer = new OneTimeSettingsListener(context,
+                AUTOFILL_SERVICE);
+        runShellCommand("settings put secure %s %s default", AUTOFILL_SERVICE, serviceName);
+        observer.assertCalled();
+        assertAutofillServiceStatus(serviceName, true);
+    }
+
+    /**
+     * Uses Settings to disable the given autofill service for the default user, and checks the
+     * value was properly check, throwing an exception if it was not.
+     */
+    public static void disableAutofillService(Context context, String serviceName) {
+        if (!isAutofillServiceEnabled(serviceName)) return;
+
+        final OneTimeSettingsListener observer = new OneTimeSettingsListener(context,
+                AUTOFILL_SERVICE);
+        runShellCommand("settings delete secure %s", AUTOFILL_SERVICE);
+        observer.assertCalled();
+        assertAutofillServiceStatus(serviceName, false);
+    }
+
+    /**
+     * Checks whether the given service is set as the autofill service for the default user.
+     */
+    public static boolean isAutofillServiceEnabled(String serviceName) {
+        final String actualName = runShellCommand("settings get secure %s", AUTOFILL_SERVICE);
+        return serviceName.equals(actualName);
+    }
+
+    /**
+     * Asserts whether the given service is enabled as the autofill service for the default user.
+     */
+    public static void assertAutofillServiceStatus(String serviceName, boolean enabled) {
+        final String actual = runShellCommand("settings get secure %s", AUTOFILL_SERVICE);
+        final String expected = enabled ? serviceName : "null";
+        assertWithMessage("Invalid value for secure setting %s", AUTOFILL_SERVICE)
+                .that(actual).isEqualTo(expected);
+    }
+
+    /**
+     * Asserts that there is no session left in the service.
+     */
+    public static void assertNoDanglingSessions() {
+        final String command = "cmd autofill list sessions";
+        final String result = runShellCommand(command);
+        assertWithMessage("Dangling sessions ('%s'): %s'", command, result).that(result).isEmpty();
+    }
+
+    /**
+     * Destroys all sessions.
+     */
+    public static void destroyAllSessions() {
+        runShellCommand("cmd autofill destroy sessions");
+        assertNoDanglingSessions();
+    }
+
+    /**
+     * Gets the instrumentation context.
+     */
+    public static Context getContext() {
+        return InstrumentationRegistry.getInstrumentation().getContext();
+    }
+
+    /**
+     * Cleans up the autofill state; should be called before pretty much any test.
+     */
+    public static void preTestCleanup() {
+        if (!hasAutofillFeature()) return;
+
+        Log.d(TAG, "preTestCleanup()");
+
+        disableAutofillService(getContext(), SERVICE_NAME);
+        InstrumentedAutoFillService.setIgnoreUnexpectedRequests(true);
+
+        destroyAllSessions();
+        InstrumentedAutoFillService.resetStaticState();
+        AuthenticationActivity.resetStaticState();
     }
 
     private Helper() {
