@@ -16,13 +16,23 @@
 package android.media.cts.bitstreams;
 
 import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.config.ConfigurationException;
+import com.android.tradefed.config.Option;
+import com.android.tradefed.config.OptionSetter;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.testtype.HostTest;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IAbiReceiver;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IDeviceTest;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import org.junit.runner.Description;
 import org.junit.runner.Runner;
+import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.Parameterized;
 
 /**
@@ -30,6 +40,12 @@ import org.junit.runners.Parameterized;
  */
 public class DeviceJUnit4Parameterized extends Parameterized
         implements IDeviceTest, IBuildReceiver, IAbiReceiver {
+
+    @Option(
+        name = HostTest.SET_OPTION_NAME,
+        description = HostTest.SET_OPTION_DESC
+    )
+    private Set<String> mKeyValueOptions = new HashSet<>();
 
     private ITestDevice mDevice;
     private List<Runner> mRunners;
@@ -77,4 +93,18 @@ public class DeviceJUnit4Parameterized extends Parameterized
     protected List<Runner> getChildren() {
         return mRunners;
     }
+
+    @Override
+    protected void runChild(Runner runner, RunNotifier notifier) {
+        try {
+            OptionSetter setter = new OptionSetter(runner);
+            for (String kv : mKeyValueOptions) {
+                setter.setOptionValue(HostTest.SET_OPTION_NAME, kv);
+            }
+        } catch (ConfigurationException e) {
+            CLog.w(e);
+        }
+        super.runChild(runner, notifier);
+    }
+
 }
