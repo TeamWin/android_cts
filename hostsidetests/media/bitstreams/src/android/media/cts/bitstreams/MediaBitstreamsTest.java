@@ -65,12 +65,12 @@ import org.xmlpull.v1.XmlPullParserFactory;
 @UseParametersRunnerFactory(DeviceJUnit4ClassRunnerWithParameters.RunnerFactory.class)
 public class MediaBitstreamsTest implements IDeviceTest, IBuildReceiver, IAbiReceiver {
 
-    @Option(name = MediaBitstreams.OPT_HOST_BITSTEAMS_PATH,
+    @Option(name = MediaBitstreams.OPT_HOST_BITSTREAMS_PATH,
             description = "Absolute path of Ittiam bitstreams (host)",
             mandatory = true)
     private File mHostBitstreamsPath = new File(MediaBitstreams.DEFAULT_HOST_BITSTREAMS_PATH);
 
-    @Option(name = MediaBitstreams.OPT_DEVICE_BITSTEAMS_PATH,
+    @Option(name = MediaBitstreams.OPT_DEVICE_BITSTREAMS_PATH,
             description = "Absolute path of Ittiam bitstreams (device)")
     private String mDeviceBitstreamsPath = MediaBitstreams.DEFAULT_DEVICE_BITSTEAMS_PATH;
 
@@ -195,7 +195,7 @@ public class MediaBitstreamsTest implements IDeviceTest, IBuildReceiver, IAbiRec
     Map<String, String> getArgs() {
         Map<String, String> args = new HashMap<>();
         args.put(MediaBitstreams.OPT_DEBUG_TARGET_DEVICE, Boolean.toString(mDebugTargetDevice));
-        args.put(MediaBitstreams.OPT_DEVICE_BITSTEAMS_PATH, mDeviceBitstreamsPath);
+        args.put(MediaBitstreams.OPT_DEVICE_BITSTREAMS_PATH, mDeviceBitstreamsPath);
         return args;
     }
 
