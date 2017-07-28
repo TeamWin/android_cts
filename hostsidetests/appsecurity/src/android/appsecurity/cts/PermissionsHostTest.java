@@ -38,6 +38,9 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
     private static final String APK_26 = "CtsUsePermissionApp26.apk";
     private static final String APK_Latest = "CtsUsePermissionAppLatest.apk";
 
+    private static final String APK_PERMISSION_POLICY_25 = "CtsPermissionPolicyTest25.apk";
+    private static final String PERMISSION_POLICY_25_PKG = "com.android.cts.permission.policy";
+
     private static final String APK_DECLARE_NON_RUNTIME_PERMISSIONS =
             "CtsDeclareNonRuntimePermissions.apk";
     private static final String APK_ESCLATE_TO_RUNTIME_PERMISSIONS =
@@ -66,6 +69,7 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
 
         getDevice().uninstallPackage(USES_PERMISSION_PKG);
         getDevice().uninstallPackage(ESCALATE_PERMISSION_PKG);
+        getDevice().uninstallPackage(PERMISSION_POLICY_25_PKG);
     }
 
     @Override
@@ -74,6 +78,7 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
 
         getDevice().uninstallPackage(USES_PERMISSION_PKG);
         getDevice().uninstallPackage(ESCALATE_PERMISSION_PKG);
+        getDevice().uninstallPackage(PERMISSION_POLICY_25_PKG);
     }
 
     public void testFail() throws Exception {
@@ -316,6 +321,14 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
         runDeviceTests(ESCALATE_PERMISSION_PKG,
                 "com.android.cts.escalatepermission.PermissionEscalationTest",
                 "testCannotEscalateNonRuntimePermissionsToRuntime");
+    }
+
+    public void testNoProtectionFlagsAddedToNonSignatureProtectionPermissions25() throws Exception {
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(
+                APK_PERMISSION_POLICY_25), false, false));
+        runDeviceTests(PERMISSION_POLICY_25_PKG,
+                "com.android.cts.permission.policy.PermissionPolicyTest25",
+                "testNoProtectionFlagsAddedToNonSignatureProtectionPermissions");
     }
 
     private void runDeviceTests(String packageName, String testClassName, String testMethodName)
