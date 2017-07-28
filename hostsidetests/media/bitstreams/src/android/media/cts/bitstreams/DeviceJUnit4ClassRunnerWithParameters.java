@@ -23,6 +23,7 @@ import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IAbiReceiver;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IDeviceTest;
+import com.android.tradefed.testtype.ISetOptionReceiver;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -41,7 +42,7 @@ import org.junit.runners.parameterized.TestWithParameters;
  * Custom JUnit4 parameterized test runner that also accommodate {@link IDeviceTest}.
  */
 public class DeviceJUnit4ClassRunnerWithParameters extends BlockJUnit4ClassRunnerWithParameters
-        implements IDeviceTest, IBuildReceiver, IAbiReceiver {
+        implements IDeviceTest, IBuildReceiver, IAbiReceiver, ISetOptionReceiver {
 
     @Option(
         name = HostTest.SET_OPTION_NAME,
