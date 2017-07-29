@@ -60,6 +60,7 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src) \
 LOCAL_PACKAGE_NAME := CtsLocationTestCases
 
 LOCAL_JACK_FLAGS := --multi-dex native
+LOCAL_DX_FLAGS := --multi-dex
 
 LOCAL_SDK_VERSION := test_current
 
