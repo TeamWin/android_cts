@@ -533,4 +533,13 @@ final class UiBot {
         }
         throw new RetryableException("Title '%s' not found for %s", expectedTitle, object);
     }
+
+    /**
+     * Gets the value of the screen orientation.
+     *
+     * @return typically {@link Helper#LANDSCAPE} or {@link Helper#PORTRAIT}.
+     */
+    public int getOrientation() {
+        return mDevice.getDisplayRotation();
+    }
 }
