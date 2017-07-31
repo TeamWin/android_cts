@@ -59,15 +59,16 @@ LK_PARAMS = dict(winSize=(15, 15),
                  criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT,
                            10, 0.03))
 
-# Constants to convert between different time units (for clarity).
+# Constants to convert between different units (for clarity).
 SEC_TO_NSEC = 1000*1000*1000.0
 SEC_TO_MSEC = 1000.0
 MSEC_TO_NSEC = 1000*1000.0
 MSEC_TO_SEC = 1/1000.0
 NSEC_TO_SEC = 1/(1000*1000*1000.0)
 NSEC_TO_MSEC = 1/(1000*1000.0)
+CM_TO_M = 1/100.0
 
-# Pass/fail thresholds.
+# PASS/FAIL thresholds.
 THRESH_MAX_CORR_DIST = 0.005
 THRESH_MAX_SHIFT_MS = 1
 THRESH_MIN_ROT = 0.001
@@ -76,6 +77,9 @@ THRESH_MIN_ROT = 0.001
 FACING_FRONT = 0
 FACING_BACK = 1
 FACING_EXTERNAL = 2
+
+# Chart distance
+CHART_DISTANCE = 25  # cm
 
 
 def main():
@@ -337,11 +341,14 @@ def get_cam_rotations(frames, facing, h):
         # p0's shape is N * 1 * 2
         mask = (p0[:, 0, 1] >= ymin) & (p0[:, 0, 1] <= ymax)
         p0_filtered = p0[mask]
-        if len(p0_filtered) < MIN_FEATURE_PTS:
+        num_features = len(p0_filtered)
+        if num_features < MIN_FEATURE_PTS:
             print "Not enough feature points in frame", i
             print "Need at least %d features, got %d" % (
-                MIN_FEATURE_PTS, len(p0_filtered))
+                MIN_FEATURE_PTS, num_features)
             assert 0
+        else:
+            print "Number of features in frame %d is %d" % (i, num_features)
         p1, st, _ = cv2.calcOpticalFlowPyrLK(gframe0, gframe1, p0_filtered,
                                              None, **LK_PARAMS)
         tform = procrustes_rotation(p0_filtered[st == 1], p1[st == 1])
@@ -440,8 +447,9 @@ def collect_data(fps, w, h, test_length):
         fmt = {"format": "yuv", "width": w, "height": h}
         s, e, _, _, _ = cam.do_3a(get_results=True, do_af=False)
         req = its.objects.manual_capture_request(s, e)
+        req["android.lens.focusDistance"] = 1 / (CHART_DISTANCE * CM_TO_M)
         req["android.control.aeTargetFpsRange"] = [fps, fps]
-        req["android.sensor.frameDuration"] = int(1000.0/fps * MSEC_TO_NSEC);
+        req["android.sensor.frameDuration"] = int(1000.0/fps * MSEC_TO_NSEC)
         print "Capturing %dx%d with sens. %d, exp. time %.1fms at %dfps" % (
             w, h, s, e*NSEC_TO_MSEC, fps)
         caps = cam.do_capture([req]*int(fps*test_length), fmt)
