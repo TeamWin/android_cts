@@ -47,8 +47,8 @@ public class DuplicateIdActivityTest extends AutoFillServiceTestCase {
 
     @Before
     public void setup() {
-        Helper.disableAutoRotation();
-        Helper.setOrientation(0);
+        Helper.disableAutoRotation(sUiBot);
+        Helper.setOrientation(sUiBot, 0);
 
         mActivity = mActivityRule.getActivity();
     }
@@ -112,7 +112,7 @@ public class DuplicateIdActivityTest extends AutoFillServiceTestCase {
         sReplier.addResponse(NO_RESPONSE);
 
         // Force rotation to force onDestroy->onCreate cycle
-        Helper.setOrientation(1);
+        Helper.setOrientation(sUiBot, 1);
 
         // Select other field to trigger new partition
         runShellCommand("input keyevent KEYCODE_TAB");
