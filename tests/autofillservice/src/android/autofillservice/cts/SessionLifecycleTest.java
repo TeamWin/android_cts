@@ -66,7 +66,7 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
      */
     @Before
     public void disableAutoRotation() {
-        Helper.disableAutoRotation();
+        Helper.disableAutoRotation(sUiBot);
     }
 
     /**
@@ -133,7 +133,7 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
 
         // Change orientation which triggers a destroy -> create in the app as the activity
         // cannot deal with such situations
-        setOrientation(LANDSCAPE);
+        setOrientation(sUiBot, LANDSCAPE);
 
         // Delete stopped marker
         getStoppedMarker(getContext()).delete();
@@ -146,7 +146,7 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
 
         // Change orientation which triggers a destroy -> create in the app as the activity
         // cannot deal with such situations
-        setOrientation(PORTRAIT);
+        setOrientation(sUiBot, PORTRAIT);
 
         // Approve authentication
         sUiBot.selectById(BUTTON_FULL_ID);
@@ -156,7 +156,7 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
 
         // Change orientation which triggers a destroy -> create in the app as the activity
         // cannot deal with such situations
-        setOrientation(LANDSCAPE);
+        setOrientation(sUiBot, LANDSCAPE);
 
         // Select dataset
         sUiBot.selectDataset("dataset");
@@ -175,7 +175,7 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
         sUiBot.assertShownById("android:id/autofill_save_yes");
 
         // Change orientation to make sure save UI can handle this
-        setOrientation(PORTRAIT);
+        setOrientation(sUiBot, PORTRAIT);
 
         // Tap "Save".
         sUiBot.selectById("android:id/autofill_save_yes");
