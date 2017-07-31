@@ -726,15 +726,22 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     static void copyDynamicConfigFiles(Map<String, File> configFiles, File resultsDir) {
         if (configFiles.size() == 0) return;
 
-        File folder = new File(resultsDir, "config");
-        folder.mkdir();
+        File configDir = new File(resultsDir, "config");
+        boolean mkdirSuccess = configDir.mkdir(); // success check added for b/63030111
+        if (!mkdirSuccess) {
+            warn("Failed to make dynamic config directory \"%s\" in the result",
+                    configDir.getAbsolutePath());
+        }
         for (String moduleName : configFiles.keySet()) {
-            File resultFile = new File(folder, moduleName+".dynamic");
+            File srcFile = configFiles.get(moduleName);
+            File destFile = new File(configDir, moduleName+".dynamic");
             try {
-                FileUtil.copyFile(configFiles.get(moduleName), resultFile);
-                FileUtil.deleteFile(configFiles.get(moduleName));
+                FileUtil.copyFile(srcFile, destFile);
+                FileUtil.deleteFile(srcFile);
             } catch (IOException e) {
-                warn("Failed to copy config file for %s to file", moduleName);
+                warn("Failure when copying config file \"%s\" to \"%s\" for module %s",
+                        srcFile.getAbsolutePath(), destFile.getAbsolutePath(), moduleName);
+                CLog.e(e);
             }
         }
     }
