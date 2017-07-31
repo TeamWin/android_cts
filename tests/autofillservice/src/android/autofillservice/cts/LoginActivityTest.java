@@ -18,12 +18,13 @@ package android.autofillservice.cts;
 
 import static android.app.Activity.RESULT_CANCELED;
 import static android.app.Activity.RESULT_OK;
+import static android.autofillservice.cts.CannedFillResponse.DO_NOT_REPLY_RESPONSE;
 import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
 import static android.autofillservice.cts.CheckoutActivity.ID_CC_NUMBER;
-import static android.autofillservice.cts.CannedFillResponse.DO_NOT_REPLY_RESPONSE;
 import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_PASSWORD_LABEL;
 import static android.autofillservice.cts.Helper.ID_USERNAME;
+import static android.autofillservice.cts.Helper.assertNoDanglingSessions;
 import static android.autofillservice.cts.Helper.assertNumberOfChildren;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.assertTextIsSanitized;
@@ -31,6 +32,7 @@ import static android.autofillservice.cts.Helper.assertValue;
 import static android.autofillservice.cts.Helper.dumpStructure;
 import static android.autofillservice.cts.Helper.eventually;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
+import static android.autofillservice.cts.Helper.getContext;
 import static android.autofillservice.cts.Helper.runShellCommand;
 import static android.autofillservice.cts.Helper.setUserComplete;
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilConnected;
@@ -72,7 +74,6 @@ import android.os.Bundle;
 import android.service.autofill.FillEventHistory;
 import android.service.autofill.FillResponse;
 import android.service.autofill.SaveInfo;
-import android.support.test.rule.ActivityTestRule;
 import android.support.test.uiautomator.UiObject2;
 import android.view.View;
 import android.view.View.AccessibilityDelegate;
@@ -99,8 +100,8 @@ import java.util.concurrent.TimeUnit;
 public class LoginActivityTest extends AutoFillServiceTestCase {
 
     @Rule
-    public final ActivityTestRule<LoginActivity> mActivityRule = new ActivityTestRule<LoginActivity>(
-            LoginActivity.class);
+    public final AutofillActivityTestRule<LoginActivity> mActivityRule =
+        new AutofillActivityTestRule<LoginActivity>(LoginActivity.class);
 
     private LoginActivity mActivity;
 
@@ -1172,7 +1173,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             throw e;
         }
 
-        // Sanity check: once saved, the session should be finsihed.
+        // Sanity check: once saved, the session should be finished.
         assertNoDanglingSessions();
     }
 
