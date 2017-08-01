@@ -15,6 +15,7 @@
  */
 package android.speech.tts.cts;
 
+import android.os.ConditionVariable;
 import android.media.AudioFormat;
 import android.os.ConditionVariable;
 import android.speech.tts.SynthesisCallback;
@@ -36,6 +37,10 @@ public class StubTextToSpeechService extends TextToSpeechService {
 
     // Object that onSynthesizeText will #block on, if set to non-null
     public static volatile ConditionVariable sSynthesizeTextWait;
+
+    // Condition variable that onSynthesizeText will #open when it started
+    // synethesizing, if set to non-null.
+    public static volatile ConditionVariable sSynthesizeTextStartEvent;
 
     private ArrayList<Locale> supportedLanguages = new ArrayList<Locale>();
     private ArrayList<Locale> supportedCountries = new ArrayList<Locale>();
@@ -78,6 +83,11 @@ public class StubTextToSpeechService extends TextToSpeechService {
     protected void onSynthesizeText(SynthesisRequest request, SynthesisCallback callback) {
         if (callback.start(16000, AudioFormat.ENCODING_PCM_16BIT, 1) != TextToSpeech.SUCCESS) {
             return;
+        }
+
+        final ConditionVariable synthesizeTextStartEvent = sSynthesizeTextStartEvent;
+        if (synthesizeTextStartEvent != null) {
+            sSynthesizeTextStartEvent.open();
         }
 
         final ConditionVariable synthesizeTextWait = sSynthesizeTextWait;
