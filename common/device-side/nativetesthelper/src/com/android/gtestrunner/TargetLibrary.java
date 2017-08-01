@@ -14,12 +14,17 @@
  * limitations under the License.
  */
 
-package android.debug.cts;
+package com.android.gtestrunner;
 
-import org.junit.runner.RunWith;
-import com.android.gtestrunner.GtestRunner;
-import com.android.gtestrunner.TargetLibrary;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-@RunWith(GtestRunner.class)
-@TargetLibrary("debugtest")
-public class DebugTest {}
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+@Inherited
+public @interface TargetLibrary {
+    String value();
+}
