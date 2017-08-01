@@ -18,6 +18,7 @@ package android.autofillservice.cts;
 
 import static android.autofillservice.cts.Helper.runShellCommand;
 import static android.autofillservice.cts.InstrumentedAutoFillService.SERVICE_NAME;
+import static android.autofillservice.cts.UiBot.PORTRAIT;
 import static android.provider.Settings.Secure.AUTOFILL_SERVICE;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -64,12 +65,6 @@ final class Helper {
     static final String ID_LOGIN = "login";
     static final String ID_OUTPUT = "output";
 
-    /** Pass to {@link #setOrientation(UiBot, int)} to change the display to portrait mode */
-    public static int PORTRAIT = 0;
-
-    /** Pass to {@link #setOrientation(UiBot, int)} to change the display to landscape mode */
-    public static int LANDSCAPE = 1;
-
     /**
      * Timeout (in milliseconds) until framework binds / unbinds from service.
      */
@@ -103,7 +98,7 @@ final class Helper {
     /**
      * Timeout (in milliseconds) for changing the screen orientation.
      */
-    static final int UI_SCREEN_ORIENTATION_TIMEOUT_MS = 10000;
+    static final int UI_SCREEN_ORIENTATION_TIMEOUT_MS = 5000;
 
     /**
      * Time to wait in between retries
@@ -113,10 +108,6 @@ final class Helper {
     private final static String ACCELLEROMETER_CHANGE =
             "content insert --uri content://settings/system --bind name:s:accelerometer_rotation "
                     + "--bind value:i:%d";
-    private final static String ORIENTATION_CHANGE =
-            "content insert --uri content://settings/system --bind name:s:user_rotation --bind "
-                    + "value:i:%d";
-
     /**
      * Runs a {@code r}, ignoring all {@link RuntimeException} and {@link Error} until the
      * {@link #UI_TIMEOUT_MS} is reached.
@@ -621,7 +612,7 @@ final class Helper {
      */
     public static void disableAutoRotation(UiBot uiBot) {
         runShellCommand(ACCELLEROMETER_CHANGE, 0);
-        setOrientation(uiBot, PORTRAIT);
+        uiBot.setScreenOrientation(PORTRAIT);
     }
 
     /**
@@ -632,32 +623,6 @@ final class Helper {
     }
 
     /**
-     * Changes the screen orientation. This triggers a activity lifecycle (destroy -> create) for
-     * activities that do not handle this config change such as {@link OutOfProcessLoginActivity}.
-     *
-     * @param value {@link #PORTRAIT} or {@link #LANDSCAPE};
-     */
-    public static void setOrientation(UiBot uiBot, int value) {
-        long startTime = System.currentTimeMillis();
-
-        while (System.currentTimeMillis() - startTime < UI_SCREEN_ORIENTATION_TIMEOUT_MS) {
-            runShellCommand(ORIENTATION_CHANGE, value);
-            final int actualValue = uiBot.getOrientation();
-            if (actualValue == value) {
-                return;
-            }
-            Log.d(TAG, "setOrientation(): sleeping until " + actualValue + " == " + value);
-            try {
-                Thread.sleep(RETRY_MS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
-        throw new RetryableException("Screen orientation didn't change to %d in %d ms", value,
-                UI_SCREEN_ORIENTATION_TIMEOUT_MS);
-    }
-
-    /**
      * Wait until a process starts and returns the process ID of the process.
      *
      * @return The pid of the process
@@ -665,7 +630,7 @@ final class Helper {
     public static int getOutOfProcessPid(@NonNull String processName) {
         long startTime = System.currentTimeMillis();
 
-        while (System.currentTimeMillis() - startTime < UI_TIMEOUT_MS) {
+        while (System.currentTimeMillis() - startTime <= UI_TIMEOUT_MS) {
             String[] allProcessDescs = runShellCommand("ps -eo PID,ARGS=CMD").split("\n");
 
             for (String processDesc : allProcessDescs) {
