@@ -133,4 +133,9 @@ public class InputFilter_AllCapsTest {
         assertEquals(1, spannedResult.getSpanEnd(span));
         assertEquals(Spanned.SPAN_INCLUSIVE_INCLUSIVE, spannedResult.getSpanFlags(span));
     }
+
+    @Test(expected = NullPointerException.class)
+    public void testNullConstructor() {
+        new AllCaps(null);
+    }
 }
