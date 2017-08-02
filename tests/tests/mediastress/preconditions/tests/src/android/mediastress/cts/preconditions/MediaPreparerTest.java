@@ -21,7 +21,6 @@ import com.android.tradefed.build.BuildInfo;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.OptionSetter;
 import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.targetprep.TargetSetupError;
 
 import junit.framework.TestCase;
 

@@ -33,18 +33,18 @@ import com.android.tradefed.testtype.AndroidJUnitTest;
 import com.android.tradefed.util.FileUtil;
 import com.android.tradefed.util.ZipUtil;
 
+import org.xmlpull.v1.XmlPullParserException;
+
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipFile;
-
-import org.xmlpull.v1.XmlPullParserException;
 
 /**
  * Ensures that the appropriate media files exist on the device
@@ -178,7 +178,8 @@ public class MediaPreparer extends PreconditionPreparer {
      * TargetSetupError is thrown. Otherwise, the mLocalMediaPath variable is set to the path of
      * this subdirectory.
      */
-    private void updateLocalMediaPath(File mediaFolder) throws TargetSetupError {
+    private void updateLocalMediaPath(ITestDevice device, File mediaFolder)
+            throws TargetSetupError {
         String[] subDirs = mediaFolder.list();
         if (subDirs.length != 1) {
             throw new TargetSetupError(String.format(
@@ -192,12 +193,15 @@ public class MediaPreparer extends PreconditionPreparer {
      * Updates mLocalMediaPath to be the pathname of the directory containing bbb_short and
      * bbb_full media directories.
      */
-    private void downloadMediaToHost(File mediaFolder) throws TargetSetupError {
+    private void downloadMediaToHost(ITestDevice device, IBuildInfo buildInfo, File mediaFolder)
+            throws TargetSetupError {
         URL url;
         try {
             // Get download URL from dynamic configuration service
-            DynamicConfigHostSide config = new DynamicConfigHostSide(DYNAMIC_CONFIG_MODULE);
-            String mediaUrlString = config.getValue(MEDIA_FILES_URL_KEY);
+            File config =
+                    DynamicConfigHostSide.getDynamicConfigFile(buildInfo, DYNAMIC_CONFIG_MODULE);
+            String mediaUrlString =
+                    DynamicConfigHostSide.getValueFromConfig(config, MEDIA_FILES_URL_KEY);
             url = new URL(mediaUrlString);
         } catch (IOException | XmlPullParserException e) {
             throw new TargetSetupError("Trouble finding media file download location with " +
@@ -288,10 +292,10 @@ public class MediaPreparer extends PreconditionPreparer {
                 // runs of MediaPreparer. Assume media files exist inside.
                 // Else, create directory if needed and download/extract media files inside.
                 mediaFolder.mkdirs();
-                downloadMediaToHost(mediaFolder);
+                downloadMediaToHost(device, buildInfo, mediaFolder);
             }
             // set mLocalMediaPath to where the CTS media files have been extracted
-            updateLocalMediaPath(mediaFolder);
+            updateLocalMediaPath(device, mediaFolder);
         }
         logInfo("Media files located on host at: %s", mLocalMediaPath);
         copyMediaFiles(device);
