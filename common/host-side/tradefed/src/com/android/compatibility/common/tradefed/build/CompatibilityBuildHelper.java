@@ -15,6 +15,7 @@
  */
 package com.android.compatibility.common.tradefed.build;
 
+import com.android.compatibility.common.util.DynamicConfigHostSide;
 import com.android.compatibility.SuiteInfo;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.build.IFolderBuildInfo;
@@ -43,7 +44,6 @@ public class CompatibilityBuildHelper {
     private static final String SUITE_VERSION = "SUITE_VERSION";
     private static final String SUITE_PLAN = "SUITE_PLAN";
     private static final String RESULT_DIR = "RESULT_DIR";
-    private static final String CONFIG_PATH_PREFIX = "DYNAMIC_CONFIG_FILE:";
     private static final String DYNAMIC_CONFIG_OVERRIDE_URL = "DYNAMIC_CONFIG_OVERRIDE_URL";
     private static final String COMMAND_LINE_ARGS = "command_line_args";
     private static final String RETRY_COMMAND_LINE_ARGS = "retry_command_line_args";
@@ -155,7 +155,8 @@ public class CompatibilityBuildHelper {
     }
 
     public void addDynamicConfigFile(String moduleName, File configFile) {
-        mBuildInfo.addBuildAttribute(CONFIG_PATH_PREFIX + moduleName, configFile.getAbsolutePath());
+        mBuildInfo.addBuildAttribute(DynamicConfigHostSide.CONFIG_PATH_PREFIX + moduleName,
+                configFile.getAbsolutePath());
     }
 
     public void setModuleIds(String[] moduleIds) {
@@ -165,8 +166,8 @@ public class CompatibilityBuildHelper {
     public Map<String, File> getDynamicConfigFiles() {
         Map<String, File> configMap = new HashMap<>();
         for (String key : mBuildInfo.getBuildAttributes().keySet()) {
-            if (key.startsWith(CONFIG_PATH_PREFIX)) {
-                configMap.put(key.substring(CONFIG_PATH_PREFIX.length()),
+            if (key.startsWith(DynamicConfigHostSide.CONFIG_PATH_PREFIX)) {
+                configMap.put(key.substring(DynamicConfigHostSide.CONFIG_PATH_PREFIX.length()),
                         new File(mBuildInfo.getBuildAttributes().get(key)));
             }
         }

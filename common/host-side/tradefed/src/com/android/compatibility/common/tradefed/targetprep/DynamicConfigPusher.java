@@ -50,6 +50,7 @@ public class DynamicConfigPusher implements ITargetCleaner {
     }
 
     private static final String LOG_TAG = DynamicConfigPusher.class.getSimpleName();
+    private static final String TMP_FOLDER_DYNAMIC_FILES = "dynamic-config-files";
 
     @Option(name = "cleanup", description = "Whether to remove config files from the test " +
             "target after test completion.")
@@ -136,18 +137,21 @@ public class DynamicConfigPusher implements ITargetCleaner {
                 break;
 
             case HOST:
-                File storageDir = new File(DynamicConfig.CONFIG_FOLDER_ON_HOST);
-                if (!storageDir.exists()) {
-                    storageDir.mkdir();
+                File storageDir = null;
+                try {
+                    storageDir = FileUtil.createTempDir(TMP_FOLDER_DYNAMIC_FILES);
+                } catch (IOException e) {
+                    throw new TargetSetupError("Fail to create a tmp folder for dynamic config "
+                            + "files", e);
                 }
-                File hostDest = new File(DynamicConfig.CONFIG_FOLDER_ON_HOST + src.getName());
+                File hostDest = new File(storageDir, src.getName());
                 try {
                     FileUtil.copyFile(src, hostDest);
                 } catch (IOException e) {
                     throw new TargetSetupError(String.format("Failed to copy file from %s to %s",
                             src.getAbsolutePath(), hostDest.getAbsolutePath()), e);
                 }
-                mFilePushed = hostDest.getAbsolutePath();
+                mFilePushed = storageDir.getAbsolutePath();
                 buildHelper.addDynamicConfigFile(mModuleName, src);
                 break;
         }
@@ -167,9 +171,8 @@ public class DynamicConfigPusher implements ITargetCleaner {
                 }
                 break;
             case HOST:
-                if (mFilePushed != null) {
-                    FileUtil.deleteFile(new File(mFilePushed));
-                }
+                FileUtil.recursiveDelete(new File(mFilePushed));
+                break;
         }
     }
 }

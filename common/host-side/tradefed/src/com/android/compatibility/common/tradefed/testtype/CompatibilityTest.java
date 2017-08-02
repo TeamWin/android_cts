@@ -59,6 +59,7 @@ import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.IShardableTest;
 import com.android.tradefed.util.AbiFormatter;
 import com.android.tradefed.util.ArrayUtil;
+import com.android.tradefed.util.StreamUtil;
 import com.android.tradefed.util.TimeUtil;
 import com.android.tradefed.util.xml.AbstractXmlParser.ParseException;
 
@@ -67,7 +68,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -431,11 +431,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                     // was successful, and test execution should proceed to next module
                     ByteArrayOutputStream stack = new ByteArrayOutputStream();
                     due.printStackTrace(new PrintWriter(stack, true));
-                    try {
-                        stack.close();
-                    } catch (IOException ioe) {
-                        // won't happen on BAOS
-                    }
+                    StreamUtil.close(stack);
                     CLog.w("Ignored DeviceUnresponsiveException because recovery was successful, "
                             + "proceeding with next module. Stack trace: %s",
                             stack.toString());
