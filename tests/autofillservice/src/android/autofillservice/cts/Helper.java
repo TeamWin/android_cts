@@ -16,8 +16,6 @@
 
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.Helper.hasAutofillFeature;
-import static android.autofillservice.cts.Helper.runShellCommand;
 import static android.autofillservice.cts.InstrumentedAutoFillService.SERVICE_NAME;
 import static android.provider.Settings.Secure.AUTOFILL_SERVICE;
 import static android.provider.Settings.Secure.USER_SETUP_COMPLETE;
@@ -31,7 +29,6 @@ import android.app.assist.AssistStructure.WindowNode;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.icu.util.Calendar;
-import android.os.UserManager;
 import android.service.autofill.FillContext;
 import android.support.annotation.NonNull;
 import android.support.test.InstrumentationRegistry;
