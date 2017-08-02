@@ -99,6 +99,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.android.compatibility.common.util.CtsMouseUtil;
 import com.android.compatibility.common.util.CtsTouchUtils;
@@ -2383,6 +2384,109 @@ public class ViewTest {
         mInstrumentation.sendKeySync(event);
 
         assertTrue(view.hasCalledDispatchUnhandledMove());
+    }
+
+    @Test
+    public void testKeyFallback() throws Throwable {
+        MockFallbackListener listener = new MockFallbackListener();
+        ViewGroup viewGroup = (ViewGroup) mActivity.findViewById(R.id.viewlayout_root);
+        // Attaching a fallback handler
+        TextView mockView1 = new TextView(mActivity);
+        mockView1.addKeyFallbackListener(listener);
+
+        // Before the view is attached, it shouldn't respond to anything
+        mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_B);
+        assertFalse(listener.fired());
+
+        // Once attached, it should start receiving fallback events
+        mActivityRule.runOnUiThread(() -> viewGroup.addView(mockView1));
+        mInstrumentation.waitForIdleSync();
+        mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_B);
+        assertTrue(listener.fired());
+        listener.reset();
+
+        // If multiple on one view, last added should receive event first
+        MockFallbackListener listener2 = new MockFallbackListener();
+        listener2.mReturnVal = true;
+        mActivityRule.runOnUiThread(() -> mockView1.addKeyFallbackListener(listener2));
+        mInstrumentation.waitForIdleSync();
+        mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_B);
+        assertTrue(listener2.fired());
+        assertFalse(listener.fired());
+        listener2.reset();
+
+        // If removed, it should not receive fallbacks anymore
+        mActivityRule.runOnUiThread(() -> {
+            mockView1.removeKeyFallbackListener(listener);
+            mockView1.removeKeyFallbackListener(listener2);
+        });
+        mInstrumentation.waitForIdleSync();
+        mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_B);
+        assertFalse(listener.fired());
+
+        mActivityRule.runOnUiThread(() -> mActivity.setContentView(R.layout.key_fallback_layout));
+        mInstrumentation.waitForIdleSync();
+        View higherInNormal = mActivity.findViewById(R.id.higher_in_normal);
+        View higherGroup = mActivity.findViewById(R.id.higher_group);
+        View lowerInHigher = mActivity.findViewById(R.id.lower_in_higher);
+        View lastButton = mActivity.findViewById(R.id.last_button);
+        View lastInHigher = mActivity.findViewById(R.id.last_in_higher);
+        View lastInNormal = mActivity.findViewById(R.id.last_in_normal);
+
+        View[] allViews = new View[]{higherInNormal, higherGroup, lowerInHigher, lastButton,
+                lastInHigher, lastInNormal};
+
+        // Test ordering by depth
+        listener.mReturnVal = true;
+        mActivityRule.runOnUiThread(() -> {
+            for (View v : allViews) {
+                v.addKeyFallbackListener(listener);
+            }
+        });
+        mInstrumentation.waitForIdleSync();
+
+        mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_B);
+        assertEquals(lastInHigher, listener.mLastView);
+        listener.reset();
+
+        mActivityRule.runOnUiThread(() -> lastInHigher.removeKeyFallbackListener(listener));
+        mInstrumentation.waitForIdleSync();
+        mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_B);
+        assertEquals(lowerInHigher, listener.mLastView);
+        listener.reset();
+
+        mActivityRule.runOnUiThread(() -> lowerInHigher.removeKeyFallbackListener(listener));
+        mInstrumentation.waitForIdleSync();
+        mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_B);
+        assertEquals(higherGroup, listener.mLastView);
+        listener.reset();
+
+        mActivityRule.runOnUiThread(() -> higherGroup.removeKeyFallbackListener(listener));
+        mInstrumentation.waitForIdleSync();
+        mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_B);
+        assertEquals(lastButton, listener.mLastView);
+        listener.reset();
+
+        mActivityRule.runOnUiThread(() -> lastButton.removeKeyFallbackListener(listener));
+        mInstrumentation.waitForIdleSync();
+        mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_B);
+        assertEquals(higherInNormal, listener.mLastView);
+        listener.reset();
+
+        mActivityRule.runOnUiThread(() -> higherInNormal.removeKeyFallbackListener(listener));
+        mInstrumentation.waitForIdleSync();
+        mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_B);
+        assertEquals(lastInNormal, listener.mLastView);
+        listener.reset();
+
+        // Test "capture"
+        mActivityRule.runOnUiThread(() -> lastInNormal.requestFocus());
+        mInstrumentation.waitForIdleSync();
+        lastInNormal.setOnKeyListener((v, keyCode, event)
+                -> (keyCode == KeyEvent.KEYCODE_B && event.getAction() == KeyEvent.ACTION_UP));
+        mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_B);
+        assertTrue(listener.fired()); // checks that both up and down were received
+        listener.reset();
     }
 
     @Test
@@ -4690,6 +4794,29 @@ public class ViewTest {
         public int childCount;
         public String tag;
         public View firstChild;
+    }
+
+    private static class MockFallbackListener implements View.OnKeyFallbackListener {
+        public View mLastView = null;
+        public boolean mGotUp = false;
+        public boolean mReturnVal = false;
+
+        @Override
+        public boolean onKeyFallback(View v, KeyEvent event) {
+            if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                mLastView = v;
+            } else if (event.getAction() == KeyEvent.ACTION_UP) {
+                mGotUp = true;
+            }
+            return mReturnVal;
+        }
+        public void reset() {
+            mLastView = null;
+            mGotUp = false;
+        }
+        public boolean fired() {
+            return mLastView != null && mGotUp;
+        }
     }
 
     private static final Class<?> ASYNC_INFLATE_VIEWS[] = {
