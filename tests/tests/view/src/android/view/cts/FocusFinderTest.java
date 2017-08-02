@@ -245,7 +245,7 @@ public class FocusFinderTest {
         assertTrue(nextFocus == mBottomRight || nextFocus == mBottomLeft);
     }
 
-    @Test
+    @Test(timeout = 500)
     public void testChainVisibility() {
         mBottomRight.setNextFocusForwardId(mBottomLeft.getId());
         mBottomLeft.setNextFocusForwardId(mTopRight.getId());
@@ -256,6 +256,20 @@ public class FocusFinderTest {
         mBottomLeft.setNextFocusForwardId(View.NO_ID);
         next = mFocusFinder.findNextFocus(mLayout, mBottomRight, View.FOCUS_FORWARD);
         assertSame(mTopLeft, next);
+
+        // This shouldn't go into an infinite loop
+        mBottomRight.setNextFocusForwardId(mTopRight.getId());
+        mTopLeft.setNextFocusForwardId(mTopRight.getId());
+        mTopRight.setNextFocusForwardId(mBottomLeft.getId());
+        mBottomLeft.setNextFocusForwardId(mTopLeft.getId());
+        mActivityRule.getActivity().runOnUiThread(() -> {
+            mTopLeft.setVisibility(View.INVISIBLE);
+            mTopRight.setVisibility(View.INVISIBLE);
+            mBottomLeft.setVisibility(View.INVISIBLE);
+            mBottomRight.setVisibility(View.INVISIBLE);
+        });
+        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+        mFocusFinder.findNextFocus(mLayout, mBottomRight, View.FOCUS_FORWARD);
     }
 
     private void verifyNextCluster(View currentCluster, int direction, View expectedNextCluster) {
