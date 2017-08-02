@@ -20,6 +20,7 @@ import static org.junit.Assert.fail;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.targetprep.ApkInstaller;
+import com.android.compatibility.common.tradefed.testtype.JarHostTest;
 import com.android.tradefed.build.FolderBuildInfo;
 import com.android.tradefed.config.ConfigurationDescriptor;
 import com.android.tradefed.config.ConfigurationException;
@@ -146,6 +147,17 @@ public class CtsConfigLoadingTest {
             Assert.assertTrue(String.format("Module config contains unknown \"component\" metadata "
                     + "field \"%s\", supported ones are: %s\nconfig: %s",
                     cmp, KNOWN_COMPONENTS, config), KNOWN_COMPONENTS.contains(cmp));
+            // Check not-shardable: JarHostTest cannot create empty shards so it should never need
+            // to be not-shardable.
+            if (cd.isNotShardable()) {
+                for (IRemoteTest test : c.getTests()) {
+                    if (test.getClass().isAssignableFrom(JarHostTest.class)) {
+                        throw new ConfigurationException(
+                                String.format("config: %s. JarHostTest does not need the "
+                                    + "not-shardable option.", config.getName()));
+                    }
+                }
+            }
         }
     }
 }
