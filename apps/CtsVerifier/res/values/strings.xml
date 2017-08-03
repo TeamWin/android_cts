@@ -3835,8 +3835,8 @@ Follow the instructions on the screen to measure the frequency response for the 
     </string-array>
 
     <!-- Strings for setting and restoring default dialer for voicemail tests -->
-    <string name="voicemail_restore_default_dialer_description">(Optional) restore the default dialer setting</string>
-    <string name="voicemail_restore_default_dialer_no_default_description">(Optional) restore the default dialer by going to settings-> apps -> cogwheel -> Phone app</string>
+    <string name="voicemail_restore_default_dialer_description">Restore the default dialer setting</string>
+    <string name="voicemail_restore_default_dialer_no_default_description">Restore the default dialer by going to settings-> apps -> cogwheel -> Phone app</string>
     <string name="voicemail_restore_default_dialer_button">Restore the default dialer"</string>
     <string name="voicemail_default_dialer_already_set">Default dialer already set</string>
     <string name="voicemail_default_dialer_already_restored">Default dialer already restored</string>
