@@ -16,8 +16,6 @@
 
 package util.build;
 
-import com.sun.tools.javac.Main;
-
 import java.io.File;
 import java.io.PrintWriter;
 import java.util.HashSet;
@@ -55,23 +53,30 @@ public class JavacBuildStep extends SourceBuildStep {
                 System.err.println("failed to create destination dir");
                 return false;
             }
-            int args = 8;
+            final int args = 9;
             String[] commandLine = new String[sourceFiles.size()+args];
-            commandLine[0] = "-classpath";
-            commandLine[1] = classPath;
-            commandLine[2] = "-d";
-            commandLine[3] = destPath;
-            commandLine[4] = "-source";
-            commandLine[5] = "1.7";
-            commandLine[6] = "-target";
-            commandLine[7] = "1.7";
+            commandLine[0] = "javac";
+            commandLine[1] = "-classpath";
+            commandLine[2] = classPath;
+            commandLine[3] = "-d";
+            commandLine[4] = destPath;
+            commandLine[5] = "-source";
+            commandLine[6] = "1.7";
+            commandLine[7] = "-target";
+            commandLine[8] = "1.7";
 
             String[] files = new String[sourceFiles.size()];
             sourceFiles.toArray(files);
 
             System.arraycopy(files, 0, commandLine, args, files.length);
 
-            return Main.compile(commandLine, new PrintWriter(System.err)) == 0;
+            try {
+                Process p = Runtime.getRuntime().exec(commandLine);
+                return p.waitFor() == 0;
+            } catch (Exception e) {
+                e.printStackTrace();
+                return false;
+            }
         }
         return false;
     }
