@@ -29,6 +29,9 @@ public class InstantCookieHostTest extends DeviceTestCase implements IBuildRecei
     private static final String INSTANT_COOKIE_APP_APK = "CtsInstantCookieApp.apk";
     private static final String INSTANT_COOKIE_APP_PKG = "test.instant.cookie";
 
+    private static final String INSTANT_COOKIE_APP_APK_2 = "CtsInstantCookieApp2.apk";
+    private static final String INSTANT_COOKIE_APP_PKG_2 = "test.instant.cookie";
+
     private CompatibilityBuildHelper mBuildHelper;
 
     @Override
@@ -84,6 +87,16 @@ public class InstantCookieHostTest extends DeviceTestCase implements IBuildRecei
         assertNull(installPackage(INSTANT_COOKIE_APP_APK, true, false));
         runDeviceTests(INSTANT_COOKIE_APP_PKG, "test.instant.cookie.CookieTest",
                 "testCookieResetOnNonInstantReinstall2");
+    }
+
+    public void testCookieValidWhenSingedWithTwoCerts() throws Exception {
+        assertNull(installPackage(INSTANT_COOKIE_APP_APK, false, true));
+        runDeviceTests(INSTANT_COOKIE_APP_PKG, "test.instant.cookie.CookieTest",
+                "testCookiePersistedAcrossInstantInstalls1");
+        uninstallPackage(INSTANT_COOKIE_APP_PKG);
+        assertNull(installPackage(INSTANT_COOKIE_APP_APK_2, true, true));
+        runDeviceTests(INSTANT_COOKIE_APP_PKG_2, "test.instant.cookie.CookieTest",
+                "testCookiePersistedAcrossInstantInstalls2");
     }
 
     private String installPackage(String apk, boolean replace, boolean instant) throws Exception {

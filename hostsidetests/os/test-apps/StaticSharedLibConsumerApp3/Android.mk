@@ -1,4 +1,3 @@
-#
 # Copyright (C) 2017 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,14 +23,10 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_STATIC_JAVA_LIBRARIES := android-support-test
 
-LOCAL_PACKAGE_NAME := CtsInstantCookieApp
+LOCAL_RES_LIBRARIES := CtsStaticSharedLibProviderApp7
+
+LOCAL_PACKAGE_NAME := CtsStaticSharedLibConsumerApp3
 
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
-
-LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/keysets/cts-keyset-test-a
-
-LOCAL_PROGUARD_ENABLED := disabled
-
-LOCAL_DEX_PREOPT := false
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)
