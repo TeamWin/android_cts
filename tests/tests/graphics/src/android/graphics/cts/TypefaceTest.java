@@ -52,6 +52,19 @@ public class TypefaceTest {
     private static final String DEFAULT = (String)null;
     private static final String INVALID = "invalid-family-name";
 
+    private static final float GLYPH_1EM_WIDTH;
+    private static final float GLYPH_3EM_WIDTH;
+
+    static {
+        // 3em.ttf supports "a", "b", "c". The width of "a" is 3em, others are 1em.
+        final Context ctx = InstrumentationRegistry.getTargetContext();
+        final Typeface typeface = ctx.getResources().getFont(R.font.a3em);
+        final Paint paint = new Paint();
+        paint.setTypeface(typeface);
+        GLYPH_3EM_WIDTH = paint.measureText("a");
+        GLYPH_1EM_WIDTH = paint.measureText("b");
+    }
+
     // list of family names to try when attempting to find a typeface with a given style
     private static final String[] FAMILIES =
             { (String) null, "monospace", "serif", "sans-serif", "cursive", "arial", "times" };
@@ -514,5 +527,69 @@ public class TypefaceTest {
         final float widthFromBlack = p.measureText(testString);
 
         assertTrue(Math.abs(widthFromRegular - widthFromBlack) > 1.0f);
+    }
+
+    @Test
+    public void testTypefaceCreate_withExactWeight() {
+        // multiweight_family has following fonts.
+        // - a3em.ttf with weight = 100, style=normal configuration.
+        //   This font supports "a", "b", "c". The weight "a" is 3em, others are 1em.
+        // - b3em.ttf with weight = 400, style=normal configuration.
+        //   This font supports "a", "b", "c". The weight "b" is 3em, others are 1em.
+        // - c3em.ttf with weight = 700, style=normal configuration.
+        //   This font supports "a", "b", "c". The weight "c" is 3em, others are 1em.
+        final Typeface family = mContext.getResources().getFont(R.font.multiweight_family);
+        assertNotNull(family);
+
+        final Paint paint = new Paint();
+        // By default, the font which weight is 400 is selected.
+        paint.setTypeface(family);
+        assertEquals(GLYPH_1EM_WIDTH, paint.measureText("a"), 0f);
+        assertEquals(GLYPH_3EM_WIDTH, paint.measureText("b"), 0f);
+        assertEquals(GLYPH_1EM_WIDTH, paint.measureText("c"), 0f);
+
+        // Draw with the font which weight is 100.
+        paint.setTypeface(Typeface.create(family, 100 /* weight */, false /* italic */));
+        assertEquals(GLYPH_3EM_WIDTH, paint.measureText("a"), 0f);
+        assertEquals(GLYPH_1EM_WIDTH, paint.measureText("b"), 0f);
+        assertEquals(GLYPH_1EM_WIDTH, paint.measureText("c"), 0f);
+
+        // Draw with the font which weight is 700.
+        paint.setTypeface(Typeface.create(family, 700 /* weight */, false /* italic */));
+        assertEquals(GLYPH_1EM_WIDTH, paint.measureText("a"), 0f);
+        assertEquals(GLYPH_1EM_WIDTH, paint.measureText("b"), 0f);
+        assertEquals(GLYPH_3EM_WIDTH, paint.measureText("c"), 0f);
+    }
+
+    @Test
+    public void testTypefaceCreate_withExactStyle() {
+        // multiweight_family has following fonts.
+        // - a3em.ttf with weight = 400, style=normal configuration.
+        //   This font supports "a", "b", "c". The weight "a" is 3em, others are 1em.
+        // - b3em.ttf with weight = 400, style=italic configuration.
+        //   This font supports "a", "b", "c". The weight "b" is 3em, others are 1em.
+        // - c3em.ttf with weight = 700, style=italic configuration.
+        //   This font supports "a", "b", "c". The weight "c" is 3em, others are 1em.
+        final Typeface family = mContext.getResources().getFont(R.font.multistyle_family);
+        assertNotNull(family);
+
+        final Paint paint = new Paint();
+        // By default, the normal style font which weight is 400 is selected.
+        paint.setTypeface(family);
+        assertEquals(GLYPH_3EM_WIDTH, paint.measureText("a"), 0f);
+        assertEquals(GLYPH_1EM_WIDTH, paint.measureText("b"), 0f);
+        assertEquals(GLYPH_1EM_WIDTH, paint.measureText("c"), 0f);
+
+        // Draw with the italic font.
+        paint.setTypeface(Typeface.create(family, 400 /* weight */, true /* italic */));
+        assertEquals(GLYPH_1EM_WIDTH, paint.measureText("a"), 0f);
+        assertEquals(GLYPH_3EM_WIDTH, paint.measureText("b"), 0f);
+        assertEquals(GLYPH_1EM_WIDTH, paint.measureText("c"), 0f);
+
+        // Draw with the italic font which weigth is 700.
+        paint.setTypeface(Typeface.create(family, 700 /* weight */, true /* italic */));
+        assertEquals(GLYPH_1EM_WIDTH, paint.measureText("a"), 0f);
+        assertEquals(GLYPH_1EM_WIDTH, paint.measureText("b"), 0f);
+        assertEquals(GLYPH_3EM_WIDTH, paint.measureText("c"), 0f);
     }
 }
