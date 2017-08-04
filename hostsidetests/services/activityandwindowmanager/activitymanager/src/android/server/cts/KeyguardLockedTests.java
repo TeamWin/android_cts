@@ -31,13 +31,13 @@ public class KeyguardLockedTests extends KeyguardTestBase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        setUpLock();
+        setLockCredential();
     }
 
     @Override
     protected void tearDown() throws Exception {
         super.tearDown();
-        tearDownLock();
+        tearDownLockCredentials();
     }
 
     public void testLockAndUnlock() throws Exception {
