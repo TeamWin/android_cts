@@ -6788,6 +6788,31 @@ public class TextViewTest {
     }
 
     @Test
+    public void testAutoSizeCallers_setTransformationMethod() throws Throwable {
+        final TextView autoSizeTextView = prepareAndRetrieveAutoSizeTestData(
+                R.id.textview_autosize_uniform, false);
+        // Mock transformation method to return the duplicated input text in order to measure
+        // auto-sizing.
+        TransformationMethod duplicateTextTransformationMethod = mock(TransformationMethod.class);
+        when(duplicateTextTransformationMethod
+                .getTransformation(any(CharSequence.class), any(View.class)))
+                .thenAnswer(invocation -> {
+                    CharSequence source = (CharSequence) invocation.getArguments()[0];
+                    return new StringBuilder().append(source).append(source).toString();
+                });
+
+        mActivityRule.runOnUiThread(() ->
+                autoSizeTextView.setTransformationMethod(null));
+        mInstrumentation.waitForIdleSync();
+        final float initialTextSize = autoSizeTextView.getTextSize();
+        mActivityRule.runOnUiThread(() ->
+                autoSizeTextView.setTransformationMethod(duplicateTextTransformationMethod));
+        mInstrumentation.waitForIdleSync();
+
+        assertTrue(autoSizeTextView.getTextSize() < initialTextSize);
+    }
+
+    @Test
     public void testAutoSizeCallers_setCompoundDrawables() throws Throwable {
         final TextView autoSizeTextView = prepareAndRetrieveAutoSizeTestData(
                 R.id.textview_autosize_uniform, false);
