@@ -161,22 +161,6 @@ InputStreamBuilderHelper::InputStreamBuilderHelper(
         : StreamBuilderHelper{AAUDIO_DIRECTION_INPUT,
             48000, 1, AAUDIO_FORMAT_PCM_I16, requestedSharingMode, requestedPerfMode} {}
 
-// Native apps don't have permissions, thus recording can
-// only be tested when running as root.
-static bool canTestRecording() {
-    static const bool runningAsRoot = getuid() == 0;
-    return runningAsRoot;
-}
-
-void InputStreamBuilderHelper::createAndVerifyStream(bool *success) {
-    if (!canTestRecording()) {
-        __android_log_write(ANDROID_LOG_WARN, LOG_TAG, "No permissions to run recording tests");
-        *success = false;
-    } else {
-        StreamBuilderHelper::createAndVerifyStream(success);
-    }
-}
-
 
 OutputStreamBuilderHelper::OutputStreamBuilderHelper(
         aaudio_sharing_mode_t requestedSharingMode, aaudio_performance_mode_t requestedPerfMode)
