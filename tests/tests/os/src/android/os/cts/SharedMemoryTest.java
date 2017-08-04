@@ -174,6 +174,22 @@ public class SharedMemoryTest {
     }
 
     @Test
+    public void testUseAfterUnmap() throws RemoteException, ErrnoException {
+        SharedMemory sharedMemory = SharedMemory.create(null, 1);
+        ByteBuffer buffer = sharedMemory.mapReadWrite();
+        byte expected = 5;
+        buffer.put(0, expected);
+        assertEquals(expected, buffer.get(0));
+        SharedMemory.unmap(buffer);
+        boolean failed = false;
+        try {
+            buffer.get(0);
+            failed = true;
+        } catch (Throwable t) { }
+        assertFalse(failed);
+    }
+
+    @Test
     public void testGetFd() throws ErrnoException {
         SharedMemory sharedMemory = SharedMemory.create("hello", 1024);
         assertNotEquals(-1, sharedMemory.getFd());
