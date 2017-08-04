@@ -255,7 +255,8 @@ public class MediaCodecTest extends AndroidTestCase {
             if (!isEncoder) {
                 fail("createInputSurface should not work on a decoder");
             }
-        } catch (IllegalStateException e) { // expected for decoder and audio encoder
+        } catch (IllegalStateException |
+                 IllegalArgumentException e) { // expected for decoder and audio encoder
             if (isVideoEncoder) {
                 throw e;
             }
