@@ -34,6 +34,10 @@ public class StateLogger {
         }
     }
 
+    public static void logAlways(String logText) {
+        CLog.logAndDisplay(INFO, logText);
+    }
+
     public static void logE(String logText) {
         CLog.logAndDisplay(ERROR, logText);
     }
