@@ -42,6 +42,8 @@
 
         <service android:name="android.security.cts.activity.SecureRandomService"
                  android:process=":secureRandom"/>
+
+        <activity android:name="android.security.cts.activity.MotionEventTestActivity"/>
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
