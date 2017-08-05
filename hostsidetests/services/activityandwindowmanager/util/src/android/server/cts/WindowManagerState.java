@@ -18,6 +18,7 @@ package android.server.cts;
 
 import static android.server.cts.ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID;
 import static android.server.cts.StateLogger.log;
+import static android.server.cts.StateLogger.logAlways;
 import static android.server.cts.StateLogger.logE;
 
 import com.android.tradefed.device.CollectingOutputReceiver;
@@ -174,6 +175,7 @@ public class WindowManagerState {
         }
         if (mFocusedWindow == null) {
             logE("No Focused Window...");
+            logAlways("Dump for No focused Window:" + dump);
         }
         if (mFocusedApp == null) {
             logE("No Focused App...");
