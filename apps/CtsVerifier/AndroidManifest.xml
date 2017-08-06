@@ -2533,7 +2533,6 @@
                 <action android:name="android.intent.action.WEB_SEARCH" />
                 <action android:name="android.intent.action.VIEW_DOWNLOADS" />
                 <action android:name="android.media.action.DISPLAY_AUDIO_EFFECT_CONTROL_PANEL" />
-                <action android:name="android.settings.SHOW_INPUT_METHOD_PICKER" />
                 <action android:name="android.intent.action.MANAGE_NETWORK_USAGE" />
                 <action android:name="com.android.settings.TTS_SETTINGS" />
                 <action android:name="android.settings.ZEN_MODE_SETTINGS" />

@@ -4409,6 +4409,66 @@ public class TextViewTest {
         assertEquals(null, mTextView.getTypeface());
     }
 
+    @Test
+    public void testXmlTextAppearance() {
+        mTextView = findTextView(R.id.textview_textappearance_attrs1);
+        assertEquals(22f, mTextView.getTextSize(), 0.01f);
+        Typeface italicSans = Typeface.create(Typeface.SANS_SERIF, Typeface.ITALIC);
+        assertEquals(italicSans, mTextView.getTypeface());
+        assertEquals(Typeface.ITALIC, mTextView.getTypeface().getStyle());
+        assertTrue(mTextView.isAllCaps());
+        assertEquals(2.4f, mTextView.getLetterSpacing(), 0.01f);
+        assertEquals("smcp", mTextView.getFontFeatureSettings());
+
+        mTextView = findTextView(R.id.textview_textappearance_attrs2);
+        assertEquals(Typeface.MONOSPACE, mTextView.getTypeface());
+        assertEquals(mActivity.getResources().getColor(R.drawable.red),
+                mTextView.getShadowColor());
+        assertEquals(10.3f, mTextView.getShadowDx(), 0.01f);
+        assertEquals(0.5f, mTextView.getShadowDy(), 0.01f);
+        assertEquals(3.3f, mTextView.getShadowRadius(), 0.01f);
+        assertTrue(mTextView.isElegantTextHeight());
+
+        // This TextView has both a TextAppearance and a style, so the style should override.
+        mTextView = findTextView(R.id.textview_textappearance_attrs3);
+        assertEquals(32f, mTextView.getTextSize(), 0.01f);
+        Typeface boldSerif = Typeface.create(Typeface.SERIF, Typeface.BOLD);
+        assertEquals(boldSerif, mTextView.getTypeface());
+        assertEquals(Typeface.BOLD, mTextView.getTypeface().getStyle());
+        assertFalse(mTextView.isAllCaps());
+        assertEquals(2.6f, mTextView.getLetterSpacing(), 0.01f);
+        assertEquals(mActivity.getResources().getColor(R.drawable.blue),
+                mTextView.getShadowColor());
+        assertEquals(1.3f, mTextView.getShadowDx(), 0.01f);
+        assertEquals(10.5f, mTextView.getShadowDy(), 0.01f);
+        assertEquals(5.3f, mTextView.getShadowRadius(), 0.01f);
+        assertFalse(mTextView.isElegantTextHeight());
+
+        // This TextView has no TextAppearance and has a style, so the style should be applied.
+        mTextView = findTextView(R.id.textview_textappearance_attrs4);
+        assertEquals(32f, mTextView.getTextSize(), 0.01f);
+        assertEquals(boldSerif, mTextView.getTypeface());
+        assertEquals(Typeface.BOLD, mTextView.getTypeface().getStyle());
+        assertFalse(mTextView.isAllCaps());
+        assertEquals(2.6f, mTextView.getLetterSpacing(), 0.01f);
+        assertEquals(mActivity.getResources().getColor(R.drawable.blue),
+                mTextView.getShadowColor());
+        assertEquals(1.3f, mTextView.getShadowDx(), 0.01f);
+        assertEquals(10.5f, mTextView.getShadowDy(), 0.01f);
+        assertEquals(5.3f, mTextView.getShadowRadius(), 0.01f);
+        assertFalse(mTextView.isElegantTextHeight());
+
+        // Note: text, link and hint colors can't be tested due to the default style overriding
+        // values b/63923542
+    }
+
+    @Test
+    public void testAttributeReading_allCapsAndPassword() {
+        // This TextView has all caps & password, therefore all caps should be ignored.
+        mTextView = findTextView(R.id.textview_textappearance_attrs_allcaps_password);
+        assertFalse(mTextView.isAllCaps());
+    }
+
     @UiThreadTest
     @Test
     public void testAccessCompoundDrawableTint() {
@@ -6785,6 +6845,31 @@ public class TextViewTest {
         assertNotEquals(-1, textView.getAutoSizeMaxTextSize());
         assertNotEquals(-1, textView.getAutoSizeStepGranularity());
         assertNotEquals(0, textView.getAutoSizeTextAvailableSizes().length);
+    }
+
+    @Test
+    public void testAutoSizeCallers_setTransformationMethod() throws Throwable {
+        final TextView autoSizeTextView = prepareAndRetrieveAutoSizeTestData(
+                R.id.textview_autosize_uniform, false);
+        // Mock transformation method to return the duplicated input text in order to measure
+        // auto-sizing.
+        TransformationMethod duplicateTextTransformationMethod = mock(TransformationMethod.class);
+        when(duplicateTextTransformationMethod
+                .getTransformation(any(CharSequence.class), any(View.class)))
+                .thenAnswer(invocation -> {
+                    CharSequence source = (CharSequence) invocation.getArguments()[0];
+                    return new StringBuilder().append(source).append(source).toString();
+                });
+
+        mActivityRule.runOnUiThread(() ->
+                autoSizeTextView.setTransformationMethod(null));
+        mInstrumentation.waitForIdleSync();
+        final float initialTextSize = autoSizeTextView.getTextSize();
+        mActivityRule.runOnUiThread(() ->
+                autoSizeTextView.setTransformationMethod(duplicateTextTransformationMethod));
+        mInstrumentation.waitForIdleSync();
+
+        assertTrue(autoSizeTextView.getTextSize() < initialTextSize);
     }
 
     @Test

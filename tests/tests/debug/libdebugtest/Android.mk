@@ -29,6 +29,7 @@ LOCAL_SRC_FILES := \
 	android_debug_cts.cpp
 
 LOCAL_SHARED_LIBRARIES := liblog
+LOCAL_WHOLE_STATIC_LIBRARIES := libnativetesthelper_jni
 
 LOCAL_SDK_VERSION := 23
 LOCAL_NDK_STL_VARIANT := c++_static

@@ -81,7 +81,6 @@ class InputStreamBuilderHelper : public StreamBuilderHelper {
     InputStreamBuilderHelper(
             aaudio_sharing_mode_t requestedSharingMode,
             aaudio_performance_mode_t requestedPerfMode);
-    void createAndVerifyStream(bool *success);
 };
 
 class OutputStreamBuilderHelper : public StreamBuilderHelper {
