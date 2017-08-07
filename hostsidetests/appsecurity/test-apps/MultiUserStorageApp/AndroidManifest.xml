@@ -25,4 +25,10 @@
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
+    <receiver android:name=".MultiUserStorageTest$TestReceiver">
+        <intent-filter>
+            <action android:name="RUN_AFTER_BOOT_COMPLETED"/>
+        </intent-filter>
+    </receiver>
+
 </manifest>
