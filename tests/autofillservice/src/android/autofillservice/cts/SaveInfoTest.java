@@ -16,11 +16,11 @@
 
 package android.autofillservice.cts;
 
+import static org.testng.Assert.assertThrows;
+
 import android.service.autofill.SaveInfo;
 import android.support.test.runner.AndroidJUnit4;
 import android.view.autofill.AutofillId;
-
-import static org.testng.Assert.assertThrows;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
