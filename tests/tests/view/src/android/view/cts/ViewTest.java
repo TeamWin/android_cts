@@ -149,7 +149,8 @@ public class ViewTest {
         PollingCheck.waitFor(mActivity::hasWindowFocus);
         mResources = mActivity.getResources();
         mMockParent = new MockViewParent(mActivity);
-        assertTrue(mActivity.waitForWindowFocus(5 * DateUtils.SECOND_IN_MILLIS));
+        PollingCheck.waitFor(5 * DateUtils.SECOND_IN_MILLIS, mActivity::hasWindowFocus);
+        assertTrue(mActivity.hasWindowFocus());
     }
 
     @Test
