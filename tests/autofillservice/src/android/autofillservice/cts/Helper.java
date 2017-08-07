@@ -61,6 +61,8 @@ final class Helper {
     static final String ID_LOGIN = "login";
     static final String ID_OUTPUT = "output";
 
+    private static final String CMD_LIST_SESSIONS = "cmd autofill list sessions";
+
     /**
      * Timeout (in milliseconds) until framework binds / unbinds from service.
      */
@@ -733,9 +735,17 @@ final class Helper {
      * Asserts that there is no session left in the service.
      */
     public static void assertNoDanglingSessions() {
-        final String command = "cmd autofill list sessions";
-        final String result = runShellCommand(command);
-        assertWithMessage("Dangling sessions ('%s'): %s'", command, result).that(result).isEmpty();
+        final String result = runShellCommand(CMD_LIST_SESSIONS);
+        assertWithMessage("Dangling sessions ('%s'): %s'", CMD_LIST_SESSIONS, result).that(result)
+                .isEmpty();
+    }
+
+    /**
+     * Asserts that there is a pending session for the given package.
+     */
+    public static void assertHasSessions(String packageName) {
+        final String result = runShellCommand(CMD_LIST_SESSIONS);
+        assertThat(result).contains(packageName);
     }
 
     /**

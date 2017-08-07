@@ -32,6 +32,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.res.Resources;
+import android.os.RemoteException;
 import android.os.SystemClock;
 import android.service.autofill.SaveInfo;
 import android.support.test.InstrumentationRegistry;
@@ -209,6 +210,16 @@ final class UiBot {
     }
 
     /**
+     * Asserts the id is shown on the screen, using a resource id from the test package.
+     * @return
+     */
+    UiObject2 assertShownByRelativeId(String id) {
+        final UiObject2 obj = waitForObject(By.res(mPackageName, id));
+        assertThat(obj).isNotNull();
+        return obj;
+    }
+
+    /**
      * Gets the text set on a view.
      */
     String getTextById(String id) {
@@ -246,7 +257,7 @@ final class UiBot {
     }
 
     /**
-     * Presses the back button.
+     * Presses the Back button.
      */
     void pressBack() {
         Log.d(TAG, "pressBack()");
@@ -254,12 +265,25 @@ final class UiBot {
     }
 
     /**
-     * Presses the home button.
+     * Presses the Home button.
      */
     void pressHome() {
         Log.d(TAG, "pressHome()");
         mDevice.pressHome();
     }
+
+    /**
+     * Uses the Recents button to switch back to previous activity
+     */
+    void switchAppsUsingRecents() throws RemoteException {
+        Log.d(TAG, "switchAppsUsingRecents()");
+
+        // Press once to show list of apps...
+        mDevice.pressRecentApps();
+        // ...press again to go back to the activity.
+        mDevice.pressRecentApps();
+    }
+
     /**
      * Asserts the save snackbar is not showing and returns it.
      */
