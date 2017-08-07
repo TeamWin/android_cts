@@ -22,8 +22,11 @@ import static com.android.cts.externalstorageapp.CommonExternalStorageTest.getAl
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.readInt;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.writeInt;
 
+import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Environment;
 import android.test.AndroidTestCase;
@@ -31,6 +34,8 @@ import android.util.Log;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Test multi-user emulated storage environment, ensuring that each user has
@@ -147,6 +152,18 @@ public class MultiUserStorageTest extends AndroidTestCase {
      * Verify that files cannot be accessed through media provider.
      */
     public void testMediaProviderUserIsolation() throws Exception {
+        // Ensure BOOT_COMPLETED has already been delivered to all apps, by sending an ordered
+        // broadcast with 1 manifest receiver and wait for it to be processed
+        final CountDownLatch cdl = new CountDownLatch(1);
+        mContext.sendOrderedBroadcast(new Intent("RUN_AFTER_BOOT_COMPLETED"), null,
+                new BroadcastReceiver() {
+                    @Override
+                    public void onReceive(Context context, Intent intent) {
+                        cdl.countDown();
+                    }
+                }, null, 0, null, null);
+        cdl.await(1, TimeUnit.MINUTES);
+
         final File myPath = Environment.getExternalStorageDirectory();
         final int myId = android.os.Process.myUid() / 100000;
         assertEquals(String.valueOf(myId), myPath.getName());
@@ -195,5 +212,12 @@ public class MultiUserStorageTest extends AndroidTestCase {
 
     private static File buildRawPath(String file) {
         return new File("/sdcard/", file);
+    }
+
+    // Used in testMediaProviderUserIsolation
+    public static class TestReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+        }
     }
 }
