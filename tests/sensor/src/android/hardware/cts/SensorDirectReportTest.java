@@ -54,10 +54,22 @@ import java.util.concurrent.TimeUnit;
  *   - test<Sensor><SharedMemoryType><RateLevel>
  *     tests basic operation of sensor in direct report mode at various rate level specification.
  *   - testRateIndependency<Sensor1><Sensor2>SingleChannel
- *     tests two sensors in the same direct channel are able to run at different rate.
+ *     tests if two sensors in the same direct channel are able to run at different rates.
  *   - testRateIndependency<Sensor>MultiChannel
- *     tests a sensor is able to be configured to different rate level for multiple channels.
+ *     tests if a sensor is able to be configured to different rate levels for multiple channels.
  *   - testRateIndependency<Sensor>MultiMode
+ *     tests if a sensor is able to report at different rates in direct report mode and traditional
+ *     report mode (polling).
+ *   - testTimestamp<Sensor>
+ *     tests if the timestamp is correct both in absolute sense and relative to traditional report.
+ *   - testAtomicCounter<Sensor>
+ *     test if atomic counter is increased as specified and if sensor event content is fully updated
+ *     before update of atomic counter.
+ *   - testRegisterMultipleChannels
+ *     test scenarios when multiple channels are registered simultaneously.
+ *   - testReconfigure
+ *     test channel reconfiguration (configure to a rate level; configure to stop; configure to
+ *     another rate level)
  */
 public class SensorDirectReportTest extends SensorTestCase {
     private static final String TAG = "SensorDirectReportTest";
@@ -75,8 +87,8 @@ public class SensorDirectReportTest extends SensorTestCase {
     private static final float FREQ_UPPER_BOUND_POLL = 2.00f;
 
     // sensor reading assumption
-    private static final float GRAVITY_MIN = 9.81f - 0.5f;
-    private static final float GRAVITY_MAX = 9.81f + 0.5f;
+    private static final float GRAVITY_MIN = 9.81f - 1.0f;
+    private static final float GRAVITY_MAX = 9.81f + 1.0f;
     private static final float GYRO_NORM_MAX = 0.1f;
 
     // test constants
@@ -369,6 +381,82 @@ public class SensorDirectReportTest extends SensorTestCase {
         runMultiModeRateIndependencyTestGroup(Sensor.TYPE_MAGNETIC_FIELD);
     }
 
+    public void testTimestampAccel() {
+        runTimestampTestGroup(Sensor.TYPE_ACCELEROMETER);
+    }
+
+    public void testTimestampGyro() {
+        runTimestampTestGroup(Sensor.TYPE_GYROSCOPE);
+    }
+
+    public void testTimestampMag() {
+        runTimestampTestGroup(Sensor.TYPE_MAGNETIC_FIELD);
+    }
+
+    public void testAtomicCounterAccel() {
+        for (int memType : POSSIBLE_CHANNEL_TYPES) {
+            runAtomicCounterTest(Sensor.TYPE_ACCELEROMETER, memType);
+        }
+    }
+
+    public void testAtomicCounterGyro() {
+        for (int memType : POSSIBLE_CHANNEL_TYPES) {
+            runAtomicCounterTest(Sensor.TYPE_GYROSCOPE, memType);
+        }
+    }
+
+    public void testAtomicCounterMag() {
+        for (int memType : POSSIBLE_CHANNEL_TYPES) {
+            runAtomicCounterTest(Sensor.TYPE_MAGNETIC_FIELD, memType);
+        }
+    }
+
+    public void testRegisterMultipleChannels() throws AssertionError {
+        resetEvent();
+        freeSharedMemory();
+
+        for (int memType : POSSIBLE_CHANNEL_TYPES) {
+            if (!isMemoryTypeNeeded(memType)) {
+                continue;
+            }
+
+            for (int repeat = 0; repeat < 10; ++repeat) {
+                // allocate new memory every time
+                allocateSharedMemory();
+
+                mChannel = prepareDirectChannel(memType, false /* secondary */);
+                assertNotNull("mChannel is null", mChannel);
+
+                mChannelSecondary = prepareDirectChannel(memType, true /* secondary */);
+                assertNotNull("mChannelSecondary is null", mChannelSecondary);
+
+                if (mChannel != null) {
+                    mChannel.close();
+                    mChannel = null;
+                }
+                if (mChannelSecondary != null) {
+                    mChannelSecondary.close();
+                    mChannelSecondary = null;
+                }
+
+                // free shared memory
+                freeSharedMemory();
+            }
+        }
+    }
+
+    public void testReconfigure() {
+        TestResultCollector c = new TestResultCollector("testReconfigure", TAG);
+
+        for (int type : POSSIBLE_SENSOR_TYPES) {
+            for (int memType : POSSIBLE_CHANNEL_TYPES) {
+                c.perform(() -> { runReconfigureTest(type, memType);},
+                        String.format("sensor type %d, mem type %d", type, memType));
+            }
+        }
+        c.judge();
+    }
+
     private void runSingleChannelRateIndependencyTestGroup(int type1, int type2) {
         if (type1 == type2) {
             throw new IllegalArgumentException("Cannot run single channel rate independency test "
@@ -436,6 +524,24 @@ public class SensorDirectReportTest extends SensorTestCase {
                               String.format("rateLevel %d, memType %d, period %d",
                                             rate, type, samplingPeriodUs));
                 }
+            }
+        }
+        c.judge();
+    }
+
+    private void runTimestampTestGroup(int sensorType) {
+        String stype = SensorCtsHelper.sensorTypeShortString(sensorType);
+
+        TestResultCollector c =
+                new TestResultCollector("testTimestamp" + stype, TAG);
+
+        for (int rateLevel : POSSIBLE_RATE_LEVELS) {
+            for (int memType : POSSIBLE_CHANNEL_TYPES) {
+                c.perform(
+                        () -> {
+                            runTimestampTest(sensorType, rateLevel, memType);
+                        },
+                        String.format("(%s, rate %d, memtype %d)", stype, rateLevel, memType));
             }
         }
         c.judge();
@@ -630,6 +736,137 @@ public class SensorDirectReportTest extends SensorTestCase {
         }
     }
 
+    private void runTimestampTest(int type, int rateLevel, int memType) {
+        Sensor s = mSensorManager.getDefaultSensor(type);
+        if (s == null
+                || s.getHighestDirectReportRateLevel() < rateLevel
+                || !s.isDirectChannelTypeSupported(memType)) {
+            return;
+        }
+        resetEvent();
+
+        mChannel = prepareDirectChannel(memType, false /* secondary */);
+        assertTrue("createDirectChannel failed", mChannel != null);
+
+        SensorEventCollection listener = new SensorEventCollection(s);
+
+        try {
+            float nominalFreq = getNominalFreq(rateLevel);
+            int samplingPeriodUs = Math.max((int) (1e6f / nominalFreq), s.getMinDelay());
+
+            assertTrue("Shared memory is not formatted",
+                       isSharedMemoryFormatted(memType));
+
+            int token = mChannel.configure(s, rateLevel);
+            assertTrue("configure direct mChannel failed", token > 0);
+
+            boolean registerRet = mSensorManager.registerListener(listener, s, samplingPeriodUs);
+            assertTrue("Register listener failed", registerRet);
+
+            List<DirectReportSensorEvent> events = collectSensorEventsRealtime(
+                    memType, false /*secondary*/, TEST_RUN_TIME_PERIOD_MILLISEC);
+            assertTrue("Realtime event collection failed", events != null);
+            assertTrue("Realtime event collection got no data", events.size() > 0);
+
+            //stop sensor and analyze content
+            mChannel.configure(s, SensorDirectChannel.RATE_STOP);
+            mSensorManager.unregisterListener(listener);
+
+            // check rate
+            checkTimestampRelative(events, listener.getEvents());
+            checkTimestampAbsolute(events);
+        } finally {
+            mChannel.close();
+            mChannel = null;
+        }
+    }
+
+    private void runAtomicCounterTest(int sensorType, int memType) throws AssertionError {
+        Sensor s = mSensorManager.getDefaultSensor(sensorType);
+        if (s == null
+                || s.getHighestDirectReportRateLevel() == SensorDirectChannel.RATE_STOP
+                || !s.isDirectChannelTypeSupported(memType)) {
+            return;
+        }
+        resetEvent();
+
+        mChannel = prepareDirectChannel(memType, false /* secondary */);
+        assertTrue("createDirectChannel failed", mChannel != null);
+
+        try {
+            assertTrue("Shared memory is not formatted", isSharedMemoryFormatted(memType));
+            waitBeforeStartSensor();
+
+            //int token = mChannel.configure(s, SensorDirectChannel.RATE_FAST);
+            int token = mChannel.configure(s, s.getHighestDirectReportRateLevel());
+            assertTrue("configure direct mChannel failed", token > 0);
+
+            checkAtomicCounterUpdate(memType, 30 * 1000); // half min
+
+            //stop sensor and analyze content
+            mChannel.configure(s, SensorDirectChannel.RATE_STOP);
+        } finally {
+            mChannel.close();
+            mChannel = null;
+        }
+    }
+
+    private void runReconfigureTest(int type, int memType) {
+        Sensor s = mSensorManager.getDefaultSensor(type);
+        if (s == null
+                || s.getHighestDirectReportRateLevel() == SensorDirectChannel.RATE_STOP
+                || !s.isDirectChannelTypeSupported(memType)) {
+            return;
+        }
+        resetEvent();
+
+        mChannel = prepareDirectChannel(memType, false /* secondary */);
+        assertTrue("createDirectChannel failed", mChannel != null);
+
+        try {
+            assertTrue("Shared memory is not formatted", isSharedMemoryFormatted(memType));
+            waitBeforeStartSensor();
+
+            int offset = 0;
+            long counter = 1;
+            List<Integer> rateLevels = new ArrayList<>();
+            List<DirectReportSensorEvent> events;
+
+            rateLevels.add(s.getHighestDirectReportRateLevel());
+            rateLevels.add(s.getHighestDirectReportRateLevel());
+            if (s.getHighestDirectReportRateLevel() != SensorDirectChannel.RATE_NORMAL) {
+                rateLevels.add(SensorDirectChannel.RATE_NORMAL);
+            }
+
+            for (int rateLevel : rateLevels) {
+                int token = mChannel.configure(s, rateLevel);
+                assertTrue("configure direct mChannel failed", token > 0);
+
+                events = collectSensorEventsRealtime(memType, false /*secondary*/,
+                                                     TEST_RUN_TIME_PERIOD_MILLISEC,
+                                                     offset, counter);
+                // stop sensor
+                mChannel.configure(s, SensorDirectChannel.RATE_STOP);
+                checkEventRate(TEST_RUN_TIME_PERIOD_MILLISEC, events, type, rateLevel);
+
+                // collect all events after stop
+                events = collectSensorEventsRealtime(memType, false /*secondary*/,
+                                                     REST_PERIOD_BEFORE_TEST_MILLISEC,
+                                                     offset, counter);
+                if (events.size() > 0) {
+                    offset += (events.size() * SENSORS_EVENT_SIZE ) % SHARED_MEMORY_SIZE;
+                    counter = events.get(events.size() - 1).serial;
+                }
+            }
+
+            // finally stop the report
+            mChannel.configure(s, SensorDirectChannel.RATE_STOP);
+        } finally {
+            mChannel.close();
+            mChannel = null;
+        }
+    }
+
     private void waitBeforeStartSensor() {
         // wait for sensor system to come to a rest after previous test to avoid flakiness.
         try {
@@ -646,6 +883,147 @@ public class SensorDirectReportTest extends SensorTestCase {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+    }
+
+    private List<DirectReportSensorEvent> collectSensorEventsRealtime(
+            int memType, boolean secondary, int timeoutMs) {
+        return collectSensorEventsRealtime(memType, secondary, timeoutMs,
+                                          0 /*initialOffset*/, 1l /*initialCounter*/);
+    }
+
+    private List<DirectReportSensorEvent> collectSensorEventsRealtime(
+            int memType, boolean secondary, int timeoutMs, int initialOffset, long initialCounter) {
+        List<DirectReportSensorEvent> events = new ArrayList<>();
+        long endTime = SystemClock.elapsedRealtime() + timeoutMs;
+
+        long atomicCounter = initialCounter;
+        int offset = initialOffset;
+
+        long timeA = SystemClock.elapsedRealtimeNanos();
+        boolean synced = false;
+        int filtered = 0;
+
+        while (SystemClock.elapsedRealtime() < endTime) {
+            if (!readSharedMemory(
+                    memType, secondary, offset + ATOMIC_COUNTER_OFFSET, ATOMIC_COUNTER_SIZE)) {
+                return null;
+            }
+
+            long timeB = SystemClock.elapsedRealtimeNanos();
+            if (timeB - timeA > 1_000_000L ) { // > 1ms
+                synced = false;
+            }
+            timeA = timeB;
+
+            if (readAtomicCounter(offset) == atomicCounter) {
+                // read entire event again and parse
+                if (!readSharedMemory(memType, secondary, offset, SENSORS_EVENT_SIZE)) {
+                    return null;
+                }
+                DirectReportSensorEvent e = mEventPool.get();
+                assertNotNull("cannot get event from reserve", e);
+                parseSensorEvent(offset, e);
+
+                atomicCounter += 1;
+                if (synced) {
+                    events.add(e);
+                } else {
+                    ++filtered;
+                }
+
+                offset += SENSORS_EVENT_SIZE;
+                if (offset + SENSORS_EVENT_SIZE > SHARED_MEMORY_SIZE) {
+                    offset = 0;
+                }
+            } else {
+                synced = true;
+            }
+        }
+        Log.d(TAG, "filtered " + filtered + " events, remain " + events.size() + " events");
+        return events;
+    }
+
+    private void checkAtomicCounterUpdate(int memType, int timeoutMs) {
+        List<DirectReportSensorEvent> events = new ArrayList<>();
+        long endTime = SystemClock.elapsedRealtime() + timeoutMs;
+
+        boolean lastValid = false;
+        long atomicCounter = 1;
+        int lastOffset = 0;
+        int offset = 0;
+
+        byte[] lastArray = new byte[SENSORS_EVENT_SIZE];
+        DirectReportSensorEvent e = getEvent();
+
+        while (SystemClock.elapsedRealtime() < endTime) {
+            if (!readSharedMemory(memType, false/*secondary*/, lastOffset, SENSORS_EVENT_SIZE)
+                    || !readSharedMemory(memType, false/*secondary*/,
+                                         offset + ATOMIC_COUNTER_OFFSET, ATOMIC_COUNTER_SIZE)) {
+                throw new IllegalStateException("cannot read shared memory, type " + memType);
+            }
+
+            if (lastValid) {
+                boolean failed = false;
+                int i;
+                for (i = 0; i < SENSORS_EVENT_SIZE; ++i) {
+                    if (lastArray[i] != mBuffer[lastOffset + i]) {
+                        failed = true;
+                        break;
+                    }
+                }
+
+                if (failed) {
+                    byte[] currentArray = new byte[SENSORS_EVENT_SIZE];
+                    System.arraycopy(mBuffer, lastOffset, currentArray, 0, SENSORS_EVENT_SIZE);
+
+                    // wait for 100ms and read again to see if the change settle
+                    try {
+                        SensorCtsHelper.sleep(100, TimeUnit.MILLISECONDS);
+                    } catch (InterruptedException ex) {
+                        Thread.currentThread().interrupt();
+                    }
+
+                    byte[] delayedRead = new byte[SENSORS_EVENT_SIZE];
+                    if (!readSharedMemory(
+                                memType, false/*secondary*/, lastOffset, SENSORS_EVENT_SIZE)) {
+                        throw new IllegalStateException(
+                                "cannot read shared memory, type " + memType);
+                    }
+                    System.arraycopy(mBuffer, lastOffset, delayedRead, 0, SENSORS_EVENT_SIZE);
+
+                    fail(String.format(
+                            "At offset %d(0x%x), byte %d(0x%x) changed after atomicCounter"
+                                + "(expecting %d, 0x%x) update, old = [%s], new = [%s], "
+                                + "delayed = [%s]",
+                            lastOffset, lastOffset, i, i, atomicCounter, atomicCounter,
+                            SensorCtsHelper.bytesToHex(lastArray, -1, -1),
+                            SensorCtsHelper.bytesToHex(currentArray, -1, -1),
+                            SensorCtsHelper.bytesToHex(delayedRead, -1, -1)));
+                }
+            }
+
+            if (readAtomicCounter(offset) == atomicCounter) {
+                // read entire event again and parse
+                if (!readSharedMemory(memType, false/*secondary*/, offset, SENSORS_EVENT_SIZE)) {
+                    throw new IllegalStateException("cannot read shared memory, type " + memType);
+                }
+                parseSensorEvent(offset, e);
+
+                atomicCounter += 1;
+
+                lastOffset = offset;
+                System.arraycopy(mBuffer, lastOffset, lastArray, 0, SENSORS_EVENT_SIZE);
+                lastValid = true;
+
+                offset += SENSORS_EVENT_SIZE;
+                if (offset + SENSORS_EVENT_SIZE > SHARED_MEMORY_SIZE) {
+                    offset = 0;
+                }
+            }
+        }
+        Log.d(TAG, "at finish checkAtomicCounterUpdate has atomic counter = " + atomicCounter);
+        // atomicCounter will not wrap back in reasonable amount of time
+        assertTrue("Realtime event collection got no data", atomicCounter != 1);
     }
 
     private MemoryFile allocateMemoryFile() {
@@ -1019,6 +1397,76 @@ public class SensorDirectReportTest extends SensorTestCase {
         return minMax;
     }
 
+    private void checkTimestampAbsolute(List<DirectReportSensorEvent> events) {
+        final int MAX_DETAIL_ITEM = 10;
+
+        StringBuffer buf = new StringBuffer();
+        int oneMsEarlyCount = 0;
+        int fiveMsLateCount = 0;
+        int tenMsLateCount = 0;
+        int errorCount = 0;
+
+        for (int i = 0; i < events.size(); ++i) {
+            DirectReportSensorEvent e = events.get(i);
+            long d = e.arrivalTs - e.ts;
+            boolean oneMsEarly = d < -1000_000;
+            boolean fiveMsLate = d > 5000_000;
+            boolean tenMsLate = d > 10_000_000;
+
+            if (oneMsEarly || fiveMsLate || tenMsLate) {
+                oneMsEarlyCount += oneMsEarly ? 1 : 0;
+                fiveMsLateCount += fiveMsLate ? 1 : 0;
+                tenMsLateCount += tenMsLate ? 1 : 0;
+
+                if (errorCount++ < MAX_DETAIL_ITEM) {
+                    buf.append("[").append(i).append("] diff = ").append(d / 1e6f).append(" ms; ");
+                }
+            }
+        }
+
+        Log.d(TAG, String.format("Irregular timestamp, %d, %d, %d out of %d",
+                    oneMsEarlyCount, fiveMsLateCount, tenMsLateCount, events.size()));
+
+        if (CHECK_ABSOLUTE_LATENCY) {
+            assertTrue(String.format(
+                    "Timestamp error, out of %d events, %d is >1ms early, %d is >5ms late, "
+                        + "%d is >10ms late, details: %s%s",
+                        events.size(), oneMsEarlyCount, fiveMsLateCount, tenMsLateCount,
+                        buf.toString(), errorCount > MAX_DETAIL_ITEM ? "..." : ""),
+                    oneMsEarlyCount == 0
+                        && fiveMsLateCount <= events.size() / 20
+                        && tenMsLateCount <= events.size() / 100);
+        }
+    }
+
+    private void checkTimestampRelative(List<DirectReportSensorEvent> directEvents,
+                                        List<DirectReportSensorEvent> pollEvents) {
+        if (directEvents.size() < 10 || pollEvents.size() < 10) {
+            // cannot check with so few data points
+            return;
+        }
+
+        long directAverageLatency = 0;
+        for (DirectReportSensorEvent e : directEvents) {
+            directAverageLatency += e.arrivalTs - e.ts;
+        }
+        directAverageLatency /= directEvents.size();
+
+        long pollAverageLatency = 0;
+        for (DirectReportSensorEvent e : pollEvents) {
+            pollAverageLatency += e.arrivalTs - e.ts;
+        }
+        pollAverageLatency /= pollEvents.size();
+
+        Log.d(TAG, String.format("Direct, poll latency = %f, %f ms",
+                directAverageLatency / 1e6f, pollAverageLatency / 1e6f));
+        assertTrue(
+                String.format("Direct, poll latency = %f, %f ms, expect direct < poll",
+                    directAverageLatency / 1e6f,
+                    pollAverageLatency / 1e6f),
+                directAverageLatency < pollAverageLatency + 1000_000);
+    }
+
     private int[] calculateExpectedNEventsUs(int timeMs, int samplingPeriodUs) {
         int[] minMax = new int[2];
         minMax[0] = Math.max((int) Math.floor(
@@ -1171,5 +1619,33 @@ public class SensorDirectReportTest extends SensorTestCase {
         ev.x = mByteBuffer.getFloat();
         ev.y = mByteBuffer.getFloat();
         ev.z = mByteBuffer.getFloat();
+    }
+
+    // parse sensors_event_t and fill information into DirectReportSensorEvent
+    private static void parseSensorEvent(byte [] buf, int offset, DirectReportSensorEvent ev) {
+        ByteBuffer b = ByteBuffer.wrap(buf, offset, SENSORS_EVENT_SIZE);
+        b.order(NATIVE_BYTE_ORDER);
+
+        ev.size = b.getInt();
+        ev.token = b.getInt();
+        ev.type = b.getInt();
+        ev.serial = ((long) b.getInt()) & 0xFFFFFFFFl; // signed=>unsigned
+        ev.ts = b.getLong();
+        ev.arrivalTs = SystemClock.elapsedRealtimeNanos();
+        ev.x = b.getFloat();
+        ev.y = b.getFloat();
+        ev.z = b.getFloat();
+    }
+
+    private long readAtomicCounter(int offset) {
+        mByteBuffer.position(offset + ATOMIC_COUNTER_OFFSET);
+        return ((long) mByteBuffer.getInt()) & 0xFFFFFFFFl; // signed => unsigned
+    }
+
+    private static long readAtomicCounter(byte [] buf, int offset) {
+        ByteBuffer b = ByteBuffer.wrap(buf, offset + ATOMIC_COUNTER_OFFSET, ATOMIC_COUNTER_SIZE);
+        b.order(ByteOrder.nativeOrder());
+
+        return ((long) b.getInt()) & 0xFFFFFFFFl; // signed => unsigned
     }
 }
