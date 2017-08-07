@@ -16,9 +16,6 @@
 
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.Helper.FILL_TIMEOUT_MS;
-import static android.autofillservice.cts.Helper.eventually;
-
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
