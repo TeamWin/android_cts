@@ -94,6 +94,6 @@
     <!--
         Exclude Verity tese cases, because we need to disable Verity to test with GSI
     -->
-    <option name="compatibility:exclude-filter" value="CtsKeystoreTestCases com.android.keystore.cts.KeyAttestationTest#testEcAttestation" />
-    <option name="compatibility:exclude-filter" value="CtsKeystoreTestCases com.android.keystore.cts.KeyAttestationTest#testRsaAttestation" />
+    <option name="compatibility:exclude-filter" value="CtsKeystoreTestCases android.keystore.cts.KeyAttestationTest#testEcAttestation" />
+    <option name="compatibility:exclude-filter" value="CtsKeystoreTestCases android.keystore.cts.KeyAttestationTest#testRsaAttestation" />
 </configuration>
