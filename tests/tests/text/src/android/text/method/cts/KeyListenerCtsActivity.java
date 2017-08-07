@@ -17,6 +17,8 @@
 package android.text.method.cts;
 
 import android.app.Activity;
+import android.os.Bundle;
+import android.text.cts.R;
 import android.text.method.BaseKeyListener;
 import android.text.method.DateKeyListener;
 import android.text.method.DateTimeKeyListener;
@@ -50,4 +52,10 @@ import android.text.method.TimeKeyListener;
  * @see TimeKeyListener
  */
 
-public class KeyListenerCtsActivity extends Activity { }
+public class KeyListenerCtsActivity extends Activity {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.keylistener_layout);
+    }
+}
