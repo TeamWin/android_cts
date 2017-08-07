@@ -53,7 +53,7 @@ public class JDiffClassDescription {
 
     private static final Set<String> HIDDEN_INTERFACE_WHITELIST = new HashSet<>();
     static {
-        // Interfaces that define @hide methods will by definition contain
+        // Interfaces that define @hide or @SystemApi or @TestApi methods will by definition contain
         // methods that do not appear in current.txt. Interfaces added to this
         // list are probably not meant to be implemented in an application.
         HIDDEN_INTERFACE_WHITELIST.add("public abstract boolean android.companion.DeviceFilter.matches(D)");
@@ -68,6 +68,7 @@ public class JDiffClassDescription {
         HIDDEN_INTERFACE_WHITELIST.add("public abstract boolean javax.microedition.khronos.egl.EGL10.eglReleaseThread()");
         HIDDEN_INTERFACE_WHITELIST.add("public abstract void org.w3c.dom.ls.LSSerializer.setFilter(org.w3c.dom.ls.LSSerializerFilter)");
         HIDDEN_INTERFACE_WHITELIST.add("public abstract org.w3c.dom.ls.LSSerializerFilter org.w3c.dom.ls.LSSerializer.getFilter()");
+        HIDDEN_INTERFACE_WHITELIST.add("public abstract android.graphics.Region android.view.WindowManager.getCurrentImeTouchRegion()");
     }
 
     public enum JDiffType {
