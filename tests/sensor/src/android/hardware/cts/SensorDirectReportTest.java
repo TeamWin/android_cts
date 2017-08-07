@@ -70,6 +70,11 @@ import java.util.concurrent.TimeUnit;
  *   - testReconfigure
  *     test channel reconfiguration (configure to a rate level; configure to stop; configure to
  *     another rate level)
+ *   - testRegisterMultipleChannelsUsingSameMemory
+ *     test a negative case when the same memory is being used twice for registering sensor direct
+ *     channel
+ *   - testCloseWithoutConfigStop
+ *     test a common mistake in API usage and make sure no negative effect is made to system.
  */
 public class SensorDirectReportTest extends SensorTestCase {
     private static final String TAG = "SensorDirectReportTest";
@@ -445,6 +450,28 @@ public class SensorDirectReportTest extends SensorTestCase {
         }
     }
 
+    public void testRegisterMultipleChannelsUsingSameMemory() throws AssertionError {
+        // MemoryFile identification is not supported by Android yet
+        int memType = SensorDirectChannel.TYPE_HARDWARE_BUFFER;
+        if (!isMemoryTypeNeeded(memType)) {
+            return;
+        }
+
+        mChannel = prepareDirectChannel(memType, false /* secondary */);
+        assertNotNull("mChannel is null", mChannel);
+
+        // use same memory to register, should fail.
+        mChannelSecondary = prepareDirectChannel(memType, false /* secondary */);
+        assertNull("mChannelSecondary is not null", mChannelSecondary);
+
+        mChannel.close();
+        // after mChannel.close(), memory should free up and this should return non-null
+        // channel
+        mChannelSecondary = prepareDirectChannel(memType, false /* secondary */);
+        assertNotNull("mChannelSecondary is null", mChannelSecondary);
+        mChannelSecondary.close();
+    }
+
     public void testReconfigure() {
         TestResultCollector c = new TestResultCollector("testReconfigure", TAG);
 
@@ -455,6 +482,37 @@ public class SensorDirectReportTest extends SensorTestCase {
             }
         }
         c.judge();
+    }
+
+    public void testCloseWithoutConfigStop() {
+        for (int type : POSSIBLE_SENSOR_TYPES) {
+            for (int memType : POSSIBLE_CHANNEL_TYPES) {
+                Sensor s = mSensorManager.getDefaultSensor(type);
+                if (s == null
+                        || s.getHighestDirectReportRateLevel() == SensorDirectChannel.RATE_STOP
+                        || !s.isDirectChannelTypeSupported(memType)) {
+                    continue;
+                }
+
+                mChannel = prepareDirectChannel(memType, false /* secondary */);
+                assertTrue("createDirectChannel failed", mChannel != null);
+
+                try {
+                    waitBeforeStartSensor();
+                    mChannel.configure(s, s.getHighestDirectReportRateLevel());
+
+                    // wait for a while
+                    waitBeforeStartSensor();
+
+                    // The following line is commented out intentionally.
+                    // mChannel.configure(s, SensorDirectChannel.RATE_STOP);
+                } finally {
+                    mChannel.close();
+                    mChannel = null;
+                }
+                waitBeforeStartSensor();
+            }
+        }
     }
 
     private void runSingleChannelRateIndependencyTestGroup(int type1, int type2) {
