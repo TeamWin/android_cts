@@ -26,7 +26,6 @@ import android.autofillservice.cts.VirtualContainerView.Line;
 import android.autofillservice.cts.VirtualContainerView.Line.OneTimeLineWatcher;
 import android.graphics.Canvas;
 import android.os.Bundle;
-import android.view.autofill.AutofillManager;
 
 /**
  * A custom activity that uses {@link Canvas} to draw the following fields:

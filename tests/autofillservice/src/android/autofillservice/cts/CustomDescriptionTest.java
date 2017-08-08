@@ -21,6 +21,7 @@ import static android.autofillservice.cts.Helper.ID_USERNAME;
 import static android.autofillservice.cts.Helper.assertNoDanglingSessions;
 import static android.autofillservice.cts.Helper.getContext;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
+
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
