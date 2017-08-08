@@ -20,6 +20,7 @@ LOCAL_ERROR_PRONE_FLAGS:= -Xep:ArrayToString:ERROR \
                           -Xep:EqualsIncompatibleType:ERROR \
                           -Xep:EqualsNaN:ERROR \
                           -Xep:FormatString:ERROR \
+                          -Xep:IdentityBinaryExpression:ERROR \
                           -Xep:JUnit3TestNotRun:ERROR \
                           -Xep:JUnitAmbiguousTestClass:ERROR \
                           -Xep:MissingFail:ERROR \
