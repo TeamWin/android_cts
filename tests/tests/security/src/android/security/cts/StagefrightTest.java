@@ -69,6 +69,11 @@ public class StagefrightTest extends InstrumentationTestCase {
      before any existing test methods
      ***********************************************************/
 
+    public void testStagefright_bug_23270724() throws Exception {
+        doStagefrightTest(R.raw.bug_23270724_1);
+        doStagefrightTest(R.raw.bug_23270724_2);
+    }
+
     public void testStagefright_bug_22771132() throws Exception {
         doStagefrightTest(R.raw.bug_22771132);
     }
@@ -145,6 +150,10 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.cve_2015_6598);
     }
 
+    public void testStagefright_bug_32873375() throws Exception {
+        doStagefrightTest(R.raw.bug_32873375);
+    }
+
     public void testStagefright_bug_26366256() throws Exception {
         doStagefrightTest(R.raw.bug_26366256);
     }
@@ -195,6 +204,11 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     public void testStagefright_cve_2016_2429_b_27211885() throws Exception {
         doStagefrightTest(R.raw.cve_2016_2429_b_27211885);
+    }
+
+    public void testStagefright_bug_34031018() throws Exception {
+        doStagefrightTest(R.raw.bug_34031018_32bit);
+        doStagefrightTest(R.raw.bug_34031018_64bit);
     }
 
     private void doStagefrightTest(final int rid) throws Exception {
@@ -436,7 +450,11 @@ public class StagefrightTest extends InstrumentationTestCase {
                 closeQuietly(fd);
             }
         } else {
-            ex.setDataSource(url);
+            try {
+                ex.setDataSource(url);
+            } catch (Exception e) {
+                // indicative of problems with our tame CTS test web server
+            }
         }
         int numtracks = ex.getTrackCount();
         String rname = url != null ? url: resources.getResourceEntryName(rid);
@@ -588,13 +606,17 @@ public class StagefrightTest extends InstrumentationTestCase {
             try {
                 retriever.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
                 fd.close();
-            } catch (IllegalArgumentException e) {
+            } catch (Exception e) {
                 // ignore
             } finally {
                 closeQuietly(fd);
             }
         } else {
-            retriever.setDataSource(url, new HashMap<String, String>());
+            try {
+                retriever.setDataSource(url, new HashMap<String, String>());
+            } catch (Exception e) {
+                // indicative of problems with our tame CTS test web server
+            }
         }
         retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
         retriever.getEmbeddedPicture();
