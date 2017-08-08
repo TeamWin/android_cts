@@ -12,23 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-LOCAL_PATH := $(call my-dir)
+LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-# Only compile source java files in this apk.
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
+LOCAL_PACKAGE_NAME := CtsContentEmptyTestApp
 
-LOCAL_MODULE := CtsBootStatsTestCases
-LOCAL_STATIC_JAVA_LIBRARIES := host-framework-protos
-LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed compatibility-host-util host-libprotobuf-java-full
+LOCAL_MODULE_TAGS := tests
 
-LOCAL_CTS_TEST_PACKAGE := android.bootstats
+LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
+
+LOCAL_SDK_VERSION := current
 
 # tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts gts vts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
-include $(BUILD_CTS_HOST_JAVA_LIBRARY)
-
-# Build the test APKs using their own makefiles
-include $(call all-makefiles-under,$(LOCAL_PATH))
+include $(BUILD_CTS_PACKAGE)

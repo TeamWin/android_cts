@@ -15,9 +15,10 @@
  */
 package android.autofillservice.cts;
 
+import static android.autofillservice.cts.Helper.getAutofillIds;
+
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import static android.autofillservice.cts.Helper.getAutofillIds;
 import android.app.assist.AssistStructure;
 import android.app.assist.AssistStructure.ViewNode;
 import android.content.IntentSender;
