@@ -22,7 +22,7 @@ import static android.autofillservice.cts.Helper.assertNoDanglingSessions;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
 
 import android.service.autofill.LuhnChecksumValidator;
-import android.service.autofill.SimpleRegexValidator;
+import android.service.autofill.RegexValidator;
 import android.service.autofill.Validator;
 import android.service.autofill.Validators;
 import android.support.annotation.NonNull;
@@ -99,41 +99,41 @@ public class ValidatorTest extends AutoFillServiceTestCase {
     public void checkForInvalidField() throws Exception {
         testValidator((usernameId, passwordId) -> Validators.or(
                 new LuhnChecksumValidator(new AutofillId(-1)),
-                new SimpleRegexValidator(passwordId, Pattern.compile("pass.*"))), true);
+                new RegexValidator(passwordId, Pattern.compile("pass.*"))), true);
     }
 
     @Test
     public void checkBoth() throws Exception {
         testValidator((usernameId, passwordId) -> Validators.and(
                 new LuhnChecksumValidator(usernameId),
-                new SimpleRegexValidator(passwordId, Pattern.compile("pass.*"))), true);
+                new RegexValidator(passwordId, Pattern.compile("pass.*"))), true);
     }
 
     @Test
     public void checkEither1() throws Exception {
         testValidator((usernameId, passwordId) -> Validators.or(
-                new SimpleRegexValidator(usernameId, Pattern.compile("7.*")),
-                new SimpleRegexValidator(passwordId, Pattern.compile("pass.*"))), true);
+                new RegexValidator(usernameId, Pattern.compile("7.*")),
+                new RegexValidator(passwordId, Pattern.compile("pass.*"))), true);
     }
 
     @Test
     public void checkEither2() throws Exception {
         testValidator((usernameId, passwordId) -> Validators.or(
-                new SimpleRegexValidator(usernameId, Pattern.compile("invalid")),
-                new SimpleRegexValidator(passwordId, Pattern.compile("pass.*"))), true);
+                new RegexValidator(usernameId, Pattern.compile("invalid")),
+                new RegexValidator(passwordId, Pattern.compile("pass.*"))), true);
     }
 
     @Test
     public void checkBothButFail() throws Exception {
         testValidator((usernameId, passwordId) -> Validators.and(
-                new SimpleRegexValidator(usernameId, Pattern.compile("7.*")),
-                new SimpleRegexValidator(passwordId, Pattern.compile("invalid"))), false);
+                new RegexValidator(usernameId, Pattern.compile("7.*")),
+                new RegexValidator(passwordId, Pattern.compile("invalid"))), false);
     }
 
     @Test
     public void checkEitherButFail() throws Exception {
         testValidator((usernameId, passwordId) -> Validators.or(
-                new SimpleRegexValidator(usernameId, Pattern.compile("invalid")),
-                new SimpleRegexValidator(passwordId, Pattern.compile("invalid"))), false);
+                new RegexValidator(usernameId, Pattern.compile("invalid")),
+                new RegexValidator(passwordId, Pattern.compile("invalid"))), false);
     }
 }

@@ -22,7 +22,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertThrows;
 
-import android.service.autofill.SimpleRegexValidator;
+import android.service.autofill.RegexValidator;
 import android.service.autofill.ValueFinder;
 import android.support.test.runner.AndroidJUnit4;
 import android.view.autofill.AutofillId;
@@ -37,26 +37,26 @@ public class SimpleRegexValidatorTest {
 
     @Test
     public void allNullConstructor() {
-        assertThrows(NullPointerException.class, () -> new SimpleRegexValidator(null, null));
+        assertThrows(NullPointerException.class, () -> new RegexValidator(null, null));
     }
 
     @Test
     public void nullRegexConstructor() {
         assertThrows(NullPointerException.class,
-                () -> new SimpleRegexValidator(new AutofillId(1), null));
+                () -> new RegexValidator(new AutofillId(1), null));
     }
 
     @Test
     public void nullAutofillIdConstructor() {
         assertThrows(NullPointerException.class,
-                () -> new SimpleRegexValidator(null, Pattern.compile(".")));
+                () -> new RegexValidator(null, Pattern.compile(".")));
     }
 
     @Test
     public void unknownField() {
         AutofillId unknownId = new AutofillId(42);
 
-        SimpleRegexValidator validator = new SimpleRegexValidator(unknownId, Pattern.compile(".*"));
+        RegexValidator validator = new RegexValidator(unknownId, Pattern.compile(".*"));
 
         ValueFinder finder = mock(ValueFinder.class);
 
@@ -67,7 +67,7 @@ public class SimpleRegexValidatorTest {
     @Test
     public void singleFieldValid() {
         AutofillId creditCardFieldId = new AutofillId(1);
-        SimpleRegexValidator validator = new SimpleRegexValidator(creditCardFieldId,
+        RegexValidator validator = new RegexValidator(creditCardFieldId,
                 Pattern.compile("^\\s*\\d{4}[\\s-]?\\d{4}[\\s-]?\\d{4}[\\s-]?(\\d{4})\\s*$"));
 
         ValueFinder finder = mock(ValueFinder.class);
@@ -82,7 +82,7 @@ public class SimpleRegexValidatorTest {
     @Test
     public void singleFieldInvalid() {
         AutofillId id = new AutofillId(1);
-        SimpleRegexValidator validator = new SimpleRegexValidator(id, Pattern.compile("\\d*"));
+        RegexValidator validator = new RegexValidator(id, Pattern.compile("\\d*"));
 
         ValueFinder finder = mock(ValueFinder.class);
 
