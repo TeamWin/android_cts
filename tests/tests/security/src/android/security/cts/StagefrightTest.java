@@ -69,6 +69,11 @@ public class StagefrightTest extends InstrumentationTestCase {
      before any existing test methods
      ***********************************************************/
 
+    public void testStagefright_bug_23270724() throws Exception {
+        doStagefrightTest(R.raw.bug_23270724_1);
+        doStagefrightTest(R.raw.bug_23270724_2);
+    }
+
     public void testStagefright_bug_22771132() throws Exception {
         doStagefrightTest(R.raw.bug_22771132);
     }
@@ -163,6 +168,11 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     public void testStagefright_bug_26366256() throws Exception {
         doStagefrightTest(R.raw.bug_26366256);
+    }
+
+    public void testStagefright_bug_34031018() throws Exception {
+        doStagefrightTest(R.raw.bug_34031018_32bit);
+        doStagefrightTest(R.raw.bug_34031018_64bit);
     }
 
     /***********************************************************
@@ -661,7 +671,7 @@ public class StagefrightTest extends InstrumentationTestCase {
             try {
                 retriever.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
                 fd.close();
-            } catch (RuntimeException e) {
+            } catch (Exception e) {
                 // ignore
             } finally {
                 closeQuietly(fd);
