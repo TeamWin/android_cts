@@ -42,6 +42,12 @@ public class PrintDocumentActivity extends Activity {
         }
 
         BasePrintTest.onActivityCreateCalled(mTestId, this);
+
+        if (savedInstanceState != null) {
+            Log.d(LOG_TAG,
+                    "We cannot deal with lifecycle. Hence finishing " + this + " for " + mTestId);
+            finish();
+        }
     }
 
     @Override
