@@ -52,15 +52,13 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
     }
 
     public void testRotation180Relaunch() throws Exception {
-        // Will receive a configuration change for rotation.
-        // TODO(b/36812336): reset configuration change count to 0 once configuration moved out.
-        testRotation(TEST_ACTIVITY_NAME, 2, 0, 1);
+        // Should receive nothing
+        testRotation(TEST_ACTIVITY_NAME, 2, 0, 0);
     }
 
     public void testRotation180NoRelaunch() throws Exception {
-        // Should receive one configuration change due to the rotation.
-        // TODO(b/36812336): reset configuration change count to 0 once configuration moved out.
-        testRotation(NO_RELAUNCH_ACTIVITY_NAME, 2, 0, 1);
+        // Should receive nothing
+        testRotation(NO_RELAUNCH_ACTIVITY_NAME, 2, 0, 0);
     }
 
     @Presubmit
