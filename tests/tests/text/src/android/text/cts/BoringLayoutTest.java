@@ -23,6 +23,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyFloat;
 import static org.mockito.Matchers.anyInt;
@@ -36,6 +37,8 @@ import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Typeface;
+import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.text.BoringLayout;
@@ -343,6 +346,91 @@ public class BoringLayoutTest {
         boringLayout.draw(canvas, null, null, 0);
         verify(canvas, times(1)).drawText(sameCharSequence(DEFAULT_CHAR_SEQUENCE),
                 anyInt(), anyInt(), anyFloat(), anyFloat(), any(Paint.class));
+    }
+
+    @Test
+    public void testEllipsize_End() {
+        // When we try to ellipsize "aaaa" into a thinner 3.4 em space, we originally think "aa…"
+        // would fit, but after measuring the new text, we find that it doesn't and we need to
+        // retry.
+        final float size = 100.0f;
+        final int allocatedWidth = (int) (3.4f * size);
+        final BoringLayout layout = new BoringLayout(
+                "aaaa",
+                getTextPaintForEllipsize(size),
+                allocatedWidth,
+                DEFAULT_ALIGN,
+                SPACING_MULT_NO_SCALE,
+                SPACING_ADD_NO_SCALE,
+                createMetrics(0, 0, 0, 0, allocatedWidth, 0),
+                false /* includepad */,
+                TextUtils.TruncateAt.END,
+                allocatedWidth);
+        assertEquals("a\u2026\uFEFF\uFEFF", layout.getText().toString());
+    }
+
+    @Test
+    public void testEllipsize_Start() {
+        // When we try to ellipsize "aaaa" into a thinner 3.4 em space, we originally think "…aa"
+        // would fit, but after measuring the new text, we find that it doesn't and we need to
+        // retry.
+        final float size = 100.0f;
+        final int allocatedWidth = (int) (3.4f * size);
+        final BoringLayout layout = new BoringLayout(
+                "aaaa",
+                getTextPaintForEllipsize(size),
+                allocatedWidth,
+                DEFAULT_ALIGN,
+                SPACING_MULT_NO_SCALE,
+                SPACING_ADD_NO_SCALE,
+                createMetrics(0, 0, 0, 0, allocatedWidth, 0),
+                false /* includepad */,
+                TextUtils.TruncateAt.START,
+                allocatedWidth);
+        assertEquals("\u2026\uFEFF\uFEFFa", layout.getText().toString());
+    }
+
+    @Test
+    public void testEllipsize_Middle() {
+        // When we try to ellipsize "aaaaaa" into a thinner 5.9 em space, we originally think
+        // "aa…aa" would fit, but after measuring the new text, we find that it doesn't and we need
+        // to retry.
+        final float size = 100.0f;
+        final int allocatedWidth = (int) (5.9f * size);
+        final BoringLayout layout = new BoringLayout(
+                "aaaaaa",
+                getTextPaintForEllipsize(size),
+                allocatedWidth,
+                DEFAULT_ALIGN,
+                SPACING_MULT_NO_SCALE,
+                SPACING_ADD_NO_SCALE,
+                createMetrics(0, 0, 0, 0, allocatedWidth, 0),
+                false /* includepad */,
+                TextUtils.TruncateAt.MIDDLE,
+                allocatedWidth);
+        final String ellipsizedString = layout.getText().toString();
+        assertTrue("aa\u2026\uFEFF\uFEFFa".equals(ellipsizedString)
+                || "a\u2026\uFEFF\uFEFFaa".equals(ellipsizedString));
+    }
+
+    private TextPaint getTextPaintForEllipsize(float size) {
+        // The font used in this method has two glyphs defined for "a" and ellipsis. Both are one
+        // em wide. But the glyphs are kerned: whenever the "a" is followed or preceded by an
+        // ellipsis, half an em is added between them as kerning. This means that:
+        // "aaaa" is 4 ems wide,
+        // "aaa…" is 4.5 ems wide,
+        // "aa…" is 3.5 ems wide,
+        // "a…" is 2.5 ems wide,
+        // "aa…aa" is 6 ems wide,
+        // "aa…a" is 5 ems wide,
+        // "a…aa" is 5 ems wide,
+        // "a…a" is 4 ems wide,
+        // "…a" is 2.5 ems wide.
+        final TextPaint paint = new TextPaint();
+        paint.setTypeface(Typeface.createFromAsset(
+                InstrumentationRegistry.getTargetContext().getAssets(), "ellipsis_test_font.ttf"));
+        paint.setTextSize(size);
+        return paint;
     }
 
     private static Metrics createMetrics(

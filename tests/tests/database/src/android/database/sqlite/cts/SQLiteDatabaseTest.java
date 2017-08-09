@@ -1499,12 +1499,12 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
         mDatabase.close();
         SQLiteDatabase.OpenParams params = new SQLiteDatabase.OpenParams.Builder()
                 .setLookasideConfig(0, 0).build();
-        mDatabase = SQLiteDatabase.openDatabase(mDatabaseFile.getPath(), params);
+        mDatabase = SQLiteDatabase.openDatabase(mDatabaseFile, params);
         verifyLookasideStats(true);
         // Reopen test db with custom lookaside config
         mDatabase.close();
         params = new SQLiteDatabase.OpenParams.Builder().setLookasideConfig(10000, 10).build();
-        mDatabase = SQLiteDatabase.openDatabase(mDatabaseFile.getPath(), params);
+        mDatabase = SQLiteDatabase.openDatabase(mDatabaseFile, params);
         // Lookaside is always disabled on low-RAM devices
         verifyLookasideStats(expectDisabled);
     }

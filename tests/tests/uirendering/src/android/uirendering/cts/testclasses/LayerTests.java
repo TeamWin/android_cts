@@ -47,6 +47,7 @@ import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -294,9 +295,9 @@ public class LayerTests extends ActivityTestBase {
             .runWithVerifier(new RectVerifier(Color.WHITE, Color.GREEN, new Rect(40, 40, 70, 70)));
     }
 
-    // Note: This test will fail for Skia pipeline, but that is OK.
-    // TODO: delete this test when Skia pipeline is default and modify next test
+    // STOPSHIP: delete this test when Skia pipeline ships as the default and modify next test
     // testSaveLayerUnclippedWithColorFilterSW to run for both HW and SW
+    @Ignore
     @Test
     public void testSaveLayerUnclippedWithColorFilterHW() {
         // verify that HW can draw nested unclipped layers with chained color filters

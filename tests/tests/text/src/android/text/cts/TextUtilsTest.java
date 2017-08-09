@@ -706,6 +706,83 @@ public class TextUtilsTest  {
         }
     }
 
+    @Test
+    public void testEllipsize_retryEnd() {
+        // When we try to ellipsize "aaaa" into a thinner 3.4 em space, we originally think
+        // "aa…" would fit, but after measuring the new text, we find that it doesn't and we need
+        // to retry.
+        final float size = 100.0f;
+        final String text = "aaaa";
+
+        final CharSequence ellipsized = TextUtils.ellipsize(text, getTextPaintForEllipsize(size),
+                3.4f * size,
+                TextUtils.TruncateAt.END, false /* preserveLength */, null /* callback */);
+        assertEquals("a\u2026", ellipsized.toString());
+    }
+
+    @Test
+    public void testEllipsize_retryEndRtl() {
+        // When we try to ellipsize "aaaa" into a thinner 3.4 em space, we originally think
+        // "aa…" would fit, but after measuring the new text, we find that it doesn't and we need
+        // to retry.
+        final float size = 100.0f;
+        final String text = "\u202Eaaaa"; // U+202E is the RIGHT-TO-LEFT OVERRIDE.
+
+        final CharSequence ellipsized = TextUtils.ellipsize(text, getTextPaintForEllipsize(size),
+                3.4f * size,
+                TextUtils.TruncateAt.END, false /* preserveLength */, null /* callback */);
+        assertEquals("\u202Ea\u2026", ellipsized.toString());
+    }
+
+    @Test
+    public void testEllipsize_retryStart() {
+        // When we try to ellipsize "aaaa" into a thinner 3.4 em space, we originally think
+        // "…aa" would fit, but after measuring the new text, we find that it doesn't and we need
+        // to retry.
+        final float size = 100.0f;
+        final String text = "aaaa";
+
+        final CharSequence ellipsized = TextUtils.ellipsize(text, getTextPaintForEllipsize(size),
+                3.4f * size,
+                TextUtils.TruncateAt.START, false /* preserveLength */, null /* callback */);
+        assertEquals("\u2026a", ellipsized.toString());
+    }
+
+    @Test
+    public void testEllipsize_retryMiddle() {
+        // When we try to ellipsize "aaaaaa" into a thinner 5.9 em space, we originally think
+        // "aa…aa" would fit, but after measuring the new text, we find that it doesn't and we need
+        // to retry.
+        final float size = 100.0f;
+        final String text = "aaaaaa";
+
+        final CharSequence ellipsized = TextUtils.ellipsize(text, getTextPaintForEllipsize(size),
+                5.9f * size,
+                TextUtils.TruncateAt.MIDDLE, false /* preserveLength */, null /* callback */);
+        final String ellipsizedString = ellipsized.toString();
+        assertTrue("aa\u2026a".equals(ellipsizedString) || "a\u2026aa".equals(ellipsizedString));
+    }
+
+    private TextPaint getTextPaintForEllipsize(float size) {
+        // The font used in this method has two glyphs defined for "a" and ellipsis. Both are one
+        // em wide. But the glyphs are kerned: whenever the "a" is followed or preceded by an
+        // ellipsis, half an em is added between them as kerning. This means that:
+        // "aaaa" is 4 ems wide,
+        // "aaa…" is 4.5 ems wide,
+        // "aa…" is 3.5 ems wide,
+        // "a…" is 2.5 ems wide,
+        // "aa…aa" is 6 ems wide,
+        // "aa…a" is 5 ems wide,
+        // "a…aa" is 5 ems wide,
+        // "a…a" is 4 ems wide,
+        // "…a" is 2.5 ems wide.
+        final TextPaint paint = new TextPaint();
+        paint.setTypeface(Typeface.createFromAsset(
+                InstrumentationRegistry.getTargetContext().getAssets(), "ellipsis_test_font.ttf"));
+        paint.setTextSize(size);
+        return paint;
+    }
+
     /**
      * Get a blank string which is filled up by '\uFEFF'.
      *

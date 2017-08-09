@@ -491,7 +491,7 @@ public class PackageManagerTest extends AndroidTestCase {
         result = mPackageManager.getNamesForUids(uids);
         assertNotNull(result);
         assertEquals(3, result.length);
-        assertEquals("android.uid.system:1000", result[0]);
+        assertEquals("shared:android.uid.system", result[0]);
         assertEquals(null, result[1]);
         assertEquals("com.android.cts.ctsshim", result[2]);
     }
