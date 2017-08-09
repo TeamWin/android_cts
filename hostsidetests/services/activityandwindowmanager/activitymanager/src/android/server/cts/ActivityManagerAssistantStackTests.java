@@ -171,6 +171,20 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         assertAssistantStackExists();
         mAmWmState.assertVisibility(TEST_ACTIVITY, true);
 
+        // Go home, launch assistant, launch app into fullscreen with activity present, and go back.
+        // Ensure home is visible.
+        removeStacks(ASSISTANT_STACK_ID);
+        launchHomeActivity();
+        launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
+                EXTRA_IS_TRANSLUCENT, String.valueOf(true), EXTRA_LAUNCH_NEW_TASK,
+                TEST_ACTIVITY);
+        mAmWmState.waitForValidState(mDevice, TEST_ACTIVITY, FULLSCREEN_WORKSPACE_STACK_ID);
+        mAmWmState.assertHomeActivityVisible(false);
+        pressBackButton();
+        mAmWmState.waitForFocusedStack(mDevice, ASSISTANT_STACK_ID);
+        assertAssistantStackExists();
+        mAmWmState.assertHomeActivityVisible(true);
+
         // Launch a fullscreen and docked app and then launch the assistant and check to see that it
         // is also visible
         removeStacks(ASSISTANT_STACK_ID);
@@ -183,6 +197,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         assertAssistantStackExists();
         mAmWmState.assertVisibility(DOCKED_ACTIVITY, true);
         mAmWmState.assertVisibility(TEST_ACTIVITY, true);
+
         disableAssistant();
     }
 
