@@ -97,9 +97,9 @@ public class Poc17_06 extends SecurityTestCase {
      */
     @SecurityTest
     public void testPocBug_35644815() throws Exception {
-      enableAdbRoot(getDevice());
-      infoDisclosure("Bug-35644815", getDevice(), 60,
-          "[\\s\\n\\S]*INFO DISC FLAG: 0000[\\s\\n\\S]*", false);
+        enableAdbRoot(getDevice());
+        String pocOut = AdbUtils.runPoc("Bug-35644815", getDevice(), 60);
+        assertMatches("[\\s\\n\\S]*INFO DISC FLAG: 0000[\\s\\n\\S]*", pocOut);
     }
 
 }
