@@ -32,7 +32,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
 
 public class AdbUtils {
 
@@ -125,29 +124,5 @@ public class AdbUtils {
             return file;
         }
 
-    }
-
-    /**
-     * Runs an info disclosure related PoC, pulls logs from the device,
-     * and searches the logs for the info being disclosed.
-     * @param pocName string of the PoC name
-     * @param device device to be ran on
-     * @param timeout time to wait for output in seconds
-     * @param pattern pattern of info being disclosed
-     * @return boolean returns false if the test fails, otherwise returns true
-     **/
-    public static boolean detectInformationDisclosure(
-        String pocName, ITestDevice device, int timeout,
-        String pattern) throws Exception {
-
-           String pocOutput = runPoc(pocName, device, timeout);
-           if (Pattern.matches(pattern, pocOutput))
-             return false;
-
-           String logcatOutput = device.executeShellCommand("logcat -d");
-           if (Pattern.matches(pattern, logcatOutput))
-             return false;
-
-           return true;
     }
 }
