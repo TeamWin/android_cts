@@ -401,6 +401,8 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         if (videoSizes == null) {
             videoSizes = parameters.getSupportedPreviewSizes();
         }
+        int minVideoWidth = Integer.MAX_VALUE;
+        int minVideoHeight = Integer.MAX_VALUE;
         for (Camera.Size size : videoSizes)
         {
             if (size.width == VIDEO_WIDTH && size.height == VIDEO_HEIGHT) {
@@ -408,9 +410,14 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
                 mVideoHeight = VIDEO_HEIGHT;
                 return;
             }
+            if (size.width < minVideoWidth || size.height < minVideoHeight) {
+                minVideoWidth = size.width;
+                minVideoHeight = size.height;
+            }
         }
-        mVideoWidth = videoSizes.get(0).width;
-        mVideoHeight = videoSizes.get(0).height;
+        // Use minimum resolution to avoid that one frame size exceeds file size limit.
+        mVideoWidth = minVideoWidth;
+        mVideoHeight = minVideoHeight;
     }
 
     private void recordVideoUsingCamera(
