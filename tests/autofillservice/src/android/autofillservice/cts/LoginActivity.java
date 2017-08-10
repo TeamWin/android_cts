@@ -51,6 +51,7 @@ public class LoginActivity extends AbstractAutoFillActivity {
     static final String ID_USERNAME_CONTAINER = "username_container";
     static final String AUTHENTICATION_MESSAGE = "Authentication failed. D'OH!";
     static final String BACKDOOR_USERNAME = "LemmeIn";
+    static final String BACKDOOR_PASSWORD_SUBSTRING = "pass";
 
     private TextView mUsernameLabel;
     private EditText mUsernameEditText;
@@ -113,7 +114,7 @@ public class LoginActivity extends AbstractAutoFillActivity {
         final String password = mPasswordEditText.getText().toString();
         final boolean valid = username.equals(password)
                 || (TextUtils.isEmpty(username) && TextUtils.isEmpty(password))
-                || password.contains("pass")
+                || password.contains(BACKDOOR_PASSWORD_SUBSTRING)
                 || username.equals(BACKDOOR_USERNAME);
 
         if (valid) {
