@@ -469,14 +469,15 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
                     // Find minimum frame duration for YUV_420_888
                     StreamConfigurationMap config = mStaticInfo.getCharacteristics().get(
                             CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+
                     final long minStillFrameDuration =
                             config.getOutputMinFrameDuration(ImageFormat.YUV_420_888, maxYuvSize);
-                    Range<Integer> targetRange = getSuitableFpsRangeForDuration(id,
-                            minStillFrameDuration);
-                    previewBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,
-                            targetRange);
-                    captureBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,
-                            targetRange);
+                    if (minStillFrameDuration > 0) {
+                        Range<Integer> targetRange = getSuitableFpsRangeForDuration(id,
+                                minStillFrameDuration);
+                        previewBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, targetRange);
+                        captureBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, targetRange);
+                    }
 
                     prepareCaptureAndStartPreview(previewBuilder, captureBuilder,
                             mOrderedPreviewSizes.get(0), maxYuvSize,
