@@ -547,7 +547,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     protected boolean isHandheld() throws DeviceNotAvailableException {
         return !hasDeviceFeature("android.software.leanback")
-                && !hasDeviceFeature("android.software.watch");
+                && !hasDeviceFeature("android.hardware.type.watch");
     }
 
     protected boolean supportsSplitScreenMultiWindow() throws DeviceNotAvailableException {
