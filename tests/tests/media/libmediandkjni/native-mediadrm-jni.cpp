@@ -64,8 +64,6 @@ static const uint8_t kClearKeyUuid[kUuidSize] = {
     0xac, 0xe3, 0x3c, 0x1e, 0x52, 0xe2, 0xfb, 0x4b
 };
 
-// The test content is not packaged with clearkey UUID,
-// we have to use a canned clearkey pssh for the test.
 static const uint8_t kClearkeyPssh[] = {
     // BMFF box header (4 bytes size + 'pssh')
     0x00, 0x00, 0x00, 0x34, 0x70, 0x73, 0x73, 0x68,
