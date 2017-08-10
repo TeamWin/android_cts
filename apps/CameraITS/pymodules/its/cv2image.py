@@ -12,26 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import matplotlib
-matplotlib.use('Agg')
-
-import its.error
-from matplotlib import pylab
-import sys
-from PIL import Image
-import numpy
-import math
-import unittest
-import cStringIO
-import scipy.stats
-import copy
-import cv2
 import os
+import unittest
+
+import cv2
+import its.device
+import its.error
+import numpy
+
+VGA_HEIGHT = 480
+VGA_WIDTH = 640
+
 
 def scale_img(img, scale=1.0):
     """Scale and image based on a real number scale factor."""
     dim = (int(img.shape[1]*scale), int(img.shape[0]*scale))
     return cv2.resize(img.copy(), dim, interpolation=cv2.INTER_AREA)
+
 
 class Chart(object):
     """Definition for chart object.
@@ -57,6 +54,9 @@ class Chart(object):
         self._scale_start = scale_start
         self._scale_stop = scale_stop
         self._scale_step = scale_step
+        self.xnorm, self.ynorm, self.wnorm, self.hnorm = its.image.chart_located_per_argv()
+        if not self.xnorm:
+            self.locate()
 
     def _calc_scale_factors(self, cam, props, fmt, s, e, fd):
         """Take an image with s, e, & fd to find the chart location.
@@ -95,8 +95,14 @@ class Chart(object):
         print 'Chart/image scale factor = %.2f' % scale_factor
         return template, img_3a, scale_factor
 
-    def locate(self, cam, props, fmt, s, e, fd):
-        """Find the chart in the image.
+    def locate(self, cam=None, props=None, fmt=None, s=0, e=0, fd=0):
+        """Find the chart in the image, and append location to chart object.
+
+        The values appended are:
+            xnorm:          float; [0, 1] left loc of chart in scene
+            ynorm:          float; [0, 1] top loc of chart in scene
+            wnorm:          float; [0, 1] width of chart in scene
+            hnorm:          float; [0, 1] height of chart in scene
 
         Args:
             cam:            An open device session
@@ -107,15 +113,21 @@ class Chart(object):
             e:              Exposure time for the AF request as defined in
                             android.sensor.exposureTime
             fd:             float; autofocus lens position
-
-        Returns:
-            xnorm:          float; [0, 1] left loc of chart in scene
-            ynorm:          float; [0, 1] top loc of chart in scene
-            wnorm:          float; [0, 1] width of chart in scene
-            hnorm:          float; [0, 1] height of chart in scene
         """
-        chart, scene, s_factor = self._calc_scale_factors(cam, props, fmt,
-                                                          s, e, fd)
+        if cam:
+            chart, scene, s_factor = self._calc_scale_factors(cam, props, fmt,
+                                                              s, e, fd)
+        else:
+            with its.device.ItsSession() as cam:
+                props = cam.get_camera_properties()
+                fmt = {'format': 'yuv', 'width': VGA_WIDTH,
+                       'height': VGA_HEIGHT}
+
+                # Get sensitivity, exposure time, and focus distance with 3A.
+                s, e, _, _, fd = cam.do_3a(get_results=True)
+
+                chart, scene, s_factor = self._calc_scale_factors(cam, props,
+                                                                  fmt, s, e, fd)
         scale_start = self._scale_start * s_factor
         scale_stop = self._scale_stop * s_factor
         scale_step = self._scale_step * s_factor
@@ -142,26 +154,36 @@ class Chart(object):
         # determine if optimization results are valid
         opt_values = [x[0] for x in max_match]
         if 2.0*min(opt_values) > max(opt_values):
-            estring = ('Unable to find chart in scene!\n'
+            estring = ('Warning: unable to find chart in scene!\n'
                        'Check camera distance and self-reported '
                        'pixel pitch, focal length and hyperfocal distance.')
-            raise its.error.Error(estring)
-        # find max and draw bbox
-        match_index = max_match.index(max(max_match, key=lambda x: x[0]))
-        scale = scale_start + scale_step * match_index
-        print 'Optimum scale factor: %.3f' %  scale
-        top_left_scaled = max_match[match_index][1]
-        h, w = chart.shape
-        bottom_right_scaled = (top_left_scaled[0] + w, top_left_scaled[1] + h)
-        top_left = (int(top_left_scaled[0]/scale),
-                    int(top_left_scaled[1]/scale))
-        bottom_right = (int(bottom_right_scaled[0]/scale),
-                        int(bottom_right_scaled[1]/scale))
-        wnorm = float((bottom_right[0]) - top_left[0]) / scene.shape[1]
-        hnorm = float((bottom_right[1]) - top_left[1]) / scene.shape[0]
-        xnorm = float(top_left[0]) / scene.shape[1]
-        ynorm = float(top_left[1]) / scene.shape[0]
-        return xnorm, ynorm, wnorm, hnorm
+            print estring
+            self.wnorm = 1.0
+            self.hnorm = 1.0
+            self.xnorm = 0.0
+            self.ynorm = 0.0
+        else:
+            if (max(opt_values) == opt_values[0] or
+                        max(opt_values) == opt_values[len(opt_values)-1]):
+                estring = ('Warning: chart is at extreme range of locator '
+                           'check.\n')
+                print estring
+            # find max and draw bbox
+            match_index = max_match.index(max(max_match, key=lambda x: x[0]))
+            scale = scale_start + scale_step * match_index
+            print 'Optimum scale factor: %.3f' %  scale
+            top_left_scaled = max_match[match_index][1]
+            h, w = chart.shape
+            bottom_right_scaled = (top_left_scaled[0] + w,
+                                   top_left_scaled[1] + h)
+            top_left = (int(top_left_scaled[0]/scale),
+                        int(top_left_scaled[1]/scale))
+            bottom_right = (int(bottom_right_scaled[0]/scale),
+                            int(bottom_right_scaled[1]/scale))
+            self.wnorm = float((bottom_right[0]) - top_left[0]) / scene.shape[1]
+            self.hnorm = float((bottom_right[1]) - top_left[1]) / scene.shape[0]
+            self.xnorm = float(top_left[0]) / scene.shape[1]
+            self.ynorm = float(top_left[1]) / scene.shape[0]
 
 
 class __UnitTest(unittest.TestCase):
@@ -186,7 +208,8 @@ class __UnitTest(unittest.TestCase):
             blur = cv2.blur(chart, (j, j))
             blur = blur[:, :, numpy.newaxis]
             sharpness[j] = (yuv_full_scale *
-                    its.image.compute_image_sharpness(blur / white_level))
+                            its.image.compute_image_sharpness(blur /
+                                                              white_level))
         self.assertTrue(numpy.isclose(sharpness[2]/sharpness[4],
                                       numpy.sqrt(2), atol=0.1))
         self.assertTrue(numpy.isclose(sharpness[4]/sharpness[8],

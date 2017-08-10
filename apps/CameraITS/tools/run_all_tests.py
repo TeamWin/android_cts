@@ -21,13 +21,24 @@ import time
 import sys
 
 import its.caps
+import its.cv2image
 import its.device
+import its.image
 from its.device import ItsSession
 
 CHART_DELAY = 1  # seconds
+CHART_DISTANCE = 30.0  # cm
+CHART_HEIGHT = 13.5  # cm
+CHART_SCALE_START = 0.65
+CHART_SCALE_STOP = 1.35
+CHART_SCALE_STEP = 0.025
 FACING_EXTERNAL = 2
 NUM_TRYS = 2
+SCENE3_FILE = os.path.join(os.environ['CAMERA_ITS_TOP'], 'pymodules', 'its',
+                           'test_images', 'ISO12233.png')
 SKIP_RET_CODE = 101  # note this must be same as tests/scene*/test_*
+VGA_HEIGHT = 480
+VGA_WIDTH = 640
 
 
 def evaluate_socket_failure(err_file_path):
@@ -294,6 +305,14 @@ def main():
                     valid_scene_code = subprocess.call(cmd, cwd=topdir)
                     assert valid_scene_code == 0
             print "Start running ITS on camera %s, %s" % (camera_id, scene)
+            # Extract chart from scene for scene3 once up front
+            chart_loc_arg = ''
+            if scene == 'scene3':
+                chart = its.cv2image.Chart(SCENE3_FILE, CHART_HEIGHT,
+                                           CHART_DISTANCE, CHART_SCALE_START,
+                                           CHART_SCALE_STOP, CHART_SCALE_STEP)
+                chart_loc_arg = 'chart_loc=%.2f,%.2f,%.2f,%.2f' % (chart.xnorm,
+                        chart.ynorm, chart.wnorm, chart.hnorm)
             # Run each test, capturing stdout and stderr.
             for (testname, testpath) in tests:
                 if auto_scene_switch:
@@ -325,7 +344,7 @@ def main():
                             test_code = skip_code
                     if skip_code is not SKIP_RET_CODE:
                         cmd = ['python', os.path.join(os.getcwd(), testpath)]
-                        cmd += sys.argv[1:] + [camera_id_arg]
+                        cmd += sys.argv[1:] + [camera_id_arg] + [chart_loc_arg]
                         with open(outpath, 'w') as fout, open(errpath, 'w') as ferr:
                             test_code = subprocess.call(
                                 cmd, stderr=ferr, stdout=fout, cwd=outdir)
