@@ -168,6 +168,25 @@ public class CharSequenceTransformationTest {
                 argThat(new CharSequenceMatcher("myUserName/..rd")));
     }
 
+    @Test
+    public void testMismatch() throws Exception {
+        AutofillId id1 = new AutofillId(1);
+        CharSequenceTransformation.Builder b = new CharSequenceTransformation.Builder(id1,
+                Pattern.compile("Who are you?"), "1");
+
+        CharSequenceTransformation trans = b.build();
+
+        ValueFinder finder = mock(ValueFinder.class);
+        RemoteViews template = mock(RemoteViews.class);
+
+        when(finder.findByAutofillId(id1)).thenReturn("I'm Batman!");
+
+        trans.apply(finder, template, 0);
+
+        // If the match fails, the view should not change.
+        verify(template, never()).setCharSequence(eq(0), any(), any());
+    }
+
     static class CharSequenceMatcher implements ArgumentMatcher<CharSequence> {
         private final CharSequence mExpected;
 
