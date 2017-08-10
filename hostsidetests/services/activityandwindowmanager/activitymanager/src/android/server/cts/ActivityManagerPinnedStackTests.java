@@ -768,12 +768,14 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_ENTER_PIP);
         mAmWmState.waitForValidState(mDevice, PIP_ACTIVITY, PINNED_STACK_ID);
         assertPinnedStackExists();
+        waitForValidPictureInPictureCallbacks(PIP_ACTIVITY, logSeparator);
         assertValidPictureInPictureCallbackOrder(PIP_ACTIVITY, logSeparator);
 
         // Trigger it to go back to fullscreen and ensure that only triggered one configuration
         // change as well
         logSeparator = clearLogcat();
         launchActivity(PIP_ACTIVITY);
+        waitForValidPictureInPictureCallbacks(PIP_ACTIVITY, logSeparator);
         assertValidPictureInPictureCallbackOrder(PIP_ACTIVITY, logSeparator);
     }
 
@@ -1182,6 +1184,24 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                         + lastMwLine + ", " + lastConfigLine + " respectively");
             }
         }
+    }
+
+    /**
+     * Waits until the expected picture-in-picture callbacks have been made.
+     */
+    private void waitForValidPictureInPictureCallbacks(String activityName, String logSeparator)
+            throws Exception {
+        mAmWmState.waitFor(mDevice, (amState, wmState) -> {
+            try {
+                final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(
+                        activityName, logSeparator);
+                return lifecycleCounts.mConfigurationChangedCount == 1 &&
+                        lifecycleCounts.mPictureInPictureModeChangedCount == 1 &&
+                        lifecycleCounts.mMultiWindowModeChangedCount == 1;
+            } catch (Exception e) {
+                return false;
+            }
+        }, "Waiting for picture-in-picture activity callbacks...");
     }
 
     /**
