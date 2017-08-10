@@ -58,6 +58,10 @@ import java.util.concurrent.TimeoutException;
 @RunWith(AndroidJUnit4.class)
 public class SharedMemoryTest {
 
+    static {
+        System.loadLibrary("ctsos_jni");
+    }
+
     private Instrumentation mInstrumentation;
     private Intent mRemoteIntent;
     private PeerConnection mRemoteConnection;
@@ -189,16 +193,19 @@ public class SharedMemoryTest {
         assertFalse(failed);
     }
 
+    private static native boolean nWriteByte(SharedMemory memory, int index, byte value);
+
     @Test
-    public void testGetFd() throws ErrnoException {
+    public void testNdkInterop() throws ErrnoException {
         SharedMemory sharedMemory = SharedMemory.create("hello", 1024);
-        assertNotEquals(-1, sharedMemory.getFd());
-        assertNotNull(sharedMemory.getFileDescriptor());
-        assertTrue(sharedMemory.getFileDescriptor().valid());
+        ByteBuffer buffer = sharedMemory.mapReadWrite();
+        assertEquals(0, buffer.get(0));
+        assertTrue(nWriteByte(sharedMemory, 0, (byte) 1));
+        assertEquals(1, buffer.get(0));
         sharedMemory.close();
-        assertEquals(-1, sharedMemory.getFd());
-        assertNotNull(sharedMemory.getFileDescriptor());
-        assertTrue(!sharedMemory.getFileDescriptor().valid());
+        buffer.put(0, (byte) 5);
+        assertFalse(nWriteByte(sharedMemory, 0, (byte) 2));
+        assertEquals(5, buffer.get(0));
     }
 
     @Test(expected=IllegalArgumentException.class)
