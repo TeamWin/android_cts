@@ -133,6 +133,9 @@ public class CtsSelfManagedConnectionService extends ConnectionService {
         connection.putExtras(moreExtras);
         connection.setVideoState(request.getVideoState());
 
+        if (!isIncoming) {
+           connection.setInitializing();
+        }
         synchronized(mLock) {
             mConnections.add(connection);
         }
