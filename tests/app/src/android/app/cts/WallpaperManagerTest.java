@@ -23,6 +23,7 @@ import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
 import android.app.WallpaperColors;
@@ -198,8 +199,7 @@ public class WallpaperManagerTest {
         WallpaperManager.OnColorsChangedListener counter = (colors, whichWp) -> latch.countDown();
 
         // Add and remove listener
-        WallpaperManager.OnColorsChangedListener listener =
-                mock(WallpaperManager.OnColorsChangedListener.class);
+        WallpaperManager.OnColorsChangedListener listener = getTestableListener();
         mWallpaperManager.addOnColorsChangedListener(listener);
         mWallpaperManager.removeOnColorsChangedListener(listener);
 
@@ -275,8 +275,7 @@ public class WallpaperManagerTest {
         final CountDownLatch latch = new CountDownLatch(expected);
         Handler handler = new Handler(Looper.getMainLooper());
 
-        WallpaperManager.OnColorsChangedListener listener =
-                mock(WallpaperManager.OnColorsChangedListener.class);
+        WallpaperManager.OnColorsChangedListener listener = getTestableListener();
         WallpaperManager.OnColorsChangedListener counter = (colors, whichWp) -> {
             handler.post(()-> {
                 received.add(whichWp);
@@ -325,8 +324,7 @@ public class WallpaperManagerTest {
 
         final CountDownLatch latch = new CountDownLatch(1);
 
-        WallpaperManager.OnColorsChangedListener listener =
-                mock(WallpaperManager.OnColorsChangedListener.class);
+        WallpaperManager.OnColorsChangedListener listener = getTestableListener();
         WallpaperManager.OnColorsChangedListener counter = (colors, whichWp) -> {
             latch.countDown();
         };
@@ -405,6 +403,17 @@ public class WallpaperManagerTest {
             mContext.unregisterReceiver(receiver);
             mWallpaperManager.removeOnColorsChangedListener(callback);
             bmp.recycle();
+        }
+    }
+
+    public WallpaperManager.OnColorsChangedListener getTestableListener() {
+        // Unfortunately mockito cannot mock anonymous classes or lambdas.
+        return spy(new TestableColorListener());
+    }
+
+    public class TestableColorListener implements WallpaperManager.OnColorsChangedListener {
+        @Override
+        public void onColorsChanged(WallpaperColors colors, int which) {
         }
     }
 }

@@ -765,6 +765,25 @@ def normalize_img(img):
     """
     return (img - numpy.amin(img))/(numpy.amax(img) - numpy.amin(img))
 
+
+def chart_located_per_argv():
+    """Determine if chart already located outside of test.
+
+    If chart info provided, return location and size. If not, return None.
+
+    Args:
+        None
+    Returns:
+        chart_loc:  float converted xnorm,ynorm,wnorm,hnorm from argv text.
+                    argv is of form 'chart_loc=0.45,0.45,0.1,0.1'
+    """
+    for s in sys.argv[1:]:
+        if s[:10] == "chart_loc=" and len(s) > 10:
+            chart_loc = s[10:].split(",")
+            return map(float, chart_loc)
+    return None, None, None, None
+
+
 def flip_mirror_img_per_argv(img):
     """Flip/mirror an image if "flip" or "mirror" is in argv
 

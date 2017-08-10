@@ -38,7 +38,7 @@ CHART_SCALE_STOP = 1.35
 CHART_SCALE_STEP = 0.025
 
 
-def test_lens_position(cam, props, fmt, sensitivity, exp, af_fd):
+def test_lens_position(cam, props, fmt, sensitivity, exp, chart):
     """Return fd, sharpness, lens state of the output images.
 
     Args:
@@ -49,23 +49,13 @@ def test_lens_position(cam, props, fmt, sensitivity, exp, af_fd):
             android.sensor.sensitivity
         exp: Exposure time for the 3A request as defined in
             android.sensor.exposureTime
-        af_fd: Focus distance for the 3A request as defined in
-            android.lens.focusDistance
+        chart: Object with chart properties
 
     Returns:
         Dictionary of results for different focal distance captures
         with static lens positions and moving lens positions
         d_static, d_moving
     """
-
-    # initialize chart class
-    chart = its.cv2image.Chart(CHART_FILE, CHART_HEIGHT, CHART_DISTANCE,
-                                CHART_SCALE_START, CHART_SCALE_STOP,
-                                CHART_SCALE_STEP)
-
-    # find chart location
-    xnorm, ynorm, wnorm, hnorm = chart.locate(cam, props, fmt, sensitivity,
-                                              exp, af_fd)
 
     # initialize variables and take data sets
     data_static = {}
@@ -89,11 +79,11 @@ def test_lens_position(cam, props, fmt, sensitivity, exp, af_fd):
         print ' focus distance (diopters): %.3f' % data['fd']
         print ' current lens location (diopters): %.3f' % data['loc']
         y, _, _ = its.image.convert_capture_to_planes(cap, props)
-        chart = its.image.normalize_img(its.image.get_image_patch(y,
-                                                                  xnorm, ynorm,
-                                                                  wnorm, hnorm))
-        its.image.write_image(chart, '%s_stat_i=%d_chart.jpg' % (NAME, i))
-        data['sharpness'] = white_level*its.image.compute_image_sharpness(chart)
+        chart.img = its.image.normalize_img(its.image.get_image_patch(
+                y, chart.xnorm, chart.ynorm, chart.wnorm, chart.hnorm))
+        its.image.write_image(chart.img, '%s_stat_i=%d_chart.jpg' % (NAME, i))
+        data['sharpness'] = white_level*its.image.compute_image_sharpness(
+                chart.img)
         print 'Chart sharpness: %.1f\n' % data['sharpness']
         data_static[i] = data
     # take moving data set
@@ -116,11 +106,11 @@ def test_lens_position(cam, props, fmt, sensitivity, exp, af_fd):
         print ' current lens location (diopters): %.3f' % data['loc']
         y, _, _ = its.image.convert_capture_to_planes(cap, props)
         y = its.image.flip_mirror_img_per_argv(y)
-        chart = its.image.normalize_img(its.image.get_image_patch(y,
-                                                                  xnorm, ynorm,
-                                                                  wnorm, hnorm))
-        its.image.write_image(chart, '%s_move_i=%d_chart.jpg' % (NAME, i))
-        data['sharpness'] = white_level*its.image.compute_image_sharpness(chart)
+        chart.img = its.image.normalize_img(its.image.get_image_patch(
+                y, chart.xnorm, chart.ynorm, chart.wnorm, chart.hnorm))
+        its.image.write_image(chart.img, '%s_move_i=%d_chart.jpg' % (NAME, i))
+        data['sharpness'] = white_level*its.image.compute_image_sharpness(
+                chart.img)
         print 'Chart sharpness: %.1f\n' % data['sharpness']
         data_moving[i] = data
     return data_static, data_moving
@@ -128,19 +118,23 @@ def test_lens_position(cam, props, fmt, sensitivity, exp, af_fd):
 
 def main():
     """Test if focus position is properly reported for moving lenses."""
-
     print '\nStarting test_lens_position.py'
+    # initialize chart class
+    chart = its.cv2image.Chart(CHART_FILE, CHART_HEIGHT, CHART_DISTANCE,
+                               CHART_SCALE_START, CHART_SCALE_STOP,
+                               CHART_SCALE_STEP)
+
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
         its.caps.skip_unless(not its.caps.fixed_focus(props))
         its.caps.skip_unless(its.caps.lens_calibrated(props))
         fmt = {'format': 'yuv', 'width': VGA_WIDTH, 'height': VGA_HEIGHT}
 
-        # Get proper sensitivity, exposure time, and focus distance with 3A.
-        s, e, _, _, fd = cam.do_3a(get_results=True)
+        # Get proper sensitivity and exposure time with 3A
+        s, e, _, _, _ = cam.do_3a(get_results=True)
 
         # Get sharpness for each focal distance
-        d_stat, d_move = test_lens_position(cam, props, fmt, s, e, fd)
+        d_stat, d_move = test_lens_position(cam, props, fmt, s, e, chart)
         print 'Lens stationary'
         for k in sorted(d_stat):
             print ('i: %d\tfd: %.3f\tlens location (diopters): %.3f \t'
