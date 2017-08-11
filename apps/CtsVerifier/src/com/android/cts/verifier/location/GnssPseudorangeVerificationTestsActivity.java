@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2016 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,15 @@
 package com.android.cts.verifier.location;
 
 import com.android.cts.verifier.location.base.GnssCtsTestActivity;
-import android.location.cts.GnssTtffTests;
+import android.location.cts.GnssPseudorangeVerificationTest;
 
 /**
- * Activity to execute CTS GnssStatusTest.
- * It is a wrapper for {@link GnssTtffTests} running with AndroidJUnitRunner.
+ * Activity to execute CTS GnssPseudorangeVerificationTest.
+ * It is a wrapper for {@link GnssPseudorangeVerificationTest} running with AndroidJUnitRunner.
  */
 
-public class GnssTtffTestsActivity extends GnssCtsTestActivity {
-  public GnssTtffTestsActivity() {
-    super(GnssTtffTests.class);
+public class GnssPseudorangeVerificationTestsActivity extends GnssCtsTestActivity {
+  public GnssPseudorangeVerificationTestsActivity() {
+    super(GnssPseudorangeVerificationTest.class);
   }
 }
