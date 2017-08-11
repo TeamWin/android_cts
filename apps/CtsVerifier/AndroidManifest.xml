@@ -1066,6 +1066,17 @@
             <meta-data android:name="test_required_features" android:value="android.hardware.location.gps" />
         </activity>
 
+        <activity android:name=".location.GnssPseudorangeVerificationTestsActivity"
+            android:label="@string/location_pseudorange_value_test"
+            android:screenOrientation="locked">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.cts.intent.category.MANUAL_TEST"/>
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_hardware"/>
+            <meta-data android:name="test_required_features" android:value="android.hardware.location.gps" />
+        </activity>
+
         <activity android:name=".location.GnssTtffTestsActivity"
             android:label="@string/location_gnss_ttff_test"
             android:screenOrientation="locked">
