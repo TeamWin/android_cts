@@ -96,4 +96,8 @@ public class ProcessMustUseSeccompTest extends DeviceTestCase {
     public void testConfigStoreHasSeccompFilter() throws DeviceNotAvailableException {
         assertSeccompFilter("android.hardware.configstore", true);
     }
+
+    public void testMediaextractorHasSeccompFilter() throws DeviceNotAvailableException {
+        assertSeccompFilter("media.extractor", false);
+    }
 }
