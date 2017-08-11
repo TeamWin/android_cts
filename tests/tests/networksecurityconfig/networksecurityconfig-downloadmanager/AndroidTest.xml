@@ -21,6 +21,6 @@
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.security.net.config.cts.CtsNetSecConfigDownloadManagerTestCases" />
-        <option name="runtime-hint" value="11m" />
+        <option name="runtime-hint" value="15s" />
     </test>
 </configuration>
