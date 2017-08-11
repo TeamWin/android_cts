@@ -17,6 +17,7 @@
 package android.security.cts;
 
 import android.media.audiofx.AudioEffect;
+import android.media.audiofx.EnvironmentalReverb;
 import android.media.audiofx.Equalizer;
 import android.media.MediaPlayer;
 import android.platform.test.annotations.SecurityTest;
@@ -27,6 +28,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.UUID;
 
 public class EffectBundleTest extends InstrumentationTestCase {
     private static final String TAG = "EffectBundleTest";
@@ -37,6 +39,11 @@ public class EffectBundleTest extends InstrumentationTestCase {
 
     private static final int MEDIA_SHORT = 0;
     private static final int MEDIA_LONG = 1;
+
+    // should match audio_effect.h (native)
+    private static final int EFFECT_CMD_SET_PARAM = 5;
+
+    private static final int intSize = 4;
 
     //Testing security bug: 32436341
     public void testEqualizer_getParamCenterFreq() throws Exception {
@@ -161,6 +168,42 @@ public class EffectBundleTest extends InstrumentationTestCase {
                 eqSetParamProperties(MEDIA_LONG));
     }
 
+    //Testing security bug: 63662938
+    @SecurityTest
+    public void testDownmix_setParameter() throws Exception {
+        verifyZeroPVSizeRejectedForSetParameter(
+                EFFECT_TYPE_DOWNMIX, new int[] { DOWNMIX_PARAM_TYPE });
+    }
+
+    /**
+     * Definitions for the downmix effect. Taken from
+     * system/media/audio/include/system/audio_effects/effect_downmix.h
+     * This effect is normally not exposed to applications.
+     */
+    private static final UUID EFFECT_TYPE_DOWNMIX = UUID
+            .fromString("381e49cc-a858-4aa2-87f6-e8388e7601b2");
+    private static final int DOWNMIX_PARAM_TYPE = 0;
+
+    //Testing security bug: 63526567
+    @SecurityTest
+    public void testEnvironmentalReverb_setParameter() throws Exception {
+        verifyZeroPVSizeRejectedForSetParameter(
+                AudioEffect.EFFECT_TYPE_ENV_REVERB, new int[] {
+                  EnvironmentalReverb.PARAM_ROOM_LEVEL,
+                  EnvironmentalReverb.PARAM_ROOM_HF_LEVEL,
+                  EnvironmentalReverb.PARAM_DECAY_TIME,
+                  EnvironmentalReverb.PARAM_DECAY_HF_RATIO,
+                  EnvironmentalReverb.PARAM_REFLECTIONS_LEVEL,
+                  EnvironmentalReverb.PARAM_REFLECTIONS_DELAY,
+                  EnvironmentalReverb.PARAM_REVERB_LEVEL,
+                  EnvironmentalReverb.PARAM_REVERB_DELAY,
+                  EnvironmentalReverb.PARAM_DIFFUSION,
+                  EnvironmentalReverb.PARAM_DENSITY,
+                  10 // EnvironmentalReverb.PARAM_PROPERTIES
+                }
+        );
+    }
+
     private boolean eqSetParamProperties(int media) {
         MediaPlayer mp = null;
         Equalizer eq = null;
@@ -169,10 +212,9 @@ public class EffectBundleTest extends InstrumentationTestCase {
             mp = MediaPlayer.create(getInstrumentation().getContext(),  getMediaId(media));
             eq = new Equalizer(0 /*priority*/, mp.getAudioSessionId());
 
-            int intSize = 4; //bytes
             int shortSize = 2; //bytes
 
-            int cmdCode = 5; // EFFECT_CMD_SET_PARAM
+            int cmdCode = EFFECT_CMD_SET_PARAM;
             byte command[] = concatArrays(/*status*/ intToByteArray(0),
                     /*psize*/ intToByteArray(1 * intSize),
                     /*vsize*/ intToByteArray(2 * shortSize),
@@ -213,7 +255,6 @@ public class EffectBundleTest extends InstrumentationTestCase {
             eq = new Equalizer(0 /*priority*/, mp.getAudioSessionId());
 
             short band = 2;
-            int intSize = 4; //bytes
 
             //baseline
             int cmdCode = 8; // EFFECT_CMD_GET_PARAM
@@ -360,6 +401,74 @@ public class EffectBundleTest extends InstrumentationTestCase {
                 return R.raw.good;
             case MEDIA_LONG:
                 return R.raw.onekhzsine_90sec;
+        }
+    }
+
+    // Verifies that for all the effects of the specified type
+    // an attempt to pass psize = 0 or vsize = 0 to 'set parameter' command
+    // is rejected by the effect.
+    private void verifyZeroPVSizeRejectedForSetParameter(
+            UUID effectType, final int paramCodes[]) throws Exception {
+
+        boolean effectFound = false;
+        for (AudioEffect.Descriptor descriptor : AudioEffect.queryEffects()) {
+            if (descriptor.type.compareTo(effectType) != 0) continue;
+
+            effectFound = true;
+            AudioEffect ae = null;
+            MediaPlayer mp = null;
+            try {
+                mp = MediaPlayer.create(getInstrumentation().getContext(), R.raw.good);
+                java.lang.reflect.Constructor ct = AudioEffect.class.getConstructor(
+                        UUID.class, UUID.class, int.class, int.class);
+                try {
+                    ae = (AudioEffect) ct.newInstance(descriptor.type, descriptor.uuid,
+                            /*priority*/ 0, mp.getAudioSessionId());
+                } catch (Exception e) {
+                    // Not every effect can be instantiated by apps.
+                    Log.w(TAG, "Failed to create effect " + descriptor.uuid);
+                    continue;
+                }
+                java.lang.reflect.Method command = AudioEffect.class.getDeclaredMethod(
+                        "command", int.class, byte[].class, byte[].class);
+                for (int paramCode : paramCodes) {
+                    executeSetParameter(ae, command, intSize, 0, paramCode);
+                    executeSetParameter(ae, command, 0, intSize, paramCode);
+                }
+            } finally {
+                if (ae != null) {
+                    ae.release();
+                }
+                if (mp != null) {
+                    mp.release();
+                }
+            }
+        }
+
+        if (!effectFound) {
+            Log.w(TAG, "No effect with type " + effectType + " was found");
+        }
+    }
+
+    private void executeSetParameter(AudioEffect ae, java.lang.reflect.Method command,
+            int paramSize, int valueSize, int paramCode) throws Exception {
+        byte cmdBuf[] = concatArrays(/*status*/ intToByteArray(0),
+                /*psize*/ intToByteArray(paramSize),
+                /*vsize*/ intToByteArray(valueSize),
+                /*data[0]*/ intToByteArray(paramCode));
+        byte reply[] = new byte[intSize];
+        Integer ret = (Integer)command.invoke(ae, EFFECT_CMD_SET_PARAM, cmdBuf, reply);
+        if (ret >= 0) {
+            int val = byteArrayToInt(reply, 0 /*offset*/);
+            assertTrue("Negative reply value expected, effect " + ae.getDescriptor().uuid +
+                    ", parameter " + paramCode + ", reply value " + val,
+                    val < 0);
+        } else {
+            // Some effect implementations detect this condition at the command dispatch level,
+            // and reject command execution. That's also OK, but log a message so the test
+            // author can double check if 'paramCode' is correct.
+            Log.w(TAG, "\"Set parameter\" command rejected for effect " + ae.getDescriptor().uuid +
+                    ", parameter " + paramCode + ", return code " + ret);
         }
     }
 
