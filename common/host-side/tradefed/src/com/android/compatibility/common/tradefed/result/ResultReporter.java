@@ -62,6 +62,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -82,6 +84,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     private static final String RESULT_KEY = "COMPATIBILITY_TEST_RESULT";
     private static final String CTS_PREFIX = "cts:";
     private static final String BUILD_INFO = CTS_PREFIX + "build_";
+    private static final String LATEST_LINK_NAME = "latest";
 
     private static final List<String> NOT_RETRY_FILES = Arrays.asList(
             ChecksumReporter.NAME,
@@ -519,6 +522,16 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             info("Test Logs: %s", mLogDir.getCanonicalPath());
             debug("Full Result: %s", zippedResults.getCanonicalPath());
 
+            Path latestLink = createLatestLinkDirectory(mResultDir.toPath());
+            if (latestLink != null) {
+                info("Latest results link: " + latestLink.toAbsolutePath());
+            }
+
+            latestLink = createLatestLinkDirectory(mLogDir.toPath());
+            if (latestLink != null) {
+                info("Latest logs link: " + latestLink.toAbsolutePath());
+            }
+
             saveLog(resultFile, zippedResults);
 
             uploadResult(resultFile);
@@ -533,6 +546,30 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
                 mResult.countResults(TestStatus.PASS),
                 mResult.countResults(TestStatus.FAIL),
                 moduleProgress);
+    }
+
+    private Path createLatestLinkDirectory(Path directory) {
+        Path link = null;
+
+        Path parent = directory.getParent();
+
+        if (parent != null) {
+            link = parent.resolve(LATEST_LINK_NAME);
+            try {
+                // if latest already exists, we have to remove it before creating
+                Files.deleteIfExists(link);
+                Files.createSymbolicLink(link, directory);
+            } catch (IOException ioe) {
+                CLog.e("Exception while attempting to create 'latest' link to: [%s]",
+                    directory);
+                CLog.e(ioe);
+                return null;
+            } catch (UnsupportedOperationException uoe) {
+                CLog.e("Failed to create 'latest' symbolic link - unsupported operation");
+                return null;
+            }
+        }
+        return link;
     }
 
     /**
