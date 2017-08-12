@@ -21,6 +21,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.PermissionGroupInfo;
 import android.content.pm.PermissionInfo;
 import android.test.AndroidTestCase;
+import android.text.TextUtils;
 import android.util.ArrayMap;
 import android.util.ArraySet;
 import android.util.Log;
@@ -54,6 +55,8 @@ public class PermissionPolicyTest extends AndroidTestCase {
         PackageInfo platformPackage = getContext().getPackageManager()
                 .getPackageInfo(PLATFORM_PACKAGE_NAME, PackageManager.GET_PERMISSIONS);
         Map<String, PermissionInfo> declaredPermissionsMap = new ArrayMap<>();
+        List<String> offendingList = new ArrayList<String>();
+
         for (PermissionInfo declaredPermission : platformPackage.permissions) {
             declaredPermissionsMap.put(declaredPermission.name, declaredPermission);
         }
@@ -71,8 +74,10 @@ public class PermissionPolicyTest extends AndroidTestCase {
             // OEMs cannot remove permissions
             String expectedPermissionName = expectedPermission.name;
             PermissionInfo declaredPermission = declaredPermissionsMap.get(expectedPermissionName);
-            assertNotNull("Permission " + expectedPermissionName
-                    + " must be declared", declaredPermission);
+            if (declaredPermission == null) {
+                offendingList.add("Permission " + expectedPermissionName + " must be declared");
+                continue;
+            }
 
             // We want to end up with OEM defined permissions and groups to check their namespace
             declaredPermissionsMap.remove(expectedPermissionName);
@@ -84,48 +89,79 @@ public class PermissionPolicyTest extends AndroidTestCase {
                     & PermissionInfo.PROTECTION_MASK_BASE;
             final int declaredProtection = declaredPermission.protectionLevel
                     & PermissionInfo.PROTECTION_MASK_BASE;
-            assertEquals("Permission " + expectedPermissionName + " invalid protection level",
-                    expectedProtection, declaredProtection);
+            if (expectedProtection != declaredProtection) {
+                offendingList.add(
+                        String.format(
+                                "Permission %s invalid protection level %x, expected %x",
+                                expectedPermissionName, declaredProtection, expectedProtection));
+            }
 
             // OEMs cannot change permission protection flags
             final int expectedProtectionFlags = expectedPermission.protectionLevel
                     & PermissionInfo.PROTECTION_MASK_FLAGS;
             final int declaredProtectionFlags = declaredPermission.protectionLevel
                     & PermissionInfo.PROTECTION_MASK_FLAGS;
-            assertEquals("Permission " + expectedPermissionName + " invalid enforced protection"
-                    + " level flags", expectedProtectionFlags, declaredProtectionFlags);
+            if (expectedProtectionFlags != declaredProtectionFlags) {
+                offendingList.add(
+                        String.format(
+                                "Permission %s invalid enforced protection %x, expected %x",
+                                expectedPermissionName,
+                                declaredProtectionFlags,
+                                expectedProtectionFlags));
+            }
 
             // OEMs cannot change permission grouping
             if ((declaredPermission.protectionLevel & PermissionInfo.PROTECTION_DANGEROUS) != 0) {
-                assertEquals("Permission " + expectedPermissionName + " not in correct group",
-                        expectedPermission.group, declaredPermission.group);
-                assertTrue("Permission group " + expectedPermission.group + "must be defined",
-                        declaredGroupsSet.contains(declaredPermission.group));
+                if (!expectedPermission.group.equals(declaredPermission.group)) {
+                    offendingList.add(
+                            "Permission " + expectedPermissionName + " not in correct group");
+                }
+
+                if (!declaredGroupsSet.contains(declaredPermission.group)) {
+                    offendingList.add(
+                            "Permission group " + expectedPermission.group + "must be defined");
+                }
             }
         }
 
         // OEMs cannot define permissions in the platform namespace
         for (String permission : declaredPermissionsMap.keySet()) {
-            assertFalse("Cannot define permission in android namespace:" + permission,
-                    permission.startsWith(PLATFORM_ROOT_NAMESPACE));
+            if (permission.startsWith(PLATFORM_ROOT_NAMESPACE)) {
+                offendingList.add("Cannot define permission in android namespace:" + permission);
+            }
         }
 
         // OEMs cannot define groups in the platform namespace
         for (PermissionGroupInfo declaredGroup : declaredGroups) {
             if (!expectedPermissionGroups.contains(declaredGroup.name)) {
-                assertFalse("Cannot define group " + declaredGroup.name + " in android namespace",
-                        declaredGroup.name != null
-                                && declaredGroup.packageName.equals(PLATFORM_PACKAGE_NAME)
-                                && declaredGroup.name.startsWith(PLATFORM_ROOT_NAMESPACE));
+                if (declaredGroup.name != null) {
+                    if (declaredGroup.packageName.equals(PLATFORM_PACKAGE_NAME)
+                            || declaredGroup.name.startsWith(PLATFORM_ROOT_NAMESPACE)) {
+                        offendingList.add(
+                                "Cannot define group "
+                                        + declaredGroup.name
+                                        + ", package "
+                                        + declaredGroup.packageName
+                                        + " in android namespace");
+                    }
+                }
             }
         }
 
         // OEMs cannot define new ephemeral permissions
         for (String permission : declaredPermissionsMap.keySet()) {
             PermissionInfo info = declaredPermissionsMap.get(permission);
-            assertFalse("Cannot define new ephemeral permission " + permission,
-                    (info.protectionLevel & PermissionInfo.PROTECTION_FLAG_EPHEMERAL) != 0);
+            if ((info.protectionLevel & PermissionInfo.PROTECTION_FLAG_EPHEMERAL) == 0) {
+                offendingList.add("Cannot define new ephemeral permission " + permission);
+            }
         }
+
+        // Fail on any offending item
+        String errMsg =
+                String.format(
+                        "Platform Permission Policy Unaltered:\n%s",
+                        TextUtils.join("\n", offendingList));
+        assertTrue(errMsg, offendingList.isEmpty());
     }
 
     private List<PermissionInfo> loadExpectedPermissions() throws Exception {
