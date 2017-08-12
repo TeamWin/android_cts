@@ -18,4 +18,9 @@
       <item name="android:paddingStart">?android:attr/listPreferredItemPaddingStart</item>
       <item name="android:paddingTop">?android:attr/dialogPreferredPadding</item>
     </style>
+    <style name="OverlayTheme" parent="android:Theme.Dialog">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+    </style>
 </resources>
