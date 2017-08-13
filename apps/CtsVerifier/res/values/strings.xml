@@ -557,6 +557,7 @@
     <string name="location_gnss_measure_no_location_test">GNSS Measurement Before Location Test</string>
     <string name="location_gnss_reg_test">GNSS Measurement Registration Test</string>
     <string name="location_gnss_value_test">GNSS Measurement Values Test</string>
+    <string name="location_pseudorange_value_test">GNSS Pseudorange Test</string>
     <string name="location_gnss_ttff_test">GNSS TTFF Test</string>
     <string name="location_gnss_nav_msg_test">GNSS Navigation Message Test</string>
     <string name="location_gnss_status_test">GNSS Status Test</string>
@@ -937,7 +938,8 @@
     <string name="snsr_offbody_state_change">Offbody state changed to %1$d. Timestamp=%2$d.</string>
     <string name="snsr_start_offbody_sensor_test_instr">Put watch on your wrist and then click Next button.</string>
     <string name="snsr_start_onbody_sensor_test_instr">Remove the watch from your wrist and then click Next button.</string>
-    <string name="snsr_offbody_detect_test_instr">Click Next button, then immediate remove the watch from your wrist.</string>
+    <string name="snsr_offbody_detect_test_instr">Click Next button, then immediate remove the watch from your wrist after the countdown reaches 0.</string>
+    <string name="snsr_offbody_detect_test_countdown">Countdown: %1$d.</string>
     <string name="snsr_onbody_detect_test_instr">Click Next button, then immediately attach the watch on your wrist.</string>
     <string name="snsr_ap_wake_offbody_detect_test_instr">Click Next button, then palm the screen. Wait a few seconds after screen blackens, then remove watch from wrist.</string>
 
