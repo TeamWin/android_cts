@@ -119,29 +119,37 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
         // and profile owners on the primary user.
     }
 
-    /**
-     * Don't require a device for tests that use the network stack on secondary users.
-     */
+    /** VPN tests don't require physical device for managed profile, thus overriding. */
     @Override
     public void testAlwaysOnVpn() throws Exception {
         super.testAlwaysOnVpn();
     }
 
+    /** VPN tests don't require physical device for managed profile, thus overriding. */
     @Override
     public void testAlwaysOnVpnLockDown() throws Exception {
         super.testAlwaysOnVpnLockDown();
     }
 
+    /** VPN tests don't require physical device for managed profile, thus overriding. */
+    @Override
+    public void testAlwaysOnVpnAcrossReboot() throws Exception {
+        super.testAlwaysOnVpnAcrossReboot();
+    }
+
+    /** VPN tests don't require physical device for managed profile, thus overriding. */
     @Override
     public void testAlwaysOnVpnPackageUninstalled() throws Exception {
         super.testAlwaysOnVpnPackageUninstalled();
     }
 
+    /** VPN tests don't require physical device for managed profile, thus overriding. */
     @Override
     public void testAlwaysOnVpnUnsupportedPackage() throws Exception {
         super.testAlwaysOnVpnUnsupportedPackage();
     }
 
+    /** VPN tests don't require physical device for managed profile, thus overriding. */
     @Override
     public void testAlwaysOnVpnUnsupportedPackageReplaced() throws Exception {
         super.testAlwaysOnVpnUnsupportedPackageReplaced();

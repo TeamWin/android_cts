@@ -284,6 +284,32 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @RequiresDevice
+    public void testAlwaysOnVpnAcrossReboot() throws Exception {
+        // Note: Always-on VPN is supported on non-FBE devices as well, and the behavior should be
+        // the same. However we're only testing the FBE case here as we need to set a device
+        // password during the test. This would cause FDE devices (e.g. angler) to prompt for the
+        // password during reboot, which we can't handle easily.
+        if (!mHasFeature || !mSupportsFbe) {
+            return;
+        }
+
+        // Set a password to encrypt the user
+        final String testPassword = "1234";
+        changeUserCredential(testPassword, null /*oldCredential*/, mUserId);
+
+        try {
+            installAppAsUser(VPN_APP_APK, mUserId);
+            executeDeviceTestMethod(".AlwaysOnVpnMultiStageTest", "testAlwaysOnSet");
+            rebootAndWaitUntilReady();
+            verifyUserCredential(testPassword, mUserId);
+            executeDeviceTestMethod(".AlwaysOnVpnMultiStageTest", "testAlwaysOnSetAfterReboot");
+        } finally {
+            changeUserCredential(null /*newCredential*/, testPassword, mUserId);
+            executeDeviceTestMethod(".AlwaysOnVpnMultiStageTest", "testCleanup");
+        }
+    }
+
+    @RequiresDevice
     public void testAlwaysOnVpnPackageUninstalled() throws Exception {
         if (!mHasFeature) {
             return;
