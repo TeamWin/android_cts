@@ -67,9 +67,9 @@ public class PermissionPolicyTest25 {
             flagsToString += flagsToString.isEmpty() ? "runtimeOnly" : "|runtimeOnly";
             protectionLevel &= ~PermissionInfo.PROTECTION_FLAG_RUNTIME_ONLY;
         }
-        if ((protectionLevel & PermissionInfo.PROTECTION_FLAG_EPHEMERAL) != 0) {
+        if ((protectionLevel & PermissionInfo.PROTECTION_FLAG_INSTANT) != 0) {
             flagsToString += flagsToString.isEmpty() ? "ephemeral" : "|ephemeral";
-            protectionLevel &= ~PermissionInfo.PROTECTION_FLAG_EPHEMERAL;
+            protectionLevel &= ~PermissionInfo.PROTECTION_FLAG_INSTANT;
         }
         if ((protectionLevel & PermissionInfo.PROTECTION_FLAG_APPOP) != 0) {
             flagsToString += flagsToString.isEmpty() ? "appop" : "|appop";
