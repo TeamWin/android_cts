@@ -84,7 +84,7 @@ public class CustomDescriptionTest extends AutoFillServiceTestCase {
                 .setCustomDescription(descriptionBuilder.apply(usernameId, passwordId))
                 .build());
 
-        // Trigger auto-fill with custom description
+        // Trigger autofill with custom description
         mActivity.onPassword(View::requestFocus);
 
         // Wait for onFill() before proceeding.
@@ -222,6 +222,54 @@ public class CustomDescriptionTest extends AutoFillServiceTestCase {
                     .addChild(R.id.img, trans)
                     .build();
         }, () -> assertSaveUiWithoutCustomDescriptionIsShown());
+    }
+
+    private void multipleTransformationsForSameFieldTest(boolean matchFirst) throws Exception {
+        enableService();
+
+        // Set response with custom description
+        final AutofillId usernameId = mActivity.getUsername().getAutofillId();
+        final CharSequenceTransformation firstTrans = new CharSequenceTransformation
+                .Builder(usernameId, Pattern.compile("(marco)"), "polo")
+                .build();
+        final CharSequenceTransformation secondTrans = new CharSequenceTransformation
+                .Builder(usernameId, Pattern.compile("(MARCO)"), "POLO")
+                .build();
+        final RemoteViews presentation = new RemoteViews(getContext().getPackageName(),
+                R.layout.two_horizontal_text_fields);
+        final CustomDescription customDescription = new CustomDescription.Builder(presentation)
+                .addChild(R.id.first, firstTrans)
+                .addChild(R.id.first, secondTrans)
+                .build();
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_USERNAME)
+                .setCustomDescription(customDescription)
+                .build());
+
+        // Trigger autofill with custom description
+        mActivity.onPassword(View::requestFocus);
+
+        // Wait for onFill() before proceeding.
+        sReplier.getNextFillRequest();
+
+        // Trigger save.
+        final String username = matchFirst ? "marco" : "MARCO";
+        mActivity.onUsername((v) -> v.setText(username));
+        mActivity.onPassword((v) -> v.setText(LoginActivity.BACKDOOR_PASSWORD_SUBSTRING));
+        mActivity.tapLogin();
+
+        final String expectedText = matchFirst ? "polo" : "POLO";
+        assertSaveUiWithCustomDescriptionIsShown(expectedText);
+    }
+
+    @Test
+    public void applyMultipleTransformationsForSameField_matchFirst() throws Exception {
+        multipleTransformationsForSameFieldTest(true);
+    }
+
+    @Test
+    public void applyMultipleTransformationsForSameField_matchSecond() throws Exception {
+        multipleTransformationsForSameFieldTest(false);
     }
 
     private void assertSaveUiWithoutCustomDescriptionIsShown() {
