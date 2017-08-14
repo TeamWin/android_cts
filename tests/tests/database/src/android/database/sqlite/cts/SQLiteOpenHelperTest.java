@@ -25,8 +25,13 @@ import android.database.sqlite.SQLiteDebug;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQuery;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.uiautomator.UiDevice;
 import android.test.AndroidTestCase;
 import android.util.Log;
+
+import static android.database.sqlite.cts.DatabaseTestUtils.getDbInfoOutput;
+import static android.database.sqlite.cts.DatabaseTestUtils.waitForConnectionToClose;
 
 /**
  * Test {@link SQLiteOpenHelper}.
@@ -159,6 +164,30 @@ public class SQLiteOpenHelperTest extends AndroidTestCase {
             }
         }
         assertTrue("No dbstat found for " + dbName, dbStatFound);
+    }
+
+    public void testCloseIdleConnection() throws Exception {
+        mOpenHelper.setIdleConnectionTimeout(1000);
+        mOpenHelper.getReadableDatabase();
+        // Wait a bit and check that connection is still open
+        Thread.sleep(600);
+        String output = getDbInfoOutput();
+        assertTrue("Connection #0 should be open. Output: " + output,
+                output.contains("Connection #0:"));
+
+        // Now cause idle timeout and check that connection is closed
+        // We wait up to 5 seconds, which is longer than required 1 s to accommodate for delays in
+        // message processing when system is busy
+        boolean connectionWasClosed = waitForConnectionToClose(10, 500);
+        assertTrue("Connection #0 should be closed", connectionWasClosed);
+    }
+
+    public void testSetIdleConnectionTimeoutValidation() throws Exception {
+        try {
+            mOpenHelper.setIdleConnectionTimeout(-1);
+            fail("Negative timeout should be rejected");
+        } catch (IllegalArgumentException expected) {
+        }
     }
 
     private MockOpenHelper getOpenHelper() {
