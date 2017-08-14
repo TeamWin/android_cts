@@ -81,7 +81,7 @@ public class FailureListener extends ResultForwarder {
             }
         }
         if (mBugReportOnFailure) {
-           InputStreamSource bugSource = mDevice.getBugreport();
+           InputStreamSource bugSource = mDevice.getBugreportz();
            super.testLog(String.format("%s-bugreport", test.toString()), LogDataType.BUGREPORT,
                    bugSource);
            bugSource.cancel();
