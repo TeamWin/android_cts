@@ -558,9 +558,13 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
         try {
             File logFile = null;
             if (mCompressLogs) {
-                logFile = mTestLogSaver.saveAndGZipLogData(name, type, stream.createInputStream());
+                try (InputStream inputStream = stream.createInputStream()) {
+                    logFile = mTestLogSaver.saveAndGZipLogData(name, type, inputStream);
+                }
             } else {
-                logFile = mTestLogSaver.saveLogData(name, type, stream.createInputStream());
+                try (InputStream inputStream = stream.createInputStream()) {
+                    logFile = mTestLogSaver.saveLogData(name, type, inputStream);
+                }
             }
             debug("Saved logs for %s in %s", name, logFile.getAbsolutePath());
         } catch (IOException e) {
