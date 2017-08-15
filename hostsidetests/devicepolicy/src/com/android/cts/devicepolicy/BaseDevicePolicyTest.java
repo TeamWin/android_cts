@@ -769,6 +769,23 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         }
     }
 
+    /**
+     * Verifies the lock credential for the given user, which unlocks the user.
+     *
+     * @param credential The credential to verify.
+     * @param userId The id of the user.
+     */
+    protected void verifyUserCredential(String credential, int userId)
+            throws DeviceNotAvailableException {
+        final String credentialArgument = (credential == null || credential.isEmpty())
+                ? "" : ("--old " + credential);
+        String commandOutput = getDevice().executeShellCommand(String.format(
+                "cmd lock_settings verify --user %d %s", userId, credentialArgument));
+        if (!commandOutput.startsWith("Lock credential verified")) {
+            fail("Failed to verify user credential: " + commandOutput);
+        }
+    }
+
     protected void wakeupAndDismissKeyguard() throws Exception {
         executeShellCommand("input keyevent KEYCODE_WAKEUP");
         executeShellCommand("wm dismiss-keyguard");

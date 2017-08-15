@@ -1181,12 +1181,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertNoDanglingSessions();
     }
 
-    enum DismissType {
-        BACK_BUTTON,
-        HOME_BUTTON,
-        TOUCH_OUTSIDE
-    }
-
     @Test
     public void testSaveGoesAwayWhenTappingHomeButton() throws Exception {
         saveGoesAway(DismissType.HOME_BUTTON);
@@ -1195,6 +1189,26 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     @Test
     public void testSaveGoesAwayWhenTappingBackButton() throws Exception {
         saveGoesAway(DismissType.BACK_BUTTON);
+    }
+
+    @Test
+    public void testSaveGoesAwayWhenTappingRecentsButton() throws Exception {
+        // Launches new activity first...
+        final Context context = getContext();
+        final Intent intent = new Intent(context, CheckoutActivity.class);
+        intent.setFlags(
+                Intent.FLAG_ACTIVITY_NEW_DOCUMENT | Intent.FLAG_ACTIVITY_RETAIN_IN_RECENTS);
+        context.startActivity(intent);
+        sUiBot.assertShownByRelativeId(CheckoutActivity.ID_ADDRESS);
+        try {
+            // .. then the real activity being tested.
+            sUiBot.switchAppsUsingRecents();
+            sUiBot.assertShownByRelativeId(ID_USERNAME_CONTAINER);
+
+            saveGoesAway(DismissType.RECENTS_BUTTON);
+        } finally {
+            CheckoutActivity.finishIt();
+        }
     }
 
     @Test
@@ -1242,6 +1256,10 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 break;
             case TOUCH_OUTSIDE:
                 sUiBot.assertShownByText(expectedMessage).click();
+                break;
+            case RECENTS_BUTTON:
+                sUiBot.switchAppsUsingRecents();
+                sUiBot.assertShownByRelativeId(CheckoutActivity.ID_ADDRESS);
                 break;
             default:
                 throw new IllegalArgumentException("invalid dismiss type: " + dismissType);
