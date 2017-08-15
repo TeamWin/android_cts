@@ -326,4 +326,41 @@
     <option name="compatibility:include-filter" value="CtsWrapWrapDebugTestCases" />
     <option name="compatibility:include-filter" value="CtsWrapWrapNoDebugTestCases" />
 
+    <!-- Exclude test cases for b/64488375
+    -->
+
+    <option name="compatibility:exclude-filter" value="CtsContentTestCases android.content.cts.AvailableIntentsTest#testVoiceCommand" />
+    <option name="compatibility:exclude-filter" value="CtsContentTestCases android.content.cts.AvailableIntentsTest#testVoiceSearchHandsFree" />
+
+    <option name="compatibility:exclude-filter" value="CtsJobSchedulerTestCases android.jobscheduler.cts.ConnectivityConstraintTest#testConnectivityConstraintExecutes_metered" />
+
+    <option name="compatibility:exclude-filter" value="CtsNetTestCasesLegacyApi22 android.net.cts.legacy.api22.ConnectivityManagerLegacyTest#testStartUsingNetworkFeature_enableHipri" />
+
+    <option name="compatibility:exclude-filter" value="CtsPermissionTestCases android.permission.cts.NoSystemFunctionPermissionTest#testSendSms" />
+
+    <option name="compatibility:exclude-filter" value="CtsPermission2TestCases android.permission2.cts.NoReceiveSmsPermissionTest#testAppSpecificSmsToken" />
+    <option name="compatibility:exclude-filter" value="CtsPermission2TestCases android.permission2.cts.NoReceiveSmsPermissionTest#testReceiveTextMessage" />
+    <option name="compatibility:exclude-filter" value="CtsPermission2TestCases android.permission2.cts.PrivappPermissionsTest#testPrivappPermissionsEnforcement" />
+
+    <option name="compatibility:exclude-filter" value="CtsSecurityHostTestCases android.security.cts.SELinuxHostTest#testNoExemptionsForBinderInVendorBan" />
+    <option name="compatibility:exclude-filter" value="CtsSecurityHostTestCases android.security.cts.SELinuxHostTest#testNoExemptionsForSocketsBetweenCoreAndVendorBan" />
+    <option name="compatibility:exclude-filter" value="CtsSecurityHostTestCases android.security.cts.SELinuxHostTest#testNoExemptionsForVendorExecutingCore" />
+
+    <option name="compatibility:exclude-filter" value="CtsContentTestCases android.signature.cts.IntentTest#shouldNotFindUnexpectedIntents" />
+
+    <option name="compatibility:exclude-filter" value="CtsTextTestCases android.text.cts.EmojiTest#testEmojiGlyph" />
+    <option name="compatibility:exclude-filter" value="CtsTextTestCases android.text.util.cts.LinkifyTest#testAddLinks_doesNotAddLinksForUrlWithoutProtocolAndWithoutKnownTld" />
+
+    <option name="compatibility:exclude-filter" value="CtsUiRenderingTestCases android.uirendering.cts.testclasses.PathClippingTests#testWebViewClipWithCircle" />
+
+    <option name="compatibility:exclude-filter" value="CtsWebkitTestCases android.webkit.cts.WebViewClientTest#testOnUnhandledKeyEvent" />
+    <option name="compatibility:exclude-filter" value="CtsWebkitTestCases android.webkit.cts.WebViewTest#testFindAll" />
+    <option name="compatibility:exclude-filter" value="CtsWebkitTestCases android.webkit.cts.WebViewTest#testFindNext" />
+    <option name="compatibility:exclude-filter" value="CtsWebkitTestCases android.webkit.cts.WebViewTest#testFlingScroll" />
+    <option name="compatibility:exclude-filter" value="CtsWebkitTestCases android.webkit.cts.WebViewTest#testGetContentHeight" />
+    <option name="compatibility:exclude-filter" value="CtsWebkitTestCases android.webkit.cts.WebViewTest#testGetHitTestResult" />
+    <option name="compatibility:exclude-filter" value="CtsWebkitTestCases android.webkit.cts.WebViewTest#testPageScroll" />
+    <option name="compatibility:exclude-filter" value="CtsWebkitTestCases android.webkit.cts.WebViewTest#testRequestFocusNodeHref" />
+    <option name="compatibility:exclude-filter" value="CtsWebkitTestCases android.webkit.cts.WebViewTest#testRequestImageRef" />
+
 </configuration>
