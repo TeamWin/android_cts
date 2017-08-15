@@ -151,7 +151,7 @@ public class PermissionPolicyTest extends AndroidTestCase {
         // OEMs cannot define new ephemeral permissions
         for (String permission : declaredPermissionsMap.keySet()) {
             PermissionInfo info = declaredPermissionsMap.get(permission);
-            if ((info.protectionLevel & PermissionInfo.PROTECTION_FLAG_INSTANT) == 0) {
+            if ((info.protectionLevel & PermissionInfo.PROTECTION_FLAG_INSTANT) != 0) {
                 offendingList.add("Cannot define new instant permission " + permission);
             }
         }
