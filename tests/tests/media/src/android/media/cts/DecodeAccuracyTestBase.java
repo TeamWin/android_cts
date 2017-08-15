@@ -20,6 +20,7 @@ import android.media.cts.R;
 import static org.junit.Assert.assertNotNull;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.MediaUtils;
 
 import android.annotation.TargetApi;
 import android.annotation.SuppressLint;
@@ -38,6 +39,7 @@ import android.graphics.SurfaceTexture;
 import android.media.MediaCodec;
 import android.media.MediaCodec.BufferInfo;
 import android.media.MediaCodec.CodecException;
+import android.media.MediaCodecInfo.VideoCapabilities;
 import android.media.MediaCodecList;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
@@ -480,10 +482,27 @@ public class DecodeAccuracyTestBase {
             if (ApiLevelUtil.isBefore(Build.VERSION_CODES.KITKAT)) {
                 return;
             }
-            if (videoFormat.getMaxWidth() != VideoFormat.INT_UNSET
-                && videoFormat.getMaxHeight() != VideoFormat.INT_UNSET) {
-                mediaFormat.setInteger(MediaFormat.KEY_MAX_WIDTH, videoFormat.getMaxWidth());
-                mediaFormat.setInteger(MediaFormat.KEY_MAX_HEIGHT, videoFormat.getMaxHeight());
+            // Set KEY_MAX_WIDTH and KEY_MAX_HEIGHT when isAbrEnabled() is set.
+            if (videoFormat.isAbrEnabled()) {
+                try {
+                    // Check for max resolution supported by the codec.
+                    final MediaCodec decoder = MediaUtils.getDecoder(mediaFormat);
+                    final VideoCapabilities videoCapabilities = MediaUtils.getVideoCapabilities(
+                            decoder.getName(), videoFormat.getMimeType());
+                    decoder.release();
+                    final int maxWidth = videoCapabilities.getSupportedWidths().getUpper();
+                    final int maxHeight =
+                            videoCapabilities.getSupportedHeightsFor(maxWidth).getUpper();
+                    if (maxWidth >= videoFormat.getWidth() && maxHeight >= videoFormat.getHeight()) {
+                        mediaFormat.setInteger(MediaFormat.KEY_MAX_WIDTH, maxWidth);
+                        mediaFormat.setInteger(MediaFormat.KEY_MAX_HEIGHT, maxHeight);
+                        return;
+                    }
+                } catch (NullPointerException exception) { /* */ }
+                // Set max width/height to current size if can't get codec's max supported
+                // width/height or max is not greater than the current size.
+                mediaFormat.setInteger(MediaFormat.KEY_MAX_WIDTH, videoFormat.getWidth());
+                mediaFormat.setInteger(MediaFormat.KEY_MAX_HEIGHT, videoFormat.getHeight());
             }
         }
 
@@ -1589,6 +1608,10 @@ class VideoFormat {
 
     public int getOriginalHeight() {
         return getParsedName().getHeight();
+    }
+
+    public boolean isAbrEnabled() {
+        return false;
     }
 
     public String getOriginalSize() {
