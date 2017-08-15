@@ -53,6 +53,7 @@ public class MediaBitstreams {
     public static final String K_TEST_GET_SUPPORTED_BITSTREAMS = "testGetSupportedBitstreams";
     public static final String K_NATIVE_CRASH = "native crash";
     public static final String K_UNSUPPORTED = "unsupported";
+    public static final String K_UNAVAILABLE = "unavailable";
 
     public static final String DYNAMIC_CONFIG_XML = "DynamicConfig.xml";
     public static final String DYNAMIC_CONFIG = "dynamicConfig";
@@ -67,7 +68,7 @@ public class MediaBitstreams {
      * @return checksum file path for {@code bitstreamPath}, e.g. {@code h264/../../../../*_md5}.
      */
     public static String getMd5Path(String bitstreamPath) {
-        String base = bitstreamPath.split("\\.")[0];
+        String base = bitstreamPath.replaceAll(".mp4$|.webm$", "");
         String codec = bitstreamPath.split("/", 2)[0];
         String md5Path = String.format("%s_%s_md5", base, codec);
         return md5Path;

@@ -39,6 +39,7 @@ import java.io.PrintStream;
 import java.nio.file.Files;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
@@ -48,11 +49,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized.Parameters;
-import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
@@ -61,9 +61,7 @@ import org.xmlpull.v1.XmlPullParserFactory;
  * Test that verifies video bitstreams decode pixel perfectly
  */
 @OptionClass(alias="media-bitstreams-test")
-@RunWith(DeviceJUnit4Parameterized.class)
-@UseParametersRunnerFactory(DeviceJUnit4ClassRunnerWithParameters.RunnerFactory.class)
-public class MediaBitstreamsTest implements IDeviceTest, IBuildReceiver, IAbiReceiver {
+public abstract class MediaBitstreamsTest implements IDeviceTest, IBuildReceiver, IAbiReceiver {
 
     @Option(name = MediaBitstreams.OPT_HOST_BITSTREAMS_PATH,
             description = "Absolute path of Ittiam bitstreams (host)",
@@ -95,6 +93,32 @@ public class MediaBitstreamsTest implements IDeviceTest, IBuildReceiver, IAbiRec
             description = "Only test bitstreams in this sub-directory")
     private String mPrefix = "";
 
+    private String mPath = "";
+
+    private static ConcurrentMap<String, List<ConformanceEntry>> mResults = new ConcurrentHashMap<>();
+
+    /**
+     * Which subset of bitstreams to test
+     */
+    enum BitstreamPackage {
+        SMALL,
+        STANDARD,
+        FULL,
+    }
+
+    static class ConformanceEntry {
+        final String mPath, mCodecName, mStatus;
+        ConformanceEntry(String path, String codecName, String status) {
+            mPath = path;
+            mCodecName = codecName;
+            mStatus = status;
+        }
+        @Override
+        public String toString() {
+            return String.format("%s,%s,%s", mPath, mCodecName, mStatus);
+        }
+    }
+
     /**
      * A helper to access resources in the build.
      */
@@ -103,24 +127,25 @@ public class MediaBitstreamsTest implements IDeviceTest, IBuildReceiver, IAbiRec
     private IAbi mAbi;
     private ITestDevice mDevice;
 
-    @Parameters(name = "{0}")
-    public static Iterable<? extends Object> bitstreams() {
+    static Collection<Object[]> bitstreams(String prefix) {
         final String dynConfXml = new File("/", MediaBitstreams.DYNAMIC_CONFIG_XML).toString();
         try (InputStream is = MediaBitstreamsTest.class.getResourceAsStream(dynConfXml)) {
-            List<String> entries = new ArrayList<>();
+            List<Object[]> entries = new ArrayList<>();
             XmlPullParser parser = XmlPullParserFactory.newInstance().newPullParser();
             parser.setInput(is, null);
             parser.nextTag();
             parser.require(XmlPullParser.START_TAG, null, MediaBitstreams.DYNAMIC_CONFIG);
             while (parser.next() != XmlPullParser.END_DOCUMENT) {
-                if (parser.getEventType() != XmlPullParser.START_TAG) {
+                if (parser.getEventType() != XmlPullParser.START_TAG
+                        || !MediaBitstreams.DYNAMIC_CONFIG_ENTRY.equals(parser.getName())) {
                     continue;
                 }
-                String name = parser.getName();
-                if (name.equals(MediaBitstreams.DYNAMIC_CONFIG_ENTRY)) {
-                    final String key = MediaBitstreams.DYNAMIC_CONFIG_KEY;
-                    entries.add(parser.getAttributeValue(null, key));
+                final String key = MediaBitstreams.DYNAMIC_CONFIG_KEY;
+                String bitstream = parser.getAttributeValue(null, key);
+                if (!bitstream.startsWith(prefix)) {
+                    continue;
                 }
+                entries.add(new Object[] {prefix, bitstream});
             }
             return entries;
         } catch (XmlPullParserException | IOException e) {
@@ -129,8 +154,9 @@ public class MediaBitstreamsTest implements IDeviceTest, IBuildReceiver, IAbiRec
         }
     }
 
-    public MediaBitstreamsTest(String prefix) {
+    public MediaBitstreamsTest(String prefix, String path) {
         mPrefix = prefix;
+        mPath = path;
     }
 
     @Override
@@ -191,6 +217,10 @@ public class MediaBitstreamsTest implements IDeviceTest, IBuildReceiver, IAbiRec
         report.addValue(MediaBitstreams.KEY_CODEC_NAME, d, ResultType.NEUTRAL, ResultUnit.NONE);
         report.addValue(MediaBitstreams.KEY_STATUS, s, ResultType.NEUTRAL, ResultUnit.NONE);
         report.submit();
+
+        ConformanceEntry ce = new ConformanceEntry(p, d, s);
+        mResults.putIfAbsent(p, new ArrayList<>());
+        mResults.get(p).add(ce);
     }
 
     Map<String, String> getArgs() {
@@ -369,9 +399,16 @@ public class MediaBitstreamsTest implements IDeviceTest, IBuildReceiver, IAbiRec
     }
 
     @Test
-    public void testBitstreamsConformance()
-            throws DeviceNotAvailableException, IOException {
-        testBitstreamsConformance(mPrefix);
+    public void testBitstreamsConformance() {
+        if (!mResults.containsKey(mPath)) {
+            try {
+                testBitstreamsConformance(mPrefix);
+            } catch (DeviceNotAvailableException | IOException e) {
+                String curMethod = getCurrentMethod();
+                addConformanceEntry(curMethod, mPath, MediaBitstreams.K_UNAVAILABLE, e.toString());
+            }
+        }
+        // todo(robertshih): lookup conformance entry; pass/fail based on lookup result
     }
 
     private void testBitstreamsConformance(String prefix)
@@ -384,7 +421,7 @@ public class MediaBitstreamsTest implements IDeviceTest, IBuildReceiver, IAbiRec
                 device,
                 MediaBitstreams.K_TEST_GET_SUPPORTED_BITSTREAMS,
                 MediaBitstreams.KEY_SUPPORTED_BITSTREAMS_TXT);
-        Set<String> bitstreams = preparer.getBitstreams();
+        Collection<Object[]> bitstreams = bitstreams(mPrefix);
         Set<String> supportedBitstreams = preparer.getSupportedBitstreams();
         CLog.i("%d supported bitstreams under %s", supportedBitstreams.size(), prefix);
 
@@ -394,7 +431,7 @@ public class MediaBitstreamsTest implements IDeviceTest, IBuildReceiver, IAbiRec
 
         String curMethod = getCurrentMethod();
         Set<String> toPush = new LinkedHashSet<>();
-        Iterator<String> iter = bitstreams.iterator();
+        Iterator<Object[]> iter = bitstreams.iterator();
 
         for (int i = 0; i < bitstreams.size(); i++) {
 
@@ -402,9 +439,15 @@ public class MediaBitstreamsTest implements IDeviceTest, IBuildReceiver, IAbiRec
                 break;
             }
 
-            String p = iter.next();
+            String p = (String) iter.next()[1];
             Map<String, Boolean> decoderCapabilities;
             decoderCapabilities = preparer.getDecoderCapabilitiesForPath(p);
+            if (decoderCapabilities.isEmpty()) {
+                addConformanceEntry(
+                        curMethod, p,
+                        MediaBitstreams.K_UNAVAILABLE,
+                        MediaBitstreams.K_UNSUPPORTED);
+            }
             for (Entry<String, Boolean> entry : decoderCapabilities.entrySet()) {
                 Boolean supported = entry.getValue();
                 if (supported) {
