@@ -264,4 +264,6 @@
     <option name="compatibility:exclude-filter" value="CtsSensorTestCases android.hardware.cts.SensorDirectReportTest#testRegisterMultipleChannels" />
     <option name="compatibility:exclude-filter" value="CtsSensorTestCases android.hardware.cts.SensorDirectReportTest#testReconfigure" />
 
+    <!-- b/64690009 -->
+    <option name="compatibility:exclude-filter" value="CtsPermission2TestCases android.permission2.cts.PrivappPermissionsTest" />
 </configuration>
