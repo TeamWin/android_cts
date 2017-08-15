@@ -596,4 +596,88 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
         // Assert the snack bar is not shown.
         sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_ADDRESS);
     }
+
+    @Test
+    public void testDontShowSaveUiWhenUserClearedAutofilledFieldThatIsRequired() throws Exception {
+        // Set service.
+        enableService();
+
+        mActivity.expectAutoFill("742 Evergreen Terrace", "Simpsons House",
+                "Springfield", "Yellow");
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_ADDRESS, ID_ADDRESS1, ID_ADDRESS2)
+                .setOptionalSavableIds(ID_CITY)
+                .addDataset(new CannedDataset.Builder()
+                        .setPresentation(createPresentation("SF"))
+                        .setField(ID_ADDRESS1, "742 Evergreen Terrace")
+                        .setField(ID_ADDRESS2, "Simpsons House")
+                        .setField(ID_CITY, "Springfield")
+                        .setField(ID_FAVORITE_COLOR, "Yellow")
+                        .build())
+                .build());
+
+        // Trigger autofill.
+        mActivity.syncRunOnUiThread(() -> mActivity.mAddress1.requestFocus());
+        sReplier.getNextFillRequest();
+
+        sUiBot.selectDataset("SF");
+        mActivity.assertAutoFilled();
+
+        // Clear the field.
+        mActivity.syncRunOnUiThread(() -> mActivity.mAddress2.setText(""));
+
+        // Trigger save...
+        mActivity.save();
+
+        // ...and make sure the snack bar is shown.
+        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_ADDRESS);
+    }
+
+    @Test
+    public void testShowSaveUiWhenUserClearedAutofilledFieldThatIsOptional() throws Exception {
+        // Set service.
+        enableService();
+
+        mActivity.expectAutoFill("742 Evergreen Terrace", "Simpsons House",
+                "Springfield", "Yellow");
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_ADDRESS, ID_ADDRESS1, ID_ADDRESS2)
+                .setOptionalSavableIds(ID_CITY)
+                .addDataset(new CannedDataset.Builder()
+                        .setPresentation(createPresentation("SF"))
+                        .setField(ID_ADDRESS1, "742 Evergreen Terrace")
+                        .setField(ID_ADDRESS2, "Simpsons House")
+                        .setField(ID_CITY, "Springfield")
+                        .setField(ID_FAVORITE_COLOR, "Yellow")
+                        .build())
+                .build());
+
+        // Trigger autofill.
+        mActivity.syncRunOnUiThread(() -> mActivity.mAddress1.requestFocus());
+        sReplier.getNextFillRequest();
+
+        sUiBot.selectDataset("SF");
+        mActivity.assertAutoFilled();
+
+        // Clear the field.
+        mActivity.syncRunOnUiThread(() -> mActivity.mCity.setText(""));
+
+        // Trigger save...
+        mActivity.save();
+
+        // ...and make sure the snack bar is shown.
+        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_ADDRESS);
+
+        // Finally, assert values.
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+        assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_ADDRESS1),
+                "742 Evergreen Terrace");
+        assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_ADDRESS2),
+                "Simpsons House");
+        assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_CITY), "");
+        assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_FAVORITE_COLOR),
+                "Yellow");
+    }
 }

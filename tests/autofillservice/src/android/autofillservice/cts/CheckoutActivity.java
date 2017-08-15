@@ -74,6 +74,12 @@ public class CheckoutActivity extends AbstractAutoFillActivity {
     private FillExpectation mExpectation;
     private CountDownLatch mBuyLatch;
 
+    private static CheckoutActivity sInstance;
+
+    public CheckoutActivity() {
+        sInstance = this;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -96,6 +102,12 @@ public class CheckoutActivity extends AbstractAutoFillActivity {
 
         mBuyButton.setOnClickListener((v) -> buy());
         mClearButton.setOnClickListener((v) -> resetFields());
+    }
+
+    static void finishIt() {
+        if (sInstance != null) {
+            sInstance.finish();
+        }
     }
 
     protected int getContentView() {

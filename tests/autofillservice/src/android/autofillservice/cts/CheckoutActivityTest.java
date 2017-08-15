@@ -107,7 +107,7 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
         final CharSequence[] options = ccExpirationNode.getAutofillOptions();
         assertWithMessage("ccExpirationNode.getAutoFillOptions()").that(options).isNotNull();
         assertWithMessage("Wrong auto-fill options for spinner").that(options).asList()
-                .containsExactly(
+                .containsExactly((Object [])
                         getContext().getResources().getStringArray(R.array.cc_expiration_values))
                 .inOrder();
 
