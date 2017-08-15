@@ -385,10 +385,12 @@ class ActivityManagerState {
         private static final Pattern TASK_ID_PATTERN = Pattern.compile("Task id #(\\d+)");
         private static final Pattern RESUMED_ACTIVITY_PATTERN = Pattern.compile(
                 "mResumedActivity\\: ActivityRecord\\{(.+) u(\\d+) (\\S+) (\\S+)\\}");
+        private static final Pattern SLEEPING_PATTERN = Pattern.compile("isSleeping=(\\S+)");
 
         int mDisplayId;
         int mStackId;
         String mResumedActivity;
+        Boolean mSleeping; // A Boolean to trigger an NPE if it's not initialized
         ArrayList<ActivityTask> mTasks = new ArrayList();
 
         private ActivityStack() {
@@ -449,6 +451,13 @@ class ActivityManagerState {
                     log(line);
                     mResumedActivity = matcher.group(3);
                     log(mResumedActivity);
+                    continue;
+                }
+
+                matcher = SLEEPING_PATTERN.matcher(line);
+                if (matcher.matches()) {
+                    log(line);
+                    mSleeping = "true".equals(matcher.group(1));
                     continue;
                 }
             }
