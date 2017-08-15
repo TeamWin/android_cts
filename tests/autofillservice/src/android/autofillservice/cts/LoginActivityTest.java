@@ -1194,12 +1194,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     @Test
     public void testSaveGoesAwayWhenTappingRecentsButton() throws Exception {
         // Launches new activity first...
-        final Context context = getContext();
-        final Intent intent = new Intent(context, CheckoutActivity.class);
-        intent.setFlags(
-                Intent.FLAG_ACTIVITY_NEW_DOCUMENT | Intent.FLAG_ACTIVITY_RETAIN_IN_RECENTS);
-        context.startActivity(intent);
-        sUiBot.assertShownByRelativeId(CheckoutActivity.ID_ADDRESS);
+        startCheckoutActivityAsNewTask();
         try {
             // .. then the real activity being tested.
             sUiBot.switchAppsUsingRecents();
@@ -1214,6 +1209,15 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     @Test
     public void testSaveGoesAwayWhenTouchingOutside() throws Exception {
         saveGoesAway(DismissType.TOUCH_OUTSIDE);
+    }
+
+    @Test
+    public void testSaveGoesAwayWhenLaunchingNewActivity() throws Exception {
+        try {
+            saveGoesAway(DismissType.LAUNCH_ACTIVITY);
+        } finally {
+            CheckoutActivity.finishIt();
+        }
     }
 
     private void saveGoesAway(DismissType dismissType) throws Exception {
@@ -1260,6 +1264,9 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             case RECENTS_BUTTON:
                 sUiBot.switchAppsUsingRecents();
                 sUiBot.assertShownByRelativeId(CheckoutActivity.ID_ADDRESS);
+                break;
+            case LAUNCH_ACTIVITY:
+                startCheckoutActivityAsNewTask();
                 break;
             default:
                 throw new IllegalArgumentException("invalid dismiss type: " + dismissType);
@@ -3175,6 +3182,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 .isEqualTo(5);
     }
 
+    @Test
     public void testAutofillLargeNumberOfDatasets() throws Exception {
         // Set service.
         enableService();
@@ -3213,5 +3221,14 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sUiBot.assertDatasets("DS-1", "DS-2", "DS-3");
 
         // TODO: once it supports scrolling, selects the last dataset and asserts it's filled.
+    }
+
+    private void startCheckoutActivityAsNewTask() {
+        final Context context = getContext();
+        final Intent intent = new Intent(context, CheckoutActivity.class);
+        intent.setFlags(
+                Intent.FLAG_ACTIVITY_NEW_DOCUMENT | Intent.FLAG_ACTIVITY_RETAIN_IN_RECENTS);
+        context.startActivity(intent);
+        sUiBot.assertShownByRelativeId(CheckoutActivity.ID_ADDRESS);
     }
 }

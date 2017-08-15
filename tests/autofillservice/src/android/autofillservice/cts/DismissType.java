@@ -17,11 +17,15 @@ package android.autofillservice.cts;
 
 /**
  * A simple enum for test cases where the Save UI is dismissed.
+ *
+ * <p><b>Note:</b> When new values are added to the enum, the equivalent tests must be added to
+ * both {@link LoginActivityTest} and {@link SimpleSaveActivityTest}.
  */
 enum DismissType {
     BACK_BUTTON,
     HOME_BUTTON,
     RECENTS_BUTTON,
     TOUCH_OUTSIDE,
-    FOCUS_OUTSIDE
+    FOCUS_OUTSIDE,
+    LAUNCH_ACTIVITY
 }
