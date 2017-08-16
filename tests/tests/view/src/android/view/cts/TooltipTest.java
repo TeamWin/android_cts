@@ -253,9 +253,6 @@ public class TooltipTest {
         injectLongClick(mTooltipView);
         assertFalse(hasTooltip(mTooltipView));
 
-        injectLongEnter(mTooltipView);
-        assertFalse(hasTooltip(mTooltipView));
-
         injectLongHoverMove(mTooltipView);
         assertFalse(hasTooltip(mTooltipView));
     }
