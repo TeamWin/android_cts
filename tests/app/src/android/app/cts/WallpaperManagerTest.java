@@ -37,6 +37,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.Looper;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
@@ -65,12 +66,16 @@ public class WallpaperManagerTest {
 
     private WallpaperManager mWallpaperManager;
     private Context mContext;
+    private Handler mHandler;
 
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
         mContext = InstrumentationRegistry.getTargetContext();
         mWallpaperManager = WallpaperManager.getInstance(mContext);
+        final HandlerThread handlerThread = new HandlerThread("TestCallbacks");
+        handlerThread.start();
+        mHandler = new Handler(handlerThread.getLooper());
     }
 
     @Test
@@ -200,11 +205,11 @@ public class WallpaperManagerTest {
 
         // Add and remove listener
         WallpaperManager.OnColorsChangedListener listener = getTestableListener();
-        mWallpaperManager.addOnColorsChangedListener(listener);
+        mWallpaperManager.addOnColorsChangedListener(listener, mHandler);
         mWallpaperManager.removeOnColorsChangedListener(listener);
 
         // Verify that the listener is not called
-        mWallpaperManager.addOnColorsChangedListener(counter);
+        mWallpaperManager.addOnColorsChangedListener(counter, mHandler);
         try {
             mWallpaperManager.setResource(R.drawable.robot);
             if (!latch.await(5, TimeUnit.SECONDS)) {
@@ -297,8 +302,8 @@ public class WallpaperManagerTest {
             });
         };
 
-        mWallpaperManager.addOnColorsChangedListener(listener);
-        mWallpaperManager.addOnColorsChangedListener(counter);
+        mWallpaperManager.addOnColorsChangedListener(listener, mHandler);
+        mWallpaperManager.addOnColorsChangedListener(counter, mHandler);
 
         try {
             mWallpaperManager.setResource(R.drawable.robot, which);
@@ -329,8 +334,8 @@ public class WallpaperManagerTest {
             latch.countDown();
         };
 
-        mWallpaperManager.addOnColorsChangedListener(listener);
-        mWallpaperManager.addOnColorsChangedListener(counter);
+        mWallpaperManager.addOnColorsChangedListener(listener, mHandler);
+        mWallpaperManager.addOnColorsChangedListener(counter, mHandler);
 
         try {
             mWallpaperManager.clear(which);
@@ -386,7 +391,7 @@ public class WallpaperManagerTest {
             }
         };
         mContext.registerReceiver(receiver, new IntentFilter(Intent.ACTION_WALLPAPER_CHANGED));
-        mWallpaperManager.addOnColorsChangedListener(callback);
+        mWallpaperManager.addOnColorsChangedListener(callback, mHandler);
 
         try {
             mWallpaperManager.setBitmap(bmp);
