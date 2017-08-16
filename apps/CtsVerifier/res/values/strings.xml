@@ -133,6 +133,10 @@
         device and verify that all rows in the policy list are green. Red items indicate policy
         settings that were not loaded properly.
     </string>
+    <string name="da_tapjacking_test">Device Admin Tapjacking Test</string>
+    <string name="da_tapjacking_test_info">This test checks that an activity cannot tapjack the
+        user by obscuring the device admin details while prompting the user to activate the admin.
+    </string>
     <string name="car_dock_test">Car Dock Test</string>
     <string name="car_dock_test_desc">This test ensures that car mode opens the app associated with
         car dock when going into car mode.\n\n
@@ -173,6 +177,19 @@
     <string name="da_force_lock">Force Lock</string>
     <string name="da_lock_success">It appears the screen was locked successfully!</string>
     <string name="da_lock_error">It does not look like the screen was locked...</string>
+
+    <string name="da_tapjacking_overlay_app_description">This activity attempts to tapjack the activity below.\n
+        Any security sensitive controls below should not respond to taps as long as this activity is visible.</string>
+    <string name="da_tapjacking_instructions">
+        1. Launch the device admin add screen by pressing the button below.\n
+        2. Wait for an overlaying transparent activity to show up obscuring the device admin details window.\n
+        3. The button to activate the admin should be disabled and should not register any taps.\n
+        4. Press \'back\' to exit the overlaying transparent activity.\n
+        5. Press \'back\' to exit the device admin details and return to this screen.\n
+        Pass the test if the device admin could not be activated while the details
+        window was being obscured.
+    </string>
+    <string name="da_tapjacking_button_text">Enable device admin</string>
 
     <!-- Strings for lock bound keys test -->
     <string name="sec_lock_bound_key_test">Lock Bound Keys Test</string>
