@@ -167,6 +167,10 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
             return mDisplayStates.get(displayId);
         }
 
+        int getNumberOfDisplays() {
+            return mDisplayStates.size();
+        }
+
         /** Return the display state with width, height, dpi */
         DisplayState getDisplayState(int width, int height, int dpi) {
             for (Map.Entry<Integer, DisplayState> entry : mDisplayStates.entrySet()) {
@@ -207,7 +211,7 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
     }
 
     /** Find the display that was not originally reported in oldDisplays and added in newDisplays */
-    private List<ActivityManagerDisplayTests.DisplayState> findNewDisplayStates(
+    protected List<ActivityManagerDisplayTests.DisplayState> findNewDisplayStates(
             ReportedDisplays oldDisplays, ReportedDisplays newDisplays) {
         final ArrayList<DisplayState> displays = new ArrayList();
 

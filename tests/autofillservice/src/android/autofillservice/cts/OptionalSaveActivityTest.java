@@ -630,7 +630,7 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
         // Trigger save...
         mActivity.save();
 
-        // ...and make sure the snack bar is shown.
+        // ...and make sure the snack bar is not shown.
         sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_ADDRESS);
     }
 

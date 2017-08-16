@@ -179,11 +179,7 @@ public class SimpleSaveActivityTest extends AutoFillServiceTestCase {
     @Test
     public void testDismissSave_byTappingRecents() throws Exception {
         // Launches a different activity first.
-        final Intent intent = new Intent(mContext, WelcomeActivity.class);
-        intent.setFlags(
-                Intent.FLAG_ACTIVITY_RETAIN_IN_RECENTS | Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
-        mContext.startActivity(intent);
-        WelcomeActivity.assertShowingDefaultMessage(sUiBot);
+        startWelcomeActivityOnNewTask();
 
         // Then launches the main activity.
         startActivity(true);
@@ -191,6 +187,16 @@ public class SimpleSaveActivityTest extends AutoFillServiceTestCase {
 
         // And finally test it..
         dismissSaveTest(DismissType.RECENTS_BUTTON);
+    }
+
+    @Test
+    public void testDismissSave_byLaunchingNewActivity() throws Exception {
+        startActivity();
+        try {
+            dismissSaveTest(DismissType.LAUNCH_ACTIVITY);
+        } finally {
+            WelcomeActivity.finishIt();
+        }
     }
 
     private void dismissSaveTest(DismissType dismissType) throws Exception {
@@ -233,9 +239,20 @@ public class SimpleSaveActivityTest extends AutoFillServiceTestCase {
                 sUiBot.switchAppsUsingRecents();
                 WelcomeActivity.assertShowingDefaultMessage(sUiBot);
                 break;
+            case LAUNCH_ACTIVITY:
+                startWelcomeActivityOnNewTask();
+                break;
             default:
                 throw new IllegalArgumentException("invalid dismiss type: " + dismissType);
         }
         sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
+    }
+
+    private void startWelcomeActivityOnNewTask() throws Exception {
+        final Intent intent = new Intent(mContext, WelcomeActivity.class);
+        intent.setFlags(
+                Intent.FLAG_ACTIVITY_RETAIN_IN_RECENTS | Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
+        mContext.startActivity(intent);
+        WelcomeActivity.assertShowingDefaultMessage(sUiBot);
     }
 }

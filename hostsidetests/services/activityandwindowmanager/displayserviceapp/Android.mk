@@ -1,4 +1,4 @@
-# Copyright (C) 2012 The Android Open Source Project
+# Copyright (C) 2017 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,25 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-LOCAL_PATH:= $(call my-dir)
-
-include $(CLEAR_VARS)
-
-LOCAL_MODULE_TAGS := tests
-
-LOCAL_SRC_FILES := \
-    $(call all-java-files-under, src)
-
-LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
-
-LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed host-libprotobuf-java-full
-
-LOCAL_STATIC_JAVA_LIBRARIES := platformprotos
-
-LOCAL_MODULE := cts-amwm-util
-
-LOCAL_SDK_VERSION := current
-
-include $(BUILD_HOST_JAVA_LIBRARY)
-
-include $(call all-makefiles-under,$(LOCAL_PATH))
+include $(call all-subdir-makefiles)

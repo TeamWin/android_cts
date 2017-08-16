@@ -1,4 +1,5 @@
-/*
+<?xml version="1.0" encoding="utf-8"?>
+<!--
  * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,20 +13,13 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-package android.autofillservice.cts;
-
-/**
- * A simple enum for test cases where the Save UI is dismissed.
- *
- * <p><b>Note:</b> When new values are added to the enum, the equivalent tests must be added to
- * both {@link LoginActivityTest} and {@link SimpleSaveActivityTest}.
- */
-enum DismissType {
-    BACK_BUTTON,
-    HOME_BUTTON,
-    RECENTS_BUTTON,
-    TOUCH_OUTSIDE,
-    FOCUS_OUTSIDE,
-    LAUNCH_ACTIVITY
-}
+ -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          xmlns:androidprv="http://schemas.android.com/apk/prv/res/android"
+          package="android.server.displayservice">
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <application android:label="CtsDisplayService">
+        <service android:name=".VirtualDisplayService"
+                 android:exported="true" />
+    </application>
+</manifest>

@@ -250,6 +250,15 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestMethod(".PermissionsTest", "testPermissionGrantState");
     }
 
+    public void testPermissionGrant_developmentPermission() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        installAppPermissionAppAsUser();
+        executeDeviceTestMethod(
+                ".PermissionsTest", "testPermissionGrantState_developmentPermission");
+    }
+
     /**
      * Require a device for tests that use the network stack. Headless Androids running in
      * data centres might need their network rules un-tampered-with in order to keep the ADB / VNC
