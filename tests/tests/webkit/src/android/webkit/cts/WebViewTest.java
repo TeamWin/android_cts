@@ -18,6 +18,7 @@ package android.webkit.cts;
 
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
@@ -2785,6 +2786,71 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         WebView webView = new WebView(getActivity());
         webView.setTextClassifier(classifier);
         assertSame(webView.getTextClassifier(), classifier);
+    }
+
+    private static class MockContext extends ContextWrapper {
+        private boolean mGetApplicationContextWasCalled;
+
+        public MockContext(Context context) {
+            super(context);
+        }
+
+        public Context getApplicationContext() {
+            mGetApplicationContextWasCalled = true;
+            return super.getApplicationContext();
+        }
+
+        public boolean wasGetApplicationContextCalled() {
+            return mGetApplicationContextWasCalled;
+        }
+    }
+
+    public void testInitSafeBrowsingUseApplicationContext() throws Exception {
+        final MockContext ctx = new MockContext(getActivity());
+        final CountDownLatch resultLatch = new CountDownLatch(1);
+        WebView.initSafeBrowsing(ctx, new ValueCallback<Boolean>() {
+            @Override
+            public void onReceiveValue(Boolean value) {
+                assertTrue(ctx.wasGetApplicationContextCalled());
+                resultLatch.countDown();
+                return;
+            }
+        });
+        assertTrue(resultLatch.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS));
+    }
+
+    public void testInitSafeBrowsingWithNullCallbackDoesntCrash() throws Exception {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+
+        WebView.initSafeBrowsing(getActivity().getApplicationContext(), null);
+    }
+
+    public void testInitSafeBrowsingInvokesCallback() throws Exception {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+
+        final CountDownLatch resultLatch = new CountDownLatch(1);
+        WebView.initSafeBrowsing(getActivity().getApplicationContext(),
+                new ValueCallback<Boolean>() {
+            @Override
+            public void onReceiveValue(Boolean value) {
+                assertTrue(Looper.getMainLooper().isCurrentThread());
+                resultLatch.countDown();
+                return;
+            }
+        });
+        assertTrue(resultLatch.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS));
+    }
+
+    public void testShutdownSafeBrowsingDoesntCrash() throws Exception {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+
+        WebView.shutdownSafeBrowsing();
     }
 
     private void savePrintedPage(final PrintDocumentAdapter adapter,
