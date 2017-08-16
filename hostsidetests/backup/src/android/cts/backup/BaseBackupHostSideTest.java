@@ -23,6 +23,7 @@ import static org.junit.Assume.assumeTrue;
 
 import com.android.compatibility.common.tradefed.testtype.CompatibilityHostTestBase;
 import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.After;
@@ -38,18 +39,21 @@ import java.util.regex.Pattern;
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public abstract class BaseBackupHostSideTest extends CompatibilityHostTestBase {
+    protected boolean mIsBackupSupported;
+
     /** Value of PackageManager.FEATURE_BACKUP */
     private static final String FEATURE_BACKUP = "android.software.backup";
 
     private static final String LOCAL_TRANSPORT =
             "android/com.android.internal.backup.LocalTransport";
 
-    private boolean mIsBackupSupported;
-
     @Before
     public void setUp() throws DeviceNotAvailableException, Exception {
         mIsBackupSupported = mDevice.hasFeature("feature:" + FEATURE_BACKUP);
-        assumeTrue(mIsBackupSupported);
+        if (!mIsBackupSupported) {
+            CLog.i("android.software.backup feature is not supported on this device");
+            return;
+        }
 
         // Check that the backup wasn't disabled and the transport wasn't switched unexpectedly.
         assertTrue("Backup was unexpectedly disabled during the module test run",

@@ -19,6 +19,7 @@ package android.cts.backup;
 import static junit.framework.Assert.assertNull;
 
 import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.After;
@@ -93,6 +94,11 @@ public class KeyValueBackupRestoreHostSideTest extends BaseBackupHostSideTest {
      */
     @Test
     public void testKeyValueBackupAndRestore() throws Exception {
+        if (!mIsBackupSupported) {
+            CLog.i("android.software.backup feature is not supported on this device");
+            return;
+        }
+
         checkDeviceTest("checkSharedPrefIsEmpty");
 
         checkDeviceTest("saveSharedPreferencesAndNotifyBackupManager");
