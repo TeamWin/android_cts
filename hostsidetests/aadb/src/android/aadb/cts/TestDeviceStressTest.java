@@ -33,8 +33,8 @@ import java.io.IOException;
  */
 public class TestDeviceStressTest extends DeviceTestCase {
 
-    private static final int TEST_FILE_COUNT= 200;
-    private int mIterations = 25;
+    private static final int TEST_FILE_COUNT= 100;
+    private int mIterations = 20;
     private ITestDevice mTestDevice;
 
     @Override
