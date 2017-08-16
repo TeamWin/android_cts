@@ -33,7 +33,7 @@ import org.junit.runner.RunWith;
 import java.util.regex.Pattern;
 
 @RunWith(AndroidJUnit4.class)
-public class SimpleRegexValidatorTest {
+public class RegexValidatorTest {
 
     @Test
     public void allNullConstructor() {
