@@ -16,6 +16,7 @@
 package android.server.cts;
 
 import android.platform.test.annotations.Presubmit;
+import android.server.displayservice.DisplayHelper;
 
 import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -28,6 +29,7 @@ import java.util.regex.Pattern;
 
 import static android.server.cts.ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID;
 import static android.server.cts.ActivityManagerState.STATE_RESUMED;
+import static android.server.cts.ActivityManagerState.STATE_STOPPED;
 import static android.server.cts.StateLogger.log;
 import static android.server.cts.StateLogger.logE;
 
@@ -52,6 +54,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
     private static final int VR_VIRTUAL_DISPLAY_HEIGHT = 90;
     private static final int VR_VIRTUAL_DISPLAY_DPI = 320;
 
+    private DisplayHelper mExternalDisplayHelper;
+
     /** Physical display metrics and overrides in the beginning of the test. */
     private ReportedDisplayMetrics mInitialDisplayMetrics;
 
@@ -66,6 +70,11 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
         try {
             enablePersistentVrMode(false);
             restoreDisplayMetricsOverrides();
+            if (mExternalDisplayHelper != null) {
+                mExternalDisplayHelper.releaseDisplay();
+                mExternalDisplayHelper = null;
+            }
+            setPrimaryDisplayState(true);
         } catch (DeviceNotAvailableException e) {
             logE(e.getMessage());
         }
@@ -1505,6 +1514,107 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
         mAmWmState.assertFocusedStack("Focus must be on secondary display", frontStackId);
     }
 
+    /**
+     * Tests that turning the primary display off does not affect the activity running
+     * on an external secondary display.
+     */
+    public void testExternalDisplayActivityTurnPrimaryOff() throws Exception {
+        final DisplayState newDisplay = createExternalVirtualDisplay();
+
+        launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mDisplayId);
+        mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME});
+
+        // Check that the activity is launched onto the external display
+        final int primaryStackId = mAmWmState.getAmState().getFrontStackId(DEFAULT_DISPLAY_ID);
+        final int frontStackId = mAmWmState.getAmState().getFrontStackId(newDisplay.mDisplayId);
+        ActivityManagerState.ActivityStack firstFrontStack =
+                mAmWmState.getAmState().getStackById(frontStackId);
+        assertEquals("Activity launched on external display must be resumed",
+                getActivityComponentName(TEST_ACTIVITY_NAME),
+                firstFrontStack.mResumedActivity);
+        mAmWmState.assertFocusedStack("Focus must be on external display", frontStackId);
+
+        setPrimaryDisplayState(false);
+
+        // Wait for the fullscreen stack to start sleeping, and then make sure the
+        // test activity is still resumed.
+        mAmWmState.waitForWithAmState(mDevice, (state) ->
+                state.getStackById(primaryStackId).mSleeping,
+                "Waiting for fullscreen stack to start sleeping");
+        firstFrontStack = mAmWmState.getAmState().getStackById(frontStackId);
+        assertEquals("Activity on external display must be resumed",
+                getActivityComponentName(TEST_ACTIVITY_NAME),
+                firstFrontStack.mResumedActivity);
+        mAmWmState.assertFocusedStack("Focus must be on external display", frontStackId);
+    }
+
+    /**
+     * Tests that an activity can be launched on a secondary display while the primary
+     * display is off.
+     */
+    public void testLaunchExternalDisplayActivityWhilePrimaryOff() throws Exception {
+        // Launch something on the primary display so we know there is a resumed activity there
+        launchActivity(LAUNCHING_ACTIVITY);
+        mAmWmState.computeState(mDevice, new String[] {LAUNCHING_ACTIVITY});
+        assertEquals("Unexpected resumed activity",
+                1, mAmWmState.getAmState().getResumedActivitiesCount());
+
+        setPrimaryDisplayState(false);
+
+        // Make sure there is no resumed activity when the primary display is off
+        mAmWmState.waitForWithAmState(mDevice, (state) ->
+                state.getStackById(state.getFrontStackId(DEFAULT_DISPLAY_ID)).mSleeping,
+                "Waiting for fullscreen stack to start sleeping");
+        assertEquals("Unexpected resumed activity",
+                0, mAmWmState.getAmState().getResumedActivitiesCount());
+
+        final DisplayState newDisplay = createExternalVirtualDisplay();
+
+        launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mDisplayId);
+        mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME});
+
+        // Check that the test activity is resumed on the external display
+        final int frontStackId = mAmWmState.getAmState().getFrontStackId(newDisplay.mDisplayId);
+        final ActivityManagerState.ActivityStack firstFrontStack =
+                mAmWmState.getAmState().getStackById(frontStackId);
+        assertEquals("Activity launched on external display must be resumed",
+                getActivityComponentName(TEST_ACTIVITY_NAME),
+                firstFrontStack.mResumedActivity);
+        mAmWmState.assertFocusedStack("Focus must be on external display", frontStackId);
+    }
+
+    /**
+     * Tests that turning the secondary display off stops activities running on that display.
+     */
+    public void testExternalDisplayToggleState() throws Exception {
+        final DisplayState newDisplay = createExternalVirtualDisplay();
+
+        launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mDisplayId);
+        mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME});
+
+        // Check that the test activity is resumed on the external display
+        final int frontStackId = mAmWmState.getAmState().getFrontStackId(newDisplay.mDisplayId);
+        final ActivityManagerState.ActivityStack firstFrontStack =
+                mAmWmState.getAmState().getStackById(frontStackId);
+        assertEquals("Activity launched on external display must be resumed",
+                getActivityComponentName(TEST_ACTIVITY_NAME),
+                firstFrontStack.mResumedActivity);
+        mAmWmState.assertFocusedStack("Focus must be on external display", frontStackId);
+
+        mExternalDisplayHelper.turnDisplayOff();
+
+        // Check that turning off the external display stops the activity
+        mAmWmState.waitForActivityState(mDevice, TEST_ACTIVITY_NAME, STATE_STOPPED);
+        assertTrue(mAmWmState.getAmState().hasActivityState(TEST_ACTIVITY_NAME, STATE_STOPPED));
+
+        mExternalDisplayHelper.turnDisplayOn();
+
+        // Check that turning on the external display resumes the activity
+        mAmWmState.waitForActivityState(mDevice, TEST_ACTIVITY_NAME, STATE_RESUMED);
+        assertTrue(mAmWmState.getAmState().hasActivityState(TEST_ACTIVITY_NAME, STATE_RESUMED));
+        mAmWmState.assertFocusedStack("Focus must be on external display", frontStackId);
+    }
+
     /** Get physical and override display metrics from WM. */
     private ReportedDisplayMetrics getDisplayMetrics() throws Exception {
         mDumpLines.clear();
@@ -1627,5 +1737,35 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
     private static String getResizeVirtualDisplayCommand() {
         return getAmStartCmd(VIRTUAL_DISPLAY_ACTIVITY) + " -f 0x20000000" +
                 " --es command resize_display";
+    }
+
+    /**
+     * Creates a private virtual display with the external and show with insecure
+     * keyguard flags set.
+     */
+    private DisplayState createExternalVirtualDisplay() throws Exception {
+        final ReportedDisplays originalDS = getDisplaysStates();
+        final int originalDisplayCount = originalDS.getNumberOfDisplays();
+
+        mExternalDisplayHelper = new DisplayHelper(getDevice());
+        mExternalDisplayHelper.createAndWaitForDisplay(true);
+
+        // Wait for the virtual display to be created and get configurations.
+        final ReportedDisplays ds =
+                getDisplayStateAfterChange(originalDisplayCount + 1);
+        assertEquals("New virtual display must be created",
+                originalDisplayCount + 1, ds.getNumberOfDisplays());
+
+        // Find the newly added display.
+        final List<DisplayState> newDisplays = findNewDisplayStates(originalDS, ds);
+        return newDisplays.get(0);
+    }
+
+    /** Turns the primary display on/off by pressing the power key */
+    private void setPrimaryDisplayState(boolean wantOn) throws DeviceNotAvailableException {
+        // Either KeyEvent.KEYCODE_WAKEUP or KeyEvent.KEYCODE_SLEEP
+        int keycode = wantOn ? 224 : 223;
+        getDevice().executeShellCommand("input keyevent " + keycode);
+        DisplayHelper.waitForDefaultDisplayState(getDevice(), wantOn);
     }
 }
