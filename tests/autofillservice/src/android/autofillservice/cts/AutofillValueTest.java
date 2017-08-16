@@ -419,7 +419,7 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
                 .setField("editText", "filled")
                 .setPresentation(createPresentation("dataset"))
                 .build());
-        MultipleTimesTimeListener timeWatcher = new MultipleTimesTimeListener("timePicker", 2,
+        MultipleTimesTimeListener timeWatcher = new MultipleTimesTimeListener("timePicker", 1,
                 mTimePicker, 12, 32);
         mTimePicker.setOnTimeChangedListener(timeWatcher);
 
