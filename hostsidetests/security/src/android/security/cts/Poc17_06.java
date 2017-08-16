@@ -71,7 +71,9 @@ public class Poc17_06 extends SecurityTestCase {
     @SecurityTest
     public void testPocBug_35047780() throws Exception {
         enableAdbRoot(getDevice());
-        AdbUtils.runPoc("Bug-35047780", getDevice(), 60);
+        if(containsDriver(getDevice(), "/dev/ipa")) {
+          AdbUtils.runPoc("Bug-35047780", getDevice(), 60);
+        }
     }
 
     /**
@@ -80,7 +82,9 @@ public class Poc17_06 extends SecurityTestCase {
     @SecurityTest
     public void testPocBug_35048450() throws Exception {
         enableAdbRoot(getDevice());
-        AdbUtils.runPoc("Bug-35048450", getDevice(), 60);
+        if(containsDriver(getDevice(), "/dev/ipa")) {
+          AdbUtils.runPoc("Bug-35048450", getDevice(), 60);
+        }
     }
 
     /**
@@ -89,7 +93,9 @@ public class Poc17_06 extends SecurityTestCase {
     @SecurityTest
     public void testPocBug_35047217() throws Exception {
         enableAdbRoot(getDevice());
-        AdbUtils.runPoc("Bug-35047217", getDevice(), 60);
+        if(containsDriver(getDevice(), "/dev/ipa")) {
+          AdbUtils.runPoc("Bug-35047217", getDevice(), 60);
+        }
     }
 
     /**
