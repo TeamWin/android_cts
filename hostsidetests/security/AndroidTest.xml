@@ -116,6 +116,7 @@
         <option name="push" value="Bug-35644510->/data/local/tmp/Bug-35644510" />
         <option name="push" value="CVE-2017-9680->/data/local/tmp/CVE-2017-9680" />
         <option name="push" value="Bug-36818198->/data/local/tmp/Bug-36818198" />
+        <option name="push" value="CVE-2017-0731->/data/local/tmp/CVE-2017-0731" />
 
         <!--__________________-->
         <!-- Bulletin 2017-09 -->
