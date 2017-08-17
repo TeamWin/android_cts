@@ -25,15 +25,14 @@ import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IDeviceTest;
 import com.android.tradefed.testtype.ISetOptionReceiver;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import org.junit.Ignore;
 import org.junit.runner.Description;
 import org.junit.runner.Runner;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.InitializationError;
-import org.junit.runners.model.TestClass;
 import org.junit.runners.parameterized.BlockJUnit4ClassRunnerWithParameters;
 import org.junit.runners.parameterized.ParametersRunnerFactory;
 import org.junit.runners.parameterized.TestWithParameters;
@@ -53,8 +52,6 @@ public class DeviceJUnit4ClassRunnerWithParameters extends BlockJUnit4ClassRunne
     private ITestDevice mDevice;
     private IBuildInfo mBuildInfo;
     private IAbi mAbi;
-    private Collection<FrameworkMethod> mFilteredChildren;
-    private Object mChildrenLock = new Object();
 
     public DeviceJUnit4ClassRunnerWithParameters(TestWithParameters test) throws InitializationError {
         super(test);
@@ -81,26 +78,28 @@ public class DeviceJUnit4ClassRunnerWithParameters extends BlockJUnit4ClassRunne
         return mDevice;
     }
 
+
     @Override
     public Description getDescription() {
-        Description description = Description.createSuiteDescription(getTestClass().getJavaClass());
-        for (FrameworkMethod child : getFilteredChildren()) {
-            description.addChild(describeChild(child));
+        Description desc = Description.createSuiteDescription(getTestClass().getJavaClass());
+        for (FrameworkMethod method : getChildren()) {
+            desc.addChild(describeChild(method));
         }
-        return description;
+        return desc;
     }
 
-    private Collection<FrameworkMethod> getFilteredChildren() {
-        if (mFilteredChildren == null) {
-            synchronized (mChildrenLock) {
-                if (mFilteredChildren == null) {
-                    mFilteredChildren = Collections.unmodifiableCollection(getChildren());
-                }
+    @Override
+    protected List<FrameworkMethod> getChildren() {
+        List<FrameworkMethod> methods = super.getChildren();
+        List<FrameworkMethod> filteredMethods = new ArrayList<>();
+        for (FrameworkMethod method : methods) {
+            Description desc = describeChild(method);
+            if (desc.getAnnotation(Ignore.class) == null) {
+                filteredMethods.add(method);
             }
         }
-        return mFilteredChildren;
+        return filteredMethods;
     }
-
     /**
      * We override createTest in order to set the device.
      */
