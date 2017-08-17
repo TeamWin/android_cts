@@ -15,7 +15,7 @@
 -->
 <configuration description="Runs a subset of CTS tests using a reference AOSP system image">
 
-    <include name="cts" />
+    <include name="cts-common" />
 
     <option name="plan" value="cts-reference-aosp" />
 
@@ -112,10 +112,6 @@
     <option name="compatibility:exclude-filter" value="CtsPermission2TestCases android.permission2.cts.NoReceiveSmsPermissionTest#testAppSpecificSmsToken" />
     <option name="compatibility:exclude-filter" value="CtsPermission2TestCases android.permission2.cts.NoReceiveSmsPermissionTest#testReceiveTextMessage" />
     <option name="compatibility:exclude-filter" value="CtsPermission2TestCases android.permission2.cts.PrivappPermissionsTest#testPrivappPermissionsEnforcement" />
-
-    <option name="compatibility:exclude-filter" value="CtsSecurityHostTestCases android.security.cts.SELinuxHostTest#testNoExemptionsForBinderInVendorBan" />
-    <option name="compatibility:exclude-filter" value="CtsSecurityHostTestCases android.security.cts.SELinuxHostTest#testNoExemptionsForSocketsBetweenCoreAndVendorBan" />
-    <option name="compatibility:exclude-filter" value="CtsSecurityHostTestCases android.security.cts.SELinuxHostTest#testNoExemptionsForVendorExecutingCore" />
 
     <option name="compatibility:exclude-filter" value="CtsContentTestCases android.signature.cts.IntentTest#shouldNotFindUnexpectedIntents" />
 
