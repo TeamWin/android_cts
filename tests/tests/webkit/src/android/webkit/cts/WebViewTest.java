@@ -18,6 +18,7 @@ package android.webkit.cts;
 
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
@@ -59,10 +60,12 @@ import android.webkit.ConsoleMessage;
 import android.webkit.CookieSyncManager;
 import android.webkit.DownloadListener;
 import android.webkit.JavascriptInterface;
+import android.webkit.SafeBrowsingResponse;
 import android.webkit.ValueCallback;
 import android.webkit.WebBackForwardList;
 import android.webkit.WebChromeClient;
 import android.webkit.WebIconDatabase;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebView.HitTestResult;
@@ -98,7 +101,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.http.Header;
@@ -2666,6 +2671,54 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         assertTrue(callbackLatch.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS));
     }
 
+    public void testSetSafeBrowsingWhitelistWithMalformedList() throws Exception {
+        List whitelist = new ArrayList<String>();
+        // Protocols are not supported in the whitelist
+        whitelist.add("http://google.com");
+        final CountDownLatch resultLatch = new CountDownLatch(1);
+        WebView.setSafeBrowsingWhitelist(whitelist, new ValueCallback<Boolean>() {
+            @Override
+            public void onReceiveValue(Boolean success) {
+                assertFalse(success);
+                resultLatch.countDown();
+            }
+        });
+        assertTrue(resultLatch.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS));
+    }
+
+    public void testSetSafeBrowsingWhitelistWithValidList() throws Exception {
+        List whitelist = new ArrayList<String>();
+        whitelist.add("safe-browsing");
+        final CountDownLatch resultLatch = new CountDownLatch(1);
+        WebView.setSafeBrowsingWhitelist(whitelist, new ValueCallback<Boolean>() {
+            @Override
+            public void onReceiveValue(Boolean success) {
+                assertTrue(success);
+                resultLatch.countDown();
+            }
+        });
+        assertTrue(resultLatch.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS));
+
+        final CountDownLatch resultLatch2 = new CountDownLatch(1);
+        mOnUiThread.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                resultLatch2.countDown();
+            }
+
+            @Override
+            public void onSafeBrowsingHit(WebView view, WebResourceRequest request, int threatType,
+                    SafeBrowsingResponse callback) {
+                Assert.fail("Should not invoke onSafeBrowsingHit");
+            }
+        });
+
+        mOnUiThread.loadUrl("chrome://safe-browsing/match?type=malware");
+
+        // Wait until page load has completed
+        assertTrue(resultLatch2.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS));
+    }
+
     @UiThreadTest
     public void testGetWebViewClient() throws Exception {
         if (!NullWebViewUtils.isWebViewAvailable()) {
@@ -2733,6 +2786,71 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         WebView webView = new WebView(getActivity());
         webView.setTextClassifier(classifier);
         assertSame(webView.getTextClassifier(), classifier);
+    }
+
+    private static class MockContext extends ContextWrapper {
+        private boolean mGetApplicationContextWasCalled;
+
+        public MockContext(Context context) {
+            super(context);
+        }
+
+        public Context getApplicationContext() {
+            mGetApplicationContextWasCalled = true;
+            return super.getApplicationContext();
+        }
+
+        public boolean wasGetApplicationContextCalled() {
+            return mGetApplicationContextWasCalled;
+        }
+    }
+
+    public void testInitSafeBrowsingUseApplicationContext() throws Exception {
+        final MockContext ctx = new MockContext(getActivity());
+        final CountDownLatch resultLatch = new CountDownLatch(1);
+        WebView.initSafeBrowsing(ctx, new ValueCallback<Boolean>() {
+            @Override
+            public void onReceiveValue(Boolean value) {
+                assertTrue(ctx.wasGetApplicationContextCalled());
+                resultLatch.countDown();
+                return;
+            }
+        });
+        assertTrue(resultLatch.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS));
+    }
+
+    public void testInitSafeBrowsingWithNullCallbackDoesntCrash() throws Exception {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+
+        WebView.initSafeBrowsing(getActivity().getApplicationContext(), null);
+    }
+
+    public void testInitSafeBrowsingInvokesCallback() throws Exception {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+
+        final CountDownLatch resultLatch = new CountDownLatch(1);
+        WebView.initSafeBrowsing(getActivity().getApplicationContext(),
+                new ValueCallback<Boolean>() {
+            @Override
+            public void onReceiveValue(Boolean value) {
+                assertTrue(Looper.getMainLooper().isCurrentThread());
+                resultLatch.countDown();
+                return;
+            }
+        });
+        assertTrue(resultLatch.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS));
+    }
+
+    public void testShutdownSafeBrowsingDoesntCrash() throws Exception {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+
+        WebView.shutdownSafeBrowsing();
     }
 
     private void savePrintedPage(final PrintDocumentAdapter adapter,

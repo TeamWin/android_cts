@@ -3223,6 +3223,28 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // TODO: once it supports scrolling, selects the last dataset and asserts it's filled.
     }
 
+    @Test
+    public void testCancellationSignalCalledAfterTimeout() throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        final OneTimeCancellationSignalListener listener =
+                new OneTimeCancellationSignalListener(Helper.FILL_TIMEOUT_MS + 2000);
+        sReplier.addResponse(DO_NOT_REPLY_RESPONSE);
+
+        // Trigger auto-fill.
+        mActivity.onUsername(View::requestFocus);
+
+        // Attach listener to CancellationSignal.
+        waitUntilConnected();
+        sReplier.getNextFillRequest().cancellationSignal.setOnCancelListener(listener);
+
+        // AssertResults
+        waitUntilDisconnected();
+        listener.assertOnCancelCalled();
+    }
+
     private void startCheckoutActivityAsNewTask() {
         final Context context = getContext();
         final Intent intent = new Intent(context, CheckoutActivity.class);
