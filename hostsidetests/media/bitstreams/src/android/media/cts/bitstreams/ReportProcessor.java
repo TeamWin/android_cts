@@ -132,6 +132,8 @@ abstract class ReportProcessor {
         instrTest.addIncludeFilter(fullTestName);
         instrTest.setTestTimeout(testTimeout);
         instrTest.setShellTimeout(shellTimeout);
+        // disable rerun mode to avoid collecting tests first then running.
+        instrTest.setRerunMode(false);
         for (Entry<String, String> e : getArgs().entrySet()) {
             instrTest.addInstrumentationArg(e.getKey(), e.getValue());
         }
