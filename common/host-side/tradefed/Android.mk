@@ -12,4 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include $(call all-subdir-makefiles)
+LOCAL_PATH := $(call my-dir)
+
+include $(CLEAR_VARS)
+
+LOCAL_SRC_FILES := $(call all-java-files-under, src)
+
+LOCAL_JAVA_RESOURCE_DIRS := res
+LOCAL_JAVA_RESOURCE_DIRS += ../../../tools/cts-tradefed/res
+
+LOCAL_SUITE_BUILD_NUMBER := $(BUILD_NUMBER_FROM_FILE)
+LOCAL_SUITE_TARGET_ARCH := $(TARGET_ARCH)
+LOCAL_SUITE_NAME := CTS
+LOCAL_SUITE_FULLNAME := "Compatibility Test Suite"
+LOCAL_SUITE_VERSION := 9.0
+
+LOCAL_JAR_MANIFEST := MANIFEST.mf
+
+LOCAL_MODULE := tradefed-cts
+
+include $(BUILD_COMPATIBILITY_SUITE)
+
+include $(call all-makefiles-under,$(LOCAL_PATH))
