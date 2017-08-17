@@ -109,4 +109,15 @@ public class Poc17_06 extends SecurityTestCase {
           assertMatches("[\\s\\n\\S]*INFO DISC FLAG: 0000[\\s\\n\\S]*", pocOut);
         }
     }
+
+    /**
+     * b/35216793
+     */
+    @SecurityTest
+    public void testPocBug_35216793() throws Exception {
+        enableAdbRoot(getDevice());
+        if(containsDriver(getDevice(), "/dev/v4l-subdev*")) {
+          AdbUtils.runPocNoOutput("Bug-35216793", getDevice(), 60);
+        }
+    }
 }
