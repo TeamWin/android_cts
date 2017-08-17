@@ -1211,15 +1211,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         saveGoesAway(DismissType.TOUCH_OUTSIDE);
     }
 
-    @Test
-    public void testSaveGoesAwayWhenLaunchingNewActivity() throws Exception {
-        try {
-            saveGoesAway(DismissType.LAUNCH_ACTIVITY);
-        } finally {
-            CheckoutActivity.finishIt();
-        }
-    }
-
     private void saveGoesAway(DismissType dismissType) throws Exception {
         enableService();
 
@@ -1264,9 +1255,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             case RECENTS_BUTTON:
                 sUiBot.switchAppsUsingRecents();
                 sUiBot.assertShownByRelativeId(CheckoutActivity.ID_ADDRESS);
-                break;
-            case LAUNCH_ACTIVITY:
-                startCheckoutActivityAsNewTask();
                 break;
             default:
                 throw new IllegalArgumentException("invalid dismiss type: " + dismissType);
