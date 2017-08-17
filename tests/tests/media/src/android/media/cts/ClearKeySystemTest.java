@@ -87,8 +87,10 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
     private static final Uri MPEG2TS_CLEAR_URL = Uri.parse(
             "android.resource://android.media.cts/" + R.raw.segment000001);
 
-    private static final UUID CLEARKEY_SCHEME_UUID =
+    private static final UUID COMMON_PSSH_SCHEME_UUID =
             new UUID(0x1077efecc0b24d02L, 0xace33c1e52e2fb4bL);
+    private static final UUID CLEARKEY_SCHEME_UUID =
+            new UUID(0xe2719d58a985b3c9L, 0x781ab030af78d30eL);
 
     private byte[] mDrmInitData;
     private byte[] mSessionId;
@@ -220,7 +222,7 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
         }
     }
 
-    private MediaDrm startDrm(final byte[][] clearKeys, final String initDataType) {
+    private MediaDrm startDrm(final byte[][] clearKeys, final String initDataType, final UUID drmSchemeUuid) {
         new Thread() {
             @Override
             public void run() {
@@ -232,7 +234,7 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
                 mLooper = Looper.myLooper();
 
                 try {
-                    mDrm = new MediaDrm(CLEARKEY_SCHEME_UUID);
+                    mDrm = new MediaDrm(drmSchemeUuid);
                 } catch (MediaDrmException e) {
                     Log.e(TAG, "Failed to create MediaDrm: " + e.getMessage());
                     return;
@@ -331,6 +333,7 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
      * Tests clear key system playback.
      */
     private void testClearKeyPlayback(
+            UUID drmSchemeUuid,
             String videoMime, String[] videoFeatures,
             String initDataType, byte[][] clearKeys,
             Uri audioUrl, boolean audioEncrypted,
@@ -339,12 +342,12 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
         MediaDrm drm = null;
         mSessionId = null;
         if (!scrambled) {
-            drm = startDrm(clearKeys, initDataType);
+            drm = startDrm(clearKeys, initDataType, drmSchemeUuid);
             if (null == drm) {
                 throw new Error("Failed to create drm.");
             }
 
-            if (!drm.isCryptoSchemeSupported(CLEARKEY_SCHEME_UUID)) {
+            if (!drm.isCryptoSchemeSupported(drmSchemeUuid)) {
                 stopDrm(drm);
                 throw new Error("Crypto scheme is not supported.");
             }
@@ -413,6 +416,18 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
 
     public void testClearKeyPlaybackCenc() throws Exception {
         testClearKeyPlayback(
+            COMMON_PSSH_SCHEME_UUID,
+            // using secure codec even though it is clear key DRM
+            MIME_VIDEO_AVC, new String[] { CodecCapabilities.FEATURE_SecurePlayback },
+            "cenc", new byte[][] { CLEAR_KEY_CENC },
+            CENC_AUDIO_URL, false,
+            CENC_VIDEO_URL, true,
+            VIDEO_WIDTH_CENC, VIDEO_HEIGHT_CENC, false);
+    }
+
+    public void testClearKeyPlaybackCenc2() throws Exception {
+        testClearKeyPlayback(
+            CLEARKEY_SCHEME_UUID,
             // using secure codec even though it is clear key DRM
             MIME_VIDEO_AVC, new String[] { CodecCapabilities.FEATURE_SecurePlayback },
             "cenc", new byte[][] { CLEAR_KEY_CENC },
@@ -423,6 +438,7 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
 
     public void testClearKeyPlaybackWebm() throws Exception {
         testClearKeyPlayback(
+            COMMON_PSSH_SCHEME_UUID,
             MIME_VIDEO_VP8, new String[0],
             "webm", new byte[][] { CLEAR_KEY_WEBM },
             WEBM_URL, true,
@@ -432,6 +448,7 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
 
     public void testClearKeyPlaybackMpeg2ts() throws Exception {
         testClearKeyPlayback(
+            COMMON_PSSH_SCHEME_UUID,
             MIME_VIDEO_AVC, new String[0],
             "mpeg2ts", null,
             MPEG2TS_SCRAMBLED_URL, false,
@@ -441,6 +458,7 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
 
     public void testPlaybackMpeg2ts() throws Exception {
         testClearKeyPlayback(
+            COMMON_PSSH_SCHEME_UUID,
             MIME_VIDEO_AVC, new String[0],
             "mpeg2ts", null,
             MPEG2TS_CLEAR_URL, false,
