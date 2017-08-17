@@ -706,6 +706,9 @@ public class LinkifyTest {
     public void testAddLinks_email_matchesShortValidEmail() {
         String email = "a@a.co";
         verifyAddLinksWithEmailSucceeds("Should match email: " + email, email);
+
+        email = "ab@a.co";
+        verifyAddLinksWithEmailSucceeds("Should match email: " + email, email);
     }
 
     @Test
