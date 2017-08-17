@@ -89,4 +89,15 @@ public class Poc17_08 extends SecurityTestCase {
                              "{16}[\\s\\n\\S]*", pocOut);
         }
     }
+
+    /**
+     *  b/35764241
+     */
+    @SecurityTest
+    public void testPocCVE_2017_9680() throws Exception {
+        enableAdbRoot(getDevice());
+        if(containsDriver(getDevice(), "/dev/qbt1000")) {
+            AdbUtils.runPocNoOutput("CVE-2017-9680", getDevice(), 120);
+        }
+    }
 }
