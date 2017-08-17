@@ -168,7 +168,7 @@ public class ActivityManagerActivityVisiblityTests extends ActivityManagerTestBa
     }
 
     public void testFinishActivityInNonFocusedStack() throws Exception {
-        if (!supportsSplitScreenMultiWindow()) {
+        if (!supportsMultiWindowMode() || !supportsSplitScreenMultiWindow()) {
             CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no multi-window support");
             return;
         }

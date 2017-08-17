@@ -164,6 +164,10 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * relaunched twice and it should have same config as initial one.
      */
     public void testSameConfigurationFullSplitFullRelaunch() throws Exception {
+        if (!supportsMultiWindowMode()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no multi-window support");
+            return;
+        }
         moveActivityFullSplitFull(TEST_ACTIVITY_NAME);
     }
 
@@ -171,6 +175,10 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * Same as {@link #testSameConfigurationFullSplitFullRelaunch} but without relaunch.
      */
     public void testSameConfigurationFullSplitFullNoRelaunch() throws Exception {
+        if (!supportsMultiWindowMode()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no multi-window support");
+            return;
+        }
         moveActivityFullSplitFull(RESIZEABLE_ACTIVITY_NAME);
     }
 
@@ -219,6 +227,10 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * relaunched twice and it should have same config as initial one.
      */
     public void testSameConfigurationSplitFullSplitRelaunch() throws Exception {
+        if (!supportsMultiWindowMode()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no multi-window support");
+            return;
+        }
         moveActivitySplitFullSplit(TEST_ACTIVITY_NAME);
     }
 
@@ -226,6 +238,10 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * Same as {@link #testSameConfigurationSplitFullSplitRelaunch} but without relaunch.
      */
     public void testSameConfigurationSplitFullSplitNoRelaunch() throws Exception {
+        if (!supportsMultiWindowMode()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no multi-window support");
+            return;
+        }
         moveActivitySplitFullSplit(RESIZEABLE_ACTIVITY_NAME);
     }
 
