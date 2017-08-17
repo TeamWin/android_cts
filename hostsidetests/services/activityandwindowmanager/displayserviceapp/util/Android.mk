@@ -1,4 +1,4 @@
-# Copyright (C) 2015 The Android Open Source Project
+# Copyright (C) 2017 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,24 +16,16 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_MODULE_TAGS := optional
-
-# Must match the package name in CtsTestCaseList.mk
-LOCAL_MODULE := CtsServicesHostTestCases
+LOCAL_MODULE_TAGS := tests
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
+LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
+
 LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed
-LOCAL_STATIC_JAVA_LIBRARIES := cts-amwm-util  \
-    cts-display-service-app-util \
-    platform-test-annotations-host
 
-LOCAL_CTS_TEST_PACKAGE := android.server
+LOCAL_MODULE := cts-display-service-app-util
 
-# Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+LOCAL_SDK_VERSION := current
 
-include $(BUILD_CTS_HOST_JAVA_LIBRARY)
-
-# Build the test APKs using their own makefiles
-include $(call all-makefiles-under,$(LOCAL_PATH))
+include $(BUILD_HOST_JAVA_LIBRARY)
