@@ -38,5 +38,8 @@
         <option name="known-failures" value="/expectations/jdwp-known-failures.txt" />
         <option name="runtime-hint" value="5m" />
 
+        <!-- Temporary work around to avoid running android.test.AndroidTestCase. -->
+        <!-- TODO(64541592) - remove once AndroidTestCase is not statically included. -->
+        <option name="exclude-filter" value="android.test.AndroidTestCase" />
     </test>
 </configuration>
