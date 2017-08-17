@@ -89,4 +89,16 @@ public class Poc17_08 extends SecurityTestCase {
                              "{16}[\\s\\n\\S]*", pocOut);
         }
     }
+
+    /**
+     *  b/36075363
+     */
+    @SecurityTest
+    public void testPocCVE_2017_0731() throws Exception {
+        AdbUtils.runPocNoOutput("CVE-2017-0731", getDevice(), 60);
+        String logcat = AdbUtils.runCommandLine("logcat -d", getDevice());
+        assertNotMatches("[\\s\\n\\S]*Fatal signal 11 \\(SIGSEGV\\)" +
+                         "[\\s\\n\\S]*>>> /system/bin/" +
+                         "mediaserver <<<[\\s\\n\\S]*", logcat);
+    }
 }
