@@ -24,8 +24,12 @@ import android.app.PendingIntent;
 import android.app.stubs.R;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Icon;
 import android.media.AudioAttributes;
+import android.media.session.MediaSession;
 import android.net.Uri;
+import android.os.Bundle;
 import android.provider.Settings;
 import android.provider.Telephony.Threads;
 import android.service.notification.StatusBarNotification;
@@ -33,12 +37,11 @@ import android.test.AndroidTestCase;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
-import java.util.Arrays;
 
 public class NotificationManagerTest extends AndroidTestCase {
     final String TAG = NotificationManagerTest.class.getSimpleName();
@@ -59,6 +62,10 @@ public class NotificationManagerTest extends AndroidTestCase {
         mNotificationManager.cancelAll();
         mNotificationManager.createNotificationChannel(new NotificationChannel(
                 NOTIFICATION_CHANNEL_ID, "name", NotificationManager.IMPORTANCE_DEFAULT));
+        // delay between tests so notifications aren't dropped by the rate limiter
+        try {
+            Thread.sleep(500);
+        } catch(InterruptedException e) {}
     }
 
     @Override
@@ -380,6 +387,110 @@ public class NotificationManagerTest extends AndroidTestCase {
         checkNotificationExistence(id, false);
     }
 
+    public void testMediaStyle() throws Exception {
+        mNotificationManager.cancelAll();
+        final int id = 99;
+        MediaSession session = new MediaSession(getContext(), "media");
+
+        final Notification notification =
+                new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                        .setSmallIcon(R.drawable.black)
+                        .setContentTitle("notify#" + id)
+                        .setContentText("This is #" + id + "notification  ")
+                        .addAction(new Notification.Action.Builder(
+                                Icon.createWithResource(getContext(), R.drawable.icon_black),
+                                "play", getPendingIntent()).build())
+                        .addAction(new Notification.Action.Builder(
+                                Icon.createWithResource(getContext(), R.drawable.icon_blue),
+                                "pause", getPendingIntent()).build())
+                        .setStyle(new Notification.MediaStyle()
+                                .setShowActionsInCompactView(0, 1)
+                                .setMediaSession(session.getSessionToken()))
+                        .build();
+        mNotificationManager.notify(id, notification);
+
+        if (!checkNotificationExistence(id, /*shouldExist=*/ true)) {
+            fail("couldn't find posted notification id=" + id);
+        }
+    }
+
+    public void testInboxStyle() throws Exception {
+        final int id = 100;
+
+        final Notification notification =
+                new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                        .setSmallIcon(R.drawable.black)
+                        .setContentTitle("notify#" + id)
+                        .setContentText("This is #" + id + "notification  ")
+                        .addAction(new Notification.Action.Builder(
+                                Icon.createWithResource(getContext(), R.drawable.icon_black),
+                                "a1", getPendingIntent()).build())
+                        .addAction(new Notification.Action.Builder(
+                                Icon.createWithResource(getContext(), R.drawable.icon_blue),
+                                "a2", getPendingIntent()).build())
+                        .setStyle(new Notification.InboxStyle().addLine("line")
+                                .setSummaryText("summary"))
+                        .build();
+        mNotificationManager.notify(id, notification);
+
+        if (!checkNotificationExistence(id, /*shouldExist=*/ true)) {
+            fail("couldn't find posted notification id=" + id);
+        }
+    }
+
+    public void testBigTextStyle() throws Exception {
+        final int id = 101;
+
+        final Notification notification =
+                new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                        .setSmallIcon(R.drawable.black)
+                        .setContentTitle("notify#" + id)
+                        .setContentText("This is #" + id + "notification  ")
+                        .addAction(new Notification.Action.Builder(
+                                Icon.createWithResource(getContext(), R.drawable.icon_black),
+                                "a1", getPendingIntent()).build())
+                        .addAction(new Notification.Action.Builder(
+                                Icon.createWithResource(getContext(), R.drawable.icon_blue),
+                                "a2", getPendingIntent()).build())
+                        .setStyle(new Notification.BigTextStyle()
+                                .setBigContentTitle("big title")
+                                .bigText("big text")
+                                .setSummaryText("summary"))
+                        .build();
+        mNotificationManager.notify(id, notification);
+
+        if (!checkNotificationExistence(id, /*shouldExist=*/ true)) {
+            fail("couldn't find posted notification id=" + id);
+        }
+    }
+
+    public void testBigPictureStyle() throws Exception {
+        final int id = 102;
+
+        final Notification notification =
+                new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                        .setSmallIcon(R.drawable.black)
+                        .setContentTitle("notify#" + id)
+                        .setContentText("This is #" + id + "notification  ")
+                        .addAction(new Notification.Action.Builder(
+                                Icon.createWithResource(getContext(), R.drawable.icon_black),
+                                "a1", getPendingIntent()).build())
+                        .addAction(new Notification.Action.Builder(
+                                Icon.createWithResource(getContext(), R.drawable.icon_blue),
+                                "a2", getPendingIntent()).build())
+                        .setStyle(new Notification.BigPictureStyle()
+                        .setBigContentTitle("title")
+                        .bigPicture(Bitmap.createBitmap(100, 100, Bitmap.Config.RGB_565))
+                        .bigLargeIcon(Icon.createWithResource(getContext(), R.drawable.icon_blue))
+                        .setSummaryText("summary"))
+                        .build();
+        mNotificationManager.notify(id, notification);
+
+        if (!checkNotificationExistence(id, /*shouldExist=*/ true)) {
+            fail("couldn't find posted notification id=" + id);
+        }
+    }
+
     public void testAutogrouping() throws Exception {
         sendNotification(1, R.drawable.black);
         sendNotification(2, R.drawable.blue);
@@ -457,17 +568,16 @@ public class NotificationManagerTest extends AndroidTestCase {
         assertAllPostedNotificationsAutogrouped();
 
         // regroup all but one of the children
-        for (int i = 40; i > 10; ) {
-            sendNotification(i, newGroup, R.drawable.blue);
-            postedIds.remove(postedIds.size() - 1);
-            assertNotificationCount(5);
+        for (int i = postedIds.size() - 1; i > 0; i--) {
             try {
                 Thread.sleep(200);
             } catch (InterruptedException ex) {
                 // pass
             }
+            int id = postedIds.remove(i);
+            sendNotification(id, newGroup, R.drawable.blue);
+            assertNotificationCount(5);
             assertOnlySomeNotificationsAutogrouped(postedIds);
-            i = i - 10;
         }
 
         // send a new non-grouped notification. since the autogroup summary still exists,
@@ -480,6 +590,11 @@ public class NotificationManagerTest extends AndroidTestCase {
             // pass
         }
         assertOnlySomeNotificationsAutogrouped(postedIds);
+    }
+
+    private PendingIntent getPendingIntent() {
+        return PendingIntent.getActivity(
+                getContext(), 0, new Intent(getContext(), this.getClass()), 0);
     }
 
     private boolean isGroupSummary(Notification n) {
@@ -500,7 +615,7 @@ public class NotificationManagerTest extends AndroidTestCase {
                 assertEquals(expectedGroupKey, sbn.getGroupKey());
             } else {
                 assertTrue(sbn.isGroup());
-                assertTrue(sbn.getKey() + " is unexpectedly autogrouped",
+                assertTrue(sbn.getKey() + " is unexpectedly autogrouped,",
                         sbn.getOverrideGroupKey() == null);
                 assertTrue(sbn.getKey() + " has an unusual group key",
                         sbn.getGroupKey() != expectedGroupKey);
