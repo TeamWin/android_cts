@@ -26,5 +26,7 @@
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
         <option name="jar" value="CtsMediaBitstreamsTestCases.jar" />
         <option name="runtime-hint" value="4h50m" />
+        <!-- shard-unit must be class -->
+        <option name="shard-unit" value="class" />
     </test>
 </configuration>
