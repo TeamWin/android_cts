@@ -241,6 +241,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
 
     protected void removeUser(int userId) throws Exception  {
         if (listUsers().contains(userId) && userId != USER_SYSTEM) {
+            waitForBroadcastIdle();
             // Don't log output, as tests sometimes set no debug user restriction, which
             // causes this to fail, we should still continue and remove the user.
             String stopUserCommand = "am stop-user -w -f " + userId;
