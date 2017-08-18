@@ -19,6 +19,8 @@ import static android.server.cts.ActivityManagerState.STATE_RESUMED;
 
 import android.platform.test.annotations.Presubmit;
 
+import android.server.cts.ActivityManagerState.ActivityStack;
+import android.server.cts.ActivityManagerState.ActivityTask;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.log.LogUtil.CLog;
 
@@ -40,8 +42,9 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     private static final String NIGHT_MODE_ACTIVITY = "NightModeActivity";
     private static final String DIALOG_WHEN_LARGE_ACTIVITY = "DialogWhenLargeActivity";
 
-    private static final String TRANSLUCENT_ACTIVITY = "TranslucentLandscapeActivity";
-
+    private static final String TRANSLUCENT_ACTIVITY =
+            "android.server.translucentapp.TranslucentLandscapeActivity";
+    private static final String TRANSLUCENT_SDK_26_PACKAGE = "android.server.translucentapp26";
     private static final String TRANSLUCENT_CURRENT_PACKAGE = "android.server.translucentapp";
 
     private static final String EXTRA_LAUNCH_NEW_TASK = "launch_new_task";
@@ -313,8 +316,8 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
                 1 /* portrait */, initialReportedSizes.orientation);
         logSeparator = clearLogcat();
 
-        // TODO(b/38225467): Target SDK 26 specific package when SDK 27 released.
-        launchActivityInComponent(TRANSLUCENT_CURRENT_PACKAGE, TRANSLUCENT_ACTIVITY);
+        launchActivityInComponent(TRANSLUCENT_SDK_26_PACKAGE, TRANSLUCENT_ACTIVITY);
+
         assertEquals("Legacy non-fullscreen activity requested landscape orientation",
                 0 /* landscape */, mAmWmState.getWmState().getLastOrientation());
 
@@ -325,19 +328,24 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         //         1 /* portrait */, updatedReportedSizes.orientation);
     }
 
-// TODO(b/38225467): Uncomment when SDK 27 is released.
-//    public void testNonFullscreenActivityProhibited() throws Exception {
-//        setComponentName(TRANSLUCENT_CURRENT_PACKAGE);
-//        launchActivity(TRANSLUCENT_ACTIVITY);
-//        mAmWmState.assertNotResumedActivity(
-//                "target SDK > 25 non-fullscreen activity should not reach onResume",
-//                TRANSLUCENT_ACTIVITY);
-//    }
-
-    // TODO(b/38225467): rename to testLegacyNonFullscreenActivityPermitted
-    public void testNonFullscreenActivityPermitted() throws Exception {
-        // TODO(b/38225467): Target SDK 26 specific package when SDK 27 released.
+    public void testNonFullscreenActivityProhibited() throws Exception {
         setComponentName(TRANSLUCENT_CURRENT_PACKAGE);
+
+        // We do not wait for the activity as it should not launch based on the restrictions around
+        // specifying orientation. We instead start an activity known to launch immediately after
+        // so that we can ensure processing the first activity occurred.
+        launchActivityNoWait(TRANSLUCENT_ACTIVITY);
+        setDefaultComponentName();
+        launchActivity(PORTRAIT_ACTIVITY_NAME);
+
+        assertFalse("target SDK > 26 non-fullscreen activity should not reach onResume",
+                mAmWmState.getAmState().containsActivity(
+                        ActivityManagerTestBase.getActivityComponentName(
+                                TRANSLUCENT_ACTIVITY, TRANSLUCENT_ACTIVITY)));
+    }
+
+    public void testNonFullscreenActivityPermitted() throws Exception {
+        setComponentName(TRANSLUCENT_SDK_26_PACKAGE);
         setDeviceRotation(0);
 
         launchActivity(TRANSLUCENT_ACTIVITY);
