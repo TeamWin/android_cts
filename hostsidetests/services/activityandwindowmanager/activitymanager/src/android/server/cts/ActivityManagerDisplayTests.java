@@ -1134,7 +1134,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
     /**
      * Test that all activities that were on the private display are destroyed on display removal.
      */
-    @Presubmit
+    // TODO: Flaky, add to presubmit when b/63404575 is fixed.
     public void testContentDestroyOnDisplayRemoved() throws Exception {
         if (!supportsMultiDisplay()) { return; }
 
