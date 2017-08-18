@@ -143,6 +143,7 @@ public class NativeClearKeySystemTest extends MediaPlayerTestBase {
         try {
             testGetPropertyStringNative(uuidByteArray(COMMON_PSSH_SCHEME_UUID),
                     "unknown-property", value);
+            fail("Should have thrown an exception");
         } catch (RuntimeException e) {
             Log.e(TAG, "testUnknownPropertyString error = '" + e.getMessage() + "'");
             assertThat(e.getMessage(), containsString("get property string returns"));
