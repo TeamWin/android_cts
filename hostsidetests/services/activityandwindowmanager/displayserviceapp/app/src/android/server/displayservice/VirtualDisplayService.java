@@ -84,6 +84,9 @@ public class VirtualDisplayService extends Service {
         final String name = "CtsVirtualDisplay";
 
         int flags = VIRTUAL_DISPLAY_FLAG_PRESENTATION | VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY;
+        if (intent.getBooleanExtra("show_content_when_locked", false /* defaultValue */)) {
+            flags |= 1 << 5; // VIRTUAL_DISPLAY_FLAG_CAN_SHOW_WITH_INSECURE_KEYGUARD
+        }
         mVirtualDisplay = displayManager.createVirtualDisplay(
                 name, WIDTH, HEIGHT, DENSITY, mReader.getSurface(), flags);
     }

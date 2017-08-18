@@ -38,12 +38,16 @@ public class DisplayHelper {
         mDevice = device;
     }
 
-    public void createAndWaitForDisplay(boolean external) throws DeviceNotAvailableException {
+    public void createAndWaitForDisplay(boolean external, boolean requestShowWhenLocked)
+            throws DeviceNotAvailableException {
         StringBuilder command =
                 new StringBuilder("am startfgservice -n " + VIRTUAL_DISPLAY_SERVICE);
         command.append(" --es command create");
         if (external) {
             command.append(" --ez external_display true");
+        }
+        if (requestShowWhenLocked) {
+            command.append(" --ez show_content_when_locked true");
         }
         mDevice.executeShellCommand(command.toString());
 

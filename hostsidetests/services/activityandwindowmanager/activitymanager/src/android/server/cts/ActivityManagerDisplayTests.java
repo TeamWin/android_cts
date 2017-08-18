@@ -1132,6 +1132,25 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
     }
 
     /**
+     * Test that only private virtual display can show content with insecure keyguard.
+     */
+    public void testFlagShowWithInsecureKeyguardOnPublicVirtualDisplay() throws Exception {
+        if (!supportsMultiDisplay()) {
+            return;
+        }
+
+        // Try to create new show-with-insecure-keyguard public virtual display.
+        final DisplayState newDisplay = new VirtualDisplayBuilder(this)
+                .setPublicDisplay(true)
+                .setCanShowWithInsecureKeyguard(true)
+                .setMustBeCreated(false)
+                .build();
+
+        // Check that the display is not created.
+        assertNull(newDisplay);
+    }
+
+    /**
      * Test that all activities that were on the private display are destroyed on display removal.
      */
     @Presubmit
@@ -1519,33 +1538,28 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      * on an external secondary display.
      */
     public void testExternalDisplayActivityTurnPrimaryOff() throws Exception {
-        final DisplayState newDisplay = createExternalVirtualDisplay();
+        // Launch something on the primary display so we know there is a resumed activity there
+        launchActivity(RESIZEABLE_ACTIVITY_NAME);
+        waitAndAssertActivityResumed(RESIZEABLE_ACTIVITY_NAME, DEFAULT_DISPLAY_ID,
+                "Activity launched on primary display must be resumed");
+
+        final DisplayState newDisplay = createExternalVirtualDisplay(
+                true /* showContentWhenLocked */);
 
         launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mDisplayId);
-        mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME});
 
         // Check that the activity is launched onto the external display
-        final int primaryStackId = mAmWmState.getAmState().getFrontStackId(DEFAULT_DISPLAY_ID);
-        final int frontStackId = mAmWmState.getAmState().getFrontStackId(newDisplay.mDisplayId);
-        ActivityManagerState.ActivityStack firstFrontStack =
-                mAmWmState.getAmState().getStackById(frontStackId);
-        assertEquals("Activity launched on external display must be resumed",
-                getActivityComponentName(TEST_ACTIVITY_NAME),
-                firstFrontStack.mResumedActivity);
-        mAmWmState.assertFocusedStack("Focus must be on external display", frontStackId);
+        waitAndAssertActivityResumed(TEST_ACTIVITY_NAME, newDisplay.mDisplayId,
+                "Activity launched on external display must be resumed");
 
         setPrimaryDisplayState(false);
 
         // Wait for the fullscreen stack to start sleeping, and then make sure the
         // test activity is still resumed.
-        mAmWmState.waitForWithAmState(mDevice, (state) ->
-                state.getStackById(primaryStackId).mSleeping,
-                "Waiting for fullscreen stack to start sleeping");
-        firstFrontStack = mAmWmState.getAmState().getStackById(frontStackId);
-        assertEquals("Activity on external display must be resumed",
-                getActivityComponentName(TEST_ACTIVITY_NAME),
-                firstFrontStack.mResumedActivity);
-        mAmWmState.assertFocusedStack("Focus must be on external display", frontStackId);
+        waitAndAssertActivityStopped(RESIZEABLE_ACTIVITY_NAME,
+                "Activity launched on primary display must be stopped after turning off");
+        waitAndAssertActivityResumed(TEST_ACTIVITY_NAME, newDisplay.mDisplayId,
+                "Activity launched on external display must be resumed");
     }
 
     /**
@@ -1554,65 +1568,76 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     public void testLaunchExternalDisplayActivityWhilePrimaryOff() throws Exception {
         // Launch something on the primary display so we know there is a resumed activity there
-        launchActivity(LAUNCHING_ACTIVITY);
-        mAmWmState.computeState(mDevice, new String[] {LAUNCHING_ACTIVITY});
-        assertEquals("Unexpected resumed activity",
-                1, mAmWmState.getAmState().getResumedActivitiesCount());
+        launchActivity(RESIZEABLE_ACTIVITY_NAME);
+        waitAndAssertActivityResumed(RESIZEABLE_ACTIVITY_NAME, DEFAULT_DISPLAY_ID,
+                "Activity launched on primary display must be resumed");
 
         setPrimaryDisplayState(false);
 
         // Make sure there is no resumed activity when the primary display is off
-        mAmWmState.waitForWithAmState(mDevice, (state) ->
-                state.getStackById(state.getFrontStackId(DEFAULT_DISPLAY_ID)).mSleeping,
-                "Waiting for fullscreen stack to start sleeping");
+        waitAndAssertActivityStopped(RESIZEABLE_ACTIVITY_NAME,
+                "Activity launched on primary display must be stopped after turning off");
         assertEquals("Unexpected resumed activity",
                 0, mAmWmState.getAmState().getResumedActivitiesCount());
 
-        final DisplayState newDisplay = createExternalVirtualDisplay();
+        final DisplayState newDisplay = createExternalVirtualDisplay(
+                true /* showContentWhenLocked */);
 
         launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mDisplayId);
-        mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME});
 
         // Check that the test activity is resumed on the external display
-        final int frontStackId = mAmWmState.getAmState().getFrontStackId(newDisplay.mDisplayId);
-        final ActivityManagerState.ActivityStack firstFrontStack =
-                mAmWmState.getAmState().getStackById(frontStackId);
-        assertEquals("Activity launched on external display must be resumed",
-                getActivityComponentName(TEST_ACTIVITY_NAME),
-                firstFrontStack.mResumedActivity);
-        mAmWmState.assertFocusedStack("Focus must be on external display", frontStackId);
+        waitAndAssertActivityResumed(TEST_ACTIVITY_NAME, newDisplay.mDisplayId,
+                "Activity launched on external display must be resumed");
     }
 
     /**
      * Tests that turning the secondary display off stops activities running on that display.
      */
     public void testExternalDisplayToggleState() throws Exception {
-        final DisplayState newDisplay = createExternalVirtualDisplay();
+        final DisplayState newDisplay = createExternalVirtualDisplay(
+                false /* showContentWhenLocked */);
 
         launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mDisplayId);
-        mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME});
 
         // Check that the test activity is resumed on the external display
-        final int frontStackId = mAmWmState.getAmState().getFrontStackId(newDisplay.mDisplayId);
-        final ActivityManagerState.ActivityStack firstFrontStack =
-                mAmWmState.getAmState().getStackById(frontStackId);
-        assertEquals("Activity launched on external display must be resumed",
-                getActivityComponentName(TEST_ACTIVITY_NAME),
-                firstFrontStack.mResumedActivity);
-        mAmWmState.assertFocusedStack("Focus must be on external display", frontStackId);
+        waitAndAssertActivityResumed(TEST_ACTIVITY_NAME, newDisplay.mDisplayId,
+                "Activity launched on external display must be resumed");
 
         mExternalDisplayHelper.turnDisplayOff();
 
         // Check that turning off the external display stops the activity
-        mAmWmState.waitForActivityState(mDevice, TEST_ACTIVITY_NAME, STATE_STOPPED);
-        assertTrue(mAmWmState.getAmState().hasActivityState(TEST_ACTIVITY_NAME, STATE_STOPPED));
+        waitAndAssertActivityStopped(TEST_ACTIVITY_NAME,
+                "Activity launched on external display must be stopped after turning off");
 
         mExternalDisplayHelper.turnDisplayOn();
 
         // Check that turning on the external display resumes the activity
-        mAmWmState.waitForActivityState(mDevice, TEST_ACTIVITY_NAME, STATE_RESUMED);
-        assertTrue(mAmWmState.getAmState().hasActivityState(TEST_ACTIVITY_NAME, STATE_RESUMED));
+        waitAndAssertActivityResumed(TEST_ACTIVITY_NAME, newDisplay.mDisplayId,
+                "Activity launched on external display must be resumed");
+    }
+
+    private void waitAndAssertActivityResumed(String activityName, int displayId, String message)
+            throws Exception {
+        mAmWmState.waitForActivityState(mDevice, activityName, STATE_RESUMED);
+
+        final String fullActivityName = getActivityComponentName(activityName);
+        assertEquals(message, fullActivityName, mAmWmState.getAmState().getResumedActivity());
+        final int frontStackId = mAmWmState.getAmState().getFrontStackId(displayId);
+        ActivityManagerState.ActivityStack firstFrontStack =
+                mAmWmState.getAmState().getStackById(frontStackId);
+        assertEquals(message, fullActivityName, firstFrontStack.mResumedActivity);
+        assertTrue(message,
+                mAmWmState.getAmState().hasActivityState(activityName, STATE_RESUMED));
         mAmWmState.assertFocusedStack("Focus must be on external display", frontStackId);
+        mAmWmState.assertVisibility(activityName, true /* visible */);
+    }
+
+    private void waitAndAssertActivityStopped(String activityName, String message)
+            throws Exception {
+        mAmWmState.waitForActivityState(mDevice, activityName, STATE_STOPPED);
+
+        assertTrue(message, mAmWmState.getAmState().hasActivityState(activityName,
+                STATE_STOPPED));
     }
 
     /** Get physical and override display metrics from WM. */
@@ -1743,12 +1768,13 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      * Creates a private virtual display with the external and show with insecure
      * keyguard flags set.
      */
-    private DisplayState createExternalVirtualDisplay() throws Exception {
+    private DisplayState createExternalVirtualDisplay(boolean showContentWhenLocked)
+            throws Exception {
         final ReportedDisplays originalDS = getDisplaysStates();
         final int originalDisplayCount = originalDS.getNumberOfDisplays();
 
         mExternalDisplayHelper = new DisplayHelper(getDevice());
-        mExternalDisplayHelper.createAndWaitForDisplay(true);
+        mExternalDisplayHelper.createAndWaitForDisplay(true /* external */, showContentWhenLocked);
 
         // Wait for the virtual display to be created and get configurations.
         final ReportedDisplays ds =
