@@ -26,7 +26,7 @@ import static com.android.cts.deviceandprofileowner.vpn.VpnTestHelper.VPN_PACKAG
  * <ul>
  *     <li>has a target SDK version below {@link android.os.Build.VERSION_CODES#N}, or</li>
  *     <li>explicitly opts out of the feature through
- *         {@link android.net.VpnService#METADATA_SUPPORTS_ALWAYS_ON}</li>
+ *         {@link android.net.VpnService#SERVICE_META_DATA_SUPPORTS_ALWAYS_ON}</li>
  * </ul>
  */
 public class AlwaysOnVpnUnsupportedTest extends BaseDeviceAdminTest {
