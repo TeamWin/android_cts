@@ -20,6 +20,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Instrumentation;
+import android.app.KeyguardManager;
 import android.app.cts.android.app.cts.tools.ServiceConnectionHandler;
 import android.app.cts.android.app.cts.tools.ServiceProcessController;
 import android.app.cts.android.app.cts.tools.SyncOrderedBroadcast;
@@ -31,6 +32,7 @@ import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.os.IBinder;
 import android.os.Parcel;
+import android.os.PowerManager;
 import android.os.RemoteException;
 import android.test.InstrumentationTestCase;
 
@@ -127,16 +129,19 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             // First kill the processes to start out in a stable state.
             conn.bind(WAIT_TIME);
             conn2.bind(WAIT_TIME);
-            try {
-                conn.getServiceIBinder().transact(IBinder.FIRST_CALL_TRANSACTION, data, null, 0);
-            } catch (RemoteException e) {
-            }
-            try {
-                conn2.getServiceIBinder().transact(IBinder.FIRST_CALL_TRANSACTION, data, null, 0);
-            } catch (RemoteException e) {
-            }
+            IBinder service1 = conn.getServiceIBinder();
+            IBinder service2 = conn2.getServiceIBinder();
             conn.unbind(WAIT_TIME);
             conn2.unbind(WAIT_TIME);
+            try {
+                service1.transact(IBinder.FIRST_CALL_TRANSACTION, data, null, 0);
+            } catch (RemoteException e) {
+            }
+            try {
+                service2.transact(IBinder.FIRST_CALL_TRANSACTION, data, null, 0);
+            } catch (RemoteException e) {
+            }
+            service1 = service2 = null;
 
             // Wait for uid's processes to go away.
             uidGoneListener.waitForValue(ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE,
@@ -200,7 +205,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
                     am.getPackageImportance(SIMPLE_PACKAGE_NAME));
 
             // Also make sure the uid state reports are as expected.
-            uidWatcher.expect(WatchUidRunner.CMD_ACTIVE, null, WAIT_TIME);
+            uidWatcher.waitFor(WatchUidRunner.CMD_ACTIVE, null, WAIT_TIME);
             uidWatcher.expect(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
             uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "FGS", WAIT_TIME);
 
@@ -297,11 +302,13 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         // First kill the process to start out in a stable state.
         mContext.stopService(serviceIntent);
         conn.bind(WAIT_TIME);
+        IBinder service = conn.getServiceIBinder();
+        conn.unbind(WAIT_TIME);
         try {
-            conn.getServiceIBinder().transact(IBinder.FIRST_CALL_TRANSACTION, data, null, 0);
+            service.transact(IBinder.FIRST_CALL_TRANSACTION, data, null, 0);
         } catch (RemoteException e) {
         }
-        conn.unbind(WAIT_TIME);
+        service = null;
 
         // Wait for uid's process to go away.
         uidGoneListener.waitForValue(ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE,
@@ -351,7 +358,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             conn.waitForConnect(WAIT_TIME);
 
             // Also make sure the uid state reports are as expected.
-            uidWatcher.expect(WatchUidRunner.CMD_ACTIVE, null, WAIT_TIME);
+            uidWatcher.waitFor(WatchUidRunner.CMD_ACTIVE, null, WAIT_TIME);
             uidWatcher.expect(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
             uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "SVC", WAIT_TIME);
 
@@ -460,16 +467,19 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         mContext.stopService(mService2Intent);
         conn.bind(WAIT_TIME);
         conn2.bind(WAIT_TIME);
-        try {
-            conn.getServiceIBinder().transact(IBinder.FIRST_CALL_TRANSACTION, data, null, 0);
-        } catch (RemoteException e) {
-        }
-        try {
-            conn2.getServiceIBinder().transact(IBinder.FIRST_CALL_TRANSACTION, data, null, 0);
-        } catch (RemoteException e) {
-        }
+        IBinder service = conn.getServiceIBinder();
+        IBinder service2 = conn2.getServiceIBinder();
         conn.unbind(WAIT_TIME);
         conn2.unbind(WAIT_TIME);
+        try {
+            service.transact(IBinder.FIRST_CALL_TRANSACTION, data, null, 0);
+        } catch (RemoteException e) {
+        }
+        try {
+            service2.transact(IBinder.FIRST_CALL_TRANSACTION, data, null, 0);
+        } catch (RemoteException e) {
+        }
+        service = service2 = null;
 
         // Wait for uid's process to go away.
         uidGoneListener.waitForValue(ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE,
@@ -522,7 +532,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
                     am.getPackageImportance(SIMPLE_PACKAGE_NAME));
 
             // Also make sure the uid state reports are as expected.
-            uidWatcher.expect(WatchUidRunner.CMD_ACTIVE, null, WAIT_TIME);
+            uidWatcher.waitFor(WatchUidRunner.CMD_ACTIVE, null, WAIT_TIME);
             uidWatcher.expect(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
             uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "FGS", WAIT_TIME);
 
@@ -625,7 +635,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             }
 
             // Track the uid proc state changes from the broadcast (but not service execution)
-            controller.getUidWatcher().expect(WatchUidRunner.CMD_IDLE, null, WAIT_TIME);
+            controller.getUidWatcher().waitFor(WatchUidRunner.CMD_IDLE, null, WAIT_TIME);
             controller.getUidWatcher().expect(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
             controller.getUidWatcher().expect(WatchUidRunner.CMD_PROCSTATE, "RCVR", WAIT_TIME);
             controller.getUidWatcher().expect(WatchUidRunner.CMD_CACHED, null, WAIT_TIME);
@@ -681,7 +691,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             }
 
             // Track the uid proc state changes from the broadcast (but not service execution)
-            controller.getUidWatcher().expect(WatchUidRunner.CMD_IDLE, null, WAIT_TIME);
+            controller.getUidWatcher().waitFor(WatchUidRunner.CMD_IDLE, null, WAIT_TIME);
             controller.getUidWatcher().expect(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
             controller.getUidWatcher().expect(WatchUidRunner.CMD_PROCSTATE, "RCVR", WAIT_TIME);
             controller.getUidWatcher().expect(WatchUidRunner.CMD_CACHED, null, WAIT_TIME);
@@ -754,10 +764,13 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             }
             conn.waitForConnect(WAIT_TIME);
 
+            final String expectedActivityState = (isScreenInteractive() && !isKeyguardLocked())
+                    ? "TOP" : "TPSL";
             // Also make sure the uid state reports are as expected.
             controller.getUidWatcher().waitFor(WatchUidRunner.CMD_ACTIVE, null, WAIT_TIME);
             controller.getUidWatcher().expect(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
-            controller.getUidWatcher().expect(WatchUidRunner.CMD_PROCSTATE, "TOP", WAIT_TIME);
+            controller.getUidWatcher().expect(WatchUidRunner.CMD_PROCSTATE,
+                    expectedActivityState, WAIT_TIME);
             controller.getUidWatcher().expect(WatchUidRunner.CMD_PROCSTATE, "SVC", WAIT_TIME);
 
             // Okay, bring down the service.
@@ -775,7 +788,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
 
             // And now fast-forward to the app going idle, service should be stopped.
             controller.makeUidIdle();
-            controller.getUidWatcher().expect(WatchUidRunner.CMD_IDLE, null, WAIT_TIME);
+            controller.getUidWatcher().waitFor(WatchUidRunner.CMD_IDLE, null, WAIT_TIME);
 
             conn.waitForDisconnect(WAIT_TIME);
             controller.getUidWatcher().waitFor(WatchUidRunner.CMD_CACHED, null, WAIT_TIME);
@@ -797,5 +810,17 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             conn.stopMonitoringIfNeeded();
             controller.cleanup();
         }
+    }
+
+    private boolean isScreenInteractive() {
+        final PowerManager powerManager =
+                (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
+        return powerManager.isInteractive();
+    }
+
+    private boolean isKeyguardLocked() {
+        final KeyguardManager keyguardManager =
+                (KeyguardManager) mContext.getSystemService(Context.KEYGUARD_SERVICE);
+        return keyguardManager.isKeyguardLocked();
     }
 }
