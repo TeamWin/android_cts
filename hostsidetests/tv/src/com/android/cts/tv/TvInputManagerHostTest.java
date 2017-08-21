@@ -17,7 +17,6 @@
 package com.android.cts.tv;
 
 import com.android.ddmlib.Log.LogLevel;
-import com.android.compatibility.common.util.VersionCodes;
 import com.android.cts.migration.MigrationHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
