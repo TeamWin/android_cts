@@ -15,22 +15,30 @@
  */
 package android.media.cts.bitstreams;
 
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameters;
 import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 
+@FullPackage
 @RunWith(DeviceJUnit4Parameterized.class)
 @UseParametersRunnerFactory(DeviceJUnit4ClassRunnerWithParameters.RunnerFactory.class)
-public class HevcYuv444BitstreamsTest extends MediaBitstreamsTest {
+public class H264Yuv420_8bitHpBitstreamsFullTest extends MediaBitstreamsTest {
 
     @Parameters(name = "{1}")
     public static Iterable<Object[]> bitstreams() {
-        return MediaBitstreamsTest.bitstreams("hevc/yuv444", BitstreamPackage.STANDARD);
+        return MediaBitstreamsTest.bitstreams("h264/yuv420/8bit/hp", BitstreamPackage.FULL);
     }
 
-    public HevcYuv444BitstreamsTest(String prefix, String path,
+    public H264Yuv420_8bitHpBitstreamsFullTest(String prefix, String path,
             BitstreamPackage pkg, BitstreamPackage packageToRun) {
         super(prefix, path, pkg, packageToRun);
     }
 
+    @Test
+    @Override
+    @FullPackage
+    public void testBitstreamsConformance() {
+        super.testBitstreamsConformance();
+    }
 }
