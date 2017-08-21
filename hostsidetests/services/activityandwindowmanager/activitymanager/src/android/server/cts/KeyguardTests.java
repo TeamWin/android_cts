@@ -29,16 +29,14 @@ public class KeyguardTests extends KeyguardTestBase {
         super.setUp();
 
         // Set screen lock (swipe)
-        mDevice.executeShellCommand("locksettings set-disabled false");
+        setLockDisabled(false);
     }
 
     @Override
     public void tearDown() throws Exception {
         super.tearDown();
 
-        // Remove screen lock
         tearDownLockCredentials();
-        mDevice.executeShellCommand("locksettings set-disabled true");
     }
 
     public void testKeyguardHidesActivity() throws Exception {

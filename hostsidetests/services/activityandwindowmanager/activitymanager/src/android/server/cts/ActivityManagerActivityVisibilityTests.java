@@ -285,6 +285,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     }
 
     public void testTurnScreenOnAttrNoLockScreen() throws Exception {
+        wakeUpAndRemoveLock();
         sleepDevice();
         final String logSeparator = clearLogcat();
         launchActivity(TURN_SCREEN_ON_ATTR_ACTIVITY_NAME);
