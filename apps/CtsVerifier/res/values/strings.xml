@@ -3478,6 +3478,35 @@ You should be prompted to select credentials; choose the ones you just installed
     2) You should see the text \"Cts App-Link Text\".\n
     </string>
 
+    <string name="tv_microphone_device_test">Microphone device test</string>
+    <string name="tv_microphone_device_test_info">
+    This test checks if InputDevice.hasMicrophone of the Media API reports a
+    correct value on every input device (including remote controls).
+    </string>
+    <string name="tv_microphone_device_test_prep_question">
+    Before continuing, please make sure that you pair all primary input
+    devices intended to be used by the device, including bluetooth
+    remotes and companion remote-control apps such as the Android TV Remote Control.
+    Have you paired every primary input device with the device under test (DUT)?
+    </string>
+    <string name="tv_microphone_device_test_mic_question">
+    Does input device \"%1$s\" have a microphone?
+    </string>
+    <string name="tv_microphone_device_test_negative_mismatch">
+    InputDevice.hasMicrophone reports that this input device DOES have a
+    microphone whereas you selected that it does not.  Please correct it by
+    declaring \"audio.mic = 0\" in the device\'s input device configuration
+    (.idc) file.
+    </string>
+    <string name="tv_microphone_device_test_positive_mismatch">
+    InputDevice.hasMicrophone reports that this input device does NOT have a
+    microphone whereas you selected that it does.  Please correct it by
+    declaring \"audio.mic = 1\" in the device\'s input device configuration
+    (.idc) file and make sure that relevant files such as key layout (.kl)
+    and key character map (.kcm) files are found by the system accordingly.
+    </string>
+    <string name="tv_microphone_device_test_no_input_devices">No input devices found.</string>
+
     <string name="overlay_view_text">Overlay View Dummy Text</string>
     <string name="custom_rating">Example of input app specific custom rating.</string>
 
