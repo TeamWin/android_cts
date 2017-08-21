@@ -145,6 +145,8 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     private boolean mLockCredentialsSet;
 
+    private boolean mLockDisabled;
+
     protected static String getAmStartCmd(final String activityName) {
         return "am start -n " + getActivityComponentName(activityName);
     }
@@ -267,12 +269,14 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         mUserRotation = getUserRotation();
         mFontScale = getFontScale();
         mLockCredentialsSet = false;
+        mLockDisabled = isLockDisabled();
     }
 
     @Override
     protected void tearDown() throws Exception {
         super.tearDown();
         try {
+            setLockDisabled(mLockDisabled);
             executeShellCommand(AM_FORCE_STOP_TEST_PACKAGE);
             executeShellCommand(AM_FORCE_STOP_SECOND_TEST_PACKAGE);
             executeShellCommand(AM_FORCE_STOP_THIRD_TEST_PACKAGE);
@@ -628,6 +632,11 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         unlockDevice();
     }
 
+    protected void wakeUpAndRemoveLock() throws DeviceNotAvailableException {
+        wakeUpDevice();
+        setLockDisabled(true);
+    }
+
     protected void wakeUpDevice() throws DeviceNotAvailableException {
         runCommandAndPrintOutput("input keyevent 224");
     }
@@ -666,6 +675,27 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     protected void removeLockCredential() throws DeviceNotAvailableException {
         runCommandAndPrintOutput("locksettings clear --old " + LOCK_CREDENTIAL);
+    }
+
+    /**
+     * Returns whether the lock screen is disabled.
+     * @return true if the lock screen is disabled, false otherwise.
+     */
+    private boolean isLockDisabled() throws DeviceNotAvailableException {
+        final String isLockDisabled = runCommandAndPrintOutput("locksettings get-disabled").trim();
+        if ("null".equals(isLockDisabled)) {
+            return false;
+        }
+        return Boolean.parseBoolean(isLockDisabled);
+
+    }
+
+    /**
+     * Disable the lock screen.
+     * @param lockDisabled true if should disable, false otherwise.
+     */
+    void setLockDisabled(boolean lockDisabled) throws DeviceNotAvailableException {
+        runCommandAndPrintOutput("locksettings set-disabled " + lockDisabled);
     }
 
     /**
