@@ -97,13 +97,13 @@ public class InstrumentedAutoFillService extends AutofillService {
     @Override
     public void onFillRequest(android.service.autofill.FillRequest request,
             CancellationSignal cancellationSignal, FillCallback callback) {
+        if (DUMP_FILL_REQUESTS) dumpStructure("onFillRequest()", request.getFillContexts());
         synchronized (sLock) {
             if (sIgnoreUnexpectedRequests || !fromSamePackage(request.getFillContexts()))  {
                 Log.w(TAG, "Ignoring onFillRequest()");
                 return;
             }
         }
-        if (DUMP_FILL_REQUESTS) dumpStructure("onFillRequest()", request.getFillContexts());
         sReplier.onFillRequest(request.getFillContexts(), request.getClientState(),
                 cancellationSignal, callback, request.getFlags());
     }
@@ -111,13 +111,13 @@ public class InstrumentedAutoFillService extends AutofillService {
     @Override
     public void onSaveRequest(android.service.autofill.SaveRequest request,
             SaveCallback callback) {
+        if (DUMP_SAVE_REQUESTS) dumpStructure("onSaveRequest()", request.getFillContexts());
         synchronized (sLock) {
             if (sIgnoreUnexpectedRequests || !fromSamePackage(request.getFillContexts())) {
                 Log.w(TAG, "Ignoring onSaveRequest()");
                 return;
             }
         }
-        if (DUMP_SAVE_REQUESTS) dumpStructure("onSaveRequest()", request.getFillContexts());
         sReplier.onSaveRequest(request.getFillContexts(), request.getClientState(), callback);
     }
 
@@ -248,6 +248,12 @@ public class InstrumentedAutoFillService extends AutofillService {
         private List<Exception> mExceptions;
 
         private Replier() {
+        }
+
+        private IdMode mIdMode = IdMode.RESOURCE_ID;
+
+        public void setIdMode(IdMode mode) {
+            this.mIdMode = mode;
         }
 
         /**
@@ -388,8 +394,20 @@ public class InstrumentedAutoFillService extends AutofillService {
                     return;
                 }
 
-                final FillResponse fillResponse = response.asFillResponse(
-                        (id) -> Helper.findNodeByResourceId(contexts, id));
+                final FillResponse fillResponse;
+
+                switch (mIdMode) {
+                    case RESOURCE_ID:
+                        fillResponse = response.asFillResponse(
+                                (id) -> Helper.findNodeByResourceId(contexts, id));
+                        break;
+                    case HTML_NAME:
+                        fillResponse = response.asFillResponse(
+                                (name) -> Helper.findNodeByHtmlName(contexts, name));
+                        break;
+                    default:
+                        throw new IllegalStateException("Unknown id mode: " + mIdMode);
+                }
 
                 Log.v(TAG, "onFillRequest(): fillResponse = " + fillResponse);
                 callback.onSuccess(fillResponse);

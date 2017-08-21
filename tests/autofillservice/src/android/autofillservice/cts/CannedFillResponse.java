@@ -366,18 +366,18 @@ final class CannedFillResponse {
 
             if (mFieldValues != null) {
                 for (Map.Entry<String, AutofillValue> entry : mFieldValues.entrySet()) {
-                    final String resourceId = entry.getKey();
-                    final ViewNode node = nodeResolver.apply(resourceId);
+                    final String id = entry.getKey();
+                    final ViewNode node = nodeResolver.apply(id);
                     if (node == null) {
-                        throw new AssertionError("No node with resource id " + resourceId);
+                        throw new AssertionError("No node with resource id " + id);
                     }
-                    final AutofillId id = node.getAutofillId();
+                    final AutofillId autofillid = node.getAutofillId();
                     final AutofillValue value = entry.getValue();
-                    final RemoteViews presentation = mFieldPresentations.get(resourceId);
+                    final RemoteViews presentation = mFieldPresentations.get(id);
                     if (presentation != null) {
-                        builder.setValue(id, value, presentation);
+                        builder.setValue(autofillid, value, presentation);
                     } else {
-                        builder.setValue(id, value);
+                        builder.setValue(autofillid, value);
                     }
                 }
             }
@@ -390,7 +390,7 @@ final class CannedFillResponse {
             return "CannedDataset " + mId + " : [hasPresentation=" + (mPresentation != null)
                     + ", fieldPresentations=" + (mFieldPresentations)
                     + ", hasAuthentication=" + (mAuthentication != null)
-                    + ", fieldValuess=" + mFieldValues + "]";
+                    + ", fieldValues=" + mFieldValues + "]";
         }
 
         static class Builder {
@@ -409,47 +409,71 @@ final class CannedFillResponse {
             }
 
             /**
-             * Sets the canned value of a text field based on its {@code resourceId}.
+             * Sets the canned value of a text field based on its {@code id}.
+             *
+             * <p>The meaning of the id is defined by the object using the canned dataset.
+             * For example, {@link InstrumentedAutoFillService.Replier} resolves the id based on
+             * {@link IdMode}.
              */
-            public Builder setField(String resourceId, String text) {
-                return setField(resourceId, AutofillValue.forText(text));
+            public Builder setField(String id, String text) {
+                return setField(id, AutofillValue.forText(text));
             }
 
             /**
-             * Sets the canned value of a list field based on its {@code resourceId}.
+             * Sets the canned value of a list field based on its its {@code id}.
+             *
+             * <p>The meaning of the id is defined by the object using the canned dataset.
+             * For example, {@link InstrumentedAutoFillService.Replier} resolves the id based on
+             * {@link IdMode}.
              */
-            public Builder setField(String resourceId, int index) {
-                return setField(resourceId, AutofillValue.forList(index));
+            public Builder setField(String id, int index) {
+                return setField(id, AutofillValue.forList(index));
             }
 
             /**
-             * Sets the canned value of a toggle field based on its {@code resourceId}.
+             * Sets the canned value of a toggle field based on its {@code id}.
+             *
+             * <p>The meaning of the id is defined by the object using the canned dataset.
+             * For example, {@link InstrumentedAutoFillService.Replier} resolves the id based on
+             * {@link IdMode}.
              */
-            public Builder setField(String resourceId, boolean toggled) {
-                return setField(resourceId, AutofillValue.forToggle(toggled));
+            public Builder setField(String id, boolean toggled) {
+                return setField(id, AutofillValue.forToggle(toggled));
             }
 
             /**
-             * Sets the canned value of a date field based on its {@code resourceId}.
+             * Sets the canned value of a date field based on its {@code id}.
+             *
+             * <p>The meaning of the id is defined by the object using the canned dataset.
+             * For example, {@link InstrumentedAutoFillService.Replier} resolves the id based on
+             * {@link IdMode}.
              */
-            public Builder setField(String resourceId, long date) {
-                return setField(resourceId, AutofillValue.forDate(date));
+            public Builder setField(String id, long date) {
+                return setField(id, AutofillValue.forDate(date));
             }
 
             /**
-             * Sets the canned value of a date field based on its {@code resourceId}.
+             * Sets the canned value of a date field based on its {@code id}.
+             *
+             * <p>The meaning of the id is defined by the object using the canned dataset.
+             * For example, {@link InstrumentedAutoFillService.Replier} resolves the id based on
+             * {@link IdMode}.
              */
-            public Builder setField(String resourceId, AutofillValue value) {
-                mFieldValues.put(resourceId, value);
+            public Builder setField(String id, AutofillValue value) {
+                mFieldValues.put(id, value);
                 return this;
             }
 
             /**
-             * Sets the canned value of a field based on its {@code resourceId}.
+             * Sets the canned value of a field based on its {@code id}.
+             *
+             * <p>The meaning of the id is defined by the object using the canned dataset.
+             * For example, {@link InstrumentedAutoFillService.Replier} resolves the id based on
+             * {@link IdMode}.
              */
-            public Builder setField(String resourceId, String text, RemoteViews presentation) {
-                setField(resourceId, text);
-                mFieldPresentations.put(resourceId, presentation);
+            public Builder setField(String id, String text, RemoteViews presentation) {
+                setField(id, text);
+                mFieldPresentations.put(id, presentation);
                 return this;
             }
 
