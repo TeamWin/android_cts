@@ -2752,10 +2752,10 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         }
     }
 
-    public void testInitSafeBrowsingUseApplicationContext() throws Exception {
+    public void testStartSafeBrowsingUseApplicationContext() throws Exception {
         final MockContext ctx = new MockContext(getActivity());
         final CountDownLatch resultLatch = new CountDownLatch(1);
-        WebView.initSafeBrowsing(ctx, new ValueCallback<Boolean>() {
+        WebView.startSafeBrowsing(ctx, new ValueCallback<Boolean>() {
             @Override
             public void onReceiveValue(Boolean value) {
                 assertTrue(ctx.wasGetApplicationContextCalled());
@@ -2766,21 +2766,21 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         assertTrue(resultLatch.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS));
     }
 
-    public void testInitSafeBrowsingWithNullCallbackDoesntCrash() throws Exception {
+    public void testStartSafeBrowsingWithNullCallbackDoesntCrash() throws Exception {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
         }
 
-        WebView.initSafeBrowsing(getActivity().getApplicationContext(), null);
+        WebView.startSafeBrowsing(getActivity().getApplicationContext(), null);
     }
 
-    public void testInitSafeBrowsingInvokesCallback() throws Exception {
+    public void testStartSafeBrowsingInvokesCallback() throws Exception {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
         }
 
         final CountDownLatch resultLatch = new CountDownLatch(1);
-        WebView.initSafeBrowsing(getActivity().getApplicationContext(),
+        WebView.startSafeBrowsing(getActivity().getApplicationContext(),
                 new ValueCallback<Boolean>() {
             @Override
             public void onReceiveValue(Boolean value) {
@@ -2790,14 +2790,6 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
             }
         });
         assertTrue(resultLatch.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS));
-    }
-
-    public void testShutdownSafeBrowsingDoesntCrash() throws Exception {
-        if (!NullWebViewUtils.isWebViewAvailable()) {
-            return;
-        }
-
-        WebView.shutdownSafeBrowsing();
     }
 
     private void savePrintedPage(final PrintDocumentAdapter adapter,
