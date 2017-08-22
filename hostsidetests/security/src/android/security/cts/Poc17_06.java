@@ -104,9 +104,9 @@ public class Poc17_06 extends SecurityTestCase {
     @SecurityTest
     public void testPocBug_35644815() throws Exception {
         enableAdbRoot(getDevice());
-        if(containsDriver(getDevice(), "/sys/kernel/debug/ion/clients/pids")) {
+        if(containsDriver(getDevice(), "/sys/kernel/debug/ion/clients/pids/")) {
           String pocOut = AdbUtils.runPoc("Bug-35644815", getDevice(), 60);
-          assertMatches("[\\s\\n\\S]*INFO DISC FLAG: 0000[\\s\\n\\S]*", pocOut);
+          assertNotMatches("[\\s\\n\\S]*INFO DISC FLAG[\\s\\n\\S]*", pocOut);
         }
     }
 }
