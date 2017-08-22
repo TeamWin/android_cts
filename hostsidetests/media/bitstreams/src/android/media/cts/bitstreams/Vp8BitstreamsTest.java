@@ -25,12 +25,11 @@ public class Vp8BitstreamsTest extends MediaBitstreamsTest {
 
     @Parameters(name = "{1}")
     public static Iterable<Object[]> bitstreams() {
-        return MediaBitstreamsTest.bitstreams("vp8", BitstreamPackage.STANDARD);
+        return MediaBitstreamsTest.bitstreams("vp8");
     }
 
-    public Vp8BitstreamsTest(String prefix, String path,
-            BitstreamPackage pkg, BitstreamPackage packageToRun) {
-        super(prefix, path, pkg, packageToRun);
+    public Vp8BitstreamsTest(String prefix, String path) {
+        super(prefix, path);
     }
 
 }

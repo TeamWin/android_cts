@@ -25,12 +25,11 @@ public class H264Yuv420_8bitBpBitstreamsTest extends MediaBitstreamsTest {
 
     @Parameters(name = "{1}")
     public static Iterable<Object[]> bitstreams() {
-        return MediaBitstreamsTest.bitstreams("h264/yuv420/8bit/bp", BitstreamPackage.STANDARD);
+        return MediaBitstreamsTest.bitstreams("h264/yuv420/8bit/bp");
     }
 
-    public H264Yuv420_8bitBpBitstreamsTest(String prefix, String path,
-            BitstreamPackage pkg, BitstreamPackage packageToRun) {
-        super(prefix, path, pkg, packageToRun);
+    public H264Yuv420_8bitBpBitstreamsTest(String prefix, String path) {
+        super(prefix, path);
     }
 
 }
