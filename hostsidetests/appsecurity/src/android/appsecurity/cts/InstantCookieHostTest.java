@@ -42,12 +42,13 @@ public class InstantCookieHostTest extends DeviceTestCase implements IBuildRecei
 
         Utils.prepareSingleUser(getDevice());
         uninstallPackage(INSTANT_COOKIE_APP_PKG);
-        clearUserData(INSTANT_COOKIE_APP_PKG);
+        clearAppCookieData();
     }
 
     @Override
     protected void tearDown() throws Exception {
         uninstallPackage(INSTANT_COOKIE_APP_PKG);
+        clearAppCookieData();
     }
 
     public void testCookieUpdateAndRetrieval() throws Exception {
@@ -85,10 +86,6 @@ public class InstantCookieHostTest extends DeviceTestCase implements IBuildRecei
                 "testCookieResetOnNonInstantReinstall2");
     }
 
-    private String clearUserData(String packageName) throws DeviceNotAvailableException {
-        return getDevice().executeShellCommand("pm clear " + packageName);
-    }
-
     private String installPackage(String apk, boolean replace, boolean instant) throws Exception {
         return getDevice().installPackage(mBuildHelper.getTestFile(apk), replace,
                 instant ? "--instant" : "--full");
@@ -101,5 +98,9 @@ public class InstantCookieHostTest extends DeviceTestCase implements IBuildRecei
     private void runDeviceTests(String packageName, String testClassName, String testMethodName)
             throws DeviceNotAvailableException {
         Utils.runDeviceTests(getDevice(), packageName, testClassName, testMethodName);
+    }
+
+    private void clearAppCookieData() throws Exception {
+        getDevice().executeShellCommand("pm clear " + INSTANT_COOKIE_APP_PKG);
     }
 }
