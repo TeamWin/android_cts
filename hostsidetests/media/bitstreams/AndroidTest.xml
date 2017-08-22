@@ -25,11 +25,8 @@
     </target_preparer>
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
         <option name="jar" value="CtsMediaBitstreamsTestCases.jar" />
-        <option name="runtime-hint" value="5h6m" />
+        <option name="runtime-hint" value="4h50m" />
         <!-- shard-unit must be class -->
         <option name="shard-unit" value="class" />
-        <!-- remove exclude-annotation option and use include-annotation
-          android.media.cts.bitstreams.FullPackage instead to run full package -->
-        <option name="exclude-annotation" value="android.media.cts.bitstreams.FullPackage" />
     </test>
 </configuration>
