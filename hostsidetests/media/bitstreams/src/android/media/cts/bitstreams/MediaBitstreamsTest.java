@@ -101,12 +101,10 @@ public abstract class MediaBitstreamsTest implements IDeviceTest, IBuildReceiver
      * Which subset of bitstreams to test
      */
     enum BitstreamPackage {
+        SMALL,
         STANDARD,
         FULL,
     }
-
-    private BitstreamPackage mPackage = BitstreamPackage.FULL;
-    private BitstreamPackage mPackageToRun = BitstreamPackage.STANDARD;
 
     static class ConformanceEntry {
         final String mPath, mCodecName, mStatus;
@@ -129,7 +127,7 @@ public abstract class MediaBitstreamsTest implements IDeviceTest, IBuildReceiver
     private IAbi mAbi;
     private ITestDevice mDevice;
 
-    static Collection<Object[]> bitstreams(String prefix, BitstreamPackage packageToRun) {
+    static Collection<Object[]> bitstreams(String prefix) {
         final String dynConfXml = new File("/", MediaBitstreams.DYNAMIC_CONFIG_XML).toString();
         try (InputStream is = MediaBitstreamsTest.class.getResourceAsStream(dynConfXml)) {
             List<Object[]> entries = new ArrayList<>();
@@ -147,32 +145,7 @@ public abstract class MediaBitstreamsTest implements IDeviceTest, IBuildReceiver
                 if (!bitstream.startsWith(prefix)) {
                     continue;
                 }
-                while (parser.next() != XmlPullParser.END_DOCUMENT) {
-                    if (parser.getEventType() != XmlPullParser.START_TAG) {
-                        continue;
-                    }
-                    if (MediaBitstreams.DYNAMIC_CONFIG_VALUE.equals(parser.getName())) {
-                        parser.next();
-                        break;
-                    }
-                }
-                String format = parser.getText();
-                String[] kvPairs = format.split(",");
-                BitstreamPackage curPackage = BitstreamPackage.FULL;
-                for (String kvPair : kvPairs) {
-                    String[] kv = kvPair.split("=");
-                    if (MediaBitstreams.DYNAMIC_CONFIG_PACKAGE.equals(kv[0])) {
-                        String packageName = kv[1];
-                        try {
-                            curPackage = BitstreamPackage.valueOf(packageName.toUpperCase());
-                        } catch (Exception e) {
-                            CLog.w(e);
-                        }
-                    }
-                }
-                if (curPackage.compareTo(packageToRun) <= 0) {
-                    entries.add(new Object[] {prefix, bitstream, curPackage, packageToRun});
-                }
+                entries.add(new Object[] {prefix, bitstream});
             }
             return entries;
         } catch (XmlPullParserException | IOException e) {
@@ -181,12 +154,9 @@ public abstract class MediaBitstreamsTest implements IDeviceTest, IBuildReceiver
         }
     }
 
-    public MediaBitstreamsTest(String prefix, String path, BitstreamPackage pkg, BitstreamPackage packageToRun
-            ) {
+    public MediaBitstreamsTest(String prefix, String path) {
         mPrefix = prefix;
         mPath = path;
-        mPackage = pkg;
-        mPackageToRun = packageToRun;
     }
 
     @Override
@@ -450,7 +420,7 @@ public abstract class MediaBitstreamsTest implements IDeviceTest, IBuildReceiver
                 device,
                 MediaBitstreams.K_TEST_GET_SUPPORTED_BITSTREAMS,
                 MediaBitstreams.KEY_SUPPORTED_BITSTREAMS_TXT);
-        Collection<Object[]> bitstreams = bitstreams(mPrefix, mPackageToRun);
+        Collection<Object[]> bitstreams = bitstreams(mPrefix);
         Set<String> supportedBitstreams = preparer.getSupportedBitstreams();
         CLog.i("%d supported bitstreams under %s", supportedBitstreams.size(), prefix);
 
