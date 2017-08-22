@@ -15,6 +15,7 @@
 -->
 <configuration description="Config for CTS Intent Signature test cases">
     <option name="config-descriptor:metadata" key="component" value="systems" />
+    <option name="not-shardable" value="true" />
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.DynamicConfigPusher">
         <option name="target" value="device" />
         <option name="config-filename" value="CtsIntentSignatureTestCases" />
