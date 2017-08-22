@@ -21,6 +21,7 @@ import static android.os.storage.StorageManager.UUID_DEFAULT;
 import static com.android.cts.storageapp.Utils.CACHE_ALL;
 import static com.android.cts.storageapp.Utils.CODE_ALL;
 import static com.android.cts.storageapp.Utils.DATA_ALL;
+import static com.android.cts.storageapp.Utils.KB_IN_BYTES;
 import static com.android.cts.storageapp.Utils.MB_IN_BYTES;
 import static com.android.cts.storageapp.Utils.PKG_A;
 import static com.android.cts.storageapp.Utils.PKG_B;
@@ -140,7 +141,7 @@ public class StorageStatsTest extends InstrumentationTestCase {
         final StorageStats as = stats.queryStatsForUid(UUID_DEFAULT, a.uid);
         final StorageStats bs = stats.queryStatsForUid(UUID_DEFAULT, b.uid);
 
-        assertMostlyEquals(DATA_ALL * 2, as.getDataBytes());
+        assertMostlyEquals(DATA_ALL * 2, as.getDataBytes(), 600 * KB_IN_BYTES);
         assertMostlyEquals(CACHE_ALL * 2, as.getCacheBytes());
 
         assertMostlyEquals(DATA_ALL, bs.getDataBytes());
