@@ -63,16 +63,22 @@ public class AccessibilityVolumeTest {
         if (mSingleVolume) {
             return;
         }
-        int startingVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_ACCESSIBILITY);
-        int otherVolume = (startingVolume == 0) ? 1 : startingVolume - 1;
-        InstrumentedAccessibilityService service = InstrumentedAccessibilityService.enableService(
-                mInstrumentation, InstrumentedAccessibilityService.class);
-
-        service.runOnServiceSync(() ->
-                mAudioManager.setStreamVolume(AudioManager.STREAM_ACCESSIBILITY, otherVolume, 0));
-        assertEquals("Accessibility service should be able to change accessibility volume",
-                otherVolume, mAudioManager.getStreamVolume(AudioManager.STREAM_ACCESSIBILITY));
-        service.runOnServiceSync(() -> mAudioManager.setStreamVolume(
-                AudioManager.STREAM_ACCESSIBILITY, startingVolume, 0));
+        final int startingVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_ACCESSIBILITY);
+        final int otherVolume = (startingVolume == 0) ? 1 : startingVolume - 1;
+        final InstrumentedAccessibilityService service = InstrumentedAccessibilityService
+                .enableService(mInstrumentation, InstrumentedAccessibilityService.class);
+        try {
+            service.runOnServiceSync(() ->
+                    mAudioManager.setStreamVolume(AudioManager.STREAM_ACCESSIBILITY, otherVolume,
+                            0));
+            assertEquals("Accessibility service should be able to change accessibility volume",
+                    otherVolume, mAudioManager.getStreamVolume(AudioManager.STREAM_ACCESSIBILITY));
+            service.runOnServiceSync(() -> mAudioManager.setStreamVolume(
+                    AudioManager.STREAM_ACCESSIBILITY, startingVolume, 0));
+        } finally {
+            if (service != null) {
+                service.runOnServiceSync(() -> service.disableSelf());
+            }
+        }
     }
 }
