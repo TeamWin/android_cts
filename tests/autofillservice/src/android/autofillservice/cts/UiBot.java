@@ -31,11 +31,11 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.Instrumentation;
 import android.app.UiAutomation;
+import android.content.Context;
 import android.content.res.Resources;
 import android.os.RemoteException;
 import android.os.SystemClock;
 import android.service.autofill.SaveInfo;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
@@ -84,12 +84,14 @@ final class UiBot {
 
 
     private final UiDevice mDevice;
+    private final Context mContext;
     private final String mPackageName;
     private final UiAutomation mAutoman;
 
     UiBot(Instrumentation instrumentation) throws Exception {
         mDevice = UiDevice.getInstance(instrumentation);
-        mPackageName = instrumentation.getContext().getPackageName();
+        mContext = instrumentation.getContext();
+        mPackageName = mContext.getPackageName();
         mAutoman = instrumentation.getUiAutomation();
     }
 
@@ -462,7 +464,7 @@ final class UiBot {
      * Gets a string from the Android resources.
      */
     private String getString(String id) {
-        final Resources resources = InstrumentationRegistry.getContext().getResources();
+        final Resources resources = mContext.getResources();
         final int stringId = resources.getIdentifier(id, "string", "android");
         return resources.getString(stringId);
     }
@@ -471,7 +473,7 @@ final class UiBot {
      * Gets a string from the Android resources.
      */
     private String getString(String id, Object... formatArgs) {
-        final Resources resources = InstrumentationRegistry.getContext().getResources();
+        final Resources resources = mContext.getResources();
         final int stringId = resources.getIdentifier(id, "string", "android");
         return resources.getString(stringId, formatArgs);
     }

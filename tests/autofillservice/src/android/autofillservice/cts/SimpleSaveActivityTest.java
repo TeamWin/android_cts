@@ -17,9 +17,10 @@ package android.autofillservice.cts;
 
 import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
-import static android.autofillservice.cts.Helper.getContext;
+import static android.autofillservice.cts.LoginActivity.ID_USERNAME_CONTAINER;
 import static android.autofillservice.cts.SimpleSaveActivity.ID_COMMIT;
 import static android.autofillservice.cts.SimpleSaveActivity.ID_INPUT;
+import static android.autofillservice.cts.SimpleSaveActivity.ID_LABEL;
 import static android.autofillservice.cts.SimpleSaveActivity.ID_PASSWORD;
 import static android.autofillservice.cts.SimpleSaveActivity.TEXT_LABEL;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
@@ -29,15 +30,13 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.autofillservice.cts.SimpleSaveActivity.FillExpectation;
-import android.content.Context;
 import android.content.Intent;
 import android.support.test.uiautomator.UiObject2;
 
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-public class SimpleSaveActivityTest extends AutoFillServiceTestCase {
+public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
 
     @Rule
     public final AutofillActivityTestRule<SimpleSaveActivity> mActivityRule =
@@ -45,19 +44,8 @@ public class SimpleSaveActivityTest extends AutoFillServiceTestCase {
 
     private SimpleSaveActivity mActivity;
 
-    // TODO: move mContext and mPackageName to superclass
-    private Context mContext;
-    private String mPackageName;
-
-    @Before
-    public void setFixtures() {
-        mContext = getContext();
-        mPackageName = mContext.getPackageName();
-    }
-
     private void startActivity() {
-        mActivity =
-                mActivityRule.launchActivity(new Intent(getContext(), SimpleSaveActivity.class));
+        startActivity(false);
     }
 
     private void startActivity(boolean remainOnRecents) {
@@ -202,15 +190,8 @@ public class SimpleSaveActivityTest extends AutoFillServiceTestCase {
         UiObject2 saveUi = sUiBot.assertSaveShowing(SAVE_DATA_TYPE_GENERIC);
 
         if (rotate) {
-            // TODO(b/64309238): since the session is gone, a new one is created when rotated;
-            // it might make sense to change the code to avoid that, but we need to re-evaluate
-            // after the CustomDescription pending intent changes.
-            sReplier.addResponse(CannedFillResponse.NO_RESPONSE);
-
             sUiBot.setScreenOrientation(UiBot.LANDSCAPE);
             saveUi = sUiBot.assertSaveShowing(SAVE_DATA_TYPE_GENERIC);
-
-            sReplier.getNextFillRequest();
         }
 
         // Save it...
@@ -219,6 +200,37 @@ public class SimpleSaveActivityTest extends AutoFillServiceTestCase {
         // ... and assert results
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
         assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_INPUT), "108");
+    }
+
+    @Test
+    public void testSaveThenStartNewSessionRightAway() throws Exception {
+        startActivity();
+
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT)
+                .build());
+
+        // Trigger autofill.
+        mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
+        sReplier.getNextFillRequest();
+        Helper.assertHasSessions(mPackageName);
+
+        // Trigger save and start a new session right away.
+        mActivity.syncRunOnUiThread(() -> {
+            mActivity.mInput.setText("108");
+            mActivity.mCommit.performClick();
+            mActivity.getAutofillManager().requestAutofill(mActivity.mInput);
+        });
+
+        // Make sure Save UI for 1st session was canceled....
+        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
+
+        //... and 2nd session canceled as well.
+        Helper.assertNoDanglingSessions();
     }
 
     @Test
@@ -341,5 +353,209 @@ public class SimpleSaveActivityTest extends AutoFillServiceTestCase {
                 Intent.FLAG_ACTIVITY_RETAIN_IN_RECENTS | Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
         mContext.startActivity(intent);
         WelcomeActivity.assertShowingDefaultMessage(sUiBot);
+    }
+
+    @Override
+    protected void saveUiRestoredAfterTappingLinkTest(PostSaveLinkTappedAction type)
+            throws Exception {
+        startActivity();
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setCustomDescription(newCustomDescription(WelcomeActivity.class))
+                .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT)
+                .build());
+
+        // Trigger autofill.
+        mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
+        sReplier.getNextFillRequest();
+        Helper.assertHasSessions(mPackageName);
+
+        // Trigger save.
+        mActivity.syncRunOnUiThread(() -> {
+            mActivity.mInput.setText("108");
+            mActivity.mCommit.performClick();
+        });
+        final UiObject2 saveUi = assertSaveUiWithLinkIsShown(SAVE_DATA_TYPE_GENERIC);
+
+        // Tap the link.
+        tapSaveUiLink(saveUi);
+
+        // Make sure new activity is shown...
+        WelcomeActivity.assertShowingDefaultMessage(sUiBot);
+        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
+
+        // .. then do something to return to previous activity...
+        switch (type) {
+            case ROTATE_THEN_TAP_BACK_BUTTON:
+                sUiBot.setScreenOrientation(UiBot.LANDSCAPE);
+                // not breaking on purpose
+            case TAP_BACK_BUTTON:
+                // ..then go back and save it.
+                sUiBot.pressBack();
+                break;
+            case FINISH_ACTIVITY:
+                // ..then finishes it.
+                WelcomeActivity.finishIt();
+                break;
+            default:
+                throw new IllegalArgumentException("invalid type: " + type);
+        }
+        // Make sure previous activity is back...
+        sUiBot.assertShownByRelativeId(ID_INPUT);
+
+        // ... and tap save.
+        final UiObject2 newSaveUi = assertSaveUiWithLinkIsShown(SAVE_DATA_TYPE_GENERIC);
+        sUiBot.saveForAutofill(newSaveUi, true);
+
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+        assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_INPUT), "108");
+    }
+
+    @Override
+    protected void tapLinkThenTapBackThenStartOverTest(PostSaveLinkTappedAction action,
+            boolean manualRequest) throws Exception {
+        startActivity();
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setCustomDescription(newCustomDescription(WelcomeActivity.class))
+                .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT)
+                .build());
+
+        // Trigger autofill.
+        mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
+        sReplier.getNextFillRequest();
+        Helper.assertHasSessions(mPackageName);
+
+        // Trigger save.
+        mActivity.syncRunOnUiThread(() -> {
+            mActivity.mInput.setText("108");
+            mActivity.mCommit.performClick();
+        });
+        final UiObject2 saveUi = assertSaveUiWithLinkIsShown(SAVE_DATA_TYPE_GENERIC);
+
+        // Tap the link.
+        tapSaveUiLink(saveUi);
+
+        // Make sure new activity is shown.
+        WelcomeActivity.assertShowingDefaultMessage(sUiBot);
+        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
+
+        // Tap back to restore the Save UI...
+        sUiBot.pressBack();
+        // Make sure previous activity is back...
+        sUiBot.assertShownByRelativeId(ID_LABEL);
+
+        // ...but don't tap it...
+        final UiObject2 saveUi2 = sUiBot.assertSaveShowing(SAVE_DATA_TYPE_GENERIC);
+
+        // ...instead, do something to dismiss it:
+        switch (action) {
+            case TOUCH_OUTSIDE:
+                sUiBot.assertShownByRelativeId(ID_LABEL).longClick();
+                break;
+            case TAP_NO_ON_SAVE_UI:
+                sUiBot.saveForAutofill(saveUi2, false);
+                break;
+            case TAP_YES_ON_SAVE_UI:
+                sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_GENERIC);
+                final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+                assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_INPUT), "108");
+                Helper.assertNoDanglingSessions();
+                break;
+            default:
+                throw new IllegalArgumentException("invalid action: " + action);
+        }
+        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
+
+        // Make sure previous session was finished.
+        Helper.assertNoDanglingSessions();
+
+        // Now triggers a new session and do business as usual...
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT)
+                .build());
+
+        // Trigger autofill.
+        if (manualRequest) {
+            mActivity.getAutofillManager().requestAutofill(mActivity.mInput);
+        } else {
+            mActivity.syncRunOnUiThread(() -> mActivity.mPassword.requestFocus());
+        }
+
+        sReplier.getNextFillRequest();
+        Helper.assertHasSessions(mPackageName);
+
+        // Trigger save.
+        mActivity.syncRunOnUiThread(() -> {
+            mActivity.mInput.setText("42");
+            mActivity.mCommit.performClick();
+        });
+
+        // Save it...
+        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_GENERIC);
+
+        // ... and assert results
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+        assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_INPUT), "42");
+    }
+
+    @Override
+    protected void saveUiCancelledAfterTappingLinkTest(PostSaveLinkTappedAction type)
+            throws Exception {
+        startActivity(type == PostSaveLinkTappedAction.TAP_RECENTS);
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setCustomDescription(newCustomDescription(WelcomeActivity.class))
+                .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT)
+                .build());
+
+        // Trigger autofill.
+        mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
+        sReplier.getNextFillRequest();
+        Helper.assertHasSessions(mPackageName);
+
+        // Trigger save.
+        mActivity.syncRunOnUiThread(() -> {
+            mActivity.mInput.setText("108");
+            mActivity.mCommit.performClick();
+        });
+        final UiObject2 saveUi = assertSaveUiWithLinkIsShown(SAVE_DATA_TYPE_GENERIC);
+
+        // Tap the link.
+        tapSaveUiLink(saveUi);
+        // Make sure new activity is shown...
+        WelcomeActivity.assertShowingDefaultMessage(sUiBot);
+        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
+
+        switch (type) {
+            case TAP_RECENTS:
+                sUiBot.switchAppsUsingRecents();
+                break;
+            case LAUNCH_PREVIOUS_ACTIVITY:
+                startActivity(SimpleSaveActivity.class);
+                break;
+            case LAUNCH_NEW_ACTIVITY:
+                // Launch a 3rd activity...
+                startActivity(LoginActivity.class);
+                sUiBot.assertShownByRelativeId(ID_USERNAME_CONTAINER);
+                // ...then go back
+                sUiBot.pressBack();
+                break;
+            default:
+                throw new IllegalArgumentException("invalid type: " + type);
+        }
+        // Make sure right activity is showing
+        sUiBot.assertShownByRelativeId(ID_INPUT);
+
+        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
     }
 }
