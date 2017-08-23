@@ -25,11 +25,12 @@ public class HevcYuv420BitstreamsTest extends MediaBitstreamsTest {
 
     @Parameters(name = "{1}")
     public static Iterable<Object[]> bitstreams() {
-        return MediaBitstreamsTest.bitstreams("hevc/yuv420");
+        return MediaBitstreamsTest.bitstreams("hevc/yuv420", BitstreamPackage.STANDARD);
     }
 
-    public HevcYuv420BitstreamsTest(String prefix, String path) {
-        super(prefix, path);
+    public HevcYuv420BitstreamsTest(String prefix, String path,
+            BitstreamPackage pkg, BitstreamPackage packageToRun) {
+        super(prefix, path, pkg, packageToRun);
     }
 
 }
