@@ -110,6 +110,9 @@ public class CompatibilityBuildHelper {
     public void addDynamicConfigFile(String moduleName, File configFile) {
         mBuildInfo.addBuildAttribute(DynamicConfigHostSide.CONFIG_PATH_PREFIX + moduleName,
                 configFile.getAbsolutePath());
+        // If invocation fails and ResultReporter never moves this file into the result,
+        // using setFile() ensures BuildInfo will delete upon cleanUp().
+        mBuildInfo.setFile(configFile.getName(), configFile, "1" /* version */);
     }
 
     public void setBusinessLogicHostFile(File hostFile) {
