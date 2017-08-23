@@ -26,5 +26,6 @@ enum DismissType {
     HOME_BUTTON,
     RECENTS_BUTTON,
     TOUCH_OUTSIDE,
-    FOCUS_OUTSIDE
+    FOCUS_OUTSIDE,
+    AFM_CANCEL
 }
