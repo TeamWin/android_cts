@@ -21,6 +21,11 @@
 #include <jni.h>
 #include <stdlib.h>
 #include <android/hardware_buffer.h>
+#include <android/log.h>
+#include <string>
+
+#define  LOG_TAG    "VrExtensionsJni"
+#define  LOGV(...)  __android_log_print(ANDROID_LOG_VERBOSE,LOG_TAG,__VA_ARGS__)
 
 using PFNEGLGETNATIVECLIENTBUFFERANDROID =
         EGLClientBuffer(EGLAPIENTRYP)(const AHardwareBuffer* buffer);
@@ -28,12 +33,34 @@ using PFNEGLGETNATIVECLIENTBUFFERANDROID =
 using PFNGLEGLIMAGETARGETTEXTURE2DOESPROC = void(GL_APIENTRYP)(GLenum target,
                                                                void* image);
 
+using PFNGLBUFFERSTORAGEEXTERNALEXTPROC =
+    void(GL_APIENTRYP)(GLenum target, GLintptr offset, GLsizeiptr size,
+                       void* clientBuffer, GLbitfield flags);
+
+using PFNGLMAPBUFFERRANGEPROC = void*(GL_APIENTRYP)(GLenum target,
+                                                    GLintptr offset,
+                                                    GLsizeiptr length,
+                                                    GLbitfield access);
+
+using PFNGLUNMAPBUFFERPROC = void*(GL_APIENTRYP)(GLenum target);
+
 PFNGLEGLIMAGETARGETTEXTURE2DOESPROC glEGLImageTargetTexture2DOES;
 PFNEGLGETNATIVECLIENTBUFFERANDROID eglGetNativeClientBufferANDROID;
 PFNEGLCREATEIMAGEKHRPROC eglCreateImageKHR;
 PFNGLFRAMEBUFFERTEXTUREMULTIVIEWOVRPROC glFramebufferTextureMultiviewOVR;
 PFNGLFRAMEBUFFERTEXTUREMULTISAMPLEMULTIVIEWOVRPROC
     glFramebufferTextureMultisampleMultiviewOVR;
+PFNGLBUFFERSTORAGEEXTERNALEXTPROC glBufferStorageExternalEXT;
+PFNGLMAPBUFFERRANGEPROC glMapBufferRange;
+PFNGLUNMAPBUFFERPROC glUnmapBuffer;
+
+#define NO_ERROR 0
+#define GL_UNIFORM_BUFFER         0x8A11
+
+// Declare flags that are added to MapBufferRange via EXT_buffer_storage.
+// https://www.khronos.org/registry/OpenGL/extensions/EXT/EXT_buffer_storage.txt
+#define GL_MAP_PERSISTENT_BIT_EXT 0x0040
+#define GL_MAP_COHERENT_BIT_EXT   0x0080
 
 #define LOAD_PROC(NAME, TYPE)                                           \
     NAME = reinterpret_cast<TYPE>(eglGetProcAddress(# NAME))
@@ -52,8 +79,8 @@ PFNGLFRAMEBUFFERTEXTUREMULTISAMPLEMULTIVIEWOVRPROC
     ASSERT((a) == (b), "assert failed on (" #a ") at " __FILE__ ":%d", __LINE__)
 #define ASSERT_NE(a, b) \
     ASSERT((a) != (b), "assert failed on (" #a ") at " __FILE__ ":%d", __LINE__)
-#define ASSERT_LE(a, b) \
-    ASSERT((a) <= (b), "assert failed on (" #a ") at " __FILE__ ":%d", __LINE__)
+#define ASSERT_GT(a, b) \
+    ASSERT((a) > (b), "assert failed on (" #a ") at " __FILE__ ":%d", __LINE__)
 
 void fail(JNIEnv* env, const char* format, ...) {
     va_list args;
@@ -70,7 +97,7 @@ void fail(JNIEnv* env, const char* format, ...) {
 
 static void testEglImageArray(JNIEnv* env, AHardwareBuffer_Desc desc,
                               int nsamples) {
-    ASSERT_LE(1, desc.layers);
+    ASSERT_GT(desc.layers, 1);
     AHardwareBuffer* hwbuffer = nullptr;
     int error = AHardwareBuffer_allocate(&desc, &hwbuffer);
     ASSERT_FALSE(error);
@@ -154,4 +181,86 @@ Java_android_vr_cts_VrExtensionBehaviorTest_nativeTestEglImageArray(
         }
       }
     }
+}
+
+static void testExternalBuffer(JNIEnv* env, uint64_t usage, bool write_hwbuffer,
+                               const std::string& test_string) {
+    // Create a blob AHardwareBuffer suitable for holding the string.
+    AHardwareBuffer_Desc desc = {};
+    desc.width = test_string.size();
+    desc.height = 1;
+    desc.layers = 1;
+    desc.format = AHARDWAREBUFFER_FORMAT_BLOB;
+    desc.usage = usage;
+    AHardwareBuffer* hwbuffer = nullptr;
+    int error = AHardwareBuffer_allocate(&desc, &hwbuffer);
+    ASSERT_EQ(error, NO_ERROR);
+    // Create EGLClientBuffer from the AHardwareBuffer.
+    EGLClientBuffer native_buffer = eglGetNativeClientBufferANDROID(hwbuffer);
+    ASSERT_TRUE(native_buffer);
+    // Create uniform buffer from EGLClientBuffer.
+    const GLbitfield flags = GL_MAP_READ_BIT | GL_MAP_WRITE_BIT |
+        GL_MAP_COHERENT_BIT_EXT | GL_MAP_PERSISTENT_BIT_EXT;
+    GLuint buf = 0;
+    glGenBuffers(1, &buf);
+    glBindBuffer(GL_UNIFORM_BUFFER, buf);
+    ASSERT_EQ(glGetError(), GL_NO_ERROR);
+    const GLsizeiptr bufsize = desc.width * desc.height;
+    glBufferStorageExternalEXT(GL_UNIFORM_BUFFER, 0,
+             bufsize, native_buffer, flags);
+    ASSERT_EQ(glGetError(), GL_NO_ERROR);
+    // Obtain a writeable pointer using either OpenGL or the Android API,
+    // then copy the test string into it.
+    if (write_hwbuffer) {
+      void* data = nullptr;
+      error = AHardwareBuffer_lock(hwbuffer,
+                                   AHARDWAREBUFFER_USAGE_CPU_READ_RARELY, -1,
+                                   NULL, &data);
+      ASSERT_EQ(error, NO_ERROR);
+      ASSERT_TRUE(data);
+      memcpy(data, test_string.c_str(), test_string.size());
+      error = AHardwareBuffer_unlock(hwbuffer, nullptr);
+      ASSERT_EQ(error, NO_ERROR);
+    } else {
+      void* data =
+          glMapBufferRange(GL_UNIFORM_BUFFER, 0, bufsize,
+                           GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT_EXT);
+      ASSERT_EQ(glGetError(), GL_NO_ERROR);
+      ASSERT_TRUE(data);
+      memcpy(data, test_string.c_str(), test_string.size());
+      glUnmapBuffer(GL_UNIFORM_BUFFER);
+      ASSERT_EQ(glGetError(), GL_NO_ERROR);
+    }
+    // Obtain a readable pointer and verify the data.
+    void* data = glMapBufferRange(GL_UNIFORM_BUFFER, 0, bufsize, GL_MAP_READ_BIT);
+    ASSERT_TRUE(data);
+    ASSERT_EQ(strncmp(static_cast<char*>(data), test_string.c_str(),
+                      test_string.size()), 0);
+    glUnmapBuffer(GL_UNIFORM_BUFFER);
+    ASSERT_EQ(glGetError(), GL_NO_ERROR);
+    AHardwareBuffer_release(hwbuffer);
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_android_vr_cts_VrExtensionBehaviorTest_nativeTestExternalBuffer(
+    JNIEnv* env, jclass /* unused */) {
+    // First, check for EXT_external_buffer in the extension string.
+    auto exts = reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS));
+    ASSERT_TRUE(exts && strstr(exts, "GL_EXT_external_buffer"));
+    // Next, load entry points provided by extensions.
+    LOAD_PROC(glBufferStorageExternalEXT, PFNGLBUFFERSTORAGEEXTERNALEXTPROC);
+    ASSERT_NE(glBufferStorageExternalEXT, nullptr);
+    LOAD_PROC(glMapBufferRange, PFNGLMAPBUFFERRANGEPROC);
+    ASSERT_NE(glMapBufferRange, nullptr);
+    LOAD_PROC(glUnmapBuffer, PFNGLUNMAPBUFFERPROC);
+    ASSERT_NE(glUnmapBuffer, nullptr);
+    const uint64_t usage = AHARDWAREBUFFER_USAGE_CPU_WRITE_OFTEN |
+        AHARDWAREBUFFER_USAGE_CPU_READ_RARELY |
+        AHARDWAREBUFFER_USAGE_GPU_DATA_BUFFER |
+        AHARDWAREBUFFER_USAGE_SENSOR_DIRECT_DATA;
+    const std::string test_string = "Hello, world.";
+    // First try writing to the buffer using OpenGL, then try writing to it via
+    // the AHardwareBuffer API.
+    testExternalBuffer(env, usage, false, test_string);
+    testExternalBuffer(env, usage, true, test_string);
 }
