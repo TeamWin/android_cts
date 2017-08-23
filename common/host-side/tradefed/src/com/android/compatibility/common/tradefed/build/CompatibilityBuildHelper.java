@@ -44,6 +44,7 @@ public class CompatibilityBuildHelper {
 
     private static final String ROOT_DIR2 = "ROOT_DIR2";
     private static final String DYNAMIC_CONFIG_OVERRIDE_URL = "DYNAMIC_CONFIG_OVERRIDE_URL";
+    private static final String BUSINESS_LOGIC_HOST_FILE = "BUSINESS_LOGIC_HOST_FILE";
     private static final String RETRY_COMMAND_LINE_ARGS = "retry_command_line_args";
     private static final String ALT_HOST_TESTCASE_DIR = "ANDROID_HOST_OUT_TESTCASES";
     private static final String ALT_TARGET_TESTCASE_DIR = "ANDROID_TARGET_OUT_TESTCASES";
@@ -111,6 +112,10 @@ public class CompatibilityBuildHelper {
                 configFile.getAbsolutePath());
     }
 
+    public void setBusinessLogicHostFile(File hostFile) {
+        mBuildInfo.addBuildAttribute(BUSINESS_LOGIC_HOST_FILE, hostFile.getAbsolutePath());
+    }
+
     public void setModuleIds(String[] moduleIds) {
         mBuildInfo.addBuildAttribute(MODULE_IDS, String.join(",", moduleIds));
     }
@@ -124,6 +129,10 @@ public class CompatibilityBuildHelper {
             }
         }
         return configMap;
+    }
+
+    public File getBusinessLogicHostFile() {
+        return new File(mBuildInfo.getBuildAttributes().get(BUSINESS_LOGIC_HOST_FILE));
     }
 
     /**
