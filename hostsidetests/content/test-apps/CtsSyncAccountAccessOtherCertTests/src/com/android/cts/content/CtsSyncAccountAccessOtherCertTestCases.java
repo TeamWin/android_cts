@@ -63,6 +63,7 @@ public class CtsSyncAccountAccessOtherCertTestCases {
     private static final long SYNC_TIMEOUT_MILLIS = 20000; // 20 sec
     private static final long UI_TIMEOUT_MILLIS = 5000; // 5 sec
 
+    private static final String PERMISSION_REQUESTED = "Permission Requested";
     public static final String TOKEN_TYPE_REMOVE_ACCOUNTS = "TOKEN_TYPE_REMOVE_ACCOUNTS";
 
     @Rule
@@ -125,10 +126,10 @@ public class CtsSyncAccountAccessOtherCertTestCases {
                 notification.click();
             } else {
                 uiDevice.openNotification();
-                uiDevice.wait(Until.hasObject(By.text("Permission requested")),
+                uiDevice.wait(Until.hasObject(By.text(PERMISSION_REQUESTED)),
                         UI_TIMEOUT_MILLIS);
 
-                uiDevice.findObject(By.text("Permission requested")).click();
+                uiDevice.findObject(By.text(PERMISSION_REQUESTED)).click();
             }
 
             uiDevice.wait(Until.hasObject(By.text("ALLOW")),
@@ -150,16 +151,16 @@ public class CtsSyncAccountAccessOtherCertTestCases {
     private UiObject2 findPermissionNotificationInStream(UiDevice uiDevice) {
         uiDevice.pressHome();
         swipeUp(uiDevice);
-        if (uiDevice.hasObject(By.text("Permission requested"))) {
-          return uiDevice.findObject(By.text("Permission requested"));
+        if (uiDevice.hasObject(By.text(PERMISSION_REQUESTED))) {
+          return uiDevice.findObject(By.text(PERMISSION_REQUESTED));
         }
         for (int i = 0; i < 100; i++) {
           if (!swipeUp(uiDevice)) {
             // We have reached the end of the stream and not found the target.
             break;
           }
-          if (uiDevice.hasObject(By.text("Permission requested"))) {
-            return uiDevice.findObject(By.text("Permission requested"));
+          if (uiDevice.hasObject(By.text(PERMISSION_REQUESTED))) {
+            return uiDevice.findObject(By.text(PERMISSION_REQUESTED));
           }
         }
         return null;
