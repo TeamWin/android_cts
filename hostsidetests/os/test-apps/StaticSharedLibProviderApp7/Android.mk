@@ -22,16 +22,18 @@ LOCAL_MODULE_TAGS := tests
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_STATIC_JAVA_LIBRARIES := android-support-test
+LOCAL_PACKAGE_NAME := CtsStaticSharedLibProviderApp7
 
-LOCAL_PACKAGE_NAME := CtsInstantCookieApp
+LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/keysets/cts-keyset-test-b
+
+LOCAL_ADDITIONAL_CERTIFICATES := cts/hostsidetests/appsecurity/certs/keysets/cts-keyset-test-a
 
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
-LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/keysets/cts-keyset-test-a
-
 LOCAL_PROGUARD_ENABLED := disabled
 
-LOCAL_DEX_PREOPT := false
+LOCAL_AAPT_FLAGS := --shared-lib
+
+LOCAL_EXPORT_PACKAGE_RESOURCES := true
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)
