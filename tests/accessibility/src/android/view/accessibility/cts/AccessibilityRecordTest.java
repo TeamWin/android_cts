@@ -35,7 +35,7 @@ import java.util.List;
 public class AccessibilityRecordTest extends AndroidTestCase {
 
     /** The number of properties of the {@link AccessibilityEvent} class. */
-    private static final int NON_STATIC_FIELD_COUNT = 22;
+    private static final int NON_STATIC_FIELD_COUNT = 24;
 
     /**
      * Test that no new fields have been added without updating the

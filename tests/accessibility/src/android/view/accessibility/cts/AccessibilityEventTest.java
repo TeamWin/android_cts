@@ -32,7 +32,7 @@ import junit.framework.TestCase;
 public class AccessibilityEventTest extends TestCase {
 
     /** The number of properties of the {@link AccessibilityEvent} class. */
-    private static final int NON_STATIC_FIELD_COUNT = 29;
+    private static final int NON_STATIC_FIELD_COUNT = 31;
 
     /**
      * Test that no new fields have been added without updating the
@@ -206,6 +206,8 @@ public class AccessibilityEventTest extends TestCase {
         sentEvent.setMaxScrollY(1);
         sentEvent.setScrollX(1);
         sentEvent.setScrollY(1);
+        sentEvent.setScrollDeltaX(3);
+        sentEvent.setScrollDeltaY(3);
         sentEvent.setToIndex(1);
         sentEvent.setScrollable(true);
         sentEvent.setAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS);
@@ -261,6 +263,10 @@ public class AccessibilityEventTest extends TestCase {
                 receivedEvent.getScrollX());
         assertSame("scrollY has incorect value", expectedEvent.getScrollY(),
                 receivedEvent.getScrollY());
+        assertSame("scrollDeltaX has incorect value", expectedEvent.getScrollDeltaX(),
+                receivedEvent.getScrollDeltaX());
+        assertSame("scrollDeltaY has incorect value", expectedEvent.getScrollDeltaY(),
+                receivedEvent.getScrollDeltaY());
         assertSame("toIndex has incorect value", expectedEvent.getToIndex(),
                 receivedEvent.getToIndex());
         assertSame("scrollable has incorect value", expectedEvent.isScrollable(),
