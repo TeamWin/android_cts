@@ -89,6 +89,9 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
@@ -3040,6 +3043,19 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
 
         public synchronized boolean onScaleChangedCalled() {
             return mOnScaleChangedCalled;
+        }
+    }
+
+    public void testGetSafeBrowsingPrivacyPolicyUrl() throws Exception {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+
+        assertNotNull(WebView.getSafeBrowsingPrivacyPolicyUrl());
+        try {
+            new URL(WebView.getSafeBrowsingPrivacyPolicyUrl().toString());
+        } catch (MalformedURLException e) {
+            Assert.fail("The privacy policy URL should be a well-formed URL");
         }
     }
 }
