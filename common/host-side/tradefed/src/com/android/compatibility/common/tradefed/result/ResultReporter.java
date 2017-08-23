@@ -499,7 +499,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
         long startTime = mResult.getStartTime();
         try {
             // Zip the full test results directory.
-            copyDynamicConfigFiles(mBuildHelper.getDynamicConfigFiles(), mResultDir);
+            copyDynamicConfigFiles();
             copyFormattingFiles(mResultDir, mBuildHelper.getSuiteName());
 
             File resultFile = ResultHandler.writeResults(mBuildHelper.getSuiteName(),
@@ -769,25 +769,32 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      * @param configFiles
      * @param resultsDir
      */
-    static void copyDynamicConfigFiles(Map<String, File> configFiles, File resultsDir) {
-        if (configFiles.size() == 0) return;
-
-        File configDir = new File(resultsDir, "config");
-        boolean mkdirSuccess = configDir.mkdir(); // success check added for b/63030111
-        if (!mkdirSuccess) {
+    private void copyDynamicConfigFiles() {
+        File configDir = new File(mResultDir, "config");
+        if (!configDir.mkdir()) {
             warn("Failed to make dynamic config directory \"%s\" in the result",
                     configDir.getAbsolutePath());
         }
-        for (String moduleName : configFiles.keySet()) {
-            File srcFile = configFiles.get(moduleName);
-            File destFile = new File(configDir, moduleName+".dynamic");
-            try {
-                FileUtil.copyFile(srcFile, destFile);
+
+        Set<String> uniqueModules = new HashSet<>();
+        for (IBuildInfo buildInfo : mMasterBuildInfos) {
+            CompatibilityBuildHelper helper = new CompatibilityBuildHelper(buildInfo);
+            Map<String, File> dcFiles = helper.getDynamicConfigFiles();
+            for (String moduleName : dcFiles.keySet()) {
+                File srcFile = dcFiles.get(moduleName);
+                if (!uniqueModules.contains(moduleName)) {
+                    // have not seen config for this module yet, copy into result
+                    File destFile = new File(configDir, moduleName + ".dynamic");
+                    try {
+                        FileUtil.copyFile(srcFile, destFile);
+                        uniqueModules.add(moduleName); // Add to uniqueModules if copy succeeds
+                    } catch (IOException e) {
+                        warn("Failure when copying config file \"%s\" to \"%s\" for module %s",
+                                srcFile.getAbsolutePath(), destFile.getAbsolutePath(), moduleName);
+                        CLog.e(e);
+                    }
+                }
                 FileUtil.deleteFile(srcFile);
-            } catch (IOException e) {
-                warn("Failure when copying config file \"%s\" to \"%s\" for module %s",
-                        srcFile.getAbsolutePath(), destFile.getAbsolutePath(), moduleName);
-                CLog.e(e);
             }
         }
     }
