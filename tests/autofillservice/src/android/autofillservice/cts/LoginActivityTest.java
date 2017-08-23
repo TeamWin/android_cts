@@ -1211,6 +1211,10 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         saveGoesAway(DismissType.TOUCH_OUTSIDE);
     }
 
+    public void testSaveGoesAwayWhenCallingCancel() throws Exception {
+        saveGoesAway(DismissType.AFM_CANCEL);
+    }
+
     private void saveGoesAway(DismissType dismissType) throws Exception {
         enableService();
 
@@ -1255,6 +1259,9 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             case RECENTS_BUTTON:
                 sUiBot.switchAppsUsingRecents();
                 sUiBot.assertShownByRelativeId(CheckoutActivity.ID_ADDRESS);
+                break;
+            case AFM_CANCEL:
+                mActivity.getAutofillManager().cancel();
                 break;
             default:
                 throw new IllegalArgumentException("invalid dismiss type: " + dismissType);
@@ -3231,6 +3238,31 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // AssertResults
         waitUntilDisconnected();
         listener.assertOnCancelCalled();
+    }
+
+    @Test
+    public void testDatasetPickerGoesAwayOnCancel() throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedDataset.Builder()
+                .setField(ID_USERNAME, "dude")
+                .setPresentation(createPresentation("The Dude"))
+                .build());
+
+        // Trigger auto-fill.
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+
+        // Make sure it's shown.
+        sUiBot.assertDatasets("The Dude");
+
+        // Then cancel..
+        mActivity.getAutofillManager().cancel();
+
+        // ...and make sure it isn't shown anymore.
+        sUiBot.assertNoDatasets();
     }
 
     private void startCheckoutActivityAsNewTask() {
