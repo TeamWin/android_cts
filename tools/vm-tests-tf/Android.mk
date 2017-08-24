@@ -111,7 +111,8 @@ $(LOCAL_BUILT_MODULE) : $(vmteststf_dep_jars) $(HOST_OUT_JAVA_LIBRARIES)/tradefe
 	$(hide) $(JAR) -cf $(PRIVATE_INTERMEDIATES_DEXCORE_JAR)-class.jar \
 		$(addprefix -C $(PRIVATE_INTERMEDIATES_CLASSES) , dot/junit/DxUtil.class dot/junit/DxAbstractMain.class)
 	$(hide) mkdir -p $(PRIVATE_INTERMEDIATES_DEXCORE_JAR).tmp
-	$(hide) $(DX) -JXms16M -JXmx768M --dex --output=$(PRIVATE_INTERMEDIATES_DEXCORE_JAR).tmp \
+	$(hide) $(if $(DX_ALT_JAR), $(JAVA) -Xms16M -Xmx768M -jar $(DX_ALT_JAR), $(DX) -JXms16M -JXmx768M) \
+		--dex --output=$(PRIVATE_INTERMEDIATES_DEXCORE_JAR).tmp \
 		$(if $(NO_OPTIMIZE_DX), --no-optimize) $(PRIVATE_INTERMEDIATES_DEXCORE_JAR)-class.jar && rm -f $(PRIVATE_INTERMEDIATES_DEXCORE_JAR).jar
 	$(hide) cd $(PRIVATE_INTERMEDIATES_DEXCORE_JAR).tmp && zip -q -r $(abspath $(PRIVATE_INTERMEDIATES_DEXCORE_JAR)) .
 	$(hide) cd $(PRIVATE_INTERMEDIATES_HOSTJUNIT_FILES)/classes && zip -q -r ../../$(notdir $@) .
