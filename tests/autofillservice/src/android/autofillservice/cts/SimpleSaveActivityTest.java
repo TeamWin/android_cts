@@ -189,12 +189,6 @@ public class SimpleSaveActivityTest extends AutoFillServiceTestCase {
         dismissSaveTest(DismissType.RECENTS_BUTTON);
     }
 
-    @Test
-    public void testDismissSave_byCallingCancel() throws Exception {
-        startActivity();
-        dismissSaveTest(DismissType.AFM_CANCEL);
-    }
-
     private void dismissSaveTest(DismissType dismissType) throws Exception {
         // Set service.
         enableService();
@@ -234,9 +228,6 @@ public class SimpleSaveActivityTest extends AutoFillServiceTestCase {
             case RECENTS_BUTTON:
                 sUiBot.switchAppsUsingRecents();
                 WelcomeActivity.assertShowingDefaultMessage(sUiBot);
-                break;
-            case AFM_CANCEL:
-                mActivity.getAutofillManager().cancel();
                 break;
             default:
                 throw new IllegalArgumentException("invalid dismiss type: " + dismissType);
