@@ -44,6 +44,7 @@ import android.text.Html;
 import android.util.Log;
 import android.view.accessibility.AccessibilityWindowInfo;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -179,7 +180,18 @@ final class UiBot {
      */
     public UiObject2 assertShownByText(String text) {
         final UiObject2 object = waitForObject(By.text(text));
-        assertWithMessage(text).that(object).isNotNull();
+        assertWithMessage("No node with text '%s'", text).that(object).isNotNull();
+        return object;
+    }
+
+    /**
+     * Asserts a node with the given content description is shown.
+     *
+     */
+    public UiObject2 assertShownByContentDescription(String contentDescription) {
+        final UiObject2 object = waitForObject(By.desc(contentDescription));
+        assertWithMessage("No node with content description '%s'", contentDescription).that(object)
+                .isNotNull();
         return object;
     }
 
@@ -211,7 +223,6 @@ final class UiBot {
 
     /**
      * Asserts the id is shown on the screen, using a resource id from the test package.
-     * @return
      */
     UiObject2 assertShownByRelativeId(String id) {
         final UiObject2 obj = waitForObject(By.res(mPackageName, id));
@@ -602,5 +613,12 @@ final class UiBot {
      */
     public int getScreenOrientation() {
         return mDevice.getDisplayRotation();
+    }
+
+    /**
+     * Dumps the current view hierarchy int the output stream.
+     */
+    public void dumpScreen() throws IOException {
+        mDevice.dumpWindowHierarchy(System.out);
     }
 }

@@ -133,7 +133,7 @@ public class SimpleSaveActivityTest extends AutoFillServiceTestCase {
                 .build());
 
         // Trigger autofill.
-        sUiBot.assertShownByRelativeId(ID_INPUT).longClick();
+        sUiBot.assertShownByRelativeId(ID_INPUT).click();
         sReplier.getNextFillRequest();
 
         // Select dataset...
@@ -154,7 +154,7 @@ public class SimpleSaveActivityTest extends AutoFillServiceTestCase {
         // Trigger save...
         input.setText("ID");
         password.setText("PASS");
-        sUiBot.assertShownByRelativeId(ID_COMMIT).longClick();
+        sUiBot.assertShownByRelativeId(ID_COMMIT).click();
         sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_GENERIC);
 
         // ... and assert results
