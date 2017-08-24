@@ -107,8 +107,13 @@ public class BusinessLogicFactory {
     private static List<BusinessLogicRuleCondition> extractRuleConditionList(
             JSONObject ruleJSONObject) throws JSONException {
         List<BusinessLogicRuleCondition> ruleConditions = new ArrayList<>();
-        // All rules require at least one condition, line below throws JSONException if not
-        JSONArray ruleConditionsJSONArray = ruleJSONObject.getJSONArray(RULE_CONDITIONS);
+        // Rules do not require a condition, return empty list if no condition is found
+        JSONArray ruleConditionsJSONArray = null;
+        try {
+            ruleConditionsJSONArray = ruleJSONObject.getJSONArray(RULE_CONDITIONS);
+        } catch (JSONException e) {
+            return ruleConditions; // no conditions for this rule, apply in all cases
+        }
         for (int i = 0; i < ruleConditionsJSONArray.length(); i++) {
             JSONObject ruleConditionJSONObject = ruleConditionsJSONArray.getJSONObject(i);
             String methodName = ruleConditionJSONObject.getString(METHOD_NAME);
