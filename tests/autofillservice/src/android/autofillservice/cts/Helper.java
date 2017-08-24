@@ -32,9 +32,11 @@ import android.content.pm.PackageManager;
 import android.icu.util.Calendar;
 import android.service.autofill.FillContext;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.Pair;
 import android.view.View;
 import android.view.ViewStructure.HtmlInfo;
 import android.view.autofill.AutofillId;
@@ -106,6 +108,29 @@ final class Helper {
     private final static String ACCELLEROMETER_CHANGE =
             "content insert --uri content://settings/system --bind name:s:accelerometer_rotation "
                     + "--bind value:i:%d";
+
+    /**
+     * Helper interface used to filter Assist nodes.
+     */
+    interface NodeFilter {
+        /**
+         * Returns whether the node passes the filter for such given id.
+         */
+        boolean matches(ViewNode node, Object id);
+    }
+
+    private static final NodeFilter RESOURCE_ID_FILTER = (node, id) -> {
+        return id.equals(node.getIdEntry());
+    };
+
+    private static final NodeFilter HTML_NAME_FILTER = (node, id) -> {
+        return id.equals(getHtmlName(node));
+    };
+
+    private static final NodeFilter TEXT_FILTER = (node, id) -> {
+        return id.equals(node.getText());
+    };
+
     /**
      * Runs a {@code r}, ignoring all {@link RuntimeException} and {@link Error} until the
      * {@link #UI_TIMEOUT_MS} is reached.
@@ -250,51 +275,119 @@ final class Helper {
     }
 
     /**
-     * Gets a node given its Android resource id, or {@code null} if not found.
+     * Gets a node if it matches the filter criteria for the given id.
      */
-    static ViewNode findNodeByResourceId(AssistStructure structure, String resourceId) {
+    static ViewNode findNodeByFilter(@NonNull AssistStructure structure, @NonNull Object id,
+            @NonNull NodeFilter filter) {
         Log.v(TAG, "Parsing request for activity " + structure.getActivityComponent());
         final int nodes = structure.getWindowNodeCount();
         for (int i = 0; i < nodes; i++) {
             final WindowNode windowNode = structure.getWindowNodeAt(i);
             final ViewNode rootNode = windowNode.getRootViewNode();
-            final ViewNode node = findNodeByResourceId(rootNode, resourceId);
+            final ViewNode node = findNodeByFilter(rootNode, id, filter);
             if (node != null) {
                 return node;
             }
         }
         return null;
+    }
+
+    /**
+     * Gets a node if it matches the filter criteria for the given id.
+     */
+    static ViewNode findNodeByFilter(@NonNull List<FillContext> contexts, @NonNull Object id,
+            @NonNull NodeFilter filter) {
+        for (FillContext context : contexts) {
+            ViewNode node = findNodeByFilter(context.getStructure(), id, filter);
+            if (node != null) {
+                return node;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Gets a node if it matches the filter criteria for the given id.
+     */
+    static ViewNode findNodeByFilter(@NonNull ViewNode node, @NonNull Object id,
+            @NonNull NodeFilter filter) {
+        if (filter.matches(node, id)) {
+            return node;
+        }
+        final int childrenSize = node.getChildCount();
+        if (childrenSize > 0) {
+            for (int i = 0; i < childrenSize; i++) {
+                final ViewNode found = findNodeByFilter(node.getChildAt(i), id, filter);
+                if (found != null) {
+                    return found;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Gets a node given its Android resource id, or {@code null} if not found.
+     */
+    static ViewNode findNodeByResourceId(AssistStructure structure, String resourceId) {
+        return findNodeByFilter(structure, resourceId, RESOURCE_ID_FILTER);
     }
 
     /**
      * Gets a node given its Android resource id, or {@code null} if not found.
      */
     static ViewNode findNodeByResourceId(List<FillContext> contexts, String resourceId) {
-        for (FillContext context : contexts) {
-            ViewNode node = findNodeByResourceId(context.getStructure(), resourceId);
-            if (node != null) {
-                return node;
-            }
-        }
-        return null;
+        return findNodeByFilter(contexts, resourceId, RESOURCE_ID_FILTER);
     }
 
     /**
      * Gets a node given its Android resource id, or {@code null} if not found.
      */
     static ViewNode findNodeByResourceId(ViewNode node, String resourceId) {
-        if (resourceId.equals(node.getIdEntry())) {
-            return node;
+        return findNodeByFilter(node, resourceId, RESOURCE_ID_FILTER);
+    }
+
+    /**
+     * Gets a node given the name of its HTML INPUT tag, or {@code null} if not found.
+     */
+    static ViewNode findNodeByHtmlName(AssistStructure structure, String htmlName) {
+        return findNodeByFilter(structure, htmlName, HTML_NAME_FILTER);
+    }
+
+    /**
+     * Gets a node given the name of its HTML INPUT tag, or {@code null} if not found.
+     */
+    static ViewNode findNodeByHtmlName(List<FillContext> contexts, String htmlName) {
+        return findNodeByFilter(contexts, htmlName, HTML_NAME_FILTER);
+    }
+
+    /**
+     * Gets a node given the name of its HTML INPUT tag, or {@code null} if not found.
+     */
+    static ViewNode findNodeByHtmlName(ViewNode node, String htmlName) {
+        return findNodeByFilter(node, htmlName, HTML_NAME_FILTER);
+    }
+
+    /**
+     * Gets the {@code name} attribute of a node representing an HTML input tag.
+     */
+    @Nullable
+    static String getHtmlName(@NonNull ViewNode node) {
+        final HtmlInfo htmlInfo = node.getHtmlInfo();
+        if (htmlInfo == null) {
+            return null;
         }
-        final int childrenSize = node.getChildCount();
-        if (childrenSize > 0) {
-            for (int i = 0; i < childrenSize; i++) {
-                final ViewNode found = findNodeByResourceId(node.getChildAt(i), resourceId);
-                if (found != null) {
-                    return found;
-                }
+        final String tag = htmlInfo.getTag();
+        if (!"input".equals(tag)) {
+            Log.w(TAG, "getHtmlName(): invalid tag (" + tag + ") on " + htmlInfo);
+            return null;
+        }
+        for (Pair<String, String> attr : htmlInfo.getAttributes()) {
+            if ("name".equals(attr.first)) {
+                return attr.second;
             }
         }
+        Log.w(TAG, "getHtmlName(): no 'name' attribute on " + htmlInfo);
         return null;
     }
 
@@ -302,48 +395,26 @@ final class Helper {
      * Gets a node given its expected text, or {@code null} if not found.
      */
     static ViewNode findNodeByText(AssistStructure structure, String text) {
-        Log.v(TAG, "Parsing request for activity " + structure.getActivityComponent());
-        final int nodes = structure.getWindowNodeCount();
-        for (int i = 0; i < nodes; i++) {
-            final WindowNode windowNode = structure.getWindowNodeAt(i);
-            final ViewNode rootNode = windowNode.getRootViewNode();
-            final ViewNode node = findNodeByText(rootNode, text);
-            if (node != null) {
-                return node;
-            }
-        }
-        return null;
+        return findNodeByFilter(structure, text, TEXT_FILTER);
     }
 
     /**
      * Gets a node given its expected text, or {@code null} if not found.
      */
     static ViewNode findNodeByText(ViewNode node, String text) {
-        if (text.equals(node.getText())) {
-            return node;
-        }
-        final int childrenSize = node.getChildCount();
-        if (childrenSize > 0) {
-            for (int i = 0; i < childrenSize; i++) {
-                final ViewNode found = findNodeByText(node.getChildAt(i), text);
-                if (found != null) {
-                    return found;
-                }
-            }
-        }
-        return null;
+        return findNodeByFilter(node, text, TEXT_FILTER);
     }
 
     /**
      * Asserts a text-base node is sanitized.
      */
     static void assertTextIsSanitized(ViewNode node) {
-      final CharSequence text = node.getText();
-      final String resourceId = node.getIdEntry();
-      if (!TextUtils.isEmpty(text)) {
-          throw new AssertionError("text on sanitized field " + resourceId + ": " + text);
-      }
-      assertNodeHasNoAutofillValue(node);
+        final CharSequence text = node.getText();
+        final String resourceId = node.getIdEntry();
+        if (!TextUtils.isEmpty(text)) {
+            throw new AssertionError("text on sanitized field " + resourceId + ": " + text);
+        }
+        assertNodeHasNoAutofillValue(node);
     }
 
     static void assertNodeHasNoAutofillValue(ViewNode node) {
