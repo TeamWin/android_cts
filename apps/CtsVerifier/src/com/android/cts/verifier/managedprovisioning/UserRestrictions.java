@@ -223,6 +223,9 @@ public class UserRestrictions {
                 return pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
             case UserManager.DISALLOW_CONFIG_WIFI:
                 return pm.hasSystemFeature(PackageManager.FEATURE_WIFI);
+            case UserManager.DISALLOW_NETWORK_RESET:
+                // This test should not run on watch
+                return !pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
             case UserManager.DISALLOW_OUTGOING_BEAM:
                 return pm.hasSystemFeature(PackageManager.FEATURE_NFC);
             case UserManager.DISALLOW_SHARE_LOCATION:
