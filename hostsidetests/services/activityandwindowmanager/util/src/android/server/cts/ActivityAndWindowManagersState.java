@@ -23,6 +23,7 @@ import static android.server.cts.ActivityManagerTestBase.HOME_STACK_ID;
 import static android.server.cts.ActivityManagerTestBase.PINNED_STACK_ID;
 import static android.server.cts.ActivityManagerTestBase.componentName;
 import static android.server.cts.StateLogger.log;
+import static android.server.cts.StateLogger.logE;
 
 import android.server.cts.ActivityManagerState.ActivityStack;
 import android.server.cts.ActivityManagerState.ActivityTask;
@@ -32,6 +33,7 @@ import android.server.cts.WindowManagerState.WindowState;
 import android.server.cts.WindowManagerState.WindowTask;
 
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.device.DeviceNotAvailableException;
 
 import junit.framework.Assert;
 
@@ -40,6 +42,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiPredicate;
+import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 
 /** Combined state of the activity manager and window manager. */
@@ -278,11 +281,22 @@ public class ActivityAndWindowManagersState extends Assert {
     void waitFor(ITestDevice device,
             BiPredicate<ActivityManagerState, WindowManagerState> waitCondition, String message)
             throws Exception {
+        waitFor(message, () -> {
+            try {
+                mAmState.computeState(device);
+                mWmState.computeState(device);
+            } catch (Exception e) {
+                logE(e.toString());
+                return false;
+            }
+            return waitCondition.test(mAmState, mWmState);
+        });
+    }
+
+    void waitFor(String message, BooleanSupplier waitCondition) throws Exception {
         int retriesLeft = 5;
         do {
-            mAmState.computeState(device);
-            mWmState.computeState(device);
-            if (!waitCondition.test(mAmState, mWmState)) {
+            if (!waitCondition.getAsBoolean()) {
                 log(message);
                 try {
                     Thread.sleep(1000);

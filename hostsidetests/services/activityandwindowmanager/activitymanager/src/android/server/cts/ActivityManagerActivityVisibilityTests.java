@@ -17,6 +17,7 @@
 package android.server.cts;
 
 import static android.server.cts.ActivityManagerState.STATE_RESUMED;
+import static android.server.cts.StateLogger.logE;
 
 import android.platform.test.annotations.Presubmit;
 
@@ -26,6 +27,7 @@ import java.lang.String;
 import static com.android.ddmlib.Log.LogLevel.INFO;
 
 import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.device.DeviceNotAvailableException;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
@@ -46,6 +48,8 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     private static final String TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY_NAME = "TurnScreenOnShowOnLockActivity";
     private static final String TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY_NAME = "TurnScreenOnAttrRemoveAttrActivity";
     private static final String TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME = "TurnScreenOnSingleTaskActivity";
+    private static final String TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY =
+            "TurnScreenOnWithRelayoutActivity";
 
     @Override
     protected void tearDown() throws Exception {
@@ -346,5 +350,32 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         mAmWmState.assertVisibility(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME, true);
         assertTrue(isDisplayOn());
         assertSingleStart(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME, logSeparator);
+    }
+
+    public void testTurnScreenOnActivity_withRelayout() throws Exception {
+        sleepDevice();
+        launchActivity(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY);
+        mAmWmState.computeState(mDevice, new String[] { TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY });
+        mAmWmState.assertVisibility(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY, true);
+
+        String logSeparator = clearLogcat();
+        sleepDevice();
+        mAmWmState.waitFor("Waiting for stopped state", () ->
+                lifecycleStopOccurred(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY, logSeparator));
+
+        // Ensure there was an actual stop if the waitFor timed out.
+        assertTrue(lifecycleStopOccurred(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY, logSeparator));
+        assertFalse(isDisplayOn());
+    }
+
+    private boolean lifecycleStopOccurred(String activityName, String logSeparator) {
+        try {
+            ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(activityName,
+                    logSeparator);
+            return lifecycleCounts.mStopCount > 0;
+        } catch (DeviceNotAvailableException e) {
+            logE(e.toString());
+            return false;
+        }
     }
 }
