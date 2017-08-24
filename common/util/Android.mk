@@ -45,6 +45,7 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE := compatibility-common-util-hostsidelib
 
 LOCAL_STATIC_JAVA_LIBRARIES :=  guavalib \
+                                json-prebuilt \
                                 junit-host \
                                 kxml2-2.3.0 \
                                 platform-test-annotations-host
