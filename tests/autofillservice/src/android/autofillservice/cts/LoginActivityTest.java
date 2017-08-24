@@ -2590,10 +2590,13 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             assertThat(selection.getClientState().getCharSequence("clientStateKey")).isEqualTo(
                     "clientStateValue");
 
-            assertThat(selection.getEvents().size()).isEqualTo(1);
-            FillEventHistory.Event event = selection.getEvents().get(0);
-            assertThat(event.getType()).isEqualTo(TYPE_DATASET_AUTHENTICATION_SELECTED);
-            assertThat(event.getDatasetId()).isEqualTo("name");
+            assertThat(selection.getEvents().size()).isEqualTo(2);
+            FillEventHistory.Event event1 = selection.getEvents().get(0);
+            assertThat(event1.getType()).isEqualTo(TYPE_DATASET_AUTHENTICATION_SELECTED);
+            assertThat(event1.getDatasetId()).isEqualTo("name");
+            FillEventHistory.Event event2 = selection.getEvents().get(1);
+            assertThat(event2.getType()).isEqualTo(TYPE_DATASET_SELECTED);
+            assertThat(event2.getDatasetId()).isNull();
         });
     }
 
