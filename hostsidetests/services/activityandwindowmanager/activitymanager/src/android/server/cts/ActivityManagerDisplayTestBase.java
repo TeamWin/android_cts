@@ -229,6 +229,9 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
      * @param densityDpi provide custom density for the display.
      * @param launchInSplitScreen start {@link VirtualDisplayActivity} to side from
      *                            {@link LaunchingActivity} on primary display.
+     * @param canShowWithInsecureKeyguard allow showing content when device is showing an insecure
+     *                                    keyguard.
+     * @param mustBeCreated should assert if the display was or wasn't created.
      * @param publicDisplay make display public.
      * @param resizeDisplay should resize display when surface size changes.
      * @param launchActivity should launch test activity immediately after display creation.
@@ -236,8 +239,9 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
      * @throws Exception
      */
     private List<ActivityManagerDisplayTests.DisplayState> createVirtualDisplays(int densityDpi,
-            boolean launchInSplitScreen, boolean publicDisplay, boolean resizeDisplay,
-            String launchActivity, int displayCount) throws Exception {
+            boolean launchInSplitScreen, boolean canShowWithInsecureKeyguard, boolean mustBeCreated,
+            boolean publicDisplay, boolean resizeDisplay, String launchActivity, int displayCount)
+            throws Exception {
         // Start an activity that is able to create virtual displays.
         if (launchInSplitScreen) {
             getLaunchActivityBuilder().setToSide(true)
@@ -250,11 +254,11 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
         final ActivityManagerDisplayTests.ReportedDisplays originalDS = getDisplaysStates();
 
         // Create virtual display with custom density dpi.
-        executeShellCommand(getCreateVirtualDisplayCommand(densityDpi, publicDisplay, resizeDisplay,
-                launchActivity, displayCount));
+        executeShellCommand(getCreateVirtualDisplayCommand(densityDpi, canShowWithInsecureKeyguard,
+                publicDisplay, resizeDisplay, launchActivity, displayCount));
         mVirtualDisplayCreated = true;
 
-        return assertAndGetNewDisplays(displayCount, originalDS);
+        return assertAndGetNewDisplays(mustBeCreated ? displayCount : -1, originalDS);
     }
 
     /**
@@ -273,7 +277,11 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
         return assertAndGetNewDisplays(1, originalDs);
     }
 
-    /** Wait for desired number of displays to be created and get their properties. */
+    /**
+     * Wait for desired number of displays to be created and get their properties.
+     * @param newDisplayCount expected display count, -1 if display should not be created.
+     * @param originalDS display states before creation of new display(s).
+     */
     private List<ActivityManagerDisplayTests.DisplayState> assertAndGetNewDisplays(
             int newDisplayCount, ActivityManagerDisplayTests.ReportedDisplays originalDS)
             throws Exception {
@@ -282,8 +290,14 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
         // Wait for the display(s) to be created and get configurations.
         final ActivityManagerDisplayTests.ReportedDisplays ds =
                 getDisplayStateAfterChange(originalDisplayCount + newDisplayCount);
-        assertEquals("New virtual display must be created",
-                originalDisplayCount + newDisplayCount, ds.mDisplayStates.size());
+        if (newDisplayCount != -1) {
+            assertEquals("New virtual display(s) must be created",
+                    originalDisplayCount + newDisplayCount, ds.mDisplayStates.size());
+        } else {
+            assertEquals("New virtual display must not be created",
+                    originalDisplayCount, ds.mDisplayStates.size());
+            return null;
+        }
 
         // Find the newly added display(s).
         final List<ActivityManagerDisplayTests.DisplayState> newDisplays
@@ -318,10 +332,12 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
 
         private int mDensityDpi = CUSTOM_DENSITY_DPI;
         private boolean mLaunchInSplitScreen = false;
+        private boolean mCanShowWithInsecureKeyguard = false;
         private boolean mPublicDisplay = false;
         private boolean mResizeDisplay = true;
         private String mLaunchActivity = null;
         private boolean mSimulateDisplay = false;
+        private boolean mMustBeCreated = true;
 
         public VirtualDisplayBuilder(ActivityManagerDisplayTestBase tests) {
             mTests = tests;
@@ -334,6 +350,12 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
 
         public VirtualDisplayBuilder setLaunchInSplitScreen(boolean launchInSplitScreen) {
             mLaunchInSplitScreen = launchInSplitScreen;
+            return this;
+        }
+
+        public VirtualDisplayBuilder setCanShowWithInsecureKeyguard(
+                boolean canShowWithInsecureKeyguard) {
+            mCanShowWithInsecureKeyguard = canShowWithInsecureKeyguard;
             return this;
         }
 
@@ -357,6 +379,11 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
             return this;
         }
 
+        public VirtualDisplayBuilder setMustBeCreated(boolean mustBeCreated) {
+            mMustBeCreated = mustBeCreated;
+            return this;
+        }
+
         public DisplayState build() throws Exception {
             final List<DisplayState> displays = build(1);
             return displays != null && !displays.isEmpty() ? displays.get(0) : null;
@@ -367,13 +394,15 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
                 return mTests.simulateDisplay(mDensityDpi);
             }
 
-            return mTests.createVirtualDisplays(mDensityDpi, mLaunchInSplitScreen, mPublicDisplay,
-                    mResizeDisplay, mLaunchActivity, count);
+            return mTests.createVirtualDisplays(mDensityDpi, mLaunchInSplitScreen,
+                    mCanShowWithInsecureKeyguard, mMustBeCreated, mPublicDisplay, mResizeDisplay,
+                    mLaunchActivity, count);
         }
     }
 
-    private static String getCreateVirtualDisplayCommand(int densityDpi, boolean publicDisplay,
-            boolean resizeDisplay, String launchActivity, int displayCount) {
+    private static String getCreateVirtualDisplayCommand(int densityDpi,
+            boolean canShowWithInsecureKeyguard, boolean publicDisplay, boolean resizeDisplay,
+            String launchActivity, int displayCount) {
         final StringBuilder commandBuilder
                 = new StringBuilder(getAmStartCmd(VIRTUAL_DISPLAY_ACTIVITY));
         commandBuilder.append(" -f 0x20000000");
@@ -382,6 +411,8 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
             commandBuilder.append(" --ei density_dpi ").append(densityDpi);
         }
         commandBuilder.append(" --ei count ").append(displayCount);
+        commandBuilder.append(" --ez can_show_with_insecure_keyguard ")
+                .append(canShowWithInsecureKeyguard);
         commandBuilder.append(" --ez public_display ").append(publicDisplay);
         commandBuilder.append(" --ez resize_display ").append(resizeDisplay);
         if (launchActivity != null) {
