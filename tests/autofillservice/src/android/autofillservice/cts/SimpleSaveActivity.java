@@ -27,10 +27,13 @@ public class SimpleSaveActivity extends AbstractAutoFillActivity {
 
     static final String ID_LABEL = "label";
     static final String ID_INPUT = "input";
+    static final String ID_PASSWORD = "password";
+    static final String ID_COMMIT = "commit";
     static final String TEXT_LABEL = "Label:";
 
     TextView mLabel;
     EditText mInput;
+    EditText mPassword;
     Button mCancel;
     Button mCommit;
 
@@ -42,10 +45,33 @@ public class SimpleSaveActivity extends AbstractAutoFillActivity {
 
         mLabel = findViewById(R.id.label);
         mInput = findViewById(R.id.input);
+        mPassword = findViewById(R.id.password);
         mCancel = findViewById(R.id.cancel);
         mCommit = findViewById(R.id.commit);
 
         mCancel.setOnClickListener((v) -> getAutofillManager().cancel());
         mCommit.setOnClickListener((v) -> getAutofillManager().commit());
+    }
+
+    FillExpectation expectAutoFill(String input, String password) {
+        final FillExpectation expectation = new FillExpectation(input, password);
+        mInput.addTextChangedListener(expectation.mInputWatcher);
+        mPassword.addTextChangedListener(expectation.mPasswordWatcher);
+        return expectation;
+    }
+
+    final class FillExpectation {
+        private final OneTimeTextWatcher mInputWatcher;
+        private final OneTimeTextWatcher mPasswordWatcher;
+
+        private FillExpectation(String input, String password) {
+            mInputWatcher = new OneTimeTextWatcher("input", mInput, input);
+            mPasswordWatcher = new OneTimeTextWatcher("password", mPassword, password);
+        }
+
+        void assertAutoFilled() throws Exception {
+            mInputWatcher.assertAutoFilled();
+            mPasswordWatcher.assertAutoFilled();
+        }
     }
 }
