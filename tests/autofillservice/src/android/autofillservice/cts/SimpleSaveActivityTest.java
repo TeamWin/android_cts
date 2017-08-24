@@ -18,11 +18,17 @@ package android.autofillservice.cts;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.Helper.getContext;
+import static android.autofillservice.cts.SimpleSaveActivity.ID_COMMIT;
 import static android.autofillservice.cts.SimpleSaveActivity.ID_INPUT;
+import static android.autofillservice.cts.SimpleSaveActivity.ID_PASSWORD;
 import static android.autofillservice.cts.SimpleSaveActivity.TEXT_LABEL;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
 
+import static com.google.common.truth.Truth.assertWithMessage;
+
+import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
+import android.autofillservice.cts.SimpleSaveActivity.FillExpectation;
 import android.content.Context;
 import android.content.Intent;
 import android.support.test.uiautomator.UiObject2;
@@ -61,6 +67,100 @@ public class SimpleSaveActivityTest extends AutoFillServiceTestCase {
                     Intent.FLAG_ACTIVITY_RETAIN_IN_RECENTS | Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
         }
         mActivity = mActivityRule.launchActivity(intent);
+    }
+
+    @Test
+    public void testAutoFillOneDatasetAndSave() throws Exception {
+        startActivity();
+
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT, ID_PASSWORD)
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_INPUT, "id")
+                        .setField(ID_PASSWORD, "pass")
+                        .setPresentation(createPresentation("YO"))
+                        .build())
+                .build());
+
+        // Trigger autofill.
+        mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
+        sReplier.getNextFillRequest();
+
+        // Select dataset.
+        final FillExpectation autofillExpecation = mActivity.expectAutoFill("id", "pass");
+        sUiBot.selectDataset("YO");
+        autofillExpecation.assertAutoFilled();
+
+        mActivity.syncRunOnUiThread(() -> {
+            mActivity.mInput.setText("ID");
+            mActivity.mPassword.setText("PASS");
+            mActivity.mCommit.performClick();
+        });
+        final UiObject2 saveUi = sUiBot.assertSaveShowing(SAVE_DATA_TYPE_GENERIC);
+
+        // Save it...
+        sUiBot.saveForAutofill(saveUi, true);
+
+        // ... and assert results
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+        assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_INPUT), "ID");
+        assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_PASSWORD), "PASS");
+    }
+
+    /**
+     * Simple test that only uses UiAutomator to interact with the activity, so it indirectly
+     * tests the integration of Autofill with Accessibility.
+     */
+    @Test
+    public void testAutoFillOneDatasetAndSave_usingUiAutomatorOnly() throws Exception {
+        startActivity();
+
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT, ID_PASSWORD)
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_INPUT, "id")
+                        .setField(ID_PASSWORD, "pass")
+                        .setPresentation(createPresentation("YO"))
+                        .build())
+                .build());
+
+        // Trigger autofill.
+        sUiBot.assertShownByRelativeId(ID_INPUT).longClick();
+        sReplier.getNextFillRequest();
+
+        // Select dataset...
+        sUiBot.selectDataset("YO");
+
+        // ...and assert autofilled values.
+        final UiObject2 input = sUiBot.assertShownByRelativeId(ID_INPUT);
+        final UiObject2 password = sUiBot.assertShownByRelativeId(ID_PASSWORD);
+
+        assertWithMessage("wrong value for 'input'").that(input.getText()).isEqualTo("id");
+        // TODO: password field is shown as **** ; ideally we should assert it's a password
+        // field, but UiAutomator does not exposes that info.
+        final String visiblePassword = password.getText();
+        assertWithMessage("'password' should not be visible").that(visiblePassword)
+            .isNotEqualTo("pass");
+        assertWithMessage("wrong value for 'password'").that(visiblePassword).hasLength(4);
+
+        // Trigger save...
+        input.setText("ID");
+        password.setText("PASS");
+        sUiBot.assertShownByRelativeId(ID_COMMIT).longClick();
+        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_GENERIC);
+
+        // ... and assert results
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+        assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_INPUT), "ID");
+        assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_PASSWORD), "PASS");
     }
 
     @Test
