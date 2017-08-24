@@ -127,6 +127,12 @@ public class PreferenceRecycleTest {
             screen.addPreference(noRecyclePref);
         });
 
+        // Select the last item in the list to make sure the newly added prefs is actually
+        // displayed even on small screen like watches.
+        mActivityRule.runOnUiThread(() -> {
+            mActivity.getListView().setSelection(mActivity.getListView().getCount() - 1);
+        });
+
         // Grab the preferences we just created on the Ui thread.
         RecycleCheckPreference recyclePref =
                 (RecycleCheckPreference)screen.findPreference("recyclePref");
