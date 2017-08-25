@@ -24,8 +24,10 @@ import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 import android.util.Log;
 
+import java.lang.reflect.Field;
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Device-side base class for tests leveraging the Business Logic service.
@@ -63,5 +65,25 @@ public class BusinessLogicTestCase {
 
     private Context getContext() {
         return InstrumentationRegistry.getInstrumentation().getTargetContext();
+    }
+
+    public void mapPut(String mapName, String key, String value) {
+        boolean put = false;
+        for (Field f : getClass().getDeclaredFields()) {
+            if (f.getName().equalsIgnoreCase(mapName) && Map.class.isAssignableFrom(f.getType())) {
+                try {
+                    ((Map) f.get(this)).put(key, value);
+                    put = true;
+                } catch (IllegalAccessException e) {
+                    Log.w(String.format("failed to invoke mapPut on field \"%s\". Resuming...",
+                            f.getName()), e);
+                    // continue iterating through fields, throw exception if no other fields match
+                }
+            }
+        }
+        if (!put) {
+            throw new RuntimeException(String.format("Failed to find map %s in class %s", mapName,
+                    getClass().getName()));
+        }
     }
 }
