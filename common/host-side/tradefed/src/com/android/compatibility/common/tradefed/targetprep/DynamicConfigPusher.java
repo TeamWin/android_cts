@@ -123,7 +123,8 @@ public class DynamicConfigPusher implements ITargetCleaner {
         }
 
         if (TestTarget.DEVICE.equals(mTarget)) {
-            String deviceDest = DynamicConfig.CONFIG_FOLDER_ON_DEVICE + hostFile.getName();
+            String deviceDest = String.format("%s%s.dynamic",
+                    DynamicConfig.CONFIG_FOLDER_ON_DEVICE, mModuleName);
             if (!device.pushFile(hostFile, deviceDest)) {
                 throw new TargetSetupError(String.format(
                         "Failed to push local '%s' to remote '%s'", hostFile.getAbsolutePath(),
