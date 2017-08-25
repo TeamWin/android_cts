@@ -958,6 +958,25 @@
     <string name="sample_test">Sample Test</string>
     <string name="sample_test_info">This test verifies that bluetooth sharing is working properly.\nThe test assumes the Device Under Test has bluetooth enabled and is already paired with a second device, also with bluetooth enabled.\nStart this test by clicking share, choose bluetooth from the options, and then select a device to share with.\nNote: This is a sample test, used to demonstrate how to write CTS Verifier tests, so just click pass.</string>
 
+    <!-- Strings for UsbDebuggingDialogTapjackingTest -->
+    <string name="usb_tapjacking_button_text">Escalate</string>
+    <string name="usb_tapjacking_test">Usb Debugging Dialog Tapjacking Test</string>
+    <string name="usb_tapjacking_test_info">This test verifies that tapjacking on the usb dialog is not possible by disallowing users from accepting usb debugging pemissions when dialog is obscured.</string>
+    <string name="usb_tapjacking_test_instructions">
+        1. Connect device via usb to computer.\n
+        2. Unroot device: adb unroot\n
+        3. Connect over tcpip: adb tcpip 5555\n
+        4. Click "Escalate".  Settings may appear if the CTS Verifier app doesn\'t have display over apps permission.  Enable this permission and then click back to navigate back to the app.\n
+        5. Wait for a USB debugging dialog to appear and for the text \"This message covers the USB debugging RSA prompt\" to appear.  There is around a 5 second delay.\n
+        ** If no dialog appears, close the CTS Verifier app and try again. \n
+        6. Try clicking OK. \n
+        Test pass if you cannot click OK when the text quoted above is on top of the USB debugging dialog.  Toast should appear saying there is an overlay so Settings cannot verify your response. \n
+        Note: Fake message overlay may remain on screen until you leave the test. This is working as intended. \n
+    </string>
+    <string name="usb_tapjacking_overlay_message">This message covers the USB debugging RSA prompt</string>
+    <string name="usb_tapjacking_error_toast">Please restart the application and try again.</string>
+    <string name="usb_tapjacking_error_toast2">Please enable display over apps permission for this application before proceeding.</string>
+
     <!-- Strings for Camera Orientation -->
     <string name="camera_orientation">Camera Orientation</string>
     <string name="co_info">This test verifies the orientation capabilities of
