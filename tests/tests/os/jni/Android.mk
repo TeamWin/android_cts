@@ -56,6 +56,14 @@ ifeq ($(ARCH_SUPPORTS_SECCOMP),1)
 endif
 
 LOCAL_CFLAGS := -Wno-unused-parameter
+
+# Let's overwrite -mcpu in case it's set to some ARMv8 core by
+# TARGET_2ND_CPU_VARIANT and causes clang to ignore the -march below.
 LOCAL_CPPFLAGS_arm := -mcpu=generic
+
+# The ARM version of this library must be built using ARMv7 ISA (even if it
+# can be run on armv8 cores) since one of the tested instruction, swp, is
+# only supported in ARMv7 (and older) cores, and obsolete in ARMv8.
+LOCAL_CPPFLAGS_arm += -march=armv7-a
 
 include $(BUILD_SHARED_LIBRARY)
