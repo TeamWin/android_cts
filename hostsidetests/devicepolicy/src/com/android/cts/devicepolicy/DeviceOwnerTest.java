@@ -266,6 +266,13 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
+    public void testCreateAndManageUser_StartUserInBackground() throws Exception {
+        if (mHasFeature && canCreateAdditionalUsers(1)) {
+            executeDeviceTestMethod(".CreateAndManageUserTest",
+                    "testCreateAndManageUser_StartUserInBackground");
+        }
+    }
+
     public void testUserAddedOrRemovedBroadcasts() throws Exception {
         if (mHasFeature && canCreateAdditionalUsers(1)) {
             executeDeviceTestMethod(".CreateAndManageUserTest",
