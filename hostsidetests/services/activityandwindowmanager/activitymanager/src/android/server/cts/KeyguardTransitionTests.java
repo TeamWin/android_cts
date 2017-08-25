@@ -33,15 +33,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
         super.setUp();
 
         // Set screen lock (swipe)
-        mDevice.executeShellCommand("locksettings set-disabled false");
-    }
-
-    @Override
-    public void tearDown() throws Exception {
-        super.tearDown();
-
-        // Remove screen lock
-        mDevice.executeShellCommand("locksettings set-disabled true");
+        setLockDisabled(false);
     }
 
     public void testUnlock() throws Exception {
