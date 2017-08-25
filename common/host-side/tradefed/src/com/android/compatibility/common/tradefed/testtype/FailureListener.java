@@ -70,10 +70,10 @@ public class FailureListener extends ResultForwarder {
         CLog.i("FailureListener.testFailed %s %b %b %b", test.toString(), mBugReportOnFailure, mLogcatOnFailure, mScreenshotOnFailure);
         if (mScreenshotOnFailure) {
             try {
-                InputStreamSource screenSource = mDevice.getScreenshot();
-                super.testLog(String.format("%s-screenshot", test.toString()), LogDataType.PNG,
-                    screenSource);
-                screenSource.cancel();
+                try (InputStreamSource screenSource = mDevice.getScreenshot()) {
+                    super.testLog(String.format("%s-screenshot", test.toString()), LogDataType.PNG,
+                        screenSource);
+                }
             } catch (DeviceNotAvailableException e) {
                 CLog.e(e);
                 CLog.e("Device %s became unavailable while capturing screenshot",
@@ -81,18 +81,18 @@ public class FailureListener extends ResultForwarder {
             }
         }
         if (mBugReportOnFailure) {
-           InputStreamSource bugSource = mDevice.getBugreportz();
-           super.testLog(String.format("%s-bugreport", test.toString()), LogDataType.BUGREPORT,
-                   bugSource);
-           bugSource.cancel();
+           try (InputStreamSource bugSource = mDevice.getBugreportz()) {
+               super.testLog(String.format("%s-bugreport", test.toString()), LogDataType.BUGREPORT,
+                       bugSource);
+           }
         }
         if (mLogcatOnFailure) {
             // sleep 2s to ensure test failure stack trace makes it into logcat capture
             RunUtil.getDefault().sleep(2 * 1000);
-            InputStreamSource logSource = mDevice.getLogcat(mMaxLogcatBytes);
-            super.testLog(String.format("%s-logcat", test.toString()), LogDataType.LOGCAT,
-                    logSource);
-            logSource.cancel();
+            try (InputStreamSource logSource = mDevice.getLogcat(mMaxLogcatBytes)) {
+                super.testLog(String.format("%s-logcat", test.toString()), LogDataType.LOGCAT,
+                        logSource);
+            }
         }
         if (mRebootOnFailure) {
             try {
