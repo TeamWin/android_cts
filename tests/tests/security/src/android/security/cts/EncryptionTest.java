@@ -22,6 +22,7 @@ import android.test.AndroidTestCase;
 import junit.framework.TestCase;
 
 import android.app.ActivityManager;
+import android.content.pm.PackageManager;
 import android.content.Context;
 import android.util.Log;
 import java.io.BufferedReader;
@@ -79,7 +80,7 @@ public class EncryptionTest extends AndroidTestCase {
 
     private boolean isRequired() {
         // Optional before MIN_API_LEVEL or if the device has low RAM
-        return PropertyUtil.getFirstApiLevel() >= MIN_API_LEVEL && !hasLowRAM();
+        return PropertyUtil.getFirstApiLevel() >= MIN_API_LEVEL && !hasLowRAM() && !isTelevision();
     }
 
     public void testConfig() throws Exception {
@@ -103,6 +104,12 @@ public class EncryptionTest extends AndroidTestCase {
         if (cpuHasNeon()) {
             assertTrue("libcrypto must have NEON", neonIsEnabled());
         }
+    }
+
+    private boolean isTelevision() {
+        PackageManager pm = getContext().getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_TELEVISION)
+                || pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK);
     }
 
     public void testEncryption() throws Exception {
