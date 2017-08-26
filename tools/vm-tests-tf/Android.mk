@@ -103,7 +103,6 @@ $(LOCAL_BUILT_MODULE) : $(vmteststf_dep_jars) $(HOST_OUT_JAVA_LIBRARIES)/tradefe
 	# generated and compile the host side junit tests
 	@echo "Write generated Main_*.java files to $(PRIVATE_INTERMEDIATES_MAIN_FILES)"
 	$(hide) $(JAVA) \
-	    $(if $(EXPERIMENTAL_USE_OPENJDK9),--add-exports jdk.jartool/sun.tools.jar=ALL-UNNAMED) \
 	    -cp $(PRIVATE_CLASS_PATH) util.build.BuildDalvikSuite $(PRIVATE_SRC_FOLDER) $(PRIVATE_INTERMEDIATES) \
 		$(PRIVATE_DALVIK_SUITE_CLASSPATH) \
 		$(PRIVATE_INTERMEDIATES_MAIN_FILES) $(PRIVATE_INTERMEDIATES_CLASSES) $(PRIVATE_INTERMEDIATES_HOSTJUNIT_FILES) $$RUN_VM_TESTS_RTO
