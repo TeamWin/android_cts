@@ -347,4 +347,32 @@ public class KeyguardTests extends KeyguardTestBase {
         assertTrue(isDisplayOn());
     }
 
+    public void testScreenOffWhileOccludedStopsActivity() throws Exception {
+        if (!isHandheld()) {
+            return;
+        }
+
+        final String logSeparator = clearLogcat();
+        gotoKeyguard();
+        mAmWmState.waitForKeyguardShowingAndNotOccluded(mDevice);
+        assertShowingAndNotOccluded();
+        launchActivity("ShowWhenLockedAttrActivity");
+        mAmWmState.computeState(mDevice, new String[] { "ShowWhenLockedAttrActivity" });
+        mAmWmState.assertVisibility("ShowWhenLockedAttrActivity", true);
+        assertShowingAndOccluded();
+        sleepDevice();
+        assertSingleLaunchAndStop("ShowWhenLockedAttrActivity", logSeparator);
+    }
+
+    public void testScreenOffCausesSingleStop() throws Exception {
+        if (!isHandheld()) {
+            return;
+        }
+
+        final String logSeparator = clearLogcat();
+        launchActivity("TestActivity");
+        mAmWmState.assertVisibility("TestActivity", true);
+        sleepDevice();
+        assertSingleLaunchAndStop("TestActivity", logSeparator);
+    }
 }
