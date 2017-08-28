@@ -32,6 +32,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import junit.framework.AssertionFailedError;
+
 /**
  * Tests for {@line BusinessLogicDeviceExecutor}.
  */
@@ -48,6 +50,7 @@ public class BusinessLogicDeviceExecutorTest {
     private static final String METHOD_6 = THIS_CLASS + ".method6";
     private static final String METHOD_7 = THIS_CLASS + ".method7";
     private static final String METHOD_8 = THIS_CLASS + ".method8";
+    private static final String METHOD_9 = THIS_CLASS + ".method9";
     private static final String FAKE_METHOD = THIS_CLASS + ".methodDoesntExist";
     private static final String ARG_STRING_1 = "arg1";
     private static final String ARG_STRING_2 = "arg2";
@@ -207,6 +210,11 @@ public class BusinessLogicDeviceExecutorTest {
         assertEquals("Failed to set second argument", mArgsUsed[1], ARG_STRING_2);
     }
 
+    @Test(expected = RuntimeException.class)
+    public void testExecuteActionThrowException() throws Exception {
+        mExecutor.executeAction(METHOD_9);
+    }
+
     public void method1() {
         mInvoked = METHOD_1;
     }
@@ -265,6 +273,11 @@ public class BusinessLogicDeviceExecutorTest {
     public void method8(String arg1, Integer arg2) {
         // This method should never be successfully invoked, since Integer parameter types are
         // unsupported for the BusinessLogic service
+    }
+
+    // throw AssertionFailedError
+    public void method9() throws AssertionFailedError {
+        assertTrue(false);
     }
 
     public static class OtherClass {
