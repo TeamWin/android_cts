@@ -23,6 +23,7 @@ import com.android.ddmlib.testrunner.TestResult;
 import com.android.ddmlib.testrunner.TestResult.TestStatus;
 import com.android.ddmlib.testrunner.TestRunResult;
 import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.CollectingTestListener;
@@ -126,7 +127,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
                 "settings get global package_verifier_enable");
         getDevice().executeShellCommand("settings put global package_verifier_enable 0");
 
-        mFixedUsers = new ArrayList();
+        mFixedUsers = new ArrayList<>();
         mPrimaryUserId = getPrimaryUser();
         mFixedUsers.add(mPrimaryUserId);
         if (mPrimaryUserId != USER_SYSTEM) {
@@ -235,8 +236,22 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
                 + getDevice().executeShellCommand(stopUserCommand));
     }
 
-    private void waitForBroadcastIdle() throws Exception {
-        getDevice().executeShellCommand("am wait-for-broadcast-idle");
+    private void waitForBroadcastIdle() throws DeviceNotAvailableException {
+        CollectingOutputReceiver receiver = new CollectingOutputReceiver();
+        try {
+            // we allow 8min for the command to complete and 4min for the command to start to
+            // output something
+            getDevice().executeShellCommand(
+                    "am wait-for-broadcast-idle", receiver, 8, 4, TimeUnit.MINUTES, 0);
+        } finally {
+            String output = receiver.getOutput();
+            CLog.d("Output from 'am wait-for-broadcast-idle': %s", output);
+            if (!output.contains("All broadcast queues are idle!")) {
+                // the call most likely failed we should fail the test
+                fail("'am wait-for-broadcase-idle' did not complete.");
+                // TODO: consider adding a reboot or recovery before failing if necessary
+            }
+        }
     }
 
     protected void removeUser(int userId) throws Exception  {

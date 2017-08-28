@@ -863,7 +863,13 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
             String mime = format.getString(MediaFormat.KEY_MIME);
             if (mime.startsWith("video/")) {
                 int finalProfile = format.getInteger(MediaFormat.KEY_PROFILE);
-                if (finalProfile != profile) {
+                if (!(finalProfile == profile ||
+                        (mediaType.equals(AVC)
+                                && profile == AVCProfileBaseline
+                                && finalProfile == AVCProfileConstrainedBaseline) ||
+                        (mediaType.equals(AVC)
+                                && profile == AVCProfileHigh
+                                && finalProfile == AVCProfileConstrainedHigh))) {
                     fail("Incorrect profile: " + finalProfile + " Expected: " + profile);
                 }
                 int finalLevel = format.getInteger(MediaFormat.KEY_LEVEL);

@@ -20,6 +20,7 @@ import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.device.NativeDevice;
 import com.android.tradefed.testtype.DeviceTestCase;
+import com.android.tradefed.log.LogUtil.CLog;
 
 import java.util.regex.Pattern;
 
@@ -42,9 +43,17 @@ public class SecurityTestCase extends DeviceTestCase {
 
     /**
      * Use {@link NativeDevice#enableAdbRoot()} internally.
+     *
+     * The test methods calling this function should run even if enableAdbRoot fails, which is why 
+     * the return value is ignored. However, we may want to act on that data point in the future.
      */
-    public void enableAdbRoot(ITestDevice mDevice) throws DeviceNotAvailableException {
-        mDevice.enableAdbRoot();
+    public boolean enableAdbRoot(ITestDevice mDevice) throws DeviceNotAvailableException {
+        if(mDevice.enableAdbRoot()) {
+            return true;
+        } else {
+            CLog.w("\"enable-root\" set to false! Root is required to check if device is vulnerable.");
+            return false;
+        }
     }
 
     /**

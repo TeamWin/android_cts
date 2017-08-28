@@ -204,8 +204,8 @@ public class StaticLayoutTest {
             // setBreakStrategy, setHyphenationFrequency, setIncludePad, and setIndents.
             StaticLayout.Builder builder = StaticLayout.Builder.obtain(LAYOUT_TEXT, 0,
                     LAYOUT_TEXT.length(), mDefaultPaint, DEFAULT_OUTER_WIDTH);
-            builder.setBreakStrategy(StaticLayout.BREAK_STRATEGY_HIGH_QUALITY);
-            builder.setHyphenationFrequency(StaticLayout.HYPHENATION_FREQUENCY_FULL);
+            builder.setBreakStrategy(Layout.BREAK_STRATEGY_HIGH_QUALITY);
+            builder.setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_FULL);
             builder.setIncludePad(true);
             builder.setIndents(null, null);
             StaticLayout layout = builder.build();

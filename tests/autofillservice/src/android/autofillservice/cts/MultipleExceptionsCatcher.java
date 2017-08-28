@@ -62,21 +62,19 @@ public final class MultipleExceptionsCatcher {
     /**
      * Throws one exception merging all exceptions thrown or added so far, if any.
      */
-    public void throwIfAny() throws Exception {
+    public void throwIfAny() throws Throwable {
         if (mThrowables.isEmpty()) return;
 
-        if (mThrowables.size() == 1) {
-            final Throwable t = mThrowables.get(0);
-            if (t instanceof Exception) {
-                throw (Exception) t;
-            }
+        final int numberExceptions = mThrowables.size();
+        if (numberExceptions == 1) {
+            throw mThrowables.get(0);
         }
 
         String msg = "D'OH!";
         try {
             try (StringWriter sw = new StringWriter(); PrintWriter pw = new PrintWriter(sw)) {
-                sw.write("Caught " + mThrowables.size() + " exceptions\n");
-                for (int i = 0; i < mThrowables.size(); i++) {
+                sw.write("Caught " + numberExceptions + " exceptions\n");
+                for (int i = 0; i < numberExceptions; i++) {
                     sw.write("\n---- Begin of exception #" + (i + 1) + " ----\n");
                     final Throwable exception = mThrowables.get(i);
                     exception.printStackTrace(pw);

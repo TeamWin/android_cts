@@ -119,7 +119,7 @@ abstract class AutoFillServiceTestCase {
     // exceptions would mask the real cause. A better approach might be using a @Rule or some other
     // visitor pattern.
     @After
-    public void assertNothingIsPending() throws Exception {
+    public void assertNothingIsPending() throws Throwable {
         final MultipleExceptionsCatcher catcher = new MultipleExceptionsCatcher()
             .run(() -> sReplier.assertNumberUnhandledFillRequests(0))
             .run(() -> sReplier.assertNumberUnhandledSaveRequests(0));

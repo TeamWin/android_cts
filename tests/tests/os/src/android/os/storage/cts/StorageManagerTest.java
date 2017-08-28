@@ -617,6 +617,38 @@ public class StorageManagerTest extends AndroidTestCase {
         looperThread.join();
     }
 
+    public void testOpenProxyFileDescriptor_largeFile() throws Exception {
+        final ProxyFileDescriptorCallback callback = new ProxyFileDescriptorCallback() {
+            @Override
+            public int onRead(long offset, int size, byte[] data) throws ErrnoException {
+                for (int i = 0; i < size; i++) {
+                    data[i] = 'L';
+                }
+                return size;
+            }
+
+            @Override
+            public long onGetSize() throws ErrnoException {
+                return 8L * 1024L * 1024L * 1024L;  // 8GB
+            }
+
+            @Override
+            public void onRelease() {}
+        };
+        final byte[] bytes = new byte[128];
+        try (final ParcelFileDescriptor fd = mStorageManager.openProxyFileDescriptor(
+                ParcelFileDescriptor.MODE_READ_ONLY, callback)) {
+            assertEquals(8L * 1024L * 1024L * 1024L, fd.getStatSize());
+
+            final int readBytes = Os.pread(
+                    fd.getFileDescriptor(), bytes, 0, bytes.length, fd.getStatSize() - 64L);
+            assertEquals(64, readBytes);
+            for (int i = 0; i < 64; i++) {
+                assertEquals('L', bytes[i]);
+            }
+        }
+    }
+
     private void assertStorageVolumesEquals(StorageVolume volume, StorageVolume clone)
             throws Exception {
         // Asserts equals() method.
