@@ -724,9 +724,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     void setupFilters() throws DeviceNotAvailableException {
         if (mRetrySessionId != null) {
             // Load the invocation result
-            RetryFilterHelper helper = new RetryFilterHelper(mBuildHelper, mRetrySessionId,
-                    mSubPlan, mIncludeFilters, mExcludeFilters, mAbiName, mModuleName, mTestName,
-                    mRetryType);
+            RetryFilterHelper helper = createRetryFilterHelper(mRetrySessionId);
             helper.validateBuildFingerprint(mDevice);
             helper.setCommandLineOptionsFor(this);
             helper.populateRetryFilters();
@@ -765,6 +763,13 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                         "Test name given without module name. Add --module <module-name>");
             }
         }
+    }
+
+    /* Creates a new {@link RetryFilterHelper} from attributes of this object. */
+    protected RetryFilterHelper createRetryFilterHelper(Integer retrySessionId) {
+        return new RetryFilterHelper(mBuildHelper, retrySessionId,
+                mSubPlan, mIncludeFilters, mExcludeFilters, mAbiName, mModuleName, mTestName,
+                mRetryType);
     }
 
     /* Helper method designed to remove filters in a list not applicable to the given module */
@@ -860,6 +865,14 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     public void setInvocationContext(IInvocationContext invocationContext) {
         mInvocationContext = invocationContext;
     }
+
+    /**
+     * @return the mSubPlan
+     */
+    protected String getSubPlan() {
+        return mSubPlan;
+    }
+
     /**
      * @return the mIncludeFilters
      */
@@ -875,6 +888,20 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     }
 
     /**
+     * @return the mModuleName
+     */
+    protected String getModuleName() {
+        return mModuleName;
+    }
+
+    /**
+     * @return the mTestName
+     */
+    protected String getTestName() {
+        return mTestName;
+    }
+
+    /**
      * @return the mModuleArgs
      */
     protected List<String> getModuleArgs() {
@@ -886,6 +913,20 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
      */
     protected List<String> getTestArgs() {
         return mTestArgs;
+    }
+
+    /**
+     * @return the mRetryType
+     */
+    protected RetryType getRetryType() {
+        return mRetryType;
+    }
+
+    /**
+     * @return the mAbiName
+     */
+    protected String getAbiName() {
+        return mAbiName;
     }
 
     /**
