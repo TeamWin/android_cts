@@ -203,6 +203,10 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         componentName = name;
     }
 
+    protected static void setDefaultComponentName() {
+        setComponentName(DEFAULT_COMPONENT_NAME);
+    }
+
     static String getBaseWindowName() {
         return getBaseWindowName(componentName);
     }
@@ -256,7 +260,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        setComponentName(DEFAULT_COMPONENT_NAME);
+        setDefaultComponentName();
 
         // Get the device, this gives a handle to run commands and install APKs.
         mDevice = getDevice();
