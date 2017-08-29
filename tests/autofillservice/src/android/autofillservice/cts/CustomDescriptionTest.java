@@ -30,7 +30,6 @@ import android.service.autofill.CustomDescription;
 import android.service.autofill.ImageTransformation;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiObject2;
 import android.view.View;
@@ -51,12 +50,10 @@ public class CustomDescriptionTest extends AutoFillServiceTestCase {
         new AutofillActivityTestRule<>(LoginActivity.class);
 
     private LoginActivity mActivity;
-    private String mPackageName;
 
     @Before
     public void setActivity() {
         mActivity = mActivityRule.getActivity();
-        mPackageName = InstrumentationRegistry.getInstrumentation().getContext().getPackageName();
     }
 
     @After
@@ -75,8 +72,8 @@ public class CustomDescriptionTest extends AutoFillServiceTestCase {
             @Nullable Runnable uiVerifier) throws Exception {
         enableService();
 
-        AutofillId usernameId = mActivity.getUsername().getAutofillId();
-        AutofillId passwordId = mActivity.getPassword().getAutofillId();
+        final AutofillId usernameId = mActivity.getUsername().getAutofillId();
+        final AutofillId passwordId = mActivity.getPassword().getAutofillId();
 
         // Set response with custom description
         sReplier.addResponse(new CannedFillResponse.Builder()
