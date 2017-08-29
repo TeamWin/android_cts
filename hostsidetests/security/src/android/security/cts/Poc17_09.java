@@ -54,7 +54,7 @@ public class Poc17_09 extends SecurityTestCase {
         }
     }
 
-    /*
+    /**
      * b/36492827
      */
     @SecurityTest
@@ -63,5 +63,19 @@ public class Poc17_09 extends SecurityTestCase {
       if (containsDriver(getDevice(), "/dev/v4l-subdev*")) {
         AdbUtils.runPocNoOutput("Bug-36492827", getDevice(), 60);
       }
+    }
+
+    /**
+     * b/38340117
+     */
+    @SecurityTest
+    public void testPocBug_38340117() throws Exception {
+        enableAdbRoot(getDevice());
+        AdbUtils.runCommandLine("logcat -c", getDevice());
+        AdbUtils.runPoc("Bug-38340117", getDevice(), 30);
+        String logcatOutput = AdbUtils.runCommandLine("logcat -d", getDevice());
+        assertNotMatches("[\\s\\n\\S]*Fatal signal 11 \\(SIGSEGV\\)" +
+                         "[\\s\\n\\S]*>>> /system/bin/" +
+                         "audioserver <<<[\\s\\n\\S]*", logcatOutput);
     }
 }
