@@ -16,6 +16,9 @@
 
 package android.app.cts.android.app.cts.tools;
 
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.app.Instrumentation;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
@@ -77,8 +80,20 @@ public class WatchUidRunner {
         mWriteFd = pfds[1];
         mWriteStream = new ParcelFileDescriptor.AutoCloseOutputStream(mWriteFd);
         mWritePrinter = new PrintWriter(new BufferedOutputStream(mWriteStream));
+        // Executing a shell command is asynchronous but we can't proceed further with the test
+        // until the 'watch-uids' cmd is executed.
+        waitUntilUidObserverReady();
         mReaderThread = new ReaderThread();
         mReaderThread.start();
+    }
+
+    private void waitUntilUidObserverReady() {
+        try {
+            final String line = mReadReader.readLine();
+            assertTrue("Unexpected output: " + line, line.startsWith("Watching uid states"));
+        } catch (IOException e) {
+            fail("Error occurred " + e);
+        }
     }
 
     public void expect(int cmd, String procState, long timeout) {
