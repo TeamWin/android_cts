@@ -1662,6 +1662,28 @@ public class ViewGroupTest implements CTSResult {
 
     @UiThreadTest
     @Test
+    public void testFocusInClusterFocusableChanges() {
+        TestClusterHier h = new TestClusterHier();
+        h.cluster1.setKeyboardNavigationCluster(false);
+        h.c1view2.setFocusedInCluster();
+        h.c2view1.requestFocus();
+        assertSame(h.top.findFocus(), h.c2view1);
+        assertTrue(h.top.restoreFocusNotInCluster());
+        assertSame(h.top.findFocus(), h.c1view2);
+        h.c1view1.setFocusable(false);
+        // making it invisible should clear focusNotInCluster chain
+        h.c1view2.setVisibility(View.INVISIBLE);
+        assertFalse(h.top.restoreFocusNotInCluster());
+        h.c1view2.setVisibility(View.VISIBLE);
+        h.c1view2.requestFocus();
+        h.c1view2.setFocusedInCluster();
+        h.c2view1.setFocusable(false);
+        h.c2view2.setFocusable(false);
+        assertFalse(h.cluster2.restoreFocusInCluster(View.FOCUS_DOWN));
+    }
+
+    @UiThreadTest
+    @Test
     public void testRestoreDefaultFocus() {
         TestClusterHier h = new TestClusterHier();
         h.c1view2.setFocusedByDefault(true);
