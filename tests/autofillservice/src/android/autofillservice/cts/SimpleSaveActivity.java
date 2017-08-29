@@ -37,6 +37,16 @@ public class SimpleSaveActivity extends AbstractAutoFillActivity {
     Button mCancel;
     Button mCommit;
 
+    private static SimpleSaveActivity sInstance;
+
+    public static SimpleSaveActivity getInstance() {
+        return sInstance;
+    }
+
+    public SimpleSaveActivity() {
+        sInstance = this;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
