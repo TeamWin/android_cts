@@ -32,7 +32,6 @@ import static android.autofillservice.cts.Helper.assertValue;
 import static android.autofillservice.cts.Helper.dumpStructure;
 import static android.autofillservice.cts.Helper.eventually;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
-import static android.autofillservice.cts.Helper.getContext;
 import static android.autofillservice.cts.Helper.runShellCommand;
 import static android.autofillservice.cts.Helper.setUserComplete;
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilConnected;
@@ -607,8 +606,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         final View[] overlay = new View[1];
         try {
             // Allow ourselves to add overlays
-            runShellCommand("appops set " + getContext().getPackageName()
-                    + " SYSTEM_ALERT_WINDOW allow");
+            runShellCommand("appops set %s SYSTEM_ALERT_WINDOW allow", mPackageName);
 
             // Make sure the fill UI is shown.
             sUiBot.assertDatasets("The Dude");
@@ -624,7 +622,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 params.width = ViewGroup.LayoutParams.MATCH_PARENT;
                 params.height = ViewGroup.LayoutParams.MATCH_PARENT;
 
-                final View view = new View(getContext()) {
+                final View view = new View(mContext) {
                     @Override
                     protected void onAttachedToWindow() {
                         super.onAttachedToWindow();
@@ -632,7 +630,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                     }
                 };
                 view.setBackgroundColor(Color.RED);
-                WindowManager windowManager = getContext().getSystemService(WindowManager.class);
+                WindowManager windowManager = mContext.getSystemService(WindowManager.class);
                 windowManager.addView(view, params);
                 overlay[0] = view;
             });
@@ -680,11 +678,10 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             assertNoDanglingSessions();
         } finally {
             // Make sure we can no longer add overlays
-            runShellCommand("appops set " + getContext().getPackageName()
-                    + " SYSTEM_ALERT_WINDOW ignore");
+            runShellCommand("appops set %s SYSTEM_ALERT_WINDOW ignore", mPackageName);
             // Make sure the overlay is removed
             mActivity.runOnUiThread(() -> {
-                WindowManager windowManager = getContext().getSystemService(WindowManager.class);
+                WindowManager windowManager = mContext.getSystemService(WindowManager.class);
                 windowManager.removeView(overlay[0]);
             });
         }
@@ -1211,6 +1208,14 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         saveGoesAway(DismissType.TOUCH_OUTSIDE);
     }
 
+    private void startCheckoutActivityAsNewTask() {
+        final Intent intent = new Intent(mContext, CheckoutActivity.class);
+        intent.setFlags(
+                Intent.FLAG_ACTIVITY_NEW_DOCUMENT | Intent.FLAG_ACTIVITY_RETAIN_IN_RECENTS);
+        mContext.startActivity(intent);
+        sUiBot.assertShownByRelativeId(CheckoutActivity.ID_ADDRESS);
+    }
+
     private void saveGoesAway(DismissType dismissType) throws Exception {
         enableService();
 
@@ -1602,7 +1607,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Prepare the authenticated response
         final Bundle clientState = new Bundle();
         clientState.putString("numbers", "4815162342");
-        final IntentSender authentication = AuthenticationActivity.createSender(getContext(), 1,
+        final IntentSender authentication = AuthenticationActivity.createSender(mContext, 1,
                 new CannedFillResponse.Builder().addDataset(
                         new CannedDataset.Builder()
                                 .setField(ID_USERNAME, "dude")
@@ -1691,7 +1696,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Prepare the authenticated response
         final Bundle clientState = new Bundle();
         clientState.putString("numbers", "4815162342");
-        final IntentSender authentication = AuthenticationActivity.createSender(getContext(), 1,
+        final IntentSender authentication = AuthenticationActivity.createSender(mContext, 1,
                 new CannedFillResponse.Builder().addDataset(
                         new CannedDataset.Builder()
                                 .setField(ID_USERNAME, "dude")
@@ -1753,7 +1758,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         final MyAutofillCallback callback = mActivity.registerCallback();
 
         // Prepare the authenticated response
-        final IntentSender authentication = AuthenticationActivity.createSender(getContext(), 1,
+        final IntentSender authentication = AuthenticationActivity.createSender(mContext, 1,
                 new CannedFillResponse.Builder().addDataset(
                         new CannedDataset.Builder()
                                 .setField(ID_USERNAME, "dude")
@@ -1801,7 +1806,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         final MyAutofillCallback callback = mActivity.registerCallback();
 
         // Prepare the authenticated response
-        final IntentSender authentication = AuthenticationActivity.createSender(getContext(), 1,
+        final IntentSender authentication = AuthenticationActivity.createSender(mContext, 1,
                 new CannedFillResponse.Builder()
                         .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
                         .build());
@@ -1846,7 +1851,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         final MyAutofillCallback callback = mActivity.registerCallback();
 
         // Prepare the authenticated response
-        final IntentSender authentication = AuthenticationActivity.createSender(getContext(), 1,
+        final IntentSender authentication = AuthenticationActivity.createSender(mContext, 1,
                 new CannedDataset.Builder()
                         .setField(ID_USERNAME, "dude")
                         .setField(ID_PASSWORD, "sweet")
@@ -1925,7 +1930,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         final MyAutofillCallback callback = mActivity.registerCallback();
 
         // Prepare the authenticated response
-        final IntentSender authentication = AuthenticationActivity.createSender(getContext(), 1,
+        final IntentSender authentication = AuthenticationActivity.createSender(mContext, 1,
                 new CannedFillResponse.Builder().addDataset(
                         new CannedDataset.Builder()
                                 .setField(ID_USERNAME, "dude")
@@ -1986,7 +1991,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         final MyAutofillCallback callback = mActivity.registerCallback();
 
         // Create the authentication intent
-        final IntentSender authentication = AuthenticationActivity.createSender(getContext(), 1,
+        final IntentSender authentication = AuthenticationActivity.createSender(mContext, 1,
                 new CannedDataset.Builder()
                         .setField(ID_USERNAME, "dude")
                         .setField(ID_PASSWORD, "sweet")
@@ -2039,9 +2044,9 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 .setField(ID_PASSWORD, "sweet")
                 .setPresentation(bogusPresentation)
                 .build();
-        final IntentSender authentication1 = AuthenticationActivity.createSender(getContext(), 1,
+        final IntentSender authentication1 = AuthenticationActivity.createSender(mContext, 1,
                 unlockedDataset);
-        final IntentSender authentication2 = AuthenticationActivity.createSender(getContext(), 2,
+        final IntentSender authentication2 = AuthenticationActivity.createSender(mContext, 2,
                 unlockedDataset);
 
         // Configure the service behavior
@@ -2098,7 +2103,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         final MyAutofillCallback callback = mActivity.registerCallback();
 
         // Prepare the authenticated response
-        final IntentSender authentication = AuthenticationActivity.createSender(getContext(), 1,
+        final IntentSender authentication = AuthenticationActivity.createSender(mContext, 1,
                 new CannedDataset.Builder()
                         .setField(ID_USERNAME, "dude")
                         .setField(ID_PASSWORD, "sweet")
@@ -2152,7 +2157,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         enableService();
 
         // Can disable while connected.
-        mActivity.runOnUiThread(() -> getContext().getSystemService(
+        mActivity.runOnUiThread(() -> mContext.getSystemService(
                 AutofillManager.class).disableAutofillServices());
 
         // Ensure disabled.
@@ -2169,7 +2174,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Configure the save UI.
         final IntentSender listener = PendingIntent.getBroadcast(
-                getContext(), 0, new Intent(intentAction), 0).getIntentSender();
+                mContext, 0, new Intent(intentAction), 0).getIntentSender();
 
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
@@ -2190,10 +2195,10 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Start watching for the negative intent
         final CountDownLatch latch = new CountDownLatch(1);
         final IntentFilter intentFilter = new IntentFilter(intentAction);
-        getContext().registerReceiver(new BroadcastReceiver() {
+        mContext.registerReceiver(new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                getContext().unregisterReceiver(this);
+                mContext.unregisterReceiver(this);
                 latch.countDown();
             }
         }, intentFilter);
@@ -2218,7 +2223,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Configure the save UI.
         final IntentSender listener = PendingIntent.getBroadcast(
-                getContext(), 0, new Intent(intentAction), 0).getIntentSender();
+                mContext, 0, new Intent(intentAction), 0).getIntentSender();
 
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
@@ -2239,10 +2244,10 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Start watching for the negative intent
         final CountDownLatch latch = new CountDownLatch(1);
         final IntentFilter intentFilter = new IntentFilter(intentAction);
-        getContext().registerReceiver(new BroadcastReceiver() {
+        mContext.registerReceiver(new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                getContext().unregisterReceiver(this);
+                mContext.unregisterReceiver(this);
                 latch.countDown();
             }
         }, intentFilter);
@@ -2559,6 +2564,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 .build();
 
         for (int i = 1; i <= 3; i++) {
+            Log.i(TAG, "testCommitMultipleTimes(): step " + i);
             final String username = "user-" + i;
             final String password = "pass-" + i;
             try {
@@ -2601,9 +2607,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
                 waitUntilDisconnected();
                 assertNoDanglingSessions();
-
             } catch (RetryableException e) {
-                throw e;
+                throw new RetryableException(e, "on step %d", i);
             } catch (Throwable t) {
                 throw new Throwable("Error on step " + i, t);
             }
@@ -2616,6 +2621,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         enableService();
 
         for (int i = 1; i <= 3; i++) {
+            Log.i(TAG, "testCancelMultipleTimes(): step " + i);
             final String username = "user-" + i;
             final String password = "pass-" + i;
             sReplier.addResponse(new CannedDataset.Builder()
@@ -2658,17 +2664,16 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Set service.
         enableService();
 
-        Intent intent = new Intent(getContext(), EmptyActivity.class);
-        IntentSender sender = PendingIntent.getActivity(getContext(), 0, intent,
+        Intent intent = new Intent(mContext, EmptyActivity.class);
+        IntentSender sender = PendingIntent.getActivity(mContext, 0, intent,
                 PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_CANCEL_CURRENT)
                 .getIntentSender();
 
-        RemoteViews presentation = new RemoteViews(getContext().getPackageName(),
-                R.layout.list_item);
+        RemoteViews presentation = new RemoteViews(mPackageName, R.layout.list_item);
         presentation.setTextViewText(R.id.text1, "Poke");
-        Intent firstIntent = new Intent(getContext(), DummyActivity.class);
+        Intent firstIntent = new Intent(mContext, DummyActivity.class);
         presentation.setOnClickPendingIntent(R.id.text1, PendingIntent.getActivity(
-                getContext(), 0, firstIntent, PendingIntent.FLAG_ONE_SHOT
+                mContext, 0, firstIntent, PendingIntent.FLAG_ONE_SHOT
                         | PendingIntent.FLAG_CANCEL_CURRENT));
 
         // Set expectations.
@@ -2705,7 +2710,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         clientState.putCharSequence("clientStateKey", "clientStateValue");
 
         // Prepare the authenticated response
-        final IntentSender authentication = AuthenticationActivity.createSender(getContext(), 1,
+        final IntentSender authentication = AuthenticationActivity.createSender(mContext, 1,
                 new CannedDataset.Builder()
                         .setField(ID_USERNAME, "dude")
                         .setField(ID_PASSWORD, "sweet")
@@ -2751,7 +2756,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         clientState.putCharSequence("clientStateKey", "clientStateValue");
 
         // Prepare the authenticated response
-        final IntentSender authentication = AuthenticationActivity.createSender(getContext(), 1,
+        final IntentSender authentication = AuthenticationActivity.createSender(mContext, 1,
                 new CannedFillResponse.Builder().addDataset(
                         new CannedDataset.Builder()
                                 .setField(ID_USERNAME, "username")
@@ -3040,7 +3045,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertThat(selectionA.getEvents()).isNull();
 
         // Launch activity B
-        getContext().startActivity(new Intent(getContext(), CheckoutActivity.class));
+        mContext.startActivity(new Intent(mContext, CheckoutActivity.class));
 
         // Trigger autofill on activity B
         sReplier.addResponse(new CannedFillResponse.Builder()
@@ -3062,6 +3067,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Now switch back to A...
         sUiBot.pressBack(); // dismiss keyboard
         sUiBot.pressBack(); // dismiss task
+        sUiBot.assertShownByRelativeId(ID_USERNAME);
         // ...and trigger save
         // Set credentials...
         mActivity.onUsername((v) -> v.setText("malkovich"));
@@ -3103,10 +3109,10 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Now disable user_complete and try again.
         try {
-            setUserComplete(getContext(), false);
+            setUserComplete(mContext, false);
             assertThat(afm.isEnabled()).isFalse();
         } finally {
-            setUserComplete(getContext(), true);
+            setUserComplete(mContext, true);
         }
     }
 
@@ -3129,7 +3135,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sUiBot.assertDatasets("The Dude");
 
         // Now disable service by setting another service
-        Helper.enableAutofillService(getContext(), NoOpAutofillService.SERVICE_NAME);
+        Helper.enableAutofillService(mContext, NoOpAutofillService.SERVICE_NAME);
 
         // ...and make sure popup's gone
         sUiBot.assertNoDatasets();
@@ -3231,14 +3237,5 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // AssertResults
         waitUntilDisconnected();
         listener.assertOnCancelCalled();
-    }
-
-    private void startCheckoutActivityAsNewTask() {
-        final Context context = getContext();
-        final Intent intent = new Intent(context, CheckoutActivity.class);
-        intent.setFlags(
-                Intent.FLAG_ACTIVITY_NEW_DOCUMENT | Intent.FLAG_ACTIVITY_RETAIN_IN_RECENTS);
-        context.startActivity(intent);
-        sUiBot.assertShownByRelativeId(CheckoutActivity.ID_ADDRESS);
     }
 }

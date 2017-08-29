@@ -35,6 +35,7 @@ public class WelcomeActivity extends AbstractAutoFillActivity {
     private static final String TAG = "WelcomeActivity";
 
     static final String EXTRA_MESSAGE = "message";
+    static final String ID_OUTPUT = "output";
 
     private TextView mOutput;
 
@@ -74,7 +75,7 @@ public class WelcomeActivity extends AbstractAutoFillActivity {
 
     // TODO: reuse in other places
     static void assertShowing(UiBot uiBot, @Nullable String expectedMessage) throws Exception {
-        final UiObject2 activity = uiBot.assertShownByRelativeId("output");
+        final UiObject2 activity = uiBot.assertShownByRelativeId(ID_OUTPUT);
         if (expectedMessage == null) {
             expectedMessage = "Welcome to the jungle!";
         }

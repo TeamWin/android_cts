@@ -25,6 +25,7 @@ import static android.autofillservice.cts.InstrumentedAutoFillService.SERVICE_NA
 import static android.provider.Settings.Secure.AUTOFILL_SERVICE;
 
 import android.autofillservice.cts.InstrumentedAutoFillService.Replier;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
@@ -58,10 +59,17 @@ abstract class AutoFillServiceTestCase {
     public final RequiredFeatureRule mRequiredFeatureRule =
             new RequiredFeatureRule(PackageManager.FEATURE_AUTOFILL);
 
+    protected final Context mContext;
+    protected final String mPackageName;
     /**
      * Stores the previous logging level so it's restored after the test.
      */
     private String mLoggingLevel;
+
+    protected AutoFillServiceTestCase() {
+        mContext = InstrumentationRegistry.getTargetContext();
+        mPackageName = mContext.getPackageName();
+    }
 
     @BeforeClass
     public static void removeLockScreen() {
