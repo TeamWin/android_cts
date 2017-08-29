@@ -16,7 +16,6 @@
 package com.android.compatibility.common.tradefed.build;
 
 import com.android.annotations.VisibleForTesting;
-import com.android.compatibility.SuiteInfo;
 import com.android.tradefed.build.BuildInfo;
 import com.android.tradefed.build.BuildRetrievalError;
 import com.android.tradefed.build.DeviceBuildInfo;
@@ -29,6 +28,7 @@ import com.android.tradefed.config.Option.Importance;
 import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.testtype.suite.TestSuiteInfo;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -218,28 +218,28 @@ public class CompatibilityBuildProvider implements IDeviceBuildProvider {
      * Return the SuiteInfo name generated at build time. Exposed for testing.
      */
     protected String getSuiteInfoName() {
-        return SuiteInfo.NAME;
+        return TestSuiteInfo.getInstance().getName();
     }
 
     /**
      * Return the SuiteInfo build number generated at build time. Exposed for testing.
      */
     protected String getSuiteInfoBuildNumber() {
-        return SuiteInfo.BUILD_NUMBER;
+        return TestSuiteInfo.getInstance().getBuildNumber();
     }
 
     /**
      * Return the SuiteInfo fullname generated at build time. Exposed for testing.
      */
     protected String getSuiteInfoFullname() {
-        return SuiteInfo.FULLNAME;
+        return TestSuiteInfo.getInstance().getFullName();
     }
 
     /**
      * Return the SuiteInfo version generated at build time. Exposed for testing.
      */
     protected String getSuiteInfoVersion() {
-        return SuiteInfo.VERSION;
+        return TestSuiteInfo.getInstance().getVersion();
     }
 
     /**
