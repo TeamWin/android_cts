@@ -39,7 +39,7 @@ public class BatteryStatsJobDurationTests extends BatteryStatsDeviceTestBase {
     private static final ComponentName JOB_COMPONENT_NAME =
             new ComponentName("com.android.server.cts.device.batterystats",
                     SimpleJobService.class.getName());
-    public static final String TAG = "BatteryStatsJobDurationTests";
+    public static final String TAG = "BatteryStatsJobDurTests";
 
     private JobInfo createJobInfo(int id) {
         JobInfo.Builder builder = new JobInfo.Builder(id, JOB_COMPONENT_NAME);
@@ -52,10 +52,11 @@ public class BatteryStatsJobDurationTests extends BatteryStatsDeviceTestBase {
         JobScheduler js = mContext.getSystemService(JobScheduler.class);
         assertTrue("JobScheduler service not available", js != null);
         final JobInfo job = createJobInfo(1);
-        long startTime = System.currentTimeMillis();
         for (int i = 0; i < 3; i++) {
             CountDownLatch latch = SimpleJobService.resetCountDownLatch();
+            Log.i(TAG, "Scheduling job.");
             js.schedule(job);
+            Log.i(TAG, "Waiting for job to finish.");
             if (!latch.await(5, TimeUnit.SECONDS)) {
                 Log.e(TAG, "Job didn't finish in 5 seconds");
                 fail("Job didn't finish in 5 seconds");
