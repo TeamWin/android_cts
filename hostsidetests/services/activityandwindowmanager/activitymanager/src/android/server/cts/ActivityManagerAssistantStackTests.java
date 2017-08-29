@@ -16,7 +16,16 @@
 
 package android.server.cts;
 
+import static android.app.ActivityManager.StackId.ASSISTANT_STACK_ID;
+import static android.app.ActivityManager.StackId.DOCKED_STACK_ID;
+import static android.app.ActivityManager.StackId.FULLSCREEN_WORKSPACE_STACK_ID;
+import static android.app.ActivityManager.StackId.PINNED_STACK_ID;
 import static android.server.cts.ActivityManagerState.STATE_RESUMED;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import org.junit.Test;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
@@ -44,11 +53,12 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
     private static final String TEST_ACTIVITY_ACTION_FINISH_SELF =
             "android.server.cts.TestActivity.finish_self";
 
+    @Test
     public void testLaunchingAssistantActivityIntoAssistantStack() throws Exception {
         // Enable the assistant and launch an assistant activity
         enableAssistant();
         launchActivity(LAUNCH_ASSISTANT_ACTIVITY_FROM_SESSION);
-        mAmWmState.waitForValidState(mDevice, ASSISTANT_ACTIVITY, ASSISTANT_STACK_ID);
+        mAmWmState.waitForValidState(ASSISTANT_ACTIVITY, ASSISTANT_STACK_ID);
 
         // Ensure that the activity launched in the fullscreen assistant stack
         assertAssistantStackExists();
@@ -58,10 +68,11 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         disableAssistant();
     }
 
+    @Test
     public void testAssistantStackZOrder() throws Exception {
         // Launch a pinned stack task
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
-        mAmWmState.waitForValidState(mDevice, PIP_ACTIVITY, PINNED_STACK_ID);
+        mAmWmState.waitForValidState(PIP_ACTIVITY, PINNED_STACK_ID);
         mAmWmState.assertContainsStack("Must contain pinned stack.", PINNED_STACK_ID);
 
         // Dock a task
@@ -74,7 +85,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         // Enable the assistant and launch an assistant activity, ensure it is on top
         enableAssistant();
         launchActivity(LAUNCH_ASSISTANT_ACTIVITY_FROM_SESSION);
-        mAmWmState.waitForValidState(mDevice, ASSISTANT_ACTIVITY, ASSISTANT_STACK_ID);
+        mAmWmState.waitForValidState(ASSISTANT_ACTIVITY, ASSISTANT_STACK_ID);
         assertAssistantStackExists();
 
         mAmWmState.assertFrontStack("Pinned stack should be on top.", PINNED_STACK_ID);
@@ -83,12 +94,14 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         disableAssistant();
     }
 
+    @Test
     public void testAssistantStackLaunchNewTask() throws Exception {
         enableAssistant();
         assertAssistantStackCanLaunchAndReturnFromNewTask();
         disableAssistant();
     }
 
+    @Test
     public void testAssistantStackLaunchNewTaskWithDockedStack() throws Exception {
         // Dock a task
         launchActivity(TEST_ACTIVITY);
@@ -110,7 +123,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         disableAssistant();
 
         // Ensure that the fullscreen stack is on top and the test activity is now visible
-        mAmWmState.waitForValidState(mDevice, TEST_ACTIVITY, FULLSCREEN_WORKSPACE_STACK_ID);
+        mAmWmState.waitForValidState(TEST_ACTIVITY, FULLSCREEN_WORKSPACE_STACK_ID);
         mAmWmState.assertFocusedActivity("TestActivity should be resumed", TEST_ACTIVITY);
         mAmWmState.assertFrontStack("Fullscreen stack should be on top.",
                 FULLSCREEN_WORKSPACE_STACK_ID);
@@ -119,11 +132,12 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
 
         // Now, tell it to finish itself and ensure that the assistant stack is brought back forward
         executeShellCommand("am broadcast -a " + TEST_ACTIVITY_ACTION_FINISH_SELF);
-        mAmWmState.waitForFocusedStack(mDevice, ASSISTANT_STACK_ID);
+        mAmWmState.waitForFocusedStack(ASSISTANT_STACK_ID);
         mAmWmState.assertFrontStack("Assistant stack should be on top.", ASSISTANT_STACK_ID);
         mAmWmState.assertFocusedStack("Assistant stack should be focused.", ASSISTANT_STACK_ID);
     }
 
+    @Test
     public void testAssistantStackFinishToPreviousApp() throws Exception {
         // Launch an assistant activity on top of an existing fullscreen activity, and ensure that
         // the fullscreen activity is still visible and on top after the assistant activity finishes
@@ -132,8 +146,8 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
                 EXTRA_FINISH_SELF, "true");
         disableAssistant();
-        mAmWmState.waitForValidState(mDevice, TEST_ACTIVITY, FULLSCREEN_WORKSPACE_STACK_ID);
-        mAmWmState.waitForActivityState(mDevice, TEST_ACTIVITY, STATE_RESUMED);
+        mAmWmState.waitForValidState(TEST_ACTIVITY, FULLSCREEN_WORKSPACE_STACK_ID);
+        mAmWmState.waitForActivityState(TEST_ACTIVITY, STATE_RESUMED);
         mAmWmState.assertFocusedActivity("TestActivity should be resumed", TEST_ACTIVITY);
         mAmWmState.assertFrontStack("Fullscreen stack should be on top.",
                 FULLSCREEN_WORKSPACE_STACK_ID);
@@ -141,15 +155,17 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
                 FULLSCREEN_WORKSPACE_STACK_ID);
     }
 
+    @Test
     public void testDisallowEnterPiPFromAssistantStack() throws Exception {
         enableAssistant();
         launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
                 EXTRA_ENTER_PIP, "true");
         disableAssistant();
-        mAmWmState.waitForValidState(mDevice, ASSISTANT_ACTIVITY, ASSISTANT_STACK_ID);
+        mAmWmState.waitForValidState(ASSISTANT_ACTIVITY, ASSISTANT_STACK_ID);
         mAmWmState.assertDoesNotContainStack("Must not contain pinned stack.", PINNED_STACK_ID);
     }
 
+    @Test
     public void testTranslucentAssistantActivityStackVisibility() throws Exception {
         enableAssistant();
         // Go home, launch the assistant and check to see that home is visible
@@ -157,7 +173,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         launchHomeActivity();
         launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
                 EXTRA_IS_TRANSLUCENT, String.valueOf(true));
-        mAmWmState.waitForValidState(mDevice, TRANSLUCENT_ASSISTANT_ACTIVITY, ASSISTANT_STACK_ID);
+        mAmWmState.waitForValidState(TRANSLUCENT_ASSISTANT_ACTIVITY, ASSISTANT_STACK_ID);
         assertAssistantStackExists();
         mAmWmState.assertHomeActivityVisible(true);
 
@@ -167,7 +183,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         launchActivity(TEST_ACTIVITY);
         launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
                 EXTRA_IS_TRANSLUCENT, String.valueOf(true));
-        mAmWmState.waitForValidState(mDevice, TRANSLUCENT_ASSISTANT_ACTIVITY, ASSISTANT_STACK_ID);
+        mAmWmState.waitForValidState(TRANSLUCENT_ASSISTANT_ACTIVITY, ASSISTANT_STACK_ID);
         assertAssistantStackExists();
         mAmWmState.assertVisibility(TEST_ACTIVITY, true);
 
@@ -178,10 +194,10 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
                 EXTRA_IS_TRANSLUCENT, String.valueOf(true), EXTRA_LAUNCH_NEW_TASK,
                 TEST_ACTIVITY);
-        mAmWmState.waitForValidState(mDevice, TEST_ACTIVITY, FULLSCREEN_WORKSPACE_STACK_ID);
+        mAmWmState.waitForValidState(TEST_ACTIVITY, FULLSCREEN_WORKSPACE_STACK_ID);
         mAmWmState.assertHomeActivityVisible(false);
         pressBackButton();
-        mAmWmState.waitForFocusedStack(mDevice, ASSISTANT_STACK_ID);
+        mAmWmState.waitForFocusedStack(ASSISTANT_STACK_ID);
         assertAssistantStackExists();
         mAmWmState.assertHomeActivityVisible(true);
 
@@ -193,7 +209,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         mAmWmState.assertContainsStack("Must contain docked stack.", DOCKED_STACK_ID);
         launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
                 EXTRA_IS_TRANSLUCENT, String.valueOf(true));
-        mAmWmState.waitForValidState(mDevice, TRANSLUCENT_ASSISTANT_ACTIVITY, ASSISTANT_STACK_ID);
+        mAmWmState.waitForValidState(TRANSLUCENT_ASSISTANT_ACTIVITY, ASSISTANT_STACK_ID);
         assertAssistantStackExists();
         mAmWmState.assertVisibility(DOCKED_ACTIVITY, true);
         mAmWmState.assertVisibility(TEST_ACTIVITY, true);
@@ -201,6 +217,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         disableAssistant();
     }
 
+    @Test
     public void testLaunchIntoSameTask() throws Exception {
         enableAssistant();
 
@@ -229,6 +246,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         disableAssistant();
     }
 
+    @Test
     public void testPinnedStackWithAssistant() throws Exception {
         if (!supportsPip() || !supportsSplitScreenMultiWindow()) return;
 
@@ -240,7 +258,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
         launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
                 EXTRA_IS_TRANSLUCENT, String.valueOf(true));
-        mAmWmState.waitForValidState(mDevice, TRANSLUCENT_ASSISTANT_ACTIVITY, ASSISTANT_STACK_ID);
+        mAmWmState.waitForValidState(TRANSLUCENT_ASSISTANT_ACTIVITY, ASSISTANT_STACK_ID);
         assertAssistantStackExists();
         mAmWmState.assertVisibility(TRANSLUCENT_ASSISTANT_ACTIVITY, true);
         mAmWmState.assertVisibility(PIP_ACTIVITY, true);

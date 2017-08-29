@@ -16,15 +16,23 @@
 
 package android.server.cts;
 
+import static android.app.ActivityManager.StackId.DOCKED_STACK_ID;
+import static android.app.ActivityManager.StackId.FREEFORM_WORKSPACE_STACK_ID;
+import static android.app.ActivityManager.StackId.PINNED_STACK_ID;
 import static android.server.cts.ActivityManagerState.RESIZE_MODE_RESIZEABLE;
-import static android.server.cts.ActivityManagerTestBase.DOCKED_STACK_ID;
-import static android.server.cts.ActivityManagerTestBase.FREEFORM_WORKSPACE_STACK_ID;
-import static android.server.cts.ActivityManagerTestBase.HOME_STACK_ID;
-import static android.server.cts.ActivityManagerTestBase.PINNED_STACK_ID;
 import static android.server.cts.ActivityManagerTestBase.componentName;
 import static android.server.cts.StateLogger.log;
 import static android.server.cts.StateLogger.logE;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import android.graphics.Rect;
 import android.server.cts.ActivityManagerState.ActivityStack;
 import android.server.cts.ActivityManagerState.ActivityTask;
 import android.server.cts.WindowManagerState.Display;
@@ -32,12 +40,6 @@ import android.server.cts.WindowManagerState.WindowStack;
 import android.server.cts.WindowManagerState.WindowState;
 import android.server.cts.WindowManagerState.WindowTask;
 
-import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.device.DeviceNotAvailableException;
-
-import junit.framework.Assert;
-
-import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -45,8 +47,10 @@ import java.util.function.BiPredicate;
 import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 
-/** Combined state of the activity manager and window manager. */
-public class ActivityAndWindowManagersState extends Assert {
+/**
+ * Combined state of the activity manager and window manager.
+ */
+public class ActivityAndWindowManagersState {
 
     // Clone of android DisplayMetrics.DENSITY_DEFAULT (DENSITY_MEDIUM)
     // (Needed in host-side tests to convert dp to px.)
@@ -65,7 +69,7 @@ public class ActivityAndWindowManagersState extends Assert {
     private ActivityManagerState mAmState = new ActivityManagerState();
     private WindowManagerState mWmState = new WindowManagerState();
 
-    private final List<WindowManagerState.WindowState> mTempWindowList = new ArrayList<>();
+    private final List<WindowState> mTempWindowList = new ArrayList<>();
 
     private boolean mUseActivityNames = true;
 
@@ -73,25 +77,23 @@ public class ActivityAndWindowManagersState extends Assert {
      * Compute AM and WM state of device, check sanity and bounds.
      * WM state will include only visible windows, stack and task bounds will be compared.
      *
-     * @param device test device.
      * @param waitForActivitiesVisible array of activity names to wait for.
      */
-    public void computeState(ITestDevice device, String[] waitForActivitiesVisible)
+    public void computeState(String[] waitForActivitiesVisible)
             throws Exception {
-        computeState(device, waitForActivitiesVisible, true);
+        computeState(waitForActivitiesVisible, true);
     }
 
     /**
      * Compute AM and WM state of device, check sanity and bounds.
      *
-     * @param device test device.
-     * @param waitForActivitiesVisible array of activity names to wait for.
+     * @param waitForActivitiesVisible  array of activity names to wait for.
      * @param compareTaskAndStackBounds pass 'true' if stack and task bounds should be compared,
      *                                  'false' otherwise.
      */
-    void computeState(ITestDevice device, String[] waitForActivitiesVisible,
-                      boolean compareTaskAndStackBounds) throws Exception {
-        waitForValidState(device, waitForActivitiesVisible, null /* stackIds */,
+    void computeState(String[] waitForActivitiesVisible,
+            boolean compareTaskAndStackBounds) throws Exception {
+        waitForValidState(waitForActivitiesVisible, null /* stackIds */,
                 compareTaskAndStackBounds);
 
         assertSanity();
@@ -117,12 +119,11 @@ public class ActivityAndWindowManagersState extends Assert {
      * waiting-for-debugger window, but real activity window won't show up since we're waiting
      * for debugger.
      */
-    void waitForDebuggerWindowVisible(
-            ITestDevice device, String[] waitForActivityRecords) throws Exception {
+    void waitForDebuggerWindowVisible(String[] waitForActivityRecords) {
         int retriesLeft = 5;
         do {
-            mAmState.computeState(device);
-            mWmState.computeState(device);
+            mAmState.computeState();
+            mWmState.computeState();
             if (shouldWaitForDebuggerWindow() ||
                     shouldWaitForActivityRecords(waitForActivityRecords)) {
                 try {
@@ -140,63 +141,59 @@ public class ActivityAndWindowManagersState extends Assert {
     /**
      * Wait for the activity to appear and for valid state in AM and WM.
      *
-     * @param device test device.
      * @param waitForActivityVisible name of activity to wait for.
      */
-    void waitForValidState(ITestDevice device, String waitForActivityVisible)
+    void waitForValidState(String waitForActivityVisible)
             throws Exception {
-        waitForValidState(device, new String[]{waitForActivityVisible}, null /* stackIds */,
+        waitForValidState(new String[]{waitForActivityVisible}, null /* stackIds */,
                 false /* compareTaskAndStackBounds */);
     }
 
     /**
      * Wait for the activity to appear in proper stack and for valid state in AM and WM.
      *
-     * @param device test device.
      * @param waitForActivityVisible name of activity to wait for.
-     * @param stackId id of the stack where provided activity should be found.
+     * @param stackId                id of the stack where provided activity should be found.
      */
-    void waitForValidState(ITestDevice device, String waitForActivityVisible, int stackId)
+    void waitForValidState(String waitForActivityVisible, int stackId)
             throws Exception {
-        waitForValidState(device, new String[]{waitForActivityVisible}, new int[]{stackId},
+        waitForValidState(new String[]{waitForActivityVisible}, new int[]{stackId},
                 false /* compareTaskAndStackBounds */);
     }
 
     /**
      * Wait for the activities to appear in proper stacks and for valid state in AM and WM.
      *
-     * @param device test device.
-     * @param waitForActivitiesVisible array of activity names to wait for.
-     * @param stackIds ids of stack where provided activities should be found.
-     *                 Pass null to skip this check.
+     * @param waitForActivitiesVisible  array of activity names to wait for.
+     * @param stackIds                  ids of stack where provided activities should be found.
+     *                                  Pass null to skip this check.
      * @param compareTaskAndStackBounds flag indicating if we should compare task and stack bounds
      *                                  for equality.
      */
-    void waitForValidState(ITestDevice device, String[] waitForActivitiesVisible, int[] stackIds,
+    void waitForValidState(String[] waitForActivitiesVisible, int[] stackIds,
             boolean compareTaskAndStackBounds) throws Exception {
-        waitForValidState(device, waitForActivitiesVisible, stackIds, compareTaskAndStackBounds,
+        waitForValidState(waitForActivitiesVisible, stackIds, compareTaskAndStackBounds,
                 componentName);
     }
 
     /**
      * Wait for the activities to appear in proper stacks and for valid state in AM and WM.
      *
-     * @param device test device.
-     * @param waitForActivitiesVisible array of activity names to wait for.
-     * @param stackIds ids of stack where provided activities should be found.
-     *                 Pass null to skip this check.
+     * @param waitForActivitiesVisible  array of activity names to wait for.
+     * @param stackIds                  ids of stack where provided activities should be found. Pass
+     *                                  null to skip this check.
      * @param compareTaskAndStackBounds flag indicating if we should compare task and stack bounds
      *                                  for equality.
-     * @param packageName name of the package of activities that we're waiting for.
+     * @param packageName               name of the package of activities that we're waiting for.
      */
-    void waitForValidState(ITestDevice device, String[] waitForActivitiesVisible, int[] stackIds,
+    void waitForValidState(String[] waitForActivitiesVisible, int[] stackIds,
             boolean compareTaskAndStackBounds, String packageName) throws Exception {
         int retriesLeft = 5;
         do {
             // TODO: Get state of AM and WM at the same time to avoid mismatches caused by
             // requesting dump in some intermediate state.
-            mAmState.computeState(device);
-            mWmState.computeState(device);
+            mAmState.computeState();
+            mWmState.computeState();
             if (shouldWaitForValidStacks(compareTaskAndStackBounds)
                     || shouldWaitForActivities(waitForActivitiesVisible, stackIds, packageName)
                     || shouldWaitForWindows()) {
@@ -213,78 +210,88 @@ public class ActivityAndWindowManagersState extends Assert {
         } while (retriesLeft-- > 0);
     }
 
-    void waitForHomeActivityVisible(ITestDevice device) throws Exception {
-        waitForValidState(device, mAmState.getHomeActivityName());
+    void waitForHomeActivityVisible() throws Exception {
+        String homeActivity = mAmState.getHomeActivityName();
+        // Sometimes this function is called before we know what Home Activity is
+        if (homeActivity == null) {
+            log("Computing state to determine Home Activity");
+            computeState(null);
+            homeActivity = mAmState.getHomeActivityName();
+        }
+        assertNotNull("homeActivity should not be null", homeActivity);
+        waitForValidState(homeActivity);
     }
 
-    /** @return true if recents activity is visible. Devices without recents will return false */
-    boolean waitForRecentsActivityVisible(ITestDevice device) throws Exception {
-        waitForWithAmState(device, ActivityManagerState::isRecentsActivityVisible,
+    /**
+     * @return true if recents activity is visible. Devices without recents will return false
+     */
+    boolean waitForRecentsActivityVisible() throws Exception {
+        waitForWithAmState(ActivityManagerState::isRecentsActivityVisible,
                 "***Waiting for recents activity to be visible...");
         return mAmState.isRecentsActivityVisible();
     }
 
-    void waitForKeyguardShowingAndNotOccluded(ITestDevice device) throws Exception {
-        waitForWithAmState(device, state -> state.getKeyguardControllerState().keyguardShowing
+    void waitForKeyguardShowingAndNotOccluded() throws Exception {
+        waitForWithAmState(state -> state.getKeyguardControllerState().keyguardShowing
                         && !state.getKeyguardControllerState().keyguardOccluded,
                 "***Waiting for Keyguard showing...");
     }
 
-    void waitForKeyguardShowingAndOccluded(ITestDevice device) throws Exception {
-        waitForWithAmState(device, state -> state.getKeyguardControllerState().keyguardShowing
+    void waitForKeyguardShowingAndOccluded() throws Exception {
+        waitForWithAmState(state -> state.getKeyguardControllerState().keyguardShowing
                         && state.getKeyguardControllerState().keyguardOccluded,
                 "***Waiting for Keyguard showing and occluded...");
     }
 
-    void waitForKeyguardGone(ITestDevice device) throws Exception {
-        waitForWithAmState(device, state -> !state.getKeyguardControllerState().keyguardShowing,
+    void waitForKeyguardGone() throws Exception {
+        waitForWithAmState(state -> !state.getKeyguardControllerState().keyguardShowing,
                 "***Waiting for Keyguard gone...");
     }
 
-    void waitForRotation(ITestDevice device, int rotation) throws Exception {
-        waitForWithWmState(device, state -> state.getRotation() == rotation,
+    void waitForRotation(int rotation) throws Exception {
+        waitForWithWmState(state -> state.getRotation() == rotation,
                 "***Waiting for Rotation: " + rotation);
     }
 
-    void waitForDisplayUnfrozen(ITestDevice device) throws Exception {
-        waitForWithWmState(device, state -> !state.isDisplayFrozen(),
+    void waitForDisplayUnfrozen() throws Exception {
+        waitForWithWmState(state -> !state.isDisplayFrozen(),
                 "***Waiting for Display unfrozen");
     }
 
-    void waitForActivityState(ITestDevice device, String activityName, String activityState)
+    void waitForActivityState(String activityName, String activityState)
             throws Exception {
-        waitForWithAmState(device, state -> state.hasActivityState(activityName, activityState),
+        waitForWithAmState(state -> state.hasActivityState(activityName, activityState),
                 "***Waiting for Activity State: " + activityState);
     }
 
-    void waitForFocusedStack(ITestDevice device, int stackId) throws Exception {
-        waitForWithAmState(device, state -> state.getFocusedStackId() == stackId,
+    void waitForFocusedStack(int stackId) throws Exception {
+        waitForWithAmState(state -> state.getFocusedStackId() == stackId,
                 "***Waiting for focused stack...");
     }
 
-    void waitForAppTransitionIdle(ITestDevice device) throws Exception {
-        waitForWithWmState(device,
+    void waitForAppTransitionIdle() throws Exception {
+        waitForWithWmState(
                 state -> WindowManagerState.APP_STATE_IDLE.equals(state.getAppTransitionState()),
                 "***Waiting for app transition idle...");
     }
 
-    void waitForWithAmState(ITestDevice device, Predicate<ActivityManagerState> waitCondition,
-            String message) throws Exception{
-        waitFor(device, (amState, wmState) -> waitCondition.test(amState), message);
+    void waitForWithAmState(Predicate<ActivityManagerState> waitCondition,
+            String message) throws Exception {
+        waitFor((amState, wmState) -> waitCondition.test(amState), message);
     }
 
-    void waitForWithWmState(ITestDevice device, Predicate<WindowManagerState> waitCondition,
-            String message) throws Exception{
-        waitFor(device, (amState, wmState) -> waitCondition.test(wmState), message);
+    void waitForWithWmState(Predicate<WindowManagerState> waitCondition,
+            String message) throws Exception {
+        waitFor((amState, wmState) -> waitCondition.test(wmState), message);
     }
 
-    void waitFor(ITestDevice device,
+    void waitFor(
             BiPredicate<ActivityManagerState, WindowManagerState> waitCondition, String message)
             throws Exception {
         waitFor(message, () -> {
             try {
-                mAmState.computeState(device);
-                mWmState.computeState(device);
+                mAmState.computeState();
+                mWmState.computeState();
             } catch (Exception e) {
                 logE(e.toString());
                 return false;
@@ -310,7 +317,9 @@ public class ActivityAndWindowManagersState extends Assert {
         } while (retriesLeft-- > 0);
     }
 
-    /** @return true if should wait for valid stacks state. */
+    /**
+     * @return true if should wait for valid stacks state.
+     */
     private boolean shouldWaitForValidStacks(boolean compareTaskAndStackBounds) {
         if (!taskListsInAmAndWmAreEqual()) {
             // We want to wait for equal task lists in AM and WM in case we caught them in the
@@ -349,7 +358,9 @@ public class ActivityAndWindowManagersState extends Assert {
         return false;
     }
 
-    /** @return true if should wait for some activities to become visible. */
+    /**
+     * @return true if should wait for some activities to become visible.
+     */
     private boolean shouldWaitForActivities(String[] waitForActivitiesVisible, int[] stackIds,
             String packageName) {
         if (waitForActivitiesVisible == null || waitForActivitiesVisible.length == 0) {
@@ -360,7 +371,7 @@ public class ActivityAndWindowManagersState extends Assert {
         // and for placing them in correct stacks (if requested).
         boolean allActivityWindowsVisible = true;
         boolean tasksInCorrectStacks = true;
-        List<WindowManagerState.WindowState> matchingWindowStates = new ArrayList<>();
+        List<WindowState> matchingWindowStates = new ArrayList<>();
         for (int i = 0; i < waitForActivitiesVisible.length; i++) {
             // Check if window is visible - it should be represented as one of the window states.
             final String windowName = mUseActivityNames ?
@@ -381,7 +392,7 @@ public class ActivityAndWindowManagersState extends Assert {
             } else if (stackIds != null) {
                 // Check if window is already in stack requested by test.
                 boolean windowInCorrectStack = false;
-                for (WindowManagerState.WindowState ws : matchingWindowStates) {
+                for (WindowState ws : matchingWindowStates) {
                     if (ws.getStackId() == stackIds[i]) {
                         windowInCorrectStack = true;
                         break;
@@ -396,7 +407,9 @@ public class ActivityAndWindowManagersState extends Assert {
         return !allActivityWindowsVisible || !tasksInCorrectStacks;
     }
 
-    /** @return true if should wait valid windows state. */
+    /**
+     * @return true if should wait valid windows state.
+     */
     private boolean shouldWaitForWindows() {
         if (mWmState.getFrontWindow() == null) {
             log("***frontWindow=null");
@@ -415,7 +428,7 @@ public class ActivityAndWindowManagersState extends Assert {
     }
 
     private boolean shouldWaitForDebuggerWindow() {
-        List<WindowManagerState.WindowState> matchingWindowStates = new ArrayList<>();
+        List<WindowState> matchingWindowStates = new ArrayList<>();
         mWmState.getMatchingVisibleWindowState("android.server.cts", matchingWindowStates);
         for (WindowState ws : matchingWindowStates) {
             if (ws.isDebuggerWindow()) {
@@ -489,7 +502,7 @@ public class ActivityAndWindowManagersState extends Assert {
 
     void assertNotFocusedStack(String msg, int stackId) throws Exception {
         if (stackId == mAmState.getFocusedStackId()) {
-            failNotEquals(msg, stackId, mAmState.getFocusedStackId());
+            assertNotEquals(msg, stackId, mAmState.getFocusedStackId());
         }
     }
 
@@ -508,10 +521,10 @@ public class ActivityAndWindowManagersState extends Assert {
     void assertNotFocusedActivity(String msg, String activityName) throws Exception {
         final String componentName = ActivityManagerTestBase.getActivityComponentName(activityName);
         if (mAmState.getFocusedActivity().equals(componentName)) {
-            failNotEquals(msg, mAmState.getFocusedActivity(), componentName);
+            assertNotEquals(msg, mAmState.getFocusedActivity(), componentName);
         }
         if (mWmState.getFocusedApp().equals(componentName)) {
-            failNotEquals(msg, mWmState.getFocusedApp(), componentName);
+            assertNotEquals(msg, mWmState.getFocusedApp(), componentName);
         }
     }
 
@@ -523,7 +536,7 @@ public class ActivityAndWindowManagersState extends Assert {
     void assertNotResumedActivity(String msg, String activityName) throws Exception {
         final String componentName = ActivityManagerTestBase.getActivityComponentName(activityName);
         if (mAmState.getResumedActivity().equals(componentName)) {
-            failNotEquals(msg, mAmState.getResumedActivity(), componentName);
+            assertNotEquals(msg, mAmState.getResumedActivity(), componentName);
         }
     }
 
@@ -533,7 +546,7 @@ public class ActivityAndWindowManagersState extends Assert {
 
     void assertNotFocusedWindow(String msg, String windowName) {
         if (mWmState.getFocusedWindow().equals(windowName)) {
-            failNotEquals(msg, mWmState.getFocusedWindow(), windowName);
+            assertNotEquals(msg, mWmState.getFocusedWindow(), windowName);
         }
     }
 
@@ -573,12 +586,12 @@ public class ActivityAndWindowManagersState extends Assert {
     /**
      * Asserts that the device default display minimim width is larger than the minimum task width.
      */
-    void assertDeviceDefaultDisplaySize(ITestDevice device, String errorMessage) throws Exception {
-        computeState(device, null);
+    void assertDeviceDefaultDisplaySize(String errorMessage) throws Exception {
+        computeState(null);
         final int minTaskSizePx = defaultMinimalTaskSize(DEFAULT_DISPLAY_ID);
         final Display display = getWmState().getDisplay(DEFAULT_DISPLAY_ID);
-        final Rectangle displayRect = display.getDisplayRect();
-        if (Math.min(displayRect.width, displayRect.height) < minTaskSizePx) {
+        final Rect displayRect = display.getDisplayRect();
+        if (Math.min(displayRect.width(), displayRect.height()) < minTaskSizePx) {
             fail(errorMessage);
         }
     }
@@ -632,8 +645,8 @@ public class ActivityAndWindowManagersState extends Assert {
                 return false;
             }
 
-            final Rectangle aStackBounds = aStack.getBounds();
-            final Rectangle wStackBounds = wStack.getBounds();
+            final Rect aStackBounds = aStack.getBounds();
+            final Rect wStackBounds = wStack.getBounds();
 
             if (aStack.isFullscreen()) {
                 if (aStackBounds != null) {
@@ -651,15 +664,17 @@ public class ActivityAndWindowManagersState extends Assert {
         return true;
     }
 
-    /** Check task bounds when docked to top/left. */
+    /**
+     * Check task bounds when docked to top/left.
+     */
     void assertDockedTaskBounds(int taskWidth, int taskHeight, String activityName) {
         // Task size can be affected by default minimal size.
         int defaultMinimalTaskSize = defaultMinimalTaskSize(
-                mAmState.getStackById(ActivityManagerTestBase.DOCKED_STACK_ID).mDisplayId);
+                mAmState.getStackById(DOCKED_STACK_ID).mDisplayId);
         int targetWidth = Math.max(taskWidth, defaultMinimalTaskSize);
         int targetHeight = Math.max(taskHeight, defaultMinimalTaskSize);
 
-        assertEquals(new Rectangle(0, 0, targetWidth, targetHeight),
+        assertEquals(new Rect(0, 0, targetWidth, targetHeight),
                 mAmState.getTaskByActivityName(activityName).getBounds());
     }
 
@@ -677,8 +692,8 @@ public class ActivityAndWindowManagersState extends Assert {
             assertEquals("Stack fullscreen state in AM and WM must be equal stackId=" + stackId,
                     aStack.isFullscreen(), wStack.isFullscreen());
 
-            final Rectangle aStackBounds = aStack.getBounds();
-            final Rectangle wStackBounds = wStack.getBounds();
+            final Rect aStackBounds = aStack.getBounds();
+            final Rect wStackBounds = wStack.getBounds();
 
             if (aStack.isFullscreen()) {
                 assertNull("Stack bounds in AM must be null stackId=" + stackId, aStackBounds);
@@ -698,38 +713,38 @@ public class ActivityAndWindowManagersState extends Assert {
                 assertEquals("Task fullscreen state in AM and WM must be equal taskId=" + taskId
                         + ", stackId=" + stackId, aTaskIsFullscreen, wTaskIsFullscreen);
 
-                final Rectangle aTaskBounds = aTask.getBounds();
-                final Rectangle wTaskBounds = wTask.getBounds();
-                final Rectangle displayRect = mWmState.getDisplay(aStack.mDisplayId)
+                final Rect aTaskBounds = aTask.getBounds();
+                final Rect wTaskBounds = wTask.getBounds();
+                final Rect displayRect = mWmState.getDisplay(aStack.mDisplayId)
                         .getDisplayRect();
 
                 if (aTaskIsFullscreen) {
                     assertNull("Task bounds in AM must be null for fullscreen taskId=" + taskId,
                             aTaskBounds);
                 } else if (!homeStackIsResizable && mWmState.isDockedStackMinimized()
-                        && displayRect.getWidth() > displayRect.getHeight()) {
+                        && displayRect.width() > displayRect.height()) {
                     // When minimized using non-resizable launcher in landscape mode, it will move
                     // the task offscreen in the negative x direction unlike portrait that crops.
                     // The x value in the task bounds will not match the stack bounds since the
                     // only the task was moved.
                     assertEquals("Task bounds in AM and WM must match width taskId=" + taskId
-                            + ", stackId" + stackId, aTaskBounds.getWidth(),
-                            wTaskBounds.getWidth());
+                                    + ", stackId" + stackId, aTaskBounds.width(),
+                            wTaskBounds.width());
                     assertEquals("Task bounds in AM and WM must match height taskId=" + taskId
-                                    + ", stackId" + stackId, aTaskBounds.getHeight(),
-                            wTaskBounds.getHeight());
+                                    + ", stackId" + stackId, aTaskBounds.height(),
+                            wTaskBounds.height());
                     assertEquals("Task bounds must match stack bounds y taskId=" + taskId
-                                    + ", stackId" + stackId, aTaskBounds.getY(),
-                            wTaskBounds.getY());
+                                    + ", stackId" + stackId, aTaskBounds.top,
+                            wTaskBounds.top);
                     assertEquals("Task and stack bounds must match width taskId=" + taskId
-                                    + ", stackId" + stackId, aStackBounds.getWidth(),
-                            wTaskBounds.getWidth());
+                                    + ", stackId" + stackId, aStackBounds.width(),
+                            wTaskBounds.width());
                     assertEquals("Task and stack bounds must match height taskId=" + taskId
-                                    + ", stackId" + stackId, aStackBounds.getHeight(),
-                            wTaskBounds.getHeight());
+                                    + ", stackId" + stackId, aStackBounds.height(),
+                            wTaskBounds.height());
                     assertEquals("Task and stack bounds must match y taskId=" + taskId
-                                    + ", stackId" + stackId, aStackBounds.getY(),
-                            wTaskBounds.getY());
+                                    + ", stackId" + stackId, aStackBounds.top,
+                            wTaskBounds.top);
                 } else {
                     assertEquals("Task bounds in AM and WM must be equal taskId=" + taskId
                             + ", stackId=" + stackId, aTaskBounds, wTaskBounds);
@@ -752,8 +767,8 @@ public class ActivityAndWindowManagersState extends Assert {
                             }
                         }
 
-                        if (aStackBounds.getWidth() >= aTaskMinWidth
-                                && aStackBounds.getHeight() >= aTaskMinHeight
+                        if (aStackBounds.width() >= aTaskMinWidth
+                                && aStackBounds.height() >= aTaskMinHeight
                                 || stackId == PINNED_STACK_ID) {
                             // Bounds are not smaller then minimal possible, so stack and task
                             // bounds must be equal.
@@ -762,40 +777,40 @@ public class ActivityAndWindowManagersState extends Assert {
                         } else if (stackId == DOCKED_STACK_ID && homeStackIsResizable
                                 && mWmState.isDockedStackMinimized()) {
                             // Portrait if the display height is larger than the width
-                            if (displayRect.getHeight() > displayRect.getWidth()) {
+                            if (displayRect.height() > displayRect.width()) {
                                 assertEquals("Task width must be equal to stack width taskId="
-                                        + taskId + ", stackId=" + stackId,
-                                        aStackBounds.getWidth(), wTaskBounds.getWidth());
+                                                + taskId + ", stackId=" + stackId,
+                                        aStackBounds.width(), wTaskBounds.width());
                                 assertTrue("Task height must be greater than stack height "
-                                        + "taskId=" + taskId + ", stackId=" + stackId,
-                                        aStackBounds.getHeight() < wTaskBounds.getHeight());
+                                                + "taskId=" + taskId + ", stackId=" + stackId,
+                                        aStackBounds.height() < wTaskBounds.height());
                                 assertEquals("Task and stack x position must be equal taskId="
-                                        + taskId + ", stackId=" + stackId,
-                                        wTaskBounds.getX(), wStackBounds.getX());
+                                                + taskId + ", stackId=" + stackId,
+                                        wTaskBounds.left, wStackBounds.left);
                             } else {
                                 assertTrue("Task width must be greater than stack width taskId="
-                                        + taskId + ", stackId=" + stackId,
-                                        aStackBounds.getWidth() < wTaskBounds.getWidth());
+                                                + taskId + ", stackId=" + stackId,
+                                        aStackBounds.width() < wTaskBounds.width());
                                 assertEquals("Task height must be equal to stack height taskId="
-                                        + taskId + ", stackId=" + stackId,
-                                        aStackBounds.getHeight(), wTaskBounds.getHeight());
+                                                + taskId + ", stackId=" + stackId,
+                                        aStackBounds.height(), wTaskBounds.height());
                                 assertEquals("Task and stack y position must be equal taskId="
-                                        + taskId + ", stackId=" + stackId, wTaskBounds.getY(),
-                                        wStackBounds.getY());
+                                                + taskId + ", stackId=" + stackId, wTaskBounds.top,
+                                        wStackBounds.top);
                             }
                         } else {
                             // Minimal dimensions affect task size, so bounds of task and stack must
                             // be different - will compare dimensions instead.
                             int targetWidth = (int) Math.max(aTaskMinWidth,
-                                    aStackBounds.getWidth());
+                                    aStackBounds.width());
                             assertEquals("Task width must be set according to minimal width"
                                             + " taskId=" + taskId + ", stackId=" + stackId,
-                                    targetWidth, (int) wTaskBounds.getWidth());
+                                    targetWidth, (int) wTaskBounds.width());
                             int targetHeight = (int) Math.max(aTaskMinHeight,
-                                    aStackBounds.getHeight());
+                                    aStackBounds.height());
                             assertEquals("Task height must be set according to minimal height"
                                             + " taskId=" + taskId + ", stackId=" + stackId,
-                                    targetHeight, (int) wTaskBounds.getHeight());
+                                    targetHeight, (int) wTaskBounds.height());
                         }
                     }
                 }
@@ -803,7 +818,7 @@ public class ActivityAndWindowManagersState extends Assert {
         }
     }
 
-    static int dpToPx(float dp, int densityDpi){
+    static int dpToPx(float dp, int densityDpi) {
         return (int) (dp * densityDpi / DISPLAY_DENSITY_DEFAULT + 0.5f);
     }
 

@@ -16,25 +16,26 @@
 
 package android.server.cts;
 
-import com.android.tradefed.log.LogUtil.CLog;
-
-import static com.android.ddmlib.Log.LogLevel.INFO;
-import static com.android.ddmlib.Log.LogLevel.ERROR;
+import android.util.Log;
 
 /**
  * Util class to perform simple state logging.
  */
 public class StateLogger {
-    private static final boolean DEBUG = false;
 
-    /** Simple info-level logging gated by {@link #DEBUG} flag */
+    private static final boolean DEBUG = false;
+    private static String TAG = "AMWM";
+
+    /**
+     * Simple info-level logging gated by {@link #DEBUG} flag
+     */
     public static void log(String logText) {
         if (DEBUG) {
-            CLog.logAndDisplay(INFO, logText);
+            Log.i(TAG, logText);
         }
     }
 
     public static void logE(String logText) {
-        CLog.logAndDisplay(ERROR, logText);
+        Log.e(TAG, logText);
     }
 }

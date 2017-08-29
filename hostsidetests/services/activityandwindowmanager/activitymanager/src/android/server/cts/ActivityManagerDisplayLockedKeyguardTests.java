@@ -16,43 +16,43 @@
 
 package android.server.cts;
 
-import com.android.tradefed.device.DeviceNotAvailableException;
-
 import static android.server.cts.ActivityManagerState.STATE_RESUMED;
 import static android.server.cts.ActivityManagerState.STATE_STOPPED;
-import static android.server.cts.StateLogger.logE;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Display tests that require a locked keyguard.
  *
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsServicesHostTestCases android.server.cts.ActivityManagerDisplayLockedKeyguardTests
+ * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsActivityManagerDeviceTestCases android.server.cts.ActivityManagerDisplayLockedKeyguardTests
  */
 public class ActivityManagerDisplayLockedKeyguardTests extends ActivityManagerDisplayTestBase {
 
     private static final String TEST_ACTIVITY_NAME = "TestActivity";
     private static final String VIRTUAL_DISPLAY_ACTIVITY = "VirtualDisplayActivity";
 
+    @Before
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         super.setUp();
         setLockCredential();
     }
 
+    @After
     @Override
-    protected void tearDown() throws Exception {
-        try {
-            removeLockCredential();
-            gotoKeyguard();
-        } catch (DeviceNotAvailableException e) {
-            logE(e.getMessage());
-        }
+    public void tearDown() throws Exception {
+        removeLockCredential();
+        gotoKeyguard();
         super.tearDown();
     }
 
     /**
      * Test that virtual display content is hidden when device is locked.
      */
+    @Test
     public void testVirtualDisplayHidesContentWhenLocked() throws Exception {
         if (!supportsMultiDisplay() || !isHandheld()) { return; }
 
@@ -66,14 +66,14 @@ public class ActivityManagerDisplayLockedKeyguardTests extends ActivityManagerDi
 
         // Lock the device.
         gotoKeyguard();
-        mAmWmState.waitForKeyguardShowingAndNotOccluded(mDevice);
-        mAmWmState.waitForActivityState(mDevice, TEST_ACTIVITY_NAME, STATE_STOPPED);
+        mAmWmState.waitForKeyguardShowingAndNotOccluded();
+        mAmWmState.waitForActivityState(TEST_ACTIVITY_NAME, STATE_STOPPED);
         mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, false /* visible */);
 
         // Unlock and check if visibility is back.
         unlockDeviceWithCredential();
-        mAmWmState.waitForKeyguardGone(mDevice);
-        mAmWmState.waitForActivityState(mDevice, TEST_ACTIVITY_NAME, STATE_RESUMED);
+        mAmWmState.waitForKeyguardGone();
+        mAmWmState.waitForActivityState(TEST_ACTIVITY_NAME, STATE_RESUMED);
         mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, true /* visible */);
     }
 }

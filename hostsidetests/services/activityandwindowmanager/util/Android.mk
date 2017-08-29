@@ -16,21 +16,21 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_MODULE_TAGS := tests
+LOCAL_MODULE_TAGS := tests optional
 
-LOCAL_SRC_FILES := \
-    $(call all-java-files-under, src)
+LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
+LOCAL_STATIC_JAVA_LIBRARIES := \
+    platformprotosnano \
+    compatibility-device-util \
+    android-support-test
 
-LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed host-libprotobuf-java-full
-
-LOCAL_STATIC_JAVA_LIBRARIES := platformprotos
+LOCAL_JAVA_LIBRARIES := core-oj core-libart
 
 LOCAL_MODULE := cts-amwm-util
 
-LOCAL_SDK_VERSION := current
+LOCAL_SDK_VERSION := test_current
 
-include $(BUILD_HOST_JAVA_LIBRARY)
+include $(BUILD_STATIC_JAVA_LIBRARY)
 
 include $(call all-makefiles-under,$(LOCAL_PATH))

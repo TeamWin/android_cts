@@ -16,8 +16,6 @@
 
 package android.server.cts;
 
-import android.platform.test.annotations.Presubmit;
-
 import static android.server.cts.WindowManagerState.TRANSIT_ACTIVITY_CLOSE;
 import static android.server.cts.WindowManagerState.TRANSIT_ACTIVITY_OPEN;
 import static android.server.cts.WindowManagerState.TRANSIT_TASK_CLOSE;
@@ -26,6 +24,12 @@ import static android.server.cts.WindowManagerState.TRANSIT_WALLPAPER_CLOSE;
 import static android.server.cts.WindowManagerState.TRANSIT_WALLPAPER_INTRA_CLOSE;
 import static android.server.cts.WindowManagerState.TRANSIT_WALLPAPER_INTRA_OPEN;
 import static android.server.cts.WindowManagerState.TRANSIT_WALLPAPER_OPEN;
+
+import static org.junit.Assert.assertEquals;
+
+import android.platform.test.annotations.Presubmit;
+
+import org.junit.Test;
 
 /**
  * This test tests the transition type selection logic in ActivityManager/
@@ -38,7 +42,7 @@ import static android.server.cts.WindowManagerState.TRANSIT_WALLPAPER_OPEN;
  * The exact animation is unspecified and can be overridden.
  *
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsServicesHostTestCases android.server.cts.ActivityManagerTransitionSelectionTests
+ * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsActivityManagerDeviceTestCases android.server.cts.ActivityManagerTransitionSelectionTests
  */
 @Presubmit
 public class ActivityManagerTransitionSelectionTests extends ActivityManagerTestBase {
@@ -50,31 +54,37 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
     //------------------------------------------------------------------------//
 
     // Test activity open/close under normal timing
+    @Test
     public void testOpenActivity_NeitherWallpaper() throws Exception {
         testOpenActivity(false /*bottomWallpaper*/, false /*topWallpaper*/,
                 false /*slowStop*/, TRANSIT_ACTIVITY_OPEN);
     }
 
+    @Test
     public void testCloseActivity_NeitherWallpaper() throws Exception {
         testCloseActivity(false /*bottomWallpaper*/, false /*topWallpaper*/,
                 false /*slowStop*/, TRANSIT_ACTIVITY_CLOSE);
     }
 
+    @Test
     public void testOpenActivity_BottomWallpaper() throws Exception {
         testOpenActivity(true /*bottomWallpaper*/, false /*topWallpaper*/,
                 false /*slowStop*/, TRANSIT_WALLPAPER_CLOSE);
     }
 
+    @Test
     public void testCloseActivity_BottomWallpaper() throws Exception {
         testCloseActivity(true /*bottomWallpaper*/, false /*topWallpaper*/,
                 false /*slowStop*/, TRANSIT_WALLPAPER_OPEN);
     }
 
+    @Test
     public void testOpenActivity_BothWallpaper() throws Exception {
         testOpenActivity(true /*bottomWallpaper*/, true /*topWallpaper*/,
                 false /*slowStop*/, TRANSIT_WALLPAPER_INTRA_OPEN);
     }
 
+    @Test
     public void testCloseActivity_BothWallpaper() throws Exception {
         testCloseActivity(true /*bottomWallpaper*/, true /*topWallpaper*/,
                 false /*slowStop*/, TRANSIT_WALLPAPER_INTRA_CLOSE);
@@ -83,31 +93,37 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
     //------------------------------------------------------------------------//
 
     // Test task open/close under normal timing
+    @Test
     public void testOpenTask_NeitherWallpaper() throws Exception {
         testOpenTask(false /*bottomWallpaper*/, false /*topWallpaper*/,
                 false /*slowStop*/, TRANSIT_TASK_OPEN);
     }
 
+    @Test
     public void testCloseTask_NeitherWallpaper() throws Exception {
         testCloseTask(false /*bottomWallpaper*/, false /*topWallpaper*/,
                 false /*slowStop*/, TRANSIT_TASK_CLOSE);
     }
 
+    @Test
     public void testOpenTask_BottomWallpaper() throws Exception {
         testOpenTask(true /*bottomWallpaper*/, false /*topWallpaper*/,
                 false /*slowStop*/, TRANSIT_WALLPAPER_CLOSE);
     }
 
+    @Test
     public void testCloseTask_BottomWallpaper() throws Exception {
         testCloseTask(true /*bottomWallpaper*/, false /*topWallpaper*/,
                 false /*slowStop*/, TRANSIT_WALLPAPER_OPEN);
     }
 
+    @Test
     public void testOpenTask_BothWallpaper() throws Exception {
         testOpenTask(true /*bottomWallpaper*/, true /*topWallpaper*/,
                 false /*slowStop*/, TRANSIT_WALLPAPER_INTRA_OPEN);
     }
 
+    @Test
     public void testCloseTask_BothWallpaper() throws Exception {
         testCloseTask(true /*bottomWallpaper*/, true /*topWallpaper*/,
                 false /*slowStop*/, TRANSIT_WALLPAPER_INTRA_CLOSE);
@@ -118,16 +134,19 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
     // Test activity close -- bottom activity slow in stopping
     // These simulate the case where the bottom activity is resumed
     // before AM receives its activitiyStopped
+    @Test
     public void testCloseActivity_NeitherWallpaper_SlowStop() throws Exception {
         testCloseActivity(false /*bottomWallpaper*/, false /*topWallpaper*/,
                 true /*slowStop*/, TRANSIT_ACTIVITY_CLOSE);
     }
 
+    @Test
     public void testCloseActivity_BottomWallpaper_SlowStop() throws Exception {
         testCloseActivity(true /*bottomWallpaper*/, false /*topWallpaper*/,
                 true /*slowStop*/, TRANSIT_WALLPAPER_OPEN);
     }
 
+    @Test
     public void testCloseActivity_BothWallpaper_SlowStop() throws Exception {
         testCloseActivity(true /*bottomWallpaper*/, true /*topWallpaper*/,
                 true /*slowStop*/, TRANSIT_WALLPAPER_INTRA_CLOSE);
@@ -138,16 +157,19 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
     // Test task close -- bottom task top activity slow in stopping
     // These simulate the case where the bottom activity is resumed
     // before AM receives its activitiyStopped
+    @Test
     public void testCloseTask_NeitherWallpaper_SlowStop() throws Exception {
         testCloseTask(false /*bottomWallpaper*/, false /*topWallpaper*/,
                 true /*slowStop*/, TRANSIT_TASK_CLOSE);
     }
 
+    @Test
     public void testCloseTask_BottomWallpaper_SlowStop() throws Exception {
         testCloseTask(true /*bottomWallpaper*/, false /*topWallpaper*/,
                 true /*slowStop*/, TRANSIT_WALLPAPER_OPEN);
     }
 
+    @Test
     public void testCloseTask_BothWallpaper_SlowStop() throws Exception {
         testCloseTask(true /*bottomWallpaper*/, true /*topWallpaper*/,
                 true /*slowStop*/, TRANSIT_WALLPAPER_INTRA_CLOSE);
@@ -156,31 +178,37 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
     //------------------------------------------------------------------------//
 
     /// Test closing of translucent activity/task
+    @Test
     public void testCloseActivity_NeitherWallpaper_Translucent() throws Exception {
         testCloseActivityTranslucent(false /*bottomWallpaper*/, false /*topWallpaper*/,
                 TRANSIT_ACTIVITY_CLOSE);
     }
 
+    @Test
     public void testCloseActivity_BottomWallpaper_Translucent() throws Exception {
         testCloseActivityTranslucent(true /*bottomWallpaper*/, false /*topWallpaper*/,
                 TRANSIT_WALLPAPER_OPEN);
     }
 
+    @Test
     public void testCloseActivity_BothWallpaper_Translucent() throws Exception {
         testCloseActivityTranslucent(true /*bottomWallpaper*/, true /*topWallpaper*/,
                 TRANSIT_WALLPAPER_INTRA_CLOSE);
     }
 
+    @Test
     public void testCloseTask_NeitherWallpaper_Translucent() throws Exception {
         testCloseTaskTranslucent(false /*bottomWallpaper*/, false /*topWallpaper*/,
                 TRANSIT_TASK_CLOSE);
     }
 
+    @Test
     public void testCloseTask_BottomWallpaper_Translucent() throws Exception {
         testCloseTaskTranslucent(true /*bottomWallpaper*/, false /*topWallpaper*/,
                 TRANSIT_WALLPAPER_OPEN);
     }
 
+    @Test
     public void testCloseTask_BothWallpaper_Translucent() throws Exception {
         testCloseTaskTranslucent(true /*bottomWallpaper*/, true /*topWallpaper*/,
                 TRANSIT_WALLPAPER_INTRA_CLOSE);
@@ -240,7 +268,7 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
         final String[] bottomActivityArray = new String[] {BOTTOM_ACTIVITY_NAME};
         final String[] topActivityArray = new String[] {topActivityName};
 
-        mAmWmState.computeState(mDevice, bottomActivityArray);
+        mAmWmState.computeState(bottomActivityArray);
 
         String topStartCmd = getAmStartCmd(topActivityName);
         if (testNewTask) {
@@ -253,11 +281,12 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
             topStartCmd += " --ei FINISH_DELAY 1000";
         }
         executeShellCommand(topStartCmd);
+
         Thread.sleep(5000);
         if (testOpen) {
-            mAmWmState.computeState(mDevice, topActivityArray);
+            mAmWmState.computeState(topActivityArray);
         } else {
-            mAmWmState.computeState(mDevice, bottomActivityArray);
+            mAmWmState.computeState(bottomActivityArray);
         }
 
         assertEquals("Picked wrong transition", expectedTransit,

@@ -22,12 +22,18 @@ import static android.server.cts.WindowManagerState.TRANSIT_KEYGUARD_GOING_AWAY_
 import static android.server.cts.WindowManagerState.TRANSIT_KEYGUARD_OCCLUDE;
 import static android.server.cts.WindowManagerState.TRANSIT_KEYGUARD_UNOCCLUDE;
 
+import static org.junit.Assert.assertEquals;
+
+import org.junit.Before;
+import org.junit.Test;
+
 /**
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsServicesHostTestCases android.server.cts.KeyguardTransitionTests
+ * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsActivityManagerDeviceTestCases android.server.cts.KeyguardTransitionTests
  */
 public class KeyguardTransitionTests extends ActivityManagerTestBase {
 
+    @Before
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -36,6 +42,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
         setLockDisabled(false);
     }
 
+    @Test
     public void testUnlock() throws Exception {
         if (!isHandheld()) {
             return;
@@ -43,11 +50,11 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
         launchActivity("TestActivity");
         gotoKeyguard();
         unlockDevice();
-        mAmWmState.computeState(mDevice, new String[] { "TestActivity"} );
+        mAmWmState.computeState(new String[] { "TestActivity"} );
         assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_GOING_AWAY,
                 mAmWmState.getWmState().getLastTransition());
     }
-
+    @Test
     public void testUnlockWallpaper() throws Exception {
         if (!isHandheld()) {
             return;
@@ -55,22 +62,22 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
         launchActivity("WallpaperActivity");
         gotoKeyguard();
         unlockDevice();
-        mAmWmState.computeState(mDevice, new String[] { "WallpaperActivity"} );
+        mAmWmState.computeState(new String[] { "WallpaperActivity"} );
         assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_GOING_AWAY_ON_WALLPAPER,
                 mAmWmState.getWmState().getLastTransition());
     }
-
+    @Test
     public void testOcclude() throws Exception {
         if (!isHandheld()) {
             return;
         }
         gotoKeyguard();
         launchActivity("ShowWhenLockedActivity");
-        mAmWmState.computeState(mDevice, new String[] { "ShowWhenLockedActivity"} );
+        mAmWmState.computeState(new String[] { "ShowWhenLockedActivity"} );
         assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_OCCLUDE,
                 mAmWmState.getWmState().getLastTransition());
     }
-
+    @Test
     public void testUnocclude() throws Exception {
         if (!isHandheld()) {
             return;
@@ -78,12 +85,12 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
         launchActivity("ShowWhenLockedActivity");
         gotoKeyguard();
         launchActivity("TestActivity");
-        mAmWmState.waitForKeyguardShowingAndNotOccluded(mDevice);
-        mAmWmState.computeState(mDevice, null);
+        mAmWmState.waitForKeyguardShowingAndNotOccluded();
+        mAmWmState.computeState(null);
         assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_UNOCCLUDE,
                 mAmWmState.getWmState().getLastTransition());
     }
-
+    @Test
     public void testNewActivityDuringOccluded() throws Exception {
         if (!isHandheld()) {
             return;
@@ -91,11 +98,11 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
         launchActivity("ShowWhenLockedActivity");
         gotoKeyguard();
         launchActivity("ShowWhenLockedWithDialogActivity");
-        mAmWmState.computeState(mDevice, new String[] { "ShowWhenLockedWithDialogActivity" });
+        mAmWmState.computeState(new String[] { "ShowWhenLockedWithDialogActivity" });
         assertEquals("Picked wrong transition", TRANSIT_ACTIVITY_OPEN,
                 mAmWmState.getWmState().getLastTransition());
     }
-
+    @Test
     public void testOccludeManifestAttr() throws Exception {
          if (!isHandheld()) {
              return;
@@ -106,12 +113,12 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
          gotoKeyguard();
          final String logSeparator = clearLogcat();
          launchActivity(activityName);
-         mAmWmState.computeState(mDevice, new String[] {activityName});
+         mAmWmState.computeState(new String[] {activityName});
          assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_OCCLUDE,
                  mAmWmState.getWmState().getLastTransition());
          assertSingleLaunch(activityName, logSeparator);
     }
-
+    @Test
     public void testOccludeAttrRemove() throws Exception {
         if (!isHandheld()) {
             return;
@@ -122,7 +129,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
         gotoKeyguard();
         String logSeparator = clearLogcat();
         launchActivity(activityName);
-        mAmWmState.computeState(mDevice, new String[] {activityName});
+        mAmWmState.computeState(new String[] {activityName});
         assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_OCCLUDE,
                 mAmWmState.getWmState().getLastTransition());
         assertSingleLaunch(activityName, logSeparator);
@@ -130,10 +137,10 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
         gotoKeyguard();
         logSeparator = clearLogcat();
         launchActivity(activityName);
-        mAmWmState.computeState(mDevice, new String[] {activityName});
+        mAmWmState.computeState(new String[] {activityName});
         assertSingleStartAndStop(activityName, logSeparator);
     }
-
+    @Test
     public void testNewActivityDuringOccludedWithAttr() throws Exception {
         if (!isHandheld()) {
             return;
@@ -145,7 +152,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
         launchActivity(activityName1);
         gotoKeyguard();
         launchActivity(activityName2);
-        mAmWmState.computeState(mDevice, new String[] { activityName2 });
+        mAmWmState.computeState(new String[] { activityName2 });
         assertEquals("Picked wrong transition", TRANSIT_ACTIVITY_OPEN,
                 mAmWmState.getWmState().getLastTransition());
     }

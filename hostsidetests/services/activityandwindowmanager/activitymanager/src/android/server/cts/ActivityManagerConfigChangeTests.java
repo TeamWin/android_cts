@@ -16,20 +16,23 @@
 
 package android.server.cts;
 
-import android.platform.test.annotations.Presubmit;
-
 import static android.server.cts.ActivityManagerState.STATE_RESUMED;
+import static android.server.cts.StateLogger.log;
 import static android.server.cts.StateLogger.logE;
 
-import com.android.ddmlib.Log.LogLevel;
-import com.android.tradefed.log.LogUtil.CLog;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
+import android.platform.test.annotations.Presubmit;
+
+import org.junit.Test;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsServicesHostTestCases android.server.cts.ActivityManagerConfigChangeTests
+ * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsActivityManagerDeviceTestCases android.server.cts.ActivityManagerConfigChangeTests
  */
 public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
     private static final String TEST_ACTIVITY_NAME = "TestActivity";
@@ -41,33 +44,39 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
 
     private static final float EXPECTED_FONT_SIZE_SP = 10.0f;
 
+    @Test
     public void testRotation90Relaunch() throws Exception{
         // Should relaunch on every rotation and receive no onConfigurationChanged()
         testRotation(TEST_ACTIVITY_NAME, 1, 1, 0);
     }
 
+    @Test
     public void testRotation90NoRelaunch() throws Exception {
         // Should receive onConfigurationChanged() on every rotation and no relaunch
         testRotation(NO_RELAUNCH_ACTIVITY_NAME, 1, 0, 1);
     }
 
+    @Test
     public void testRotation180Relaunch() throws Exception {
         // Should receive nothing
         testRotation(TEST_ACTIVITY_NAME, 2, 0, 0);
     }
 
+    @Test
     public void testRotation180NoRelaunch() throws Exception {
         // Should receive nothing
         testRotation(NO_RELAUNCH_ACTIVITY_NAME, 2, 0, 0);
     }
 
     @Presubmit
+    @Test
     public void testChangeFontScaleRelaunch() throws Exception {
         // Should relaunch and receive no onConfigurationChanged()
         testChangeFontScale(FONT_SCALE_ACTIVITY_NAME, true /* relaunch */);
     }
 
     @Presubmit
+    @Test
     public void testChangeFontScaleNoRelaunch() throws Exception {
         // Should receive onConfigurationChanged() and no relaunch
         testChangeFontScale(FONT_SCALE_NO_RELAUNCH_ACTIVITY_NAME, false /* relaunch */);
@@ -79,20 +88,20 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
         launchActivity(activityName);
 
         final String[] waitForActivitiesVisible = new String[] {activityName};
-        mAmWmState.computeState(mDevice, waitForActivitiesVisible);
+        mAmWmState.computeState(waitForActivitiesVisible);
 
         final int initialRotation = 4 - rotationStep;
         setDeviceRotation(initialRotation);
-        mAmWmState.computeState(mDevice, waitForActivitiesVisible);
+        mAmWmState.computeState(waitForActivitiesVisible);
         final int actualStackId = mAmWmState.getAmState().getTaskByActivityName(
                 activityName).mStackId;
         final int displayId = mAmWmState.getAmState().getStackById(actualStackId).mDisplayId;
         final int newDeviceRotation = getDeviceRotation(displayId);
         if (newDeviceRotation == INVALID_DEVICE_ROTATION) {
-            CLog.logAndDisplay(LogLevel.WARN, "Got an invalid device rotation value. "
+            logE("Got an invalid device rotation value. "
                     + "Continuing the test despite of that, but it is likely to fail.");
         } else if (newDeviceRotation != initialRotation) {
-            CLog.logAndDisplay(LogLevel.INFO, "This device doesn't support user rotation "
+            log("This device doesn't support user rotation "
                     + "mode. Not continuing the rotation checks.");
             return;
         }
@@ -100,7 +109,7 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
         for (int rotation = 0; rotation < 4; rotation += rotationStep) {
             final String logSeparator = clearLogcat();
             setDeviceRotation(rotation);
-            mAmWmState.computeState(mDevice, waitForActivitiesVisible);
+            mAmWmState.computeState(waitForActivitiesVisible);
             assertRelaunchOrConfigChanged(activityName, numRelaunch, numConfigChange, logSeparator);
         }
     }
@@ -109,17 +118,17 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
             String activityName, boolean relaunch) throws Exception {
         launchActivity(activityName);
         final String[] waitForActivitiesVisible = new String[] {activityName};
-        mAmWmState.computeState(mDevice, waitForActivitiesVisible);
+        mAmWmState.computeState(waitForActivitiesVisible);
 
         setFontScale(1.0f);
-        mAmWmState.computeState(mDevice, waitForActivitiesVisible);
+        mAmWmState.computeState(waitForActivitiesVisible);
 
         final int densityDpi = getGlobalDensityDpi();
 
         for (float fontScale = 0.85f; fontScale <= 1.3f; fontScale += 0.15f) {
             final String logSeparator = clearLogcat();
             setFontScale(fontScale);
-            mAmWmState.computeState(mDevice, waitForActivitiesVisible);
+            mAmWmState.computeState(waitForActivitiesVisible);
             assertRelaunchOrConfigChanged(activityName, relaunch ? 1 : 0, relaunch ? 0 : 1,
                     logSeparator);
 
@@ -135,6 +144,7 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
      * Test updating application info when app is running. An activity with matching package name
      * must be recreated and its asset sequence number must be incremented.
      */
+    @Test
     public void testUpdateApplicationInfo() throws Exception {
         final String firstLogSeparator = clearLogcat();
 
@@ -145,7 +155,7 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
         final String logSeparator = clearLogcat();
         // Update package info.
         executeShellCommand("am update-appinfo all " + componentName);
-        mAmWmState.waitForWithAmState(mDevice, (amState) -> {
+        mAmWmState.waitForWithAmState((amState) -> {
             // Wait for activity to be resumed and asset seq number to be updated.
             try {
                 return readAssetSeqNumber(TEST_ACTIVITY_NAME, logSeparator) == assetSeq + 1
@@ -195,7 +205,7 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
             Pattern.compile(".*?-(l|m|tv|h|xh|xxh|xxxh|\\d+)dpi-.*?");
 
     private int getGlobalDensityDpi() throws Exception {
-        final String result = getDevice().executeShellCommand("am get-config");
+        final String result = executeShellCommand("am get-config");
         final String[] lines = result.split("\n");
         if (lines.length < 1) {
             throw new IllegalStateException("Invalid config returned from device: " + result);

@@ -17,12 +17,13 @@ package android.server.displayservice;
 
 import static junit.framework.Assert.assertTrue;
 
-import com.android.tradefed.device.CollectingOutputReceiver;
-import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.testtype.DeviceTestCase;
-import java.util.regex.Pattern;
+import android.support.test.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.SystemUtil;
+
+import java.io.IOException;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class DisplayHelper {
     private static final String VIRTUAL_DISPLAY_NAME = "CtsVirtualDisplay";
@@ -32,14 +33,12 @@ public class DisplayHelper {
             ".*DisplayDeviceInfo\\{\"([^\"]+)\":.*, state (\\S+),.*\\}.*");
 
     private boolean mCreated;
-    private final ITestDevice mDevice;
 
-    public DisplayHelper(ITestDevice device) {
-        mDevice = device;
+    public DisplayHelper() {
     }
 
     public void createAndWaitForDisplay(boolean external, boolean requestShowWhenLocked)
-            throws DeviceNotAvailableException {
+            {
         StringBuilder command =
                 new StringBuilder("am startfgservice -n " + VIRTUAL_DISPLAY_SERVICE);
         command.append(" --es command create");
@@ -49,46 +48,42 @@ public class DisplayHelper {
         if (requestShowWhenLocked) {
             command.append(" --ez show_content_when_locked true");
         }
-        mDevice.executeShellCommand(command.toString());
+        executeShellCommand(command.toString());
 
-        waitForDisplayState(mDevice, false /* default */, true /* exists */, true /* on */);
+        waitForDisplayState(false /* default */, true /* exists */, true /* on */);
         mCreated = true;
     }
 
-    public void turnDisplayOff() throws DeviceNotAvailableException {
-        mDevice.executeShellCommand(
+    public void turnDisplayOff() {
+        executeShellCommand(
                 "am start-service -n " + VIRTUAL_DISPLAY_SERVICE + " --es command off");
-        waitForDisplayState(mDevice, false /* default */, true /* exists */, false /* on */);
+        waitForDisplayState(false /* default */, true /* exists */, false /* on */);
     }
 
-    public void turnDisplayOn() throws DeviceNotAvailableException {
-        mDevice.executeShellCommand(
+    public void turnDisplayOn() {
+        executeShellCommand(
                 "am start-service -n " + VIRTUAL_DISPLAY_SERVICE + " --es command on");
-        waitForDisplayState(mDevice, false /* default */, true /* exists */, true /* on */);
+        waitForDisplayState(false /* default */, true /* exists */, true /* on */);
     }
 
-    public void releaseDisplay() throws DeviceNotAvailableException {
+    public void releaseDisplay() {
         if (mCreated) {
-            mDevice.executeShellCommand(
+            executeShellCommand(
                     "am start-service -n " + VIRTUAL_DISPLAY_SERVICE + " --es command destroy");
-            waitForDisplayState(mDevice, false /* default */, false /* exists */, true /* on */);
+            waitForDisplayState(false /* default */, false /* exists */, true /* on */);
         }
         mCreated = false;
     }
 
-    public static void waitForDefaultDisplayState(ITestDevice device, boolean wantOn)
-            throws DeviceNotAvailableException {
-        waitForDisplayState(device, true /* default */, true /* exists */, wantOn);
+    public static void waitForDefaultDisplayState(boolean wantOn) {
+        waitForDisplayState(true /* default */, true /* exists */, wantOn);
     }
 
-    public static boolean getDefaultDisplayState(ITestDevice device)
-            throws DeviceNotAvailableException {
-        return getDisplayState(device, true);
+    public static boolean getDefaultDisplayState() {
+        return getDisplayState(true);
     }
 
-    private static void waitForDisplayState(
-            ITestDevice device, boolean defaultDisplay, boolean wantExists, boolean wantOn)
-            throws DeviceNotAvailableException {
+    private static void waitForDisplayState(boolean defaultDisplay, boolean wantExists, boolean wantOn) {
         int tries = 0;
         boolean done = false;
         do {
@@ -100,7 +95,7 @@ public class DisplayHelper {
                 }
             }
 
-            Boolean state = getDisplayState(device, defaultDisplay);
+            Boolean state = getDisplayState(defaultDisplay);
             done = (!wantExists && state == null)
                     || (wantExists && state != null && state == wantOn);
 
@@ -110,11 +105,8 @@ public class DisplayHelper {
         assertTrue(done);
     }
 
-    private static Boolean getDisplayState(ITestDevice device, boolean defaultDisplay)
-            throws DeviceNotAvailableException {
-        final CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
-        device.executeShellCommand("dumpsys display", outputReceiver);
-        String dump = outputReceiver.getOutput();
+    private static Boolean getDisplayState(boolean defaultDisplay) {
+        String dump = executeShellCommand("dumpsys display");
 
         boolean displayExists = false;
         boolean displayOn = false;
@@ -128,5 +120,15 @@ public class DisplayHelper {
             }
         }
         return null;
+    }
+
+    private static String executeShellCommand(String command) {
+        try {
+            return SystemUtil
+                    .runShellCommand(InstrumentationRegistry.getInstrumentation(), command);
+        } catch (IOException e) {
+            //bubble it up
+            throw new RuntimeException(e);
+        }
     }
 }

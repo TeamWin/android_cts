@@ -16,17 +16,28 @@
 
 package android.server.cts;
 
-import com.android.tradefed.device.CollectingOutputReceiver;
-import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.log.LogUtil.CLog;
-import com.android.tradefed.testtype.DeviceTestCase;
+import static android.server.cts.ActivityManagerTestBase.executeShellCommand;
+import static android.server.cts.StateLogger.log;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import android.graphics.Point;
+import android.os.RemoteException;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.uiautomator.UiDevice;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-public class CrossAppDragAndDropTests extends DeviceTestCase {
+public class CrossAppDragAndDropTests {
     // Constants copied from ActivityManager.StackId. If they are changed there, these must be
     // updated.
     /** ID of stack where fullscreen activities are normally launched into. */
@@ -47,7 +58,6 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
     private static final String AM_REMOVE_STACK = "am stack remove ";
     private static final String AM_START_N = "am start -n ";
     private static final String AM_STACK_LIST = "am stack list";
-    private static final String INPUT_MOUSE_SWIPE = "input mouse swipe ";
     private static final String TASK_ID_PREFIX = "taskId";
 
     // Regex pattern to match adb shell am stack list output of the form:
@@ -55,7 +65,7 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
     private static final String TASK_REGEX_PATTERN_STRING =
             "taskId=[0-9]+: %s bounds=\\[[0-9]+,[0-9]+\\]\\[[0-9]+,[0-9]+\\]";
 
-    private static final int SWIPE_DURATION_MS = 500;
+    private static final int SWIPE_STEPS = 100;
 
     private static final String SOURCE_PACKAGE_NAME = "android.wm.cts.dndsourceapp";
     private static final String TARGET_PACKAGE_NAME = "android.wm.cts.dndtargetapp";
@@ -104,7 +114,7 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
     private static final String AM_SUPPORTS_SPLIT_SCREEN_MULTIWINDOW =
             "am supports-split-screen-multi-window";
 
-    private ITestDevice mDevice;
+    private UiDevice mDevice;
 
     private Map<String, String> mSourceResults;
     private Map<String, String> mTargetResults;
@@ -112,12 +122,9 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
     private String mSourcePackageName;
     private String mTargetPackageName;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        mDevice = getDevice();
-
+    @Before
+    public void setUp() throws Exception {
+        mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         if (!supportsDragAndDrop()) {
             return;
         }
@@ -127,23 +134,17 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
         cleanupState();
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
-
+    @After
+    public void tearDown() throws Exception {
         if (!supportsDragAndDrop()) {
             return;
         }
 
-        mDevice.executeShellCommand(AM_FORCE_STOP + mSourcePackageName);
-        mDevice.executeShellCommand(AM_FORCE_STOP + mTargetPackageName);
+        executeShellCommand(AM_FORCE_STOP + mSourcePackageName);
+        executeShellCommand(AM_FORCE_STOP + mTargetPackageName);
     }
 
-    private String executeShellCommand(String command) throws DeviceNotAvailableException {
-        return mDevice.executeShellCommand(command);
-    }
-
-    private void clearLogs() throws DeviceNotAvailableException {
+    private void clearLogs() {
         executeShellCommand("logcat -c");
     }
 
@@ -151,7 +152,7 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
         return AM_START_N + componentName + " -e mode " + modeExtra;
     }
 
-    private String getMoveTaskCommand(int taskId, int stackId) throws Exception {
+    private String getMoveTaskCommand(int taskId, int stackId) {
         return AM_MOVE_TASK + taskId + " " + stackId + " true";
     }
 
@@ -217,7 +218,7 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
      *         {@code false} to launch the app taking up the right half of the display.
      */
     private void launchFreeformActivity(String packageName, String activityName, String mode,
-            Point displaySize, boolean leftSide) throws Exception{
+            Point displaySize, boolean leftSide) throws Exception {
         clearLogs();
         final String componentName = getComponentName(packageName, activityName);
         executeShellCommand(getStartCommand(componentName, mode) + " --stack "
@@ -236,7 +237,7 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
             Thread.sleep(500);
             String logs = executeShellCommand("logcat -d -b events");
             for (String line : logs.split("\\n")) {
-                if(line.contains("am_on_resume_called") && line.contains(fullActivityName)) {
+                if (line.contains("am_on_resume_called") && line.contains(fullActivityName)) {
                     return;
                 }
             }
@@ -245,33 +246,18 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
         throw new Exception(fullActivityName + " has failed to start");
     }
 
-    private void injectInput(Point from, Point to, int durationMs) throws Exception {
-        executeShellCommand(
-                INPUT_MOUSE_SWIPE + from.x + " " + from.y + " " + to.x + " " + to.y + " " +
-                durationMs);
+    private void injectInput(Point from, Point to, int steps) throws Exception {
+        mDevice.drag(from.x, from.y, to.x, to.y, steps);
     }
 
-    static class Point {
-        public int x, y;
-
-        public Point(int _x, int _y) {
-            x=_x;
-            y=_y;
-        }
-
-        public Point() {}
-    }
-
-    private String findTaskInfo(String name) throws Exception {
-        CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
-        mDevice.executeShellCommand(AM_STACK_LIST, outputReceiver);
-        final String output = outputReceiver.getOutput();
+    private String findTaskInfo(String name) {
+        final String output = executeShellCommand(AM_STACK_LIST);
         final StringBuilder builder = new StringBuilder();
         builder.append("Finding task info for task: ");
         builder.append(name);
-        builder.append("\nParsing adb shell am output: " );
+        builder.append("\nParsing adb shell am output: ");
         builder.append(output);
-        CLog.i(builder.toString());
+        log(builder.toString());
         final Pattern pattern = Pattern.compile(String.format(TASK_REGEX_PATTERN_STRING, name));
         for (String line : output.split("\\n")) {
             final String truncatedLine;
@@ -304,7 +290,7 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
         return false;
     }
 
-    private int getActivityTaskId(String name) throws Exception {
+    private int getActivityTaskId(String name) {
         final String taskInfo = findTaskInfo(name);
         for (String word : taskInfo.split("\\s+")) {
             if (word.startsWith(TASK_ID_PREFIX)) {
@@ -336,11 +322,15 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
         point.y = Integer.parseInt(parts[1]);
     }
 
-    private void unlockDevice() throws DeviceNotAvailableException {
+    private void unlockDevice() {
         // Wake up the device, if necessary.
-        executeShellCommand("input keyevent 224");
+        try {
+            mDevice.wakeUp();
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
+        }
         // Unlock the screen.
-        executeShellCommand("input keyevent 82");
+        mDevice.pressMenu();
     }
 
     private Map<String, String> getLogResults(String className, String lastResultKey)
@@ -378,8 +368,8 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
     }
 
     private void assertDragAndDropResults(String sourceMode, String targetMode,
-                                          String expectedStartDragResult, String expectedDropResult,
-                                          String expectedListenerResults) throws Exception {
+            String expectedStartDragResult, String expectedDropResult,
+            String expectedListenerResults) throws Exception {
         if (!supportsDragAndDrop()) {
             return;
         }
@@ -400,10 +390,12 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
 
         clearLogs();
 
-        injectInput(
-                getWindowCenter(getComponentName(mSourcePackageName, SOURCE_ACTIVITY_NAME)),
-                getWindowCenter(getComponentName(mTargetPackageName, TARGET_ACTIVITY_NAME)),
-                SWIPE_DURATION_MS);
+        Point p1 = getWindowCenter(getComponentName(mSourcePackageName, SOURCE_ACTIVITY_NAME));
+        assertNotNull(p1);
+        Point p2 = getWindowCenter(getComponentName(mTargetPackageName, TARGET_ACTIVITY_NAME));
+        assertNotNull(p2);
+
+        injectInput(p1, p2, SWIPE_STEPS);
 
         mSourceResults = getLogResults(SOURCE_LOG_TAG, RESULT_KEY_START_DRAG);
         assertSourceResult(RESULT_KEY_START_DRAG, expectedStartDragResult);
@@ -452,95 +444,114 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
         }
     }
 
-    private boolean supportsDragAndDrop() throws Exception {
-        String supportsMultiwindow = mDevice.executeShellCommand("am supports-multiwindow").trim();
+    private boolean supportsDragAndDrop() {
+        String supportsMultiwindow = executeShellCommand("am supports-multiwindow").trim();
         if ("true".equals(supportsMultiwindow)) {
             return true;
         } else if ("false".equals(supportsMultiwindow)) {
             return false;
         } else {
-            throw new Exception(
+            throw new RuntimeException(
                     "device does not support \"am supports-multiwindow\" shell command.");
         }
     }
 
-    private boolean supportsSplitScreenMultiWindow() throws DeviceNotAvailableException {
+    private boolean supportsSplitScreenMultiWindow() {
         return !executeShellCommand(AM_SUPPORTS_SPLIT_SCREEN_MULTIWINDOW).startsWith("false");
     }
 
-    private boolean supportsFreeformMultiWindow() throws DeviceNotAvailableException {
-        return mDevice.hasFeature("feature:android.software.freeform_window_management");
+    private boolean supportsFreeformMultiWindow() {
+        final String output = executeShellCommand("pm list features");
+        return output.contains("feature:android.software.freeform_window_management");
     }
 
+    @Test
     public void testCancelSoon() throws Exception {
         assertDropResult(CANCEL_SOON, REQUEST_NONE, RESULT_MISSING);
     }
 
+    @Test
     public void testDisallowGlobal() throws Exception {
         assertNoGlobalDragEvents(DISALLOW_GLOBAL, RESULT_OK);
     }
 
+    @Test
     public void testDisallowGlobalBelowSdk24() throws Exception {
         mTargetPackageName = TARGET_23_PACKAGE_NAME;
         assertNoGlobalDragEvents(GRANT_NONE, RESULT_OK);
     }
 
+    @Test
     public void testFileUriLocal() throws Exception {
         assertNoGlobalDragEvents(FILE_LOCAL, RESULT_OK);
     }
 
+    @Test
     public void testFileUriGlobal() throws Exception {
         assertNoGlobalDragEvents(FILE_GLOBAL, RESULT_EXCEPTION);
     }
 
+    @Test
     public void testGrantNoneRequestNone() throws Exception {
         assertDropResult(GRANT_NONE, REQUEST_NONE, RESULT_EXCEPTION);
     }
 
+    @Test
     public void testGrantNoneRequestRead() throws Exception {
         assertDropResult(GRANT_NONE, REQUEST_READ, RESULT_NULL_DROP_PERMISSIONS);
     }
 
+    @Test
     public void testGrantNoneRequestWrite() throws Exception {
         assertDropResult(GRANT_NONE, REQUEST_WRITE, RESULT_NULL_DROP_PERMISSIONS);
     }
 
+    @Test
     public void testGrantReadRequestNone() throws Exception {
         assertDropResult(GRANT_READ, REQUEST_NONE, RESULT_EXCEPTION);
     }
 
+    @Test
     public void testGrantReadRequestRead() throws Exception {
         assertDropResult(GRANT_READ, REQUEST_READ, RESULT_OK);
     }
 
+    @Test
     public void testGrantReadRequestWrite() throws Exception {
         assertDropResult(GRANT_READ, REQUEST_WRITE, RESULT_EXCEPTION);
     }
 
+    @Test
     public void testGrantReadNoPrefixRequestReadNested() throws Exception {
         assertDropResult(GRANT_READ_NOPREFIX, REQUEST_READ_NESTED, RESULT_EXCEPTION);
     }
 
+    @Test
     public void testGrantReadPrefixRequestReadNested() throws Exception {
         assertDropResult(GRANT_READ_PREFIX, REQUEST_READ_NESTED, RESULT_OK);
     }
 
+    @Test
     public void testGrantPersistableRequestTakePersistable() throws Exception {
         assertDropResult(GRANT_READ_PERSISTABLE, REQUEST_TAKE_PERSISTABLE, RESULT_OK);
     }
 
+    @Test
     public void testGrantReadRequestTakePersistable() throws Exception {
         assertDropResult(GRANT_READ, REQUEST_TAKE_PERSISTABLE, RESULT_EXCEPTION);
     }
 
+    @Test
     public void testGrantWriteRequestNone() throws Exception {
         assertDropResult(GRANT_WRITE, REQUEST_NONE, RESULT_EXCEPTION);
     }
 
+    @Test
     public void testGrantWriteRequestRead() throws Exception {
         assertDropResult(GRANT_WRITE, REQUEST_READ, RESULT_EXCEPTION);
     }
 
+    @Test
     public void testGrantWriteRequestWrite() throws Exception {
         assertDropResult(GRANT_WRITE, REQUEST_WRITE, RESULT_OK);
     }

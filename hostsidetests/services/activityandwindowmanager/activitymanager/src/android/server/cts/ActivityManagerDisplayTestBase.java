@@ -16,12 +16,13 @@
 
 package android.server.cts;
 
-import com.android.tradefed.device.CollectingOutputReceiver;
-import com.android.tradefed.device.DeviceNotAvailableException;
-
 import static android.server.cts.ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID;
 import static android.server.cts.StateLogger.log;
-import static android.server.cts.StateLogger.logE;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import org.junit.After;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,14 +53,11 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
     /** Temp storage used for parsing. */
     final LinkedList<String> mDumpLines = new LinkedList<>();
 
+    @After
     @Override
-    protected void tearDown() throws Exception {
-        try {
-            destroyVirtualDisplays();
-            destroySimulatedDisplays();
-        } catch (DeviceNotAvailableException e) {
-            logE(e.getMessage());
-        }
+    public void tearDown() throws Exception {
+        destroyVirtualDisplays();
+        destroySimulatedDisplays();
         super.tearDown();
     }
 
@@ -199,10 +197,8 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
         }
     }
 
-    ReportedDisplays getDisplaysStates() throws DeviceNotAvailableException {
-        final CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
-        mDevice.executeShellCommand(DUMPSYS_ACTIVITY_PROCESSES, outputReceiver);
-        String dump = outputReceiver.getOutput();
+    ReportedDisplays getDisplaysStates() {
+        String dump = executeShellCommand(DUMPSYS_ACTIVITY_PROCESSES);
         mDumpLines.clear();
 
         Collections.addAll(mDumpLines, dump.split("\\n"));
@@ -249,7 +245,7 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
         } else {
             launchActivity(VIRTUAL_DISPLAY_ACTIVITY);
         }
-        mAmWmState.computeState(mDevice, new String[] {VIRTUAL_DISPLAY_ACTIVITY},
+        mAmWmState.computeState(new String[] {VIRTUAL_DISPLAY_ACTIVITY},
                 false /* compareTaskAndStackBounds */);
         final ActivityManagerDisplayTests.ReportedDisplays originalDS = getDisplaysStates();
 
@@ -435,8 +431,7 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
     }
 
     /** Wait for provided number of displays and report their configurations. */
-    ReportedDisplays getDisplayStateAfterChange(int expectedDisplayCount)
-            throws DeviceNotAvailableException {
+    ReportedDisplays getDisplayStateAfterChange(int expectedDisplayCount) {
         ReportedDisplays ds = getDisplaysStates();
 
         int retriesLeft = 5;

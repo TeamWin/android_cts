@@ -18,6 +18,10 @@ package android.server.cts;
 
 import static android.server.cts.StateLogger.log;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

@@ -16,24 +16,22 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_TAGS := tests optional
 
 # Must match the package name in CtsTestCaseList.mk
-LOCAL_MODULE := CtsServicesHostTestCases
+LOCAL_PACKAGE_NAME := CtsActivityManagerDeviceTestCases
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed
 LOCAL_STATIC_JAVA_LIBRARIES := cts-amwm-util  \
-    cts-display-service-app-util \
-    platform-test-annotations-host
+    cts-display-service-app-util
 
 LOCAL_CTS_TEST_PACKAGE := android.server
 
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
-include $(BUILD_CTS_HOST_JAVA_LIBRARY)
+include $(BUILD_CTS_PACKAGE)
 
 # Build the test APKs using their own makefiles
 include $(call all-makefiles-under,$(LOCAL_PATH))

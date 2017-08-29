@@ -18,21 +18,17 @@ package android.server.cts;
 
 import static android.server.cts.StateLogger.logE;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.awt.Rectangle;
+import static org.junit.Assert.assertTrue;
 
-import com.android.ddmlib.Log.LogLevel;
-import com.android.tradefed.device.CollectingOutputReceiver;
-import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.log.LogUtil.CLog;
-import com.android.tradefed.testtype.DeviceTestCase;
-
-import android.server.cts.ActivityManagerTestBase;
 import android.server.cts.WindowManagerState.WindowState;
 
+import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
+
 public class ChildMovementTests extends ParentChildTestBase {
+
     private List<WindowState> mWindowList = new ArrayList();
 
     @Override
@@ -50,7 +46,7 @@ public class ChildMovementTests extends ParentChildTestBase {
             mAmWmState.getWmState().getMatchingVisibleWindowState(fullWindowName, mWindowList);
             return mWindowList.get(0);
         } catch (Exception e) {
-            CLog.logAndDisplay(LogLevel.INFO, "Couldn't find window: " + fullWindowName);
+            logE("Couldn't find window: " + fullWindowName);
             return null;
         }
     }
@@ -60,17 +56,17 @@ public class ChildMovementTests extends ParentChildTestBase {
             mAmWmState.getWmState().getPrefixMatchingVisibleWindowState(prefix, mWindowList);
             return mWindowList.get(0);
         } catch (Exception e) {
-            CLog.logAndDisplay(LogLevel.INFO, "Couldn't find window: " + prefix);
+            logE("Couldn't find window: " + prefix);
             return null;
         }
     }
 
     void doSingleTest(ParentChildTest t) throws Exception {
         String popupName = "ChildWindow";
-        final String[] waitForVisible = new String[] { popupName };
+        final String[] waitForVisible = new String[]{popupName};
 
         mAmWmState.setUseActivityNamesForWindowNames(false);
-        mAmWmState.computeState(mDevice, waitForVisible);
+        mAmWmState.computeState(waitForVisible);
         WindowState popup = getSingleWindowByPrefix(popupName);
         WindowState parent = getSingleWindow(getBaseWindowName() + activityName());
 
@@ -105,7 +101,7 @@ public class ChildMovementTests extends ParentChildTestBase {
                 return;
             }
             synchronized (monitor) {
-                if (sawChildMove ^ sawMainMove ) {
+                if (sawChildMove ^ sawMainMove) {
                     monitor.notifyAll();
                     return;
                 }
@@ -134,9 +130,10 @@ public class ChildMovementTests extends ParentChildTestBase {
      * Since the Child is static within the window, if we ever see one of
      * them move xor the other one we have a problem!
      */
+    @Test
     public void testSurfaceMovesWithParent() throws Exception {
         doFullscreenTest("MovesWithParent",
-            (WindowState parent, WindowState popup) -> {
+                (WindowState parent, WindowState popup) -> {
                     popupName = popup.getName();
                     mainName = parent.getName();
                     installSurfaceObserver(observer);
@@ -149,6 +146,6 @@ public class ChildMovementTests extends ParentChildTestBase {
                         assertTrue(testPassed);
                         removeSurfaceObserver();
                     }
-            });
+                });
     }
 }

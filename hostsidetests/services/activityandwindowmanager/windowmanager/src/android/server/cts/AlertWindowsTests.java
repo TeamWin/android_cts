@@ -16,8 +16,13 @@
 
 package android.server.cts;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import android.platform.test.annotations.Presubmit;
-import com.android.tradefed.device.DeviceNotAvailableException;
+
+import org.junit.After;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,7 +30,7 @@ import java.util.List;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsWindowManagerHostTestCases android.server.cts.AlertWindowsTests
+ * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsWindowManagerDeviceTestCases android.server.cts.AlertWindowsTests
  */
 @Presubmit
 public class AlertWindowsTests extends ActivityManagerTestBase {
@@ -62,33 +67,35 @@ public class AlertWindowsTests extends ActivityManagerTestBase {
             TYPE_INPUT_METHOD,
             TYPE_NAVIGATION_BAR);
 
+    @After
     @Override
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         super.tearDown();
-        try {
-            setAlertWindowPermission(PACKAGE_NAME, false);
-            setAlertWindowPermission(SDK_25_PACKAGE_NAME, false);
-            executeShellCommand("am force-stop " + PACKAGE_NAME);
-            executeShellCommand("am force-stop " + SDK_25_PACKAGE_NAME);
-        } catch (DeviceNotAvailableException e) {
-        }
+        setAlertWindowPermission(PACKAGE_NAME, false);
+        setAlertWindowPermission(SDK_25_PACKAGE_NAME, false);
+        executeShellCommand("am force-stop " + PACKAGE_NAME);
+        executeShellCommand("am force-stop " + SDK_25_PACKAGE_NAME);
     }
 
+    @Test
     public void testAlertWindowAllowed() throws Exception {
         runAlertWindowTest(PACKAGE_NAME, ACTIVITY_NAME, true /* hasAlertWindowPermission */,
                 true /* atLeastO */);
     }
 
+    @Test
     public void testAlertWindowDisallowed() throws Exception {
         runAlertWindowTest(PACKAGE_NAME, ACTIVITY_NAME, false /* hasAlertWindowPermission */,
                 true /* atLeastO */);
     }
 
+    @Test
     public void testAlertWindowAllowedSdk25() throws Exception {
         runAlertWindowTest(SDK_25_PACKAGE_NAME, SDK_25_ACTIVITY_NAME,
                 true /* hasAlertWindowPermission */, false /* atLeastO */);
     }
 
+    @Test
     public void testAlertWindowDisallowedSdk25() throws Exception {
         runAlertWindowTest(SDK_25_PACKAGE_NAME, SDK_25_ACTIVITY_NAME,
                 false /* hasAlertWindowPermission */, false /* atLeastO */);
@@ -100,7 +107,7 @@ public class AlertWindowsTests extends ActivityManagerTestBase {
         setAlertWindowPermission(packageName, hasAlertWindowPermission);
 
         executeShellCommand(getAmStartCmd(activityName));
-        mAmWmState.computeState(mDevice, new String[] { activityName });
+        mAmWmState.computeState(new String[]{activityName});
         mAmWmState.assertVisibility(activityName, true);
 
         assertAlertWindows(packageName, hasAlertWindowPermission, atLeastO);
@@ -138,14 +145,14 @@ public class AlertWindowsTests extends ActivityManagerTestBase {
 
         // Assert that the alert windows have higher z-order than the main app window
         assertTrue("lowestAlertWindow=" + lowestAlertWindow + " less than mainAppWindow="
-                        + mainAppWindow, lowestAlertWindow.getLayer() > mainAppWindow.getLayer());
+                + mainAppWindow, lowestAlertWindow.getLayer() > mainAppWindow.getLayer());
 
         // Assert that legacy alert windows have a lower z-order than the new alert window layer.
         final WindowManagerState.WindowState appOverlayWindow =
                 wMState.getWindowByPackageName(packageName, TYPE_APPLICATION_OVERLAY);
         if (appOverlayWindow != null && highestAlertWindow != appOverlayWindow) {
             assertTrue("highestAlertWindow=" + highestAlertWindow
-                    + " greater than appOverlayWindow=" + appOverlayWindow,
+                            + " greater than appOverlayWindow=" + appOverlayWindow,
                     highestAlertWindow.getLayer() < appOverlayWindow.getLayer());
         }
 
@@ -156,12 +163,12 @@ public class AlertWindowsTests extends ActivityManagerTestBase {
             wMState.sortWindowsByLayer(systemWindows);
             final WindowManagerState.WindowState lowestSystemWindow = alertWindows.get(0);
             assertTrue("highestAlertWindow=" + highestAlertWindow
-                    + " greater than lowestSystemWindow=" + lowestSystemWindow,
+                            + " greater than lowestSystemWindow=" + lowestSystemWindow,
                     highestAlertWindow.getLayer() < lowestSystemWindow.getLayer());
         }
     }
 
-    private void setAlertWindowPermission(String packageName, boolean allow) throws Exception {
+    private void setAlertWindowPermission(String packageName, boolean allow) {
         executeShellCommand("appops set " + packageName + " android:system_alert_window "
                 + (allow ? "allow" : "deny"));
     }

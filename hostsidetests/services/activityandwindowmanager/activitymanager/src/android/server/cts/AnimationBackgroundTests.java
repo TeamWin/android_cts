@@ -16,12 +16,21 @@
 
 package android.server.cts;
 
+
+import static android.app.ActivityManager.StackId.FULLSCREEN_WORKSPACE_STACK_ID;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import org.junit.Test;
+
 /**
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsServicesHostTestCases android.server.cts.AnimationBackgroundTests
+ * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsActivityManagerDeviceTestCases android.server.cts.AnimationBackgroundTests
  */
 public class AnimationBackgroundTests extends ActivityManagerTestBase {
 
+    @Test
     public void testAnimationBackground_duringAnimation() throws Exception {
         launchActivity(LAUNCHING_ACTIVITY);
         getLaunchActivityBuilder()
@@ -30,7 +39,7 @@ public class AnimationBackgroundTests extends ActivityManagerTestBase {
                 .execute();
 
         // Make sure we are in the middle of the animation.
-        mAmWmState.waitForWithWmState(mDevice, state -> state
+        mAmWmState.waitForWithWmState(state -> state
                 .getStack(FULLSCREEN_WORKSPACE_STACK_ID)
                         .isWindowAnimationBackgroundSurfaceShowing(),
                 "***Waiting for animation background showing");
@@ -39,10 +48,11 @@ public class AnimationBackgroundTests extends ActivityManagerTestBase {
                 .isWindowAnimationBackgroundSurfaceShowing());
     }
 
+    @Test
     public void testAnimationBackground_gone() throws Exception {
         launchActivity(LAUNCHING_ACTIVITY);
         getLaunchActivityBuilder().setTargetActivityName("AnimationTestActivity").execute();
-        mAmWmState.computeState(mDevice, new String[] { "AnimationTestActivity "});
+        mAmWmState.computeState(new String[] { "AnimationTestActivity "});
         assertFalse("window animation background needs to be gone", mAmWmState.getWmState()
                 .getStack(FULLSCREEN_WORKSPACE_STACK_ID)
                 .isWindowAnimationBackgroundSurfaceShowing());

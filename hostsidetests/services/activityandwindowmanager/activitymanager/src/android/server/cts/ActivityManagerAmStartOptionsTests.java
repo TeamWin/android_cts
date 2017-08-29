@@ -16,14 +16,17 @@
 
 package android.server.cts;
 
-import com.android.tradefed.device.DeviceNotAvailableException;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
-import java.util.regex.Pattern;
+import org.junit.Test;
+
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsServicesHostTestCases android.server.cts.ActivityManagerAmStartOptionsTests
+ * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsActivityManagerDeviceTestCases android.server.cts.ActivityManagerAmStartOptionsTests
  */
 public class ActivityManagerAmStartOptionsTests extends ActivityManagerTestBase {
 
@@ -31,6 +34,7 @@ public class ActivityManagerAmStartOptionsTests extends ActivityManagerTestBase 
     private static final String ENTRYPOINT_ACTIVITY_NAME = "EntryPointAliasActivity";
     private static final String SINGLE_TASK_ACTIVITY_NAME = "SingleTaskActivity";
 
+    @Test
     public void testDashD() throws Exception {
         final String activityComponentName =
                 ActivityManagerTestBase.getActivityComponentName(TEST_ACTIVITY_NAME);
@@ -41,9 +45,9 @@ public class ActivityManagerAmStartOptionsTests extends ActivityManagerTestBase 
         // -D could fail in this case if the force stop of process is broken.
         int prevProcId = -1;
         for (int i = 0; i < 2; i++) {
-            executeShellCommand(getAmStartCmd(TEST_ACTIVITY_NAME) + " -D");
+            executeShellCommand("am start -n " + getActivityComponentName(TEST_ACTIVITY_NAME) + " -D");
 
-            mAmWmState.waitForDebuggerWindowVisible(mDevice, waitForActivityRecords);
+            mAmWmState.waitForDebuggerWindowVisible(waitForActivityRecords);
             int procId = mAmWmState.getAmState().getActivityProcId(activityComponentName);
 
             assertTrue("Invalid ProcId.", procId >= 0);
@@ -54,10 +58,12 @@ public class ActivityManagerAmStartOptionsTests extends ActivityManagerTestBase 
         }
     }
 
+    @Test
     public void testDashW_Direct() throws Exception {
         testDashW(SINGLE_TASK_ACTIVITY_NAME, SINGLE_TASK_ACTIVITY_NAME);
     }
 
+    @Test
     public void testDashW_Indirect() throws Exception {
         testDashW(ENTRYPOINT_ACTIVITY_NAME, SINGLE_TASK_ACTIVITY_NAME);
     }
@@ -84,7 +90,7 @@ public class ActivityManagerAmStartOptionsTests extends ActivityManagerTestBase 
         // different in subsequent warm/hot launches, so that the entrypoint alias
         // activity is always started, but the actual activity is not started again
         // because of the NEW_TASK and singleTask flags.
-        final String result = executeShellCommand(getAmStartCmd(entryActivity) + " -W"
+        final String result = executeShellCommand("am start -n " + getActivityComponentName(entryActivity) + " -W"
                 + (shouldStart ? " -d about:blank" : ""));
 
         // Verify shell command return value
@@ -150,8 +156,7 @@ public class ActivityManagerAmStartOptionsTests extends ActivityManagerTestBase 
     private static final Pattern sDisplayTimePattern =
             Pattern.compile("(.+): Displayed (.*): (\\+{0,1})([0-9]+)ms(.*)");
 
-    void verifyLogcat(String actualActivityName, boolean shouldStart, String logSeparator)
-            throws DeviceNotAvailableException {
+    void verifyLogcat(String actualActivityName, boolean shouldStart, String logSeparator) {
         int displayCount = 0;
         String activityName = null;
 

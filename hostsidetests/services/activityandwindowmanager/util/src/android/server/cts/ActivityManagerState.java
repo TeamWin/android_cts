@@ -16,29 +16,30 @@
 
 package android.server.cts;
 
-import com.android.tradefed.device.CollectingOutputReceiver;
-import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.device.ITestDevice;
+import static android.app.ActivityManager.StackId.HOME_STACK_ID;
+import static android.app.ActivityManager.StackId.RECENTS_STACK_ID;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
+import static android.server.cts.StateLogger.log;
+import static android.server.cts.StateLogger.logE;
 
-import java.awt.Rectangle;
-import java.lang.Integer;
-import java.lang.String;
+import android.graphics.Rect;
+import android.support.test.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.SystemUtil;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-
 import java.util.Map;
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
-
-import static android.server.cts.ActivityManagerTestBase.HOME_STACK_ID;
-import static android.server.cts.ActivityManagerTestBase.RECENTS_STACK_ID;
-import static android.server.cts.StateLogger.log;
-import static android.server.cts.StateLogger.logE;
+import java.util.regex.Pattern;
 
 class ActivityManagerState {
+
     public static final int DUMP_MODE_ACTIVITIES = 0;
 
     public static final String STATE_RESUMED = "RESUMED";
@@ -49,11 +50,6 @@ class ActivityManagerState {
 
     private static final String DUMPSYS_ACTIVITY_ACTIVITIES = "dumpsys activity activities";
 
-    // Copied from ActivityRecord.java
-    private static final int APPLICATION_ACTIVITY_TYPE = 0;
-    private static final int HOME_ACTIVITY_TYPE = 1;
-    private static final int RECENTS_ACTIVITY_TYPE = 2;
-
     private final Pattern mDisplayIdPattern = Pattern.compile("Display #(\\d+).*");
     private final Pattern mStackIdPattern = Pattern.compile("Stack #(\\d+)\\:");
     private final Pattern mResumedActivityPattern =
@@ -62,7 +58,7 @@ class ActivityManagerState {
             Pattern.compile("mFocusedStack=ActivityStack\\{(.+) stackId=(\\d+), (.+)\\}(.+)");
 
     private final Pattern[] mExtractStackExitPatterns =
-            { mStackIdPattern, mResumedActivityPattern, mFocusedStackPattern, mDisplayIdPattern };
+            {mStackIdPattern, mResumedActivityPattern, mFocusedStackPattern, mDisplayIdPattern};
 
     // Stacks in z-order with the top most at the front of the list, starting with primary display.
     private final List<ActivityStack> mStacks = new ArrayList();
@@ -74,11 +70,11 @@ class ActivityManagerState {
     private final List<String> mResumedActivities = new ArrayList();
     private final LinkedList<String> mSysDump = new LinkedList();
 
-    void computeState(ITestDevice device) throws DeviceNotAvailableException {
-        computeState(device, DUMP_MODE_ACTIVITIES);
+    void computeState() {
+        computeState(DUMP_MODE_ACTIVITIES);
     }
 
-    void computeState(ITestDevice device, int dumpMode) throws DeviceNotAvailableException {
+    void computeState(int dumpMode) {
         // It is possible the system is in the middle of transition to the right state when we get
         // the dump. We try a few times to get the information we need before giving up.
         int retriesLeft = 3;
@@ -101,14 +97,20 @@ class ActivityManagerState {
                 }
             }
 
-            final CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
             String dumpsysCmd = "";
             switch (dumpMode) {
                 case DUMP_MODE_ACTIVITIES:
-                    dumpsysCmd = DUMPSYS_ACTIVITY_ACTIVITIES; break;
+                    dumpsysCmd = DUMPSYS_ACTIVITY_ACTIVITIES;
+                    break;
             }
-            device.executeShellCommand(dumpsysCmd, outputReceiver);
-            dump = outputReceiver.getOutput();
+
+            try {
+                dump = SystemUtil
+                        .runShellCommand(InstrumentationRegistry.getInstrumentation(), dumpsysCmd);
+            } catch (IOException e) {
+                //bubble it up
+                throw new RuntimeException(e);
+            }
             parseSysDump(dump);
 
             retry = mStacks.isEmpty() || mFocusedStackId == -1 || (mResumedActivityRecord == null
@@ -268,11 +270,11 @@ class ActivityManagerState {
     boolean isActivityVisible(String activityName) {
         for (ActivityStack stack : mStacks) {
             for (ActivityTask task : stack.mTasks) {
-               for (Activity activity : task.mActivities) {
-                   if (activity.name.equals(activityName)) {
-                       return activity.visible;
-                   }
-               }
+                for (Activity activity : task.mActivities) {
+                    if (activity.name.equals(activityName)) {
+                        return activity.visible;
+                    }
+                }
             }
         }
         return false;
@@ -295,11 +297,11 @@ class ActivityManagerState {
     int getActivityProcId(String activityName) {
         for (ActivityStack stack : mStacks) {
             for (ActivityTask task : stack.mTasks) {
-               for (Activity activity : task.mActivities) {
-                   if (activity.name.equals(activityName)) {
-                       return activity.procId;
-                   }
-               }
+                for (Activity activity : task.mActivities) {
+                    if (activity.name.equals(activityName)) {
+                        return activity.procId;
+                    }
+                }
             }
         }
         return -1;
@@ -327,7 +329,7 @@ class ActivityManagerState {
         ActivityStack homeStack = getStackById(HOME_STACK_ID);
         if (homeStack != null) {
             for (ActivityTask task : homeStack.mTasks) {
-                if (task.mTaskType == HOME_ACTIVITY_TYPE) {
+                if (task.mTaskType == ACTIVITY_TYPE_HOME) {
                     return task;
                 }
             }
@@ -340,7 +342,7 @@ class ActivityManagerState {
         ActivityStack recentsStack = getStackById(RECENTS_STACK_ID);
         if (recentsStack != null) {
             for (ActivityTask task : recentsStack.mTasks) {
-                if (task.mTaskType == RECENTS_ACTIVITY_TYPE) {
+                if (task.mTaskType == ACTIVITY_TYPE_RECENTS) {
                     return task;
                 }
             }
@@ -385,19 +387,17 @@ class ActivityManagerState {
         private static final Pattern TASK_ID_PATTERN = Pattern.compile("Task id #(\\d+)");
         private static final Pattern RESUMED_ACTIVITY_PATTERN = Pattern.compile(
                 "mResumedActivity\\: ActivityRecord\\{(.+) u(\\d+) (\\S+) (\\S+)\\}");
-        private static final Pattern SLEEPING_PATTERN = Pattern.compile("isSleeping=(\\S+)");
 
         int mDisplayId;
         int mStackId;
         String mResumedActivity;
-        Boolean mSleeping; // A Boolean to trigger an NPE if it's not initialized
         ArrayList<ActivityTask> mTasks = new ArrayList();
 
         private ActivityStack() {
         }
 
         static ActivityStack create(LinkedList<String> dump, Pattern stackIdPattern,
-                                    Pattern[] exitPatterns, int displayId) {
+                Pattern[] exitPatterns, int displayId) {
             final String line = dump.peek().trim();
 
             final Matcher matcher = stackIdPattern.matcher(line);
@@ -453,13 +453,6 @@ class ActivityManagerState {
                     log(mResumedActivity);
                     continue;
                 }
-
-                matcher = SLEEPING_PATTERN.matcher(line);
-                if (matcher.matches()) {
-                    log(line);
-                    mSleeping = "true".equals(matcher.group(1));
-                    continue;
-                }
             }
         }
 
@@ -502,6 +495,7 @@ class ActivityManagerState {
     }
 
     static class ActivityTask extends ActivityContainer {
+
         private static final Pattern TASK_RECORD_PATTERN = Pattern.compile("\\* TaskRecord\\"
                 + "{(\\S+) #(\\d+) (\\S+)=(\\S+) U=(\\d+) StackId=(\\d+) sz=(\\d+)\\}");
 
@@ -515,7 +509,7 @@ class ActivityManagerState {
                 "\\* Hist #(\\d+)\\: ActivityRecord\\{(\\S+) u(\\d+) (\\S+) t(\\d+)\\}");
 
         private static final Pattern TASK_TYPE_PATTERN = Pattern.compile("autoRemoveRecents=(\\S+) "
-                + "isPersistable=(\\S+) numFullscreen=(\\d+) taskType=(\\d+) "
+                + "isPersistable=(\\S+) numFullscreen=(\\d+) activityType=(\\d+) "
                 + "mTaskToReturnTo=(\\d+)");
 
         private static final Pattern RESIZABLE_PATTERN = Pattern.compile(
@@ -523,7 +517,7 @@ class ActivityManagerState {
 
         int mTaskId;
         int mStackId;
-        Rectangle mLastNonFullscreenBounds;
+        Rect mLastNonFullscreenBounds;
         String mRealActivity;
         String mOrigActivity;
         ArrayList<Activity> mActivities = new ArrayList();
@@ -598,6 +592,7 @@ class ActivityManagerState {
                 if (matcher.matches()) {
                     log(line);
                     mLastNonFullscreenBounds = extractBounds(matcher);
+                    continue;
                 }
 
                 matcher = REAL_ACTIVITY_PATTERN.matcher(line);
@@ -656,6 +651,7 @@ class ActivityManagerState {
     }
 
     static class Activity {
+
         private static final Pattern STATE_PATTERN = Pattern.compile("state=(\\S+).*");
         private static final Pattern VISIBILITY_PATTERN = Pattern.compile("keysPaused=(\\S+) "
                 + "inHistory=(\\S+) visible=(\\S+) sleeping=(\\S+) idle=(\\S+) "
@@ -743,6 +739,7 @@ class ActivityManagerState {
     }
 
     static abstract class ActivityContainer {
+
         protected static final Pattern FULLSCREEN_PATTERN = Pattern.compile("mFullscreen=(\\S+)");
         protected static final Pattern BOUNDS_PATTERN =
                 Pattern.compile("mBounds=Rect\\((\\d+), (\\d+) - (\\d+), (\\d+)\\)");
@@ -752,7 +749,7 @@ class ActivityManagerState {
                 Pattern.compile("mMinHeight=(\\d+)");
 
         protected boolean mFullscreen;
-        protected Rectangle mBounds;
+        protected Rect mBounds;
         protected int mMinWidth = -1;
         protected int mMinHeight = -1;
 
@@ -778,12 +775,12 @@ class ActivityManagerState {
             return true;
         }
 
-        static Rectangle extractBounds(Matcher matcher) {
+        static Rect extractBounds(Matcher matcher) {
             final int left = Integer.valueOf(matcher.group(1));
             final int top = Integer.valueOf(matcher.group(2));
             final int right = Integer.valueOf(matcher.group(3));
             final int bottom = Integer.valueOf(matcher.group(4));
-            final Rectangle rect = new Rectangle(left, top, right - left, bottom - top);
+            final Rect rect = new Rect(left, top, right, bottom);
 
             log(rect.toString());
             return rect;
@@ -805,7 +802,7 @@ class ActivityManagerState {
             return true;
         }
 
-        Rectangle getBounds() {
+        Rect getBounds() {
             return mBounds;
         }
 
@@ -823,6 +820,7 @@ class ActivityManagerState {
     }
 
     static class KeyguardControllerState {
+
         private static final Pattern NAME_PATTERN = Pattern.compile("KeyguardController:");
         private static final Pattern SHOWING_PATTERN = Pattern.compile("mKeyguardShowing=(\\S+)");
         private static final Pattern OCCLUDED_PATTERN = Pattern.compile("mOccluded=(\\S+)");

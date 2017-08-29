@@ -16,19 +16,21 @@
 
 package android.server.cts;
 
-import com.android.ddmlib.Log.LogLevel;
-import com.android.tradefed.device.CollectingOutputReceiver;
-import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.log.LogUtil.CLog;
+
+import static android.app.ActivityManager.StackId.FREEFORM_WORKSPACE_STACK_ID;
+import static android.server.cts.StateLogger.log;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import org.junit.Test;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static android.server.cts.StateLogger.log;
-
 /**
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsServicesHostTestCases android.server.cts.ActivityAndWindowManagerOverrideConfigTests
+ * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsActivityManagerDeviceTestCases android.server.cts.ActivityAndWindowManagerOverrideConfigTests
  */
 public class ActivityAndWindowManagerOverrideConfigTests extends ActivityManagerTestBase {
     private static final String TEST_ACTIVITY_NAME = "LogConfigurationActivity";
@@ -41,7 +43,7 @@ public class ActivityAndWindowManagerOverrideConfigTests extends ActivityManager
         }
 
         private boolean findConfigurationChange(String activityName, String logSeparator)
-                throws DeviceNotAvailableException, InterruptedException {
+                throws InterruptedException {
             int tries = 0;
             boolean observedChange = false;
             while (tries < 5 && !observedChange) {
@@ -63,9 +65,10 @@ public class ActivityAndWindowManagerOverrideConfigTests extends ActivityManager
         }
     }
 
+    @Test
     public void testReceiveOverrideConfigFromRelayout() throws Exception {
         if (!supportsFreeform()) {
-            CLog.logAndDisplay(LogLevel.INFO, "Device doesn't support freeform. Skipping test.");
+            log("Device doesn't support freeform. Skipping test.");
             return;
         }
 

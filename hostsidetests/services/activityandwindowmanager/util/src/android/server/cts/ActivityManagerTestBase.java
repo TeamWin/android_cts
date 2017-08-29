@@ -16,64 +16,45 @@
 
 package android.server.cts;
 
-import com.android.ddmlib.Log.LogLevel;
-import com.android.tradefed.device.CollectingOutputReceiver;
-import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.log.LogUtil.CLog;
-import com.android.tradefed.result.InputStreamSource;
-import com.android.tradefed.testtype.DeviceTestCase;
+import static android.app.ActivityManager.StackId.ASSISTANT_STACK_ID;
+import static android.app.ActivityManager.StackId.DOCKED_STACK_ID;
+import static android.app.ActivityManager.StackId.FREEFORM_WORKSPACE_STACK_ID;
+import static android.app.ActivityManager.StackId.FULLSCREEN_WORKSPACE_STACK_ID;
+import static android.app.ActivityManager.StackId.INVALID_STACK_ID;
+import static android.app.ActivityManager.StackId.PINNED_STACK_ID;
+import static android.server.cts.StateLogger.log;
+import static android.server.cts.StateLogger.logE;
+import static android.view.KeyEvent.KEYCODE_APP_SWITCH;
 
-import java.awt.image.BufferedImage;
-import java.lang.Exception;
-import java.lang.Integer;
-import java.lang.String;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+import android.graphics.Bitmap;
+import android.os.ParcelFileDescriptor;
+import android.os.RemoteException;
+import android.server.cts.ActivityManagerState.ActivityStack;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.uiautomator.UiDevice;
+import android.view.Display;
+
+import com.android.compatibility.common.util.SystemUtil;
+
+import org.junit.After;
+import org.junit.Before;
+
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static android.server.cts.StateLogger.log;
-import static android.server.cts.StateLogger.logE;
-
-import android.server.cts.ActivityManagerState.ActivityStack;
-
-import javax.imageio.ImageIO;
-
-public abstract class ActivityManagerTestBase extends DeviceTestCase {
+public abstract class ActivityManagerTestBase {
     private static final boolean PRETEND_DEVICE_SUPPORTS_PIP = false;
     private static final boolean PRETEND_DEVICE_SUPPORTS_FREEFORM = false;
     private static final String LOG_SEPARATOR = "LOG_SEPARATOR";
-
-    // Constants copied from ActivityManager.StackId. If they are changed there, these must be
-    // updated.
-    /** Invalid stack ID. */
-    public static final int INVALID_STACK_ID = -1;
-
-    /** First static stack ID. */
-    public static final int FIRST_STATIC_STACK_ID = 0;
-
-    /** Home activity stack ID. */
-    public static final int HOME_STACK_ID = FIRST_STATIC_STACK_ID;
-
-    /** ID of stack where fullscreen activities are normally launched into. */
-    public static final int FULLSCREEN_WORKSPACE_STACK_ID = 1;
-
-    /** ID of stack where freeform/resized activities are normally launched into. */
-    public static final int FREEFORM_WORKSPACE_STACK_ID = FULLSCREEN_WORKSPACE_STACK_ID + 1;
-
-    /** ID of stack that occupies a dedicated region of the screen. */
-    public static final int DOCKED_STACK_ID = FREEFORM_WORKSPACE_STACK_ID + 1;
-
-    /** ID of stack that always on top (always visible) when it exist. */
-    public static final int PINNED_STACK_ID = DOCKED_STACK_ID + 1;
-
-    /** Recents activity stack ID. */
-    public static final int RECENTS_STACK_ID = PINNED_STACK_ID + 1;
-
-    /** Assistant activity stack ID.  This stack is fullscreen and non-resizeable. */
-    public static final int ASSISTANT_STACK_ID = RECENTS_STACK_ID + 1;
 
     protected static final int[] ALL_STACK_IDS_BUT_HOME = {
             FULLSCREEN_WORKSPACE_STACK_ID, FREEFORM_WORKSPACE_STACK_ID, DOCKED_STACK_ID,
@@ -123,14 +104,9 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
             "am supports-split-screen-multi-window";
     private static final String AM_NO_HOME_SCREEN = "am no-home-screen";
 
-    private static final String INPUT_KEYEVENT_HOME = "input keyevent 3";
-    private static final String INPUT_KEYEVENT_BACK = "input keyevent 4";
-    private static final String INPUT_KEYEVENT_APP_SWITCH = "input keyevent 187";
-    public static final String INPUT_KEYEVENT_WINDOW = "input keyevent 171";
-
     private static final String LOCK_CREDENTIAL = "1234";
 
-    private static final int INVALID_DISPLAY_ID = -1;
+    private static final int INVALID_DISPLAY_ID = Display.INVALID_DISPLAY;
 
     private static final String DEFAULT_COMPONENT_NAME = "android.server.cts";
 
@@ -138,8 +114,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     protected static final int INVALID_DEVICE_ROTATION = -1;
 
-    /** A reference to the device under test. */
-    protected ITestDevice mDevice;
+    protected UiDevice mDevice;
 
     private HashSet<String> mAvailableFeatures;
 
@@ -243,9 +218,9 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
             @Override
             public void run() {
                 try {
-                    mDevice.executeShellCommand("wm surface-trace", mSurfaceTraceReceiver);
-                } catch (DeviceNotAvailableException e) {
-                    logE("Device not available: " + e.toString());
+                    registerSurfaceTraceReceiver("wm surface-trace", mSurfaceTraceReceiver);
+                } catch (IOException e) {
+                    logE("Error running wm surface-trace: " + e.toString());
                 }
             }
         };
@@ -253,17 +228,14 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     }
 
     void removeSurfaceObserver() {
-        mSurfaceTraceReceiver.cancel();
         mSurfaceTraceThread.interrupt();
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
+        mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         setDefaultComponentName();
 
-        // Get the device, this gives a handle to run commands and install APKs.
-        mDevice = getDevice();
         wakeUpAndUnlockDevice();
         pressHomeButton();
         // Remove special stacks.
@@ -276,58 +248,57 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         mLockDisabled = isLockDisabled();
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
-        try {
-            setLockDisabled(mLockDisabled);
-            executeShellCommand(AM_FORCE_STOP_TEST_PACKAGE);
-            executeShellCommand(AM_FORCE_STOP_SECOND_TEST_PACKAGE);
-            executeShellCommand(AM_FORCE_STOP_THIRD_TEST_PACKAGE);
-            // Restore rotation settings to the state they were before test.
-            setAccelerometerRotation(mInitialAccelerometerRotation);
-            setUserRotation(mUserRotation);
-            setFontScale(mFontScale);
+    @After
+    public void tearDown() throws Exception {
+        setLockDisabled(mLockDisabled);
+        executeShellCommand(AM_FORCE_STOP_TEST_PACKAGE);
+        executeShellCommand(AM_FORCE_STOP_SECOND_TEST_PACKAGE);
+        executeShellCommand(AM_FORCE_STOP_THIRD_TEST_PACKAGE);
+        // Restore rotation settings to the state they were before test.
+        setAccelerometerRotation(mInitialAccelerometerRotation);
+        setUserRotation(mUserRotation);
+        setFontScale(mFontScale);
             setWindowTransitionAnimationDurationScale(1);
-            // Remove special stacks.
-            removeStacks(ALL_STACK_IDS_BUT_HOME_AND_FULLSCREEN);
-            wakeUpAndUnlockDevice();
-            pressHomeButton();
-        } catch (DeviceNotAvailableException e) {
-        }
+        // Remove special stacks.
+        removeStacks(ALL_STACK_IDS_BUT_HOME_AND_FULLSCREEN);
+        wakeUpAndUnlockDevice();
+        pressHomeButton();
     }
 
     protected void removeStacks(int... stackIds) {
+        for (Integer stackId : stackIds) {
+            executeShellCommand(AM_REMOVE_STACK + stackId);
+        }
+    }
+
+    protected static String executeShellCommand(String command) {
+        log("Shell command: " + command);
         try {
-            for (Integer stackId : stackIds) {
-                executeShellCommand(AM_REMOVE_STACK + stackId);
-            }
-        } catch (DeviceNotAvailableException e) {
+            return SystemUtil
+                    .runShellCommand(InstrumentationRegistry.getInstrumentation(), command);
+        } catch (IOException e) {
+            //bubble it up
+            logE("Error running shell command: " + command);
+            throw new RuntimeException(e);
         }
     }
 
-    protected String executeShellCommand(String command) throws DeviceNotAvailableException {
-        return executeShellCommand(mDevice, command);
-    }
-
-    protected static String executeShellCommand(ITestDevice device, String command)
-            throws DeviceNotAvailableException {
-        log("adb shell " + command);
-        return device.executeShellCommand(command);
-    }
-
-    protected void executeShellCommand(String command, CollectingOutputReceiver outputReceiver)
-            throws DeviceNotAvailableException {
-        log("adb shell " + command);
-        mDevice.executeShellCommand(command, outputReceiver);
-    }
-
-    protected BufferedImage takeScreenshot() throws Exception {
-        final InputStreamSource stream = mDevice.getScreenshot("PNG", false /* rescale */);
-        if (stream == null) {
-            fail("Failed to take screenshot of device");
+    protected static void registerSurfaceTraceReceiver(String command, SurfaceTraceReceiver outputReceiver)
+            throws IOException {
+        log("Shell command: " + command);
+        ParcelFileDescriptor pfd = InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .executeShellCommand(command);
+        byte[] buf = new byte[512];
+        int bytesRead;
+        FileInputStream fis = new ParcelFileDescriptor.AutoCloseInputStream(pfd);
+        while ((bytesRead = fis.read(buf)) != -1) {
+            outputReceiver.addOutput(buf, 0, bytesRead);
         }
-        return ImageIO.read(stream.createInputStream());
+        fis.close();
+    }
+
+    protected Bitmap takeScreenshot() throws Exception {
+        return InstrumentationRegistry.getInstrumentation().getUiAutomation().takeScreenshot();
     }
 
     protected void launchActivityInComponent(final String componentName,
@@ -341,7 +312,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     protected void launchActivity(final String targetActivityName, final String... keyValuePairs)
             throws Exception {
         executeShellCommand(getAmStartCmd(targetActivityName, keyValuePairs));
-        mAmWmState.waitForValidState(mDevice, targetActivityName);
+        mAmWmState.waitForValidState(targetActivityName);
     }
 
     protected void launchActivityNoWait(final String targetActivityName,
@@ -351,7 +322,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     protected void launchActivityInNewTask(final String targetActivityName) throws Exception {
         executeShellCommand(getAmStartCmdInNewTask(targetActivityName));
-        mAmWmState.waitForValidState(mDevice, targetActivityName);
+        mAmWmState.waitForValidState(targetActivityName);
     }
 
     /**
@@ -376,7 +347,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
      * Returns the set of stack ids.
      */
     private HashSet<Integer> getStackIds() throws Exception {
-        mAmWmState.computeState(mDevice, null);
+        mAmWmState.computeState(null);
         final List<ActivityStack> stacks = mAmWmState.getAmState().getStacks();
         final HashSet<Integer> stackIds = new HashSet<>();
         for (ActivityStack s : stacks) {
@@ -388,14 +359,14 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     protected void launchHomeActivity()
             throws Exception {
         executeShellCommand(AM_START_HOME_ACTIVITY_COMMAND);
-        mAmWmState.waitForHomeActivityVisible(mDevice);
+        mAmWmState.waitForHomeActivityVisible();
     }
 
     protected void launchActivityOnDisplay(String targetActivityName, int displayId)
             throws Exception {
         executeShellCommand(getAmStartCmd(targetActivityName, displayId));
 
-        mAmWmState.waitForValidState(mDevice, targetActivityName);
+        mAmWmState.waitForValidState(targetActivityName);
     }
 
     /**
@@ -408,7 +379,6 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
      *                           package name of {@link #LAUNCHING_ACTIVITY} will be added
      *                           automatically.
      * @param displayId Display id where target activity should be launched.
-     * @throws Exception
      */
     protected void launchActivityFromLaunching(boolean toSide, boolean randomData,
             boolean multipleTask, String targetActivityName, int displayId) throws Exception {
@@ -431,14 +401,14 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         }
         executeShellCommand(commandBuilder.toString());
 
-        mAmWmState.waitForValidState(mDevice, targetActivityName);
+        mAmWmState.waitForValidState(targetActivityName);
     }
 
     protected void launchActivityInStack(String activityName, int stackId,
             final String... keyValuePairs) throws Exception {
         executeShellCommand(getAmStartCmd(activityName, keyValuePairs) + " --stack " + stackId);
 
-        mAmWmState.waitForValidState(mDevice, activityName, stackId);
+        mAmWmState.waitForValidState(activityName, stackId);
     }
 
     protected void launchActivityInDockStack(String activityName) throws Exception {
@@ -451,7 +421,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         // view. We need to fix that in sys-ui before we can change this.
         moveActivityToDockStack(activityName);
 
-        mAmWmState.waitForValidState(mDevice, activityName, DOCKED_STACK_ID);
+        mAmWmState.waitForValidState(activityName, DOCKED_STACK_ID);
     }
 
     protected void launchActivityToSide(boolean randomData, boolean multipleTaskFlag,
@@ -461,7 +431,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
                 .setMultipleTask(multipleTaskFlag).setTargetActivityName(activityToLaunch)
                 .execute();
 
-        mAmWmState.waitForValidState(mDevice, activityToLaunch, FULLSCREEN_WORKSPACE_STACK_ID);
+        mAmWmState.waitForValidState(activityToLaunch, FULLSCREEN_WORKSPACE_STACK_ID);
     }
 
     protected void moveActivityToDockStack(String activityName) throws Exception {
@@ -473,7 +443,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         final String cmd = AM_MOVE_TASK + taskId + " " + stackId + " true";
         executeShellCommand(cmd);
 
-        mAmWmState.waitForValidState(mDevice, activityName, stackId);
+        mAmWmState.waitForValidState(activityName, stackId);
     }
 
     protected void resizeActivityTask(String activityName, int left, int top, int right, int bottom)
@@ -485,45 +455,40 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     }
 
     protected void resizeDockedStack(
-            int stackWidth, int stackHeight, int taskWidth, int taskHeight)
-                    throws DeviceNotAvailableException {
+            int stackWidth, int stackHeight, int taskWidth, int taskHeight) {
         executeShellCommand(AM_RESIZE_DOCKED_STACK
                 + "0 0 " + stackWidth + " " + stackHeight
                 + " 0 0 " + taskWidth + " " + taskHeight);
     }
 
     protected void resizeStack(int stackId, int stackLeft, int stackTop, int stackWidth,
-            int stackHeight) throws DeviceNotAvailableException {
+            int stackHeight) {
         executeShellCommand(AM_RESIZE_STACK + String.format("%d %d %d %d %d", stackId, stackLeft,
                 stackTop, stackWidth, stackHeight));
     }
 
-    protected void pressHomeButton() throws DeviceNotAvailableException {
-        executeShellCommand(INPUT_KEYEVENT_HOME);
+    protected void pressHomeButton() {
+        mDevice.pressHome();
     }
 
-    protected void pressBackButton() throws DeviceNotAvailableException {
-        executeShellCommand(INPUT_KEYEVENT_BACK);
+    protected void pressBackButton() {
+        mDevice.pressBack();
     }
 
-    protected void pressAppSwitchButton() throws DeviceNotAvailableException {
-        executeShellCommand(INPUT_KEYEVENT_APP_SWITCH);
+    protected void pressAppSwitchButton() {
+        mDevice.pressKeyCode(KEYCODE_APP_SWITCH);
     }
 
     // Utility method for debugging, not used directly here, but useful, so kept around.
-    protected void printStacksAndTasks() throws DeviceNotAvailableException {
-        CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
-        executeShellCommand(AM_STACK_LIST, outputReceiver);
-        String output = outputReceiver.getOutput();
+    protected void printStacksAndTasks() {
+        String output = executeShellCommand(AM_STACK_LIST);
         for (String line : output.split("\\n")) {
-            CLog.logAndDisplay(LogLevel.INFO, line);
+            log(line);
         }
     }
 
-    protected int getActivityTaskId(String name) throws DeviceNotAvailableException {
-        CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
-        executeShellCommand(AM_STACK_LIST, outputReceiver);
-        final String output = outputReceiver.getOutput();
+    protected int getActivityTaskId(String name) {
+        String output = executeShellCommand(AM_STACK_LIST);
         final Pattern activityPattern = Pattern.compile("(.*) " + getWindowName(name) + " (.*)");
         for (String line : output.split("\\n")) {
             Matcher matcher = activityPattern.matcher(line);
@@ -539,41 +504,37 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         return -1;
     }
 
-    protected boolean supportsVrMode() throws DeviceNotAvailableException {
+    protected boolean supportsVrMode() {
         return hasDeviceFeature("android.software.vr.mode") &&
                 hasDeviceFeature("android.hardware.vr.high_performance");
     }
 
-    protected boolean supportsPip() throws DeviceNotAvailableException {
+    protected boolean supportsPip() {
         return hasDeviceFeature("android.software.picture_in_picture")
                 || PRETEND_DEVICE_SUPPORTS_PIP;
     }
 
-    protected boolean supportsFreeform() throws DeviceNotAvailableException {
+    protected boolean supportsFreeform() {
         return hasDeviceFeature("android.software.freeform_window_management")
                 || PRETEND_DEVICE_SUPPORTS_FREEFORM;
     }
 
-    protected boolean isHandheld() throws DeviceNotAvailableException {
+    protected boolean isHandheld() {
         return !hasDeviceFeature("android.software.leanback")
                 && !hasDeviceFeature("android.hardware.type.watch");
     }
 
-    protected boolean supportsSplitScreenMultiWindow() throws DeviceNotAvailableException {
-        CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
-        executeShellCommand(AM_SUPPORTS_SPLIT_SCREEN_MULTIWINDOW, outputReceiver);
-        String output = outputReceiver.getOutput();
+    protected boolean supportsSplitScreenMultiWindow() {
+        String output = executeShellCommand(AM_SUPPORTS_SPLIT_SCREEN_MULTIWINDOW);
         return !output.startsWith("false");
     }
 
-    protected boolean noHomeScreen() throws DeviceNotAvailableException {
-        CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
-        executeShellCommand(AM_NO_HOME_SCREEN, outputReceiver);
-        String output = outputReceiver.getOutput();
+    protected boolean noHomeScreen() {
+        String output = executeShellCommand(AM_NO_HOME_SCREEN);
         return output.startsWith("true");
     }
 
-    protected boolean hasDeviceFeature(String requiredFeature) throws DeviceNotAvailableException {
+    protected boolean hasDeviceFeature(String requiredFeature) {
         if (mAvailableFeatures == null) {
             // TODO: Move this logic to ITestDevice.
             final String output = runCommandAndPrintOutput("pm list features");
@@ -591,16 +552,14 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         }
         boolean result = mAvailableFeatures.contains(requiredFeature);
         if (!result) {
-            CLog.logAndDisplay(LogLevel.INFO, "Device doesn't support " + requiredFeature);
+            log("Device doesn't support " + requiredFeature);
         }
         return result;
     }
 
-    protected boolean isDisplayOn() throws DeviceNotAvailableException {
-        final CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
-        mDevice.executeShellCommand("dumpsys power", outputReceiver);
-
-        for (String line : outputReceiver.getOutput().split("\\n")) {
+    protected boolean isDisplayOn() {
+        String output = executeShellCommand("dumpsys power");
+        for (String line : output.split("\\n")) {
             line = line.trim();
 
             final Matcher matcher = sDisplayStatePattern.matcher(line);
@@ -614,9 +573,13 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         return false;
     }
 
-    protected void sleepDevice() throws DeviceNotAvailableException {
+    protected void sleepDevice() {
         int retriesLeft = 5;
-        runCommandAndPrintOutput("input keyevent 26");
+        try {
+            mDevice.sleep();
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
+        }
         do {
             if (isDisplayOn()) {
                 log("***Waiting for display to turn off...");
@@ -632,26 +595,31 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         } while (retriesLeft-- > 0);
     }
 
-    protected void wakeUpAndUnlockDevice() throws DeviceNotAvailableException {
+    protected void wakeUpAndUnlockDevice() {
         wakeUpDevice();
         unlockDevice();
     }
 
-    protected void wakeUpAndRemoveLock() throws DeviceNotAvailableException {
+    protected void wakeUpAndRemoveLock() {
         wakeUpDevice();
         setLockDisabled(true);
     }
 
-    protected void wakeUpDevice() throws DeviceNotAvailableException {
-        runCommandAndPrintOutput("input keyevent 224");
+    protected void wakeUpDevice() {
+        try {
+            mDevice.wakeUp();
+            setLockDisabled(true);
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    protected void unlockDevice() throws DeviceNotAvailableException {
-        runCommandAndPrintOutput("input keyevent 82");
+    protected void unlockDevice() {
+        mDevice.pressMenu();
     }
 
     protected void unlockDeviceWithCredential() throws Exception {
-        runCommandAndPrintOutput("input keyevent 82");
+        mDevice.pressMenu();
         try {
             Thread.sleep(3000);
         } catch (InterruptedException e) {
@@ -661,24 +629,23 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     }
 
     protected void enterAndConfirmLockCredential() throws Exception {
-        // TODO: This should use waitForIdle..but there ain't such a thing on hostside tests, boo :(
-        Thread.sleep(500);
+        mDevice.waitForIdle(3000);
 
         runCommandAndPrintOutput("input text " + LOCK_CREDENTIAL);
-        runCommandAndPrintOutput("input keyevent KEYCODE_ENTER");
+        mDevice.pressEnter();
     }
 
-    protected void gotoKeyguard() throws DeviceNotAvailableException {
+    protected void gotoKeyguard() {
         sleepDevice();
         wakeUpDevice();
     }
 
-    protected void setLockCredential() throws DeviceNotAvailableException {
+    protected void setLockCredential() {
         mLockCredentialsSet = true;
         runCommandAndPrintOutput("locksettings set-pin " + LOCK_CREDENTIAL);
     }
 
-    protected void removeLockCredential() throws DeviceNotAvailableException {
+    protected void removeLockCredential() {
         runCommandAndPrintOutput("locksettings clear --old " + LOCK_CREDENTIAL);
     }
 
@@ -686,7 +653,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
      * Returns whether the lock screen is disabled.
      * @return true if the lock screen is disabled, false otherwise.
      */
-    private boolean isLockDisabled() throws DeviceNotAvailableException {
+    private boolean isLockDisabled() {
         final String isLockDisabled = runCommandAndPrintOutput("locksettings get-disabled").trim();
         if ("null".equals(isLockDisabled)) {
             return false;
@@ -699,7 +666,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
      * Disable the lock screen.
      * @param lockDisabled true if should disable, false otherwise.
      */
-    void setLockDisabled(boolean lockDisabled) throws DeviceNotAvailableException {
+    void setLockDisabled(boolean lockDisabled) {
         runCommandAndPrintOutput("locksettings set-disabled " + lockDisabled);
     }
 
@@ -710,10 +677,10 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     protected void setDeviceRotation(int rotation) throws Exception {
         setAccelerometerRotation(0);
         setUserRotation(rotation);
-        mAmWmState.waitForRotation(mDevice, rotation);
+        mAmWmState.waitForRotation(rotation);
     }
 
-    protected int getDeviceRotation(int displayId) throws DeviceNotAvailableException {
+    protected int getDeviceRotation(int displayId) {
         final String displays = runCommandAndPrintOutput("dumpsys display displays").trim();
         Pattern pattern = Pattern.compile(
                 "(mDisplayId=" + displayId + ")([\\s\\S]*)(mOverrideDisplayInfo)(.*)"
@@ -727,18 +694,18 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         return INVALID_DEVICE_ROTATION;
     }
 
-    private int getAccelerometerRotation() throws DeviceNotAvailableException {
+    private int getAccelerometerRotation() {
         final String rotation =
                 runCommandAndPrintOutput("settings get system accelerometer_rotation");
         return Integer.parseInt(rotation.trim());
     }
 
-    private void setAccelerometerRotation(int rotation) throws DeviceNotAvailableException {
+    private void setAccelerometerRotation(int rotation) {
         runCommandAndPrintOutput(
                 "settings put system accelerometer_rotation " + rotation);
     }
 
-    protected int getUserRotation() throws DeviceNotAvailableException {
+    protected int getUserRotation() {
         final String rotation =
                 runCommandAndPrintOutput("settings get system user_rotation").trim();
         if ("null".equals(rotation)) {
@@ -747,7 +714,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         return Integer.parseInt(rotation);
     }
 
-    private void setUserRotation(int rotation) throws DeviceNotAvailableException {
+    private void setUserRotation(int rotation) {
         if (rotation == -1) {
             runCommandAndPrintOutput(
                     "settings delete system user_rotation");
@@ -757,7 +724,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         }
     }
 
-    protected void setFontScale(float fontScale) throws DeviceNotAvailableException {
+    protected void setFontScale(float fontScale) {
         if (fontScale == 0.0f) {
             runCommandAndPrintOutput(
                     "settings delete system font_scale");
@@ -767,13 +734,12 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         }
     }
 
-    protected void setWindowTransitionAnimationDurationScale(float animDurationScale)
-            throws DeviceNotAvailableException {
+    protected void setWindowTransitionAnimationDurationScale(float animDurationScale) {
         runCommandAndPrintOutput(
                 "settings put global transition_animation_scale " + animDurationScale);
     }
 
-    protected float getFontScale() throws DeviceNotAvailableException {
+    protected float getFontScale() {
         try {
             final String fontScale =
                     runCommandAndPrintOutput("settings get system font_scale").trim();
@@ -785,7 +751,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         }
     }
 
-    protected String runCommandAndPrintOutput(String command) throws DeviceNotAvailableException {
+    protected String runCommandAndPrintOutput(String command) {
         final String output = executeShellCommand(command);
         log(output);
         return output;
@@ -796,15 +762,15 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
      * always find the starting point from where to evaluate following logs.
      * @return Unique log separator.
      */
-    protected String clearLogcat() throws DeviceNotAvailableException {
-        mDevice.executeAdbCommand("logcat", "-c");
+    protected String clearLogcat() {
+        executeShellCommand("logcat -c");
         final String uniqueString = UUID.randomUUID().toString();
         executeShellCommand("log -t " + LOG_SEPARATOR + " " + uniqueString);
         return uniqueString;
     }
 
     void assertActivityLifecycle(String activityName, boolean relaunched,
-            String logSeparator) throws DeviceNotAvailableException {
+            String logSeparator) {
         int retriesLeft = 5;
         String resultString;
         do {
@@ -826,7 +792,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     /** @return Error string if lifecycle counts don't match, null if everything is fine. */
     private String verifyLifecycleCondition(String activityName, String logSeparator,
-            boolean relaunched) throws DeviceNotAvailableException {
+            boolean relaunched) {
         final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(activityName,
                 logSeparator);
         if (relaunched) {
@@ -857,8 +823,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     }
 
     protected void assertRelaunchOrConfigChanged(
-            String activityName, int numRelaunch, int numConfigChange, String logSeparator)
-            throws DeviceNotAvailableException {
+            String activityName, int numRelaunch, int numConfigChange, String logSeparator) {
         int retriesLeft = 5;
         String resultString;
         do {
@@ -881,7 +846,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     /** @return Error string if lifecycle counts don't match, null if everything is fine. */
     private String verifyRelaunchOrConfigChanged(String activityName, int numRelaunch,
-            int numConfigChange, String logSeparator) throws DeviceNotAvailableException {
+            int numConfigChange, String logSeparator) {
         final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(activityName,
                 logSeparator);
 
@@ -898,8 +863,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         return null;
     }
 
-    protected void assertActivityDestroyed(String activityName, String logSeparator)
-            throws DeviceNotAvailableException {
+    protected void assertActivityDestroyed(String activityName, String logSeparator) {
         int retriesLeft = 5;
         String resultString;
         do {
@@ -920,8 +884,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     }
 
     /** @return Error string if lifecycle counts don't match, null if everything is fine. */
-    private String verifyActivityDestroyed(String activityName, String logSeparator)
-            throws DeviceNotAvailableException {
+    private String verifyActivityDestroyed(String activityName, String logSeparator) {
         final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(activityName,
                 logSeparator);
 
@@ -938,19 +901,18 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         return null;
     }
 
-    protected String[] getDeviceLogsForComponent(String componentName, String logSeparator)
-            throws DeviceNotAvailableException {
+    protected String[] getDeviceLogsForComponent(String componentName, String logSeparator) {
         return getDeviceLogsForComponents(new String[]{componentName}, logSeparator);
     }
 
     protected String[] getDeviceLogsForComponents(final String[] componentNames,
-            String logSeparator) throws DeviceNotAvailableException {
+            String logSeparator) {
         String filters = LOG_SEPARATOR + ":I ";
         for (String component : componentNames) {
             filters += component + ":I ";
         }
-        final String[] result = mDevice.executeAdbCommand(
-                "logcat", "-v", "brief", "-d", filters, "*:S").split("\\n");
+        final String[] result = executeShellCommand("logcat -v brief -d " + filters + " *:S")
+                .split("\\n");
         if (logSeparator == null) {
             return result;
         }
@@ -971,7 +933,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         return filteredResult;
     }
 
-    void assertSingleLaunch(String activityName, String logSeparator) throws DeviceNotAvailableException {
+    void assertSingleLaunch(String activityName, String logSeparator) {
         int retriesLeft = 5;
         String resultString;
         do {
@@ -993,7 +955,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         assertNull(resultString, resultString);
     }
 
-    public void assertSingleLaunchAndStop(String activityName, String logSeparator) throws DeviceNotAvailableException {
+    public void assertSingleLaunchAndStop(String activityName, String logSeparator) {
         int retriesLeft = 5;
         String resultString;
         do {
@@ -1015,7 +977,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         assertNull(resultString, resultString);
     }
 
-    public void assertSingleStartAndStop(String activityName, String logSeparator) throws DeviceNotAvailableException {
+    public void assertSingleStartAndStop(String activityName, String logSeparator) {
         int retriesLeft = 5;
         String resultString;
         do {
@@ -1037,7 +999,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         assertNull(resultString, resultString);
     }
 
-    void assertSingleStart(String activityName, String logSeparator) throws DeviceNotAvailableException {
+    void assertSingleStart(String activityName, String logSeparator) {
         int retriesLeft = 5;
         String resultString;
         do {
@@ -1061,7 +1023,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     private String validateLifecycleCounts(String activityName, String logSeparator,
             int createCount, int startCount, int resumeCount, int pauseCount, int stopCount,
-            int destroyCount) throws DeviceNotAvailableException {
+            int destroyCount) {
 
         final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(activityName,
                 logSeparator);
@@ -1145,8 +1107,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         }
     }
 
-    ReportedSizes getLastReportedSizesForActivity(String activityName, String logSeparator)
-            throws DeviceNotAvailableException {
+    ReportedSizes getLastReportedSizesForActivity(String activityName, String logSeparator) {
         int retriesLeft = 5;
         ReportedSizes result;
         do {
@@ -1166,8 +1127,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         return result;
     }
 
-    private ReportedSizes readLastReportedSizes(String activityName, String logSeparator)
-            throws DeviceNotAvailableException {
+    private ReportedSizes readLastReportedSizes(String activityName, String logSeparator) {
         final String[] lines = getDeviceLogsForComponent(activityName, logSeparator);
         for (int i = lines.length - 1; i >= 0; i--) {
             final String line = lines[i].trim();
@@ -1205,8 +1165,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         int mLastStopLineIndex;
         int mDestroyCount;
 
-        public ActivityLifecycleCounts(String activityName, String logSeparator)
-                throws DeviceNotAvailableException {
+        public ActivityLifecycleCounts(String activityName, String logSeparator) {
             int lineIndex = 0;
             for (String line : getDeviceLogsForComponent(activityName, logSeparator)) {
                 line = line.trim();
@@ -1284,12 +1243,11 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     }
 
     protected LaunchActivityBuilder getLaunchActivityBuilder() {
-        return new LaunchActivityBuilder(mAmWmState, mDevice);
+        return new LaunchActivityBuilder(mAmWmState);
     }
 
     protected static class LaunchActivityBuilder {
         private final ActivityAndWindowManagersState mAmWmState;
-        private final ITestDevice mDevice;
 
         private String mTargetActivityName;
         private String mTargetPackage = componentName;
@@ -1302,10 +1260,8 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         private boolean mReorderToFront;
         private boolean mWaitForLaunched;
 
-        public LaunchActivityBuilder(ActivityAndWindowManagersState amWmState,
-                                     ITestDevice device) {
+        public LaunchActivityBuilder(ActivityAndWindowManagersState amWmState) {
             mAmWmState = amWmState;
-            mDevice = device;
             mWaitForLaunched = true;
         }
 
@@ -1388,10 +1344,10 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
             if (mDisplayId != INVALID_DISPLAY_ID) {
                 commandBuilder.append(" --ei display_id ").append(mDisplayId);
             }
-            executeShellCommand(mDevice, commandBuilder.toString());
+            executeShellCommand(commandBuilder.toString());
 
             if (mWaitForLaunched) {
-                mAmWmState.waitForValidState(mDevice, new String[]{mTargetActivityName},
+                mAmWmState.waitForValidState(new String[]{mTargetActivityName},
                         null /* stackIds */, false /* compareTaskAndStackBounds */, mTargetPackage);
             }
         }

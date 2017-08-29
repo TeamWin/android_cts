@@ -20,29 +20,34 @@ import static android.server.cts.ActivityAndWindowManagersState.DEFAULT_DISPLAY_
 import static android.server.cts.StateLogger.log;
 import static android.server.cts.StateLogger.logE;
 
-import android.graphics.RectProto;
-import com.android.server.wm.proto.AppWindowTokenProto;
-import com.android.server.wm.proto.AppTransitionProto;
-import com.android.server.wm.proto.DisplayProto;
-import com.android.server.wm.proto.IdentifierProto;
-import com.android.server.wm.proto.PinnedStackControllerProto;
-import com.android.server.wm.proto.StackProto;
-import com.android.server.wm.proto.TaskProto;
-import com.android.server.wm.proto.WindowManagerServiceProto;
-import com.android.server.wm.proto.WindowStateAnimatorProto;
-import com.android.server.wm.proto.WindowStateProto;
-import com.android.server.wm.proto.WindowSurfaceControllerProto;
-import com.android.server.wm.proto.WindowTokenProto;
-import android.view.DisplayInfoProto;
-import com.android.tradefed.device.CollectingByteOutputReceiver;
-import com.android.tradefed.device.ITestDevice;
+import static org.junit.Assert.fail;
 
-import com.google.protobuf.InvalidProtocolBufferException;
+import android.graphics.Rect;
+import android.graphics.nano.RectProto;
+import android.os.ParcelFileDescriptor;
+import android.support.test.InstrumentationRegistry;
+import android.view.nano.DisplayInfoProto;
 
-import java.awt.Rectangle;
+import com.android.server.wm.proto.nano.AppTransitionProto;
+import com.android.server.wm.proto.nano.AppWindowTokenProto;
+import com.android.server.wm.proto.nano.DisplayProto;
+import com.android.server.wm.proto.nano.IdentifierProto;
+import com.android.server.wm.proto.nano.PinnedStackControllerProto;
+import com.android.server.wm.proto.nano.StackProto;
+import com.android.server.wm.proto.nano.TaskProto;
+import com.android.server.wm.proto.nano.WindowManagerServiceProto;
+import com.android.server.wm.proto.nano.WindowStateAnimatorProto;
+import com.android.server.wm.proto.nano.WindowStateProto;
+import com.android.server.wm.proto.nano.WindowSurfaceControllerProto;
+import com.android.server.wm.proto.nano.WindowTokenProto;
+
+import com.google.protobuf.nano.InvalidProtocolBufferNanoException;
+
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -70,6 +75,7 @@ public class WindowManagerState {
     public static final String APP_STATE_IDLE = "APP_STATE_IDLE";
 
     private static final String DUMPSYS_WINDOW = "dumpsys window -a --proto";
+    private WindowManagerServiceProto state;
 
     private static final String STARTING_WINDOW_PREFIX = "Starting ";
     private static final String DEBUGGER_WINDOW_PREFIX = "Waiting For Debugger: ";
@@ -87,16 +93,16 @@ public class WindowManagerState {
     private String mLastTransition = null;
     private String mAppTransitionState = null;
     private String mInputMethodWindowAppToken = null;
-    private Rectangle mStableBounds = new Rectangle();
-    private Rectangle mDefaultPinnedStackBounds = new Rectangle();
-    private Rectangle mPinnedStackMovementBounds = new Rectangle();
+    private Rect mStableBounds = new Rect();
+    private Rect mDefaultPinnedStackBounds = new Rect();
+    private Rect mPinnedStackMovementBounds = new Rect();
     private final LinkedList<String> mSysDump = new LinkedList();
     private int mRotation;
     private int mLastOrientation;
     private boolean mDisplayFrozen;
     private boolean mIsDockedStackMinimized;
 
-    void computeState(ITestDevice device) throws Exception {
+    public void computeState() {
         // It is possible the system is in the middle of transition to the right state when we get
         // the dump. We try a few times to get the information we need before giving up.
         int retriesLeft = 3;
@@ -118,12 +124,10 @@ public class WindowManagerState {
                 }
             }
 
-            final CollectingByteOutputReceiver outputReceiver = new CollectingByteOutputReceiver();
-            device.executeShellCommand(DUMPSYS_WINDOW, outputReceiver);
-            dump = outputReceiver.getOutput();
+            dump = executeShellCommand(DUMPSYS_WINDOW);
             try {
                 parseSysDumpProto(dump);
-            } catch (InvalidProtocolBufferException ex) {
+            } catch (InvalidProtocolBufferNanoException ex) {
                 System.out.println(new String(dump, StandardCharsets.UTF_8));
             }
 
@@ -141,23 +145,43 @@ public class WindowManagerState {
         }
     }
 
-    private void parseSysDumpProto(byte[] sysDump) throws Exception {
+    private byte[] executeShellCommand(String cmd) {
+        try {
+            ParcelFileDescriptor pfd =
+                    InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                            .executeShellCommand(cmd);
+            byte[] buf = new byte[512];
+            int bytesRead;
+            FileInputStream fis = new ParcelFileDescriptor.AutoCloseInputStream(pfd);
+            ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+            while ((bytesRead = fis.read(buf)) != -1) {
+                stdout.write(buf, 0, bytesRead);
+            }
+            fis.close();
+            return stdout.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    private void parseSysDumpProto(byte[] sysDump) throws InvalidProtocolBufferNanoException {
         reset();
+        state = WindowManagerServiceProto.parseFrom(sysDump);
         List<WindowState> allWindows = new ArrayList<>();
         Map<String, WindowState> windowMap = new HashMap<>();
-        WindowManagerServiceProto state = WindowManagerServiceProto.parser().parseFrom(sysDump);
-        if (state.hasFocusedWindow()) {
-            mFocusedWindow = state.getFocusedWindow().getTitle();
+        if (state.focusedWindow != null) {
+            mFocusedWindow = state.focusedWindow.title;
         }
-        mFocusedApp = state.getFocusedApp();
-        for (int i = 0; i < state.getDisplaysCount(); i++) {
-            DisplayProto displayProto = state.getDisplays(i);
+        mFocusedApp = state.focusedApp;
+        for (int i = 0; i < state.displays.length; i++) {
+            DisplayProto displayProto = state.displays[i];
             final Display display = new Display(displayProto);
             mDisplays.add(display);
             allWindows.addAll(display.getWindows());
             List<WindowStack> stacks = new ArrayList<>();
-            for (int j = 0; j < displayProto.getStacksCount(); j++) {
-                StackProto stackProto = displayProto.getStacks(j);
+            for (int j = 0; j < displayProto.stacks.length; j++) {
+                StackProto stackProto = displayProto.stacks[j];
                 final WindowStack stack = new WindowStack(stackProto);
                 mStacks.add(stack);
                 stacks.add(stack);
@@ -167,28 +191,127 @@ public class WindowManagerState {
 
             // use properties from the default display only
             if (display.getDisplayId() == DEFAULT_DISPLAY_ID) {
-                mIsDockedStackMinimized = displayProto.getDockedStackDividerController().getMinimizedDock();
-                PinnedStackControllerProto pinnedStackProto = displayProto.getPinnedStackController();
-                mDefaultPinnedStackBounds = WindowContainer.extractBounds(pinnedStackProto.getDefaultBounds());
-                mPinnedStackMovementBounds = WindowContainer.extractBounds(pinnedStackProto.getMovementBounds());
+                if (displayProto.dockedStackDividerController != null) {
+                    mIsDockedStackMinimized =
+                            displayProto.dockedStackDividerController.minimizedDock;
+                }
+                PinnedStackControllerProto pinnedStackProto = displayProto.pinnedStackController;
+                if (pinnedStackProto != null) {
+                    mDefaultPinnedStackBounds = WindowContainer.extractBounds(
+                            pinnedStackProto.defaultBounds);
+                    mPinnedStackMovementBounds = WindowContainer
+                            .extractBounds(pinnedStackProto.movementBounds);
+                }
             }
         }
         for (WindowState w : allWindows) {
             windowMap.put(w.getToken(), w);
         }
-        for (int i = 0; i < state.getWindowsCount(); i++) {
-            IdentifierProto identifierProto = state.getWindows(i);
-            String hash_code = Integer.toHexString(identifierProto.getHashCode());
+        for (int i = 0; i < state.windows.length; i++) {
+            IdentifierProto identifierProto = state.windows[i];
+            String hash_code = Integer.toHexString(identifierProto.hashCode);
             mWindowStates.add(windowMap.get(hash_code));
         }
-        mStableBounds = WindowContainer.extractBounds(state.getPolicy().getStableBounds());
-        mInputMethodWindowAppToken = Integer.toHexString(state.getInputMethodWindow().getHashCode());
-        mDisplayFrozen = state.getDisplayFrozen();
-        mRotation = state.getRotation();
-        mLastOrientation = state.getLastOrientation();
-        AppTransitionProto appTransitionProto = state.getAppTransition();
-        mAppTransitionState = appTransitionProto.getAppTransitionState().name();
-        mLastTransition = appTransitionProto.getLastUsedAppTransition().name();
+        if (state.policy != null) {
+            mStableBounds = WindowContainer.extractBounds(state.policy.stableBounds);
+        }
+        if (state.inputMethodWindow != null) {
+            mInputMethodWindowAppToken = Integer.toHexString(state.inputMethodWindow.hashCode);
+        }
+        mDisplayFrozen = state.displayFrozen;
+        mRotation = state.rotation;
+        mLastOrientation = state.lastOrientation;
+        AppTransitionProto appTransitionProto = state.appTransition;
+        int appState = 0;
+        int lastTransition = 0;
+        if (appTransitionProto != null) {
+            appState = appTransitionProto.appTransitionState;
+            lastTransition = appTransitionProto.lastUsedAppTransition;
+        }
+        mAppTransitionState = appStateToString(appState);
+        mLastTransition = appTransitionToString(lastTransition);
+    }
+
+    static String appStateToString(int appState) {
+        switch (appState) {
+            case AppTransitionProto.APP_STATE_IDLE:
+                return "APP_STATE_IDLE";
+            case AppTransitionProto.APP_STATE_READY:
+                return "APP_STATE_READY";
+            case AppTransitionProto.APP_STATE_RUNNING:
+                return "APP_STATE_RUNNING";
+            case AppTransitionProto.APP_STATE_TIMEOUT:
+                return "APP_STATE_TIMEOUT";
+            default:
+                fail("Invalid AppTransitionState");
+                return null;
+        }
+    }
+
+    static String appTransitionToString(int transition) {
+        switch (transition) {
+            case AppTransitionProto.TRANSIT_UNSET: {
+                return "TRANSIT_UNSET";
+            }
+            case AppTransitionProto.TRANSIT_NONE: {
+                return "TRANSIT_NONE";
+            }
+            case AppTransitionProto.TRANSIT_ACTIVITY_OPEN: {
+                return TRANSIT_ACTIVITY_OPEN;
+            }
+            case AppTransitionProto.TRANSIT_ACTIVITY_CLOSE: {
+                return TRANSIT_ACTIVITY_CLOSE;
+            }
+            case AppTransitionProto.TRANSIT_TASK_OPEN: {
+                return TRANSIT_TASK_OPEN;
+            }
+            case AppTransitionProto.TRANSIT_TASK_CLOSE: {
+                return TRANSIT_TASK_CLOSE;
+            }
+            case AppTransitionProto.TRANSIT_TASK_TO_FRONT: {
+                return "TRANSIT_TASK_TO_FRONT";
+            }
+            case AppTransitionProto.TRANSIT_TASK_TO_BACK: {
+                return "TRANSIT_TASK_TO_BACK";
+            }
+            case AppTransitionProto.TRANSIT_WALLPAPER_CLOSE: {
+                return TRANSIT_WALLPAPER_CLOSE;
+            }
+            case AppTransitionProto.TRANSIT_WALLPAPER_OPEN: {
+                return TRANSIT_WALLPAPER_OPEN;
+            }
+            case AppTransitionProto.TRANSIT_WALLPAPER_INTRA_OPEN: {
+                return TRANSIT_WALLPAPER_INTRA_OPEN;
+            }
+            case AppTransitionProto.TRANSIT_WALLPAPER_INTRA_CLOSE: {
+                return TRANSIT_WALLPAPER_INTRA_CLOSE;
+            }
+            case AppTransitionProto.TRANSIT_TASK_OPEN_BEHIND: {
+                return "TRANSIT_TASK_OPEN_BEHIND";
+            }
+            case AppTransitionProto.TRANSIT_ACTIVITY_RELAUNCH: {
+                return "TRANSIT_ACTIVITY_RELAUNCH";
+            }
+            case AppTransitionProto.TRANSIT_DOCK_TASK_FROM_RECENTS: {
+                return "TRANSIT_DOCK_TASK_FROM_RECENTS";
+            }
+            case AppTransitionProto.TRANSIT_KEYGUARD_GOING_AWAY: {
+                return TRANSIT_KEYGUARD_GOING_AWAY;
+            }
+            case AppTransitionProto.TRANSIT_KEYGUARD_GOING_AWAY_ON_WALLPAPER: {
+                return TRANSIT_KEYGUARD_GOING_AWAY_ON_WALLPAPER;
+            }
+            case AppTransitionProto.TRANSIT_KEYGUARD_OCCLUDE: {
+                return TRANSIT_KEYGUARD_OCCLUDE;
+            }
+            case AppTransitionProto.TRANSIT_KEYGUARD_UNOCCLUDE: {
+                return TRANSIT_KEYGUARD_UNOCCLUDE;
+            }
+            default: {
+                fail("Invalid lastUsedAppTransition");
+                return null;
+            }
+        }
     }
 
     void getMatchingWindowTokens(final String windowName, List<String> tokenList) {
@@ -210,7 +333,8 @@ public class WindowManagerState {
         }
     }
 
-    void getPrefixMatchingVisibleWindowState(final String windowName, List<WindowState> windowList) {
+    void getPrefixMatchingVisibleWindowState(final String windowName,
+            List<WindowState> windowList) {
         windowList.clear();
         for (WindowState ws : mWindowStates) {
             if (ws.isShown() && ws.getName().startsWith(windowName)) {
@@ -315,7 +439,9 @@ public class WindowManagerState {
         return false;
     }
 
-    /** Check if there exists a window record with matching windowName. */
+    /**
+     * Check if there exists a window record with matching windowName.
+     */
     boolean containsWindow(String windowName) {
         for (WindowState window : mWindowStates) {
             if (window.getName().equals(windowName)) {
@@ -325,7 +451,9 @@ public class WindowManagerState {
         return false;
     }
 
-    /** Check if at least one window which matches provided window name is visible. */
+    /**
+     * Check if at least one window which matches provided window name is visible.
+     */
     boolean isWindowVisible(String windowName) {
         for (WindowState window : mWindowStates) {
             if (window.getName().equals(windowName)) {
@@ -375,15 +503,15 @@ public class WindowManagerState {
         return getWindowStateForAppToken(mInputMethodWindowAppToken);
     }
 
-    Rectangle getStableBounds() {
+    Rect getStableBounds() {
         return mStableBounds;
     }
 
-    Rectangle getDefaultPinnedStackBounds() {
+    Rect getDefaultPinnedStackBounds() {
         return mDefaultPinnedStackBounds;
     }
 
-    Rectangle getPinnedStackMomentBounds() {
+    Rect getPinnedStackMomentBounds() {
         return mPinnedStackMovementBounds;
     }
 
@@ -421,18 +549,16 @@ public class WindowManagerState {
         boolean mWindowAnimationBackgroundSurfaceShowing;
 
         WindowStack(StackProto proto) {
-            mStackId = proto.getId();
-            mFullscreen = proto.getFillsParent();
-            if (proto.hasBounds()) {
-                mBounds = extractBounds(proto.getBounds());
-            }
-            for (int i = 0; i < proto.getTasksCount(); i++) {
-                TaskProto taskProto = proto.getTasks(i);
+            mStackId = proto.id;
+            mFullscreen = proto.fillsParent;
+            mBounds = extractBounds(proto.bounds);
+            for (int i = 0; i < proto.tasks.length; i++) {
+                TaskProto taskProto = proto.tasks[i];
                 WindowTask task = new WindowTask(taskProto);
                 mTasks.add(task);
                 mSubWindows.addAll(task.getWindows());
             }
-            mWindowAnimationBackgroundSurfaceShowing = proto.getAnimationBackgroundSurfaceIsDimming();
+            mWindowAnimationBackgroundSurfaceShowing = proto.animationBackgroundSurfaceIsDimming;
         }
 
         WindowTask getTask(int taskId) {
@@ -452,46 +578,47 @@ public class WindowManagerState {
     static class WindowTask extends WindowContainer {
 
         int mTaskId;
-        Rectangle mTempInsetBounds;
+        Rect mTempInsetBounds;
         List<String> mAppTokens = new ArrayList();
 
         WindowTask(TaskProto proto) {
-            mTaskId = proto.getId();
-            mFullscreen = proto.getFillsParent();
-            if (proto.hasBounds()) {
-                mBounds = extractBounds(proto.getBounds());
-            }
-            for (int i = 0; i < proto.getAppWindowTokensCount(); i++) {
-                AppWindowTokenProto appWindowTokenProto = proto.getAppWindowTokens(i);
-                mAppTokens.add(appWindowTokenProto.getName());
-                WindowTokenProto windowTokenProto = appWindowTokenProto.getWindowToken();
-                for (int j = 0; j < windowTokenProto.getWindowsCount(); j++) {
-                    WindowStateProto windowProto = windowTokenProto.getWindows(j);
+            mTaskId = proto.id;
+            mFullscreen = proto.fillsParent;
+            mBounds = extractBounds(proto.bounds);
+            for (int i = 0; i < proto.appWindowTokens.length; i++) {
+                AppWindowTokenProto appWindowTokenProto = proto.appWindowTokens[i];
+                mAppTokens.add(appWindowTokenProto.name);
+                WindowTokenProto windowTokenProto = appWindowTokenProto.windowToken;
+                for (int j = 0; j < windowTokenProto.windows.length; j++) {
+                    WindowStateProto windowProto = windowTokenProto.windows[j];
                     WindowState window = new WindowState(windowProto);
                     mSubWindows.add(window);
                     mSubWindows.addAll(window.getWindows());
                 }
             }
-            mTempInsetBounds = extractBounds(proto.getTempInsetBounds());
+            mTempInsetBounds = extractBounds(proto.tempInsetBounds);
         }
     }
 
     static abstract class WindowContainer {
 
         protected boolean mFullscreen;
-        protected Rectangle mBounds;
+        protected Rect mBounds;
         protected List<WindowState> mSubWindows = new ArrayList<>();
 
-        static Rectangle extractBounds(RectProto rectProto) {
-            final int left = rectProto.getLeft();
-            final int top = rectProto.getTop();
-            final int right = rectProto.getRight();
-            final int bottom = rectProto.getBottom();
-            final Rectangle rect = new Rectangle(left, top, right - left, bottom - top);
+        static Rect extractBounds(RectProto rectProto) {
+            if (rectProto == null) {
+                return new Rect(0, 0, 0, 0);
+            }
+            final int left = rectProto.left;
+            final int top = rectProto.top;
+            final int right = rectProto.right;
+            final int bottom = rectProto.bottom;
+            final Rect rect = new Rect(left, top, right, bottom);
             return rect;
         }
 
-        Rectangle getBounds() {
+        Rect getBounds() {
             return mBounds;
         }
 
@@ -507,30 +634,32 @@ public class WindowManagerState {
     static class Display extends WindowContainer {
 
         private final int mDisplayId;
-        private Rectangle mDisplayRect = new Rectangle();
-        private Rectangle mAppRect = new Rectangle();
+        private Rect mDisplayRect = new Rect();
+        private Rect mAppRect = new Rect();
         private int mDpi;
 
         public Display(DisplayProto proto) {
-            mDisplayId = proto.getId();
-            for (int i = 0; i < proto.getAboveAppWindowsCount(); i++) {
-                addWindowsFromTokenProto(proto.getAboveAppWindows(i));
+            mDisplayId = proto.id;
+            for (int i = 0; i < proto.aboveAppWindows.length; i++) {
+                addWindowsFromTokenProto(proto.aboveAppWindows[i]);
             }
-            for (int i = 0; i < proto.getBelowAppWindowsCount(); i++) {
-                addWindowsFromTokenProto(proto.getBelowAppWindows(i));
+            for (int i = 0; i < proto.belowAppWindows.length; i++) {
+                addWindowsFromTokenProto(proto.belowAppWindows[i]);
             }
-            for (int i = 0; i < proto.getImeWindowsCount(); i++) {
-                addWindowsFromTokenProto(proto.getImeWindows(i));
+            for (int i = 0; i < proto.imeWindows.length; i++) {
+                addWindowsFromTokenProto(proto.imeWindows[i]);
             }
-            mDpi = proto.getDpi();
-            DisplayInfoProto infoProto = proto.getDisplayInfo();
-            mDisplayRect.setBounds(0, 0, infoProto.getLogicalWidth(), infoProto.getLogicalHeight());
-            mAppRect.setBounds(0, 0, infoProto.getAppWidth(), infoProto.getAppHeight());
+            mDpi = proto.dpi;
+            DisplayInfoProto infoProto = proto.displayInfo;
+            if (infoProto != null) {
+                mDisplayRect.set(0, 0, infoProto.logicalWidth, infoProto.logicalHeight);
+                mAppRect.set(0, 0, infoProto.logicalWidth, infoProto.logicalHeight);
+            }
         }
 
         private void addWindowsFromTokenProto(WindowTokenProto proto) {
-            for (int j = 0; j < proto.getWindowsCount(); j++) {
-                WindowStateProto windowProto = proto.getWindows(j);
+            for (int j = 0; j < proto.windows.length; j++) {
+                WindowStateProto windowProto = proto.windows[j];
                 WindowState childWindow = new WindowState(windowProto);
                 mSubWindows.add(childWindow);
                 mSubWindows.addAll(childWindow.getWindows());
@@ -545,11 +674,11 @@ public class WindowManagerState {
             return mDpi;
         }
 
-        Rectangle getDisplayRect() {
+        Rect getDisplayRect() {
             return mDisplayRect;
         }
 
-        Rectangle getAppRect() {
+        Rect getAppRect() {
             return mAppRect;
         }
 
@@ -561,58 +690,63 @@ public class WindowManagerState {
     }
 
     public static class WindowState extends WindowContainer {
+
         private static final String TAG = "[WindowState] ";
 
         public static final int TYPE_WALLPAPER = 2013;
 
-        private static final int WINDOW_TYPE_NORMAL   = 0;
+        private static final int WINDOW_TYPE_NORMAL = 0;
         private static final int WINDOW_TYPE_STARTING = 1;
-        private static final int WINDOW_TYPE_EXITING  = 2;
+        private static final int WINDOW_TYPE_EXITING = 2;
         private static final int WINDOW_TYPE_DEBUGGER = 3;
 
         private String mName;
         private final String mAppToken;
         private final int mWindowType;
-        private int mType;
+        private int mType = 0;
         private int mDisplayId;
         private int mStackId;
         private int mLayer;
         private boolean mShown;
-        private Rectangle mContainingFrame = new Rectangle();
-        private Rectangle mParentFrame = new Rectangle();
-        private Rectangle mContentFrame = new Rectangle();
-        private Rectangle mFrame = new Rectangle();
-        private Rectangle mSurfaceInsets = new Rectangle();
-        private Rectangle mContentInsets = new Rectangle();
-        private Rectangle mGivenContentInsets = new Rectangle();
-        private Rectangle mCrop = new Rectangle();
+        private Rect mContainingFrame = new Rect();
+        private Rect mParentFrame = new Rect();
+        private Rect mContentFrame = new Rect();
+        private Rect mFrame = new Rect();
+        private Rect mSurfaceInsets = new Rect();
+        private Rect mContentInsets = new Rect();
+        private Rect mGivenContentInsets = new Rect();
+        private Rect mCrop = new Rect();
 
-        WindowState (WindowStateProto proto) {
-            IdentifierProto identifierProto = proto.getIdentifier();
-            mName = identifierProto.getTitle();
-            mAppToken = Integer.toHexString(identifierProto.getHashCode());
-            mDisplayId = proto.getDisplayId();
-            mStackId = proto.getStackId();
-            mType = proto.getAttributes().getType();
-            WindowStateAnimatorProto animatorProto = proto.getAnimator();
-            if (animatorProto.hasSurface()) {
-                WindowSurfaceControllerProto surfaceProto = animatorProto.getSurface();
-                mShown = surfaceProto.getShown();
-                mLayer = surfaceProto.getLayer();
+        WindowState(WindowStateProto proto) {
+            IdentifierProto identifierProto = proto.identifier;
+            mName = identifierProto.title;
+            mAppToken = Integer.toHexString(identifierProto.hashCode);
+            mDisplayId = proto.displayId;
+            mStackId = proto.stackId;
+            if (proto.attributes != null) {
+                mType = proto.attributes.type;
             }
-            mGivenContentInsets = extractBounds(proto.getGivenContentInsets());
-            mFrame = extractBounds(proto.getFrame());
-            mContainingFrame = extractBounds(proto.getContainingFrame());
-            mParentFrame = extractBounds(proto.getParentFrame());
-            mContentFrame = extractBounds(proto.getContentFrame());
-            mContentInsets = extractBounds(proto.getContentInsets());
-            mSurfaceInsets = extractBounds(proto.getSurfaceInsets());
-            mCrop = extractBounds(animatorProto.getLastClipRect());
+            WindowStateAnimatorProto animatorProto = proto.animator;
+            if (animatorProto != null) {
+                if (animatorProto.surface != null) {
+                    WindowSurfaceControllerProto surfaceProto = animatorProto.surface;
+                    mShown = surfaceProto.shown;
+                    mLayer = surfaceProto.layer;
+                }
+                mCrop = extractBounds(animatorProto.lastClipRect);
+            }
+            mGivenContentInsets = extractBounds(proto.givenContentInsets);
+            mFrame = extractBounds(proto.frame);
+            mContainingFrame = extractBounds(proto.containingFrame);
+            mParentFrame = extractBounds(proto.parentFrame);
+            mContentFrame = extractBounds(proto.contentFrame);
+            mContentInsets = extractBounds(proto.contentInsets);
+            mSurfaceInsets = extractBounds(proto.surfaceInsets);
             if (mName.startsWith(STARTING_WINDOW_PREFIX)) {
                 mWindowType = WINDOW_TYPE_STARTING;
                 // Existing code depends on the prefix being removed
                 mName = mName.substring(STARTING_WINDOW_PREFIX.length());
-            } else if (proto.getAnimatingExit()) {
+            } else if (proto.animatingExit) {
                 mWindowType = WINDOW_TYPE_EXITING;
             } else if (mName.startsWith(DEBUGGER_WINDOW_PREFIX)) {
                 mWindowType = WINDOW_TYPE_STARTING;
@@ -620,8 +754,8 @@ public class WindowManagerState {
             } else {
                 mWindowType = 0;
             }
-            for (int i = 0; i < proto.getChildWindowsCount(); i++) {
-                WindowStateProto childProto = proto.getChildWindows(i);
+            for (int i = 0; i < proto.childWindows.length; i++) {
+                WindowStateProto childProto = proto.childWindows[i];
                 WindowState childWindow = new WindowState(childProto);
                 mSubWindows.add(childWindow);
                 mSubWindows.addAll(childWindow.getWindows());
@@ -660,35 +794,35 @@ public class WindowManagerState {
             return mLayer;
         }
 
-        Rectangle getContainingFrame() {
+        Rect getContainingFrame() {
             return mContainingFrame;
         }
 
-        Rectangle getFrame() {
+        Rect getFrame() {
             return mFrame;
         }
 
-        Rectangle getSurfaceInsets() {
+        Rect getSurfaceInsets() {
             return mSurfaceInsets;
         }
 
-        Rectangle getContentInsets() {
+        Rect getContentInsets() {
             return mContentInsets;
         }
 
-        Rectangle getGivenContentInsets() {
+        Rect getGivenContentInsets() {
             return mGivenContentInsets;
         }
 
-        Rectangle getContentFrame() {
+        Rect getContentFrame() {
             return mContentFrame;
         }
 
-        Rectangle getParentFrame() {
+        Rect getParentFrame() {
             return mParentFrame;
         }
 
-        Rectangle getCrop() {
+        Rect getCrop() {
             return mCrop;
         }
 
@@ -702,10 +836,14 @@ public class WindowManagerState {
 
         private static String getWindowTypeSuffix(int windowType) {
             switch (windowType) {
-            case WINDOW_TYPE_STARTING: return " STARTING";
-            case WINDOW_TYPE_EXITING: return " EXITING";
-            case WINDOW_TYPE_DEBUGGER: return " DEBUGGER";
-            default: break;
+                case WINDOW_TYPE_STARTING:
+                    return " STARTING";
+                case WINDOW_TYPE_EXITING:
+                    return " EXITING";
+                case WINDOW_TYPE_DEBUGGER:
+                    return " DEBUGGER";
+                default:
+                    break;
             }
             return "";
         }

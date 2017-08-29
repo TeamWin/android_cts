@@ -16,22 +16,20 @@
 
 package android.server.cts;
 
-import java.lang.Exception;
-import java.lang.String;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
+import static android.app.ActivityManager.StackId.DOCKED_STACK_ID;
+import static android.server.cts.StateLogger.log;
+
 import junit.framework.Assert;
 
-import static com.android.ddmlib.Log.LogLevel.INFO;
+import org.junit.Test;
 
-import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.log.LogUtil.CLog;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsServicesHostTestCases android.server.cts.ActivityManagerReplaceWindowTests
+ * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsActivityManagerDeviceTestCases android.server.cts.ActivityManagerReplaceWindowTests
  */
 public class ActivityManagerReplaceWindowTests extends ActivityManagerTestBase {
 
@@ -40,17 +38,19 @@ public class ActivityManagerReplaceWindowTests extends ActivityManagerTestBase {
 
     private List<String> mTempWindowTokens = new ArrayList();
 
+    @Test
     public void testReplaceWindow_Dock_Relaunch() throws Exception {
         testReplaceWindow_Dock(true);
     }
 
+    @Test
     public void testReplaceWindow_Dock_NoRelaunch() throws Exception {
         testReplaceWindow_Dock(false);
     }
 
     private void testReplaceWindow_Dock(boolean relaunch) throws Exception {
         if (!supportsSplitScreenMultiWindow()) {
-            CLog.logAndDisplay(INFO, "Skipping test: no multi-window support");
+            log("Skipping test: no multi-window support");
             return;
         }
 
@@ -70,7 +70,7 @@ public class ActivityManagerReplaceWindowTests extends ActivityManagerTestBase {
             Thread.sleep(2000);
         }
 
-        CLog.logAndDisplay(INFO, "==========Before Docking========");
+        log("==========Before Docking========");
         final String oldToken = getWindowToken(windowName, activityName);
 
         // Move to docked stack
@@ -81,7 +81,7 @@ public class ActivityManagerReplaceWindowTests extends ActivityManagerTestBase {
         // Sleep 5 seconds, then check if the window is replaced properly.
         Thread.sleep(5000);
 
-        CLog.logAndDisplay(INFO, "==========After Docking========");
+        log("==========After Docking========");
         final String newToken = getWindowToken(windowName, activityName);
 
         // For both relaunch and not relaunch case, we'd like the window to be kept.
@@ -90,7 +90,7 @@ public class ActivityManagerReplaceWindowTests extends ActivityManagerTestBase {
 
     private String getWindowToken(String windowName, String activityName)
             throws Exception {
-        mAmWmState.computeState(mDevice, new String[] {activityName});
+        mAmWmState.computeState(new String[] {activityName});
 
         mAmWmState.assertVisibility(activityName, true);
 

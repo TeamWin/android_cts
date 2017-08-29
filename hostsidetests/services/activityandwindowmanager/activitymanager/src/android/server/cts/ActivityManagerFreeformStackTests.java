@@ -16,15 +16,20 @@
 
 package android.server.cts;
 
+
+import static android.app.ActivityManager.StackId.FREEFORM_WORKSPACE_STACK_ID;
+
+import static org.junit.Assert.assertEquals;
+
+import android.graphics.Rect;
 import android.server.cts.ActivityManagerState.ActivityStack;
 import android.server.cts.ActivityManagerState.ActivityTask;
 
-import java.awt.Rectangle;
-import java.util.ArrayList;
+import org.junit.Test;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsServicesHostTestCases android.server.cts.ActivityManagerFreeformStackTests
+ * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsActivityManagerDeviceTestCases android.server.cts.ActivityManagerFreeformStackTests
  */
 public class ActivityManagerFreeformStackTests extends ActivityManagerTestBase {
 
@@ -42,11 +47,12 @@ public class ActivityManagerFreeformStackTests extends ActivityManagerTestBase {
     private static final String NON_RESIZEABLE_ACTIVITY = "NonResizeableActivity";
     private static final String NO_RELAUNCH_ACTIVITY = "NoRelaunchActivity";
 
+    @Test
     public void testFreeformWindowManagementSupport() throws Exception {
 
         launchActivityInStack(FREEFORM_ACTIVITY, FREEFORM_WORKSPACE_STACK_ID);
 
-        mAmWmState.computeState(mDevice, new String[] {FREEFORM_ACTIVITY, TEST_ACTIVITY});
+        mAmWmState.computeState(new String[] {FREEFORM_ACTIVITY, TEST_ACTIVITY});
 
         if (!supportsFreeform()) {
             mAmWmState.assertDoesNotContainStack(
@@ -60,14 +66,15 @@ public class ActivityManagerFreeformStackTests extends ActivityManagerTestBase {
         mAmWmState.assertVisibility(TEST_ACTIVITY, true);
         mAmWmState.assertFocusedActivity(
                 TEST_ACTIVITY + " must be focused Activity", TEST_ACTIVITY);
-        assertEquals(new Rectangle(0, 0, TEST_TASK_SIZE_1, TEST_TASK_SIZE_1),
+        assertEquals(new Rect(0, 0, TEST_TASK_SIZE_1, TEST_TASK_SIZE_1),
                 mAmWmState.getAmState().getTaskByActivityName(TEST_ACTIVITY).getBounds());
     }
 
+    @Test
     public void testNonResizeableActivityHasFullDisplayBounds() throws Exception {
         launchActivityInStack(NON_RESIZEABLE_ACTIVITY, FREEFORM_WORKSPACE_STACK_ID);
 
-        mAmWmState.computeState(mDevice, new String[] {NON_RESIZEABLE_ACTIVITY});
+        mAmWmState.computeState(new String[] {NON_RESIZEABLE_ACTIVITY});
 
         final ActivityTask task =
                 mAmWmState.getAmState().getTaskByActivityName(NON_RESIZEABLE_ACTIVITY);
@@ -85,11 +92,12 @@ public class ActivityManagerFreeformStackTests extends ActivityManagerTestBase {
                 task.getBounds());
     }
 
+    @Test
     public void testActivityLifeCycleOnResizeFreeformTask() throws Exception {
         launchActivityInStack(TEST_ACTIVITY, FREEFORM_WORKSPACE_STACK_ID);
         launchActivityInStack(NO_RELAUNCH_ACTIVITY, FREEFORM_WORKSPACE_STACK_ID);
 
-        mAmWmState.computeState(mDevice, new String[]{TEST_ACTIVITY, NO_RELAUNCH_ACTIVITY});
+        mAmWmState.computeState(new String[]{TEST_ACTIVITY, NO_RELAUNCH_ACTIVITY});
 
         if (!supportsFreeform()) {
             mAmWmState.assertDoesNotContainStack(
@@ -98,7 +106,7 @@ public class ActivityManagerFreeformStackTests extends ActivityManagerTestBase {
         }
 
         final int displayId = mAmWmState.getAmState().getStackById(
-                ActivityManagerTestBase.FREEFORM_WORKSPACE_STACK_ID).mDisplayId;
+                FREEFORM_WORKSPACE_STACK_ID).mDisplayId;
         final int densityDpi =
                 mAmWmState.getWmState().getDisplay(displayId).getDpi();
         final int testTaskSize1 =
@@ -111,14 +119,14 @@ public class ActivityManagerFreeformStackTests extends ActivityManagerTestBase {
         resizeActivityTask(NO_RELAUNCH_ACTIVITY,
                 TEST_TASK_OFFSET_2, TEST_TASK_OFFSET_2, testTaskSize1, testTaskSize2);
 
-        mAmWmState.computeState(mDevice, new String[]{TEST_ACTIVITY, NO_RELAUNCH_ACTIVITY});
+        mAmWmState.computeState(new String[]{TEST_ACTIVITY, NO_RELAUNCH_ACTIVITY});
 
         final String logSeparator = clearLogcat();
         resizeActivityTask(TEST_ACTIVITY,
                 TEST_TASK_OFFSET, TEST_TASK_OFFSET, testTaskSize2, testTaskSize1);
         resizeActivityTask(NO_RELAUNCH_ACTIVITY,
                 TEST_TASK_OFFSET_2, TEST_TASK_OFFSET_2, testTaskSize2, testTaskSize1);
-        mAmWmState.computeState(mDevice, new String[]{TEST_ACTIVITY, NO_RELAUNCH_ACTIVITY});
+        mAmWmState.computeState(new String[]{TEST_ACTIVITY, NO_RELAUNCH_ACTIVITY});
 
         assertActivityLifecycle(TEST_ACTIVITY, true /* relaunched */, logSeparator);
         assertActivityLifecycle(NO_RELAUNCH_ACTIVITY, false /* relaunched */, logSeparator);

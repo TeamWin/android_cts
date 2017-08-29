@@ -16,18 +16,20 @@
 
 package android.server.cts;
 
-import com.google.common.io.Files;
+import static org.junit.Assert.assertTrue;
 
-import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.util.FileUtil;
+import android.support.test.InstrumentationRegistry;
 
+import org.junit.Before;
+import org.junit.Test;
+
+import java.io.BufferedInputStream;
 import java.io.File;
-import java.lang.StringBuilder;
+import java.io.FileInputStream;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsServicesHostTestCases android.server.cts.ActivityManagerAmProfileTests
+ * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsActivityManagerDeviceTestCases android.server.cts.ActivityManagerAmProfileTests
  *
  * Please talk to Android Studio team first if you want to modify or delete these tests.
  */
@@ -36,16 +38,16 @@ public class ActivityManagerAmProfileTests extends ActivityManagerTestBase {
     private static final String TEST_PACKAGE_NAME = "android.server.cts.debuggable";
     private static final String TEST_ACTIVITY_NAME = "DebuggableAppActivity";
     private static final String OUTPUT_FILE_PATH = "/data/local/tmp/profile.trace";
+    private static String READABLE_FILE_PATH = null;
     private static final String FIRST_WORD_NO_STREAMING = "*version\n";
     private static final String FIRST_WORD_STREAMING = "SLOW";  // Magic word set by runtime.
 
-    private ITestDevice mDevice;
-
+    @Before
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         super.setUp();
-        mDevice = getDevice();
         setComponentName(TEST_PACKAGE_NAME);
+        READABLE_FILE_PATH = InstrumentationRegistry.getContext().getExternalFilesDir(null).getPath() + "/profile.trace";
     }
 
     /**
@@ -54,6 +56,7 @@ public class ActivityManagerAmProfileTests extends ActivityManagerTestBase {
      *    sampling-based profiling? no;
      *    using streaming output mode? no.
      */
+    @Test
     public void testAmProfileStartNoSamplingNoStreaming() throws Exception {
         // am profile start ... , and the same to the following 3 test methods.
         testProfile(true, false, false);
@@ -63,25 +66,32 @@ public class ActivityManagerAmProfileTests extends ActivityManagerTestBase {
      * The following tests are similar to testAmProfileStartNoSamplingNoStreaming(),
      * only different in the three configuration options.
      */
+    @Test
     public void testAmProfileStartNoSamplingStreaming() throws Exception {
         testProfile(true, false, true);
     }
+    @Test
     public void testAmProfileStartSamplingNoStreaming() throws Exception {
         testProfile(true, true, false);
     }
+    @Test
     public void testAmProfileStartSamplingStreaming() throws Exception {
         testProfile(true, true, true);
     }
+    @Test
     public void testAmStartStartProfilerNoSamplingNoStreaming() throws Exception {
         // am start --start-profiler ..., and the same to the following 3 test methods.
         testProfile(false, false, false);
     }
+    @Test
     public void testAmStartStartProfilerNoSamplingStreaming() throws Exception {
         testProfile(false, false, true);
     }
+    @Test
     public void testAmStartStartProfilerSamplingNoStreaming() throws Exception {
         testProfile(false, true, false);
     }
+    @Test
     public void testAmStartStartProfilerSamplingStreaming() throws Exception {
         testProfile(false, true, true);
     }
@@ -134,30 +144,35 @@ public class ActivityManagerAmProfileTests extends ActivityManagerTestBase {
     }
 
     private void verifyOutputFileFormat(boolean streaming) throws Exception {
+
+        // This is a hack. The am service has to write to /data/local/tmp because it doesn't have
+        // access to the sdcard but the test app can't read there
+        executeShellCommand("mv " + OUTPUT_FILE_PATH + " " + READABLE_FILE_PATH);
+
         String expectedFirstWord = streaming ? FIRST_WORD_STREAMING : FIRST_WORD_NO_STREAMING;
-        byte[] data = readFileOnClient(OUTPUT_FILE_PATH);
+        byte[] data = readFileOnClient(READABLE_FILE_PATH);
         assertTrue("data size=" + data.length, data.length >= expectedFirstWord.length());
         String actualFirstWord = new String(data, 0, expectedFirstWord.length());
         assertTrue("Unexpected first word: '" + actualFirstWord + "'",
                    actualFirstWord.equals(expectedFirstWord));
         // Clean up.
         executeShellCommand("rm -f " + OUTPUT_FILE_PATH);
+        executeShellCommand("rm -f " + READABLE_FILE_PATH);
     }
 
     private byte[] readFileOnClient(String clientPath) throws Exception {
-        assertTrue("File not found on client: " + clientPath,
-                mDevice.doesFileExist(clientPath));
-        File copyOnHost = File.createTempFile("host", "copy");
-        try {
-            executeAdbCommand("pull", clientPath, copyOnHost.getPath());
-            return Files.toByteArray(copyOnHost);
-        } finally {
-            FileUtil.deleteFile(copyOnHost);
-        }
+        File file = new File(clientPath);
+        assertTrue("File not found on client: " + clientPath, file.isFile());
+        int size = (int) file.length();
+        byte[] bytes = new byte[size];
+        BufferedInputStream buf = new BufferedInputStream(new FileInputStream(file));
+        buf.read(bytes, 0, bytes.length);
+        buf.close();
+        return bytes;
     }
 
-    private String[] executeAdbCommand(String... command) throws DeviceNotAvailableException {
-        String output = mDevice.executeAdbCommand(command);
+    private String[] executeAdbCommand(String command) {
+        String output = executeShellCommand(command);
         // "".split() returns { "" }, but we want an empty array
         String[] lines = output.equals("") ? new String[0] : output.split("\n");
         return lines;

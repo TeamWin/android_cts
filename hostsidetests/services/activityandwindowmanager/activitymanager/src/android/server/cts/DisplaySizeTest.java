@@ -16,18 +16,21 @@
 
 package android.server.cts;
 
-import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.testtype.DeviceTestCase;
+import static org.junit.Assert.assertTrue;
+
+import android.os.Build;
+
+import org.junit.After;
+import org.junit.Test;
 
 /**
  * Ensure that compatibility dialog is shown when launching an application with
  * an unsupported smallest width.
  *
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsServicesHostTestCases android.server.cts.DisplaySizeTest
+ * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsActivityManagerDeviceTestCases android.server.cts.DisplaySizeTest
  */
-public class DisplaySizeTest extends DeviceTestCase {
+public class DisplaySizeTest extends ActivityManagerTestBase {
     private static final String DENSITY_PROP_DEVICE = "ro.sf.lcd_density";
     private static final String DENSITY_PROP_EMULATOR = "qemu.sf.lcd_density";
 
@@ -37,30 +40,18 @@ public class DisplaySizeTest extends DeviceTestCase {
     private static final int ACTIVITY_TIMEOUT_MILLIS = 1000;
     private static final int WINDOW_TIMEOUT_MILLIS = 1000;
 
-    private ITestDevice mDevice;
-
+    @After
     @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        mDevice = getDevice();
-    }
-
-    @Override
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         super.tearDown();
+        resetDensity();
 
-        try {
-            resetDensity();
-
-            // Ensure app process is stopped.
-            forceStopPackage("android.displaysize.app");
-            forceStopPackage("android.server.cts");
-        } catch (DeviceNotAvailableException e) {
-            // Do nothing.
-        }
+        // Ensure app process is stopped.
+        forceStopPackage("android.displaysize.app");
+        forceStopPackage("android.server.cts");
     }
 
+    @Test
     public void testCompatibilityDialog() throws Exception {
         // Launch some other app (not to perform density change on launcher).
         startActivity("android.server.cts", "TestActivity");
@@ -74,6 +65,7 @@ public class DisplaySizeTest extends DeviceTestCase {
         verifyWindowDisplayed("UnsupportedDisplaySizeDialog", WINDOW_TIMEOUT_MILLIS);
     }
 
+    @Test
     public void testCompatibilityDialogWhenFocused() throws Exception {
         startActivity("android.displaysize.app", "SmallestWidthActivity");
         verifyWindowDisplayed("SmallestWidthActivity", ACTIVITY_TIMEOUT_MILLIS);
@@ -83,6 +75,7 @@ public class DisplaySizeTest extends DeviceTestCase {
         verifyWindowDisplayed("UnsupportedDisplaySizeDialog", WINDOW_TIMEOUT_MILLIS);
     }
 
+    @Test
     public void testCompatibilityDialogAfterReturn() throws Exception {
         // Launch target app.
         startActivity("android.displaysize.app", "SmallestWidthActivity");
@@ -94,13 +87,13 @@ public class DisplaySizeTest extends DeviceTestCase {
         setUnsupportedDensity();
 
         // Go back.
-        mDevice.executeShellCommand("input keyevent 4");
+        executeShellCommand("input keyevent 4");
 
         verifyWindowDisplayed("SmallestWidthActivity", ACTIVITY_TIMEOUT_MILLIS);
         verifyWindowDisplayed("UnsupportedDisplaySizeDialog", WINDOW_TIMEOUT_MILLIS);
     }
 
-    private void setUnsupportedDensity() throws DeviceNotAvailableException {
+    private void setUnsupportedDensity() {
         // Set device to 0.85 zoom. It doesn't matter that we're zooming out
         // since the feature verifies that we're in a non-default density.
         final int stableDensity = getStableDensity();
@@ -109,63 +102,56 @@ public class DisplaySizeTest extends DeviceTestCase {
     }
 
     private int getStableDensity() {
-        try {
-            final String densityProp;
-            if (mDevice.getSerialNumber().startsWith("emulator-")) {
-                densityProp = DENSITY_PROP_EMULATOR;
-            } else {
-                densityProp = DENSITY_PROP_DEVICE;
-            }
-
-            return Integer.parseInt(mDevice.getProperty(densityProp));
-        } catch (DeviceNotAvailableException e) {
-            return 0;
+        final String densityProp;
+        if (Build.getSerial().startsWith("emulator-")) {
+            densityProp = DENSITY_PROP_EMULATOR;
+        } else {
+            densityProp = DENSITY_PROP_DEVICE;
         }
+
+        return Integer.parseInt(executeShellCommand("getprop " + densityProp).trim());
     }
 
-    private void setDensity(int targetDensity) throws DeviceNotAvailableException {
-        mDevice.executeShellCommand("wm density " + targetDensity);
+    private void setDensity(int targetDensity) {
+        executeShellCommand("wm density " + targetDensity);
 
         // Verify that the density is changed.
-        final String output = mDevice.executeShellCommand("wm density");
+        final String output = executeShellCommand("wm density");
         final boolean success = output.contains("Override density: " + targetDensity);
 
         assertTrue("Failed to set density to " + targetDensity, success);
     }
 
-    private void resetDensity() throws DeviceNotAvailableException {
-        mDevice.executeShellCommand("wm density reset");
+    private void resetDensity() {
+        executeShellCommand("wm density reset");
     }
 
-    private void forceStopPackage(String packageName) throws DeviceNotAvailableException {
+    private void forceStopPackage(String packageName) {
         final String forceStopCmd = String.format(AM_FORCE_STOP, packageName);
-        mDevice.executeShellCommand(forceStopCmd);
+        executeShellCommand(forceStopCmd);
     }
 
-    private void startActivity(String packageName, String activityName)
-            throws DeviceNotAvailableException {
-        mDevice.executeShellCommand(getStartCommand(packageName, activityName));
+    private void startActivity(String packageName, String activityName){
+        executeShellCommand(getStartCommand(packageName, activityName));
     }
 
-    private void startOtherActivityOnTop(String packageName, String activityName)
-            throws DeviceNotAvailableException {
+    private void startOtherActivityOnTop(String packageName, String activityName) {
         final String startCmd = getStartCommand(packageName, activityName)
                 + " -f 0x20000000 --ez launch_another_activity true";
-        mDevice.executeShellCommand(startCmd);
+        executeShellCommand(startCmd);
     }
 
     private String getStartCommand(String packageName, String activityName) {
         return String.format(AM_START_COMMAND, packageName, packageName, activityName);
     }
 
-    private void verifyWindowDisplayed(String windowName, long timeoutMillis)
-            throws DeviceNotAvailableException {
+    private void verifyWindowDisplayed(String windowName, long timeoutMillis) {
         boolean success = false;
 
         // Verify that compatibility dialog is shown within 1000ms.
         final long timeoutTimeMillis = System.currentTimeMillis() + timeoutMillis;
         while (!success && System.currentTimeMillis() < timeoutTimeMillis) {
-            final String output = mDevice.executeShellCommand("dumpsys window");
+            final String output = executeShellCommand("dumpsys window");
             success = output.contains(windowName);
         }
 

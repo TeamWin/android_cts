@@ -16,49 +16,45 @@
 
 package android.server.cts;
 
-import com.android.ddmlib.Log.LogLevel;
-import com.android.tradefed.log.LogUtil.CLog;
-import com.android.tradefed.testtype.DeviceTestCase;
+import static android.server.cts.StateLogger.log;
 
 import android.server.cts.WindowManagerState.WindowState;
-import android.server.cts.ActivityManagerTestBase;
 
 public abstract class ParentChildTestBase extends ActivityManagerTestBase {
+
     private static final String COMPONENT_NAME = "android.server.FrameTestApp";
 
     interface ParentChildTest {
+
         void doTest(WindowState parent, WindowState child);
     }
 
     public void startTestCase(String testCase) throws Exception {
         setComponentName(COMPONENT_NAME);
         String cmd = getAmStartCmd(activityName(), intentKey(), testCase);
-        CLog.logAndDisplay(LogLevel.INFO, cmd);
         executeShellCommand(cmd);
     }
 
     public void startTestCaseDocked(String testCase) throws Exception {
-        setComponentName(COMPONENT_NAME);
-        String cmd = getAmStartCmd(activityName(), intentKey(), testCase);
-        CLog.logAndDisplay(LogLevel.INFO, cmd);
-        executeShellCommand(cmd);
+        startTestCase(testCase);
         moveActivityToDockStack(activityName());
     }
 
     abstract String intentKey();
+
     abstract String activityName();
 
     abstract void doSingleTest(ParentChildTest t) throws Exception;
 
     void doFullscreenTest(String testCase, ParentChildTest t) throws Exception {
-        CLog.logAndDisplay(LogLevel.INFO, "Running test fullscreen");
+        log("Running test fullscreen");
         startTestCase(testCase);
         doSingleTest(t);
         stopTestCase();
     }
 
     void doDockedTest(String testCase, ParentChildTest t) throws Exception {
-        CLog.logAndDisplay(LogLevel.INFO, "Running test docked");
+        log("Running test docked");
         startTestCaseDocked(testCase);
         doSingleTest(t);
         stopTestCase();

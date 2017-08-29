@@ -22,10 +22,12 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
 
-LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed
+LOCAL_STATIC_JAVA_LIBRARIES := \
+    compatibility-device-util \
+    android-support-test
 
 LOCAL_MODULE := cts-display-service-app-util
 
 LOCAL_SDK_VERSION := current
 
-include $(BUILD_HOST_JAVA_LIBRARY)
+include $(BUILD_STATIC_JAVA_LIBRARY)
