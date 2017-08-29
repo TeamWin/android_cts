@@ -56,6 +56,9 @@ abstract class AutoFillServiceTestCase {
     public final RetryRule mRetryRule = new RetryRule(2);
 
     @Rule
+    public final AutofillLoggingTestRule mLoggingRule = new AutofillLoggingTestRule(TAG);
+
+    @Rule
     public final RequiredFeatureRule mRequiredFeatureRule =
             new RequiredFeatureRule(PackageManager.FEATURE_AUTOFILL);
 
@@ -72,10 +75,14 @@ abstract class AutoFillServiceTestCase {
     }
 
     @BeforeClass
-    public static void removeLockScreen() {
+    public static void prepareScreen() {
         if (!hasAutofillFeature()) return;
 
+        // Unlock screen.
         runShellCommand("input keyevent KEYCODE_WAKEUP");
+
+        // Collapse notifications.
+        runShellCommand("cmd statusbar collapse");
     }
 
     @BeforeClass
