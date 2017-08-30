@@ -18,7 +18,6 @@ package com.android.compatibility.common.tradefed.presubmit;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import com.android.compatibility.SuiteInfo;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.result.ResultReporter;
 import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
@@ -40,6 +39,7 @@ import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IDeviceTest;
 import com.android.tradefed.testtype.IInvocationContextReceiver;
 import com.android.tradefed.testtype.IRemoteTest;
+import com.android.tradefed.testtype.suite.TestSuiteInfo;
 import com.android.tradefed.util.AbiUtils;
 import com.android.tradefed.util.FileUtil;
 
@@ -551,7 +551,7 @@ public class IntegrationTest {
     @Test
     public void testSingleModuleRun_sharded() throws Exception {
         final String moduleName = "module_sharded";
-        Set<String> abis = AbiUtils.getAbisForArch(SuiteInfo.TARGET_ARCH);
+        Set<String> abis = AbiUtils.getAbisForArch(TestSuiteInfo.getInstance().getTargetArch());
         Iterator<String> ite = abis.iterator();
         final String abi1 = ite.next();
         final String abi2 = ite.next();
@@ -601,7 +601,7 @@ public class IntegrationTest {
     @Test
     public void testSingleModuleRun_sharded_incomplete() throws Exception {
         final String moduleName = "module_sharded_incomplete";
-        Set<String> abis = AbiUtils.getAbisForArch(SuiteInfo.TARGET_ARCH);
+        Set<String> abis = AbiUtils.getAbisForArch(TestSuiteInfo.getInstance().getTargetArch());
         Iterator<String> ite = abis.iterator();
         final String abi1 = ite.next();
         final String abi2 = ite.next();
@@ -652,7 +652,7 @@ public class IntegrationTest {
     @Test
     public void testSingleModuleRun_sharded_getTestShard() throws Exception {
         final String moduleName = "module_sharded_getTestShard";
-        Set<String> abis = AbiUtils.getAbisForArch(SuiteInfo.TARGET_ARCH);
+        Set<String> abis = AbiUtils.getAbisForArch(TestSuiteInfo.getInstance().getTargetArch());
         Iterator<String> ite = abis.iterator();
         final String abi1 = ite.next();
         final String abi2 = ite.next();

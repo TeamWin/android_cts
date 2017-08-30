@@ -15,7 +15,6 @@
  */
 package com.android.compatibility.common.tradefed.testtype.suite;
 
-import com.android.compatibility.SuiteInfo;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
 import com.android.compatibility.common.tradefed.testtype.ISubPlan;
@@ -33,6 +32,7 @@ import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.Abi;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.suite.ITestSuite;
+import com.android.tradefed.testtype.suite.TestSuiteInfo;
 import com.android.tradefed.util.AbiFormatter;
 import com.android.tradefed.util.AbiUtils;
 import com.android.tradefed.util.ArrayUtil;
@@ -235,7 +235,7 @@ public class CompatibilityTestSuite extends ITestSuite {
      * Exposed for testing.
      */
     protected Set<String> getAbisForBuildTargetArch() {
-        return AbiUtils.getAbisForArch(SuiteInfo.TARGET_ARCH);
+        return AbiUtils.getAbisForArch(TestSuiteInfo.getInstance().getTargetArch());
     }
 
     /**
