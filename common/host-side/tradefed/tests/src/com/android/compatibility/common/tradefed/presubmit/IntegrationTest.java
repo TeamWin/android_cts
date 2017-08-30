@@ -53,6 +53,7 @@ import org.junit.runners.JUnit4;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -135,6 +136,8 @@ public class IntegrationTest {
 
         EasyMock.expect(mMockDevice.getSerialNumber()).andStubReturn("SERIAL");
         EasyMock.expect(mMockBuildInfo.getDeviceSerial()).andStubReturn("SERIAL");
+
+        EasyMock.expect(mMockBuildInfo.getFiles()).andStubReturn(Collections.emptyList());
 
         mContext = new InvocationContext();
         mContext.addAllocatedDevice("default", mMockDevice);
