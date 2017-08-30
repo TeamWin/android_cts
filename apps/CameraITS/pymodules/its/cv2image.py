@@ -30,6 +30,18 @@ def scale_img(img, scale=1.0):
     return cv2.resize(img.copy(), dim, interpolation=cv2.INTER_AREA)
 
 
+def gray_scale_img(img):
+    """Return gray scale version of image."""
+    if len(img.shape) == 2:
+        img_gray = img.copy()
+    elif len(img.shape) == 3:
+        if img.shape[2] == 1:
+            img_gray = img[:, :, 0].copy()
+        else:
+            img_gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    return img_gray
+
+
 class Chart(object):
     """Definition for chart object.
 
@@ -54,7 +66,7 @@ class Chart(object):
         self._scale_start = scale_start
         self._scale_stop = scale_stop
         self._scale_step = scale_step
-        self.xnorm, self.ynorm, self.wnorm, self.hnorm = its.image.chart_located_per_argv()
+        self.xnorm, self.ynorm, self.wnorm, self.hnorm, self.scale = its.image.chart_located_per_argv()
         if not self.xnorm:
             self.locate()
 
@@ -79,7 +91,7 @@ class Chart(object):
         req['android.lens.focusDistance'] = fd
         cap_chart = its.image.stationary_lens_cap(cam, req, fmt)
         img_3a = its.image.convert_capture_to_rgb_image(cap_chart, props)
-        img_3a = its.image.flip_mirror_img_per_argv(img_3a)
+        img_3a = its.image.rotate_img_per_argv(img_3a)
         its.image.write_image(img_3a, 'af_scene.jpg')
         template = cv2.imread(self._file, cv2.IMREAD_ANYDEPTH)
         focal_l = cap_chart['metadata']['android.lens.focalLength']
@@ -103,6 +115,7 @@ class Chart(object):
             ynorm:          float; [0, 1] top loc of chart in scene
             wnorm:          float; [0, 1] width of chart in scene
             hnorm:          float; [0, 1] height of chart in scene
+            scale:          float; scale factor to extract chart
 
         Args:
             cam:            An open device session
@@ -131,17 +144,12 @@ class Chart(object):
         scale_start = self._scale_start * s_factor
         scale_stop = self._scale_stop * s_factor
         scale_step = self._scale_step * s_factor
+        self.scale = s_factor
         max_match = []
         # check for normalized image
         if numpy.amax(scene) <= 1.0:
             scene = (scene * 255.0).astype(numpy.uint8)
-        if len(scene.shape) == 2:
-            scene_gray = scene.copy()
-        elif len(scene.shape) == 3:
-            if scene.shape[2] == 1:
-                scene_gray = scene[:, :, 0]
-            else:
-                scene_gray = cv2.cvtColor(scene.copy(), cv2.COLOR_RGB2GRAY)
+        scene_gray = gray_scale_img(scene)
         print 'Finding chart in scene...'
         for scale in numpy.arange(scale_start, scale_stop, scale_step):
             scene_scaled = scale_img(scene_gray, scale)
@@ -170,16 +178,16 @@ class Chart(object):
                 print estring
             # find max and draw bbox
             match_index = max_match.index(max(max_match, key=lambda x: x[0]))
-            scale = scale_start + scale_step * match_index
-            print 'Optimum scale factor: %.3f' %  scale
+            self.scale = scale_start + scale_step * match_index
+            print 'Optimum scale factor: %.3f' %  self.scale
             top_left_scaled = max_match[match_index][1]
             h, w = chart.shape
             bottom_right_scaled = (top_left_scaled[0] + w,
                                    top_left_scaled[1] + h)
-            top_left = (int(top_left_scaled[0]/scale),
-                        int(top_left_scaled[1]/scale))
-            bottom_right = (int(bottom_right_scaled[0]/scale),
-                            int(bottom_right_scaled[1]/scale))
+            top_left = (int(top_left_scaled[0]/self.scale),
+                        int(top_left_scaled[1]/self.scale))
+            bottom_right = (int(bottom_right_scaled[0]/self.scale),
+                            int(bottom_right_scaled[1]/self.scale))
             self.wnorm = float((bottom_right[0]) - top_left[0]) / scene.shape[1]
             self.hnorm = float((bottom_right[1]) - top_left[1]) / scene.shape[0]
             self.xnorm = float(top_left[0]) / scene.shape[1]

@@ -159,11 +159,11 @@ public final class ServiceProcessController {
 
         for (int i=0; i<mConnections.length; i++) {
             IBinder serviceBinder = mConnections[i].getServiceIBinder();
+            mConnections[i].unbind(timeout);
             try {
                 serviceBinder.transact(IBinder.FIRST_CALL_TRANSACTION, mData, null, 0);
             } catch (RemoteException e) {
             }
-            mConnections[i].unbind(timeout);
         }
 
         // Wait for uid's process to go away.

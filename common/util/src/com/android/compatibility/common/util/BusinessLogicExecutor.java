@@ -61,10 +61,17 @@ public abstract class BusinessLogicExecutor {
         try {
             invokeMethod(method, args);
         } catch (ClassNotFoundException | IllegalAccessException | InstantiationException |
-                InvocationTargetException | NoSuchMethodException e) {
+                NoSuchMethodException e) {
             throw new RuntimeException(String.format(
                     "BusinessLogic: Failed to invoke action method %s with args: %s", method,
                     Arrays.toString(args)), e);
+        } catch (InvocationTargetException e) {
+            // This action throws an exception, so throw the original exception (e.g.
+            // AssertionFailedError) for a more readable stacktrace.
+            Throwable t = e.getCause();
+            RuntimeException re = new RuntimeException(t.getMessage(), t.getCause());
+            re.setStackTrace(t.getStackTrace());
+            throw re;
         }
     }
 

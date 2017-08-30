@@ -158,7 +158,7 @@ final class Helper {
                     if (e instanceof RetryableException) {
                         throw e;
                     } else {
-                        throw new Exception("Timedout out after " + timeout + " ms", e);
+                        throw new RetryableException(e, "Timedout out after %d ms", timeout);
                     }
                 }
             }

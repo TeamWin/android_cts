@@ -140,7 +140,7 @@ public class BusinessLogic {
         }
 
         /**
-         * Invoke this Business Logic condition with an executor.
+         * Invoke this Business Logic action with an executor.
          */
         public void invoke(BusinessLogicExecutor executor) {
             executor.executeAction(mMethodName,
