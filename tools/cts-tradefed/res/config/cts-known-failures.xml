@@ -30,9 +30,8 @@
     <option name="compatibility:exclude-filter" value="CtsAccessibilityServiceTestCases android.accessibilityservice.cts.AccessibilityTextTraversalTest#testActionNextAndPreviousAtGranularityPageOverText" />
     <option name="compatibility:exclude-filter" value="CtsAccessibilityServiceTestCases android.accessibilityservice.cts.AccessibilityTextTraversalTest#testActionNextAndPreviousAtGranularityPageOverTextExtend" />
 
-    <!-- b/17530117 -->
-    <option name="compatibility:exclude-filter" value="CtsCameraTestCases android.hardware.camera2.cts.AllocationTest#testBlackWhite" />
-    <option name="compatibility:exclude-filter" value="CtsCameraTestCases android.hardware.camera2.cts.AllocationTest#testParamSensitivity" />
+    <!-- b/17989532 -->
+    <option name="compatibility:exclude-filter" value="CtsCameraTestCases android.hardware.camera2.cts.SurfaceViewPreviewTest#testPreparePerformance" />
 
     <!-- These test cases are only applicable to Android Auto Embedded targets.-->
     <option name="compatibility:exclude-filter" value="CtsCarTestCases" />
