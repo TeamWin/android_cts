@@ -171,7 +171,8 @@ public class CompatibilityBuildProvider implements IDeviceBuildProvider {
      */
     @Override
     public void cleanUp(IBuildInfo info) {
-        // ignore
+        // Everything should have been copied properly to result folder, we clean up
+        info.cleanUp();
     }
 
     private void addCompatibilitySuiteInfo(IBuildInfo info) {

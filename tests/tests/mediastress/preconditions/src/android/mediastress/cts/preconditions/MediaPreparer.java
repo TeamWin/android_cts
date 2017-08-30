@@ -17,7 +17,7 @@ package android.mediastress.cts.preconditions;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.targetprep.PreconditionPreparer;
-import com.android.compatibility.common.util.DynamicConfigHostSide;
+import com.android.compatibility.common.tradefed.util.DynamicConfigFileReader;
 import com.android.ddmlib.IDevice;
 import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.IBuildInfo;
@@ -198,10 +198,8 @@ public class MediaPreparer extends PreconditionPreparer {
         URL url;
         try {
             // Get download URL from dynamic configuration service
-            File config =
-                    DynamicConfigHostSide.getDynamicConfigFile(buildInfo, DYNAMIC_CONFIG_MODULE);
-            String mediaUrlString =
-                    DynamicConfigHostSide.getValueFromConfig(config, MEDIA_FILES_URL_KEY);
+            String mediaUrlString = DynamicConfigFileReader.getValueFromConfig(
+                    buildInfo, DYNAMIC_CONFIG_MODULE, MEDIA_FILES_URL_KEY);
             url = new URL(mediaUrlString);
         } catch (IOException | XmlPullParserException e) {
             throw new TargetSetupError("Trouble finding media file download location with " +
