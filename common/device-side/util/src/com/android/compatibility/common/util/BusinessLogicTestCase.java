@@ -15,6 +15,9 @@
  */
 package com.android.compatibility.common.util;
 
+import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
+
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -65,6 +68,14 @@ public class BusinessLogicTestCase {
 
     private Context getContext() {
         return InstrumentationRegistry.getInstrumentation().getTargetContext();
+    }
+
+    public static void skipTest(String message) {
+        assumeTrue(message, false);
+    }
+
+    public static void failTest(String message) {
+        fail(message);
     }
 
     public void mapPut(String mapName, String key, String value) {
