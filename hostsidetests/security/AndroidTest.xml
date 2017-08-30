@@ -124,6 +124,7 @@
         <option name="push" value="Bug-33039685->/data/local/tmp/Bug-33039685" />
         <option name="push" value="Bug-35676417->/data/local/tmp/Bug-35676417" />
         <option name="push" value="Bug-35644812->/data/local/tmp/Bug-35644812" />
+        <option name="push" value="Bug-36492827->/data/local/tmp/Bug-36492827" />
 
         <option name="append-bitness" value="true" />
     </target_preparer>
