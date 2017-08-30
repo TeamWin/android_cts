@@ -64,6 +64,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -82,6 +83,14 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     private static final String RESULT_KEY = "COMPATIBILITY_TEST_RESULT";
     private static final String CTS_PREFIX = "cts:";
     private static final String BUILD_INFO = CTS_PREFIX + "build_";
+
+    public static final String BUILD_VERSION_RELEASE = "build_version_release";
+    public static final String BUILD_ID = "build_id";
+    public static final String BUILD_PRODUCT = "build_product";
+    public static final String BUILD_DEVICE = "build_device";
+    public static final String BUILD_MANUFACTURER = "build_manufacturer";
+    public static final String BUILD_BRAND = "build_brand";
+    public static final String BUILD_FINGERPRINT = "build_fingerprint";
 
     private static final List<String> NOT_RETRY_FILES = Arrays.asList(
             ChecksumReporter.NAME,
@@ -125,7 +134,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     private int invocationEndedCount = 0;
     private CountDownLatch mFinalized = null;
 
-    private IInvocationResult mResult = new InvocationResult();
+    protected IInvocationResult mResult = new InvocationResult();
     private IModuleResult mCurrentModuleResult;
     private ICaseResult mCurrentCaseResult;
     private ITestResult mCurrentResult;
@@ -154,6 +163,9 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     private final ResultReporter mMasterResultReporter;
 
     private LogFileSaver mTestLogSaver;
+
+    // Elapsed time from invocation started to ended.
+    private long mElapsedTime;
 
     /**
      * Default constructor.
@@ -457,27 +469,25 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             if (++invocationEndedCount < mMasterBuildInfos.size()) {
                 return;
             }
-            finalizeResults(elapsedTime);
+            mElapsedTime = elapsedTime;
+            finalizeResults();
             mFinalized.countDown();
         }
     }
 
-    private void finalizeResults(long elapsedTime) {
+    private void finalizeResults() {
         // Add all device serials into the result to be serialized
         for (String deviceSerial : mMasterDeviceSerials) {
             mResult.addDeviceSerial(deviceSerial);
         }
 
+        addDeviceBuildInfoToResult();
+
         Set<String> allExpectedModules = new HashSet<>();
-        // Add all build info to the result to be serialized
         for (IBuildInfo buildInfo : mMasterBuildInfos) {
             for (Map.Entry<String, String> entry : buildInfo.getBuildAttributes().entrySet()) {
                 String key = entry.getKey();
                 String value = entry.getValue();
-                if (key.startsWith(BUILD_INFO)) {
-                    mResult.addInvocationInfo(key.substring(CTS_PREFIX.length()), value);
-                }
-
                 if (key.equals(CompatibilityBuildHelper.MODULE_IDS) && value.length() > 0) {
                     Collections.addAll(allExpectedModules, value.split(","));
                 }
@@ -493,17 +503,13 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
         String moduleProgress = String.format("%d of %d",
                 mResult.getModuleCompleteCount(), mResult.getModules().size());
 
-        long startTime = mResult.getStartTime();
+
         try {
             // Zip the full test results directory.
             copyDynamicConfigFiles(mBuildHelper.getDynamicConfigFiles(), mResultDir);
             copyFormattingFiles(mResultDir, mBuildHelper.getSuiteName());
 
-            File resultFile = ResultHandler.writeResults(mBuildHelper.getSuiteName(),
-                    mBuildHelper.getSuiteVersion(), mBuildHelper.getSuitePlan(),
-                    mBuildHelper.getSuiteBuild(), mResult, mResultDir, startTime,
-                    elapsedTime + startTime, mReferenceUrl, getLogUrl(),
-                    mBuildHelper.getCommandLineArgs());
+            File resultFile = generateResultXmlFile();
             if (mRetrySessionId != null) {
                 copyRetryFiles(ResultHandler.getResultDirectory(
                         mBuildHelper.getResultsDir(), mRetrySessionId), mResultDir);
@@ -529,7 +535,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
         }
         // print the run results last.
         info("Invocation finished in %s. PASSED: %d, FAILED: %d, MODULES: %s",
-                TimeUtil.formatElapsedTime(elapsedTime),
+                TimeUtil.formatElapsedTime(mElapsedTime),
                 mResult.countResults(TestStatus.PASS),
                 mResult.countResults(TestStatus.FAIL),
                 moduleProgress);
@@ -652,6 +658,82 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
         ResultReporter clone = new ResultReporter(this);
         OptionCopier.copyOptionsNoThrow(this, clone);
         return clone;
+    }
+
+    /**
+     * Create results file compatible with CTSv2 (xml) report format.
+     */
+    protected File generateResultXmlFile()
+            throws IOException, XmlPullParserException {
+        return ResultHandler.writeResults(mBuildHelper.getSuiteName(),
+                mBuildHelper.getSuiteVersion(), mBuildHelper.getSuitePlan(),
+                mBuildHelper.getSuiteBuild(), mResult, mResultDir, mResult.getStartTime(),
+                mElapsedTime + mResult.getStartTime(), mReferenceUrl, getLogUrl(),
+                mBuildHelper.getCommandLineArgs());
+    }
+
+    /**
+     * Add build info collected from the device attributes to the results.
+     */
+    protected void addDeviceBuildInfoToResult() {
+        // Add all build info to the result to be serialized
+        Map<String, String> buildProperties = mapBuildInfo();
+        addBuildInfoToResult(buildProperties, mResult);
+    }
+
+    /**
+     * Override specific build properties so the report will be associated with the
+     * build fingerprint being certified.
+     */
+    protected void addDeviceBuildInfoToResult(String buildFingerprintOverride,
+            String manufactureOverride) {
+
+        Map<String, String> buildProperties = mapBuildInfo();
+
+        // Extract and override values from build fingerprint.
+        // Build fingerprint format: brand/product/device:version/build_id/tags
+        String fingerprintPrefix = buildFingerprintOverride.split(":")[0];
+        String fingerprintTail = buildFingerprintOverride.split(":")[1];
+        String buildIdOverride = fingerprintTail.split("/")[1];
+        buildProperties.put(BUILD_ID, buildIdOverride);
+        String brandOverride = fingerprintPrefix.split("/")[0];
+        buildProperties.put(BUILD_BRAND, brandOverride);
+        String deviceOverride = fingerprintPrefix.split("/")[2];
+        buildProperties.put(BUILD_DEVICE, deviceOverride);
+        String productOverride = fingerprintPrefix.split("/")[1];
+        buildProperties.put(BUILD_PRODUCT, productOverride);
+        String versionOverride = fingerprintTail.split("/")[0];
+        buildProperties.put(BUILD_VERSION_RELEASE, versionOverride);
+        buildProperties.put(BUILD_FINGERPRINT, buildFingerprintOverride);
+        buildProperties.put(BUILD_MANUFACTURER, manufactureOverride);
+
+        // Add modified values to results.
+        addBuildInfoToResult(buildProperties, mResult);
+        mResult.setBuildFingerprint(buildFingerprintOverride);
+    }
+    /** Aggregate build info from member device info. */
+    protected Map<String, String> mapBuildInfo() {
+        Map<String, String> buildProperties = new HashMap<>();
+        for (IBuildInfo buildInfo : mMasterBuildInfos) {
+            for (Map.Entry<String, String> entry : buildInfo.getBuildAttributes().entrySet()) {
+                String key = entry.getKey();
+                String value = entry.getValue();
+                if (key.startsWith(BUILD_INFO)) {
+                    buildProperties.put(key.substring(CTS_PREFIX.length()), value);
+                }
+            }
+        }
+        return buildProperties;
+    }
+
+    /**
+     * Add build info to results.
+     * @param buildProperties Build info to add.
+     */
+    protected static void addBuildInfoToResult(Map<String, String> buildProperties,
+            IInvocationResult invocationResult) {
+        buildProperties.entrySet().stream().forEach(entry ->
+                invocationResult.addInvocationInfo(entry.getKey(), entry.getValue()));
     }
 
     /**
