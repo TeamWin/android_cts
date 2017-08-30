@@ -109,6 +109,7 @@ def main():
             ],
         "scene3": [
             "test_3a_consistency",
+            "test_flip_mirror",
             "test_lens_movement_reporting",
             "test_lens_position"
             ],
@@ -311,8 +312,9 @@ def main():
                 chart = its.cv2image.Chart(SCENE3_FILE, CHART_HEIGHT,
                                            CHART_DISTANCE, CHART_SCALE_START,
                                            CHART_SCALE_STOP, CHART_SCALE_STEP)
-                chart_loc_arg = 'chart_loc=%.2f,%.2f,%.2f,%.2f' % (chart.xnorm,
-                        chart.ynorm, chart.wnorm, chart.hnorm)
+                chart_loc_arg = 'chart_loc=%.2f,%.2f,%.2f,%.2f,%.3f' % (
+                        chart.xnorm, chart.ynorm, chart.wnorm, chart.hnorm,
+                        chart.scale)
             # Run each test, capturing stdout and stderr.
             for (testname, testpath) in tests:
                 if auto_scene_switch:
