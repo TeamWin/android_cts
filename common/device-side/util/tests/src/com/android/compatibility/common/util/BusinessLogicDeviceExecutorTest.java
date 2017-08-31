@@ -19,11 +19,14 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNull;
 import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 
+import org.junit.AssumptionViolatedException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -51,6 +54,7 @@ public class BusinessLogicDeviceExecutorTest {
     private static final String METHOD_7 = THIS_CLASS + ".method7";
     private static final String METHOD_8 = THIS_CLASS + ".method8";
     private static final String METHOD_9 = THIS_CLASS + ".method9";
+    private static final String METHOD_10 = THIS_CLASS + ".method10";
     private static final String FAKE_METHOD = THIS_CLASS + ".methodDoesntExist";
     private static final String ARG_STRING_1 = "arg1";
     private static final String ARG_STRING_2 = "arg2";
@@ -215,6 +219,18 @@ public class BusinessLogicDeviceExecutorTest {
         mExecutor.executeAction(METHOD_9);
     }
 
+    @Test
+    public void testExecuteActionViolateAssumption() throws Exception {
+        try {
+            mExecutor.executeAction(METHOD_10);
+            // JUnit4 doesn't support expecting AssumptionViolatedException with "expected"
+            // attribute on @Test annotation, so test using Assert.fail()
+            fail("Expected assumption failure");
+        } catch (AssumptionViolatedException e) {
+            // expected
+        }
+    }
+
     public void method1() {
         mInvoked = METHOD_1;
     }
@@ -278,6 +294,11 @@ public class BusinessLogicDeviceExecutorTest {
     // throw AssertionFailedError
     public void method9() throws AssertionFailedError {
         assertTrue(false);
+    }
+
+    // throw AssumptionViolatedException
+    public void method10() throws AssumptionViolatedException {
+        assumeTrue(false);
     }
 
     public static class OtherClass {
