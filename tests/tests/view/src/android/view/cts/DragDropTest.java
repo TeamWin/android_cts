@@ -35,8 +35,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.android.internal.util.ArrayUtils;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -47,6 +45,7 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
 
 @RunWith(AndroidJUnit4.class)
 public class DragDropTest {
@@ -169,7 +168,8 @@ public class DragDropTest {
     private void expectEndEventFailure6(int viewId, int releaseViewId) {
         View v = mActivity.findViewById(viewId);
         View release = mActivity.findViewById(releaseViewId);
-        int [] releaseLoc = release.getLocationOnScreen();
+        int [] releaseLoc = new int[2];
+        release.getLocationOnScreen(releaseLoc);
         mExpected.add(new LogEntry(v, obtainDragEvent(DragEvent.ACTION_DRAG_ENDED,
                 releaseLoc[0] + 6, releaseLoc[1] + 6, false)));
     }
@@ -179,8 +179,10 @@ public class DragDropTest {
     private void expectEventWithOffset(int action, int viewId, int locationViewId, int offset) {
         View v = mActivity.findViewById(viewId);
         View locationView = mActivity.findViewById(locationViewId);
-        int [] viewLocation = v.getLocationOnScreen();
-        int [] locationViewLocation = locationView.getLocationOnScreen();
+        int [] viewLocation = new int[2];
+        v.getLocationOnScreen(viewLocation);
+        int [] locationViewLocation = new int[2];
+        locationView.getLocationOnScreen(locationViewLocation);
         mExpected.add(new LogEntry(v, obtainDragEvent(action,
                 locationViewLocation[0] - viewLocation[0] + offset,
                 locationViewLocation[1] - viewLocation[1] + offset, false)));
@@ -199,7 +201,8 @@ public class DragDropTest {
     private void injectMouseWithOffset(int viewId, int action, int offset) {
         runOnMain(() -> {
             View v = mActivity.findViewById(viewId);
-            int [] destLoc = v.getLocationOnScreen();
+            int [] destLoc = new int [2];
+            v.getLocationOnScreen(destLoc);
             long downTime = SystemClock.uptimeMillis();
             MotionEvent event = MotionEvent.obtain(downTime, downTime, action,
                     destLoc[0] + offset, destLoc[1] + offset, 1);
@@ -570,6 +573,11 @@ public class DragDropTest {
         verifyEventLog();
     }
 
+    private boolean drawableStateContains(int resourceId, int attr) {
+        return IntStream.of(mActivity.findViewById(resourceId).getDrawableState())
+                .anyMatch(x -> x == attr);
+    }
+
     /**
      * Tests that state_drag_hovered and state_drag_can_accept are set correctly.
      */
@@ -585,52 +593,38 @@ public class DragDropTest {
                 logEvent(v, ev);
                 return true;
             });
-            assertFalse(ArrayUtils.contains(
-                    mActivity.findViewById(R.id.inner).getDrawableState(),
-                    android.R.attr.state_drag_can_accept));
+            assertFalse(drawableStateContains(R.id.inner, android.R.attr.state_drag_can_accept));
         });
 
         startDrag();
 
         runOnMain(() -> {
-            assertFalse(ArrayUtils.contains(
-                    mActivity.findViewById(R.id.inner).getDrawableState(),
-                    android.R.attr.state_drag_hovered));
-            assertTrue(ArrayUtils.contains(
-                    mActivity.findViewById(R.id.inner).getDrawableState(),
-                    android.R.attr.state_drag_can_accept));
+            assertFalse(drawableStateContains(R.id.inner, android.R.attr.state_drag_hovered));
+            assertTrue(drawableStateContains(R.id.inner, android.R.attr.state_drag_can_accept));
         });
 
         // Move mouse into the view.
         injectMouse5(R.id.inner, MotionEvent.ACTION_MOVE);
         runOnMain(() -> {
-            assertTrue(ArrayUtils.contains(
-                    mActivity.findViewById(R.id.inner).getDrawableState(),
-                    android.R.attr.state_drag_hovered));
+            assertTrue(drawableStateContains(R.id.inner, android.R.attr.state_drag_hovered));
         });
 
         // Move out.
         injectMouse5(R.id.subcontainer, MotionEvent.ACTION_MOVE);
         runOnMain(() -> {
-            assertFalse(ArrayUtils.contains(
-                    mActivity.findViewById(R.id.inner).getDrawableState(),
-                    android.R.attr.state_drag_hovered));
+            assertFalse(drawableStateContains(R.id.inner, android.R.attr.state_drag_hovered));
         });
 
         // Move in.
         injectMouse5(R.id.inner, MotionEvent.ACTION_MOVE);
         runOnMain(() -> {
-            assertTrue(ArrayUtils.contains(
-                    mActivity.findViewById(R.id.inner).getDrawableState(),
-                    android.R.attr.state_drag_hovered));
+            assertTrue(drawableStateContains(R.id.inner, android.R.attr.state_drag_hovered));
         });
 
         // Release there.
         injectMouse5(R.id.inner, MotionEvent.ACTION_UP);
         runOnMain(() -> {
-            assertFalse(ArrayUtils.contains(
-                    mActivity.findViewById(R.id.inner).getDrawableState(),
-                    android.R.attr.state_drag_hovered));
+            assertFalse(drawableStateContains(R.id.inner, android.R.attr.state_drag_hovered));
         });
     }
 }
