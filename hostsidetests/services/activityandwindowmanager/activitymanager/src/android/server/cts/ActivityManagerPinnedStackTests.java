@@ -19,7 +19,6 @@ package android.server.cts;
 import static android.server.cts.ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID;
 import static android.server.cts.ActivityManagerState.STATE_STOPPED;
 
-import android.server.cts.ActivityManagerState.Activity;
 import android.server.cts.ActivityManagerState.ActivityStack;
 import android.server.cts.ActivityManagerState.ActivityTask;
 
@@ -787,6 +786,38 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         launchActivity(PIP_ACTIVITY);
         waitForValidPictureInPictureCallbacks(PIP_ACTIVITY, logSeparator);
         assertValidPictureInPictureCallbackOrder(PIP_ACTIVITY, logSeparator);
+    }
+
+    public void testEnterPipInterruptedCallbacks() throws Exception {
+        if (!supportsPip()) return;
+
+        // Slow down the transition animations for this test
+        setWindowTransitionAnimationDurationScale(20);
+
+        // Launch a PiP activity
+        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
+        // Wait until the PiP activity has moved into the pinned stack (happens before the
+        // transition has started)
+        mAmWmState.waitForValidState(mDevice, PIP_ACTIVITY, PINNED_STACK_ID);
+        assertPinnedStackExists();
+
+        // Relaunch the PiP activity back into fullscreen
+        String logSeparator = clearLogcat();
+        launchActivity(PIP_ACTIVITY);
+        // Wait until the PiP activity is reparented into the fullscreen stack (happens after the
+        // transition has finished)
+        mAmWmState.waitForValidState(mDevice, PIP_ACTIVITY, FULLSCREEN_WORKSPACE_STACK_ID);
+
+        // Ensure that we get the callbacks indicating that PiP/MW mode was cancelled, but no
+        // configuration change (since none was sent)
+        final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(
+                PIP_ACTIVITY, logSeparator);
+        assertTrue(lifecycleCounts.mConfigurationChangedCount == 0);
+        assertTrue(lifecycleCounts.mPictureInPictureModeChangedCount == 1);
+        assertTrue(lifecycleCounts.mMultiWindowModeChangedCount == 1);
+
+        // Reset the animation scale
+        setWindowTransitionAnimationDurationScale(1);
     }
 
     public void testStopBeforeMultiWindowCallbacksOnDismiss() throws Exception {
