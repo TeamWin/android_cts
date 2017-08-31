@@ -1616,6 +1616,48 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
                 "Activity launched on external display must be resumed");
     }
 
+    /**
+     * Tests that tapping on the primary display after showing the keyguard resumes the
+     * activity on the primary display.
+     */
+    public void testStackFocusSwitchOnTouchEventAfterKeyguard() throws Exception {
+        // Launch something on the primary display so we know there is a resumed activity there
+        launchActivity(RESIZEABLE_ACTIVITY_NAME);
+        waitAndAssertActivityResumed(RESIZEABLE_ACTIVITY_NAME, DEFAULT_DISPLAY_ID,
+                "Activity launched on primary display must be resumed");
+
+        sleepDevice();
+
+        // Make sure there is no resumed activity when the primary display is off
+        waitAndAssertActivityStopped(RESIZEABLE_ACTIVITY_NAME,
+                "Activity launched on primary display must be stopped after turning off");
+        assertEquals("Unexpected resumed activity",
+                0, mAmWmState.getAmState().getResumedActivitiesCount());
+
+        final DisplayState newDisplay = createExternalVirtualDisplay(
+                true /* showContentWhenLocked */);
+
+        launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mDisplayId);
+
+        // Check that the test activity is resumed on the external display
+        waitAndAssertActivityResumed(TEST_ACTIVITY_NAME, newDisplay.mDisplayId,
+                "Activity launched on external display must be resumed");
+
+        // Unlock the device and tap on the middle of the primary display
+        wakeUpDevice();
+        executeShellCommand("wm dismiss-keyguard");
+        final ReportedDisplayMetrics displayMetrics = getDisplayMetrics();
+        final int width = displayMetrics.getWidth();
+        final int height = displayMetrics.getHeight();
+        executeShellCommand("input tap " + (width / 2) + " " + (height / 2));
+
+        // Check that the activity on the primary display is resumed
+        waitAndAssertActivityResumed(RESIZEABLE_ACTIVITY_NAME, DEFAULT_DISPLAY_ID,
+                "Activity launched on primary display must be resumed");
+        assertEquals("Unexpected resumed activity",
+                1, mAmWmState.getAmState().getResumedActivitiesCount());
+    }
+
     private void waitAndAssertActivityResumed(String activityName, int displayId, String message)
             throws Exception {
         mAmWmState.waitForActivityState(mDevice, activityName, STATE_RESUMED);
