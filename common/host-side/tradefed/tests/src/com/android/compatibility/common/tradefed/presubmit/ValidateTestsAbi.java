@@ -19,7 +19,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.android.compatibility.SuiteInfo;
+import com.android.tradefed.testtype.suite.TestSuiteInfo;
 import com.android.tradefed.util.AaptParser;
 import com.android.tradefed.util.AbiUtils;
 
@@ -106,7 +106,8 @@ public class ValidateTestsAbi {
             // We only check the apk that have native code
             if (!result.getNativeCode().isEmpty()) {
                 List<String> supportedAbiApk = result.getNativeCode();
-                Set<String> buildTarget = AbiUtils.getAbisForArch(SuiteInfo.TARGET_ARCH);
+                Set<String> buildTarget = AbiUtils.getAbisForArch(
+                        TestSuiteInfo.getInstance().getTargetArch());
                 // first check, all the abis are supported
                 for (String abi : supportedAbiApk) {
                     if (!buildTarget.contains(abi)) {
@@ -166,7 +167,8 @@ public class ValidateTestsAbi {
         // we sort to have binary starting with same name, next to each other. The last two
         // characters of their name with be the bitness (32 or 64).
         Collections.sort(orderedList);
-        Set<String> buildTarget = AbiUtils.getAbisForArch(SuiteInfo.TARGET_ARCH);
+        Set<String> buildTarget = AbiUtils.getAbisForArch(
+                TestSuiteInfo.getInstance().getTargetArch());
         // We expect one binary per abi of CTS, they should be appended with 32 or 64
         for (int i = 0; i < orderedList.size(); i=i + buildTarget.size()) {
             List<String> subSet = orderedList.subList(i, i + buildTarget.size());

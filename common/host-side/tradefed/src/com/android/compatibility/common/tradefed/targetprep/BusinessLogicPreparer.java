@@ -15,7 +15,6 @@
  */
 package com.android.compatibility.common.tradefed.targetprep;
 
-import com.android.compatibility.SuiteInfo;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.util.BusinessLogic;
 import com.android.tradefed.build.IBuildInfo;
@@ -26,6 +25,7 @@ import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.targetprep.BuildError;
 import com.android.tradefed.targetprep.ITargetCleaner;
 import com.android.tradefed.targetprep.TargetSetupError;
+import com.android.tradefed.testtype.suite.TestSuiteInfo;
 import com.android.tradefed.util.FileUtil;
 import com.android.tradefed.util.StreamUtil;
 
@@ -38,8 +38,6 @@ import java.net.URL;
  */
 @OptionClass(alias="business-logic-preparer")
 public class BusinessLogicPreparer implements ITargetCleaner {
-
-    private static final String LOG_TAG = BusinessLogicPreparer.class.getSimpleName();
 
     /* Placeholder in the service URL for the suite to be configured */
     private static final String SUITE_PLACEHOLDER = "{suite-name}";
@@ -72,7 +70,7 @@ public class BusinessLogicPreparer implements ITargetCleaner {
             DeviceNotAvailableException {
         // Piece together request URL
         String requestString = String.format("%s?key=%s", mUrl.replace(SUITE_PLACEHOLDER,
-                SuiteInfo.NAME), mApiKey);
+                TestSuiteInfo.getInstance().getName()), mApiKey);
         // Retrieve business logic string from service
         String businessLogicString = null;
         try {
@@ -80,8 +78,8 @@ public class BusinessLogicPreparer implements ITargetCleaner {
             businessLogicString = StreamUtil.getStringFromStream(request.openStream());
         } catch (IOException e) {
             throw new TargetSetupError(String.format(
-                    "Cannot connect to business logic service for suite %s", SuiteInfo.NAME), e,
-                    device.getDeviceDescriptor());
+                    "Cannot connect to business logic service for suite %s",
+                    TestSuiteInfo.getInstance().getName()), e, device.getDeviceDescriptor());
         }
         // Push business logic string to host file
         try {
@@ -93,7 +91,7 @@ public class BusinessLogicPreparer implements ITargetCleaner {
         } catch (IOException e) {
             throw new TargetSetupError(String.format(
                     "Retrieved business logic for suite %s could not be written to host",
-                    SuiteInfo.NAME), device.getDeviceDescriptor());
+                    TestSuiteInfo.getInstance().getName()), device.getDeviceDescriptor());
         }
         // Push business logic string to device file
         removeDeviceFile(device); // remove any existing business logic file from device
@@ -102,7 +100,7 @@ public class BusinessLogicPreparer implements ITargetCleaner {
         } else {
             throw new TargetSetupError(String.format(
                     "Retrieved business logic for suite %s could not be written to device %s",
-                    SuiteInfo.NAME, device.getSerialNumber()), device.getDeviceDescriptor());
+                    TestSuiteInfo.getInstance().getName(), device.getSerialNumber()), device.getDeviceDescriptor());
         }
     }
 

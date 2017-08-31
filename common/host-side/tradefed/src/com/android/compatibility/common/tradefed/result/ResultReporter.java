@@ -142,7 +142,6 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     private int mCurrentTestNum;
     private int mTotalTestsInModule;
 
-
     // Whether modules can be marked done for this invocation. Initialized in invocationStarted()
     // Visible for unit testing
     protected boolean mCanMarkDone;
@@ -765,9 +764,6 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
 
     /**
      * move the dynamic config files to the results directory
-     *
-     * @param configFiles
-     * @param resultsDir
      */
     private void copyDynamicConfigFiles() {
         File configDir = new File(mResultDir, "config");
