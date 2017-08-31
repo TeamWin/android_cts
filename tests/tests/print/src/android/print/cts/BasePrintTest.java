@@ -510,6 +510,23 @@ public abstract class BasePrintTest {
         mCreateActivityCallCounter.reset();
     }
 
+    /**
+     * Wait until the message is shown that indicates that a printer is unavailable.
+     *
+     * @throws Exception If anything was unexpected.
+     */
+    protected void waitForPrinterUnavailable() throws Exception {
+        final String printerUnavailableMessage =
+                getPrintSpoolerString("print_error_printer_unavailable");
+
+        UiObject message = getUiDevice().findObject(new UiSelector().resourceId(
+                "com.android.printspooler:id/message"));
+        if (!message.getText().equals(printerUnavailableMessage)) {
+            throw new Exception("Wrong message: " + message.getText() + " instead of "
+                    + printerUnavailableMessage);
+        }
+    }
+
     void selectPrinter(String printerName) throws UiObjectNotFoundException, IOException {
         try {
             long delay = 1;
