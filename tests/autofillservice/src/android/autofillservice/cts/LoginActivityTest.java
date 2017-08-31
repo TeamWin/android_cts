@@ -2744,6 +2744,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             FillEventHistory.Event event = selection.getEvents().get(0);
             assertThat(event.getType()).isEqualTo(TYPE_DATASET_AUTHENTICATION_SELECTED);
             assertThat(event.getDatasetId()).isEqualTo("name");
+            assertThat(event.getClientState().getCharSequence("clientStateKey")).isEqualTo(
+                    "clientStateValue");
         });
     }
 
@@ -2788,6 +2790,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             FillEventHistory.Event event = selection.getEvents().get(0);
             assertThat(event.getType()).isEqualTo(TYPE_AUTHENTICATION_SELECTED);
             assertThat(event.getDatasetId()).isNull();
+            assertThat(event.getClientState().getCharSequence("clientStateKey")).isEqualTo(
+                    "clientStateValue");
         });
     }
 
@@ -2796,11 +2800,15 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         enableService();
 
         // Set up first partition with an anonymous dataset
+        Bundle clientState1 = new Bundle();
+        clientState1.putCharSequence("clientStateKey", "Value1");
+
         sReplier.addResponse(new CannedFillResponse.Builder().addDataset(
                 new CannedDataset.Builder()
                         .setField(ID_USERNAME, "username")
                         .setPresentation(createPresentation("dataset1"))
                         .build())
+                .setExtras(clientState1)
                 .build());
 
         // Trigger autofill on username
@@ -2812,17 +2820,20 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             // Verify fill selection
             FillEventHistory selection = InstrumentedAutoFillService.peekInstance()
                     .getFillEventHistory();
-            assertThat(selection.getClientState()).isNull();
+            assertThat(selection.getClientState().getCharSequence("clientStateKey")).isEqualTo(
+                    "Value1");
 
             assertThat(selection.getEvents().size()).isEqualTo(1);
             FillEventHistory.Event event = selection.getEvents().get(0);
             assertThat(event.getType()).isEqualTo(TYPE_DATASET_SELECTED);
             assertThat(event.getDatasetId()).isNull();
+            assertThat(event.getClientState().getCharSequence("clientStateKey")).isEqualTo(
+                    "Value1");
         });
 
         // Set up second partition with a named dataset
-        Bundle clientState = new Bundle();
-        clientState.putCharSequence("clientStateKey", "clientStateValue");
+        Bundle clientState2 = new Bundle();
+        clientState2.putCharSequence("clientStateKey", "Value2");
 
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .addDataset(
@@ -2837,7 +2848,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                                 .setPresentation(createPresentation("dataset3"))
                                 .setId("name3")
                                 .build())
-                .setExtras(clientState)
+                .setExtras(clientState2)
                 .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_PASSWORD).build());
 
         // Trigger autofill on password
@@ -2850,12 +2861,14 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             FillEventHistory selection = InstrumentedAutoFillService.peekInstance()
                     .getFillEventHistory();
             assertThat(selection.getClientState().getCharSequence("clientStateKey")).isEqualTo(
-                    "clientStateValue");
+                    "Value2");
 
             assertThat(selection.getEvents().size()).isEqualTo(1);
             FillEventHistory.Event event = selection.getEvents().get(0);
             assertThat(event.getType()).isEqualTo(TYPE_DATASET_SELECTED);
             assertThat(event.getDatasetId()).isEqualTo("name3");
+            assertThat(event.getClientState().getCharSequence("clientStateKey")).isEqualTo(
+                    "Value2");
         });
 
         mActivity.onPassword((v) -> v.setText("new password"));
@@ -2866,16 +2879,20 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             FillEventHistory selection = InstrumentedAutoFillService.peekInstance()
                     .getFillEventHistory();
             assertThat(selection.getClientState().getCharSequence("clientStateKey")).isEqualTo(
-                    "clientStateValue");
+                    "Value2");
 
             assertThat(selection.getEvents().size()).isEqualTo(2);
             FillEventHistory.Event event1 = selection.getEvents().get(0);
             assertThat(event1.getType()).isEqualTo(TYPE_DATASET_SELECTED);
             assertThat(event1.getDatasetId()).isEqualTo("name3");
+            assertThat(event1.getClientState().getCharSequence("clientStateKey")).isEqualTo(
+                    "Value2");
 
             FillEventHistory.Event event2 = selection.getEvents().get(1);
             assertThat(event2.getType()).isEqualTo(TYPE_SAVE_SHOWN);
             assertThat(event2.getDatasetId()).isNull();
+            assertThat(event2.getClientState().getCharSequence("clientStateKey")).isEqualTo(
+                    "Value2");
         });
     }
 
@@ -2904,6 +2921,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             FillEventHistory.Event event = selection.getEvents().get(0);
             assertThat(event.getType()).isEqualTo(TYPE_DATASET_SELECTED);
             assertThat(event.getDatasetId()).isNull();
+            assertThat(event.getClientState()).isNull();
         });
 
         // Second request
@@ -2946,6 +2964,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             FillEventHistory.Event event = selection.getEvents().get(0);
             assertThat(event.getType()).isEqualTo(TYPE_DATASET_SELECTED);
             assertThat(event.getDatasetId()).isNull();
+            assertThat(event.getClientState()).isNull();
         });
 
         // Second request
@@ -2988,6 +3007,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             FillEventHistory.Event event = selection.getEvents().get(0);
             assertThat(event.getType()).isEqualTo(TYPE_DATASET_SELECTED);
             assertThat(event.getDatasetId()).isNull();
+            assertThat(event.getClientState()).isNull();
         });
 
         // Second request
