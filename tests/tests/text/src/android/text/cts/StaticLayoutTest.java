@@ -25,6 +25,7 @@ import static org.junit.Assert.fail;
 import android.graphics.Typeface;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
+import android.support.test.filters.Suppress;
 import android.support.test.runner.AndroidJUnit4;
 import android.text.Editable;
 import android.text.Layout;
@@ -59,6 +60,13 @@ public class StaticLayoutTest {
     private static final int LAST_LINE = 5;
     private static final int LINE_COUNT = 6;
     private static final int LARGER_THAN_LINE_COUNT  = 50;
+
+    private static final String LOREM_IPSUM = "Lorem ipsum dolor sit amet, consectetur adipiscing "
+            + "elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad "
+            + "minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea "
+            + "commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse "
+            + "cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non "
+            + "proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
 
     /* the first line must have one tab. the others not. totally 6 lines
      */
@@ -1308,5 +1316,39 @@ public class StaticLayoutTest {
                 mDefaultPaint, Integer.MAX_VALUE - 1).setMaxLines(2)
                 .setEllipsize(TruncateAt.END).build();
         layout.getPrimaryHorizontal(layout.getText().length());
+    }
+
+    // TODO: Re-enable once http://b/65207701 is fixed.
+    @Test
+    @Suppress
+    public void testGetLineWidth() {
+        final float wholeWidth = mDefaultPaint.measureText(LOREM_IPSUM);
+        final int lineWidth = (int) (wholeWidth / 10.0f);  // Make 10 lines per paragraph.
+        final String multiParaTestString =
+                LOREM_IPSUM + "\n" + LOREM_IPSUM + "\n" + LOREM_IPSUM + "\n" + LOREM_IPSUM;
+        final Layout layout = StaticLayout.Builder.obtain(multiParaTestString, 0,
+                multiParaTestString.length(), mDefaultPaint, lineWidth)
+                .build();
+        for (int i = 0; i < layout.getLineCount(); i++) {
+            assertTrue(layout.getLineWidth(i) <= lineWidth);
+        }
+    }
+
+    // TODO: Re-enable once http://b/65207701 is fixed.
+    @Test
+    @Suppress
+    public void testIndent() {
+        final float wholeWidth = mDefaultPaint.measureText(LOREM_IPSUM);
+        final int lineWidth = (int) (wholeWidth / 10.0f);  // Make 10 lines per paragraph.
+        final int indentWidth = (int) (lineWidth * 0.3f);  // Make 30% indent.
+        final String multiParaTestString =
+                LOREM_IPSUM + "\n" + LOREM_IPSUM + "\n" + LOREM_IPSUM + "\n" + LOREM_IPSUM;
+        final Layout layout = StaticLayout.Builder.obtain(multiParaTestString, 0,
+                multiParaTestString.length(), mDefaultPaint, lineWidth)
+                .setIndents(new int[] { indentWidth }, null)
+                .build();
+        for (int i = 0; i < layout.getLineCount(); i++) {
+            assertTrue(layout.getLineWidth(i) <= lineWidth - indentWidth);
+        }
     }
 }
