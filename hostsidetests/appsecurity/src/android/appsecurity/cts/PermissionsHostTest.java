@@ -46,6 +46,10 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
     private static final String APK_ESCLATE_TO_RUNTIME_PERMISSIONS =
             "CtsEscalateToRuntimePermissions.apk";
 
+    private static final String SCREEN_OFF_TIMEOUT_NS = "system";
+    private static final String SCREEN_OFF_TIMEOUT_KEY = "screen_off_timeout";
+    private String mScreenTimeoutBeforeTest;
+
     private IAbi mAbi;
     private CompatibilityBuildHelper mBuildHelper;
 
@@ -70,11 +74,23 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
         getDevice().uninstallPackage(USES_PERMISSION_PKG);
         getDevice().uninstallPackage(ESCALATE_PERMISSION_PKG);
         getDevice().uninstallPackage(PERMISSION_POLICY_25_PKG);
+
+        // Set screen timeout to 30 min to not timeout while waiting for UI to change
+        mScreenTimeoutBeforeTest = getDevice().getSetting(SCREEN_OFF_TIMEOUT_NS,
+                SCREEN_OFF_TIMEOUT_KEY);
+        getDevice().setSetting(SCREEN_OFF_TIMEOUT_NS, SCREEN_OFF_TIMEOUT_KEY, "1800000");
+
+        // Wake up device
+        getDevice().executeShellCommand("input keyevent KEYCODE_WAKEUP");
+        getDevice().disableKeyguard();
     }
 
     @Override
     protected void tearDown() throws Exception {
         super.tearDown();
+
+        getDevice().setSetting(SCREEN_OFF_TIMEOUT_NS, SCREEN_OFF_TIMEOUT_KEY,
+                mScreenTimeoutBeforeTest);
 
         getDevice().uninstallPackage(USES_PERMISSION_PKG);
         getDevice().uninstallPackage(ESCALATE_PERMISSION_PKG);
