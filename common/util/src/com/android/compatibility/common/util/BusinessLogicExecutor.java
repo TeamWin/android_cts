@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.junit.AssumptionViolatedException;
+
 /**
  * Resolves methods provided by the BusinessLogicService and invokes them
  */
@@ -69,9 +71,15 @@ public abstract class BusinessLogicExecutor {
             // This action throws an exception, so throw the original exception (e.g.
             // AssertionFailedError) for a more readable stacktrace.
             Throwable t = e.getCause();
-            RuntimeException re = new RuntimeException(t.getMessage(), t.getCause());
-            re.setStackTrace(t.getStackTrace());
-            throw re;
+            if (AssumptionViolatedException.class.isInstance(t)) {
+                // This is an assumption failure (registered as a "pass") so don't wrap this
+                // throwable in a RuntimeException
+                throw (AssumptionViolatedException) t;
+            } else {
+                RuntimeException re = new RuntimeException(t.getMessage(), t.getCause());
+                re.setStackTrace(t.getStackTrace());
+                throw re;
+            }
         }
     }
 

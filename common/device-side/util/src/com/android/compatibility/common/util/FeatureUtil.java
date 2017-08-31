@@ -24,14 +24,33 @@ import android.support.test.InstrumentationRegistry;
  */
 public class FeatureUtil {
 
+    /** Returns true if the device has a given system feature */
     public static boolean hasSystemFeature(String feature) {
         return getPackageManager().hasSystemFeature(feature);
     }
 
+    /** Returns true if the device lacks a given system feature */
     public static boolean lacksSystemFeature(String feature) {
         return !hasSystemFeature(feature);
     }
 
+    /** Returns true if the device has any feature in a given collection of system features */
+    public static boolean hasAnySystemFeature(String... features) {
+        PackageManager pm = getPackageManager();
+        for (String feature : features) {
+            if (pm.hasSystemFeature(feature)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Returns true if the device lacks any feature in a given collection of system features */
+    public static boolean lacksAnySystemFeature(String... features) {
+        return !hasAllSystemFeatures(features);
+    }
+
+    /** Returns true if the device has all features in a given collection of system features */
     public static boolean hasAllSystemFeatures(String... features) {
         PackageManager pm = getPackageManager();
         for (String feature : features) {
@@ -42,14 +61,9 @@ public class FeatureUtil {
         return true;
     }
 
+    /** Returns true if the device lacks all features in a given collection of system features */
     public static boolean lacksAllSystemFeatures(String... features) {
-        PackageManager pm = getPackageManager();
-        for (String feature : features) {
-            if (pm.hasSystemFeature(feature)) {
-                return false;
-            }
-        }
-        return true;
+        return !hasAnySystemFeature(features);
     }
 
     private static PackageManager getPackageManager() {
