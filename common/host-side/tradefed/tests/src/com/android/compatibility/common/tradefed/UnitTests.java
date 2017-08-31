@@ -41,6 +41,7 @@ import com.android.compatibility.common.tradefed.testtype.retry.RetryFactoryTest
 import com.android.compatibility.common.tradefed.testtype.suite.CompatibilityTestSuiteTest;
 import com.android.compatibility.common.tradefed.testtype.suite.ModuleRepoSuiteTest;
 import com.android.compatibility.common.tradefed.util.CollectorUtilTest;
+import com.android.compatibility.common.tradefed.util.DynamicConfigFileReaderTest;
 import com.android.compatibility.common.tradefed.util.OptionHelperTest;
 import com.android.compatibility.common.tradefed.util.RetryFilterHelperTest;
 import com.android.compatibility.common.tradefed.util.UniqueModuleCountUtilTest;
@@ -101,6 +102,7 @@ import org.junit.runners.Suite.SuiteClasses;
 
     // util
     CollectorUtilTest.class,
+    DynamicConfigFileReaderTest.class,
     OptionHelperTest.class,
     RetryFilterHelperTest.class,
     UniqueModuleCountUtilTest.class,
