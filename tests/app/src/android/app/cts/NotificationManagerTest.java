@@ -80,6 +80,12 @@ public class NotificationManagerTest extends AndroidTestCase {
             }
             mNotificationManager.deleteNotificationChannel(nc.getId());
         }
+
+        List<NotificationChannelGroup> groups = mNotificationManager.getNotificationChannelGroups();
+        // Delete all groups.
+        for (NotificationChannelGroup ncg : groups) {
+            mNotificationManager.deleteNotificationChannelGroup(ncg.getId());
+        }
     }
 
     public void testCreateChannelGroup() throws Exception {
@@ -149,6 +155,46 @@ public class NotificationManagerTest extends AndroidTestCase {
         mNotificationManager.createNotificationChannel(channel);
         assertEquals(NotificationManager.IMPORTANCE_DEFAULT,
                 mNotificationManager.getNotificationChannel(mId).getImportance());
+    }
+
+    public void testCreateChannel_addToGroup() throws Exception {
+        String oldGroup = null;
+        String newGroup = "new group";
+        mNotificationManager.createNotificationChannelGroup(
+                new NotificationChannelGroup(newGroup, newGroup));
+
+        NotificationChannel channel =
+                new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
+        channel.setGroup(oldGroup);
+        mNotificationManager.createNotificationChannel(channel);
+
+        channel.setGroup(newGroup);
+        mNotificationManager.createNotificationChannel(channel);
+
+        final NotificationChannel updatedChannel =
+                mNotificationManager.getNotificationChannel(mId);
+        assertEquals("Failed to add non-grouped channel to a group on update ",
+                newGroup, updatedChannel.getGroup());
+    }
+
+    public void testCreateChannel_cannotChangeGroup() throws Exception {
+        String oldGroup = "old group";
+        String newGroup = "new group";
+        mNotificationManager.createNotificationChannelGroup(
+                new NotificationChannelGroup(oldGroup, oldGroup));
+        mNotificationManager.createNotificationChannelGroup(
+                new NotificationChannelGroup(newGroup, newGroup));
+
+        NotificationChannel channel =
+                new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
+        channel.setGroup(oldGroup);
+        mNotificationManager.createNotificationChannel(channel);
+        channel.setGroup(newGroup);
+        mNotificationManager.createNotificationChannel(channel);
+        final NotificationChannel updatedChannel =
+                mNotificationManager.getNotificationChannel(mId);
+        assertEquals("Channels should not be allowed to change groups",
+                oldGroup, updatedChannel.getGroup());
     }
 
     public void testCreateSameChannelDoesNotUpdate() throws Exception {
@@ -325,6 +371,54 @@ public class NotificationManagerTest extends AndroidTestCase {
                 fail("we got back other notifications besides the one we posted: "
                         + sbn.getKey());
             }
+        }
+    }
+
+    public void testNotify_blockedChannel() throws Exception {
+        mNotificationManager.cancelAll();
+
+        NotificationChannel channel =
+                new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_NONE);
+        mNotificationManager.createNotificationChannel(channel);
+
+        int id = 1;
+        final Notification notification =
+                new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                        .setSmallIcon(R.drawable.black)
+                        .setWhen(System.currentTimeMillis())
+                        .setContentTitle("notify#" + id)
+                        .setContentText("This is #" + id + "notification  ")
+                        .build();
+        mNotificationManager.notify(id, notification);
+
+        if (!checkNotificationExistence(id, /*shouldExist=*/ false)) {
+            fail("found unexpected notification id=" + id);
+        }
+    }
+
+    public void testNotify_blockedChannelGroup() throws Exception {
+        mNotificationManager.cancelAll();
+
+        NotificationChannelGroup group = new NotificationChannelGroup(mId, "group name");
+        group.setBlocked(true);
+        mNotificationManager.createNotificationChannelGroup(group);
+        NotificationChannel channel =
+                new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
+        channel.setGroup(mId);
+        mNotificationManager.createNotificationChannel(channel);
+
+        int id = 1;
+        final Notification notification =
+                new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                        .setSmallIcon(R.drawable.black)
+                        .setWhen(System.currentTimeMillis())
+                        .setContentTitle("notify#" + id)
+                        .setContentText("This is #" + id + "notification  ")
+                        .build();
+        mNotificationManager.notify(id, notification);
+
+        if (!checkNotificationExistence(id, /*shouldExist=*/ false)) {
+            fail("found unexpected notification id=" + id);
         }
     }
 
