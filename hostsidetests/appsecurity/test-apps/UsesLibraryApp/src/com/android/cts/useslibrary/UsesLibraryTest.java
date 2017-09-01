@@ -68,11 +68,19 @@ public class UsesLibraryTest extends InstrumentationTestCase {
             Object[] dexElements = getDexElementsFromClassLoader((BaseDexClassLoader) loader);
             assertTrue(dexElements != null && dexElements.length > 1);
 
+            // First dex file is either the shared library or the cts instrumentation library.
             DexFile libDexFile = getDexFileFromDexElement(dexElements[0]);
             String libPath = libDexFile.getName();
-            DexFile apkDexFile = getDexFileFromDexElement(dexElements[1]);
+            // The last dex file should be the test apk file: com.android.cts.useslibrary.
+            DexFile apkDexFile = getDexFileFromDexElement(dexElements[dexElements.length - 1]);
             String apkPath = apkDexFile.getName();
+
+            // In order to ensure the collision check is executed we use the apkDexFile when
+            // constructing the test class path for duplicates.
+            // We do not use the shared libraries apks because they are compiled with a special
+            // marker which may skip the collision check (b/37777332).
             String testPath = libPath + File.pathSeparator + apkPath + File.pathSeparator + apkPath;
+
             PathClassLoader testLoader = new PathClassLoader(testPath, null);
             Object[] testDexElements = getDexElementsFromClassLoader(testLoader);
             assertTrue(testDexElements != null && testDexElements.length == 3);
