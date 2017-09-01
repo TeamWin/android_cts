@@ -25,6 +25,7 @@ import static android.autofillservice.cts.SimpleSaveActivity.ID_PASSWORD;
 import static android.autofillservice.cts.SimpleSaveActivity.TEXT_LABEL;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
 
+import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
@@ -557,5 +558,63 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         sUiBot.assertShownByRelativeId(ID_INPUT);
 
         sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
+    }
+
+    @Test
+    public void testSelectedDatasetsAreSentOnSaveRequest() throws Exception {
+        startActivity();
+
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT, ID_PASSWORD)
+                // Added on reversed order on purpose
+                .addDataset(new CannedDataset.Builder()
+                        .setId("D2")
+                        .setField(ID_INPUT, "id again")
+                        .setField(ID_PASSWORD, "pass")
+                        .setPresentation(createPresentation("D2"))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setId("D1")
+                        .setField(ID_INPUT, "id")
+                        .setPresentation(createPresentation("D1"))
+                        .build())
+                .build());
+
+        // Trigger autofill.
+        mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
+        sReplier.getNextFillRequest();
+
+        // Select 1st dataset.
+        final FillExpectation autofillExpecation1 = mActivity.expectAutoFill("id");
+        final UiObject2 picker1 = sUiBot.assertDatasets("D2", "D1");
+        sUiBot.selectDataset(picker1, "D1");
+        autofillExpecation1.assertAutoFilled();
+
+        // Select 2nd dataset.
+        mActivity.syncRunOnUiThread(() -> mActivity.mPassword.requestFocus());
+        final FillExpectation autofillExpecation2 = mActivity.expectAutoFill("id again", "pass");
+        final UiObject2 picker2 = sUiBot.assertDatasets("D2");
+        sUiBot.selectDataset(picker2, "D2");
+        autofillExpecation2.assertAutoFilled();
+
+        mActivity.syncRunOnUiThread(() -> {
+            mActivity.mInput.setText("ID");
+            mActivity.mPassword.setText("PASS");
+            mActivity.mCommit.performClick();
+        });
+        final UiObject2 saveUi = sUiBot.assertSaveShowing(SAVE_DATA_TYPE_GENERIC);
+
+        // Save it...
+        sUiBot.saveForAutofill(saveUi, true);
+
+        // ... and assert results
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+        assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_INPUT), "ID");
+        assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_PASSWORD), "PASS");
+        assertThat(saveRequest.datasetIds).containsExactly("D1", "D2").inOrder();
     }
 }
