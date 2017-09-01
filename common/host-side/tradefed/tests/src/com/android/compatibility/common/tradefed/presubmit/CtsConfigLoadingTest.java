@@ -66,6 +66,7 @@ public class CtsConfigLoadingTest {
             "metrics",
             "misc",
             "networking",
+            "neuralnetworks",
             "renderscript",
             "security",
             "systems",
