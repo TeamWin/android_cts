@@ -1545,10 +1545,10 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
 
         // Run twice to check if repeated selection-deselection on the same track works well.
         for (int i = 0; i < 2; i++) {
-            // Waits until at least one subtitle is fired. Timeout is 2 seconds.
+            // Waits until at least one subtitle is fired. Timeout is 2.5 seconds.
             selectSubtitleTrack(i);
             mOnSubtitleDataCalled.reset();
-            assertTrue(mOnSubtitleDataCalled.waitForSignal(2000));
+            assertTrue(mOnSubtitleDataCalled.waitForSignal(2500));
 
             // Try deselecting track.
             deselectSubtitleTrack(i);
