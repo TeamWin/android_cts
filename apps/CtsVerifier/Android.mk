@@ -97,10 +97,11 @@ empty-device-admin := $(call intermediates-dir-for,APPS,CtsEmptyDeviceAdmin)/pac
 
 # Builds and launches CTS Verifier on a device.
 .PHONY: cts-verifier
-cts-verifier: CtsVerifier adb NotificationBot CtsPermissionApp
+cts-verifier: CtsVerifier adb NotificationBot CtsPermissionApp CtsEmptyDeviceAdmin
 	adb install -r $(PRODUCT_OUT)/data/app/CtsVerifier/CtsVerifier.apk \
 		&& adb install -r $(notification-bot) \
 		&& adb install -r $(permission-app) \
+		&& adb install -r $(empty-device-admin) \
 		&& adb shell "am start -n com.android.cts.verifier/.CtsVerifierActivity"
 
 #
