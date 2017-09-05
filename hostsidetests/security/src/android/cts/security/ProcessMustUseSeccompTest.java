@@ -26,26 +26,35 @@ public class ProcessMustUseSeccompTest extends DeviceTestCase {
     */
     private ITestDevice mDevice;
 
+    private static final String PS_CMD = "toybox ps -A -o name,pid";
+    private static final String LSHAL_CMD = "lshal list -ip";
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         mDevice = getDevice();
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        mDevice = null;
+        super.tearDown();
+    }
+
     /*
-     * get the PID of process "Name" using "ps" command. If prefix == True
-     * only check that the name starts with "Name". This is useful for HALs
-     * which are versioned e.g. android.hardware.configstore@1.1-service.
-     * If prefix == False then name must be an exact match.
+     * Get the PID of process "Name" using "Cmd". If prefix == True only do
+     * prefix matching. This is used for HALs which are versioned
+     * e.g. android.hardware.configstore@1.1-service. If prefix == False then
+     * name must be an exact match.
      */
-    private String getPidByName(String Name, boolean prefix) throws DeviceNotAvailableException {
+    private String getPidFromCmd(String Name, String Cmd, boolean prefix) throws DeviceNotAvailableException {
         String ret = "";
         CollectingOutputReceiver Out = new CollectingOutputReceiver();
-        mDevice.executeShellCommand("toybox ps -A -o name,pid", Out);
-        String[] ps = Out.getOutput().split(System.getProperty("line.separator"));
+        mDevice.executeShellCommand(Cmd, Out);
+        String[] lines = Out.getOutput().split(System.getProperty("line.separator"));
 
-        for (String process: ps) {
-            String[] namePid = process.trim().split("\\s+");
+        for (String line: lines) {
+            String[] namePid = line.trim().split("\\s+");
             if (!prefix && !namePid[0].equals(Name)) {
                 continue;
             }
@@ -84,20 +93,25 @@ public class ProcessMustUseSeccompTest extends DeviceTestCase {
         return false;
     }
 
-    public void assertSeccompFilter(String Name, boolean prefix) throws DeviceNotAvailableException {
-        String Pid = getPidByName(Name, prefix);
+    private void assertSeccompFilter(String Name, String Cmd, boolean prefix)
+                throws DeviceNotAvailableException {
+        String Pid = getPidFromCmd(Name, Cmd, prefix);
         assertFalse(Name + " process not found.", Pid.equals(""));
         assertTrue(Name + " must have a seccomp filter enabled.\n"
                    + "The \"Seccomp\" field of " + Name + "'s "
-                   + "/proc/<pid>/status file should be set to \"2\"",
+                   + "/proc/" + Pid + "/status file should be set to \"2\"",
                    pidHasSeccompBpf(Pid));
     }
 
-    public void testConfigStoreHasSeccompFilter() throws DeviceNotAvailableException {
-        assertSeccompFilter("android.hardware.configstore", true);
+    public void testConfigStoreHalHasSeccompFilter() throws DeviceNotAvailableException {
+        assertSeccompFilter("android.hardware.configstore", LSHAL_CMD, true);
     }
 
     public void testMediaextractorHasSeccompFilter() throws DeviceNotAvailableException {
-        assertSeccompFilter("media.extractor", false);
+        assertSeccompFilter("media.extractor", PS_CMD, false);
+    }
+
+    public void testOmxHalHasSeccompFilter() throws DeviceNotAvailableException {
+        assertSeccompFilter("android.hardware.media.omx", LSHAL_CMD, true);
     }
 }
