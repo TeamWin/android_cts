@@ -16,6 +16,8 @@
 
 package android.autofillservice.cts;
 
+import static android.autofillservice.cts.CannedFillResponse.ResponseType.NULL;
+
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.Activity;
@@ -196,7 +198,12 @@ public class AuthenticationActivity extends AbstractAutoFillActivity {
         final Parcelable result;
 
         if (response != null) {
-            result = response.asFillResponse((id) -> Helper.findNodeByResourceId(structure, id));
+            if (response.getResponseType() == NULL) {
+                result = null;
+            } else {
+                result = response
+                        .asFillResponse((id) -> Helper.findNodeByResourceId(structure, id));
+            }
         } else if (dataset != null) {
             result = dataset.asDataset((id) -> Helper.findNodeByResourceId(structure, id));
         } else {

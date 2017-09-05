@@ -1800,16 +1800,29 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
+    public void testFillResponseAuthServiceHasNoDataButCanSave() throws Exception {
+        fillResponseAuthServiceHasNoDataTest(true);
+    }
+
+    @Test
     public void testFillResponseAuthServiceHasNoData() throws Exception {
+        fillResponseAuthServiceHasNoDataTest(false);
+    }
+
+    private void fillResponseAuthServiceHasNoDataTest(boolean canSave) throws Exception {
         // Set service.
         enableService();
         final MyAutofillCallback callback = mActivity.registerCallback();
 
         // Prepare the authenticated response
-        final IntentSender authentication = AuthenticationActivity.createSender(mContext, 1,
-                new CannedFillResponse.Builder()
+        final CannedFillResponse response = canSave
+                ? new CannedFillResponse.Builder()
                         .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
-                        .build());
+                        .build()
+                : CannedFillResponse.NO_RESPONSE;
+
+        final IntentSender authentication =
+                AuthenticationActivity.createSender(mContext, 1, response);
 
         // Configure the service behavior
         sReplier.addResponse(new CannedFillResponse.Builder()
