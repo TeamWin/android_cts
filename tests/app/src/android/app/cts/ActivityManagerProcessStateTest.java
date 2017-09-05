@@ -692,7 +692,9 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
 
             // Track the uid proc state changes from the broadcast (but not service execution)
             controller.getUidWatcher().waitFor(WatchUidRunner.CMD_IDLE, null, WAIT_TIME);
-            controller.getUidWatcher().expect(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
+            // There could be a transient 'cached' state here before 'uncached' if uid state
+            // changes are dispatched before receiver is started.
+            controller.getUidWatcher().waitFor(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
             controller.getUidWatcher().expect(WatchUidRunner.CMD_PROCSTATE, "RCVR", WAIT_TIME);
             controller.getUidWatcher().expect(WatchUidRunner.CMD_CACHED, null, WAIT_TIME);
             controller.getUidWatcher().expect(WatchUidRunner.CMD_PROCSTATE, "CEM", WAIT_TIME);
