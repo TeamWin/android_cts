@@ -77,7 +77,7 @@
     <string name="da_uninstall_test">Device Admin Uninstall Test</string>
     <string name="da_uninstall_test_info">This test checks that an active device administrator
         can be easily uninstalled from the application details screen in a way similar to other
-        apps.
+        apps. This test requires CtsEmptyDeviceAdmin.apk to be installed on the device.
     </string>
     <string name="da_tapjacking_test">Device Admin Tapjacking Test</string>
     <string name="da_tapjacking_test_info">This test checks that an activity cannot tapjack the
@@ -124,10 +124,10 @@
     <string name="da_lock_success">It appears the screen was locked successfully!</string>
     <string name="da_lock_error">It does not look like the screen was locked...</string>
 
-    <string name="da_install_admin_instructions">Please install the \'Test Device Admin\' app on the device.
-        If needed, grant \'Cts Verifier\' permission to install unknown apps, and return when install succeeds.
+    <string name="da_install_admin_instructions">
+        Please install the \'Test Device Admin\' app (packaged as CtsEmptyDeviceAdmin.apk) on the device.
     </string>
-    <string name="da_install_admin_button_text">Install admin</string>
+    <string name="da_admin_installed_status_text">\'Test Device Admin\' installed on the device.</string>
     <string name="da_enable_admin_instructions">Add \'Test Device Admin\' as an active administrator on the device.
         Tap the button below to review the device admin details and activate the administrator.
     </string>
