@@ -90,11 +90,11 @@ LOCAL_PREBUILT_STATIC_JAVA_LIBRARIES := \
 include $(BUILD_MULTI_PREBUILT)
 
 pre-installed-apps := \
+    CtsEmptyDeviceAdmin \
     CtsPermissionApp \
     NotificationBot
 
 other-required-apps := \
-    CtsEmptyDeviceAdmin \
     CtsVerifierUSBCompanion \
     CtsVpnFirewallAppApi23 \
     CtsVpnFirewallAppApi24 \
