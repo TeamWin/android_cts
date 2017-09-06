@@ -109,18 +109,24 @@ public class BusinessLogic {
         /* Stored method name and String args */
         protected String mMethodName;
         protected List<String> mMethodArgs;
+        /* Whether or not the boolean result of this condition should be reversed */
+        protected boolean mNegated;
 
-        public BusinessLogicRuleCondition(String methodName, List<String> methodArgs) {
+
+        public BusinessLogicRuleCondition(String methodName, List<String> methodArgs,
+                boolean negated) {
             mMethodName = methodName;
             mMethodArgs = methodArgs;
+            mNegated = negated;
         }
 
         /**
          * Invoke this Business Logic condition with an executor.
          */
         public boolean invoke(BusinessLogicExecutor executor) {
-            return executor.executeCondition(mMethodName,
-                    mMethodArgs.toArray(new String[mMethodArgs.size()]));
+            // XOR the negated boolean with the return value of the method
+            return (mNegated != executor.executeCondition(mMethodName,
+                    mMethodArgs.toArray(new String[mMethodArgs.size()])));
         }
     }
 
