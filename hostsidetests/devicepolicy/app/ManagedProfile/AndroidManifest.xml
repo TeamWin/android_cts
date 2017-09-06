@@ -159,6 +159,16 @@
                 <action android:name="android.telecom.action.SHOW_MISSED_CALLS_NOTIFICATION" />
             </intent-filter>
         </receiver>
+
+        <!-- Dummy receiver that's decleared direct boot aware. This is needed to make the test app
+             executable by instrumentation before device unlock -->
+        <receiver android:name=".ResetPasswordWithTokenTest$DummyReceiver"
+          android:directBootAware="true" >
+          <intent-filter>
+            <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+          </intent-filter>
+        </receiver>
+
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
