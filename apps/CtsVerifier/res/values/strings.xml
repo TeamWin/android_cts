@@ -2215,6 +2215,7 @@ You should be prompted to select credentials; choose the ones you just installed
         Verify that the notification is badged (see sample badge below). Then mark this test accordingly.
     </string>
     <string name="provisioning_byod_notification_title">This is a notification</string>
+    <string name="provisioning_byod_notification_public_title">Contents hidden by policy</string>
 
     <string name="provisioning_byod_disallow_apps_control">Disallow apps control</string>
     <string name="provisioning_byod_disallow_apps_control_info">
