@@ -43,6 +43,7 @@ import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import javax.xml.transform.TransformerException;
@@ -103,6 +104,8 @@ public class CtsApiCoverage {
         String reportTitle = "CTS API Coverage";
         int apiLevel = Integer.MAX_VALUE;
 
+        List<File> notFoundTestApks = new ArrayList<File>();
+        int numTestApkArgs = 0;
         for (int i = 0; i < args.length; i++) {
             if (args[i].startsWith("-")) {
                 if ("-o".equals(args[i])) {
@@ -133,12 +136,21 @@ public class CtsApiCoverage {
                 }
             } else {
                 File file = new File(args[i]);
+                numTestApkArgs++;
                 if (file.isDirectory()) {
                     testApks.addAll(Arrays.asList(file.listFiles(SUPPORTED_FILE_NAME_FILTER)));
-                } else {
+                } else if (file.isFile()) {
                     testApks.add(file);
+                } else {
+                    notFoundTestApks.add(file);
                 }
             }
+        }
+
+        if (!notFoundTestApks.isEmpty()) {
+            String msg = String.format(Locale.US, "%d/%d testApks not found: %s",
+                    notFoundTestApks.size(), numTestApkArgs, notFoundTestApks);
+            throw new IllegalArgumentException(msg);
         }
 
         /*
