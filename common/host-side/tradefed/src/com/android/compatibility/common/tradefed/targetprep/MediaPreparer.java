@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.mediastress.cts.preconditions;
+package com.android.compatibility.common.tradefed.targetprep;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.targetprep.PreconditionPreparer;
@@ -59,6 +59,10 @@ public class MediaPreparer extends PreconditionPreparer {
     @Option(name = "skip-media-download",
             description = "Whether to skip the media files precondition")
     protected boolean mSkipMediaDownload = false;
+
+    @Option(name = "media-download-only",
+            description = "Only download media files; do not run instrumentation or copy files")
+    protected boolean mMediaDownloadOnly = false;
 
     /*
      * The pathnames of the device's directories that hold media files for the tests.
@@ -145,6 +149,10 @@ public class MediaPreparer extends PreconditionPreparer {
         public String toString() {
             return String.format("%dx%d", width, height);
         }
+    }
+
+    public static File getDefaultMediaDir() {
+        return new File(System.getProperty("java.io.tmpdir"), MEDIA_FOLDER_NAME);
     }
 
     /*
@@ -275,17 +283,19 @@ public class MediaPreparer extends PreconditionPreparer {
             logInfo("Skipping media preparation");
             return; // skip this precondition
         }
-        setMountPoint(device);
-        setMaxRes(device, buildInfo);
-        if (mediaFilesExistOnDevice(device)) {
-            // if files already on device, do nothing
-            logInfo("Media files found on the device");
-            return;
+        if (!mMediaDownloadOnly) {
+            setMountPoint(device);
+            setMaxRes(device, buildInfo);
+            if (mediaFilesExistOnDevice(device)) {
+                // if files already on device, do nothing
+                logInfo("Media files found on the device");
+                return;
+            }
         }
         if (mLocalMediaPath == null) {
             // Option 'local-media-path' has not been defined
             // Get directory to store media files on this host
-            File mediaFolder = new File(System.getProperty("java.io.tmpdir"), MEDIA_FOLDER_NAME);
+            File mediaFolder = getDefaultMediaDir();
             if(!mediaFolder.exists() || mediaFolder.list().length == 0){
                 // If directory already exists and contains files, it has been created by previous
                 // runs of MediaPreparer. Assume media files exist inside.
@@ -297,7 +307,9 @@ public class MediaPreparer extends PreconditionPreparer {
             updateLocalMediaPath(device, mediaFolder);
         }
         logInfo("Media files located on host at: %s", mLocalMediaPath);
-        copyMediaFiles(device);
+        if (!mMediaDownloadOnly) {
+            copyMediaFiles(device);
+        }
     }
 
     // Initialize maximum resolution of media files to copy
