@@ -127,6 +127,10 @@ public class NativeClearKeySystemTest extends MediaPlayerTestBase {
                 CENC_CLEARKEY_VIDEO_URL.toString()));
     }
 
+    public void testQueryKeyStatus() throws Exception {
+        assertTrue(testQueryKeyStatusNative(uuidByteArray(COMMON_PSSH_SCHEME_UUID)));
+    }
+
     public void testGetPropertyString() throws Exception {
         StringBuffer value = new StringBuffer();
         testGetPropertyStringNative(uuidByteArray(COMMON_PSSH_SCHEME_UUID), "description", value);
@@ -229,6 +233,8 @@ public class NativeClearKeySystemTest extends MediaPlayerTestBase {
             final String name, StringBuffer value);
 
     private static native boolean testPsshNative(final byte[] uuid, final String videoUrl);
+
+    private static native boolean testQueryKeyStatusNative(final byte[] uuid);
 
     public void testClearKeyPlaybackCenc() throws Exception {
         testClearKeyPlayback(
