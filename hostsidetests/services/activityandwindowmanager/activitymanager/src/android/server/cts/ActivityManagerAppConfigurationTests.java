@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static android.server.cts.ActivityAndWindowManagersState.dpToPx;
+import static android.server.cts.ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
@@ -48,6 +49,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
 
     private static final int SMALL_WIDTH_DP = 426;
     private static final int SMALL_HEIGHT_DP = 320;
+    private static final int NAVI_BAR_HEIGHT_DP = 48;
 
     /**
      * Tests that the WindowManager#getDefaultDisplay() and the Configuration of the Activity
@@ -484,10 +486,39 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     }
 
     /**
+     * If aspect ratio larger than 2.0, and system insets less than default system insets height
+     * (from nav bar),it won't meet CTS testcase requirement, so we treat these scenario specially
+     * and do not check the rotation.
+     */
+    private boolean shouldSkipRotationCheck() throws Exception{
+        WindowManagerState wmState = mAmWmState.getWmState();
+        wmState.computeState(mDevice);
+        WindowManagerState.Display display = wmState.getDisplay(DEFAULT_DISPLAY_ID);
+        Rectangle displayRect = display.getDisplayRect();
+        Rectangle appRect = display.getAppRect();
+
+        float aspectRatio = 0.0f;
+        int naviBarHeight;
+        if (wmState.getRotation() == 0 || wmState.getRotation() == 2) {
+            aspectRatio = (float) displayRect.height / displayRect.width;
+            naviBarHeight = displayRect.height - appRect.height;
+        } else {
+            aspectRatio = (float) displayRect.width / displayRect.height;
+            naviBarHeight = displayRect.width - appRect.width;
+        }
+
+        int density = display.getDpi();
+        int systemInsetsHeight = dpToPx(NAVI_BAR_HEIGHT_DP, density);
+        // After changed rotation the dispalySize will be effected by aspect ratio and system UI
+        // insets (from nav bar) together, so we should check if needed to skip testcase
+        return aspectRatio >= 2.0 && naviBarHeight < systemInsetsHeight;
+    }
+
+    /**
      * Asserts that after rotation, the aspect ratios of display size, metrics, and configuration
      * have flipped.
      */
-    private static void assertSizesRotate(ReportedSizes rotationA, ReportedSizes rotationB)
+    private void assertSizesRotate(ReportedSizes rotationA, ReportedSizes rotationB)
             throws Exception {
         assertEquals(rotationA.displayWidth, rotationA.metricsWidth);
         assertEquals(rotationA.displayHeight, rotationA.metricsHeight);
@@ -498,12 +529,17 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         final boolean afterPortrait = rotationB.displayWidth < rotationB.displayHeight;
         assertFalse(beforePortrait == afterPortrait);
 
-        final boolean beforeConfigPortrait = rotationA.widthDp < rotationA.heightDp;
-        final boolean afterConfigPortrait = rotationB.widthDp < rotationB.heightDp;
-        assertEquals(beforePortrait, beforeConfigPortrait);
-        assertEquals(afterPortrait, afterConfigPortrait);
-
-        assertEquals(rotationA.smallestWidthDp, rotationB.smallestWidthDp);
+        // When rotation is land, displayHeight calculated base on N does not contain
+        // statusBarHeight, while displayHeight calculated base on O version contains
+        // statusBarHeight. Therefore starting with O we don't check config rotation and
+        // smallestWidth on some devices with tall aspect ratio.
+        if (!shouldSkipRotationCheck()) {
+            final boolean beforeConfigPortrait = rotationA.widthDp < rotationA.heightDp;
+            final boolean afterConfigPortrait = rotationB.widthDp < rotationB.heightDp;
+            assertEquals(beforePortrait, beforeConfigPortrait);
+            assertEquals(afterPortrait, afterConfigPortrait);
+            assertEquals(rotationA.smallestWidthDp, rotationB.smallestWidthDp);
+        }
     }
 
     /**
