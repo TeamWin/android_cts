@@ -493,6 +493,54 @@ static void listener(
     }
 }
 
+static void acquireLicense(
+    JNIEnv* env, const AMediaObjects& aMediaObjects, const AMediaDrmSessionId& sessionId,
+    AMediaDrmKeyType keyType) {
+    // Pointer to keyRequest memory, which remains until the next
+    // AMediaDrm_getKeyRequest call or until the drm object is released.
+    const uint8_t* keyRequest;
+    size_t keyRequestSize = 0;
+    std::string errorMessage;
+
+    // The server recognizes "video/mp4" but not "video/avc".
+    media_status_t status = AMediaDrm_getKeyRequest(aMediaObjects.getDrm(),
+            &sessionId, kClearkeyPssh, sizeof(kClearkeyPssh),
+            "video/mp4" /*mimeType*/, keyType,
+            NULL, 0, &keyRequest, &keyRequestSize);
+    if (status != AMEDIA_OK) {
+        errorMessage.assign("getKeyRequest failed, error = %d");
+        goto errorOut;
+    }
+
+    if (kKeyRequestSize != keyRequestSize) {
+        ALOGE("Invalid keyRequestSize %zd", kKeyRequestSize);
+        errorMessage.assign("Invalid key request size, error = %d");
+        status = AMEDIA_DRM_NEED_KEY;
+        goto errorOut;
+    }
+
+    if (memcmp(kKeyRequestData, keyRequest, kKeyRequestSize) != 0) {
+        errorMessage.assign("Invalid key request data is returned, error = %d");
+        status = AMEDIA_DRM_NEED_KEY;
+        goto errorOut;
+    }
+
+    AMediaDrmKeySetId keySetId;
+    gGotVendorDefinedEvent = false;
+    status = AMediaDrm_provideKeyResponse(aMediaObjects.getDrm(), &sessionId,
+            reinterpret_cast<const uint8_t*>(kResponse),
+            sizeof(kResponse), &keySetId);
+    if (status == AMEDIA_OK) {
+        return;  // success
+    }
+
+    errorMessage.assign("provideKeyResponse failed, error = %d");
+
+errorOut:
+    AMediaDrm_closeSession(aMediaObjects.getDrm(), &sessionId);
+    jniThrowExceptionFmt(env, "java/lang/RuntimeException", errorMessage.c_str(), status);
+}
+
 extern "C" jboolean Java_android_media_cts_NativeClearKeySystemTest_testClearKeyPlaybackNative(
     JNIEnv* env, jclass /*clazz*/, jbyteArray uuid, jobject playbackParams) {
     if (NULL == uuid || NULL == playbackParams) {
@@ -562,44 +610,7 @@ extern "C" jboolean Java_android_media_cts_NativeClearKeySystemTest_testClearKey
         return JNI_FALSE;
     }
 
-    // Pointer to keyRequest memory, which remains until the next
-    // AMediaDrm_getKeyRequest call or until the drm object is released.
-    const uint8_t* keyRequest;
-    size_t keyRequestSize = 0;
-
-    // The server recognizes "video/mp4" but not "video/avc".
-    status = AMediaDrm_getKeyRequest(aMediaObjects.getDrm(), &sessionId,
-            kClearkeyPssh, sizeof(kClearkeyPssh),
-            "video/mp4" /*mimeType*/, KEY_TYPE_STREAMING,
-            NULL, 0, &keyRequest, &keyRequestSize);
-    if (status != AMEDIA_OK) {
-        jniThrowExceptionFmt(env, "java/lang/RuntimeException",
-                "getKeyRequest failed, error = %d", status);
-        AMediaDrm_closeSession(aMediaObjects.getDrm(), &sessionId);
-        return JNI_FALSE;
-    }
-
-    if (kKeyRequestSize != keyRequestSize) {
-        ALOGE("Invalid keyRequestSize %zd", keyRequestSize);
-        return JNI_FALSE;
-    }
-
-    if (memcmp(kKeyRequestData, keyRequest, kKeyRequestSize) != 0) {
-        ALOGE("Invalid keyRequest data is returned");
-        return JNI_FALSE;
-    }
-
-    AMediaDrmKeySetId keySetId;
-    gGotVendorDefinedEvent = false;
-    status = AMediaDrm_provideKeyResponse(aMediaObjects.getDrm(), &sessionId,
-            reinterpret_cast<const uint8_t*>(kResponse),
-            sizeof(kResponse), &keySetId);
-    if (status != AMEDIA_OK) {
-        jniThrowExceptionFmt(env, "java/lang/RuntimeException",
-                "provideKeyResponse failed, error = %d", status);
-        AMediaDrm_closeSession(aMediaObjects.getDrm(), &sessionId);
-        return JNI_FALSE;
-    }
+    acquireLicense(env, aMediaObjects, sessionId, KEY_TYPE_STREAMING);
 
     // Check if the event listener has received the expected event sent by
     // provideKeyResponse. This is for testing AMediaDrm_setOnEventListener().
@@ -635,6 +646,88 @@ extern "C" jboolean Java_android_media_cts_NativeClearKeySystemTest_testClearKey
     return JNI_TRUE;
 }
 
+extern "C" jboolean Java_android_media_cts_NativeClearKeySystemTest_testQueryKeyStatusNative(
+    JNIEnv* env, jclass /*clazz*/, jbyteArray uuid) {
+
+    if (NULL == uuid) {
+        jniThrowException(env, "java/lang/NullPointerException", "null uuid");
+        return JNI_FALSE;
+    }
+
+    Uuid juuid = jbyteArrayToUuid(env, uuid);
+    if (!isUuidSizeValid(juuid)) {
+        jniThrowExceptionFmt(env, "java/lang/IllegalArgumentException",
+                "invalid UUID size, expected %u bytes", kUuidSize);
+        return JNI_FALSE;
+    }
+
+    AMediaObjects aMediaObjects;
+    media_status_t status = AMEDIA_OK;
+    aMediaObjects.setDrm(AMediaDrm_createByUUID(&juuid[0]));
+    if (NULL == aMediaObjects.getDrm()) {
+        jniThrowException(env, "java/lang/RuntimeException", "failed to create drm");
+        return JNI_FALSE;
+    }
+
+    AMediaDrmSessionId sessionId;
+    status = AMediaDrm_openSession(aMediaObjects.getDrm(), &sessionId);
+    if (status != AMEDIA_OK) {
+        jniThrowException(env, "java/lang/RuntimeException",
+                "openSession failed");
+        return JNI_FALSE;
+    }
+
+    size_t numPairs = 3;
+    AMediaDrmKeyValue keyStatus[numPairs];
+
+    // Test for AMEDIA_DRM_SHORT_BUFFER
+    --numPairs;
+    status = AMediaDrm_queryKeyStatus(aMediaObjects.getDrm(), &sessionId, keyStatus, &numPairs);
+    if (status != AMEDIA_DRM_SHORT_BUFFER) {
+        jniThrowExceptionFmt(env, "java/lang/RuntimeException",
+                "AMediaDrm_queryKeyStatus should return AMEDIA_DRM_SHORT_BUFFER, error = %d",
+                        status);
+        return JNI_FALSE;
+    }
+
+    // Test default key status
+    ++numPairs;
+    status = AMediaDrm_queryKeyStatus(aMediaObjects.getDrm(), &sessionId, keyStatus, &numPairs);
+    if (status != AMEDIA_OK) {
+        jniThrowExceptionFmt(env, "java/lang/RuntimeException",
+                "AMediaDrm_queryKeyStatus failed, error = %d", status);
+        return JNI_FALSE;
+    }
+
+    for (size_t i = 0; i < numPairs; ++i) {
+        ALOGI("AMediaDrm_queryKeyStatus: key=%s, value=%s", keyStatus[i].mKey, keyStatus[i].mValue);
+    }
+
+    acquireLicense(env, aMediaObjects, sessionId, KEY_TYPE_STREAMING);
+
+    // Test valid key status
+    numPairs = 3;
+    status = AMediaDrm_queryKeyStatus(aMediaObjects.getDrm(), &sessionId, keyStatus, &numPairs);
+    if (status != AMEDIA_OK) {
+        jniThrowExceptionFmt(env, "java/lang/RuntimeException",
+                "AMediaDrm_queryKeyStatus failed, error = %d", status);
+        return JNI_FALSE;
+    }
+
+    for (size_t i = 0; i < numPairs; ++i) {
+        ALOGI("AMediaDrm_queryKeyStatus: key=%s, value=%s", keyStatus[i].mKey, keyStatus[i].mValue);
+    }
+
+
+    status = AMediaDrm_closeSession(aMediaObjects.getDrm(), &sessionId);
+    if (status != AMEDIA_OK) {
+        jniThrowException(env, "java/lang/RuntimeException",
+                "closeSession failed");
+        return JNI_FALSE;
+    }
+    return JNI_TRUE;
+}
+
 static JNINativeMethod gMethods[] = {
     { "isCryptoSchemeSupportedNative", "([B)Z",
             (void *)Java_android_media_cts_NativeClearKeySystemTest_isCryptoSchemeSupportedNative },
@@ -649,6 +742,9 @@ static JNINativeMethod gMethods[] = {
 
     { "testPsshNative", "([BLjava/lang/String;)Z",
             (void *)Java_android_media_cts_NativeClearKeySystemTest__testPsshNative },
+
+    { "testQueryKeyStatusNative", "([B)Z",
+            (void *)Java_android_media_cts_NativeClearKeySystemTest_testQueryKeyStatusNative },
 };
 
 int register_android_media_cts_NativeClearKeySystemTest(JNIEnv* env) {
