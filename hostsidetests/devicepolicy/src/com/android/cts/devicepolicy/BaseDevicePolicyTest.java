@@ -138,6 +138,8 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         removeTestUsers();
         // Unlock keyguard before test
         wakeupAndDismissKeyguard();
+        // Go to home.
+        executeShellCommand("input keyevent KEYCODE_HOME");
     }
 
     @Override
