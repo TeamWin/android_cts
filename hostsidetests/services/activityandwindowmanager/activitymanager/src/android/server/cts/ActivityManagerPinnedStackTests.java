@@ -83,7 +83,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     private static final String TEST_ACTIVITY_ACTION_FINISH =
             "android.server.cts.TestActivity.finish_self";
 
-    private static final int APP_OPS_OP_ENTER_PICTURE_IN_PICTURE_ON_HIDE = 67;
+    private static final String APP_OPS_OP_ENTER_PICTURE_IN_PICTURE = "PICTURE_IN_PICTURE";
     private static final int APP_OPS_MODE_ALLOWED = 0;
     private static final int APP_OPS_MODE_IGNORED = 1;
     private static final int APP_OPS_MODE_ERRORED = 2;
@@ -694,7 +694,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
         // Disable enter-pip and try to enter pip
         setAppOpsOpToMode(ActivityManagerTestBase.componentName,
-                APP_OPS_OP_ENTER_PICTURE_IN_PICTURE_ON_HIDE, APP_OPS_MODE_IGNORED);
+                APP_OPS_OP_ENTER_PICTURE_IN_PICTURE, APP_OPS_MODE_IGNORED);
 
         // Launch the PIP activity on pause
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
@@ -706,7 +706,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
         // Re-enable enter-pip-on-hide
         setAppOpsOpToMode(ActivityManagerTestBase.componentName,
-                APP_OPS_OP_ENTER_PICTURE_IN_PICTURE_ON_HIDE, APP_OPS_MODE_ALLOWED);
+                APP_OPS_OP_ENTER_PICTURE_IN_PICTURE, APP_OPS_MODE_ALLOWED);
     }
 
     public void testEnterPipFromTaskWithMultipleActivities() throws Exception {
@@ -1256,8 +1256,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     /**
      * Sets an app-ops op for a given package to a given mode.
      */
-    private void setAppOpsOpToMode(String packageName, int op, int mode) throws Exception {
-        executeShellCommand(String.format("appops set %s %d %d", packageName, op, mode));
+    private void setAppOpsOpToMode(String packageName, String op, int mode) throws Exception {
+        executeShellCommand(String.format("appops set %s %s %d", packageName, op, mode));
     }
 
     /**
