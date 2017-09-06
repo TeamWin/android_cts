@@ -16,6 +16,7 @@
 package android.location.cts;
 
 import junit.framework.Assert;
+import android.location.GnssClock;
 import android.location.GnssMeasurement;
 import android.location.GnssMeasurementsEvent;
 import android.util.Log;
@@ -82,10 +83,16 @@ class TestGnssMeasurementListener extends GnssMeasurementsEvent.Callback {
     public void onGnssMeasurementsReceived(GnssMeasurementsEvent event) {
         // Only count measurement events with more than 4 actual Measurements in same constellation
         // with Cn0DbHz value greater than 18
-        if (event.getMeasurements().size() > 0) { 
+        if (event.getMeasurements().size() > 0) {
             Log.i(mTag, "GnssMeasurementsEvent size:" + event.getMeasurements().size());
             if (filterByEventSize) {
                 HashMap<Integer, Integer> constellationEventCount = new HashMap<>();
+                GnssClock gnssClock = event.getClock();
+                if (!gnssClock.hasFullBiasNanos()) {
+                    // If devices does not have FullBiasNanos yet, it will be difficult to check the quality, so await 
+                    // this flag as well.
+                    return;
+                }
                 for (GnssMeasurement gnssMeasurement : event.getMeasurements()){
                     int constellationType = gnssMeasurement.getConstellationType();
                     // if the measurement's signal level is too small ignore
