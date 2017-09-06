@@ -80,7 +80,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     private static final String SIMPLE_APP_APK = "CtsSimpleApp.apk";
     private static final String SIMPLE_APP_PKG = "com.android.cts.launcherapps.simpleapp";
 
-    private static final long TIMEOUT_USER_LOCKED_MILLIS = TimeUnit.SECONDS.toMillis(15);
+    private static final long TIMEOUT_USER_LOCKED_MILLIS = TimeUnit.SECONDS.toMillis(30);
 
     private static final String PARAM_PROFILE_ID = "profile-id";
 
@@ -157,6 +157,10 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         changeUserCredential("1234", null, mProfileUserId);
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".LockNowTest",
                 "testLockNowWithKeyEviction", mProfileUserId);
+        waitUntilProfileLocked();
+    }
+
+    private void waitUntilProfileLocked() throws Exception {
         final String cmd = "dumpsys activity | grep 'User #" + mProfileUserId + ": state='";
         final Pattern p = Pattern.compile("state=([\\p{Upper}_]+)$");
         SuccessCondition userLocked = () -> {
@@ -970,6 +974,20 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         // Managed profile owner should be able to control it via DISALLOW_BLUETOOTH_SHARING.
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".BluetoothSharingRestrictionTest",
                 "testOppDisabledWhenRestrictionSet", mProfileUserId);
+    }
+
+    public void testResetPasswordWithTokenBeforeUnlock() throws Exception {
+        if (!mHasFeature || !mSupportsFbe) {
+            return;
+        }
+
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ResetPasswordWithTokenTest",
+                "setupWorkProfileAndLock", mProfileUserId);
+        waitUntilProfileLocked();
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ResetPasswordWithTokenTest",
+                "testResetPasswordBeforeUnlock", mProfileUserId);
+        // Password needs to be in sync with ResetPasswordWithTokenTest.PASSWORD1
+        verifyUserCredential("123456", mProfileUserId);
     }
 
     private void disableActivityForUser(String activityName, int userId)

@@ -26,7 +26,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Set of tests for use cases that apply to profile and device owner.
@@ -111,6 +113,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     protected static final String ASSIST_INTERACTION_SERVICE =
             ASSIST_APP_PKG + "/.MyInteractionService";
 
+    private static final String ARG_ALLOW_FAILURE = "allowFailure";
     // ID of the user all tests are run as. For device owner this will be the primary user, for
     // profile owner it is the user id of the created profile.
     protected int mUserId;
@@ -805,7 +808,12 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         // This is the default test for MixedDeviceOwnerTest and MixedProfileOwnerTest,
         // MixedManagedProfileOwnerTest overrides this method to execute the same test more strictly
         // without allowing failures.
-        executeDeviceTestMethod(".ResetPasswordWithTokenTest", "testResetPasswordWithTokenMayFail");
+        executeResetPasswordWithTokenTests(true);
+    }
+
+    protected void executeResetPasswordWithTokenTests(Boolean allowFailures) throws Exception {
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".ResetPasswordWithTokenTest", null, mUserId,
+                Collections.singletonMap(ARG_ALLOW_FAILURE, Boolean.toString(allowFailures)));
     }
 
     public void testClearApplicationData() throws Exception {
