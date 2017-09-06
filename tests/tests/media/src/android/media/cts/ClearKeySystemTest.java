@@ -31,6 +31,7 @@ import android.media.CamcorderProfile;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.Looper;
+import android.support.annotation.NonNull;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Base64;
 import android.util.Log;
@@ -42,8 +43,10 @@ import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.Vector;
 
@@ -222,7 +225,7 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
         }
     }
 
-    private MediaDrm startDrm(final byte[][] clearKeys, final String initDataType, final UUID drmSchemeUuid) {
+    private @NonNull MediaDrm startDrm(final byte[][] clearKeys, final String initDataType, final UUID drmSchemeUuid) {
         new Thread() {
             @Override
             public void run() {
@@ -279,7 +282,7 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
         mLooper.quit();
     }
 
-    private byte[] openSession(MediaDrm drm) {
+    private @NonNull byte[] openSession(MediaDrm drm) {
         byte[] mSessionId = null;
         boolean mRetryOpen;
         do {
@@ -297,7 +300,7 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
         drm.closeSession(sessionId);
     }
 
-    public boolean isResolutionSupported(String mime, String[] features,
+    private boolean isResolutionSupported(String mime, String[] features,
             int videoWidth, int videoHeight) {
         if (ApiLevelUtil.isBefore(android.os.Build.VERSION_CODES.JELLY_BEAN)) {
             if  (videoHeight <= 144) {
@@ -343,10 +346,6 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
         mSessionId = null;
         if (!scrambled) {
             drm = startDrm(clearKeys, initDataType, drmSchemeUuid);
-            if (null == drm) {
-                throw new Error("Failed to create drm.");
-            }
-
             if (!drm.isCryptoSchemeSupported(drmSchemeUuid)) {
                 stopDrm(drm);
                 throw new Error("Crypto scheme is not supported.");
@@ -411,6 +410,64 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
         if (!scrambled) {
             closeSession(drm, mSessionId);
             stopDrm(drm);
+        }
+    }
+
+    private boolean queryKeyStatus(@NonNull final MediaDrm drm, @NonNull final byte[] sessionId) {
+        final HashMap<String, String> keyStatus = drm.queryKeyStatus(sessionId);
+        if (keyStatus.isEmpty()) {
+            Log.e(TAG, "queryKeyStatus: empty key status");
+            return false;
+        }
+
+        final Set<String> keySet = keyStatus.keySet();
+        final int numKeys = keySet.size();
+        final String[] keys = keySet.toArray(new String[numKeys]);
+        for (int i = 0; i < numKeys; ++i) {
+            final String key = keys[i];
+            Log.i(TAG, "queryKeyStatus: key=" + key + ", value=" + keyStatus.get(key));
+        }
+
+        return true;
+    }
+
+    public void testQueryKeyStatus() throws Exception {
+        MediaDrm drm = startDrm(new byte[][] { CLEAR_KEY_CENC }, "cenc", COMMON_PSSH_SCHEME_UUID);
+        if (!drm.isCryptoSchemeSupported(COMMON_PSSH_SCHEME_UUID)) {
+            stopDrm(drm);
+            throw new Error("Crypto scheme is not supported.");
+        }
+
+        // Test default key status
+        mSessionId = openSession(drm);
+        if (!queryKeyStatus(drm, mSessionId)) {
+            closeSession(drm, mSessionId);
+            stopDrm(drm);
+            throw new Error("query default key status failed");
+        }
+
+        // Test valid key status
+        mMediaCodecPlayer = new MediaCodecClearKeyPlayer(
+                getActivity().getSurfaceHolder(),
+                mSessionId, false,
+                mContext.getResources());
+        mMediaCodecPlayer.setAudioDataSource(CENC_AUDIO_URL, null, false);
+        mMediaCodecPlayer.setVideoDataSource(CENC_VIDEO_URL, null, true);
+        mMediaCodecPlayer.start();
+        mMediaCodecPlayer.prepare();
+
+        mDrmInitData = mMediaCodecPlayer.getDrmInitData();
+        getKeys(drm, "cenc", mSessionId, mDrmInitData, new byte[][] { CLEAR_KEY_CENC });
+        boolean success = true;
+        if (!queryKeyStatus(drm, mSessionId)) {
+            success = false;
+        }
+
+        mMediaCodecPlayer.reset();
+        closeSession(drm, mSessionId);
+        stopDrm(drm);
+        if (!success) {
+            throw new Error("query key status failed");
         }
     }
 
