@@ -251,11 +251,11 @@ public class GnssPseudorangeVerificationTest extends GnssTestCase {
     int eventCount = events.size();
     Log.i(TAG, "Number of Gps Event received = " + eventCount);
     int gnssYearOfHardware = mTestLocationManager.getLocationManager().getGnssYearOfHardware();
-    if (eventCount == 0 && gnssYearOfHardware <= MIN_HARDWARE_YEAR_MEASUREMENTS_REQUIRED) {
+    if (eventCount == 0 && gnssYearOfHardware < MIN_HARDWARE_YEAR_MEASUREMENTS_REQUIRED) {
       return;
     }
 
-    Log.i(TAG, "This is a device from 2017 or later.");
+    Log.i(TAG, "This is a device from 2016 or later.");
     assertTrue("GnssMeasurementEvent count: expected > 0, received = " + eventCount,
         eventCount > 0);
 
