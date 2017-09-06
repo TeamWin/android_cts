@@ -119,4 +119,17 @@ public class Poc17_08 extends SecurityTestCase {
                          "__wlan_hdd_cfg80211_extscan_set_bssid_hotlist: " +
                          "2775: attr mac address failed[\\s\\n\\S]*", pocOut);
     }
+
+    /**
+     *  b/36075363
+     */
+    @SecurityTest
+    public void testPocCVE_2017_0731() throws Exception {
+        AdbUtils.runCommandLine("logcat -c", getDevice());
+        AdbUtils.runPocNoOutput("CVE-2017-0731", getDevice(), 60);
+        String logcat = AdbUtils.runCommandLine("logcat -d", getDevice());
+        assertNotMatches("[\\s\\n\\S]*Fatal signal 11 \\(SIGSEGV\\)" +
+                         "[\\s\\n\\S]*>>> /system/bin/" +
+                         "mediaserver <<<[\\s\\n\\S]*", logcat);
+    }
 }
