@@ -492,16 +492,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 ALWAYS_FOCUSABLE_PIP_ACTIVITY)));
     }
 
-    public void testAutoEnterPictureInPictureNonFullscreenActivity() throws Exception {
-        if (!supportsPip()) return;
-
-        // Launch an auto-enter PIP activity, and a translucent activity on top. Ensure that the
-        // start of the translucent activity does not trigger the PIP activity to enter PIP.
-        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP_ON_PAUSE, "true");
-        launchActivity(TRANSLUCENT_TEST_ACTIVITY);
-        assertPinnedStackDoesNotExist();
-    }
-
     public void testDisallowMultipleTasksInPinnedStack() throws Exception {
         if (!supportsPip()) return;
 
