@@ -680,30 +680,34 @@ extern "C" jboolean Java_android_media_cts_NativeClearKeySystemTest_testQueryKey
     size_t numPairs = 3;
     AMediaDrmKeyValue keyStatus[numPairs];
 
-    // Test for AMEDIA_DRM_SHORT_BUFFER
-    --numPairs;
+    // Test default key status, should return zero key status
+    status = AMediaDrm_queryKeyStatus(aMediaObjects.getDrm(), &sessionId, keyStatus, &numPairs);
+    if (status != AMEDIA_OK) {
+        jniThrowExceptionFmt(env, "java/lang/RuntimeException",
+                "AMediaDrm_queryKeyStatus failed, error = %d", status);
+        AMediaDrm_closeSession(aMediaObjects.getDrm(), &sessionId);
+        return JNI_FALSE;
+    }
+
+    if (numPairs != 0) {
+        jniThrowExceptionFmt(env, "java/lang/RuntimeException",
+                "AMediaDrm_queryKeyStatus failed, no policy should be defined");
+        AMediaDrm_closeSession(aMediaObjects.getDrm(), &sessionId);
+        return JNI_FALSE;
+    }
+
+    acquireLicense(env, aMediaObjects, sessionId, KEY_TYPE_STREAMING);
+
+    // Test short buffer
+    numPairs = 2;
     status = AMediaDrm_queryKeyStatus(aMediaObjects.getDrm(), &sessionId, keyStatus, &numPairs);
     if (status != AMEDIA_DRM_SHORT_BUFFER) {
         jniThrowExceptionFmt(env, "java/lang/RuntimeException",
                 "AMediaDrm_queryKeyStatus should return AMEDIA_DRM_SHORT_BUFFER, error = %d",
                         status);
+        AMediaDrm_closeSession(aMediaObjects.getDrm(), &sessionId);
         return JNI_FALSE;
     }
-
-    // Test default key status
-    ++numPairs;
-    status = AMediaDrm_queryKeyStatus(aMediaObjects.getDrm(), &sessionId, keyStatus, &numPairs);
-    if (status != AMEDIA_OK) {
-        jniThrowExceptionFmt(env, "java/lang/RuntimeException",
-                "AMediaDrm_queryKeyStatus failed, error = %d", status);
-        return JNI_FALSE;
-    }
-
-    for (size_t i = 0; i < numPairs; ++i) {
-        ALOGI("AMediaDrm_queryKeyStatus: key=%s, value=%s", keyStatus[i].mKey, keyStatus[i].mValue);
-    }
-
-    acquireLicense(env, aMediaObjects, sessionId, KEY_TYPE_STREAMING);
 
     // Test valid key status
     numPairs = 3;
@@ -711,6 +715,7 @@ extern "C" jboolean Java_android_media_cts_NativeClearKeySystemTest_testQueryKey
     if (status != AMEDIA_OK) {
         jniThrowExceptionFmt(env, "java/lang/RuntimeException",
                 "AMediaDrm_queryKeyStatus failed, error = %d", status);
+        AMediaDrm_closeSession(aMediaObjects.getDrm(), &sessionId);
         return JNI_FALSE;
     }
 
@@ -718,6 +723,12 @@ extern "C" jboolean Java_android_media_cts_NativeClearKeySystemTest_testQueryKey
         ALOGI("AMediaDrm_queryKeyStatus: key=%s, value=%s", keyStatus[i].mKey, keyStatus[i].mValue);
     }
 
+    if (numPairs !=  3) {
+        jniThrowExceptionFmt(env, "java/lang/RuntimeException",
+                "AMediaDrm_queryKeyStatus returns %zd key status, expecting 3", numPairs);
+        AMediaDrm_closeSession(aMediaObjects.getDrm(), &sessionId);
+        return JNI_FALSE;
+    }
 
     status = AMediaDrm_closeSession(aMediaObjects.getDrm(), &sessionId);
     if (status != AMEDIA_OK) {
