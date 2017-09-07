@@ -79,6 +79,22 @@ public class CtsConfigLoadingTest {
     ));
 
     /**
+     * List of the officially supported runners in CTS, they meet all the interfaces criteria as
+     * well as support sharding very well. Any new addition should go through a review.
+     */
+    private static final Set<String> SUPPORTED_CTS_TEST_TYPE = new HashSet<>(Arrays.asList(
+            // Cts runners
+            "com.android.compatibility.common.tradefed.testtype.JarHostTest",
+            "com.android.compatibility.testtype.DalvikTest",
+            "com.android.compatibility.testtype.LibcoreTest",
+            "com.drawelements.deqp.runner.DeqpTestRunner",
+            // Tradefed runners
+            "com.android.tradefed.testtype.AndroidJUnitTest",
+            "com.android.tradefed.testtype.HostTest",
+            "com.android.tradefed.testtype.GTest"
+    ));
+
+    /**
      * Test that configuration shipped in Tradefed can be parsed.
      * -> Exclude deprecated ApkInstaller.
      * -> Check if host-side tests are non empty.
@@ -121,6 +137,12 @@ public class CtsConfigLoadingTest {
             }
             // We can ensure that Host side tests are not empty.
             for (IRemoteTest test : c.getTests()) {
+                // Check that all the tests runners are well supported.
+                if (!SUPPORTED_CTS_TEST_TYPE.contains(test.getClass().getCanonicalName())) {
+                    throw new ConfigurationException(
+                            String.format("testtype %s is not officially supported by CTS.",
+                                    test.getClass().getCanonicalName()));
+                }
                 if (test instanceof HostTest) {
                     HostTest hostTest = (HostTest) test;
                     // We inject a made up folder so that it can find the tests.
