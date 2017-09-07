@@ -438,9 +438,11 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
             throw new Error("Crypto scheme is not supported.");
         }
 
-        // Test default key status
         mSessionId = openSession(drm);
-        if (!queryKeyStatus(drm, mSessionId)) {
+
+        // Test default key status, should not be defined
+        final HashMap<String, String> keyStatus = drm.queryKeyStatus(mSessionId);
+        if (!keyStatus.isEmpty()) {
             closeSession(drm, mSessionId);
             stopDrm(drm);
             throw new Error("query default key status failed");
