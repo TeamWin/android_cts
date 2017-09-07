@@ -517,6 +517,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
+                        .setId("I'm the alpha and the omega")
                         .setField(ID_USERNAME, "dude")
                         .setField(ID_PASSWORD, "sweet")
                         .setPresentation(createPresentation("The Dude"))
@@ -557,6 +558,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
 
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+
+        assertThat(saveRequest.datasetIds).containsExactly("I'm the alpha and the omega");
 
         // Assert value of expected fields - should not be sanitized.
         final ViewNode username = findNodeByResourceId(saveRequest.structure, ID_USERNAME);
@@ -1161,6 +1164,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
         sReplier.assertNumberUnhandledSaveRequests(0);
+        assertThat(saveRequest.datasetIds).isNull();
 
         // Assert value of expected fields - should not be sanitized.
         try {

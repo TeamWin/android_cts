@@ -118,7 +118,8 @@ public class InstrumentedAutoFillService extends AutofillService {
                 return;
             }
         }
-        sReplier.onSaveRequest(request.getFillContexts(), request.getClientState(), callback);
+        sReplier.onSaveRequest(request.getFillContexts(), request.getClientState(), callback,
+                request.getDatasetIds());
     }
 
     private boolean fromSamePackage(List<FillContext> contexts) {
@@ -216,12 +217,14 @@ public class InstrumentedAutoFillService extends AutofillService {
      * that can be asserted at the end of a test case.
      */
     static final class SaveRequest {
-        final List<FillContext> contexts;
-        final AssistStructure structure;
-        final Bundle data;
-        final SaveCallback callback;
+        public final List<FillContext> contexts;
+        public final AssistStructure structure;
+        public final Bundle data;
+        public final SaveCallback callback;
+        public final List<String> datasetIds;
 
-        private SaveRequest(List<FillContext> contexts, Bundle data, SaveCallback callback) {
+        private SaveRequest(List<FillContext> contexts, Bundle data, SaveCallback callback,
+                List<String> datasetIds) {
             if (contexts != null && contexts.size() > 0) {
                 structure = contexts.get(contexts.size() - 1).getStructure();
             } else {
@@ -230,6 +233,7 @@ public class InstrumentedAutoFillService extends AutofillService {
             this.contexts = contexts;
             this.data = data;
             this.callback = callback;
+            this.datasetIds = datasetIds;
         }
     }
 
@@ -419,9 +423,10 @@ public class InstrumentedAutoFillService extends AutofillService {
             }
         }
 
-        private void onSaveRequest(List<FillContext> contexts, Bundle data, SaveCallback callback) {
+        private void onSaveRequest(List<FillContext> contexts, Bundle data, SaveCallback callback,
+                List<String> datasetIds) {
             Log.d(TAG, "onSaveRequest()");
-            mSaveRequests.offer(new SaveRequest(contexts, data, callback));
+            mSaveRequests.offer(new SaveRequest(contexts, data, callback, datasetIds));
             callback.onSuccess();
         }
     }
