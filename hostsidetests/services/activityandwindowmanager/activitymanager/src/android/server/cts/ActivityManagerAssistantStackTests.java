@@ -27,6 +27,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
     private static final String VOICE_INTERACTION_SERVICE = "AssistantVoiceInteractionService";
 
     private static final String TEST_ACTIVITY = "TestActivity";
+    private static final String ANIMATION_TEST_ACTIVITY = "AnimationTestActivity";
     private static final String DOCKED_ACTIVITY = "DockedActivity";
     private static final String ASSISTANT_ACTIVITY = "AssistantActivity";
     private static final String LAUNCH_ASSISTANT_ACTIVITY_FROM_SESSION =
@@ -198,7 +199,8 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
                 .mTaskId;
 
         // Launch a new fullscreen activity
-        launchActivity(TEST_ACTIVITY);
+        // Using Animation Test Activity because it is opaque on all devices.
+        launchActivity(ANIMATION_TEST_ACTIVITY);
         mAmWmState.assertVisibility(ASSISTANT_ACTIVITY, false);
 
         // Launch the assistant again and ensure that it goes into the same task
