@@ -27,6 +27,7 @@ import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.content.Intent;
 import android.support.test.uiautomator.UiObject2;
+import android.view.View;
 
 import org.junit.Rule;
 
@@ -258,5 +259,75 @@ public class PreSimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase
         }
 
         sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+    }
+
+    @Override
+    protected void tapLinkLaunchTrampolineActivityThenTapBackAndStartNewSessionTest()
+            throws Exception {
+        // Prepare activity.
+        startActivity(false);
+        mActivity.mPreInput.getRootView()
+                .setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS);
+
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setCustomDescription(newCustomDescription(TrampolineWelcomeActivity.class))
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_PRE_INPUT)
+                .build());
+
+        // Trigger autofill.
+        mActivity.getAutofillManager().requestAutofill(mActivity.mPreInput);
+        sReplier.getNextFillRequest();
+        Helper.assertHasSessions(mPackageName);
+
+        // Trigger save.
+        mActivity.syncRunOnUiThread(() -> {
+            mActivity.mPreInput.setText("108");
+            mActivity.mSubmit.performClick();
+        });
+        final UiObject2 saveUi = assertSaveUiWithLinkIsShown(SAVE_DATA_TYPE_PASSWORD);
+
+        // Tap the link.
+        tapSaveUiLink(saveUi);
+
+        // Make sure new activity is shown...
+        WelcomeActivity.assertShowingDefaultMessage(sUiBot);
+
+        // Save UI should be showing as well, since Trampoline finished.
+        sUiBot.assertSaveShowing(SAVE_DATA_TYPE_PASSWORD);
+
+        // Go back and make sure it's showing the right activity.
+        sUiBot.pressBack();
+        sUiBot.assertShownByRelativeId(ID_INPUT);
+
+        // Now triggers a new session in the new activity (SaveActivity) and do business as usual...
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_EMAIL_ADDRESS, ID_INPUT)
+                .build());
+
+        // Trigger autofill.
+        final SimpleSaveActivity newActivty = SimpleSaveActivity.getInstance();
+        newActivty.getAutofillManager().requestAutofill(newActivty.mInput);
+
+        sReplier.getNextFillRequest();
+        Helper.assertHasSessions(mPackageName);
+
+        // Trigger save.
+        newActivty.syncRunOnUiThread(() -> {
+            newActivty.mInput.setText("42");
+            newActivty.mCommit.performClick();
+        });
+        // Make sure post-save activity is shown...
+        sUiBot.assertShownByRelativeId(ID_INPUT);
+
+        // Save it...
+        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_EMAIL_ADDRESS);
+
+        // ... and assert results
+        final SaveRequest saveRequest1 = sReplier.getNextSaveRequest();
+        assertTextAndValue(findNodeByResourceId(saveRequest1.structure, ID_INPUT), "42");
     }
 }

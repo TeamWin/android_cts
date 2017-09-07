@@ -61,6 +61,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".WebViewActivity"/>
+        <activity android:name=".TrampolineWelcomeActivity"/>
 
         <service
             android:name=".InstrumentedAutoFillService"
