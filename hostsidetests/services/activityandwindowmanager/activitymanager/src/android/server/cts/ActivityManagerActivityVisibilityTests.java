@@ -300,6 +300,11 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     }
 
     public void testTurnScreenOnAttrWithLockScreen() throws Exception {
+        if (!isHandheld()) {
+            // This test requires the ability to have a lock screen.
+            return;
+        }
+
         setLockCredential();
         sleepDevice();
         final String logSeparator = clearLogcat();
