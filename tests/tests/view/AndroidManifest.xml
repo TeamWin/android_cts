@@ -335,7 +335,7 @@
 
         <activity android:name="android.view.cts.PointerCaptureCtsActivity"
                   android:screenOrientation="locked"
-                  android:theme="@style/WhiteBackgroundTheme">
+                  android:label="PointerCaptureCtsActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
