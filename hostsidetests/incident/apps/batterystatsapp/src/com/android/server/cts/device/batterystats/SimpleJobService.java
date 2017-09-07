@@ -52,6 +52,7 @@ public class SimpleJobService extends JobService {
             if (sLatch != null) {
                 sLatch.countDown();
             }
+            Log.i(TAG, "Finished job.");
         }
     };
 
