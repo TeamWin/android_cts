@@ -18,7 +18,6 @@ package com.android.compatibility.common.tradefed.testtype.suite;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
 import com.android.compatibility.common.tradefed.testtype.ISubPlan;
-import com.android.compatibility.common.tradefed.testtype.ModuleRepo;
 import com.android.compatibility.common.tradefed.testtype.SubPlan;
 import com.android.compatibility.common.util.TestFilter;
 import com.android.tradefed.build.IBuildInfo;
@@ -261,7 +260,7 @@ public class CompatibilityTestSuite extends ITestSuite {
             }
         }
         if (mModuleName != null) {
-            List<String> modules = ModuleRepo.getModuleNamesMatching(
+            List<String> modules = ModuleRepoSuite.getModuleNamesMatching(
                     mBuildHelper.getTestsDir(), mModuleName);
             if (modules.size() == 0) {
                 throw new IllegalArgumentException(
