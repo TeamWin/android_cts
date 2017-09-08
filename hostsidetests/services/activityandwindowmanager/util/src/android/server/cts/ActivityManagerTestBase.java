@@ -288,6 +288,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
             setAccelerometerRotation(mInitialAccelerometerRotation);
             setUserRotation(mUserRotation);
             setFontScale(mFontScale);
+            setWindowTransitionAnimationDurationScale(1);
             // Remove special stacks.
             removeStacks(ALL_STACK_IDS_BUT_HOME_AND_FULLSCREEN);
             wakeUpAndUnlockDevice();
@@ -764,6 +765,12 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
             runCommandAndPrintOutput(
                     "settings put system font_scale " + fontScale);
         }
+    }
+
+    protected void setWindowTransitionAnimationDurationScale(float animDurationScale)
+            throws DeviceNotAvailableException {
+        runCommandAndPrintOutput(
+                "settings put global transition_animation_scale " + animDurationScale);
     }
 
     protected float getFontScale() throws DeviceNotAvailableException {
