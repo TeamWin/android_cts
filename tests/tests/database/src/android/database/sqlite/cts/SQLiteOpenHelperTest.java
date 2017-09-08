@@ -22,6 +22,7 @@ import android.database.sqlite.SQLiteCursor;
 import android.database.sqlite.SQLiteCursorDriver;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDebug;
+import android.database.sqlite.SQLiteGlobal;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQuery;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
@@ -188,6 +189,19 @@ public class SQLiteOpenHelperTest extends AndroidTestCase {
             fail("Negative timeout should be rejected");
         } catch (IllegalArgumentException expected) {
         }
+    }
+
+    public void testCloseIdleConnectionDefaultDisabled() throws Exception {
+        // Make sure system default timeout is not changed
+        assertEquals(30000, SQLiteGlobal.getIdleConnectionTimeout());
+
+        mOpenHelper.getReadableDatabase();
+        // Wait past the timeout and verify that connection is still open
+        Log.w(TAG, "Waiting for 35 seconds...");
+        Thread.sleep(35000);
+        String output = getDbInfoOutput();
+        assertTrue("Connection #0 should be open. Output: " + output,
+                output.contains("Connection #0:"));
     }
 
     private MockOpenHelper getOpenHelper() {
