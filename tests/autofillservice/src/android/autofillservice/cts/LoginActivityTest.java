@@ -1848,6 +1848,75 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
+    public void testFillResponseFiltering() throws Exception {
+        // Set service.
+        enableService();
+        final MyAutofillCallback callback = mActivity.registerCallback();
+
+        // Prepare the authenticated response
+        final Bundle clientState = new Bundle();
+        clientState.putString("numbers", "4815162342");
+        final IntentSender authentication = AuthenticationActivity.createSender(mContext, 1,
+                new CannedFillResponse.Builder().addDataset(
+                        new CannedDataset.Builder()
+                                .setField(ID_USERNAME, "dude")
+                                .setField(ID_PASSWORD, "sweet")
+                                .setId("name")
+                                .setPresentation(createPresentation("Dataset"))
+                                .build())
+                        .setExtras(clientState).build());
+
+        // Configure the service behavior
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setAuthentication(authentication, ID_USERNAME, ID_PASSWORD)
+                .setPresentation(createPresentation("Tap to auth response"))
+                .setExtras(clientState)
+                .build());
+
+        // Set expectation for the activity
+        mActivity.expectAutoFill("dude", "sweet");
+
+        // Trigger auto-fill.
+        mActivity.onUsername(View::requestFocus);
+
+        // Wait for onFill() before proceeding.
+        sReplier.getNextFillRequest();
+        final View username = mActivity.getUsername();
+
+        // Make sure it's showing initially...
+        callback.assertUiShownEvent(username);
+        sUiBot.assertDatasets("Tap to auth response");
+
+        // ..then type something to hide it.
+        runShellCommand("input keyevent KEYCODE_A");
+        callback.assertUiHiddenEvent(username);
+        sUiBot.assertNoDatasets();
+
+        // Now delete the char and assert it's shown again...
+        runShellCommand("input keyevent KEYCODE_DEL");
+        callback.assertUiShownEvent(username);
+        sUiBot.assertDatasets("Tap to auth response");
+
+        // ...and select it this time
+        AuthenticationActivity.setResultCode(RESULT_OK);
+        sUiBot.selectDataset("Tap to auth response");
+        callback.assertUiHiddenEvent(username);
+        callback.assertUiShownEvent(username);
+        final UiObject2 picker = sUiBot.assertDatasets("Dataset");
+        sUiBot.selectDataset(picker, "Dataset");
+        callback.assertUiHiddenEvent(username);
+        sUiBot.assertNoDatasets();
+
+        // Check the results.
+        mActivity.assertAutoFilled();
+
+        final Bundle data = AuthenticationActivity.getData();
+        assertThat(data).isNotNull();
+        final String extraValue = data.getString("numbers");
+        assertThat(extraValue).isEqualTo("4815162342");
+    }
+
+    @Test
     public void testDatasetAuthTwoFields() throws Exception {
         datasetAuthTwoFields(false);
     }
@@ -2159,6 +2228,157 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         callback.assertUiShownEvent(username);
         sUiBot.assertDatasets("Tap to auth dataset", "What, me auth?");
 
+        final String chosenOne = selectAuth ? "Tap to auth dataset" : "What, me auth?";
+        sUiBot.selectDataset(chosenOne);
+        callback.assertUiHiddenEvent(username);
+        sUiBot.assertNoDatasets();
+
+        // Check the results.
+        mActivity.assertAutoFilled();
+    }
+
+    @Test
+    public void testDatasetAuthFiltering() throws Exception {
+        // TODO: current API requires these fields...
+        final RemoteViews bogusPresentation = createPresentation("Whatever man, I'm not used...");
+        final String bogusValue = "Y U REQUIRE IT?";
+
+        // Set service.
+        enableService();
+        final MyAutofillCallback callback = mActivity.registerCallback();
+
+        // Create the authentication intents
+        final CannedDataset unlockedDataset = new CannedDataset.Builder()
+                .setField(ID_USERNAME, "dude")
+                .setField(ID_PASSWORD, "sweet")
+                .setPresentation(bogusPresentation)
+                .build();
+        final IntentSender authentication = AuthenticationActivity.createSender(mContext, 1,
+                unlockedDataset);
+
+        // Configure the service behavior
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, bogusValue)
+                        .setField(ID_PASSWORD, bogusValue)
+                        .setPresentation(createPresentation("Tap to auth dataset"))
+                        .setAuthentication(authentication)
+                        .build())
+                .build());
+
+        // Set expectation for the activity
+        mActivity.expectAutoFill("dude", "sweet");
+
+        // Trigger auto-fill.
+        mActivity.onUsername(View::requestFocus);
+
+        // Wait for onFill() before proceeding.
+        sReplier.getNextFillRequest();
+        final View username = mActivity.getUsername();
+
+        // Make sure it's showing initially...
+        callback.assertUiShownEvent(username);
+        sUiBot.assertDatasets("Tap to auth dataset");
+
+        // ..then type something to hide it.
+        runShellCommand("input keyevent KEYCODE_A");
+        callback.assertUiHiddenEvent(username);
+        sUiBot.assertNoDatasets();
+
+        // Now delete the char and assert it's shown again...
+        runShellCommand("input keyevent KEYCODE_DEL");
+        callback.assertUiShownEvent(username);
+        sUiBot.assertDatasets("Tap to auth dataset");
+
+        // ...and select it this time
+        sUiBot.selectDataset("Tap to auth dataset");
+        callback.assertUiHiddenEvent(username);
+        sUiBot.assertNoDatasets();
+
+        // Check the results.
+        mActivity.assertAutoFilled();
+    }
+
+    @Test
+    public void testDatasetAuthMixedFilteringSelectAuth() throws Exception {
+        datasetAuthMixedFilteringTest(true);
+    }
+
+    @Test
+    public void testDatasetAuthMixedFilteringSelectNonAuth() throws Exception {
+        datasetAuthMixedFilteringTest(false);
+    }
+
+    private void datasetAuthMixedFilteringTest(boolean selectAuth) throws Exception {
+        // TODO: current API requires these fields...
+        final RemoteViews bogusPresentation = createPresentation("Whatever man, I'm not used...");
+        final String bogusValue = "Y U REQUIRE IT?";
+
+        // Set service.
+        enableService();
+        final MyAutofillCallback callback = mActivity.registerCallback();
+
+        // Create the authentication intents
+        final CannedDataset unlockedDataset = new CannedDataset.Builder()
+                .setField(ID_USERNAME, "DUDE")
+                .setField(ID_PASSWORD, "SWEET")
+                .setPresentation(bogusPresentation)
+                .build();
+        final IntentSender authentication = AuthenticationActivity.createSender(mContext, 1,
+                unlockedDataset);
+
+        // Configure the service behavior
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, bogusValue)
+                        .setField(ID_PASSWORD, bogusValue)
+                        .setPresentation(createPresentation("Tap to auth dataset"))
+                        .setAuthentication(authentication)
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setField(ID_PASSWORD, "sweet")
+                        .setPresentation(createPresentation("What, me auth?"))
+                        .build())
+                .build());
+
+        // Set expectation for the activity
+        if (selectAuth) {
+            mActivity.expectAutoFill("DUDE", "SWEET");
+        } else {
+            mActivity.expectAutoFill("dude", "sweet");
+        }
+
+        // Trigger auto-fill.
+        mActivity.onUsername(View::requestFocus);
+
+        // Wait for onFill() before proceeding.
+        sReplier.getNextFillRequest();
+        final View username = mActivity.getUsername();
+
+        // Make sure it's showing initially...
+        callback.assertUiShownEvent(username);
+        sUiBot.assertDatasets("Tap to auth dataset", "What, me auth?");
+
+        // Filter the auth dataset.
+        runShellCommand("input keyevent KEYCODE_D");
+        sUiBot.assertDatasets("What, me auth?");
+
+        // Filter all.
+        runShellCommand("input keyevent KEYCODE_W");
+        callback.assertUiHiddenEvent(username);
+        sUiBot.assertNoDatasets();
+
+        // Now delete the char and assert the non-auth is shown again.
+        runShellCommand("input keyevent KEYCODE_DEL");
+        callback.assertUiShownEvent(username);
+        sUiBot.assertDatasets("What, me auth?");
+
+        // Delete again and assert all dataset are shown.
+        runShellCommand("input keyevent KEYCODE_DEL");
+        sUiBot.assertDatasets("Tap to auth dataset", "What, me auth?");
+
+        // ...and select it this time
         final String chosenOne = selectAuth ? "Tap to auth dataset" : "What, me auth?";
         sUiBot.selectDataset(chosenOne);
         callback.assertUiHiddenEvent(username);
