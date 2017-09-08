@@ -217,6 +217,33 @@ public class ModuleRepoSuite {
         return true;
     }
 
+    /**
+     * @return the {@link List} of modules whose name contains the given pattern.
+     */
+    public static List<String> getModuleNamesMatching(File directory, String pattern) {
+        String[] names = directory.list(new FilenameFilter(){
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.contains(pattern) && name.endsWith(CONFIG_EXT);
+            }
+        });
+        List<String> modules = new ArrayList<String>(names.length);
+        for (String name : names) {
+            int index = name.indexOf(CONFIG_EXT);
+            if (index > 0) {
+                String module = name.substring(0, index);
+                if (module.equals(pattern)) {
+                    // Pattern represents a single module, just return a single-item list
+                    modules = new ArrayList<>(1);
+                    modules.add(module);
+                    return modules;
+                }
+                modules.add(module);
+            }
+        }
+        return modules;
+    }
+
     private void addFilters(Set<String> stringFilters,
             Map<String, List<TestFilter>> filters, Set<IAbi> abis) {
         for (String filterString : stringFilters) {
