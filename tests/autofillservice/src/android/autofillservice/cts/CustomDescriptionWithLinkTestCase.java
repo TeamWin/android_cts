@@ -192,6 +192,15 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
         saveUiCancelledAfterTappingLinkTest(PostSaveLinkTappedAction.LAUNCH_NEW_ACTIVITY);
     }
 
+    @Test
+    public final void testTapLink_launchTrampolineActivityThenTapBackAndStartNewSession()
+            throws Exception {
+        tapLinkLaunchTrampolineActivityThenTapBackAndStartNewSessionTest();
+    }
+
+    protected abstract void tapLinkLaunchTrampolineActivityThenTapBackAndStartNewSessionTest()
+            throws Exception;
+
     enum PostSaveLinkTappedAction {
         TAP_BACK_BUTTON,
         ROTATE_THEN_TAP_BACK_BUTTON,
@@ -213,10 +222,14 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
 
     protected final CustomDescription newCustomDescription(
             Class<? extends Activity> activityClass) {
-        final RemoteViews presentation = new RemoteViews(mPackageName,
-                R.layout.custom_description_with_link);
         final Intent intent = new Intent(mContext, activityClass);
         intent.setFlags(Intent.FLAG_ACTIVITY_RETAIN_IN_RECENTS | Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
+        return newCustomDescription(intent);
+    }
+
+    protected final CustomDescription newCustomDescription(Intent intent) {
+        final RemoteViews presentation = new RemoteViews(mPackageName,
+                R.layout.custom_description_with_link);
         final PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent, 0);
         presentation.setOnClickPendingIntent(R.id.link, pendingIntent);
         return new CustomDescription.Builder(presentation).build();
