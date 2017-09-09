@@ -45,6 +45,7 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import com.android.compatibility.common.util.CtsMouseUtil.ActionMatcher;
+import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.Before;
@@ -228,7 +229,10 @@ public class PointerCaptureTest {
 
         // Show a context menu on a widget.
         mActivity.registerForContextMenu(mTarget);
-        mActivityRule.runOnUiThread(() -> mTarget.showContextMenu(0, 0));
+        // TODO(kaznacheev) replace the below line with a call to showContextMenu once b/65487689
+        // is fixed. Meanwhile, emulate a long press which takes long enough time to avoid the race
+        // condition.
+        CtsTouchUtils.emulateLongPressOnView(mInstrumentation, mTarget, 0, 0);
         PollingCheck.waitFor(TIMEOUT_DELTA, () -> !mOuter.hasWindowFocus());
         assertPointerCapture(false);
 
