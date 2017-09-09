@@ -14,19 +14,5 @@
  * limitations under the License.
  */
 
-package android.cts.nnapi;
-
-import android.test.AndroidTestCase;
-
-public class NNAPITest extends AndroidTestCase {
-
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-    }
-
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
-    }
-}
+// Include corresponding NNAPI unit tests in frameworks/ml/nn/runtime/test
+#include "test/TestTrivialModel.cpp"
