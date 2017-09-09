@@ -729,14 +729,9 @@ public class CipherTest extends AndroidTestCase {
                                     + ciphertext.length + " bytes): "
                                     + HexEncoding.encode(ciphertext) + " for "
                                     + plaintext.length + " byte long plaintext");
-                            // TODO: Remove this workaround once Conscrypt's RSA Cipher Bug 22567458
-                            // is fixed. Conscrypt's Cipher.doFinal throws a SignatureException.
-                            // This code is unreachable because of the fail() above. It's here only
-                            // so that the compiler does not complain about us catching
-                            // SignatureException.
-                            Signature sig = Signature.getInstance("SHA256withRSA");
-                            sig.sign();
-                        } catch (BadPaddingException | SignatureException expected) {}
+                            // TODO: Remove the catching of RuntimeException workaround once the
+                            // corresponding Bug 22567458 in Conscrypt is fixed.
+                        } catch (BadPaddingException | RuntimeException expected) {}
                     } else {
                         try {
                             byte[] ciphertext = cipher.doFinal(plaintext);
@@ -744,9 +739,10 @@ public class CipherTest extends AndroidTestCase {
                                     + ciphertext.length + " bytes): "
                                     + HexEncoding.encode(ciphertext) + " for "
                                     + plaintext.length + " byte long plaintext");
-                            // TODO: Remove the catching of RuntimeException workaround once the
-                            // corresponding Bug 22567463 in Conscrypt is fixed.
-                        } catch (IllegalBlockSizeException | RuntimeException expected) {}
+                            // TODO: Remove the catching of RuntimeException and BadPaddingException
+                            // workaround once the corresponding Bug 22567463 in Conscrypt is fixed.
+                        } catch (IllegalBlockSizeException | BadPaddingException | RuntimeException
+                                exception) {}
                     }
                 } catch (Throwable e) {
                     throw new RuntimeException(
