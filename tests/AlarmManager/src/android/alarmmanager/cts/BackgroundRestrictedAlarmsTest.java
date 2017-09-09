@@ -158,7 +158,7 @@ public class BackgroundRestrictedAlarmsTest {
 
     private void updateAlarmManagerConstants() throws IOException {
         String cmd = "settings put global alarm_manager_constants min_interval="
-                + MIN_REPEATING_INTERVAL + ",limit_bg_alarms_enabled=true";
+                + MIN_REPEATING_INTERVAL;
         mUiDevice.executeShellCommand(cmd);
     }
 
