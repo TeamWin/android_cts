@@ -44,6 +44,7 @@ public class TestAlarmActivity extends Activity {
         final AlarmManager am = getSystemService(AlarmManager.class);
         final Intent intent = getIntent();
         final Intent receiverIntent = new Intent(this, TestAlarmReceiver.class);
+        receiverIntent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         final PendingIntent alarmClockSender =
                 PendingIntent.getBroadcast(this, 0, receiverIntent, 0);
         final PendingIntent alarmSender = PendingIntent.getBroadcast(this, 1, receiverIntent, 0);

@@ -15,6 +15,8 @@
  */
 package android.security.cts;
 
+import com.android.compatibility.common.util.CpuFeatures;
+import com.android.compatibility.common.util.PropertyUtil;
 import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
@@ -39,6 +41,10 @@ public class ProcessMustUseSeccompTest extends DeviceTestCase {
     protected void tearDown() throws Exception {
         mDevice = null;
         super.tearDown();
+    }
+
+    private boolean isFullTrebleDevice() throws DeviceNotAvailableException {
+        return PropertyUtil.getFirstApiLevel(mDevice) > 25;
     }
 
     /*
@@ -104,7 +110,9 @@ public class ProcessMustUseSeccompTest extends DeviceTestCase {
     }
 
     public void testConfigStoreHalHasSeccompFilter() throws DeviceNotAvailableException {
-        assertSeccompFilter("android.hardware.configstore", LSHAL_CMD, true);
+        if (CpuFeatures.isArm64(mDevice)) {
+            assertSeccompFilter("android.hardware.configstore", LSHAL_CMD, true);
+        }
     }
 
     public void testMediaextractorHasSeccompFilter() throws DeviceNotAvailableException {
@@ -112,6 +120,10 @@ public class ProcessMustUseSeccompTest extends DeviceTestCase {
     }
 
     public void testOmxHalHasSeccompFilter() throws DeviceNotAvailableException {
-        assertSeccompFilter("android.hardware.media.omx", LSHAL_CMD, true);
+        if (isFullTrebleDevice()) {
+            assertSeccompFilter("android.hardware.media.omx", LSHAL_CMD, true);
+        } else {
+            assertSeccompFilter("media.codec", PS_CMD, false);
+        }
     }
 }

@@ -63,6 +63,12 @@ public class SimpleSaveActivity extends AbstractAutoFillActivity {
         mCommit.setOnClickListener((v) -> getAutofillManager().commit());
     }
 
+    FillExpectation expectAutoFill(String input) {
+        final FillExpectation expectation = new FillExpectation(input, null);
+        mInput.addTextChangedListener(expectation.mInputWatcher);
+        return expectation;
+    }
+
     FillExpectation expectAutoFill(String input, String password) {
         final FillExpectation expectation = new FillExpectation(input, password);
         mInput.addTextChangedListener(expectation.mInputWatcher);
@@ -76,12 +82,16 @@ public class SimpleSaveActivity extends AbstractAutoFillActivity {
 
         private FillExpectation(String input, String password) {
             mInputWatcher = new OneTimeTextWatcher("input", mInput, input);
-            mPasswordWatcher = new OneTimeTextWatcher("password", mPassword, password);
+            mPasswordWatcher = password == null
+                    ? null
+                    : new OneTimeTextWatcher("password", mPassword, password);
         }
 
         void assertAutoFilled() throws Exception {
             mInputWatcher.assertAutoFilled();
-            mPasswordWatcher.assertAutoFilled();
+            if (mPasswordWatcher != null) {
+                mPasswordWatcher.assertAutoFilled();
+            }
         }
     }
 }

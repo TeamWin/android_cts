@@ -24,7 +24,9 @@ import static android.autofillservice.cts.SimpleSaveActivity.ID_LABEL;
 import static android.autofillservice.cts.SimpleSaveActivity.ID_PASSWORD;
 import static android.autofillservice.cts.SimpleSaveActivity.TEXT_LABEL;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
+import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 
+import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
@@ -32,6 +34,7 @@ import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.autofillservice.cts.SimpleSaveActivity.FillExpectation;
 import android.content.Intent;
 import android.support.test.uiautomator.UiObject2;
+import android.view.View;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -557,5 +560,121 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         sUiBot.assertShownByRelativeId(ID_INPUT);
 
         sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
+    }
+
+    @Test
+    public void testSelectedDatasetsAreSentOnSaveRequest() throws Exception {
+        startActivity();
+
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT, ID_PASSWORD)
+                // Added on reversed order on purpose
+                .addDataset(new CannedDataset.Builder()
+                        .setId("D2")
+                        .setField(ID_INPUT, "id again")
+                        .setField(ID_PASSWORD, "pass")
+                        .setPresentation(createPresentation("D2"))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setId("D1")
+                        .setField(ID_INPUT, "id")
+                        .setPresentation(createPresentation("D1"))
+                        .build())
+                .build());
+
+        // Trigger autofill.
+        mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
+        sReplier.getNextFillRequest();
+
+        // Select 1st dataset.
+        final FillExpectation autofillExpecation1 = mActivity.expectAutoFill("id");
+        final UiObject2 picker1 = sUiBot.assertDatasets("D2", "D1");
+        sUiBot.selectDataset(picker1, "D1");
+        autofillExpecation1.assertAutoFilled();
+
+        // Select 2nd dataset.
+        mActivity.syncRunOnUiThread(() -> mActivity.mPassword.requestFocus());
+        final FillExpectation autofillExpecation2 = mActivity.expectAutoFill("id again", "pass");
+        final UiObject2 picker2 = sUiBot.assertDatasets("D2");
+        sUiBot.selectDataset(picker2, "D2");
+        autofillExpecation2.assertAutoFilled();
+
+        mActivity.syncRunOnUiThread(() -> {
+            mActivity.mInput.setText("ID");
+            mActivity.mPassword.setText("PASS");
+            mActivity.mCommit.performClick();
+        });
+        final UiObject2 saveUi = sUiBot.assertSaveShowing(SAVE_DATA_TYPE_GENERIC);
+
+        // Save it...
+        sUiBot.saveForAutofill(saveUi, true);
+
+        // ... and assert results
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+        assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_INPUT), "ID");
+        assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_PASSWORD), "PASS");
+        assertThat(saveRequest.datasetIds).containsExactly("D1", "D2").inOrder();
+    }
+
+    @Override
+    protected void tapLinkLaunchTrampolineActivityThenTapBackAndStartNewSessionTest()
+            throws Exception {
+        // Prepare activity.
+        startActivity();
+        mActivity.mInput.getRootView()
+                .setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS);
+
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setCustomDescription(newCustomDescription(TrampolineWelcomeActivity.class))
+                .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT)
+                .build());
+
+        // Trigger autofill.
+        mActivity.getAutofillManager().requestAutofill(mActivity.mInput);
+        sReplier.getNextFillRequest();
+        Helper.assertHasSessions(mPackageName);
+
+        // Trigger save.
+        mActivity.syncRunOnUiThread(() -> {
+            mActivity.mInput.setText("108");
+            mActivity.mCommit.performClick();
+        });
+        final UiObject2 saveUi = assertSaveUiWithLinkIsShown(SAVE_DATA_TYPE_GENERIC);
+
+        // Tap the link.
+        tapSaveUiLink(saveUi);
+
+        // Make sure new activity is shown...
+        WelcomeActivity.assertShowingDefaultMessage(sUiBot);
+
+        // Save UI should be showing as well, since Trampoline finished.
+        sUiBot.assertSaveShowing(SAVE_DATA_TYPE_GENERIC);
+
+        // Go back and make sure it's showing the right activity.
+        sUiBot.pressBack();
+        sUiBot.assertShownByRelativeId(ID_LABEL);
+
+        // Now start a new session.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_PASSWORD)
+                .build());
+        mActivity.getAutofillManager().requestAutofill(mActivity.mPassword);
+        sReplier.getNextFillRequest();
+        mActivity.syncRunOnUiThread(() -> {
+            mActivity.mPassword.setText("42");
+            mActivity.mCommit.performClick();
+        });
+        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+        assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_INPUT), "108");
+        assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_PASSWORD), "42");
     }
 }

@@ -148,6 +148,40 @@ public class CharSequenceTransformationTest {
     }
 
     @Test
+    public void testReplaceAllByOne() throws Exception {
+        AutofillId id = new AutofillId(1);
+        CharSequenceTransformation trans = new CharSequenceTransformation
+                .Builder(id, Pattern.compile("."), "*")
+                .build();
+
+        ValueFinder finder = mock(ValueFinder.class);
+        RemoteViews template = mock(RemoteViews.class);
+
+        when(finder.findByAutofillId(id)).thenReturn("four");
+
+        trans.apply(finder, template, 0);
+
+        verify(template).setCharSequence(eq(0), any(), argThat(new CharSequenceMatcher("****")));
+    }
+
+    @Test
+    public void testPartialMatchIsIgnored() throws Exception {
+        AutofillId id = new AutofillId(1);
+        CharSequenceTransformation trans = new CharSequenceTransformation
+                .Builder(id, Pattern.compile("^MATCH$"), "*")
+                .build();
+
+        ValueFinder finder = mock(ValueFinder.class);
+        RemoteViews template = mock(RemoteViews.class);
+
+        when(finder.findByAutofillId(id)).thenReturn("preMATCHpost");
+
+        trans.apply(finder, template, 0);
+
+        verify(template, never()).setCharSequence(eq(0), any(), any());
+    }
+
+    @Test
     public void userNameObfuscator() throws Exception {
         AutofillId userNameFieldId = new AutofillId(1);
         AutofillId passwordFieldId = new AutofillId(2);

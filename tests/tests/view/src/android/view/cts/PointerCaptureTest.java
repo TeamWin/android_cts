@@ -26,7 +26,6 @@ import static com.android.compatibility.common.util.CtsMouseUtil.verifyEnterMove
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.inOrder;
@@ -40,13 +39,13 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
-import android.util.Log;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 
 import com.android.compatibility.common.util.CtsMouseUtil.ActionMatcher;
+import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.Before;
@@ -61,7 +60,6 @@ import org.mockito.InOrder;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class PointerCaptureTest {
-    private static final String TAG = "PointerCaptureTest";
     private static final long TIMEOUT_DELTA = 10000;
 
     private Instrumentation mInstrumentation;
@@ -125,17 +123,12 @@ public class PointerCaptureTest {
     }
 
     private void injectMotionEvent(MotionEvent event) {
-        try {
-            if ((event.getSource() & InputDevice.SOURCE_CLASS_POINTER) != 0) {
-                // Regular mouse event.
-                mInstrumentation.sendPointerSync(event);
-            } else {
-                // Relative mouse event belongs to SOURCE_CLASS_TRACKBALL.
-                mInstrumentation.sendTrackballEventSync(event);
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "injectMotionEvent failed: " + event, e);
-            fail(e.getMessage());
+        if ((event.getSource() & InputDevice.SOURCE_CLASS_POINTER) != 0) {
+            // Regular mouse event.
+            mInstrumentation.sendPointerSync(event);
+        } else {
+            // Relative mouse event belongs to SOURCE_CLASS_TRACKBALL.
+            mInstrumentation.sendTrackballEventSync(event);
         }
     }
 
@@ -236,7 +229,10 @@ public class PointerCaptureTest {
 
         // Show a context menu on a widget.
         mActivity.registerForContextMenu(mTarget);
-        mActivityRule.runOnUiThread(() -> mTarget.showContextMenu(0, 0));
+        // TODO(kaznacheev) replace the below line with a call to showContextMenu once b/65487689
+        // is fixed. Meanwhile, emulate a long press which takes long enough time to avoid the race
+        // condition.
+        CtsTouchUtils.emulateLongPressOnView(mInstrumentation, mTarget, 0, 0);
         PollingCheck.waitFor(TIMEOUT_DELTA, () -> !mOuter.hasWindowFocus());
         assertPointerCapture(false);
 

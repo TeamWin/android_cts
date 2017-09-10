@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,19 +14,21 @@
  * limitations under the License.
  */
 
-package android.cts.nnapi;
+package android.security.cts;
 
-import android.test.AndroidTestCase;
+import android.platform.test.annotations.SecurityTest;
 
-public class NNAPITest extends AndroidTestCase {
+@SecurityTest
+public class Poc17_10 extends SecurityTestCase {
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-    }
-
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
+    /**
+     * b/62058746
+     */
+    @SecurityTest
+    public void testPocBug_62058746() throws Exception {
+        enableAdbRoot(getDevice());
+        if (containsDriver(getDevice(), "/proc/cld/athdiagpfs")) {
+          AdbUtils.runPocNoOutput("Bug-62058746", getDevice(), 60);
+        }
     }
 }

@@ -17,6 +17,8 @@
 package com.android.compatibility.common.util;
 
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertTrue;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -97,7 +99,7 @@ public class BusinessLogicTest {
             "              ]\n" +
             "            },\n" +
             "            {\n" +
-            "              \"methodName\": \"conditionMethodName2\",\n" +
+            "              \"methodName\": \"!conditionMethodName2\",\n" + // use negation
             "              \"methodArgs\": [\n" +
             "                \"arg2\"\n" +
             "              ]\n" +
@@ -139,6 +141,8 @@ public class BusinessLogicTest {
             BusinessLogicRuleCondition rule1Condition = rule1Conditions.get(0);
             assertEquals("Wrong method name for business logic rule condition",
                     "conditionMethodName1", rule1Condition.mMethodName);
+            assertFalse("Wrong negation value for business logic rule condition",
+                    rule1Condition.mNegated);
             assertEquals("Wrong arg string count for business logic rule condition", 1,
                     rule1Condition.mMethodArgs.size());
             assertEquals("Wrong arg for business logic rule condition", "arg1",
@@ -163,6 +167,8 @@ public class BusinessLogicTest {
             BusinessLogicRuleCondition rule2Condition = rule2Conditions.get(0);
             assertEquals("Wrong method name for business logic rule condition",
                     "conditionMethodName1", rule2Condition.mMethodName);
+            assertFalse("Wrong negation value for business logic rule condition",
+                    rule2Condition.mNegated);
             assertEquals("Wrong arg string count for business logic rule condition", 1,
                     rule2Condition.mMethodArgs.size());
             assertEquals("Wrong arg for business logic rule condition", "arg1",
@@ -184,6 +190,8 @@ public class BusinessLogicTest {
             BusinessLogicRuleCondition rule3Condition1 = rule3Conditions.get(0);
             assertEquals("Wrong method name for business logic rule condition",
                     "conditionMethodName1", rule3Condition1.mMethodName);
+            assertFalse("Wrong negation value for business logic rule condition",
+                    rule3Condition1.mNegated);
             assertEquals("Wrong arg string count for business logic rule condition", 1,
                     rule3Condition1.mMethodArgs.size());
             assertEquals("Wrong arg for business logic rule condition", "arg1",
@@ -191,6 +199,8 @@ public class BusinessLogicTest {
             BusinessLogicRuleCondition rule3Condition2 = rule3Conditions.get(1);
             assertEquals("Wrong method name for business logic rule condition",
                     "conditionMethodName2", rule3Condition2.mMethodName);
+            assertTrue("Wrong negation value for business logic rule condition",
+                    rule3Condition2.mNegated);
             assertEquals("Wrong arg string count for business logic rule condition", 1,
                     rule3Condition2.mMethodArgs.size());
             assertEquals("Wrong arg for business logic rule condition", "arg2",
