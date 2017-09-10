@@ -111,6 +111,7 @@ cts_support_packages := \
     CtsSimpleApp \
     CtsSimplePreMApp \
     CtsSomeAccessibilityServices \
+    CtsSyncInvalidAccountAuthorityTestCases \
     CtsThemeDeviceApp \
     TestDeviceSetup \
     CtsUiAutomatorApp \
@@ -246,6 +247,7 @@ cts_host_libraries := \
     CtsThemeHostTestCases \
     CtsUsageHostTestCases \
     CtsSecurityHostTestCases \
+    CtsSyncContentHostTestCases \
     CtsTrustedVoiceHostTestCases \
     CtsUsbTests
 
