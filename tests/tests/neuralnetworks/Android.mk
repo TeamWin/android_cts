@@ -12,31 +12,44 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Build the unit tests.
+
 LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
-
-# Replace "Example" with your name.
-LOCAL_PACKAGE_NAME := CtsNNAPITestCases
-
-# Don't include this package in any target.
-LOCAL_MODULE_TAGS := optional
-
-# Include both the 32 and 64 bit versions
+LOCAL_MODULE := CtsNNAPITestCases
+LOCAL_MODULE_PATH := $(TARGET_OUT_DATA)/nativetest
 LOCAL_MULTILIB := both
+LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE)32
+LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE)64
 
-# When built, explicitly put it in the data partition.
-LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
+LOCAL_SRC_FILES := \
+     src/TestValidation.cpp \
+     src/TestMemory.cpp \
+     src/TestTrivialModel.cpp \
+     src/TestGenerated.cpp
 
-LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner legacy-android-test
-LOCAL_JNI_SHARED_LIBRARIES := libnnapitest_jni
+LOCAL_C_INCLUDES := frameworks/ml/nn/runtime/include/
+LOCAL_C_INCLUDES += frameworks/ml/nn/runtime/test/
+LOCAL_C_INCLUDES += frameworks/ml/nn/runtime/
+LOCAL_C_INCLUDES += frameworks/ml/nn/common/include
+LOCAL_C_INCLUDES += frameworks/ml/nn/tools/test_generator/include
 
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
+LOCAL_SHARED_LIBRARIES := liblog libneuralnetworks
 
-LOCAL_SDK_VERSION := current
+# TODO: use the libgtest_ndk_c++ instead
+LOCAL_STATIC_LIBRARIES := libgtest libgtest_main
+
+LOCAL_CTS_TEST_PACKAGE := android.neuralnetworks
 
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
-include $(BUILD_CTS_PACKAGE)
-include $(LOCAL_PATH)/libnnapitest/Android.mk
+LOCAL_CFLAGS := -Werror -Wall
+
+# TODO: use the following two lines instead
+#LOCAL_SDK_VERSION := current
+#LOCAL_NDK_STL_VARIANT := c++_static
+LOCAL_CXX_STL := libc++
+
+include $(BUILD_CTS_EXECUTABLE)

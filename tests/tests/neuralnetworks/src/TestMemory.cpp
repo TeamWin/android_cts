@@ -14,28 +14,5 @@
  * limitations under the License.
  */
 
-package android.cts.nnapi;
-
-import android.test.AndroidTestCase;
-import android.util.Log;
-
-public class NNAPIGeneratedTests extends NNAPITest {
-    static {
-        System.loadLibrary("nnapitest_jni");
-    }
-
-    native boolean avgPoolQuant8();
-    public void testAvgPoolQuant8() {
-        assertFalse(avgPoolQuant8());
-    }
-
-    native boolean conv1H3W2Same();
-    public void testConv1H3W2Same() {
-        assertFalse(conv1H3W2Same());
-    }
-
-    native boolean mobileNet();
-    public void testMobileNet() {
-        assertFalse(mobileNet());
-    }
-}
+// Include corresponding NNAPI unit tests in frameworks/ml/nn/runtime/test
+#include "test/TestMemory.cpp"
