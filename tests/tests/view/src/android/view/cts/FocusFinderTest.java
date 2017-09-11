@@ -94,6 +94,10 @@ public class FocusFinderTest {
         verifyNextFocus(null, View.FOCUS_LEFT, mBottomRight);
         verifyNextFocus(null, View.FOCUS_UP, mBottomRight);
 
+        // Check that left/right traversal works when top/bottom borders are equal.
+        verifyNextFocus(mTopRight, View.FOCUS_LEFT, mTopLeft);
+        verifyNextFocus(mBottomLeft, View.FOCUS_RIGHT, mBottomRight);
+
         // Edge-case where root has focus
         mActivityRule.runOnUiThread(() -> {
             mLayout.setFocusableInTouchMode(true);
