@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.android.compatibility.common.tradefed.util;
 
-package com.android.compatibility.common.util;
-
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.compatibility.common.util.DynamicConfig;
 import com.android.tradefed.build.IBuildInfo;
-import com.android.tradefed.build.VersionedFile;
+import com.android.tradefed.log.LogUtil.CLog;
 
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -27,19 +28,15 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Utility to get value from a dynamic config file.
- * @deprecated use DynamicConfigFileReader instead.
+ * Utility to read the data from a dynamic config file.
  */
-@Deprecated
-public class DynamicConfigHostSide {
-
-    public static final String CONFIG_PATH_PREFIX = "DYNAMIC_CONFIG_FILE:";
+public class DynamicConfigFileReader {
 
     /**
      * Returns the value of a key from a downloaded file.
      *
      * @param file The file downloaded, can be retrieve via
-     *        {@link #getDynamicConfigFile(IBuildInfo, String)}
+     *        {@link CompatibilityBuildHelper#getDynamicConfigFiles()}
      * @param key the key inside the file which value we want to return
      * @return the value associated to the key in the config file provided.
      */
@@ -55,21 +52,21 @@ public class DynamicConfigHostSide {
     }
 
     /**
-     * Returns a dynamic config file downloaded in {@link DynamicConfigPusher} the path is stored
-     * in the build info under a module name.
+     * Returns the value of a key from the build info and module targeted.
      *
-     * @param info the invocation {@link IBuildInfo}
-     * @param moduleName the name of the module of the file.
-     * @return a {@link File} created from the downloaded file.
-     * @deprecated use CompatibilityBuildHelper#getDynamicConfigFiles
+     * @param info the {@link IBuildInfo} of the run.
+     * @param moduleName the name of the module we need the dynamic file from.
+     * @param key the key inside the file which value we want to return
+     * @return the value associated to the key in the dynamic config associated with the module.
      */
-    @Deprecated
-    public static File getDynamicConfigFile(IBuildInfo info, String moduleName) {
-        for (VersionedFile vFile : info.getFiles()) {
-            if (vFile.getVersion().equals(CONFIG_PATH_PREFIX + moduleName)) {
-                return vFile.getFile();
-            }
+    public static String getValueFromConfig(IBuildInfo info, String moduleName, String key)
+            throws XmlPullParserException, IOException {
+        CompatibilityBuildHelper helper = new CompatibilityBuildHelper(info);
+        File dynamicConfig = helper.getDynamicConfigFiles().get(moduleName);
+        if (dynamicConfig == null) {
+            CLog.d("Config file %s, not found in the map of dynamic configs.", moduleName);
+            return null;
         }
-        return null;
+        return getValueFromConfig(dynamicConfig, key);
     }
 }

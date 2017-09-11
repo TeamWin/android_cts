@@ -77,7 +77,9 @@ public class CollectorUtil {
      */
     public static void pullFromHost(File src, File dest) {
         try {
-            FileUtil.recursiveCopy(src, dest);
+            if (src.listFiles() != null) {
+                FileUtil.recursiveCopy(src, dest);
+            }
             FileUtil.recursiveDelete(src);
         } catch (IOException e) {
             CLog.e("Caught exception during pull.");
