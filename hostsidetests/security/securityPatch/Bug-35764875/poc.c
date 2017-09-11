@@ -109,7 +109,7 @@ int main(int argc, char* argv[]) {
   memset(&event32_dup, 0, sizeof(event32_dup));
   event32_dup.timeout_ms = 1;
 
-  for (int i = 0;i < 10000; i++) {
+  for (int i = 0;i < 500; i++) {
     memcpy(&event32, &event32_dup, sizeof(event32_dup));
     ret = ioctl(fd, AUDIO_GET_EVENT_32, &event32);
 
@@ -121,7 +121,7 @@ int main(int argc, char* argv[]) {
 
     trycount++;
 
-    usleep(100);
+    usleep(1000);
   }
 
   close(fd);
