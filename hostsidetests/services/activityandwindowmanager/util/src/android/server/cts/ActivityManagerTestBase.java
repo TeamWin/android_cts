@@ -562,6 +562,17 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         return output.startsWith("true");
     }
 
+    /**
+     * Rotation support is indicated by explicitly having both landscape and portrait
+     * features or not listing either at all.
+     */
+    protected boolean supportsRotation() throws DeviceNotAvailableException {
+        return (hasDeviceFeature("android.hardware.screen.landscape")
+                    && hasDeviceFeature("android.hardware.screen.portrait"))
+            || (!hasDeviceFeature("android.hardware.screen.landscape")
+                    && !hasDeviceFeature("android.hardware.screen.portrait"));
+    }
+
     protected boolean hasDeviceFeature(String requiredFeature) throws DeviceNotAvailableException {
         if (mAvailableFeatures == null) {
             // TODO: Move this logic to ITestDevice.
