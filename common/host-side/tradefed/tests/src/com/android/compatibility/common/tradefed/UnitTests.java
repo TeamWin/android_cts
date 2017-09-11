@@ -29,6 +29,7 @@ import com.android.compatibility.common.tradefed.testtype.ModuleDefTest;
 import com.android.compatibility.common.tradefed.testtype.ModuleRepoTest;
 import com.android.compatibility.common.tradefed.testtype.SubPlanTest;
 import com.android.compatibility.common.tradefed.util.CollectorUtilTest;
+import com.android.compatibility.common.tradefed.util.DynamicConfigFileReaderTest;
 import com.android.compatibility.common.tradefed.util.OptionHelperTest;
 import com.android.compatibility.common.tradefed.util.RetryFilterHelperTest;
 
@@ -52,6 +53,7 @@ public class UnitTests extends TestSuite {
         addTestSuite(ResultReporterTest.class);
         addTestSuite(CompatibilityTestTest.class);
         addTestSuite(OptionHelperTest.class);
+        addTestSuite(DynamicConfigFileReaderTest.class);
         addTestSuite(CollectorUtilTest.class);
         addTestSuite(MetadataReporterTest.class);
         addTestSuite(ModuleDefTest.class);
