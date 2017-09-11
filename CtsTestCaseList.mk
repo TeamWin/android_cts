@@ -79,6 +79,7 @@ cts_support_packages := \
     CtsMonkeyApp2 \
     CtsSimpleApp \
     CtsSomeAccessibilityServices \
+    CtsSyncInvalidAccountAuthorityTestCases \
     CtsThemeDeviceApp \
     TestDeviceSetup \
     CtsUiAutomatorApp \
@@ -187,6 +188,7 @@ cts_host_libraries := \
     CtsMultiUserHostTestCases \
     CtsThemeHostTestCases \
     CtsSecurityHostTestCases \
+    CtsSyncContentHostTestCases \
     CtsUsbTests
 
 # List of native tests. For 32 bit targets, assumes that there will be
