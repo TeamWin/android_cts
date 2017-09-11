@@ -42,6 +42,14 @@ public class SecurityTestCase extends DeviceTestCase {
     }
 
     /**
+     * Allows a CTS test to pass if called after a planned reboot.
+     */
+    public void updateKernelStartTime() throws Exception {
+        kernelStartTime = System.currentTimeMillis()/1000 -
+            Integer.parseInt(getDevice().executeShellCommand("cut -f1 -d. /proc/uptime").trim());
+    }
+
+    /**
      * Use {@link NativeDevice#enableAdbRoot()} internally.
      *
      * The test methods calling this function should run even if enableAdbRoot fails, which is why 
