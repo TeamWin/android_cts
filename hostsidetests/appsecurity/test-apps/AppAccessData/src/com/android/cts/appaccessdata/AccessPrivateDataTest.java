@@ -104,14 +104,12 @@ public class AccessPrivateDataTest extends AndroidTestCase {
             fail("Was not able to access another app's public file: " + e);
         }
 
-        boolean foundOtherStats = false;
         try {
             BufferedReader qtaguidReader = new BufferedReader(new FileReader("/proc/net/xt_qtaguid/stats"));
             String line;
             while ((line = qtaguidReader.readLine()) != null) {
                 String tokens[] = line.split(" ");
                 if (tokens.length > 3 && tokens[3].equals(String.valueOf(otherAppUid))) {
-                    foundOtherStats = true;
                     if (!tokens[2].equals("0x0")) {
                         fail("Other apps detailed traffic stats leaked");
                     }
@@ -121,6 +119,5 @@ public class AccessPrivateDataTest extends AndroidTestCase {
         } catch (FileNotFoundException e) {
             fail("Was not able to access qtaguid/stats: " + e);
         }
-        assertTrue("Was expecting to find other apps' traffic stats", foundOtherStats);
     }
 }
