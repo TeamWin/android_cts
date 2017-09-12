@@ -23,12 +23,14 @@ import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.build.IBuildProvider;
 import com.android.tradefed.build.IDeviceBuildInfo;
 import com.android.tradefed.build.IDeviceBuildProvider;
+import com.android.tradefed.build.VersionedFile;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.Option.Importance;
 import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.suite.TestSuiteInfo;
+import com.android.tradefed.util.FileUtil;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -172,7 +174,16 @@ public class CompatibilityBuildProvider implements IDeviceBuildProvider {
     @Override
     public void cleanUp(IBuildInfo info) {
         // Everything should have been copied properly to result folder, we clean up
-        info.cleanUp();
+        if (info instanceof IDeviceBuildInfo) {
+            for (VersionedFile f : info.getFiles()) {
+                // do not delete the testsdir since it's the real CTS folder.
+                if (!f.getFile().equals(((IDeviceBuildInfo) info).getTestsDir())) {
+                    FileUtil.recursiveDelete(f.getFile());
+                }
+            }
+        } else {
+            info.cleanUp();
+        }
     }
 
     private void addCompatibilitySuiteInfo(IBuildInfo info) {
