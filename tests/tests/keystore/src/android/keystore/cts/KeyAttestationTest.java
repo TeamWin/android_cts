@@ -426,7 +426,7 @@ public class KeyAttestationTest extends AndroidTestCase {
 
         try {
             Certificate certificates[] = keyStore.getCertificateChain(keystoreAlias);
-            verifyCertificateChain((X509Certificate[])certificates);
+            verifyCertificateChain(certificates);
 
             X509Certificate attestationCert = (X509Certificate) certificates[0];
             Attestation attestation = new Attestation(attestationCert);
@@ -480,7 +480,7 @@ public class KeyAttestationTest extends AndroidTestCase {
 
         try {
             Certificate certificates[] = keyStore.getCertificateChain(keystoreAlias);
-            verifyCertificateChain((X509Certificate[])certificates);
+            verifyCertificateChain(certificates);
 
             X509Certificate attestationCert = (X509Certificate) certificates[0];
             Attestation attestation = new Attestation(attestationCert);
@@ -880,7 +880,7 @@ public class KeyAttestationTest extends AndroidTestCase {
         keyPairGenerator.generateKeyPair();
     }
 
-    private void verifyCertificateChain(X509Certificate[] certChain)
+    private void verifyCertificateChain(Certificate[] certChain)
             throws GeneralSecurityException {
         assertNotNull(certChain);
         for (int i = 1; i < certChain.length; ++i) {
@@ -893,10 +893,12 @@ public class KeyAttestationTest extends AndroidTestCase {
                 }
 
                 // Check that issuer in the signed cert matches subject in the signing cert.
+                X509Certificate x509CurrCert = (X509Certificate) certChain[i];
+                X509Certificate x509PrevCert = (X509Certificate) certChain[i - 1];
                 X500Name signingCertSubject =
-                    new JcaX509CertificateHolder(certChain[i]).getSubject();
+                        new JcaX509CertificateHolder(x509CurrCert).getSubject();
                 X500Name signedCertIssuer =
-                    new JcaX509CertificateHolder(certChain[i - 1]).getIssuer();
+                        new JcaX509CertificateHolder(x509PrevCert).getIssuer();
                 // Use .toASN1Object().equals() rather than .equals() because .equals() is case
                 // insensitive, and we want to verify an exact match.
                 assertTrue(
@@ -905,7 +907,7 @@ public class KeyAttestationTest extends AndroidTestCase {
                 if (i == 1) {
                     // First cert should have subject "CN=Android Keystore Key".
                     X500Name signedCertSubject =
-                            new JcaX509CertificateHolder(certChain[i - 1]).getSubject();
+                            new JcaX509CertificateHolder(x509PrevCert).getSubject();
                     assertEquals(signedCertSubject, new X500Name("CN=Android Keystore Key"));
                 }
             } catch (InvalidKeyException | CertificateException | NoSuchAlgorithmException
