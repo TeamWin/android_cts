@@ -165,19 +165,4 @@ public class ResetPasswordWithTokenTest extends BaseDeviceAdminTest {
         assertFalse(mDevicePolicyManager.resetPasswordWithToken(ADMIN_RECEIVER_COMPONENT,
                 SHORT_PASSWORD, TOKEN0, 0));
     }
-
-    private void assertPasswordSufficiency(boolean expectPasswordSufficient) {
-        int retries = 15;
-        // isActivePasswordSufficient() gets the result asynchronously so let's retry a few times
-        while (retries >= 0
-                && mDevicePolicyManager.isActivePasswordSufficient() != expectPasswordSufficient) {
-            retries--;
-            try {
-                Thread.sleep(200);
-            } catch (InterruptedException e) {
-                break;
-            }
-        }
-        assertEquals(expectPasswordSufficient, mDevicePolicyManager.isActivePasswordSufficient());
-    }
 }

@@ -23,8 +23,8 @@
     <option name="compatibility:exclude-filter" value="CtsLocationTestCases android.location.cts.GnssTtffTests#testTtffWithNetwork" />
 
     <!-- b/35314835 -->
-    <option name="compatibility:exclude-filter" value="CtsServicesHostTestCases android.server.cts.ActivityManagerPinnedStackTests#testAlwaysFocusablePipActivity" />
-    <option name="compatibility:exclude-filter" value="CtsServicesHostTestCases android.server.cts.ActivityManagerPinnedStackTests#testLaunchIntoPinnedStack" />
+    <option name="compatibility:exclude-filter" value="CtsActivityManagerDeviceTestCases android.server.am.ActivityManagerPinnedStackTests#testAlwaysFocusablePipActivity" />
+    <option name="compatibility:exclude-filter" value="CtsActivityManagerDeviceTestCases android.server.am.ActivityManagerPinnedStackTests#testLaunchIntoPinnedStack" />
 
     <!-- b/17595050 -->
     <option name="compatibility:exclude-filter" value="CtsAccessibilityServiceTestCases android.accessibilityservice.cts.AccessibilityTextTraversalTest#testActionNextAndPreviousAtGranularityPageOverText" />
