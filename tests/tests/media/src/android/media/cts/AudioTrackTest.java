@@ -2358,6 +2358,33 @@ public class AudioTrackTest extends CtsAndroidTestCase {
         assertTrue(TEST_NAME + ": buffer frame count", observedBufferSize2 > 0);
     }
 
+    // Test AudioTrack to see if there are any problems with large frame counts.
+    public void testAudioTrackLargeFrameCount() throws Exception {
+        // constants for test
+        final String TEST_NAME = "testAudioTrackLargeFrameCount";
+        final int[] BUFFER_SIZES = { 4294968, 42949680, 429496800, Integer.MAX_VALUE };
+        final int[] MODES = { AudioTrack.MODE_STATIC, AudioTrack.MODE_STREAM };
+
+        for (int mode : MODES) {
+            for (int bufferSizeInBytes : BUFFER_SIZES) {
+                try {
+                    final AudioTrack track = new AudioTrack.Builder()
+                        .setAudioFormat(new AudioFormat.Builder()
+                            .setEncoding(AudioFormat.ENCODING_PCM_8BIT)
+                            .setSampleRate(44100)
+                            .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                            .build())
+                        .setTransferMode(mode)
+                        .setBufferSizeInBytes(bufferSizeInBytes) // 1 byte == 1 frame
+                        .build();
+                    track.release(); // OK to successfully complete
+                } catch (UnsupportedOperationException e) {
+                    ; // OK to throw unsupported exception
+                }
+            }
+        }
+    }
+
 /* Do not run in JB-MR1. will be re-opened in the next platform release.
     public void testResourceLeakage() throws Exception {
         final int BUFFER_SIZE = 600 * 1024;
