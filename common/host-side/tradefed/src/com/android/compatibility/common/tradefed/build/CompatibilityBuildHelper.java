@@ -15,10 +15,10 @@
  */
 package com.android.compatibility.common.tradefed.build;
 
-import com.android.compatibility.common.util.DynamicConfigHostSide;
 import com.android.compatibility.SuiteInfo;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.build.IFolderBuildInfo;
+import com.android.tradefed.build.VersionedFile;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -47,6 +47,9 @@ public class CompatibilityBuildHelper {
     private static final String DYNAMIC_CONFIG_OVERRIDE_URL = "DYNAMIC_CONFIG_OVERRIDE_URL";
     private static final String COMMAND_LINE_ARGS = "command_line_args";
     private static final String RETRY_COMMAND_LINE_ARGS = "retry_command_line_args";
+
+    private static final String CONFIG_PATH_PREFIX = "DYNAMIC_CONFIG_FILE:";
+
     private final IBuildInfo mBuildInfo;
     private boolean mInitialized = false;
 
@@ -155,23 +158,26 @@ public class CompatibilityBuildHelper {
     }
 
     public void addDynamicConfigFile(String moduleName, File configFile) {
-        mBuildInfo.addBuildAttribute(DynamicConfigHostSide.CONFIG_PATH_PREFIX + moduleName,
-                configFile.getAbsolutePath());
         // If invocation fails and ResultReporter never moves this file into the result,
         // using setFile() ensures BuildInfo will delete upon cleanUp().
-        mBuildInfo.setFile(configFile.getName(), configFile, "1" /* version */);
+        mBuildInfo.setFile(configFile.getName(), configFile,
+                CONFIG_PATH_PREFIX + moduleName /* version */);
     }
 
     public void setModuleIds(String[] moduleIds) {
         mBuildInfo.addBuildAttribute(MODULE_IDS, String.join(",", moduleIds));
     }
 
+    /**
+     * Returns the map of the dynamic config files downloaded.
+     */
     public Map<String, File> getDynamicConfigFiles() {
         Map<String, File> configMap = new HashMap<>();
-        for (String key : mBuildInfo.getBuildAttributes().keySet()) {
-            if (key.startsWith(DynamicConfigHostSide.CONFIG_PATH_PREFIX)) {
-                configMap.put(key.substring(DynamicConfigHostSide.CONFIG_PATH_PREFIX.length()),
-                        new File(mBuildInfo.getBuildAttributes().get(key)));
+        for (VersionedFile vFile : mBuildInfo.getFiles()) {
+            if (vFile.getVersion().startsWith(CONFIG_PATH_PREFIX)) {
+                configMap.put(
+                        vFile.getVersion().substring(CONFIG_PATH_PREFIX.length()),
+                        vFile.getFile());
             }
         }
         return configMap;
