@@ -27,7 +27,7 @@ import org.junit.Test;
  * Display tests that require a locked keyguard.
  *
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases ActivityManagerDisplayLockedKeyguardTests
+ * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.ActivityManagerDisplayLockedKeyguardTests
  */
 public class ActivityManagerDisplayLockedKeyguardTests extends ActivityManagerDisplayTestBase {
 
