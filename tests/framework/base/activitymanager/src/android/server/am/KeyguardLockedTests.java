@@ -89,7 +89,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         mAmWmState.waitForKeyguardShowingAndNotOccluded();
         assertShowingAndNotOccluded();
         launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
-        mAmWmState.computeState(new String[] { SHOW_WHEN_LOCKED_ACTIVITY });
+        mAmWmState.computeState(new WaitForValidActivityState.Builder( SHOW_WHEN_LOCKED_ACTIVITY ).build());
         mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
         launchActivity("DismissKeyguardActivity");
         enterAndConfirmLockCredential();
@@ -108,7 +108,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         mAmWmState.waitForKeyguardShowingAndNotOccluded();
         assertShowingAndNotOccluded();
         launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
-        mAmWmState.computeState(new String[] { SHOW_WHEN_LOCKED_ACTIVITY });
+        mAmWmState.computeState(new WaitForValidActivityState.Builder( SHOW_WHEN_LOCKED_ACTIVITY ).build());
         mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
         executeShellCommand("am broadcast -a trigger_broadcast --ez dismissKeyguard true");
         enterAndConfirmLockCredential();
@@ -125,12 +125,12 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         }
         final String logSeparator = clearLogcat();
         gotoKeyguard();
-        mAmWmState.computeState(null);
+        mAmWmState.computeState();
         assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
         launchActivity("DismissKeyguardMethodActivity");
         enterAndConfirmLockCredential();
         mAmWmState.waitForKeyguardGone();
-        mAmWmState.computeState(new String[] { "DismissKeyguardMethodActivity"});
+        mAmWmState.computeState(new WaitForValidActivityState.Builder( "DismissKeyguardMethodActivity").build());
         mAmWmState.assertVisibility("DismissKeyguardMethodActivity", true);
         assertFalse(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
         assertOnDismissSucceededInLogcat(logSeparator);
@@ -143,12 +143,12 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         }
         final String logSeparator = clearLogcat();
         gotoKeyguard();
-        mAmWmState.computeState(null);
+        mAmWmState.computeState();
         assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
         launchActivity("DismissKeyguardMethodActivity");
         pressBackButton();
         assertOnDismissCancelledInLogcat(logSeparator);
-        mAmWmState.computeState(new String[] {});
+        mAmWmState.computeState();
         mAmWmState.assertVisibility("DismissKeyguardMethodActivity", false);
         assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
         unlockDeviceWithCredential();
@@ -188,12 +188,12 @@ public class KeyguardLockedTests extends KeyguardTestBase {
 
         launchActivity(PIP_ACTIVITY);
         executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_ENTER_PIP);
-        mAmWmState.computeState(new String[] { PIP_ACTIVITY });
+        mAmWmState.computeState(new WaitForValidActivityState.Builder( PIP_ACTIVITY ).build());
         mAmWmState.assertContainsStack("Must contain pinned stack.", PINNED_STACK_ID);
         mAmWmState.assertVisibility(PIP_ACTIVITY, true);
 
         launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
-        mAmWmState.computeState(new String[] { SHOW_WHEN_LOCKED_ACTIVITY });
+        mAmWmState.computeState(new WaitForValidActivityState.Builder( SHOW_WHEN_LOCKED_ACTIVITY ).build());
         mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
 
         gotoKeyguard();
@@ -211,7 +211,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
 
         launchActivity(PIP_ACTIVITY, EXTRA_SHOW_OVER_KEYGUARD, "true");
         executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_ENTER_PIP);
-        mAmWmState.computeState(new String[] { PIP_ACTIVITY });
+        mAmWmState.computeState(new WaitForValidActivityState.Builder( PIP_ACTIVITY ).build());
         mAmWmState.assertContainsStack("Must contain pinned stack.", PINNED_STACK_ID);
         mAmWmState.assertVisibility(PIP_ACTIVITY, true);
 

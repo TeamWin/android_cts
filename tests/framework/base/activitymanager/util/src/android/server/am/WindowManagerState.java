@@ -16,6 +16,8 @@
 
 package android.server.am;
 
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
+import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.server.am.ProtoExtractors.extract;
 import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logE;
@@ -615,6 +617,20 @@ public class WindowManagerState {
             mFullConfiguration.setTo(extract(proto.fullConfiguration));
             mMergedOverrideConfiguration.setTo(extract(proto.mergedOverrideConfiguration));
         }
+
+        int getWindowingMode() {
+            if (mFullConfiguration == null) {
+                return WINDOWING_MODE_UNDEFINED;
+            }
+            return mFullConfiguration.windowConfiguration.getWindowingMode();
+        }
+
+        int getActivityType() {
+            if (mFullConfiguration == null) {
+                return ACTIVITY_TYPE_UNDEFINED;
+            }
+            return mFullConfiguration.windowConfiguration.getActivityType();
+        }
     }
 
     abstract class WindowContainer extends ConfigurationContainer {
@@ -702,10 +718,6 @@ public class WindowManagerState {
     }
 
     public class WindowState extends WindowContainer {
-
-        private static final String TAG = "[WindowState] ";
-
-        public static final int TYPE_WALLPAPER = 2013;
 
         private static final int WINDOW_TYPE_NORMAL = 0;
         private static final int WINDOW_TYPE_STARTING = 1;

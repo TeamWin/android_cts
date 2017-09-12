@@ -22,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import android.graphics.Rect;
+import android.server.am.WaitForValidActivityState;
 import android.server.am.WindowManagerState.WindowState;
 
 import org.junit.Test;
@@ -55,7 +56,8 @@ public class DialogFrameTests extends ParentChildTestBase {
     }
 
     void doSingleTest(ParentChildTest t) throws Exception {
-        final String[] waitForVisible = new String[]{"TestDialog"};
+        final WaitForValidActivityState waitForVisible =
+                new WaitForValidActivityState.Builder("TestDialog").build();
 
         mAmWmState.computeState(waitForVisible);
         WindowState dialog = getSingleWindow("TestDialog");

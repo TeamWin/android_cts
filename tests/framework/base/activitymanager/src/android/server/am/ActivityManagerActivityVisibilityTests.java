@@ -19,6 +19,9 @@ package android.server.am;
 import static android.app.ActivityManager.StackId.DOCKED_STACK_ID;
 import static android.app.ActivityManager.StackId.FULLSCREEN_WORKSPACE_STACK_ID;
 import static android.app.ActivityManager.StackId.PINNED_STACK_ID;
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY;
+import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
+import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.StateLogger.log;
 
@@ -129,11 +132,13 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
 
         launchActivityInDockStack(DOCKED_ACTIVITY_NAME);
         mAmWmState.computeState(new String[] {DOCKED_ACTIVITY_NAME});
-        launchActivityInStack(TEST_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID);
+        launchActivity(TEST_ACTIVITY_NAME, WINDOWING_MODE_SPLIT_SCREEN_SECONDARY);
         mAmWmState.computeState(new String[] {DOCKED_ACTIVITY_NAME, TEST_ACTIVITY_NAME});
-        launchActivityInStack(TRANSLUCENT_ACTIVITY_NAME, DOCKED_STACK_ID);
-        mAmWmState.computeState(new String[] {TEST_ACTIVITY_NAME, DOCKED_ACTIVITY_NAME,
-                TRANSLUCENT_ACTIVITY_NAME}, false /* compareTaskAndStackBounds */);
+        launchActivity(TRANSLUCENT_ACTIVITY_NAME, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
+        mAmWmState.computeState(false /* compareTaskAndStackBounds */,
+                new WaitForValidActivityState.Builder(TEST_ACTIVITY_NAME).build(),
+                new WaitForValidActivityState.Builder(DOCKED_ACTIVITY_NAME).build(),
+                new WaitForValidActivityState.Builder(TRANSLUCENT_ACTIVITY_NAME).build());
         mAmWmState.assertContainsStack("Must contain docked stack", DOCKED_STACK_ID);
         mAmWmState.assertContainsStack("Must contain fullscreen stack",
                 FULLSCREEN_WORKSPACE_STACK_ID);
@@ -164,7 +169,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         mAmWmState.computeState(new String[] { BROADCAST_RECEIVER_ACTIVITY });
         mAmWmState.assertVisibility(BROADCAST_RECEIVER_ACTIVITY, true);
         // Launch something to fullscreen stack to make it focused.
-        launchActivityInStack(TEST_ACTIVITY_NAME, 1);
+        launchActivity(TEST_ACTIVITY_NAME, WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
         mAmWmState.computeState(new String[] { TEST_ACTIVITY_NAME });
         mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, true);
         // Finish activity in non-focused (docked) stack.

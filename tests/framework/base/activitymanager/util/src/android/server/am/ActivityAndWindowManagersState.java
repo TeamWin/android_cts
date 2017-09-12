@@ -18,7 +18,10 @@ package android.server.am;
 
 import static android.app.ActivityManager.StackId.DOCKED_STACK_ID;
 import static android.app.ActivityManager.StackId.FREEFORM_WORKSPACE_STACK_ID;
+import static android.app.ActivityManager.StackId.INVALID_STACK_ID;
 import static android.app.ActivityManager.StackId.PINNED_STACK_ID;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
+import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.server.am.ActivityManagerState.RESIZE_MODE_RESIZEABLE;
 import static android.server.am.ActivityManagerTestBase.componentName;
 import static android.server.am.StateLogger.log;
@@ -55,6 +58,7 @@ public class ActivityAndWindowManagersState {
     // Clone of android DisplayMetrics.DENSITY_DEFAULT (DENSITY_MEDIUM)
     // (Needed in host-side tests to convert dp to px.)
     private static final int DISPLAY_DENSITY_DEFAULT = 160;
+    // TODO: Change to use framework constant.
     public static final int DEFAULT_DISPLAY_ID = 0;
 
     // Default minimal size of resizable task, used if none is set explicitly.
@@ -69,9 +73,26 @@ public class ActivityAndWindowManagersState {
     private ActivityManagerState mAmState = new ActivityManagerState();
     private WindowManagerState mWmState = new WindowManagerState();
 
-    private final List<WindowState> mTempWindowList = new ArrayList<>();
-
     private boolean mUseActivityNames = true;
+
+    @Deprecated
+    public void computeState(String... waitForActivitiesVisible)
+            throws Exception {
+        WaitForValidActivityState[] states = waitForActivitiesVisible != null ?
+                new WaitForValidActivityState[waitForActivitiesVisible.length] : null;
+        if (states != null) {
+            for (int i = 0; i < waitForActivitiesVisible.length; i++) {
+                states[i] =
+                        new WaitForValidActivityState.Builder(waitForActivitiesVisible[i]).build();
+            }
+        }
+        computeState(states);
+    }
+
+    @Deprecated
+    public void computeState() throws Exception {
+        computeState(true, null);
+    }
 
     /**
      * Compute AM and WM state of device, check sanity and bounds.
@@ -79,23 +100,21 @@ public class ActivityAndWindowManagersState {
      *
      * @param waitForActivitiesVisible array of activity names to wait for.
      */
-    public void computeState(String[] waitForActivitiesVisible)
+    public void computeState(WaitForValidActivityState... waitForActivitiesVisible)
             throws Exception {
-        computeState(waitForActivitiesVisible, true);
+        computeState(true, waitForActivitiesVisible);
     }
 
     /**
      * Compute AM and WM state of device, check sanity and bounds.
      *
-     * @param waitForActivitiesVisible  array of activity names to wait for.
      * @param compareTaskAndStackBounds pass 'true' if stack and task bounds should be compared,
      *                                  'false' otherwise.
+     * @param waitForActivitiesVisible  array of activity states to wait for.
      */
-    void computeState(String[] waitForActivitiesVisible,
-            boolean compareTaskAndStackBounds) throws Exception {
-        waitForValidState(waitForActivitiesVisible, null /* stackIds */,
-                compareTaskAndStackBounds);
-
+    void computeState(boolean compareTaskAndStackBounds,
+            WaitForValidActivityState... waitForActivitiesVisible) throws Exception {
+        waitForValidState(compareTaskAndStackBounds, waitForActivitiesVisible);
         assertSanity();
         assertValidBounds(compareTaskAndStackBounds);
     }
@@ -143,10 +162,18 @@ public class ActivityAndWindowManagersState {
      *
      * @param waitForActivityVisible name of activity to wait for.
      */
+    @Deprecated
     void waitForValidState(String waitForActivityVisible)
             throws Exception {
-        waitForValidState(new String[]{waitForActivityVisible}, null /* stackIds */,
-                false /* compareTaskAndStackBounds */);
+        waitForValidState(false /* compareTaskAndStackBounds */,
+                new WaitForValidActivityState.Builder()
+                        .setActivityName(waitForActivityVisible)
+                        .build());
+    }
+
+    /** Wait for the activity to appear and for valid state in AM and WM. */
+    void waitForValidState(WaitForValidActivityState... waitForActivityVisible) throws Exception {
+        waitForValidState(false /* compareTaskAndStackBounds */, waitForActivityVisible);
     }
 
     /**
@@ -155,39 +182,38 @@ public class ActivityAndWindowManagersState {
      * @param waitForActivityVisible name of activity to wait for.
      * @param stackId                id of the stack where provided activity should be found.
      */
+    @Deprecated
     void waitForValidState(String waitForActivityVisible, int stackId)
             throws Exception {
-        waitForValidState(new String[]{waitForActivityVisible}, new int[]{stackId},
-                false /* compareTaskAndStackBounds */);
+        waitForValidState(false /* compareTaskAndStackBounds */,
+                new WaitForValidActivityState.Builder()
+                        .setActivityName(waitForActivityVisible)
+                        .setStackId(stackId)
+                        .build());
     }
 
     /**
      * Wait for the activities to appear in proper stacks and for valid state in AM and WM.
      *
-     * @param waitForActivitiesVisible  array of activity names to wait for.
-     * @param stackIds                  ids of stack where provided activities should be found.
-     *                                  Pass null to skip this check.
      * @param compareTaskAndStackBounds flag indicating if we should compare task and stack bounds
      *                                  for equality.
+     * @param waitForActivitiesVisible  array of activity state to wait for.
      */
-    void waitForValidState(String[] waitForActivitiesVisible, int[] stackIds,
-            boolean compareTaskAndStackBounds) throws Exception {
-        waitForValidState(waitForActivitiesVisible, stackIds, compareTaskAndStackBounds,
-                componentName);
+    private void waitForValidState(boolean compareTaskAndStackBounds,
+            WaitForValidActivityState... waitForActivitiesVisible) throws Exception {
+        waitForValidState(compareTaskAndStackBounds, componentName, waitForActivitiesVisible);
     }
 
     /**
      * Wait for the activities to appear in proper stacks and for valid state in AM and WM.
      *
-     * @param waitForActivitiesVisible  array of activity names to wait for.
-     * @param stackIds                  ids of stack where provided activities should be found. Pass
-     *                                  null to skip this check.
      * @param compareTaskAndStackBounds flag indicating if we should compare task and stack bounds
      *                                  for equality.
      * @param packageName               name of the package of activities that we're waiting for.
+     * @param waitForActivitiesVisible  array of activity states to wait for.
      */
-    void waitForValidState(String[] waitForActivitiesVisible, int[] stackIds,
-            boolean compareTaskAndStackBounds, String packageName) throws Exception {
+    void waitForValidState(boolean compareTaskAndStackBounds, String packageName,
+            WaitForValidActivityState... waitForActivitiesVisible) throws Exception {
         int retriesLeft = 5;
         do {
             // TODO: Get state of AM and WM at the same time to avoid mismatches caused by
@@ -195,7 +221,7 @@ public class ActivityAndWindowManagersState {
             mAmState.computeState();
             mWmState.computeState();
             if (shouldWaitForValidStacks(compareTaskAndStackBounds)
-                    || shouldWaitForActivities(waitForActivitiesVisible, stackIds, packageName)
+                    || shouldWaitForActivities(packageName, waitForActivitiesVisible)
                     || shouldWaitForWindows()) {
                 log("***Waiting for valid stacks and activities states...");
                 try {
@@ -215,7 +241,7 @@ public class ActivityAndWindowManagersState {
         // Sometimes this function is called before we know what Home Activity is
         if (homeActivity == null) {
             log("Computing state to determine Home Activity");
-            computeState(null);
+            computeState();
             homeActivity = mAmState.getHomeActivityName();
         }
         assertNotNull("homeActivity should not be null", homeActivity);
@@ -361,8 +387,8 @@ public class ActivityAndWindowManagersState {
     /**
      * @return true if should wait for some activities to become visible.
      */
-    private boolean shouldWaitForActivities(String[] waitForActivitiesVisible, int[] stackIds,
-            String packageName) {
+    private boolean shouldWaitForActivities(String packageName,
+            WaitForValidActivityState... waitForActivitiesVisible) {
         if (waitForActivitiesVisible == null || waitForActivitiesVisible.length == 0) {
             return false;
         }
@@ -373,13 +399,15 @@ public class ActivityAndWindowManagersState {
         boolean tasksInCorrectStacks = true;
         List<WindowState> matchingWindowStates = new ArrayList<>();
         for (int i = 0; i < waitForActivitiesVisible.length; i++) {
+            final String activityName = waitForActivitiesVisible[i].activityName;
             // Check if window is visible - it should be represented as one of the window states.
             final String windowName = mUseActivityNames ?
-                    ActivityManagerTestBase.getWindowName(packageName, waitForActivitiesVisible[i])
-                    : waitForActivitiesVisible[i];
+                    ActivityManagerTestBase.getWindowName(packageName, activityName) : activityName;
             final String activityComponentName =
-                    ActivityManagerTestBase.getActivityComponentName(packageName,
-                            waitForActivitiesVisible[i]);
+                    ActivityManagerTestBase.getActivityComponentName(packageName, activityName);
+            final int stackId = waitForActivitiesVisible[i].stackId;
+            final int windowingMode = waitForActivitiesVisible[i].windowingMode;
+            final int activityType = waitForActivitiesVisible[i].activityType;
 
             mWmState.getMatchingVisibleWindowState(windowName, matchingWindowStates);
             boolean activityWindowVisible = !matchingWindowStates.isEmpty();
@@ -389,16 +417,26 @@ public class ActivityAndWindowManagersState {
             } else if (!mAmState.isActivityVisible(activityComponentName)) {
                 log("Activity not visible: " + activityComponentName);
                 allActivityWindowsVisible = false;
-            } else if (stackIds != null) {
-                // Check if window is already in stack requested by test.
-                boolean windowInCorrectStack = false;
+            } else {
+                // Check if window is already the correct state requested by test.
+                boolean windowInCorrectState = false;
                 for (WindowState ws : matchingWindowStates) {
-                    if (ws.getStackId() == stackIds[i]) {
-                        windowInCorrectStack = true;
-                        break;
+                    if (stackId != INVALID_STACK_ID && ws.getStackId() != stackId) {
+                        continue;
                     }
+                    if (windowingMode != WINDOWING_MODE_UNDEFINED
+                            && ws.getWindowingMode() != windowingMode) {
+                        continue;
+                    }
+                    if (activityType != ACTIVITY_TYPE_UNDEFINED
+                            && ws.getActivityType() != activityType) {
+                        continue;
+                    }
+                    windowInCorrectState = true;
+                    break;
                 }
-                if (!windowInCorrectStack) {
+
+                if (!windowInCorrectState) {
                     log("Window in incorrect stack: " + waitForActivitiesVisible[i]);
                     tasksInCorrectStacks = false;
                 }
@@ -587,7 +625,7 @@ public class ActivityAndWindowManagersState {
      * Asserts that the device default display minimim width is larger than the minimum task width.
      */
     void assertDeviceDefaultDisplaySize(String errorMessage) throws Exception {
-        computeState(null);
+        computeState();
         final int minTaskSizePx = defaultMinimalTaskSize(DEFAULT_DISPLAY_ID);
         final Display display = getWmState().getDisplay(DEFAULT_DISPLAY_ID);
         final Rect displayRect = display.getDisplayRect();

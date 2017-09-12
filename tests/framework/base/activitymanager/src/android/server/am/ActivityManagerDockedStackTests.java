@@ -21,6 +21,8 @@ import static android.app.ActivityManager.StackId.DOCKED_STACK_ID;
 import static android.app.ActivityManager.StackId.FULLSCREEN_WORKSPACE_STACK_ID;
 import static android.app.ActivityManager.StackId.HOME_STACK_ID;
 import static android.app.ActivityManager.StackId.RECENTS_STACK_ID;
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY;
+import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.server.am.StateLogger.log;
 import static android.server.am.WindowManagerState.TRANSIT_WALLPAPER_OPEN;
 
@@ -173,7 +175,7 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
                 TEST_ACTIVITY_NAME);
 
         // Launch another activity to side to cover first one.
-        launchActivityInStack(NO_RELAUNCH_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID);
+        launchActivity(NO_RELAUNCH_ACTIVITY_NAME, WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
         mAmWmState.computeState(waitForSecondVisible);
         int taskNumberCovered = mAmWmState.getAmState().getStackById(FULLSCREEN_WORKSPACE_STACK_ID)
                 .getTasks().size();
@@ -250,10 +252,11 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         }
 
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
-        mAmWmState.computeState(new String[] {LAUNCHING_ACTIVITY});
+        mAmWmState.computeState(new WaitForValidActivityState.Builder(LAUNCHING_ACTIVITY).build());
 
-        final String[] waitForActivitiesVisible =
-            new String[] {targetActivityName, LAUNCHING_ACTIVITY};
+        final WaitForValidActivityState[] waitForActivitiesVisible =
+            new WaitForValidActivityState[] {new WaitForValidActivityState.Builder(targetActivityName).build(),
+                    new WaitForValidActivityState.Builder(LAUNCHING_ACTIVITY).build()};
 
         // Launch activity to side with data.
         launchActivityToSide(true, false, targetActivityName);
@@ -311,7 +314,7 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         }
 
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
-        mAmWmState.computeState(new String[] {LAUNCHING_ACTIVITY});
+        mAmWmState.computeState(new WaitForValidActivityState.Builder(LAUNCHING_ACTIVITY).build());
         final String[] waitForActivitiesVisible =
             new String[] {LAUNCHING_ACTIVITY, TEST_ACTIVITY_NAME};
 
@@ -346,9 +349,9 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         }
 
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
-        mAmWmState.computeState(new String[] {LAUNCHING_ACTIVITY});
+        mAmWmState.computeState(new WaitForValidActivityState.Builder(LAUNCHING_ACTIVITY).build());
         getLaunchActivityBuilder().setToSide(true).execute();
-        mAmWmState.computeState(new String[] {TEST_ACTIVITY_NAME});
+        mAmWmState.computeState(new WaitForValidActivityState.Builder(TEST_ACTIVITY_NAME).build());
         mAmWmState.assertContainsStack(
                 "Must contain fullscreen stack.", FULLSCREEN_WORKSPACE_STACK_ID);
         mAmWmState.assertContainsStack("Must contain docked stack.", DOCKED_STACK_ID);
@@ -383,9 +386,9 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         }
 
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
-        mAmWmState.computeState(new String[] {LAUNCHING_ACTIVITY});
+        mAmWmState.computeState(new WaitForValidActivityState.Builder(LAUNCHING_ACTIVITY).build());
         getLaunchActivityBuilder().setToSide(true).execute();
-        mAmWmState.computeState(new String[] {TEST_ACTIVITY_NAME});
+        mAmWmState.computeState(new WaitForValidActivityState.Builder(TEST_ACTIVITY_NAME).build());
         mAmWmState.assertSanity();
         mAmWmState.assertContainsStack(
                 "Must contain fullscreen stack.", FULLSCREEN_WORKSPACE_STACK_ID);
@@ -410,7 +413,7 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
 
         launchActivityInDockStackAndMinimize(TEST_ACTIVITY_NAME);
         assertDockMinimized();
-        mAmWmState.computeState(new String[] {TEST_ACTIVITY_NAME});
+        mAmWmState.computeState(new WaitForValidActivityState.Builder(TEST_ACTIVITY_NAME).build());
         mAmWmState.assertContainsStack("Must contain docked stack.", DOCKED_STACK_ID);
         mAmWmState.assertFocusedStack("Home activity should be focused in minimized mode",
                 HOME_STACK_ID);
@@ -458,14 +461,14 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
             assertDockNotMinimized();
 
             // Dismiss the dock stack
-            launchActivityInStack(TEST_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID);
+            launchActivity(TEST_ACTIVITY_NAME, WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
             moveActivityToStack(DOCKED_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID);
             mAmWmState.computeState(new String[]{DOCKED_ACTIVITY_NAME});
 
             // Go home and check the app transition
             assertNotSame(TRANSIT_WALLPAPER_OPEN, mAmWmState.getWmState().getLastTransition());
             pressHomeButton();
-            mAmWmState.computeState(null);
+            mAmWmState.computeState();
             assertEquals(TRANSIT_WALLPAPER_OPEN, mAmWmState.getWmState().getLastTransition());
         }
     }
@@ -494,10 +497,10 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         }
 
         launchActivityInDockStack(TEST_ACTIVITY_NAME);
-        mAmWmState.computeState(new String[] {TEST_ACTIVITY_NAME});
+        mAmWmState.computeState(new WaitForValidActivityState.Builder(TEST_ACTIVITY_NAME).build());
         sleepDevice();
         wakeUpAndUnlockDevice();
-        mAmWmState.computeState(new String[] {TEST_ACTIVITY_NAME});
+        mAmWmState.computeState(new WaitForValidActivityState.Builder(TEST_ACTIVITY_NAME).build());
         assertDockMinimized();
     }
 
@@ -513,11 +516,11 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
 
         sleepDevice();
         wakeUpAndUnlockDevice();
-        mAmWmState.computeState(new String[] {TEST_ACTIVITY_NAME});
+        mAmWmState.computeState(new WaitForValidActivityState.Builder(TEST_ACTIVITY_NAME).build());
 
         // Unminimized back to splitscreen
         pressAppSwitchButton();
-        mAmWmState.computeState(new String[] {TEST_ACTIVITY_NAME});
+        mAmWmState.computeState(new WaitForValidActivityState.Builder(TEST_ACTIVITY_NAME).build());
     }
 
     @Test
@@ -528,12 +531,13 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         }
 
         launchActivityInDockStack(DOCKED_ACTIVITY_NAME);
-        mAmWmState.computeState(new String[] {DOCKED_ACTIVITY_NAME});
-        launchActivityInStack(TEST_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID);
-        mAmWmState.computeState(new String[] {TEST_ACTIVITY_NAME});
+        mAmWmState.computeState(new WaitForValidActivityState.Builder(DOCKED_ACTIVITY_NAME).build());
+        launchActivity(TEST_ACTIVITY_NAME, WINDOWING_MODE_SPLIT_SCREEN_SECONDARY);
+        mAmWmState.computeState(new WaitForValidActivityState.Builder(TEST_ACTIVITY_NAME).build());
         resizeDockedStack(STACK_SIZE, STACK_SIZE, TASK_SIZE, TASK_SIZE);
-        mAmWmState.computeState(new String[] {TEST_ACTIVITY_NAME, DOCKED_ACTIVITY_NAME},
-                false /* compareTaskAndStackBounds */);
+        mAmWmState.computeState(false /* compareTaskAndStackBounds */,
+                new WaitForValidActivityState.Builder(TEST_ACTIVITY_NAME).build(),
+                new WaitForValidActivityState.Builder(DOCKED_ACTIVITY_NAME).build());
         mAmWmState.assertContainsStack("Must contain docked stack", DOCKED_STACK_ID);
         mAmWmState.assertContainsStack("Must contain fullscreen stack",
                 FULLSCREEN_WORKSPACE_STACK_ID);
@@ -551,7 +555,8 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
             return;
         }
 
-        final String[] waitTestActivityName = new String[] {TEST_ACTIVITY_NAME};
+        final WaitForValidActivityState[] waitTestActivityName =
+                new WaitForValidActivityState[] {new WaitForValidActivityState.Builder(TEST_ACTIVITY_NAME).build()};
         launchActivity(TEST_ACTIVITY_NAME);
         mAmWmState.computeState(waitTestActivityName);
         final Rect fullScreenBounds =
@@ -559,10 +564,10 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
 
         moveActivityToDockStack(TEST_ACTIVITY_NAME);
         mAmWmState.computeState(waitTestActivityName);
-        launchActivityInStack(NO_RELAUNCH_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID);
+        launchActivity(NO_RELAUNCH_ACTIVITY_NAME, WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
 
-        mAmWmState.computeState(
-                new String[]{TEST_ACTIVITY_NAME, NO_RELAUNCH_ACTIVITY_NAME});
+        mAmWmState.computeState(new WaitForValidActivityState.Builder(TEST_ACTIVITY_NAME).build(),
+                new WaitForValidActivityState.Builder(NO_RELAUNCH_ACTIVITY_NAME).build());
         final Rect initialDockBounds =
                 mAmWmState.getWmState().getStack(DOCKED_STACK_ID).getBounds();
 
@@ -570,15 +575,15 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
 
         Rect newBounds = computeNewDockBounds(fullScreenBounds, initialDockBounds, true);
         resizeDockedStack(newBounds.width(), newBounds.height(), newBounds.width(), newBounds.height());
-        mAmWmState.computeState(
-                new String[]{TEST_ACTIVITY_NAME, NO_RELAUNCH_ACTIVITY_NAME});
+        mAmWmState.computeState(new WaitForValidActivityState.Builder(TEST_ACTIVITY_NAME).build(),
+                new WaitForValidActivityState.Builder(NO_RELAUNCH_ACTIVITY_NAME).build());
 
         // We resize twice to make sure we cross an orientation change threshold for both
         // activities.
         newBounds = computeNewDockBounds(fullScreenBounds, initialDockBounds, false);
         resizeDockedStack(newBounds.width(), newBounds.height(), newBounds.width(), newBounds.height());
-        mAmWmState.computeState(
-                new String[]{TEST_ACTIVITY_NAME, NO_RELAUNCH_ACTIVITY_NAME});
+        mAmWmState.computeState(new WaitForValidActivityState.Builder(TEST_ACTIVITY_NAME).build(),
+                new WaitForValidActivityState.Builder(NO_RELAUNCH_ACTIVITY_NAME).build());
         assertActivityLifecycle(TEST_ACTIVITY_NAME, true /* relaunched */, logSeparator);
         assertActivityLifecycle(NO_RELAUNCH_ACTIVITY_NAME, false /* relaunched */, logSeparator);
     }

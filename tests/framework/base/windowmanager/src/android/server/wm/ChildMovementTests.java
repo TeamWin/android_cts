@@ -21,6 +21,7 @@ import static android.server.am.StateLogger.logE;
 import static org.junit.Assert.assertTrue;
 
 import android.server.am.SurfaceTraceReceiver;
+import android.server.am.WaitForValidActivityState;
 import android.server.am.WindowManagerState.WindowState;
 
 import org.junit.Test;
@@ -64,7 +65,8 @@ public class ChildMovementTests extends ParentChildTestBase {
 
     void doSingleTest(ParentChildTest t) throws Exception {
         String popupName = "ChildWindow";
-        final String[] waitForVisible = new String[]{popupName};
+        final WaitForValidActivityState waitForVisible =
+                new WaitForValidActivityState.Builder(popupName).build();
 
         mAmWmState.setUseActivityNamesForWindowNames(false);
         mAmWmState.computeState(waitForVisible);

@@ -19,6 +19,7 @@ package android.server.am;
 
 import static android.app.ActivityManager.StackId.DOCKED_STACK_ID;
 import static android.app.ActivityManager.StackId.FREEFORM_WORKSPACE_STACK_ID;
+import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
 import static android.server.am.ActivityAndWindowManagersState.dpToPx;
 import static android.server.am.StateLogger.log;
 
@@ -102,7 +103,7 @@ public class ActivityManagerManifestLayoutTests extends ActivityManagerTestBase 
         // Issue command to resize to <0,0,1,1>. We expect the size to be floored at
         // MIN_WIDTH_DPxMIN_HEIGHT_DP.
         if (stackId == FREEFORM_WORKSPACE_STACK_ID) {
-            launchActivityInStack(activityName, stackId);
+            launchActivity(activityName, WINDOWING_MODE_FREEFORM);
             resizeActivityTask(activityName, 0, 0, 1, 1);
         } else { // stackId == DOCKED_STACK_ID
             launchActivityInDockStack(activityName);
@@ -129,7 +130,7 @@ public class ActivityManagerManifestLayoutTests extends ActivityManagerTestBase 
                 + (hGravity == GRAVITY_HOR_LEFT ? "Left" : "Right") + "LayoutActivity";
 
         // Launch in freeform stack
-        launchActivityInStack(activityName, FREEFORM_WORKSPACE_STACK_ID);
+        launchActivity(activityName, WINDOWING_MODE_FREEFORM);
 
         getDisplayAndWindowState(activityName, true);
 
@@ -156,7 +157,7 @@ public class ActivityManagerManifestLayoutTests extends ActivityManagerTestBase 
             throws Exception {
         final String windowName = getWindowName(activityName);
 
-        mAmWmState.computeState(new String[] {activityName});
+        mAmWmState.computeState(new WaitForValidActivityState.Builder(activityName).build());
 
         if (checkFocus) {
             mAmWmState.assertFocusedWindow("Test window must be the front window.", windowName);
