@@ -89,8 +89,9 @@ public class GnssPseudorangeVerificationTest extends GnssTestCase {
   public void testPseudorangeValue() throws Exception {
     // Checks if Gnss hardware feature is present, skips test (pass) if not,
     // and hard asserts that Location/Gnss (Provider) is turned on if is Cts Verifier.
+    // From android O, CTS tests should run in the lab with GPS signal.
     if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager,
-        TAG, MIN_HARDWARE_YEAR_MEASUREMENTS_REQUIRED, isCtsVerifierTest())) {
+        TAG, MIN_HARDWARE_YEAR_MEASUREMENTS_REQUIRED, true)) {
       return;
     }
 
@@ -231,8 +232,9 @@ public class GnssPseudorangeVerificationTest extends GnssTestCase {
   public void testPseudoPosition() throws Exception {
     // Checks if Gnss hardware feature is present, skips test (pass) if not,
     // and hard asserts that Location/Gnss (Provider) is turned on if is Cts Verifier.
+    // From android O, CTS tests should run in the lab with GPS signal.
     if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager,
-        TAG, MIN_HARDWARE_YEAR_MEASUREMENTS_REQUIRED, isCtsVerifierTest())) {
+        TAG, MIN_HARDWARE_YEAR_MEASUREMENTS_REQUIRED, true)) {
       return;
     }
 
