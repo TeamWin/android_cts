@@ -19,6 +19,7 @@
 #define LOG_TAG "SeccompTest"
 
 #include <cutils/log.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -36,8 +37,8 @@ static jboolean testSyscallBlocked(JNIEnv *, jobject, int nr) {
     int pid = fork();
     if (pid == 0) {
         ALOGI("Calling syscall %d", nr);
-        int ret = syscall(nr);
-        return false;
+        syscall(nr);
+        exit(0);
     } else {
         int status;
         int ret = waitpid(pid, &status, 0);
