@@ -58,6 +58,8 @@ def main():
                be handled automatically. Note that this argument requires
                special physical/hardware setup to work and may not work on
                all android devices.
+        skip_scene_validation: force skip scene validation. Used when test scene
+                 is setup up front and don't require tester validation.
     """
 
     # Not yet mandated tests
@@ -117,6 +119,8 @@ def main():
     result_device_id = None
     rot_rig_id = None
 
+    skip_scene_validation = False
+
     for s in sys.argv[1:]:
         if s[:7] == "camera=" and len(s) > 7:
             camera_ids = s[7:].split(',')
@@ -129,6 +133,8 @@ def main():
         elif s[:8] == 'rot_rig=' and len(s) > 8:
             rot_rig_id = s[8:]  # valid values: 'default' or '$VID:$PID:$CH'
             # The default '$VID:$PID:$CH' is '04d8:fc73:1'
+        elif s == 'skip_scene_validation':
+            skip_scene_validation = True
 
     auto_scene_switch = chart_host_id is not None
     merge_result_switch = result_device_id is not None
@@ -247,7 +253,7 @@ def main():
                     skip_code = skip_sensor_fusion()
                     if rot_rig_id or skip_code == SKIP_RET_CODE:
                         validate_switch = False
-                if scene == 'scene5':
+                if skip_scene_validation:
                     validate_switch = False
                 cmd = None
                 if auto_scene_switch:
