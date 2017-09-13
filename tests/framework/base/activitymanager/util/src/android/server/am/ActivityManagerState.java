@@ -20,23 +20,34 @@ import static android.app.ActivityManager.StackId.HOME_STACK_ID;
 import static android.app.ActivityManager.StackId.RECENTS_STACK_ID;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
+import static android.server.am.ProtoExtractors.extract;
 import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logE;
 
 import android.graphics.Rect;
+import android.graphics.nano.RectProto;
+import android.os.ParcelFileDescriptor;
 import android.support.test.InstrumentationRegistry;
 
-import com.android.compatibility.common.util.SystemUtil;
+import com.android.server.am.proto.nano.ActivityStackSupervisorProto;
+import com.android.server.am.proto.nano.ActivityManagerServiceProto;
+import com.android.server.am.proto.nano.ActivityRecordProto;
+import com.android.server.am.proto.nano.ActivityStackProto;
+import com.android.server.am.proto.nano.ActivityDisplayProto;
+import com.android.server.am.proto.nano.KeyguardControllerProto;
+import com.android.server.am.proto.nano.TaskRecordProto;
+import com.android.server.wm.proto.nano.ConfigurationContainerProto;
 
+import com.google.protobuf.nano.InvalidProtocolBufferNanoException;
+
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 class ActivityManagerState {
 
@@ -46,29 +57,16 @@ class ActivityManagerState {
     public static final String STATE_PAUSED = "PAUSED";
     public static final String STATE_STOPPED = "STOPPED";
 
-    public static final String RESIZE_MODE_RESIZEABLE = "RESIZE_MODE_RESIZEABLE";
-
-    private static final String DUMPSYS_ACTIVITY_ACTIVITIES = "dumpsys activity activities";
-
-    private final Pattern mDisplayIdPattern = Pattern.compile("Display #(\\d+).*");
-    private final Pattern mStackIdPattern = Pattern.compile("Stack #(\\d+)\\:");
-    private final Pattern mResumedActivityPattern =
-            Pattern.compile("ResumedActivity\\: ActivityRecord\\{(.+) u(\\d+) (\\S+) (\\S+)\\}");
-    private final Pattern mFocusedStackPattern =
-            Pattern.compile("mFocusedStack=ActivityStack\\{(.+) stackId=(\\d+), (.+)\\}(.+)");
-
-    private final Pattern[] mExtractStackExitPatterns =
-            {mStackIdPattern, mResumedActivityPattern, mFocusedStackPattern, mDisplayIdPattern};
+    private static final String DUMPSYS_ACTIVITY_ACTIVITIES = "dumpsys activity --proto";
 
     // Stacks in z-order with the top most at the front of the list, starting with primary display.
-    private final List<ActivityStack> mStacks = new ArrayList();
+    private final List<ActivityStack> mStacks = new ArrayList<>();
     // Stacks on all attached displays, in z-order with the top most at the front of the list.
     private final Map<Integer, List<ActivityStack>> mDisplayStacks = new HashMap<>();
     private KeyguardControllerState mKeyguardControllerState;
     private int mFocusedStackId = -1;
     private String mResumedActivityRecord = null;
-    private final List<String> mResumedActivities = new ArrayList();
-    private final LinkedList<String> mSysDump = new LinkedList();
+    private final List<String> mResumedActivities = new ArrayList<>();
 
     void computeState() {
         computeState(DUMP_MODE_ACTIVITIES);
@@ -79,7 +77,7 @@ class ActivityManagerState {
         // the dump. We try a few times to get the information we need before giving up.
         int retriesLeft = 3;
         boolean retry = false;
-        String dump = null;
+        byte[] dump = null;
 
         log("==============================");
         log("     ActivityManagerState     ");
@@ -104,22 +102,17 @@ class ActivityManagerState {
                     break;
             }
 
+            dump = executeShellCommand(dumpsysCmd);
             try {
-                dump = SystemUtil
-                        .runShellCommand(InstrumentationRegistry.getInstrumentation(), dumpsysCmd);
-            } catch (IOException e) {
-                //bubble it up
-                throw new RuntimeException(e);
+                parseSysDumpProto(dump);
+            } catch (InvalidProtocolBufferNanoException ex) {
+                throw new RuntimeException("Failed to parse dumpsys:\n"
+                        + new String(dump, StandardCharsets.UTF_8), ex);
             }
-            parseSysDump(dump);
 
             retry = mStacks.isEmpty() || mFocusedStackId == -1 || (mResumedActivityRecord == null
                     || mResumedActivities.isEmpty()) && !mKeyguardControllerState.keyguardShowing;
         } while (retry && retriesLeft-- > 0);
-
-        if (retry) {
-            log(dump);
-        }
 
         if (mStacks.isEmpty()) {
             logE("No stacks found...");
@@ -135,68 +128,57 @@ class ActivityManagerState {
         }
     }
 
-    private void parseSysDump(String sysDump) {
-        reset();
-
-        Collections.addAll(mSysDump, sysDump.split("\\n"));
-
-        int currentDisplayId = 0;
-        while (!mSysDump.isEmpty()) {
-            final ActivityStack stack = ActivityStack.create(mSysDump, mStackIdPattern,
-                    mExtractStackExitPatterns, currentDisplayId);
-
-            if (stack != null) {
-                mStacks.add(stack);
-                mDisplayStacks.get(currentDisplayId).add(stack);
-                if (stack.mResumedActivity != null) {
-                    mResumedActivities.add(stack.mResumedActivity);
-                }
-                continue;
+    private byte[] executeShellCommand(String cmd) {
+        try {
+            ParcelFileDescriptor pfd =
+                    InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                            .executeShellCommand(cmd);
+            byte[] buf = new byte[512];
+            int bytesRead;
+            FileInputStream fis = new ParcelFileDescriptor.AutoCloseInputStream(pfd);
+            ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+            while ((bytesRead = fis.read(buf)) != -1) {
+                stdout.write(buf, 0, bytesRead);
             }
-
-            KeyguardControllerState controller = KeyguardControllerState.create(
-                    mSysDump, new Pattern[0]);
-            if (controller != null) {
-                mKeyguardControllerState = controller;
-                continue;
-            }
-
-            final String line = mSysDump.pop().trim();
-
-            Matcher matcher = mFocusedStackPattern.matcher(line);
-            if (matcher.matches()) {
-                log(line);
-                final String stackId = matcher.group(2);
-                log(stackId);
-                mFocusedStackId = Integer.parseInt(stackId);
-                continue;
-            }
-
-            matcher = mResumedActivityPattern.matcher(line);
-            if (matcher.matches()) {
-                log(line);
-                mResumedActivityRecord = matcher.group(3);
-                log(mResumedActivityRecord);
-                continue;
-            }
-
-            matcher = mDisplayIdPattern.matcher(line);
-            if (matcher.matches()) {
-                log(line);
-                final String displayId = matcher.group(1);
-                log(displayId);
-                currentDisplayId = Integer.parseInt(displayId);
-                mDisplayStacks.put(currentDisplayId, new ArrayList<>());
-            }
+            fis.close();
+            return stdout.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
+
+    private void parseSysDumpProto(byte[] sysDump) throws InvalidProtocolBufferNanoException {
+        reset();
+
+        ActivityManagerServiceProto activityManagerServiceProto =
+                ActivityManagerServiceProto.parseFrom(sysDump);
+        ActivityStackSupervisorProto state = activityManagerServiceProto.activities;
+        for (int i = 0; i < state.displays.length; i++) {
+            ActivityDisplayProto displayStack = state.displays[i];
+            List<ActivityStack> activityStacks = new ArrayList<>();
+            for (int j = 0; j < displayStack.stacks.length; j++) {
+                ActivityStack activityStack = new ActivityStack(displayStack.stacks[j]);
+                mStacks.add(activityStack);
+                activityStacks.add(activityStack);
+                if (activityStack.mResumedActivity != null) {
+                    mResumedActivities.add(activityStack.mResumedActivity);
+                }
+            }
+            mDisplayStacks.put(displayStack.id, activityStacks);
+        }
+        mKeyguardControllerState = new KeyguardControllerState(state.keyguardController);
+        mFocusedStackId = state.focusedStackId;
+        if (state.resumedActivity != null) {
+            mResumedActivityRecord = state.resumedActivity.title;
+        }
+    }
+
 
     private void reset() {
         mStacks.clear();
         mFocusedStackId = -1;
         mResumedActivityRecord = null;
         mResumedActivities.clear();
-        mSysDump.clear();
         mKeyguardControllerState = null;
     }
 
@@ -247,7 +229,7 @@ class ActivityManagerState {
     }
 
     List<ActivityStack> getStacks() {
-        return new ArrayList(mStacks);
+        return new ArrayList<>(mStacks);
     }
 
     int getStackCount() {
@@ -384,75 +366,22 @@ class ActivityManagerState {
 
     static class ActivityStack extends ActivityContainer {
 
-        private static final Pattern TASK_ID_PATTERN = Pattern.compile("Task id #(\\d+)");
-        private static final Pattern RESUMED_ACTIVITY_PATTERN = Pattern.compile(
-                "mResumedActivity\\: ActivityRecord\\{(.+) u(\\d+) (\\S+) (\\S+)\\}");
-
         int mDisplayId;
         int mStackId;
         String mResumedActivity;
-        ArrayList<ActivityTask> mTasks = new ArrayList();
+        ArrayList<ActivityTask> mTasks = new ArrayList<>();
 
-        private ActivityStack() {
-        }
-
-        static ActivityStack create(LinkedList<String> dump, Pattern stackIdPattern,
-                Pattern[] exitPatterns, int displayId) {
-            final String line = dump.peek().trim();
-
-            final Matcher matcher = stackIdPattern.matcher(line);
-            if (!matcher.matches()) {
-                // Not a stack.
-                return null;
+        ActivityStack(ActivityStackProto proto) {
+            super(proto.configurationContainer);
+            mStackId = proto.id;
+            mDisplayId = proto.displayId;
+            mBounds = extract(proto.bounds);
+            mFullscreen = proto.fullscreen;
+            for (int i = 0; i < proto.tasks.length; i++) {
+                mTasks.add(new ActivityTask(proto.tasks[i]));
             }
-            // For the stack Id line we just read.
-            dump.pop();
-
-            final ActivityStack stack = new ActivityStack();
-            stack.mDisplayId = displayId;
-            log(line);
-            final String stackId = matcher.group(1);
-            log(stackId);
-            stack.mStackId = Integer.parseInt(stackId);
-            stack.extract(dump, exitPatterns);
-            return stack;
-        }
-
-        private void extract(LinkedList<String> dump, Pattern[] exitPatterns) {
-
-            final List<Pattern> taskExitPatterns = new ArrayList();
-            Collections.addAll(taskExitPatterns, exitPatterns);
-            taskExitPatterns.add(TASK_ID_PATTERN);
-            taskExitPatterns.add(RESUMED_ACTIVITY_PATTERN);
-            final Pattern[] taskExitPatternsArray =
-                    taskExitPatterns.toArray(new Pattern[taskExitPatterns.size()]);
-
-            while (!doneExtracting(dump, exitPatterns)) {
-                final ActivityTask task =
-                        ActivityTask.create(dump, TASK_ID_PATTERN, taskExitPatternsArray);
-
-                if (task != null) {
-                    mTasks.add(task);
-                    continue;
-                }
-
-                final String line = dump.pop().trim();
-
-                if (extractFullscreen(line)) {
-                    continue;
-                }
-
-                if (extractBounds(line)) {
-                    continue;
-                }
-
-                Matcher matcher = RESUMED_ACTIVITY_PATTERN.matcher(line);
-                if (matcher.matches()) {
-                    log(line);
-                    mResumedActivity = matcher.group(3);
-                    log(mResumedActivity);
-                    continue;
-                }
+            if (proto.resumedActivity != null) {
+                mResumedActivity = proto.resumedActivity.title;
             }
         }
 
@@ -481,7 +410,7 @@ class ActivityManagerState {
         }
 
         List<ActivityTask> getTasks() {
-            return new ArrayList(mTasks);
+            return new ArrayList<>(mTasks);
         }
 
         ActivityTask getTask(int taskId) {
@@ -496,144 +425,36 @@ class ActivityManagerState {
 
     static class ActivityTask extends ActivityContainer {
 
-        private static final Pattern TASK_RECORD_PATTERN = Pattern.compile("\\* TaskRecord\\"
-                + "{(\\S+) #(\\d+) (\\S+)=(\\S+) U=(\\d+) StackId=(\\d+) sz=(\\d+)\\}");
-
-        private static final Pattern LAST_NON_FULLSCREEN_BOUNDS_PATTERN = Pattern.compile(
-                "mLastNonFullscreenBounds=Rect\\((\\d+), (\\d+) - (\\d+), (\\d+)\\)");
-
-        private static final Pattern ORIG_ACTIVITY_PATTERN = Pattern.compile("origActivity=(\\S+)");
-        private static final Pattern REAL_ACTIVITY_PATTERN = Pattern.compile("realActivity=(\\S+)");
-
-        private static final Pattern ACTIVITY_NAME_PATTERN = Pattern.compile(
-                "\\* Hist #(\\d+)\\: ActivityRecord\\{(\\S+) u(\\d+) (\\S+) t(\\d+)\\}");
-
-        private static final Pattern TASK_TYPE_PATTERN = Pattern.compile("autoRemoveRecents=(\\S+) "
-                + "isPersistable=(\\S+) numFullscreen=(\\d+) activityType=(\\d+) "
-                + "mTaskToReturnTo=(\\d+)");
-
-        private static final Pattern RESIZABLE_PATTERN = Pattern.compile(
-                ".*mResizeMode=([^\\s]+).*");
-
         int mTaskId;
         int mStackId;
         Rect mLastNonFullscreenBounds;
         String mRealActivity;
         String mOrigActivity;
-        ArrayList<Activity> mActivities = new ArrayList();
+        ArrayList<Activity> mActivities = new ArrayList<>();
         int mTaskType = -1;
         int mReturnToType = -1;
-        private String mResizeMode;
+        private int mResizeMode;
 
-        private ActivityTask() {
-        }
-
-        static ActivityTask create(
-                LinkedList<String> dump, Pattern taskIdPattern, Pattern[] exitPatterns) {
-            final String line = dump.peek().trim();
-
-            final Matcher matcher = taskIdPattern.matcher(line);
-            if (!matcher.matches()) {
-                // Not a task.
-                return null;
-            }
-            // For the task Id line we just read.
-            dump.pop();
-
-            final ActivityTask task = new ActivityTask();
-            log(line);
-            final String taskId = matcher.group(1);
-            log(taskId);
-            task.mTaskId = Integer.parseInt(taskId);
-            task.extract(dump, exitPatterns);
-            return task;
-        }
-
-        private void extract(LinkedList<String> dump, Pattern[] exitPatterns) {
-            final List<Pattern> activityExitPatterns = new ArrayList();
-            Collections.addAll(activityExitPatterns, exitPatterns);
-            activityExitPatterns.add(ACTIVITY_NAME_PATTERN);
-            final Pattern[] activityExitPatternsArray =
-                    activityExitPatterns.toArray(new Pattern[activityExitPatterns.size()]);
-
-            while (!doneExtracting(dump, exitPatterns)) {
-                final Activity activity =
-                        Activity.create(dump, ACTIVITY_NAME_PATTERN, activityExitPatternsArray);
-
-                if (activity != null) {
-                    mActivities.add(activity);
-                    continue;
-                }
-
-                final String line = dump.pop().trim();
-
-                if (extractFullscreen(line)) {
-                    continue;
-                }
-
-                if (extractBounds(line)) {
-                    continue;
-                }
-
-                if (extractMinimalSize(line)) {
-                    continue;
-                }
-
-                Matcher matcher = TASK_RECORD_PATTERN.matcher(line);
-                if (matcher.matches()) {
-                    log(line);
-                    final String stackId = matcher.group(6);
-                    mStackId = Integer.valueOf(stackId);
-                    log(stackId);
-                    continue;
-                }
-
-                matcher = LAST_NON_FULLSCREEN_BOUNDS_PATTERN.matcher(line);
-                if (matcher.matches()) {
-                    log(line);
-                    mLastNonFullscreenBounds = extractBounds(matcher);
-                    continue;
-                }
-
-                matcher = REAL_ACTIVITY_PATTERN.matcher(line);
-                if (matcher.matches()) {
-                    if (mRealActivity == null) {
-                        log(line);
-                        mRealActivity = matcher.group(1);
-                        log(mRealActivity);
-                    }
-                    continue;
-                }
-
-                matcher = ORIG_ACTIVITY_PATTERN.matcher(line);
-                if (matcher.matches()) {
-                    if (mOrigActivity == null) {
-                        log(line);
-                        mOrigActivity = matcher.group(1);
-                        log(mOrigActivity);
-                    }
-                    continue;
-                }
-
-                matcher = TASK_TYPE_PATTERN.matcher(line);
-                if (matcher.matches()) {
-                    log(line);
-                    mTaskType = Integer.valueOf(matcher.group(4));
-                    mReturnToType = Integer.valueOf(matcher.group(5));
-                    continue;
-                }
-
-                matcher = RESIZABLE_PATTERN.matcher(line);
-                if (matcher.matches()) {
-                    log(line);
-                    mResizeMode = matcher.group(1);
-                    log(mResizeMode);
-                    continue;
-                }
+        ActivityTask(TaskRecordProto proto) {
+            super(proto.configurationContainer);
+            mTaskId = proto.id;
+            mStackId = proto.stackId;
+            mLastNonFullscreenBounds = extract(proto.lastNonFullscreenBounds);
+            mRealActivity = proto.realActivity;
+            mOrigActivity = proto.origActivity;
+            mTaskType = proto.activityType;
+            mReturnToType = proto.returnToType;
+            mResizeMode = proto.resizeMode;
+            mFullscreen = proto.fullscreen;
+            mBounds = extract(proto.bounds);
+            mMinWidth = proto.minWidth;
+            mMinHeight = proto.minHeight;
+            for (int i = 0;  i < proto.activities.length; i++) {
+                mActivities.add(new Activity(proto.activities[i]));
             }
         }
 
-        public String getResizeMode() {
+        public int getResizeMode() {
             return mResizeMode;
         }
 
@@ -650,16 +471,7 @@ class ActivityManagerState {
         }
     }
 
-    static class Activity {
-
-        private static final Pattern STATE_PATTERN = Pattern.compile("state=(\\S+).*");
-        private static final Pattern VISIBILITY_PATTERN = Pattern.compile("keysPaused=(\\S+) "
-                + "inHistory=(\\S+) visible=(\\S+) sleeping=(\\S+) idle=(\\S+) "
-                + "mStartingWindowState=(\\S+)");
-        private static final Pattern FRONT_OF_TASK_PATTERN = Pattern.compile("frontOfTask=(\\S+) "
-                + "task=TaskRecord\\{(\\S+) #(\\d+) A=(\\S+) U=(\\d+) StackId=(\\d+) sz=(\\d+)\\}");
-        private static final Pattern PROCESS_RECORD_PATTERN = Pattern.compile(
-                "app=ProcessRecord\\{(\\S+) (\\d+):(\\S+)/(.+)\\}");
+    static class Activity extends ActivityContainer {
 
         String name;
         String state;
@@ -667,139 +479,26 @@ class ActivityManagerState {
         boolean frontOfTask;
         int procId = -1;
 
-        private Activity() {
-        }
-
-        static Activity create(
-                LinkedList<String> dump, Pattern activityNamePattern, Pattern[] exitPatterns) {
-            final String line = dump.peek().trim();
-
-            final Matcher matcher = activityNamePattern.matcher(line);
-            if (!matcher.matches()) {
-                // Not an activity.
-                return null;
-            }
-            // For the activity name line we just read.
-            dump.pop();
-
-            final Activity activity = new Activity();
-            log(line);
-            activity.name = matcher.group(4);
-            log(activity.name);
-            activity.extract(dump, exitPatterns);
-            return activity;
-        }
-
-        private void extract(LinkedList<String> dump, Pattern[] exitPatterns) {
-
-            while (!doneExtracting(dump, exitPatterns)) {
-                final String line = dump.pop().trim();
-
-                // Break the activity extraction once we hit an empty line
-                if (line.isEmpty()) {
-                    break;
-                }
-
-                Matcher matcher = VISIBILITY_PATTERN.matcher(line);
-                if (matcher.matches()) {
-                    log(line);
-                    final String visibleString = matcher.group(3);
-                    visible = Boolean.valueOf(visibleString);
-                    log(visibleString);
-                    continue;
-                }
-
-                matcher = STATE_PATTERN.matcher(line);
-                if (matcher.matches()) {
-                    log(line);
-                    state = matcher.group(1);
-                    log(state);
-                    continue;
-                }
-
-                matcher = PROCESS_RECORD_PATTERN.matcher(line);
-                if (matcher.matches()) {
-                    log(line);
-                    final String procIdString = matcher.group(2);
-                    procId = Integer.valueOf(procIdString);
-                    log(procIdString);
-                    continue;
-                }
-
-                matcher = FRONT_OF_TASK_PATTERN.matcher(line);
-                if (matcher.matches()) {
-                    log(line);
-                    final String frontOfTaskString = matcher.group(1);
-                    frontOfTask = Boolean.valueOf(frontOfTaskString);
-                    log(frontOfTaskString);
-                    continue;
-                }
+        Activity(ActivityRecordProto proto) {
+            super(proto.configurationContainer);
+            name = proto.identifier.title;
+            state = proto.state;
+            visible = proto.visible;
+            frontOfTask = proto.frontOfTask;
+            if (proto.procId != 0) {
+                procId = proto.procId;
             }
         }
     }
 
-    static abstract class ActivityContainer {
-
-        protected static final Pattern FULLSCREEN_PATTERN = Pattern.compile("mFullscreen=(\\S+)");
-        protected static final Pattern BOUNDS_PATTERN =
-                Pattern.compile("mBounds=Rect\\((\\d+), (\\d+) - (\\d+), (\\d+)\\)");
-        protected static final Pattern MIN_WIDTH_PATTERN =
-                Pattern.compile("mMinWidth=(\\d+)");
-        protected static final Pattern MIN_HEIGHT_PATTERN =
-                Pattern.compile("mMinHeight=(\\d+)");
-
+    static abstract class ActivityContainer extends WindowManagerState.ConfigurationContainer {
         protected boolean mFullscreen;
         protected Rect mBounds;
         protected int mMinWidth = -1;
         protected int mMinHeight = -1;
 
-        boolean extractFullscreen(String line) {
-            final Matcher matcher = FULLSCREEN_PATTERN.matcher(line);
-            if (!matcher.matches()) {
-                return false;
-            }
-            log(line);
-            final String fullscreen = matcher.group(1);
-            log(fullscreen);
-            mFullscreen = Boolean.valueOf(fullscreen);
-            return true;
-        }
-
-        boolean extractBounds(String line) {
-            final Matcher matcher = BOUNDS_PATTERN.matcher(line);
-            if (!matcher.matches()) {
-                return false;
-            }
-            log(line);
-            mBounds = extractBounds(matcher);
-            return true;
-        }
-
-        static Rect extractBounds(Matcher matcher) {
-            final int left = Integer.valueOf(matcher.group(1));
-            final int top = Integer.valueOf(matcher.group(2));
-            final int right = Integer.valueOf(matcher.group(3));
-            final int bottom = Integer.valueOf(matcher.group(4));
-            final Rect rect = new Rect(left, top, right, bottom);
-
-            log(rect.toString());
-            return rect;
-        }
-
-        boolean extractMinimalSize(String line) {
-            final Matcher minWidthMatcher = MIN_WIDTH_PATTERN.matcher(line);
-            final Matcher minHeightMatcher = MIN_HEIGHT_PATTERN.matcher(line);
-
-            if (minWidthMatcher.matches()) {
-                log(line);
-                mMinWidth = Integer.valueOf(minWidthMatcher.group(1));
-            } else if (minHeightMatcher.matches()) {
-                log(line);
-                mMinHeight = Integer.valueOf(minHeightMatcher.group(1));
-            } else {
-                return false;
-            }
-            return true;
+        ActivityContainer(ConfigurationContainerProto proto) {
+            super(proto);
         }
 
         Rect getBounds() {
@@ -821,70 +520,14 @@ class ActivityManagerState {
 
     static class KeyguardControllerState {
 
-        private static final Pattern NAME_PATTERN = Pattern.compile("KeyguardController:");
-        private static final Pattern SHOWING_PATTERN = Pattern.compile("mKeyguardShowing=(\\S+)");
-        private static final Pattern OCCLUDED_PATTERN = Pattern.compile("mOccluded=(\\S+)");
+        boolean keyguardShowing = false;
+        boolean keyguardOccluded = false;
 
-        boolean keyguardShowing;
-        boolean keyguardOccluded;
-
-        private KeyguardControllerState() {
-        }
-
-        static KeyguardControllerState create(LinkedList<String> dump, Pattern[] exitPatterns) {
-            final String line = dump.peek().trim();
-
-            final Matcher matcher = NAME_PATTERN.matcher(line);
-            if (!matcher.matches()) {
-                // Not KeyguardController
-                return null;
-            }
-
-            // For the KeyguardController line we just read.
-            dump.pop();
-
-            final KeyguardControllerState controller = new KeyguardControllerState();
-            controller.extract(dump, exitPatterns);
-            return controller;
-        }
-
-        private void extract(LinkedList<String> dump, Pattern[] exitPatterns) {
-
-            while (!doneExtracting(dump, exitPatterns)) {
-                final String line = dump.pop().trim();
-
-                Matcher matcher = SHOWING_PATTERN.matcher(line);
-                if (matcher.matches()) {
-                    log(line);
-                    final String showingString = matcher.group(1);
-                    keyguardShowing = Boolean.valueOf(showingString);
-                    log(showingString);
-                    continue;
-                }
-
-                matcher = OCCLUDED_PATTERN.matcher(line);
-                if (matcher.matches()) {
-                    log(line);
-                    final String occludedString = matcher.group(1);
-                    keyguardOccluded = Boolean.valueOf(occludedString);
-                    log(occludedString);
-                    continue;
-                }
+        KeyguardControllerState(KeyguardControllerProto proto) {
+            if (proto != null) {
+                keyguardShowing = proto.keyguardShowing;
+                keyguardOccluded = proto.keyguardOccluded;
             }
         }
-    }
-
-    static boolean doneExtracting(LinkedList<String> dump, Pattern[] exitPatterns) {
-        if (dump.isEmpty()) {
-            return true;
-        }
-        final String line = dump.peek().trim();
-
-        for (Pattern pattern : exitPatterns) {
-            if (pattern.matcher(line).matches()) {
-                return true;
-            }
-        }
-        return false;
     }
 }
