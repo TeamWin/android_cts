@@ -35,7 +35,7 @@ LOCAL_C_INCLUDES += frameworks/ml/nn/runtime/
 LOCAL_C_INCLUDES += frameworks/ml/nn/common/include
 LOCAL_C_INCLUDES += frameworks/ml/nn/tools/test_generator/include
 
-LOCAL_SHARED_LIBRARIES := liblog libneuralnetworks
+LOCAL_SHARED_LIBRARIES := libandroid liblog libneuralnetworks
 
 # TODO: use the libgtest_ndk_c++ instead
 LOCAL_STATIC_LIBRARIES := libgtest libgtest_main
