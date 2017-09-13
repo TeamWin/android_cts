@@ -272,6 +272,11 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      */
     @Presubmit
     public void testDialogWhenLargeSplitSmall() throws Exception {
+        if (!supportsSplitScreenMultiWindow()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no multi-window support");
+            return;
+        }
+
         launchActivityInStack(DIALOG_WHEN_LARGE_ACTIVITY, DOCKED_STACK_ID);
         final ActivityManagerState.ActivityStack stack = mAmWmState.getAmState()
                 .getStackById(DOCKED_STACK_ID);
