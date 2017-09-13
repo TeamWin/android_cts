@@ -128,15 +128,20 @@
         <option name="push" value="Bug-36492827->/data/local/tmp/Bug-36492827" />
         <option name="push" value="Bug-38340117->/data/local/tmp/Bug-38340117" />
 
-
         <!--__________________-->
         <!-- Bulletin 2017-10 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
 
         <option name="push" value="Bug-62058746->/data/local/tmp/Bug-62058746" />
-
+        <option name="push" value="CVE-2017-0770->/data/local/tmp/CVE-2017-0770" />
 
         <option name="append-bitness" value="true" />
+    </target_preparer>
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
+        <option name="cleanup" value="true" />
+        <option name="push" value="cve_2017_0770.mp4->/sdcard/cve_2017_0770.mp4" />
+
+        <option name="append-bitness" value="false" />
     </target_preparer>
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
         <option name="jar" value="CtsSecurityHostTestCases.jar" />
