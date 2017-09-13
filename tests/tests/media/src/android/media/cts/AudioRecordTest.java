@@ -682,7 +682,7 @@ public class AudioRecordTest extends CtsAndroidTestCase {
             // Verify recording starts within 400 ms of AudioTrack completion (typical 180ms)
             // Verify recording completes within 50 ms of expected test time (typical 20ms)
             assertEquals(TEST_NAME, PLAYBACK_TIME_IN_MS, firstSampleTime - startTime,
-                isLowLatencyDevice() ? 400 : 800);
+                isLowLatencyDevice() ? 200 : 800);
             assertEquals(TEST_NAME, RECORD_TIME_IN_MS, endTime - firstSampleTime,
                 isLowLatencyDevice()? 50 : 400);
 
