@@ -15,6 +15,8 @@
  */
 package android.media.cts;
 
+import static android.support.test.InstrumentationRegistry.getInstrumentation;
+
 import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
@@ -33,6 +35,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Parcel;
+import android.support.test.filters.LargeTest;
 import android.test.AndroidTestCase;
 import android.view.KeyEvent;
 
@@ -415,6 +418,32 @@ public class MediaSessionTest extends AndroidTestCase {
             assertEquals(PlaybackState.STATE_STOPPED,
                     mSession.getController().getPlaybackState().getState());
         }
+    }
+
+    /**
+     * Tests setCallback(null). No callbacks will be called once setCallback(null) is done.
+     */
+    @LargeTest
+    public void testSetCallbackWithNull() throws Exception {
+        getInstrumentation().runOnMainSync(new Runnable() {
+            @Override
+            public void run() {
+                MediaSessionCallback sessionCallback = new MediaSessionCallback();
+                mSession.setCallback(sessionCallback, mHandler);
+                mSession.setFlags(MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
+                mSession.setActive(true);
+
+                MediaController controller = mSession.getController();
+                setPlaybackState(PlaybackState.STATE_PLAYING);
+
+                controller.getTransportControls().pause();
+                mSession.setCallback(null, mHandler);
+
+                sessionCallback.reset(1);
+                sessionCallback.await(TIME_OUT_MS);
+                assertFalse("Callback shouldn't be called.", sessionCallback.mOnPauseCalled);
+            }
+        });
     }
 
     private void setPlaybackState(int state) {
