@@ -122,7 +122,6 @@ public class AudioSecurityTest extends CtsAndroidTestCase {
     }
 
     // b/37536407
-    @SecurityTest
     public void testAllEffectsEqualizer_CVE_2017_0401() throws Exception {
         testAllEffects("equalizer get parameter name",
                 new TestEffect() {
