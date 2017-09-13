@@ -42,7 +42,7 @@ import org.junit.Test;
  * The exact animation is unspecified and can be overridden.
  *
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases ActivityManagerTransitionSelectionTests
+ * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.ActivityManagerTransitionSelectionTests
  */
 @Presubmit
 public class ActivityManagerTransitionSelectionTests extends ActivityManagerTestBase {

@@ -32,7 +32,7 @@ import java.util.regex.Pattern;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases ActivityManagerConfigChangeTests
+ * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.ActivityManagerConfigChangeTests
  */
 public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
     private static final String TEST_ACTIVITY_NAME = "TestActivity";

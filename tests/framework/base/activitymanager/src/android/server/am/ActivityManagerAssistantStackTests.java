@@ -29,7 +29,7 @@ import org.junit.Test;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/tests/framework/base/activitymanager/util/run-test ActivityManagerAssistantStackTests
+ * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.ActivityManagerAssistantStackTests
  */
 public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase {
 

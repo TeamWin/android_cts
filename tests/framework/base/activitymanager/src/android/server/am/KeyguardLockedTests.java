@@ -28,7 +28,7 @@ import org.junit.Test;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases KeyguardLockedTests
+ * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.KeyguardLockedTests
  */
 public class KeyguardLockedTests extends KeyguardTestBase {
 

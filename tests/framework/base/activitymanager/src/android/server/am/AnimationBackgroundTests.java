@@ -26,7 +26,7 @@ import org.junit.Test;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases AnimationBackgroundTests
+ * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.AnimationBackgroundTests
  */
 public class AnimationBackgroundTests extends ActivityManagerTestBase {
 
