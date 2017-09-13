@@ -825,6 +825,10 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTestRawBlob(R.raw.bug_36895511, "video/hevc", 320, 240);
     }
 
+    public void testBug64836894() throws Exception {
+        doStagefrightTestRawBlob(R.raw.bug_64836894, "video/avc", 320, 240);
+    }
+
     private void runWithTimeout(Runnable runner, int timeout) {
         Thread t = new Thread(runner);
         t.start();
