@@ -289,7 +289,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     @Test
     public void testDialogWhenLargeSplitSmall() throws Exception {
         if (!supportsSplitScreenMultiWindow()) {
-            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no multi-window support");
+            log("Skipping test: no multi-window support");
             return;
         }
 
