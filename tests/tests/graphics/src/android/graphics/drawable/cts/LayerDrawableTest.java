@@ -1690,21 +1690,29 @@ public class LayerDrawableTest extends AndroidTestCase {
 
 
     public void testPreloadDensity() throws XmlPullParserException, IOException {
-        final Resources res = getContext().getResources();
+        final Resources res = mContext.getResources();
         final int densityDpi = res.getConfiguration().densityDpi;
         try {
-            testPreloadDensityInner(res);
+            DrawableTestUtils.setResourcesDensity(res, densityDpi);
+            verifyPreloadDensityInner(res, densityDpi);
         } finally {
             DrawableTestUtils.setResourcesDensity(res, densityDpi);
         }
     }
 
-    private void testPreloadDensityInner(Resources res) throws XmlPullParserException, IOException {
-        // Set density to a fixed value so that we're not affected by the
-        // device's native density.
-        final int densityDpi = DisplayMetrics.DENSITY_MEDIUM;
-        DrawableTestUtils.setResourcesDensity(res, densityDpi);
+    public void testPreloadDensity_tvdpi() throws XmlPullParserException, IOException {
+        final Resources res = mContext.getResources();
+        final int densityDpi = res.getConfiguration().densityDpi;
+        try {
+            DrawableTestUtils.setResourcesDensity(res, 213);
+            verifyPreloadDensityInner(res, 213);
+        } finally {
+            DrawableTestUtils.setResourcesDensity(res, densityDpi);
+        }
+    }
 
+    private void verifyPreloadDensityInner(Resources res, int densityDpi)
+            throws XmlPullParserException, IOException {
         // Capture initial state at default density.
         final XmlResourceParser parser = DrawableTestUtils.getResourceParser(
                 res, R.drawable.layer_drawable_density);
@@ -1733,11 +1741,13 @@ public class LayerDrawableTest extends AndroidTestCase {
         DrawableTestUtils.setResourcesDensity(res, densityDpi / 2);
         final LayerDrawable halfDrawable =
                 (LayerDrawable) preloadedConstantState.newDrawable(res);
-        final int halfContentWidth = Math.round(initialContentWidth / 2f);
-        final int halfLeftPadding = initialLeftPadding / 2;
-        final int halfRightPadding = initialRightPadding / 2;
-        final int halfContentInsetL = initialContentInsetL / 2;
-        final int halfContentInsetR = initialContentInsetR / 2;
+        // NOTE: densityDpi may not be an even number, so account for *actual* scaling in asserts
+        final float approxHalf = (float)(densityDpi / 2) / densityDpi;
+        final int halfContentWidth = Math.round(initialContentWidth * approxHalf);
+        final int halfLeftPadding = (int) (initialLeftPadding * approxHalf);
+        final int halfRightPadding = (int) (initialRightPadding * approxHalf);
+        final int halfContentInsetL = (int) (initialContentInsetL * approxHalf);
+        final int halfContentInsetR = (int) (initialContentInsetR * approxHalf);
         final int halfIntrinsicWidth = halfContentWidth + halfContentInsetL + halfContentInsetR;
         assertEquals(halfLeftPadding, halfDrawable.getLeftPadding());
         assertEquals(halfRightPadding, halfDrawable.getRightPadding());
@@ -1745,14 +1755,18 @@ public class LayerDrawableTest extends AndroidTestCase {
         assertEquals(halfContentInsetR, halfDrawable.getLayerInsetLeft(0));
         assertEquals(halfContentWidth, halfDrawable.getLayerWidth(0));
         assertEquals(halfIntrinsicWidth, halfDrawable.getIntrinsicWidth());
-        assertEquals(initialBottomPadding / 2, halfDrawable.getBottomPadding());
-        assertEquals(initialTopPadding / 2, halfDrawable.getTopPadding());
-        assertEquals(initialLayerInsetLeft / 2,halfDrawable.getLayerInsetLeft(0));
-        assertEquals(initialLayerInsetRight / 2, halfDrawable.getLayerInsetRight(0));
-        assertEquals(initialLayerInsetTop / 2, halfDrawable.getLayerInsetTop(0));
-        assertEquals(initialLayerInsetBottom / 2, halfDrawable.getLayerInsetBottom(0));
-        assertEquals(Math.round(initialLayerWidth / 2f), halfDrawable.getLayerWidth(0));
-        assertEquals(Math.round(initialLayerHeight / 2f), halfDrawable.getLayerHeight(0));
+        assertEquals((int) (initialBottomPadding * approxHalf), halfDrawable.getBottomPadding());
+        assertEquals((int) (initialTopPadding * approxHalf), halfDrawable.getTopPadding());
+        assertEquals((int) (initialLayerInsetLeft * approxHalf),
+                halfDrawable.getLayerInsetLeft(0));
+        assertEquals((int) (initialLayerInsetRight * approxHalf),
+                halfDrawable.getLayerInsetRight(0));
+        assertEquals((int) (initialLayerInsetTop * approxHalf),
+                halfDrawable.getLayerInsetTop(0));
+        assertEquals((int) (initialLayerInsetBottom * approxHalf),
+                halfDrawable.getLayerInsetBottom(0));
+        assertEquals(Math.round(initialLayerWidth * approxHalf), halfDrawable.getLayerWidth(0));
+        assertEquals(Math.round(initialLayerHeight * approxHalf), halfDrawable.getLayerHeight(0));
 
         // Set density to double original.
         DrawableTestUtils.setResourcesDensity(res, densityDpi * 2);
@@ -1798,20 +1812,31 @@ public class LayerDrawableTest extends AndroidTestCase {
         // The half-density drawable will scale-up all of the values that were
         // previously scaled-down, so we need to capture the rounding errors.
         halfDrawable.applyTheme(t);
-        assertEquals(halfLeftPadding * 2, halfDrawable.getLeftPadding());
-        assertEquals(halfRightPadding * 2, halfDrawable.getRightPadding());
-        assertEquals(halfContentInsetL * 2, halfDrawable.getLayerInsetRight(0));
-        assertEquals(halfContentInsetR * 2, halfDrawable.getLayerInsetLeft(0));
-        assertEquals(halfContentWidth * 2, halfDrawable.getLayerWidth(0));
+
+        // Reproduce imprecise truncated scale down, and back up. Note that we don't round.
+        float approxDouble = 1 / approxHalf;
+        assertEquals((int) (halfLeftPadding * approxDouble), halfDrawable.getLeftPadding());
+        assertEquals((int) (halfRightPadding * approxDouble), halfDrawable.getRightPadding());
+        assertEquals((int) (halfContentInsetL * approxDouble), halfDrawable.getLayerInsetRight(0));
+        assertEquals((int) (halfContentInsetR * approxDouble), halfDrawable.getLayerInsetLeft(0));
+        assertEquals((int) (halfContentWidth * approxDouble), halfDrawable.getLayerWidth(0));
         assertEquals(halfIntrinsicWidth * 2, halfDrawable.getIntrinsicWidth());
-        assertEquals(2 * (initialBottomPadding / 2), halfDrawable.getBottomPadding());
-        assertEquals(2 * (initialTopPadding / 2), halfDrawable.getTopPadding());
-        assertEquals(2 * (initialLayerInsetLeft / 2), halfDrawable.getLayerInsetLeft(0));
-        assertEquals(2 * (initialLayerInsetRight / 2), halfDrawable.getLayerInsetRight(0));
-        assertEquals(2 * (initialLayerInsetTop / 2), halfDrawable.getLayerInsetTop(0));
-        assertEquals(2 * (initialLayerInsetBottom / 2), halfDrawable.getLayerInsetBottom(0));
-        assertEquals(2 * Math.round(initialLayerWidth / 2f), halfDrawable.getLayerWidth(0));
-        assertEquals(2 * Math.round(initialLayerHeight / 2f), halfDrawable.getLayerHeight(0));
+        assertEquals((int) ((int) (initialBottomPadding * approxHalf) * approxDouble),
+                halfDrawable.getBottomPadding());
+        assertEquals((int) ((int) (initialTopPadding * approxHalf) * approxDouble),
+                halfDrawable.getTopPadding());
+        assertEquals((int) ((int) (initialLayerInsetLeft * approxHalf) * approxDouble),
+                halfDrawable.getLayerInsetLeft(0));
+        assertEquals((int) ((int) (initialLayerInsetRight * approxHalf) * approxDouble),
+                halfDrawable.getLayerInsetRight(0));
+        assertEquals((int) ((int) (initialLayerInsetTop * approxHalf) * approxDouble),
+                halfDrawable.getLayerInsetTop(0));
+        assertEquals((int) ((int) (initialLayerInsetBottom * approxHalf) * approxDouble),
+                halfDrawable.getLayerInsetBottom(0));
+        assertEquals(Math.round(Math.round(initialLayerWidth * approxHalf) * approxDouble),
+                halfDrawable.getLayerWidth(0));
+        assertEquals(Math.round(Math.round(initialLayerHeight * approxHalf) * approxDouble),
+                halfDrawable.getLayerHeight(0));
 
         // The double-density drawable will scale-down all of the values that
         // were previously scaled-up, so we don't need to worry about rounding.
