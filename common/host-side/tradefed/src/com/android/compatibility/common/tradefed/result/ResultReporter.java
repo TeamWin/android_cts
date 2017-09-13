@@ -83,10 +83,14 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     private static final String CTS_PREFIX = "cts:";
     private static final String BUILD_INFO = CTS_PREFIX + "build_";
 
+    /**
+     * List of files and directories that should NOT be copied when retrying CTS.
+     */
     private static final List<String> NOT_RETRY_FILES = Arrays.asList(
             ChecksumReporter.NAME,
             ChecksumReporter.PREV_NAME,
-            ResultHandler.FAILURE_REPORT_NAME);
+            ResultHandler.FAILURE_REPORT_NAME,
+            "diffs");
 
     @Option(name = CompatibilityTest.RETRY_OPTION,
             shortName = 'r',
