@@ -360,21 +360,29 @@ public class InsetDrawableTest extends AndroidTestCase {
 
 
     public void testPreloadDensity() throws XmlPullParserException, IOException {
-        final Resources res = getContext().getResources();
+        final Resources res = mContext.getResources();
         final int densityDpi = res.getConfiguration().densityDpi;
         try {
-            testPreloadDensityInner(res);
+            DrawableTestUtils.setResourcesDensity(res, densityDpi);
+            verifyPreloadDensityInner(res, densityDpi);
         } finally {
             DrawableTestUtils.setResourcesDensity(res, densityDpi);
         }
     }
 
-    private void testPreloadDensityInner(Resources res) throws XmlPullParserException, IOException {
-        // Set density to a fixed value so that we're not affected by the
-        // device's native density.
-        final int densityDpi = DisplayMetrics.DENSITY_MEDIUM;
-        DrawableTestUtils.setResourcesDensity(res, densityDpi);
+    public void testPreloadDensity_tvdpi() throws XmlPullParserException, IOException {
+        final Resources res = mContext.getResources();
+        final int densityDpi = res.getConfiguration().densityDpi;
+        try {
+            DrawableTestUtils.setResourcesDensity(res, 213);
+            verifyPreloadDensityInner(res, 213);
+        } finally {
+            DrawableTestUtils.setResourcesDensity(res, densityDpi);
+        }
+    }
 
+    private void verifyPreloadDensityInner(Resources res, int densityDpi)
+            throws XmlPullParserException, IOException {
         // Capture initial state at default density.
         final XmlResourceParser parser = DrawableTestUtils.getResourceParser(
                 res, R.drawable.inset_density);
@@ -384,12 +392,14 @@ public class InsetDrawableTest extends AndroidTestCase {
         final int origInsetHoriz = preloadedDrawable.getIntrinsicWidth()
                 - preloadedDrawable.getDrawable().getIntrinsicWidth();
 
-        // Set density to half of original. Unlike offsets, which are
+        // Set density to approximately half of original. Unlike offsets, which are
         // truncated, dimensions are rounded to the nearest pixel.
         DrawableTestUtils.setResourcesDensity(res, densityDpi / 2);
         final InsetDrawable halfDrawable =
                 (InsetDrawable) preloadedConstantState.newDrawable(res);
-        assertEquals(Math.round(origInsetHoriz / 2f), halfDrawable.getIntrinsicWidth()
+        // NOTE: densityDpi may not be an even number, so account for *actual* scaling in asserts
+        final float approxHalf = (float)(densityDpi / 2) / densityDpi;
+        assertEquals(Math.round(origInsetHoriz * approxHalf), halfDrawable.getIntrinsicWidth()
                 - halfDrawable.getDrawable().getIntrinsicWidth());
 
         // Set density to double original.
@@ -409,8 +419,10 @@ public class InsetDrawableTest extends AndroidTestCase {
         // Ensure theme density is applied correctly.
         final Theme t = res.newTheme();
         halfDrawable.applyTheme(t);
-        assertEquals(origInsetHoriz, halfDrawable.getIntrinsicWidth()
-                - halfDrawable.getDrawable().getIntrinsicWidth());
+        float approxDouble = 1 / approxHalf;
+        // Reproduce imprecise truncated scale down, and back up. Note that we don't round.
+        assertEquals((int)(approxDouble * ((int)(origInsetHoriz * approxHalf))),
+                halfDrawable.getIntrinsicWidth() - halfDrawable.getDrawable().getIntrinsicWidth());
         doubleDrawable.applyTheme(t);
         assertEquals(origInsetHoriz, doubleDrawable.getIntrinsicWidth()
                 - doubleDrawable.getDrawable().getIntrinsicWidth());
