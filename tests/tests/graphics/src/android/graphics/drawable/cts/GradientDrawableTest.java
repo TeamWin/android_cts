@@ -500,19 +500,28 @@ public class GradientDrawableTest extends AndroidTestCase {
         final Resources res = getContext().getResources();
         final int densityDpi = res.getConfiguration().densityDpi;
         try {
-            testPreloadDensityInner(res);
+            DrawableTestUtils.setResourcesDensity(res, densityDpi);
+            verifyPreloadDensityInner(res, densityDpi);
         } finally {
             DrawableTestUtils.setResourcesDensity(res, densityDpi);
         }
     }
 
-    private void testPreloadDensityInner(Resources res) throws XmlPullParserException, IOException {
-        final Rect tempPadding = new Rect();
+    @MediumTest
+    public void testPreloadDensity_tvdpi() throws XmlPullParserException, IOException {
+        final Resources res = getContext().getResources();
+        final int densityDpi = res.getConfiguration().densityDpi;
+        try {
+            DrawableTestUtils.setResourcesDensity(res, 213);
+            verifyPreloadDensityInner(res, 213);
+        } finally {
+            DrawableTestUtils.setResourcesDensity(res, densityDpi);
+        }
+    }
 
-        // Set density to a fixed value so that we're not affected by the
-        // device's native density.
-        final int densityDpi = DisplayMetrics.DENSITY_MEDIUM;
-        DrawableTestUtils.setResourcesDensity(res, densityDpi);
+    private void verifyPreloadDensityInner(Resources res, int densityDpi)
+            throws XmlPullParserException, IOException {
+        final Rect tempPadding = new Rect();
 
         // Capture initial state at default density.
         final XmlResourceParser parser = DrawableTestUtils.getResourceParser(
@@ -525,15 +534,17 @@ public class GradientDrawableTest extends AndroidTestCase {
         final Rect origPadding = new Rect();
         preloadedDrawable.getPadding(origPadding);
 
-        // Set density to half of original. Unlike offsets, which are
+        // Set density to approximately half of original. Unlike offsets, which are
         // truncated, dimensions are rounded to the nearest pixel.
         DrawableTestUtils.setResourcesDensity(res, densityDpi / 2);
         final GradientDrawable halfDrawable =
                 (GradientDrawable) preloadedConstantState.newDrawable(res);
-        assertEquals(Math.round(origWidth / 2f), halfDrawable.getIntrinsicWidth());
-        assertEquals(Math.round(origHeight / 2f), halfDrawable.getIntrinsicHeight());
+        // NOTE: densityDpi may not be an even number, so account for *actual* scaling in asserts
+        final float approxHalf = (float)(densityDpi / 2) / densityDpi;
+        assertEquals(Math.round(origWidth * approxHalf), halfDrawable.getIntrinsicWidth());
+        assertEquals(Math.round(origHeight * approxHalf), halfDrawable.getIntrinsicHeight());
         assertTrue(halfDrawable.getPadding(tempPadding));
-        assertEquals((int) (origPadding.left / 2f), tempPadding.left);
+        assertEquals((int) (origPadding.left * approxHalf), tempPadding.left);
 
         // Set density to double original.
         DrawableTestUtils.setResourcesDensity(res, densityDpi * 2);
@@ -553,20 +564,21 @@ public class GradientDrawableTest extends AndroidTestCase {
         assertTrue(origDrawable.getPadding(tempPadding));
         assertEquals(origPadding, tempPadding);
 
-        // Some precision is lost when scaling the half-density
-        // drawable back up to the original density. Padding is
-        // always truncated, rather than rounded.
+        // Reproduce imprecise truncated scale down, and back up. Note these aren't rounded.
+        final float approxDouble = 1 / approxHalf;
         final Rect sloppyOrigPadding = new Rect();
-        sloppyOrigPadding.left = 2 * (origPadding.left / 2);
-        sloppyOrigPadding.top = 2 * (origPadding.top / 2);
-        sloppyOrigPadding.right = 2 * (origPadding.right / 2);
-        sloppyOrigPadding.bottom = 2 * (origPadding.bottom / 2);
+        sloppyOrigPadding.left = (int)(approxDouble * ((int)(origPadding.left * approxHalf)));
+        sloppyOrigPadding.top = (int)(approxDouble * ((int)(origPadding.top * approxHalf)));
+        sloppyOrigPadding.right = (int)(approxDouble * ((int)(origPadding.right * approxHalf)));
+        sloppyOrigPadding.bottom = (int)(approxDouble * ((int)(origPadding.bottom * approxHalf)));
 
         // Ensure theme density is applied correctly.
         final Theme t = res.newTheme();
         halfDrawable.applyTheme(t);
-        assertEquals(2 * Math.round(origWidth / 2f), halfDrawable.getIntrinsicWidth());
-        assertEquals(2 * Math.round(origHeight / 2f), halfDrawable.getIntrinsicHeight());
+        assertEquals(Math.round(approxDouble * Math.round(origWidth * approxHalf)),
+                halfDrawable.getIntrinsicWidth());
+        assertEquals(Math.round(approxDouble * Math.round(origHeight * approxHalf)),
+                halfDrawable.getIntrinsicHeight());
         assertTrue(halfDrawable.getPadding(tempPadding));
         assertEquals(sloppyOrigPadding, tempPadding);
         doubleDrawable.applyTheme(t);
