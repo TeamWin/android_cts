@@ -23,7 +23,9 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
+import android.app.Instrumentation;
 import android.content.Context;
+import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
@@ -51,6 +53,7 @@ public class EditTextTest {
     private EditText mEditText1;
     private EditText mEditText2;
     private AttributeSet mAttributeSet;
+    private Instrumentation mInstrumentation;
 
     @Rule
     public ActivityTestRule<EditTextCtsActivity> mActivityRule =
@@ -58,6 +61,7 @@ public class EditTextTest {
 
     @Before
     public void setup() {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mActivity = mActivityRule.getActivity();
         mEditText1 = (EditText) mActivity.findViewById(R.id.edittext_simple1);
         mEditText2 = (EditText) mActivity.findViewById(R.id.edittext_simple2);
@@ -331,6 +335,25 @@ public class EditTextTest {
 
         assertEquals(mEditText1.getSelectionStart(), mEditText2.getSelectionStart());
         assertEquals(mEditText1.getSelectionEnd(), mEditText2.getSelectionEnd());
+    }
+
+    @Test
+    public void testSetMaxLines_toZero_shouldNotDisplayAnyLines() throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            mEditText1.setPadding(0, 0, 0, 0);
+            mEditText1.setText("Single");
+            mEditText1.setMaxLines(0);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        final int expectedHeight = mEditText1.getTotalPaddingBottom()
+                + mEditText1.getTotalPaddingTop();
+        assertEquals(expectedHeight, mEditText1.getHeight());
+
+        mActivityRule.runOnUiThread(() -> mEditText1.setText("Two\nLines"));
+        mInstrumentation.waitForIdleSync();
+
+        assertEquals(expectedHeight, mEditText1.getHeight());
     }
 
     private class MockEditText extends EditText {
