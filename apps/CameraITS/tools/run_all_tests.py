@@ -77,6 +77,8 @@ def main():
         rot_rig: [Experimental] ID of the rotation rig being used (formatted as
                  "<vendor ID>:<product ID>:<channel #>" or "default")
         tmp_dir: location of temp directory for output files
+        skip_scene_validation: force skip scene validation. Used when test scene
+                 is setup up front and don't require tester validation.
     """
 
     # Not yet mandated tests
@@ -136,6 +138,7 @@ def main():
     result_device_id = None
     rot_rig_id = None
     tmp_dir = None
+    skip_scene_validation = False
     for s in sys.argv[1:]:
         if s[:7] == "camera=" and len(s) > 7:
             camera_ids = s[7:].split(',')
@@ -150,6 +153,8 @@ def main():
             # The default '$VID:$PID:$CH' is '04d8:fc73:1'
         elif s[:8] == 'tmp_dir=' and len(s) > 8:
             tmp_dir = s[8:]
+        elif s == 'skip_scene_validation':
+            skip_scene_validation = True
 
     auto_scene_switch = chart_host_id is not None
     merge_result_switch = result_device_id is not None
@@ -268,7 +273,7 @@ def main():
                     skip_code = skip_sensor_fusion()
                     if rot_rig_id or skip_code == SKIP_RET_CODE:
                         validate_switch = False
-                if scene == 'scene5':
+                if skip_scene_validation:
                     validate_switch = False
                 cmd = None
                 if auto_scene_switch:
