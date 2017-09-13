@@ -71,6 +71,18 @@ public class StagefrightTest extends InstrumentationTestCase {
      before any existing test methods
      ***********************************************************/
 
+    public void testStagefrightANR_bug_62673844() throws Exception {
+        doStagefrightTestANR(R.raw.bug_62673844);
+    }
+
+    public void testStagefright_bug_37079296() throws Exception {
+        doStagefrightTest(R.raw.bug_37079296);
+    }
+
+    public void testStagefright_bug_38342499() throws Exception {
+        doStagefrightTest(R.raw.bug_38342499);
+    }
+
     public void testStagefright_bug_23270724() throws Exception {
         doStagefrightTest(R.raw.bug_23270724_1);
         doStagefrightTest(R.raw.bug_23270724_2);
@@ -303,6 +315,10 @@ public class StagefrightTest extends InstrumentationTestCase {
         server.shutdown();
     }
 
+    private void doStagefrightTestANR(final int rid) throws Exception {
+        doStagefrightTestMediaPlayerANR(rid, null);
+    }
+
     private Surface getDummySurface() {
         int[] textures = new int[1];
         GLES20.glGenTextures(1, textures, 0);
@@ -356,6 +372,7 @@ public class StagefrightTest extends InstrumentationTestCase {
         public void onCompletion(MediaPlayer mp) {
             // preserve error condition, if any
             lock.lock();
+            completed = true;
             condition.signal();
             lock.unlock();
         }
@@ -375,9 +392,19 @@ public class StagefrightTest extends InstrumentationTestCase {
             return what;
         }
 
+        public boolean waitForErrorOrCompletion() throws InterruptedException {
+            lock.lock();
+            if (condition.awaitNanos(TIMEOUT_NS) <= 0) {
+                Log.d(TAG, "timed out on waiting for error or completion");
+            }
+            lock.unlock();
+            return (what != 0 && what != MediaPlayer.MEDIA_ERROR_SERVER_DIED) || completed;
+        }
+
         ReentrantLock lock = new ReentrantLock();
         Condition condition = lock.newCondition();
         int what;
+        boolean completed = false;
     }
 
     class LooperThread extends Thread {
@@ -704,5 +731,51 @@ public class StagefrightTest extends InstrumentationTestCase {
                     mpcl.waitForError() == MediaPlayer.MEDIA_ERROR_SERVER_DIED);
         thr.stopLooper();
         thr.join();
+    }
+
+    private void doStagefrightTestMediaPlayerANR(final int rid, final String uri) throws Exception {
+        String name = uri != null ? uri :
+            getInstrumentation().getContext().getResources().getResourceEntryName(rid);
+        Log.i(TAG, "start mediaplayerANR test for: " + name);
+
+        final MediaPlayerCrashListener mpl = new MediaPlayerCrashListener();
+
+        LooperThread t = new LooperThread(new Runnable() {
+            @Override
+            public void run() {
+                MediaPlayer mp = new MediaPlayer();
+                mp.setOnErrorListener(mpl);
+                mp.setOnPreparedListener(mpl);
+                mp.setOnCompletionListener(mpl);
+                Surface surface = getDummySurface();
+                mp.setSurface(surface);
+                AssetFileDescriptor fd = null;
+                try {
+                    if (uri == null) {
+                        fd = getInstrumentation().getContext().getResources()
+                                .openRawResourceFd(rid);
+
+                        mp.setDataSource(fd.getFileDescriptor(),
+                                fd.getStartOffset(),
+                                fd.getLength());
+                    } else {
+                        mp.setDataSource(uri);
+                    }
+                    mp.prepareAsync();
+                } catch (Exception e) {
+                } finally {
+                    closeQuietly(fd);
+                }
+
+                Looper.loop();
+                mp.release();
+            }
+        });
+
+        t.start();
+        String cve = name.replace("_", "-").toUpperCase();
+        assertTrue("Device *IS* vulnerable to " + cve, mpl.waitForErrorOrCompletion());
+        t.stopLooper();
+        t.join(); // wait for thread to exit so we're sure the player was released
     }
 }
