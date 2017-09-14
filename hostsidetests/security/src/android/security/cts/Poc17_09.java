@@ -31,4 +31,15 @@ public class Poc17_09 extends SecurityTestCase {
           AdbUtils.runPocNoOutput("Bug-33039685", getDevice(), 60);
         }
     }
+
+    /**
+     *  b/35676417
+     */
+    @SecurityTest
+    public void testPocBug_35676417() throws Exception {
+        enableAdbRoot(getDevice());
+        if (containsDriver(getDevice(), "/sys/devices/soc/7544000.qcom,sps-dma/driver_override")) {
+          AdbUtils.runPocNoOutput("Bug-35676417", getDevice(), 60);
+        }
+    }
 }
