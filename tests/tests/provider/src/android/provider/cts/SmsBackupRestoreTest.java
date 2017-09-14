@@ -128,10 +128,8 @@ public class SmsBackupRestoreTest extends TestCaseThatRunsIfTelephonyIsEnabled {
     }
 
     /**
-     * Test adds 2 SMS messages, 1 text-only MMS messages and 1 non-text-only, runs backup,
-     * deletes the messages from the provider, runs restore, check if the messages are in the
-     * provider (w/o non-text-only one).
-     * @throws Exception
+     * Test adds 1 text-only MMS message, runs backup, deletes the message from the provider,
+     * runs restore, checks if the message is in the provider.
      */
     public void testSmsBackupRestore() throws Exception {
         if (!mHasFeature) {
@@ -139,16 +137,12 @@ public class SmsBackupRestoreTest extends TestCaseThatRunsIfTelephonyIsEnabled {
             return;
         }
 
-        ContentValues smsContentValues[] = new ContentValues[] {
-                createSmsValues(smsAddressBody1),
-                createSmsValues(smsAddressBody2)};
-        Log.i(TAG, "Put 2 SMS into the provider");
+        ContentValues smsContentValues[] = new ContentValues[] {createSmsValues(smsAddressBody1)};
+        Log.i(TAG, "Put 1 SMS into the provider");
         mContentResolver.bulkInsert(Telephony.Sms.CONTENT_URI, smsContentValues);
 
-        Log.i(TAG, "Put 1 text MMS into the provider");
+        Log.i(TAG, "Put 1 text-only MMS into the provider");
         addMms(true /*isTextOnly*/, mmsBody, mmsSubject, mmsAddresses);
-        Log.i(TAG, "Put 1 non-text MMS into the provider");
-        addMms(false /*isTextOnly*/, mmsBody, mmsSubject, mmsAddresses);
 
         Log.i(TAG, "Run backup");
         ProviderTestUtils.runBackup(TELEPHONY_PROVIDER_PACKAGE, mUiAutomation);
@@ -157,11 +151,9 @@ public class SmsBackupRestoreTest extends TestCaseThatRunsIfTelephonyIsEnabled {
         Log.i(TAG, "Run restore");
         ProviderTestUtils.runRestore(TELEPHONY_PROVIDER_PACKAGE, mUiAutomation);
 
-        Log.i(TAG, "Check the providers for the messages");
+        Log.i(TAG, "Check the providers for the message");
         assertEquals(1,
                 mContentResolver.delete(Telephony.Sms.CONTENT_URI, SMS_SELECTION, smsAddressBody1));
-        assertEquals(1,
-                mContentResolver.delete(Telephony.Sms.CONTENT_URI, SMS_SELECTION, smsAddressBody2));
 
         try (Cursor mmsCursor = mContentResolver.query(Telephony.Mms.CONTENT_URI, ID_PROJECTION,
                 MMS_SELECTION, new String[] {mmsSubject}, null)) {
@@ -258,3 +250,4 @@ public class SmsBackupRestoreTest extends TestCaseThatRunsIfTelephonyIsEnabled {
                 mUiAutomation);
     }
 }
+
