@@ -38,7 +38,9 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -88,7 +90,10 @@ public class ModuleRepoSuite {
             throw new IllegalArgumentException(
                     String.format("No config files found in %s", testsDir.getAbsolutePath()));
         }
-        for (File configFile : configFiles) {
+        // Ensure stable initial order of configurations.
+        List<File> listConfigFiles = Arrays.asList(configFiles);
+        Collections.sort(listConfigFiles);
+        for (File configFile : listConfigFiles) {
             final String name = configFile.getName().replace(CONFIG_EXT, "");
             final String[] pathArg = new String[] { configFile.getAbsolutePath() };
             try {
