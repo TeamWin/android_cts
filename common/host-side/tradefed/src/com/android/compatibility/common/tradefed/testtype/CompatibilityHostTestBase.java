@@ -140,7 +140,7 @@ public class CompatibilityHostTestBase implements IAbiReceiver, IBuildReceiver, 
         options = optList.toArray(new String[optList.size()]);
 
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mBuild);
-        File testFile = new File(buildHelper.getTestsDir(), fileName);
+        File testFile = buildHelper.getTestFile(fileName);
         // Install the APK on the device.
         String installResult = mDevice.installPackage(testFile, true, options);
 
