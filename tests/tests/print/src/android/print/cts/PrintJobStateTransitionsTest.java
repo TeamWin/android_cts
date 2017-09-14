@@ -16,6 +16,11 @@
 
 package android.print.cts;
 
+import static android.print.cts.Utils.eventually;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import android.print.PrintAttributes;
 import android.print.PrintAttributes.Margins;
 import android.print.PrintAttributes.MediaSize;
@@ -32,6 +37,7 @@ import android.print.cts.services.SecondPrintService;
 import android.print.cts.services.StubbablePrinterDiscoverySession;
 import android.printservice.PrintJob;
 import android.util.Log;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,9 +45,6 @@ import org.junit.runners.Parameterized;
 
 import java.util.ArrayList;
 import java.util.Collection;
-
-import static android.print.cts.Utils.eventually;
-import static org.junit.Assert.*;
 
 /**
  * Tests all possible states of print jobs.
@@ -363,6 +366,10 @@ public class PrintJobStateTransitionsTest extends BasePrintTest {
 
         // Start printing.
         print(adapter);
+
+        // Wait until adapter is done
+        waitForWriteAdapterCallback(1);
+
         clickPrintButton();
 
         // Wait for print job to be queued
