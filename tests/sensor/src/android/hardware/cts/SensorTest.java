@@ -304,21 +304,21 @@ public class SensorTest extends SensorTestCase {
     public void testSensorTimeStamps() throws Exception {
         ArrayList<Throwable> errorsFound = new ArrayList<>();
         for (Sensor sensor : mSensorList) {
-            // test both continuous and batching mode sensors
-            verifyLongActivation(sensor, 0 /* maxReportLatencyUs */, errorsFound);
-            verifyLongActivation(sensor, (int) TimeUnit.SECONDS.toMicros(10), errorsFound);
+            if (sensor.getType() < Sensor.TYPE_DEVICE_PRIVATE_BASE) {
+                // test both continuous and batching mode sensors
+                verifyLongActivation(sensor, 0 /* maxReportLatencyUs */, errorsFound);
+                verifyLongActivation(sensor, (int) TimeUnit.SECONDS.toMicros(10), errorsFound);
+            }
         }
         assertOnErrors(errorsFound);
     }
 
     // TODO: remove when parameterized tests are supported (see SensorBatchingTests.java)
     public void testBatchAndFlush() throws Exception {
-        // TODO - replace this constant once method to do so is made available
-        final int SENSOR_TYPE_DEVICE_PRIVATE_BASE = 0x10000;
         SensorCtsHelper.sleep(3, TimeUnit.SECONDS);
         ArrayList<Throwable> errorsFound = new ArrayList<>();
         for (Sensor sensor : mSensorList) {
-            if (sensor.getType() < SENSOR_TYPE_DEVICE_PRIVATE_BASE) {
+            if (sensor.getType() < Sensor.TYPE_DEVICE_PRIVATE_BASE) {
                 verifyRegisterListenerCallFlush(sensor, null /* handler */, errorsFound);
             }
         }
