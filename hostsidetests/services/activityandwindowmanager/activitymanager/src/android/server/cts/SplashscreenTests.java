@@ -35,13 +35,26 @@ public class SplashscreenTests extends ActivityManagerTestBase {
     }
 
     private void assertAllColor(BufferedImage img, Rectangle bounds, int expectedColor) {
+        int correctPixels = 0;
+        int wrongPixels = 0;
         for (int x = bounds.x; x < bounds.x + bounds.width; x++) {
             for (int y = bounds.y; y < bounds.y + bounds.height; y++) {
                 assertTrue(x < img.getWidth());
                 assertTrue(y < img.getHeight());
                 final int color = img.getRGB(x, y);
-                assertEquals("Colors must match at x=" + x + " y=" + y, expectedColor, color);
+                if (expectedColor == color) {
+                    correctPixels++;
+                } else {
+                    wrongPixels++;
+                }
             }
+        }
+
+        // Some pixels might be covered by screen shape decorations, like rounded corners.
+        final float ratio = (float) wrongPixels / (correctPixels + wrongPixels);
+        if (ratio > 0.01f) {
+            fail("More than 1% of pixels have wrong color correctPixels=" + correctPixels
+                    + " wrongPixels=" + wrongPixels);
         }
     }
 }
