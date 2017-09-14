@@ -421,29 +421,24 @@ public class MediaSessionTest extends AndroidTestCase {
     }
 
     /**
-     * Tests setCallback(null). No callbacks will be called once setCallback(null) is done.
+     * Tests {@link MediaSession#setCallback} with {@code null}. No callbacks will be called
+     * once {@code setCallback(null)} is done.
      */
-    @LargeTest
     public void testSetCallbackWithNull() throws Exception {
-        getInstrumentation().runOnMainSync(new Runnable() {
-            @Override
-            public void run() {
-                MediaSessionCallback sessionCallback = new MediaSessionCallback();
-                mSession.setCallback(sessionCallback, mHandler);
-                mSession.setFlags(MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
-                mSession.setActive(true);
+        MediaSessionCallback sessionCallback = new MediaSessionCallback();
+        mSession.setCallback(sessionCallback, mHandler);
+        mSession.setFlags(MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
+        mSession.setActive(true);
 
-                MediaController controller = mSession.getController();
-                setPlaybackState(PlaybackState.STATE_PLAYING);
+        MediaController controller = mSession.getController();
+        setPlaybackState(PlaybackState.STATE_PLAYING);
 
-                controller.getTransportControls().pause();
-                mSession.setCallback(null, mHandler);
+        sessionCallback.reset(1);
+        mSession.setCallback(null, mHandler);
 
-                sessionCallback.reset(1);
-                sessionCallback.await(TIME_OUT_MS);
-                assertFalse("Callback shouldn't be called.", sessionCallback.mOnPauseCalled);
-            }
-        });
+        controller.getTransportControls().pause();
+        assertFalse(sessionCallback.await(WAIT_MS));
+        assertFalse("Callback shouldn't be called.", sessionCallback.mOnPauseCalled);
     }
 
     private void setPlaybackState(int state) {
