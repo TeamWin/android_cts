@@ -143,6 +143,8 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     // Whether modules can be marked done for this invocation. Initialized in invocationStarted()
     // Visible for unit testing
     protected boolean mCanMarkDone;
+    // Whether the current test run has failed. If true, we will not mark the current module done
+    protected boolean mTestRunFailed;
     // Whether the current module has previously been marked done
     private boolean mModuleWasDone;
 
@@ -279,6 +281,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             // Handle non-JarHostTest case
             mCurrentModuleResult = mResult.getOrCreateModule(id);
             mModuleWasDone = mCurrentModuleResult.isDone();
+            mTestRunFailed = false;
             if (!mModuleWasDone) {
                 // we only want to update testRun variables if the IModuleResult is not yet done
                 // otherwise leave testRun variables alone so isDone evaluates to true.
@@ -377,9 +380,11 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     public void testRunEnded(long elapsedTime, Map<String, String> metrics) {
         mCurrentModuleResult.inProgress(false);
         mCurrentModuleResult.addRuntime(elapsedTime);
-        if (!mModuleWasDone && mCanMarkDone) {
-            // Only mark module done if status of the invocation allows it (mCanMarkDone) and
-            // if module has not already been marked done.
+        if (!mModuleWasDone && mCanMarkDone && !mTestRunFailed) {
+            // Only mark module done if:
+            // - status of the invocation allows it (mCanMarkDone), and
+            // - module has not already been marked done, and
+            // - no test run failure has been detected
             mCurrentModuleResult.setDone(mCurrentTestNum >= mTotalTestsInModule);
         }
         if (isShardResultReporter()) {
@@ -408,7 +413,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void testRunFailed(String errorMessage) {
-        // ignore
+        mTestRunFailed = true;
     }
 
     /**
