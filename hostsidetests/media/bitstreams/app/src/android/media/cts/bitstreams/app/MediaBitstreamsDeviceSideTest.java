@@ -68,7 +68,7 @@ public class MediaBitstreamsDeviceSideTest {
 
     private static File mAppCache = InstrumentationRegistry.getContext().getExternalCacheDir();
     private static String mDeviceBitstreamsPath = InstrumentationRegistry.getArguments().getString(
-            MediaBitstreams.OPT_DEVICE_BITSTEAMS_PATH,
+            MediaBitstreams.OPT_DEVICE_BITSTREAMS_PATH,
             MediaBitstreams.DEFAULT_DEVICE_BITSTEAMS_PATH);
 
     @BeforeClass
