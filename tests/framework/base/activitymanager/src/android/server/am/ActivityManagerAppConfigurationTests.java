@@ -117,6 +117,10 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      */
     @Test
     public void testConfigurationUpdatesWhenRotatingWhileFullscreen() throws Exception {
+        if (!supportsRotation()) {
+            log("Skipping test: no rotation support");
+            return;
+        }
         setDeviceRotation(0);
         final String logSeparator = clearLogcat();
         launchActivityInStack(RESIZEABLE_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID);
