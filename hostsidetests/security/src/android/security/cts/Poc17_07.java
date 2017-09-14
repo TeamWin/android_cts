@@ -26,7 +26,7 @@ public class Poc17_07 extends SecurityTestCase {
      */
     @SecurityTest
     public void testPocBug_33863407() throws Exception {
-	enableAdbRoot(getDevice());
+        enableAdbRoot(getDevice());
         if(containsDriver(getDevice(), "/sys/kernel/debug/mdp/reg")) {
             AdbUtils.runPoc("Bug-33863407", getDevice(), 60);
         }
@@ -63,5 +63,16 @@ public class Poc17_07 extends SecurityTestCase {
         if(containsDriver(getDevice(), "/dev/ashmem")) {
             AdbUtils.runPoc("CVE-2017-8263", getDevice(), 60);
         }
+    }
+
+    /**
+     * b/34173755
+     */
+    @SecurityTest
+    public void testPocBug_34173755() throws Exception {
+        enableAdbRoot(getDevice());
+        if(containsDriver(getDevice(), "/dev/ashmem")) {
+           AdbUtils.runPoc("Bug-34173755", getDevice(), 60);
+      }
     }
 }
