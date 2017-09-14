@@ -29,4 +29,15 @@ public class Poc17_08 extends SecurityTestCase {
         enableAdbRoot(getDevice());
         AdbUtils.runPoc("Bug-36266767", getDevice(), 60);
     }
+
+    /**
+     *  b/36591162
+     */
+    @SecurityTest
+    public void testPocBug_36591162() throws Exception {
+        enableAdbRoot(getDevice());
+        if(containsDriver(getDevice(), "/dev/qce")) {
+            AdbUtils.runPoc("Bug-36591162", getDevice(), 60);
+        }
+    }
 }
