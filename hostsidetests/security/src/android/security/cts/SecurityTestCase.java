@@ -50,6 +50,14 @@ public class SecurityTestCase extends DeviceTestCase {
     }
 
     /**
+     * Allows a CTS test to pass if called after a planned reboot.
+     */
+    public void updateKernelStartTime() throws Exception {
+        kernelStartTime = System.currentTimeMillis()/1000 -
+            Integer.parseInt(getDevice().executeShellCommand("cut -f1 -d. /proc/uptime").trim());
+    }
+
+    /**
      * Takes a device and runs a root command.  There is a more robust version implemented by
      * NativeDevice, but due to some other changes it isnt trivially acessible, but I can get
      * that implementation fairly easy if we think it is a better idea.
