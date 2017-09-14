@@ -21,6 +21,10 @@ LOCAL_PACKAGE_NAME := CtsLibcoreOjTestCases
 LOCAL_STATIC_JAVA_LIBRARIES := \
     core-ojtests-public
 
+LOCAL_JAVA_LIBRARIES := testng
+
+LOCAL_DX_FLAGS := --core-library
+
 # Don't include this package in any target
 LOCAL_MODULE_TAGS := tests
 
