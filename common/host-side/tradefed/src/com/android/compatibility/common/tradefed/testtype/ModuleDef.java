@@ -82,7 +82,7 @@ public class ModuleDef implements IModuleDef {
     /**
      * Sort preparers into different lists according to their types
      *
-     * @param preparers, target preparers
+     * @param preparers target preparers
      * @throws IllegalArgumentException
      */
     protected void initializePrepareLists(List<ITargetPreparer> preparers)
@@ -115,7 +115,7 @@ public class ModuleDef implements IModuleDef {
     /**
      * Check whether required interfaces are implemented.
      *
-     * @param hasAbiReceiver, whether at lease one of the preparers is AbiReceiver
+     * @param hasAbiReceiver whether at lease one of the preparers is AbiReceiver
      * @throws IllegalArgumentException
      */
     protected void checkRequiredInterfaces(boolean hasAbiReceiver) throws IllegalArgumentException {
