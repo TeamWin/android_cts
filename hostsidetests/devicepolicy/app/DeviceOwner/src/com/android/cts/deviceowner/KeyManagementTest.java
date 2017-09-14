@@ -220,6 +220,9 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
         try {
             granted = (KeyChain.getPrivateKey(getActivity(), alias) != null);
         } catch (KeyChainException e) {
+            if (expected) {
+                e.printStackTrace();
+            }
         }
         assertEquals("Grant for alias: \"" + alias + "\"", expected, granted);
     }
