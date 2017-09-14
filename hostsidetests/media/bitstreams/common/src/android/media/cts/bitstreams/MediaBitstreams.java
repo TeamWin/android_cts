@@ -38,17 +38,21 @@ public class MediaBitstreams {
     public static final String DEFAULT_DEVICE_BITSTEAMS_PATH = "/data/local/tmp/TestVectorsIttiam";
 
     /* metric keys */
-    public static final String KEY_BITSTREAMS_FORMATS_XML = "bitstreams-formats-xml";
-    public static final String KEY_SUPPORTED_BITSTREAMS_TXT = "supported-bitstreams-txt";
-    public static final String KEY_BITSTREAMS_VALIDATION_TXT = "bitstreams-validation-txt";
-    public static final String KEY_APP_CACHE_DIR = "app-cache-dir";
-    public static final String KEY_ERR_MSG = "err-msg";
+    public static final String KEY_BITSTREAMS_FORMATS_XML = "bitstreams_formats_xml";
+    public static final String KEY_SUPPORTED_BITSTREAMS_TXT = "supported_bitstreams_txt";
+    public static final String KEY_BITSTREAMS_VALIDATION_TXT = "bitstreams_validation_txt";
+    public static final String KEY_APP_CACHE_DIR = "app_cache_dir";
+    public static final String KEY_ERR_MSG = "err_msg";
+    public static final String KEY_PATH = "path";
+    public static final String KEY_CODEC_NAME = "codec_name";
+    public static final String KEY_STATUS = "status";
 
     /* constants */
     public static final String K_MODULE = "CtsMediaBitstreamsTestCases";
     public static final String K_BITSTREAMS_LIST_TXT = "bitstreamsFile.txt";
     public static final String K_TEST_GET_SUPPORTED_BITSTREAMS = "testGetSupportedBitstreams";
     public static final String K_NATIVE_CRASH = "native crash";
+    public static final String K_UNSUPPORTED = "unsupported";
 
     public static final String DYNAMIC_CONFIG_XML = "DynamicConfig.xml";
     public static final String DYNAMIC_CONFIG = "dynamicConfig";

@@ -21,6 +21,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.media.MediaCodec;
+import android.media.MediaCodecInfo;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.cts.bitstreams.MediaBitstreams;
@@ -161,12 +162,18 @@ public class MediaBitstreamsDeviceSideTest {
                 }
 
                 MediaFormat format = parseTrackFormat(formatStr);
-                if (!MediaUtils.checkDecoderForFormat(format)) {
-                    continue;
-                }
+                String mime = format.getString(MediaFormat.KEY_MIME);
+                String[] decoders = MediaUtils.getDecoderNamesForMime(mime);
 
                 ps.println(path);
+                ps.println(decoders.length);
+                for (String name : decoders) {
+                    ps.println(name);
+                    ps.println(MediaUtils.supports(name, format));
+                }
+
             }
+
             ps.flush();
         }
     }
