@@ -63,10 +63,10 @@ final class Helper {
     static final String ID_LOGIN = "login";
     static final String ID_OUTPUT = "output";
 
-    /** Pass to {@link #setOrientation(int)} to change the display to portrait mode */
+    /** Pass to {@link #setOrientation(UiBot, int)} to change the display to portrait mode */
     public static int PORTRAIT = 0;
 
-    /** Pass to {@link #setOrientation(int)} to change the display to landscape mode */
+    /** Pass to {@link #setOrientation(UiBot, int)} to change the display to landscape mode */
     public static int LANDSCAPE = 1;
 
     /**
@@ -98,6 +98,11 @@ final class Helper {
      * Timeout (in milliseconds) for UI operations. Typically used by {@link UiBot}.
      */
     static final int UI_TIMEOUT_MS = 2000;
+
+    /**
+     * Timeout (in milliseconds) for changing the screen orientation.
+     */
+    static final int UI_SCREEN_ORIENTATION_TIMEOUT_MS = 10000;
 
     /**
      * Time to wait in between retries
@@ -613,9 +618,9 @@ final class Helper {
     /**
      * Prevents the screen to rotate by itself
      */
-    public static void disableAutoRotation() {
+    public static void disableAutoRotation(UiBot uiBot) {
         runShellCommand(ACCELLEROMETER_CHANGE, 0);
-        setOrientation(PORTRAIT);
+        setOrientation(uiBot, PORTRAIT);
     }
 
     /**
@@ -631,8 +636,24 @@ final class Helper {
      *
      * @param value {@link #PORTRAIT} or {@link #LANDSCAPE};
      */
-    public static void setOrientation(int value) {
-        runShellCommand(ORIENTATION_CHANGE, value);
+    public static void setOrientation(UiBot uiBot, int value) {
+        long startTime = System.currentTimeMillis();
+
+        while (System.currentTimeMillis() - startTime < UI_SCREEN_ORIENTATION_TIMEOUT_MS) {
+            runShellCommand(ORIENTATION_CHANGE, value);
+            final int actualValue = uiBot.getOrientation();
+            if (actualValue == value) {
+                return;
+            }
+            Log.d(TAG, "setOrientation(): sleeping until " + actualValue + " == " + value);
+            try {
+                Thread.sleep(RETRY_MS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        throw new RetryableException("Screen orientation didn't change to %d in %d ms", value,
+                UI_SCREEN_ORIENTATION_TIMEOUT_MS);
     }
 
     /**
@@ -640,7 +661,7 @@ final class Helper {
      *
      * @return The pid of the process
      */
-    public static int getOutOfProcessPid(@NonNull String processName) throws InterruptedException {
+    public static int getOutOfProcessPid(@NonNull String processName) {
         long startTime = System.currentTimeMillis();
 
         while (System.currentTimeMillis() - startTime < UI_TIMEOUT_MS) {
@@ -654,7 +675,11 @@ final class Helper {
                 }
             }
 
-            Thread.sleep(RETRY_MS);
+            try {
+                Thread.sleep(RETRY_MS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         }
 
         throw new IllegalStateException("process not found");
