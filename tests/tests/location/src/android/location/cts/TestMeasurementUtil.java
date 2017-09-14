@@ -358,6 +358,7 @@ public final class TestMeasurementUtil {
                         "1 <= svid <= 24 || 93 <= svid <= 106",
                         svidValue,
                         (svid >= 1 && svid <= 24) || (svid >= 93 && svid <= 106));
+                break;
             case GnssStatus.CONSTELLATION_QZSS:
                 softAssert.assertTrue("svid: Space Vehicle ID. Constellation type " +
                                 "= CONSTELLATION_QZSS",
