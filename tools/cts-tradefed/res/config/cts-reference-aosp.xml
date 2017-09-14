@@ -31,8 +31,8 @@
     <!-- Radio system of a reference AOSP system image is not checked -->
     <option name="compatibility:exclude-filter" value="CtsTelephonyTestCases" />
     <option name="compatibility:exclude-filter" value="CtsTelephony2TestCases" />
-    <option name="compatibility:exclude-filter" value="CtsIncidentHostTestCases com.android.server.cts.PackageIncidentTest#testPackageServiceDump" />
     <option name="compatibility:exclude-filter" value="CtsAppTestCases android.app.cts.SystemFeaturesTest#testLocationFeatures" />
+    <option name="compatibility:exclude-filter" value="CtsIncidentHostTestCases com.android.server.cts.PackageIncidentTest#testPackageServiceDump" />
 
     <!-- Exclude telephony related testcases -->
     <option name="compatibility:exclude-filter" value="CtsCarrierApiTestCases android.carrierapi.cts.CarrierApiTest#testGetIccAuthentication" />
@@ -53,6 +53,10 @@
     <option name="compatibility:exclude-filter" value="CtsUsageStatsTestCases android.app.usage.cts.NetworkUsageStatsTest#testTagDetails" />
     <option name="compatibility:exclude-filter" value="CtsUsageStatsTestCases android.app.usage.cts.NetworkUsageStatsTest#testUidDetails" />
     <option name="compatibility:exclude-filter" value="CtsUsageStatsTestCases android.app.usage.cts.NetworkUsageStatsTest#testUserSummary" />
+
+    <!-- Exclude not applicable testcases-->
+    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases" />
+    <option name="compatibility:exclude-filter" value="CtsOsTestCases android.os.cts.UsbDebuggingTest#testUsbDebugging" />
 
     <!--
         Exclude Webkit related testcases
@@ -85,7 +89,6 @@
     <option name="compatibility:exclude-filter" value="CtsContentTestCases android.content.cts.AvailableIntentsTest#testVoiceCommand" />
     <option name="compatibility:exclude-filter" value="CtsContentTestCases android.content.cts.AvailableIntentsTest#testVoiceSearchHandsFree" />
     <option name="compatibility:exclude-filter" value="CtsPermission2TestCases android.permission2.cts.PrivappPermissionsTest#testPrivappPermissionsEnforcement" />
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.IntentTest#shouldNotFindUnexpectedIntents" />
     <option name="compatibility:exclude-filter" value="CtsVideoTestCases android.video.cts.VideoEncoderDecoderTest#testVp8Other0Qual1920x1080" />
 
 </configuration>
