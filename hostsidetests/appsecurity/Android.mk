@@ -23,6 +23,8 @@ LOCAL_MODULE := CtsAppSecurityTests
 
 LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed-prebuilt
 
+LOCAL_JAVA_RESOURCE_DIRS := res
+
 LOCAL_CTS_TEST_PACKAGE := android.tests.appsecurity
 
 include $(BUILD_CTS_HOST_JAVA_LIBRARY)
