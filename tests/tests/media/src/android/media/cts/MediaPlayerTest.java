@@ -1841,6 +1841,14 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     }
 
     public void testChangeTimedTextTrack() throws Throwable {
+        testChangeTimedTextTrackWithSpeed(1.0f);
+    }
+
+    public void testChangeTimedTextTrackFast() throws Throwable {
+        testChangeTimedTextTrackWithSpeed(2.0f);
+    }
+
+    private void testChangeTimedTextTrackWithSpeed(float speed) throws Throwable {
         testTimedText(R.raw.testvideo_with_2_timedtext_tracks, 2,
                 new int[] {R.raw.test_subtitle1_srt, R.raw.test_subtitle2_srt},
                 new VerifyAndSignalTimedText(),
@@ -1851,6 +1859,10 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
                         mOnTimedTextCalled.reset();
 
                         mMediaPlayer.start();
+                        if (speed != 1.0f) {
+                            mMediaPlayer.setPlaybackParams(new PlaybackParams().setSpeed(speed));
+                        }
+
                         assertTrue(mMediaPlayer.isPlaying());
 
                         // Waits until at least two subtitles are fired. Timeout is 2.5 sec.
