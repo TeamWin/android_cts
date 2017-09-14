@@ -16,7 +16,6 @@
 
 package android.cts.backup;
 
-import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
 
 import static org.junit.Assume.assumeTrue;
@@ -29,8 +28,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.Scanner;
 
 /**
@@ -38,7 +35,6 @@ import java.util.Scanner;
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public abstract class BaseBackupHostSideTest extends CompatibilityHostTestBase {
-
     /** Value of PackageManager.FEATURE_BACKUP */
     private static final String FEATURE_BACKUP = "android.software.backup";
 
@@ -46,25 +42,16 @@ public abstract class BaseBackupHostSideTest extends CompatibilityHostTestBase {
             "android/com.android.internal.backup.LocalTransport";
 
     private boolean mIsBackupSupported;
-    private boolean mWasBackupEnabled;
-    private String mOldTransport;
 
     @Before
     public void setUp() throws DeviceNotAvailableException, Exception {
         mIsBackupSupported = mDevice.hasFeature("feature:" + FEATURE_BACKUP);
         assumeTrue(mIsBackupSupported);
-        // Enable backup and select local backup transport
-        assertTrue("LocalTransport should be available.", hasBackupTransport(LOCAL_TRANSPORT));
-        mWasBackupEnabled = enableBackup(true);
-        mOldTransport = setBackupTransport(LOCAL_TRANSPORT);
     }
 
     @After
     public void tearDown() throws Exception {
-        if (mIsBackupSupported) {
-            setBackupTransport(mOldTransport);
-            enableBackup(mWasBackupEnabled);
-        }
+        // Not deleting to avoid breaking the tests calling super.tearDown()
     }
 
     /**
@@ -125,42 +112,28 @@ public abstract class BaseBackupHostSideTest extends CompatibilityHostTestBase {
         assertTrue("Restore not successful", restoreOutput.contains("restoreFinished: 0"));
     }
 
-    // Copied over from BackupQuotaTest
-    private boolean enableBackup(boolean enable) throws Exception {
-        boolean previouslyEnabled;
-        String output = mDevice.executeShellCommand("bmgr enabled");
-        Pattern pattern = Pattern.compile("^Backup Manager currently (enabled|disabled)$");
-        Matcher matcher = pattern.matcher(output.trim());
-        if (matcher.find()) {
-            previouslyEnabled = "enabled".equals(matcher.group(1));
-        } else {
-            throw new RuntimeException("non-parsable output setting bmgr enabled: " + output);
-        }
-
-        mDevice.executeShellCommand("bmgr enable " + enable);
-        return previouslyEnabled;
+    protected void startActivityInPackageAndWait(String packageName, String className)
+            throws DeviceNotAvailableException {
+        mDevice.executeShellCommand(String.format(
+                "am start -W -a android.intent.action.MAIN -n %s/%s.%s", packageName,
+                packageName,
+                className));
     }
 
-    // Copied over from BackupQuotaTest
-    private String setBackupTransport(String transport) throws Exception {
-        String output = mDevice.executeShellCommand("bmgr transport " + transport);
-        Pattern pattern = Pattern.compile("\\(formerly (.*)\\)$");
-        Matcher matcher = pattern.matcher(output);
-        if (matcher.find()) {
-            return matcher.group(1);
-        } else {
-            throw new RuntimeException("non-parsable output setting bmgr transport: " + output);
-        }
+    /**
+     * Clears backup data stored in Local Transport for a package.
+     * NB: 'bmgr wipe' does not produce any useful output if the package or transport not found,
+     * so we cannot really check the success of the operation
+      */
+    protected void clearBackupDataInLocalTransport(String packageName)
+            throws DeviceNotAvailableException {
+        mDevice.executeShellCommand(String.format("bmgr wipe %s %s", LOCAL_TRANSPORT, packageName));
     }
 
-    // Copied over from BackupQuotaTest
-    private boolean hasBackupTransport(String transport) throws Exception {
-        String output = mDevice.executeShellCommand("bmgr list transports");
-        for (String t : output.split(" ")) {
-            if (transport.equals(t.trim())) {
-                return true;
-            }
-        }
-        return false;
+    /**
+     * Clears package data
+     */
+    protected void clearPackageData(String packageName) throws DeviceNotAvailableException {
+        mDevice.executeShellCommand(String.format("pm clear %s", packageName));
     }
 }
