@@ -2550,7 +2550,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="device_owner_reenable_statusbar_button">Reenable status bar</string>
     <string name="device_owner_disable_keyguard_test">Disable keyguard</string>
     <string name="device_owner_disable_keyguard_test_info">
-            Note that any device passwords that you might have set will be deleted during this test.\n
+            Before running this test, please make sure you have not set any device lockscreen password.\n
             Please press the below button to disable the keyguard. Press the power button on your device to
             switch off the screen. Then press the power button to switch the screen back on and verify that
             no keyguard was shown.\n
@@ -2560,6 +2560,7 @@ You should be prompted to select credentials; choose the ones you just installed
     </string>
     <string name="device_owner_disable_keyguard_button">Disable keyguard</string>
     <string name="device_owner_reenable_keyguard_button">Reenable keyguard</string>
+    <string name="device_owner_lockscreen_secure">Please remove lockscreen password</string>
     <string name="device_profile_owner_permission_lockdown_test">Permissions lockdown</string>
     <string name="device_profile_owner_permission_lockdown_test_instructions">
             Select each of the three grant states for the permission shown below in turn.\n
