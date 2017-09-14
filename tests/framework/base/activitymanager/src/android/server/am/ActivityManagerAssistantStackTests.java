@@ -70,6 +70,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
 
     @Test
     public void testAssistantStackZOrder() throws Exception {
+        if (!supportsPip() || !supportsSplitScreenMultiWindow()) return;
         // Launch a pinned stack task
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
         mAmWmState.waitForValidState(PIP_ACTIVITY, PINNED_STACK_ID);
@@ -103,6 +104,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
 
     @Test
     public void testAssistantStackLaunchNewTaskWithDockedStack() throws Exception {
+        if (!supportsSplitScreenMultiWindow()) return;
         // Dock a task
         launchActivity(TEST_ACTIVITY);
         launchActivityInDockStack(DOCKED_ACTIVITY);
@@ -203,17 +205,18 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
 
         // Launch a fullscreen and docked app and then launch the assistant and check to see that it
         // is also visible
-        removeStacks(ASSISTANT_STACK_ID);
-        launchActivityInDockStack(DOCKED_ACTIVITY);
-        launchActivity(TEST_ACTIVITY);
-        mAmWmState.assertContainsStack("Must contain docked stack.", DOCKED_STACK_ID);
-        launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
-                EXTRA_IS_TRANSLUCENT, String.valueOf(true));
-        mAmWmState.waitForValidState(TRANSLUCENT_ASSISTANT_ACTIVITY, ASSISTANT_STACK_ID);
-        assertAssistantStackExists();
-        mAmWmState.assertVisibility(DOCKED_ACTIVITY, true);
-        mAmWmState.assertVisibility(TEST_ACTIVITY, true);
-
+        if (supportsSplitScreenMultiWindow()) {
+            removeStacks(ASSISTANT_STACK_ID);
+            launchActivityInDockStack(DOCKED_ACTIVITY);
+            launchActivity(TEST_ACTIVITY);
+            mAmWmState.assertContainsStack("Must contain docked stack.", DOCKED_STACK_ID);
+            launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
+                    EXTRA_IS_TRANSLUCENT, String.valueOf(true));
+            mAmWmState.waitForValidState(TRANSLUCENT_ASSISTANT_ACTIVITY, ASSISTANT_STACK_ID);
+            assertAssistantStackExists();
+            mAmWmState.assertVisibility(DOCKED_ACTIVITY, true);
+            mAmWmState.assertVisibility(TEST_ACTIVITY, true);
+        }
         disableAssistant();
     }
 
