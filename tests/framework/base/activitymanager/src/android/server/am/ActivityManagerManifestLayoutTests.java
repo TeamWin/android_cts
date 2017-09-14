@@ -35,7 +35,7 @@ import java.util.List;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases ActivityManagerManifestLayoutTests
+ * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.ActivityManagerManifestLayoutTests
  */
 public class ActivityManagerManifestLayoutTests extends ActivityManagerTestBase {
 

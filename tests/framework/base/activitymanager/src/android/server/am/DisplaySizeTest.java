@@ -28,7 +28,7 @@ import org.junit.Test;
  * an unsupported smallest width.
  *
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases DisplaySizeTest
+ * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.DisplaySizeTest
  */
 public class DisplaySizeTest extends ActivityManagerTestBase {
     private static final String DENSITY_PROP_DEVICE = "ro.sf.lcd_density";

@@ -29,7 +29,7 @@ import java.io.FileInputStream;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases ActivityManagerAmProfileTests
+ * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.ActivityManagerAmProfileTests
  *
  * Please talk to Android Studio team first if you want to modify or delete these tests.
  */

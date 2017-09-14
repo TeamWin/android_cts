@@ -17,14 +17,18 @@
 package android.systemui.cts;
 
 import android.app.ActivityManager;
+import android.app.UiAutomation;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
+import android.view.InputDevice;
 import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -98,9 +102,30 @@ public class LightBarTests extends ActivityInstrumentationTestCase2<LightBarActi
         requestLightBars(Color.RED /* background */);
         Thread.sleep(1000);
 
+        // Inject a cancelled interaction with the nav bar to ensure it is at full opacity.
+        int x = getActivity().getWidth() / 2;
+        int y = getActivity().getBottom() + 10;
+        injectCanceledTap(x, y);
+        Thread.sleep(1000);
+
         Bitmap bitmap = takeNavigationBarScreenshot();
         Stats s = evaluateLightBarBitmap(bitmap, Color.RED /* background */);
         assertLightStats(bitmap, s);
+    }
+
+    private void injectCanceledTap(int x, int y) {
+        long downTime = SystemClock.uptimeMillis();
+        injectEvent(MotionEvent.ACTION_DOWN, x, y, downTime);
+        injectEvent(MotionEvent.ACTION_CANCEL, x, y, downTime);
+    }
+
+    private void injectEvent(int action, int x, int y, long downTime) {
+        final UiAutomation automation = getInstrumentation().getUiAutomation();
+        final long eventTime = SystemClock.uptimeMillis();
+        MotionEvent event = MotionEvent.obtain(downTime, eventTime, action, x, y, 0);
+        event.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+        assertTrue(automation.injectInputEvent(event, true));
+        event.recycle();
     }
 
     private boolean hasVirtualNavigationBar() {

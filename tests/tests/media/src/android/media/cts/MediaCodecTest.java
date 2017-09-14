@@ -1757,6 +1757,11 @@ public class MediaCodecTest extends AndroidTestCase {
      * <br> getInputBuffer() after the failed queueSecureInputBuffer() succeeds.
      */
     public void testCryptoError() throws Exception {
+        if (!supportsCodec(MIME_TYPE, true)) {
+            Log.i(TAG, "No encoder found for mimeType= " + MIME_TYPE);
+            return;
+        }
+
         MediaDrm drm = new MediaDrm(CLEARKEY_SCHEME_UUID);
         byte[] sessionId = drm.openSession();
         MediaCrypto crypto = new MediaCrypto(CLEARKEY_SCHEME_UUID, new byte[0]);
