@@ -16,10 +16,11 @@
 
 package android.location.cts;
 
-
+import android.location.cts.pseudorange.PseudorangePositionVelocityFromRealTimeEvents;
 import android.location.GnssMeasurement;
 import android.location.GnssMeasurementsEvent;
 import android.location.GnssStatus;
+import android.location.Location;
 import android.util.Log;
 import com.android.compatibility.common.util.CddTest;
 import java.util.ArrayList;
@@ -38,6 +39,7 @@ public class GnssPseudorangeVerificationTest extends GnssTestCase {
   private static final int MEASUREMENT_EVENTS_TO_COLLECT_COUNT = 10;
   private static final int MIN_SATELLITES_REQUIREMENT = 4;
   private static final double SECONDS_PER_NANO = 1.0e-9;
+  private static final double POSITION_THRESHOLD_IN_DEGREES = 0.003; // degrees (~= 300 meters)
   // GPS/GLONASS: according to http://cdn.intechopen.com/pdfs-wm/27712.pdf, the pseudorange in time
   // is 65-83 ms, which is 18 ms range.
   // GLONASS: orbit is a bit closer than GPS, so we add 0.003ms to the range, hence deltaiSeconds
@@ -96,7 +98,7 @@ public class GnssPseudorangeVerificationTest extends GnssTestCase {
     mTestLocationManager.requestLocationUpdates(mLocationListener);
 
     mMeasurementListener = new TestGnssMeasurementListener(TAG,
-                                                MEASUREMENT_EVENTS_TO_COLLECT_COUNT);
+                                                MEASUREMENT_EVENTS_TO_COLLECT_COUNT, true);
     mTestLocationManager.registerGnssMeasurementCallback(mMeasurementListener);
 
     boolean success = mLocationListener.await();
@@ -219,6 +221,85 @@ public class GnssPseudorangeVerificationTest extends GnssTestCase {
           String.valueOf(deltaiSeconds),
           (deltaiSeconds >= 0.0 && deltaiSeconds <= threshold));
     }
+  }
 
+  /*
+ * Use pseudorange calculation library to calculate position then compare to location from
+ * Location Manager.
+ */
+  public void testPseudoPosition() throws Exception {
+    mLocationListener = new TestLocationListener(LOCATION_TO_COLLECT_COUNT);
+    mTestLocationManager.requestLocationUpdates(mLocationListener);
+
+    mMeasurementListener = new TestGnssMeasurementListener(TAG,
+                                     MEASUREMENT_EVENTS_TO_COLLECT_COUNT, true);
+    mTestLocationManager.registerGnssMeasurementCallback(mMeasurementListener);
+
+    boolean success = mLocationListener.await();
+
+    List<Location> receivedLocationList = mLocationListener.getReceivedLocationList();
+    assertTrue("Time elapsed without getting enough location fixes."
+            + " Possibly, the test has been run deep indoors."
+            + " Consider retrying test outdoors.",
+        success && receivedLocationList.size() > 0);
+    Location locationFromApi = receivedLocationList.get(0);
+
+    // Since we are checking the eventCount later, there is no need to check the return value here.
+    mMeasurementListener.await();
+
+    List<GnssMeasurementsEvent> events = mMeasurementListener.getEvents();
+    int eventCount = events.size();
+    Log.i(TAG, "Number of Gps Event received = " + eventCount);
+    int gnssYearOfHardware = mTestLocationManager.getLocationManager().getGnssYearOfHardware();
+    if (eventCount == 0 && gnssYearOfHardware <= MIN_HARDWARE_YEAR_MEASUREMENTS_REQUIRED) {
+      return;
+    }
+
+    Log.i(TAG, "This is a device from 2017 or later.");
+    assertTrue("GnssMeasurementEvent count: expected > 0, received = " + eventCount,
+        eventCount > 0);
+
+    PseudorangePositionVelocityFromRealTimeEvents mPseudorangePositionFromRealTimeEvents
+        = new PseudorangePositionVelocityFromRealTimeEvents();
+    mPseudorangePositionFromRealTimeEvents.setReferencePosition(
+        (int) (locationFromApi.getLatitude() * 1E7),
+        (int) (locationFromApi.getLongitude() * 1E7),
+        (int) (locationFromApi.getAltitude()  * 1E7));
+
+    Log.i(TAG, "Location from Location Manager"
+        + ", Latitude:" + locationFromApi.getLatitude()
+        + ", Longitude:" + locationFromApi.getLongitude()
+        + ", Altitude:" + locationFromApi.getAltitude());
+
+
+    int totalCalculatedLocationCnt = 0;
+    for(GnssMeasurementsEvent event : events){
+      // In mMeasurementListener.getEvents() we already filtered out events, at this point every
+      // event will have at least 4 satellites in one constellation.
+      mPseudorangePositionFromRealTimeEvents.computePositionVelocitySolutionsFromRawMeas(event);
+      double[] calculatedLocation =
+          mPseudorangePositionFromRealTimeEvents.getPositionSolutionLatLngDeg();
+      // it will return NaN when there is no enough measurements to calculate the position
+      if (Double.isNaN(calculatedLocation[0])) {
+        continue;
+      }
+      else {
+        totalCalculatedLocationCnt ++;
+        Log.i(TAG, "Calculated Location"
+            + ", Latitude:" + calculatedLocation[0]
+            + ", Longitude:" + calculatedLocation[1]
+            + ", Altitude:" + calculatedLocation[2]);
+
+        assertTrue("Latitude should be close to " + locationFromApi.getLatitude(),
+            Math.abs(calculatedLocation[0] - locationFromApi.getLatitude())
+                < POSITION_THRESHOLD_IN_DEGREES);
+        assertTrue("Longitude should be close to" + locationFromApi.getLongitude(),
+            Math.abs(calculatedLocation[1] - locationFromApi.getLongitude())
+                < POSITION_THRESHOLD_IN_DEGREES);
+        //TODO: Check for the altitude and position uncertainty.
+      }
+    }
+    assertTrue("Calculated Location Count should be greater than 0.",
+        totalCalculatedLocationCnt > 0);
   }
 }
