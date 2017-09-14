@@ -396,23 +396,24 @@ public class TabHostTest {
         assertEquals(TAG_TAB2, tabHost.getCurrentTabTag());
     }
 
-    @UiThreadTest
     @Test
     public void testKeyboardNavigation() throws Throwable {
-        mActivity.setContentView(R.layout.tabhost_focus);
-        TabHost tabHost = (TabHost) mActivity.findViewById(android.R.id.tabhost);
-        tabHost.setup();
-        TabSpec spec = tabHost.newTabSpec("Tab 1");
-        spec.setContent(R.id.tab1);
-        spec.setIndicator("Tab 1");
-        tabHost.addTab(spec);
-        spec = tabHost.newTabSpec("Tab 2");
-        spec.setContent(R.id.tab2);
-        spec.setIndicator("Tab 2");
-        tabHost.addTab(spec);
-        View topBut = mActivity.findViewById(R.id.before_button);
-        topBut.requestFocus();
-        assertTrue(topBut.isFocused());
+        mActivityRule.runOnUiThread(() -> {
+            mActivity.setContentView(R.layout.tabhost_focus);
+            TabHost tabHost = mActivity.findViewById(android.R.id.tabhost);
+            tabHost.setup();
+            TabSpec spec = tabHost.newTabSpec("Tab 1");
+            spec.setContent(R.id.tab1);
+            spec.setIndicator("Tab 1");
+            tabHost.addTab(spec);
+            spec = tabHost.newTabSpec("Tab 2");
+            spec.setContent(R.id.tab2);
+            spec.setIndicator("Tab 2");
+            tabHost.addTab(spec);
+            View topBut = mActivity.findViewById(R.id.before_button);
+            topBut.requestFocus();
+            assertTrue(topBut.isFocused());
+        });
         mInstrumentation.waitForIdleSync();
         mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_TAB);
         View tabs = mActivity.findViewById(android.R.id.tabs);
@@ -435,7 +436,7 @@ public class TabHostTest {
         mActivityRule.runOnUiThread(() -> firstTab.requestFocus());
         mInstrumentation.waitForIdleSync();
         sendKeyComboSync(KeyEvent.KEYCODE_TAB, shiftKey);
-        assertTrue(topBut.isFocused());
+        assertTrue(mActivity.findViewById(R.id.before_button).isFocused());
     }
 
     private class MyTabContentFactoryText implements TabHost.TabContentFactory {
