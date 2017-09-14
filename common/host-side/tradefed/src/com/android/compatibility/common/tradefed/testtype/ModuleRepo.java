@@ -64,7 +64,9 @@ public class ModuleRepo implements IModuleRepo {
     private static final String CONFIG_EXT = ".config";
     private static final Map<String, Integer> ENDING_MODULES = new HashMap<>();
     static {
-        ENDING_MODULES.put("CtsMonkeyTestCases", 1);
+      // b/62732298 put testFullDisk in the end to accommodate CTSMediaStressTest temporally
+      ENDING_MODULES.put("CtsAppSecurityHostTestCases", 1);
+      ENDING_MODULES.put("CtsMonkeyTestCases", 2);
     }
     // Synchronization objects for Token Modules.
     private int mInitCount = 0;
