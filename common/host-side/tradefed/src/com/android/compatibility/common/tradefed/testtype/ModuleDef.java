@@ -259,6 +259,13 @@ public class ModuleDef implements IModuleDef {
         moduleFinisher.finish();
 
         // Tear down
+        runPreparerTeardowns();
+    }
+
+    /**
+     * Run preparers' teardown functions.
+     */
+    protected void runPreparerTeardowns() throws DeviceNotAvailableException {
         for (ITargetCleaner cleaner : mCleaners) {
             CLog.d("Cleaner: %s", cleaner.getClass().getSimpleName());
             cleaner.tearDown(mDevice, mBuild, null);
@@ -266,7 +273,7 @@ public class ModuleDef implements IModuleDef {
     }
 
     /**
-     * Run preparer setup functions.
+     * Run preparers' setup functions.
      *
      * @throws DeviceNotAvailableException
      */
