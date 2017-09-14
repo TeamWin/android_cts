@@ -279,7 +279,7 @@ public class MediaBitstreamsTest implements IDeviceTest, IBuildReceiver, IAbiRec
                 MetricsReportLog report = new MetricsReportLog(
                         mBuildHelper.getBuildInfo(), mAbi.getName(),
                         String.format("%s#%s", className, mMethodName),
-                        getClass().getSimpleName(), path);
+                        getClass().getSimpleName(), path.replaceAll("[./]", "_"));
 
                 boolean failedEarly;
                 String errMsg;
