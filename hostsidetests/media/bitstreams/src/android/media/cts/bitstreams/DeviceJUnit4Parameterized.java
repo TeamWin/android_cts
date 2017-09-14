@@ -26,6 +26,7 @@ import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IAbiReceiver;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IDeviceTest;
+import com.android.tradefed.testtype.ISetOptionReceiver;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -39,7 +40,7 @@ import org.junit.runners.Parameterized;
  * Custom JUnit4 parameterized test runner that also accommodate {@link IDeviceTest}.
  */
 public class DeviceJUnit4Parameterized extends Parameterized
-        implements IDeviceTest, IBuildReceiver, IAbiReceiver {
+        implements IDeviceTest, IBuildReceiver, IAbiReceiver, ISetOptionReceiver {
 
     @Option(
         name = HostTest.SET_OPTION_NAME,
