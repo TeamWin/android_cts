@@ -14,11 +14,12 @@
  * limitations under the License
  */
 
-package android.backup.cts.backuprestoreapp;
+package android.cts.backup.keyvaluerestoreapp;
 
 import android.app.backup.BackupAgentHelper;
 
-public class CtsBackupRestoreBackupAgent extends BackupAgentHelper {
+public class KeyValueBackupAgent extends BackupAgentHelper {
+
     private static final String KEY_BACKUP_TEST_PREFS_PREFIX = "backup-test-prefs";
     private static final String KEY_BACKUP_TEST_FILES_PREFIX = "backup-test-files";
 
@@ -26,8 +27,8 @@ public class CtsBackupRestoreBackupAgent extends BackupAgentHelper {
     public void onCreate() {
         super.onCreate();
         addHelper(KEY_BACKUP_TEST_PREFS_PREFIX,
-                KeyValueBackupRandomDataActivity.getSharedPreferencesBackupHelper(this));
+                KeyValueBackupRestoreTest.getSharedPreferencesBackupHelper(this));
         addHelper(KEY_BACKUP_TEST_FILES_PREFIX,
-                KeyValueBackupRandomDataActivity.getFileBackupHelper(this));
+                KeyValueBackupRestoreTest.getFileBackupHelper(this));
     }
 }
