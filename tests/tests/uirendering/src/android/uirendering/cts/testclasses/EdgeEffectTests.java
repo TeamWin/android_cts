@@ -30,6 +30,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.support.test.filters.LargeTest;
 import android.support.test.filters.MediumTest;
+import android.support.test.filters.Suppress;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.uirendering.cts.R;
@@ -92,6 +93,8 @@ public class EdgeEffectTests {
                 name.getMethodName(), "EdgeEffect doesn't match expected");
     }
 
+    //b/63010438
+    @Suppress
     @Test
     public void testOnPull() {
         assertEdgeEffect(edgeEffect -> {
@@ -99,6 +102,8 @@ public class EdgeEffectTests {
         }, R.drawable.edge_effect_red);
     }
 
+    //b/63010438
+    @Suppress
     @Test
     public void testSetSize() {
         assertEdgeEffect(edgeEffect -> {
@@ -107,6 +112,8 @@ public class EdgeEffectTests {
         }, R.drawable.edge_effect_size);
     }
 
+    //b/63010438
+    @Suppress
     @Test
     public void testSetColor() {
         assertEdgeEffect(edgeEffect -> {
@@ -115,6 +122,8 @@ public class EdgeEffectTests {
         }, R.drawable.edge_effect_green);
     }
 
+    //b/63010438
+    @Suppress
     @Test
     public void testOnPullWithDisplacement() {
         assertEdgeEffect(edgeEffect -> {
