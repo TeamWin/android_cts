@@ -16,25 +16,17 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.backup.cts.backuprestoreapp">
+    package="android.cts.backup.keyvaluerestoreapp">
 
     <application
-        android:backupAgent="CtsBackupRestoreBackupAgent">
+        android:backupAgent=".KeyValueBackupAgent"
+        android:killAfterRestore="false" >
+
         <uses-library android:name="android.test.runner" />
-
-        <activity
-            android:name=".KeyValueBackupRandomDataActivity"
-            android:launchMode="singleInstance">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
-
     </application>
 
     <instrumentation
         android:name="android.support.test.runner.AndroidJUnitRunner"
-        android:targetPackage="android.backup.cts.backuprestoreapp" />
+        android:targetPackage="android.cts.backup.keyvaluerestoreapp" />
 
 </manifest>
