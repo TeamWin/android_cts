@@ -128,4 +128,14 @@ public class Poc17_07 extends SecurityTestCase {
           AdbUtils.runPocNoOutput("Bug-35139833", getDevice(), 60);
         }
     }
+
+    /**
+     *  b/35468048
+     */
+    @SecurityTest
+    public void testPocBug_35468048() throws Exception {
+        enableAdbRoot(getDevice());
+        infoDisclosure("Bug-35468048", getDevice(), 60, "[\\s\\n\\S]*read succeeded: [0-9]+" +
+            " bytes[\\s][\\S]{3} content: 0x[0-9]+. 0x[0-9]+[\\s\\n\\S]*", true );
+    }
 }
