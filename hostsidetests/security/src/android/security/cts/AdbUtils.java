@@ -137,7 +137,8 @@ public class AdbUtils {
      * @return boolean returns false if the test fails, otherwise returns true
      **/
     public static boolean detectInformationDisclosure(
-        String pocName, ITestDevice device, int timeout, String pattern) throws Exception {
+        String pocName, ITestDevice device, int timeout,
+        String pattern) throws Exception {
 
            String pocOutput = runPoc(pocName, device, timeout);
            if (Pattern.matches(pattern, pocOutput))
