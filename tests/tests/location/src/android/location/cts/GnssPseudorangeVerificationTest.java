@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.HashMap;
 
 /**
  * Test computing and verifying the pseudoranges based on the raw measurements
@@ -133,7 +134,11 @@ public class GnssPseudorangeVerificationTest extends GnssTestCase {
       TestMeasurementUtil.assertGnssClockFields(event.getClock(), softAssert, timeInNs);
 
       ArrayList<GnssMeasurement> filteredMeasurements = filterMeasurements(event.getMeasurements());
-      validatePseudorange(filteredMeasurements, softAssert, timeInNs);
+      HashMap<Integer, ArrayList<GnssMeasurement>> measurementConstellationMap =
+          groupByConstellation(filteredMeasurements);
+      for (ArrayList<GnssMeasurement> measurements : measurementConstellationMap.values()) {
+        validatePseudorange(measurements, softAssert, timeInNs);
+      }
 
       // we need at least 4 satellites to calculate the pseudorange
       if(event.getMeasurements().size() >= MIN_SATELLITES_REQUIREMENT) {
@@ -147,6 +152,19 @@ public class GnssPseudorangeVerificationTest extends GnssTestCase {
         hasEventWithEnoughMeasurements);
 
     softAssert.assertAll();
+  }
+
+  private HashMap<Integer, ArrayList<GnssMeasurement>> groupByConstellation(
+      Collection<GnssMeasurement> measurements) {
+    HashMap<Integer, ArrayList<GnssMeasurement>> measurementConstellationMap = new HashMap<>();
+    for (GnssMeasurement measurement: measurements){
+      int constellationType = measurement.getConstellationType();
+      if (!measurementConstellationMap.containsKey(constellationType)) {
+        measurementConstellationMap.put(constellationType, new ArrayList<>());
+      }
+      measurementConstellationMap.get(constellationType).add(measurement);
+    }
+    return measurementConstellationMap;
   }
 
   private ArrayList<GnssMeasurement> filterMeasurements(Collection<GnssMeasurement> measurements) {
