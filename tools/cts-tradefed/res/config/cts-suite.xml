@@ -55,6 +55,7 @@
     <!-- Include additional test metadata output. -->
     <template-include name="metadata-reporters" default="empty" />
 
+    <result_reporter class="com.android.compatibility.common.tradefed.result.ConsoleReporter" />
     <result_reporter class="com.android.compatibility.common.tradefed.result.ResultReporter" />
     <result_reporter class="com.android.tradefed.result.suite.SuiteResultReporter" />
 </configuration>
