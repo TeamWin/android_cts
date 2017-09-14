@@ -537,6 +537,10 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
+        boolean mHasAutofill = hasDeviceFeature("android.software.autofill");
+        if (!mHasAutofill) {
+          return;
+        }
         installAppAsUser(AUTOFILL_APP_APK, mUserId);
 
         executeDeviceTestMethod(".AutofillRestrictionsTest",
