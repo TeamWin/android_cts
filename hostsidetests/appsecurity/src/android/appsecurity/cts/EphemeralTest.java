@@ -194,7 +194,7 @@ public class EphemeralTest extends DeviceTestCase
             if (exposed) {
                 runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testExposedActivity", testArgs);
             } else {
-                CLog.i("Skip intent; " + dumpArgs(testArgs));
+                CLog.w("Skip intent; " + dumpArgs(testArgs));
             }
         }
     }
@@ -246,7 +246,8 @@ public class EphemeralTest extends DeviceTestCase
         if (testArgs.get("mime_type") != null) {
             command.append(" -t ").append(testArgs.get("mime_type"));
         }
-        return !"No activities found".equals(getDevice().executeShellCommand(command.toString()));
+        final String output = getDevice().executeShellCommand(command.toString()).trim();
+        return !"No activities found".equals(output);
     }
 
     private static final String dumpArgs(Map<String, String> testArgs) {
