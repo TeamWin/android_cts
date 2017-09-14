@@ -16,14 +16,18 @@
 package android.media.cts.bitstreams;
 
 import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.config.Option;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.testtype.HostTest;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IAbiReceiver;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IDeviceTest;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import org.junit.runner.Description;
 import org.junit.runner.Runner;
 import org.junit.runners.model.FrameworkMethod;
@@ -38,6 +42,12 @@ import org.junit.runners.parameterized.TestWithParameters;
  */
 public class DeviceJUnit4ClassRunnerWithParameters extends BlockJUnit4ClassRunnerWithParameters
         implements IDeviceTest, IBuildReceiver, IAbiReceiver {
+
+    @Option(
+        name = HostTest.SET_OPTION_NAME,
+        description = HostTest.SET_OPTION_DESC
+    )
+    private Set<String> mKeyValueOptions = new HashSet<>();
 
     private ITestDevice mDevice;
     private IBuildInfo mBuildInfo;
@@ -112,6 +122,7 @@ public class DeviceJUnit4ClassRunnerWithParameters extends BlockJUnit4ClassRunne
         if (testObj instanceof IAbiReceiver) {
             ((IAbiReceiver) testObj).setAbi(mAbi);
         }
+        HostTest.setOptionToLoadedObject(testObj, new ArrayList<String>(mKeyValueOptions));
         return testObj;
     }
 
