@@ -56,6 +56,7 @@ final class UiBot {
 
     private static final String RESOURCE_ID_DATASET_PICKER = "autofill_dataset_picker";
     private static final String RESOURCE_ID_SAVE_SNACKBAR = "autofill_save";
+    private static final String RESOURCE_ID_SAVE_ICON = "autofill_save_icon";
     private static final String RESOURCE_ID_SAVE_TITLE = "autofill_save_title";
     private static final String RESOURCE_ID_CONTEXT_MENUITEM = "floating_toolbar_menu_item_text";
 
@@ -356,7 +357,12 @@ final class UiBot {
                 timeout);
 
         final UiObject2 titleView = snackbar.findObject(By.res("android", RESOURCE_ID_SAVE_TITLE));
-        assertWithMessage("save title (%s)", RESOURCE_ID_SAVE_TITLE).that(titleView).isNotNull();
+        assertWithMessage("save title (%s) is not shown", RESOURCE_ID_SAVE_TITLE).that(titleView)
+                .isNotNull();
+
+        final UiObject2 iconView = snackbar.findObject(By.res("android", RESOURCE_ID_SAVE_ICON));
+        assertWithMessage("save icon (%s) is not shown", RESOURCE_ID_SAVE_ICON).that(iconView)
+                .isNotNull();
 
         final String actualTitle = titleView.getText();
         Log.d(TAG, "save title: " + actualTitle);
