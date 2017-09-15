@@ -24,6 +24,7 @@ import android.os.UserManager;
 public class ResetPasswordWithTokenTest extends BaseManagedProfileTest {
 
     private static final String PASSWORD0 = "1234";
+    // This needs to be in sync with ManagedProfileTest.RESET_PASSWORD_TEST_DEFAULT_PASSWORD
     private static final String PASSWORD1 = "123456";
 
     private static final byte[] token = "abcdefghijklmnopqrstuvwxyz0123456789".getBytes();
@@ -44,9 +45,8 @@ public class ResetPasswordWithTokenTest extends BaseManagedProfileTest {
      * to put the profile in RUNNING_LOCKED state, and will be called by the hostside logic before
      * {@link #testResetPasswordBeforeUnlock} is exercised.
      */
-    public void setupWorkProfileAndLock() {
-        assertTrue(mDevicePolicyManager.setResetPasswordToken(ADMIN_RECEIVER_COMPONENT, token));
-        assertTrue(mDevicePolicyManager.isResetPasswordTokenActive(ADMIN_RECEIVER_COMPONENT));
+    public void testSetupWorkProfileAndLock() {
+        testSetResetPasswordToken();
         // Reset password on the work profile will enable separate work challenge for it.
         assertTrue(mDevicePolicyManager.resetPasswordWithToken(ADMIN_RECEIVER_COMPONENT, PASSWORD0,
                 token, 0));
@@ -55,7 +55,7 @@ public class ResetPasswordWithTokenTest extends BaseManagedProfileTest {
                 DevicePolicyManager.PASSWORD_QUALITY_NUMERIC);
         mDevicePolicyManager.setPasswordMinimumLength(ADMIN_RECEIVER_COMPONENT, 6);
 
-        mDevicePolicyManager.lockNow(DevicePolicyManager.FLAG_EVICT_CREDENTIAL_ENCRYPTION_KEY);
+        testLockWorkProfile();
     }
 
     public void testResetPasswordBeforeUnlock() {
@@ -68,5 +68,14 @@ public class ResetPasswordWithTokenTest extends BaseManagedProfileTest {
             mDevicePolicyManager.isActivePasswordSufficient();
             fail("Did not throw expected exception.");
         } catch (IllegalStateException expected) {}
+    }
+
+    public void testSetResetPasswordToken() {
+        assertTrue(mDevicePolicyManager.setResetPasswordToken(ADMIN_RECEIVER_COMPONENT, token));
+        assertTrue(mDevicePolicyManager.isResetPasswordTokenActive(ADMIN_RECEIVER_COMPONENT));
+    }
+
+    public void testLockWorkProfile() {
+        mDevicePolicyManager.lockNow(DevicePolicyManager.FLAG_EVICT_CREDENTIAL_ENCRYPTION_KEY);
     }
 }
