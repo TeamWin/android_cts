@@ -75,6 +75,13 @@ final class UiBot {
 
     private static final String TAG = "AutoFillCtsUiBot";
 
+    /** Pass to {@link #setScreenOrientation(int)} to change the display to portrait mode */
+    public static int PORTRAIT = 0;
+
+    /** Pass to {@link #setScreenOrientation(int)} to change the display to landscape mode */
+    public static int LANDSCAPE = 1;
+
+
     private final UiDevice mDevice;
     private final String mPackageName;
     private final UiAutomation mAutoman;
@@ -535,11 +542,41 @@ final class UiBot {
     }
 
     /**
+     * Sets the the screen orientation.
+     *
+     * @param orientation typically {@link #LANDSCAPE} or {@link #PORTRAIT}.
+     *
+     * @throws RetryableException if value didn't change.
+     */
+    public void setScreenOrientation(int orientation) {
+        mAutoman.setRotation(orientation);
+
+        long startTime = System.currentTimeMillis();
+
+        while (System.currentTimeMillis() - startTime <= Helper.UI_SCREEN_ORIENTATION_TIMEOUT_MS) {
+            final int actualValue = getScreenOrientation();
+            if (actualValue == orientation) {
+                return;
+            }
+            Log.w(TAG, "setScreenOrientation(): sleeping " + Helper.RETRY_MS
+                    + "ms until orientation is " + orientation
+                    + " (instead of " + actualValue + ")");
+            try {
+                Thread.sleep(Helper.RETRY_MS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        throw new RetryableException("Screen orientation didn't change to %d in %d ms", orientation,
+                Helper.UI_SCREEN_ORIENTATION_TIMEOUT_MS);
+    }
+
+    /**
      * Gets the value of the screen orientation.
      *
-     * @return typically {@link Helper#LANDSCAPE} or {@link Helper#PORTRAIT}.
+     * @return typically {@link #LANDSCAPE} or {@link #PORTRAIT}.
      */
-    public int getOrientation() {
+    public int getScreenOrientation() {
         return mDevice.getDisplayRotation();
     }
 }
