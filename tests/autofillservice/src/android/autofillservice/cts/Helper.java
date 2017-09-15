@@ -41,6 +41,7 @@ import android.view.View;
 import android.view.ViewStructure.HtmlInfo;
 import android.view.autofill.AutofillId;
 import android.view.autofill.AutofillValue;
+import android.webkit.WebView;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -134,6 +135,20 @@ final class Helper {
 
     private static final NodeFilter TEXT_FILTER = (node, id) -> {
         return id.equals(node.getText());
+    };
+
+    private static final NodeFilter WEBVIEW_ROOT_FILTER = (node, id) -> {
+        // TODO(b/66953802): class name should be android.webkit.WebView, and form name should be
+        // inside HtmlInfo, but Chromium 61 does not implement that.
+        final String className = node.getClassName();
+        final String formName;
+        if (className.equals("android.webkit.WebView")) {
+            final HtmlInfo htmlInfo = assertHasHtmlTag(node, "form");
+            formName = getAttributeValue(htmlInfo, "name");
+        } else {
+            formName = className;
+        }
+        return id.equals(formName);
     };
 
     /**
@@ -256,6 +271,7 @@ final class Helper {
             .append(" class=").append(node.getClassName())
             .append(" text=").append(node.getText())
             .append(" class=").append(node.getClassName())
+            .append(" webDomain=").append(node.getWebDomain())
             .append(" #children=").append(childrenSize);
 
         buffer.append("\n").append(prefix)
@@ -853,6 +869,53 @@ final class Helper {
         destroyAllSessions();
         InstrumentedAutoFillService.resetStaticState();
         AuthenticationActivity.resetStaticState();
+    }
+
+    /**
+     * Asserts the node has an {@code HTMLInfo} property, with the given tag.
+     */
+    public static HtmlInfo assertHasHtmlTag(ViewNode node, String expectedTag) {
+        final HtmlInfo info = node.getHtmlInfo();
+        assertWithMessage("node doesn't have htmlInfo").that(info).isNotNull();
+        assertWithMessage("wrong tag").that(info.getTag()).isEqualTo(expectedTag);
+        return info;
+    }
+
+    /**
+     * Gets the value of an {@code HTMLInfo} attribute.
+     */
+    @Nullable
+    public static String getAttributeValue(HtmlInfo info, String attribute) {
+        for (Pair<String, String> pair : info.getAttributes()) {
+            if (pair.first.equals(attribute)) {
+                return pair.second;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Asserts a {@code HTMLInfo} has an attribute with a given value.
+     */
+    public static void assertHasAttribute(HtmlInfo info, String attribute, String expectedValue) {
+        final String actualValue = getAttributeValue(info, attribute);
+        assertWithMessage("Attribute %s not found", attribute).that(actualValue).isNotNull();
+        assertWithMessage("Wrong value for Attribute %s", attribute)
+            .that(actualValue).isEqualTo(expectedValue);
+    }
+
+    /**
+     * Finds a {@link WebView} node given its expected form name.
+     */
+    public static ViewNode findWebViewNode(AssistStructure structure, String formName) {
+        return findNodeByFilter(structure, formName, WEBVIEW_ROOT_FILTER);
+    }
+
+    /**
+     * Finds a {@link WebView} node given its expected form name.
+     */
+    public static ViewNode findWebViewNode(ViewNode node, String formName) {
+        return findNodeByFilter(node, formName, WEBVIEW_ROOT_FILTER);
     }
 
     private Helper() {
