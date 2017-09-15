@@ -32,15 +32,29 @@ I. Generating reference images (CTS maintainers only)
 Reference images are typically only generated for new API revisions. To
 generate a new set of reference images, do the following:
 
-  1. Connect one device for each DPI bucket (ldpi, xxxhdpi, etc.) that you wish
-     to generate references images for. Confirm that all devices are connected
-     with:
+  1. Obtain the emulator image for the current platform. You can either build
+     these from scratch (not recommended) via:
+
+     make PRODUCT-sdk_phone_x86_64-sdk sdk_repo -j32
+
+     Or obtain them from the sdk-repo-linux-system-images-<build-id>.zip
+     artifact from the sdk_phone_x86_64-sdk build server target.
+
+  2. Start one AVD emulator image for each DPI bucket (ldpi, xxxhdpi, etc.)
+     that you wish to generate references images for. Anecdotally, up to three
+     emulators can run reliably at the same time. Confirm that all emulators
+     are connected with:
 
      adb devices
 
-  2. Image generation occurs on all devices in parallel. Resulting sets of
-     reference images are saved in assets/<platform>/<dpi>.zip and will
-     overwrite any existing sets. Image generation may be started using:
+  3. Set up your build environment for x86_64 and build CTS:
+
+     lunch sdk_x86_64-eng && make cts -j32
+
+  2. Generate the reference images. Generation occurs on all devices in
+     parallel. Resulting sets of reference images are automatically saved in
+     assets/<platform>/<dpi>.zip and will overwrite any existing sets. Image
+     generation may be started using:
 
      ./cts/hostsidetests/theme/generate_images.sh
 
