@@ -2497,15 +2497,6 @@
                 android:resource="@xml/filepaths" />
         </provider>
 
-        <provider
-            android:name="com.android.cts.verifier.admin.DeviceAdminUninstallTestActivity$DeviceAdminApkFileProvider"
-            android:authorities="com.android.cts.verifier.admin.fileprovider"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/filepaths_admin" />
-        </provider>
-
         <activity android:name=".managedprovisioning.ByodIconSamplerActivity">
             <intent-filter>
                 <action android:name="com.android.cts.verifier.managedprovisioning.BYOD_SAMPLE_ICON" />

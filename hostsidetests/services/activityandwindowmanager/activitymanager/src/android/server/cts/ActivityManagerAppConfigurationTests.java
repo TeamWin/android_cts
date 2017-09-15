@@ -105,6 +105,10 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * Tests whether the Display sizes change when rotating the device.
      */
     public void testConfigurationUpdatesWhenRotatingWhileFullscreen() throws Exception {
+        if (!supportsRotation()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no rotation support");
+            return;
+        }
         setDeviceRotation(0);
         final String logSeparator = clearLogcat();
         launchActivityInStack(RESIZEABLE_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID);
@@ -269,6 +273,11 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      */
     @Presubmit
     public void testDialogWhenLargeSplitSmall() throws Exception {
+        if (!supportsSplitScreenMultiWindow()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no multi-window support");
+            return;
+        }
+
         launchActivityInStack(DIALOG_WHEN_LARGE_ACTIVITY, DOCKED_STACK_ID);
         final ActivityManagerState.ActivityStack stack = mAmWmState.getAmState()
                 .getStackById(DOCKED_STACK_ID);

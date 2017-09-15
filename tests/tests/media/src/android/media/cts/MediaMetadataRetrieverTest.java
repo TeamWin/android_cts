@@ -18,6 +18,7 @@ package android.media.cts;
 
 import android.media.cts.R;
 
+import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
 import android.media.MediaDataSource;
@@ -30,6 +31,7 @@ import android.util.Log;
 
 import com.android.compatibility.common.util.MediaUtils;
 
+import static android.content.pm.PackageManager.FEATURE_WATCH;
 import static android.media.MediaMetadataRetriever.OPTION_CLOSEST;
 import static android.media.MediaMetadataRetriever.OPTION_CLOSEST_SYNC;
 import static android.media.MediaMetadataRetriever.OPTION_NEXT_SYNC;
@@ -45,12 +47,14 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
 
     protected Resources mResources;
     protected MediaMetadataRetriever mRetriever;
+    private PackageManager mPackageManager;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         mResources = getContext().getResources();
         mRetriever = new MediaMetadataRetriever();
+        mPackageManager = getContext().getPackageManager();
     }
 
     @Override
@@ -293,6 +297,12 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
 
     private void testGetFrameAtTime(int option, int[][] testCases) {
         int resId = R.raw.binary_counter_320x240_30fps_600frames;
+        if (!MediaUtils.hasCodecForResourceAndDomain(getContext(), resId, "video/")
+            && mPackageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+            MediaUtils.skipTest("no video codecs for resource on watch");
+            return;
+        }
+
         MediaMetadataRetriever retriever = new MediaMetadataRetriever();
         Resources resources = getContext().getResources();
         AssetFileDescriptor afd = resources.openRawResourceFd(resId);

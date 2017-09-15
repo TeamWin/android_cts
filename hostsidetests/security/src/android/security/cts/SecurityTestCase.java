@@ -21,6 +21,8 @@ import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.device.NativeDevice;
 import com.android.tradefed.testtype.DeviceTestCase;
 
+import java.util.regex.Pattern;
+
 public class SecurityTestCase extends DeviceTestCase {
 
     private long kernelStartTime;
@@ -71,15 +73,11 @@ public class SecurityTestCase extends DeviceTestCase {
         getDevice().disableAdbRoot();
     }
 
-    /**
-     * Runs an info disclosure
-     **/
-    public void infoDisclosure(
-        String pocName, ITestDevice device, int timeout,
-        String pattern, boolean result) throws Exception {
+    public void assertMatches(String pattern, String input) throws Exception {
+        assertTrue("Pattern not found", Pattern.matches(pattern, input));
+    }
 
-        assertTrue("Pattern found.",
-                    AdbUtils.detectInformationDisclosure
-                    (pocName, device, timeout, pattern)==result );
-     }
+    public void assertNotMatches(String pattern, String input) throws Exception {
+        assertFalse("Pattern found", Pattern.matches(pattern, input));
+    }
 }

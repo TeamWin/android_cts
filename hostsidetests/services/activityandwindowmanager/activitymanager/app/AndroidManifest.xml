@@ -242,7 +242,10 @@
                   android:exported="true"
                   android:theme="@style/TranslucentTheme"
         />
+        <!-- An animation test with an explicitly opaque theme, overriding device defaults, as the
+             animation background being tested is not used in translucent activities. -->
         <activity android:name=".AnimationTestActivity"
+                  android:theme="@style/OpaqueTheme"
                   android:exported="true"
         />
         <activity android:name=".VirtualDisplayActivity"

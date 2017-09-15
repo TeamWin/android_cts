@@ -298,6 +298,7 @@ public class ActivityTransitionTest extends BaseTransitionTest {
 
     @Test
     public void testAnimationQuery() throws Throwable {
+        enterScene(R.layout.scene1);
         assertFalse(mActivity.isActivityTransitionRunning());
         mActivityRule.runOnUiThread(() -> {
             mActivity.getWindow().setExitTransition(new Fade());

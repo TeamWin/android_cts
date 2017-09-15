@@ -1015,6 +1015,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     /** Test that reported display size corresponds to fullscreen after exiting PiP. */
     public void testDisplayMetricsPinUnpin() throws Exception {
+        if (!supportsPip()) return;
+
         String logSeparator = clearLogcat();
         launchActivity(TEST_ACTIVITY);
         final int defaultDisplayStackId = mAmWmState.getAmState().getFocusedStackId();

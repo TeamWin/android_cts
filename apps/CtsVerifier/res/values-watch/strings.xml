@@ -24,4 +24,14 @@
       perform a palm press to turn off display and put device into suspend mode. The screen will
       turn on and device will vibrate once all the tests are completed.
     </string>
+
+    <string name="da_tapjacking_instructions">
+        1. Launch the device admin add screen by pressing the button below.\n
+        2. Wait for an overlaying transparent activity to show up obscuring the device admin details window.\n
+        3. The button to activate the admin should be disabled and should not register any taps.\n
+        4. Wait 10 seconds for the overlaying transparent activity to go away.\n
+        5. Exit the device admin details and return to this screen.\n
+        Pass the test if the device admin could not be activated while the details
+        window was being obscured.
+    </string>
 </resources>

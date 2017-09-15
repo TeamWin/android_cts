@@ -545,7 +545,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     protected boolean isHandheld() throws DeviceNotAvailableException {
         return !hasDeviceFeature("android.software.leanback")
-                && !hasDeviceFeature("android.software.watch");
+                && !hasDeviceFeature("android.hardware.type.watch");
     }
 
     protected boolean supportsSplitScreenMultiWindow() throws DeviceNotAvailableException {
@@ -560,6 +560,17 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         executeShellCommand(AM_NO_HOME_SCREEN, outputReceiver);
         String output = outputReceiver.getOutput();
         return output.startsWith("true");
+    }
+
+    /**
+     * Rotation support is indicated by explicitly having both landscape and portrait
+     * features or not listing either at all.
+     */
+    protected boolean supportsRotation() throws DeviceNotAvailableException {
+        return (hasDeviceFeature("android.hardware.screen.landscape")
+                    && hasDeviceFeature("android.hardware.screen.portrait"))
+            || (!hasDeviceFeature("android.hardware.screen.landscape")
+                    && !hasDeviceFeature("android.hardware.screen.portrait"));
     }
 
     protected boolean hasDeviceFeature(String requiredFeature) throws DeviceNotAvailableException {
