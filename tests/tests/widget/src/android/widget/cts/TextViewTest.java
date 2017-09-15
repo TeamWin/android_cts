@@ -982,6 +982,30 @@ public class TextViewTest {
     }
 
     @Test
+    public void testSetMaxLines_toZero_shouldNotDisplayAnyLines() throws Throwable {
+        mTextView = findTextView(R.id.textview_text);
+        mActivityRule.runOnUiThread(() -> {
+            mTextView.setPadding(0, 0, 0, 0);
+            mTextView.setText("Single");
+            mTextView.setMaxLines(0);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        final int expectedHeight = mTextView.getTotalPaddingBottom()
+                + mTextView.getTotalPaddingTop();
+
+        assertEquals(expectedHeight, mTextView.getHeight());
+
+        mActivityRule.runOnUiThread(() -> mTextView.setText("Two\nLines"));
+        mInstrumentation.waitForIdleSync();
+        assertEquals(expectedHeight, mTextView.getHeight());
+
+        mActivityRule.runOnUiThread(() -> mTextView.setTextIsSelectable(true));
+        mInstrumentation.waitForIdleSync();
+        assertEquals(expectedHeight, mTextView.getHeight());
+    }
+
+    @Test
     public void testWidth() throws Throwable {
         mTextView = findTextView(R.id.textview_text);
         int originalWidth = mTextView.getWidth();
