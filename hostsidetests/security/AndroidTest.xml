@@ -127,13 +127,14 @@
         <option name="push" value="Bug-35644812->/data/local/tmp/Bug-35644812" />
         <option name="push" value="Bug-36492827->/data/local/tmp/Bug-36492827" />
         <option name="push" value="Bug-38340117->/data/local/tmp/Bug-38340117" />
+        <option name="push" value="CVE-2017-0770->/data/local/tmp/CVE-2017-0770" />
 
         <!--__________________-->
         <!-- Bulletin 2017-10 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
 
         <option name="push" value="Bug-62058746->/data/local/tmp/Bug-62058746" />
-        <option name="push" value="CVE-2017-0770->/data/local/tmp/CVE-2017-0770" />
+        <option name="push" value="Bug-37093119->/data/local/tmp/Bug-37093119" />
 
         <option name="append-bitness" value="true" />
     </target_preparer>
