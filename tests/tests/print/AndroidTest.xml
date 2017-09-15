@@ -22,6 +22,7 @@
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.print.cts" />
         <option name="runtime-hint" value="33m00s" />
-        <option name="shell-timeout" value="19800000"/>
+        <!-- allow 30min to output something before timeout -->
+        <option name="shell-timeout" value="1800000"/>
     </test>
 </configuration>
