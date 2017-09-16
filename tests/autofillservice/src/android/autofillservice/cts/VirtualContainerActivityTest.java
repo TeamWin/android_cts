@@ -36,7 +36,8 @@ import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.VirtualContainerView.Line;
 import android.graphics.Rect;
-import android.support.test.rule.ActivityTestRule;
+import android.os.SystemClock;
+import android.service.autofill.SaveInfo;
 import android.support.test.uiautomator.UiObject2;
 import android.view.autofill.AutofillManager;
 
@@ -51,8 +52,8 @@ import org.junit.Test;
 public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
 
     @Rule
-    public final ActivityTestRule<VirtualContainerActivity> mActivityRule =
-            new ActivityTestRule<VirtualContainerActivity>(VirtualContainerActivity.class);
+    public final AutofillActivityTestRule<VirtualContainerActivity> mActivityRule =
+            new AutofillActivityTestRule<VirtualContainerActivity>(VirtualContainerActivity.class);
 
     private VirtualContainerActivity mActivity;
 
