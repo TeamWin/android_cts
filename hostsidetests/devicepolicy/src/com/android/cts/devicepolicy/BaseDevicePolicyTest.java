@@ -27,10 +27,16 @@ import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.CollectingTestListener;
+import com.android.tradefed.result.FileInputStreamSource;
+import com.android.tradefed.result.LogDataType;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.util.FileUtil;
+import com.android.tradefed.util.TarUtil;
 
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -238,7 +244,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
                 + getDevice().executeShellCommand(stopUserCommand));
     }
 
-    private void waitForBroadcastIdle() throws DeviceNotAvailableException {
+    private void waitForBroadcastIdle() throws DeviceNotAvailableException, IOException {
         CollectingOutputReceiver receiver = new CollectingOutputReceiver();
         try {
             // we allow 8min for the command to complete and 4min for the command to start to
@@ -249,6 +255,24 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
             String output = receiver.getOutput();
             CLog.d("Output from 'am wait-for-broadcast-idle': %s", output);
             if (!output.contains("All broadcast queues are idle!")) {
+                // Gather the system_server dump data for investigation.
+                File heapDump = getDevice().dumpHeap("system_server", "/data/local/tmp/dump.hprof");
+                if (heapDump != null) {
+                    // If file is too too big, tar if with TarUtil.
+                    String pid = getDevice().getProcessPid("system_server");
+                    // gzip the file it's quite big
+                    File heapDumpGz = TarUtil.gzip(heapDump);
+                    try (FileInputStreamSource source = new FileInputStreamSource(heapDumpGz)) {
+                        addTestLog(
+                                String.format("system_server_dump.%s.%s.hprof",
+                                        pid, getDevice().getDeviceDate()),
+                                LogDataType.GZIP, source);
+                    } finally {
+                        FileUtil.deleteFile(heapDump);
+                    }
+                } else {
+                    CLog.e("Failed to capture the dumpheap from system_server");
+                }
                 // the call most likely failed we should fail the test
                 fail("'am wait-for-broadcase-idle' did not complete.");
                 // TODO: consider adding a reboot or recovery before failing if necessary

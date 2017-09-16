@@ -84,6 +84,9 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
 
     private static final String PARAM_PROFILE_ID = "profile-id";
 
+    // Password needs to be in sync with ResetPasswordWithTokenTest.PASSWORD1
+    private static final String RESET_PASSWORD_TEST_DEFAULT_PASSWORD = "123456";
+
     private int mParentUserId;
 
     // ID of the profile we'll create. This will always be a profile of the parent.
@@ -982,12 +985,47 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         }
 
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ResetPasswordWithTokenTest",
-                "setupWorkProfileAndLock", mProfileUserId);
+                "testSetupWorkProfileAndLock", mProfileUserId);
         waitUntilProfileLocked();
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ResetPasswordWithTokenTest",
                 "testResetPasswordBeforeUnlock", mProfileUserId);
         // Password needs to be in sync with ResetPasswordWithTokenTest.PASSWORD1
-        verifyUserCredential("123456", mProfileUserId);
+        verifyUserCredential(RESET_PASSWORD_TEST_DEFAULT_PASSWORD, mProfileUserId);
+    }
+
+    /**
+     * Test password reset token is still functional after the primary user clears and
+     * re-adds back its device lock. This is to detect a regression where the work profile
+     * undergoes an untrusted credential reset (causing synthetic password to change, invalidating
+     * existing password reset token) if it has unified work challenge and the primary user clears
+     * the device lock.
+     */
+    public void testResetPasswordTokenUsableAfterClearingLock() throws Exception {
+        if (!mHasFeature || !mSupportsFbe) {
+            return;
+        }
+        final String devicePassword = "1234";
+
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ResetPasswordWithTokenTest",
+                "testSetResetPasswordToken", mProfileUserId);
+        try {
+            changeUserCredential(devicePassword, null, mParentUserId);
+            changeUserCredential(null, devicePassword, mParentUserId);
+            changeUserCredential(devicePassword, null, mParentUserId);
+
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ResetPasswordWithTokenTest",
+                    "testLockWorkProfile", mProfileUserId);
+            waitUntilProfileLocked();
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ResetPasswordWithTokenTest",
+                    "testResetPasswordBeforeUnlock", mProfileUserId);
+            verifyUserCredential(RESET_PASSWORD_TEST_DEFAULT_PASSWORD, mProfileUserId);
+        } finally {
+            changeUserCredential(null, devicePassword, mParentUserId);
+            // Cycle the device screen to flush stale password information from keyguard,
+            // otherwise it will still ask for the non-existent password.
+            executeShellCommand("input keyevent KEYCODE_WAKEUP");
+            executeShellCommand("input keyevent KEYCODE_SLEEP");
+        }
     }
 
     private void disableActivityForUser(String activityName, int userId)
