@@ -37,8 +37,7 @@ LOCAL_C_INCLUDES += frameworks/ml/nn/tools/test_generator/include
 
 LOCAL_SHARED_LIBRARIES := libandroid liblog libneuralnetworks
 
-# TODO: use the libgtest_ndk_c++ instead
-LOCAL_STATIC_LIBRARIES := libgtest libgtest_main
+LOCAL_STATIC_LIBRARIES := libgtest_ndk_c++ libgtest_main_ndk_c++
 
 LOCAL_CTS_TEST_PACKAGE := android.neuralnetworks
 
@@ -47,9 +46,7 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 LOCAL_CFLAGS := -Werror -Wall
 
-# TODO: use the following two lines instead
-#LOCAL_SDK_VERSION := current
-#LOCAL_NDK_STL_VARIANT := c++_static
-LOCAL_CXX_STL := libc++
+LOCAL_SDK_VERSION := current
+LOCAL_NDK_STL_VARIANT := c++_static
 
 include $(BUILD_CTS_EXECUTABLE)
