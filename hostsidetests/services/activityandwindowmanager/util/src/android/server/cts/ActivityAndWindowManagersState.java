@@ -251,10 +251,17 @@ public class ActivityAndWindowManagersState extends Assert {
                 "***Waiting for Display unfrozen");
     }
 
-    void waitForActivityState(ITestDevice device, String activityName, String activityState)
-            throws Exception {
-        waitForWithAmState(device, state -> state.hasActivityState(activityName, activityState),
-                "***Waiting for Activity State: " + activityState);
+    void waitForActivityState(ITestDevice device, String activityName, String... activityStates)
+        throws Exception {
+        waitForWithAmState(device, state -> {
+                for (String activityState : activityStates) {
+                    if (state.hasActivityState(activityName, activityState)) {
+                        return true;
+                    }
+                }
+                return false;
+            },
+            "***Waiting for Activity State: " + activityStates);
     }
 
     void waitForFocusedStack(ITestDevice device, int stackId) throws Exception {
