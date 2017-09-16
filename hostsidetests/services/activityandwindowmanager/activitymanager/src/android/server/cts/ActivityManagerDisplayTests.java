@@ -28,6 +28,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static android.server.cts.ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID;
+import static android.server.cts.ActivityManagerState.STATE_PAUSED;
 import static android.server.cts.ActivityManagerState.STATE_RESUMED;
 import static android.server.cts.ActivityManagerState.STATE_STOPPED;
 import static android.server.cts.StateLogger.log;
@@ -1555,9 +1556,11 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
         setPrimaryDisplayState(false);
 
         // Wait for the fullscreen stack to start sleeping, and then make sure the
-        // test activity is still resumed.
-        waitAndAssertActivityStopped(RESIZEABLE_ACTIVITY_NAME,
-                "Activity launched on primary display must be stopped after turning off");
+        // test activity is still resumed. Note that on some devices, the top activity may go to
+        // the stopped state by itself on sleep, causing the server side to believe it is still
+        // paused.
+        waitAndAssertActivityPausedOrStopped(RESIZEABLE_ACTIVITY_NAME,
+                "Activity launched on primary display must be stopped or paused after turning off");
         waitAndAssertActivityResumed(TEST_ACTIVITY_NAME, newDisplay.mDisplayId,
                 "Activity launched on external display must be resumed");
     }
@@ -1676,10 +1679,28 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
 
     private void waitAndAssertActivityStopped(String activityName, String message)
             throws Exception {
-        mAmWmState.waitForActivityState(mDevice, activityName, STATE_STOPPED);
+        waitAndAssertActivityState(activityName, message, STATE_STOPPED);
+    }
 
-        assertTrue(message, mAmWmState.getAmState().hasActivityState(activityName,
-                STATE_STOPPED));
+    private void waitAndAssertActivityPausedOrStopped(String activityName, String message)
+            throws Exception {
+        waitAndAssertActivityState(activityName, message, STATE_PAUSED, STATE_STOPPED);
+    }
+
+    private void waitAndAssertActivityState(String activityName, String message, String... states)
+            throws Exception {
+        mAmWmState.waitForActivityState(mDevice, activityName, states);
+
+        boolean stateFound = false;
+
+        for (String state : states) {
+            if (mAmWmState.getAmState().hasActivityState(activityName, state)) {
+                stateFound = true;
+                break;
+            }
+        }
+
+        assertTrue(message, stateFound);
     }
 
     /** Get physical and override display metrics from WM. */
