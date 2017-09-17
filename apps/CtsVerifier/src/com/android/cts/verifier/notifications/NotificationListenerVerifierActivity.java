@@ -987,6 +987,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         @Override
         void tearDown() {
             deleteChannel();
+            delay();
         }
 
         private void sendMessagingNotification() {
