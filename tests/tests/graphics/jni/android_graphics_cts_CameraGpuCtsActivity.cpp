@@ -288,6 +288,7 @@ class ImageReaderHelper {
         : mWidth(width), mHeight(height), mFormat(format), mUsage(usage), mMaxImages(maxImages) {}
 
     ~ImageReaderHelper() {
+        mAcquiredImage.reset();
         if (mImgReaderAnw) {
             AImageReader_delete(mImgReader);
             // No need to call ANativeWindow_release on imageReaderAnw
