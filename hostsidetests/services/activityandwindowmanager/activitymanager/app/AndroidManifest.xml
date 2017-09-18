@@ -53,6 +53,7 @@
         />
         <activity android:name=".ResizeableActivity"
                 android:resizeableActivity="true"
+                android:allowEmbedded="true"
                 android:exported="true"
                 android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density"
         />
