@@ -21,6 +21,7 @@ import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceTestCase;
+import com.android.tradefed.log.LogUtil.CLog;
 
 import android.platform.test.annotations.RootPermissionTest;
 
@@ -86,6 +87,33 @@ public class AdbUtils {
         NullOutputReceiver receiver = new NullOutputReceiver();
         device.executeShellCommand("/data/local/tmp/" + pocName, receiver, timeout,
                 TimeUnit.SECONDS, 0);
+    }
+
+    /**
+     * Enables malloc debug on a given process.
+     *
+     * @param processName the name of the process to run with libc malloc debug
+     * @param device the device to use
+     * @return true if enabling malloc debug succeeded
+     */
+    public static boolean enableLibcMallocDebug(String processName, ITestDevice device) throws Exception {
+        device.executeShellCommand("setprop libc.debug.malloc.program " + processName);
+        device.executeShellCommand("setprop libc.debug.malloc.options \"backtrace guard\"");
+        String cmdOut = device.executeShellCommand("ps | fgrep " + processName);
+        Scanner s = new Scanner(cmdOut);
+        if(!s.hasNextInt()) {
+            CLog.w("Could not find pid for process: " + processName);
+            return false;
+        }
+
+        String result = device.executeShellCommand("kill -9 " + s.nextInt());
+        if(!result.equals("")) {
+            CLog.w("Could not restart process: " + processName);
+            return false;
+        }
+
+        TimeUnit.SECONDS.sleep(1);
+        return true;
     }
 
     /**
