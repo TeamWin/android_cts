@@ -16,7 +16,8 @@
 
 package android.os.cts;
 
-import static org.junit.Assert.fail;
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.content.Context;
 import android.content.Intent;
@@ -41,6 +42,7 @@ import java.net.URL;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import java.util.function.Consumer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -85,10 +87,16 @@ public class StrictModeTest {
         StrictMode.setVmPolicy(
                 new StrictMode.VmPolicy.Builder().detectCleartextNetwork().penaltyLog().build());
 
-        assertViolation(
-                "Detected cleartext network traffic from UID",
-                () -> ((HttpURLConnection) new URL("http://example.com/").openConnection())
-                        .getResponseCode());
+        inspectViolation(
+                () ->
+                        ((HttpURLConnection) new URL("http://example.com/").openConnection())
+                                .getResponseCode(),
+                info -> {
+                    assertThat(info.message).contains("example.com");
+                    assertThat(info.crashInfo.exceptionMessage)
+                            .startsWith(StrictMode.CLEARTEXT_DETECTED_MSG);
+                    assertPolicy(info, StrictMode.DETECT_VM_CLEARTEXT_NETWORK);
+                });
     }
 
     /** Secure connection should be ignored */
@@ -103,8 +111,9 @@ public class StrictModeTest {
                 new StrictMode.VmPolicy.Builder().detectCleartextNetwork().penaltyLog().build());
 
         assertNoViolation(
-                () -> ((HttpURLConnection) new URL("https://example.com/").openConnection())
-                        .getResponseCode());
+                () ->
+                        ((HttpURLConnection) new URL("https://example.com/").openConnection())
+                                .getResponseCode());
     }
 
     @Test
@@ -113,14 +122,16 @@ public class StrictModeTest {
                 new StrictMode.VmPolicy.Builder().detectFileUriExposure().penaltyLog().build());
 
         final Uri badUri = Uri.fromFile(new File("/sdcard/meow.jpg"));
-        assertViolation(
-                badUri + " exposed beyond app",
+        inspectViolation(
                 () -> {
                     Intent intent = new Intent(Intent.ACTION_VIEW);
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     intent.setDataAndType(badUri, "image/jpeg");
                     getContext().startActivity(intent);
-                });
+                },
+                violation ->
+                        assertThat(violation.crashInfo.stackTrace)
+                                .contains(badUri + " exposed beyond app"));
 
         final Uri goodUri = Uri.parse("content://com.example/foobar");
         assertNoViolation(
@@ -141,14 +152,16 @@ public class StrictModeTest {
                         .build());
 
         final Uri uri = Uri.parse("content://com.example/foobar");
-        assertViolation(
-                uri + " exposed beyond app",
+        inspectViolation(
                 () -> {
                     Intent intent = new Intent(Intent.ACTION_VIEW);
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     intent.setDataAndType(uri, "image/jpeg");
                     getContext().startActivity(intent);
-                });
+                },
+                violation ->
+                        assertThat(violation.crashInfo.stackTrace)
+                                .contains(uri + " exposed beyond app"));
 
         assertNoViolation(
                 () -> {
@@ -170,10 +183,13 @@ public class StrictModeTest {
         StrictMode.setVmPolicy(
                 new StrictMode.VmPolicy.Builder().detectUntaggedSockets().penaltyLog().build());
 
-        assertViolation(
-                "Untagged socket detected",
-                () -> ((HttpURLConnection) new URL("http://example.com/").openConnection())
-                        .getResponseCode());
+        inspectViolation(
+                () ->
+                        ((HttpURLConnection) new URL("http://example.com/").openConnection())
+                                .getResponseCode(),
+                violation ->
+                        assertThat(violation.crashInfo.stackTrace)
+                                .contains(StrictMode.UNTAGGED_SOCKET_VIOLATION_MESSAGE));
 
         assertNoViolation(
                 () -> {
@@ -207,14 +223,18 @@ public class StrictModeTest {
                     }
                 });
 
-        assertViolation(
-                "Untagged socket detected",
+        inspectViolation(
                 () -> {
                     try (Socket socket = new Socket("example.com", 80)) {
                         socket.getOutputStream().close();
                     }
-                });
+                },
+                violation ->
+                        assertThat(violation.crashInfo.stackTrace)
+                                .contains(StrictMode.UNTAGGED_SOCKET_VIOLATION_MESSAGE));
     }
+
+    private static final int PERMISSION_USER_ONLY = 0600;
 
     @Test
     public void testRead() throws Exception {
@@ -222,34 +242,24 @@ public class StrictModeTest {
         final File dir = test.getParentFile();
 
         final FileInputStream is = new FileInputStream(test);
-        final FileDescriptor fd = Os.open(test.getAbsolutePath(), OsConstants.O_RDONLY, 0600);
+        final FileDescriptor fd =
+                Os.open(test.getAbsolutePath(), OsConstants.O_RDONLY, PERMISSION_USER_ONLY);
 
         StrictMode.setThreadPolicy(
                 new StrictMode.ThreadPolicy.Builder().detectDiskReads().penaltyLog().build());
 
-        assertViolation(
-                "StrictModeDiskReadViolation",
-            test::exists);
-        assertViolation(
-                "StrictModeDiskReadViolation",
-            test::length);
-        assertViolation(
-                "StrictModeDiskReadViolation",
-            dir::list);
-        assertViolation(
-                "StrictModeDiskReadViolation",
-                () -> {
-                    new FileInputStream(test);
-                });
-        assertViolation(
-                "StrictModeDiskReadViolation",
-            is::read);
-        assertViolation(
-                "StrictModeDiskReadViolation",
-                () -> Os.open(test.getAbsolutePath(), OsConstants.O_RDONLY, 0600));
-        assertViolation(
-                "StrictModeDiskReadViolation",
-                () -> Os.read(fd, new byte[10], 0, 1));
+        Consumer<ViolationInfo> assertDiskReadPolicy =
+                violation -> assertPolicy(violation, StrictMode.DETECT_DISK_READ);
+        inspectViolation(test::exists, assertDiskReadPolicy);
+        inspectViolation(test::length, assertDiskReadPolicy);
+        inspectViolation(dir::list, assertDiskReadPolicy);
+        inspectViolation(is::read, assertDiskReadPolicy);
+
+        inspectViolation(() -> new FileInputStream(test), assertDiskReadPolicy);
+        inspectViolation(
+                () -> Os.open(test.getAbsolutePath(), OsConstants.O_RDONLY, PERMISSION_USER_ONLY),
+                assertDiskReadPolicy);
+        inspectViolation(() -> Os.read(fd, new byte[10], 0, 1), assertDiskReadPolicy);
     }
 
     @Test
@@ -257,38 +267,28 @@ public class StrictModeTest {
         File file = File.createTempFile("foo", "bar");
 
         final FileOutputStream os = new FileOutputStream(file);
-        final FileDescriptor fd = Os.open(file.getAbsolutePath(), OsConstants.O_RDWR, 0600);
+        final FileDescriptor fd =
+                Os.open(file.getAbsolutePath(), OsConstants.O_RDWR, PERMISSION_USER_ONLY);
 
         StrictMode.setThreadPolicy(
                 new StrictMode.ThreadPolicy.Builder().detectDiskWrites().penaltyLog().build());
 
-        assertViolation(
-                "StrictModeDiskWriteViolation",
-                () -> File.createTempFile("foo", "bar"));
-        assertViolation(
-                "StrictModeDiskWriteViolation",
-            file::delete);
-        assertViolation(
-                "StrictModeDiskWriteViolation",
-            file::createNewFile);
-        assertViolation(
-                "StrictModeDiskWriteViolation",
-                () -> new FileOutputStream(file));
-        assertViolation(
-                "StrictModeDiskWriteViolation",
-                () -> os.write(32));
-        assertViolation(
-                "StrictModeDiskWriteViolation",
-                () -> Os.open(file.getAbsolutePath(), OsConstants.O_RDWR, 0600));
-        assertViolation(
-                "StrictModeDiskWriteViolation",
-                () -> Os.write(fd, new byte[10], 0, 1));
-        assertViolation(
-                "StrictModeDiskWriteViolation",
-                () -> Os.fsync(fd));
-        assertViolation(
-                "StrictModeDiskWriteViolation",
-                () -> file.renameTo(new File(file.getParent(), "foobar")));
+        Consumer<ViolationInfo> assertDiskWritePolicy =
+                violation -> assertPolicy(violation, StrictMode.DETECT_DISK_WRITE);
+
+        inspectViolation(() -> File.createTempFile("foo", "bar"), assertDiskWritePolicy);
+        inspectViolation(() -> new FileOutputStream(file), assertDiskWritePolicy);
+        inspectViolation(file::delete, assertDiskWritePolicy);
+        inspectViolation(file::createNewFile, assertDiskWritePolicy);
+        inspectViolation(() -> os.write(32), assertDiskWritePolicy);
+
+        inspectViolation(
+                () -> Os.open(file.getAbsolutePath(), OsConstants.O_RDWR, PERMISSION_USER_ONLY),
+                assertDiskWritePolicy);
+        inspectViolation(() -> Os.write(fd, new byte[10], 0, 1), assertDiskWritePolicy);
+        inspectViolation(() -> Os.fsync(fd), assertDiskWritePolicy);
+        inspectViolation(
+                () -> file.renameTo(new File(file.getParent(), "foobar")), assertDiskWritePolicy);
     }
 
     @Test
@@ -301,55 +301,42 @@ public class StrictModeTest {
         StrictMode.setThreadPolicy(
                 new StrictMode.ThreadPolicy.Builder().detectNetwork().penaltyLog().build());
 
-        assertViolation(
-                "StrictModeNetworkViolation",
+        inspectViolation(
                 () -> {
                     try (Socket socket = new Socket("example.com", 80)) {
                         socket.getOutputStream().close();
                     }
-                });
-
-        assertViolation(
-                "StrictModeNetworkViolation",
-                () -> ((HttpURLConnection) new URL("http://example.com/").openConnection())
-                        .getResponseCode());
+                },
+                violation -> assertPolicy(violation, StrictMode.DETECT_NETWORK));
+        inspectViolation(
+                () ->
+                        ((HttpURLConnection) new URL("http://example.com/").openConnection())
+                                .getResponseCode(),
+                violation -> assertPolicy(violation, StrictMode.DETECT_NETWORK));
     }
 
     private static void assertViolation(String expected, ThrowingRunnable r) throws Exception {
-        final LinkedBlockingQueue<ViolationInfo> violations = new LinkedBlockingQueue<>();
-        StrictMode.setViolationLogger(violations::add);
-
-        try {
-            r.run();
-            while (true) {
-                final ViolationInfo violation = violations.poll(5, TimeUnit.SECONDS);
-                if (violation == null) {
-                    fail("Expected violation not found: " + expected);
-                } else if (violation.crashInfo == null) {
-                    fail("Violation missing crashInfo");
-                } else if (violation.crashInfo.stackTrace.contains(expected)) {
-                    return;
-                }
-            }
-        } finally {
-            StrictMode.setViolationLogger(null);
-        }
+        inspectViolation(
+                r, violation -> assertThat(violation.crashInfo.stackTrace).contains(expected));
     }
 
     private static void assertNoViolation(ThrowingRunnable r) throws Exception {
+        inspectViolation(
+                r, violation -> assertWithMessage("Unexpected violation").that(violation).isNull());
+    }
+
+    private void assertPolicy(ViolationInfo info, int policy) {
+        assertWithMessage("Policy bit incorrect").that(info.policy & policy).isEqualTo(policy);
+    }
+
+    private static void inspectViolation(
+            ThrowingRunnable violating, Consumer<ViolationInfo> consume) throws Exception {
         final LinkedBlockingQueue<ViolationInfo> violations = new LinkedBlockingQueue<>();
         StrictMode.setViolationLogger(violations::add);
 
         try {
-            r.run();
-            while (true) {
-                final ViolationInfo violation = violations.poll(5, TimeUnit.SECONDS);
-                if (violation == null) {
-                    return;
-                } else {
-                    fail("Unexpected violation found: " + violation);
-                }
-            }
+            violating.run();
+            consume.accept(violations.poll(5, TimeUnit.SECONDS));
         } finally {
             StrictMode.setViolationLogger(null);
         }
