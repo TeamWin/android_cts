@@ -236,6 +236,26 @@ public class ActivityAndWindowManagersState {
         } while (retriesLeft-- > 0);
     }
 
+    void waitForAllStoppedActivities() throws Exception {
+        int retriesLeft = 5;
+        do {
+            mAmState.computeState();
+            if (mAmState.containsStartedActivities()){
+                log("***Waiting for valid stacks and activities states...");
+                try {
+                    Thread.sleep(1500);
+                } catch (InterruptedException e) {
+                    log(e.toString());
+                    // Well I guess we are not waiting...
+                }
+            } else {
+                break;
+            }
+        } while (retriesLeft-- > 0);
+
+        assertFalse(mAmState.containsStartedActivities());
+    }
+
     void waitForHomeActivityVisible() throws Exception {
         String homeActivity = mAmState.getHomeActivityName();
         // Sometimes this function is called before we know what Home Activity is
