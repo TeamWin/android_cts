@@ -147,9 +147,18 @@ JVMTI_RUN_TEST_GENERATED_FILES := \
 define GEN_JVMTI_RUN_TEST_GENERATED_FILE
 
 GEN_INPUT := $(wildcard $(LOCAL_PATH)/src/$(1)*/expected.txt)
+ifeq (true,$(ANDROID_COMPILE_WITH_JACK))
+GEN_JACK := $(wildcard $(LOCAL_PATH)/src/$(1)*/expected_jack.diff)
+else
+GEN_JACK :=
+endif
 GEN_OUTPUT := $(GENERATED_SRC_DIR)/results.$(1).expected.txt
-$$(GEN_OUTPUT): $$(GEN_INPUT)
+$$(GEN_OUTPUT): PRIVATE_GEN_JACK := $$(GEN_JACK)
+$$(GEN_OUTPUT): $$(GEN_INPUT) $$(GEN_JACK)
 	cp $$< $$@
+ifneq (,$$(GEN_JACK))
+	patch $$@ < $$(PRIVATE_GEN_JACK)
+endif
 
 GEN_INPUT :=
 GEN_OUTPUT :=
