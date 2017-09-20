@@ -54,12 +54,12 @@ public class BatteryStatsJobDurationTests extends BatteryStatsDeviceTestBase {
         final JobInfo job = createJobInfo(1);
         for (int i = 0; i < 3; i++) {
             CountDownLatch latch = SimpleJobService.resetCountDownLatch();
-            Log.i(TAG, "Scheduling job.");
+            Log.i(TAG, "Scheduling job");
             js.schedule(job);
-            Log.i(TAG, "Waiting for job to finish.");
-            if (!latch.await(5, TimeUnit.SECONDS)) {
-                Log.e(TAG, "Job didn't finish in 5 seconds");
-                fail("Job didn't finish in 5 seconds");
+            Log.i(TAG, "Waiting for job to finish");
+            if (!latch.await(30, TimeUnit.SECONDS)) {
+                Log.e(TAG, "Job didn't finish in 30 seconds");
+                fail("Job didn't finish in 30 seconds");
             }
         }
     }
