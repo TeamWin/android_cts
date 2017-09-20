@@ -99,7 +99,7 @@ public class AdbUtils {
     public static boolean enableLibcMallocDebug(String processName, ITestDevice device) throws Exception {
         device.executeShellCommand("setprop libc.debug.malloc.program " + processName);
         device.executeShellCommand("setprop libc.debug.malloc.options \"backtrace guard\"");
-        String cmdOut = device.executeShellCommand("ps | fgrep " + processName);
+        String cmdOut = device.executeShellCommand("ps -A | fgrep " + processName);
         Scanner s = new Scanner(cmdOut);
         if(!s.hasNextInt()) {
             CLog.w("Could not find pid for process: " + processName);
