@@ -50,6 +50,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
     private static final String SECOND_ACTIVITY_NO_EMBEDDING_NAME = "SecondActivityNoEmbedding";
     private static final String THIRD_ACTIVITY_NAME = "ThirdActivity";
     private static final String VR_TEST_ACTIVITY_NAME = "VrTestActivity";
+    private static final String SHOW_WHEN_LOCKED_ATTR_ACTIVITY_NAME = "ShowWhenLockedAttrActivity";
     private static final String SECOND_PACKAGE_NAME = "android.server.cts.second";
     private static final String THIRD_PACKAGE_NAME = "android.server.cts.third";
     private static final int VR_VIRTUAL_DISPLAY_WIDTH = 70;
@@ -1811,6 +1812,34 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
         }
 
         assertTrue(message, stateFound);
+    }
+
+    /**
+     * Tests that showWhenLocked works on a secondary display.
+     */
+    public void testSecondaryDisplayShowWhenLocked() throws Exception {
+        try {
+            setLockCredential();
+
+            launchActivity(TEST_ACTIVITY_NAME);
+
+            final DisplayState newDisplay = createExternalVirtualDisplay(
+                    false /* showContentWhenLocked */);
+            launchActivityOnDisplay(SHOW_WHEN_LOCKED_ATTR_ACTIVITY_NAME, newDisplay.mDisplayId);
+
+            gotoKeyguard();
+            mAmWmState.waitForKeyguardShowingAndNotOccluded(mDevice);
+
+            mAmWmState.waitForActivityState(mDevice, TEST_ACTIVITY_NAME, STATE_STOPPED);
+            mAmWmState.waitForActivityState(
+                    mDevice, SHOW_WHEN_LOCKED_ATTR_ACTIVITY_NAME, STATE_RESUMED);
+
+            mAmWmState.computeState(mDevice, new String[] { SHOW_WHEN_LOCKED_ATTR_ACTIVITY_NAME });
+            assertTrue("Expected resumed activity on secondary display", mAmWmState.getAmState()
+                    .hasActivityState(SHOW_WHEN_LOCKED_ATTR_ACTIVITY_NAME, STATE_RESUMED));
+        } finally {
+            removeLockCredential();
+        }
     }
 
     /** Get physical and override display metrics from WM. */
