@@ -16,6 +16,8 @@
 
 package android.host.multiuser;
 
+import android.platform.test.annotations.Presubmit;
+
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 
@@ -37,6 +39,7 @@ public class CreateUsersNoAppCrashesTest extends BaseMultiUserTest {
         mInitialUserId = getDevice().getCurrentUser();
     }
 
+    @Presubmit
     public void testCanCreateGuestUser() throws Exception {
         if (!mSupportsMultiUser) {
             return;
