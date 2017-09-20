@@ -21,6 +21,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.platform.test.annotations.Presubmit;
 import android.server.am.ActivityManagerTestBase;
+import android.server.am.WaitForValidActivityState;
 import android.server.am.WindowManagerState;
 
 import org.junit.After;
@@ -109,7 +110,7 @@ public class AlertWindowsTests extends ActivityManagerTestBase {
         setAlertWindowPermission(packageName, hasAlertWindowPermission);
 
         executeShellCommand(getAmStartCmd(activityName));
-        mAmWmState.computeState(new String[]{activityName});
+        mAmWmState.computeState(new WaitForValidActivityState.Builder(activityName).build());
         mAmWmState.assertVisibility(activityName, true);
 
         assertAlertWindows(packageName, hasAlertWindowPermission, atLeastO);

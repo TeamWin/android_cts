@@ -265,10 +265,7 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
 
         final String topActivityName = topTranslucent ?
                 TRANSLUCENT_TOP_ACTIVITY_NAME : TOP_ACTIVITY_NAME;
-        final String[] bottomActivityArray = new String[] {BOTTOM_ACTIVITY_NAME};
-        final String[] topActivityArray = new String[] {topActivityName};
-
-        mAmWmState.computeState(bottomActivityArray);
+        mAmWmState.computeState(new WaitForValidActivityState.Builder(BOTTOM_ACTIVITY_NAME).build());
 
         String topStartCmd = getAmStartCmd(topActivityName);
         if (testNewTask) {
@@ -284,9 +281,9 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
 
         Thread.sleep(5000);
         if (testOpen) {
-            mAmWmState.computeState(topActivityArray);
+            mAmWmState.computeState(new WaitForValidActivityState.Builder(topActivityName).build());
         } else {
-            mAmWmState.computeState(bottomActivityArray);
+            mAmWmState.computeState(new WaitForValidActivityState.Builder(BOTTOM_ACTIVITY_NAME).build());
         }
 
         assertEquals("Picked wrong transition", expectedTransit,

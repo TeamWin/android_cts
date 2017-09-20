@@ -16,6 +16,13 @@
 
 package android.server.wm;
 
+import static android.app.ActivityManager.StackId.DOCKED_STACK_ID;
+import static android.app.ActivityManager.StackId.FREEFORM_WORKSPACE_STACK_ID;
+import static android.app.ActivityManager.StackId.PINNED_STACK_ID;
+import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
+import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY;
 import static android.server.am.ActivityManagerTestBase.executeShellCommand;
 import static android.server.am.StateLogger.log;
 
@@ -38,20 +45,6 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 public class CrossAppDragAndDropTests {
-    // Constants copied from ActivityManager.StackId. If they are changed there, these must be
-    // updated.
-    /** ID of stack where fullscreen activities are normally launched into. */
-    private static final int FULLSCREEN_WORKSPACE_STACK_ID = 1;
-
-    /** ID of stack where freeform/resized activities are normally launched into. */
-    private static final int FREEFORM_WORKSPACE_STACK_ID = FULLSCREEN_WORKSPACE_STACK_ID + 1;
-
-    /** ID of stack that occupies a dedicated region of the screen. */
-    private static final int DOCKED_STACK_ID = FREEFORM_WORKSPACE_STACK_ID + 1;
-
-    /** ID of stack that always on top (always visible) when it exists. */
-    private static final int PINNED_STACK_ID = DOCKED_STACK_ID + 1;
-
     private static final String AM_FORCE_STOP = "am force-stop ";
     private static final String AM_MOVE_TASK = "am stack move-task ";
     private static final String AM_RESIZE_TASK = "am task resize ";
@@ -180,8 +173,8 @@ public class CrossAppDragAndDropTests {
         // See b/29068935.
         clearLogs();
         final String componentName = getComponentName(mSourcePackageName, SOURCE_ACTIVITY_NAME);
-        executeShellCommand(getStartCommand(componentName, null) + " --stack " +
-                FULLSCREEN_WORKSPACE_STACK_ID);
+        executeShellCommand(getStartCommand(componentName, null) + " --windowingMode " +
+                WINDOWING_MODE_FULLSCREEN);
         final int taskId = getActivityTaskId(componentName);
         // Moving a task from the full screen stack to the docked stack resets
         // WindowManagerService#mDockedStackCreateBounds.
@@ -190,6 +183,7 @@ public class CrossAppDragAndDropTests {
         executeShellCommand(AM_FORCE_STOP + SOURCE_PACKAGE_NAME);
 
         // Remove special stacks.
+        // TODO: Better to replace this with command to remove all multi-window stacks.
         executeShellCommand(AM_REMOVE_STACK + PINNED_STACK_ID);
         executeShellCommand(AM_REMOVE_STACK + DOCKED_STACK_ID);
         executeShellCommand(AM_REMOVE_STACK + FREEFORM_WORKSPACE_STACK_ID);
@@ -199,7 +193,8 @@ public class CrossAppDragAndDropTests {
             throws Exception {
         clearLogs();
         final String componentName = getComponentName(packageName, activityName);
-        executeShellCommand(getStartCommand(componentName, mode) + " --stack " + DOCKED_STACK_ID);
+        executeShellCommand(getStartCommand(componentName, mode) + " --windowingMode "
+                + WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
         waitForResume(packageName, activityName);
     }
 
@@ -207,8 +202,8 @@ public class CrossAppDragAndDropTests {
             throws Exception {
         clearLogs();
         final String componentName = getComponentName(packageName, activityName);
-        executeShellCommand(getStartCommand(componentName, mode) + " --stack "
-                + FULLSCREEN_WORKSPACE_STACK_ID);
+        executeShellCommand(getStartCommand(componentName, mode) + " --windowingMode "
+                + WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
         waitForResume(packageName, activityName);
     }
 
@@ -221,8 +216,8 @@ public class CrossAppDragAndDropTests {
             Point displaySize, boolean leftSide) throws Exception {
         clearLogs();
         final String componentName = getComponentName(packageName, activityName);
-        executeShellCommand(getStartCommand(componentName, mode) + " --stack "
-                + FREEFORM_WORKSPACE_STACK_ID);
+        executeShellCommand(getStartCommand(componentName, mode) + " --windowingMode "
+                + WINDOWING_MODE_FREEFORM);
         waitForResume(packageName, activityName);
         Point topLeft = new Point(leftSide ? 0 : displaySize.x / 2, 0);
         Point bottomRight = new Point(leftSide ? displaySize.x / 2 : displaySize.x, displaySize.y);

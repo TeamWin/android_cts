@@ -346,7 +346,7 @@ public abstract class ActivityManagerTestBase {
      * Returns the set of stack ids.
      */
     private HashSet<Integer> getStackIds() throws Exception {
-        mAmWmState.computeState(null);
+        mAmWmState.computeState();
         final List<ActivityManagerState.ActivityStack> stacks = mAmWmState.getAmState().getStacks();
         final HashSet<Integer> stackIds = new HashSet<>();
         for (ActivityManagerState.ActivityStack s : stacks) {
@@ -403,11 +403,14 @@ public abstract class ActivityManagerTestBase {
         mAmWmState.waitForValidState(targetActivityName);
     }
 
-    protected void launchActivityInStack(String activityName, int stackId,
+    protected void launchActivity(String activityName, int windowingMode,
             final String... keyValuePairs) throws Exception {
-        executeShellCommand(getAmStartCmd(activityName, keyValuePairs) + " --stack " + stackId);
-
-        mAmWmState.waitForValidState(activityName, stackId);
+        executeShellCommand(getAmStartCmd(activityName, keyValuePairs)
+                + " --windowingMode " + windowingMode);
+        mAmWmState.waitForValidState(new WaitForValidActivityState.Builder()
+                .setActivityName(activityName)
+                .setWindowingMode(windowingMode)
+                .build());
     }
 
     protected void launchActivityInDockStack(String activityName) throws Exception {
@@ -1357,8 +1360,8 @@ public abstract class ActivityManagerTestBase {
             executeShellCommand(commandBuilder.toString());
 
             if (mWaitForLaunched) {
-                mAmWmState.waitForValidState(new String[]{mTargetActivityName},
-                        null /* stackIds */, false /* compareTaskAndStackBounds */, mTargetPackage);
+                mAmWmState.waitForValidState(false /* compareTaskAndStackBounds */, mTargetPackage,
+                        new WaitForValidActivityState.Builder(mTargetActivityName).build());
             }
         }
     }

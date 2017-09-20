@@ -16,6 +16,7 @@
 
 package android.server.am;
 
+import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
@@ -307,7 +308,7 @@ public class PipActivity extends AbstractLifecycleLogActivity {
 
         final ActivityOptions options = ActivityOptions.makeBasic();
         options.setLaunchBounds(bounds);
-        options.setLaunchStackId(4 /* ActivityManager.StackId.PINNED_STACK_ID */);
+        options.setLaunchWindowingMode(WINDOWING_MODE_PINNED);
         caller.startActivity(intent, options.toBundle());
     }
 
