@@ -803,6 +803,9 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     public void testPasswordSufficientInitially() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
         executeDeviceTestClass(".PasswordSufficientInitiallyTest");
     }
 
