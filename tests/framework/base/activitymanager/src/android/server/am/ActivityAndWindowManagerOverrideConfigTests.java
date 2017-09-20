@@ -18,6 +18,7 @@ package android.server.am;
 
 
 import static android.app.ActivityManager.StackId.FREEFORM_WORKSPACE_STACK_ID;
+import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
 import static android.server.am.StateLogger.log;
 
 import static org.junit.Assert.assertFalse;
@@ -72,7 +73,7 @@ public class ActivityAndWindowManagerOverrideConfigTests extends ActivityManager
             return;
         }
 
-        launchActivityInStack(TEST_ACTIVITY_NAME, FREEFORM_WORKSPACE_STACK_ID);
+        launchActivity(TEST_ACTIVITY_NAME, WINDOWING_MODE_FREEFORM);
 
         setDeviceRotation(0);
         String logSeparator = clearLogcat();

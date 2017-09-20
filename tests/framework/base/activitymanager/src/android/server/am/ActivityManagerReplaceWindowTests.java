@@ -90,7 +90,7 @@ public class ActivityManagerReplaceWindowTests extends ActivityManagerTestBase {
 
     private String getWindowToken(String windowName, String activityName)
             throws Exception {
-        mAmWmState.computeState(new String[] {activityName});
+        mAmWmState.computeState(new WaitForValidActivityState.Builder(activityName).build());
 
         mAmWmState.assertVisibility(activityName, true);
 

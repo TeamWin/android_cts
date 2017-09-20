@@ -19,6 +19,7 @@ package android.server.am;
 import static android.app.ActivityManager.StackId.FULLSCREEN_WORKSPACE_STACK_ID;
 import static android.app.ActivityManager.StackId.HOME_STACK_ID;
 import static android.app.ActivityManager.StackId.PINNED_STACK_ID;
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.server.am.ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID;
 import static android.server.am.ActivityManagerState.STATE_STOPPED;
 import static android.view.KeyEvent.KEYCODE_WINDOW;
@@ -166,8 +167,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // Tap the screen at a known location in the pinned stack bounds, and ensure that it is
         // not passed down to the top task
         tapToFinishPip();
-        mAmWmState.computeState(new String[] {PIP_ACTIVITY},
-                false /* compareTaskAndStackBounds */);
+        mAmWmState.computeState(false /* compareTaskAndStackBounds */,
+                new WaitForValidActivityState.Builder(PIP_ACTIVITY).build());
         mAmWmState.assertVisibility(PIP_ACTIVITY, true);
     }
 
@@ -448,8 +449,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         launchActivity(PIP_ACTIVITY,
                 EXTRA_ENTER_PIP_ON_PAUSE, "true",
                 EXTRA_START_ACTIVITY, getActivityComponentName(NON_RESIZEABLE_ACTIVITY));
-        mAmWmState.computeState(new String[] {NON_RESIZEABLE_ACTIVITY},
-                false /* compareTaskAndStackBounds */);
+        mAmWmState.computeState(false /* compareTaskAndStackBounds */,
+                new WaitForValidActivityState.Builder(NON_RESIZEABLE_ACTIVITY).build());
         assertPinnedStackDoesNotExist();
 
         // Go home while the pip activity is open and ensure the previous activity is not PIPed
@@ -778,7 +779,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // Launch an activity that will enter PiP when it is paused with a delay that is long enough
         // for the next resumeWhilePausing activity to finish resuming, but slow enough to not
         // trigger the current system pause timeout (currently 500ms)
-        launchActivityInStack(PIP_ACTIVITY, FULLSCREEN_WORKSPACE_STACK_ID,
+        launchActivity(PIP_ACTIVITY, WINDOWING_MODE_FULLSCREEN,
                 EXTRA_ENTER_PIP_ON_PAUSE, "true",
                 EXTRA_ON_PAUSE_DELAY, "350",
                 EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP, "true");
@@ -1113,7 +1114,9 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
         String logSeparator = clearLogcat();
         launchActivity(TEST_ACTIVITY);
-        final int defaultDisplayStackId = mAmWmState.getAmState().getFocusedStackId();
+        final int defaultWindowingMode = WINDOWING_MODE_FULLSCREEN;
+        // TODO: Uncomment the line below after we start dumping AM to proto.
+        //final int defaultWindowingMode = mAmWmState.getAmState().getActivity(TEST_ACTIVITY).getWindowingMode();
         final ReportedSizes initialSizes = getLastReportedSizesForActivity(TEST_ACTIVITY,
                 logSeparator);
         final Rect initialAppBounds = readAppBounds(TEST_ACTIVITY, logSeparator);
@@ -1133,7 +1136,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                         && initialAppBounds.height() == pinnedAppBounds.height());
 
         logSeparator = clearLogcat();
-        launchActivityInStack(PIP_ACTIVITY, defaultDisplayStackId);
+        launchActivity(PIP_ACTIVITY, defaultWindowingMode);
         final ReportedSizes finalSizes = getLastReportedSizesForActivity(PIP_ACTIVITY,
                 logSeparator);
         final Rect finalAppBounds = readAppBounds(PIP_ACTIVITY, logSeparator);
@@ -1303,7 +1306,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
      */
     private WindowManagerState.WindowState getWindowState(String activity) throws Exception {
         String windowName = getWindowName(activity);
-        mAmWmState.computeState(new String[] {activity});
+        mAmWmState.computeState(new WaitForValidActivityState.Builder(activity).build());
         final List<WindowManagerState.WindowState> tempWindowList = new ArrayList<>();
         mAmWmState.getWmState().getMatchingVisibleWindowState(windowName, tempWindowList);
         return tempWindowList.get(0);
@@ -1364,7 +1367,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         }
 
         mAmWmState.waitForValidState(topActivityName, PINNED_STACK_ID);
-        mAmWmState.computeState(null);
+        mAmWmState.computeState();
 
         if (supportsPip()) {
             final String windowName = getWindowName(topActivityName);

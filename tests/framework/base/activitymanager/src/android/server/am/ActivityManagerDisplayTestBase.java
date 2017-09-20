@@ -245,8 +245,8 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
         } else {
             launchActivity(VIRTUAL_DISPLAY_ACTIVITY);
         }
-        mAmWmState.computeState(new String[] {VIRTUAL_DISPLAY_ACTIVITY},
-                false /* compareTaskAndStackBounds */);
+        mAmWmState.computeState(false /* compareTaskAndStackBounds */,
+                new WaitForValidActivityState.Builder(VIRTUAL_DISPLAY_ACTIVITY).build());
         final ActivityManagerDisplayTests.ReportedDisplays originalDS = getDisplaysStates();
 
         // Create virtual display with custom density dpi.
