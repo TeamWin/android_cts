@@ -32,8 +32,6 @@ import android.widget.TextView;
 import java.io.File;
 
 public class DragSource extends Activity{
-    private static final String LOG_TAG = "DragSource";
-
     private static final String RESULT_KEY_START_DRAG = "START_DRAG";
     private static final String RESULT_KEY_DETAILS = "DETAILS";
     private static final String RESULT_OK = "OK";
@@ -46,10 +44,13 @@ public class DragSource extends Activity{
     private static final long TIMEOUT_CANCEL = 150;
 
     private TextView mTextView;
+    private String mLogTag;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        mLogTag = getIntent().getStringExtra("logtag");
 
         View view = getLayoutInflater().inflate(R.layout.source_activity, null);
         setContentView(view);
@@ -125,7 +126,7 @@ public class DragSource extends Activity{
     }
 
     private void logResult(String key, String value) {
-        Log.i(LOG_TAG, key + "=" + value);
+        Log.i(mLogTag, key + "=" + value);
         mTextView.setText(mTextView.getText() + "\n" + key + "=" + value);
     }
 }
