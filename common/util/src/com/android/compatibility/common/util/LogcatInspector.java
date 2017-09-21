@@ -2,6 +2,9 @@ package com.android.compatibility.common.util;
 
 import static junit.framework.TestCase.fail;
 
+import com.google.common.base.Joiner;
+import com.google.common.io.Closeables;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,7 +41,7 @@ public abstract class LogcatInspector {
         // in practice the case where calling Log.?(<message1>) right after clearAndMark() resulted
         // in <message1> appearing before the unique identifier. It's not guaranteed per the docs
         // that log command will have written when returning, so better be safe. 3s should be fine.
-        assertLogcatContainsInOrder(tag, 3, uniqueString);
+        assertLogcatContainsInOrder(tag + ":* *:S", 3, uniqueString);
         return uniqueString;
     }
 
@@ -52,13 +55,53 @@ public abstract class LogcatInspector {
      * @throws IOException if error while reading.
      */
     public void assertLogcatContainsInOrder(
-            String filterTag, int maxTimeoutInSeconds, String... logcatStrings)
+            String filterSpec, int maxTimeoutInSeconds, String... logcatStrings)
             throws AssertionError, IOException {
-        long timeout = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(maxTimeoutInSeconds);
+        try {
+            int nextStringIndex =
+                    numberOfLogcatStringsFound(filterSpec, maxTimeoutInSeconds, logcatStrings);
+            if (nextStringIndex < logcatStrings.length) {
+                fail(
+                        "Couldn't find "
+                                + logcatStrings[nextStringIndex]
+                                + (nextStringIndex > 0
+                                        ? " after " + logcatStrings[nextStringIndex - 1]
+                                        : "")
+                                + " within "
+                                + maxTimeoutInSeconds
+                                + " seconds ");
+            }
+        } catch (InterruptedException e) {
+            fail("Thread interrupted unexpectedly: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Wait for up to {@param timeInSeconds}, if all the strings {@param logcatStrings} are found in
+     * order then the assertion fails, otherwise it succeeds.
+     *
+     * @throws AssertionError if all the strings are found in order in the given time.
+     * @throws IOException if error while reading.
+     */
+    public void assertLogcatDoesNotContainInOrder(int timeInSeconds, String... logcatStrings)
+            throws IOException {
+        try {
+            int stringsFound = numberOfLogcatStringsFound("", timeInSeconds, logcatStrings);
+            if (stringsFound == logcatStrings.length) {
+                fail("Found " + Joiner.on(", ").join(logcatStrings) + " that weren't expected");
+            }
+        } catch (InterruptedException e) {
+            fail("Thread interrupted unexpectedly: " + e.getMessage());
+        }
+    }
+
+    private int numberOfLogcatStringsFound(
+            String filterSpec, int timeInSeconds, String... logcatStrings)
+            throws InterruptedException, IOException {
+        long timeout = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(timeInSeconds);
         int stringIndex = 0;
         while (timeout >= System.currentTimeMillis()) {
-            InputStream logcatStream =
-                    executeShellCommand("logcat -v brief -d " + filterTag + ":* *:S");
+            InputStream logcatStream = executeShellCommand("logcat -v brief -d " + filterSpec);
             BufferedReader logcat = new BufferedReader(new InputStreamReader(logcatStream));
             String line;
             stringIndex = 0;
@@ -67,26 +110,16 @@ public abstract class LogcatInspector {
                     stringIndex++;
                     if (stringIndex >= logcatStrings.length) {
                         drainAndClose(logcat);
-                        return;
+                        return stringIndex;
                     }
                 }
             }
-            closeQuietly(logcat);
-            try {
-                // In case the key has not been found, wait for the log to update before
-                // performing the next search.
-                Thread.sleep(SMALL_LOGCAT_DELAY);
-            } catch (InterruptedException e) {
-                fail("Thread interrupted unexpectedly: " + e.getMessage());
-            }
+            Closeables.closeQuietly(logcat);
+            // In case the key has not been found, wait for the log to update before
+            // performing the next search.
+            Thread.sleep(SMALL_LOGCAT_DELAY);
         }
-        fail(
-                "Couldn't find "
-                        + logcatStrings[stringIndex]
-                        + (stringIndex > 0 ? " after " + logcatStrings[stringIndex - 1] : "")
-                        + " within "
-                        + maxTimeoutInSeconds
-                        + " seconds ");
+        return stringIndex;
     }
 
     private static void drainAndClose(BufferedReader reader) {
@@ -96,17 +129,6 @@ public abstract class LogcatInspector {
             }
         } catch (IOException ignored) {
         }
-        closeQuietly(reader);
-    }
-
-    private static void closeQuietly(AutoCloseable closeable) {
-        if (closeable != null) {
-            try {
-                closeable.close();
-            } catch (RuntimeException rethrown) {
-                throw rethrown;
-            } catch (Exception ignored) {
-            }
-        }
+        Closeables.closeQuietly(reader);
     }
 }

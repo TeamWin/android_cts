@@ -42,12 +42,13 @@ public class BaseBackupCtsTest extends InstrumentationTestCase {
             "android/com.android.internal.backup.LocalTransport";
 
     private boolean isBackupSupported;
-    private LogcatInspector mLogcatInspector = new LogcatInspector() {
-        @Override
-        protected InputStream executeShellCommand(String command) throws IOException {
-            return executeStreamedShellCommand(getInstrumentation(), command);
-        }
-    };
+    private LogcatInspector mLogcatInspector =
+            new LogcatInspector() {
+                @Override
+                protected InputStream executeShellCommand(String command) throws IOException {
+                    return executeStreamedShellCommand(getInstrumentation(), command);
+                }
+            };
 
     @Override
     protected void setUp() throws Exception {
@@ -86,7 +87,7 @@ public class BaseBackupCtsTest extends InstrumentationTestCase {
     protected void waitForLogcat(int maxTimeoutInSeconds, String... logcatStrings)
             throws Exception {
         mLogcatInspector.assertLogcatContainsInOrder(
-                APP_LOG_TAG, maxTimeoutInSeconds, logcatStrings);
+                APP_LOG_TAG + ":* *:S", maxTimeoutInSeconds, logcatStrings);
     }
 
     protected void createTestFileOfSize(String packageName, int size) throws Exception {
