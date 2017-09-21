@@ -60,7 +60,7 @@ public class ProtoExtractors {
 
     public static Rect extract(RectProto proto) {
         if (proto == null) {
-            return new Rect();
+            return null;
         }
         return new Rect(proto.left, proto.top, proto.right, proto.bottom);
     }
