@@ -36,6 +36,8 @@ public class CurrentApi {
             API_FILE_DIRECTORY + "/current.api";
     public static final String SYSTEM_CURRENT_API_FILE =
             API_FILE_DIRECTORY + "/system-current.api";
+    public static final String SYSTEM_REMOVED_API_FILE =
+            API_FILE_DIRECTORY + "/system-removed.api";
 
     static final String TAG_ROOT = "api";
     static final String TAG_PACKAGE = "package";
