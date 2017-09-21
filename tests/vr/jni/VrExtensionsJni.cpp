@@ -248,6 +248,8 @@ Java_android_vr_cts_VrExtensionBehaviorTest_nativeTestExternalBuffer(
     auto exts = reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS));
     ASSERT_TRUE(exts && strstr(exts, "GL_EXT_external_buffer"));
     // Next, load entry points provided by extensions.
+    LOAD_PROC(eglGetNativeClientBufferANDROID, PFNEGLGETNATIVECLIENTBUFFERANDROID);
+    ASSERT_NE(eglGetNativeClientBufferANDROID, nullptr);
     LOAD_PROC(glBufferStorageExternalEXT, PFNGLBUFFERSTORAGEEXTERNALEXTPROC);
     ASSERT_NE(glBufferStorageExternalEXT, nullptr);
     LOAD_PROC(glMapBufferRange, PFNGLMAPBUFFERRANGEPROC);
