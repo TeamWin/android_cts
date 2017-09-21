@@ -34,6 +34,7 @@ import static org.junit.Assert.fail;
 import android.graphics.Point;
 import android.os.RemoteException;
 import android.os.SystemClock;
+import android.platform.test.annotations.Presubmit;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
@@ -46,6 +47,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+/**
+ * Build: mmma -j32 cts/tests/framework/base
+ * Run: cts/tests/framework/base/activitymanager/util/run-test CtsWindowManagerDeviceTestCases android.server.wm.CrossAppDragAndDropTests
+ */
+@Presubmit
 public class CrossAppDragAndDropTests {
     private static final String TAG = "CrossAppDragAndDrop";
 
