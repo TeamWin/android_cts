@@ -59,6 +59,13 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         mActivity = mActivityRule.launchActivity(intent);
     }
 
+    private void restartActivity() {
+        final Intent intent = new Intent(mContext.getApplicationContext(),
+                SimpleSaveActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+        mContext.startActivity(intent);
+    }
+
     @Test
     public void testAutoFillOneDatasetAndSave() throws Exception {
         startActivity();
@@ -347,6 +354,98 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
                 throw new IllegalArgumentException("invalid dismiss type: " + dismissType);
         }
         sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
+    }
+
+    @Test
+    public void testTapHomeWhileDatasetPickerUiIsShowing() throws Exception {
+        startActivity();
+        enableService();
+        final MyAutofillCallback callback = mActivity.registerCallback();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_INPUT, "id")
+                        .setField(ID_PASSWORD, "pass")
+                        .setPresentation(createPresentation("YO"))
+                        .build())
+                .build());
+
+        // Trigger autofill.
+        sUiBot.assertShownByRelativeId(ID_INPUT).click();
+        sReplier.getNextFillRequest();
+        sUiBot.assertDatasets("YO");
+        callback.assertUiShownEvent(mActivity.mInput);
+
+        // Go home, you are drunk!
+        sUiBot.pressHome();
+        sUiBot.assertNoDatasets();
+        callback.assertUiHiddenEvent(mActivity.mInput);
+
+        // Switch back to the activity.
+        restartActivity();
+        sUiBot.assertShownByText(TEXT_LABEL, Helper.ACTIVITY_RESURRECTION_MS);
+        final UiObject2 datasetPicker = sUiBot.assertDatasets("YO");
+        callback.assertUiShownEvent(mActivity.mInput);
+
+        // Now autofill it.
+        final FillExpectation autofillExpecation = mActivity.expectAutoFill("id", "pass");
+        sUiBot.selectDataset(datasetPicker, "YO");
+        autofillExpecation.assertAutoFilled();
+    }
+
+    @Test
+    public void testTapHomeWhileSaveUiIsShowing() throws Exception {
+        startActivity();
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT)
+                .build());
+
+        // Trigger autofill.
+        mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
+        sReplier.getNextFillRequest();
+        sUiBot.assertNoDatasets();
+
+        // Trigger save, but don't tap it.
+        mActivity.syncRunOnUiThread(() -> {
+            mActivity.mInput.setText("108");
+            mActivity.mCommit.performClick();
+        });
+        sUiBot.assertSaveShowing(SAVE_DATA_TYPE_GENERIC);
+
+        // Go home, you are drunk!
+        sUiBot.pressHome();
+        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
+        Helper.assertNoDanglingSessions();
+
+        // Prepare the response for the next session, which will be automatically triggered
+        // when the activity is brought back.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT, ID_PASSWORD)
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_INPUT, "id")
+                        .setField(ID_PASSWORD, "pass")
+                        .setPresentation(createPresentation("YO"))
+                        .build())
+                .build());
+
+        // Switch back to the activity.
+        restartActivity();
+        sUiBot.assertShownByText(TEXT_LABEL, Helper.ACTIVITY_RESURRECTION_MS);
+        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
+        sReplier.getNextFillRequest();
+        sUiBot.assertNoDatasets();
+
+        // Trigger and select UI.
+        mActivity.syncRunOnUiThread(() -> mActivity.mPassword.requestFocus());
+        final FillExpectation autofillExpecation = mActivity.expectAutoFill("id", "pass");
+        sUiBot.selectDataset("YO");
+
+        // Assert it.
+        autofillExpecation.assertAutoFilled();
     }
 
     private void startWelcomeActivityOnNewTask() throws Exception {

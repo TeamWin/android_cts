@@ -182,7 +182,11 @@ final class UiBot {
      * {@link #assertDatasets(String...)}.
      */
     public UiObject2 assertShownByText(String text) {
-        final UiObject2 object = waitForObject(By.text(text));
+        return assertShownByText(text, UI_TIMEOUT_MS);
+    }
+
+    public UiObject2 assertShownByText(String text, int timeoutMs) {
+        final UiObject2 object = waitForObject(By.text(text), timeoutMs);
         assertWithMessage("No node with text '%s'", text).that(object).isNotNull();
         return object;
     }
