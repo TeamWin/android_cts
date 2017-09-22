@@ -129,6 +129,9 @@
     <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityFlowPortraitTest#startWithFragmentAndInitTitleMultiWindowPortraitTest" />
     <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityFlowPortraitTest#startWithFragmentNoHeadersMultiWindowPortraitTest" />
 
+    <!-- b/63916274 -->
+    <option name="compatibility:exclude-filter" value="CtsTelecomTestCases android.telecom.cts.WiredHeadsetTest" />
+
     <!-- b/38177396 -->
     <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityFlowLandscapeTest#multiWindowHistoryPreserveLandscapeTest" />
     <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityFlowLandscapeTest#multiWindowInOutLandscapeTest" />
