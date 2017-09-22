@@ -24,4 +24,12 @@
       perform a palm press to turn off display and put device into suspend mode. The screen will
       turn on and device will vibrate once all the tests are completed.
     </string>
+
+    <string name="device_owner_network_logging_ui_info">
+        1) Ensure the device has a lock screen enabled.\n
+        2) Enable network logging by tapping on the left button below.\n
+        3) View the lock screen by performing a palm press and then pressing a side button.\n
+        4) Check that an icon appeared at the top of the lock screen. Tap the icon and unlock the device.\n
+        5) Verify that a dialog about device monitoring opens, and informs you about: the name of the app that manages this device, details about the device owner\'s capabilities, and information that the admin can see the most recent network traffic log.\n
+    </string>
 </resources>
