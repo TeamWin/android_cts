@@ -111,7 +111,7 @@ public class ProcessMustUseSeccompTest extends DeviceTestCase {
 
     public void testConfigStoreHalHasSeccompFilter() throws DeviceNotAvailableException {
         if (CpuFeatures.isArm64(mDevice)) {
-            assertSeccompFilter("android.hardware.configstore", LSHAL_CMD, true);
+            assertSeccompFilter("android.hardware.configstore", PS_CMD, true);
         }
     }
 
@@ -120,10 +120,6 @@ public class ProcessMustUseSeccompTest extends DeviceTestCase {
     }
 
     public void testOmxHalHasSeccompFilter() throws DeviceNotAvailableException {
-        if (isFullTrebleDevice()) {
-            assertSeccompFilter("android.hardware.media.omx", LSHAL_CMD, true);
-        } else {
-            assertSeccompFilter("media.codec", PS_CMD, false);
-        }
+        assertSeccompFilter("media.codec", PS_CMD, false);
     }
 }
