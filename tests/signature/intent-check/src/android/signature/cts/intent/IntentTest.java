@@ -17,6 +17,7 @@ package android.signature.cts.intent;
 
 import static android.signature.cts.CurrentApi.CURRENT_API_FILE;
 import static android.signature.cts.CurrentApi.SYSTEM_CURRENT_API_FILE;
+import static android.signature.cts.CurrentApi.SYSTEM_REMOVED_API_FILE;
 
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
@@ -29,21 +30,20 @@ import android.util.Log;
 
 import com.android.compatibility.common.util.DynamicConfigDeviceSide;
 
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.xmlpull.v1.XmlPullParserException;
+
 import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.IOException;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import org.junit.Assert;
-import org.junit.runner.RunWith;
-import org.junit.Before;
-import org.junit.Test;
-
-import org.xmlpull.v1.XmlPullParserException;
 
 /**
  * Validate that the android intents used by APKs on this device are part of the
@@ -115,6 +115,7 @@ public class IntentTest {
             Set<String> intents = new HashSet<>();
             intents.addAll(parse(CURRENT_API_FILE));
             intents.addAll(parse(SYSTEM_CURRENT_API_FILE));
+            intents.addAll(parse(SYSTEM_REMOVED_API_FILE));
             return intents;
         } catch (XmlPullParserException | IOException e) {
             throw new RuntimeException("failed to parse", e);
