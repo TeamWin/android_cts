@@ -25,9 +25,10 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
+import android.util.Log;
 
 public class SimpleForegroundService extends Service {
-
+    private static final String TAG = "SimpleForegroundService";
     private Looper mServiceLooper;
     private ServiceHandler mServiceHandler;
 
@@ -38,6 +39,7 @@ public class SimpleForegroundService extends Service {
 
         @Override
         public void handleMessage(Message msg) {
+            Log.i(TAG, "Handling message.");
             // Sleep for 2 seconds.
             try {
                 Thread.sleep(2000);
@@ -45,6 +47,7 @@ public class SimpleForegroundService extends Service {
                 // Restore interrupt status.
                 Thread.currentThread().interrupt();
             }
+            Log.i(TAG, "Stopping service.");
             // Stop the service using the startId, so that we don't stop
             // the service in the middle of handling another job
             stopSelf(msg.arg1);
@@ -72,6 +75,7 @@ public class SimpleForegroundService extends Service {
                 .setContentTitle("CTS Foreground")
                 .setSmallIcon(android.R.drawable.ic_secure)
                 .build();
+        Log.i(TAG, "Starting Foreground.");
         startForeground(1, notification);
 
         Message msg = mServiceHandler.obtainMessage();
