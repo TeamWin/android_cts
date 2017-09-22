@@ -458,12 +458,26 @@ public class MediaSessionTest extends AndroidTestCase {
      * Tests {@link MediaSession.QueueItem}.
      */
     public void testQueueItem() {
-        QueueItem item = new QueueItem(new MediaDescription.Builder()
-                .setMediaId("media-id").setTitle("title").build(), TEST_QUEUE_ID);
+        MediaDescription.Builder descriptionBuilder = new MediaDescription.Builder()
+                .setMediaId("media-id")
+                .setTitle("title");
+
+        QueueItem item = new QueueItem(descriptionBuilder.build(), TEST_QUEUE_ID);
         assertEquals(TEST_QUEUE_ID, item.getQueueId());
         assertEquals("media-id", item.getDescription().getMediaId());
         assertEquals("title", item.getDescription().getTitle());
         assertEquals(0, item.describeContents());
+
+        QueueItem sameItem = new QueueItem(descriptionBuilder.build(), TEST_QUEUE_ID);
+        assertTrue(item.equals(sameItem));
+
+        QueueItem differentQueueId = new QueueItem(
+            descriptionBuilder.build(), TEST_QUEUE_ID + 1);
+        assertFalse(item.equals(differentQueueId));
+
+        QueueItem differentDescription = new QueueItem(
+            descriptionBuilder.setTitle("title2").build(), TEST_QUEUE_ID);
+        assertFalse(item.equals(differentDescription));
 
         Parcel p = Parcel.obtain();
         item.writeToParcel(p, 0);
