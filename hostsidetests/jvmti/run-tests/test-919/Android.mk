@@ -18,6 +18,7 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := CtsJvmtiRunTest919HostTestCases
 LOCAL_STATIC_JAVA_LIBRARIES := CtsJvmtiHostTestBase
+LOCAL_JARJAR_RULES := $(LOCAL_PATH)/jarjar-rules.txt
 LOCAL_MODULE_TAGS := tests
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
