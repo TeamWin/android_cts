@@ -31,6 +31,7 @@ import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Pair;
 import android.util.SparseArray;
@@ -38,6 +39,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewStructure;
 import android.view.ViewStructure.HtmlInfo;
+import android.view.WindowManager;
 import android.view.autofill.AutofillManager;
 import android.view.autofill.AutofillValue;
 
@@ -81,10 +83,13 @@ class VirtualContainerView extends View {
         mUnfocusedColor = Color.BLACK;
         mFocusedColor = Color.RED;
         mTextPaint.setStyle(Style.FILL);
-        mTopMargin = 100;
-        mLeftMargin = 100;
-        mTextHeight = 90;
-        mVerticalGap = 10;
+        DisplayMetrics metrics = new DisplayMetrics();
+        WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        wm.getDefaultDisplay().getMetrics(metrics);
+        mTopMargin = metrics.heightPixels * 5 / 100;
+        mLeftMargin = metrics.widthPixels * 5 / 100;
+        mTextHeight = metrics.widthPixels * 5 / 100; // adjust text size with display width
+        mVerticalGap = metrics.heightPixels / 100;
 
         mLineLength = mTextHeight + mVerticalGap;
         mTextPaint.setTextSize(mTextHeight);
