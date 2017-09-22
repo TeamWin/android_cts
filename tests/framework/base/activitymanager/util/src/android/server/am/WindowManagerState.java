@@ -79,7 +79,6 @@ public class WindowManagerState {
     public static final String APP_STATE_IDLE = "APP_STATE_IDLE";
 
     private static final String DUMPSYS_WINDOW = "dumpsys window -a --proto";
-    private WindowManagerServiceProto state;
 
     private static final String STARTING_WINDOW_PREFIX = "Starting ";
     private static final String DEBUGGER_WINDOW_PREFIX = "Waiting For Debugger: ";
@@ -132,7 +131,8 @@ public class WindowManagerState {
             try {
                 parseSysDumpProto(dump);
             } catch (InvalidProtocolBufferNanoException ex) {
-                System.out.println(new String(dump, StandardCharsets.UTF_8));
+                throw new RuntimeException("Failed to parse dumpsys:\n"
+                        + new String(dump, StandardCharsets.UTF_8), ex);
             }
 
             retry = mWindowStates.isEmpty() || mFocusedApp == null;
@@ -171,7 +171,7 @@ public class WindowManagerState {
 
     private void parseSysDumpProto(byte[] sysDump) throws InvalidProtocolBufferNanoException {
         reset();
-        state = WindowManagerServiceProto.parseFrom(sysDump);
+        WindowManagerServiceProto state = WindowManagerServiceProto.parseFrom(sysDump);
         List<WindowState> allWindows = new ArrayList<>();
         Map<String, WindowState> windowMap = new HashMap<>();
         if (state.focusedWindow != null) {
@@ -604,7 +604,7 @@ public class WindowManagerState {
         }
     }
 
-    class ConfigurationContainer {
+    static class ConfigurationContainer {
         final Configuration mOverrideConfiguration = new Configuration();
         final Configuration mFullConfiguration = new Configuration();
         final Configuration mMergedOverrideConfiguration = new Configuration();

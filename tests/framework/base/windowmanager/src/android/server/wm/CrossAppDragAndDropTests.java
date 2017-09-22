@@ -33,8 +33,11 @@ import static org.junit.Assert.fail;
 
 import android.graphics.Point;
 import android.os.RemoteException;
+import android.os.SystemClock;
+import android.platform.test.annotations.Presubmit;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.UiDevice;
+import android.util.Log;
 
 import org.junit.After;
 import org.junit.Before;
@@ -44,7 +47,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+/**
+ * Build: mmma -j32 cts/tests/framework/base
+ * Run: cts/tests/framework/base/activitymanager/util/run-test CtsWindowManagerDeviceTestCases android.server.wm.CrossAppDragAndDropTests
+ */
+@Presubmit
 public class CrossAppDragAndDropTests {
+    private static final String TAG = "CrossAppDragAndDrop";
+
     private static final String AM_FORCE_STOP = "am force-stop ";
     private static final String AM_MOVE_TASK = "am stack move-task ";
     private static final String AM_RESIZE_TASK = "am task resize ";
@@ -115,8 +125,17 @@ public class CrossAppDragAndDropTests {
     private String mSourcePackageName;
     private String mTargetPackageName;
 
+    private String mSessionId;
+    private String mSourceLogTag;
+    private String mTargetLogTag;
+
     @Before
     public void setUp() throws Exception {
+        // Use uptime in seconds as unique test invocation id.
+        mSessionId = Long.toString(SystemClock.uptimeMillis() / 1000);
+        mSourceLogTag = SOURCE_LOG_TAG + mSessionId;
+        mTargetLogTag = TARGET_LOG_TAG + mSessionId;
+
         mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         if (!supportsDragAndDrop()) {
             return;
@@ -141,8 +160,8 @@ public class CrossAppDragAndDropTests {
         executeShellCommand("logcat -c");
     }
 
-    private String getStartCommand(String componentName, String modeExtra) {
-        return AM_START_N + componentName + " -e mode " + modeExtra;
+    private String getStartCommand(String componentName, String modeExtra, String logtag) {
+        return AM_START_N + componentName + " -e mode " + modeExtra + " -e logtag " + logtag;
     }
 
     private String getMoveTaskCommand(int taskId, int stackId) {
@@ -173,7 +192,7 @@ public class CrossAppDragAndDropTests {
         // See b/29068935.
         clearLogs();
         final String componentName = getComponentName(mSourcePackageName, SOURCE_ACTIVITY_NAME);
-        executeShellCommand(getStartCommand(componentName, null) + " --windowingMode " +
+        executeShellCommand(getStartCommand(componentName, null, null) + " --windowingMode " +
                 WINDOWING_MODE_FULLSCREEN);
         final int taskId = getActivityTaskId(componentName);
         // Moving a task from the full screen stack to the docked stack resets
@@ -189,20 +208,20 @@ public class CrossAppDragAndDropTests {
         executeShellCommand(AM_REMOVE_STACK + FREEFORM_WORKSPACE_STACK_ID);
     }
 
-    private void launchDockedActivity(String packageName, String activityName, String mode)
-            throws Exception {
+    private void launchDockedActivity(String packageName, String activityName, String mode,
+            String logtag) throws Exception {
         clearLogs();
         final String componentName = getComponentName(packageName, activityName);
-        executeShellCommand(getStartCommand(componentName, mode) + " --windowingMode "
+        executeShellCommand(getStartCommand(componentName, mode, logtag) + " --windowingMode "
                 + WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
         waitForResume(packageName, activityName);
     }
 
-    private void launchFullscreenActivity(String packageName, String activityName, String mode)
-            throws Exception {
+    private void launchFullscreenActivity(String packageName, String activityName, String mode,
+            String logtag) throws Exception {
         clearLogs();
         final String componentName = getComponentName(packageName, activityName);
-        executeShellCommand(getStartCommand(componentName, mode) + " --windowingMode "
+        executeShellCommand(getStartCommand(componentName, mode, logtag) + " --windowingMode "
                 + WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
         waitForResume(packageName, activityName);
     }
@@ -213,10 +232,10 @@ public class CrossAppDragAndDropTests {
      *         {@code false} to launch the app taking up the right half of the display.
      */
     private void launchFreeformActivity(String packageName, String activityName, String mode,
-            Point displaySize, boolean leftSide) throws Exception {
+            String logtag, Point displaySize, boolean leftSide) throws Exception {
         clearLogs();
         final String componentName = getComponentName(packageName, activityName);
-        executeShellCommand(getStartCommand(componentName, mode) + " --windowingMode "
+        executeShellCommand(getStartCommand(componentName, mode, logtag) + " --windowingMode "
                 + WINDOWING_MODE_FREEFORM);
         waitForResume(packageName, activityName);
         Point topLeft = new Point(leftSide ? 0 : displaySize.x / 2, 0);
@@ -369,15 +388,22 @@ public class CrossAppDragAndDropTests {
             return;
         }
 
+        Log.e(TAG, "session: " + mSessionId + ", source: " + sourceMode
+                + ", target: " + targetMode);
+
         if (supportsSplitScreenMultiWindow()) {
-            launchDockedActivity(mSourcePackageName, SOURCE_ACTIVITY_NAME, sourceMode);
-            launchFullscreenActivity(mTargetPackageName, TARGET_ACTIVITY_NAME, targetMode);
+            launchDockedActivity(
+                    mSourcePackageName, SOURCE_ACTIVITY_NAME, sourceMode, mSourceLogTag);
+            launchFullscreenActivity(
+                    mTargetPackageName, TARGET_ACTIVITY_NAME, targetMode, mTargetLogTag);
         } else if (supportsFreeformMultiWindow()) {
             // Fallback to try to launch two freeform windows side by side.
             Point displaySize = getDisplaySize();
-            launchFreeformActivity(mSourcePackageName, SOURCE_ACTIVITY_NAME, sourceMode,
+            launchFreeformActivity(
+                    mSourcePackageName, SOURCE_ACTIVITY_NAME, sourceMode, mSourceLogTag,
                     displaySize, true /* leftSide */);
-            launchFreeformActivity(mTargetPackageName, TARGET_ACTIVITY_NAME, targetMode,
+            launchFreeformActivity(
+                    mTargetPackageName, TARGET_ACTIVITY_NAME, targetMode, mTargetLogTag,
                     displaySize, false /* leftSide */);
         } else {
             return;
@@ -392,10 +418,10 @@ public class CrossAppDragAndDropTests {
 
         injectInput(p1, p2, SWIPE_STEPS);
 
-        mSourceResults = getLogResults(SOURCE_LOG_TAG, RESULT_KEY_START_DRAG);
+        mSourceResults = getLogResults(mSourceLogTag, RESULT_KEY_START_DRAG);
         assertSourceResult(RESULT_KEY_START_DRAG, expectedStartDragResult);
 
-        mTargetResults = getLogResults(TARGET_LOG_TAG, RESULT_KEY_DRAG_ENDED);
+        mTargetResults = getLogResults(mTargetLogTag, RESULT_KEY_DRAG_ENDED);
         assertTargetResult(RESULT_KEY_DROP_RESULT, expectedDropResult);
         if (!RESULT_MISSING.equals(expectedDropResult)) {
             assertTargetResult(RESULT_KEY_ACCESS_BEFORE, RESULT_EXCEPTION);

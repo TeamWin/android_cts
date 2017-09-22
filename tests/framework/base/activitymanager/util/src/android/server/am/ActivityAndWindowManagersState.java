@@ -22,7 +22,7 @@ import static android.app.ActivityManager.StackId.INVALID_STACK_ID;
 import static android.app.ActivityManager.StackId.PINNED_STACK_ID;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
-import static android.server.am.ActivityManagerState.RESIZE_MODE_RESIZEABLE;
+import static android.content.pm.ActivityInfo.RESIZE_MODE_RESIZEABLE;
 import static android.server.am.ActivityManagerTestBase.componentName;
 import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logE;
@@ -720,7 +720,7 @@ public class ActivityAndWindowManagersState {
         // Cycle through the stacks and tasks to figure out if the home stack is resizable
         final ActivityTask homeTask = mAmState.getHomeTask();
         final boolean homeStackIsResizable = homeTask != null
-                && homeTask.getResizeMode().equals(RESIZE_MODE_RESIZEABLE);
+                && homeTask.getResizeMode() == RESIZE_MODE_RESIZEABLE;
 
         for (ActivityStack aStack : mAmState.getStacks()) {
             final int stackId = aStack.mStackId;

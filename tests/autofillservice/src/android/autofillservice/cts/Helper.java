@@ -96,6 +96,11 @@ final class Helper {
     static final int UI_TIMEOUT_MS = 2000;
 
     /**
+     * Timeout (in milliseconds) for an activity to be brought out to top.
+     */
+    static final int ACTIVITY_RESURRECTION_MS = 5000;
+
+    /**
      * Timeout (in milliseconds) for changing the screen orientation.
      */
     static final int UI_SCREEN_ORIENTATION_TIMEOUT_MS = 5000;

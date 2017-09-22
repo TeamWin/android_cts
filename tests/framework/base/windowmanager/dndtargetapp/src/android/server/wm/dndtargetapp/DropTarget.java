@@ -31,8 +31,6 @@ import android.view.View;
 import android.widget.TextView;
 
 public class DropTarget extends Activity {
-    public static final String LOG_TAG = "DropTarget";
-
     private static final String RESULT_KEY_DRAG_STARTED = "DRAG_STARTED";
     private static final String RESULT_KEY_DRAG_ENDED = "DRAG_ENDED";
     private static final String RESULT_KEY_EXTRAS = "EXTRAS";
@@ -52,10 +50,13 @@ public class DropTarget extends Activity {
     protected static final String MAGIC_VALUE = "42";
 
     private TextView mTextView;
+    private String mLogTag;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        mLogTag = getIntent().getStringExtra("logtag");
 
         View view = getLayoutInflater().inflate(R.layout.target_activity, null);
         setContentView(view);
@@ -90,7 +91,7 @@ public class DropTarget extends Activity {
     }
 
     private void logResult(String key, String value) {
-        Log.i(LOG_TAG, key + "=" + value);
+        Log.i(mLogTag, key + "=" + value);
         mTextView.setText(mTextView.getText() + "\n" + key + "=" + value);
     }
 
