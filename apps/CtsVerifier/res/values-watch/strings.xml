@@ -42,4 +42,21 @@
         4) Check that an icon appeared at the top of the lock screen. Tap the icon and unlock the device.\n
         5) Verify that a dialog about device monitoring opens, and informs you about: the name of the app that manages this device, details about the device owner\'s capabilities, and information that the admin can see the most recent network traffic log.\n
     </string>
+
+    <string name="enterprise_privacy_quick_settings_info">
+        1. Ensure the device has a lock screen enabled.\n
+        2. Lock the device.\n
+        3. Check that an icon appeared at the top of the lock screen. Tap the icon and unlock the device.\n
+        4. Verify that a screen informing you what your managing organization can do is shown.\n
+    </string>
+
+    <string name="enterprise_privacy_keyguard_info">
+        1) Press the Open Settings button to open Settings.\n
+        2) Navigate to \"Personalization\" &gt; \"Screen lock\" and select the first screen lock type that is not \"None\".\n
+        3) Use the Back button to return to this page.\n
+        4) Lock the device.\n
+        5) Verify that an info icon appeared at the top of the lock screen.\n
+        6) Unlock the device.\n
+        7) Repeat steps (1) through (6) for each screen lock type other than \"None\".
+    </string>
 </resources>
