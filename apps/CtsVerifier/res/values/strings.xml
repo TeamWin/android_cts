@@ -1142,7 +1142,8 @@
     <string name="mtp_host_grant_permission_message">Grant permission.\nReply a dialog asking device permission.</string>
     <string name="mtp_host_test_read_event_message">Test MtpDevice#readEvent.\nTake a picture at the connected device.</string>
     <string name="mtp_host_test_send_object_message">Test MtpDevice#sendObject.</string>
-    <string name="mtp_host_test_notification_message">Test MTP notification.\nCheck if there is an notification on this device saying the other MTP device is connected to this device. Also check if it opens the UI to browse files in the connected device by tapping the notification.</string>
+    <string name="mtp_host_test_file_browse_message">Test MTP file browsing.\nCheck if the UI to browse files in the connected devices was shown automatically. If not, tap a notification on this device saying the other MTP device is connected. If different application launched, go to the applicaiton settings by clicking the App Settings button, open the detailes settings page of the app, clear the default action settings, and retry. </string>
+    <string name="mtp_app_settings">App Settings</string>
 
     <!-- Strings for the Camera ITS test activity -->
     <string name="camera_its_test">Camera ITS Test</string>
