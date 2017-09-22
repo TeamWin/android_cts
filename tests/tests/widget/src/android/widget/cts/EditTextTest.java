@@ -337,25 +337,6 @@ public class EditTextTest {
         assertEquals(mEditText1.getSelectionEnd(), mEditText2.getSelectionEnd());
     }
 
-    @Test
-    public void testSetMaxLines_toZero_shouldNotDisplayAnyLines() throws Throwable {
-        mActivityRule.runOnUiThread(() -> {
-            mEditText1.setPadding(0, 0, 0, 0);
-            mEditText1.setText("Single");
-            mEditText1.setMaxLines(0);
-        });
-        mInstrumentation.waitForIdleSync();
-
-        final int expectedHeight = mEditText1.getTotalPaddingBottom()
-                + mEditText1.getTotalPaddingTop();
-        assertEquals(expectedHeight, mEditText1.getHeight());
-
-        mActivityRule.runOnUiThread(() -> mEditText1.setText("Two\nLines"));
-        mInstrumentation.waitForIdleSync();
-
-        assertEquals(expectedHeight, mEditText1.getHeight());
-    }
-
     private class MockEditText extends EditText {
         public MockEditText(Context context) {
             super(context);
