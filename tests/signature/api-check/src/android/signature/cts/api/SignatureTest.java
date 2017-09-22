@@ -52,6 +52,9 @@ public class SignatureTest extends InstrumentationTestCase {
         // TODO(b/63383787) - These classes, which are nested annotations with @Retention(SOURCE)
         // are removed from framework.dex for an as yet unknown reason.
         KNOWN_INACCESSIBLE_CLASSES.add("android.content.pm.PackageManager.PermissionFlags");
+        KNOWN_INACCESSIBLE_CLASSES.add("android.hardware.radio.ProgramSelector.IdentifierType");
+        KNOWN_INACCESSIBLE_CLASSES.add("android.hardware.radio.ProgramSelector.ProgramType");
+        KNOWN_INACCESSIBLE_CLASSES.add("android.hardware.radio.RadioManager.Band");
         KNOWN_INACCESSIBLE_CLASSES.add("android.os.UserManager.UserRestrictionSource");
         KNOWN_INACCESSIBLE_CLASSES.add(
                 "android.service.persistentdata.PersistentDataBlockManager.FlashLockState");
