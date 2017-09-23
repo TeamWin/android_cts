@@ -25,12 +25,15 @@ import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import android.platform.test.annotations.Presubmit;
+
 import org.junit.Test;
 
 /**
- * Build: mmma -j32 cts/hostsidetests/services
+ * Build: mmma -j32 cts/tests/framework/base
  * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.ActivityManagerAssistantStackTests
  */
+@Presubmit
 public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase {
 
     private static final String VOICE_INTERACTION_SERVICE = "AssistantVoiceInteractionService";

@@ -30,6 +30,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import android.app.ActivityManager;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
@@ -113,6 +115,7 @@ public abstract class ActivityManagerTestBase {
 
     protected static final int INVALID_DEVICE_ROTATION = -1;
 
+    protected Context mContext;
     protected UiDevice mDevice;
 
     private HashSet<String> mAvailableFeatures;
@@ -232,6 +235,7 @@ public abstract class ActivityManagerTestBase {
 
     @Before
     public void setUp() throws Exception {
+        mContext = InstrumentationRegistry.getContext();
         mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         setDefaultComponentName();
 
@@ -527,8 +531,7 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected boolean supportsSplitScreenMultiWindow() {
-        String output = executeShellCommand(AM_SUPPORTS_SPLIT_SCREEN_MULTIWINDOW);
-        return !output.startsWith("false");
+        return ActivityManager.supportsSplitScreenMultiWindow(mContext);
     }
 
     protected boolean noHomeScreen() {
