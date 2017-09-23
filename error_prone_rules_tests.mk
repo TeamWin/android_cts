@@ -16,6 +16,5 @@
 
 # Goal is to eventually merge with error_prone_rules.mk
 LOCAL_ERROR_PRONE_FLAGS:= -Xep:JUnit3TestNotRun:ERROR \
-                          -Xep:JUnitAmbiguousTestClass:ERROR \
                           -Xep:TryFailThrowable:ERROR
 

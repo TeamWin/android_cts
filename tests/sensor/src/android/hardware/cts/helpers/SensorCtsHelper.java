@@ -228,6 +228,30 @@ public class SensorCtsHelper {
     }
 
     /**
+     * Format an array of floats.
+     *
+     * @param array the array of floats
+     *
+     * @return The formatted string
+     */
+    public static String formatFloatArray(float[] array) {
+        StringBuilder sb = new StringBuilder();
+        if (array.length > 1) {
+            sb.append("(");
+        }
+        for (int i = 0; i < array.length; i++) {
+            sb.append(String.format("%.2f", array[i]));
+            if (i != array.length - 1) {
+                sb.append(", ");
+            }
+        }
+        if (array.length > 1) {
+            sb.append(")");
+        }
+        return sb.toString();
+    }
+
+    /**
      * @return A {@link File} representing a root directory to store sensor tests data.
      */
     public static File getSensorTestDataDirectory() throws IOException {
