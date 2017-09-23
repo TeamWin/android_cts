@@ -147,14 +147,17 @@ public class CollectorUtil {
         HashMap<String, List<String>> jsonMap = new HashMap<>();
         Pattern p = Pattern.compile(TEST_METRICS_PATTERN);
         Matcher m = p.matcher(jsonString);
-        while (m.find()) {
+        if (!m.find()) {
+            return jsonString;
+        }
+        do {
             String key = m.group(1);
             String value = m.group(2);
             if (!jsonMap.containsKey(key)) {
                 jsonMap.put(key, new ArrayList<String>());
             }
             jsonMap.get(key).add(value);
-        }
+        } while (m.find());
         // Rewrite json string as arrays.
         newJsonBuilder.append("{");
         boolean firstLine = true;
