@@ -39,6 +39,15 @@ LOCAL_SRC_FILES := frameworks/base/api/system-current.txt
 
 include $(LOCAL_PATH)/build_xml_api_file.mk
 
+# removed system api, in XML format.
+# ============================================================
+include $(CLEAR_VARS)
+LOCAL_MODULE := cts-system-removed-api
+LOCAL_MODULE_STEM := system-removed.api
+LOCAL_SRC_FILES := frameworks/base/api/system-removed.txt
+
+include $(LOCAL_PATH)/build_xml_api_file.mk
+
 # current legacy-test api, in XML format.
 # ============================================================
 include $(CLEAR_VARS)

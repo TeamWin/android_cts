@@ -28,6 +28,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-test \
     compatibility-device-util \
     ctstestrunner \
+    truth-prebuilt \
     guava \
     junit \
     legacy-android-test
