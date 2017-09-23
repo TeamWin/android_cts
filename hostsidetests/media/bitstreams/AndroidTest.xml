@@ -26,6 +26,12 @@
         <option name="target" value="device" />
         <option name="config-filename" value="CtsMediaBitstreamsTestCases" />
     </target_preparer>
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.ReportLogCollector">
+        <option name="src-dir" value="/sdcard/report-log-files/"/>
+        <option name="dest-dir" value="report-log-files/"/>
+        <option name="temp-dir" value="temp-report-logs/"/>
+        <option name="device-dir" value="true"/>
+    </target_preparer>
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
         <option name="jar" value="CtsMediaBitstreamsTestCases.jar" />
         <option name="runtime-hint" value="4h50m" />
