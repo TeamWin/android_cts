@@ -22,6 +22,8 @@ import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.ITestInvocationListener;
 import com.android.tradefed.testtype.AndroidJUnitTest;
+import com.android.tradefed.util.FileUtil;
+import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -100,9 +102,15 @@ abstract class ReportProcessor {
      */
     static String[] getReportLines(ITestDevice device, String reportPath)
             throws DeviceNotAvailableException {
-        String cat = String.format("cat %s", reportPath);
-        String output = device.executeShellCommand(cat);
-        return output.isEmpty() ? new String[0] : output.split("\n");
+        File reportFile = device.pullFile(reportPath);
+        try {
+            return FileUtil.readStringFromFile(reportFile).split("\n");
+        } catch (IOException e) {
+            CLog.w(e);
+            return new String[0];
+        } finally {
+            reportFile.delete();
+        }
     }
 
     /* Special listener for setting MediaPreparer instance variable values */
