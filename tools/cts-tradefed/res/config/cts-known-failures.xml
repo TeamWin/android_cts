@@ -238,7 +238,7 @@
     <option name="compatibility:exclude-filter" value="CtsMediaTestCases android.media.cts.VideoDecoderPerfTest#testVp8Goog0Perf1280x0720" />
 
     <!-- b/63566721 -->
-    <option name="compatibility:exclude-filter" value="CtsWrapWrapDebugTestCases android.wrap.cts.WrapTest" />
+    <option name="compatibility:exclude-filter" value="CtsWrapWrapDebugTestCases" />
 
     <!-- b/38420898 -->
     <option name="compatibility:exclude-filter" value="CtsSensorTestCases android.hardware.cts.SensorDirectReportTest#testRateIndependencyAccelMultiChannel" />
