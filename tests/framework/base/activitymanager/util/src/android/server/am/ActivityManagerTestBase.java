@@ -16,12 +16,13 @@
 
 package android.server.am;
 
-import static android.app.ActivityManager.StackId.ASSISTANT_STACK_ID;
 import static android.app.ActivityManager.StackId.DOCKED_STACK_ID;
-import static android.app.ActivityManager.StackId.FREEFORM_WORKSPACE_STACK_ID;
 import static android.app.ActivityManager.StackId.FULLSCREEN_WORKSPACE_STACK_ID;
 import static android.app.ActivityManager.StackId.INVALID_STACK_ID;
-import static android.app.ActivityManager.StackId.PINNED_STACK_ID;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_ASSISTANT;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
 import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logE;
 import static android.view.KeyEvent.KEYCODE_APP_SWITCH;
@@ -57,13 +58,9 @@ public abstract class ActivityManagerTestBase {
     private static final boolean PRETEND_DEVICE_SUPPORTS_FREEFORM = false;
     private static final String LOG_SEPARATOR = "LOG_SEPARATOR";
 
-    protected static final int[] ALL_STACK_IDS_BUT_HOME = {
-            FULLSCREEN_WORKSPACE_STACK_ID, FREEFORM_WORKSPACE_STACK_ID, DOCKED_STACK_ID,
-            PINNED_STACK_ID, ASSISTANT_STACK_ID
-    };
-
-    protected static final int[] ALL_STACK_IDS_BUT_HOME_AND_FULLSCREEN = {
-            FREEFORM_WORKSPACE_STACK_ID, DOCKED_STACK_ID, PINNED_STACK_ID, ASSISTANT_STACK_ID
+    protected static final int[] ALL_ACTIVITY_TYPE_BUT_HOME = {
+            ACTIVITY_TYPE_STANDARD, ACTIVITY_TYPE_ASSISTANT, ACTIVITY_TYPE_RECENTS,
+            ACTIVITY_TYPE_UNDEFINED
     };
 
     private static final String TASK_ID_PREFIX = "taskId";
@@ -75,8 +72,6 @@ public abstract class ActivityManagerTestBase {
             = "am force-stop android.server.am.second";
     private static final String AM_FORCE_STOP_THIRD_TEST_PACKAGE
             = "am force-stop android.server.am.third";
-
-    private static final String AM_REMOVE_STACK = "am stack remove ";
 
     protected static final String AM_START_HOME_ACTIVITY_COMMAND =
             "am start -a android.intent.action.MAIN -c android.intent.category.HOME";
@@ -116,6 +111,7 @@ public abstract class ActivityManagerTestBase {
     protected static final int INVALID_DEVICE_ROTATION = -1;
 
     protected Context mContext;
+    protected ActivityManager mAm;
     protected UiDevice mDevice;
 
     private HashSet<String> mAvailableFeatures;
@@ -236,13 +232,17 @@ public abstract class ActivityManagerTestBase {
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getContext();
+        mAm = mContext.getSystemService(ActivityManager.class);
         mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         setDefaultComponentName();
+        executeShellCommand("pm grant " + mContext.getPackageName()
+                + " android.permission.MANAGE_ACTIVITY_STACKS");
+        executeShellCommand("pm grant " + mContext.getPackageName()
+                + " android.permission.ACTIVITY_EMBEDDING");
 
         wakeUpAndUnlockDevice();
         pressHomeButton();
-        // Remove special stacks.
-        removeStacks(ALL_STACK_IDS_BUT_HOME_AND_FULLSCREEN);
+        removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
         // Store rotation settings.
         mInitialAccelerometerRotation = getAccelerometerRotation();
         mUserRotation = getUserRotation();
@@ -262,16 +262,17 @@ public abstract class ActivityManagerTestBase {
         setUserRotation(mUserRotation);
         setFontScale(mFontScale);
             setWindowTransitionAnimationDurationScale(1);
-        // Remove special stacks.
-        removeStacks(ALL_STACK_IDS_BUT_HOME_AND_FULLSCREEN);
+        removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
         wakeUpAndUnlockDevice();
         pressHomeButton();
     }
 
-    protected void removeStacks(int... stackIds) {
-        for (Integer stackId : stackIds) {
-            executeShellCommand(AM_REMOVE_STACK + stackId);
-        }
+    protected void removeStacksWithActivityTypes(int... activityTypes) {
+        mAm.removeStacksWithActivityTypes(activityTypes);
+    }
+
+    protected void removeStacksInWindowingModes(int... windowingModes) {
+        mAm.removeStacksInWindowingModes(windowingModes);
     }
 
     public static String executeShellCommand(String command) {
