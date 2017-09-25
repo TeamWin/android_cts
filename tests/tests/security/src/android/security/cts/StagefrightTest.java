@@ -824,6 +824,11 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTestRawBlob(R.raw.cve_2017_0762, "video/hevc", 320, 240);
     }
 
+    @SecurityTest
+    public void testCve_2017_0687() throws Exception {
+        doStagefrightTestRawBlob(R.raw.cve_2017_0687, "video/avc", 320, 240);
+    }
+
     private void runWithTimeout(Runnable runner, int timeout) {
         Thread t = new Thread(runner);
         t.start();
