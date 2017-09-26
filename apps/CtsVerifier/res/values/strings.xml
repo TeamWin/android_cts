@@ -3049,17 +3049,21 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="enterprise_privacy_default_apps">Default apps</string>
     <string name="enterprise_privacy_default_apps_info">
         Please do the following:\n
-        1) Press the Reset button.\n
-        2) Press the Open Settings button.\n
-        3) In the screen that opens, verify that you are not told that your administrator set any default apps.\n
-        4) Use the Back button to return to this page.\n
-        5) Press the Set Default Apps button.\n
+        1) When a default browser is set, you must clear it by step (2), (3) and (4).\n
+        2) Confirm default browser by "Settings &gt; Apps &amp; notifications &gt; Default apps &gt; Browser app".\n
+        3) Tap default browser app in the "Settings &gt; Apps &amp; notifications &gt; App info".\n
+        4) Tap "Open by default" and Tap "CLEAR DEFAULTS"\n
+        5) Press the Reset button.\n
         6) Press the Open Settings button.\n
-        7) In the screen that opens, verify that you are now told that your administrator has set 7 default apps.\n
-        8) Tap on that information. Verify that a list of default apps shows, with 7 elements in it.\n
-        9) Verify that each element shows the CTS Verifier is the default app.\n
-        10) Use the Back button to return to this page.\n
-        11) Press the Reset button.
+        7) In the screen that opens, verify that you are not told that your administrator set any default apps.\n
+        8) Use the Back button to return to this page.\n
+        9) Press the Set Default Apps button.\n
+        10) Press the Open Settings button.\n
+        11) In the screen that opens, verify that you are now told that your administrator has set 7 default apps.\n
+        12) Tap on that information. Verify that a list of default apps shows, with 7 elements in it.\n
+        13) Verify that each element shows the CTS Verifier is the default app.\n
+        14) Use the Back button to return to this page.\n
+        15) Press the Reset button.
     </string>
     <string name="enterprise_privacy_set_default_apps">Set Default Apps</string>
     <string name="enterprise_privacy_default_ime">Default keyboard</string>
