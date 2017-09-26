@@ -386,7 +386,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         executeShellCommand(FINISH_ACTIVITY_BROADCAST);
 
         // Verify that activity brought to front is in originally requested orientation.
-        mAmWmState.waitForValidState(mDevice, LANDSCAPE_ACTIVITY_NAME);
+        mAmWmState.computeState(mDevice, new String[]{LANDSCAPE_ACTIVITY_NAME});
         assertEquals("Should return to app in landscape orientation",
                 0 /* landscape */, mAmWmState.getWmState().getLastOrientation());
     }
