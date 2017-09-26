@@ -45,6 +45,8 @@ public class LightBarTests extends ActivityInstrumentationTestCase2<LightBarActi
 
     public static final String DUMP_PATH = "/sdcard/lightstatustest.png";
 
+    private static final int WAIT_TIME = 2000;
+
     public LightBarTests() {
         super(LightBarActivity.class);
     }
@@ -52,6 +54,7 @@ public class LightBarTests extends ActivityInstrumentationTestCase2<LightBarActi
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+
         // As the way to access Instrumentation is changed in the new runner, we need to inject it
         // manually into ActivityInstrumentationTestCase2. ActivityInstrumentationTestCase2 will
         // be marked as deprecated and replaced with ActivityTestRule.
@@ -73,7 +76,7 @@ public class LightBarTests extends ActivityInstrumentationTestCase2<LightBarActi
         }
 
         requestLightBars(Color.RED /* background */);
-        Thread.sleep(1000);
+        Thread.sleep(WAIT_TIME);
 
         Bitmap bitmap = takeStatusBarScreenshot();
         Stats s = evaluateLightBarBitmap(bitmap, Color.RED /* background */);
@@ -100,13 +103,13 @@ public class LightBarTests extends ActivityInstrumentationTestCase2<LightBarActi
         }
 
         requestLightBars(Color.RED /* background */);
-        Thread.sleep(1000);
+        Thread.sleep(WAIT_TIME);
 
         // Inject a cancelled interaction with the nav bar to ensure it is at full opacity.
         int x = getActivity().getWidth() / 2;
         int y = getActivity().getBottom() + 10;
         injectCanceledTap(x, y);
-        Thread.sleep(1000);
+        Thread.sleep(WAIT_TIME);
 
         Bitmap bitmap = takeNavigationBarScreenshot();
         Stats s = evaluateLightBarBitmap(bitmap, Color.RED /* background */);
