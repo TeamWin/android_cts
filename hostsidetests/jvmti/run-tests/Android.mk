@@ -157,7 +157,7 @@ $$(GEN_OUTPUT): PRIVATE_GEN_JACK := $$(GEN_JACK)
 $$(GEN_OUTPUT): $$(GEN_INPUT) $$(GEN_JACK)
 	cp $$< $$@
 ifneq (,$$(GEN_JACK))
-	patch $$@ < $$(PRIVATE_GEN_JACK)
+	(cd $$(dir $$@) && patch $$(notdir $$@)) < $$(PRIVATE_GEN_JACK)
 endif
 
 GEN_INPUT :=
