@@ -230,7 +230,8 @@ public abstract class MediaBitstreamsTest implements IDeviceTest, IBuildReceiver
         MetricsReportLog report = new MetricsReportLog(
                 mBuildHelper.getBuildInfo(), mAbi.getName(),
                 String.format("%s#%s", className, methodName),
-                MediaBitstreams.K_MODULE, "media_bitstreams_conformance");
+                MediaBitstreams.K_MODULE + "." + this.getClass().getCanonicalName(),
+                "media_bitstreams_conformance");
         return report;
     }
 
