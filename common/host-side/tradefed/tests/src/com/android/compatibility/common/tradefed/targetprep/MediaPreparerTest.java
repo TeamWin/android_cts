@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.mediastress.cts.preconditions;
+package com.android.compatibility.common.tradefed.targetprep;
 
 import com.android.ddmlib.IDevice;
 import com.android.tradefed.build.BuildInfo;
