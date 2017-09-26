@@ -150,6 +150,8 @@ def unpack_raw10_image(img):
     lsbs = img[::, 4::5].reshape(h,w/4)
     lsbs = numpy.right_shift(
             numpy.packbits(numpy.unpackbits(lsbs).reshape(h,w/4,4,2),3), 6)
+    # Pair the LSB bits group to pixel 0 instead of pixel 3
+    lsbs = lsbs.reshape(h,w/4,4)[:,:,::-1]
     lsbs = lsbs.reshape(h,w)
     # Fuse the MSBs and LSBs back together
     img16 = numpy.bitwise_or(msbs, lsbs).reshape(h,w)
@@ -200,6 +202,8 @@ def unpack_raw12_image(img):
     lsbs = img[::, 2::3].reshape(h,w/2)
     lsbs = numpy.right_shift(
             numpy.packbits(numpy.unpackbits(lsbs).reshape(h,w/2,2,4),3), 4)
+    # Pair the LSB bits group to pixel 0 instead of pixel 1
+    lsbs = lsbs.reshape(h,w/2,2)[:,:,::-1]
     lsbs = lsbs.reshape(h,w)
     # Fuse the MSBs and LSBs back together
     img16 = numpy.bitwise_or(msbs, lsbs).reshape(h,w)
