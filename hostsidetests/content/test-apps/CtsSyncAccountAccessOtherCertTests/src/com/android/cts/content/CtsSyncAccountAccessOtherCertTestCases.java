@@ -204,8 +204,9 @@ public class CtsSyncAccountAccessOtherCertTestCases {
     }
 
     private boolean hasNotificationSupport() {
-        return !getContext().getPackageManager()
-                .hasSystemFeature(PackageManager.FEATURE_LEANBACK);
+        final PackageManager manager = getContext().getPackageManager();
+        return !manager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+                && !manager.hasSystemFeature(PackageManager.FEATURE_EMBEDDED);
     }
 
     private void allowSyncAdapterRunInBackgroundAndDataInBackground() throws IOException {
