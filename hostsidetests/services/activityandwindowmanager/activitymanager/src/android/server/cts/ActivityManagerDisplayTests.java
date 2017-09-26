@@ -1838,7 +1838,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
             assertTrue("Expected resumed activity on secondary display", mAmWmState.getAmState()
                     .hasActivityState(SHOW_WHEN_LOCKED_ATTR_ACTIVITY_NAME, STATE_RESUMED));
         } finally {
-            removeLockCredential();
+            tearDownLockCredentials();
         }
     }
 
