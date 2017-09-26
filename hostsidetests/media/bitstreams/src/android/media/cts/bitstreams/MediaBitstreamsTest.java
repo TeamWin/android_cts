@@ -430,6 +430,13 @@ public abstract class MediaBitstreamsTest implements IDeviceTest, IBuildReceiver
 
     @Test
     public void testBitstreamsConformance() {
+        File bitstreamFile = new File(mHostBitstreamsPath, mPath);
+        if (!bitstreamFile.exists()) {
+            // todo(b/65165250): throw Exception once MediaPreparer can auto-download
+            CLog.w(bitstreamFile + " not found; skipping");
+            return;
+        }
+
         if (!mResults.containsKey(mPath)) {
             try {
                 testBitstreamsConformance(mPrefix);
