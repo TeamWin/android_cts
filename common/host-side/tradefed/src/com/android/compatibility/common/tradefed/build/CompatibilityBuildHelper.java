@@ -220,6 +220,18 @@ public class CompatibilityBuildHelper {
     }
 
     /**
+     * @return a {@link File} representing the directory to store screenshots taken while testing.
+     * @throws FileNotFoundException if the directory structure is not valid.
+     */
+    public File getScreenshotsDir() throws FileNotFoundException {
+        File screenshotsDir = new File(getResultDir(), "screenshots");
+        if (!screenshotsDir.exists()) {
+            screenshotsDir.mkdirs();
+        }
+        return screenshotsDir;
+    }
+
+    /**
      * @return a {@link File} representing the test modules directory.
      * @throws FileNotFoundException if the directory structure is not valid.
      */
