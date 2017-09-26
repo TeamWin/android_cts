@@ -68,6 +68,13 @@
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
           android:text="@string/dialer_telecom_intents_call_settings"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/js_padding"
+        android:layout_marginBottom="@dimen/js_padding">
       <CheckBox
           android:id="@+id/dialer_telecom_intents_call_settings_check_box"
           android:text="@string/dialer_check_intents_check_box"
@@ -85,6 +92,13 @@
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
           android:text="@string/dialer_telecom_intents_short_sms"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/js_padding"
+        android:layout_marginBottom="@dimen/js_padding">
       <CheckBox
           android:id="@+id/dialer_telecom_intents_short_sms_check_box"
           android:text="@string/dialer_check_intents_check_box"
@@ -102,6 +116,13 @@
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
           android:text="@string/dialer_telecom_intents_calling_accounts"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/js_padding"
+        android:layout_marginBottom="@dimen/js_padding">
       <CheckBox
           android:id="@+id/dialer_telecom_intents_calling_accounts_check_box"
           android:text="@string/dialer_check_intents_check_box"
@@ -119,6 +140,13 @@
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
           android:text="@string/dialer_telecom_intents_accessibility_settings"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/js_padding"
+        android:layout_marginBottom="@dimen/js_padding">
       <CheckBox
           android:id="@+id/dialer_telecom_intents_accessibility_settings_check_box"
           android:text="@string/dialer_check_intents_check_box"
