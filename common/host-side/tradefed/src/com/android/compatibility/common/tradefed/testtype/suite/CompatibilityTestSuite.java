@@ -16,9 +16,9 @@
 package com.android.compatibility.common.tradefed.testtype.suite;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
-import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
 import com.android.compatibility.common.tradefed.testtype.ISubPlan;
 import com.android.compatibility.common.tradefed.testtype.SubPlan;
+import com.android.compatibility.common.tradefed.testtype.retry.RetryFactoryTest;
 import com.android.compatibility.common.util.TestFilter;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.IConfiguration;
@@ -56,20 +56,21 @@ import java.util.Set;
 @OptionClass(alias = "compatibility")
 public class CompatibilityTestSuite extends ITestSuite {
 
-    private static final String INCLUDE_FILTER_OPTION = "include-filter";
-    private static final String EXCLUDE_FILTER_OPTION = "exclude-filter";
-    private static final String SUBPLAN_OPTION = "subplan";
-    private static final String MODULE_OPTION = "module";
-    private static final String TEST_OPTION = "test";
+    public static final String ABI_OPTION = "abi";
+    public static final String INCLUDE_FILTER_OPTION = "include-filter";
+    public static final String EXCLUDE_FILTER_OPTION = "exclude-filter";
+    public static final String SUBPLAN_OPTION = "subplan";
+    public static final String MODULE_OPTION = "module";
+    public static final String TEST_OPTION = "test";
+    public static final char TEST_OPTION_SHORT_NAME = 't';
     private static final String MODULE_ARG_OPTION = "module-arg";
     private static final String TEST_ARG_OPTION = "test-arg";
-    private static final String ABI_OPTION = "abi";
     private static final String SKIP_HOST_ARCH_CHECK = "skip-host-arch-check";
     private static final String PRIMARY_ABI_RUN = "primary-abi-only";
     private static final String PRODUCT_CPU_ABI_KEY = "ro.product.cpu.abi";
 
     // TODO: remove this option when CompatibilityTest goes away
-    @Option(name = CompatibilityTest.RETRY_OPTION,
+    @Option(name = RetryFactoryTest.RETRY_OPTION,
             shortName = 'r',
             description = "Copy of --retry from CompatibilityTest to prevent using it.")
     private Integer mRetrySessionId = null;
@@ -96,7 +97,7 @@ public class CompatibilityTestSuite extends ITestSuite {
     private String mModuleName = null;
 
     @Option(name = TEST_OPTION,
-            shortName = 't',
+            shortName = TEST_OPTION_SHORT_NAME,
             description = "the test to run.",
             importance = Importance.IF_UNSET)
     private String mTestName = null;
