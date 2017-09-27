@@ -15,6 +15,9 @@
  */
 package com.android.compatibility.common.tradefed.testtype;
 
+import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
@@ -63,5 +66,13 @@ public class BusinessLogicHostTestBase extends CompatibilityHostTestBase {
                     mBuild, this);
             mBusinessLogic.applyLogicFor(testName, executor);
         }
+    }
+
+    public static void skipTest(String message) {
+        assumeTrue(message, false);
+    }
+
+    public static void failTest(String message) {
+        fail(message);
     }
 }
