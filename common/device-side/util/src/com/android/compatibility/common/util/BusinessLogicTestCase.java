@@ -23,6 +23,7 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 
+import android.app.Instrumentation;
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 import android.util.Log;
@@ -66,8 +67,12 @@ public class BusinessLogicTestCase {
         }
     }
 
-    private Context getContext() {
-        return InstrumentationRegistry.getInstrumentation().getTargetContext();
+    protected static Instrumentation getInstrumentation() {
+        return InstrumentationRegistry.getInstrumentation();
+    }
+
+    protected static Context getContext() {
+        return getInstrumentation().getTargetContext();
     }
 
     public static void skipTest(String message) {
