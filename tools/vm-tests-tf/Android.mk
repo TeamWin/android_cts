@@ -96,7 +96,7 @@ ifndef LOCAL_JACK_ENABLED
 oj_jar := $(call intermediates-dir-for,JAVA_LIBRARIES,core-oj,,COMMON)/classes.jar
 libart_jar := $(call intermediates-dir-for,JAVA_LIBRARIES,core-libart,,COMMON)/classes.jar
 $(LOCAL_BUILT_MODULE): PRIVATE_DALVIK_SUITE_CLASSPATH := $(oj_jar):$(libart_jar):$(cts-tf-dalvik-lib.jar):$(HOST_OUT_JAVA_LIBRARIES)/tradefed.jar:
-$(LOCAL_BUILT_MODULE) : $(vmteststf_dep_jars) $(HOST_OUT_JAVA_LIBRARIES)/tradefed.jar
+$(LOCAL_BUILT_MODULE) : $(vmteststf_dep_jars) $(HOST_OUT_JAVA_LIBRARIES)/tradefed.jar $(DX)
 	$(hide) rm -rf $(dir $@) && mkdir -p $(dir $@)
 	$(hide) mkdir -p $(PRIVATE_INTERMEDIATES_HOSTJUNIT_FILES)/dot/junit $(dir $(PRIVATE_INTERMEDIATES_DEXCORE_JAR))
 	# generated and compile the host side junit tests
@@ -109,7 +109,7 @@ $(LOCAL_BUILT_MODULE) : $(vmteststf_dep_jars) $(HOST_OUT_JAVA_LIBRARIES)/tradefe
 	$(hide) $(JAR) -cf $(PRIVATE_INTERMEDIATES_DEXCORE_JAR)-class.jar \
 		$(addprefix -C $(PRIVATE_INTERMEDIATES_CLASSES) , dot/junit/DxUtil.class dot/junit/DxAbstractMain.class dot/junit/AssertionFailedException.class)
 	$(hide) mkdir -p $(PRIVATE_INTERMEDIATES_DEXCORE_JAR).tmp
-	$(hide) $(DX) -JXms16M -JXmx768M --dex --output=$(PRIVATE_INTERMEDIATES_DEXCORE_JAR).tmp \
+	$(hide) $(DX_COMMAND) --dex --output=$(PRIVATE_INTERMEDIATES_DEXCORE_JAR).tmp \
 		$(if $(NO_OPTIMIZE_DX), --no-optimize) $(PRIVATE_INTERMEDIATES_DEXCORE_JAR)-class.jar && rm -f $(PRIVATE_INTERMEDIATES_DEXCORE_JAR).jar
 	$(hide) cd $(PRIVATE_INTERMEDIATES_DEXCORE_JAR).tmp && zip -q -r $(abspath $(PRIVATE_INTERMEDIATES_DEXCORE_JAR)) .
 	$(hide) cd $(PRIVATE_INTERMEDIATES_HOSTJUNIT_FILES)/classes && zip -q -r ../../$(notdir $@) .
