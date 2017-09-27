@@ -16,7 +16,8 @@
 package com.android.compatibility.common.tradefed.result;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
-import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
+import com.android.compatibility.common.tradefed.testtype.retry.RetryFactoryTest;
+import com.android.compatibility.common.tradefed.testtype.suite.CompatibilityTestSuite;
 import com.android.compatibility.common.tradefed.util.RetryType;
 import com.android.compatibility.common.util.ChecksumReporter;
 import com.android.compatibility.common.util.ICaseResult;
@@ -101,14 +102,14 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             ResultHandler.FAILURE_REPORT_NAME,
             "diffs");
 
-    @Option(name = CompatibilityTest.RETRY_OPTION,
+    @Option(name = RetryFactoryTest.RETRY_OPTION,
             shortName = 'r',
             description = "retry a previous session.",
             importance = Importance.IF_UNSET)
     private Integer mRetrySessionId = null;
 
-    @Option(name = CompatibilityTest.RETRY_TYPE_OPTION,
-            description = "used with " + CompatibilityTest.RETRY_OPTION
+    @Option(name = RetryFactoryTest.RETRY_TYPE_OPTION,
+            description = "used with " + RetryFactoryTest.RETRY_OPTION
             + ", retry tests of a certain status. Possible values include \"failed\", "
             + "\"not_executed\", and \"custom\".",
             importance = Importance.IF_UNSET)
@@ -811,11 +812,11 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
         }
         return !(RetryType.FAILED.equals(mRetryType)
                 || RetryType.CUSTOM.equals(mRetryType)
-                || args.contains(CompatibilityTest.INCLUDE_FILTER_OPTION)
-                || args.contains(CompatibilityTest.EXCLUDE_FILTER_OPTION)
-                || args.contains(CompatibilityTest.SUBPLAN_OPTION)
+                || args.contains(CompatibilityTestSuite.INCLUDE_FILTER_OPTION)
+                || args.contains(CompatibilityTestSuite.EXCLUDE_FILTER_OPTION)
+                || args.contains(CompatibilityTestSuite.SUBPLAN_OPTION)
                 || args.matches(String.format(".* (-%s|--%s) .*",
-                CompatibilityTest.TEST_OPTION_SHORT_NAME, CompatibilityTest.TEST_OPTION)));
+                CompatibilityTestSuite.TEST_OPTION_SHORT_NAME, CompatibilityTestSuite.TEST_OPTION)));
     }
 
     /**

@@ -16,9 +16,9 @@
 package com.android.compatibility.common.tradefed.result;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
-import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
 import com.android.compatibility.common.tradefed.testtype.ISubPlan;
 import com.android.compatibility.common.tradefed.testtype.SubPlan;
+import com.android.compatibility.common.tradefed.testtype.suite.CompatibilityTestSuite;
 import com.android.compatibility.common.tradefed.util.OptionHelper;
 import com.android.compatibility.common.util.ICaseResult;
 import com.android.compatibility.common.util.IInvocationResult;
@@ -33,8 +33,8 @@ import com.android.tradefed.config.ConfigurationException;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.Option.Importance;
 import com.android.tradefed.log.LogUtil.CLog;
-import com.android.tradefed.util.xml.AbstractXmlParser.ParseException;
 import com.android.tradefed.util.StreamUtil;
+import com.android.tradefed.util.xml.AbstractXmlParser.ParseException;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -43,13 +43,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -90,27 +90,27 @@ public class SubPlanHelper {
             importance=Importance.IF_UNSET)
     private Set<String> mResultTypes = new HashSet<String>();
 
-    @Option(name = CompatibilityTest.INCLUDE_FILTER_OPTION,
+    @Option(name = CompatibilityTestSuite.INCLUDE_FILTER_OPTION,
             description = "the include module filters to apply.",
             importance = Importance.NEVER)
     private Set<String> mIncludeFilters = new HashSet<String>();
 
-    @Option(name = CompatibilityTest.EXCLUDE_FILTER_OPTION,
+    @Option(name = CompatibilityTestSuite.EXCLUDE_FILTER_OPTION,
             description = "the exclude module filters to apply.",
             importance = Importance.NEVER)
     private Set<String> mExcludeFilters = new HashSet<String>();
 
-    @Option(name = CompatibilityTest.MODULE_OPTION, shortName = 'm',
+    @Option(name = CompatibilityTestSuite.MODULE_OPTION, shortName = 'm',
             description = "the test module to run.",
             importance = Importance.NEVER)
     private String mModuleName = null;
 
-    @Option(name = CompatibilityTest.TEST_OPTION, shortName = 't',
+    @Option(name = CompatibilityTestSuite.TEST_OPTION, shortName = 't',
             description = "the test to run.",
             importance = Importance.NEVER)
     private String mTestName = null;
 
-    @Option(name = CompatibilityTest.ABI_OPTION, shortName = 'a',
+    @Option(name = CompatibilityTestSuite.ABI_OPTION, shortName = 'a',
             description = "the abi to test.",
             importance = Importance.NEVER)
     private String mAbiName = null;
@@ -154,7 +154,7 @@ public class SubPlanHelper {
             throw new RuntimeException(
                     String.format("Unable to find or parse subplan %s", name), e);
         } finally {
-            StreamUtil.closeStream(subPlanInputStream);
+            StreamUtil.close(subPlanInputStream);
         }
     }
 
@@ -202,7 +202,7 @@ public class SubPlanHelper {
      * Create a subplan derived from a result.
      * <p/>
      * {@link Option} values must be set before this is called.
-     * @param build
+     * @param buildHelper
      * @return subplan
      * @throws ConfigurationException
      */
