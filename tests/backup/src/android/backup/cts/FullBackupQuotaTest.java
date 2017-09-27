@@ -50,6 +50,15 @@ public class FullBackupQuotaTest extends BaseBackupCtsTest {
         if (!isBackupSupported()) {
             return;
         }
+        // get the app out of (possibly) stopped state so that backup can be run
+        exec("cmd activity broadcast -a android.backup.app.ACTION_WAKE_UP " +
+                "-n android.backup.app/.WakeUpReceiver");
+
+        // give it 3s for the broadcast to be delivered
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {}
+
         String separator = clearLogcat();
         exec("bmgr backupnow " + BACKUP_APP_NAME);
         waitForLogcat(TIMEOUT_SECONDS,separator,
