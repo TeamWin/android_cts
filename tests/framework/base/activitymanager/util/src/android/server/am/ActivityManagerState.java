@@ -56,6 +56,7 @@ class ActivityManagerState {
     public static final String STATE_RESUMED = "RESUMED";
     public static final String STATE_PAUSED = "PAUSED";
     public static final String STATE_STOPPED = "STOPPED";
+    public static final String STATE_DESTROYED = "DESTROYED";
 
     private static final String DUMPSYS_ACTIVITY_ACTIVITIES = "dumpsys activity --proto";
 
@@ -255,6 +256,20 @@ class ActivityManagerState {
                 for (Activity activity : task.mActivities) {
                     if (activity.name.equals(activityName)) {
                         return activity.visible;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    boolean containsStartedActivities() {
+        for (ActivityStack stack : mStacks) {
+            for (ActivityTask task : stack.mTasks) {
+                for (Activity activity : task.mActivities) {
+                    if (!activity.state.equals(STATE_STOPPED)
+                            && !activity.state.equals(STATE_DESTROYED)) {
+                        return true;
                     }
                 }
             }
