@@ -481,8 +481,10 @@ public abstract class ActivityManagerTestBase {
         mDevice.pressBack();
     }
 
-    protected void pressAppSwitchButton() {
+    protected void pressAppSwitchButton() throws Exception {
         mDevice.pressKeyCode(KEYCODE_APP_SWITCH);
+        mAmWmState.waitForRecentsActivityVisible();
+        mAmWmState.waitForAppTransitionIdle();
     }
 
     // Utility method for debugging, not used directly here, but useful, so kept around.

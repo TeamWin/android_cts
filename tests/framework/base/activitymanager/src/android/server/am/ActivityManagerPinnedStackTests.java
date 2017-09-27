@@ -247,8 +247,10 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // Ensure that the surface insets are not negative
         windowState = getWindowState(PIP_ACTIVITY);
         Rect contentInsets = windowState.getContentInsets();
-        assertTrue(contentInsets.left >= 0 && contentInsets.top >= 0 && contentInsets.width() >= 0 &&
-                contentInsets.height() >= 0);
+        if (contentInsets != null) {
+            assertTrue(contentInsets.left >= 0 && contentInsets.top >= 0
+                    && contentInsets.width() >= 0 && contentInsets.height() >= 0);
+        }
     }
 
     @Test
@@ -571,7 +573,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         mAmWmState.waitForWithAmState((amState) -> {
             return amState.getFrontStackId(DEFAULT_DISPLAY_ID) == PINNED_STACK_ID;
         }, "Waiting to re-enter PIP");
-        mAmWmState.assertFocusedStack("Expected home stack focused", HOME_STACK_ID);
+        mAmWmState.assertHomeActivityVisible(true);
     }
 
     @Test
@@ -595,8 +597,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         mAmWmState.waitForWithAmState((amState) -> {
             return amState.getFrontStackId(DEFAULT_DISPLAY_ID) == PINNED_STACK_ID;
         }, "Waiting to re-enter PIP");
-        mAmWmState.assertFocusedStack("Expected fullscreen stack focused",
-                FULLSCREEN_WORKSPACE_STACK_ID);
+        mAmWmState.assertVisibility(TEST_ACTIVITY, true);
     }
 
     @Test
@@ -1022,10 +1023,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // separate stack id or as an activity), for those cases the visibility asserts will be
         // ignored
         pressAppSwitchButton();
-        if (mAmWmState.waitForRecentsActivityVisible()) {
-            mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true);
-            mAmWmState.assertVisibility(TEST_ACTIVITY, false);
-        }
+        mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true);
+        mAmWmState.assertVisibility(TEST_ACTIVITY, false);
     }
 
     @Test
@@ -1148,7 +1147,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     private static final Pattern sAppBoundsPattern = Pattern.compile(
-            "(.+)appBounds=Rect\\((\\d+), (\\d+) - (\\d+), (\\d+)\\)(.*)");
+            "(.+)mAppBounds=Rect\\((\\d+), (\\d+) - (\\d+), (\\d+)\\)(.*)");
 
     /** Read app bounds in last applied configuration from logs. */
     private Rect readAppBounds(String activityName, String logSeparator) throws Exception {
