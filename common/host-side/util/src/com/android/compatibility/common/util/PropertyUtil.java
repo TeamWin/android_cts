@@ -45,4 +45,19 @@ public class PropertyUtil {
         String propString = device.getProperty(FIRST_API_LEVEL);
         return (propString == null) ? device.getApiLevel() : Integer.parseInt(propString);
     }
+
+    /** Returns whether the property exists on this device */
+    public static boolean propertyExists(ITestDevice device, String property)
+            throws DeviceNotAvailableException {
+        return device.getProperty(property) != null;
+    }
+
+    /** Returns whether the property value is equal to a given string */
+    public static boolean propertyEquals(ITestDevice device, String property, String value)
+            throws DeviceNotAvailableException {
+        if (value == null) {
+            return !propertyExists(device, property); // null value implies property does not exist
+        }
+        return value.equals(device.getProperty(property));
+    }
 }

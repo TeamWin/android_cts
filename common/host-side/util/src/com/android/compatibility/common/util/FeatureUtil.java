@@ -24,6 +24,10 @@ import com.android.tradefed.device.ITestDevice;
  */
 public class FeatureUtil {
 
+    public static final String LEANBACK_FEATURE = "android.software.leanback";
+    public static final String TV_FEATURE = "android.hardware.type.television";
+    public static final String WATCH_FEATURE = "android.hardware.type.watch";
+
     /** Returns true if the device has a given system feature */
     public static boolean hasSystemFeature(ITestDevice device, String feature)
             throws DeviceNotAvailableException {
@@ -51,4 +55,16 @@ public class FeatureUtil {
         }
         return true;
     }
+
+    /** Returns true if the device has feature TV_FEATURE or feature LEANBACK_FEATURE */
+    public static boolean isTv(ITestDevice device) throws DeviceNotAvailableException {
+        return hasAnySystemFeature(device, TV_FEATURE, LEANBACK_FEATURE);
+    }
+
+    /** Returns true if the device has feature WATCH_FEATURE */
+    public static boolean isWatch(ITestDevice device) throws DeviceNotAvailableException {
+        return hasSystemFeature(device, WATCH_FEATURE);
+    }
+
+
 }
