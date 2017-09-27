@@ -28,7 +28,6 @@ LOCAL_JAVA_LIBRARIES := junit
 
 include $(BUILD_JAVA_LIBRARY)
 
-cts-tf-dalvik-lib.jack := $(full_classes_jack)
 cts-tf-dalvik-lib.jar := $(full_classes_jar)
 
 # buildutil java library
@@ -56,8 +55,6 @@ include $(BUILD_HOST_JAVA_LIBRARY)
 #
 include $(CLEAR_VARS)
 
-include $(BUILD_SYSTEM)/configure_local_jack.mk
-
 LOCAL_MODULE := vm-tests-tf
 LOCAL_MODULE_CLASS := JAVA_LIBRARIES
 LOCAL_MODULE_SUFFIX := $(COMMON_JAVA_PACKAGE_SUFFIX)
@@ -75,15 +72,8 @@ include $(BUILD_SYSTEM)/base_rules.mk
 
 vmteststf_dep_jars := \
     $(HOST_JDK_TOOLS_JAR) \
+    $(cts-tf-dalvik-lib.jar) \
     $(addprefix $(HOST_OUT_JAVA_LIBRARIES)/, cts-tf-dalvik-buildutil.jar dasm.jar dx.jar cfassembler.jar junit-host.jar)
-
-$(LOCAL_BUILT_MODULE): PRIVATE_JACK_EXTRA_ARGS := $(LOCAL_JACK_EXTRA_ARGS)
-
-ifdef LOCAL_JACK_ENABLED
-    vmteststf_dep_jars += $(cts-tf-dalvik-lib.jack)
-else
-    vmteststf_dep_jars += $(cts-tf-dalvik-lib.jar)
-endif
 
 $(LOCAL_BUILT_MODULE): PRIVATE_SRC_FOLDER := $(LOCAL_PATH)/src
 $(LOCAL_BUILT_MODULE): PRIVATE_INTERMEDIATES_CLASSES := $(call intermediates-dir-for,JAVA_LIBRARIES,cts-tf-dalvik-buildutil,HOST)/classes
@@ -92,8 +82,6 @@ $(LOCAL_BUILT_MODULE): PRIVATE_INTERMEDIATES_DEXCORE_JAR := $(intermediates)/tes
 $(LOCAL_BUILT_MODULE): PRIVATE_INTERMEDIATES_MAIN_FILES := $(intermediates)/main_files
 $(LOCAL_BUILT_MODULE): PRIVATE_INTERMEDIATES_HOSTJUNIT_FILES := $(intermediates)/hostjunit_files
 $(LOCAL_BUILT_MODULE): PRIVATE_CLASS_PATH := $(call normalize-path-list, $(vmteststf_dep_jars))
-$(LOCAL_BUILT_MODULE): PRIVATE_JACK_VERSION := $(LOCAL_JACK_VERSION)
-ifndef LOCAL_JACK_ENABLED
 oj_jar := $(call intermediates-dir-for,JAVA_LIBRARIES,core-oj,,COMMON)/classes.jar
 libart_jar := $(call intermediates-dir-for,JAVA_LIBRARIES,core-libart,,COMMON)/classes.jar
 $(LOCAL_BUILT_MODULE): PRIVATE_DALVIK_SUITE_CLASSPATH := $(oj_jar):$(libart_jar):$(cts-tf-dalvik-lib.jar):$(HOST_OUT_JAVA_LIBRARIES)/tradefed.jar:
@@ -117,31 +105,6 @@ $(LOCAL_BUILT_MODULE) : $(vmteststf_dep_jars) $(HOST_OUT_JAVA_LIBRARIES)/tradefe
 	$(hide) cd $(dir $@) && zip -q -r $(notdir $@) tests
 oj_jar :=
 libart_jar :=
-else # LOCAL_JACK_ENABLED
-oj_jack := $(call intermediates-dir-for,JAVA_LIBRARIES,core-oj,,COMMON)/classes.jack
-libart_jack := $(call intermediates-dir-for,JAVA_LIBRARIES,core-libart,,COMMON)/classes.jack
-$(LOCAL_BUILT_MODULE): PRIVATE_DALVIK_SUITE_CLASSPATH := $(oj_jack):$(libart_jack):$(cts-tf-dalvik-lib.jack):$(HOST_OUT_JAVA_LIBRARIES)/tradefed.jar
-$(LOCAL_BUILT_MODULE) : $(vmteststf_dep_jars) $(JACK) $(oj_jack) $(libart_jack) $(HOST_OUT_JAVA_LIBRARIES)/tradefed.jar | setup-jack-server
-	$(hide) rm -rf $(dir $@) && mkdir -p $(dir $@)
-	$(hide) mkdir -p $(PRIVATE_INTERMEDIATES_HOSTJUNIT_FILES)/dot/junit $(dir $(PRIVATE_INTERMEDIATES_DEXCORE_JAR))
-	# generated and compile the host side junit tests
-	@echo "Write generated Main_*.java files to $(PRIVATE_INTERMEDIATES_MAIN_FILES)"
-	$(hide) JACK_VERSION=$(PRIVATE_JACK_VERSION) $(JAVA) -cp $(PRIVATE_CLASS_PATH) util.build.JackBuildDalvikSuite $(JACK) $(PRIVATE_SRC_FOLDER) $(PRIVATE_INTERMEDIATES) \
-		$(PRIVATE_DALVIK_SUITE_CLASSPATH) \
-		$(PRIVATE_INTERMEDIATES_MAIN_FILES) $(PRIVATE_INTERMEDIATES_CLASSES) $(PRIVATE_INTERMEDIATES_HOSTJUNIT_FILES) $$RUN_VM_TESTS_RTO
-	@echo "Generate $(PRIVATE_INTERMEDIATES_DEXCORE_JAR)"
-	$(hide) $(JAR) -cf $(PRIVATE_INTERMEDIATES_DEXCORE_JAR)-class.jar \
-		$(addprefix -C $(PRIVATE_INTERMEDIATES_CLASSES) , dot/junit/DxUtil.class dot/junit/DxAbstractMain.class dot/junit/AssertionFailedException.class)
-	$(hide) $(call call-jack) --import $(PRIVATE_INTERMEDIATES_DEXCORE_JAR)-class.jar --output-jack $(PRIVATE_INTERMEDIATES_DEXCORE_JAR).jack
-	$(hide) mkdir -p $(PRIVATE_INTERMEDIATES_DEXCORE_JAR).tmp
-	$(hide) $(call call-jack,$(PRIVATE_JACK_EXTRA_ARGS)) --output-dex $(PRIVATE_INTERMEDIATES_DEXCORE_JAR).tmp \
-		$(if $(NO_OPTIMIZE_DX), -D jack.dex.optimize "false") --import $(PRIVATE_INTERMEDIATES_DEXCORE_JAR).jack && rm -f $(PRIVATE_INTERMEDIATES_DEXCORE_JAR).jack
-	$(hide) cd $(PRIVATE_INTERMEDIATES_DEXCORE_JAR).tmp && zip -q -r $(abspath $(PRIVATE_INTERMEDIATES_DEXCORE_JAR)) .
-	$(hide) cd $(PRIVATE_INTERMEDIATES_HOSTJUNIT_FILES)/classes && zip -q -r ../../$(notdir $@) .
-	$(hide) cd $(dir $@) && zip -q -r $(notdir $@) tests
-oj_jack :=
-libart_jack :=
-endif # LOCAL_JACK_ENABLED
 
 # Clean up temp vars
 intermediates :=
