@@ -52,23 +52,48 @@ public class PropertyUtil {
         return (firstApiLevel == INT_VALUE_IF_UNSET) ? Build.VERSION.SDK_INT : firstApiLevel;
     }
 
+    /** Returns whether the property exists on this device */
+    public static boolean propertyExists(String property) {
+        return getProperty(property) != null;
+    }
+
+    /** Returns whether the property value is equal to a given string */
+    public static boolean propertyEquals(String property, String value) {
+        if (value == null) {
+            return !propertyExists(property); // null value implies property does not exist
+        }
+        return value.equals(getProperty(property));
+    }
+
     /**
      * Retrieves the desired integer property, returning INT_VALUE_IF_UNSET if not found.
      */
     public static int getPropertyInt(String property) {
+        String value = getProperty(property);
+        if (value == null) {
+            return INT_VALUE_IF_UNSET;
+        }
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            return INT_VALUE_IF_UNSET;
+        }
+    }
+
+    /** Retrieves the desired property value in string form */
+    public static String getProperty(String property) {
         Scanner scanner = null;
-        int val = INT_VALUE_IF_UNSET;
         try {
             Process process = new ProcessBuilder("getprop", property).start();
             scanner = new Scanner(process.getInputStream());
-            val = Integer.parseInt(scanner.nextLine().trim());
-        } catch (IOException | NumberFormatException e) {
-            return val = INT_VALUE_IF_UNSET;
+            String value = scanner.nextLine().trim();
+            return (value.isEmpty()) ? null : value;
+        } catch (IOException e) {
+            return null;
         } finally {
             if (scanner != null) {
                 scanner.close();
             }
         }
-        return val;
     }
 }
