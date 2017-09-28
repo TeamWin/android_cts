@@ -19,10 +19,14 @@ package android.server.am;
 
 import static android.app.ActivityManager.StackId.DOCKED_STACK_ID;
 import static android.app.ActivityManager.StackId.FULLSCREEN_WORKSPACE_STACK_ID;
-import static android.app.ActivityManager.StackId.HOME_STACK_ID;
-import static android.app.ActivityManager.StackId.RECENTS_STACK_ID;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY;
+import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
+import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.server.am.StateLogger.log;
 import static android.server.am.WindowManagerState.TRANSIT_WALLPAPER_OPEN;
 
@@ -38,7 +42,7 @@ import android.graphics.Rect;
 import org.junit.Test;
 
 /**
- * Build: mmma -j32 cts/hostsidetests/services
+ * Build: mmma -j32 cts/tests/framework/base
  * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.ActivityManagerDockedStackTests
  */
 public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
@@ -75,9 +79,10 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
 
         launchActivity(TEST_ACTIVITY_NAME);
         mAmWmState.computeState(new String[] {TEST_ACTIVITY_NAME});
-        mAmWmState.assertContainsStack("Must contain home stack.", HOME_STACK_ID);
-        mAmWmState.assertContainsStack(
-                "Must contain fullscreen stack.", FULLSCREEN_WORKSPACE_STACK_ID);
+        mAmWmState.assertContainsStack("Must contain home stack.",
+                WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME);
+        mAmWmState.assertContainsStack("Must contain fullscreen stack.",
+                WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD);
         mAmWmState.assertDoesNotContainStack("Must not contain docked stack.", DOCKED_STACK_ID);
     }
 
@@ -90,8 +95,10 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
 
         launchActivityInDockStack(TEST_ACTIVITY_NAME);
         mAmWmState.computeState(new String[] {TEST_ACTIVITY_NAME});
-        mAmWmState.assertContainsStack("Must contain home stack.", HOME_STACK_ID);
-        mAmWmState.assertContainsStack("Must contain docked stack.", DOCKED_STACK_ID);
+        mAmWmState.assertContainsStack("Must contain home stack.",
+                WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME);
+        mAmWmState.assertContainsStack("Must contain docked stack.",
+                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
     }
 
     @Test
@@ -104,7 +111,8 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         launchActivityInDockStack(NON_RESIZEABLE_ACTIVITY_NAME);
         mAmWmState.computeState(new String[] {NON_RESIZEABLE_ACTIVITY_NAME});
 
-        mAmWmState.assertContainsStack("Must contain home stack.", HOME_STACK_ID);
+        mAmWmState.assertContainsStack("Must contain home stack.",
+                WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME);
         mAmWmState.assertDoesNotContainStack("Must not contain docked stack.", DOCKED_STACK_ID);
         mAmWmState.assertFrontStack(
                 "Fullscreen stack must be front stack.", FULLSCREEN_WORKSPACE_STACK_ID);
@@ -144,7 +152,7 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
 
         // Remove the docked stack, and ensure that
         final String logSeparator = clearLogcat();
-        removeStacks(DOCKED_STACK_ID);
+        removeStacksInWindowingModes(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
         final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(
                 TEST_ACTIVITY_NAME, logSeparator);
         if (lifecycleCounts.mMultiWindowModeChangedCount != 1) {
@@ -416,7 +424,7 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         mAmWmState.computeState(new WaitForValidActivityState.Builder(TEST_ACTIVITY_NAME).build());
         mAmWmState.assertContainsStack("Must contain docked stack.", DOCKED_STACK_ID);
         mAmWmState.assertFocusedStack("Home activity should be focused in minimized mode",
-                HOME_STACK_ID);
+                WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME);
 
         // Rotate device single steps (90°) 0-1-2-3.
         // Each time we compute the state we implicitly assert valid bounds in minimized mode.
@@ -615,8 +623,8 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         launchActivityInDockStack(TEST_ACTIVITY_NAME);
         mAmWmState.computeState(new String[]{TEST_ACTIVITY_NAME});
 
-        final int homeStackIndex = mAmWmState.getStackPosition(HOME_STACK_ID);
-        final int recentsStackIndex = mAmWmState.getStackPosition(RECENTS_STACK_ID);
+        final int homeStackIndex = mAmWmState.getStackPosition(ACTIVITY_TYPE_HOME);
+        final int recentsStackIndex = mAmWmState.getStackPosition(ACTIVITY_TYPE_RECENTS);
         assertTrue("Recents stack should be on top of home stack",
                 recentsStackIndex < homeStackIndex);
     }

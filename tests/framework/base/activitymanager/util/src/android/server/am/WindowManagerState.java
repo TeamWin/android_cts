@@ -424,6 +424,10 @@ public class WindowManagerState {
         return mDisplayStacks.get(displayId).get(0).mStackId;
     }
 
+    int getFrontStackActivityType(int displayId) {
+        return mDisplayStacks.get(displayId).get(0).getActivityType();
+    }
+
     public int getRotation() {
         return mRotation;
     }
@@ -437,6 +441,21 @@ public class WindowManagerState {
             if (stackId == stack.mStackId) {
                 return true;
             }
+        }
+        return false;
+    }
+
+    boolean containsStack(int windowingMode, int activityType) {
+        for (WindowStack stack : mStacks) {
+            if (activityType != ACTIVITY_TYPE_UNDEFINED
+                    && activityType != stack.getActivityType()) {
+                continue;
+            }
+            if (windowingMode != WINDOWING_MODE_UNDEFINED
+                    && windowingMode != stack.getWindowingMode()) {
+                continue;
+            }
+            return true;
         }
         return false;
     }
@@ -492,9 +511,9 @@ public class WindowManagerState {
     }
 
 
-    int getStackPosition(int stackId) {
+    int getStackPosition(int activityType) {
         for (int i = 0; i < mStacks.size(); i++) {
-            if (stackId == mStacks.get(i).mStackId) {
+            if (activityType == mStacks.get(i).getActivityType()) {
                 return i;
             }
         }
