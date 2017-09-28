@@ -57,7 +57,7 @@ public class FeatureUtil {
     }
 
     /** Returns true if the device has feature TV_FEATURE or feature LEANBACK_FEATURE */
-    public static boolean isTv(ITestDevice device) throws DeviceNotAvailableException {
+    public static boolean isTV(ITestDevice device) throws DeviceNotAvailableException {
         return hasAnySystemFeature(device, TV_FEATURE, LEANBACK_FEATURE);
     }
 
