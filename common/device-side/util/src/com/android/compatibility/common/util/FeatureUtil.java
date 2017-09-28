@@ -67,7 +67,7 @@ public class FeatureUtil {
     }
 
     /** Returns true if the device has feature TV_FEATURE or feature LEANBACK_FEATURE */
-    public static boolean isTv() {
+    public static boolean isTV() {
         return hasAnySystemFeature(TV_FEATURE, LEANBACK_FEATURE);
     }
 
