@@ -252,6 +252,22 @@ public class TypefaceTest {
     }
 
     @Test
+    public void testInvalidCmapFont_tooLargeCodePoints() {
+        // Following three font doen't have any coverage between U+0000..U+10FFFF. Just make sure
+        // they don't crash us.
+        final String[] INVALID_CMAP_FONTS = {
+            "out_of_unicode_start_cmap12.ttf",
+            "out_of_unicode_end_cmap12.ttf",
+            "too_large_start_cmap12.ttf",
+            "too_large_end_cmap12.ttf",
+        };
+        for (final String file : INVALID_CMAP_FONTS) {
+            final Typeface typeface = Typeface.createFromAsset(mContext.getAssets(), file);
+            assertNotNull(typeface);
+        }
+    }
+
+    @Test
     public void testInvalidCmapFont_unsortedEntries() {
         // Following two font files have glyph for U+0400 and U+0100 but the fonts must not be used
         // due to invalid cmap data. For more details, see each ttx source file.
