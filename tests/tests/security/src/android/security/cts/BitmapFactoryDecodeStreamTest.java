@@ -39,4 +39,10 @@ public class BitmapFactoryDecodeStreamTest extends AndroidTestCase {
         BitmapFactory.decodeStream(inStream);
 
     }
+
+    public void test_b65290323() throws Exception {
+        InputStream exploitImage = new BufferedInputStream(mContext.getResources().openRawResource(
+                R.raw.b65290323));
+        BitmapFactory.decodeStream(exploitImage);
+    }
 }
