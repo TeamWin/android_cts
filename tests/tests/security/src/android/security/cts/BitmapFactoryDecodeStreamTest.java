@@ -46,4 +46,10 @@ public class BitmapFactoryDecodeStreamTest extends AndroidTestCase {
                 R.raw.cve_2017_0691));
         BitmapFactory.decodeStream(exploitImage);
     }
+
+    public void test_b65290323() throws Exception {
+        InputStream exploitImage = new BufferedInputStream(mContext.getResources().openRawResource(
+                R.raw.b65290323));
+        BitmapFactory.decodeStream(exploitImage);
+    }
 }
