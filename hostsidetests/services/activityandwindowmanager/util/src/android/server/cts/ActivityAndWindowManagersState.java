@@ -213,6 +213,26 @@ public class ActivityAndWindowManagersState extends Assert {
         } while (retriesLeft-- > 0);
     }
 
+    void waitForAllStoppedActivities(ITestDevice device) throws Exception {
+        int retriesLeft = 5;
+        do {
+            mAmState.computeState(device);
+            if (mAmState.containsStartedActivities()){
+                log("***Waiting for valid stacks and activities states...");
+                try {
+                    Thread.sleep(1500);
+                } catch (InterruptedException e) {
+                    log(e.toString());
+                    // Well I guess we are not waiting...
+                }
+            } else {
+                break;
+            }
+        } while (retriesLeft-- > 0);
+
+        assertFalse(mAmState.containsStartedActivities());
+    }
+
     void waitForHomeActivityVisible(ITestDevice device) throws Exception {
         waitForValidState(device, mAmState.getHomeActivityName());
     }
