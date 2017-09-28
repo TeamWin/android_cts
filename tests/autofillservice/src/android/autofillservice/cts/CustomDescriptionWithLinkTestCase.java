@@ -192,6 +192,9 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
         saveUiCancelledAfterTappingLinkTest(PostSaveLinkTappedAction.LAUNCH_NEW_ACTIVITY);
     }
 
+    protected abstract void saveUiCancelledAfterTappingLinkTest(PostSaveLinkTappedAction type)
+            throws Exception;
+
     @Test
     public final void testTapLink_launchTrampolineActivityThenTapBackAndStartNewSession()
             throws Exception {
@@ -200,6 +203,18 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
 
     protected abstract void tapLinkLaunchTrampolineActivityThenTapBackAndStartNewSessionTest()
             throws Exception;
+
+    @Test
+    public final void testTapLinkAfterUpdateAppliedToLinkView() throws Exception {
+        tapLinkAfterUpdateAppliedTest(true);
+    }
+
+    @Test
+    public final void testTapLinkAfterUpdateAppliedToAnotherView() throws Exception {
+        tapLinkAfterUpdateAppliedTest(false);
+    }
+
+    protected abstract void tapLinkAfterUpdateAppliedTest(boolean updateLinkView) throws Exception;
 
     enum PostSaveLinkTappedAction {
         TAP_BACK_BUTTON,
@@ -213,41 +228,56 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
         TAP_YES_ON_SAVE_UI
     }
 
-    protected abstract void saveUiCancelledAfterTappingLinkTest(PostSaveLinkTappedAction type)
-            throws Exception;
-
     protected final void startActivity(Class<?> clazz) {
         mContext.startActivity(new Intent(mContext, clazz));
     }
 
-    protected final CustomDescription newCustomDescription(
+    protected RemoteViews newTemplate() {
+        final RemoteViews presentation = new RemoteViews(mPackageName,
+                R.layout.custom_description_with_link);
+        return presentation;
+    }
+
+    protected final CustomDescription.Builder newCustomDescriptionBuilder(
             Class<? extends Activity> activityClass) {
         final Intent intent = new Intent(mContext, activityClass);
         intent.setFlags(Intent.FLAG_ACTIVITY_RETAIN_IN_RECENTS | Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
-        return newCustomDescription(intent);
+        return newCustomDescriptionBuilder(intent);
+    }
+
+    protected final CustomDescription newCustomDescription(
+            Class<? extends Activity> activityClass) {
+        return newCustomDescriptionBuilder(activityClass).build();
+    }
+
+    protected final CustomDescription.Builder newCustomDescriptionBuilder(Intent intent) {
+        final RemoteViews presentation = newTemplate();
+        final PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent, 0);
+        presentation.setOnClickPendingIntent(R.id.link, pendingIntent);
+        return new CustomDescription.Builder(presentation);
     }
 
     protected final CustomDescription newCustomDescription(Intent intent) {
-        final RemoteViews presentation = new RemoteViews(mPackageName,
-                R.layout.custom_description_with_link);
-        final PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent, 0);
-        presentation.setOnClickPendingIntent(R.id.link, pendingIntent);
-        return new CustomDescription.Builder(presentation).build();
+        return newCustomDescriptionBuilder(intent).build();
     }
 
     protected final UiObject2 assertSaveUiWithLinkIsShown(int saveType) {
+        return assertSaveUiWithLinkIsShown(saveType, "DON'T TAP ME!");
+    }
+
+    protected final UiObject2 assertSaveUiWithLinkIsShown(int saveType, String expectedText) {
         // First make sure the UI is shown...
         final UiObject2 saveUi = sUiBot.assertSaveShowing(saveType);
         // Then make sure it does have the custom view with link on it...
-        getLink(saveUi);
+        final UiObject2 link = getLink(saveUi);
+        assertThat(link.getText()).isEqualTo(expectedText);
         return saveUi;
     }
 
     protected final UiObject2 getLink(final UiObject2 container) {
-        final UiObject2 button = container.findObject(By.res(mPackageName, ID_LINK));
-        assertThat(button).isNotNull();
-        assertThat(button.getText()).isEqualTo("DON'T TAP ME!");
-        return button;
+        final UiObject2 link = container.findObject(By.res(mPackageName, ID_LINK));
+        assertThat(link).isNotNull();
+        return link;
     }
 
     protected final void tapSaveUiLink(UiObject2 saveUi) {

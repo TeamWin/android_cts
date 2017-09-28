@@ -16,6 +16,7 @@
 package android.autofillservice.cts;
 
 import static android.autofillservice.cts.AntiTrimmerTextWatcher.TRIMMER_PATTERN;
+import static android.autofillservice.cts.Helper.ID_STATIC_TEXT;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.assertTextValue;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
@@ -35,14 +36,22 @@ import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.autofillservice.cts.SimpleSaveActivity.FillExpectation;
 import android.content.Intent;
+import android.service.autofill.BatchUpdates;
+import android.service.autofill.CustomDescription;
+import android.service.autofill.RegexValidator;
 import android.service.autofill.SaveInfo;
 import android.service.autofill.TextValueSanitizer;
+import android.service.autofill.Validator;
+import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiObject2;
 import android.view.View;
 import android.view.autofill.AutofillId;
+import android.widget.RemoteViews;
 
 import org.junit.Rule;
 import org.junit.Test;
+
+import java.util.regex.Pattern;
 
 public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
 
@@ -909,5 +918,56 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         // ... and assert results
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
         assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_INPUT), "108");
+    }
+
+    @Override
+    protected void tapLinkAfterUpdateAppliedTest(boolean updateLinkView) throws Exception {
+        startActivity();
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        final CustomDescription.Builder customDescription =
+                newCustomDescriptionBuilder(WelcomeActivity.class);
+        final RemoteViews update = newTemplate();
+        if (updateLinkView) {
+            update.setCharSequence(R.id.link, "setText", "TAP ME IF YOU CAN");
+        } else {
+            update.setCharSequence(R.id.static_text, "setText", "ME!");
+        }
+        Validator validCondition = new RegexValidator(mActivity.mInput.getAutofillId(),
+                Pattern.compile(".*"));
+        customDescription.batchUpdate(validCondition,
+                new BatchUpdates.Builder().updateTemplate(update).build());
+
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setCustomDescription(customDescription.build())
+                .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT)
+                .build());
+
+        // Trigger autofill.
+        mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
+        sReplier.getNextFillRequest();
+        Helper.assertHasSessions(mPackageName);
+        // Trigger save.
+        mActivity.syncRunOnUiThread(() -> {
+            mActivity.mInput.setText("108");
+            mActivity.mCommit.performClick();
+        });
+        final UiObject2 saveUi;
+        if (updateLinkView) {
+            saveUi = assertSaveUiWithLinkIsShown(SAVE_DATA_TYPE_GENERIC, "TAP ME IF YOU CAN");
+        } else {
+            saveUi = assertSaveUiWithLinkIsShown(SAVE_DATA_TYPE_GENERIC);
+            final UiObject2 changed = saveUi.findObject(By.res(mPackageName, ID_STATIC_TEXT));
+            assertThat(changed.getText()).isEqualTo("ME!");
+        }
+
+        // Tap the link.
+        tapSaveUiLink(saveUi);
+
+        // Make sure new activity is shown...
+        WelcomeActivity.assertShowingDefaultMessage(sUiBot);
+        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
     }
 }
