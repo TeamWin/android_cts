@@ -24,6 +24,11 @@ import android.support.test.InstrumentationRegistry;
  */
 public class FeatureUtil {
 
+    public static final String LEANBACK_FEATURE = "android.software.leanback";
+    public static final String TV_FEATURE = "android.hardware.type.television";
+    public static final String WATCH_FEATURE = "android.hardware.type.watch";
+
+
     /** Returns true if the device has a given system feature */
     public static boolean hasSystemFeature(String feature) {
         return getPackageManager().hasSystemFeature(feature);
@@ -59,6 +64,16 @@ public class FeatureUtil {
             }
         }
         return true;
+    }
+
+    /** Returns true if the device has feature TV_FEATURE or feature LEANBACK_FEATURE */
+    public static boolean isTV() {
+        return hasAnySystemFeature(TV_FEATURE, LEANBACK_FEATURE);
+    }
+
+    /** Returns true if the device has feature WATCH_FEATURE */
+    public static boolean isWatch() {
+        return hasSystemFeature(WATCH_FEATURE);
     }
 
     /** Returns true if the device lacks all features in a given collection of system features */

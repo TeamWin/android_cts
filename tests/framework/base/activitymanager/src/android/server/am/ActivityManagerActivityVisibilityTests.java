@@ -351,6 +351,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     @Test
     public void testTurnScreenOnAttrRemove() throws Exception {
         sleepDevice();
+        mAmWmState.waitForAllStoppedActivities();
         String logSeparator = clearLogcat();
         launchActivity(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY_NAME);
         mAmWmState.computeState(new String[] {
@@ -359,6 +360,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         assertSingleLaunch(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY_NAME, logSeparator);
 
         sleepDevice();
+        mAmWmState.waitForAllStoppedActivities();
         logSeparator = clearLogcat();
         launchActivity(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY_NAME);
         assertFalse(isDisplayOn());

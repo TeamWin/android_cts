@@ -35,10 +35,13 @@ import android.util.Log;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.Socket;
 import java.net.URL;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -74,6 +77,45 @@ public class StrictModeTest {
 
     public interface ThrowingRunnable {
         void run() throws Exception;
+    }
+
+    @Test
+    public void testUnclosedCloseable() throws Exception {
+        StrictMode.setVmPolicy(
+                new StrictMode.VmPolicy.Builder().detectLeakedClosableObjects().build());
+
+        inspectViolation(
+                () -> leakCloseable("leaked.txt"),
+                info -> {
+                    assertThat(info.message)
+                            .isEqualTo(
+                                    "A resource was acquired at attached stack trace but never released. See java.io.Closeable for information on avoiding resource leaks.");
+                    assertThat(info.crashInfo).isNotNull();
+                    assertThat(info.crashInfo.stackTrace).contains("leakCloseable");
+                    assertPolicy(info, StrictMode.DETECT_VM_CLOSABLE_LEAKS);
+                });
+    }
+
+    private void leakCloseable(String fileName) throws InterruptedException {
+        final CountDownLatch finalizedSignal = new CountDownLatch(1);
+        try {
+            new FileOutputStream(new File(getContext().getFilesDir(), fileName)) {
+                @Override
+                protected void finalize() throws IOException {
+                    super.finalize();
+                    finalizedSignal.countDown();
+                }
+            };
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        Runtime.getRuntime().gc();
+        Runtime.getRuntime().runFinalization();
+        // Sometimes it needs extra prodding.
+        if (!finalizedSignal.await(5, TimeUnit.SECONDS)) {
+            Runtime.getRuntime().gc();
+            Runtime.getRuntime().runFinalization();
+        }
     }
 
     /** Insecure connection should be detected */

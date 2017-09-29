@@ -17,9 +17,12 @@
 package android.server.am;
 
 import static android.app.ActivityManager.StackId.FULLSCREEN_WORKSPACE_STACK_ID;
-import static android.app.ActivityManager.StackId.HOME_STACK_ID;
 import static android.app.ActivityManager.StackId.PINNED_STACK_ID;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
+import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
+import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.server.am.ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID;
 import static android.server.am.ActivityManagerState.STATE_STOPPED;
 import static android.view.KeyEvent.KEYCODE_WINDOW;
@@ -247,8 +250,10 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // Ensure that the surface insets are not negative
         windowState = getWindowState(PIP_ACTIVITY);
         Rect contentInsets = windowState.getContentInsets();
-        assertTrue(contentInsets.left >= 0 && contentInsets.top >= 0 && contentInsets.width() >= 0 &&
-                contentInsets.height() >= 0);
+        if (contentInsets != null) {
+            assertTrue(contentInsets.left >= 0 && contentInsets.top >= 0
+                    && contentInsets.width() >= 0 && contentInsets.height() >= 0);
+        }
     }
 
     @Test
@@ -571,7 +576,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         mAmWmState.waitForWithAmState((amState) -> {
             return amState.getFrontStackId(DEFAULT_DISPLAY_ID) == PINNED_STACK_ID;
         }, "Waiting to re-enter PIP");
-        mAmWmState.assertFocusedStack("Expected home stack focused", HOME_STACK_ID);
+        mAmWmState.assertHomeActivityVisible(true);
     }
 
     @Test
@@ -595,8 +600,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         mAmWmState.waitForWithAmState((amState) -> {
             return amState.getFrontStackId(DEFAULT_DISPLAY_ID) == PINNED_STACK_ID;
         }, "Waiting to re-enter PIP");
-        mAmWmState.assertFocusedStack("Expected fullscreen stack focused",
-                FULLSCREEN_WORKSPACE_STACK_ID);
+        mAmWmState.assertVisibility(TEST_ACTIVITY, true);
     }
 
     @Test
@@ -604,7 +608,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         if (!supportsPip()) return;
 
         // Start with a clean slate, remove all the stacks but home
-        removeStacks(ALL_STACK_IDS_BUT_HOME);
+        removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
 
         // Launch a pip activity
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
@@ -612,8 +616,9 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
         // Remove the stack and ensure that the task is now in the fullscreen stack (when no
         // fullscreen stack existed before)
-        removeStacks(PINNED_STACK_ID);
-        assertPinnedStackStateOnMoveToFullscreen(PIP_ACTIVITY, HOME_STACK_ID,
+        removeStacksInWindowingModes(WINDOWING_MODE_PINNED);
+        assertPinnedStackStateOnMoveToFullscreen(PIP_ACTIVITY,
+                WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME,
                 true /* expectTopTaskHasActivity */, true /* expectBottomTaskHasActivity */);
     }
 
@@ -628,8 +633,9 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
         // Remove the stack and ensure that the task is placed in the fullscreen stack, behind the
         // top fullscreen activity
-        removeStacks(PINNED_STACK_ID);
-        assertPinnedStackStateOnMoveToFullscreen(PIP_ACTIVITY, FULLSCREEN_WORKSPACE_STACK_ID,
+        removeStacksInWindowingModes(WINDOWING_MODE_PINNED);
+        assertPinnedStackStateOnMoveToFullscreen(PIP_ACTIVITY,
+                WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD,
                 false /* expectTopTaskHasActivity */, true /* expectBottomTaskHasActivity */);
     }
 
@@ -646,8 +652,9 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
         // Remove the stack and ensure that the task is placed on top of the hidden fullscreen
         // stack, but that the home stack is still focused
-        removeStacks(PINNED_STACK_ID);
-        assertPinnedStackStateOnMoveToFullscreen(PIP_ACTIVITY, HOME_STACK_ID,
+        removeStacksInWindowingModes(WINDOWING_MODE_PINNED);
+        assertPinnedStackStateOnMoveToFullscreen(PIP_ACTIVITY,
+                WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME,
                 false /* expectTopTaskHasActivity */, true /* expectBottomTaskHasActivity */);
     }
 
@@ -656,7 +663,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         if (!supportsPip()) return;
 
         // Start with a clean slate, remove all the stacks but home
-        removeStacks(ALL_STACK_IDS_BUT_HOME);
+        removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
 
         // Launch a pip activity
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
@@ -665,7 +672,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // Remove the stack and ensure that the task is now in the fullscreen stack (when no
         // fullscreen stack existed before)
         executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_MOVE_TO_BACK);
-        assertPinnedStackStateOnMoveToFullscreen(PIP_ACTIVITY, HOME_STACK_ID,
+        assertPinnedStackStateOnMoveToFullscreen(PIP_ACTIVITY,
+                WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME,
                 false /* expectTopTaskHasActivity */, true /* expectBottomTaskHasActivity */);
     }
 
@@ -681,7 +689,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // Remove the stack and ensure that the task is placed in the fullscreen stack, behind the
         // top fullscreen activity
         executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_MOVE_TO_BACK);
-        assertPinnedStackStateOnMoveToFullscreen(PIP_ACTIVITY, FULLSCREEN_WORKSPACE_STACK_ID,
+        assertPinnedStackStateOnMoveToFullscreen(PIP_ACTIVITY,
+                WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD,
                 false /* expectTopTaskHasActivity */, true /* expectBottomTaskHasActivity */);
     }
 
@@ -699,7 +708,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // Remove the stack and ensure that the task is placed on top of the hidden fullscreen
         // stack, but that the home stack is still focused
         executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_MOVE_TO_BACK);
-        assertPinnedStackStateOnMoveToFullscreen(PIP_ACTIVITY, HOME_STACK_ID,
+        assertPinnedStackStateOnMoveToFullscreen(
+                PIP_ACTIVITY, WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME,
                 false /* expectTopTaskHasActivity */, true /* expectBottomTaskHasActivity */);
     }
 
@@ -871,7 +881,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
         // Dismiss it
         String logSeparator = clearLogcat();
-        removeStacks(PINNED_STACK_ID);
+        removeStacksInWindowingModes(WINDOWING_MODE_PINNED);
         mAmWmState.waitForValidState(PIP_ACTIVITY, FULLSCREEN_WORKSPACE_STACK_ID);
 
         // Confirm that we get stop before the multi-window and picture-in-picture mode change
@@ -1022,10 +1032,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // separate stack id or as an activity), for those cases the visibility asserts will be
         // ignored
         pressAppSwitchButton();
-        if (mAmWmState.waitForRecentsActivityVisible()) {
-            mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true);
-            mAmWmState.assertVisibility(TEST_ACTIVITY, false);
-        }
+        mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true);
+        mAmWmState.assertVisibility(TEST_ACTIVITY, false);
     }
 
     @Test
@@ -1148,7 +1156,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     private static final Pattern sAppBoundsPattern = Pattern.compile(
-            "(.+)appBounds=Rect\\((\\d+), (\\d+) - (\\d+), (\\d+)\\)(.*)");
+            "(.+)mAppBounds=Rect\\((\\d+), (\\d+) - (\\d+), (\\d+)\\)(.*)");
 
     /** Read app bounds in last applied configuration from logs. */
     private Rect readAppBounds(String activityName, String logSeparator) throws Exception {
@@ -1169,15 +1177,15 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     /**
      * Called after the given {@param activityName} has been moved to the fullscreen stack. Ensures
-     * that the {@param focusedStackId} is focused, and checks the top and/or bottom tasks in the
-     * fullscreen stack if {@param expectTopTaskHasActivity} or {@param expectBottomTaskHasActivity}
-     * are set respectively.
+     * that the stack matching the {@param windowingMode} and {@param activityType} is focused, and
+     * checks the top and/or bottom tasks in the fullscreen stack if
+     * {@param expectTopTaskHasActivity} or {@param expectBottomTaskHasActivity} are set respectively.
      */
-    private void assertPinnedStackStateOnMoveToFullscreen(String activityName, int focusedStackId,
-            boolean expectTopTaskHasActivity, boolean expectBottomTaskHasActivity)
+    private void assertPinnedStackStateOnMoveToFullscreen(String activityName, int windowingMode,
+            int activityType, boolean expectTopTaskHasActivity, boolean expectBottomTaskHasActivity)
                     throws Exception {
-        mAmWmState.waitForFocusedStack(focusedStackId);
-        mAmWmState.assertFocusedStack("Wrong focused stack", focusedStackId);
+        mAmWmState.waitForFocusedStack(windowingMode, activityType);
+        mAmWmState.assertFocusedStack("Wrong focused stack", windowingMode, activityType);
         mAmWmState.waitForActivityState(activityName, STATE_STOPPED);
         assertTrue(mAmWmState.getAmState().hasActivityState(activityName, STATE_STOPPED));
         assertPinnedStackDoesNotExist();

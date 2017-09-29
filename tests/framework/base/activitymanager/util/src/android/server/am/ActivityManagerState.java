@@ -16,10 +16,10 @@
 
 package android.server.am;
 
-import static android.app.ActivityManager.StackId.HOME_STACK_ID;
-import static android.app.ActivityManager.StackId.RECENTS_STACK_ID;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
+import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.server.am.ProtoExtractors.extract;
 import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logE;
@@ -56,6 +56,7 @@ class ActivityManagerState {
     public static final String STATE_RESUMED = "RESUMED";
     public static final String STATE_PAUSED = "PAUSED";
     public static final String STATE_STOPPED = "STOPPED";
+    public static final String STATE_DESTROYED = "DESTROYED";
 
     private static final String DUMPSYS_ACTIVITY_ACTIVITIES = "dumpsys activity --proto";
 
@@ -186,8 +187,22 @@ class ActivityManagerState {
         return mDisplayStacks.get(displayId).get(0).mStackId;
     }
 
+    int getFrontStackActivityType(int displayId) {
+        return mDisplayStacks.get(displayId).get(0).getActivityType();
+    }
+
     int getFocusedStackId() {
         return mFocusedStackId;
+    }
+
+    int getFocusedStackActivityType() {
+        final ActivityStack stack = getStackById(mFocusedStackId);
+        return stack != null ? stack.getActivityType() : ACTIVITY_TYPE_UNDEFINED;
+    }
+
+    int getFocusedStackWindowingMode() {
+        final ActivityStack stack = getStackById(mFocusedStackId);
+        return stack != null ? stack.getWindowingMode() : WINDOWING_MODE_UNDEFINED;
     }
 
     String getFocusedActivity() {
@@ -210,6 +225,21 @@ class ActivityManagerState {
         return getStackById(stackId) != null;
     }
 
+    boolean containsStack(int windowingMode, int activityType) {
+        for (ActivityStack stack : mStacks) {
+            if (activityType != ACTIVITY_TYPE_UNDEFINED
+                    && activityType != stack.getActivityType()) {
+                continue;
+            }
+            if (windowingMode != WINDOWING_MODE_UNDEFINED
+                    && windowingMode != stack.getWindowingMode()) {
+                continue;
+            }
+            return true;
+        }
+        return false;
+    }
+
     ActivityStack getStackById(int stackId) {
         for (ActivityStack stack : mStacks) {
             if (stackId == stack.mStackId) {
@@ -219,9 +249,18 @@ class ActivityManagerState {
         return null;
     }
 
-    int getStackPosition(int stackId) {
+    ActivityStack getStackByActivityType(int activityType) {
+        for (ActivityStack stack : mStacks) {
+            if (activityType == stack.getActivityType()) {
+                return stack;
+            }
+        }
+        return null;
+    }
+
+    int getStackPosition(int activityType) {
         for (int i = 0; i < mStacks.size(); i++) {
-            if (stackId == mStacks.get(i).mStackId) {
+            if (activityType == mStacks.get(i).getActivityType()) {
                 return i;
             }
         }
@@ -255,6 +294,20 @@ class ActivityManagerState {
                 for (Activity activity : task.mActivities) {
                     if (activity.name.equals(activityName)) {
                         return activity.visible;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    boolean containsStartedActivities() {
+        for (ActivityStack stack : mStacks) {
+            for (ActivityTask task : stack.mTasks) {
+                for (Activity activity : task.mActivities) {
+                    if (!activity.state.equals(STATE_STOPPED)
+                            && !activity.state.equals(STATE_DESTROYED)) {
+                        return true;
                     }
                 }
             }
@@ -308,27 +361,17 @@ class ActivityManagerState {
     }
 
     ActivityTask getHomeTask() {
-        ActivityStack homeStack = getStackById(HOME_STACK_ID);
-        if (homeStack != null) {
-            for (ActivityTask task : homeStack.mTasks) {
-                if (task.mTaskType == ACTIVITY_TYPE_HOME) {
-                    return task;
-                }
-            }
-            return null;
+        final ActivityStack homeStack = getStackByActivityType(ACTIVITY_TYPE_HOME);
+        if (homeStack != null && !homeStack.mTasks.isEmpty()) {
+            return homeStack.mTasks.get(0);
         }
         return null;
     }
 
-    ActivityTask getRecentsTask() {
-        ActivityStack recentsStack = getStackById(RECENTS_STACK_ID);
-        if (recentsStack != null) {
-            for (ActivityTask task : recentsStack.mTasks) {
-                if (task.mTaskType == ACTIVITY_TYPE_RECENTS) {
-                    return task;
-                }
-            }
-            return null;
+    private ActivityTask getRecentsTask() {
+        final ActivityStack recentsStack = getStackByActivityType(ACTIVITY_TYPE_RECENTS);
+        if (recentsStack != null && !recentsStack.mTasks.isEmpty()) {
+            return recentsStack.mTasks.get(0);
         }
         return null;
     }

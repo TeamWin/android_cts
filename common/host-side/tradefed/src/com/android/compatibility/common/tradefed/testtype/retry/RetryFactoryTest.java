@@ -16,7 +16,6 @@
 package com.android.compatibility.common.tradefed.testtype.retry;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
-import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
 import com.android.compatibility.common.tradefed.testtype.suite.CompatibilityTestSuite;
 import com.android.compatibility.common.tradefed.util.RetryFilterHelper;
 import com.android.compatibility.common.tradefed.util.RetryType;
@@ -47,7 +46,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Runner that creates a {@link CompatibilityTest} to re-run some previous results.
+ * Runner that creates a {@link CompatibilityTestSuite} to re-run some previous results.
  * Only the 'cts' plan is supported.
  * TODO: explore other new way to build the retry (instead of relying on one massive pair of
  * include/exclude filters)
@@ -57,50 +56,52 @@ public class RetryFactoryTest implements IRemoteTest, IDeviceTest, IBuildReceive
         ISystemStatusCheckerReceiver, IInvocationContextReceiver, IShardableTest {
 
     /**
-     * Mirror the {@link CompatibilityTest} options in order to create it.
+     * Mirror the {@link CompatibilityTestSuite} options in order to create it.
      */
     public static final String RETRY_OPTION = "retry";
+    public static final String RETRY_TYPE_OPTION = "retry-type";
+
     @Option(name = RETRY_OPTION,
             shortName = 'r',
             description = "retry a previous session's failed and not executed tests.",
             mandatory = true)
     private Integer mRetrySessionId = null;
 
-    @Option(name = CompatibilityTest.SUBPLAN_OPTION,
+    @Option(name = CompatibilityTestSuite.SUBPLAN_OPTION,
             description = "the subplan to run",
             importance = Importance.IF_UNSET)
     protected String mSubPlan;
 
-    @Option(name = CompatibilityTest.INCLUDE_FILTER_OPTION,
+    @Option(name = CompatibilityTestSuite.INCLUDE_FILTER_OPTION,
             description = "the include module filters to apply.",
             importance = Importance.ALWAYS)
     protected Set<String> mIncludeFilters = new HashSet<>();
 
-    @Option(name = CompatibilityTest.EXCLUDE_FILTER_OPTION,
+    @Option(name = CompatibilityTestSuite.EXCLUDE_FILTER_OPTION,
             description = "the exclude module filters to apply.",
             importance = Importance.ALWAYS)
     protected Set<String> mExcludeFilters = new HashSet<>();
 
-    @Option(name = CompatibilityTest.ABI_OPTION,
+    @Option(name = CompatibilityTestSuite.ABI_OPTION,
             shortName = 'a',
             description = "the abi to test.",
             importance = Importance.IF_UNSET)
     protected String mAbiName = null;
 
-    @Option(name = CompatibilityTest.MODULE_OPTION,
+    @Option(name = CompatibilityTestSuite.MODULE_OPTION,
             shortName = 'm',
             description = "the test module to run.",
             importance = Importance.IF_UNSET)
     protected String mModuleName = null;
 
-    @Option(name = CompatibilityTest.TEST_OPTION,
-            shortName = CompatibilityTest.TEST_OPTION_SHORT_NAME,
+    @Option(name = CompatibilityTestSuite.TEST_OPTION,
+            shortName = CompatibilityTestSuite.TEST_OPTION_SHORT_NAME,
             description = "the test run.",
             importance = Importance.IF_UNSET)
     protected String mTestName = null;
 
-    @Option(name = CompatibilityTest.RETRY_TYPE_OPTION,
-            description = "used with " + CompatibilityTest.RETRY_OPTION + ", retry tests"
+    @Option(name = RETRY_TYPE_OPTION,
+            description = "used with " + RETRY_OPTION + ", retry tests"
             + " of a certain status. Possible values include \"failed\" and \"not_executed\".",
             importance = Importance.IF_UNSET)
     protected RetryType mRetryType = null;

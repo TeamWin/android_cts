@@ -30,33 +30,42 @@ INSTRUCTIONS
 I. Generating reference images (CTS maintainers only)
 
 Reference images are typically only generated for new API revisions. To
-generate a new set of reference images, do the following:
+generate a new set of reference images from an emulator, do the following:
 
-  1. Obtain the emulator image for the current platform. You can either build
-     these from scratch (not recommended) via:
+  1. Ensure the Android SDK is installed locally. Either a public or internal
+     distribution is fine. From the console, set the ANDROID_SDK_ROOT env var:
 
-     make PRODUCT-sdk_phone_x86_64-sdk sdk_repo -j32
+     export ANDROID_SDK_ROOT = /path/to/sdk
 
-     Or obtain them from the sdk-repo-linux-system-images-<build-id>.zip
-     artifact from the sdk_phone_x86_64-sdk build server target.
+  2. Obtain an x86_64 emulator image from the build server by using the script
+     available internally at go/emu-dev. This script will install the image in
+     your SDK.
 
-  2. Start one AVD emulator image for each DPI bucket (ldpi, xxxhdpi, etc.)
-     that you wish to generate references images for. Anecdotally, up to three
-     emulators can run reliably at the same time. Confirm that all emulators
-     are connected with:
+  3. Use the SDK's AVD Manager tool to create a single virtual device using the
+     emulator image from step 2. The exact configuration doesn't really matter;
+     you can use Nexus 5 as a template. Name the emulator "theme_emulator".
 
-     adb devices
-
-  3. Set up your build environment for x86_64 and build CTS:
+  4. From the console, set up your build environment for x86_64 and build CTS:
 
      lunch sdk_x86_64-eng && make cts -j32
 
-  2. Generate the reference images. Generation occurs on all devices in
-     parallel. Resulting sets of reference images are automatically saved in
-     assets/<platform>/<dpi>.zip and will overwrite any existing sets. Image
-     generation may be started using:
+  5. Use the reference image script to generate the reference images. The script
+     will automatically start the emulator in the required configurations and
+     install the resulting reference images in assets/<platform>/<dpi>.zip,
+     overwriting any existing images.
 
-     ./cts/hostsidetests/theme/generate_images.sh
+     ./cts/hostsidetests/theme/generate_images.py theme_emulator
+
+You can also generate reference images using a real device. To generate a new set
+of reference images from a real device, do the following:
+
+  1. Connect the device. Verify the device is connected:
+
+     adb devices
+
+  2. Use the reference image script to generate the reference images:
+
+     ./cts/hostsidetests/theme/generate_images.py
 
 A complete collection of reference images for a given API revision must include
 a set for each possible DPI bucket (tvdpi, xxhdpi, etc.) that may be tested.

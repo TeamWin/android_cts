@@ -192,6 +192,15 @@ public class ActivityAndWindowManagersState {
                         .build());
     }
 
+    void waitForValidStateWithActivityType(String waitForActivityVisible, int activityType)
+            throws Exception {
+        waitForValidState(false /* compareTaskAndStackBounds */,
+                new WaitForValidActivityState.Builder()
+                        .setActivityName(waitForActivityVisible)
+                        .setActivityType(activityType)
+                        .build());
+    }
+
     /**
      * Wait for the activities to appear in proper stacks and for valid state in AM and WM.
      *
@@ -234,6 +243,26 @@ public class ActivityAndWindowManagersState {
                 break;
             }
         } while (retriesLeft-- > 0);
+    }
+
+    void waitForAllStoppedActivities() throws Exception {
+        int retriesLeft = 5;
+        do {
+            mAmState.computeState();
+            if (mAmState.containsStartedActivities()){
+                log("***Waiting for valid stacks and activities states...");
+                try {
+                    Thread.sleep(1500);
+                } catch (InterruptedException e) {
+                    log(e.toString());
+                    // Well I guess we are not waiting...
+                }
+            } else {
+                break;
+            }
+        } while (retriesLeft-- > 0);
+
+        assertFalse(mAmState.containsStartedActivities());
     }
 
     void waitForHomeActivityVisible() throws Exception {
@@ -290,8 +319,18 @@ public class ActivityAndWindowManagersState {
                 "***Waiting for Activity State: " + activityState);
     }
 
+    @Deprecated
     void waitForFocusedStack(int stackId) throws Exception {
         waitForWithAmState(state -> state.getFocusedStackId() == stackId,
+                "***Waiting for focused stack...");
+    }
+
+    void waitForFocusedStack(int windowingMode, int activityType) throws Exception {
+        waitForWithAmState(state ->
+                        (activityType == ACTIVITY_TYPE_UNDEFINED
+                                || state.getFocusedStackActivityType() == activityType)
+                        && (windowingMode == WINDOWING_MODE_UNDEFINED
+                                || state.getFocusedStackWindowingMode() == windowingMode),
                 "***Waiting for focused stack...");
     }
 
@@ -519,9 +558,15 @@ public class ActivityAndWindowManagersState {
         assertNotNull("Must have app.", mWmState.getFocusedApp());
     }
 
+    @Deprecated
     void assertContainsStack(String msg, int stackId) throws Exception {
         assertTrue(msg, mAmState.containsStack(stackId));
         assertTrue(msg, mWmState.containsStack(stackId));
+    }
+
+    void assertContainsStack(String msg, int windowingMode, int activityType) throws Exception {
+        assertTrue(msg, mAmState.containsStack(windowingMode, activityType));
+        assertTrue(msg, mWmState.containsStack(windowingMode, activityType));
     }
 
     void assertDoesNotContainStack(String msg, int stackId) throws Exception {
@@ -534,13 +579,23 @@ public class ActivityAndWindowManagersState {
         assertEquals(msg, stackId, mWmState.getFrontStackId(DEFAULT_DISPLAY_ID));
     }
 
+    void assertFrontStackActivityType(String msg, int activityType) throws Exception {
+        assertEquals(msg, activityType, mAmState.getFrontStackActivityType(DEFAULT_DISPLAY_ID));
+        assertEquals(msg, activityType, mWmState.getFrontStackActivityType(DEFAULT_DISPLAY_ID));
+    }
+
+    @Deprecated
     void assertFocusedStack(String msg, int stackId) throws Exception {
         assertEquals(msg, stackId, mAmState.getFocusedStackId());
     }
 
-    void assertNotFocusedStack(String msg, int stackId) throws Exception {
-        if (stackId == mAmState.getFocusedStackId()) {
-            assertNotEquals(msg, stackId, mAmState.getFocusedStackId());
+    void assertFocusedStack(String msg, int windowingMode, int activityType)
+            throws Exception {
+        if (windowingMode != WINDOWING_MODE_UNDEFINED) {
+            assertEquals(msg, windowingMode, mAmState.getFocusedStackWindowingMode());
+        }
+        if (activityType != ACTIVITY_TYPE_UNDEFINED) {
+            assertEquals(msg, activityType, mAmState.getFocusedStackActivityType());
         }
     }
 
@@ -666,9 +721,9 @@ public class ActivityAndWindowManagersState {
         return true;
     }
 
-    int getStackPosition(int stackId) {
-        int wmStackIndex = mWmState.getStackPosition(stackId);
-        int amStackIndex = mAmState.getStackPosition(stackId);
+    int getStackPosition(int activityType) {
+        int wmStackIndex = mWmState.getStackPosition(activityType);
+        int amStackIndex = mAmState.getStackPosition(activityType);
         assertEquals("Window and activity manager must have the same stack position index",
                 amStackIndex, wmStackIndex);
         return wmStackIndex;

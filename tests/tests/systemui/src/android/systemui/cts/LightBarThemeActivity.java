@@ -16,7 +16,5 @@
 
 package android.systemui.cts;
 
-import android.app.Activity;
-
-public class LightBarThemeActivity extends Activity {
+public class LightBarThemeActivity extends LightBarBaseActivity {
 }

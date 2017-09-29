@@ -20,6 +20,7 @@ import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.result.InvocationFailureHandler;
 import com.android.compatibility.common.tradefed.result.SubPlanHelper;
 import com.android.compatibility.common.tradefed.targetprep.NetworkConnectivityChecker;
+import com.android.compatibility.common.tradefed.testtype.suite.CompatibilityTestSuite;
 import com.android.compatibility.common.tradefed.util.RetryFilterHelper;
 import com.android.compatibility.common.tradefed.util.RetryType;
 import com.android.compatibility.common.tradefed.util.UniqueModuleCountUtil;
@@ -79,8 +80,10 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A Test for running Compatibility Suites
+ * A Test for running Compatibility Suites.
+ * @deprecated use {@link CompatibilityTestSuite} instead.
  */
+@Deprecated
 @OptionClass(alias = "compatibility")
 public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildReceiver,
         IStrictShardableTest, ISystemStatusCheckerReceiver, ITestCollector,
