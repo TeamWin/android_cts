@@ -29,15 +29,24 @@ import org.xmlpull.v1.XmlPullParser;
 
 import java.io.InputStream;
 import java.lang.String;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static android.os.Build.VERSION.SECURITY_PATCH;
 
 /**
  * Tests for permission policy on the platform.
  */
 public class PermissionPolicyTest extends AndroidTestCase {
+    private static final Date HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PATCH_DATE = parseDate("2017-09-05");
+    private static final String HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PERMISSION
+            = "android.permission.HIDE_NON_SYSTEM_OVERLAY_WINDOWS";
+
     private static final String LOG_TAG = "PermissionProtectionTest";
 
     private static final String PLATFORM_PACKAGE_NAME = "android";
@@ -68,8 +77,12 @@ public class PermissionPolicyTest extends AndroidTestCase {
         Set<String> expectedPermissionGroups = new ArraySet<String>();
 
         for (PermissionInfo expectedPermission : loadExpectedPermissions()) {
-            // OEMs cannot remove permissions
             String expectedPermissionName = expectedPermission.name;
+            if (shouldSkipPermission(expectedPermissionName)) {
+                continue;
+            }
+
+            // OEMs cannot remove permissions
             PermissionInfo declaredPermission = declaredPermissionsMap.get(expectedPermissionName);
             assertNotNull("Permission " + expectedPermissionName
                     + " must be declared", declaredPermission);
@@ -207,5 +220,22 @@ public class PermissionPolicyTest extends AndroidTestCase {
             }
         }
         return protectionLevel;
+    }
+
+    private static Date parseDate(String date) {
+        Date patchDate = new Date();
+        try {
+            SimpleDateFormat template = new SimpleDateFormat("yyyy-MM-dd");
+            patchDate = template.parse(date);
+        } catch (ParseException e) {
+        }
+
+        return patchDate;
+    }
+
+    private boolean shouldSkipPermission(String permissionName) {
+        return parseDate(SECURITY_PATCH).before(HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PATCH_DATE) &&
+                HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PERMISSION.equals(permissionName);
+
     }
 }
