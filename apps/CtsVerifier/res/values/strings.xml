@@ -1525,8 +1525,11 @@
     <string name="attention_phone_order">Check that ranker respects telephone URIs for contacts.</string>
     <string name="attention_interruption_order">Check that ranker temporarily boosts interruptions.
     This test takes 30 seconds to complete.</string>
-    <string name="attention_none_are_filtered">Check that \"All\" mode doesn\'t filter any notifications.</string>
-    <string name="attention_some_are_filtered">Check that \"Priority\" mode doesn\'t filter priority notifications.</string>
+    <string name="attention_none_are_filtered_messages">Check that \"All\" mode doesn\'t filter any notifications (messages).</string>
+    <string name="attention_none_are_filtered_diff_categories">Check that \"All\" mode doesn\'t filter any notifications (event, reminder, alarm).</string>
+    <string name="attention_some_are_filtered_messages">Check that \"Priority\" mode doesn\'t filter priority notifications (messages from starred contacts).</string>
+    <string name="attention_some_are_filtered_alarms">Check that \"Priority\" mode doesn\'t filter priority notifications (alarms).</string>
+    <string name="attention_some_are_filtered_media_system_other">Check that \"Priority\" mode doesn\'t filter priority notifications (media, system, other).</string>
     <string name="attention_all_are_filtered">Check that \"None\" mode filters all notifications.</string>
     <string name="nls_test">Notification Listener Test</string>
     <string name="nas_test">Notification Assistant Test</string>
