@@ -689,7 +689,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         runCommandAndPrintOutput("locksettings set-pin " + LOCK_CREDENTIAL);
     }
 
-    protected void removeLockCredential() throws DeviceNotAvailableException {
+    private void removeLockCredential() throws DeviceNotAvailableException {
         runCommandAndPrintOutput("locksettings clear --old " + LOCK_CREDENTIAL);
     }
 
