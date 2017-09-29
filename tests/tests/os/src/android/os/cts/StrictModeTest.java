@@ -96,11 +96,12 @@ public class StrictModeTest {
         inspectViolation(
                 () -> leakCloseable("leaked.txt"),
                 info -> {
-                    assertThat(info.message)
+                    assertThat(info.getMessagePrefix())
                             .isEqualTo(
                                     "A resource was acquired at attached stack trace but never released. See java.io.Closeable for information on avoiding resource leaks.");
-                    assertThat(info.crashInfo).isNotNull();
-                    assertThat(info.crashInfo.stackTrace).contains("leakCloseable");
+                    assertThat(info.getViolationDetails())
+                            .isEqualTo("Explicit termination method 'close' not called");
+                    assertThat(info.getStackTrace()).contains("leakCloseable");
                     assertPolicy(info, StrictMode.DETECT_VM_CLOSABLE_LEAKS);
                 });
     }
@@ -159,8 +160,8 @@ public class StrictModeTest {
                         ((HttpURLConnection) new URL("http://example.com/").openConnection())
                                 .getResponseCode(),
                 info -> {
-                    assertThat(info.message).contains("example.com");
-                    assertThat(info.crashInfo.exceptionMessage)
+                    assertThat(info.getMessagePrefix()).contains("example.com");
+                    assertThat(info.getViolationDetails())
                             .startsWith(StrictMode.CLEARTEXT_DETECTED_MSG);
                     assertPolicy(info, StrictMode.DETECT_VM_CLEARTEXT_NETWORK);
                 });
@@ -196,9 +197,10 @@ public class StrictModeTest {
                     intent.setDataAndType(badUri, "image/jpeg");
                     getContext().startActivity(intent);
                 },
-                violation ->
-                        assertThat(violation.crashInfo.stackTrace)
-                                .contains(badUri + " exposed beyond app"));
+                violation -> {
+                    assertThat(violation.getMessagePrefix()).isEmpty();
+                    assertThat(violation.getStackTrace()).contains(badUri + " exposed beyond app");
+                });
 
         final Uri goodUri = Uri.parse("content://com.example/foobar");
         assertNoViolation(
@@ -227,7 +229,7 @@ public class StrictModeTest {
                     getContext().startActivity(intent);
                 },
                 violation ->
-                        assertThat(violation.crashInfo.stackTrace)
+                        assertThat(violation.getStackTrace())
                                 .contains(uri + " exposed beyond app"));
 
         assertNoViolation(
@@ -255,7 +257,7 @@ public class StrictModeTest {
                         ((HttpURLConnection) new URL("http://example.com/").openConnection())
                                 .getResponseCode(),
                 violation ->
-                        assertThat(violation.crashInfo.stackTrace)
+                        assertThat(violation.getStackTrace())
                                 .contains(StrictMode.UNTAGGED_SOCKET_VIOLATION_MESSAGE));
 
         assertNoViolation(
@@ -297,7 +299,7 @@ public class StrictModeTest {
                     }
                 },
                 violation ->
-                        assertThat(violation.crashInfo.stackTrace)
+                        assertThat(violation.getStackTrace())
                                 .contains(StrictMode.UNTAGGED_SOCKET_VIOLATION_MESSAGE));
     }
 
@@ -395,12 +397,12 @@ public class StrictModeTest {
                                 () -> service.performDiskWrite(),
                                 (violation) -> {
                                     assertPolicy(violation, StrictMode.DETECT_DISK_WRITE);
-                                    assertThat(violation.crashInfo.stackTrace)
+                                    assertThat(violation.getStackTrace())
                                             .contains(
                                                     "android.os.cts.CtsRemoteService$1.performDiskWrite");
-                                    assertThat(violation.crashInfo.stackTrace)
+                                    assertThat(violation.getStackTrace())
                                             .contains("# via Binder call with stack:");
-                                    assertThat(violation.crashInfo.stackTrace)
+                                    assertThat(violation.getStackTrace())
                                             .contains("StrictModeTest.testViolationAcrossBinder");
                                 });
                         assertNoViolation(() -> service.getPid());
@@ -437,6 +439,10 @@ public class StrictModeTest {
         consumer.accept(ISecondary.Stub.asInterface(binder));
         context.unbindService(secondaryConnection);
         context.stopService(intent);
+    }
+
+    private static void assertViolation(String expected, ThrowingRunnable r) throws Exception {
+        inspectViolation(r, violation -> assertThat(violation.getStackTrace()).contains(expected));
     }
 
     private static void assertNoViolation(ThrowingRunnable r) throws Exception {
