@@ -34,11 +34,6 @@ public class FeatureUtil {
         return getPackageManager().hasSystemFeature(feature);
     }
 
-    /** Returns true if the device lacks a given system feature */
-    public static boolean lacksSystemFeature(String feature) {
-        return !hasSystemFeature(feature);
-    }
-
     /** Returns true if the device has any feature in a given collection of system features */
     public static boolean hasAnySystemFeature(String... features) {
         PackageManager pm = getPackageManager();
@@ -48,11 +43,6 @@ public class FeatureUtil {
             }
         }
         return false;
-    }
-
-    /** Returns true if the device lacks any feature in a given collection of system features */
-    public static boolean lacksAnySystemFeature(String... features) {
-        return !hasAllSystemFeatures(features);
     }
 
     /** Returns true if the device has all features in a given collection of system features */
@@ -74,11 +64,6 @@ public class FeatureUtil {
     /** Returns true if the device has feature WATCH_FEATURE */
     public static boolean isWatch() {
         return hasSystemFeature(WATCH_FEATURE);
-    }
-
-    /** Returns true if the device lacks all features in a given collection of system features */
-    public static boolean lacksAllSystemFeatures(String... features) {
-        return !hasAnySystemFeature(features);
     }
 
     private static PackageManager getPackageManager() {
