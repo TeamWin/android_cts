@@ -148,4 +148,18 @@ public class Poc17_07 extends SecurityTestCase {
         enableAdbRoot(getDevice());
         AdbUtils.runPocNoOutput("Bug-35470735", getDevice(), 60);
     }
+
+    /*
+     *  b/36991414
+     */
+    @SecurityTest
+    public void testPocBug_36991414() throws Exception {
+        if(containsDriver(getDevice(), "/system/lib64/libgui.so")) {
+          AdbUtils.runCommandLine("logcat -c", getDevice());
+          AdbUtils.runPoc("Bug-36991414", getDevice(), 60);
+          String pocOut =  AdbUtils.runCommandLine("logcat -d", getDevice());
+          assertNotMatches("[\\s\\n\\S]*Fatal signal 11" +
+                           "[\\s\\n\\S]*/system/lib64/libgui.so [\\s\\n\\S]*", pocOut);
+        }
+    }
 }
