@@ -24,9 +24,8 @@ import static org.mockito.Mockito.verify;
 
 import android.animation.Animator;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Matrix;
-import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -34,7 +33,6 @@ import android.transition.Fade;
 import android.transition.Transition;
 import android.transition.TransitionListenerAdapter;
 import android.transition.TransitionManager;
-import android.transition.TransitionUtils;
 import android.transition.TransitionValues;
 import android.view.View;
 import android.view.ViewGroup;
@@ -127,8 +125,7 @@ public class FadeTest extends BaseTransitionTest {
         enterScene(R.layout.scene1);
 
         final View redSquare = mActivity.findViewById(R.id.redSquare);
-        final Bitmap redSquareBitmap = TransitionUtils.createViewBitmap(redSquare, new Matrix(),
-                new RectF(0, 0, redSquare.getWidth(), redSquare.getHeight()));
+        final Bitmap redSquareBitmap = createViewBitmap(redSquare);
         final FrameLayout container = new FrameLayout(mActivity);
         final ViewGroup sceneRoot = mActivity.findViewById(R.id.holder);
 
@@ -178,6 +175,14 @@ public class FadeTest extends BaseTransitionTest {
         assertTrue(onDisappearCalled.await(0, TimeUnit.SECONDS));
     }
 
+    private Bitmap createViewBitmap(View view) {
+        int bitmapWidth = view.getWidth();
+        int bitmapHeight = view.getHeight();
+        Bitmap bitmap = Bitmap.createBitmap(bitmapWidth, bitmapHeight, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        view.draw(canvas);
+        return bitmap;
+    }
 
     /**
      * From {@link android.uirendering.cts.bitmapcomparers.MSSIMComparer}
