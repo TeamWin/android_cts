@@ -55,4 +55,19 @@ public class Poc17_10 extends SecurityTestCase {
             Thread.sleep(180000);
         }
     }
+
+    /**
+     * b/36817053
+     */
+    @SecurityTest
+    public void testPocBug_36817053() throws Exception {
+        enableAdbRoot(getDevice());
+        AdbUtils.runCommandLine("dmesg -c" , getDevice());
+        AdbUtils.runPocNoOutput("Bug-36817053", getDevice(), 60);
+        String dmesgOut = AdbUtils.runCommandLine("dmesg", getDevice());
+        assertNotMatches("[\\s\\n\\S]*" +
+                         "__wlan_hdd_cfg80211_extscan_get_valid_channels: " +
+                         "[0-9]+: attr request id failed[\\s\\n\\S]*",
+                         dmesgOut);
+    }
 }
