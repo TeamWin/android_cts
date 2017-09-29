@@ -16,6 +16,7 @@
 
 package android.server.am;
 
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.server.am.ProtoExtractors.extract;
@@ -510,6 +511,17 @@ public class WindowManagerState {
         return null;
     }
 
+    WindowStack getStandardStackByWindowingMode(int windowingMode) {
+        for (WindowStack stack : mStacks) {
+            if (stack.getActivityType() != ACTIVITY_TYPE_STANDARD) {
+                continue;
+            }
+            if (stack.getWindowingMode() == windowingMode) {
+                return stack;
+            }
+        }
+        return null;
+    }
 
     int getStackPosition(int activityType) {
         for (int i = 0; i < mStacks.size(); i++) {

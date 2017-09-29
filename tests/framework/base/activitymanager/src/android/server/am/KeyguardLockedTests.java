@@ -17,8 +17,8 @@
 package android.server.am;
 
 
-import static android.app.ActivityManager.StackId.PINNED_STACK_ID;
-
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
+import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -171,13 +171,15 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_ENTER_PIP);
         mAmWmState.waitForKeyguardShowingAndOccluded();
         assertShowingAndOccluded();
-        mAmWmState.assertDoesNotContainStack("Must not contain pinned stack.", PINNED_STACK_ID);
+        mAmWmState.assertDoesNotContainStack("Must not contain pinned stack.",
+                WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
 
         // Enter the credentials and ensure that the activity actually entered picture-in-picture
         enterAndConfirmLockCredential();
         mAmWmState.waitForKeyguardGone();
         assertKeyguardGone();
-        mAmWmState.assertContainsStack("Must contain pinned stack.", PINNED_STACK_ID);
+        mAmWmState.assertContainsStack("Must contain pinned stack.", WINDOWING_MODE_PINNED,
+                ACTIVITY_TYPE_STANDARD);
     }
 
     @Test
@@ -188,12 +190,14 @@ public class KeyguardLockedTests extends KeyguardTestBase {
 
         launchActivity(PIP_ACTIVITY);
         executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_ENTER_PIP);
-        mAmWmState.computeState(new WaitForValidActivityState.Builder( PIP_ACTIVITY ).build());
-        mAmWmState.assertContainsStack("Must contain pinned stack.", PINNED_STACK_ID);
+        mAmWmState.computeState(new WaitForValidActivityState.Builder(PIP_ACTIVITY).build());
+        mAmWmState.assertContainsStack("Must contain pinned stack.", WINDOWING_MODE_PINNED,
+                ACTIVITY_TYPE_STANDARD);
         mAmWmState.assertVisibility(PIP_ACTIVITY, true);
 
         launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
-        mAmWmState.computeState(new WaitForValidActivityState.Builder( SHOW_WHEN_LOCKED_ACTIVITY ).build());
+        mAmWmState.computeState(
+                new WaitForValidActivityState.Builder(SHOW_WHEN_LOCKED_ACTIVITY).build());
         mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
 
         gotoKeyguard();
@@ -211,8 +215,9 @@ public class KeyguardLockedTests extends KeyguardTestBase {
 
         launchActivity(PIP_ACTIVITY, EXTRA_SHOW_OVER_KEYGUARD, "true");
         executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_ENTER_PIP);
-        mAmWmState.computeState(new WaitForValidActivityState.Builder( PIP_ACTIVITY ).build());
-        mAmWmState.assertContainsStack("Must contain pinned stack.", PINNED_STACK_ID);
+        mAmWmState.computeState(new WaitForValidActivityState.Builder(PIP_ACTIVITY).build());
+        mAmWmState.assertContainsStack("Must contain pinned stack.", WINDOWING_MODE_PINNED,
+                ACTIVITY_TYPE_STANDARD);
         mAmWmState.assertVisibility(PIP_ACTIVITY, true);
 
         gotoKeyguard();

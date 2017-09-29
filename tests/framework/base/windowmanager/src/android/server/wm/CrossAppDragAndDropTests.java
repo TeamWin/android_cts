@@ -16,11 +16,9 @@
 
 package android.server.wm;
 
-import static android.app.ActivityManager.StackId.DOCKED_STACK_ID;
-import static android.app.ActivityManager.StackId.FREEFORM_WORKSPACE_STACK_ID;
-import static android.app.ActivityManager.StackId.PINNED_STACK_ID;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
+import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY;
 import static android.server.am.ActivityManagerTestBase.executeShellCommand;
@@ -31,6 +29,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.app.ActivityManager;
+import android.content.Context;
 import android.graphics.Point;
 import android.os.RemoteException;
 import android.os.SystemClock;
@@ -117,6 +117,8 @@ public class CrossAppDragAndDropTests {
     private static final String AM_SUPPORTS_SPLIT_SCREEN_MULTIWINDOW =
             "am supports-split-screen-multi-window";
 
+    protected Context mContext;
+    protected ActivityManager mAm;
     private UiDevice mDevice;
 
     private Map<String, String> mSourceResults;
@@ -136,6 +138,8 @@ public class CrossAppDragAndDropTests {
         mSourceLogTag = SOURCE_LOG_TAG + mSessionId;
         mTargetLogTag = TARGET_LOG_TAG + mSessionId;
 
+        mContext = InstrumentationRegistry.getContext();
+        mAm = mContext.getSystemService(ActivityManager.class);
         mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         if (!supportsDragAndDrop()) {
             return;
@@ -197,15 +201,16 @@ public class CrossAppDragAndDropTests {
         final int taskId = getActivityTaskId(componentName);
         // Moving a task from the full screen stack to the docked stack resets
         // WindowManagerService#mDockedStackCreateBounds.
-        executeShellCommand(getMoveTaskCommand(taskId, DOCKED_STACK_ID));
+        mAm.setTaskWindowingMode(taskId, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, true /* toTop */);
         waitForResume(mSourcePackageName, SOURCE_ACTIVITY_NAME);
         executeShellCommand(AM_FORCE_STOP + SOURCE_PACKAGE_NAME);
 
         // Remove special stacks.
-        // TODO: Better to replace this with command to remove all multi-window stacks.
-        executeShellCommand(AM_REMOVE_STACK + PINNED_STACK_ID);
-        executeShellCommand(AM_REMOVE_STACK + DOCKED_STACK_ID);
-        executeShellCommand(AM_REMOVE_STACK + FREEFORM_WORKSPACE_STACK_ID);
+        mAm.removeStacksInWindowingModes(new int[] {
+                WINDOWING_MODE_PINNED,
+                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY,
+                WINDOWING_MODE_FREEFORM
+        });
     }
 
     private void launchDockedActivity(String packageName, String activityName, String mode,

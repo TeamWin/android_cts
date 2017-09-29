@@ -15,8 +15,8 @@
  */
 package android.server.am;
 
-import static android.app.ActivityManager.StackId.DOCKED_STACK_ID;
-import static android.app.ActivityManager.StackId.FULLSCREEN_WORKSPACE_STACK_ID;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY;
 import static android.server.am.ActivityAndWindowManagersState.dpToPx;
@@ -82,7 +82,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
                 logSeparator);
 
         logSeparator = clearLogcat();
-        moveActivityToStack(RESIZEABLE_ACTIVITY_NAME, DOCKED_STACK_ID);
+        setActivityTaskWindowingMode(RESIZEABLE_ACTIVITY_NAME, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
         final ReportedSizes dockedSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
                 logSeparator);
 
@@ -107,7 +107,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
                 logSeparator);
 
         logSeparator = clearLogcat();
-        moveActivityToStack(RESIZEABLE_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID);
+        setActivityTaskWindowingMode(RESIZEABLE_ACTIVITY_NAME, WINDOWING_MODE_FULLSCREEN);
         final ReportedSizes fullscreenSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
                 logSeparator);
 
@@ -248,7 +248,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
 
         // Move to docked stack.
         logSeparator = clearLogcat();
-        moveActivityToStack(activityName, DOCKED_STACK_ID);
+        setActivityTaskWindowingMode(activityName, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
         final ReportedSizes dockedSizes = getActivityDisplaySize(activityName, logSeparator);
         assertSizesAreSane(initialFullscreenSizes, dockedSizes);
         // Make sure docked stack is focused. This way when we dismiss it later fullscreen stack
@@ -256,14 +256,17 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         launchActivity(activityName, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
         mAmWmState.computeState(false /* compareTaskAndStackBounds */,
                 new WaitForValidActivityState.Builder(activityName).build());
+        final ActivityManagerState.ActivityStack stack = mAmWmState.getAmState()
+                .getStandardStackByWindowingMode(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
 
         // Resize docked stack to fullscreen size. This will trigger activity relaunch with
         // non-empty override configuration corresponding to fullscreen size.
         logSeparator = clearLogcat();
-        runCommandAndPrintOutput("am stack resize " + DOCKED_STACK_ID + " 0 0 "
-                + displayRect.width() + " " + displayRect.height());
+        mAm.resizeStack(stack.mStackId, displayRect);
+
         // Move activity back to fullscreen stack.
-        moveActivityToStack(activityName, FULLSCREEN_WORKSPACE_STACK_ID);
+        setActivityTaskWindowingMode(activityName,
+                WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
         final ReportedSizes finalFullscreenSizes = getActivityDisplaySize(activityName,
                 logSeparator);
 
@@ -302,16 +305,16 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
 
         launchActivity(DIALOG_WHEN_LARGE_ACTIVITY, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
         final ActivityManagerState.ActivityStack stack = mAmWmState.getAmState()
-                .getStackById(DOCKED_STACK_ID);
+                .getStandardStackByWindowingMode(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
         final WindowManagerState.Display display =
                 mAmWmState.getWmState().getDisplay(stack.mDisplayId);
         final int density = display.getDpi();
         final int smallWidthPx = dpToPx(SMALL_WIDTH_DP, density);
         final int smallHeightPx = dpToPx(SMALL_HEIGHT_DP, density);
 
-        runCommandAndPrintOutput("am stack resize " + DOCKED_STACK_ID + " 0 0 "
-                + smallWidthPx + " " + smallHeightPx);
-        mAmWmState.waitForValidState(DIALOG_WHEN_LARGE_ACTIVITY, DOCKED_STACK_ID);
+        mAm.resizeStack(stack.mStackId, new Rect(0, 0, smallWidthPx, smallHeightPx));
+        mAmWmState.waitForValidState(DIALOG_WHEN_LARGE_ACTIVITY,
+                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
     }
 
     /**
@@ -502,13 +505,14 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
 
         // Move to fullscreen stack.
         logSeparator = clearLogcat();
-        moveActivityToStack(activityName, FULLSCREEN_WORKSPACE_STACK_ID);
+        setActivityTaskWindowingMode(
+                activityName, WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
         final ReportedSizes fullscreenSizes = getActivityDisplaySize(activityName, logSeparator);
         assertSizesAreSane(fullscreenSizes, initialDockedSizes);
 
         // Move activity back to docked stack.
         logSeparator = clearLogcat();
-        moveActivityToStack(activityName, DOCKED_STACK_ID);
+        setActivityTaskWindowingMode(activityName, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
         final ReportedSizes finalDockedSizes = getActivityDisplaySize(activityName, logSeparator);
 
         // After activity configuration was changed twice it must report same size as original one.

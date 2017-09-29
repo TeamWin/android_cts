@@ -17,7 +17,7 @@
 package android.server.am;
 
 
-import static android.app.ActivityManager.StackId.DOCKED_STACK_ID;
+import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.server.am.StateLogger.log;
 
 import junit.framework.Assert;
@@ -74,9 +74,7 @@ public class ActivityManagerReplaceWindowTests extends ActivityManagerTestBase {
         final String oldToken = getWindowToken(windowName, activityName);
 
         // Move to docked stack
-        final int taskId = getActivityTaskId(activityName);
-        final String cmd = AM_MOVE_TASK + taskId + " " + DOCKED_STACK_ID + " true";
-        executeShellCommand(cmd);
+        setActivityTaskWindowingMode(activityName, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
 
         // Sleep 5 seconds, then check if the window is replaced properly.
         Thread.sleep(5000);

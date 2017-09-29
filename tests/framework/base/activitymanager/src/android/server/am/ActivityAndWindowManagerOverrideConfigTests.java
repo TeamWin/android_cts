@@ -16,8 +16,6 @@
 
 package android.server.am;
 
-
-import static android.app.ActivityManager.StackId.FREEFORM_WORKSPACE_STACK_ID;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
 import static android.server.am.StateLogger.log;
 

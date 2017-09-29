@@ -16,6 +16,7 @@
 
 package android.server.wm;
 
+import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.server.am.StateLogger.log;
 
 import android.server.am.ActivityManagerTestBase;
@@ -38,7 +39,7 @@ public abstract class ParentChildTestBase extends ActivityManagerTestBase {
 
     public void startTestCaseDocked(String testCase) throws Exception {
         startTestCase(testCase);
-        moveActivityToDockStack(activityName());
+        setActivityTaskWindowingMode(activityName(), WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
     }
 
     abstract String intentKey();
