@@ -42,4 +42,17 @@ public class Poc17_10 extends SecurityTestCase {
           AdbUtils.runPocNoOutput("Bug-37093119", getDevice(), 60);
         }
     }
+
+    /**
+     * b/62085265
+     */
+    @SecurityTest
+    public void testPocBug_62085265() throws Exception {
+        enableAdbRoot(getDevice());
+        if (containsDriver(getDevice(), "/system/bin/pktlogconf")) {
+            AdbUtils.runCommandLine("pktlogconf -a cld -erx,tx -s 1", getDevice());
+            // Device can take up to 90 seconds before rebooting
+            Thread.sleep(180000);
+        }
+    }
 }
