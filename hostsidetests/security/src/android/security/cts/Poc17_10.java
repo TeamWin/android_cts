@@ -70,4 +70,19 @@ public class Poc17_10 extends SecurityTestCase {
                          "[0-9]+: attr request id failed[\\s\\n\\S]*",
                          dmesgOut);
     }
+
+    /**
+     * b/36730104
+     */
+    @SecurityTest
+    public void testPocBug_36730104() throws Exception {
+        enableAdbRoot(getDevice());
+        AdbUtils.runCommandLine("dmesg -c" , getDevice());
+        AdbUtils.runPocNoOutput("Bug-36730104", getDevice(), 60);
+        String dmesgOut = AdbUtils.runCommandLine("dmesg", getDevice());
+        assertNotMatches("[\\s\\n\\S]*" +
+                         "hdd_extscan_start_fill_bucket_channel_spec: " +
+                         "[0-9]+: attr bucket index failed[\\s\\n\\S]*",
+                         dmesgOut);
+    }
 }
