@@ -30,10 +30,9 @@ import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.StringJoiner;
-import java.util.StringTokenizer;
+import java.util.ArrayList;
+import java.util.List;
+
 
 /**
  * Host-side test for the media session manager that installs and runs device-side tests after the
@@ -56,29 +55,22 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
     private static final String DEVICE_SIDE_TEST_CLASS =
             "android.media.session.cts.MediaSessionManagerTest";
 
-    private static final String SETTINGS_NOTIFICATION_LISTENER_NAMESPACE = "secure";
-    private static final String SETTINGS_NOTIFICATION_LISTENER_NAME =
-            "enabled_notification_listeners";
-
-    // Keep the original notification listener list to clean up.
-    private Map<Integer, String> mNotificationListeners;
+    private final List<Integer> mNotificationListeners = new ArrayList<>();
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        mNotificationListeners = new HashMap<>();
 
         // Ensure that the previously running media session test helper app doesn't exist.
         getDevice().uninstallPackage(MEDIA_SESSION_TEST_HELPER_PKG);
+        mNotificationListeners.clear();
     }
 
     @Override
     public void tearDown() throws Exception {
         // Cleanup
-        for (int userId : mNotificationListeners.keySet()) {
-            String notificationListener = mNotificationListeners.get(userId);
-            putSettings(SETTINGS_NOTIFICATION_LISTENER_NAMESPACE,
-                    SETTINGS_NOTIFICATION_LISTENER_NAME, notificationListener, userId);
+        for (int userId : mNotificationListeners) {
+            setAllowGetActiveSessionForTest(false, userId);
         }
         super.tearDown();
     }
@@ -90,7 +82,7 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
     public void testGetActiveSessions_primaryUser() throws Exception {
         int primaryUserId = getDevice().getPrimaryUserId();
 
-        allowGetActiveSessionForTest(primaryUserId);
+        setAllowGetActiveSessionForTest(true, primaryUserId);
         installAppAsUser(DEVICE_SIDE_TEST_APK, primaryUserId);
         runTest("testGetActiveSessions_noMediaSessionFromMediaSessionTestHelper");
 
@@ -116,7 +108,7 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
         // Test if another user can get the session.
         int newUser = createAndStartUser();
         installAppAsUser(DEVICE_SIDE_TEST_APK, newUser);
-        allowGetActiveSessionForTest(newUser);
+        setAllowGetActiveSessionForTest(true, newUser);
         runTestAsUser("testGetActiveSessions_noMediaSession", newUser);
         removeUser(newUser);
     }
@@ -136,7 +128,7 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
         // Remove the created user first not to exceed system's user number limit.
         int newUser = createAndStartRestrictedProfile(getDevice().getPrimaryUserId());
         installAppAsUser(DEVICE_SIDE_TEST_APK, newUser);
-        allowGetActiveSessionForTest(newUser);
+        setAllowGetActiveSessionForTest(true, newUser);
         runTestAsUser("testGetActiveSessions_noMediaSession", newUser);
         removeUser(newUser);
     }
@@ -156,7 +148,7 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
         // Remove the created user first not to exceed system's user number limit.
         int newUser = createAndStartManagedProfile(getDevice().getPrimaryUserId());
         installAppAsUser(DEVICE_SIDE_TEST_APK, newUser);
-        allowGetActiveSessionForTest(newUser);
+        setAllowGetActiveSessionForTest(true, newUser);
         runTestAsUser("testGetActiveSessions_noMediaSession", newUser);
         removeUser(newUser);
     }
@@ -172,43 +164,24 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
     }
 
     /**
-     * Allows the {@link #DEVICE_SIDE_TEST_CLASS} to call
-     * {@link MediaSessionManager#getActiveSessions} for testing.
+     * Sets to allow or disallow the {@link #DEVICE_SIDE_TEST_CLASS}
+     * to call {@link MediaSessionManager#getActiveSessions} for testing.
      * <p>{@link MediaSessionManager#getActiveSessions} bypasses the permission check if the
-     * caller is the enabled notification listener. This method uses the behavior by making
-     * {@link #DEVICE_SIDE_TEST_CLASS} as the notification listener. So any change in this
-     * should be also applied to the class.
+     * caller is the enabled notification listener. This method uses the behavior by allowing
+     * this class as the notification listener service.
      * <p>Note that the device-side test {@link android.media.cts.MediaSessionManagerTest} already
      * covers the test for failing {@link MediaSessionManager#getActiveSessions} without the
      * permission nor the notification listener.
      */
-    private void allowGetActiveSessionForTest(int userId) throws Exception {
-        final String NOTIFICATION_LISTENER_DELIM = ":";
-        if (mNotificationListeners.get(userId) != null) {
-            // Already enabled.
-            return;
-        }
-        String list = getSettings(SETTINGS_NOTIFICATION_LISTENER_NAMESPACE,
-                SETTINGS_NOTIFICATION_LISTENER_NAME, userId);
-
+    private void setAllowGetActiveSessionForTest(boolean allow, int userId) throws Exception {
         String notificationListener = DEVICE_SIDE_TEST_PKG + "/" + DEVICE_SIDE_TEST_CLASS;
-        // Ensure that the list doesn't contain notificationListener already.
-        // This can happen if the test is killed while running.
-        StringTokenizer tokenizer = new StringTokenizer(list, NOTIFICATION_LISTENER_DELIM);
-        StringJoiner joiner = new StringJoiner(NOTIFICATION_LISTENER_DELIM);
-        while (tokenizer.hasMoreTokens()) {
-            String token = tokenizer.nextToken();
-            if (!token.isEmpty() && !token.equals(notificationListener)) {
-                joiner.add(token);
-            }
+        String command = "cmd notification "
+                + ((allow) ? "allow_listener " : "disallow_listener ")
+                + notificationListener + " " + userId;
+        executeShellCommand(command);
+        if (allow) {
+            mNotificationListeners.add(userId);
         }
-        list = joiner.toString();
-        // Preserve the original list.
-        mNotificationListeners.put(userId, list);
-        // Allow get active sessions by setting notification listener.
-        joiner.add(notificationListener);
-        putSettings(SETTINGS_NOTIFICATION_LISTENER_NAMESPACE,
-                SETTINGS_NOTIFICATION_LISTENER_NAME, joiner.toString(), userId);
     }
 
     private void sendControlCommand(int userId, int flag) throws Exception {
