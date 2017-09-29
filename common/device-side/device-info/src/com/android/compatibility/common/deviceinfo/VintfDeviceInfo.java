@@ -45,7 +45,6 @@ public final class VintfDeviceInfo extends DeviceInfo {
         store.addResult("os_version", VintfRuntimeInfo.getOsVersion());
         store.addResult("hardware_id", VintfRuntimeInfo.getHardwareId());
         store.addResult("kernel_version", VintfRuntimeInfo.getKernelVersion());
-        store.addResult("kernel_sepolicy_version", VintfRuntimeInfo.getKernelSepolicyVersion());
         store.addResult("sepolicy_version", VintfObject.getSepolicyVersion());
 
         String[] hals = VintfObject.getHalNamesAndVersions();
