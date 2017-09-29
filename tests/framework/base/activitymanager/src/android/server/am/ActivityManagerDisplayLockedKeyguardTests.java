@@ -44,8 +44,7 @@ public class ActivityManagerDisplayLockedKeyguardTests extends ActivityManagerDi
     @After
     @Override
     public void tearDown() throws Exception {
-        removeLockCredential();
-        gotoKeyguard();
+        tearDownLockCredentials();
         super.tearDown();
     }
 

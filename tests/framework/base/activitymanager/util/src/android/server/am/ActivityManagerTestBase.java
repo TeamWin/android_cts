@@ -664,7 +664,7 @@ public abstract class ActivityManagerTestBase {
         runCommandAndPrintOutput("locksettings set-pin " + LOCK_CREDENTIAL);
     }
 
-    protected void removeLockCredential() {
+    private void removeLockCredential() {
         runCommandAndPrintOutput("locksettings clear --old " + LOCK_CREDENTIAL);
     }
 
