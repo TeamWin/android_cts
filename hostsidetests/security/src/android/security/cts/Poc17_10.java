@@ -42,4 +42,47 @@ public class Poc17_10 extends SecurityTestCase {
           AdbUtils.runPocNoOutput("Bug-37093119", getDevice(), 60);
         }
     }
+
+    /**
+     * b/62085265
+     */
+    @SecurityTest
+    public void testPocBug_62085265() throws Exception {
+        enableAdbRoot(getDevice());
+        if (containsDriver(getDevice(), "/system/bin/pktlogconf")) {
+            AdbUtils.runCommandLine("pktlogconf -a cld -erx,tx -s 1", getDevice());
+            // Device can take up to 90 seconds before rebooting
+            Thread.sleep(180000);
+        }
+    }
+
+    /**
+     * b/36817053
+     */
+    @SecurityTest
+    public void testPocBug_36817053() throws Exception {
+        enableAdbRoot(getDevice());
+        AdbUtils.runCommandLine("dmesg -c" , getDevice());
+        AdbUtils.runPocNoOutput("Bug-36817053", getDevice(), 60);
+        String dmesgOut = AdbUtils.runCommandLine("dmesg", getDevice());
+        assertNotMatches("[\\s\\n\\S]*" +
+                         "__wlan_hdd_cfg80211_extscan_get_valid_channels: " +
+                         "[0-9]+: attr request id failed[\\s\\n\\S]*",
+                         dmesgOut);
+    }
+
+    /**
+     * b/36730104
+     */
+    @SecurityTest
+    public void testPocBug_36730104() throws Exception {
+        enableAdbRoot(getDevice());
+        AdbUtils.runCommandLine("dmesg -c" , getDevice());
+        AdbUtils.runPocNoOutput("Bug-36730104", getDevice(), 60);
+        String dmesgOut = AdbUtils.runCommandLine("dmesg", getDevice());
+        assertNotMatches("[\\s\\n\\S]*" +
+                         "hdd_extscan_start_fill_bucket_channel_spec: " +
+                         "[0-9]+: attr bucket index failed[\\s\\n\\S]*",
+                         dmesgOut);
+    }
 }
