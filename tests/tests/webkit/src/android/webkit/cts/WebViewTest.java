@@ -2622,6 +2622,10 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
     }
 
     public void testSetSafeBrowsingWhitelistWithMalformedList() throws Exception {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+
         List whitelist = new ArrayList<String>();
         // Protocols are not supported in the whitelist
         whitelist.add("http://google.com");
@@ -2637,6 +2641,10 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
     }
 
     public void testSetSafeBrowsingWhitelistWithValidList() throws Exception {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+
         List whitelist = new ArrayList<String>();
         whitelist.add("safe-browsing");
         final CountDownLatch resultLatch = new CountDownLatch(1);
@@ -2756,6 +2764,10 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
     }
 
     public void testStartSafeBrowsingUseApplicationContext() throws Exception {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+
         final MockContext ctx = new MockContext(getActivity());
         final CountDownLatch resultLatch = new CountDownLatch(1);
         WebView.startSafeBrowsing(ctx, new ValueCallback<Boolean>() {
