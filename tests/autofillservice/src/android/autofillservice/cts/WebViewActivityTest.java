@@ -25,6 +25,7 @@ import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.support.test.uiautomator.UiObject2;
+import android.view.ViewStructure.HtmlInfo;
 
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -116,14 +117,43 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
         assertThat(password).hasLength(5);
 
         // Assert structure passed to service.
-        final ViewNode usernameNode = Helper.findNodeByHtmlName(fillRequest.structure, "username");
-        Helper.assertTextIsSanitized(usernameNode);
-        assertThat(usernameNode.isFocused()).isTrue();
-        assertThat(usernameNode.getAutofillHints()).asList().containsExactly("username");
-        final ViewNode passwordNode = Helper.findNodeByHtmlName(fillRequest.structure, "password");
-        Helper.assertTextIsSanitized(passwordNode);
-        assertThat(passwordNode.getAutofillHints()).asList().containsExactly("current-password");
-        assertThat(passwordNode.isFocused()).isFalse();
+        try {
+            final ViewNode webViewNode = Helper.findWebViewNode(fillRequest.structure, "FORM AM I");
+            // TODO(b/66953802): class name should be android.webkit.WebView, and form name should
+            // be inside HtmlInfo, but Chromium 61 does not implement that.
+            if (webViewNode.getClassName().equals("android.webkit.WebView")) {
+                final HtmlInfo htmlInfo = Helper.assertHasHtmlTag(webViewNode, "form");
+                Helper.assertHasAttribute(htmlInfo, "name", "FORM AM I");
+            } else {
+                assertThat(webViewNode.getClassName()).isEqualTo("FORM AM I");
+                assertThat(webViewNode.getHtmlInfo()).isNull();
+            }
+            assertThat(webViewNode.getWebDomain()).isEqualTo(WebViewActivity.FAKE_DOMAIN);
+
+            final ViewNode usernameNode =
+                    Helper.findNodeByHtmlName(fillRequest.structure, "username");
+            Helper.assertTextIsSanitized(usernameNode);
+            final HtmlInfo usernameHtmlInfo = Helper.assertHasHtmlTag(usernameNode, "input");
+            Helper.assertHasAttribute(usernameHtmlInfo, "type", "text");
+            Helper.assertHasAttribute(usernameHtmlInfo, "name", "username");
+            assertThat(usernameNode.isFocused()).isTrue();
+            assertThat(usernameNode.getAutofillHints()).asList().containsExactly("username");
+            assertThat(usernameNode.getHint()).isEqualTo("There's no place like a holder");
+
+            final ViewNode passwordNode =
+                    Helper.findNodeByHtmlName(fillRequest.structure, "password");
+            Helper.assertTextIsSanitized(passwordNode);
+            final HtmlInfo passwordHtmlInfo = Helper.assertHasHtmlTag(passwordNode, "input");
+            Helper.assertHasAttribute(passwordHtmlInfo, "type", "password");
+            Helper.assertHasAttribute(passwordHtmlInfo, "name", "password");
+            assertThat(passwordNode.getAutofillHints()).asList()
+                    .containsExactly("current-password");
+            assertThat(passwordNode.getHint()).isEqualTo("Holder it like it cannnot passer a word");
+            assertThat(passwordNode.isFocused()).isFalse();
+        } catch (RuntimeException | Error e) {
+            Helper.dumpStructure("failed on testAutofillOneDataset()", fillRequest.structure);
+            throw e;
+        }
     }
 
     @Test

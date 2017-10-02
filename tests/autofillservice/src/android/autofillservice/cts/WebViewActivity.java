@@ -17,11 +17,21 @@ package android.autofillservice.cts;
 
 import android.os.Bundle;
 import android.support.test.uiautomator.UiObject2;
+import android.util.Log;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.EditText;
 
+import java.io.IOException;
+
 public class WebViewActivity extends AbstractAutoFillActivity {
+
+    private static final String TAG = "WebViewActivity";
+    static final String FAKE_DOMAIN = "y.u.no.real.server";
+    private static final String FAKE_URL = "https://" + FAKE_DOMAIN + ":666/login.html";
+    static final String ID_WEBVIEW = "webview";
 
     WebView mWebView;
 
@@ -31,9 +41,30 @@ public class WebViewActivity extends AbstractAutoFillActivity {
 
         setContentView(R.layout.webview_activity);
 
-        mWebView = (WebView) findViewById(R.id.webview);
-        mWebView.setWebViewClient(new WebViewClient());
-        mWebView.loadUrl("file:///android_res/raw/login.html");
+        mWebView = findViewById(R.id.webview);
+        mWebView.setWebViewClient(new WebViewClient() {
+            // WebView does not set the WebDomain on file:// requests, so we need to use an https://
+            // request and intercept it to provide the real data.
+            @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view,
+                    WebResourceRequest request) {
+                final String url = request.getUrl().toString();
+                if (!url.equals(FAKE_URL)) {
+                    Log.d(TAG, "Ignoring " + url);
+                    return super.shouldInterceptRequest(view, request);
+                }
+
+                final String rawPath = request.getUrl().getPath().substring(1); // Remove leading /
+                Log.d(TAG, "Converting " + url + " to " + rawPath);
+                // NOTE: cannot use try() because it would close the stream before WebView uses it.
+                try {
+                    return new WebResourceResponse("text/html", "utf-8", getAssets().open(rawPath));
+                } catch (IOException e) {
+                    throw new IllegalArgumentException("Error opening " + rawPath, e);
+                }
+            }
+        });
+        mWebView.loadUrl(FAKE_URL);
     }
 
     public UiObject2 getUsernameLabel(UiBot uiBot) {
