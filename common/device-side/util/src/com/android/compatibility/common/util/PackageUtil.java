@@ -38,11 +38,6 @@ public class PackageUtil {
         }
     }
 
-    /** Returns true if a package with the given name does NOT exist on the device */
-    public static boolean doesNotExist(String packageName) {
-        return !exists(packageName);
-    }
-
     /** Returns true if the app for the given package name is a system app for this device */
     public static boolean isSystemApp(String packageName) {
         try {
@@ -52,11 +47,6 @@ public class PackageUtil {
         } catch(PackageManager.NameNotFoundException e) {
             return false;
         }
-    }
-
-    /** Returns true if the app for the given package name is NOT a system app for this device */
-    public static boolean isNotSystemApp(String packageName) {
-        return isSystemApp(packageName);
     }
 
     private static PackageManager getPackageManager() {
