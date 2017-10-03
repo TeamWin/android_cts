@@ -36,10 +36,11 @@ public class ResultReporterBuildInfoTest extends TestCase {
         String device = "gDevice";
         String version = "gVersion";
         String buildId = "123";
+        String model = "gModel";
         String fingerprint = brand + "/" + product + "/" + device + ":" +
                 version + "/" + buildId + "/userdebug-keys";
 
-        IInvocationResult result = tester.testBuildInfoOverride(fingerprint, manufacture);
+        IInvocationResult result = tester.testBuildInfoOverride(fingerprint, manufacture, model);
         Map<String, String> invocationInfo = result.getInvocationInfo();
         assertEquals(invocationInfo.get(ResultReporter.BUILD_ID), buildId);
         assertEquals(invocationInfo.get(ResultReporter.BUILD_BRAND), brand);
@@ -48,6 +49,7 @@ public class ResultReporterBuildInfoTest extends TestCase {
         assertEquals(invocationInfo.get(ResultReporter.BUILD_VERSION_RELEASE), version);
         assertEquals(invocationInfo.get(ResultReporter.BUILD_FINGERPRINT), fingerprint);
         assertEquals(invocationInfo.get(ResultReporter.BUILD_MANUFACTURER), manufacture);
+        assertEquals(invocationInfo.get(ResultReporter.BUILD_MODEL), model);
     }
 
     public static class ResultReporterBuildInfoTester extends ResultReporter {
@@ -57,8 +59,9 @@ public class ResultReporterBuildInfoTest extends TestCase {
         }
 
         public IInvocationResult testBuildInfoOverride(String buildFingerprintOverride,
-                String manufactureOverride) {
-            addDeviceBuildInfoToResult(buildFingerprintOverride, manufactureOverride);
+                String manufactureOverride, String modelOverride) {
+            addDeviceBuildInfoToResult(
+                    buildFingerprintOverride, manufactureOverride, modelOverride);
             return mResult;
         }
 
@@ -72,6 +75,7 @@ public class ResultReporterBuildInfoTest extends TestCase {
             buildProperties.put(BUILD_VERSION_RELEASE, BUILD_VERSION_RELEASE);
             buildProperties.put(BUILD_FINGERPRINT, BUILD_FINGERPRINT);
             buildProperties.put(BUILD_MANUFACTURER, BUILD_MANUFACTURER);
+            buildProperties.put(BUILD_MODEL, BUILD_MODEL);
             return buildProperties;
         }
     }
