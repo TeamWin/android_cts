@@ -36,6 +36,9 @@ LOCAL_PREBUILT_JNI_LIBS_x86_64 := ../wrap.sh
 LOCAL_PACKAGE_NAME := CtsWrapWrapDebugTestCases
 LOCAL_MANIFEST_FILE := AndroidManifest.xml
 
+# Jarjar to make WrapTest unique.
+LOCAL_JARJAR_RULES := $(LOCAL_PATH)/jarjar-rules.txt
+
 include $(BUILD_PACKAGE)
 
 include $(CLEAR_VARS)
