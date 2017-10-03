@@ -32,4 +32,7 @@ LOCAL_SDK_VERSION := current
 LOCAL_PACKAGE_NAME := CtsWrapNoWrapTestCases
 LOCAL_MANIFEST_FILE := AndroidManifest.xml
 
+# Jarjar to make WrapTest unique.
+LOCAL_JARJAR_RULES := $(LOCAL_PATH)/jarjar-rules.txt
+
 include $(BUILD_PACKAGE)
