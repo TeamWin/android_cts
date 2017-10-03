@@ -88,13 +88,14 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     private static final String BUILD_INFO = CTS_PREFIX + "build_";
     private static final String LATEST_LINK_NAME = "latest";
 
-    public static final String BUILD_VERSION_RELEASE = "build_version_release";
-    public static final String BUILD_ID = "build_id";
-    public static final String BUILD_PRODUCT = "build_product";
-    public static final String BUILD_DEVICE = "build_device";
-    public static final String BUILD_MANUFACTURER = "build_manufacturer";
     public static final String BUILD_BRAND = "build_brand";
+    public static final String BUILD_DEVICE = "build_device";
     public static final String BUILD_FINGERPRINT = "build_fingerprint";
+    public static final String BUILD_ID = "build_id";
+    public static final String BUILD_MANUFACTURER = "build_manufacturer";
+    public static final String BUILD_MODEL = "build_model";
+    public static final String BUILD_PRODUCT = "build_product";
+    public static final String BUILD_VERSION_RELEASE = "build_version_release";
 
     private static final List<String> NOT_RETRY_FILES = Arrays.asList(
             ChecksumReporter.NAME,
@@ -724,7 +725,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      * build fingerprint being certified.
      */
     protected void addDeviceBuildInfoToResult(String buildFingerprintOverride,
-            String manufactureOverride) {
+            String manufactureOverride, String modelOverride) {
 
         Map<String, String> buildProperties = mapBuildInfo();
 
@@ -744,6 +745,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
         buildProperties.put(BUILD_VERSION_RELEASE, versionOverride);
         buildProperties.put(BUILD_FINGERPRINT, buildFingerprintOverride);
         buildProperties.put(BUILD_MANUFACTURER, manufactureOverride);
+        buildProperties.put(BUILD_MODEL, modelOverride);
 
         // Add modified values to results.
         addBuildInfoToResult(buildProperties, mResult);
