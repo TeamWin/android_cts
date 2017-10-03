@@ -27,13 +27,19 @@ from avd import *
 from queue import Queue, Empty
 
 
+# This dict should contain one entry for every density listed in CDD 7.1.1.3.
 CTS_THEME_dict = {
     120: "ldpi",
     160: "mdpi",
     213: "tvdpi",
     240: "hdpi",
+    260: "260dpi",
+    280: "280dpi",
+    300: "300dpi",
     320: "xhdpi",
+    340: "340dpi",
     360: "360dpi",
+    400: "400dpi",
     420: "420dpi",
     480: "xxhdpi",
     560: "560dpi",
