@@ -100,6 +100,6 @@ public class SuspendPackageTest extends InstrumentationTestCase {
 
     private boolean isWatch() {
         return (getInstrumentation().getContext().getResources().getConfiguration().uiMode
-                & Configuration.UI_MODE_TYPE_WATCH) == Configuration.UI_MODE_TYPE_WATCH;
+                & Configuration.UI_MODE_TYPE_MASK) == Configuration.UI_MODE_TYPE_WATCH;
     }
 }
