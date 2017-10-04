@@ -15,6 +15,7 @@
  */
 
 #define _GNU_SOURCE
+#include <string.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <pthread.h>
@@ -72,7 +73,7 @@ struct ion_debugfs_handle {
 
 #define TARGET "/sys/kernel/debug/ion/clients/pids/"
 int main(int argc, char *argv[]) {
-  int i, ret, tmpfd;
+  int i, j, ret, tmpfd;
   ssize_t rr;
   char buf[PAGE_SIZE] = {0}, *p;
   DIR *dir;
@@ -118,9 +119,14 @@ int main(int argc, char *argv[]) {
 
       p = (char *)&entry;
       p += sizeof(int);
-      printf("INFO DISC FLAG: ");
       for (i = 0; i < sizeof(int); i++) {
-        printf("%x", p[i]);
+        if(p[i] != 0) {
+          printf("INFO DISC FLAG; ");
+          for (j = 0; j < sizeof(int); j++) {
+            printf("%x", p[j]);
+          }
+          break;
+        }
       }
     }
     close(tmpfd);
