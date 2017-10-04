@@ -129,6 +129,7 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
                 assertThat(webViewNode.getHtmlInfo()).isNull();
             }
             assertThat(webViewNode.getWebDomain()).isEqualTo(WebViewActivity.FAKE_DOMAIN);
+            assertThat(webViewNode.getWebScheme()).isEqualTo("https");
 
             final ViewNode usernameNode =
                     Helper.findNodeByHtmlName(fillRequest.structure, "username");
