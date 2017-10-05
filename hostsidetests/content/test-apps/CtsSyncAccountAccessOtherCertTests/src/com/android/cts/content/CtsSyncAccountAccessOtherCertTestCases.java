@@ -39,7 +39,6 @@ import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.Until;
-import android.util.Log;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
