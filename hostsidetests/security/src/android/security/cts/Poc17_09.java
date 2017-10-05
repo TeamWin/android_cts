@@ -91,4 +91,21 @@ public class Poc17_09 extends SecurityTestCase {
                          "[\\s\\n\\S]*>>> /system/bin/" +
                          "mediaserver <<<[\\s\\n\\S]*", logcat);
     }
+
+    /**
+     * b/34621073
+     */
+    @SecurityTest
+    public void testPocCve_2017_0756() throws Exception {
+        enableAdbRoot(getDevice());
+        AdbUtils.enableLibcMallocDebug("mediaserver", getDevice());
+        AdbUtils.runCommandLine("logcat -c" , getDevice());
+        AdbUtils.runPocNoOutput("CVE-2017-0756", getDevice(), 60);
+        String logcatOut = AdbUtils.runCommandLine("logcat -d", getDevice());
+        assertNotMatches("[\\s\\n\\S]*HAS A CORRUPTED REAR GUARD" +
+                         "[\\s\\n\\S]*", logcatOut);
+        assertNotMatches("[\\s\\n\\S]*Fatal signal 11 \\(SIGSEGV\\)" +
+                         "[\\s\\n\\S]*>>> /system/bin/" +
+                         "mediaserver <<<[\\s\\n\\S]*", logcatOut);
+     }
 }
