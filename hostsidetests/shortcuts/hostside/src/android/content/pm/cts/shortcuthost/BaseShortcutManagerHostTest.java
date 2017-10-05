@@ -41,6 +41,8 @@ import javax.annotation.Nullable;
 abstract public class BaseShortcutManagerHostTest extends DeviceTestCase implements IBuildReceiver {
     protected static final boolean DUMPSYS_IN_TEARDOWN = false; // DO NOT SUBMIT WITH TRUE
 
+    protected static final boolean NO_UNINSTALL_IN_TEARDOWN = false; // DO NOT SUBMIT WITH TRUE
+
     private static final String RUNNER = "android.support.test.runner.AndroidJUnitRunner";
 
     private IBuildInfo mCtsBuild;
