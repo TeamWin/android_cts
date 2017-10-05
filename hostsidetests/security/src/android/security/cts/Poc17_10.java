@@ -85,4 +85,18 @@ public class Poc17_10 extends SecurityTestCase {
                          "[0-9]+: attr bucket index failed[\\s\\n\\S]*",
                          dmesgOut);
     }
+
+    /**
+     * b/36817548
+     */
+    @SecurityTest
+    public void testPocCve_2017_0809() throws Exception {
+        enableAdbRoot(getDevice());
+        AdbUtils.enableLibcMallocDebug("mediadrmserver", getDevice());
+        AdbUtils.runCommandLine("logcat -c" , getDevice());
+        AdbUtils.runPocNoOutput("CVE-2017-0809", getDevice(), 60);
+        String logcatOut = AdbUtils.runCommandLine("logcat -d", getDevice());
+        assertNotMatches("[\\s\\n\\S]*HAS A CORRUPTED REAR GUARD" +
+                         "[\\s\\n\\S]*", logcatOut);
+     }
 }
