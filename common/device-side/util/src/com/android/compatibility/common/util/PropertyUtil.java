@@ -31,7 +31,8 @@ public class PropertyUtil {
      * Name of read-only property detailing the first API level for which the product was
      * shipped. Property should be undefined for factory ROM products.
      */
-    public static String FIRST_API_LEVEL = "ro.product.first_api_level";
+    public static final String FIRST_API_LEVEL = "ro.product.first_api_level";
+    private static final String TAG_DEV_KEYS = "dev-keys";
 
     /** Value to be returned by getPropertyInt() if property is not found */
     public static int INT_VALUE_IF_UNSET = -1;
@@ -40,6 +41,16 @@ public class PropertyUtil {
     public static boolean isFactoryROM() {
         // property should be undefined if and only if the product is factory ROM.
         return getPropertyInt(FIRST_API_LEVEL) == INT_VALUE_IF_UNSET;
+    }
+
+    /** Returns whether this build is built with dev-keys */
+    public static boolean isDevKeysBuild() {
+        for (String tag : Build.TAGS.split(",")) {
+            if (TAG_DEV_KEYS.equals(tag.trim())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
