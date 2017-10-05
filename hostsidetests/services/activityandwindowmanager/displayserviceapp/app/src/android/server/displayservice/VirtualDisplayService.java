@@ -20,6 +20,8 @@ import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_C
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_PRESENTATION;
 
 import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
 import android.graphics.PixelFormat;
@@ -32,6 +34,7 @@ import android.util.Log;
 import android.view.Surface;
 
 public class VirtualDisplayService extends Service {
+    private static final String NOTIFICATION_CHANNEL_ID = "cts/VirtualDisplayService";
     private static final String TAG = "VirtualDisplayService";
 
     private static final int FOREGROUND_ID = 1;
@@ -47,7 +50,11 @@ public class VirtualDisplayService extends Service {
     public void onCreate() {
         super.onCreate();
 
-        Notification notif = new Notification.Builder(this)
+        NotificationManager notificationManager = getSystemService(NotificationManager.class);
+        notificationManager.createNotificationChannel(new NotificationChannel(
+            NOTIFICATION_CHANNEL_ID, NOTIFICATION_CHANNEL_ID,
+            NotificationManager.IMPORTANCE_DEFAULT));
+        Notification notif = new Notification.Builder(this, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.ic_dialog_alert)
                 .build();
         startForeground(FOREGROUND_ID, notif);
