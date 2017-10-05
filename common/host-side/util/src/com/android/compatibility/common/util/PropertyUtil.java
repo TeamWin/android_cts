@@ -29,11 +29,24 @@ public class PropertyUtil {
      * shipped. Property should be undefined for factory ROM products.
      */
     public static final String FIRST_API_LEVEL = "ro.product.first_api_level";
+    private static final String BUILD_TAGS_PROPERTY = "ro.build.tags";
+    private static final String TAG_DEV_KEYS = "dev-keys";
 
     /** Returns whether the device build is the factory ROM */
     public static boolean isFactoryROM(ITestDevice device) throws DeviceNotAvailableException {
         // first API level property should be undefined if and only if the product is factory ROM.
         return device.getProperty(FIRST_API_LEVEL) == null;
+    }
+
+    /** Returns whether this build is built with dev-keys */
+    public static boolean isDevKeysBuild(ITestDevice device) throws DeviceNotAvailableException {
+        String buildTags = device.getProperty(BUILD_TAGS_PROPERTY);
+        for (String tag : buildTags.split(",")) {
+            if (TAG_DEV_KEYS.equals(tag.trim())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

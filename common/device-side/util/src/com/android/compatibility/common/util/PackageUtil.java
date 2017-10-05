@@ -17,8 +17,14 @@
 package com.android.compatibility.common.util;
 
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.support.test.InstrumentationRegistry;
+import android.util.Log;
+
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * Device-side utility class for PackageManager-related operations
@@ -27,6 +33,7 @@ public class PackageUtil {
 
     private static final int SYSTEM_APP_MASK =
             ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP;
+    private static final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
 
     /** Returns true if a package with the given name exists on the device */
     public static boolean exists(String packageName) {
@@ -34,6 +41,19 @@ public class PackageUtil {
             return (getPackageManager().getApplicationInfo(packageName,
                     PackageManager.GET_META_DATA) != null);
         } catch(PackageManager.NameNotFoundException e) {
+            return false;
+        }
+    }
+
+    /** Returns true if a package with the given name AND SHA digest exists on the device */
+    public static boolean exists(String packageName, String sha) {
+        try {
+            if (getPackageManager().getApplicationInfo(
+                    packageName, PackageManager.GET_META_DATA) == null) {
+                return false;
+            }
+            return sha.equals(computePackageSignatureDigest(packageName));
+        } catch (NoSuchAlgorithmException | PackageManager.NameNotFoundException e) {
             return false;
         }
     }
@@ -47,6 +67,34 @@ public class PackageUtil {
         } catch(PackageManager.NameNotFoundException e) {
             return false;
         }
+    }
+
+    /**
+     * Compute the signature SHA digest for a package.
+     * @param package the name of the package for which the signature SHA digest is requested
+     * @return the signature SHA digest
+     */
+    public static String computePackageSignatureDigest(String packageName)
+            throws NoSuchAlgorithmException, PackageManager.NameNotFoundException {
+        PackageInfo packageInfo = getPackageManager()
+                .getPackageInfo(packageName, PackageManager.GET_SIGNATURES);
+        MessageDigest messageDigest = MessageDigest.getInstance("SHA256");
+        messageDigest.update(packageInfo.signatures[0].toByteArray());
+
+        final byte[] digest = messageDigest.digest();
+        final int digestLength = digest.length;
+        final int charCount = 3 * digestLength - 1;
+
+        final char[] chars = new char[charCount];
+        for (int i = 0; i < digestLength; i++) {
+            final int byteHex = digest[i] & 0xFF;
+            chars[i * 3] = HEX_ARRAY[byteHex >>> 4];
+            chars[i * 3 + 1] = HEX_ARRAY[byteHex & 0x0F];
+            if (i < digestLength - 1) {
+                chars[i * 3 + 2] = ':';
+            }
+        }
+        return new String(chars);
     }
 
     private static PackageManager getPackageManager() {
