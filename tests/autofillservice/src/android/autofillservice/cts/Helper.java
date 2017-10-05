@@ -448,7 +448,6 @@ final class Helper {
 
     /**
      * Asserts the contents of a text-based node that is also auto-fillable.
-     *
      */
     static void assertTextOnly(ViewNode node, String expectedValue) {
         assertText(node, expectedValue, false);
@@ -456,7 +455,6 @@ final class Helper {
 
     /**
      * Asserts the contents of a text-based node that is also auto-fillable.
-     *
      */
     static void assertTextAndValue(ViewNode node, String expectedValue) {
         assertText(node, expectedValue, true);
@@ -483,15 +481,16 @@ final class Helper {
     }
 
     private static void assertText(ViewNode node, String expectedValue, boolean isAutofillable) {
-        assertWithMessage("wrong text on %s", node).that(node.getText().toString())
+        assertWithMessage("wrong text on %s", node.getAutofillId()).that(node.getText().toString())
                 .isEqualTo(expectedValue);
         final AutofillValue value = node.getAutofillValue();
+        final AutofillId id = node.getAutofillId();
         if (isAutofillable) {
-            assertWithMessage("null auto-fill value on %s", node).that(value).isNotNull();
-            assertWithMessage("wrong auto-fill value on %s", node)
+            assertWithMessage("null auto-fill value on %s", id).that(value).isNotNull();
+            assertWithMessage("wrong auto-fill value on %s", id)
                     .that(value.getTextValue().toString()).isEqualTo(expectedValue);
         } else {
-            assertWithMessage("node %s should not have AutofillValue", node).that(value).isNull();
+            assertWithMessage("node %s should not have AutofillValue", id).that(value).isNull();
         }
     }
 
@@ -500,9 +499,10 @@ final class Helper {
      */
     static ViewNode assertTextValue(ViewNode node, String expectedText) {
         final AutofillValue value = node.getAutofillValue();
-        assertWithMessage("null autofill value on %s", node).that(value).isNotNull();
-        assertWithMessage("wrong autofill type on %s", node).that(value.isText()).isTrue();
-        assertWithMessage("wrong autofill value on %s", node).that(value.getTextValue().toString())
+        final AutofillId id = node.getAutofillId();
+        assertWithMessage("null autofill value on %s", id).that(value).isNotNull();
+        assertWithMessage("wrong autofill type on %s", id).that(value.isText()).isTrue();
+        assertWithMessage("wrong autofill value on %s", id).that(value.getTextValue().toString())
                 .isEqualTo(expectedText);
         return node;
     }
@@ -512,9 +512,10 @@ final class Helper {
      */
     static ViewNode assertListValue(ViewNode node, int expectedIndex) {
         final AutofillValue value = node.getAutofillValue();
-        assertWithMessage("null autofill value on %s", node).that(value).isNotNull();
-        assertWithMessage("wrong autofill type on %s", node).that(value.isList()).isTrue();
-        assertWithMessage("wrong autofill value on %s", node).that(value.getListValue())
+        final AutofillId id = node.getAutofillId();
+        assertWithMessage("null autofill value on %s", id).that(value).isNotNull();
+        assertWithMessage("wrong autofill type on %s", id).that(value.isList()).isTrue();
+        assertWithMessage("wrong autofill value on %s", id).that(value.getListValue())
                 .isEqualTo(expectedIndex);
         return node;
     }
@@ -524,9 +525,10 @@ final class Helper {
      */
     static void assertToggleValue(ViewNode node, boolean expectedToggle) {
         final AutofillValue value = node.getAutofillValue();
-        assertWithMessage("null autofill value on %s", node).that(value).isNotNull();
-        assertWithMessage("wrong autofill type on %s", node).that(value.isToggle()).isTrue();
-        assertWithMessage("wrong autofill value on %s", node).that(value.getToggleValue())
+        final AutofillId id = node.getAutofillId();
+        assertWithMessage("null autofill value on %s", id).that(value).isNotNull();
+        assertWithMessage("wrong autofill type on %s", id).that(value.isToggle()).isTrue();
+        assertWithMessage("wrong autofill value on %s", id).that(value.getToggleValue())
                 .isEqualTo(expectedToggle);
     }
 
