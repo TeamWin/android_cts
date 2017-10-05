@@ -34,7 +34,7 @@ LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed compatibility-host-util
 
 LOCAL_CTS_TEST_PACKAGE := android.host.security
 
-ifeq ($(HOSTOS),darwin)
+ifeq ($(HOST_OS),darwin)
 SHAREDLIB_EXT=dylib
 else
 SHAREDLIB_EXT=so
