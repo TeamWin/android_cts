@@ -92,6 +92,7 @@ import org.junit.Test;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
 
 /**
  * This is the test case covering most scenarios - other test cases will cover characteristics
@@ -1116,6 +1117,61 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         mActivity.onUsername((v) -> v.setText("c"));
         sUiBot.assertDatasets(C);
+    }
+
+    @Test
+    public void filterTextUsingRegex() throws Exception {
+        // Dataset presentations.
+        final String aa = "Two A's";
+        final String ab = "A and B";
+        final String b = "Only B";
+
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "whatever", Pattern.compile("a|aa"))
+                        .setPresentation(createPresentation(aa))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "whatsoever", createPresentation(ab),
+                                Pattern.compile("a|ab"))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, (String) null, Pattern.compile("b"))
+                        .setPresentation(createPresentation(b))
+                        .build())
+                .build());
+
+        // Trigger auto-fill.
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+
+        // With no filter text all datasets should be shown
+        sUiBot.assertDatasets(aa, ab, b);
+
+        // Only two datasets start with 'a'
+        runShellCommand("input keyevent KEYCODE_A");
+        sUiBot.assertDatasets(aa, ab);
+
+        // Only one dataset start with 'aa'
+        runShellCommand("input keyevent KEYCODE_A");
+        sUiBot.assertDatasets(aa);
+
+        // Only two datasets start with 'a'
+        runShellCommand("input keyevent KEYCODE_DEL");
+        sUiBot.assertDatasets(aa, ab);
+
+        // With no filter text all datasets should be shown
+        runShellCommand("input keyevent KEYCODE_DEL");
+        sUiBot.assertDatasets(aa, ab, b);
+
+        // No dataset start with 'aaa'
+        runShellCommand("input keyevent KEYCODE_A");
+        runShellCommand("input keyevent KEYCODE_A");
+        runShellCommand("input keyevent KEYCODE_A");
+        sUiBot.assertNoDatasets();
     }
 
     @Test
@@ -2289,6 +2345,79 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         runShellCommand("input keyevent KEYCODE_DEL");
         callback.assertUiShownEvent(username);
         sUiBot.assertDatasets("Tap to auth dataset");
+
+        // ...and select it this time
+        sUiBot.selectDataset("Tap to auth dataset");
+        callback.assertUiHiddenEvent(username);
+        sUiBot.assertNoDatasets();
+
+        // Check the results.
+        mActivity.assertAutoFilled();
+    }
+
+    @Test
+    public void testDatasetAuthFilteringUsingRegex() throws Exception {
+        // TODO: current API requires these fields...
+        final RemoteViews bogusPresentation = createPresentation("Whatever man, I'm not used...");
+        final String bogusValue = "Y U REQUIRE IT?";
+
+        // Set service.
+        enableService();
+        final MyAutofillCallback callback = mActivity.registerCallback();
+
+        // Create the authentication intents
+        final CannedDataset unlockedDataset = new CannedDataset.Builder()
+                .setField(ID_USERNAME, "dude")
+                .setField(ID_PASSWORD, "sweet")
+                .setPresentation(bogusPresentation)
+                .build();
+        final IntentSender authentication = AuthenticationActivity.createSender(mContext, 1,
+                unlockedDataset);
+
+        // Configure the service behavior
+
+        final Pattern min2Chars = Pattern.compile(".{2,}");
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, bogusValue, min2Chars)
+                        .setField(ID_PASSWORD, bogusValue)
+                        .setPresentation(createPresentation("Tap to auth dataset"))
+                        .setAuthentication(authentication)
+                        .build())
+                .build());
+
+        // Set expectation for the activity
+        mActivity.expectAutoFill("dude", "sweet");
+
+        // Trigger auto-fill.
+        mActivity.onUsername(View::requestFocus);
+
+        // Wait for onFill() before proceeding.
+        sReplier.getNextFillRequest();
+        final View username = mActivity.getUsername();
+
+        // Make sure it's showing initially...
+        callback.assertUiShownEvent(username);
+        sUiBot.assertDatasets("Tap to auth dataset");
+
+        // ...then type something to hide it.
+        runShellCommand("input keyevent KEYCODE_A");
+        callback.assertUiHiddenEvent(username);
+        sUiBot.assertNoDatasets();
+
+        // ...now type something again to show it, as the input will have 2 chars.
+        runShellCommand("input keyevent KEYCODE_A");
+        callback.assertUiShownEvent(username);
+        sUiBot.assertDatasets("Tap to auth dataset");
+
+        // Delete the char and assert it's not shown again...
+        runShellCommand("input keyevent KEYCODE_DEL");
+        callback.assertUiHiddenEvent(username);
+        sUiBot.assertNoDatasets();
+
+        // ...then type something again to show it, as the input will have 2 chars.
+        runShellCommand("input keyevent KEYCODE_A");
+        callback.assertUiShownEvent(username);
 
         // ...and select it this time
         sUiBot.selectDataset("Tap to auth dataset");

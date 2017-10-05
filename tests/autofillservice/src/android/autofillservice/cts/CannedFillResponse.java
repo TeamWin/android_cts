@@ -39,6 +39,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 /**
  * Helper class used to produce a {@link FillResponse} based on expected fields that should be
@@ -344,6 +345,7 @@ final class CannedFillResponse {
     static class CannedDataset {
         private final Map<String, AutofillValue> mFieldValues;
         private final Map<String, RemoteViews> mFieldPresentations;
+        private final Map<String, Pattern> mFieldFilters;
         private final RemoteViews mPresentation;
         private final IntentSender mAuthentication;
         private final String mId;
@@ -351,6 +353,7 @@ final class CannedFillResponse {
         private CannedDataset(Builder builder) {
             mFieldValues = builder.mFieldValues;
             mFieldPresentations = builder.mFieldPresentations;
+            mFieldFilters = builder.mFieldFilters;
             mPresentation = builder.mPresentation;
             mAuthentication = builder.mAuthentication;
             mId = builder.mId;
@@ -374,10 +377,19 @@ final class CannedFillResponse {
                     final AutofillId autofillid = node.getAutofillId();
                     final AutofillValue value = entry.getValue();
                     final RemoteViews presentation = mFieldPresentations.get(id);
+                    final Pattern filter = mFieldFilters.get(id);
                     if (presentation != null) {
-                        builder.setValue(autofillid, value, presentation);
+                        if (filter == null) {
+                            builder.setValue(autofillid, value, presentation);
+                        } else {
+                            builder.setValue(autofillid, value, filter, presentation);
+                        }
                     } else {
-                        builder.setValue(autofillid, value);
+                        if (filter == null) {
+                            builder.setValue(autofillid, value);
+                        } else {
+                            builder.setValue(autofillid, value, filter);
+                        }
                     }
                 }
             }
@@ -390,12 +402,15 @@ final class CannedFillResponse {
             return "CannedDataset " + mId + " : [hasPresentation=" + (mPresentation != null)
                     + ", fieldPresentations=" + (mFieldPresentations)
                     + ", hasAuthentication=" + (mAuthentication != null)
-                    + ", fieldValues=" + mFieldValues + "]";
+                    + ", fieldValues=" + mFieldValues
+                    + ", fieldFilters=" + mFieldFilters + "]";
         }
 
         static class Builder {
             private final Map<String, AutofillValue> mFieldValues = new HashMap<>();
             private final Map<String, RemoteViews> mFieldPresentations = new HashMap<>();
+            private final Map<String, Pattern> mFieldFilters = new HashMap<>();
+
             private RemoteViews mPresentation;
             private IntentSender mAuthentication;
             private String mId;
@@ -417,6 +432,17 @@ final class CannedFillResponse {
              */
             public Builder setField(String id, String text) {
                 return setField(id, AutofillValue.forText(text));
+            }
+
+            /**
+             * Sets the canned value of a text field based on its {@code id}.
+             *
+             * <p>The meaning of the id is defined by the object using the canned dataset.
+             * For example, {@link InstrumentedAutoFillService.Replier} resolves the id based on
+             * {@link IdMode}.
+             */
+            public Builder setField(String id, String text, Pattern filter) {
+                return setField(id, AutofillValue.forText(text), filter);
             }
 
             /**
@@ -465,6 +491,19 @@ final class CannedFillResponse {
             }
 
             /**
+             * Sets the canned value of a date field based on its {@code id}.
+             *
+             * <p>The meaning of the id is defined by the object using the canned dataset.
+             * For example, {@link InstrumentedAutoFillService.Replier} resolves the id based on
+             * {@link IdMode}.
+             */
+            public Builder setField(String id, AutofillValue value, Pattern filter) {
+                setField(id, value);
+                mFieldFilters.put(id, filter);
+                return this;
+            }
+
+            /**
              * Sets the canned value of a field based on its {@code id}.
              *
              * <p>The meaning of the id is defined by the object using the canned dataset.
@@ -474,6 +513,20 @@ final class CannedFillResponse {
             public Builder setField(String id, String text, RemoteViews presentation) {
                 setField(id, text);
                 mFieldPresentations.put(id, presentation);
+                return this;
+            }
+
+            /**
+             * Sets the canned value of a field based on its {@code id}.
+             *
+             * <p>The meaning of the id is defined by the object using the canned dataset.
+             * For example, {@link InstrumentedAutoFillService.Replier} resolves the id based on
+             * {@link IdMode}.
+             */
+            public Builder setField(String id, String text, RemoteViews presentation,
+                    Pattern filter) {
+                setField(id, text, presentation);
+                mFieldFilters.put(id, filter);
                 return this;
             }
 
