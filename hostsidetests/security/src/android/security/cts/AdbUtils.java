@@ -99,8 +99,23 @@ public class AdbUtils {
     public static boolean enableLibcMallocDebug(String processName, ITestDevice device) throws Exception {
         device.executeShellCommand("setprop libc.debug.malloc.program " + processName);
         device.executeShellCommand("setprop libc.debug.malloc.options \"backtrace guard\"");
-        String cmdOut = device.executeShellCommand("ps | fgrep " + processName);
-        Scanner s = new Scanner(cmdOut);
+        /**
+         * The pidof command is being avoided because it does not exist on versions before M, and
+         * it behaves differently between M and N.
+         * Also considered was the ps -AoPID,CMDLINE command, but ps does not support options on
+         * versions before O.
+         * The [^]] prefix is being used for the grep command to avoid the case where the output of
+         * ps includes the grep command itself.
+         */
+        String cmdOut = device.executeShellCommand("ps | grep '[^]]" + processName + "'");
+        /**
+         * .hasNextInt() checks if the next token can be parsed as an integer, not if any remaining
+         * token is an integer.
+         * Example command: $ ps | fgrep mediaserver
+         * Out: media     269   1     77016  24416 binder_thr 00f35142ec S /system/bin/mediaserver
+         * The second field of the output is the PID, which is needed to restart the process.
+         */
+        Scanner s = new Scanner(cmdOut).useDelimiter("\\D+");
         if(!s.hasNextInt()) {
             CLog.w("Could not find pid for process: " + processName);
             return false;
