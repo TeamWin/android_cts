@@ -239,7 +239,8 @@ public class ByodHelperActivity extends LocationListenerActivity
             final Intent installIntent = new Intent(Intent.ACTION_INSTALL_PACKAGE)
                     .setData(Uri.parse("package:" + getPackageName()))
                     .putExtra(Intent.EXTRA_NOT_UNKNOWN_SOURCE, true)
-                    .putExtra(Intent.EXTRA_RETURN_RESULT, true);
+                    .putExtra(Intent.EXTRA_RETURN_RESULT, true)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivityForResult(installIntent, REQUEST_INSTALL_PACKAGE);
 
             // Not yet ready to finish- wait until the result comes back
