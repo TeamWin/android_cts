@@ -113,7 +113,7 @@ public class UserRestrictions {
             Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
             Settings.ACTION_SYNC_SETTINGS,
             Settings.ACTION_WIRELESS_SETTINGS,
-            Settings.ACTION_WIRELESS_SETTINGS,
+            Settings.ACTION_NFC_SETTINGS,
             Settings.ACTION_SETTINGS,
             Settings.ACTION_SETTINGS,
             Settings.ACTION_LOCATION_SOURCE_SETTINGS,
