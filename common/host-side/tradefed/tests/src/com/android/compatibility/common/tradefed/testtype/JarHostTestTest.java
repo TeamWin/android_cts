@@ -15,19 +15,28 @@
  */
 package com.android.compatibility.common.tradefed.testtype;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.BuildInfo;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.OptionSetter;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.result.ITestInvocationListener;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner.TestMetrics;
 import com.android.tradefed.testtype.HostTest;
 import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.util.FileUtil;
 
-import junit.framework.TestCase;
-
 import org.easymock.EasyMock;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -39,17 +48,21 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Unit tests for {@link JarHostTest}.
  */
-public class JarHostTestTest extends TestCase {
+@RunWith(JUnit4.class)
+public class JarHostTestTest {
 
     private static final String TEST_JAR1 = "/testtype/testJar1.jar";
     private static final String TEST_JAR2 = "/testtype/testJar2.jar";
     private JarHostTest mTest;
     private File mTestDir = null;
+    private ITestInvocationListener mListener;
 
     /**
      * More testable version of {@link JarHostTest}
@@ -74,23 +87,16 @@ public class JarHostTestTest extends TestCase {
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
         mTest = new JarHostTest();
         mTestDir = FileUtil.createTempDir("jarhostest");
+        mListener = EasyMock.createMock(ITestInvocationListener.class);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         FileUtil.recursiveDelete(mTestDir);
-        super.tearDown();
     }
 
     /**
@@ -123,13 +129,18 @@ public class JarHostTestTest extends TestCase {
     @RunWith(JUnit4.class)
     public static class Junit4TestClass2  {
         public Junit4TestClass2() {}
+        @Rule public TestMetrics metrics = new TestMetrics();
+
         @org.junit.Test
-        public void testPass2() {}
+        public void testPass2() {
+            metrics.addTestMetric("key", "value");
+        }
     }
 
     /**
      * Test that {@link JarHostTest#split()} inherited from {@link HostTest} is still good.
      */
+    @Test
     public void testSplit_withoutJar() throws Exception {
         OptionSetter setter = new OptionSetter(mTest);
         setter.setOptionValue("class", "com.android.compatibility.common.tradefed.testtype."
@@ -146,6 +157,7 @@ public class JarHostTestTest extends TestCase {
     /**
      * Test that {@link JarHostTest#split()} can split classes coming from a jar.
      */
+    @Test
     public void testSplit_withJar() throws Exception {
         File testJar = getJarResource(TEST_JAR1, mTestDir);
         mTest = new JarHostTestable(mTestDir);
@@ -165,6 +177,7 @@ public class JarHostTestTest extends TestCase {
     /**
      * Test that {@link JarHostTest#getTestShard(int, int)} can split classes coming from a jar.
      */
+    @Test
     public void testGetTestShard_withJar() throws Exception {
         File testJar = getJarResource(TEST_JAR2, mTestDir);
         mTest = new JarHostTestLoader(mTestDir, testJar);
@@ -258,5 +271,46 @@ public class JarHostTestTest extends TestCase {
             }
             return child;
         }
+    }
+
+    /**
+     * If a jar file is not found, the countTest will fail but we still want to report a
+     * testRunStart and End pair for results.
+     */
+    @Test
+    public void testCountTestFails() throws Exception {
+        OptionSetter setter = new OptionSetter(mTest);
+        setter.setOptionValue("jar", "thisjardoesnotexistatall.jar");
+        mListener.testRunStarted(EasyMock.anyObject(), EasyMock.eq(0));
+        mListener.testRunEnded(EasyMock.anyLong(), EasyMock.anyObject());
+        EasyMock.replay(mListener);
+        try {
+            mTest.run(mListener);
+            fail("Should have thrown an exception.");
+        } catch(RuntimeException expected) {
+            // expected
+        }
+        EasyMock.verify(mListener);
+    }
+
+    /**
+     * Test that metrics from tests in JarHost are reported and accounted for.
+     */
+    @Test
+    public void testJarHostMetrics() throws Exception {
+        OptionSetter setter = new OptionSetter(mTest);
+        setter.setOptionValue("class", "com.android.compatibility.common.tradefed.testtype."
+                + "JarHostTestTest$Junit4TestClass2");
+        mListener.testRunStarted(EasyMock.anyObject(), EasyMock.eq(1));
+        TestIdentifier tid = new TestIdentifier("com.android.compatibility.common.tradefed."
+                + "testtype.JarHostTestTest$Junit4TestClass2", "testPass2");
+        mListener.testStarted(EasyMock.eq(tid), EasyMock.anyLong());
+        Map<String, String> metrics = new HashMap<>();
+        metrics.put("key", "value");
+        mListener.testEnded(EasyMock.eq(tid), EasyMock.anyLong(), EasyMock.eq(metrics));
+        mListener.testRunEnded(EasyMock.anyLong(), EasyMock.anyObject());
+        EasyMock.replay(mListener);
+        mTest.run(mListener);
+        EasyMock.verify(mListener);
     }
 }
