@@ -99,6 +99,24 @@ public class ImageTransformationTest {
     }
 
     @Test
+    public void theOneOptionsMatchesWithContentDescription() throws Exception {
+        AutofillId id = new AutofillId(1);
+        ImageTransformation trans = new ImageTransformation
+                .Builder(id, Pattern.compile(".*"), 42, "Are you content?")
+                .build();
+
+        ValueFinder finder = mock(ValueFinder.class);
+        RemoteViews template = mock(RemoteViews.class);
+
+        when(finder.findByAutofillId(id)).thenReturn("val");
+
+        trans.apply(finder, template, 0);
+
+        verify(template).setImageViewResource(0, 42);
+        verify(template).setContentDescription(0, "Are you content?");
+    }
+
+    @Test
     public void noOptionsMatches() throws Exception {
         AutofillId id = new AutofillId(1);
         ImageTransformation trans = new ImageTransformation
@@ -134,6 +152,25 @@ public class ImageTransformationTest {
     }
 
     @Test
+    public void multipleOptionsOneMatchesWithContentDescription() throws Exception {
+        AutofillId id = new AutofillId(1);
+        ImageTransformation trans = new ImageTransformation
+                .Builder(id, Pattern.compile(".*1"), 1, "Are you content?")
+                .addOption(Pattern.compile(".*2"), 2, "I am content")
+                .build();
+
+        ValueFinder finder = mock(ValueFinder.class);
+        RemoteViews template = mock(RemoteViews.class);
+
+        when(finder.findByAutofillId(id)).thenReturn("val-2");
+
+        trans.apply(finder, template, 0);
+
+        verify(template).setImageViewResource(0, 2);
+        verify(template).setContentDescription(0, "I am content");
+    }
+
+    @Test
     public void twoOptionsMatch() throws Exception {
         AutofillId id = new AutofillId(1);
         ImageTransformation trans = new ImageTransformation
@@ -150,5 +187,25 @@ public class ImageTransformationTest {
 
         // If two options match, the first one is picked
         verify(template, only()).setImageViewResource(0, 1);
+    }
+
+    @Test
+    public void twoOptionsMatchWithContentDescription() throws Exception {
+        AutofillId id = new AutofillId(1);
+        ImageTransformation trans = new ImageTransformation
+                .Builder(id, Pattern.compile(".*a.*"), 1, "Are you content?")
+                .addOption(Pattern.compile(".*b.*"), 2, "No, I'm not")
+                .build();
+
+        ValueFinder finder = mock(ValueFinder.class);
+        RemoteViews template = mock(RemoteViews.class);
+
+        when(finder.findByAutofillId(id)).thenReturn("ab");
+
+        trans.apply(finder, template, 0);
+
+        // If two options match, the first one is picked
+        verify(template).setImageViewResource(0, 1);
+        verify(template).setContentDescription(0, "Are you content?");
     }
 }
