@@ -34,6 +34,12 @@ LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed compatibility-host-util
 
 LOCAL_CTS_TEST_PACKAGE := android.host.security
 
+ifeq ($(HOST_OS),darwin)
+SHAREDLIB_EXT=dylib
+else
+SHAREDLIB_EXT=so
+endif
+
 selinux_plat_seapp_contexts := $(call intermediates-dir-for,ETC,plat_seapp_contexts)/plat_seapp_contexts
 
 selinux_plat_seapp_neverallows := $(call intermediates-dir-for,ETC,plat_seapp_neverallows)/plat_seapp_neverallows
@@ -47,6 +53,9 @@ selinux_plat_service_contexts := $(call intermediates-dir-for,ETC,plat_service_c
 LOCAL_JAVA_RESOURCE_FILES := \
     $(HOST_OUT_EXECUTABLES)/checkseapp \
     $(HOST_OUT_EXECUTABLES)/checkfc \
+    $(HOST_OUT_EXECUTABLES)/sepolicy_tests \
+    $(HOST_OUT)/lib64/libsepolwrap.$(SHAREDLIB_EXT) \
+    $(HOST_OUT)/lib64/libc++.$(SHAREDLIB_EXT) \
     $(selinux_plat_seapp_contexts) \
     $(selinux_plat_seapp_neverallows) \
     $(selinux_plat_file_contexts) \
