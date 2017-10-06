@@ -91,7 +91,7 @@ public class ActivityAndWindowManagersState {
 
     @Deprecated
     public void computeState() throws Exception {
-        computeState(true, null);
+        computeState(true);
     }
 
     /**
