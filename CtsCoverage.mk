@@ -84,12 +84,10 @@ cts-combined-coverage : $(cts-combined-coverage-report)
 cts-combined-xml-coverage : $(cts-combined-xml-coverage-report)
 
 # Put the test coverage report in the dist dir if "cts" is among the build goals.
-ifneq ($(filter cts, $(MAKECMDGOALS)),)
-  $(call dist-for-goals, cts, $(cts-test-coverage-report):cts-test-coverage-report.html)
-  $(call dist-for-goals, cts, $(cts-verifier-coverage-report):cts-verifier-coverage-report.html)
-  $(call dist-for-goals, cts, $(cts-combined-coverage-report):cts-combined-coverage-report.html)
-  $(call dist-for-goals, cts, $(cts-combined-xml-coverage-report):cts-combined-coverage-report.xml)
-endif
+$(call dist-for-goals, cts, $(cts-test-coverage-report):cts-test-coverage-report.html)
+$(call dist-for-goals, cts, $(cts-verifier-coverage-report):cts-verifier-coverage-report.html)
+$(call dist-for-goals, cts, $(cts-combined-coverage-report):cts-combined-coverage-report.html)
+$(call dist-for-goals, cts, $(cts-combined-xml-coverage-report):cts-combined-coverage-report.xml)
 
 # Arguments;
 #  1 - Name of the report printed out on the screen
