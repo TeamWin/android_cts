@@ -98,7 +98,7 @@ endif
 define generate-coverage-report
 	$(hide) mkdir -p $(dir $@)
 	$(hide) $(PRIVATE_CTS_API_COVERAGE_EXE) -d $(PRIVATE_DEXDEPS_EXE) -a $(PRIVATE_API_XML_DESC) -f $(3) -o $@ $(2)
-	@ echo $(1): file://$(ANDROID_BUILD_TOP)/$@
+	@ echo $(1): file://$$(cd $(dir $@); pwd)/$(notdir $@)
 endef
 
 # Reset temp vars
