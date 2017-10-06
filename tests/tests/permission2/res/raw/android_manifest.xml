@@ -309,6 +309,10 @@
     <protected-broadcast android:name="com.android.server.usb.ACTION_OPEN_IN_APPS" />
     <protected-broadcast android:name="com.android.server.am.DELETE_DUMPHEAP" />
     <protected-broadcast android:name="com.android.server.net.action.SNOOZE_WARNING" />
+    <protected-broadcast android:name="com.android.server.wifi.ConnectToNetworkNotification.USER_DISMISSED_NOTIFICATION" />
+    <protected-broadcast android:name="com.android.server.wifi.ConnectToNetworkNotification.CONNECT_TO_NETWORK" />
+    <protected-broadcast android:name="com.android.server.wifi.ConnectToNetworkNotification.PICK_WIFI_NETWORK" />
+    <protected-broadcast android:name="com.android.server.wifi.ConnectToNetworkNotification.PICK_NETWORK_AFTER_FAILURE" />
     <protected-broadcast android:name="android.net.wifi.WIFI_STATE_CHANGED" />
     <protected-broadcast android:name="android.net.wifi.WIFI_AP_STATE_CHANGED" />
     <protected-broadcast android:name="android.net.wifi.WIFI_CREDENTIAL_CHANGED" />
@@ -563,6 +567,7 @@
         android:icon="@drawable/perm_group_contacts"
         android:label="@string/permgrouplab_contacts"
         android:description="@string/permgroupdesc_contacts"
+        android:request="@string/permgrouprequest_contacts"
         android:priority="100" />
 
     <!-- Allows an application to read the user's contacts data.
@@ -593,6 +598,7 @@
         android:icon="@drawable/perm_group_calendar"
         android:label="@string/permgrouplab_calendar"
         android:description="@string/permgroupdesc_calendar"
+        android:request="@string/permgrouprequest_calendar"
         android:priority="200" />
 
     <!-- Allows an application to read the user's calendar data.
@@ -623,6 +629,7 @@
         android:icon="@drawable/perm_group_sms"
         android:label="@string/permgrouplab_sms"
         android:description="@string/permgroupdesc_sms"
+        android:request="@string/permgrouprequest_sms"
         android:priority="300" />
 
     <!-- Allows an application to send SMS messages.
@@ -699,6 +706,7 @@
         android:icon="@drawable/perm_group_storage"
         android:label="@string/permgrouplab_storage"
         android:description="@string/permgroupdesc_storage"
+        android:request="@string/permgrouprequest_storage"
         android:priority="900" />
 
     <!-- Allows an application to read from external storage.
@@ -760,6 +768,7 @@
         android:icon="@drawable/perm_group_location"
         android:label="@string/permgrouplab_location"
         android:description="@string/permgroupdesc_location"
+        android:request="@string/permgrouprequest_location"
         android:priority="400" />
 
     <!-- Allows an app to access precise location.
@@ -792,6 +801,7 @@
         android:icon="@drawable/perm_group_phone_calls"
         android:label="@string/permgrouplab_phone"
         android:description="@string/permgroupdesc_phone"
+        android:request="@string/permgrouprequest_phone"
         android:priority="500" />
 
     <!-- Allows read only access to phone state, including the phone number of the device,
@@ -943,6 +953,7 @@
         android:icon="@drawable/perm_group_microphone"
         android:label="@string/permgrouplab_microphone"
         android:description="@string/permgroupdesc_microphone"
+        android:request="@string/permgrouprequest_microphone"
         android:priority="600" />
 
     <!-- Allows an application to record audio.
@@ -985,6 +996,7 @@
         android:icon="@drawable/perm_group_camera"
         android:label="@string/permgrouplab_camera"
         android:description="@string/permgroupdesc_camera"
+        android:request="@string/permgrouprequest_camera"
         android:priority="700" />
 
     <!-- Required to be able to access the camera device.
@@ -1014,6 +1026,7 @@
         android:icon="@drawable/perm_group_sensors"
         android:label="@string/permgrouplab_sensors"
         android:description="@string/permgroupdesc_sensors"
+        android:request="@string/permgrouprequest_sensors"
         android:priority="800" />
 
     <!-- Allows an application to access data from sensors that the user uses to
@@ -1860,11 +1873,11 @@
 
     <!-- @SystemApi @hide Allows an application to create/manage/remove stacks -->
     <permission android:name="android.permission.MANAGE_ACTIVITY_STACKS"
-        android:protectionLevel="signature|privileged" />
+        android:protectionLevel="signature|privileged|development" />
 
     <!-- @SystemApi @hide Allows an application to embed other activities -->
     <permission android:name="android.permission.ACTIVITY_EMBEDDING"
-                android:protectionLevel="signature|privileged" />
+                android:protectionLevel="signature|privileged|development" />
 
     <!-- Allows an application to start any activity, regardless of permission
          protection or exported state.
@@ -2270,7 +2283,7 @@
          <p>An application requesting this permission is responsible for
          verifying the source and integrity of the update before passing
          it off to the installer components.
-         @hide -->
+         @SystemApi @hide -->
     <permission android:name="android.permission.UPDATE_TIME_ZONE_RULES"
         android:protectionLevel="signature|privileged" />
 
@@ -2390,7 +2403,8 @@
     <permission android:name="android.permission.UPDATE_DEVICE_STATS"
         android:protectionLevel="signature|privileged" />
 
-    <!-- @SystemApi @hide Allows an application to collect battery statistics -->
+    <!-- @SystemApi @hide Allows an application to collect application operation statistics.
+         Not for use by third party apps. -->
     <permission android:name="android.permission.GET_APP_OPS_STATS"
         android:protectionLevel="signature|privileged|development" />
 
@@ -2419,15 +2433,6 @@
          to hide non-system-overlay windows.
          <p>Not for use by third-party applications.
          @hide
-    -->
-    <permission android:name="android.permission.HIDE_NON_SYSTEM_OVERLAY_WINDOWS"
-                android:protectionLevel="signature|installer" />
-
-    <!-- @SystemApi Allows an application to use
-        {@link android.view.WindowManager.LayoutsParams#PRIVATE_FLAG_HIDE_NON_SYSTEM_OVERLAY_WINDOWS}
-        to hide non-system-overlay windows.
-        <p>Not for use by third-party applications.
-        @hide
     -->
     <permission android:name="android.permission.HIDE_NON_SYSTEM_OVERLAY_WINDOWS"
                 android:protectionLevel="signature|installer" />
@@ -2634,10 +2639,6 @@
     <permission android:name="android.permission.BIND_AUTOFILL_SERVICE"
         android:protectionLevel="signature" />
 
-    <!-- @hide TODO(b/37563972): remove once clients use BIND_AUTOFILL_SERVICE -->
-    <permission android:name="android.permission.BIND_AUTOFILL"
-        android:protectionLevel="signature" />
-
     <!-- Must be required by hotword enrollment application,
          to ensure that only the system can interact with it.
          @hide <p>Not for use by third-party applications.</p> -->
@@ -2775,6 +2776,14 @@
     <!-- @SystemApi Allows an application to install packages.
     <p>Not for use by third-party applications. -->
     <permission android:name="android.permission.INSTALL_PACKAGES"
+      android:protectionLevel="signature|privileged" />
+
+    <!-- @SystemApi Allows an application to install self updates. This is a limited version
+         of {@link android.Manifest.permission#INSTALL_PACKAGES}.
+        <p>Not for use by third-party applications.
+        @hide
+    -->
+    <permission android:name="android.permission.INSTALL_SELF_UPDATES"
         android:protectionLevel="signature|privileged" />
 
     <!-- @SystemApi Allows an application to clear user data.
@@ -3065,6 +3074,12 @@
     <permission android:name="android.permission.BATTERY_STATS"
         android:protectionLevel="signature|privileged|development" />
 
+    <!--Allows an application to manage statscompanion.
+    <p>Not for use by third-party applications.
+         @hide -->
+    <permission android:name="android.permission.STATSCOMPANION"
+        android:protectionLevel="signature" />
+
     <!-- @SystemApi Allows an application to control the backup and restore process.
     <p>Not for use by third-party applications.
          @hide pending API council -->
@@ -3090,6 +3105,13 @@
          <p>Not for use by third-party applications. -->
     <permission android:name="android.permission.BIND_APPWIDGET"
         android:protectionLevel="signature|privileged" />
+
+    <!-- Allows an application to bind app's slices and get their
+         content. This content will be surfaced to the
+         user and not to leave the device.
+         <p>Not for use by third-party applications. @hide -->
+    <permission android:name="android.permission.BIND_SLICE"
+        android:protectionLevel="signature|privileged|development" />
 
     <!-- @SystemApi Private permission, to restrict who can bring up a dialog to add a new
          keyguard widget
@@ -3134,6 +3156,11 @@
         @hide -->
     <permission android:name="android.permission.READ_SEARCH_INDEXABLES"
         android:protectionLevel="signature|privileged" />
+
+    <!-- @SystemApi Internal permission to allows an application to bind to suggestion service.
+        @hide -->
+    <permission android:name="android.permission.BIND_SETTINGS_SUGGESTIONS_SERVICE"
+                android:protectionLevel="signature" />
 
     <!-- @SystemApi Allows applications to set a live wallpaper.
          @hide XXX Change to signature once the picker is moved to its
@@ -3845,6 +3872,16 @@
             </intent-filter>
         </receiver>
 
+        <receiver android:name="com.android.server.stats.StatsCompanionService$AnomalyAlarmReceiver"
+                  android:permission="android.permission.STATSCOMPANION"
+                  android:exported="false">
+        </receiver>
+
+        <receiver android:name="com.android.server.stats.StatsCompanionService$PollingAlarmReceiver"
+                  android:permission="android.permission.STATSCOMPANION"
+                  android:exported="false">
+        </receiver>
+
         <service android:name="android.hardware.location.GeofenceHardwareService"
             android:permission="android.permission.LOCATION_HARDWARE"
             android:exported="false" />
@@ -3896,6 +3933,9 @@
                  android:permission="android.permission.BIND_JOB_SERVICE" >
         </service>
 
+        <service android:name="com.android.server.timezone.TimeZoneUpdateIdler"
+                 android:permission="android.permission.BIND_JOB_SERVICE" >
+        </service>
     </application>
 
 </manifest>

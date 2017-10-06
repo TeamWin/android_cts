@@ -140,7 +140,11 @@ public class PermissionPolicyTest extends AndroidTestCase {
         // OEMs cannot define permissions in the platform namespace
         for (String permission : declaredPermissionsMap.keySet()) {
             if (permission.startsWith(PLATFORM_ROOT_NAMESPACE)) {
-                offendingList.add("Cannot define permission in android namespace:" + permission);
+                final PermissionInfo permInfo = declaredPermissionsMap.get(permission);
+                offendingList.add(
+                        "Cannot define permission " + permission
+                        + ", package " + permInfo.packageName
+                        + " in android namespace");
             }
         }
 
@@ -151,11 +155,9 @@ public class PermissionPolicyTest extends AndroidTestCase {
                     if (declaredGroup.packageName.equals(PLATFORM_PACKAGE_NAME)
                             || declaredGroup.name.startsWith(PLATFORM_ROOT_NAMESPACE)) {
                         offendingList.add(
-                                "Cannot define group "
-                                        + declaredGroup.name
-                                        + ", package "
-                                        + declaredGroup.packageName
-                                        + " in android namespace");
+                                "Cannot define group " + declaredGroup.name
+                                + ", package " + declaredGroup.packageName
+                                + " in android namespace");
                     }
                 }
             }
