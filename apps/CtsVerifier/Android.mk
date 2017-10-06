@@ -148,8 +148,6 @@ $(verifier-zip) : $(call intermediates-dir-for,APPS,CtsVerifier)/package.apk | $
 		$(hide) $(ACP) -fpr $(HOST_OUT)/CameraITS $(verifier-dir)
 		$(hide) cd $(cts-dir) && zip -rq $(verifier-dir-name) $(verifier-dir-name)
 
-ifneq ($(filter cts, $(MAKECMDGOALS)),)
-  $(call dist-for-goals, cts, $(verifier-zip):$(verifier-zip-name))
-endif
+$(call dist-for-goals, cts, $(verifier-zip):$(verifier-zip-name))
 
 include $(call all-makefiles-under,$(LOCAL_PATH))
