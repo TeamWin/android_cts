@@ -199,6 +199,12 @@ public class StagefrightTest extends InstrumentationTestCase {
      before any existing test methods
      ***********************************************************/
 
+    @SecurityTest
+    public void testStagefright_bug_65717533() throws Exception {
+        doStagefrightTest(R.raw.bug_65717533_header_corrupt);
+    }
+
+    @SecurityTest
     public void testStagefright_bug_33818508() throws Exception {
         doStagefrightTest(R.raw.bug_33818508);
     }
