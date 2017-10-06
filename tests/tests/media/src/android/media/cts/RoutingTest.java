@@ -19,22 +19,27 @@ package android.media.cts;
 import android.content.Context;
 import android.content.pm.PackageManager;
 
+import android.media.AudioAttributes;
 import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioRouting;
 import android.media.AudioTrack;
+import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 
 import android.os.Handler;
 import android.os.Looper;
 
+import android.os.SystemClock;
 import android.test.AndroidTestCase;
 
 import android.util.Log;
 
 import java.lang.Runnable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * AudioTrack / AudioRecord preferred device and routing listener tests.
@@ -46,8 +51,11 @@ import java.lang.Runnable;
  */
 public class RoutingTest extends AndroidTestCase {
     private static final String TAG = "RoutingTest";
+    private static final int MAX_WAITING_ROUTING_CHANGED_COUNT = 3;
+    private static final long WAIT_ROUTING_CHANGE_TIME_MS = 1000;
 
     private AudioManager mAudioManager;
+    private CountDownLatch mRoutingChangedLatch;
 
     @Override
     protected void setUp() throws Exception {
@@ -454,5 +462,145 @@ public class RoutingTest extends AndroidTestCase {
         puller.stop();
         audioRecord.stop();
         audioRecord.release();
+    }
+
+    private class AudioRoutingListener implements AudioRouting.OnRoutingChangedListener
+    {
+        public void onRoutingChanged(AudioRouting audioRouting) {
+            if (mRoutingChangedLatch != null) {
+                mRoutingChangedLatch.countDown();
+            }
+        }
+    }
+
+    private MediaPlayer allocMediaPlayer() {
+        final int resid = R.raw.testmp3;
+        MediaPlayer mediaPlayer = MediaPlayer.create(mContext, resid);
+        mediaPlayer.setAudioAttributes(
+            new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).build());
+        mediaPlayer.start();
+        return mediaPlayer;
+    }
+
+    public void test_mediaPlayer_preferredDevice() {
+        if (!mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT)) {
+            // Can't do it so skip this test
+            return;
+        }
+
+        MediaPlayer mediaPlayer = allocMediaPlayer();
+        assertTrue(mediaPlayer.isPlaying());
+
+        // None selected (new MediaPlayer), so check for default
+        assertNull(mediaPlayer.getPreferredDevice());
+
+        // resets to default
+        assertTrue(mediaPlayer.setPreferredDevice(null));
+
+        // test each device
+        AudioDeviceInfo[] deviceList = mAudioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS);
+        for (int index = 0; index < deviceList.length; index++) {
+            assertTrue(mediaPlayer.setPreferredDevice(deviceList[index]));
+            assertTrue(mediaPlayer.getPreferredDevice() == deviceList[index]);
+        }
+
+        // Check defaults again
+        assertTrue(mediaPlayer.setPreferredDevice(null));
+        assertNull(mediaPlayer.getPreferredDevice());
+
+        mediaPlayer.stop();
+        mediaPlayer.release();
+    }
+
+    public void test_mediaPlayer_getRoutedDevice() {
+        if (!mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT)) {
+            // Can't do it so skip this test
+            return;
+        }
+
+        MediaPlayer mediaPlayer = allocMediaPlayer();
+        assertTrue(mediaPlayer.isPlaying());
+
+        // Sleep for 1s to ensure the output device open
+        SystemClock.sleep(1000);
+
+        // No explicit route
+        AudioDeviceInfo routedDevice = mediaPlayer.getRoutedDevice();
+        assertNotNull(routedDevice);
+
+        mediaPlayer.stop();
+        mediaPlayer.release();
+    }
+
+    public void test_MediaPlayer_RoutingListener() {
+        if (!mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT)) {
+            // Can't do it so skip this test
+            return;
+        }
+
+        MediaPlayer mediaPlayer = allocMediaPlayer();
+
+        // null listener
+        mediaPlayer.addOnRoutingChangedListener(null, null);
+
+        AudioRoutingListener listener = new AudioRoutingListener();
+        AudioRoutingListener someOtherListener = new AudioRoutingListener();
+
+        // add a listener
+        mediaPlayer.addOnRoutingChangedListener(listener, null);
+
+        // remove listeners
+        // remove a listener we didn't add
+        mediaPlayer.removeOnRoutingChangedListener(someOtherListener);
+        // remove a valid listener
+        mediaPlayer.removeOnRoutingChangedListener(listener);
+
+        Looper myLooper = prepareIfNeededLooper();
+
+        mediaPlayer.addOnRoutingChangedListener(listener, new Handler());
+        mediaPlayer.removeOnRoutingChangedListener(listener);
+
+        mediaPlayer.stop();
+        mediaPlayer.release();
+        if (myLooper != null) {
+            myLooper.quit();
+        }
+    }
+
+    public void test_MediaPlayer_RoutingChangedCallback() {
+        if (!mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT)) {
+            // Can't do it so skip this test
+            return;
+        }
+
+        MediaPlayer mediaPlayer = allocMediaPlayer();
+        AudioRoutingListener listener = new AudioRoutingListener();
+        mediaPlayer.addOnRoutingChangedListener(listener, null);
+
+        AudioDeviceInfo[] deviceList = mAudioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS);
+        if (deviceList.length < 2) {
+            // The available output device is less than 2, we can't switch output device.
+            return;
+        }
+        for (int index = 0; index < deviceList.length; index++) {
+            assertTrue(mediaPlayer.setPreferredDevice(deviceList[index]));
+            mRoutingChangedLatch = new CountDownLatch(1);
+            boolean routingChanged = false;
+            for (int i = 0; i < MAX_WAITING_ROUTING_CHANGED_COUNT; i++) {
+                try {
+                    mRoutingChangedLatch.await(WAIT_ROUTING_CHANGE_TIME_MS, TimeUnit.MILLISECONDS);
+                } catch (InterruptedException e) {
+                }
+                if (mediaPlayer.getRoutedDevice().getId() == deviceList[index].getId()) {
+                    routingChanged = true;
+                    break;
+                }
+            }
+            assertTrue(routingChanged);
+        }
+
+        mediaPlayer.removeOnRoutingChangedListener(listener);
+        mediaPlayer.stop();
+        mediaPlayer.release();
     }
 }
