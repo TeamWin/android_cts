@@ -22,8 +22,9 @@ LOCAL_MULTILIB := both
 
 LOCAL_SRC_FILES := \
     test_aaudio.cpp \
-    test_aaudio_misc.cpp \
     test_aaudio_callback.cpp \
+    test_aaudio_mmap.cpp \
+    test_aaudio_misc.cpp \
     test_aaudio_stream_builder.cpp \
     utils.cpp \
 
