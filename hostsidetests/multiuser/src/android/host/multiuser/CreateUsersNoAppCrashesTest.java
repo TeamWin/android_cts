@@ -69,8 +69,9 @@ public class CreateUsersNoAppCrashesTest extends BaseMultiUserTest {
                     appErrors.add(line);
                 } else if (line.contains("Finished processing BOOT_COMPLETED for u" + targetUserId)) {
                     return true;
+                } else if (line.contains("FATAL EXCEPTION IN SYSTEM PROCESS")) {
+                    throw new IllegalStateException("System process crashed - " + line);
                 }
-
             }
             in.close();
             Thread.sleep(LOGCAT_POLL_INTERVAL_MS);
