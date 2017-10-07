@@ -44,6 +44,7 @@ import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.service.autofill.CharSequenceTransformation;
 import android.service.autofill.CustomDescription;
+import android.service.autofill.ImageTransformation;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiObject2;
 import android.widget.ArrayAdapter;
@@ -249,11 +250,20 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
         assertToggleValue(findNodeByResourceId(saveRequest.structure, ID_SAVE_CC), false);
     }
 
+    @Test
+    public void testCustomizedSaveUi() throws Exception {
+        customizedSaveUi(false);
+    }
+
+    @Test
+    public void testCustomizedSaveUiWithContentDescription() throws Exception {
+        customizedSaveUi(true);
+    }
+
     /**
      * Tests that a spinner can be used on custom save descriptions.
      */
-    @Test
-    public void testCustomizedSaveUi() throws Exception {
+    private void customizedSaveUi(boolean withContentDescription) throws Exception {
         // Set service.
         enableService();
 
@@ -268,9 +278,18 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
         final CharSequenceTransformation trans2 = new CharSequenceTransformation
                 .Builder(mActivity.getCcExpiration().getAutofillId(), Pattern.compile("(.*)"), "$1")
                 .build();
+        final ImageTransformation trans3 = (withContentDescription
+                ? new ImageTransformation.Builder(mActivity.getCcNumber().getAutofillId(),
+                        Pattern.compile("(.*)"), R.drawable.android,
+                        "One image is worth thousand words")
+                : new ImageTransformation.Builder(mActivity.getCcNumber().getAutofillId(),
+                        Pattern.compile("(.*)"), R.drawable.android))
+                .build();
+
         final CustomDescription customDescription = new CustomDescription.Builder(presentation)
                 .addChild(R.id.first, trans1)
                 .addChild(R.id.second, trans2)
+                .addChild(R.id.img, trans3)
                 .build();
 
         sReplier.addResponse(new CannedFillResponse.Builder()
@@ -305,6 +324,15 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
         final UiObject2 expiration = saveUi.findObject(By.res(packageName, "second"));
         assertThat(expiration).isNotNull();
         assertThat(expiration.getText()).isEqualTo("today");
+
+        final UiObject2 image = saveUi.findObject(By.res(packageName, "img"));
+        assertThat(image).isNotNull();
+        final String contentDescription = image.getContentDescription();
+        if (withContentDescription) {
+            assertThat(contentDescription).isEqualTo("One image is worth thousand words");
+        } else {
+            assertThat(contentDescription).isNull();
+        }
     }
 
     /**

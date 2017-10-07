@@ -27,8 +27,10 @@ import android.service.autofill.CustomDescription;
 import android.service.autofill.Dataset;
 import android.service.autofill.FillCallback;
 import android.service.autofill.FillResponse;
+import android.service.autofill.Sanitizer;
 import android.service.autofill.SaveInfo;
 import android.service.autofill.Validator;
+import android.util.Pair;
 import android.view.autofill.AutofillId;
 import android.view.autofill.AutofillValue;
 import android.widget.RemoteViews;
@@ -60,6 +62,7 @@ final class CannedFillResponse {
 
     private final ResponseType mResponseType;
     private final List<CannedDataset> mDatasets;
+    private final ArrayList<Pair<Sanitizer, AutofillId[]>> mSanitizers;
     private final String mFailureMessage;
     private final int mSaveType;
     private final Validator mValidator;
@@ -93,6 +96,7 @@ final class CannedFillResponse {
         mIgnoredIds = builder.mIgnoredIds;
         mNegativeActionStyle = builder.mNegativeActionStyle;
         mNegativeActionListener = builder.mNegativeActionListener;
+        mSanitizers = builder.mSanitizers;
         mFlags = builder.mFlags;
     }
 
@@ -154,6 +158,11 @@ final class CannedFillResponse {
             if (mCustomDescription != null) {
                 saveInfo.setCustomDescription(mCustomDescription);
             }
+
+            for (Pair<Sanitizer, AutofillId[]> sanitizer : mSanitizers) {
+                saveInfo.addSanitizer(sanitizer.first, sanitizer.second);
+            }
+
             builder.setSaveInfo(saveInfo.build());
         }
         if (mIgnoredIds != null) {
@@ -182,6 +191,7 @@ final class CannedFillResponse {
                 + ", hasAuthentication=" + (mAuthentication != null)
                 + ", authenticationIds=" + Arrays.toString(mAuthenticationIds)
                 + ", ignoredIds=" + Arrays.toString(mIgnoredIds)
+                + ", sanitizers =" + mSanitizers
                 + "]";
     }
 
@@ -193,6 +203,7 @@ final class CannedFillResponse {
 
     static class Builder {
         private final List<CannedDataset> mDatasets = new ArrayList<>();
+        private final ArrayList<Pair<Sanitizer, AutofillId[]>> mSanitizers = new ArrayList<>();
         private final ResponseType mResponseType;
         private String mFailureMessage;
         private Validator mValidator;
@@ -310,6 +321,14 @@ final class CannedFillResponse {
         public Builder setNegativeAction(int style, IntentSender listener) {
             mNegativeActionStyle = style;
             mNegativeActionListener = listener;
+            return this;
+        }
+
+        /**
+         * Adds a save sanitizer.
+         */
+        public Builder addSanitizer(Sanitizer sanitizer, AutofillId... ids) {
+            mSanitizers.add(new Pair<>(sanitizer, ids));
             return this;
         }
 

@@ -55,7 +55,8 @@ public class AdoptableHostTest extends DeviceTestCase implements IAbiReceiver, I
     protected void setUp() throws Exception {
         super.setUp();
 
-        Utils.prepareSingleUser(getDevice());
+        // Start all possible users to make sure their storage is unlocked
+        Utils.prepareMultipleUsers(getDevice(), Integer.MAX_VALUE);
         assertNotNull(mAbi);
         assertNotNull(mCtsBuild);
 

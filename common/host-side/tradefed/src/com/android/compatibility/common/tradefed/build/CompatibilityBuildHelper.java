@@ -16,6 +16,7 @@
 package com.android.compatibility.common.tradefed.build;
 
 import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.build.IDeviceBuildInfo;
 import com.android.tradefed.build.IFolderBuildInfo;
 import com.android.tradefed.build.VersionedFile;
 import com.android.tradefed.util.FileUtil;
@@ -249,6 +250,12 @@ public class CompatibilityBuildHelper {
         } catch (FileNotFoundException | NullPointerException e) {
             // Ok, no root dir for us to get, moving on to the next option.
             testsDir = null;
+        }
+
+        if (testsDir == null) {
+            if (mBuildInfo instanceof IDeviceBuildInfo) {
+                testsDir = ((IDeviceBuildInfo) mBuildInfo).getTestsDir();
+            }
         }
 
         if (testsDir == null) {

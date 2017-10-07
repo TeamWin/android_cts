@@ -204,4 +204,7 @@
     <option name="compatibility:exclude-filter" value="CtsSensorTestCases android.hardware.cts.SensorDirectReportTest#testRegisterMultipleChannels" />
     <option name="compatibility:exclude-filter" value="CtsSensorTestCases android.hardware.cts.SensorDirectReportTest#testReconfigure" />
 
+    <!-- b/65843095 -->
+    <option name="compatibility:exclude-filter" value="CtsLogdTestCases logd#statistics" />
+
 </configuration>

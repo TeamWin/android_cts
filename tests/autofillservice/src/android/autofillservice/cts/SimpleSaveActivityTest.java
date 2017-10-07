@@ -15,7 +15,9 @@
  */
 package android.autofillservice.cts;
 
+import static android.autofillservice.cts.AntiTrimmerTextWatcher.TRIMMER_PATTERN;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
+import static android.autofillservice.cts.Helper.assertTextValue;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.LoginActivity.ID_USERNAME_CONTAINER;
 import static android.autofillservice.cts.SimpleSaveActivity.ID_COMMIT;
@@ -33,8 +35,10 @@ import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.autofillservice.cts.SimpleSaveActivity.FillExpectation;
 import android.content.Intent;
+import android.service.autofill.TextValueSanitizer;
 import android.support.test.uiautomator.UiObject2;
 import android.view.View;
+import android.view.autofill.AutofillId;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -775,5 +779,82 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
         assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_INPUT), "108");
         assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_PASSWORD), "42");
+    }
+
+    @Test
+    public void testSanitizeOnSave() throws Exception {
+        startActivity();
+
+        // Set listeners that will change the saved value
+        new AntiTrimmerTextWatcher(mActivity.mInput);
+        new AntiTrimmerTextWatcher(mActivity.mPassword);
+
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        final AutofillId inputId = mActivity.mInput.getAutofillId();
+        final AutofillId passwordId = mActivity.mPassword.getAutofillId();
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT)
+                .addSanitizer(new TextValueSanitizer(TRIMMER_PATTERN, "$1"), inputId, passwordId)
+                .build());
+
+        // Trigger autofill.
+        mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
+        sReplier.getNextFillRequest();
+        Helper.assertHasSessions(mPackageName);
+
+        // Trigger save.
+        mActivity.syncRunOnUiThread(() -> {
+            mActivity.mInput.setText("id");
+            mActivity.mPassword.setText("pass");
+            mActivity.mCommit.performClick();
+        });
+
+        // Save it...
+        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_GENERIC);
+
+        // ... and assert results
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+        assertTextValue(findNodeByResourceId(saveRequest.structure, ID_INPUT), "id");
+        assertTextValue(findNodeByResourceId(saveRequest.structure, ID_PASSWORD), "pass");
+    }
+
+    @Test
+    public void testDontSaveWhenSanitizedValueDidntChange() throws Exception {
+        startActivity();
+
+        // Set listeners that will change the saved value
+        new AntiTrimmerTextWatcher(mActivity.mInput);
+        new AntiTrimmerTextWatcher(mActivity.mPassword);
+
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        final AutofillId inputId = mActivity.mInput.getAutofillId();
+        final AutofillId passwordId = mActivity.mPassword.getAutofillId();
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT, ID_PASSWORD)
+                .addSanitizer(new TextValueSanitizer(TRIMMER_PATTERN, "$1"), inputId, passwordId)
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_INPUT, "id")
+                        .setField(ID_PASSWORD, "pass")
+                        .setPresentation(createPresentation("YO"))
+                        .build())
+                .build());
+
+        // Trigger autofill.
+        mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
+        sReplier.getNextFillRequest();
+
+        mActivity.syncRunOnUiThread(() -> {
+            mActivity.mInput.setText("id");
+            mActivity.mPassword.setText("pass");
+            mActivity.mCommit.performClick();
+        });
+
+        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
     }
 }

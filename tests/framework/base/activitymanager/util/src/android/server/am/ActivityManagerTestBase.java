@@ -1278,6 +1278,10 @@ public abstract class ActivityManagerTestBase {
         private String mLaunchingActivityName = LAUNCHING_ACTIVITY;
         private boolean mReorderToFront;
         private boolean mWaitForLaunched;
+        // Use of the following variables indicates that a broadcast receiver should be used instead
+        // of a launching activity;
+        private String mBroadcastReceiverComponent;
+        private String mBroadcastReceiverAction;
 
         public LaunchActivityBuilder(ActivityAndWindowManagersState amWmState) {
             mAmWmState = amWmState;
@@ -1334,9 +1338,25 @@ public abstract class ActivityManagerTestBase {
             return this;
         }
 
+        /** Use broadcast receiver instead of launching activity. */
+        public LaunchActivityBuilder setUseBroadcastReceiver(String componentName,
+                String broadcastAction) {
+            mBroadcastReceiverComponent = componentName;
+            mBroadcastReceiverAction = broadcastAction;
+            return this;
+        }
+
         public void execute() throws Exception {
-            StringBuilder commandBuilder = new StringBuilder(getAmStartCmd(mLaunchingActivityName));
-            commandBuilder.append(" -f 0x20000000");
+            StringBuilder commandBuilder = new StringBuilder();
+            if (mBroadcastReceiverComponent != null && mBroadcastReceiverAction != null) {
+                // Use broadcast receiver to launch the target.
+                commandBuilder.append("am broadcast -a ").append(mBroadcastReceiverAction);
+                commandBuilder.append(" -p ").append(mBroadcastReceiverComponent);
+            } else {
+                // Use launching activity to launch the target.
+                commandBuilder.append(getAmStartCmd(mLaunchingActivityName));
+                commandBuilder.append(" -f 0x20000000");
+            }
 
             // Add a flag to ensure we actually mean to launch an activity.
             commandBuilder.append(" --ez launch_activity true");

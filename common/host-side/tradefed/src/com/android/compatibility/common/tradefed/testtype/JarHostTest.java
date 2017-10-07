@@ -36,8 +36,8 @@ import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -136,11 +136,25 @@ public class JarHostTest extends HostTest {
      */
     @Override
     public void run(ITestInvocationListener listener) throws DeviceNotAvailableException {
-        int numTests = countTestCases();
+        int numTests = 0;
+        RuntimeException bufferedException = null;
+        try {
+            numTests = countTestCases();
+        } catch (RuntimeException e) {
+            bufferedException = e;
+        }
         long startTime = System.currentTimeMillis();
         listener.testRunStarted(getClass().getName(), numTests);
-        super.run(new HostTestListener(listener));
-        listener.testRunEnded(System.currentTimeMillis() - startTime, Collections.emptyMap());
+        HostTestListener hostListener = new HostTestListener(listener);
+        try {
+            if (bufferedException != null) {
+                throw bufferedException;
+            }
+            super.run(hostListener);
+        } finally {
+            listener.testRunEnded(System.currentTimeMillis() - startTime,
+                    hostListener.getMetrics());
+        }
     }
 
     /**
@@ -149,6 +163,8 @@ public class JarHostTest extends HostTest {
      * HostTestListener withholds from listeners for console logging and result reporting.
      */
     public class HostTestListener extends ResultForwarder {
+
+        private Map<String, String> mCollectedMetrics = new HashMap<>();
 
         public HostTestListener(ITestInvocationListener listener) {
             super(listener);
@@ -168,6 +184,14 @@ public class JarHostTest extends HostTest {
         @Override
         public void testRunEnded(long elapsedTime, Map<String, String> metrics) {
             CLog.d("HostTestListener.testRunEnded(%d, %s)", elapsedTime, metrics.toString());
+            mCollectedMetrics.putAll(metrics);
+        }
+
+        /**
+         * Returns all the metrics reported by the tests
+         */
+        Map<String, String> getMetrics() {
+            return mCollectedMetrics;
         }
     }
 }

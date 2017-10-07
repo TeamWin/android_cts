@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-     Copyright (C) 2017 The Android Open Source Project
+<!-- Copyright (C) 2017 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -14,15 +13,10 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.server.am.third">
-
-    <application>
-        <activity android:name=".ThirdActivity"
-                  android:resizeableActivity="true"
-                  android:allowEmbedded="true"
-                  android:exported="true" />
-    </application>
-
-</manifest>
+<configuration description="Config for the CTS Content host tests">
+    <option name="config-descriptor:metadata" key="component" value="framework" />
+    <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
+        <option name="jar" value="CtsDeviceIdleHostTestCases.jar" />
+        <option name="runtime-hint" value="1m" />
+    </test>
+</configuration>
