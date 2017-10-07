@@ -16,9 +16,8 @@
 
 package android.server.am;
 
-
-import static android.app.ActivityManager.StackId.DOCKED_STACK_ID;
-
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
+import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.view.WindowManager.LayoutParams.TYPE_WALLPAPER;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -205,7 +204,7 @@ public class KeyguardTests extends KeyguardTestBase {
         mAmWmState.assertVisibility("ShowWhenLockedActivity", true);
         assertShowingAndOccluded();
         mAmWmState.assertDoesNotContainStack("Activity must be full screen.",
-                DOCKED_STACK_ID);
+                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
         pressHomeButton();
         unlockDevice();
     }

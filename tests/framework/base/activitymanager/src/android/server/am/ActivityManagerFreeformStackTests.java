@@ -16,9 +16,7 @@
 
 package android.server.am;
 
-
-import static android.app.ActivityManager.StackId.FREEFORM_WORKSPACE_STACK_ID;
-
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
 import static org.junit.Assert.assertEquals;
 
@@ -56,13 +54,13 @@ public class ActivityManagerFreeformStackTests extends ActivityManagerTestBase {
         mAmWmState.computeState(FREEFORM_ACTIVITY, TEST_ACTIVITY);
 
         if (!supportsFreeform()) {
-            mAmWmState.assertDoesNotContainStack(
-                    "Must not contain freeform stack.", FREEFORM_WORKSPACE_STACK_ID);
+            mAmWmState.assertDoesNotContainStack("Must not contain freeform stack.",
+                    WINDOWING_MODE_FREEFORM, ACTIVITY_TYPE_STANDARD);
             return;
         }
 
-        mAmWmState.assertFrontStack(
-                "Freeform stack must be the front stack.", FREEFORM_WORKSPACE_STACK_ID);
+        mAmWmState.assertFrontStack("Freeform stack must be the front stack.",
+                WINDOWING_MODE_FREEFORM, ACTIVITY_TYPE_STANDARD);
         mAmWmState.assertVisibility(FREEFORM_ACTIVITY, true);
         mAmWmState.assertVisibility(TEST_ACTIVITY, true);
         mAmWmState.assertFocusedActivity(
@@ -102,13 +100,13 @@ public class ActivityManagerFreeformStackTests extends ActivityManagerTestBase {
                 new WaitForValidActivityState.Builder(NO_RELAUNCH_ACTIVITY).build());
 
         if (!supportsFreeform()) {
-            mAmWmState.assertDoesNotContainStack(
-                    "Must not contain freeform stack.", FREEFORM_WORKSPACE_STACK_ID);
+            mAmWmState.assertDoesNotContainStack("Must not contain freeform stack.",
+                    WINDOWING_MODE_FREEFORM, ACTIVITY_TYPE_STANDARD);
             return;
         }
 
-        final int displayId = mAmWmState.getAmState().getStackById(
-                FREEFORM_WORKSPACE_STACK_ID).mDisplayId;
+        final int displayId = mAmWmState.getAmState().getStandardStackByWindowingMode(
+                WINDOWING_MODE_FREEFORM).mDisplayId;
         final int densityDpi =
                 mAmWmState.getWmState().getDisplay(displayId).getDpi();
         final int testTaskSize1 =

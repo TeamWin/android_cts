@@ -16,13 +16,13 @@
 
 package android.server.am;
 
-import static android.app.ActivityManager.StackId.DOCKED_STACK_ID;
-import static android.app.ActivityManager.StackId.FULLSCREEN_WORKSPACE_STACK_ID;
 import static android.app.ActivityManager.StackId.INVALID_STACK_ID;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_ASSISTANT;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
+import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
+import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logE;
 import static android.view.KeyEvent.KEYCODE_APP_SWITCH;
@@ -96,8 +96,6 @@ public abstract class ActivityManagerTestBase {
 
     static final String AM_MOVE_TASK = "am stack move-task ";
 
-    private static final String AM_SUPPORTS_SPLIT_SCREEN_MULTIWINDOW =
-            "am supports-split-screen-multi-window";
     private static final String AM_NO_HOME_SCREEN = "am no-home-screen";
 
     private static final String LOCK_CREDENTIAL = "1234";
@@ -426,9 +424,10 @@ public abstract class ActivityManagerTestBase {
         // the recents button which is consistent with what the user does. However, currently sys-ui
         // does handle FLAG_LONG_PRESS for the app switch key. It just listens for long press on the
         // view. We need to fix that in sys-ui before we can change this.
-        moveActivityToDockStack(activityName);
+        setActivityTaskWindowingMode(activityName, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
 
-        mAmWmState.waitForValidState(activityName, DOCKED_STACK_ID);
+        mAmWmState.waitForValidState(activityName,
+                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
     }
 
     protected void launchActivityToSide(boolean randomData, boolean multipleTaskFlag,
@@ -438,11 +437,15 @@ public abstract class ActivityManagerTestBase {
                 .setMultipleTask(multipleTaskFlag).setTargetActivityName(activityToLaunch)
                 .execute();
 
-        mAmWmState.waitForValidState(activityToLaunch, FULLSCREEN_WORKSPACE_STACK_ID);
+        mAmWmState.waitForValidState(activityToLaunch,
+                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY, ACTIVITY_TYPE_STANDARD);
     }
 
-    protected void moveActivityToDockStack(String activityName) throws Exception {
-        moveActivityToStack(activityName, DOCKED_STACK_ID);
+    protected void setActivityTaskWindowingMode(String activityName, int windowingMode)
+            throws Exception {
+        final int taskId = getActivityTaskId(activityName);
+        mAm.setTaskWindowingMode(taskId, windowingMode, true /* toTop */);
+        mAmWmState.waitForValidState(activityName, windowingMode, ACTIVITY_TYPE_STANDARD);
     }
 
     protected void moveActivityToStack(String activityName, int stackId) throws Exception {

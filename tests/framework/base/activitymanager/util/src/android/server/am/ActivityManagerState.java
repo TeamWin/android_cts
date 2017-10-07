@@ -18,6 +18,7 @@ package android.server.am;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.server.am.ProtoExtractors.extract;
@@ -191,6 +192,10 @@ class ActivityManagerState {
         return mDisplayStacks.get(displayId).get(0).getActivityType();
     }
 
+    int getFrontStackWindowingMode(int displayId) {
+        return mDisplayStacks.get(displayId).get(0).getWindowingMode();
+    }
+
     int getFocusedStackId() {
         return mFocusedStackId;
     }
@@ -252,6 +257,18 @@ class ActivityManagerState {
     ActivityStack getStackByActivityType(int activityType) {
         for (ActivityStack stack : mStacks) {
             if (activityType == stack.getActivityType()) {
+                return stack;
+            }
+        }
+        return null;
+    }
+
+    ActivityStack getStandardStackByWindowingMode(int windowingMode) {
+        for (ActivityStack stack : mStacks) {
+            if (stack.getActivityType() != ACTIVITY_TYPE_STANDARD) {
+                continue;
+            }
+            if (stack.getWindowingMode() == windowingMode) {
                 return stack;
             }
         }
@@ -388,13 +405,14 @@ class ActivityManagerState {
     }
 
     ActivityTask getTaskByActivityName(String activityName) {
-        return getTaskByActivityName(activityName, -1);
+        return getTaskByActivityName(activityName, WINDOWING_MODE_UNDEFINED);
     }
 
-    ActivityTask getTaskByActivityName(String activityName, int stackId) {
+    ActivityTask getTaskByActivityName(String activityName, int windowingMode) {
         String fullName = ActivityManagerTestBase.getActivityComponentName(activityName);
         for (ActivityStack stack : mStacks) {
-            if (stackId == -1 || stackId == stack.mStackId) {
+            if (windowingMode == WINDOWING_MODE_UNDEFINED
+                    || windowingMode == stack.getWindowingMode()) {
                 for (ActivityTask task : stack.mTasks) {
                     for (Activity activity : task.mActivities) {
                         if (activity.name.equals(fullName)) {

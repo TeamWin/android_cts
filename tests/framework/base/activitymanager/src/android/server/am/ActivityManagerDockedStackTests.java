@@ -16,9 +16,6 @@
 
 package android.server.am;
 
-
-import static android.app.ActivityManager.StackId.DOCKED_STACK_ID;
-import static android.app.ActivityManager.StackId.FULLSCREEN_WORKSPACE_STACK_ID;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
@@ -83,7 +80,8 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
                 WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME);
         mAmWmState.assertContainsStack("Must contain fullscreen stack.",
                 WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD);
-        mAmWmState.assertDoesNotContainStack("Must not contain docked stack.", DOCKED_STACK_ID);
+        mAmWmState.assertDoesNotContainStack("Must not contain docked stack.",
+                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
     }
 
     @Test
@@ -113,9 +111,10 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
 
         mAmWmState.assertContainsStack("Must contain home stack.",
                 WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME);
-        mAmWmState.assertDoesNotContainStack("Must not contain docked stack.", DOCKED_STACK_ID);
-        mAmWmState.assertFrontStack(
-                "Fullscreen stack must be front stack.", FULLSCREEN_WORKSPACE_STACK_ID);
+        mAmWmState.assertDoesNotContainStack("Must not contain docked stack.",
+                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
+        mAmWmState.assertFrontStack("Fullscreen stack must be front stack.",
+                WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD);
     }
 
     @Test
@@ -129,9 +128,10 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         mAmWmState.computeState(new String[] {LAUNCHING_ACTIVITY});
         getLaunchActivityBuilder().setToSide(true).execute();
         mAmWmState.computeState(new String[] {TEST_ACTIVITY_NAME});
-        mAmWmState.assertContainsStack(
-                "Must contain fullscreen stack.", FULLSCREEN_WORKSPACE_STACK_ID);
-        mAmWmState.assertContainsStack("Must contain docked stack.", DOCKED_STACK_ID);
+        mAmWmState.assertContainsStack("Must contain fullscreen stack.",
+                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY, ACTIVITY_TYPE_STANDARD);
+        mAmWmState.assertContainsStack("Must contain docked stack.",
+                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
     }
 
     @Test
@@ -146,9 +146,10 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         mAmWmState.computeState(new String[] {LAUNCHING_ACTIVITY});
         getLaunchActivityBuilder().setToSide(true).execute();
         mAmWmState.computeState(new String[] {TEST_ACTIVITY_NAME});
-        mAmWmState.assertContainsStack(
-                "Must contain fullscreen stack.", FULLSCREEN_WORKSPACE_STACK_ID);
-        mAmWmState.assertContainsStack("Must contain docked stack.", DOCKED_STACK_ID);
+        mAmWmState.assertContainsStack("Must contain fullscreen stack.",
+                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY, ACTIVITY_TYPE_STANDARD);
+        mAmWmState.assertContainsStack("Must contain docked stack.",
+                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
 
         // Remove the docked stack, and ensure that
         final String logSeparator = clearLogcat();
@@ -177,16 +178,17 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         // Launch activity to side.
         getLaunchActivityBuilder().setToSide(true).execute();
         mAmWmState.computeState(waitForFirstVisible);
-        int taskNumberInitial = mAmWmState.getAmState().getStackById(FULLSCREEN_WORKSPACE_STACK_ID)
-                .getTasks().size();
+        int taskNumberInitial = mAmWmState.getAmState().getStandardStackByWindowingMode(
+                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY).getTasks().size();
         mAmWmState.assertFocusedActivity("Launched to side activity must be in front.",
                 TEST_ACTIVITY_NAME);
 
         // Launch another activity to side to cover first one.
-        launchActivity(NO_RELAUNCH_ACTIVITY_NAME, WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
+        launchActivity(
+                NO_RELAUNCH_ACTIVITY_NAME, WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
         mAmWmState.computeState(waitForSecondVisible);
-        int taskNumberCovered = mAmWmState.getAmState().getStackById(FULLSCREEN_WORKSPACE_STACK_ID)
-                .getTasks().size();
+        int taskNumberCovered = mAmWmState.getAmState().getStandardStackByWindowingMode(
+                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY).getTasks().size();
         assertEquals("Fullscreen stack must have one task added.",
                 taskNumberInitial + 1, taskNumberCovered);
         mAmWmState.assertFocusedActivity("Launched to side covering activity must be in front.",
@@ -195,8 +197,8 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         // Launch activity that was first launched to side. It should be brought to front.
         getLaunchActivityBuilder().setToSide(true).execute();
         mAmWmState.computeState(waitForFirstVisible);
-        int taskNumberFinal = mAmWmState.getAmState().getStackById(FULLSCREEN_WORKSPACE_STACK_ID)
-                .getTasks().size();
+        int taskNumberFinal = mAmWmState.getAmState().getStandardStackByWindowingMode(
+                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY).getTasks().size();
         assertEquals("Task number in fullscreen stack must remain the same.",
                 taskNumberCovered, taskNumberFinal);
         mAmWmState.assertFocusedActivity("Launched to side covering activity must be in front.",
@@ -218,23 +220,23 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         // Launch activity to side.
         getLaunchActivityBuilder().setToSide(true).execute();
         mAmWmState.computeState(waitForActivitiesVisible);
-        int taskNumberInitial = mAmWmState.getAmState().getStackById(FULLSCREEN_WORKSPACE_STACK_ID)
-                .getTasks().size();
+        int taskNumberInitial = mAmWmState.getAmState().getStandardStackByWindowingMode(
+                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY).getTasks().size();
         assertNotNull("Launched to side activity must be in fullscreen stack.",
-                mAmWmState.getAmState()
-                        .getTaskByActivityName(TEST_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID));
+                mAmWmState.getAmState().getTaskByActivityName(
+                        TEST_ACTIVITY_NAME, WINDOWING_MODE_SPLIT_SCREEN_SECONDARY));
 
         // Try to launch to side same activity again.
         getLaunchActivityBuilder().setToSide(true).execute();
         mAmWmState.computeState(waitForActivitiesVisible);
-        int taskNumberFinal = mAmWmState.getAmState().getStackById(FULLSCREEN_WORKSPACE_STACK_ID)
-                .getTasks().size();
+        int taskNumberFinal = mAmWmState.getAmState().getStandardStackByWindowingMode(
+                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY).getTasks().size();
         assertEquals("Task number mustn't change.", taskNumberInitial, taskNumberFinal);
         mAmWmState.assertFocusedActivity("Launched to side activity must remain in front.",
                 TEST_ACTIVITY_NAME);
         assertNotNull("Launched to side activity must remain in fullscreen stack.",
-                mAmWmState.getAmState()
-                        .getTaskByActivityName(TEST_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID));
+                mAmWmState.getAmState().getTaskByActivityName(
+                        TEST_ACTIVITY_NAME, WINDOWING_MODE_SPLIT_SCREEN_SECONDARY));
     }
 
     @Test
@@ -263,25 +265,27 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         mAmWmState.computeState(new WaitForValidActivityState.Builder(LAUNCHING_ACTIVITY).build());
 
         final WaitForValidActivityState[] waitForActivitiesVisible =
-            new WaitForValidActivityState[] {new WaitForValidActivityState.Builder(targetActivityName).build(),
-                    new WaitForValidActivityState.Builder(LAUNCHING_ACTIVITY).build()};
+                new WaitForValidActivityState[] {
+                    new WaitForValidActivityState.Builder(targetActivityName).build(),
+                    new WaitForValidActivityState.Builder(LAUNCHING_ACTIVITY).build()
+                };
 
         // Launch activity to side with data.
         launchActivityToSide(true, false, targetActivityName);
         mAmWmState.computeState(waitForActivitiesVisible);
-        mAmWmState.assertContainsStack(
-                "Must contain fullscreen stack.", FULLSCREEN_WORKSPACE_STACK_ID);
-        int taskNumberInitial = mAmWmState.getAmState().getStackById(FULLSCREEN_WORKSPACE_STACK_ID)
-                .getTasks().size();
+        mAmWmState.assertContainsStack("Must contain fullscreen stack.",
+                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY, ACTIVITY_TYPE_STANDARD);
+        int taskNumberInitial = mAmWmState.getAmState().getStandardStackByWindowingMode(
+                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY).getTasks().size();
         assertNotNull("Launched to side activity must be in fullscreen stack.",
-                mAmWmState.getAmState()
-                        .getTaskByActivityName(targetActivityName, FULLSCREEN_WORKSPACE_STACK_ID));
+                mAmWmState.getAmState().getTaskByActivityName(
+                        targetActivityName, WINDOWING_MODE_SPLIT_SCREEN_SECONDARY));
 
         // Try to launch to side same activity again with different data.
         launchActivityToSide(true, false, targetActivityName);
         mAmWmState.computeState(waitForActivitiesVisible);
-        int taskNumberSecondLaunch = mAmWmState.getAmState()
-                .getStackById(FULLSCREEN_WORKSPACE_STACK_ID).getTasks().size();
+        int taskNumberSecondLaunch = mAmWmState.getAmState().getStandardStackByWindowingMode(
+                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY).getTasks().size();
         if (taskCountMustIncrement) {
             assertEquals("Task number must be incremented.", taskNumberInitial + 1,
                     taskNumberSecondLaunch);
@@ -292,14 +296,14 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         mAmWmState.assertFocusedActivity("Launched to side activity must be in front.",
                 targetActivityName);
         assertNotNull("Launched to side activity must be launched in fullscreen stack.",
-                mAmWmState.getAmState()
-                        .getTaskByActivityName(targetActivityName, FULLSCREEN_WORKSPACE_STACK_ID));
+                mAmWmState.getAmState().getTaskByActivityName(
+                        targetActivityName, WINDOWING_MODE_SPLIT_SCREEN_SECONDARY));
 
         // Try to launch to side same activity again with no data.
         launchActivityToSide(false, false, targetActivityName);
         mAmWmState.computeState(waitForActivitiesVisible);
-        int taskNumberFinal = mAmWmState.getAmState().getStackById(FULLSCREEN_WORKSPACE_STACK_ID)
-                .getTasks().size();
+        int taskNumberFinal = mAmWmState.getAmState().getStandardStackByWindowingMode(
+                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY).getTasks().size();
         if (taskCountMustIncrement) {
             assertEquals("Task number must be incremented.", taskNumberSecondLaunch + 1,
                     taskNumberFinal);
@@ -310,8 +314,8 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         mAmWmState.assertFocusedActivity("Launched to side activity must be in front.",
                 targetActivityName);
         assertNotNull("Launched to side activity must be launched in fullscreen stack.",
-                mAmWmState.getAmState()
-                        .getTaskByActivityName(targetActivityName, FULLSCREEN_WORKSPACE_STACK_ID));
+                mAmWmState.getAmState().getTaskByActivityName(
+                        targetActivityName, WINDOWING_MODE_SPLIT_SCREEN_SECONDARY));
     }
 
     @Test
@@ -329,24 +333,24 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         // Launch activity to side.
         getLaunchActivityBuilder().setToSide(true).execute();
         mAmWmState.computeState(waitForActivitiesVisible);
-        int taskNumberInitial = mAmWmState.getAmState().getStackById(FULLSCREEN_WORKSPACE_STACK_ID)
-                .getTasks().size();
+        int taskNumberInitial = mAmWmState.getAmState().getStandardStackByWindowingMode(
+                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY).getTasks().size();
         assertNotNull("Launched to side activity must be in fullscreen stack.",
-                mAmWmState.getAmState()
-                        .getTaskByActivityName(TEST_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID));
+                mAmWmState.getAmState().getTaskByActivityName(
+                        TEST_ACTIVITY_NAME, WINDOWING_MODE_SPLIT_SCREEN_SECONDARY));
 
         // Try to launch to side same activity again, but with Intent#FLAG_ACTIVITY_MULTIPLE_TASK.
         getLaunchActivityBuilder().setToSide(true).setMultipleTask(true).execute();
         mAmWmState.computeState(waitForActivitiesVisible);
-        int taskNumberFinal = mAmWmState.getAmState().getStackById(FULLSCREEN_WORKSPACE_STACK_ID)
-                .getTasks().size();
+        int taskNumberFinal = mAmWmState.getAmState().getStandardStackByWindowingMode(
+                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY).getTasks().size();
         assertEquals("Task number must be incremented.", taskNumberInitial + 1,
                 taskNumberFinal);
         mAmWmState.assertFocusedActivity("Launched to side activity must be in front.",
                 TEST_ACTIVITY_NAME);
         assertNotNull("Launched to side activity must remain in fullscreen stack.",
-                mAmWmState.getAmState()
-                        .getTaskByActivityName(TEST_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID));
+                mAmWmState.getAmState().getTaskByActivityName(
+                        TEST_ACTIVITY_NAME, WINDOWING_MODE_SPLIT_SCREEN_SECONDARY));
     }
 
     @Test
@@ -360,9 +364,10 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         mAmWmState.computeState(new WaitForValidActivityState.Builder(LAUNCHING_ACTIVITY).build());
         getLaunchActivityBuilder().setToSide(true).execute();
         mAmWmState.computeState(new WaitForValidActivityState.Builder(TEST_ACTIVITY_NAME).build());
-        mAmWmState.assertContainsStack(
-                "Must contain fullscreen stack.", FULLSCREEN_WORKSPACE_STACK_ID);
-        mAmWmState.assertContainsStack("Must contain docked stack.", DOCKED_STACK_ID);
+        mAmWmState.assertContainsStack("Must contain fullscreen stack.",
+                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY, ACTIVITY_TYPE_STANDARD);
+        mAmWmState.assertContainsStack("Must contain docked stack.",
+                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
 
         // Rotate device single steps (90°) 0-1-2-3.
         // Each time we compute the state we implicitly assert valid bounds.
@@ -398,9 +403,10 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         getLaunchActivityBuilder().setToSide(true).execute();
         mAmWmState.computeState(new WaitForValidActivityState.Builder(TEST_ACTIVITY_NAME).build());
         mAmWmState.assertSanity();
-        mAmWmState.assertContainsStack(
-                "Must contain fullscreen stack.", FULLSCREEN_WORKSPACE_STACK_ID);
-        mAmWmState.assertContainsStack("Must contain docked stack.", DOCKED_STACK_ID);
+        mAmWmState.assertContainsStack("Must contain fullscreen stack.",
+                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY, ACTIVITY_TYPE_STANDARD);
+        mAmWmState.assertContainsStack("Must contain docked stack.",
+                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
 
         String[] waitForActivitiesVisible =
             new String[] {LAUNCHING_ACTIVITY, TEST_ACTIVITY_NAME};
@@ -422,7 +428,8 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         launchActivityInDockStackAndMinimize(TEST_ACTIVITY_NAME);
         assertDockMinimized();
         mAmWmState.computeState(new WaitForValidActivityState.Builder(TEST_ACTIVITY_NAME).build());
-        mAmWmState.assertContainsStack("Must contain docked stack.", DOCKED_STACK_ID);
+        mAmWmState.assertContainsStack("Must contain docked stack.",
+                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
         mAmWmState.assertFocusedStack("Home activity should be focused in minimized mode",
                 WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME);
 
@@ -470,7 +477,8 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
 
             // Dismiss the dock stack
             launchActivity(TEST_ACTIVITY_NAME, WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
-            moveActivityToStack(DOCKED_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID);
+            setActivityTaskWindowingMode(DOCKED_ACTIVITY_NAME,
+                    WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
             mAmWmState.computeState(new String[]{DOCKED_ACTIVITY_NAME});
 
             // Go home and check the app transition
@@ -546,11 +554,13 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         mAmWmState.computeState(false /* compareTaskAndStackBounds */,
                 new WaitForValidActivityState.Builder(TEST_ACTIVITY_NAME).build(),
                 new WaitForValidActivityState.Builder(DOCKED_ACTIVITY_NAME).build());
-        mAmWmState.assertContainsStack("Must contain docked stack", DOCKED_STACK_ID);
-        mAmWmState.assertContainsStack("Must contain fullscreen stack",
-                FULLSCREEN_WORKSPACE_STACK_ID);
+        mAmWmState.assertContainsStack("Must contain fullscreen stack.",
+                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY, ACTIVITY_TYPE_STANDARD);
+        mAmWmState.assertContainsStack("Must contain docked stack.",
+                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
         assertEquals(new Rect(0, 0, STACK_SIZE, STACK_SIZE),
-                mAmWmState.getAmState().getStackById(DOCKED_STACK_ID).getBounds());
+                mAmWmState.getAmState().getStandardStackByWindowingMode(
+                        WINDOWING_MODE_SPLIT_SCREEN_PRIMARY).getBounds());
         mAmWmState.assertDockedTaskBounds(TASK_SIZE, TASK_SIZE, DOCKED_ACTIVITY_NAME);
         mAmWmState.assertVisibility(DOCKED_ACTIVITY_NAME, true);
         mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, true);
@@ -564,20 +574,22 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         }
 
         final WaitForValidActivityState[] waitTestActivityName =
-                new WaitForValidActivityState[] {new WaitForValidActivityState.Builder(TEST_ACTIVITY_NAME).build()};
+                new WaitForValidActivityState[] {new WaitForValidActivityState.Builder(
+                        TEST_ACTIVITY_NAME).build()};
         launchActivity(TEST_ACTIVITY_NAME);
         mAmWmState.computeState(waitTestActivityName);
-        final Rect fullScreenBounds =
-                mAmWmState.getWmState().getStack(FULLSCREEN_WORKSPACE_STACK_ID).getBounds();
+        final Rect fullScreenBounds = mAmWmState.getWmState().getStandardStackByWindowingMode(
+                WINDOWING_MODE_FULLSCREEN).getBounds();
 
-        moveActivityToDockStack(TEST_ACTIVITY_NAME);
+        setActivityTaskWindowingMode(TEST_ACTIVITY_NAME, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
         mAmWmState.computeState(waitTestActivityName);
-        launchActivity(NO_RELAUNCH_ACTIVITY_NAME, WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
+        launchActivity(NO_RELAUNCH_ACTIVITY_NAME,
+                WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
 
         mAmWmState.computeState(new WaitForValidActivityState.Builder(TEST_ACTIVITY_NAME).build(),
                 new WaitForValidActivityState.Builder(NO_RELAUNCH_ACTIVITY_NAME).build());
-        final Rect initialDockBounds =
-                mAmWmState.getWmState().getStack(DOCKED_STACK_ID).getBounds();
+        final Rect initialDockBounds = mAmWmState.getWmState().getStandardStackByWindowingMode(
+                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY) .getBounds();
 
         final String logSeparator = clearLogcat();
 

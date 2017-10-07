@@ -16,11 +16,11 @@
 
 package android.server.am;
 
-import static android.app.ActivityManager.StackId.DOCKED_STACK_ID;
-import static android.app.ActivityManager.StackId.FREEFORM_WORKSPACE_STACK_ID;
 import static android.app.ActivityManager.StackId.INVALID_STACK_ID;
-import static android.app.ActivityManager.StackId.PINNED_STACK_ID;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
+import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
+import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
+import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.content.pm.ActivityInfo.RESIZE_MODE_RESIZEABLE;
 import static android.server.am.ActivityManagerTestBase.componentName;
@@ -198,6 +198,16 @@ public class ActivityAndWindowManagersState {
                 new WaitForValidActivityState.Builder()
                         .setActivityName(waitForActivityVisible)
                         .setActivityType(activityType)
+                        .build());
+    }
+
+    void waitForValidState(String waitForActivityVisible, int windowingMode, int activityType)
+            throws Exception {
+        waitForValidState(false /* compareTaskAndStackBounds */,
+                new WaitForValidActivityState.Builder()
+                        .setActivityName(waitForActivityVisible)
+                        .setActivityType(activityType)
+                        .setWindowingMode(windowingMode)
                         .build());
     }
 
@@ -558,25 +568,37 @@ public class ActivityAndWindowManagersState {
         assertNotNull("Must have app.", mWmState.getFocusedApp());
     }
 
-    @Deprecated
-    void assertContainsStack(String msg, int stackId) throws Exception {
-        assertTrue(msg, mAmState.containsStack(stackId));
-        assertTrue(msg, mWmState.containsStack(stackId));
-    }
-
     void assertContainsStack(String msg, int windowingMode, int activityType) throws Exception {
         assertTrue(msg, mAmState.containsStack(windowingMode, activityType));
         assertTrue(msg, mWmState.containsStack(windowingMode, activityType));
     }
 
+    @Deprecated
     void assertDoesNotContainStack(String msg, int stackId) throws Exception {
         assertFalse(msg, mAmState.containsStack(stackId));
         assertFalse(msg, mWmState.containsStack(stackId));
     }
 
+    void assertDoesNotContainStack(String msg, int windowingMode, int activityType)
+            throws Exception {
+        assertFalse(msg, mAmState.containsStack(windowingMode, activityType));
+        assertFalse(msg, mWmState.containsStack(windowingMode, activityType));
+    }
+
     void assertFrontStack(String msg, int stackId) throws Exception {
         assertEquals(msg, stackId, mAmState.getFrontStackId(DEFAULT_DISPLAY_ID));
         assertEquals(msg, stackId, mWmState.getFrontStackId(DEFAULT_DISPLAY_ID));
+    }
+
+    void assertFrontStack(String msg, int windowingMode, int activityType)
+            throws Exception {
+        if (windowingMode != WINDOWING_MODE_UNDEFINED) {
+            assertEquals(msg, windowingMode,
+                    mAmState.getFrontStackWindowingMode(DEFAULT_DISPLAY_ID));
+        }
+        if (activityType != ACTIVITY_TYPE_UNDEFINED) {
+            assertEquals(msg, activityType, mAmState.getFrontStackActivityType(DEFAULT_DISPLAY_ID));
+        }
     }
 
     void assertFrontStackActivityType(String msg, int activityType) throws Exception {
@@ -763,7 +785,8 @@ public class ActivityAndWindowManagersState {
     void assertDockedTaskBounds(int taskWidth, int taskHeight, String activityName) {
         // Task size can be affected by default minimal size.
         int defaultMinimalTaskSize = defaultMinimalTaskSize(
-                mAmState.getStackById(DOCKED_STACK_ID).mDisplayId);
+                mAmState.getStandardStackByWindowingMode(
+                        WINDOWING_MODE_SPLIT_SCREEN_PRIMARY).mDisplayId);
         int targetWidth = Math.max(taskWidth, defaultMinimalTaskSize);
         int targetHeight = Math.max(taskHeight, defaultMinimalTaskSize);
 
@@ -842,13 +865,15 @@ public class ActivityAndWindowManagersState {
                     assertEquals("Task bounds in AM and WM must be equal taskId=" + taskId
                             + ", stackId=" + stackId, aTaskBounds, wTaskBounds);
 
-                    if (compareTaskAndStackBounds && stackId != FREEFORM_WORKSPACE_STACK_ID) {
+                    if (compareTaskAndStackBounds
+                            && aStack.getWindowingMode() != WINDOWING_MODE_FREEFORM) {
                         int aTaskMinWidth = aTask.getMinWidth();
                         int aTaskMinHeight = aTask.getMinHeight();
 
                         if (aTaskMinWidth == -1 || aTaskMinHeight == -1) {
                             // Minimal dimension(s) not set for task - it should be using defaults.
-                            int defaultMinimalSize = (stackId == PINNED_STACK_ID)
+                            int defaultMinimalSize =
+                                    aStack.getWindowingMode() == WINDOWING_MODE_PINNED
                                     ? defaultMinimalPinnedTaskSize(aStack.mDisplayId)
                                     : defaultMinimalTaskSize(aStack.mDisplayId);
 
@@ -862,13 +887,13 @@ public class ActivityAndWindowManagersState {
 
                         if (aStackBounds.width() >= aTaskMinWidth
                                 && aStackBounds.height() >= aTaskMinHeight
-                                || stackId == PINNED_STACK_ID) {
+                                || aStack.getWindowingMode() == WINDOWING_MODE_PINNED) {
                             // Bounds are not smaller then minimal possible, so stack and task
                             // bounds must be equal.
                             assertEquals("Task bounds must be equal to stack bounds taskId="
                                     + taskId + ", stackId=" + stackId, aStackBounds, wTaskBounds);
-                        } else if (stackId == DOCKED_STACK_ID && homeStackIsResizable
-                                && mWmState.isDockedStackMinimized()) {
+                        } else if (aStack.getWindowingMode() == WINDOWING_MODE_SPLIT_SCREEN_PRIMARY
+                                && homeStackIsResizable && mWmState.isDockedStackMinimized()) {
                             // Portrait if the display height is larger than the width
                             if (displayRect.height() > displayRect.width()) {
                                 assertEquals("Task width must be equal to stack width taskId="
