@@ -17,15 +17,14 @@
 package android.server.am;
 
 
-import static android.app.ActivityManager.StackId.FULLSCREEN_WORKSPACE_STACK_ID;
-
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
 /**
- * Build: mmma -j32 cts/hostsidetests/services
+ * Build: mmma -j32 cts/tests/framework/base
  * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.AnimationBackgroundTests
  */
 public class AnimationBackgroundTests extends ActivityManagerTestBase {
@@ -40,11 +39,11 @@ public class AnimationBackgroundTests extends ActivityManagerTestBase {
 
         // Make sure we are in the middle of the animation.
         mAmWmState.waitForWithWmState(state -> state
-                .getStack(FULLSCREEN_WORKSPACE_STACK_ID)
+                .getStandardStackByWindowingMode(WINDOWING_MODE_FULLSCREEN)
                         .isWindowAnimationBackgroundSurfaceShowing(),
                 "***Waiting for animation background showing");
         assertTrue("window animation background needs to be showing", mAmWmState.getWmState()
-                .getStack(FULLSCREEN_WORKSPACE_STACK_ID)
+                .getStandardStackByWindowingMode(WINDOWING_MODE_FULLSCREEN)
                 .isWindowAnimationBackgroundSurfaceShowing());
     }
 
@@ -54,7 +53,7 @@ public class AnimationBackgroundTests extends ActivityManagerTestBase {
         getLaunchActivityBuilder().setTargetActivityName("AnimationTestActivity").execute();
         mAmWmState.computeState(new WaitForValidActivityState.Builder("AnimationTestActivity").build());
         assertFalse("window animation background needs to be gone", mAmWmState.getWmState()
-                .getStack(FULLSCREEN_WORKSPACE_STACK_ID)
+                .getStandardStackByWindowingMode(WINDOWING_MODE_FULLSCREEN)
                 .isWindowAnimationBackgroundSurfaceShowing());
     }
 }

@@ -16,11 +16,11 @@
 
 package android.server.am;
 
-import static android.app.ActivityManager.StackId.DOCKED_STACK_ID;
-import static android.app.ActivityManager.StackId.FULLSCREEN_WORKSPACE_STACK_ID;
-import static android.app.ActivityManager.StackId.PINNED_STACK_ID;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_ASSISTANT;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
+import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
+import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
@@ -81,15 +81,17 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         if (!supportsPip() || !supportsSplitScreenMultiWindow()) return;
         // Launch a pinned stack task
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
-        mAmWmState.waitForValidState(PIP_ACTIVITY, PINNED_STACK_ID);
-        mAmWmState.assertContainsStack("Must contain pinned stack.", PINNED_STACK_ID);
+        mAmWmState.waitForValidState(PIP_ACTIVITY, WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
+        mAmWmState.assertContainsStack("Must contain pinned stack.",
+                WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
 
         // Dock a task
         launchActivity(TEST_ACTIVITY);
         launchActivityInDockStack(DOCKED_ACTIVITY);
         mAmWmState.assertContainsStack("Must contain fullscreen stack.",
-                FULLSCREEN_WORKSPACE_STACK_ID);
-        mAmWmState.assertContainsStack("Must contain docked stack.", DOCKED_STACK_ID);
+                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY, ACTIVITY_TYPE_STANDARD);
+        mAmWmState.assertContainsStack("Must contain docked stack.",
+                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
 
         // Enable the assistant and launch an assistant activity, ensure it is on top
         enableAssistant();
@@ -97,7 +99,8 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         mAmWmState.waitForValidStateWithActivityType(ASSISTANT_ACTIVITY, ACTIVITY_TYPE_ASSISTANT);
         assertAssistantStackExists();
 
-        mAmWmState.assertFrontStack("Pinned stack should be on top.", PINNED_STACK_ID);
+        mAmWmState.assertFrontStack("Pinned stack should be on top.",
+                WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
         mAmWmState.assertFocusedStack("Assistant stack should be focused.",
                 WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_ASSISTANT);
 
@@ -118,8 +121,9 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         launchActivity(TEST_ACTIVITY);
         launchActivityInDockStack(DOCKED_ACTIVITY);
         mAmWmState.assertContainsStack("Must contain fullscreen stack.",
-                FULLSCREEN_WORKSPACE_STACK_ID);
-        mAmWmState.assertContainsStack("Must contain docked stack.", DOCKED_STACK_ID);
+                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY, ACTIVITY_TYPE_STANDARD);
+        mAmWmState.assertContainsStack("Must contain docked stack.",
+                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
 
         enableAssistant();
         assertAssistantStackCanLaunchAndReturnFromNewTask();
@@ -127,19 +131,25 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
     }
 
     private void assertAssistantStackCanLaunchAndReturnFromNewTask() throws Exception {
+        final boolean inSplitScreenMode = mAmWmState.getAmState().containsStack(
+                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
+
         // Enable the assistant and launch an assistant activity which will launch a new task
         enableAssistant();
         launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
                 EXTRA_LAUNCH_NEW_TASK, TEST_ACTIVITY);
         disableAssistant();
 
+        final int expectedWindowingMode = inSplitScreenMode
+                ? WINDOWING_MODE_SPLIT_SCREEN_SECONDARY
+                : WINDOWING_MODE_FULLSCREEN;
         // Ensure that the fullscreen stack is on top and the test activity is now visible
-        mAmWmState.waitForValidState(TEST_ACTIVITY, FULLSCREEN_WORKSPACE_STACK_ID);
+        mAmWmState.waitForValidState(TEST_ACTIVITY, expectedWindowingMode, ACTIVITY_TYPE_STANDARD);
         mAmWmState.assertFocusedActivity("TestActivity should be resumed", TEST_ACTIVITY);
         mAmWmState.assertFrontStack("Fullscreen stack should be on top.",
-                FULLSCREEN_WORKSPACE_STACK_ID);
+                expectedWindowingMode, ACTIVITY_TYPE_STANDARD);
         mAmWmState.assertFocusedStack("Fullscreen stack should be focused.",
-                FULLSCREEN_WORKSPACE_STACK_ID);
+                expectedWindowingMode, ACTIVITY_TYPE_STANDARD);
 
         // Now, tell it to finish itself and ensure that the assistant stack is brought back forward
         executeShellCommand("am broadcast -a " + TEST_ACTIVITY_ACTION_FINISH_SELF);
@@ -159,13 +169,14 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
                 EXTRA_FINISH_SELF, "true");
         disableAssistant();
-        mAmWmState.waitForValidState(TEST_ACTIVITY, FULLSCREEN_WORKSPACE_STACK_ID);
+        mAmWmState.waitForValidState(TEST_ACTIVITY,
+                WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD);
         mAmWmState.waitForActivityState(TEST_ACTIVITY, STATE_RESUMED);
         mAmWmState.assertFocusedActivity("TestActivity should be resumed", TEST_ACTIVITY);
         mAmWmState.assertFrontStack("Fullscreen stack should be on top.",
-                FULLSCREEN_WORKSPACE_STACK_ID);
+                WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD);
         mAmWmState.assertFocusedStack("Fullscreen stack should be focused.",
-                FULLSCREEN_WORKSPACE_STACK_ID);
+                WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD);
     }
 
     @Test
@@ -175,7 +186,8 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
                 EXTRA_ENTER_PIP, "true");
         disableAssistant();
         mAmWmState.waitForValidStateWithActivityType(ASSISTANT_ACTIVITY, ACTIVITY_TYPE_ASSISTANT);
-        mAmWmState.assertDoesNotContainStack("Must not contain pinned stack.", PINNED_STACK_ID);
+        mAmWmState.assertDoesNotContainStack("Must not contain pinned stack.",
+                WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
     }
 
     @Test
@@ -211,7 +223,8 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
                 EXTRA_IS_TRANSLUCENT, String.valueOf(true), EXTRA_LAUNCH_NEW_TASK,
                 TEST_ACTIVITY);
-        mAmWmState.waitForValidState(TEST_ACTIVITY, FULLSCREEN_WORKSPACE_STACK_ID);
+        mAmWmState.waitForValidState(TEST_ACTIVITY,
+                WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD);
         mAmWmState.assertHomeActivityVisible(false);
         pressBackButton();
         mAmWmState.waitForFocusedStack(WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_ASSISTANT);
@@ -225,7 +238,8 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
             removeStacksWithActivityTypes(ACTIVITY_TYPE_ASSISTANT);
             launchActivityInDockStack(DOCKED_ACTIVITY);
             launchActivity(TEST_ACTIVITY);
-            mAmWmState.assertContainsStack("Must contain docked stack.", DOCKED_STACK_ID);
+            mAmWmState.assertContainsStack("Must contain docked stack.",
+                    WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
             launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
                     EXTRA_IS_TRANSLUCENT, String.valueOf(true));
             mAmWmState.waitForValidStateWithActivityType(

@@ -138,6 +138,29 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 mProfileUserId);
     }
 
+    public void testWipeDataWithReason() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        assertTrue(listUsers().contains(mProfileUserId));
+        runDeviceTestsAsUser(
+                MANAGED_PROFILE_PKG,
+                ".WipeDataTest",
+                "testWipeDataWithReason",
+                mProfileUserId);
+        // Note: the managed profile is removed by this test, which will make removeUserCommand in
+        // tearDown() to complain, but that should be OK since its result is not asserted.
+        assertUserGetsRemoved(mProfileUserId);
+        // testWipeDataWithReason() removes the managed profile,
+        // so it needs to separated from other tests.
+        // Check the notification is presented after work profile got removed, so profile user no
+        // longer exists, verification should be run in primary user.
+        runDeviceTestsAsUser(
+                MANAGED_PROFILE_PKG,
+                ".WipeDataWithReasonVerificationTest",
+                mParentUserId);
+    }
+
     /**
      *  wipeData() test removes the managed profile, so it needs to separated from other tests.
      */
@@ -147,7 +170,8 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         }
         assertTrue(listUsers().contains(mProfileUserId));
         runDeviceTestsAsUser(
-                MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".WipeDataTest", mProfileUserId);
+                MANAGED_PROFILE_PKG, ".WipeDataTest",
+                "testWipeData", mProfileUserId);
         // Note: the managed profile is removed by this test, which will make removeUserCommand in
         // tearDown() to complain, but that should be OK since its result is not asserted.
         assertUserGetsRemoved(mProfileUserId);

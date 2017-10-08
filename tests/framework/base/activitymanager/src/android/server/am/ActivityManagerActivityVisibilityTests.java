@@ -16,10 +16,10 @@
 
 package android.server.am;
 
-import static android.app.ActivityManager.StackId.DOCKED_STACK_ID;
-import static android.app.ActivityManager.StackId.FULLSCREEN_WORKSPACE_STACK_ID;
-import static android.app.ActivityManager.StackId.PINNED_STACK_ID;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY;
+import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
@@ -75,7 +75,8 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         executeShellCommand(AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK_COMMAND);
 
         mAmWmState.computeState(new String[] {PIP_ON_PIP_ACTIVITY, TRANSLUCENT_ACTIVITY});
-        mAmWmState.assertFrontStack("Pinned stack must be the front stack.", PINNED_STACK_ID);
+        mAmWmState.assertFrontStack("Pinned stack must be the front stack.",
+                WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
         mAmWmState.assertVisibility(PIP_ON_PIP_ACTIVITY, true);
         mAmWmState.assertVisibility(TRANSLUCENT_ACTIVITY, true);
     }
@@ -94,8 +95,8 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         launchActivity(TRANSLUCENT_ACTIVITY);
 
         mAmWmState.computeState( new String[]{TRANSLUCENT_ACTIVITY});
-        mAmWmState.assertFrontStack(
-                "Fullscreen stack must be the front stack.", FULLSCREEN_WORKSPACE_STACK_ID);
+        mAmWmState.assertFrontStack("Fullscreen stack must be the front stack.",
+                WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD);
         mAmWmState.assertVisibility(TRANSLUCENT_ACTIVITY, true);
         mAmWmState.assertHomeActivityVisible(true);
     }
@@ -139,9 +140,10 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
                 new WaitForValidActivityState.Builder(TEST_ACTIVITY_NAME).build(),
                 new WaitForValidActivityState.Builder(DOCKED_ACTIVITY_NAME).build(),
                 new WaitForValidActivityState.Builder(TRANSLUCENT_ACTIVITY_NAME).build());
-        mAmWmState.assertContainsStack("Must contain docked stack", DOCKED_STACK_ID);
-        mAmWmState.assertContainsStack("Must contain fullscreen stack",
-                FULLSCREEN_WORKSPACE_STACK_ID);
+        mAmWmState.assertContainsStack("Must contain fullscreen stack.",
+                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY, ACTIVITY_TYPE_STANDARD);
+        mAmWmState.assertContainsStack("Must contain docked stack.",
+                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
         mAmWmState.assertVisibility(DOCKED_ACTIVITY_NAME, true);
         mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, true);
         mAmWmState.assertVisibility(TRANSLUCENT_ACTIVITY_NAME, true);
