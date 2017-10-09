@@ -18,11 +18,11 @@ package com.android.cts.verifier.managedprovisioning;
 
 import static android.os.UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES;
 
-import android.app.NotificationChannel;
-import android.app.admin.DevicePolicyManager;
 import android.app.KeyguardManager;
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -30,18 +30,19 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.UserManager;
 import android.provider.MediaStore;
 import android.support.v4.content.FileProvider;
 import android.support.v4.util.Pair;
 import android.util.Log;
 
+import com.android.cts.verifier.R;
+import com.android.cts.verifier.location.LocationListenerActivity;
+import com.android.cts.verifier.managedprovisioning.ByodPresentMediaDialog.DialogCallback;
+
 import java.io.File;
 import java.util.ArrayList;
-
-import com.android.cts.verifier.location.LocationListenerActivity;
-import com.android.cts.verifier.R;
-import com.android.cts.verifier.managedprovisioning.ByodPresentMediaDialog.DialogCallback;
 
 /**
  * A helper activity from the managed profile side that responds to requests from CTS verifier in
@@ -169,6 +170,8 @@ public class ByodHelperActivity extends LocationListenerActivity
 
     private ArrayList<File> mTempFiles = new ArrayList<File>();
 
+    private Handler mMainThreadHandler;
+
     private void showNotification(int visibility) {
         final Notification notification = new Notification.Builder(this, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.icon)
@@ -184,6 +187,7 @@ public class ByodHelperActivity extends LocationListenerActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mMainThreadHandler = new Handler(getMainLooper());
         if (savedInstanceState != null) {
             Log.w(TAG, "Restored state");
             mOriginalRestrictions = savedInstanceState.getBundle(ORIGINAL_RESTRICTIONS_NAME);
@@ -234,15 +238,16 @@ public class ByodHelperActivity extends LocationListenerActivity
                 setUnknownSourcesRestriction(!allowNonMarket);
                 mOriginalRestrictions.putBoolean(DISALLOW_INSTALL_UNKNOWN_SOURCES, !wasAllowed);
             }
+            // Start the installer activity until this activity is rendered to workaround a glitch.
+            mMainThreadHandler.post(() -> {
+                // Request to install a non-market application- easiest way is to reinstall ourself
+                final Intent installIntent = new Intent(Intent.ACTION_INSTALL_PACKAGE)
+                        .setData(Uri.parse("package:" + getPackageName()))
+                        .putExtra(Intent.EXTRA_NOT_UNKNOWN_SOURCE, true)
+                        .putExtra(Intent.EXTRA_RETURN_RESULT, true);
+                startActivityForResult(installIntent, REQUEST_INSTALL_PACKAGE);
 
-            // Request to install a non-market application- easiest way is to reinstall ourself
-            final Intent installIntent = new Intent(Intent.ACTION_INSTALL_PACKAGE)
-                    .setData(Uri.parse("package:" + getPackageName()))
-                    .putExtra(Intent.EXTRA_NOT_UNKNOWN_SOURCE, true)
-                    .putExtra(Intent.EXTRA_RETURN_RESULT, true)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivityForResult(installIntent, REQUEST_INSTALL_PACKAGE);
-
+            });
             // Not yet ready to finish- wait until the result comes back
             return;
             // Queried by CtsVerifier in the primary side using startActivityForResult.
