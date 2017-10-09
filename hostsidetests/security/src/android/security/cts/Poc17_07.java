@@ -162,4 +162,17 @@ public class Poc17_07 extends SecurityTestCase {
                            "[\\s\\n\\S]*/system/lib64/libgui.so [\\s\\n\\S]*", pocOut);
         }
     }
+
+    /*
+     * b/33968204
+     */
+    @SecurityTest
+    public void testPocCVE_2017_0340() throws Exception {
+        AdbUtils.runCommandLine("logcat -c", getDevice());
+        AdbUtils.runPocNoOutput("CVE-2017-0340", getDevice(), 60);
+        String logcat = AdbUtils.runCommandLine("logcat -d", getDevice());
+        assertNotMatches("[\\s\\n\\S]*Fatal signal 11 \\(SIGSEGV\\)" +
+                         "[\\s\\n\\S]*>>> /system/bin/" +
+                         "mediaserver <<<[\\s\\n\\S]*", logcat);
+    }
 }
