@@ -2928,7 +2928,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="enterprise_privacy_page">Managed device info page</string>
     <string name="enterprise_privacy_page_info">
         Please press the Go button to open Settings. Verify that:\n
-        1) There is an entry for managed device information.\n
+        1) One of the Settings screens contains an entry for managed device information.\n
         2) Tapping that entry opens a screen.\n
         3) In this screen, at a minimum, you are told your organization can:\n
         * Change settings on this device.\n
