@@ -1773,7 +1773,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 .setPresentation(createPresentation("Tap to auth response"))
                 .build());
 
-        // Trigger auto-fill.
+        // Trigger autofill.
         mActivity.onUsername(View::requestFocus);
 
         // Wait for onFill() before proceeding.
@@ -1782,7 +1782,11 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         callback.assertUiShownEvent(username);
         sUiBot.assertDatasets("Tap to auth response");
 
-        // Auto fill it.
+        // Disables autofill so it's not triggered again after the auth activity is finished
+        // (and current session is canceled) and the login activity is resumed.
+        username.setImportantForAutofill(IMPORTANT_FOR_AUTOFILL_NO);
+
+        // Autofill it.
         final CountDownLatch latch = new CountDownLatch(1);
         AuthenticationActivity.setResultCode(latch, RESULT_OK);
 

@@ -78,18 +78,17 @@ public class LoginActivity extends AbstractAutoFillActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         setContentView(getContentView());
 
-        mLoginButton = (Button) findViewById(R.id.login);
-        mSaveButton = (Button) findViewById(R.id.save);
-        mClearButton = (Button) findViewById(R.id.clear);
-        mCancelButton = (Button) findViewById(R.id.cancel);
-        mUsernameLabel = (TextView) findViewById(R.id.username_label);
-        mUsernameEditText = (EditText) findViewById(R.id.username);
-        mPasswordLabel = (TextView) findViewById(R.id.password_label);
-        mPasswordEditText = (EditText) findViewById(R.id.password);
-        mOutput = (TextView) findViewById(R.id.output);
+        mLoginButton = findViewById(R.id.login);
+        mSaveButton = findViewById(R.id.save);
+        mClearButton = findViewById(R.id.clear);
+        mCancelButton = findViewById(R.id.cancel);
+        mUsernameLabel = findViewById(R.id.username_label);
+        mUsernameEditText = findViewById(R.id.username);
+        mPasswordLabel = findViewById(R.id.password_label);
+        mPasswordEditText = findViewById(R.id.password);
+        mOutput = findViewById(R.id.output);
 
         mLoginButton.setOnClickListener((v) -> login());
         mSaveButton.setOnClickListener((v) -> save());
