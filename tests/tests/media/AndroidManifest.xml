@@ -39,7 +39,8 @@
         <activity android:name="android.media.cts.AudioManagerStubHelper"
             android:label="AudioManagerStubHelper"/>
         <activity android:name="android.media.cts.DecodeAccuracyTestActivity"
-            android:label="DecodeAccuracyTestActivity">
+            android:label="DecodeAccuracyTestActivity"
+            android:screenOrientation="locked">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
