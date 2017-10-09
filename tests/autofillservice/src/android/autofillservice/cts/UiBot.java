@@ -360,11 +360,13 @@ final class UiBot {
         final UiObject2 snackbar = waitForObject(By.res("android", RESOURCE_ID_SAVE_SNACKBAR),
                 timeout);
 
-        final UiObject2 titleView = snackbar.findObject(By.res("android", RESOURCE_ID_SAVE_TITLE));
+        final UiObject2 titleView =
+                waitForObject(snackbar, By.res("android", RESOURCE_ID_SAVE_TITLE), UI_TIMEOUT_MS);
         assertWithMessage("save title (%s) is not shown", RESOURCE_ID_SAVE_TITLE).that(titleView)
                 .isNotNull();
 
-        final UiObject2 iconView = snackbar.findObject(By.res("android", RESOURCE_ID_SAVE_ICON));
+        final UiObject2 iconView =
+                waitForObject(snackbar, By.res("android", RESOURCE_ID_SAVE_ICON), UI_TIMEOUT_MS);
         assertWithMessage("save icon (%s) is not shown", RESOURCE_ID_SAVE_ICON).that(iconView)
                 .isNotNull();
 
@@ -511,15 +513,18 @@ final class UiBot {
     /**
      * Waits for and returns an object.
      *
+     * @param parent where to find the object (or {@code null} to use device's root).
      * @param selector {@link BySelector} that identifies the object.
      * @param timeout timeout in ms
      */
-    private UiObject2 waitForObject(BySelector selector, long timeout) {
+    private UiObject2 waitForObject(UiObject2 parent, BySelector selector, long timeout) {
         // NOTE: mDevice.wait does not work for the save snackbar, so we need a polling approach.
         final int maxTries = 5;
         final long napTime = timeout / maxTries;
         for (int i = 1; i <= maxTries; i++) {
-            final UiObject2 uiObject = mDevice.findObject(selector);
+            final UiObject2 uiObject = parent != null
+                    ? parent.findObject(selector)
+                    : mDevice.findObject(selector);
             if (uiObject != null) {
                 return uiObject;
             }
@@ -527,6 +532,17 @@ final class UiBot {
         }
         throw new RetryableException("Object with selector '%s' not found in %d ms",
                 selector, UI_TIMEOUT_MS);
+
+    }
+
+    /**
+     * Waits for and returns an object.
+     *
+     * @param selector {@link BySelector} that identifies the object.
+     * @param timeout timeout in ms
+     */
+    private UiObject2 waitForObject(BySelector selector, long timeout) {
+        return waitForObject(null, selector, timeout);
     }
 
     /**
