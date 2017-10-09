@@ -664,8 +664,10 @@ public class WindowTest {
         final Window presentationWindow = mPresentation.getWindow();
         presentationWindow.setLocalFocus(true, false);
         PollingCheck.waitFor(() -> mPresentation.button1.hasWindowFocus());
-        checkPresentationButtonFocus(true, false, false);
+        checkPresentationButtonFocus(false, false, false);
         assertFalse(mPresentation.button1.isInTouchMode());
+        injectKeyEvent(presentationWindow, KeyEvent.KEYCODE_TAB);
+        checkPresentationButtonFocus(true, false, false);
         injectKeyEvent(presentationWindow, KeyEvent.KEYCODE_TAB);
         checkPresentationButtonFocus(false, true, false);
         injectKeyEvent(presentationWindow, KeyEvent.KEYCODE_TAB);
