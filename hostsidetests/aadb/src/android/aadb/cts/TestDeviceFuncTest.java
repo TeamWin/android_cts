@@ -57,16 +57,14 @@ public class TestDeviceFuncTest extends DeviceTestCase {
      * Simple testcase to ensure that the grabbing a bugreport from a real TestDevice works.
      */
     public void testBugreport() throws Exception {
-        InputStreamSource bugreport = mTestDevice.getBugreport();
         InputStream bugreportData = null;
-        try {
+        try (InputStreamSource bugreport = mTestDevice.getBugreport()) {
             bugreportData = bugreport.createInputStream();
             String data = StreamUtil.getStringFromStream(bugreportData);
             assertTrue(String.format("Expected at least %d characters; only saw %d",
                     mMinBugreportBytes, data.length()), data.length() >= mMinBugreportBytes);
             // TODO: check the captured report more extensively, perhaps using loganalysis
         } finally {
-            StreamUtil.cancel(bugreport);
             StreamUtil.close(bugreportData);
         }
     }
@@ -366,10 +364,9 @@ public class TestDeviceFuncTest extends DeviceTestCase {
         while (!passed) {
             // sleep a small amount of time to ensure last log message makes it into capture
             RunUtil.getDefault().sleep(10);
-            InputStreamSource source = getDevice().getLogcat(100 * 1024);
-            assertNotNull(source);
             File tmpTxtFile = FileUtil.createTempFile("logcat", ".txt");
-            try {
+            try (InputStreamSource source = getDevice().getLogcat(100 * 1024)) {
+                assertNotNull(source);
                 FileUtil.writeToFile(source.createInputStream(), tmpTxtFile);
                 CLog.i("Created file at %s", tmpTxtFile.getAbsolutePath());
                 // ensure last log message is present in log
@@ -379,7 +376,6 @@ public class TestDeviceFuncTest extends DeviceTestCase {
                 }
             } finally {
                 FileUtil.deleteFile(tmpTxtFile);
-                source.cancel();
             }
             retry++;
             if ((retry > 100) && !passed) {
