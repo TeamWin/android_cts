@@ -1904,6 +1904,109 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
+    public void testFillResponseAuthClientStateSetOnIntentOnly() throws Exception {
+        fillResponseAuthWithClientState(ClientStateLocation.INTENT_ONLY);
+    }
+
+    @Test
+    public void testFillResponseAuthClientStateSetOnFillResponseOnly() throws Exception {
+        fillResponseAuthWithClientState(ClientStateLocation.FILL_RESPONSE_ONLY);
+    }
+
+    @Test
+    public void testFillResponseAuthClientStateSetOnIntentAndFillResponse() throws Exception {
+        fillResponseAuthWithClientState(ClientStateLocation.BOTH);
+    }
+
+    enum ClientStateLocation {
+        INTENT_ONLY,
+        FILL_RESPONSE_ONLY,
+        BOTH
+    }
+
+    private void fillResponseAuthWithClientState(ClientStateLocation where) throws Exception {
+        // Set service.
+        enableService();
+
+        // Prepare the authenticated response
+        final CannedFillResponse.Builder authenticatedResponseBuilder =
+                new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setField(ID_PASSWORD, "sweet")
+                        .setPresentation(createPresentation("Dataset"))
+                        .build());
+
+        if (where == ClientStateLocation.FILL_RESPONSE_ONLY || where == ClientStateLocation.BOTH) {
+            authenticatedResponseBuilder.setExtras(newClientState("CSI", "FromAuthResponse"));
+        }
+
+        final IntentSender authentication = where == ClientStateLocation.FILL_RESPONSE_ONLY
+                ? AuthenticationActivity.createSender(mContext, 1,
+                        authenticatedResponseBuilder.build())
+                : AuthenticationActivity.createSender(mContext, 1,
+                        authenticatedResponseBuilder.build(), newClientState("CSI", "FromIntent"));
+
+        // Configure the service behavior
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setAuthentication(authentication, ID_USERNAME)
+                .setIgnoreFields(ID_PASSWORD)
+                .setPresentation(createPresentation("Tap to auth response"))
+                .setExtras(newClientState("CSI", "FromResponse"))
+                .build());
+
+        // Set expectation for the activity
+        mActivity.expectAutoFill("dude", "sweet");
+
+        // Trigger autofill.
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+
+        // Tap authentication request.
+        sUiBot.selectDataset("Tap to auth response");
+
+        // Tap dataset.
+        sUiBot.selectDataset("Dataset");
+
+        // Check the results.
+        mActivity.assertAutoFilled();
+
+        // Now trigger save.
+        mActivity.onUsername((v) -> v.setText("malkovich"));
+        mActivity.onPassword((v) -> v.setText("malkovich"));
+        final String expectedMessage = getWelcomeMessage("malkovich");
+        final String actualMessage = mActivity.tapLogin();
+        assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
+        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+
+        // Assert client state on authentication activity.
+        assertClientState("auth activity", AuthenticationActivity.getData(), "CSI", "FromResponse");
+
+        // Assert client state on save request.
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+        final String expectedValue = where == ClientStateLocation.FILL_RESPONSE_ONLY
+                ? "FromAuthResponse" : "FromIntent";
+        assertClientState("on save", saveRequest.data, "CSI", expectedValue);
+    }
+
+    // TODO(on master): move to helper / reuse in other places
+    private void assertClientState(String where, Bundle data, String expectedKey,
+            String expectedValue) {
+        assertWithMessage("no client state on %s", where).that(data).isNotNull();
+        final String extraValue = data.getString(expectedKey);
+        assertWithMessage("invalid value for %s on %s", expectedKey, where)
+            .that(extraValue).isEqualTo(expectedValue);
+    }
+
+    // TODO(on master): move to helper / reuse in other places
+    private Bundle newClientState(String key, String value) {
+        final Bundle clientState = new Bundle();
+        clientState.putString(key, value);
+        return clientState;
+    }
+
+    @Test
     public void testFillResponseFiltering() throws Exception {
         // Set service.
         enableService();
@@ -2515,6 +2618,85 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Check the results.
         mActivity.assertAutoFilled();
+    }
+
+    @Test
+    public void testDatasetAuthClientStateSetOnIntentOnly() throws Exception {
+        fillDatasetAuthWithClientState(ClientStateLocation.INTENT_ONLY);
+    }
+
+    @Test
+    public void testDatasetAuthClientStateSetOnFillResponseOnly() throws Exception {
+        fillDatasetAuthWithClientState(ClientStateLocation.FILL_RESPONSE_ONLY);
+    }
+
+    @Test
+    public void testDatasetAuthClientStateSetOnIntentAndFillResponse() throws Exception {
+        fillDatasetAuthWithClientState(ClientStateLocation.BOTH);
+    }
+
+    private void fillDatasetAuthWithClientState(ClientStateLocation where) throws Exception {
+
+        // TODO: current API requires these fields...
+        final RemoteViews bogusPresentation = createPresentation("Whatever man, I'm not used...");
+        final String bogusValue = "Y U REQUIRE IT?";
+
+        // Set service.
+        enableService();
+
+        // Prepare the authenticated response
+        final CannedDataset dataset = new CannedDataset.Builder()
+                .setField(ID_USERNAME, "dude")
+                .setField(ID_PASSWORD, "sweet")
+                .setPresentation(bogusPresentation)
+                .build();
+        final IntentSender authentication = where == ClientStateLocation.FILL_RESPONSE_ONLY
+                ? AuthenticationActivity.createSender(mContext, 1,
+                        dataset)
+                : AuthenticationActivity.createSender(mContext, 1,
+                        dataset, newClientState("CSI", "FromIntent"));
+
+        // Configure the service behavior
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
+                .setExtras(newClientState("CSI", "FromResponse"))
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, bogusValue)
+                        .setField(ID_PASSWORD, bogusValue)
+                        .setPresentation(createPresentation("Tap to auth dataset"))
+                        .setAuthentication(authentication)
+                        .build())
+                .build());
+
+        // Set expectation for the activity
+        mActivity.expectAutoFill("dude", "sweet");
+
+        // Trigger auto-fill.
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+
+        // Tap authentication request.
+        sUiBot.selectDataset("Tap to auth dataset");
+
+        // Check the results.
+        mActivity.assertAutoFilled();
+
+        // Now trigger save.
+        mActivity.onUsername((v) -> v.setText("malkovich"));
+        mActivity.onPassword((v) -> v.setText("malkovich"));
+        final String expectedMessage = getWelcomeMessage("malkovich");
+        final String actualMessage = mActivity.tapLogin();
+        assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
+        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+
+        // Assert client state on authentication activity.
+        assertClientState("auth activity", AuthenticationActivity.getData(), "CSI", "FromResponse");
+
+        // Assert client state on save request.
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+        final String expectedValue = where == ClientStateLocation.FILL_RESPONSE_ONLY
+                ? "FromResponse" : "FromIntent";
+        assertClientState("on save", saveRequest.data, "CSI", expectedValue);
     }
 
     @Test
