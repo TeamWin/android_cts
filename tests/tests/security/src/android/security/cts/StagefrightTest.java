@@ -679,6 +679,7 @@ public class StagefrightTest extends InstrumentationTestCase {
                     MediaCodecInfo.CodecCapabilities caps = info.getCapabilitiesForType(mime);
                     if (caps != null) {
                         matchingCodecs.add(info.getName());
+                        Log.i(TAG, "Found matching codec " + info.getName() + " for track " + t);
                     }
                 } catch (IllegalArgumentException e) {
                     // type is not supported
