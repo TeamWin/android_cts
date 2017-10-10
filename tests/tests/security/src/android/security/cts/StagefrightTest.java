@@ -383,6 +383,11 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.bug_27855419);
     }
 
+    @SecurityTest
+    public void testStagefright_bug_19779574() throws Exception {
+        doStagefrightTest(R.raw.bug_19779574);
+    }
+
     private void doStagefrightTest(final int rid) throws Exception {
         doStagefrightTestMediaPlayer(rid);
         doStagefrightTestMediaCodec(rid);
@@ -667,6 +672,7 @@ public class StagefrightTest extends InstrumentationTestCase {
                     MediaCodecInfo.CodecCapabilities caps = info.getCapabilitiesForType(mime);
                     if (caps != null) {
                         matchingCodecs.add(info.getName());
+                        Log.i(TAG, "Found matching codec " + info.getName() + " for track " + t);
                     }
                 } catch (IllegalArgumentException e) {
                     // type is not supported
@@ -677,7 +683,12 @@ public class StagefrightTest extends InstrumentationTestCase {
                 Log.w(TAG, "no codecs for track " + t + ", type " + mime);
             }
             // decode this track once with each matching codec
-            ex.selectTrack(t);
+            try {
+                ex.selectTrack(t);
+            } catch (IllegalArgumentException e) {
+                Log.w(TAG, "couldn't select track " + t);
+                // continue on with codec initialization anyway, since that might still crash
+            }
             for (String codecName: matchingCodecs) {
                 Log.i(TAG, "Decoding track " + t + " using codec " + codecName);
                 ex.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
@@ -689,6 +700,7 @@ public class StagefrightTest extends InstrumentationTestCase {
                 try {
                     codec.configure(format, surface, null, 0);
                     codec.start();
+                    Log.i(TAG, "started codec " + codecName);
                 } catch (Exception e) {
                     Log.i(TAG, "Failed to start/configure:", e);
                 }
