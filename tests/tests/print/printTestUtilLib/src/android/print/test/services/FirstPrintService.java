@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package android.print.cts.services;
+package android.print.test.services;
 
-public class SecondPrintService extends StubbablePrintService {
+public class FirstPrintService extends StubbablePrintService {
 
     private static final Object sLock = new Object();
 

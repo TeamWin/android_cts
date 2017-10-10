@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package android.print.cts;
+package android.print.test;
 
 import static android.content.pm.PackageManager.GET_META_DATA;
 import static android.content.pm.PackageManager.GET_SERVICES;
-import static android.print.cts.Utils.getPrintManager;
+import static android.print.test.Utils.getPrintManager;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -35,6 +35,7 @@ import static org.mockito.hamcrest.MockitoHamcrest.argThat;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -50,12 +51,13 @@ import android.print.PrintDocumentAdapter;
 import android.print.PrintDocumentAdapter.LayoutResultCallback;
 import android.print.PrintDocumentAdapter.WriteResultCallback;
 import android.print.PrintDocumentInfo;
+import android.print.PrintManager;
 import android.print.PrinterId;
-import android.print.cts.services.PrintServiceCallbacks;
-import android.print.cts.services.PrinterDiscoverySessionCallbacks;
-import android.print.cts.services.StubbablePrintService;
-import android.print.cts.services.StubbablePrinterDiscoverySession;
 import android.print.pdf.PrintedPdfDocument;
+import android.print.test.services.PrintServiceCallbacks;
+import android.print.test.services.PrinterDiscoverySessionCallbacks;
+import android.print.test.services.StubbablePrintService;
+import android.print.test.services.StubbablePrinterDiscoverySession;
 import android.printservice.CustomPrinterIconCallback;
 import android.printservice.PrintJob;
 import android.provider.Settings;
@@ -104,10 +106,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  * This is the base class for print tests.
  */
 public abstract class BasePrintTest {
-    private final static String LOG_TAG = "BasePrintTest";
+    private static final String LOG_TAG = "BasePrintTest";
 
-    static final long OPERATION_TIMEOUT_MILLIS = 60000;
-    static final String PRINT_JOB_NAME = "Test";
+    protected static final long OPERATION_TIMEOUT_MILLIS = 60000;
+    protected static final String PRINT_JOB_NAME = "Test";
     static final String TEST_ID = "BasePrintTest.EXTRA_TEST_ID";
 
     private static final String PRINT_SPOOLER_PACKAGE_NAME = "com.android.printspooler";
@@ -141,6 +143,7 @@ public abstract class BasePrintTest {
     private CallCounter mLayoutCallCounter;
     private CallCounter mWriteCallCounter;
     private CallCounter mWriteCancelCallCounter;
+    private CallCounter mStartCallCounter;
     private CallCounter mFinishCallCounter;
     private CallCounter mPrintJobQueuedCallCounter;
     private CallCounter mCreateSessionCallCounter;
@@ -264,6 +267,7 @@ public abstract class BasePrintTest {
         Log.d(LOG_TAG, "init counters");
         mCancelOperationCounter = new CallCounter();
         mLayoutCallCounter = new CallCounter();
+        mStartCallCounter = new CallCounter();
         mFinishCallCounter = new CallCounter();
         mWriteCallCounter = new CallCounter();
         mWriteCancelCallCounter = new CallCounter();
@@ -276,7 +280,7 @@ public abstract class BasePrintTest {
         sIdToTest.put(mTestId, this);
 
         // Create the activity if needed
-        if (!mShouldStartActivityRule.noActivity) {
+        if (!mShouldStartActivityRule.mNoActivity) {
             createActivity();
         }
 
@@ -316,8 +320,17 @@ public abstract class BasePrintTest {
         Log.d(LOG_TAG, "tearDownClass() done");
     }
 
-    protected void print(final PrintDocumentAdapter adapter, final PrintAttributes attributes) {
-        print(adapter, "Print job", attributes);
+    protected android.print.PrintJob print(@NonNull final PrintDocumentAdapter adapter,
+            final PrintAttributes attributes) {
+        android.print.PrintJob[] printJob = new android.print.PrintJob[1];
+        // Initiate printing as if coming from the app.
+        getInstrumentation().runOnMainSync(() -> {
+            PrintManager printManager = (PrintManager) getActivity()
+                    .getSystemService(Context.PRINT_SERVICE);
+            printJob[0] = printManager.print("Print job", adapter, attributes);
+        });
+
+        return printJob[0];
     }
 
     protected void print(PrintDocumentAdapter adapter) {
@@ -342,15 +355,19 @@ public abstract class BasePrintTest {
                         attributes));
     }
 
-    void onCancelOperationCalled() {
+    protected void onCancelOperationCalled() {
         mCancelOperationCounter.call();
     }
 
-    void onLayoutCalled() {
+    public void onStartCalled() {
+        mStartCallCounter.call();
+    }
+
+    protected void onLayoutCalled() {
         mLayoutCallCounter.call();
     }
 
-    int getWriteCallCount() {
+    protected int getWriteCallCount() {
         return mWriteCallCounter.getCallCount();
     }
 
@@ -362,15 +379,15 @@ public abstract class BasePrintTest {
         mWriteCancelCallCounter.call();
     }
 
-    void onFinishCalled() {
+    protected void onFinishCalled() {
         mFinishCallCounter.call();
     }
 
-    void onPrintJobQueuedCalled() {
+    protected void onPrintJobQueuedCalled() {
         mPrintJobQueuedCallCounter.call();
     }
 
-    void onPrinterDiscoverySessionCreateCalled() {
+    protected void onPrinterDiscoverySessionCreateCalled() {
         mCreateSessionCallCounter.call();
     }
 
@@ -378,41 +395,46 @@ public abstract class BasePrintTest {
         mDestroySessionCallCounter.call();
     }
 
-    void waitForCancelOperationCallbackCalled() {
+    protected void waitForCancelOperationCallbackCalled() {
         waitForCallbackCallCount(mCancelOperationCounter, 1,
                 "Did not get expected call to onCancel for the current operation.");
     }
 
-    void waitForPrinterDiscoverySessionCreateCallbackCalled() {
+    protected void waitForPrinterDiscoverySessionCreateCallbackCalled() {
         waitForCallbackCallCount(mCreateSessionCallCounter, 1,
                 "Did not get expected call to onCreatePrinterDiscoverySession.");
     }
 
-    void waitForPrinterDiscoverySessionDestroyCallbackCalled(int count) {
+    public void waitForPrinterDiscoverySessionDestroyCallbackCalled(int count) {
         waitForCallbackCallCount(mDestroySessionCallCounter, count,
                 "Did not get expected call to onDestroyPrinterDiscoverySession.");
     }
 
-    void waitForServiceOnPrintJobQueuedCallbackCalled(int count) {
+    protected void waitForServiceOnPrintJobQueuedCallbackCalled(int count) {
         waitForCallbackCallCount(mPrintJobQueuedCallCounter, count,
                 "Did not get expected call to onPrintJobQueued.");
     }
 
-    void waitForAdapterFinishCallbackCalled() {
+    protected void waitForAdapterStartCallbackCalled() {
+        waitForCallbackCallCount(mStartCallCounter, 1,
+                "Did not get expected call to start.");
+    }
+
+    protected void waitForAdapterFinishCallbackCalled() {
         waitForCallbackCallCount(mFinishCallCounter, 1,
                 "Did not get expected call to finish.");
     }
 
-    void waitForLayoutAdapterCallbackCount(int count) {
+    protected void waitForLayoutAdapterCallbackCount(int count) {
         waitForCallbackCallCount(mLayoutCallCounter, count,
                 "Did not get expected call to layout.");
     }
 
-    void waitForWriteAdapterCallback(int count) {
+    public void waitForWriteAdapterCallback(int count) {
         waitForCallbackCallCount(mWriteCallCounter, count, "Did not get expected call to write.");
     }
 
-    void waitForWriteCancelCallback(int count) {
+    protected void waitForWriteCancelCallback(int count) {
         waitForCallbackCallCount(mWriteCancelCallCounter, count,
                 "Did not get expected cancel of write.");
     }
@@ -471,7 +493,7 @@ public abstract class BasePrintTest {
      *
      * @return The number of onDestroy calls on the print activity.
      */
-    int getActivityDestroyCallbackCallCount() {
+    protected int getActivityDestroyCallbackCallCount() {
         return mDestroyActivityCallCounter.getCallCount();
     }
 
@@ -497,11 +519,12 @@ public abstract class BasePrintTest {
     /**
      * Reset all counters.
      */
-    void resetCounters() {
+    public void resetCounters() {
         mCancelOperationCounter.reset();
         mLayoutCallCounter.reset();
         mWriteCallCounter.reset();
         mWriteCancelCallCounter.reset();
+        mStartCallCounter.reset();
         mFinishCallCounter.reset();
         mPrintJobQueuedCallCounter.reset();
         mCreateSessionCallCounter.reset();
@@ -527,7 +550,7 @@ public abstract class BasePrintTest {
         }
     }
 
-    void selectPrinter(String printerName) throws UiObjectNotFoundException, IOException {
+    protected void selectPrinter(String printerName) throws UiObjectNotFoundException, IOException {
         try {
             long delay = 1;
             while (true) {
@@ -566,8 +589,8 @@ public abstract class BasePrintTest {
                             delay *= 2;
                         } else {
                             throw new UiObjectNotFoundException(
-                                    "Could find printer " + printerName +
-                                            " even though we retried");
+                                    "Could find printer " + printerName
+                                            + " even though we retried");
                         }
                     }
                 } else {
@@ -580,7 +603,7 @@ public abstract class BasePrintTest {
         }
     }
 
-    void answerPrintServicesWarning(boolean confirm) throws UiObjectNotFoundException {
+    protected void answerPrintServicesWarning(boolean confirm) throws UiObjectNotFoundException {
         UiObject button;
         if (confirm) {
             button = getUiDevice().findObject(new UiSelector().resourceId("android:id/button1"));
@@ -590,7 +613,8 @@ public abstract class BasePrintTest {
         button.click();
     }
 
-    void changeOrientation(String orientation) throws UiObjectNotFoundException, IOException {
+    protected void changeOrientation(String orientation) throws UiObjectNotFoundException,
+            IOException {
         try {
             UiDevice uiDevice = getUiDevice();
             UiObject orientationSpinner = uiDevice.findObject(new UiSelector().resourceId(
@@ -604,7 +628,7 @@ public abstract class BasePrintTest {
         }
     }
 
-    protected String getOrientation() throws UiObjectNotFoundException, IOException {
+    public String getOrientation() throws UiObjectNotFoundException, IOException {
         try {
             UiObject orientationSpinner = getUiDevice().findObject(new UiSelector().resourceId(
                     "com.android.printspooler:id/orientation_spinner"));
@@ -615,7 +639,7 @@ public abstract class BasePrintTest {
         }
     }
 
-    void changeMediaSize(String mediaSize) throws UiObjectNotFoundException, IOException {
+    protected void changeMediaSize(String mediaSize) throws UiObjectNotFoundException, IOException {
         try {
             UiDevice uiDevice = getUiDevice();
             UiObject mediaSizeSpinner = uiDevice.findObject(new UiSelector().resourceId(
@@ -629,7 +653,7 @@ public abstract class BasePrintTest {
         }
     }
 
-    void changeColor(String color) throws UiObjectNotFoundException, IOException {
+    protected void changeColor(String color) throws UiObjectNotFoundException, IOException {
         try {
             UiDevice uiDevice = getUiDevice();
             UiObject colorSpinner = uiDevice.findObject(new UiSelector().resourceId(
@@ -643,7 +667,7 @@ public abstract class BasePrintTest {
         }
     }
 
-    protected String getColor() throws UiObjectNotFoundException, IOException {
+    public String getColor() throws UiObjectNotFoundException, IOException {
         try {
             UiObject colorSpinner = getUiDevice().findObject(new UiSelector().resourceId(
                     "com.android.printspooler:id/color_spinner"));
@@ -654,7 +678,7 @@ public abstract class BasePrintTest {
         }
     }
 
-    void changeDuplex(String duplex) throws UiObjectNotFoundException, IOException {
+    protected void changeDuplex(String duplex) throws UiObjectNotFoundException, IOException {
         try {
             UiDevice uiDevice = getUiDevice();
             UiObject duplexSpinner = uiDevice.findObject(new UiSelector().resourceId(
@@ -668,7 +692,7 @@ public abstract class BasePrintTest {
         }
     }
 
-    void changeCopies(int newCopies) throws UiObjectNotFoundException, IOException {
+    protected void changeCopies(int newCopies) throws UiObjectNotFoundException, IOException {
         try {
             UiObject copies = getUiDevice().findObject(new UiSelector().resourceId(
                     "com.android.printspooler:id/copies_edittext"));
@@ -690,11 +714,11 @@ public abstract class BasePrintTest {
         }
     }
 
-    void assertNoPrintButton() throws UiObjectNotFoundException, IOException {
+    protected void assertNoPrintButton() throws UiObjectNotFoundException, IOException {
         assertFalse(getUiDevice().hasObject(By.res("com.android.printspooler:id/print_button")));
     }
 
-    void clickPrintButton() throws UiObjectNotFoundException, IOException {
+    public void clickPrintButton() throws UiObjectNotFoundException, IOException {
         try {
             UiObject printButton = getUiDevice().findObject(new UiSelector().resourceId(
                     "com.android.printspooler:id/print_button"));
@@ -705,7 +729,7 @@ public abstract class BasePrintTest {
         }
     }
 
-    void clickRetryButton() throws UiObjectNotFoundException, IOException {
+    protected void clickRetryButton() throws UiObjectNotFoundException, IOException {
         try {
             UiObject retryButton = getUiDevice().findObject(new UiSelector().resourceId(
                     "com.android.printspooler:id/action_button"));
@@ -716,7 +740,7 @@ public abstract class BasePrintTest {
         }
     }
 
-    void dumpWindowHierarchy() throws IOException {
+    public void dumpWindowHierarchy() throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         getUiDevice().dumpWindowHierarchy(os);
 
@@ -730,7 +754,7 @@ public abstract class BasePrintTest {
         return mActivity;
     }
 
-    protected void createActivity() {
+    protected void createActivity() throws IOException {
         Log.d(LOG_TAG, "createActivity()");
 
         int createBefore = getActivityCreateCallbackCallCount();
@@ -739,6 +763,10 @@ public abstract class BasePrintTest {
         intent.putExtra(TEST_ID, mTestId);
 
         Instrumentation instrumentation = getInstrumentation();
+
+        // Unlock screen.
+        SystemUtil.runShellCommand(instrumentation, "input keyevent KEYCODE_WAKEUP");
+
         intent.setClassName(instrumentation.getTargetContext().getPackageName(),
                 PrintDocumentActivity.class.getName());
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -747,26 +775,26 @@ public abstract class BasePrintTest {
         waitForActivityCreateCallbackCalled(createBefore + 1);
     }
 
-    void openPrintOptions() throws UiObjectNotFoundException {
+    protected void openPrintOptions() throws UiObjectNotFoundException {
         UiObject expandHandle = getUiDevice().findObject(new UiSelector().resourceId(
                 "com.android.printspooler:id/expand_collapse_handle"));
         expandHandle.click();
     }
 
-    void openCustomPrintOptions() throws UiObjectNotFoundException {
+    protected void openCustomPrintOptions() throws UiObjectNotFoundException {
         UiObject expandHandle = getUiDevice().findObject(new UiSelector().resourceId(
                 "com.android.printspooler:id/more_options_button"));
         expandHandle.click();
     }
 
-    static void clearPrintSpoolerData() throws Exception {
+    protected static void clearPrintSpoolerData() throws Exception {
         assertTrue("failed to clear print spooler data",
                 SystemUtil.runShellCommand(getInstrumentation(), String.format(
                         "pm clear --user %d %s", CURRENT_USER_ID, PRINT_SPOOLER_PACKAGE_NAME))
                         .contains(PM_CLEAR_SUCCESS_OUTPUT));
     }
 
-    void verifyLayoutCall(InOrder inOrder, PrintDocumentAdapter mock,
+    protected void verifyLayoutCall(InOrder inOrder, PrintDocumentAdapter mock,
             PrintAttributes oldAttributes, PrintAttributes newAttributes,
             final boolean forPreview) {
         inOrder.verify(mock).onLayout(eq(oldAttributes), eq(newAttributes),
@@ -786,7 +814,7 @@ public abstract class BasePrintTest {
                         }));
     }
 
-    PrintDocumentAdapter createMockPrintDocumentAdapter(Answer<Void> layoutAnswer,
+    protected PrintDocumentAdapter createMockPrintDocumentAdapter(Answer<Void> layoutAnswer,
             Answer<Void> writeAnswer, Answer<Void> finishAnswer) {
         // Create a mock print adapter.
         PrintDocumentAdapter adapter = mock(PrintDocumentAdapter.class);
@@ -811,15 +839,15 @@ public abstract class BasePrintTest {
      *
      * @return The mock adapter
      */
-    @NonNull PrintDocumentAdapter createDefaultPrintDocumentAdapter(int numPages) {
+    public @NonNull PrintDocumentAdapter createDefaultPrintDocumentAdapter(int numPages) {
         final PrintAttributes[] printAttributes = new PrintAttributes[1];
 
         return createMockPrintDocumentAdapter(
                 invocation -> {
                     PrintAttributes oldAttributes = (PrintAttributes) invocation.getArguments()[0];
                     printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
-                    PrintDocumentAdapter.LayoutResultCallback callback =
-                            (PrintDocumentAdapter.LayoutResultCallback) invocation
+                    LayoutResultCallback callback =
+                            (LayoutResultCallback) invocation
                                     .getArguments()[3];
 
                     callback.onLayoutFinished(new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
@@ -834,8 +862,8 @@ public abstract class BasePrintTest {
                     Object[] args = invocation.getArguments();
                     PageRange[] pages = (PageRange[]) args[0];
                     ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
-                    PrintDocumentAdapter.WriteResultCallback callback =
-                            (PrintDocumentAdapter.WriteResultCallback) args[3];
+                    WriteResultCallback callback =
+                            (WriteResultCallback) args[3];
 
                     writeBlankPages(printAttributes[0], fd, pages[0].getStart(), pages[0].getEnd());
                     fd.close();
@@ -996,7 +1024,7 @@ public abstract class BasePrintTest {
      * @param adapter The {@link PrintDocumentAdapter} used
      * @throws Exception If the printer could not be made default
      */
-    void makeDefaultPrinter(PrintDocumentAdapter adapter, String printerName)
+    public void makeDefaultPrinter(PrintDocumentAdapter adapter, String printerName)
             throws Exception {
         // Perform a full print operation on the printer
         Log.d(LOG_TAG, "print");
@@ -1027,7 +1055,7 @@ public abstract class BasePrintTest {
      *
      * @throws Exception If anything is unexpected
      */
-    String[] getPrintSpoolerStringArray(String resourceName) throws Exception {
+    protected String[] getPrintSpoolerStringArray(String resourceName) throws Exception {
         PackageManager pm = getActivity().getPackageManager();
         Resources printSpoolerRes = pm.getResourcesForApplication(PRINTSPOOLER_PACKAGE);
         int id = printSpoolerRes.getIdentifier(resourceName, "array", PRINTSPOOLER_PACKAGE);
@@ -1042,7 +1070,7 @@ public abstract class BasePrintTest {
      *
      * @throws Exception If anything is unexpected
      */
-    String getPrintSpoolerString(String resourceName) throws Exception {
+    private String getPrintSpoolerString(String resourceName) throws Exception {
         PackageManager pm = getActivity().getPackageManager();
         Resources printSpoolerRes = pm.getResourcesForApplication(PRINTSPOOLER_PACKAGE);
         int id = printSpoolerRes.getIdentifier(resourceName, "string", PRINTSPOOLER_PACKAGE);
@@ -1057,7 +1085,7 @@ public abstract class BasePrintTest {
      *
      * @throws Exception If anything is unexpected
      */
-    String getPrintSpoolerStringOneParam(String resourceName, Object p)
+    protected String getPrintSpoolerStringOneParam(String resourceName, Object p)
             throws Exception {
         PackageManager pm = getActivity().getPackageManager();
         Resources printSpoolerRes = pm.getResourcesForApplication(PRINTSPOOLER_PACKAGE);
@@ -1072,7 +1100,7 @@ public abstract class BasePrintTest {
      *
      * @throws Exception If anything is unexpected
      */
-    PrintAttributes.MediaSize getDefaultMediaSize() throws Exception {
+    protected PrintAttributes.MediaSize getDefaultMediaSize() throws Exception {
         PackageManager pm = getActivity().getPackageManager();
         Resources printSpoolerRes = pm.getResourcesForApplication(PRINTSPOOLER_PACKAGE);
         int defaultMediaSizeResId = printSpoolerRes.getIdentifier("mediasize_default", "string",
@@ -1096,19 +1124,19 @@ public abstract class BasePrintTest {
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
-    @interface NoActivity { }
+    protected @interface NoActivity { }
 
     /**
      * Rule that handles the {@link NoActivity} annotation.
      */
     private static class ShouldStartActivity implements TestRule {
-        boolean noActivity;
+        boolean mNoActivity;
 
         @Override
         public Statement apply(Statement base, org.junit.runner.Description description) {
             for (Annotation annotation : description.getAnnotations()) {
                 if (annotation instanceof NoActivity) {
-                    noActivity = true;
+                    mNoActivity = true;
                     break;
                 }
             }

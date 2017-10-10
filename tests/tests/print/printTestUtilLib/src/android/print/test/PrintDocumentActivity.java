@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.print.cts;
+package android.print.test;
 
 import android.app.Activity;
 import android.app.KeyguardManager;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.print.cts.services;
+package android.print.test.services;
 
 import android.content.Context;
 import android.printservice.PrintJob;

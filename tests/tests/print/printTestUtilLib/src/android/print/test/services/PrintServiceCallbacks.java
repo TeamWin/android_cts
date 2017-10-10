@@ -14,15 +14,25 @@
  * limitations under the License.
  */
 
-package android.print.cts.services;
+package android.print.test.services;
 
-import android.app.Activity;
-import android.os.Bundle;
+import android.printservice.PrintJob;
 
-public class SettingsActivity extends Activity {
+public abstract class PrintServiceCallbacks {
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    private StubbablePrintService mService;
+
+    public StubbablePrintService getService() {
+        return mService;
     }
+
+    public void setService(StubbablePrintService service) {
+        mService = service;
+    }
+
+    public abstract PrinterDiscoverySessionCallbacks onCreatePrinterDiscoverySessionCallbacks();
+
+    public abstract void onRequestCancelPrintJob(PrintJob printJob);
+
+    public abstract void onPrintJobQueued(PrintJob printJob);
 }
