@@ -16,21 +16,15 @@
 
 package android.cts.backup;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertNull;
-import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.assertNull;
 
-import static org.junit.Assume.assumeTrue;
-
-import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.targetprep.TargetSetupError;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import java.io.FileNotFoundException;
 
 /**
  * Test checking that restoreAnyVersion manifest flag is respected by backup manager.
@@ -61,6 +55,7 @@ public class RestoreAnyVersionHostSideTest extends BaseBackupHostSideTest {
             "CtsBackupRestoreAnyVersionNoRestoreApp.apk";
 
     @After
+    @Override
     public void tearDown() throws Exception {
         super.tearDown();
 
@@ -137,21 +132,21 @@ public class RestoreAnyVersionHostSideTest extends BaseBackupHostSideTest {
     }
 
     private void installRestoreAnyVersionApp()
-            throws DeviceNotAvailableException, FileNotFoundException {
+            throws DeviceNotAvailableException, TargetSetupError {
         installPackage(RESTORE_ANY_VERSION_APP_APK, "-d", "-r");
 
         checkRestoreAnyVersionDeviceTest("checkAppVersionIsOld");
     }
 
     private void installNoRestoreAnyVersionApp()
-            throws DeviceNotAvailableException, FileNotFoundException {
+            throws DeviceNotAvailableException, TargetSetupError {
         installPackage(NO_RESTORE_ANY_VERSION_APK, "-d", "-r");
 
         checkRestoreAnyVersionDeviceTest("checkAppVersionIsOld");
     }
 
     private void installNewVersionApp()
-            throws DeviceNotAvailableException, FileNotFoundException {
+            throws DeviceNotAvailableException, TargetSetupError {
         installPackage(RESTORE_ANY_VERSION_UPDATE_APK, "-d", "-r");
 
         checkRestoreAnyVersionDeviceTest("checkAppVersionIsNew");

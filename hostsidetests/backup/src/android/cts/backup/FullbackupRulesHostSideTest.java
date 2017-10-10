@@ -16,8 +16,6 @@
 
 package android.cts.backup;
 
-import static org.junit.Assert.assertTrue;
-
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Test;

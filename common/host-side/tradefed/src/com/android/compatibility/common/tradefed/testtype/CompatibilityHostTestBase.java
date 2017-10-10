@@ -37,6 +37,7 @@ import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IAbiReceiver;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IDeviceTest;
+import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.AbiUtils;
 
 import org.junit.Assume;
@@ -55,7 +56,10 @@ import java.util.Map;
  * to access build and ABI information, as well as a reference to the testing device. The class
  * includes methods to install and uninstall test packages, as well as methods to run device-side
  * tests and retrieve their results.
+ *
+ * @deprecated use {@link BaseHostJUnit4Test} as a base test class instead.
  */
+@Deprecated
 public class CompatibilityHostTestBase implements IAbiReceiver, IBuildReceiver, IDeviceTest {
 
     protected static final String AJUR = "android.support.test.runner.AndroidJUnitRunner";

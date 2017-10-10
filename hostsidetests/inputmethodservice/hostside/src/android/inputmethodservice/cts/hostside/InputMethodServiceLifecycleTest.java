@@ -17,10 +17,10 @@
 package android.inputmethodservice.cts.hostside;
 
 import static android.inputmethodservice.cts.common.DeviceEventConstants.ACTION_DEVICE_EVENT;
-import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.TEST_START;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.EXTRA_EVENT_SENDER;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.EXTRA_EVENT_TYPE;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.RECEIVER_COMPONENT;
+import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.TEST_START;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -33,8 +33,8 @@ import android.inputmethodservice.cts.common.test.DeviceTestConstants;
 import android.inputmethodservice.cts.common.test.ShellCommandUtils;
 import android.inputmethodservice.cts.common.test.TestInfo;
 
-import com.android.compatibility.common.tradefed.testtype.CompatibilityHostTestBase;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.After;
 import org.junit.Before;
@@ -42,7 +42,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class InputMethodServiceLifecycleTest extends CompatibilityHostTestBase {
+public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
 
     private String mDefaultImeId;
 
@@ -59,7 +59,6 @@ public class InputMethodServiceLifecycleTest extends CompatibilityHostTestBase {
     @After
     public void tearDown() throws Exception {
         shell(ShellCommandUtils.setCurrentIme(mDefaultImeId));
-        cleanUpTestImes();
     }
 
     @Test
@@ -166,8 +165,8 @@ public class InputMethodServiceLifecycleTest extends CompatibilityHostTestBase {
     }
 
     private void uninstallPackageIfExists(final String packageName) throws Exception {
-        if (isPackageInstalled(packageName)) {
-            uninstallPackage(packageName);
+        if (isPackageInstalled(getDevice(), packageName)) {
+            uninstallPackage(getDevice(), packageName);
         }
     }
 }

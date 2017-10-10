@@ -28,13 +28,14 @@ import com.android.compatibility.common.util.BusinessLogicExecutor;
 import com.android.compatibility.common.util.BusinessLogicFactory;
 import com.android.compatibility.common.util.BusinessLogicHostExecutor;
 import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import java.io.File;
 
 /**
  * Host-side base class for tests leveraging the Business Logic service.
  */
-public class BusinessLogicHostTestBase extends CompatibilityHostTestBase {
+public class BusinessLogicHostTestBase extends BaseHostJUnit4Test {
 
     /* String marking the beginning of the parameter in a test name */
     private static final String PARAM_START = "[";
@@ -49,7 +50,7 @@ public class BusinessLogicHostTestBase extends CompatibilityHostTestBase {
         // Business logic must be retrieved in this @Before method, since the build info contains
         // the location of the business logic file and cannot be referenced from a static context
         if (mBusinessLogic == null) {
-            CompatibilityBuildHelper helper = new CompatibilityBuildHelper(mBuild);
+            CompatibilityBuildHelper helper = new CompatibilityBuildHelper(getBuild());
             File businessLogicFile = helper.getBusinessLogicHostFile();
             mBusinessLogic = BusinessLogicFactory.createFromFile(businessLogicFile);
         }
@@ -63,7 +64,7 @@ public class BusinessLogicHostTestBase extends CompatibilityHostTestBase {
         if (mBusinessLogic.hasLogicFor(testName)) {
             CLog.i("Applying business logic for test case: ", testName);
             BusinessLogicExecutor executor = new BusinessLogicHostExecutor(getDevice(),
-                    mBuild, this);
+                    getBuild(), this);
             mBusinessLogic.applyLogicFor(testName, executor);
         }
     }
