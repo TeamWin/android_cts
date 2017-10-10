@@ -14,27 +14,15 @@
  * limitations under the License.
  */
 
-package android.print.cts.services;
+package android.print.test.services;
 
-public class FirstPrintService extends StubbablePrintService {
+import android.app.Activity;
+import android.os.Bundle;
 
-    private static final Object sLock = new Object();
-
-    private static PrintServiceCallbacks sCallbacks;
-
-    public static void setCallbacks(PrintServiceCallbacks callbacks) {
-        synchronized (sLock) {
-            sCallbacks = callbacks;
-        }
-    }
+public class SettingsActivity extends Activity {
 
     @Override
-    protected PrintServiceCallbacks getCallbacks() {
-        synchronized (sLock) {
-            if (sCallbacks != null) {
-                sCallbacks.setService(this);
-            }
-            return sCallbacks;
-        }
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
     }
 }
