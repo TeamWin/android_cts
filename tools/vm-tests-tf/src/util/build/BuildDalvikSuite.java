@@ -243,7 +243,7 @@ public class BuildDalvikSuite {
     }
 
     private String getShellExecJavaLine(String classpath, String mainclass) {
-      String cmd = String.format("ANDROID_DATA=%s dalvikvm|#ABI#| -Xmx512M -Xss32K " +
+      String cmd = String.format("ANDROID_DATA=%s dalvikvm|#ABI#| -Xmx512M -Xss32K -Xnodex2oat " +
               "-Djava.io.tmpdir=%s -classpath %s %s", TARGET_JAR_ROOT_PATH, TARGET_JAR_ROOT_PATH,
               classpath, mainclass);
       StringBuilder code = new StringBuilder();
