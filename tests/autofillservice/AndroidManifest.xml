@@ -80,6 +80,15 @@
                 <action android:name="android.service.autofill.AutofillService" />
             </intent-filter>
         </service>
+        <!--  BadAutofillService does not declare the proper permission -->
+        <service
+            android:name=".BadAutofillService"
+            android:label="BadAutofillService"
+            android:permission="android.permission.BIND_AUTOFILL" >
+            <intent-filter>
+                <action android:name="android.service.autofill.AutofillService" />
+            </intent-filter>
+        </service>
     </application>
 
     <instrumentation
