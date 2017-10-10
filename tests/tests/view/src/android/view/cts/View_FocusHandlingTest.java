@@ -275,6 +275,121 @@ public class View_FocusHandlingTest {
         assertFalse(parent.hasFocusable());
     }
 
+    @Test
+    public void testSizeHandling() {
+        Activity activity = mActivityRule.getActivity();
+        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+
+        View v5 = new Button(activity);
+        ViewGroup layout = activity.findViewById(R.id.auto_test_area);
+
+        // Test requestFocus before first layout focuses if non-0 size
+        activity.runOnUiThread(() -> {
+            layout.addView(v5, 30, 30);
+            assertTrue(isZeroSize(v5));
+            assertTrue(v5.requestFocus());
+        });
+        instrumentation.waitForIdleSync();
+        assertFalse(isZeroSize(v5));
+        assertTrue(v5.isFocused());
+
+        // Test resize to 0 defocuses
+        activity.runOnUiThread(() -> {
+            v5.setRight(v5.getLeft());
+            assertEquals(0, v5.getWidth());
+        });
+        instrumentation.waitForIdleSync();
+        assertTrue(isZeroSize(v5));
+        assertFalse(v5.isFocused());
+
+        // Test requestFocus on laid-out 0-size fails
+        activity.runOnUiThread(() -> assertFalse(v5.requestFocus()));
+
+        activity.runOnUiThread(() -> layout.removeAllViews());
+
+        // Test requestFocus before first layout focuses a child if non-0 size
+        LinearLayout ll0 = new LinearLayout(activity);
+        ll0.setFocusable(true);
+        ll0.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
+        View butInScroll = new Button(activity);
+        activity.runOnUiThread(() -> {
+            ll0.addView(butInScroll, 40, 40);
+            layout.addView(ll0, 100, 100);
+            assertTrue(isZeroSize(butInScroll));
+            assertTrue(ll0.requestFocus());
+        });
+        instrumentation.waitForIdleSync();
+        assertFalse(isZeroSize(butInScroll));
+        assertTrue(butInScroll.isFocused());
+
+        // Test focusableViewAvailable on resize to non-0 size
+        activity.runOnUiThread(() -> {
+            butInScroll.setRight(v5.getLeft());
+        });
+        instrumentation.waitForIdleSync();
+        assertTrue(isZeroSize(butInScroll));
+        assertTrue(ll0.isFocused());
+
+        activity.runOnUiThread(() -> layout.removeAllViews());
+        instrumentation.waitForIdleSync();
+
+        // Test requestFocus before first layout defocuses if still 0 size
+        LinearLayout ll = new LinearLayout(activity);
+        View zeroSizeBut = new Button(activity);
+        activity.runOnUiThread(() -> {
+            ll.addView(zeroSizeBut, 30, 0);
+            layout.addView(ll, 100, 100);
+            assertTrue(zeroSizeBut.requestFocus());
+        });
+        instrumentation.waitForIdleSync();
+        assertTrue(isZeroSize(zeroSizeBut));
+        assertFalse(zeroSizeBut.isFocused());
+
+        activity.runOnUiThread(() -> layout.removeAllViews());
+        instrumentation.waitForIdleSync();
+
+        // Test requestFocus before first layout focuses parent if child is still 0 size
+        LinearLayout ll2 = new LinearLayout(activity);
+        ll2.setFocusable(true);
+        ll2.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
+        View zeroButInAfter = new Button(activity);
+        activity.runOnUiThread(() -> {
+            ll2.addView(zeroButInAfter, 40, 0);
+            layout.addView(ll2, 100, 100);
+            assertTrue(ll2.requestFocus());
+            assertTrue(zeroButInAfter.isFocused());
+        });
+        instrumentation.waitForIdleSync();
+        assertTrue(isZeroSize(zeroButInAfter));
+        assertFalse(zeroButInAfter.isFocused());
+        assertTrue(ll2.isFocused());
+
+        activity.runOnUiThread(() -> layout.removeAllViews());
+        instrumentation.waitForIdleSync();
+
+        // Test that we don't focus anything above/outside of where we requested focus
+        LinearLayout ll3 = new LinearLayout(activity);
+        Button outside = new Button(activity);
+        LinearLayout sub = new LinearLayout(activity);
+        Button inside = new Button(activity);
+        activity.runOnUiThread(() -> {
+            ll3.addView(outside, 40, 40);
+            sub.addView(inside, 30, 0);
+            ll3.addView(sub, 40, 40);
+            layout.addView(ll3, 100, 100);
+            assertTrue(sub.requestFocus());
+            assertTrue(inside.isFocused());
+        });
+        instrumentation.waitForIdleSync();
+        assertTrue(isZeroSize(inside));
+        assertTrue(outside.isFocusable() && !isZeroSize(outside));
+        assertNull(layout.getRootView().findFocus());
+    }
+
+    private boolean isZeroSize(View view) {
+        return view.getWidth() <= 0 || view.getHeight() <= 0;
+    }
+
     @UiThreadTest
     @Test
     public void testFocusAuto() {
