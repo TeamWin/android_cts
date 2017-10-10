@@ -57,6 +57,8 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
 
     private final List<Integer> mNotificationListeners = new ArrayList<>();
 
+    private boolean mNotificationListenerDisabled;
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -64,6 +66,7 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
         // Ensure that the previously running media session test helper app doesn't exist.
         getDevice().uninstallPackage(MEDIA_SESSION_TEST_HELPER_PKG);
         mNotificationListeners.clear();
+        mNotificationListenerDisabled = "true".equals(getDevice().getProperty("ro.config.low_ram"));
     }
 
     @Override
@@ -80,6 +83,11 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
      */
     @RequiresDevice
     public void testGetActiveSessions_primaryUser() throws Exception {
+        if (mNotificationListenerDisabled) {
+            CLog.logAndDisplay(LogLevel.INFO,
+                    "NotificationListener is disabled. Test won't run.");
+            return;
+        }
         int primaryUserId = getDevice().getPrimaryUserId();
 
         setAllowGetActiveSessionForTest(true, primaryUserId);
@@ -104,6 +112,11 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
                     "Cannot create a new user. Skipping multi-user test cases.");
             return;
         }
+        if (mNotificationListenerDisabled) {
+            CLog.logAndDisplay(LogLevel.INFO,
+                    "NotificationListener is disabled. Test won't run.");
+            return;
+        }
 
         // Test if another user can get the session.
         int newUser = createAndStartUser();
@@ -121,6 +134,11 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
         if (!canCreateAdditionalUsers(1)) {
             CLog.logAndDisplay(LogLevel.INFO,
                     "Cannot create a new user. Skipping multi-user test cases.");
+            return;
+        }
+        if (mNotificationListenerDisabled) {
+            CLog.logAndDisplay(LogLevel.INFO,
+                    "NotificationListener is disabled. Test won't run.");
             return;
         }
 
@@ -141,6 +159,11 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
         if (!hasDeviceFeature("android.software.managed_users")) {
             CLog.logAndDisplay(LogLevel.INFO,
                     "Device doesn't support managed profiles. Test won't run.");
+            return;
+        }
+        if (mNotificationListenerDisabled) {
+            CLog.logAndDisplay(LogLevel.INFO,
+                    "NotificationListener is disabled. Test won't run.");
             return;
         }
 
