@@ -832,4 +832,11 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         executeShellCommand("input keyevent KEYCODE_WAKEUP");
         executeShellCommand("wm dismiss-keyguard");
     }
+
+    protected void startActivityAsUser(int userId, String packageName, String activityName)
+        throws Exception {
+        wakeupAndDismissKeyguard();
+        String command = "am start -W --user " + userId + " " + packageName + "/" + activityName;
+        getDevice().executeShellCommand(command);
+    }
 }
