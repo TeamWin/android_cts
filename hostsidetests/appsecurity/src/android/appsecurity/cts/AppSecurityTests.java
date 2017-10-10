@@ -25,17 +25,9 @@ import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IAbiReceiver;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.util.AbiUtils;
-import com.android.tradefed.util.RunUtil;
 
-import java.io.BufferedReader;
-import java.io.EOFException;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Set of tests that verify various security checks involving multiple apps are

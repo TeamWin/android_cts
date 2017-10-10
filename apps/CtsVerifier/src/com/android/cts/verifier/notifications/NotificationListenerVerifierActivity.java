@@ -45,6 +45,7 @@ import java.util.UUID;
 import static com.android.cts.verifier.notifications.MockListener.*;
 
 import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertNull;
 
 public class NotificationListenerVerifierActivity extends InteractiveVerifierActivity
         implements Runnable {
@@ -88,6 +89,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         tests.add(new DataIntactTest());
         tests.add(new DismissOneTest());
         tests.add(new DismissOneWithReasonTest());
+        tests.add(new DismissOneWithStatsTest());
         tests.add(new DismissAllTest());
         tests.add(new SnoozeNotificationForTimeTest());
         tests.add(new SnoozeNotificationForTimeCancelTest());
@@ -372,6 +374,61 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
                         sleep(100);
                         status = RETEST;
                     } else {
+                        status = FAIL;
+                    }
+                }
+            }
+        }
+
+        @Override
+        void tearDown() {
+            mNm.cancelAll();
+            deleteChannel();
+            MockListener.getInstance().resetData();
+        }
+    }
+
+    private class DismissOneWithStatsTest extends InteractiveTestCase {
+        int mRetries = 3;
+
+        @Override
+        View inflate(ViewGroup parent) {
+            return createAutoItem(parent, R.string.nls_clear_one_stats);
+        }
+
+        @Override
+        void setUp() {
+            createChannel();
+            sendNotifications();
+            status = READY;
+        }
+
+        @Override
+        void test() {
+            if (status == READY) {
+                MockListener.getInstance().cancelNotification(
+                        MockListener.getInstance().getKeyForTag(mTag1));
+                status = RETEST;
+            } else {
+                List<JSONObject> result =
+                        new ArrayList<>(MockListener.getInstance().mRemovedReason.values());
+                boolean pass = true;
+                for (JSONObject payload : result) {
+                    try {
+                        pass &= (payload.getBoolean(JSON_STATS) == false);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                        pass = false;
+                    }
+                }
+                if (pass) {
+                    status = PASS;
+                } else {
+                    if (--mRetries > 0) {
+                        sleep(100);
+                        status = RETEST;
+                    } else {
+                        logFail("Notification listener got populated stats object.");
                         status = FAIL;
                     }
                 }
