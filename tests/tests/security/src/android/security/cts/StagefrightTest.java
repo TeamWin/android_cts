@@ -517,7 +517,13 @@ public class StagefrightTest extends InstrumentationTestCase {
                 Log.w(TAG, "no codecs for track " + t + ", type " + mime);
             }
             // decode this track once with each matching codec
-            ex.selectTrack(t);
+            try {
+                ex.selectTrack(t);
+            } catch (IllegalArgumentException e) {
+                Log.w(TAG, "couldn't select track " + t);
+                // continue on with codec initialization anyway, since that might still crash
+            }
+
             for (String codecName: matchingCodecs) {
                 Log.i(TAG, "Decoding track " + t + " using codec " + codecName);
                 ex.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
