@@ -316,6 +316,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
 
     public void testTurnScreenOnShowOnLockAttr() throws Exception {
         sleepDevice();
+        mAmWmState.waitForAllStoppedActivities(mDevice);
         final String logSeparator = clearLogcat();
         launchActivity(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY_NAME);
         mAmWmState.computeState(mDevice, new String[] { TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY_NAME });
