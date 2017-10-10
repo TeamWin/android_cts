@@ -1329,6 +1329,9 @@ public class PopupWindowTest {
             mActivity.runOnUiThread(() ->
                     mActivity.setRequestedOrientation(orientation));
             mActivity.waitForConfigurationChanged();
+            // Wait for main thread to be idle to make sure layout and draw have been performed
+            // before continuing.
+            mInstrumentation.waitForIdleSync();
 
             View parentWindowView = mActivity.getWindow().getDecorView();
             int parentWidth = parentWindowView.getMeasuredWidth();
