@@ -59,7 +59,7 @@ public class ShortcutManagerRequestPinTest extends ShortcutManagerCtsTestsBase {
 
         final String SHORTCUT_ID = "s12345";
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertTrue(getManager().isRequestPinShortcutSupported());
 
             ReplyUtil.invokeAndWaitForReply(getTestContext(), (replyAction) -> {
@@ -78,7 +78,7 @@ public class ShortcutManagerRequestPinTest extends ShortcutManagerCtsTestsBase {
                 Log.i(TAG, "Done.");
             });
         });
-        runWithCaller(mLauncherContext1, () -> {
+        runWithCallerWithStrictMode(mLauncherContext1, () -> {
             final ShortcutQuery query = new ShortcutQuery()
                     .setPackage(mPackageContext1.getPackageName())
                     .setShortcutIds(list(SHORTCUT_ID))
