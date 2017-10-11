@@ -561,6 +561,7 @@ public class WindowManagerState {
         mFocusedWindow = null;
         mFocusedApp = null;
         mInputMethodWindowAppToken = null;
+        mIsDockedStackMinimized = false;
     }
 
     class WindowStack extends WindowContainer {
