@@ -25,8 +25,9 @@ LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE)64
 
 LOCAL_SRC_FILES := \
     src/test_aaudio.cpp \
-    src/test_aaudio_misc.cpp \
     src/test_aaudio_callback.cpp \
+    src/test_aaudio_misc.cpp \
+    src/test_aaudio_mmap.cpp \
     src/test_aaudio_stream_builder.cpp \
     src/utils.cpp \
 
