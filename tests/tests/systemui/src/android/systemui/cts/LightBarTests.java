@@ -21,7 +21,11 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.app.ActivityManager;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.UiAutomation;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -50,12 +54,23 @@ public class LightBarTests extends LightBarTestBase {
 
     private static final int WAIT_TIME = 2000;
 
+    private final String NOTIFICATION_TAG = "TEST_TAG";
+    private final String NOTIFICATION_CHANNEL_ID = "test_channel";
+    private final String NOTIFICATION_GROUP_KEY = "test_group";
+    private NotificationManager mNm;
+
     @Rule
     public ActivityTestRule<LightBarActivity> mActivityRule = new ActivityTestRule<>(
             LightBarActivity.class);
 
     @Test
     public void testLightStatusBarIcons() throws Throwable {
+        mNm = (NotificationManager) getInstrumentation().getContext()
+                .getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationChannel channel1 = new NotificationChannel(NOTIFICATION_CHANNEL_ID,
+                NOTIFICATION_CHANNEL_ID, NotificationManager.IMPORTANCE_LOW);
+        mNm.createNotificationChannel(channel1);
+
         PackageManager pm = getInstrumentation().getContext().getPackageManager();
         if (pm.hasSystemFeature(PackageManager.FEATURE_WATCH)
                 || pm.hasSystemFeature(PackageManager.FEATURE_TELEVISION)
@@ -69,12 +84,26 @@ public class LightBarTests extends LightBarTestBase {
             return;
         }
 
+        // post 10 notifications to ensure enough icons in the status bar
+        for (int i = 0; i < 10; i++) {
+            Notification.Builder noti1 = new Notification.Builder(getInstrumentation().getContext(),
+                    NOTIFICATION_CHANNEL_ID)
+                    .setSmallIcon(R.drawable.ic_save)
+                    .setChannelId(NOTIFICATION_CHANNEL_ID)
+                    .setPriority(Notification.PRIORITY_LOW)
+                    .setGroup(NOTIFICATION_GROUP_KEY);
+            mNm.notify(NOTIFICATION_TAG, i, noti1.build());
+        }
+
         requestLightBars(Color.RED /* background */);
         Thread.sleep(WAIT_TIME);
 
         Bitmap bitmap = takeStatusBarScreenshot(mActivityRule.getActivity());
         Stats s = evaluateLightBarBitmap(bitmap, Color.RED /* background */);
         assertLightStats(bitmap, s);
+
+        mNm.cancelAll();
+        mNm.deleteNotificationChannel(NOTIFICATION_CHANNEL_ID);
     }
 
     @Test
