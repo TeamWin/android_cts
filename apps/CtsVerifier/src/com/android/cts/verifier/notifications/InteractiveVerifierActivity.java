@@ -474,6 +474,42 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
         }
     }
 
+    protected class CannotBeEnabledTest extends InteractiveTestCase {
+        @Override
+        View inflate(ViewGroup parent) {
+            return createNlsSettingsItem(parent, R.string.nls_cannot_enable_service);
+        }
+
+        @Override
+        boolean autoStart() {
+            return true;
+        }
+
+        @Override
+        void test() {
+            mNm.cancelAll();
+            Intent settings = new Intent(NOTIFICATION_LISTENER_SETTINGS);
+            if (settings.resolveActivity(mPackageManager) == null) {
+                logFail("no settings activity");
+                status = FAIL;
+            } else {
+                String listeners = Secure.getString(getContentResolver(),
+                        ENABLED_NOTIFICATION_LISTENERS);
+                if (listeners != null && listeners.contains(LISTENER_PATH)) {
+                    status = FAIL;
+                } else {
+                    status = PASS;
+                }
+                next();
+            }
+        }
+
+        void tearDown() {
+            // wait for the service to start
+            delay();
+        }
+    }
+
     protected class ServiceStartedTest extends InteractiveTestCase {
         @Override
         View inflate(ViewGroup parent) {
@@ -482,7 +518,7 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
 
         @Override
         void test() {
-            if (MockListener.getInstance() != null) {
+            if (MockListener.getInstance() != null && MockListener.getInstance().isConnected) {
                 status = PASS;
                 next();
             } else {
