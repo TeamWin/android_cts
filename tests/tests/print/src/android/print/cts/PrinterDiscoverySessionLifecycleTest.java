@@ -16,8 +16,8 @@
 
 package android.print.cts;
 
-import static android.print.cts.Utils.eventually;
-import static android.print.cts.Utils.runOnMainThread;
+import static android.print.test.Utils.eventually;
+import static android.print.test.Utils.runOnMainThread;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -33,11 +33,12 @@ import android.print.PrintDocumentAdapter;
 import android.print.PrinterCapabilitiesInfo;
 import android.print.PrinterId;
 import android.print.PrinterInfo;
-import android.print.cts.services.FirstPrintService;
-import android.print.cts.services.PrintServiceCallbacks;
-import android.print.cts.services.PrinterDiscoverySessionCallbacks;
-import android.print.cts.services.SecondPrintService;
-import android.print.cts.services.StubbablePrinterDiscoverySession;
+import android.print.test.BasePrintTest;
+import android.print.test.services.FirstPrintService;
+import android.print.test.services.PrintServiceCallbacks;
+import android.print.test.services.PrinterDiscoverySessionCallbacks;
+import android.print.test.services.SecondPrintService;
+import android.print.test.services.StubbablePrinterDiscoverySession;
 import android.printservice.PrintJob;
 import android.printservice.PrinterDiscoverySession;
 import android.support.annotation.NonNull;

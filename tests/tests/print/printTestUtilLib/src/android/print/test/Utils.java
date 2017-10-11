@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2014 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.print.cts;
+package android.print.test;
 
 import android.content.Context;
 import android.os.Handler;
@@ -68,7 +68,7 @@ public class Utils {
      *
      * @throws Throwable If the {@link Runnable} caused an issue
      */
-    static void runOnMainThread(@NonNull final Invokable r) throws Throwable {
+    public static void runOnMainThread(@NonNull final Invokable r) throws Throwable {
         final Object synchronizer = new Object();
         final Throwable[] thrown = new Throwable[1];
 
@@ -128,7 +128,7 @@ public class Utils {
      *
      * @throws Exception If print job could not be found
      */
-    static @NonNull PrintJob getPrintJob(@NonNull PrintManager pm, @NonNull String name)
+    public static @NonNull PrintJob getPrintJob(@NonNull PrintManager pm, @NonNull String name)
             throws Exception {
         for (android.print.PrintJob job : pm.getPrintJobs()) {
             if (job.getInfo().getLabel().equals(name)) {
@@ -142,7 +142,7 @@ public class Utils {
     /**
      * @return The print manager
      */
-    static @NonNull PrintManager getPrintManager(@NonNull Context context) {
+    public static @NonNull PrintManager getPrintManager(@NonNull Context context) {
         return (PrintManager) context.getSystemService(Context.PRINT_SERVICE);
     }
 }

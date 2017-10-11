@@ -14,15 +14,39 @@
  * limitations under the License.
  */
 
-package android.print.cts.services;
+package android.print.test.services;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+
+import java.util.ArrayList;
 
 public class AddPrintersActivity extends Activity {
+    private static final ArrayList<Runnable> sObservers = new ArrayList<>();
+
+    public static void addObserver(@NonNull Runnable observer) {
+        synchronized (sObservers) {
+            sObservers.add(observer);
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        synchronized (sObservers) {
+            for (Runnable sObserver : sObservers) {
+                sObserver.run();
+            }
+        }
+
+        finish();
+    }
+
+    public static void clearObservers() {
+        synchronized (sObservers) {
+            sObservers.clear();
+        }
     }
 }

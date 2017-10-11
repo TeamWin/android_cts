@@ -14,25 +14,27 @@
  * limitations under the License.
  */
 
-package android.print.cts.services;
+package android.print.test.services;
 
-import android.printservice.PrintJob;
+public class SecondPrintService extends StubbablePrintService {
 
-public abstract class PrintServiceCallbacks {
+    private static final Object sLock = new Object();
 
-    private StubbablePrintService mService;
+    private static PrintServiceCallbacks sCallbacks;
 
-    public StubbablePrintService getService() {
-        return mService;
+    public static void setCallbacks(PrintServiceCallbacks callbacks) {
+        synchronized (sLock) {
+            sCallbacks = callbacks;
+        }
     }
 
-    public void setService(StubbablePrintService service) {
-        mService = service;
+    @Override
+    protected PrintServiceCallbacks getCallbacks() {
+        synchronized (sLock) {
+            if (sCallbacks != null) {
+                sCallbacks.setService(this);
+            }
+            return sCallbacks;
+        }
     }
-
-    public abstract PrinterDiscoverySessionCallbacks onCreatePrinterDiscoverySessionCallbacks();
-
-    public abstract void onRequestCancelPrintJob(PrintJob printJob);
-
-    public abstract void onPrintJobQueued(PrintJob printJob);
 }

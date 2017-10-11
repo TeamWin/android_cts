@@ -925,10 +925,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
      */
     protected void startSimpleActivityAsUser(int userId) throws Exception {
         installAppAsUser(TEST_APP_APK, userId);
-        wakeupAndDismissKeyguard();
-        String command = "am start -W --user " + userId + " " + TEST_APP_PKG + "/"
-                + TEST_APP_PKG + ".SimpleActivity";
-        getDevice().executeShellCommand(command);
+        startActivityAsUser(userId, TEST_APP_PKG, TEST_APP_PKG + ".SimpleActivity");
     }
 
     protected void setScreenCaptureDisabled(int userId, boolean disabled) throws Exception {

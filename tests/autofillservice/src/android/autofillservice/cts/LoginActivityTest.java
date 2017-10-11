@@ -3548,6 +3548,45 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
+    public void testServiceIsDisabledWhenNewServiceInfoIsInvalid() throws Exception {
+        serviceIsDisabledWhenNewServiceIsInvalid(BadAutofillService.SERVICE_NAME);
+    }
+
+    @Test
+    public void testServiceIsDisabledWhenNewServiceNameIsInvalid() throws Exception {
+        serviceIsDisabledWhenNewServiceIsInvalid("Y_U_NO_VALID");
+    }
+
+    private void serviceIsDisabledWhenNewServiceIsInvalid(String serviceName) throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedDataset.Builder()
+                .setField(ID_USERNAME, "dude")
+                .setField(ID_PASSWORD, "sweet")
+                .setPresentation(createPresentation("The Dude"))
+                .build());
+        mActivity.expectAutoFill("dude", "sweet");
+
+        // Trigger autofill.
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+        sUiBot.assertDatasets("The Dude");
+
+        // Now disable service by setting another service...
+        Helper.enableAutofillService(mContext, serviceName);
+
+        // ...and make sure popup's gone
+        sUiBot.assertNoDatasets();
+
+        // Then try to trigger autofill again...
+        mActivity.onPassword(View::requestFocus);
+        //...it should not work!
+        sUiBot.assertNoDatasets();
+    }
+
+    @Test
     public void testAutofillMovesCursorToTheEnd() throws Exception {
         // Set service.
         enableService();

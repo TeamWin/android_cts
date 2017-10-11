@@ -67,7 +67,8 @@ public class FailureListener extends ResultForwarder {
     @Override
     public void testFailed(TestIdentifier test, String trace) {
         super.testFailed(test, trace);
-        CLog.i("FailureListener.testFailed %s %b %b %b", test.toString(), mBugReportOnFailure, mLogcatOnFailure, mScreenshotOnFailure);
+        CLog.i("FailureListener.testFailed %s %b %b %b",
+                test.toString(), mBugReportOnFailure, mLogcatOnFailure, mScreenshotOnFailure);
         if (mScreenshotOnFailure) {
             try {
                 try (InputStreamSource screenSource = mDevice.getScreenshot()) {
@@ -81,10 +82,27 @@ public class FailureListener extends ResultForwarder {
             }
         }
         if (mBugReportOnFailure) {
-           try (InputStreamSource bugSource = mDevice.getBugreportz()) {
-               super.testLog(String.format("%s-bugreport", test.toString()), LogDataType.BUGREPORT,
-                       bugSource);
-           }
+            int api = -1;
+            try {
+                api = mDevice.getApiLevel();
+            } catch (DeviceNotAvailableException e) {
+                // ignore, it will be raised later.
+            }
+            if (api < 24) {
+                try (InputStreamSource fallback = mDevice.getBugreport()) {
+                    super.testLog(String.format("%s-bugreport", test.toString()),
+                            LogDataType.BUGREPORT, fallback);
+                }
+            } else {
+                try (InputStreamSource bugSource = mDevice.getBugreportz()) {
+                    if (bugSource != null) {
+                        super.testLog(String.format("%s-bugreportz", test.toString()),
+                                LogDataType.BUGREPORTZ, bugSource);
+                    } else {
+                        CLog.e("Failed to capture bugreport for %s", test.toString());
+                    }
+                }
+            }
         }
         if (mLogcatOnFailure) {
             // sleep 2s to ensure test failure stack trace makes it into logcat capture

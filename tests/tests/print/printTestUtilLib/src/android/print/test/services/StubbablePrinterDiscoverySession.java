@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package android.print.cts.services;
+package android.print.test.services;
 
-import android.support.annotation.NonNull;
 import android.os.CancellationSignal;
 import android.print.PrinterId;
 import android.printservice.CustomPrinterIconCallback;
 import android.printservice.PrintService;
 import android.printservice.PrinterDiscoverySession;
+import android.support.annotation.NonNull;
 
 import java.util.List;
 

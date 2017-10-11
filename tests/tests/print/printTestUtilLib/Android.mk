@@ -1,4 +1,4 @@
-# Copyright (C) 2014 The Android Open Source Project
+# Copyright (C) 2017s The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,18 +18,10 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE_TAGS := tests
 
-LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
-
-# Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
-
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_PACKAGE_NAME := CtsPrintTestCases
+LOCAL_MODULE := print-test-util-lib
 
-LOCAL_STATIC_JAVA_LIBRARIES := print-test-util-lib
+LOCAL_STATIC_JAVA_LIBRARIES := mockito-target-minus-junit4 ctstestrunner ub-uiautomator compatibility-device-util android-support-test
 
-LOCAL_SDK_VERSION := test_current
-
-include $(BUILD_CTS_PACKAGE)
-include $(call all-makefiles-under,$(LOCAL_PATH))
+include $(BUILD_STATIC_JAVA_LIBRARY)
