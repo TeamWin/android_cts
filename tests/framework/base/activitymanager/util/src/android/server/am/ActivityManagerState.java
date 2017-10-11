@@ -178,6 +178,7 @@ class ActivityManagerState {
 
     private void reset() {
         mStacks.clear();
+        mDisplayStacks.clear();
         mFocusedStackId = -1;
         mResumedActivityRecord = null;
         mResumedActivities.clear();
