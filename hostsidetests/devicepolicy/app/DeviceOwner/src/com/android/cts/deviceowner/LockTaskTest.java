@@ -23,6 +23,7 @@ import static org.junit.Assert.assertArrayEquals;
 
 import android.app.Activity;
 import android.app.ActivityManager;
+import android.app.ActivityOptions;
 import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -341,6 +342,27 @@ public class LockTaskTest {
         assertFalse(mIsActivityResumed);
     }
 
+    // Start lock task with ActivityOptions
+    @Test
+    public void testActivityOptions_whitelisted() throws Exception {
+        mDevicePolicyManager.setLockTaskPackages(ADMIN_COMPONENT, new String[] { PACKAGE_NAME });
+        startLockTaskWithOptions(UTILITY_ACTIVITY);
+        waitForResume();
+
+        // Verify that activity open and activity manager is in lock task.
+        assertLockTaskModeActive();
+        assertTrue(mIsActivityRunning);
+        assertTrue(mIsActivityResumed);
+
+        stopAndFinish(UTILITY_ACTIVITY);
+    }
+
+    // Starting a non-whitelisted activity with ActivityOptions is not allowed
+    @Test(expected = SecurityException.class)
+    public void testActivityOptions_nonWhitelisted() throws Exception {
+        startLockTaskWithOptions(UTILITY_ACTIVITY);
+    }
+
     /**
      * Checks that lock task mode is active and fails the test if it isn't.
      */
@@ -412,6 +434,15 @@ public class LockTaskTest {
     }
 
     /**
+     * Starts LockTaskUtilityActivity with {@link ActivityOptions#setLockTaskMode(boolean)}
+     */
+    private void startLockTaskWithOptions(String className) throws InterruptedException {
+        Intent intent = getLockTaskUtility(className);
+        Bundle options = ActivityOptions.makeBasic().setLockTaskMode(true).toBundle();
+        startAndWait(intent, options);
+    }
+
+    /**
      * Calls stopLockTask on the LockTaskUtilityActivity
      */
     private void stopLockTask(String className) throws InterruptedException {
@@ -435,9 +466,16 @@ public class LockTaskTest {
      * the command.
      */
     private void startAndWait(Intent intent) throws InterruptedException {
+        startAndWait(intent, null);
+    }
+
+    /**
+     * Same as {@link #startAndWait(Intent)}, but with additional {@link ActivityOptions}.
+     */
+    private void startAndWait(Intent intent, Bundle options) throws InterruptedException {
         mIntentHandled = false;
         synchronized (this) {
-            mContext.startActivity(intent);
+            mContext.startActivity(intent, options);
             // Give 20 secs to finish.
             wait(ACTIVITY_RUNNING_TIMEOUT_MILLIS);
             assertTrue(mIntentHandled);
