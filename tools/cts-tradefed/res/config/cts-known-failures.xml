@@ -194,6 +194,7 @@
 
     <!-- b/65843095 -->
     <option name="compatibility:exclude-filter" value="CtsLogdTestCases logd#statistics" />
+    <option name="compatibility:exclude-filter" value="CtsLogdTestCases logd#sepolicy_rate_limiter" />
 
     <!-- b/67377433 -->
     <!-- fails only on angler/bullhead userdebug -->
