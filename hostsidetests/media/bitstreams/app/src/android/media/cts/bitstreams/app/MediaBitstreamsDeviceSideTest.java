@@ -285,13 +285,19 @@ public class MediaBitstreamsDeviceSideTest {
             MediaExtractor ex = new MediaExtractor();
             MediaCodec d = null;
             try {
-                MediaCodec decoder = d = MediaCodec.createByCodecName(name);
-                ex.setDataSource(path);
-                ex.selectTrack(0);
-                ex.seekTo(0, MediaExtractor.SEEK_TO_NEXT_SYNC);
+                Future<MediaCodec> dec = mExecutorService.submit(new Callable<MediaCodec>() {
+                    @Override
+                    public MediaCodec call() throws Exception {
+                        return MediaCodec.createByCodecName(name);
+                    }
+                });
+                MediaCodec decoder = d = dec.get(1, TimeUnit.SECONDS);
                 Future<Boolean> conform = mExecutorService.submit(new Callable<Boolean>() {
                     @Override
                     public Boolean call() throws Exception {
+                        ex.setDataSource(path);
+                        ex.selectTrack(0);
+                        ex.seekTo(0, MediaExtractor.SEEK_TO_NEXT_SYNC);
                         return MediaUtils.verifyDecoder(decoder, ex, frameChecksums);
                     }
                 });
