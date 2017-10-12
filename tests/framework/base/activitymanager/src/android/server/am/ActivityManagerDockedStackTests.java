@@ -45,12 +45,14 @@ import org.junit.Test;
 public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
 
     private static final String TEST_ACTIVITY_NAME = "TestActivity";
-    private static final String FINISHABLE_ACTIVITY_NAME = "FinishableActivity";
     private static final String NON_RESIZEABLE_ACTIVITY_NAME = "NonResizeableActivity";
     private static final String DOCKED_ACTIVITY_NAME = "DockedActivity";
     private static final String NO_RELAUNCH_ACTIVITY_NAME = "NoRelaunchActivity";
     private static final String SINGLE_INSTANCE_ACTIVITY_NAME = "SingleInstanceActivity";
     private static final String SINGLE_TASK_ACTIVITY_NAME = "SingleTaskActivity";
+
+    private static final String TEST_ACTIVITY_ACTION_FINISH =
+        "android.server.am.TestActivity.finish_self";
 
     private static final int TASK_SIZE = 600;
     private static final int STACK_SIZE = 300;
@@ -496,12 +498,12 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
             return;
         }
 
-        launchActivityInDockStackAndMinimize(FINISHABLE_ACTIVITY_NAME);
+        launchActivityInDockStackAndMinimize(TEST_ACTIVITY_NAME);
         assertDockMinimized();
 
-        runCommandAndPrintOutput("am broadcast -a 'android.server.am.FinishableActivity.finish'");
+        executeShellCommand("am broadcast -a " + TEST_ACTIVITY_ACTION_FINISH);
         waitForDockNotMinimized();
-        mAmWmState.assertVisibility(FINISHABLE_ACTIVITY_NAME, false);
+        mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, false);
         assertDockNotMinimized();
     }
 
@@ -527,7 +529,7 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
             return;
         }
 
-        launchActivityInDockStackAndMinimize(FINISHABLE_ACTIVITY_NAME);
+        launchActivityInDockStackAndMinimize(TEST_ACTIVITY_NAME);
         assertDockMinimized();
 
         sleepDevice();

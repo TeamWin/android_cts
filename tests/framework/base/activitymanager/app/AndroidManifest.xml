@@ -299,9 +299,6 @@
                   android:exported="true"
                   android:launchMode="singleInstance"
         />
-        <activity android:name=".FinishableActivity"
-                  android:exported="true"
-        />
         <activity android:name=".NightModeActivity"
                   android:exported="true"
                   android:configChanges="uiMode"
