@@ -81,7 +81,6 @@
       <method abstract="false" deprecated="not deprecated" final="true" name="vkFreeDescriptorSets" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="vkDestroyFence" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="vkDestroyRenderPass" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="__bss_start" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="vkGetEventStatus" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="vkCmdBindPipeline" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="vkGetPhysicalDeviceFeatures" native="true" return="na" static="false" synchronized="true" visibility="public"/>
@@ -115,7 +114,6 @@
       <method abstract="false" deprecated="not deprecated" final="true" name="vkCmdClearColorImage" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="vkCmdSetScissor" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="vkCreateEvent" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_end" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="vkGetImageSparseMemoryRequirements" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="vkCmdSetStencilReference" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="vkCmdCopyImage" native="true" return="na" static="false" synchronized="true" visibility="public"/>
@@ -123,7 +121,6 @@
       <method abstract="false" deprecated="not deprecated" final="true" name="vkWaitForFences" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="vkBindImageMemory" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="vkCmdPipelineBarrier" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_edata" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="vkCreateImageView" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="vkEnumerateInstanceExtensionProperties" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="vkResetDescriptorPool" native="true" return="na" static="false" synchronized="true" visibility="public"/>
@@ -189,9 +186,7 @@
       <field deprecated="not deprecated" final="true" name="SL_IID_ANDROIDBUFFERQUEUESOURCE" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
       <field deprecated="not deprecated" final="true" name="SL_IID_RATEPITCH" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
       <field deprecated="not deprecated" final="true" name="SL_IID_VIRTUALIZER" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="__bss_start" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <field deprecated="not deprecated" final="true" name="SL_IID_ANDROIDEFFECT" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_end" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <field deprecated="not deprecated" final="true" name="SL_IID_MIDITIME" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
       <field deprecated="not deprecated" final="true" name="SL_IID_OUTPUTMIX" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="slCreateEngine" native="true" return="na" static="false" synchronized="true" visibility="public"/>
@@ -201,7 +196,6 @@
       <field deprecated="not deprecated" final="true" name="SL_IID_THREADSYNC" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="slQuerySupportedEngineInterfaces" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <field deprecated="not deprecated" final="true" name="SL_IID_PLAYBACKRATE" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_edata" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <field deprecated="not deprecated" final="true" name="SL_IID_METADATATRAVERSAL" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
       <field deprecated="not deprecated" final="true" name="SL_IID_MIDITEMPO" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
       <field deprecated="not deprecated" final="true" name="SL_IID_VIBRA" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
@@ -296,7 +290,6 @@
       <method abstract="false" deprecated="not deprecated" final="true" name="AMediaCrypto_isCryptoSchemeSupported" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AMediaExtractor_setDataSourceFd" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <field deprecated="not deprecated" final="true" name="AMEDIAFORMAT_KEY_CHANNEL_MASK" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="__bss_start" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AMediaDrm_queryKeyStatus" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AImageReader_delete" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AImage_getFormat" native="true" return="na" static="false" synchronized="true" visibility="public"/>
@@ -329,7 +322,6 @@
       <method abstract="false" deprecated="not deprecated" final="true" name="AMediaFormat_getInt32" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <field deprecated="not deprecated" final="true" name="AMEDIAFORMAT_KEY_AAC_PROFILE" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AMediaCodec_setParameters" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_end" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AMediaMuxer_setLocation" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AMediaDrm_closeSession" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AImage_getPlanePixelStride" native="true" return="na" static="false" synchronized="true" visibility="public"/>
@@ -337,7 +329,6 @@
       <method abstract="false" deprecated="not deprecated" final="true" name="AImageReader_acquireNextImageAsync" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AMediaFormat_setInt32" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AMediaFormat_setString" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_edata" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AMediaCodec_flush" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AImageReader_acquireLatestImage" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AMediaDrm_release" native="true" return="na" static="false" synchronized="true" visibility="public"/>
@@ -368,10 +359,7 @@
       <method abstract="false" deprecated="not deprecated" final="true" name="AMediaMuxer_setOrientationHint" native="true" return="na" static="false" synchronized="true" visibility="public"/>
     </class>
     <class abstract="false" deprecated="not deprecated" final="true" name="libsync.so" static="false" visibility="public">
-      <method abstract="false" deprecated="not deprecated" final="true" name="_edata" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_end" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="sync_merge" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="__bss_start" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <field deprecated="not deprecated" final="true" name="LIBSYNC" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="sync_file_info_free" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="sync_file_info" native="true" return="na" static="false" synchronized="true" visibility="public"/>
@@ -432,7 +420,6 @@
       <method abstract="false" deprecated="not deprecated" final="true" name="conj" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="fmaf" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="llrintf" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_end" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="catanl" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="feholdexcept" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="remainderf" native="true" return="na" static="false" synchronized="true" visibility="public"/>
@@ -471,7 +458,6 @@
       <method abstract="false" deprecated="not deprecated" final="true" name="modf" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="nextafter" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="y1f" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_edata" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="asinl" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="asinhl" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="scalb" native="true" return="na" static="false" synchronized="true" visibility="public"/>
@@ -567,7 +553,6 @@
       <method abstract="false" deprecated="not deprecated" final="true" name="carg" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="erfcf" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="feraiseexcept" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="__bss_start" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="erfcl" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="scalbn" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="feclearexcept" native="true" return="na" static="false" synchronized="true" visibility="public"/>
@@ -703,7 +688,6 @@
       <method abstract="false" deprecated="not deprecated" final="true" name="glOrthoxOES" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glExtGetTexturesQCOM" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glEndTilingQCOM" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_end" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glDeleteRenderbuffersOES" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glGetMaterialfv" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glColor4x" native="true" return="na" static="false" synchronized="true" visibility="public"/>
@@ -758,7 +742,6 @@
       <method abstract="false" deprecated="not deprecated" final="true" name="glBufferData" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glOrthof" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glMultMatrixf" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_edata" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glGetLightxv" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glClearColor" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glGetClipPlanex" native="true" return="na" static="false" synchronized="true" visibility="public"/>
@@ -878,7 +861,6 @@
       <method abstract="false" deprecated="not deprecated" final="true" name="glDrawTexxOES" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glVertexPointer" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glMaterialxvOES" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="__bss_start" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glBlendEquationSeparateOES" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glBindBuffer" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glDepthRangex" native="true" return="na" static="false" synchronized="true" visibility="public"/>
@@ -1004,7 +986,6 @@
       <method abstract="false" deprecated="not deprecated" final="true" name="glObjectLabelKHR" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glUseProgramStages" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glProgramUniformMatrix4x2fv" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_end" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glBindVertexArray" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glGetObjectPtrLabelKHR" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glProgramUniform3ui" native="true" return="na" static="false" synchronized="true" visibility="public"/>
@@ -1071,7 +1052,6 @@
       <method abstract="false" deprecated="not deprecated" final="true" name="glClearBufferfi" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glVertexAttrib1fv" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glUniformMatrix2x4fv" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_edata" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glGetQueryiv" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glClearColor" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glCopyTexSubImage3D" native="true" return="na" static="false" synchronized="true" visibility="public"/>
@@ -1239,7 +1219,6 @@
       <method abstract="false" deprecated="not deprecated" final="true" name="glGetProgramResourceiv" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glProgramBinaryOES" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glAttachShader" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="__bss_start" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glSamplerParameteri" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glBlitFramebuffer" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glBindBuffer" native="true" return="na" static="false" synchronized="true" visibility="public"/>
@@ -1424,12 +1403,10 @@
       <method abstract="false" deprecated="not deprecated" final="true" name="eglChooseConfig" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="eglGetCurrentContext" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="eglGetSystemTimeFrequencyNV" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_edata" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="eglCreateWindowSurface" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="eglSignalSyncKHR" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="eglQueryAPI" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="eglSetDamageRegionKHR" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_end" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="eglStreamAttribKHR" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="eglStreamConsumerReleaseKHR" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="eglGetConfigs" native="true" return="na" static="false" synchronized="true" visibility="public"/>
@@ -1437,7 +1414,6 @@
       <method abstract="false" deprecated="not deprecated" final="true" name="eglWaitClient" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="eglUnlockSurfaceKHR" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="eglQuerySurface" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="__bss_start" native="true" return="na" static="false" synchronized="true" visibility="public"/>
     </class>
     <class abstract="false" deprecated="not deprecated" final="true" name="libopenmaxal.so" static="false" visibility="public">
       <field deprecated="not deprecated" final="true" name="XA_IID_AUDIOENCODER" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
@@ -1467,16 +1443,13 @@
       <field deprecated="not deprecated" final="true" name="XA_IID_VIDEODECODERCAPABILITIES" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
       <field deprecated="not deprecated" final="true" name="LIBOPENMAXAL" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
       <field deprecated="not deprecated" final="true" name="XA_IID_EQUALIZER" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="__bss_start" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <field deprecated="not deprecated" final="true" name="XA_IID_NULL" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_end" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <field deprecated="not deprecated" final="true" name="XA_IID_VOLUME" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
       <field deprecated="not deprecated" final="true" name="XA_IID_IMAGEDECODERCAPABILITIES" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
       <field deprecated="not deprecated" final="true" name="XA_IID_THREADSYNC" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
       <field deprecated="not deprecated" final="true" name="XA_IID_LED" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
       <field deprecated="not deprecated" final="true" name="XA_IID_ENGINE" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
       <field deprecated="not deprecated" final="true" name="XA_IID_VIDEOENCODER" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_edata" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <field deprecated="not deprecated" final="true" name="XA_IID_IMAGECONTROLS" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
       <field deprecated="not deprecated" final="true" name="XA_IID_METADATAEXTRACTION" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
       <field deprecated="not deprecated" final="true" name="XA_IID_SEEK" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
@@ -1497,11 +1470,8 @@
       <method abstract="false" deprecated="not deprecated" final="true" name="__cxa_guard_acquire" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="_ZdaPvRKSt9nothrow_t" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="__cxa_pure_virtual" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="__bss_start" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="_ZnwmRKSt9nothrow_t" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_end" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <field deprecated="not deprecated" final="true" name="LIBC_O" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_edata" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="_ZdlPvRKSt9nothrow_t" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="_ZdlPv" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="_Znwm" native="true" return="na" static="false" synchronized="true" visibility="public"/>
@@ -1510,10 +1480,7 @@
     </class>
     <class abstract="false" deprecated="not deprecated" final="true" name="libjnigraphics.so" static="false" visibility="public">
       <method abstract="false" deprecated="not deprecated" final="true" name="AndroidBitmap_getInfo" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_edata" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_end" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AndroidBitmap_unlockPixels" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="__bss_start" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AndroidBitmap_lockPixels" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <field deprecated="not deprecated" final="true" name="LIBJNIGRAPHICS" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
     </class>
@@ -1642,7 +1609,6 @@
       <method abstract="false" deprecated="not deprecated" final="true" name="ANativeWindow_fromSurface" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AAsset_read" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="ASensorEventQueue_setEventRate" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_edata" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AConfiguration_getNavigation" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AInputEvent_getType" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="ANativeWindow_unlockAndPost" native="true" return="na" static="false" synchronized="true" visibility="public"/>
@@ -1700,11 +1666,9 @@
       <method abstract="false" deprecated="not deprecated" final="true" name="ANativeActivity_finish" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="ANativeActivity_showSoftInput" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AChoreographer_getInstance" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="__bss_start" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AConfiguration_setLanguage" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AMotionEvent_getHistoricalToolMinor" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AMotionEvent_getHistoricalPressure" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_end" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AConfiguration_fromAssetManager" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="ASensorManager_configureDirectReport" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="ASensorManager_destroyDirectChannel" native="true" return="na" static="false" synchronized="true" visibility="public"/>
@@ -1741,13 +1705,10 @@
       <method abstract="false" deprecated="not deprecated" final="true" name="ANeuralNetworksEvent_free" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="ANeuralNetworksModel_setOperandValue" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="ANeuralNetworksMemory_createFromFd" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="__bss_start" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_end" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="ANeuralNetworksModel_finish" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="ANeuralNetworksCompilation_free" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="ANeuralNetworksExecution_setInputFromMemory" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="ANeuralNetworksModel_setOperandValueFromMemory" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_edata" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <field deprecated="not deprecated" final="true" name="LIBNEURALNETWORKS" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="ANeuralNetworksCompilation_finish" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="ANeuralNetworksExecution_setOutput" native="true" return="na" static="false" synchronized="true" visibility="public"/>
@@ -1795,8 +1756,6 @@
       <method abstract="false" deprecated="not deprecated" final="true" name="AAudioStream_getFramesPerDataCallback" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AAudioStreamBuilder_setSamplesPerFrame" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AAudioStream_setBufferSizeInFrames" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="__bss_start" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_end" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AAudioStreamBuilder_setSampleRate" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AAudioStream_getState" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AAudioStreamBuilder_delete" native="true" return="na" static="false" synchronized="true" visibility="public"/>
@@ -1807,7 +1766,6 @@
       <method abstract="false" deprecated="not deprecated" final="true" name="AAudio_createStreamBuilder" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AAudioStream_getFramesPerBurst" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AAudioStream_read" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_edata" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AAudioStreamBuilder_setDirection" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AAudioStreamBuilder_setFormat" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AAudioStream_write" native="true" return="na" static="false" synchronized="true" visibility="public"/>
@@ -1823,13 +1781,10 @@
       <method abstract="false" deprecated="not deprecated" final="true" name="ANativeWindow_getWidth" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AHardwareBuffer_acquire" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="ANativeWindow_fromSurfaceTexture" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="__bss_start" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <field deprecated="not deprecated" final="true" name="LIBNATIVEWINDOW" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_end" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AHardwareBuffer_sendHandleToUnixSocket" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AHardwareBuffer_recvHandleFromUnixSocket" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AHardwareBuffer_allocate" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_edata" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="ANativeWindow_fromSurface" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="AHardwareBuffer_fromHardwareBuffer" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="ANativeWindow_lock" native="true" return="na" static="false" synchronized="true" visibility="public"/>
@@ -1871,16 +1826,13 @@
       <method abstract="false" deprecated="not deprecated" final="true" name="ACaptureSessionOutput_create" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="ACameraManager_delete" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="ACameraManager_create" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="__bss_start" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="ACameraMetadata_free" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="ACaptureRequest_setEntry_rational" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_end" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="ACameraCaptureSession_stopRepeating" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <field deprecated="not deprecated" final="true" name="LIBCAMERA2NDK" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="ACameraMetadata_getConstEntry" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="ACaptureRequest_setEntry_i64" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="ACaptureRequest_setEntry_float" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_edata" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="ACameraManager_unregisterAvailabilityCallback" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="ACameraOutputTarget_create" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="ACaptureSessionOutputContainer_free" native="true" return="na" static="false" synchronized="true" visibility="public"/>
@@ -1992,7 +1944,6 @@
       <method abstract="false" deprecated="not deprecated" final="true" name="glReadPixels" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glCoverageOperationNV" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glUniform3iv" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_edata" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glVertexAttribPointer" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glGenPerfMonitorsAMD" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glVertexAttrib1f" native="true" return="na" static="false" synchronized="true" visibility="public"/>
@@ -2067,11 +2018,9 @@
       <method abstract="false" deprecated="not deprecated" final="true" name="glGetBufferPointervOES" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glGetString" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glStencilMaskSeparate" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="__bss_start" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glBindRenderbuffer" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glDiscardFramebufferEXT" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glDepthRangef" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_end" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glExtGetFramebuffersQCOM" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glVertexAttrib3f" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="glClearDepthf" native="true" return="na" static="false" synchronized="true" visibility="public"/>
@@ -2102,13 +2051,10 @@
     <class abstract="false" deprecated="not deprecated" final="true" name="liblog.so" static="false" visibility="public">
       <method abstract="false" deprecated="not deprecated" final="true" name="__android_log_is_loggable_len" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="__android_log_is_loggable" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_edata" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_end" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="__android_log_assert" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="__android_log_print" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="__android_log_write" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="__android_log_vprint" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="__bss_start" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <field deprecated="not deprecated" final="true" name="LIBLOG" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
       <field deprecated="not deprecated" final="true" name="LIBLOG_O" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
       <field deprecated="not deprecated" final="true" name="LIBLOG_M" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
@@ -2241,7 +2187,6 @@
       <method abstract="false" deprecated="not deprecated" final="true" name="sem_timedwait" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="__read_chk" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="__system_property_get" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_edata" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="getgroups" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="tmpnam" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="endgrent" native="true" return="na" static="false" synchronized="true" visibility="public"/>
@@ -2536,7 +2481,6 @@
       <method abstract="false" deprecated="not deprecated" final="true" name="signalfd" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="__res_mailok" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="strncat" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="__bss_start" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="tcsetattr" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="wmempcpy" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="fnmatch" native="true" return="na" static="false" synchronized="true" visibility="public"/>
@@ -2618,7 +2562,6 @@
       <method abstract="false" deprecated="not deprecated" final="true" name="pthread_create" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="setuid" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="strsep" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_end" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="ns_name_unpack" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="fgetpos64" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="ns_msg_getflag" native="true" return="na" static="false" synchronized="true" visibility="public"/>
@@ -3381,7 +3324,6 @@
       <method abstract="false" deprecated="not deprecated" final="true" name="gz_error" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="gzread" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="inflate_table" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_edata" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="deflateCopy" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="gzputc" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="inflateGetHeader" native="true" return="na" static="false" synchronized="true" visibility="public"/>
@@ -3398,7 +3340,6 @@
       <method abstract="false" deprecated="not deprecated" final="true" name="crc32_combine64" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="deflateInit_" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="zlibCompileFlags" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="__bss_start" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="gzdirect" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="deflateInit2_" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="deflatePending" native="true" return="na" static="false" synchronized="true" visibility="public"/>
@@ -3408,7 +3349,6 @@
       <method abstract="false" deprecated="not deprecated" final="true" name="zcfree" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="gzgets" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="inflateResetKeep" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_end" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="gzoffset64" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="compressBound" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="deflateParams" native="true" return="na" static="false" synchronized="true" visibility="public"/>
@@ -3451,13 +3391,10 @@
       <method abstract="false" deprecated="not deprecated" final="true" name="android_dlopen_ext" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="__cfi_slowpath_diag" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="dlsym" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="__bss_start" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_end" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <field deprecated="not deprecated" final="true" name="LIBC_N" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
       <field deprecated="not deprecated" final="true" name="LIBC" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="dlerror" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="dlopen" native="true" return="na" static="false" synchronized="true" visibility="public"/>
-      <method abstract="false" deprecated="not deprecated" final="true" name="_edata" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="__cfi_shadow_size" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <method abstract="false" deprecated="not deprecated" final="true" name="dlclose" native="true" return="na" static="false" synchronized="true" visibility="public"/>
       <field deprecated="not deprecated" final="true" name="LIBC_OMR1" static="false" transient="false" type="native" value="" visibility="public" volatile="false"/>

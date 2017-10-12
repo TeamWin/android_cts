@@ -57,6 +57,14 @@ class NdkApiXmlReport {
     private static final String NDK_PACKAGE_NAME = "ndk";
     private static final String NDK_DUMMY_RETURN_TYPE = "na";
 
+    private static final Map<String, String> sInternalSymMap;
+    static {
+        sInternalSymMap = new HashMap<String, String>();
+        sInternalSymMap.put("__bss_start", "bss");
+        sInternalSymMap.put("_end", "initialized data");
+        sInternalSymMap.put("_edata", "uninitialized data");
+    }
+
     private static final FilenameFilter SUPPORTED_FILE_NAME_FILTER =
             new FilenameFilter() {
                 public boolean accept(File dir, String name) {
@@ -172,6 +180,10 @@ class NdkApiXmlReport {
         for (int i = 0; i < symArr.length; i++) {
             if (symArr[i].isExtern()) {
                 Element methodEle;
+                if(isInternalSymbol(symArr[i])) {
+                    continue;
+                }
+
                 if (symArr[i].type == ReadElf.Symbol.STT_OBJECT) {
                     methodEle = createFieldEle(dom, symArr[i].name);
                 } else {
@@ -264,6 +276,15 @@ class NdkApiXmlReport {
             }
         } catch (ParserConfigurationException pce) {
             System.out.println("UsersXML: Error trying to instantiate DocumentBuilder " + pce);
+        }
+    }
+
+    protected static boolean isInternalSymbol(ReadElf.Symbol sym) {
+        String value = sInternalSymMap.get(sym.name);
+        if (value == null) {
+            return false;
+        } else {
+            return true;
         }
     }
 
