@@ -1637,6 +1637,42 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
+    public void testDontTriggerSaveOnFinishWhenRequestedByFlag() throws Exception {
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
+                .setFlags(SaveInfo.FLAG_DONT_SAVE_ON_FINISH)
+                .build());
+
+        // Trigger auto-fill.
+        mActivity.onUsername(View::requestFocus);
+
+        // Sanity check.
+        sUiBot.assertNoDatasets();
+
+        // Wait for onFill() before proceeding, otherwise the fields might be changed before
+        // the session started
+        sReplier.getNextFillRequest();
+
+        // Set credentials...
+        mActivity.onUsername((v) -> v.setText("malkovich"));
+        mActivity.onPassword((v) -> v.setText("malkovich"));
+
+        // ...and login
+        final String expectedMessage = getWelcomeMessage("malkovich");
+        final String actualMessage = mActivity.tapLogin();
+        assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
+
+        // Make sure it didn't trigger save.
+        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+
+        // Sanity check: session should have been canceled
+        assertNoDanglingSessions();
+    }
+
+    @Test
     public void testAutoFillOneDatasetAndSaveWhenFlagSecure() throws Exception {
         mActivity.setFlags(FLAG_SECURE);
         testAutoFillOneDatasetAndSave();

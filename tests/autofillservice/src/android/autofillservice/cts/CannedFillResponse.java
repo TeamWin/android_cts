@@ -78,6 +78,7 @@ final class CannedFillResponse {
     private final int mNegativeActionStyle;
     private final IntentSender mNegativeActionListener;
     private final int mFlags;
+    private final AutofillId mSaveTriggerId;
 
     private CannedFillResponse(Builder builder) {
         mResponseType = builder.mResponseType;
@@ -98,6 +99,7 @@ final class CannedFillResponse {
         mNegativeActionListener = builder.mNegativeActionListener;
         mSanitizers = builder.mSanitizers;
         mFlags = builder.mFlags;
+        mSaveTriggerId = builder.mSaveTriggerId;
     }
 
     /**
@@ -163,6 +165,9 @@ final class CannedFillResponse {
                 saveInfo.addSanitizer(sanitizer.first, sanitizer.second);
             }
 
+            if (mSaveTriggerId != null) {
+                saveInfo.setTriggerId(mSaveTriggerId);
+            }
             builder.setSaveInfo(saveInfo.build());
         }
         if (mIgnoredIds != null) {
@@ -192,6 +197,7 @@ final class CannedFillResponse {
                 + ", authenticationIds=" + Arrays.toString(mAuthenticationIds)
                 + ", ignoredIds=" + Arrays.toString(mIgnoredIds)
                 + ", sanitizers =" + mSanitizers
+                + ", saveTriggerId=" + mSaveTriggerId
                 + "]";
     }
 
@@ -220,6 +226,7 @@ final class CannedFillResponse {
         private int mNegativeActionStyle;
         private IntentSender mNegativeActionListener;
         private int mFlags;
+        private AutofillId mSaveTriggerId;
 
         public Builder(ResponseType type) {
             mResponseType = type;
@@ -342,6 +349,15 @@ final class CannedFillResponse {
         public Builder returnFailure(String message) {
             assertWithMessage("already added datasets").that(mDatasets).isEmpty();
             mFailureMessage = message;
+            return this;
+        }
+
+        /**
+         * Sets the view that explicitly triggers save.
+         */
+        public Builder setSaveTriggerId(AutofillId id) {
+            assertWithMessage("already set").that(mSaveTriggerId).isNull();
+            mSaveTriggerId = id;
             return this;
         }
     }

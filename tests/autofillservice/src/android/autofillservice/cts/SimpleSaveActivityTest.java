@@ -35,6 +35,7 @@ import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.autofillservice.cts.SimpleSaveActivity.FillExpectation;
 import android.content.Intent;
+import android.service.autofill.SaveInfo;
 import android.service.autofill.TextValueSanitizer;
 import android.support.test.uiautomator.UiObject2;
 import android.view.View;
@@ -856,5 +857,57 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         });
 
         sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
+    }
+
+    @Test
+    public void testExplicitySaveButton() throws Exception {
+        explicitySaveButtonTest(false, 0);
+    }
+
+    @Test
+    public void testExplicitySaveButtonWhenAppClearFields() throws Exception {
+        explicitySaveButtonTest(true, 0);
+    }
+
+    @Test
+    public void testExplicitySaveButtonOnly() throws Exception {
+        explicitySaveButtonTest(false, SaveInfo.FLAG_DONT_SAVE_ON_FINISH);
+    }
+
+    /**
+     * Tests scenario where service explicitly indicates which button is used to save.
+     */
+    private void explicitySaveButtonTest(boolean clearFieldsOnSubmit, int flags) throws Exception {
+        startActivity();
+        mActivity.setAutoCommit(false);
+        mActivity.setClearFieldsOnSubmit(clearFieldsOnSubmit);
+
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT)
+                .setSaveTriggerId(mActivity.mCommit.getAutofillId())
+                .setFlags(flags)
+                .build());
+
+        // Trigger autofill.
+        mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
+        sReplier.getNextFillRequest();
+        Helper.assertHasSessions(mPackageName);
+        // Trigger save.
+        mActivity.syncRunOnUiThread(() -> {
+            mActivity.mInput.setText("108");
+            mActivity.mCommit.performClick();
+        });
+        UiObject2 saveUi = sUiBot.assertSaveShowing(SAVE_DATA_TYPE_GENERIC);
+
+        // Save it...
+        sUiBot.saveForAutofill(saveUi, true);
+
+        // ... and assert results
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+        assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_INPUT), "108");
     }
 }

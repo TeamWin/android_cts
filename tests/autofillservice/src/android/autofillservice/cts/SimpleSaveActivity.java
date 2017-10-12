@@ -16,6 +16,8 @@
 package android.autofillservice.cts;
 
 import android.os.Bundle;
+import android.util.Log;
+import android.view.autofill.AutofillManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -25,11 +27,15 @@ import android.widget.TextView;
  */
 public class SimpleSaveActivity extends AbstractAutoFillActivity {
 
+    private static final String TAG = "SimpleSaveActivity";
+
     static final String ID_LABEL = "label";
     static final String ID_INPUT = "input";
     static final String ID_PASSWORD = "password";
     static final String ID_COMMIT = "commit";
     static final String TEXT_LABEL = "Label:";
+
+    private static SimpleSaveActivity sInstance;
 
     TextView mLabel;
     EditText mInput;
@@ -37,7 +43,8 @@ public class SimpleSaveActivity extends AbstractAutoFillActivity {
     Button mCancel;
     Button mCommit;
 
-    private static SimpleSaveActivity sInstance;
+    private boolean mAutoCommit = true;
+    private boolean mClearFieldsOnSubmit = false;
 
     public static SimpleSaveActivity getInstance() {
         return sInstance;
@@ -60,7 +67,40 @@ public class SimpleSaveActivity extends AbstractAutoFillActivity {
         mCommit = findViewById(R.id.commit);
 
         mCancel.setOnClickListener((v) -> getAutofillManager().cancel());
-        mCommit.setOnClickListener((v) -> getAutofillManager().commit());
+        mCommit.setOnClickListener((v) -> onCommit());
+    }
+
+    private void onCommit() {
+        if (mClearFieldsOnSubmit) {
+            resetFields();
+        }
+        if (mAutoCommit) {
+            Log.d(TAG, "onCommit(): calling AFM.commit()");
+            getAutofillManager().commit();
+        } else {
+            Log.d(TAG, "onCommit(): NOT calling AFM.commit()");
+        }
+    }
+
+    private void resetFields() {
+        Log.d(TAG, "resetFields()");
+        mInput.setText("");
+        mPassword.setText("");
+    }
+
+    /**
+     * Defines whether the activity should automatically call {@link AutofillManager#commit()} when
+     * the commit button is tapped.
+     */
+    void setAutoCommit(boolean flag) {
+        mAutoCommit = flag;
+    }
+
+    /**
+     * Defines whether the activity should automatically clear its fields when submit is clicked.
+     */
+    void setClearFieldsOnSubmit(boolean flag) {
+        mClearFieldsOnSubmit = flag;
     }
 
     FillExpectation expectAutoFill(String input) {
