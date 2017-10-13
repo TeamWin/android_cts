@@ -34,26 +34,32 @@ import java.lang.reflect.Method;
 public class UsesLibraryTest extends InstrumentationTestCase {
     private static final String TAG = "UsesLibraryTest";
 
+    /**
+     * Verify that the test apk is backed by an oat file in the presence of shared libraries.
+     *
+     * This essentially verifies that dex2oat was not disabled and that hopefully
+     * the shared library check did something and was successful.
+     * Note that we cannot verify the shared library oat files (if WITH_DEXPREOPT=false
+     * we do not preopt the shared libraries).
+     */
     public void testUsesLibrary() throws Exception {
         ClassLoader loader = getClass().getClassLoader();
         if (loader instanceof BaseDexClassLoader) {
-            Object[] dexElements = getDexElementsFromClassLoader((BaseDexClassLoader) loader);
-            for (Object dexElement : dexElements) {
-                DexFile dexFile = getDexFileFromDexElement(dexElement);
-                assertTrue(isDexFileBackedByOatFile(dexFile));
-            }
+            DexFile apkDexFile = getTestDexFile((BaseDexClassLoader) loader);
+            assertTrue(isDexFileBackedByOatFile(apkDexFile));
         }
     }
 
+    /**
+     * Verify that the test apk is backed by an oat file when the shared libraries are missing
+     * from the class path.
+     */
     public void testMissingLibrary() throws Exception {
         ClassLoader loader = getClass().getClassLoader();
         if (loader instanceof BaseDexClassLoader) {
-            Object[] dexElements = getDexElementsFromClassLoader((BaseDexClassLoader) loader);
-            assertTrue(dexElements != null && dexElements.length > 1);
+            DexFile apkDexFile = getTestDexFile((BaseDexClassLoader) loader);
 
-            DexFile dexFile = getDexFileFromDexElement(dexElements[1]);
-            String testApkPath = dexFile.getName();
-            PathClassLoader testLoader = new PathClassLoader(testApkPath, null);
+            PathClassLoader testLoader = new PathClassLoader(apkDexFile.getName(), null);
             Object[] testDexElements = getDexElementsFromClassLoader(testLoader);
             assertTrue(testDexElements != null && testDexElements.length == 1);
 
@@ -62,6 +68,9 @@ public class UsesLibraryTest extends InstrumentationTestCase {
         }
     }
 
+    /**
+     * Verify that we punt to run from apk if the classpath generates a class collision failure.
+     */
     public void testDuplicateLibrary() throws Exception {
         ClassLoader loader = getClass().getClassLoader();
         if (loader instanceof BaseDexClassLoader) {
@@ -98,6 +107,14 @@ public class UsesLibraryTest extends InstrumentationTestCase {
         Field dexFileField = dexElement.getClass().getDeclaredField("dexFile");
         dexFileField.setAccessible(true);
         return (DexFile) dexFileField.get(dexElement);
+    }
+
+    private DexFile getTestDexFile(BaseDexClassLoader loader) throws Exception {
+        Object[] dexElements = getDexElementsFromClassLoader(loader);
+        assertTrue(dexElements != null && dexElements.length > 0);
+        // First dex files are shared libraries and the cts instrumentation library.
+        // The last dex file should be the test apk file: com.android.cts.useslibrary.
+        return getDexFileFromDexElement(dexElements[dexElements.length - 1]);
     }
 
     private boolean isDexFileBackedByOatFile(DexFile dexFile) throws Exception {
