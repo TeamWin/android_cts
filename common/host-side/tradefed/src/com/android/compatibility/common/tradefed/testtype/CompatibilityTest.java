@@ -477,6 +477,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                         module.getAbi().getName());
                 mInvocationContext.setModuleInvocationContext(moduleContext);
                 try {
+                    listener.testModuleStarted(moduleContext);
                     module.run(listener);
                 } catch (DeviceUnresponsiveException due) {
                     // being able to catch a DeviceUnresponsiveException here implies that recovery
@@ -493,6 +494,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                     // clear out module invocation context since we are now done with module
                     // execution
                     mInvocationContext.setModuleInvocationContext(null);
+                    listener.testModuleEnded();
                 }
                 long duration = System.currentTimeMillis() - start;
                 long expected = module.getRuntimeHint();
