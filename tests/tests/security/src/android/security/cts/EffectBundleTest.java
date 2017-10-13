@@ -48,44 +48,68 @@ public class EffectBundleTest extends InstrumentationTestCase {
 
     //Testing security bug: 32436341
     public void testEqualizer_getParamCenterFreq() throws Exception {
+        if (!hasEqualizer()) {
+            return;
+        }
         testGetParam(MEDIA_SHORT, Equalizer.PARAM_CENTER_FREQ, INVALID_BAND_ARRAY, mValue0,
                 mValue1);
     }
 
     //Testing security bug: 32588352
     public void testEqualizer_getParamCenterFreq_long() throws Exception {
+        if (!hasEqualizer()) {
+            return;
+        }
         testGetParam(MEDIA_LONG, Equalizer.PARAM_CENTER_FREQ, INVALID_BAND_ARRAY, mValue0, mValue1);
     }
 
     //Testing security bug: 32438598
     public void testEqualizer_getParamBandLevel() throws Exception {
+        if (!hasEqualizer()) {
+            return;
+        }
         testGetParam(MEDIA_SHORT, Equalizer.PARAM_BAND_LEVEL, INVALID_BAND_ARRAY, mValue0, mValue1);
     }
 
     //Testing security bug: 32584034
     public void testEqualizer_getParamBandLevel_long() throws Exception {
+        if (!hasEqualizer()) {
+            return;
+        }
         testGetParam(MEDIA_LONG, Equalizer.PARAM_BAND_LEVEL, INVALID_BAND_ARRAY, mValue0, mValue1);
     }
 
     //Testing security bug: 32247948
     public void testEqualizer_getParamFreqRange() throws Exception {
+        if (!hasEqualizer()) {
+            return;
+        }
         testGetParam(MEDIA_SHORT, Equalizer.PARAM_BAND_FREQ_RANGE, INVALID_BAND_ARRAY, mValue0,
                 mValue1);
     }
 
     //Testing security bug: 32588756
     public void testEqualizer_getParamFreqRange_long() throws Exception {
+        if (!hasEqualizer()) {
+            return;
+        }
         testGetParam(MEDIA_LONG, Equalizer.PARAM_BAND_FREQ_RANGE, INVALID_BAND_ARRAY, mValue0,
                 mValue1);
     }
 
     //Testing security bug: 32448258
     public void testEqualizer_getParamPresetName() throws Exception {
+        if (!hasEqualizer()) {
+            return;
+        }
         testParamPresetName(MEDIA_SHORT);
     }
 
     //Testing security bug: 32588016
     public void testEqualizer_getParamPresetName_long() throws Exception {
+        if (!hasEqualizer()) {
+            return;
+        }
         testParamPresetName(MEDIA_LONG);
     }
 
@@ -123,6 +147,9 @@ public class EffectBundleTest extends InstrumentationTestCase {
 
     //testing security bug: 32095626
     public void testEqualizer_setParamBandLevel() throws Exception {
+        if (!hasEqualizer()) {
+            return;
+        }
         final int command = Equalizer.PARAM_BAND_LEVEL;
         short[] value = { 1000 };
         for (int invalidBand : INVALID_BAND_ARRAY)
@@ -135,6 +162,9 @@ public class EffectBundleTest extends InstrumentationTestCase {
 
     //testing security bug: 32585400
     public void testEqualizer_setParamBandLevel_long() throws Exception {
+        if (!hasEqualizer()) {
+            return;
+        }
         final int command = Equalizer.PARAM_BAND_LEVEL;
         short[] value = { 1000 };
         for (int invalidBand : INVALID_BAND_ARRAY)
@@ -147,24 +177,36 @@ public class EffectBundleTest extends InstrumentationTestCase {
 
     //testing security bug: 32705438
     public void testEqualizer_getParamFreqRangeCommand_short() throws Exception {
+        if (!hasEqualizer()) {
+            return;
+        }
         assertTrue("testEqualizer_getParamFreqRangeCommand_short did not complete successfully",
                 eqGetParamFreqRangeCommand(MEDIA_SHORT));
     }
 
     //testing security bug: 32703959
     public void testEqualizer_getParamFreqRangeCommand_long() throws Exception {
+        if (!hasEqualizer()) {
+            return;
+        }
         assertTrue("testEqualizer_getParamFreqRangeCommand_long did not complete successfully",
                 eqGetParamFreqRangeCommand(MEDIA_LONG));
     }
 
     //testing security bug: 37563371 (short media)
     public void testEqualizer_setParamProperties_short() throws Exception {
+        if (!hasEqualizer()) {
+            return;
+        }
         assertTrue("testEqualizer_setParamProperties_long did not complete successfully",
                 eqSetParamProperties(MEDIA_SHORT));
     }
 
     //testing security bug: 37563371 (long media)
     public void testEqualizer_setParamProperties_long() throws Exception {
+        if (!hasEqualizer()) {
+            return;
+        }
         assertTrue("testEqualizer_setParamProperties_long did not complete successfully",
                 eqSetParamProperties(MEDIA_LONG));
     }
@@ -471,6 +513,18 @@ public class EffectBundleTest extends InstrumentationTestCase {
             Log.w(TAG, "\"Set parameter\" command rejected for effect " + ae.getDescriptor().uuid +
                     ", parameter " + paramCode + ", return code " + ret);
         }
+    }
+
+    private boolean hasEqualizer() {
+        boolean result = false;
+        try {
+            MediaPlayer mp = MediaPlayer.create(getInstrumentation().getContext(), R.raw.good);
+            new Equalizer(0 /*priority*/, mp.getAudioSessionId());
+            result = true;
+        } catch (Exception e) {
+            Log.d(TAG, "Cannot create equalizer");
+        }
+        return result;
     }
 
     private static byte[] intToByteArray(int value) {
