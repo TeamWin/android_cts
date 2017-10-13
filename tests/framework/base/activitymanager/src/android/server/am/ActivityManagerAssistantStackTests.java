@@ -36,7 +36,7 @@ import org.junit.Test;
  * Build: mmma -j32 cts/tests/framework/base
  * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.ActivityManagerAssistantStackTests
  */
-@Presubmit
+//@Presubmit b/67706642
 public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase {
 
     private static final String VOICE_INTERACTION_SERVICE = "AssistantVoiceInteractionService";
@@ -55,12 +55,13 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
     private static final String EXTRA_ENTER_PIP = "enter_pip";
     private static final String EXTRA_LAUNCH_NEW_TASK = "launch_new_task";
     private static final String EXTRA_FINISH_SELF = "finish_self";
-    public static final String EXTRA_IS_TRANSLUCENT = "is_translucent";
+    private static final String EXTRA_IS_TRANSLUCENT = "is_translucent";
 
     private static final String TEST_ACTIVITY_ACTION_FINISH_SELF =
             "android.server.am.TestActivity.finish_self";
 
     @Test
+    @Presubmit
     public void testLaunchingAssistantActivityIntoAssistantStack() throws Exception {
         // Enable the assistant and launch an assistant activity
         enableAssistant();
@@ -77,6 +78,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
     }
 
     @Test
+    @Presubmit
     public void testAssistantStackZOrder() throws Exception {
         if (!supportsPip() || !supportsSplitScreenMultiWindow()) return;
         // Launch a pinned stack task
@@ -108,6 +110,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
     }
 
     @Test
+    @Presubmit
     public void testAssistantStackLaunchNewTask() throws Exception {
         enableAssistant();
         assertAssistantStackCanLaunchAndReturnFromNewTask();
@@ -115,6 +118,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
     }
 
     @Test
+    @Presubmit
     public void testAssistantStackLaunchNewTaskWithDockedStack() throws Exception {
         if (!supportsSplitScreenMultiWindow()) return;
         // Dock a task
@@ -161,6 +165,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
     }
 
     @Test
+    @Presubmit
     public void testAssistantStackFinishToPreviousApp() throws Exception {
         // Launch an assistant activity on top of an existing fullscreen activity, and ensure that
         // the fullscreen activity is still visible and on top after the assistant activity finishes
@@ -180,6 +185,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
     }
 
     @Test
+    @Presubmit
     public void testDisallowEnterPiPFromAssistantStack() throws Exception {
         enableAssistant();
         launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
@@ -191,6 +197,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
     }
 
     @Test
+    @Presubmit
     public void testTranslucentAssistantActivityStackVisibility() throws Exception {
         enableAssistant();
         // Go home, launch the assistant and check to see that home is visible
@@ -252,6 +259,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
     }
 
     @Test
+    @Presubmit
     public void testLaunchIntoSameTask() throws Exception {
         enableAssistant();
 

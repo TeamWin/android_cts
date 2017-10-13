@@ -18,6 +18,7 @@
 #include <gtest/gtest.h>
 #include <android/log.h>
 
+#include <errno.h>
 #include <sys/ptrace.h>
 #include <sys/types.h>
 #include <sys/uio.h>

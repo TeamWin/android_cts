@@ -32,16 +32,15 @@ import android.platform.test.annotations.Presubmit;
 import org.junit.Test;
 
 /**
- * This test tests the transition type selection logic in ActivityManager/
- * WindowManager. BottomActivity is started first, then TopActivity, and we
- * check the transition type that the system selects when TopActivity enters
- * or exits under various setups.
+ * This test tests the transition type selection logic in ActivityManager/WindowManager.
+ * BottomActivity is started first, then TopActivity, and we check the transition type that the
+ * system selects when TopActivity enters or exits under various setups.
  *
- * Note that we only require the correct transition type to be reported (eg.
- * TRANSIT_ACTIVITY_OPEN, TRANSIT_TASK_CLOSE, TRANSIT_WALLPAPER_OPEN, etc.).
- * The exact animation is unspecified and can be overridden.
+ * Note that we only require the correct transition type to be reported (eg. TRANSIT_ACTIVITY_OPEN,
+ * TRANSIT_TASK_CLOSE, TRANSIT_WALLPAPER_OPEN, etc.). The exact animation is unspecified and can be
+ * overridden.
  *
- * Build: mmma -j32 cts/hostsidetests/services
+ * Build: mmma -j32 cts/tests/framework/base
  * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.ActivityManagerTransitionSelectionTests
  */
 @Presubmit
@@ -263,10 +262,10 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
         }
         executeShellCommand(bottomStartCmd);
 
-        final String topActivityName = topTranslucent ?
-                TRANSLUCENT_TOP_ACTIVITY_NAME : TOP_ACTIVITY_NAME;
         mAmWmState.computeState(new WaitForValidActivityState.Builder(BOTTOM_ACTIVITY_NAME).build());
 
+        final String topActivityName = topTranslucent ?
+                TRANSLUCENT_TOP_ACTIVITY_NAME : TOP_ACTIVITY_NAME;
         String topStartCmd = getAmStartCmd(topActivityName);
         if (testNewTask) {
             topStartCmd += " -f 0x18000000";

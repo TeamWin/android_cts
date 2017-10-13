@@ -31,7 +31,6 @@ import android.os.ParcelFileDescriptor;
 import android.support.test.InstrumentationRegistry;
 
 import com.android.server.am.proto.nano.ActivityStackSupervisorProto;
-import com.android.server.am.proto.nano.ActivityManagerServiceProto;
 import com.android.server.am.proto.nano.ActivityRecordProto;
 import com.android.server.am.proto.nano.ActivityStackProto;
 import com.android.server.am.proto.nano.ActivityDisplayProto;
@@ -59,7 +58,7 @@ class ActivityManagerState {
     public static final String STATE_STOPPED = "STOPPED";
     public static final String STATE_DESTROYED = "DESTROYED";
 
-    private static final String DUMPSYS_ACTIVITY_ACTIVITIES = "dumpsys activity --proto";
+    private static final String DUMPSYS_ACTIVITY_ACTIVITIES = "dumpsys activity --proto activities";
 
     // Stacks in z-order with the top most at the front of the list, starting with primary display.
     private final List<ActivityStack> mStacks = new ArrayList<>();
@@ -152,9 +151,7 @@ class ActivityManagerState {
     private void parseSysDumpProto(byte[] sysDump) throws InvalidProtocolBufferNanoException {
         reset();
 
-        ActivityManagerServiceProto activityManagerServiceProto =
-                ActivityManagerServiceProto.parseFrom(sysDump);
-        ActivityStackSupervisorProto state = activityManagerServiceProto.activities;
+        ActivityStackSupervisorProto state = ActivityStackSupervisorProto.parseFrom(sysDump);
         for (int i = 0; i < state.displays.length; i++) {
             ActivityDisplayProto displayStack = state.displays[i];
             List<ActivityStack> activityStacks = new ArrayList<>();

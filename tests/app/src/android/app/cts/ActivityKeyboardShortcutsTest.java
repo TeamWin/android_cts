@@ -19,6 +19,7 @@ package android.app.cts;
 import android.app.stubs.KeyboardShortcutsActivity;
 import android.content.pm.PackageManager;
 import android.test.ActivityInstrumentationTestCase2;
+import android.test.UiThreadTest;
 import android.view.KeyEvent;
 import android.view.KeyboardShortcutGroup;
 import android.view.Menu;
@@ -51,6 +52,7 @@ public class ActivityKeyboardShortcutsTest
      * Tests that requestShowKeyboardShortcuts fetches app specific shortcuts even when triggered
      * from an overflow menu (options menu in the test)
      */
+    @UiThreadTest
     public void testRequestShowKeyboardShortcuts() throws InterruptedException {
         if (!keyboardShortcutsSupported()) {
             return;
