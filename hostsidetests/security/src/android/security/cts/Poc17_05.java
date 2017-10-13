@@ -41,4 +41,15 @@ public class Poc17_05 extends SecurityTestCase {
             AdbUtils.runPocNoOutput("CVE-2017-0465", getDevice(), 60);
         }
     }
+
+    /**
+     * b/33899710
+     */
+    @SecurityTest
+    public void testPocCve_2016_10289() throws Exception {
+        enableAdbRoot(getDevice());
+        if(containsDriver(getDevice(), "/sys/kernel/debug/qcrypto/stats-1")) {
+            AdbUtils.runPocNoOutput("CVE-2016-10289", getDevice(), 60);
+        }
+     }
 }
