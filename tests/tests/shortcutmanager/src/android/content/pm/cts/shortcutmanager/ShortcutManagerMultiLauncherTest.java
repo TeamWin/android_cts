@@ -16,6 +16,7 @@
 package android.content.pm.cts.shortcutmanager;
 
 import static android.content.pm.LauncherApps.ShortcutQuery.FLAG_GET_KEY_FIELDS_ONLY;
+import static android.content.pm.LauncherApps.ShortcutQuery.FLAG_MATCH_ALL_PINNED;
 import static android.content.pm.LauncherApps.ShortcutQuery.FLAG_MATCH_DYNAMIC;
 import static android.content.pm.LauncherApps.ShortcutQuery.FLAG_MATCH_MANIFEST;
 import static android.content.pm.LauncherApps.ShortcutQuery.FLAG_MATCH_PINNED;
@@ -266,6 +267,16 @@ public class ShortcutManagerMultiLauncherTest extends ShortcutManagerCtsTestsBas
                     .revertToOriginalList()
                     .selectByIds("ms32")
                     .areAllDisabled();
+
+            // Make sure "ALL_PINNED" doesn't work without the permission.
+            assertWith(getShortcutsAsLauncher(
+                    FLAG_MATCH_PINNED | FLAG_GET_KEY_FIELDS_ONLY | FLAG_MATCH_ALL_PINNED,
+                    mPackageContext1.getPackageName()))
+                    .haveIds("s3", "s4", "ms22");
+            assertWith(getShortcutsAsLauncher(
+                    FLAG_MATCH_PINNED | FLAG_GET_KEY_FIELDS_ONLY | FLAG_MATCH_ALL_PINNED,
+                    mPackageContext2.getPackageName()))
+                    .haveIds("s1", "s2", "s3", "ms32");
         });
     }
 }
