@@ -186,6 +186,87 @@ public class EnqueueJobWorkTest extends ConstraintTest {
     }
 
     /**
+     * Test basic enqueueing batches of work that will be executed in parallel.
+     */
+    public void testEnqueueParallel2Work() throws Exception {
+        Intent work1 = new Intent("work1");
+        Intent work2 = new Intent("work2");
+        TestWorkItem[] work = new TestWorkItem[] {
+                new TestWorkItem(work1, TestWorkItem.FLAG_DELAY_COMPLETE_PUSH_BACK),
+                new TestWorkItem(work2, TestWorkItem.FLAG_DELAY_COMPLETE_PUSH_BACK) };
+        kTestEnvironment.setExpectedExecutions(1);
+        kTestEnvironment.setExpectedWork(work);
+        JobInfo ji = mBuilder.setOverrideDeadline(0).build();
+        mJobScheduler.enqueue(ji, new JobWorkItem(work1));
+        mJobScheduler.enqueue(ji, new JobWorkItem(work2));
+        kTestEnvironment.readyToWork();
+        assertTrue("Job with work enqueued did not fire.",
+                kTestEnvironment.awaitExecution());
+        compareWork(work, kTestEnvironment.getLastReceivedWork());
+    }
+
+    /**
+     * Test basic enqueueing batches of work that will be executed in parallel and completed
+     * in reverse order.
+     */
+    public void testEnqueueParallel2ReverseWork() throws Exception {
+        Intent work1 = new Intent("work1");
+        Intent work2 = new Intent("work2");
+        TestWorkItem[] work = new TestWorkItem[] {
+                new TestWorkItem(work1, TestWorkItem.FLAG_DELAY_COMPLETE_PUSH_BACK),
+                new TestWorkItem(work2, TestWorkItem.FLAG_DELAY_COMPLETE_PUSH_TOP) };
+        kTestEnvironment.setExpectedExecutions(1);
+        kTestEnvironment.setExpectedWork(work);
+        JobInfo ji = mBuilder.setOverrideDeadline(0).build();
+        mJobScheduler.enqueue(ji, new JobWorkItem(work1));
+        mJobScheduler.enqueue(ji, new JobWorkItem(work2));
+        kTestEnvironment.readyToWork();
+        assertTrue("Job with work enqueued did not fire.",
+                kTestEnvironment.awaitExecution());
+        compareWork(work, kTestEnvironment.getLastReceivedWork());
+    }
+
+    /**
+     * Test basic enqueueing batches of work that will be executed in parallel.
+     */
+    public void testEnqueueMultipleParallelWork() throws Exception {
+        Intent work1 = new Intent("work1");
+        Intent work2 = new Intent("work2");
+        Intent work3 = new Intent("work3");
+        Intent work4 = new Intent("work4");
+        Intent work5 = new Intent("work5");
+        Intent work6 = new Intent("work6");
+        Intent work7 = new Intent("work7");
+        Intent work8 = new Intent("work8");
+        TestWorkItem[] work = new TestWorkItem[] {
+                new TestWorkItem(work1, TestWorkItem.FLAG_DELAY_COMPLETE_PUSH_BACK),
+                new TestWorkItem(work2, TestWorkItem.FLAG_DELAY_COMPLETE_PUSH_TOP),
+                new TestWorkItem(work3, TestWorkItem.FLAG_DELAY_COMPLETE_PUSH_BACK
+                        | TestWorkItem.FLAG_COMPLETE_NEXT),
+                new TestWorkItem(work4, TestWorkItem.FLAG_COMPLETE_NEXT),
+                new TestWorkItem(work5, TestWorkItem.FLAG_DELAY_COMPLETE_PUSH_TOP),
+                new TestWorkItem(work6, TestWorkItem.FLAG_DELAY_COMPLETE_PUSH_TOP),
+                new TestWorkItem(work7, TestWorkItem.FLAG_DELAY_COMPLETE_PUSH_TOP
+                        | TestWorkItem.FLAG_COMPLETE_NEXT),
+                new TestWorkItem(work8) };
+        kTestEnvironment.setExpectedExecutions(1);
+        kTestEnvironment.setExpectedWork(work);
+        JobInfo ji = mBuilder.setOverrideDeadline(0).build();
+        mJobScheduler.enqueue(ji, new JobWorkItem(work1));
+        mJobScheduler.enqueue(ji, new JobWorkItem(work2));
+        mJobScheduler.enqueue(ji, new JobWorkItem(work3));
+        mJobScheduler.enqueue(ji, new JobWorkItem(work4));
+        mJobScheduler.enqueue(ji, new JobWorkItem(work5));
+        mJobScheduler.enqueue(ji, new JobWorkItem(work6));
+        mJobScheduler.enqueue(ji, new JobWorkItem(work7));
+        mJobScheduler.enqueue(ji, new JobWorkItem(work8));
+        kTestEnvironment.readyToWork();
+        assertTrue("Job with work enqueued did not fire.",
+                kTestEnvironment.awaitExecution());
+        compareWork(work, kTestEnvironment.getLastReceivedWork());
+    }
+
+    /**
      * Test job getting stopped while processing work and that work being redelivered.
      */
     public void testEnqueueMultipleRedeliver() throws Exception {
@@ -223,6 +304,61 @@ public class EnqueueJobWorkTest extends ConstraintTest {
         // Now we are going to add some more work, restart the job, and see if it correctly
         // redelivers the last work and delivers the new work.
         TestWorkItem[] finalWork = new TestWorkItem[] {
+                new TestWorkItem(work4, 0, 2), new TestWorkItem(work5), new TestWorkItem(work6) };
+        kTestEnvironment.setExpectedExecutions(1);
+        kTestEnvironment.setExpectedWork(finalWork);
+        mJobScheduler.enqueue(ji, new JobWorkItem(work5));
+        mJobScheduler.enqueue(ji, new JobWorkItem(work6));
+        kTestEnvironment.readyToWork();
+        SystemUtil.runShellCommand(getInstrumentation(), "cmd jobscheduler run "
+                + kJobServiceComponent.getPackageName() + " " + ENQUEUE_WORK_JOB_ID);
+
+        assertTrue("Restarted with work enqueued did not execute.",
+                kTestEnvironment.awaitExecution());
+        compareWork(finalWork, kTestEnvironment.getLastReceivedWork());
+    }
+
+    /**
+     * Test job getting stopped while processing work in parallel and that work being redelivered.
+     */
+    public void testEnqueueMultipleParallelRedeliver() throws Exception {
+        Intent work1 = new Intent("work1");
+        Intent work2 = new Intent("work2");
+        Intent work3 = new Intent("work3");
+        Intent work4 = new Intent("work4");
+        Intent work5 = new Intent("work5");
+        Intent work6 = new Intent("work6");
+        TestWorkItem[] initialWork = new TestWorkItem[] {
+                new TestWorkItem(work1),
+                new TestWorkItem(work2, TestWorkItem.FLAG_DELAY_COMPLETE_PUSH_BACK),
+                new TestWorkItem(work3, TestWorkItem.FLAG_DELAY_COMPLETE_PUSH_BACK),
+                new TestWorkItem(work4, TestWorkItem.FLAG_WAIT_FOR_STOP, 1) };
+        kTestEnvironment.setExpectedExecutions(1);
+        kTestEnvironment.setExpectedWaitForStop();
+        kTestEnvironment.setExpectedWork(initialWork);
+        JobInfo ji = mBuilder.setOverrideDeadline(0).build();
+        mJobScheduler.enqueue(ji, new JobWorkItem(work1));
+        mJobScheduler.enqueue(ji, new JobWorkItem(work2));
+        mJobScheduler.enqueue(ji, new JobWorkItem(work3));
+        mJobScheduler.enqueue(ji, new JobWorkItem(work4));
+        kTestEnvironment.readyToWork();
+
+        // Now wait for the job to get to the point where it is processing the last
+        // work and waiting for it to be stopped.
+        assertTrue("Job with work enqueued did not wait to stop.",
+                kTestEnvironment.awaitWaitingForStop());
+
+        // Cause the job to timeout (stop) immediately, and wait for its execution to finish.
+        SystemUtil.runShellCommand(getInstrumentation(), "cmd jobscheduler timeout "
+                + kJobServiceComponent.getPackageName() + " " + ENQUEUE_WORK_JOB_ID);
+        assertTrue("Job with work enqueued did not finish.",
+                kTestEnvironment.awaitExecution());
+        compareWork(initialWork, kTestEnvironment.getLastReceivedWork());
+
+        // Now we are going to add some more work, restart the job, and see if it correctly
+        // redelivers the last work and delivers the new work.
+        TestWorkItem[] finalWork = new TestWorkItem[] {
+                new TestWorkItem(work2, 0, 2), new TestWorkItem(work3, 0, 2),
                 new TestWorkItem(work4, 0, 2), new TestWorkItem(work5), new TestWorkItem(work6) };
         kTestEnvironment.setExpectedExecutions(1);
         kTestEnvironment.setExpectedWork(finalWork);
