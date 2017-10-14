@@ -570,10 +570,18 @@ public class WindowManagerState {
         mStacks.clear();
         mDisplays.clear();
         mWindowStates.clear();
+        mDisplayStacks.clear();
         mFocusedWindow = null;
         mFocusedApp = null;
+        mLastTransition = null;
         mInputMethodWindowAppToken = null;
         mIsDockedStackMinimized = false;
+        mStableBounds.setEmpty();
+        mDefaultPinnedStackBounds.setEmpty();
+        mPinnedStackMovementBounds.setEmpty();
+        mRotation = 0;
+        mLastOrientation = 0;
+        mDisplayFrozen = false;
     }
 
     class WindowStack extends WindowContainer {

@@ -3901,4 +3901,27 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         waitUntilDisconnected();
         listener.assertOnCancelCalled();
     }
+
+    @Test
+    public void testNewTextAttributes() throws Exception {
+        enableService();
+        sReplier.addResponse(NO_RESPONSE);
+        mActivity.onUsername(View::requestFocus);
+
+        final FillRequest request = sReplier.getNextFillRequest();
+        final ViewNode username = findNodeByResourceId(request.structure, ID_USERNAME);
+        assertThat(username.getMinTextEms()).isEqualTo(2);
+        assertThat(username.getMaxTextEms()).isEqualTo(5);
+        assertThat(username.getMaxTextLength()).isEqualTo(10);
+
+        final ViewNode container = findNodeByResourceId(request.structure, ID_USERNAME_CONTAINER);
+        assertThat(container.getMinTextEms()).isEqualTo(-1);
+        assertThat(container.getMaxTextEms()).isEqualTo(-1);
+        assertThat(container.getMaxTextLength()).isEqualTo(-1);
+
+        final ViewNode password = findNodeByResourceId(request.structure, ID_PASSWORD);
+        assertThat(password.getMinTextEms()).isEqualTo(-1);
+        assertThat(password.getMaxTextEms()).isEqualTo(-1);
+        assertThat(password.getMaxTextLength()).isEqualTo(-1);
+    }
 }
