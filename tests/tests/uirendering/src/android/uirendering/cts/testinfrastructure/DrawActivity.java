@@ -204,7 +204,7 @@ public class DrawActivity extends Activity {
     }
 
     private class DrawCounterListener implements ViewTreeObserver.OnDrawListener {
-        private final int[] mLocationOnScreen = new int[2];
+        private final int[] mLocationInWindow = new int[2];
         private static final int DEBUG_REQUIRE_EXTRA_FRAMES = 1;
         private int mDrawCount = 0;
 
@@ -218,8 +218,8 @@ public class DrawActivity extends Activity {
                 Log.d("UiRendering", "notifying capture");
                 mView.getViewTreeObserver().removeOnDrawListener(this);
                 synchronized (mLock) {
-                    mViewWrapper.getLocationOnScreen(mLocationOnScreen);
-                    mLock.set(mLocationOnScreen[0], mLocationOnScreen[1]);
+                    mViewWrapper.getLocationInWindow(mLocationInWindow);
+                    mLock.set(mLocationInWindow[0], mLocationInWindow[1]);
                     mLock.notify();
                 }
             });
