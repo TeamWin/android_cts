@@ -22,8 +22,11 @@
     <application>
         <activity android:name=".TestActivity"
                 android:resizeableActivity="true"
-                android:exported="true"
-        />
+                android:exported="true">
+                <layout android:minWidth="1dp"
+                        android:minHeight="1dp"
+                />
+        </activity>
         <activity android:name=".ResizeableActivity"
                 android:resizeableActivity="true"
                 android:exported="true"
@@ -48,8 +51,11 @@
                 android:resizeableActivity="true"
                 android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|fontScale"
                 android:exported="true"
-                android:taskAffinity="nobody.but.NoRelaunchActivity"
-        />
+                android:taskAffinity="nobody.but.NoRelaunchActivity">
+                <layout android:minWidth="1dp"
+                        android:minHeight="1dp"
+                />
+        </activity>
         <activity android:name=".SlowCreateActivity"
                 android:resizeableActivity="true"
                 android:exported="true"
