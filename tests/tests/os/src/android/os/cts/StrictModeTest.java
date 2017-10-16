@@ -19,19 +19,23 @@ package android.os.cts;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.net.TrafficStats;
 import android.net.Uri;
+import android.os.IBinder;
+import android.os.RemoteException;
 import android.os.StrictMode;
+import android.os.StrictMode.ThreadPolicy.Builder;
 import android.os.StrictMode.ViolationInfo;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.system.Os;
 import android.system.OsConstants;
 import android.util.Log;
-
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
@@ -43,10 +47,12 @@ import java.net.Socket;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-
 import java.util.function.Consumer;
 import org.junit.After;
 import org.junit.Before;
@@ -57,6 +63,7 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class StrictModeTest {
     private static final String TAG = "StrictModeTest";
+    private static final String REMOTE_SERVICE_ACTION = "android.app.REMOTESERVICE";
 
     private StrictMode.ThreadPolicy mThreadPolicy;
     private StrictMode.VmPolicy mVmPolicy;
@@ -375,9 +382,61 @@ public class StrictModeTest {
                 violation -> assertPolicy(violation, StrictMode.DETECT_NETWORK));
     }
 
-    private static void assertViolation(String expected, ThrowingRunnable r) throws Exception {
-        inspectViolation(
-                r, violation -> assertThat(violation.crashInfo.stackTrace).contains(expected));
+    @Test
+    public void testViolationAcrossBinder() throws Exception {
+        runWithRemoteServiceBound(
+                getContext(),
+                service -> {
+                    StrictMode.setThreadPolicy(
+                            new Builder().detectDiskWrites().penaltyLog().build());
+
+                    try {
+                        inspectViolation(
+                                () -> service.performDiskWrite(),
+                                (violation) -> {
+                                    assertPolicy(violation, StrictMode.DETECT_DISK_WRITE);
+                                    assertThat(violation.crashInfo.stackTrace)
+                                            .contains(
+                                                    "android.os.cts.CtsRemoteService$1.performDiskWrite");
+                                    assertThat(violation.crashInfo.stackTrace)
+                                            .contains("# via Binder call with stack:");
+                                    assertThat(violation.crashInfo.stackTrace)
+                                            .contains("StrictModeTest.testViolationAcrossBinder");
+                                });
+                        assertNoViolation(() -> service.getPid());
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+    }
+
+    private static void runWithRemoteServiceBound(Context context, Consumer<ISecondary> consumer)
+            throws ExecutionException, InterruptedException, RemoteException {
+        BlockingQueue<IBinder> binderHolder = new ArrayBlockingQueue<>(1);
+        ServiceConnection secondaryConnection =
+                new ServiceConnection() {
+                    public void onServiceConnected(ComponentName className, IBinder service) {
+                        binderHolder.add(service);
+                    }
+
+                    public void onServiceDisconnected(ComponentName className) {
+                        binderHolder.drainTo(new ArrayList<>());
+                    }
+                };
+        Intent intent = new Intent(REMOTE_SERVICE_ACTION);
+        intent.setPackage(context.getPackageName());
+
+        Intent secondaryIntent = new Intent(ISecondary.class.getName());
+        secondaryIntent.setPackage(context.getPackageName());
+        assertThat(
+                        context.bindService(
+                                secondaryIntent, secondaryConnection, Context.BIND_AUTO_CREATE))
+                .isTrue();
+        IBinder binder = binderHolder.take();
+        assertThat(binder.queryLocalInterface(binder.getInterfaceDescriptor())).isNull();
+        consumer.accept(ISecondary.Stub.asInterface(binder));
+        context.unbindService(secondaryConnection);
+        context.stopService(intent);
     }
 
     private static void assertNoViolation(ThrowingRunnable r) throws Exception {
