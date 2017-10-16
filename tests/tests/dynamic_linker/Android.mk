@@ -44,5 +44,5 @@ LOCAL_JNI_SHARED_LIBRARIES := libdynamiclinker_native_lib_a libdynamiclinker_nat
 LOCAL_MANIFEST_FILE := AndroidManifest.xml
 LOCAL_PACKAGE_NAME := CtsDynamicLinkerTestCases
 LOCAL_SDK_VERSION := current
-LOCAL_COMPATIBILITY_SUITE := cts
+LOCAL_COMPATIBILITY_SUITE := cts vts
 include $(BUILD_CTS_PACKAGE)
