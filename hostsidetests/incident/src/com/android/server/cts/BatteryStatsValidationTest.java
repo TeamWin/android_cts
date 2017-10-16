@@ -375,9 +375,9 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".BatteryStatsJobDurationTests",
                 "testJobDuration");
 
-        // Should be approximately 3000 ms. Use 0.8x and 2x as the lower and upper
+        // Should be approximately 15000 ms (3 x 5000 ms). Use 0.8x and 2x as the lower and upper
         // bounds to account for possible errors due to thread scheduling and cpu load.
-        assertValueRange("jb", DEVICE_SIDE_JOB_COMPONENT, 5, (long) (3000 * 0.8), 3000 * 2);
+        assertValueRange("jb", DEVICE_SIDE_JOB_COMPONENT, 5, (long) (15000 * 0.8), 15000 * 2);
         batteryOffScreenOn();
     }
 
