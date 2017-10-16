@@ -23,13 +23,16 @@ import android.test.AndroidTestCase;
 import java.io.InputStream;
 
 import android.security.cts.R;
+import android.platform.test.annotations.SecurityTest;
 
 public class SkiaICORecursiveDecodingTest extends AndroidTestCase {
 
+    @SecurityTest
     public void test_android_bug_17262540() {
         doSkiaIcoRecursiveDecodingTest(R.raw.bug_17262540);
     }
 
+    @SecurityTest
     public void test_android_bug_17265466() {
         doSkiaIcoRecursiveDecodingTest(R.raw.bug_17265466);
     }
