@@ -898,7 +898,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT)
                 .setSaveTriggerId(mActivity.mCommit.getAutofillId())
-                .setFlags(flags)
+                .setSaveInfoFlags(flags)
                 .build());
 
         // Trigger autofill.

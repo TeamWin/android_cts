@@ -1675,7 +1675,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Set expectations.
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
-                .setFlags(SaveInfo.FLAG_DONT_SAVE_ON_FINISH)
+                .setSaveInfoFlags(SaveInfo.FLAG_DONT_SAVE_ON_FINISH)
                 .build());
 
         // Trigger auto-fill.

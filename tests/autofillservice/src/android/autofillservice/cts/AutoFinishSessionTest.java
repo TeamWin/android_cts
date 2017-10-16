@@ -68,7 +68,7 @@ public class AutoFinishSessionTest extends AutoFillServiceTestCase {
 
         // Set expectations.
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setFlags(SaveInfo.FLAG_SAVE_ON_ALL_VIEWS_INVISIBLE)
+                .setSaveInfoFlags(SaveInfo.FLAG_SAVE_ON_ALL_VIEWS_INVISIBLE)
                 .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, viewsToSave).build());
 
         // Trigger autofill
@@ -185,7 +185,7 @@ public class AutoFinishSessionTest extends AutoFillServiceTestCase {
 
         // Set expectations.
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setFlags(SaveInfo.FLAG_SAVE_ON_ALL_VIEWS_INVISIBLE)
+                .setSaveInfoFlags(SaveInfo.FLAG_SAVE_ON_ALL_VIEWS_INVISIBLE)
                 .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, "editText1").build());
 
         // Trigger autofill
