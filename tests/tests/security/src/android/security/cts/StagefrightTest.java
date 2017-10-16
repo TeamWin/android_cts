@@ -71,6 +71,10 @@ public class StagefrightTest extends InstrumentationTestCase {
      before any existing test methods
      ***********************************************************/
 
+    public void testStagefright_bug_62187433() throws Exception {
+        doStagefrightTest(R.raw.bug_62187433);
+    }
+
     public void testStagefrightANR_bug_62673844() throws Exception {
         doStagefrightTestANR(R.raw.bug_62673844);
     }
