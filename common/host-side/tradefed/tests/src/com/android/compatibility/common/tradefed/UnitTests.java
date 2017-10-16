@@ -39,7 +39,6 @@ import com.android.compatibility.common.tradefed.testtype.ModuleDefTest;
 import com.android.compatibility.common.tradefed.testtype.ModuleRepoTest;
 import com.android.compatibility.common.tradefed.testtype.SubPlanTest;
 import com.android.compatibility.common.tradefed.testtype.retry.RetryFactoryTestTest;
-import com.android.compatibility.common.tradefed.testtype.suite.CompatibilityTestSuiteTest;
 import com.android.compatibility.common.tradefed.testtype.suite.ModuleRepoSuiteTest;
 import com.android.compatibility.common.tradefed.util.CollectorUtilTest;
 import com.android.compatibility.common.tradefed.util.DynamicConfigFileReaderTest;
@@ -99,7 +98,6 @@ import org.junit.runners.Suite.SuiteClasses;
     RetryFactoryTestTest.class,
 
     // testype.suite
-    CompatibilityTestSuiteTest.class,
     ModuleRepoSuiteTest.class,
 
     // util
