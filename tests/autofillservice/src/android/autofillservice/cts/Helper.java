@@ -20,6 +20,10 @@ import static android.autofillservice.cts.InstrumentedAutoFillService.SERVICE_NA
 import static android.autofillservice.cts.UiBot.PORTRAIT;
 import static android.provider.Settings.Secure.AUTOFILL_SERVICE;
 import static android.provider.Settings.Secure.USER_SETUP_COMPLETE;
+import static android.service.autofill.FillEventHistory.Event.TYPE_AUTHENTICATION_SELECTED;
+import static android.service.autofill.FillEventHistory.Event.TYPE_DATASET_AUTHENTICATION_SELECTED;
+import static android.service.autofill.FillEventHistory.Event.TYPE_DATASET_SELECTED;
+import static android.service.autofill.FillEventHistory.Event.TYPE_SAVE_SHOWN;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -30,7 +34,9 @@ import android.app.assist.AssistStructure.WindowNode;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.icu.util.Calendar;
+import android.os.Bundle;
 import android.service.autofill.FillContext;
+import android.service.autofill.FillEventHistory;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
@@ -63,6 +69,8 @@ final class Helper {
     static final String ID_PASSWORD = "password";
     static final String ID_LOGIN = "login";
     static final String ID_OUTPUT = "output";
+
+    public static final String NULL_DATASET_ID = null;
 
     private static final String CMD_LIST_SESSIONS = "cmd autofill list sessions";
 
@@ -918,6 +926,161 @@ final class Helper {
      */
     public static ViewNode findWebViewNode(ViewNode node, String formName) {
         return findNodeByFilter(node, formName, WEBVIEW_ROOT_FILTER);
+    }
+
+    private static void assertClientState(Object container, Bundle clientState,
+            String key, String value) {
+        assertWithMessage("'%s' should have client state", container)
+            .that(clientState).isNotNull();
+        assertWithMessage("Wrong number of client state extras on '%s'", container)
+            .that(clientState.keySet().size()).isEqualTo(1);
+        assertWithMessage("Wrong value for client state key (%s) on '%s'", key, container)
+            .that(clientState.getString(key)).isEqualTo(value);
+    }
+
+    /**
+     * Asserts the content of a {@link FillEventHistory#getClientState()}.
+     *
+     * @param history event to be asserted
+     * @param key the only key expected in the client state bundle
+     * @param value the only value expected in the client state bundle
+     */
+    @SuppressWarnings("javadoc")
+    public static void assertDeprecatedClientState(@NonNull FillEventHistory history,
+            @NonNull String key, @NonNull String value) {
+        assertThat(history).isNotNull();
+        @SuppressWarnings("deprecation")
+        final Bundle clientState = history.getClientState();
+        assertClientState(history, clientState, key, value);
+    }
+
+    /**
+     * Asserts the {@link FillEventHistory#getClientState()} is not set.
+     *
+     * @param history event to be asserted
+     */
+    @SuppressWarnings("javadoc")
+    public static void assertNoDeprecatedClientState(@NonNull FillEventHistory history) {
+        assertThat(history).isNotNull();
+        @SuppressWarnings("deprecation")
+        final Bundle clientState = history.getClientState();
+        assertWithMessage("History '%s' should not have client state", history)
+             .that(clientState).isNull();
+    }
+
+    /**
+     * Asserts the content of a {@link android.service.autofill.FillEventHistory.Event}.
+     *
+     * @param event event to be asserted
+     * @param eventType expected type
+     * @param datasetId dataset set id expected in the event
+     * @param key the only key expected in the client state bundle (or {@code null} if it shouldn't
+     * have client state)
+     * @param value the only value expected in the client state bundle (or {@code null} if it
+     * shouldn't have client state)
+     */
+    private static void assertFillEvent(@NonNull FillEventHistory.Event event,
+            int eventType, @Nullable String datasetId,
+            @Nullable String key, @Nullable String value) {
+        assertThat(event).isNotNull();
+        assertWithMessage("Wrong type for %s", event).that(event.getType()).isEqualTo(eventType);
+        if (datasetId == null) {
+            assertWithMessage("Event %s should not have dataset id", event)
+                .that(event.getDatasetId()).isNull();
+        } else {
+            assertWithMessage("Wrong dataset id for %s", event)
+                .that(event.getDatasetId()).isEqualTo(datasetId);
+        }
+        final Bundle clientState = event.getClientState();
+        if (key == null) {
+            assertWithMessage("Event '%s' should not have client state", event)
+                .that(clientState).isNull();
+        } else {
+            assertClientState(event, clientState, key, value);
+        }
+    }
+
+    /**
+     * Asserts the content of a
+     * {@link android.service.autofill.FillEventHistory.Event#TYPE_DATASET_SELECTED} event.
+     *
+     * @param event event to be asserted
+     * @param datasetId dataset set id expected in the event
+     */
+    public static void assertFillEventForDatasetSelected(@NonNull FillEventHistory.Event event,
+            @Nullable String datasetId) {
+        assertFillEvent(event, TYPE_DATASET_SELECTED, datasetId, null, null);
+    }
+
+    /**
+     * Asserts the content of a
+     * {@link android.service.autofill.FillEventHistory.Event#TYPE_DATASET_SELECTED} event.
+     *
+     * @param event event to be asserted
+     * @param datasetId dataset set id expected in the event
+     * @param key the only key expected in the client state bundle
+     * @param value the only value expected in the client state bundle
+     */
+    public static void assertFillEventForDatasetSelected(@NonNull FillEventHistory.Event event,
+            @Nullable String datasetId, @Nullable String key, @Nullable String value) {
+        assertFillEvent(event, TYPE_DATASET_SELECTED, datasetId, key, value);
+    }
+
+    /**
+     * Asserts the content of a
+     * {@link android.service.autofill.FillEventHistory.Event#TYPE_SAVE_SHOWN} event.
+     *
+     * @param event event to be asserted
+     * @param datasetId dataset set id expected in the event
+     * @param key the only key expected in the client state bundle
+     * @param value the only value expected in the client state bundle
+     */
+    public static void assertFillEventForSaveShown(@NonNull FillEventHistory.Event event,
+            @NonNull String datasetId, @NonNull String key, @NonNull String value) {
+        assertFillEvent(event, TYPE_SAVE_SHOWN, datasetId, key, value);
+    }
+
+    /**
+     * Asserts the content of a
+     * {@link android.service.autofill.FillEventHistory.Event#TYPE_SAVE_SHOWN} event.
+     *
+     * @param event event to be asserted
+     * @param datasetId dataset set id expected in the event
+     */
+    public static void assertFillEventForSaveShown(@NonNull FillEventHistory.Event event,
+            @NonNull String datasetId) {
+        assertFillEvent(event, TYPE_SAVE_SHOWN, datasetId, null, null);
+    }
+
+    /**
+     * Asserts the content of a
+     * {@link android.service.autofill.FillEventHistory.Event#TYPE_DATASET_AUTHENTICATION_SELECTED}
+     * event.
+     *
+     * @param event event to be asserted
+     * @param datasetId dataset set id expected in the event
+     * @param key the only key expected in the client state bundle
+     * @param value the only value expected in the client state bundle
+     */
+    public static void assertFillEventForDatasetAuthenticationSelected(
+            @NonNull FillEventHistory.Event event,
+            @Nullable String datasetId, @NonNull String key, @NonNull String value) {
+        assertFillEvent(event, TYPE_DATASET_AUTHENTICATION_SELECTED, datasetId, key, value);
+    }
+
+    /**
+     * Asserts the content of a
+     * {@link android.service.autofill.FillEventHistory.Event#TYPE_AUTHENTICATION_SELECTED} event.
+     *
+     * @param event event to be asserted
+     * @param datasetId dataset set id expected in the event
+     * @param key the only key expected in the client state bundle
+     * @param value the only value expected in the client state bundle
+     */
+    public static void assertFillEventForAuthenticationSelected(
+            @NonNull FillEventHistory.Event event,
+            @Nullable String datasetId, @NonNull String key, @NonNull String value) {
+        assertFillEvent(event, TYPE_AUTHENTICATION_SELECTED, datasetId, key, value);
     }
 
     private Helper() {
