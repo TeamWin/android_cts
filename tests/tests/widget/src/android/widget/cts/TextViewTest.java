@@ -26,7 +26,6 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.refEq;
 import static org.mockito.Mockito.doAnswer;
@@ -188,6 +187,19 @@ public class TextViewTest {
 
     private static final int SMARTSELECT_START = 0;
     private static final int SMARTSELECT_END = 40;
+    private static final TextClassifier FAKE_TEXT_CLASSIFIER = new TextClassifier() {
+        @Override
+        public TextSelection suggestSelection(
+                CharSequence text, int start, int end, LocaleList locales) {
+            return new TextSelection.Builder(SMARTSELECT_START, SMARTSELECT_END).build();
+        }
+
+        @Override
+        public TextClassification classifyText(
+                CharSequence text, int start, int end, LocaleList locales) {
+            return new TextClassification.Builder().build();
+        }
+    };
     private static final int CLICK_TIMEOUT = ViewConfiguration.getDoubleTapTimeout() + 50;
 
     private CharSequence mTransformedText;
@@ -7733,17 +7745,10 @@ public class TextViewTest {
 
     private void initializeTextForSmartSelection(CharSequence text) throws Throwable {
         assertTrue(text.length() >= SMARTSELECT_END);
-        TextClassifier mockClassifier = mock(TextClassifier.class);
-        when(mockClassifier.suggestSelection(
-                any(CharSequence.class), anyInt(), anyInt(), any(LocaleList.class)))
-                .thenReturn(new TextSelection.Builder(SMARTSELECT_START, SMARTSELECT_END).build());
-        when(mockClassifier.classifyText(
-                any(CharSequence.class), anyInt(), anyInt(), any(LocaleList.class)))
-                .thenReturn(new TextClassification.Builder().build());
         mActivityRule.runOnUiThread(() -> {
             mTextView.setTextIsSelectable(true);
             mTextView.setText(text);
-            mTextView.setTextClassifier(mockClassifier);
+            mTextView.setTextClassifier(FAKE_TEXT_CLASSIFIER);
             mTextView.requestFocus();
         });
         mInstrumentation.waitForIdleSync();
