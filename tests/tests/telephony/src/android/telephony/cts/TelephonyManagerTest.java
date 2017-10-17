@@ -509,7 +509,7 @@ public class TelephonyManagerTest {
 
         if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             if (!TextUtils.isEmpty(meid)) {
-                assertImei(meid);
+                assertMeidEsn(meid);
             } else {
                 // If MEID is empty, then IMEI must not be empty. A phone should have either a
                 // IMEI or MEID. The validation of IMEI will be checked by testGetImei().
