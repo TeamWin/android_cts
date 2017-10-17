@@ -39,6 +39,7 @@ import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.config.OptionCopier;
 import com.android.tradefed.invoker.IInvocationContext;
 import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.result.FileInputStreamSource;
 import com.android.tradefed.result.ILogSaver;
 import com.android.tradefed.result.ILogSaverListener;
 import com.android.tradefed.result.IShardableListener;
@@ -49,6 +50,7 @@ import com.android.tradefed.result.LogDataType;
 import com.android.tradefed.result.LogFile;
 import com.android.tradefed.result.LogFileSaver;
 import com.android.tradefed.result.TestSummary;
+import com.android.tradefed.result.suite.SuiteResultReporter;
 import com.android.tradefed.util.FileUtil;
 import com.android.tradefed.util.StreamUtil;
 import com.android.tradefed.util.TimeUtil;
@@ -447,10 +449,24 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void putSummary(List<TestSummary> summaries) {
-        // This is safe to be invoked on either the master or a shard ResultReporter,
-        // but the value added to the report will be that of the master ResultReporter.
-        if (summaries.size() > 0) {
-            mReferenceUrl = summaries.get(0).getSummary().getString();
+        for (TestSummary summary : summaries) {
+            // If one summary is from SuiteResultReporter, log it as an extra file.
+            if (SuiteResultReporter.SUITE_REPORTER_SOURCE.equals(summary.getSource())) {
+                File summaryFile = null;
+                try {
+                    summaryFile = FileUtil.createTempFile("summary", ".txt");
+                    FileUtil.writeToFile(summary.getSummary().getString(), summaryFile);
+                    try (InputStreamSource stream = new FileInputStreamSource(summaryFile)) {
+                        testLog("summary", LogDataType.TEXT, stream);
+                    }
+                } catch (IOException e) {
+                    CLog.e(e);
+                } finally {
+                    FileUtil.deleteFile(summaryFile);
+                }
+            } else if (mReferenceUrl == null && summary.getSummary().getString() != null) {
+                mReferenceUrl = summary.getSummary().getString();
+            }
         }
     }
 
