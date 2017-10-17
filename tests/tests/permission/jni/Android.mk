@@ -32,6 +32,6 @@ LOCAL_SDK_VERSION := 23
 LOCAL_CPPFLAGS := -std=gnu++11
 LOCAL_NDK_STL_VARIANT := c++_static
 
-LOCAL_CFLAGS := -Wno-unused-parameter
+LOCAL_CFLAGS := -Wno-unused-parameter -Wall -Werror
 
 include $(BUILD_SHARED_LIBRARY)
