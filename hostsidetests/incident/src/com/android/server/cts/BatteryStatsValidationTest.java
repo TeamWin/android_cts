@@ -289,12 +289,12 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         installPackage(DEVICE_SIDE_TEST_APK, true);
 
         // Background test.
-        executeBackground(ACTION_BLE_SCAN_UNOPTIMIZED, 30_000);
+        executeBackground(ACTION_BLE_SCAN_UNOPTIMIZED, 40_000);
         assertValueRange("blem", "", 5, 1, 1); // ble_scan_count
         assertValueRange("blem", "", 6, 1, 1); // ble_scan_count_bg
 
         // Foreground test.
-        executeForeground(ACTION_BLE_SCAN_UNOPTIMIZED, 30_000);
+        executeForeground(ACTION_BLE_SCAN_UNOPTIMIZED, 40_000);
         assertValueRange("blem", "", 5, 2, 2); // ble_scan_count
         assertValueRange("blem", "", 6, 1, 1); // ble_scan_count_bg
 
@@ -314,7 +314,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         final int maxTime = 3000; // max single scan time in ms
 
         // Optimized - Background.
-        executeBackground(ACTION_BLE_SCAN_OPTIMIZED, 30_000);
+        executeBackground(ACTION_BLE_SCAN_OPTIMIZED, 40_000);
         assertValueRange("blem", "", 7, 1*minTime, 1*maxTime); // actualTime
         assertValueRange("blem", "", 8, 1*minTime, 1*maxTime); // actualTimeBg
         assertValueRange("blem", "", 11, 0, 0); // unoptimizedScanTotalTime
@@ -323,7 +323,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         assertValueRange("blem", "", 14, 0, 0); // unoptimizedScanMaxTimeBg
 
         // Optimized - Foreground.
-        executeForeground(ACTION_BLE_SCAN_OPTIMIZED, 30_000);
+        executeForeground(ACTION_BLE_SCAN_OPTIMIZED, 40_000);
         assertValueRange("blem", "", 7, 2*minTime, 2*maxTime); // actualTime
         assertValueRange("blem", "", 8, 1*minTime, 1*maxTime); // actualTimeBg
         assertValueRange("blem", "", 11, 0, 0); // unoptimizedScanTotalTime
@@ -332,7 +332,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         assertValueRange("blem", "", 14, 0, 0); // unoptimizedScanMaxTimeBg
 
         // Unoptimized - Background.
-        executeBackground(ACTION_BLE_SCAN_UNOPTIMIZED, 30_000);
+        executeBackground(ACTION_BLE_SCAN_UNOPTIMIZED, 40_000);
         assertValueRange("blem", "", 7, 3*minTime, 3*maxTime); // actualTime
         assertValueRange("blem", "", 8, 2*minTime, 2*maxTime); // actualTimeBg
         assertValueRange("blem", "", 11, 1*minTime, 1*maxTime); // unoptimizedScanTotalTime
@@ -341,7 +341,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         assertValueRange("blem", "", 14, 1*minTime, 1*maxTime); // unoptimizedScanMaxTimeBg
 
         // Unoptimized - Foreground.
-        executeForeground(ACTION_BLE_SCAN_UNOPTIMIZED, 30_000);
+        executeForeground(ACTION_BLE_SCAN_UNOPTIMIZED, 40_000);
         assertValueRange("blem", "", 7, 4*minTime, 4*maxTime); // actualTime
         assertValueRange("blem", "", 8, 2*minTime, 2*maxTime); // actualTimeBg
         assertValueRange("blem", "", 11, 2*minTime, 2*maxTime); // unoptimizedScanTotalTime
