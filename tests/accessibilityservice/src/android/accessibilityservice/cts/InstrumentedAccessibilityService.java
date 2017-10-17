@@ -22,11 +22,15 @@ import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 
 public class InstrumentedAccessibilityService extends AccessibilityService {
+
+    private static final boolean DEBUG = false;
+
     // Match com.android.server.accessibility.AccessibilityManagerService#COMPONENT_NAME_SEPARATOR
     private static final String COMPONENT_NAME_SEPARATOR = ":";
 
-    private static final int TIMEOUT_SERVICE_ENABLE = 10000;
-    private static final int TIMEOUT_SERVICE_PERFORM_SYNC = 5000;
+    // Timeout disabled in #DEBUG mode to prevent breakpoint-related failures
+    private static final int TIMEOUT_SERVICE_ENABLE = DEBUG ? Integer.MAX_VALUE : 10000;
+    private static final int TIMEOUT_SERVICE_PERFORM_SYNC = DEBUG ? Integer.MAX_VALUE : 5000;
 
     private static final HashMap<Class, WeakReference<InstrumentedAccessibilityService>>
             sInstances = new HashMap<>();
