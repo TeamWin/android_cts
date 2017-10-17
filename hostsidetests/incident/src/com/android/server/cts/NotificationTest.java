@@ -18,9 +18,9 @@ package com.android.server.cts;
 
 import android.service.notification.NotificationRecordProto;
 import android.service.notification.NotificationServiceDumpProto;
-import android.service.notification.State;
-import android.service.notification.ZenMode;
+import android.service.notification.NotificationRecordProto.State;
 import android.service.notification.ZenModeProto;
+import android.service.notification.ZenModeProto.ZenMode;
 
 /**
  * Test to check that the notification service properly outputs its dump state.

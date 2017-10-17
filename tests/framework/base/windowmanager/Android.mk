@@ -31,7 +31,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     platform-test-annotations \
     cts-amwm-util
 
-LOCAL_COMPATIBILITY_SUITE := cts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 LOCAL_SDK_VERSION := test_current
 

@@ -24,7 +24,14 @@ import static android.autofillservice.cts.CheckoutActivity.ID_CC_NUMBER;
 import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_PASSWORD_LABEL;
 import static android.autofillservice.cts.Helper.ID_USERNAME;
+import static android.autofillservice.cts.Helper.NULL_DATASET_ID;
+import static android.autofillservice.cts.Helper.assertDeprecatedClientState;
+import static android.autofillservice.cts.Helper.assertFillEventForAuthenticationSelected;
+import static android.autofillservice.cts.Helper.assertFillEventForDatasetAuthenticationSelected;
+import static android.autofillservice.cts.Helper.assertFillEventForDatasetSelected;
+import static android.autofillservice.cts.Helper.assertFillEventForSaveShown;
 import static android.autofillservice.cts.Helper.assertNoDanglingSessions;
+import static android.autofillservice.cts.Helper.assertNoDeprecatedClientState;
 import static android.autofillservice.cts.Helper.assertNumberOfChildren;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.assertTextIsSanitized;
@@ -39,10 +46,6 @@ import static android.autofillservice.cts.LoginActivity.AUTHENTICATION_MESSAGE;
 import static android.autofillservice.cts.LoginActivity.BACKDOOR_USERNAME;
 import static android.autofillservice.cts.LoginActivity.ID_USERNAME_CONTAINER;
 import static android.autofillservice.cts.LoginActivity.getWelcomeMessage;
-import static android.service.autofill.FillEventHistory.Event.TYPE_AUTHENTICATION_SELECTED;
-import static android.service.autofill.FillEventHistory.Event.TYPE_DATASET_AUTHENTICATION_SELECTED;
-import static android.service.autofill.FillEventHistory.Event.TYPE_DATASET_SELECTED;
-import static android.service.autofill.FillEventHistory.Event.TYPE_SAVE_SHOWN;
 import static android.service.autofill.FillRequest.FLAG_MANUAL_REQUEST;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_ADDRESS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_CREDIT_CARD;
@@ -3323,17 +3326,12 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.assertAutoFilled();
 
         // Verify fill selection
-        FillEventHistory selection = InstrumentedAutoFillService.peekInstance()
-                .getFillEventHistory();
-        assertThat(selection.getClientState().getCharSequence("clientStateKey")).isEqualTo(
-                "clientStateValue");
-
+        FillEventHistory selection =
+                InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+        assertDeprecatedClientState(selection, "clientStateKey", "clientStateValue");
         assertThat(selection.getEvents().size()).isEqualTo(1);
-        FillEventHistory.Event event = selection.getEvents().get(0);
-        assertThat(event.getType()).isEqualTo(TYPE_DATASET_AUTHENTICATION_SELECTED);
-        assertThat(event.getDatasetId()).isEqualTo("name");
-        assertThat(event.getClientState().getCharSequence("clientStateKey")).isEqualTo(
-                "clientStateValue");
+        assertFillEventForDatasetAuthenticationSelected(selection.getEvents().get(0), "name",
+                "clientStateKey", "clientStateValue");
     }
 
     @Test
@@ -3368,17 +3366,12 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sUiBot.assertDatasets("dataset");
 
         // Verify fill selection
-        FillEventHistory selection = InstrumentedAutoFillService.peekInstance()
-                .getFillEventHistory();
-        assertThat(selection.getClientState().getCharSequence("clientStateKey")).isEqualTo(
-                "clientStateValue");
-
+        FillEventHistory selection =
+                InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+        assertDeprecatedClientState(selection, "clientStateKey", "clientStateValue");
         assertThat(selection.getEvents().size()).isEqualTo(1);
-        FillEventHistory.Event event = selection.getEvents().get(0);
-        assertThat(event.getType()).isEqualTo(TYPE_AUTHENTICATION_SELECTED);
-        assertThat(event.getDatasetId()).isNull();
-        assertThat(event.getClientState().getCharSequence("clientStateKey")).isEqualTo(
-                "clientStateValue");
+        assertFillEventForAuthenticationSelected(selection.getEvents().get(0), NULL_DATASET_ID,
+                "clientStateKey", "clientStateValue");
     }
 
     @Test
@@ -3409,15 +3402,10 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             // Verify fill selection
             FillEventHistory selection = InstrumentedAutoFillService.peekInstance()
                     .getFillEventHistory();
-            assertThat(selection.getClientState().getCharSequence("clientStateKey")).isEqualTo(
-                    "Value1");
-
+            assertDeprecatedClientState(selection, "clientStateKey", "Value1");
             assertThat(selection.getEvents().size()).isEqualTo(1);
-            FillEventHistory.Event event = selection.getEvents().get(0);
-            assertThat(event.getType()).isEqualTo(TYPE_DATASET_SELECTED);
-            assertThat(event.getDatasetId()).isNull();
-            assertThat(event.getClientState().getCharSequence("clientStateKey")).isEqualTo(
-                    "Value1");
+            assertFillEventForDatasetSelected(selection.getEvents().get(0), NULL_DATASET_ID,
+                    "clientStateKey", "Value1");
         }
 
         // Set up second partition with a named dataset
@@ -3451,15 +3439,9 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             // Verify fill selection
             FillEventHistory selection = InstrumentedAutoFillService.peekInstance()
                     .getFillEventHistory();
-            assertThat(selection.getClientState().getCharSequence("clientStateKey")).isEqualTo(
-                    "Value2");
-
-            assertThat(selection.getEvents().size()).isEqualTo(1);
-            FillEventHistory.Event event = selection.getEvents().get(0);
-            assertThat(event.getType()).isEqualTo(TYPE_DATASET_SELECTED);
-            assertThat(event.getDatasetId()).isEqualTo("name3");
-            assertThat(event.getClientState().getCharSequence("clientStateKey")).isEqualTo(
-                    "Value2");
+            assertDeprecatedClientState(selection, "clientStateKey", "Value2");
+            assertFillEventForDatasetSelected(selection.getEvents().get(0), "name3",
+                    "clientStateKey", "Value2");
         }
 
         mActivity.onPassword((v) -> v.setText("new password"));
@@ -3470,21 +3452,13 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             // Verify fill selection
             FillEventHistory selection = InstrumentedAutoFillService.peekInstance()
                     .getFillEventHistory();
-            assertThat(selection.getClientState().getCharSequence("clientStateKey")).isEqualTo(
-                    "Value2");
+            assertDeprecatedClientState(selection, "clientStateKey", "Value2");
 
             assertThat(selection.getEvents().size()).isEqualTo(2);
-            FillEventHistory.Event event1 = selection.getEvents().get(0);
-            assertThat(event1.getType()).isEqualTo(TYPE_DATASET_SELECTED);
-            assertThat(event1.getDatasetId()).isEqualTo("name3");
-            assertThat(event1.getClientState().getCharSequence("clientStateKey")).isEqualTo(
-                    "Value2");
-
-            FillEventHistory.Event event2 = selection.getEvents().get(1);
-            assertThat(event2.getType()).isEqualTo(TYPE_SAVE_SHOWN);
-            assertThat(event2.getDatasetId()).isNull();
-            assertThat(event2.getClientState().getCharSequence("clientStateKey")).isEqualTo(
-                    "Value2");
+            assertFillEventForDatasetSelected(selection.getEvents().get(0), "name3",
+                    "clientStateKey", "Value2");
+            assertFillEventForSaveShown(selection.getEvents().get(1), NULL_DATASET_ID,
+                    "clientStateKey", "Value2");
         }
     }
 
@@ -3511,13 +3485,9 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             // Verify fill selection
             FillEventHistory selection = InstrumentedAutoFillService.peekInstance()
                     .getFillEventHistory();
-            assertThat(selection.getClientState()).isNull();
-
+            assertNoDeprecatedClientState(selection);
             assertThat(selection.getEvents().size()).isEqualTo(1);
-            FillEventHistory.Event event = selection.getEvents().get(0);
-            assertThat(event.getType()).isEqualTo(TYPE_DATASET_SELECTED);
-            assertThat(event.getDatasetId()).isNull();
-            assertThat(event.getClientState()).isNull();
+            assertFillEventForDatasetSelected(selection.getEvents().get(0), NULL_DATASET_ID);
         }
 
         // Second request
@@ -3558,13 +3528,9 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             // Verify fill selection
             FillEventHistory selection = InstrumentedAutoFillService.peekInstance()
                     .getFillEventHistory();
-            assertThat(selection.getClientState()).isNull();
-
+            assertNoDeprecatedClientState(selection);
             assertThat(selection.getEvents().size()).isEqualTo(1);
-            FillEventHistory.Event event = selection.getEvents().get(0);
-            assertThat(event.getType()).isEqualTo(TYPE_DATASET_SELECTED);
-            assertThat(event.getDatasetId()).isNull();
-            assertThat(event.getClientState()).isNull();
+            assertFillEventForDatasetSelected(selection.getEvents().get(0), NULL_DATASET_ID);
         }
 
         // Second request
@@ -3605,13 +3571,9 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             // Verify fill selection
             FillEventHistory selection = InstrumentedAutoFillService.peekInstance()
                     .getFillEventHistory();
-            assertThat(selection.getClientState()).isNull();
-
+            assertNoDeprecatedClientState(selection);
             assertThat(selection.getEvents().size()).isEqualTo(1);
-            FillEventHistory.Event event = selection.getEvents().get(0);
-            assertThat(event.getType()).isEqualTo(TYPE_DATASET_SELECTED);
-            assertThat(event.getDatasetId()).isNull();
-            assertThat(event.getClientState()).isNull();
+            assertFillEventForDatasetSelected(selection.getEvents().get(0), NULL_DATASET_ID);
         }
 
         // Second request
@@ -3665,7 +3627,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Verify fill selection for Activity A
         FillEventHistory selectionA = InstrumentedAutoFillService.peekInstance()
                 .getFillEventHistory();
-        assertThat(selectionA.getClientState().getString("activity")).isEqualTo("A");
+        assertDeprecatedClientState(selectionA, "activity", "A");
         assertThat(selectionA.getEvents()).isNull();
 
         // Launch activity B
@@ -3685,7 +3647,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Verify fill selection for Activity B
         final FillEventHistory selectionB = InstrumentedAutoFillService.peekInstance()
                 .getFillEventHistory();
-        assertThat(selectionB.getClientState().getString("activity")).isEqualTo("B");
+        assertDeprecatedClientState(selectionB, "activity", "B");
         assertThat(selectionB.getEvents()).isNull();
 
         // Now switch back to A...
@@ -3705,9 +3667,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Finally, make sure history is right
         final FillEventHistory finalSelection = InstrumentedAutoFillService.peekInstance()
                 .getFillEventHistory();
-        assertThat(finalSelection.getClientState().getString("activity")).isEqualTo("B");
+        assertDeprecatedClientState(finalSelection, "activity", "B");
         assertThat(finalSelection.getEvents()).isNull();
-
     }
 
     @Test
