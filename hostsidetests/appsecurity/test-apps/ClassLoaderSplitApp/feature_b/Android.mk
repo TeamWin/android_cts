@@ -19,7 +19,7 @@ include $(CLEAR_VARS)
 
 LOCAL_USE_AAPT2 := true
 LOCAL_MODULE_TAGS := tests
-LOCAL_COMPATIBILITY_SUITE := cts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 LOCAL_PACKAGE_NAME := CtsClassloaderSplitAppFeatureB
 
 LOCAL_SRC_FILES := $(call all-subdir-java-files)
