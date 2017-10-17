@@ -533,7 +533,8 @@ public abstract class ActivityManagerTestBase {
 
     protected boolean isHandheld() {
         return !hasDeviceFeature("android.software.leanback")
-                && !hasDeviceFeature("android.hardware.type.watch");
+                && !hasDeviceFeature("android.hardware.type.watch")
+                && !hasDeviceFeature("android.hardware.type.embedded");
     }
 
     protected boolean supportsSplitScreenMultiWindow() {
