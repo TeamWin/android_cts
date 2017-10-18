@@ -32,7 +32,8 @@ LOCAL_C_INCLUDES := \
 LOCAL_CFLAGS := -DUNIX_ENV=1 -DqDNGBigEndian=0 -DqDNGThreadSafe=1 -DqDNGUseLibJPEG=1 -DqDNGUseXMP=0 -DqDNGValidate=1 -DqDNGValidateTarget=1 -DqAndroid=1 -fexceptions -Wsign-compare -Wno-reorder -Wframe-larger-than=20000
 
 # Flags to avoid warnings from DNG SDK
-LOCAL_CFLAGS += -Wno-unused-parameter
+LOCAL_CFLAGS += -Wall -Werror -Wno-unused-parameter
+LOCAL_CFLAGS += -Wno-unused-value -Wno-unused-variable
 
 LOCAL_STATIC_LIBRARIES := libdng_sdk_validate libjpeg_static_ndk
 LOCAL_SHARED_LIBRARIES := libandroid \
