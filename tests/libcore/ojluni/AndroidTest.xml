@@ -28,11 +28,13 @@
         <option name="test-file-name" value="CtsLibcoreOjTestCases.apk" />
     </target_preparer>
     <test class="com.android.compatibility.testtype.LibcoreTest" >
-        <!-- override AJUR -->
-        <option name="runner" value="com.android.cts.core.runner.CoreTestRunner" />
         <option name="package" value="android.libcore.cts.oj" />
-        <option name="instrumentation-arg" key="core-listener"
+        <option name="instrumentation-arg" key="runnerBuilder"
+                value="com.android.cts.core.runner.support.TestNgRunnerBuilder"/>
+        <option name="instrumentation-arg" key="listener"
                 value="com.android.cts.runner.CtsTestRunListener"/>
+        <option name="instrumentation-arg" key="filter"
+                value="com.android.cts.core.runner.ExpectationBasedFilter" />
         <option name="core-expectation" value="/knownfailures.txt" />
         <option name="core-expectation" value="/brokentests.txt" />
         <option name="core-expectation" value="/icebox.txt" />
