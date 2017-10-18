@@ -2308,19 +2308,19 @@ public class CameraTestUtils extends Assert {
          * string. Same rule applies to the rest of sub second tags.
          */
         int subSecTime = exif.getAttributeInt(ExifInterface.TAG_SUBSEC_TIME, /*defaultValue*/-1);
-        collector.expectTrue("Exif TAG_SUBSEC_TIME value is null or invalid!", subSecTime > 0);
+        collector.expectTrue("Exif TAG_SUBSEC_TIME value is null or invalid!", subSecTime >= 0);
 
         // TAG_SUBSEC_TIME_ORIG
         int subSecTimeOrig = exif.getAttributeInt(ExifInterface.TAG_SUBSEC_TIME_ORIG,
                 /*defaultValue*/-1);
         collector.expectTrue("Exif TAG_SUBSEC_TIME_ORIG value is null or invalid!",
-                subSecTimeOrig > 0);
+                subSecTimeOrig >= 0);
 
         // TAG_SUBSEC_TIME_DIG
         int subSecTimeDig = exif.getAttributeInt(ExifInterface.TAG_SUBSEC_TIME_DIG,
                 /*defaultValue*/-1);
         collector.expectTrue(
-                "Exif TAG_SUBSEC_TIME_DIG value is null or invalid!", subSecTimeDig > 0);
+                "Exif TAG_SUBSEC_TIME_DIG value is null or invalid!", subSecTimeDig >= 0);
 
         /**
          * TAG_GPS_DATESTAMP & TAG_GPS_TIMESTAMP.
