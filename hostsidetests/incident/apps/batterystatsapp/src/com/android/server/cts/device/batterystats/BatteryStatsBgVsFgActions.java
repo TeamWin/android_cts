@@ -174,9 +174,14 @@ public class BatteryStatsBgVsFgActions {
             Log.e(TAG, "Device does not support Bluetooth");
             return;
         }
+        boolean bluetoothEnabledByTest = false;
         if (!bluetoothAdapter.isEnabled()) {
-            Log.e(TAG, "Bluetooth is not enabled");
-            return;
+            if (!bluetoothAdapter.enable()) {
+                Log.e(TAG, "Bluetooth is not enabled");
+                return;
+            }
+            sleep(8_000);
+            bluetoothEnabledByTest = true;
         }
 
         BluetoothLeScanner bleScanner = bluetoothAdapter.getBluetoothLeScanner();
@@ -205,6 +210,11 @@ public class BatteryStatsBgVsFgActions {
         bleScanner.startScan(null, scanSettings, scanCallback);
         sleep(2_000);
         bleScanner.stopScan(scanCallback);
+
+        // Restore adapter state at end of test
+        if (bluetoothEnabledByTest) {
+            bluetoothAdapter.disable();
+        }
     }
 
     private static void doGpsUpdate(Context ctx, String requestCode) {
