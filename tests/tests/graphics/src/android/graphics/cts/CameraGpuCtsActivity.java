@@ -93,7 +93,7 @@ public class CameraGpuCtsActivity extends Activity {
 
     public void waitToFinishRendering() throws InterruptedException {
         // Wait long enough so that all frames are captured.
-        if (!mFinishedRendering.await(10, TimeUnit.SECONDS)) {
+        if (!mFinishedRendering.await(30, TimeUnit.SECONDS)) {
             throw new IllegalStateException("Coudn't finish drawing frames!");
         }
     }
