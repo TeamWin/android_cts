@@ -41,6 +41,8 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.Socket;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -117,6 +119,22 @@ public class StrictModeTest {
             Runtime.getRuntime().runFinalization();
         }
     }
+
+    @Test
+    public void testClassInstanceLimit() throws Exception {
+        StrictMode.setVmPolicy(
+                new StrictMode.VmPolicy.Builder()
+                        .setClassInstanceLimit(LimitedClass.class, 1)
+                        .build());
+        List<LimitedClass> references = new ArrayList<>();
+        assertNoViolation(() -> references.add(new LimitedClass()));
+        references.add(new LimitedClass());
+        inspectViolation(
+                StrictMode::conditionallyCheckInstanceCounts,
+                info -> assertPolicy(info, StrictMode.DETECT_VM_INSTANCE_LEAKS));
+    }
+
+    private static final class LimitedClass {}
 
     /** Insecure connection should be detected */
     @Test
