@@ -39,30 +39,35 @@ import java.util.regex.Pattern;
 public class ImageTransformationTest {
 
     @Test
+    @SuppressWarnings("deprecation")
     public void testAllNullBuilder() {
         assertThrows(NullPointerException.class,
                 () ->  new ImageTransformation.Builder(null, null, 0));
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void testNullAutofillIdBuilder() {
         assertThrows(NullPointerException.class,
                 () ->  new ImageTransformation.Builder(null, Pattern.compile(""), 1));
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void testNullRegexBuilder() {
         assertThrows(NullPointerException.class,
                 () ->  new ImageTransformation.Builder(new AutofillId(1), null, 1));
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void testNullSubstBuilder() {
         assertThrows(IllegalArgumentException.class,
                 () ->  new ImageTransformation.Builder(new AutofillId(1), Pattern.compile(""), 0));
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void fieldCannotBeFound() throws Exception {
         AutofillId unknownId = new AutofillId(42);
 
@@ -82,6 +87,7 @@ public class ImageTransformationTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void theOneOptionsMatches() throws Exception {
         AutofillId id = new AutofillId(1);
         ImageTransformation trans = new ImageTransformation
@@ -117,6 +123,7 @@ public class ImageTransformationTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void noOptionsMatches() throws Exception {
         AutofillId id = new AutofillId(1);
         ImageTransformation trans = new ImageTransformation
@@ -134,6 +141,7 @@ public class ImageTransformationTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void multipleOptionsOneMatches() throws Exception {
         AutofillId id = new AutofillId(1);
         ImageTransformation trans = new ImageTransformation
@@ -171,6 +179,7 @@ public class ImageTransformationTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void twoOptionsMatch() throws Exception {
         AutofillId id = new AutofillId(1);
         ImageTransformation trans = new ImageTransformation

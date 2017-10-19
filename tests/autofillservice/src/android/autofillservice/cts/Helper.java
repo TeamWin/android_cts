@@ -69,6 +69,7 @@ final class Helper {
     static final String ID_PASSWORD = "password";
     static final String ID_LOGIN = "login";
     static final String ID_OUTPUT = "output";
+    static final String ID_STATIC_TEXT = "static_text";
 
     public static final String NULL_DATASET_ID = null;
 
