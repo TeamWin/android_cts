@@ -491,7 +491,6 @@ class ActivityManagerState {
         String mOrigActivity;
         ArrayList<Activity> mActivities = new ArrayList<>();
         int mTaskType = -1;
-        int mReturnToType = -1;
         private int mResizeMode;
 
         ActivityTask(TaskRecordProto proto) {
@@ -502,7 +501,6 @@ class ActivityManagerState {
             mRealActivity = proto.realActivity;
             mOrigActivity = proto.origActivity;
             mTaskType = proto.activityType;
-            mReturnToType = proto.returnToType;
             mResizeMode = proto.resizeMode;
             mFullscreen = proto.fullscreen;
             mBounds = extract(proto.bounds);
