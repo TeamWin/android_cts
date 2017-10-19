@@ -19,6 +19,7 @@ LOCAL_STATIC_LIBRARIES += \
   libbacktrace_offline \
   libbacktrace \
   libunwind \
+  libunwindstack \
   libziparchive \
   libz \
   libgtest \
