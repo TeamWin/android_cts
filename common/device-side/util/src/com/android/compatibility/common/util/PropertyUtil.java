@@ -32,10 +32,16 @@ public class PropertyUtil {
      * shipped. Property should be undefined for factory ROM products.
      */
     public static final String FIRST_API_LEVEL = "ro.product.first_api_level";
+    private static final String BUILD_TYPE_PROPERTY = "ro.build.type";
     private static final String TAG_DEV_KEYS = "dev-keys";
 
     /** Value to be returned by getPropertyInt() if property is not found */
     public static int INT_VALUE_IF_UNSET = -1;
+
+    /** Returns whether the device build is a user build */
+    public static boolean isUserBuild() {
+        return propertyEquals(BUILD_TYPE_PROPERTY, "user");
+    }
 
     /** Returns whether the device build is the factory ROM */
     public static boolean isFactoryROM() {
