@@ -43,8 +43,5 @@
         android:name="android.support.test.runner.AndroidJUnitRunner"
         android:label="JobScheduler device-side tests"
         android:targetPackage="android.jobscheduler.cts" >
-        <meta-data
-            android:name="listener"
-            android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
 </manifest>
