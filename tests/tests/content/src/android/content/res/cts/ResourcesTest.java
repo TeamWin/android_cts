@@ -31,6 +31,7 @@ import android.content.res.Resources;
 import android.content.res.Resources.NotFoundException;
 import android.content.res.TypedArray;
 import android.content.res.XmlResourceParser;
+import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.graphics.drawable.AdaptiveIconDrawable;
 import android.graphics.drawable.ColorDrawable;
@@ -786,6 +787,40 @@ public class ResourcesTest extends AndroidTestCase {
 
         assertNotNull(font);
         assertNotSame(Typeface.DEFAULT, font);
+    }
+
+    private Typeface getLargerTypeface(String text, Typeface typeface1, Typeface typeface2) {
+        Paint p1 = new Paint();
+        p1.setTypeface(typeface1);
+        float width1 = p1.measureText(text);
+        Paint p2 = new Paint();
+        p2.setTypeface(typeface2);
+        float width2 = p2.measureText(text);
+
+        if (width1 > width2) {
+            return typeface1;
+        } else if (width1 < width2) {
+            return typeface2;
+        } else {
+            fail("The widths of the text should not be the same");
+            return null;
+        }
+    }
+
+    public void testGetFont_xmlFileWithTtc() {
+        // Here we test that building typefaces by indexing in font collections works correctly.
+        // We want to ensure that the built typefaces correspond to the fonts with the right index.
+        // sample_font_collection.ttc contains two fonts (with indices 0 and 1). The first one has
+        // glyph "a" of 3em width, and all the other glyphs 1em. The second one has glyph "b" of
+        // 3em width, and all the other glyphs 1em. Hence, we can compare the width of these
+        // glyphs to assert that ttc indexing works.
+        Typeface normalFont = mResources.getFont(R.font.sample_ttc_family);
+        assertNotNull(normalFont);
+        Typeface italicFont = Typeface.create(normalFont, Typeface.ITALIC);
+        assertNotNull(italicFont);
+
+        assertEquals(getLargerTypeface("a", normalFont, italicFont), normalFont);
+        assertEquals(getLargerTypeface("b", normalFont, italicFont), italicFont);
     }
 
     public void testGetFont_invalidXmlFile() {
