@@ -54,8 +54,9 @@ my_bionic_testlib_files := \
   libtest_check_order_reloc_siblings_f.so \
   libtest_check_order_reloc_siblings.so \
   libtest_check_rtld_next_from_library.so \
-  libtest_dlopen_from_ctor_main.so \
+  libtest_dlopen_df_1_global.so \
   libtest_dlopen_from_ctor.so \
+  libtest_dlopen_from_ctor_main.so \
   libtest_dlopen_weak_undefined_func.so \
   libtest_dlsym_df_1_global.so \
   libtest_dlsym_from_this_child.so \
