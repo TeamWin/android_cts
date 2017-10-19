@@ -73,6 +73,12 @@ final class Helper {
 
     public static final String NULL_DATASET_ID = null;
 
+    /**
+     * Can be used in cases where the autofill values is required by irrelevant (like adding a
+     * value to an authenticated dataset).
+     */
+    public static final String UNUSED_AUTOFILL_VALUE = null;
+
     private static final String CMD_LIST_SESSIONS = "cmd autofill list sessions";
 
     /**
