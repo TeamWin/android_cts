@@ -92,6 +92,37 @@ static bool wrong_arch(const std::string& library, const std::string& err) {
   return err.find("dlopen failed: \"" + library + "\" has unexpected e_machine: ") == 0;
 }
 
+// copied from system/core/base/strings.cpp; libbase isn't available here
+static std::vector<std::string> split(const std::string& s,
+                               const std::string& delimiters) {
+  std::vector<std::string> result;
+
+  size_t base = 0;
+  size_t found;
+  while (true) {
+    found = s.find_first_of(delimiters, base);
+    result.push_back(s.substr(base, found - base));
+    if (found == s.npos) break;
+    base = found + 1;
+  }
+
+  return result;
+}
+
+static bool in_ld_preload(const std::string& path) {
+  static const char* ld_preload = getenv("LD_PRELOAD");
+  if (ld_preload != nullptr) {
+    // ' ' has also been allowed in LD_PRELOAD as well as ':'
+    std::vector<std::string> ld_preload_names =split(ld_preload, " :");
+    auto result = std::find_if(ld_preload_names.begin(), ld_preload_names.end(),
+                               [&path](const std::string& s) {
+                                 return s == path || s == std::string(basename(path.c_str()));
+                               });
+    return result != ld_preload_names.end();
+  }
+  return false;
+}
+
 static bool check_lib(const std::string& path,
                       const std::string& library_path,
                       const std::unordered_set<std::string>& libraries,
@@ -113,8 +144,12 @@ static bool check_lib(const std::string& path,
       return false;
     }
   } else if (handle.get() != nullptr) {
-    errors->push_back("The library \"" + path + "\" is not a public library but it loaded.");
-    return false;
+    // LD_PRELOAD libs are shared to the classloader-namespace. So, access to
+    // the lib is okay even when the lib is not a public library.
+    if (!in_ld_preload(path)) {
+      errors->push_back("The library \"" + path + "\" is not a public library but it loaded.");
+      return false;
+    }
   } else { // (handle == nullptr && !shouldBeAccessible(path))
     // Check the error message
     std::string err = dlerror();
