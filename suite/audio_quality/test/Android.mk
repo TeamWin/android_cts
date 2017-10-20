@@ -33,7 +33,8 @@ LOCAL_STATIC_LIBRARIES := \
 # need to keep everything in libcts_.. Otherwise, linker will drop some
 # functions and linker error happens
 LOCAL_WHOLE_STATIC_LIBRARIES := libcts_audio_quality
-LOCAL_CFLAGS:= -g -fno-exceptions -Wno-unused-parameter
+LOCAL_CFLAGS := -g -fno-exceptions -Wall -Werror
+LOCAL_CFLAGS += -Wno-unused-parameter -Wno-unused-variable
 LOCAL_LDFLAGS:= -g -lrt -ldl -lm -fno-exceptions -lpthread
 LOCAL_CXX_STL := libc++_static
 LOCAL_MODULE_HOST_OS := linux
