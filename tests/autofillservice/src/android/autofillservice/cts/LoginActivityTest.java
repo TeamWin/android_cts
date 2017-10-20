@@ -3873,7 +3873,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         final ViewNode username = findNodeByResourceId(request.structure, ID_USERNAME);
         assertThat(username.getMinTextEms()).isEqualTo(2);
         assertThat(username.getMaxTextEms()).isEqualTo(5);
-        assertThat(username.getMaxTextLength()).isEqualTo(10);
+        assertThat(username.getMaxTextLength()).isEqualTo(25);
 
         final ViewNode container = findNodeByResourceId(request.structure, ID_USERNAME_CONTAINER);
         assertThat(container.getMinTextEms()).isEqualTo(-1);
