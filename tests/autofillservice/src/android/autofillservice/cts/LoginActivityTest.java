@@ -25,6 +25,7 @@ import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_PASSWORD_LABEL;
 import static android.autofillservice.cts.Helper.ID_USERNAME;
 import static android.autofillservice.cts.Helper.NULL_DATASET_ID;
+import static android.autofillservice.cts.Helper.UNUSED_AUTOFILL_VALUE;
 import static android.autofillservice.cts.Helper.assertDeprecatedClientState;
 import static android.autofillservice.cts.Helper.assertFillEventForAuthenticationSelected;
 import static android.autofillservice.cts.Helper.assertFillEventForDatasetAuthenticationSelected;
@@ -336,6 +337,43 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         } else {
             sUiBot.selectDataset("THE DUDE");
         }
+
+        // Check the results.
+        mActivity.assertAutoFilled();
+    }
+
+    @Test
+    public void testAutoFillDatasetWithoutFieldIsIgnored() throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setField(ID_PASSWORD, "sweet")
+                        .setPresentation(createPresentation("The Dude"))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "DUDE")
+                        .setField(ID_PASSWORD, "SWEET")
+                        .build())
+                .build());
+        mActivity.expectAutoFill("dude", "sweet");
+
+        // Trigger auto-fill.
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+
+        // Make sure all datasets are available...
+        sUiBot.assertDatasets("The Dude");
+
+        // ... on all fields.
+        mActivity.onPassword(View::requestFocus);
+        sUiBot.assertDatasets("The Dude");
+
+        // Auto-fill it.
+        sUiBot.selectDataset("The Dude");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -2129,10 +2167,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     }
 
     private void datasetAuthTwoFields(boolean cancelFirstAttempt) throws Exception {
-        // TODO: current API requires these fields...
-        final RemoteViews bogusPresentation = createPresentation("Whatever man, I'm not used...");
-        final String bogusValue = "Y U REQUIRE IT?";
-
         // Set service.
         enableService();
         final MyAutofillCallback callback = mActivity.registerCallback();
@@ -2142,14 +2176,13 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 new CannedDataset.Builder()
                         .setField(ID_USERNAME, "dude")
                         .setField(ID_PASSWORD, "sweet")
-                        .setPresentation(bogusPresentation)
                         .build());
 
         // Configure the service behavior
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
-                        .setField(ID_USERNAME, bogusValue)
-                        .setField(ID_PASSWORD, bogusValue)
+                        .setField(ID_USERNAME, UNUSED_AUTOFILL_VALUE)
+                        .setField(ID_PASSWORD, UNUSED_AUTOFILL_VALUE)
                         .setPresentation(createPresentation("Tap to auth dataset"))
                         .setAuthentication(authentication)
                         .build())
@@ -2282,7 +2315,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 new CannedDataset.Builder()
                         .setField(ID_USERNAME, "dude")
                         .setField(ID_PASSWORD, "sweet")
-                        .setPresentation(createPresentation("Dataset"))
                         .build());
 
         // Configure the service behavior
@@ -2317,10 +2349,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
     @Test
     public void testDatasetAuthTwoDatasets() throws Exception {
-        // TODO: current API requires these fields...
-        final RemoteViews bogusPresentation = createPresentation("Whatever man, I'm not used...");
-        final String bogusValue = "Y U REQUIRE IT?";
-
         // Set service.
         enableService();
         final MyAutofillCallback callback = mActivity.registerCallback();
@@ -2329,7 +2357,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         final CannedDataset unlockedDataset = new CannedDataset.Builder()
                 .setField(ID_USERNAME, "dude")
                 .setField(ID_PASSWORD, "sweet")
-                .setPresentation(bogusPresentation)
                 .build();
         final IntentSender authentication1 = AuthenticationActivity.createSender(mContext, 1,
                 unlockedDataset);
@@ -2339,14 +2366,14 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Configure the service behavior
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
-                        .setField(ID_USERNAME, bogusValue)
-                        .setField(ID_PASSWORD, bogusValue)
+                        .setField(ID_USERNAME, UNUSED_AUTOFILL_VALUE)
+                        .setField(ID_PASSWORD, UNUSED_AUTOFILL_VALUE)
                         .setPresentation(createPresentation("Tap to auth dataset 1"))
                         .setAuthentication(authentication1)
                         .build())
                 .addDataset(new CannedDataset.Builder()
-                        .setField(ID_USERNAME, bogusValue)
-                        .setField(ID_PASSWORD, bogusValue)
+                        .setField(ID_USERNAME, UNUSED_AUTOFILL_VALUE)
+                        .setField(ID_PASSWORD, UNUSED_AUTOFILL_VALUE)
                         .setPresentation(createPresentation("Tap to auth dataset 2"))
                         .setAuthentication(authentication2)
                         .build())
@@ -2394,7 +2421,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 new CannedDataset.Builder()
                         .setField(ID_USERNAME, "dude")
                         .setField(ID_PASSWORD, "sweet")
-                        .setPresentation(createPresentation("Dataset"))
                         .build());
 
         // Configure the service behavior
@@ -2441,10 +2467,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
     @Test
     public void testDatasetAuthFiltering() throws Exception {
-        // TODO: current API requires these fields...
-        final RemoteViews bogusPresentation = createPresentation("Whatever man, I'm not used...");
-        final String bogusValue = "Y U REQUIRE IT?";
-
         // Set service.
         enableService();
         final MyAutofillCallback callback = mActivity.registerCallback();
@@ -2453,7 +2475,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         final CannedDataset unlockedDataset = new CannedDataset.Builder()
                 .setField(ID_USERNAME, "dude")
                 .setField(ID_PASSWORD, "sweet")
-                .setPresentation(bogusPresentation)
                 .build();
         final IntentSender authentication = AuthenticationActivity.createSender(mContext, 1,
                 unlockedDataset);
@@ -2461,8 +2482,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Configure the service behavior
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
-                        .setField(ID_USERNAME, bogusValue)
-                        .setField(ID_PASSWORD, bogusValue)
+                        .setField(ID_USERNAME, UNUSED_AUTOFILL_VALUE)
+                        .setField(ID_PASSWORD, UNUSED_AUTOFILL_VALUE)
                         .setPresentation(createPresentation("Tap to auth dataset"))
                         .setAuthentication(authentication)
                         .build())
@@ -2503,10 +2524,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
     @Test
     public void testDatasetAuthFilteringUsingRegex() throws Exception {
-        // TODO: current API requires these fields...
-        final RemoteViews bogusPresentation = createPresentation("Whatever man, I'm not used...");
-        final String bogusValue = "Y U REQUIRE IT?";
-
         // Set service.
         enableService();
         final MyAutofillCallback callback = mActivity.registerCallback();
@@ -2515,7 +2532,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         final CannedDataset unlockedDataset = new CannedDataset.Builder()
                 .setField(ID_USERNAME, "dude")
                 .setField(ID_PASSWORD, "sweet")
-                .setPresentation(bogusPresentation)
                 .build();
         final IntentSender authentication = AuthenticationActivity.createSender(mContext, 1,
                 unlockedDataset);
@@ -2525,8 +2541,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         final Pattern min2Chars = Pattern.compile(".{2,}");
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
-                        .setField(ID_USERNAME, bogusValue, min2Chars)
-                        .setField(ID_PASSWORD, bogusValue)
+                        .setField(ID_USERNAME, UNUSED_AUTOFILL_VALUE, min2Chars)
+                        .setField(ID_PASSWORD, UNUSED_AUTOFILL_VALUE)
                         .setPresentation(createPresentation("Tap to auth dataset"))
                         .setAuthentication(authentication)
                         .build())
@@ -2585,10 +2601,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     }
 
     private void datasetAuthMixedFilteringTest(boolean selectAuth) throws Exception {
-        // TODO: current API requires these fields...
-        final RemoteViews bogusPresentation = createPresentation("Whatever man, I'm not used...");
-        final String bogusValue = "Y U REQUIRE IT?";
-
         // Set service.
         enableService();
         final MyAutofillCallback callback = mActivity.registerCallback();
@@ -2597,7 +2609,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         final CannedDataset unlockedDataset = new CannedDataset.Builder()
                 .setField(ID_USERNAME, "DUDE")
                 .setField(ID_PASSWORD, "SWEET")
-                .setPresentation(bogusPresentation)
                 .build();
         final IntentSender authentication = AuthenticationActivity.createSender(mContext, 1,
                 unlockedDataset);
@@ -2605,8 +2616,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Configure the service behavior
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
-                        .setField(ID_USERNAME, bogusValue)
-                        .setField(ID_PASSWORD, bogusValue)
+                        .setField(ID_USERNAME, UNUSED_AUTOFILL_VALUE)
+                        .setField(ID_PASSWORD, UNUSED_AUTOFILL_VALUE)
                         .setPresentation(createPresentation("Tap to auth dataset"))
                         .setAuthentication(authentication)
                         .build())
@@ -2679,11 +2690,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     }
 
     private void fillDatasetAuthWithClientState(ClientStateLocation where) throws Exception {
-
-        // TODO: current API requires these fields...
-        final RemoteViews bogusPresentation = createPresentation("Whatever man, I'm not used...");
-        final String bogusValue = "Y U REQUIRE IT?";
-
         // Set service.
         enableService();
 
@@ -2691,7 +2697,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         final CannedDataset dataset = new CannedDataset.Builder()
                 .setField(ID_USERNAME, "dude")
                 .setField(ID_PASSWORD, "sweet")
-                .setPresentation(bogusPresentation)
                 .build();
         final IntentSender authentication = where == ClientStateLocation.FILL_RESPONSE_ONLY
                 ? AuthenticationActivity.createSender(mContext, 1,
@@ -2704,8 +2709,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
                 .setExtras(newClientState("CSI", "FromResponse"))
                 .addDataset(new CannedDataset.Builder()
-                        .setField(ID_USERNAME, bogusValue)
-                        .setField(ID_PASSWORD, bogusValue)
+                        .setField(ID_USERNAME, UNUSED_AUTOFILL_VALUE)
+                        .setField(ID_PASSWORD, UNUSED_AUTOFILL_VALUE)
                         .setPresentation(createPresentation("Tap to auth dataset"))
                         .setAuthentication(authentication)
                         .build())

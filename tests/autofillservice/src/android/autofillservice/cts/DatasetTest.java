@@ -54,8 +54,8 @@ public class DatasetTest {
 
     @Test
     public void testBuilder_setValueWithoutPresentation() {
-        final Dataset.Builder builder = new Dataset.Builder();
-        assertThrows(IllegalStateException.class, () -> builder.setValue(mId, mValue));
+        // Just assert that it builds without throwing an exception.
+        assertThat(new Dataset.Builder().setValue(mId, mValue).build()).isNotNull();
     }
 
     @Test
@@ -87,7 +87,7 @@ public class DatasetTest {
     }
 
     @Test
-    public void testBuilder_setFilteredValueWithPresentationWithoutPresentation() {
+    public void testBuilder_setFilteredValueWithoutPresentation() {
         final Dataset.Builder builder = new Dataset.Builder();
         assertThrows(IllegalStateException.class, () -> builder.setValue(mId, mValue, mFilter));
     }
