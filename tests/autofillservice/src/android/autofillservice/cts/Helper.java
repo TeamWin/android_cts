@@ -1005,6 +1005,14 @@ final class Helper {
         } else {
             assertClientState(event, clientState, key, value);
         }
+        assertWithMessage("Event '%s' should not have selected datasets", event)
+                .that(event.getSelectedDatasetIds()).isEmpty();
+        assertWithMessage("Event '%s' should not have ignored datasets", event)
+                .that(event.getIgnoredDatasetIds()).isEmpty();
+        assertWithMessage("Event '%s' should not have changed fields", event)
+                .that(event.getChangedFields()).isEmpty();
+        assertWithMessage("Event '%s' should not have manually-entered fields", event)
+                .that(event.getManuallyEnteredField()).isEmpty();
     }
 
     /**

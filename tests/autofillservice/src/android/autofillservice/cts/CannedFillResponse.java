@@ -77,7 +77,8 @@ final class CannedFillResponse {
     private final String[] mIgnoredIds;
     private final int mNegativeActionStyle;
     private final IntentSender mNegativeActionListener;
-    private final int mFlags;
+    private final int mSaveInfoFlags;
+    private final int mFillResponseFlags;
     private final AutofillId mSaveTriggerId;
 
     private CannedFillResponse(Builder builder) {
@@ -98,7 +99,8 @@ final class CannedFillResponse {
         mNegativeActionStyle = builder.mNegativeActionStyle;
         mNegativeActionListener = builder.mNegativeActionListener;
         mSanitizers = builder.mSanitizers;
-        mFlags = builder.mFlags;
+        mSaveInfoFlags = builder.mSaveInfoFlags;
+        mFillResponseFlags = builder.mFillResponseFlags;
         mSaveTriggerId = builder.mSaveTriggerId;
     }
 
@@ -129,7 +131,8 @@ final class CannedFillResponse {
      * structure.
      */
     FillResponse asFillResponse(Function<String, ViewNode> nodeResolver) {
-        final FillResponse.Builder builder = new FillResponse.Builder();
+        final FillResponse.Builder builder = new FillResponse.Builder()
+                .setFlags(mFillResponseFlags);
         if (mDatasets != null) {
             for (CannedDataset cannedDataset : mDatasets) {
                 final Dataset dataset = cannedDataset.asDataset(nodeResolver);
@@ -144,7 +147,7 @@ final class CannedFillResponse {
                             : new SaveInfo.Builder(mSaveType,
                                     getAutofillIds(nodeResolver, mRequiredSavableIds));
 
-            saveInfo.setFlags(mFlags);
+            saveInfo.setFlags(mSaveInfoFlags);
 
             if (mValidator != null) {
                 saveInfo.setValidator(mValidator);
@@ -188,7 +191,8 @@ final class CannedFillResponse {
                 + ",datasets=" + mDatasets
                 + ", requiredSavableIds=" + Arrays.toString(mRequiredSavableIds)
                 + ", optionalSavableIds=" + Arrays.toString(mOptionalSavableIds)
-                + ", flags=" + mFlags
+                + ", saveInfoFlags=" + mSaveInfoFlags
+                + ", fillResponseFlags=" + mFillResponseFlags
                 + ", failureMessage=" + mFailureMessage
                 + ", saveDescription=" + mSaveDescription
                 + ", mCustomDescription=" + mCustomDescription
@@ -225,7 +229,8 @@ final class CannedFillResponse {
         private String[] mIgnoredIds;
         private int mNegativeActionStyle;
         private IntentSender mNegativeActionListener;
-        private int mFlags;
+        private int mSaveInfoFlags;
+        private int mFillResponseFlags;
         private AutofillId mSaveTriggerId;
 
         public Builder(ResponseType type) {
@@ -259,8 +264,13 @@ final class CannedFillResponse {
             return this;
         }
 
-        public Builder setFlags(int flags) {
-            mFlags = flags;
+        public Builder setSaveInfoFlags(int flags) {
+            mSaveInfoFlags = flags;
+            return this;
+        }
+
+        public Builder setFillResponseFlags(int flags) {
+            mFillResponseFlags = flags;
             return this;
         }
 

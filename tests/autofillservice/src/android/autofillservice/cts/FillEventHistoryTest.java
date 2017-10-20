@@ -30,7 +30,9 @@ import static android.autofillservice.cts.Helper.assertFillEventForSaveShown;
 import static android.autofillservice.cts.Helper.assertNoDeprecatedClientState;
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilConnected;
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilDisconnected;
+import static android.autofillservice.cts.LoginActivity.BACKDOOR_USERNAME;
 import static android.autofillservice.cts.LoginActivity.getWelcomeMessage;
+import static android.service.autofill.FillEventHistory.Event.TYPE_CONTEXT_COMMITTED;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 
@@ -42,12 +44,20 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.service.autofill.FillEventHistory;
+import android.service.autofill.FillResponse;
+import android.support.test.uiautomator.UiObject2;
 import android.view.View;
+import android.view.autofill.AutofillId;
+
+import com.google.common.collect.ImmutableMap;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Test that uses {@link LoginActivity} to test {@link FillEventHistory}.
@@ -71,7 +81,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
     }
 
     @Test
-    public void checkFillSelectionAfterSelectingDatasetAuthentication() throws Exception {
+    public void testDatasetAuthenticationSelected() throws Exception {
         enableService();
 
         // Set up FillResponse with dataset authentication
@@ -114,7 +124,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
     }
 
     @Test
-    public void checkFillSelectionAfterSelectingAuthentication() throws Exception {
+    public void testAuthenticationSelected() throws Exception {
         enableService();
 
         // Set up FillResponse with response wide authentication
@@ -154,7 +164,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
     }
 
     @Test
-    public void checkFillSelectionAfterSelectingTwoDatasets() throws Exception {
+    public void testDatasetSelected_twoResponses() throws Exception {
         enableService();
 
         // Set up first partition with an anonymous dataset
@@ -242,7 +252,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
     }
 
     @Test
-    public void checkFillSelectionIsResetAfterReturningNull() throws Exception {
+    public void testNoEvents_whenServiceReturnsNullResponse() throws Exception {
         enableService();
 
         // First reset
@@ -285,7 +295,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
     }
 
     @Test
-    public void checkFillSelectionIsResetAfterReturningError() throws Exception {
+    public void testNoEvents_whenServiceReturnsFailure() throws Exception {
         enableService();
 
         // First reset
@@ -328,7 +338,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
     }
 
     @Test
-    public void checkFillSelectionIsResetAfterTimeout() throws Exception {
+    public void testNoEvents_whenServiceTimesout() throws Exception {
         enableService();
 
         // First reset
@@ -389,7 +399,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
      * </ol>
      */
     @Test
-    public void checkFillSelectionFromPreviousSessionIsDiscarded() throws Exception {
+    public void testEventsFromPreviousSessionIsDiscarded() throws Exception {
         enableService();
 
         // Launch activity A
@@ -448,5 +458,813 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
                 .getFillEventHistory();
         assertDeprecatedClientState(finalSelection, "activity", "B");
         assertThat(finalSelection.getEvents()).isNull();
+    }
+
+    @Test
+    public void testContextCommitted_whenServiceDidntDoAnything() throws Exception {
+        enableService();
+
+        sReplier.addResponse(CannedFillResponse.NO_RESPONSE);
+
+        // Trigger autofill on username
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+        sUiBot.assertNoDatasets();
+
+        // Trigger save
+        mActivity.onUsername((v) -> v.setText("malkovich"));
+        mActivity.onPassword((v) -> v.setText("malkovich"));
+        final String expectedMessage = getWelcomeMessage("malkovich");
+        final String actualMessage = mActivity.tapLogin();
+        assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
+        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+
+        // Assert no events where generated
+        final FillEventHistory selection =
+                InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+        assertThat(selection).isNull();
+    }
+
+    @Test
+    public void textContextCommitted_withoutDatasets() throws Exception {
+        enableService();
+
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setFillResponseFlags(FillResponse.FLAG_TRACK_CONTEXT_COMMITED)
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
+                .build());
+
+        // Trigger autofill on username
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+        sUiBot.assertNoDatasets();
+
+        // Trigger save
+        mActivity.onUsername((v) -> v.setText("malkovich"));
+        mActivity.onPassword((v) -> v.setText("malkovich"));
+        final String expectedMessage = getWelcomeMessage("malkovich");
+        final String actualMessage = mActivity.tapLogin();
+        assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
+        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+        sReplier.getNextSaveRequest();
+
+        // Assert it
+        final FillEventHistory selection =
+                InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+        assertThat(selection.getEvents().size()).isEqualTo(1);
+        assertFillEventForSaveShown(selection.getEvents().get(0), NULL_DATASET_ID);
+    }
+
+    @Test
+    public void testContextCommitted_withoutFlagOnLastResponse() throws Exception {
+        enableService();
+        // Trigger 1st autofill request
+        sReplier.addResponse(new CannedFillResponse.Builder().addDataset(
+                new CannedDataset.Builder()
+                        .setId("id1")
+                        .setField(ID_USERNAME, BACKDOOR_USERNAME)
+                        .setPresentation(createPresentation("dataset1"))
+                        .build())
+                .setFillResponseFlags(FillResponse.FLAG_TRACK_CONTEXT_COMMITED)
+                .build());
+        mActivity.expectAutoFill(BACKDOOR_USERNAME);
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+        sUiBot.selectDataset("dataset1");
+        mActivity.assertAutoFilled();
+        // Verify fill history
+        {
+            final FillEventHistory selection =
+                    InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+            assertThat(selection.getEvents().size()).isEqualTo(1);
+            assertFillEventForDatasetSelected(selection.getEvents().get(0), "id1");
+        }
+
+        // Trigger 2st autofill request (which will clear the fill event history)
+        sReplier.addResponse(new CannedFillResponse.Builder().addDataset(
+                new CannedDataset.Builder()
+                        .setId("id2")
+                        .setField(ID_PASSWORD, "whatever")
+                        .setPresentation(createPresentation("dataset2"))
+                        .build())
+                // don't set flags
+                .build());
+        mActivity.expectPasswordAutoFill("whatever");
+        mActivity.onPassword(View::requestFocus);
+        sReplier.getNextFillRequest();
+        sUiBot.selectDataset("dataset2");
+        mActivity.assertAutoFilled();
+        // Verify fill history
+        {
+            final FillEventHistory selection =
+                    InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+            assertThat(selection.getEvents().size()).isEqualTo(1);
+            assertFillEventForDatasetSelected(selection.getEvents().get(0), "id2");
+        }
+
+        // Finish the context by login in
+        final String expectedMessage = getWelcomeMessage(BACKDOOR_USERNAME);
+        final String actualMessage = mActivity.tapLogin();
+        assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
+        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+
+        {
+            // Verify fill history
+            final FillEventHistory selection =
+                    InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+            assertThat(selection.getEvents().size()).isEqualTo(1);
+
+            assertFillEventForDatasetSelected(selection.getEvents().get(0), "id2");
+        }
+    }
+
+    @Test
+    public void testContextCommitted_idlessDatasets() throws Exception {
+        enableService();
+
+        sReplier.addResponse(new CannedFillResponse.Builder().addDataset(
+                new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "username1")
+                        .setField(ID_PASSWORD, "password1")
+                        .setPresentation(createPresentation("dataset1"))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "username2")
+                        .setField(ID_PASSWORD, "password2")
+                        .setPresentation(createPresentation("dataset2"))
+                        .build())
+                .setFillResponseFlags(FillResponse.FLAG_TRACK_CONTEXT_COMMITED)
+                .build());
+        mActivity.expectAutoFill("username1", "password1");
+
+        // Trigger autofill on username
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+
+        final UiObject2 datasetPicker = sUiBot.assertDatasets("dataset1", "dataset2");
+        sUiBot.selectDataset(datasetPicker, "dataset1");
+        mActivity.assertAutoFilled();
+
+        // Verify dataset selection
+        {
+            final FillEventHistory selection =
+                    InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+            assertThat(selection.getEvents().size()).isEqualTo(1);
+            assertFillEventForDatasetSelected(selection.getEvents().get(0), NULL_DATASET_ID);
+        }
+
+        // Finish the context by login in
+        mActivity.onUsername((v) -> v.setText("USERNAME"));
+        mActivity.onPassword((v) -> v.setText("USERNAME"));
+
+        final String expectedMessage = getWelcomeMessage("USERNAME");
+        final String actualMessage = mActivity.tapLogin();
+        assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
+        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+
+        // ...and check again
+        {
+            final FillEventHistory selection =
+                    InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+            assertThat(selection.getEvents().size()).isEqualTo(1);
+            assertFillEventForDatasetSelected(selection.getEvents().get(0), NULL_DATASET_ID);
+        }
+    }
+
+    @Test
+    public void testContextCommitted_idlessDatasetSelected_datasetWithIdIgnored()
+            throws Exception {
+        enableService();
+
+        sReplier.addResponse(new CannedFillResponse.Builder().addDataset(
+                new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "username1")
+                        .setField(ID_PASSWORD, "password1")
+                        .setPresentation(createPresentation("dataset1"))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setId("id2")
+                        .setField(ID_USERNAME, "username2")
+                        .setField(ID_PASSWORD, "password2")
+                        .setPresentation(createPresentation("dataset2"))
+                        .build())
+                .setFillResponseFlags(FillResponse.FLAG_TRACK_CONTEXT_COMMITED)
+                .build());
+        mActivity.expectAutoFill("username1", "password1");
+
+        // Trigger autofill on username
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+
+        final UiObject2 datasetPicker = sUiBot.assertDatasets("dataset1", "dataset2");
+        sUiBot.selectDataset(datasetPicker, "dataset1");
+        mActivity.assertAutoFilled();
+
+        // Verify dataset selection
+        {
+            final FillEventHistory selection =
+                    InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+            assertThat(selection.getEvents().size()).isEqualTo(1);
+            assertFillEventForDatasetSelected(selection.getEvents().get(0), NULL_DATASET_ID);
+        }
+
+        // Finish the context by login in
+        mActivity.onPassword((v) -> v.setText("username1"));
+
+        final String expectedMessage = getWelcomeMessage("username1");
+        final String actualMessage = mActivity.tapLogin();
+        assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
+        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+
+        // ...and check again
+        {
+            final FillEventHistory selection =
+                    InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+            assertThat(selection.getEvents().size()).isEqualTo(2);
+            assertFillEventForDatasetSelected(selection.getEvents().get(0), NULL_DATASET_ID);
+
+            FillEventHistory.Event event2 = selection.getEvents().get(1);
+            assertThat(event2.getType()).isEqualTo(TYPE_CONTEXT_COMMITTED);
+            assertThat(event2.getDatasetId()).isNull();
+            assertThat(event2.getClientState()).isNull();
+            assertThat(event2.getSelectedDatasetIds()).isEmpty();
+            assertThat(event2.getIgnoredDatasetIds()).containsExactly("id2");
+            final AutofillId passwordId = mActivity.getPassword().getAutofillId();
+            final Map<AutofillId, String> changedFields = event2.getChangedFields();
+            assertThat(changedFields).containsExactly(passwordId, "id2");
+            assertThat(event2.getManuallyEnteredField()).isEmpty();
+        }
+    }
+
+    @Test
+    public void testContextCommitted_idlessDatasetIgnored_datasetWithIdSelected()
+            throws Exception {
+        enableService();
+
+        sReplier.addResponse(new CannedFillResponse.Builder().addDataset(
+                new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "username1")
+                        .setField(ID_PASSWORD, "password1")
+                        .setPresentation(createPresentation("dataset1"))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setId("id2")
+                        .setField(ID_USERNAME, "username2")
+                        .setField(ID_PASSWORD, "password2")
+                        .setPresentation(createPresentation("dataset2"))
+                        .build())
+                .setFillResponseFlags(FillResponse.FLAG_TRACK_CONTEXT_COMMITED)
+                .build());
+        mActivity.expectAutoFill("username2", "password2");
+
+        // Trigger autofill on username
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+
+        final UiObject2 datasetPicker = sUiBot.assertDatasets("dataset1", "dataset2");
+        sUiBot.selectDataset(datasetPicker, "dataset2");
+        mActivity.assertAutoFilled();
+
+        // Verify dataset selection
+        {
+            final FillEventHistory selection =
+                    InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+            assertThat(selection.getEvents().size()).isEqualTo(1);
+            assertFillEventForDatasetSelected(selection.getEvents().get(0), "id2");
+        }
+
+        // Finish the context by login in
+        mActivity.onPassword((v) -> v.setText("username2"));
+
+        final String expectedMessage = getWelcomeMessage("username2");
+        final String actualMessage = mActivity.tapLogin();
+        assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
+        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+
+        // ...and check again
+        {
+            final FillEventHistory selection =
+                    InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+            assertThat(selection.getEvents().size()).isEqualTo(2);
+            assertFillEventForDatasetSelected(selection.getEvents().get(0), "id2");
+
+            FillEventHistory.Event event2 = selection.getEvents().get(1);
+            assertThat(event2.getType()).isEqualTo(TYPE_CONTEXT_COMMITTED);
+            assertThat(event2.getDatasetId()).isNull();
+            assertThat(event2.getClientState()).isNull();
+            assertThat(event2.getSelectedDatasetIds()).containsExactly("id2");
+            assertThat(event2.getIgnoredDatasetIds()).isEmpty();
+            final AutofillId passwordId = mActivity.getPassword().getAutofillId();
+            final Map<AutofillId, String> changedFields = event2.getChangedFields();
+            assertThat(changedFields).containsExactly(passwordId, "id2");
+            assertThat(event2.getManuallyEnteredField()).isEmpty();
+        }
+    }
+
+    /**
+     * Tests scenario where the context was committed, no dataset was selected by the user,
+     * neither the user entered values that were present in these datasets.
+     */
+    @Test
+    public void testContextCommitted_noDatasetSelected_valuesNotManuallyEntered() throws Exception {
+        enableService();
+
+        sReplier.addResponse(new CannedFillResponse.Builder().addDataset(
+                new CannedDataset.Builder()
+                        .setId("id1")
+                        .setField(ID_USERNAME, "username1")
+                        .setField(ID_PASSWORD, "password1")
+                        .setPresentation(createPresentation("dataset1"))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setId("id2")
+                        .setField(ID_USERNAME, "username2")
+                        .setField(ID_PASSWORD, "password2")
+                        .setPresentation(createPresentation("dataset2"))
+                        .build())
+                .setFillResponseFlags(FillResponse.FLAG_TRACK_CONTEXT_COMMITED)
+                .build());
+        // Trigger autofill on username
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+        sUiBot.assertDatasets("dataset1", "dataset2");
+
+        // Verify history
+        {
+            final FillEventHistory selection =
+                    InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+            assertThat(selection.getEvents()).isNull();
+        }
+
+        // Enter values not present at the datasets
+        mActivity.onUsername((v) -> v.setText("USERNAME"));
+        mActivity.onPassword((v) -> v.setText("USERNAME"));
+
+        // Finish the context by login in
+        final String expectedMessage = getWelcomeMessage("USERNAME");
+        final String actualMessage = mActivity.tapLogin();
+        assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
+        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+
+        // Verify history again
+        {
+            final FillEventHistory selection =
+                    InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+            assertThat(selection.getEvents().size()).isEqualTo(1);
+        }
+    }
+
+    /**
+     * Tests scenario where the context was committed, just one dataset was selected by the user,
+     * and the user changed the values provided by the service.
+     */
+    @Test
+    public void testContextCommitted_oneDatasetSelected() throws Exception {
+        enableService();
+
+        sReplier.addResponse(new CannedFillResponse.Builder().addDataset(
+                new CannedDataset.Builder()
+                        .setId("id1")
+                        .setField(ID_USERNAME, "username1")
+                        .setField(ID_PASSWORD, "password1")
+                        .setPresentation(createPresentation("dataset1"))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setId("id2")
+                        .setField(ID_USERNAME, "username2")
+                        .setField(ID_PASSWORD, "password2")
+                        .setPresentation(createPresentation("dataset2"))
+                        .build())
+                .setFillResponseFlags(FillResponse.FLAG_TRACK_CONTEXT_COMMITED)
+                .build());
+        mActivity.expectAutoFill("username1", "password1");
+
+        // Trigger autofill on username
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+
+        final UiObject2 datasetPicker = sUiBot.assertDatasets("dataset1", "dataset2");
+        sUiBot.selectDataset(datasetPicker, "dataset1");
+        mActivity.assertAutoFilled();
+
+        // Verify dataset selection
+        {
+            final FillEventHistory selection =
+                    InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+            assertThat(selection.getEvents().size()).isEqualTo(1);
+            assertFillEventForDatasetSelected(selection.getEvents().get(0), "id1");
+        }
+
+        // Finish the context by login in
+        mActivity.onUsername((v) -> v.setText("USERNAME"));
+        mActivity.onPassword((v) -> v.setText("USERNAME"));
+
+        final String expectedMessage = getWelcomeMessage("USERNAME");
+        final String actualMessage = mActivity.tapLogin();
+        assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
+        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+
+        // ...and check again
+        {
+            final FillEventHistory selection =
+                    InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+            assertThat(selection.getEvents().size()).isEqualTo(2);
+
+            assertFillEventForDatasetSelected(selection.getEvents().get(0), "id1");
+
+            FillEventHistory.Event event2 = selection.getEvents().get(1);
+            assertThat(event2.getType()).isEqualTo(TYPE_CONTEXT_COMMITTED);
+            assertThat(event2.getDatasetId()).isNull();
+            assertThat(event2.getClientState()).isNull();
+            assertThat(event2.getSelectedDatasetIds()).containsExactly("id1");
+            assertThat(event2.getIgnoredDatasetIds()).containsExactly("id2");
+            final Map<AutofillId, String> changedFields = event2.getChangedFields();
+            final AutofillId usernameId = mActivity.getUsername().getAutofillId();
+            final AutofillId passwordId = mActivity.getPassword().getAutofillId();
+            assertThat(changedFields).containsExactlyEntriesIn(
+                    ImmutableMap.of(usernameId, "id1", passwordId, "id1"));
+            assertThat(event2.getManuallyEnteredField()).isEmpty();
+        }
+    }
+
+    /**
+     * Tests scenario where the context was committed, both datasets were selected by the user,
+     * and the user changed the values provided by the service.
+     */
+    @Test
+    public void testContextCommitted_multipleDatasetsSelected() throws Exception {
+        enableService();
+
+        sReplier.addResponse(new CannedFillResponse.Builder().addDataset(
+                new CannedDataset.Builder()
+                        .setId("id1")
+                        .setField(ID_USERNAME, "username")
+                        .setPresentation(createPresentation("dataset1"))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setId("id2")
+                        .setField(ID_PASSWORD, "password")
+                        .setPresentation(createPresentation("dataset2"))
+                        .build())
+                .setFillResponseFlags(FillResponse.FLAG_TRACK_CONTEXT_COMMITED)
+                .build());
+        mActivity.expectAutoFill("username");
+
+        // Trigger autofill
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+
+        // Autofill username
+        sUiBot.selectDataset("dataset1");
+        mActivity.assertAutoFilled();
+        {
+            // Verify fill history
+            final FillEventHistory selection =
+                    InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+            assertThat(selection.getEvents().size()).isEqualTo(1);
+            assertFillEventForDatasetSelected(selection.getEvents().get(0), "id1");
+        }
+
+        // Autofill password
+        mActivity.expectPasswordAutoFill("password");
+
+        mActivity.onPassword(View::requestFocus);
+        sUiBot.selectDataset("dataset2");
+        mActivity.assertAutoFilled();
+
+        {
+            // Verify fill history
+            final FillEventHistory selection =
+                    InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+            assertThat(selection.getEvents().size()).isEqualTo(2);
+
+            assertFillEventForDatasetSelected(selection.getEvents().get(0), "id1");
+            assertFillEventForDatasetSelected(selection.getEvents().get(1), "id2");
+        }
+
+        // Finish the context by login in
+        mActivity.onPassword((v) -> v.setText("username"));
+
+        final String expectedMessage = getWelcomeMessage("username");
+        final String actualMessage = mActivity.tapLogin();
+        assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
+        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+
+        {
+            // Verify fill history
+            final FillEventHistory selection =
+                    InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+            assertThat(selection.getEvents().size()).isEqualTo(3);
+
+            assertFillEventForDatasetSelected(selection.getEvents().get(0), "id1");
+            assertFillEventForDatasetSelected(selection.getEvents().get(1), "id2");
+
+            final FillEventHistory.Event event3 = selection.getEvents().get(2);
+            assertThat(event3.getType()).isEqualTo(TYPE_CONTEXT_COMMITTED);
+            assertThat(event3.getDatasetId()).isNull();
+            assertThat(event3.getClientState()).isNull();
+            assertThat(event3.getSelectedDatasetIds()).containsExactly("id1", "id2");
+            assertThat(event3.getIgnoredDatasetIds()).isEmpty();
+            final Map<AutofillId, String> changedFields = event3.getChangedFields();
+            final AutofillId passwordId = mActivity.getPassword().getAutofillId();
+            assertThat(changedFields).containsExactly(passwordId, "id2");
+            assertThat(event3.getManuallyEnteredField()).isEmpty();
+        }
+    }
+
+    /**
+     * Tests scenario where the context was committed, both datasets were selected by the user,
+     * and the user didn't change the values provided by the service.
+     */
+    @Test
+    public void testContextCommitted_multipleDatasetsSelected_butNotChanged() throws Exception {
+        enableService();
+
+        sReplier.addResponse(new CannedFillResponse.Builder().addDataset(
+                new CannedDataset.Builder()
+                        .setId("id1")
+                        .setField(ID_USERNAME, BACKDOOR_USERNAME)
+                        .setPresentation(createPresentation("dataset1"))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setId("id2")
+                        .setField(ID_PASSWORD, "whatever")
+                        .setPresentation(createPresentation("dataset2"))
+                        .build())
+                .setFillResponseFlags(FillResponse.FLAG_TRACK_CONTEXT_COMMITED)
+                .build());
+        mActivity.expectAutoFill(BACKDOOR_USERNAME);
+
+        // Trigger autofill
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+
+        // Autofill username
+        sUiBot.selectDataset("dataset1");
+        mActivity.assertAutoFilled();
+        {
+            // Verify fill history
+            final FillEventHistory selection =
+                    InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+            assertThat(selection.getEvents().size()).isEqualTo(1);
+            assertFillEventForDatasetSelected(selection.getEvents().get(0), "id1");
+        }
+
+        // Autofill password
+        mActivity.expectPasswordAutoFill("whatever");
+
+        mActivity.onPassword(View::requestFocus);
+        sUiBot.selectDataset("dataset2");
+        mActivity.assertAutoFilled();
+
+        {
+            // Verify fill history
+            final FillEventHistory selection =
+                    InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+            assertThat(selection.getEvents().size()).isEqualTo(2);
+
+            assertFillEventForDatasetSelected(selection.getEvents().get(0), "id1");
+            assertFillEventForDatasetSelected(selection.getEvents().get(1), "id2");
+        }
+
+        // Finish the context by login in
+        final String expectedMessage = getWelcomeMessage(BACKDOOR_USERNAME);
+        final String actualMessage = mActivity.tapLogin();
+        assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
+        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+
+        {
+            // Verify fill history
+            final FillEventHistory selection =
+                    InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+            assertThat(selection.getEvents().size()).isEqualTo(3);
+
+            assertFillEventForDatasetSelected(selection.getEvents().get(0), "id1");
+            assertFillEventForDatasetSelected(selection.getEvents().get(1), "id2");
+
+            final FillEventHistory.Event event3 = selection.getEvents().get(2);
+            assertThat(event3.getType()).isEqualTo(TYPE_CONTEXT_COMMITTED);
+            assertThat(event3.getDatasetId()).isNull();
+            assertThat(event3.getClientState()).isNull();
+            assertThat(event3.getSelectedDatasetIds()).containsExactly("id1", "id2");
+            assertThat(event3.getIgnoredDatasetIds()).isEmpty();
+            assertThat(event3.getChangedFields()).isEmpty();
+            assertThat(event3.getManuallyEnteredField()).isEmpty();
+        }
+    }
+
+    /**
+     * Tests scenario where the context was committed, the user selected the dataset, than changed
+     * the autofilled values, but then change the values again so they match what was provided by
+     * the service.
+     */
+    @Test
+    public void testContextCommitted_oneDatasetSelected_Changed_thenChangedBack()
+            throws Exception {
+        enableService();
+
+        sReplier.addResponse(new CannedFillResponse.Builder().addDataset(
+                new CannedDataset.Builder()
+                        .setId("id1")
+                        .setField(ID_USERNAME, "username")
+                        .setField(ID_PASSWORD, "username")
+                        .setPresentation(createPresentation("dataset1"))
+                        .build())
+                .setFillResponseFlags(FillResponse.FLAG_TRACK_CONTEXT_COMMITED)
+                .build());
+        mActivity.expectAutoFill("username", "username");
+
+        // Trigger autofill on username
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+
+        sUiBot.selectDataset("dataset1");
+        mActivity.assertAutoFilled();
+
+        // Verify dataset selection
+        {
+            final FillEventHistory selection =
+                    InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+            assertThat(selection.getEvents().size()).isEqualTo(1);
+            assertFillEventForDatasetSelected(selection.getEvents().get(0), "id1");
+        }
+
+        // Change the fields to different values from datasets
+        mActivity.onUsername((v) -> v.setText("USERNAME"));
+        mActivity.onPassword((v) -> v.setText("USERNAME"));
+
+        // Then change back to dataset values
+        mActivity.onUsername((v) -> v.setText("username"));
+        mActivity.onPassword((v) -> v.setText("username"));
+
+        final String expectedMessage = getWelcomeMessage("username");
+        final String actualMessage = mActivity.tapLogin();
+        assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
+        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+
+        // ...and check again
+        {
+            final FillEventHistory selection =
+                    InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+            assertThat(selection.getEvents().size()).isEqualTo(2);
+            assertFillEventForDatasetSelected(selection.getEvents().get(0), "id1");
+
+            FillEventHistory.Event event2 = selection.getEvents().get(1);
+            assertThat(event2.getType()).isEqualTo(TYPE_CONTEXT_COMMITTED);
+            assertThat(event2.getDatasetId()).isNull();
+            assertThat(event2.getClientState()).isNull();
+            assertThat(event2.getSelectedDatasetIds()).containsExactly("id1");
+            assertThat(event2.getIgnoredDatasetIds()).isEmpty();
+            assertThat(event2.getChangedFields()).isEmpty();
+            assertThat(event2.getManuallyEnteredField()).isEmpty();
+        }
+    }
+
+    /**
+     * Tests scenario where the context was committed, the user did not selected any dataset, but
+     * the user manually entered values that match what was provided by the service.
+     */
+    @Test
+    public void testContextCommitted_noDatasetSelected_butManuallyEntered()
+            throws Exception {
+        enableService();
+
+        sReplier.addResponse(new CannedFillResponse.Builder().addDataset(
+                new CannedDataset.Builder()
+                        .setId("id1")
+                        .setField(ID_USERNAME, BACKDOOR_USERNAME)
+                        .setField(ID_PASSWORD, "NotUsedPassword")
+                        .setPresentation(createPresentation("dataset1"))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setId("id2")
+                        .setField(ID_USERNAME, "NotUserUsername")
+                        .setField(ID_PASSWORD, "whatever")
+                        .setPresentation(createPresentation("dataset2"))
+                        .build())
+                .setFillResponseFlags(FillResponse.FLAG_TRACK_CONTEXT_COMMITED)
+                .build());
+        // Trigger autofill on username
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+        sUiBot.assertDatasets("dataset1", "dataset2");
+
+        // Verify history
+        {
+            final FillEventHistory selection =
+                    InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+            assertThat(selection.getEvents()).isNull();
+        }
+
+        // Enter values present at the datasets
+        mActivity.onUsername((v) -> v.setText(BACKDOOR_USERNAME));
+        mActivity.onPassword((v) -> v.setText("whatever"));
+
+        // Finish the context by login in
+        final String expectedMessage = getWelcomeMessage(BACKDOOR_USERNAME);
+        final String actualMessage = mActivity.tapLogin();
+        assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
+        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+
+        // Verify history
+        {
+            final FillEventHistory selection =
+                    InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+            assertThat(selection.getEvents().size()).isEqualTo(1);
+
+            FillEventHistory.Event event = selection.getEvents().get(0);
+            assertThat(event.getType()).isEqualTo(TYPE_CONTEXT_COMMITTED);
+            assertThat(event.getDatasetId()).isNull();
+            assertThat(event.getClientState()).isNull();
+            assertThat(event.getSelectedDatasetIds()).isEmpty();
+            assertThat(event.getIgnoredDatasetIds()).containsExactly("id1", "id2");
+            assertThat(event.getChangedFields()).isEmpty();
+            final AutofillId usernameId = mActivity.getUsername().getAutofillId();
+            final AutofillId passwordId = mActivity.getPassword().getAutofillId();
+
+            final Map<AutofillId, Set<String>> manuallyEnteredFields =
+                    event.getManuallyEnteredField();
+            assertThat(manuallyEnteredFields).isNotNull();
+            assertThat(manuallyEnteredFields.size()).isEqualTo(2);
+            assertThat(manuallyEnteredFields.get(usernameId)).containsExactly("id1");
+            assertThat(manuallyEnteredFields.get(passwordId)).containsExactly("id2");
+        }
+    }
+
+    /**
+     * Tests scenario where the context was committed, the user did not selected any dataset, but
+     * the user manually entered values that match what was provided by the service on different
+     * datasets.
+     */
+    @Test
+    public void testContextCommitted_noDatasetSelected_butManuallyEntered_matchingMultipleDatasets()
+            throws Exception {
+        enableService();
+
+        sReplier.addResponse(new CannedFillResponse.Builder().addDataset(
+                new CannedDataset.Builder()
+                        .setId("id1")
+                        .setField(ID_USERNAME, BACKDOOR_USERNAME)
+                        .setField(ID_PASSWORD, "NotUsedPassword")
+                        .setPresentation(createPresentation("dataset1"))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setId("id2")
+                        .setField(ID_USERNAME, "NotUserUsername")
+                        .setField(ID_PASSWORD, "whatever")
+                        .setPresentation(createPresentation("dataset2"))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setId("id3")
+                        .setField(ID_USERNAME, BACKDOOR_USERNAME)
+                        .setField(ID_PASSWORD, "whatever")
+                        .setPresentation(createPresentation("dataset3"))
+                        .build())
+                .setFillResponseFlags(FillResponse.FLAG_TRACK_CONTEXT_COMMITED)
+                .build());
+        // Trigger autofill on username
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+        sUiBot.assertDatasets("dataset1", "dataset2", "dataset3");
+
+        // Verify history
+        {
+            final FillEventHistory selection =
+                    InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+            assertThat(selection.getEvents()).isNull();
+        }
+
+        // Enter values present at the datasets
+        mActivity.onUsername((v) -> v.setText(BACKDOOR_USERNAME));
+        mActivity.onPassword((v) -> v.setText("whatever"));
+
+        // Finish the context by login in
+        final String expectedMessage = getWelcomeMessage(BACKDOOR_USERNAME);
+        final String actualMessage = mActivity.tapLogin();
+        assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
+        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+
+        // Verify history
+        {
+            final FillEventHistory selection =
+                    InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+            assertThat(selection.getEvents().size()).isEqualTo(1);
+
+            FillEventHistory.Event event = selection.getEvents().get(0);
+            assertThat(event.getType()).isEqualTo(TYPE_CONTEXT_COMMITTED);
+            assertThat(event.getDatasetId()).isNull();
+            assertThat(event.getClientState()).isNull();
+            assertThat(event.getSelectedDatasetIds()).isEmpty();
+            assertThat(event.getIgnoredDatasetIds()).containsExactly("id1", "id2", "id3");
+            assertThat(event.getChangedFields()).isEmpty();
+            final AutofillId usernameId = mActivity.getUsername().getAutofillId();
+            final AutofillId passwordId = mActivity.getPassword().getAutofillId();
+
+            final Map<AutofillId, Set<String>> manuallyEnteredFields =
+                    event.getManuallyEnteredField();
+            assertThat(manuallyEnteredFields.size()).isEqualTo(2);
+            assertThat(manuallyEnteredFields.get(usernameId)).containsExactly("id1", "id3");
+            assertThat(manuallyEnteredFields.get(passwordId)).containsExactly("id2", "id3");
+        }
     }
 }
