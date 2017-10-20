@@ -421,6 +421,14 @@
                 android:text="@string/sample_text"
                 style="@style/AllCapsPassword" />
 
+            <TextView
+                android:id="@+id/textview_textappearance_attrs_serif_fontfamily"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_text"
+                android:typeface="serif"
+                android:textAppearance="@style/TextAppearance.Xml2" />
+
         </LinearLayout>
 
 </ScrollView>
