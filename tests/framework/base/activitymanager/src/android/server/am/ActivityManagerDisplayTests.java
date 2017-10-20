@@ -1751,6 +1751,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     @Test
     public void testExternalDisplayActivityTurnPrimaryOff() throws Exception {
+        if (!supportsMultiDisplay()) { return; }
+
         // Launch something on the primary display so we know there is a resumed activity there
         launchActivity(RESIZEABLE_ACTIVITY_NAME);
         waitAndAssertActivityResumed(RESIZEABLE_ACTIVITY_NAME, DEFAULT_DISPLAY_ID,
@@ -1781,6 +1783,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     @Test
     public void testLaunchExternalDisplayActivityWhilePrimaryOff() throws Exception {
+        if (!supportsMultiDisplay()) { return; }
+
         // Launch something on the primary display so we know there is a resumed activity there
         launchActivity(RESIZEABLE_ACTIVITY_NAME);
         waitAndAssertActivityResumed(RESIZEABLE_ACTIVITY_NAME, DEFAULT_DISPLAY_ID,
@@ -1809,6 +1813,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     @Test
     public void testExternalDisplayToggleState() throws Exception {
+        if (!supportsMultiDisplay()) { return; }
+
         final DisplayState newDisplay = createExternalVirtualDisplay(
                 false /* showContentWhenLocked */);
 
@@ -1837,6 +1843,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     @Test
     public void testStackFocusSwitchOnTouchEventAfterKeyguard() throws Exception {
+        if (!supportsMultiDisplay()) { return; }
+
         // Launch something on the primary display so we know there is a resumed activity there
         launchActivity(RESIZEABLE_ACTIVITY_NAME);
         waitAndAssertActivityResumed(RESIZEABLE_ACTIVITY_NAME, DEFAULT_DISPLAY_ID,
@@ -1902,6 +1910,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      * Tests that showWhenLocked works on a secondary display.
      */
     public void testSecondaryDisplayShowWhenLocked() throws Exception {
+        if (!supportsMultiDisplay()) { return; }
+
         try {
             setLockCredential();
 
