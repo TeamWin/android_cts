@@ -19,7 +19,6 @@ package android.app.cts;
 import android.app.stubs.KeyboardShortcutsActivity;
 import android.content.pm.PackageManager;
 import android.test.ActivityInstrumentationTestCase2;
-import android.test.UiThreadTest;
 import android.view.KeyEvent;
 import android.view.KeyboardShortcutGroup;
 import android.view.Menu;
@@ -52,7 +51,6 @@ public class ActivityKeyboardShortcutsTest
      * Tests that requestShowKeyboardShortcuts fetches app specific shortcuts even when triggered
      * from an overflow menu (options menu in the test)
      */
-    @UiThreadTest
     public void testRequestShowKeyboardShortcuts() throws InterruptedException {
         if (!keyboardShortcutsSupported()) {
             return;
@@ -93,6 +91,8 @@ public class ActivityKeyboardShortcutsTest
     private boolean keyboardShortcutsSupported() {
       // Keyboard shortcuts API is not supported on watches.
       // TODO(b/62257073): Provide a more granular feature to check here.
-      return !mActivity.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH);
+      // 2017-10-17: Updated to also exclude EMBEDDED
+      return !mActivity.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH) &&
+             !mActivity.getPackageManager().hasSystemFeature(PackageManager.FEATURE_EMBEDDED);
     }
 }

@@ -313,7 +313,7 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
         final UiObject2 saveUi = sUiBot.assertSaveShowing(SAVE_DATA_TYPE_CREDIT_CARD);
 
         // Then make sure it does have the custom views on it...
-        final UiObject2 staticText = saveUi.findObject(By.res(packageName, "static_text"));
+        final UiObject2 staticText = saveUi.findObject(By.res(packageName, Helper.ID_STATIC_TEXT));
         assertThat(staticText).isNotNull();
         assertThat(staticText.getText()).isEqualTo("YO:");
 
@@ -384,6 +384,6 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
         final UiObject2 saveUi = sUiBot.assertSaveShowing(SAVE_DATA_TYPE_CREDIT_CARD);
 
         // Then make sure it does not have the custom views on it...
-        assertThat(saveUi.findObject(By.res(packageName, "static_text"))).isNull();
+        assertThat(saveUi.findObject(By.res(packageName, Helper.ID_STATIC_TEXT))).isNull();
     }
 }

@@ -23,6 +23,7 @@ import static android.autofillservice.cts.GridActivity.ID_L3C1;
 import static android.autofillservice.cts.GridActivity.ID_L3C2;
 import static android.autofillservice.cts.GridActivity.ID_L4C1;
 import static android.autofillservice.cts.GridActivity.ID_L4C2;
+import static android.autofillservice.cts.Helper.UNUSED_AUTOFILL_VALUE;
 import static android.autofillservice.cts.Helper.assertTextIsSanitized;
 import static android.autofillservice.cts.Helper.assertValue;
 import static android.autofillservice.cts.Helper.getContext;
@@ -46,7 +47,6 @@ import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.service.autofill.FillResponse;
-import android.widget.RemoteViews;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -1310,10 +1310,6 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         // Set service.
         enableService();
 
-        // TODO: current API requires these fields...
-        final RemoteViews bogusPresentation = createPresentation("Whatever man, I'm not used...");
-        final String bogusValue = "Y U REQUIRE IT?";
-
         /**
          * 1st partition.
          */
@@ -1322,19 +1318,18 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 new CannedDataset.Builder()
                         .setField(ID_L1C1, "l1c1")
                         .setField(ID_L1C2, "l1c2")
-                        .setPresentation(bogusPresentation)
                         .build());
         final IntentSender auth12 = AuthenticationActivity.createSender(getContext(), 12);
         final CannedFillResponse response1 = new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth11)
-                        .setField(ID_L1C1, bogusValue)
-                        .setField(ID_L1C2, bogusValue)
+                        .setField(ID_L1C1, UNUSED_AUTOFILL_VALUE)
+                        .setField(ID_L1C2, UNUSED_AUTOFILL_VALUE)
                         .setPresentation(createPresentation("P1D1"))
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth12)
-                        .setField(ID_L1C1, bogusValue)
+                        .setField(ID_L1C1, UNUSED_AUTOFILL_VALUE)
                         .setPresentation(createPresentation("P1D2"))
                         .build())
                 .build();
@@ -1365,19 +1360,18 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         final IntentSender auth22 = AuthenticationActivity.createSender(getContext(), 22,
                 new CannedDataset.Builder()
                     .setField(ID_L2C2, "L2C2")
-                    .setPresentation(bogusPresentation)
                     .build());
         final CannedFillResponse response2 = new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth21)
                         .setPresentation(createPresentation("P2D1"))
-                        .setField(ID_L2C1, bogusValue)
-                        .setField(ID_L2C2, bogusValue)
+                        .setField(ID_L2C1, UNUSED_AUTOFILL_VALUE)
+                        .setField(ID_L2C2, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth22)
                         .setPresentation(createPresentation("P2D2"))
-                        .setField(ID_L2C2, bogusValue)
+                        .setField(ID_L2C2, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .build();
         sReplier.addResponse(response2);
@@ -1406,21 +1400,20 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 new CannedDataset.Builder()
                         .setField(ID_L3C1, "l3c1")
                         .setField(ID_L3C2, "l3c2")
-                        .setPresentation(bogusPresentation)
                         .build());
         final IntentSender auth32 = AuthenticationActivity.createSender(getContext(), 32);
         final CannedFillResponse response3 = new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth31)
                         .setPresentation(createPresentation("P3D1"))
-                        .setField(ID_L3C1, bogusValue)
-                        .setField(ID_L3C2, bogusValue)
+                        .setField(ID_L3C1, UNUSED_AUTOFILL_VALUE)
+                        .setField(ID_L3C2, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth32)
                         .setPresentation(createPresentation("P3D2"))
-                        .setField(ID_L3C1, bogusValue)
-                        .setField(ID_L3C2, bogusValue)
+                        .setField(ID_L3C1, UNUSED_AUTOFILL_VALUE)
+                        .setField(ID_L3C2, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .build();
         sReplier.addResponse(response3);
@@ -1451,19 +1444,18 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 new CannedDataset.Builder()
                     .setField(ID_L4C1, "L4C1")
                     .setField(ID_L4C2, "L4C2")
-                    .setPresentation(bogusPresentation)
                     .build());
         final CannedFillResponse response4 = new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth41)
                         .setPresentation(createPresentation("P4D1"))
-                        .setField(ID_L4C1, bogusValue)
+                        .setField(ID_L4C1, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth42)
                         .setPresentation(createPresentation("P4D2"))
-                        .setField(ID_L4C1, bogusValue)
-                        .setField(ID_L4C2, bogusValue)
+                        .setField(ID_L4C1, UNUSED_AUTOFILL_VALUE)
+                        .setField(ID_L4C2, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .build();
         sReplier.addResponse(response4);
@@ -1496,10 +1488,6 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         // Set service.
         enableService();
 
-        // TODO: current API requires these fields...
-        final RemoteViews bogusPresentation = createPresentation("Whatever man, I'm not used...");
-        final String bogusValue = "Y U REQUIRE IT?";
-
         /**
          * 1st partition.
          */
@@ -1508,19 +1496,18 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 new CannedDataset.Builder()
                         .setField(ID_L1C1, "l1c1")
                         .setField(ID_L1C2, "l1c2")
-                        .setPresentation(bogusPresentation)
                         .build());
         final IntentSender auth12 = AuthenticationActivity.createSender(getContext(), 12);
         final CannedFillResponse response1 = new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth11)
-                        .setField(ID_L1C1, bogusValue)
-                        .setField(ID_L1C2, bogusValue)
+                        .setField(ID_L1C1, UNUSED_AUTOFILL_VALUE)
+                        .setField(ID_L1C2, UNUSED_AUTOFILL_VALUE)
                         .setPresentation(createPresentation("P1D1"))
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth12)
-                        .setField(ID_L1C1, bogusValue)
+                        .setField(ID_L1C1, UNUSED_AUTOFILL_VALUE)
                         .setPresentation(createPresentation("P1D2"))
                         .build())
                 .build();
@@ -1541,19 +1528,18 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         final IntentSender auth22 = AuthenticationActivity.createSender(getContext(), 22,
                 new CannedDataset.Builder()
                     .setField(ID_L2C2, "L2C2")
-                    .setPresentation(bogusPresentation)
                     .build());
         final CannedFillResponse response2 = new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth21)
                         .setPresentation(createPresentation("P2D1"))
-                        .setField(ID_L2C1, bogusValue)
-                        .setField(ID_L2C2, bogusValue)
+                        .setField(ID_L2C1, UNUSED_AUTOFILL_VALUE)
+                        .setField(ID_L2C2, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth22)
                         .setPresentation(createPresentation("P2D2"))
-                        .setField(ID_L2C2, bogusValue)
+                        .setField(ID_L2C2, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .build();
         sReplier.addResponse(response2);
@@ -1572,21 +1558,20 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 new CannedDataset.Builder()
                         .setField(ID_L3C1, "l3c1")
                         .setField(ID_L3C2, "l3c2")
-                        .setPresentation(bogusPresentation)
                         .build());
         final IntentSender auth32 = AuthenticationActivity.createSender(getContext(), 32);
         final CannedFillResponse response3 = new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth31)
                         .setPresentation(createPresentation("P3D1"))
-                        .setField(ID_L3C1, bogusValue)
-                        .setField(ID_L3C2, bogusValue)
+                        .setField(ID_L3C1, UNUSED_AUTOFILL_VALUE)
+                        .setField(ID_L3C2, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth32)
                         .setPresentation(createPresentation("P3D2"))
-                        .setField(ID_L3C1, bogusValue)
-                        .setField(ID_L3C2, bogusValue)
+                        .setField(ID_L3C1, UNUSED_AUTOFILL_VALUE)
+                        .setField(ID_L3C2, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .build();
         sReplier.addResponse(response3);
@@ -1607,19 +1592,18 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 new CannedDataset.Builder()
                     .setField(ID_L4C1, "L4C1")
                     .setField(ID_L4C2, "L4C2")
-                    .setPresentation(bogusPresentation)
                     .build());
         final CannedFillResponse response4 = new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth41)
                         .setPresentation(createPresentation("P4D1"))
-                        .setField(ID_L4C1, bogusValue)
+                        .setField(ID_L4C1, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth42)
                         .setPresentation(createPresentation("P4D2"))
-                        .setField(ID_L4C1, bogusValue)
-                        .setField(ID_L4C2, bogusValue)
+                        .setField(ID_L4C1, UNUSED_AUTOFILL_VALUE)
+                        .setField(ID_L4C2, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .build();
         sReplier.addResponse(response4);
@@ -1683,10 +1667,6 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         // Set service.
         enableService();
 
-        // TODO: current API requires these fields...
-        final RemoteViews bogusPresentation = createPresentation("Whatever man, I'm not used...");
-        final String bogusValue = "Y U REQUIRE IT?";
-
         /**
          * 1st partition.
          */
@@ -1700,7 +1680,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth12)
-                        .setField(ID_L1C1, bogusValue)
+                        .setField(ID_L1C1, UNUSED_AUTOFILL_VALUE)
                         .setPresentation(createPresentation("P1D2"))
                         .build())
                 .build();
@@ -1720,7 +1700,6 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         final IntentSender auth22 = AuthenticationActivity.createSender(getContext(), 22,
                 new CannedDataset.Builder()
                     .setField(ID_L2C2, "L2C2")
-                    .setPresentation(bogusPresentation)
                     .build());
         final CannedFillResponse response2 = new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
@@ -1731,7 +1710,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth22)
                         .setPresentation(createPresentation("P2D2"))
-                        .setField(ID_L2C2, bogusValue)
+                        .setField(ID_L2C2, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .build();
         sReplier.addResponse(response2);
@@ -1750,14 +1729,13 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 new CannedDataset.Builder()
                         .setField(ID_L3C1, "l3c1")
                         .setField(ID_L3C2, "l3c2")
-                        .setPresentation(bogusPresentation)
                         .build());
         final CannedFillResponse response3 = new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth31)
                         .setPresentation(createPresentation("P3D1"))
-                        .setField(ID_L3C1, bogusValue)
-                        .setField(ID_L3C2, bogusValue)
+                        .setField(ID_L3C1, UNUSED_AUTOFILL_VALUE)
+                        .setField(ID_L3C2, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setPresentation(createPresentation("P3D2"))
@@ -1783,7 +1761,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth41)
                         .setPresentation(createPresentation("P4D1"))
-                        .setField(ID_L4C1, bogusValue)
+                        .setField(ID_L4C1, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setPresentation(createPresentation("P4D2"))
@@ -1876,10 +1854,6 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         // Set service.
         enableService();
 
-        // TODO: current API requires these fields...
-        final RemoteViews bogusPresentation = createPresentation("Whatever man, I'm not used...");
-        final String bogusValue = "Y U REQUIRE IT?";
-
         /**
          * 1st partition.
          */
@@ -1893,7 +1867,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth12)
-                        .setField(ID_L1C1, bogusValue)
+                        .setField(ID_L1C1, UNUSED_AUTOFILL_VALUE)
                         .setPresentation(createPresentation("P1D2"))
                         .build())
                 .build();
@@ -1917,15 +1891,14 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                     .setField(ID_L1C1, "2l1c1") // from previous partition
                     .setField(ID_L2C1, "2l2c1")
                     .setField(ID_L2C2, "2l2c2")
-                    .setPresentation(bogusPresentation)
                     .build());
         final CannedFillResponse response2 = new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth21)
                         .setPresentation(createPresentation("P2D1"))
-                        .setField(ID_L1C1, bogusValue) // from previous partition
-                        .setField(ID_L2C1, bogusValue)
-                        .setField(ID_L2C2, bogusValue)
+                        .setField(ID_L1C1, UNUSED_AUTOFILL_VALUE) // from previous partition
+                        .setField(ID_L2C1, UNUSED_AUTOFILL_VALUE)
+                        .setField(ID_L2C2, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setPresentation(createPresentation("P2D2"))
@@ -1957,23 +1930,22 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                         .setField(ID_L1C2, "3l1c2") // from previous partition
                         .setField(ID_L3C1, "3l3c1")
                         .setField(ID_L3C2, "3l3c2")
-                        .setPresentation(bogusPresentation)
                         .build());
         final IntentSender auth32 = AuthenticationActivity.createSender(getContext(), 32);
         final CannedFillResponse response3 = new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth31)
                         .setPresentation(createPresentation("P3D1"))
-                        .setField(ID_L1C2, bogusValue) // from previous partition
-                        .setField(ID_L3C1, bogusValue)
-                        .setField(ID_L3C2, bogusValue)
+                        .setField(ID_L1C2, UNUSED_AUTOFILL_VALUE) // from previous partition
+                        .setField(ID_L3C1, UNUSED_AUTOFILL_VALUE)
+                        .setField(ID_L3C2, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth32)
                         .setPresentation(createPresentation("P3D2"))
-                        .setField(ID_L2C2, bogusValue) // from previous partition
-                        .setField(ID_L3C1, bogusValue)
-                        .setField(ID_L3C2, bogusValue)
+                        .setField(ID_L2C2, UNUSED_AUTOFILL_VALUE) // from previous partition
+                        .setField(ID_L3C1, UNUSED_AUTOFILL_VALUE)
+                        .setField(ID_L3C2, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .build();
         sReplier.addResponse(response3);
@@ -2009,7 +1981,6 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                         .setField(ID_L3C1, "4l3c1") // from previous partition
                         .setField(ID_L3C2, "4l3c2") // from previous partition
                         .setField(ID_L4C1, "4l4c1")
-                        .setPresentation(bogusPresentation)
                         .build());
         final IntentSender auth42 = AuthenticationActivity.createSender(getContext(), 42,
                 new CannedDataset.Builder()
@@ -2022,32 +1993,31 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                         .setField(ID_L1C1, "4L1C1") // from previous partition
                         .setField(ID_L4C1, "4L4C1")
                         .setField(ID_L4C2, "4L4C2")
-                        .setPresentation(bogusPresentation)
                         .build());
         final CannedFillResponse response4 = new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth41)
                         .setPresentation(createPresentation("P4D1"))
-                        .setField(ID_L1C1, bogusValue) // from previous partition
-                        .setField(ID_L1C2, bogusValue) // from previous partition
-                        .setField(ID_L2C1, bogusValue) // from previous partition
-                        .setField(ID_L2C2, bogusValue) // from previous partition
-                        .setField(ID_L3C1, bogusValue) // from previous partition
-                        .setField(ID_L3C2, bogusValue) // from previous partition
-                        .setField(ID_L4C1, bogusValue)
+                        .setField(ID_L1C1, UNUSED_AUTOFILL_VALUE) // from previous partition
+                        .setField(ID_L1C2, UNUSED_AUTOFILL_VALUE) // from previous partition
+                        .setField(ID_L2C1, UNUSED_AUTOFILL_VALUE) // from previous partition
+                        .setField(ID_L2C2, UNUSED_AUTOFILL_VALUE) // from previous partition
+                        .setField(ID_L3C1, UNUSED_AUTOFILL_VALUE) // from previous partition
+                        .setField(ID_L3C2, UNUSED_AUTOFILL_VALUE) // from previous partition
+                        .setField(ID_L4C1, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth42)
                         .setPresentation(createPresentation("P4D2"))
-                        .setField(ID_L1C1, bogusValue) // from previous partition
-                        .setField(ID_L1C2, bogusValue) // from previous partition
-                        .setField(ID_L2C1, bogusValue) // from previous partition
-                        .setField(ID_L2C2, bogusValue) // from previous partition
-                        .setField(ID_L3C1, bogusValue) // from previous partition
-                        .setField(ID_L3C2, bogusValue) // from previous partition
-                        .setField(ID_L1C1, bogusValue) // from previous partition
-                        .setField(ID_L4C1, bogusValue)
-                        .setField(ID_L4C2, bogusValue)
+                        .setField(ID_L1C1, UNUSED_AUTOFILL_VALUE) // from previous partition
+                        .setField(ID_L1C2, UNUSED_AUTOFILL_VALUE) // from previous partition
+                        .setField(ID_L2C1, UNUSED_AUTOFILL_VALUE) // from previous partition
+                        .setField(ID_L2C2, UNUSED_AUTOFILL_VALUE) // from previous partition
+                        .setField(ID_L3C1, UNUSED_AUTOFILL_VALUE) // from previous partition
+                        .setField(ID_L3C2, UNUSED_AUTOFILL_VALUE) // from previous partition
+                        .setField(ID_L1C1, UNUSED_AUTOFILL_VALUE) // from previous partition
+                        .setField(ID_L4C1, UNUSED_AUTOFILL_VALUE)
+                        .setField(ID_L4C2, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .build();
         sReplier.addResponse(response4);

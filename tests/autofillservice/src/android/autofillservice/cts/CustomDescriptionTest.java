@@ -25,9 +25,12 @@ import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.service.autofill.BatchUpdates;
 import android.service.autofill.CharSequenceTransformation;
 import android.service.autofill.CustomDescription;
 import android.service.autofill.ImageTransformation;
+import android.service.autofill.RegexValidator;
+import android.service.autofill.Validator;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.test.uiautomator.By;
@@ -47,7 +50,7 @@ import java.util.regex.Pattern;
 public class CustomDescriptionTest extends AutoFillServiceTestCase {
     @Rule
     public final AutofillActivityTestRule<LoginActivity> mActivityRule =
-        new AutofillActivityTestRule<>(LoginActivity.class);
+            new AutofillActivityTestRule<>(LoginActivity.class);
 
     private LoginActivity mActivity;
 
@@ -105,13 +108,13 @@ public class CustomDescriptionTest extends AutoFillServiceTestCase {
     @Test
     public void validTransformation() throws Exception {
         testCustomDescription((usernameId, passwordId) -> {
-            RemoteViews presentation = new RemoteViews(getContext().getPackageName(),
-                    R.layout.two_horizontal_text_fields);
+            RemoteViews presentation = newTemplate(R.layout.two_horizontal_text_fields);
 
             CharSequenceTransformation trans1 = new CharSequenceTransformation
                     .Builder(usernameId, Pattern.compile("(.*)"), "$1")
                     .addField(passwordId, Pattern.compile(".*(..)"), "..$1")
                     .build();
+            @SuppressWarnings("deprecation")
             ImageTransformation trans2 = new ImageTransformation
                     .Builder(usernameId, Pattern.compile(".*"),
                     R.drawable.android).build();
@@ -120,31 +123,253 @@ public class CustomDescriptionTest extends AutoFillServiceTestCase {
                     .addChild(R.id.first, trans1)
                     .addChild(R.id.img, trans2)
                     .build();
-        }, () -> assertSaveUiWithCustomDescriptionIsShown("usernm..wd"));
+        }, () -> assertSaveUiIsShownWithTwoLines("usernm..wd"));
+    }
+
+    @Test
+    public void validTransformationWithOneTemplateUpdate() throws Exception {
+        testCustomDescription((usernameId, passwordId) -> {
+            RemoteViews presentation = newTemplate(R.layout.two_horizontal_text_fields);
+
+            CharSequenceTransformation trans1 = new CharSequenceTransformation
+                    .Builder(usernameId, Pattern.compile("(.*)"), "$1")
+                    .addField(passwordId, Pattern.compile(".*(..)"), "..$1")
+                    .build();
+            @SuppressWarnings("deprecation")
+            ImageTransformation trans2 = new ImageTransformation
+                    .Builder(usernameId, Pattern.compile(".*"),
+                    R.drawable.android).build();
+            RemoteViews update = newTemplate(0); // layout id not really used
+            update.setViewVisibility(R.id.second, View.GONE);
+            Validator condition = new RegexValidator(usernameId, Pattern.compile(".*"));
+
+            return new CustomDescription.Builder(presentation)
+                    .addChild(R.id.first, trans1)
+                    .addChild(R.id.img, trans2)
+                    .batchUpdate(condition,
+                            new BatchUpdates.Builder().updateTemplate(update).build())
+                    .build();
+        }, () -> assertSaveUiIsShownWithJustOneLine("usernm..wd"));
+    }
+
+    @Test
+    public void validTransformationWithMultipleTemplateUpdates() throws Exception {
+        testCustomDescription((usernameId, passwordId) -> {
+            RemoteViews presentation = newTemplate(R.layout.two_horizontal_text_fields);
+
+            CharSequenceTransformation trans1 = new CharSequenceTransformation.Builder(usernameId,
+                    Pattern.compile("(.*)"), "$1")
+                            .addField(passwordId, Pattern.compile(".*(..)"), "..$1")
+                            .build();
+            @SuppressWarnings("deprecation")
+            ImageTransformation trans2 = new ImageTransformation.Builder(usernameId,
+                    Pattern.compile(".*"), R.drawable.android)
+                    .build();
+
+            Validator validCondition = new RegexValidator(usernameId, Pattern.compile(".*"));
+            Validator invalidCondition = new RegexValidator(usernameId, Pattern.compile("D'OH"));
+
+            // Line 1 updates
+            RemoteViews update1 = newTemplate(666); // layout id not really used
+            update1.setContentDescription(R.id.first, "First am I"); // valid
+            RemoteViews update2 = newTemplate(0); // layout id not really used
+            update2.setViewVisibility(R.id.first, View.GONE); // invalid
+
+            // Line 2 updates
+            RemoteViews update3 = newTemplate(-666); // layout id not really used
+            update3.setTextViewText(R.id.second, "First of his second name"); // valid
+            RemoteViews update4 = newTemplate(0); // layout id not really used
+            update4.setTextViewText(R.id.second, "SECOND of his second name"); // invalid
+
+            return new CustomDescription.Builder(presentation)
+                    .addChild(R.id.first, trans1)
+                    .addChild(R.id.img, trans2)
+                    .batchUpdate(validCondition,
+                            new BatchUpdates.Builder().updateTemplate(update1).build())
+                    .batchUpdate(invalidCondition,
+                            new BatchUpdates.Builder().updateTemplate(update2).build())
+                    .batchUpdate(validCondition,
+                            new BatchUpdates.Builder().updateTemplate(update3).build())
+                    .batchUpdate(invalidCondition,
+                            new BatchUpdates.Builder().updateTemplate(update4).build())
+                    .build();
+        }, () -> assertSaveUiWithLinesIsShown(
+                (line1) -> assertWithMessage("Wrong content description for line1")
+                        .that(line1.getContentDescription()).isEqualTo("First am I"),
+                (line2) -> assertWithMessage("Wrong text for line2").that(line2.getText())
+                        .isEqualTo("First of his second name"),
+                null));
+    }
+
+    @Test
+    public void testMultipleBatchUpdates_noConditionPass() throws Exception {
+        multipleBatchUpdatesTest(BatchUpdatesConditionType.NONE_PASS);
+    }
+
+    @Test
+    public void testMultipleBatchUpdates_secondConditionPass() throws Exception {
+        multipleBatchUpdatesTest(BatchUpdatesConditionType.SECOND_PASS);
+    }
+
+    @Test
+    public void testMultipleBatchUpdates_thirdConditionPass() throws Exception {
+        multipleBatchUpdatesTest(BatchUpdatesConditionType.THIRD_PASS);
+    }
+
+    @Test
+    public void testMultipleBatchUpdates_allConditionsPass() throws Exception {
+        multipleBatchUpdatesTest(BatchUpdatesConditionType.ALL_PASS);
+    }
+
+    private enum BatchUpdatesConditionType {
+        NONE_PASS,
+        SECOND_PASS,
+        THIRD_PASS,
+        ALL_PASS
+    }
+
+    /**
+     * Tests a custom description that has 3 transformations, one applied directly and the other
+     * 2 in batch updates.
+     *
+     * @param conditionsType defines which batch updates conditions will pass.
+     */
+    private void multipleBatchUpdatesTest(BatchUpdatesConditionType conditionsType)
+            throws Exception {
+
+        final boolean line2Pass = conditionsType == BatchUpdatesConditionType.SECOND_PASS
+                || conditionsType == BatchUpdatesConditionType.ALL_PASS;
+        final boolean line3Pass = conditionsType == BatchUpdatesConditionType.THIRD_PASS
+                || conditionsType == BatchUpdatesConditionType.ALL_PASS;
+
+        final Visitor<UiObject2> line1Visitor = (line1) -> assertWithMessage("Wrong text for line1")
+                .that(line1.getText()).isEqualTo("L1-u");
+
+        final Visitor<UiObject2> line2Visitor;
+        if (line2Pass) {
+            line2Visitor = (line2) -> assertWithMessage("Wrong text for line2")
+                    .that(line2.getText()).isEqualTo("L2-u");
+        } else {
+            line2Visitor = null;
+        }
+
+        final Visitor<UiObject2> line3Visitor;
+        if (line3Pass) {
+            line3Visitor = (line3) -> assertWithMessage("Wrong text for line3")
+                    .that(line3.getText()).isEqualTo("L3-p");
+        } else {
+            line3Visitor = null;
+        }
+
+        testCustomDescription((usernameId, passwordId) -> {
+            Validator validCondition = new RegexValidator(usernameId, Pattern.compile(".*"));
+            Validator invalidCondition = new RegexValidator(usernameId, Pattern.compile("D'OH"));
+            Pattern firstCharGroupRegex = Pattern.compile("^(.).*$");
+
+            final RemoteViews presentation =
+                    newTemplate(R.layout.three_horizontal_text_fields_last_two_invisible);
+
+            final CharSequenceTransformation line1Transformation =
+                    new CharSequenceTransformation.Builder(usernameId, firstCharGroupRegex, "L1-$1")
+                        .build();
+
+            final CharSequenceTransformation line2Transformation =
+                    new CharSequenceTransformation.Builder(usernameId, firstCharGroupRegex, "L2-$1")
+                        .build();
+            final RemoteViews line2Updates = newTemplate(666); // layout id not really used
+            line2Updates.setViewVisibility(R.id.second, View.VISIBLE);
+
+            final CharSequenceTransformation line3Transformation =
+                    new CharSequenceTransformation.Builder(passwordId, firstCharGroupRegex, "L3-$1")
+                        .build();
+            final RemoteViews line3Updates = newTemplate(666); // layout id not really used
+            line3Updates.setViewVisibility(R.id.third, View.VISIBLE);
+
+            return new CustomDescription.Builder(presentation)
+                    .addChild(R.id.first, line1Transformation)
+                    .batchUpdate(line2Pass ? validCondition : invalidCondition,
+                            new BatchUpdates.Builder()
+                            .transformChild(R.id.second, line2Transformation)
+                            .updateTemplate(line2Updates)
+                            .build())
+                    .batchUpdate(line3Pass ? validCondition : invalidCondition,
+                            new BatchUpdates.Builder()
+                            .transformChild(R.id.third, line3Transformation)
+                            .updateTemplate(line3Updates)
+                            .build())
+                    .build();
+        }, () -> assertSaveUiWithLinesIsShown(line1Visitor, line2Visitor, line3Visitor));
+    }
+
+    @Test
+    public void testBatchUpdatesApplyUpdateFirstThenTransformations() throws Exception {
+
+        final Visitor<UiObject2> line1Visitor = (line1) -> assertWithMessage("Wrong text for line1")
+                .that(line1.getText()).isEqualTo("L1-u");
+        final Visitor<UiObject2> line2Visitor = (line2) -> assertWithMessage("Wrong text for line2")
+                .that(line2.getText()).isEqualTo("L2-u");
+        final Visitor<UiObject2> line3Visitor = (line3) -> assertWithMessage("Wrong text for line3")
+                .that(line3.getText()).isEqualTo("L3-p");
+
+        testCustomDescription((usernameId, passwordId) -> {
+            Validator validCondition = new RegexValidator(usernameId, Pattern.compile(".*"));
+            Validator invalidCondition = new RegexValidator(usernameId, Pattern.compile("D'OH"));
+            Pattern firstCharGroupRegex = Pattern.compile("^(.).*$");
+
+            final RemoteViews presentation =
+                    newTemplate(R.layout.two_horizontal_text_fields);
+
+            final CharSequenceTransformation line1Transformation =
+                    new CharSequenceTransformation.Builder(usernameId, firstCharGroupRegex, "L1-$1")
+                        .build();
+
+            final CharSequenceTransformation line2Transformation =
+                    new CharSequenceTransformation.Builder(usernameId, firstCharGroupRegex, "L2-$1")
+                        .build();
+
+            final CharSequenceTransformation line3Transformation =
+                    new CharSequenceTransformation.Builder(passwordId, firstCharGroupRegex, "L3-$1")
+                        .build();
+            final RemoteViews line3Presentation = newTemplate(R.layout.third_line_only);
+            final RemoteViews line3Updates = newTemplate(666); // layout id not really used
+            line3Updates.addView(R.id.parent, line3Presentation);
+
+            return new CustomDescription.Builder(presentation)
+                    .addChild(R.id.first, line1Transformation)
+                    .batchUpdate(validCondition,
+                            new BatchUpdates.Builder()
+                            .transformChild(R.id.second, line2Transformation)
+                            .build())
+                    .batchUpdate(validCondition,
+                            new BatchUpdates.Builder()
+                            .updateTemplate(line3Updates)
+                            .transformChild(R.id.third, line3Transformation)
+                            .build())
+                    .build();
+        }, () -> assertSaveUiWithLinesIsShown(line1Visitor, line2Visitor, line3Visitor));
     }
 
     @Test
     public void badImageTransformation() throws Exception {
         testCustomDescription((usernameId, passwordId) -> {
-            RemoteViews presentation = new RemoteViews(getContext().getPackageName(),
-                    R.layout.two_horizontal_text_fields);
+            RemoteViews presentation = newTemplate(R.layout.two_horizontal_text_fields);
 
-            ImageTransformation trans = new ImageTransformation
-                    .Builder(usernameId, Pattern.compile(".*"), 1)
-                    .build();
+            @SuppressWarnings("deprecation")
+            ImageTransformation trans = new ImageTransformation.Builder(usernameId,
+                    Pattern.compile(".*"), 1).build();
 
             return new CustomDescription.Builder(presentation)
                     .addChild(R.id.img, trans)
                     .build();
-        }, () -> assertSaveUiWithCustomDescriptionIsShown() );
+        }, () -> assertSaveUiWithCustomDescriptionIsShown());
     }
 
     @Test
     public void unusedImageTransformation() throws Exception {
         testCustomDescription((usernameId, passwordId) -> {
-            RemoteViews presentation = new RemoteViews(getContext().getPackageName(),
-                    R.layout.two_horizontal_text_fields);
+            RemoteViews presentation = newTemplate(R.layout.two_horizontal_text_fields);
 
+            @SuppressWarnings("deprecation")
             ImageTransformation trans = new ImageTransformation
                     .Builder(usernameId, Pattern.compile("invalid"), R.drawable.android)
                     .build();
@@ -158,9 +383,9 @@ public class CustomDescriptionTest extends AutoFillServiceTestCase {
     @Test
     public void applyImageTransformationToTextView() throws Exception {
         testCustomDescription((usernameId, passwordId) -> {
-            RemoteViews presentation = new RemoteViews(getContext().getPackageName(),
-                    R.layout.two_horizontal_text_fields);
+            RemoteViews presentation = newTemplate(R.layout.two_horizontal_text_fields);
 
+            @SuppressWarnings("deprecation")
             ImageTransformation trans = new ImageTransformation
                     .Builder(usernameId, Pattern.compile(".*"), R.drawable.android)
                     .build();
@@ -174,8 +399,7 @@ public class CustomDescriptionTest extends AutoFillServiceTestCase {
     @Test
     public void failFirstFailAll() throws Exception {
         testCustomDescription((usernameId, passwordId) -> {
-            RemoteViews presentation = new RemoteViews(getContext().getPackageName(),
-                    R.layout.two_horizontal_text_fields);
+            RemoteViews presentation = newTemplate(R.layout.two_horizontal_text_fields);
 
             CharSequenceTransformation trans = new CharSequenceTransformation
                     .Builder(usernameId, Pattern.compile("(.*)"), "$42")
@@ -191,8 +415,7 @@ public class CustomDescriptionTest extends AutoFillServiceTestCase {
     @Test
     public void failSecondFailAll() throws Exception {
         testCustomDescription((usernameId, passwordId) -> {
-            RemoteViews presentation = new RemoteViews(getContext().getPackageName(),
-                    R.layout.two_horizontal_text_fields);
+            RemoteViews presentation = newTemplate(R.layout.two_horizontal_text_fields);
 
             CharSequenceTransformation trans = new CharSequenceTransformation
                     .Builder(usernameId, Pattern.compile("(.*)"), "$1")
@@ -208,8 +431,7 @@ public class CustomDescriptionTest extends AutoFillServiceTestCase {
     @Test
     public void applyCharSequenceTransformationToImageView() throws Exception {
         testCustomDescription((usernameId, passwordId) -> {
-            RemoteViews presentation = new RemoteViews(getContext().getPackageName(),
-                    R.layout.two_horizontal_text_fields);
+            RemoteViews presentation = newTemplate(R.layout.two_horizontal_text_fields);
 
             CharSequenceTransformation trans = new CharSequenceTransformation
                     .Builder(usernameId, Pattern.compile("(.*)"), "$1")
@@ -232,8 +454,7 @@ public class CustomDescriptionTest extends AutoFillServiceTestCase {
         final CharSequenceTransformation secondTrans = new CharSequenceTransformation
                 .Builder(usernameId, Pattern.compile("(MARCO)"), "POLO")
                 .build();
-        final RemoteViews presentation = new RemoteViews(getContext().getPackageName(),
-                R.layout.two_horizontal_text_fields);
+        RemoteViews presentation = newTemplate(R.layout.two_horizontal_text_fields);
         final CustomDescription customDescription = new CustomDescription.Builder(presentation)
                 .addChild(R.id.first, firstTrans)
                 .addChild(R.id.first, secondTrans)
@@ -256,7 +477,7 @@ public class CustomDescriptionTest extends AutoFillServiceTestCase {
         mActivity.tapLogin();
 
         final String expectedText = matchFirst ? "polo" : "POLO";
-        assertSaveUiWithCustomDescriptionIsShown(expectedText);
+        assertSaveUiIsShownWithTwoLines(expectedText);
     }
 
     @Test
@@ -267,6 +488,10 @@ public class CustomDescriptionTest extends AutoFillServiceTestCase {
     @Test
     public void applyMultipleTransformationsForSameField_matchSecond() throws Exception {
         multipleTransformationsForSameFieldTest(false);
+    }
+
+    private RemoteViews newTemplate(int resourceId) {
+        return new RemoteViews(getContext().getPackageName(), resourceId);
     }
 
     private void assertSaveUiWithoutCustomDescriptionIsShown() {
@@ -290,10 +515,59 @@ public class CustomDescriptionTest extends AutoFillServiceTestCase {
         return saveUi;
     }
 
-    private void assertSaveUiWithCustomDescriptionIsShown(String expectedText) {
+    /**
+     * Asserts the save ui only has {@code first} and {@code second} lines (i.e, {@code third} is
+     * invisible), but only {@code first} has text.
+     */
+    private UiObject2 assertSaveUiIsShownWithTwoLines(String expectedTextOnFirst) {
+        return assertSaveUiWithLinesIsShown(
+                (line1) -> assertWithMessage("Wrong text for child with id 'first'")
+                        .that(line1.getText()).isEqualTo(expectedTextOnFirst),
+                (line2) -> assertWithMessage("Wrong text for child with id 'second'")
+                        .that(line2.getText()).isNull(),
+                null);
+    }
+
+    /**
+     * Asserts the save ui only has {@code first} line (i.e., {@code second} and {@code third} are
+     * invisible).
+     */
+    private void assertSaveUiIsShownWithJustOneLine(String expectedTextOnFirst) {
+        assertSaveUiWithLinesIsShown(
+                (line1) -> assertWithMessage("Wrong text for child with id 'first'")
+                        .that(line1.getText()).isEqualTo(expectedTextOnFirst),
+                null, null);
+    }
+
+    private UiObject2 assertSaveUiWithLinesIsShown(@Nullable Visitor<UiObject2> line1Visitor,
+            @Nullable Visitor<UiObject2> line2Visitor, @Nullable Visitor<UiObject2> line3Visitor) {
         final UiObject2 saveUi = assertSaveUiWithCustomDescriptionIsShown();
-        assertWithMessage("didn't find '%s' on SaveUI (%s)", expectedText,
-                sUiBot.getChildrenAsText(saveUi))
-                        .that(saveUi.findObject(By.text(expectedText))).isNotNull();
+        assertSaveUiChild(saveUi, "first", line1Visitor);
+        assertSaveUiChild(saveUi, "second", line2Visitor);
+        assertSaveUiChild(saveUi, "third", line3Visitor);
+        return saveUi;
+    }
+
+    /**
+     * Asserts the contents of save UI child element.
+     *
+     * @param saveUi save UI
+     * @param childId resource id of the child
+     * @param assertion if {@code null}, asserts the child does not exist; otherwise, asserts the
+     * child with it.
+     */
+    private void assertSaveUiChild(@NonNull UiObject2 saveUi, @NonNull String childId,
+            @Nullable Visitor<UiObject2> assertion) {
+        final UiObject2 child = saveUi.findObject(By.res(mPackageName, childId));
+        if (assertion != null) {
+            assertWithMessage("Didn't find child with id '%s'", childId).that(child).isNotNull();
+            try {
+                assertion.visit(child);
+            } catch (Throwable t) {
+                throw new AssertionError("Error on child '" + childId + "'", t);
+            }
+        } else {
+            assertWithMessage("Shouldn't find child with id '%s'", childId).that(child).isNull();
+        }
     }
 }

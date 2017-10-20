@@ -20,6 +20,7 @@
         <option name="test-file-name" value="CtsJobSchedulerTestCases.apk" />
         <option name="test-file-name" value="CtsJobSchedulerJobPerm.apk" />
         <option name="test-file-name" value="CtsJobSchedulerSharedUid.apk" />
+        <option name="test-file-name" value="CtsJobTestApp.apk" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.jobscheduler.cts" />

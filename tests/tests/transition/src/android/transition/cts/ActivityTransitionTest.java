@@ -465,7 +465,7 @@ public class ActivityTransitionTest extends BaseTransitionTest {
         mActivityRule.runOnUiThread(() -> targetActivity.finishAfterTransition());
 
         // Should only take a short time, but there's no need to rush it on failure.
-        assertTrue(startCalled.await(1, TimeUnit.SECONDS));
+        assertTrue(startCalled.await(5, TimeUnit.SECONDS));
 
         TargetActivity.sLastCreated = null;
     }

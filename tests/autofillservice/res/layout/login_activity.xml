@@ -39,7 +39,7 @@
             android:id="@+id/username"
             android:minEms="2"
             android:maxEms="5"
-            android:maxLength="10"
+            android:maxLength="25"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
     </LinearLayout>
