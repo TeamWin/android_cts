@@ -45,7 +45,7 @@ LOCAL_C_INCLUDES += frameworks/rs/cpp
 LOCAL_C_INCLUDES += frameworks/rs
 
 LOCAL_CPPFLAGS := -std=c++11
-LOCAL_CFLAGS := -Wno-unused-parameter
+LOCAL_CFLAGS := -Wall -Werror -Wno-unused-parameter
 
 LOCAL_SHARED_LIBRARIES := libdl liblog
 LOCAL_STATIC_LIBRARIES := libRScpp_static

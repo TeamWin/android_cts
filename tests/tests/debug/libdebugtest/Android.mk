@@ -22,6 +22,8 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := libdebugtest
 
+LOCAL_CFLAGS := -Wall -Werror
+
 # Don't include this package in any configuration by default.
 LOCAL_MODULE_TAGS := optional
 
