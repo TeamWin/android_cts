@@ -21,6 +21,7 @@ LOCAL_SRC_FILES := test_data.cpp
 LOCAL_SDK_VERSION := 23
 LOCAL_NDK_STL_VARIANT := c++_static
 
+LOCAL_CFLAGS := -Wall -Werror -Wno-unused-const-variable
 LOCAL_C_INCLUDES := $(JNI_H_INCLUDE)
 
 include $(BUILD_SHARED_LIBRARY)

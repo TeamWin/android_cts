@@ -32,7 +32,10 @@ LOCAL_CXX_STL := libc++_static
 LOCAL_SHARED_LIBRARIES := liblog \
 		libnativehelper_compat_libc++
 
-LOCAL_CFLAGS := -Wno-unused-parameter
+LOCAL_CFLAGS := \
+        -Wall -Werror \
+        -Wno-unused-parameter \
+        -Wno-unused-variable \
 
 include $(BUILD_SHARED_LIBRARY)
 
