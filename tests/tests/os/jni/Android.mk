@@ -55,7 +55,8 @@ ifeq ($(ARCH_SUPPORTS_SECCOMP),1)
 	LOCAL_CFLAGS += -DARCH_SUPPORTS_SECCOMP
 endif
 
-LOCAL_CFLAGS := -Wno-unused-parameter
+LOCAL_CFLAGS := -Wall -Werror -Wno-unused-parameter
+LOCAL_CFLAGS += -Wno-inline-asm -Wno-unused-const-variable
 
 # Let's overwrite -mcpu in case it's set to some ARMv8 core by
 # TARGET_2ND_CPU_VARIANT and causes clang to ignore the -march below.

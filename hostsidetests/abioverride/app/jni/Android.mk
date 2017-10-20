@@ -26,7 +26,7 @@ LOCAL_SRC_FILES := CtsAbiOverrideJniOnLoad.cpp
 LOCAL_C_INCLUDES := $(JNI_H_INCLUDE)
 
 # Ignore unused parameters.
-LOCAL_CFLAGS += -Wno-unused-parameter
+LOCAL_CFLAGS += -Wall -Werror -Wno-unused-parameter
 
 LOCAL_SHARED_LIBRARIES := libnativehelper_compat_libc++ liblog libdl
 LOCAL_CXX_STL := none
