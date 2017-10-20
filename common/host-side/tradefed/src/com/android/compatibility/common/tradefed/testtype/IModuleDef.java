@@ -21,6 +21,7 @@ import com.android.tradefed.invoker.IInvocationContext;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IDeviceTest;
+import com.android.tradefed.testtype.IInvocationContextReceiver;
 import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.IRuntimeHintProvider;
 import com.android.tradefed.testtype.ITestCollector;
@@ -33,7 +34,7 @@ import java.util.Set;
  * Container for Compatibility test info.
  */
 public interface IModuleDef extends Comparable<IModuleDef>, IBuildReceiver, IDeviceTest,
-        IRemoteTest, IRuntimeHintProvider, ITestCollector {
+        IRemoteTest, IRuntimeHintProvider, ITestCollector, IInvocationContextReceiver {
 
     /** key names used for saving module info into {@link IInvocationContext} */
     // This currently references ModuleDefinition so that there's only once source for String

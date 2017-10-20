@@ -16,10 +16,10 @@
 
 package android.cts.backup;
 
-import static junit.framework.Assert.assertNull;
+import static org.junit.Assert.assertNull;
 
-import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.After;
 import org.junit.Test;
@@ -61,6 +61,7 @@ public class AllowBackupHostSideTest extends BaseBackupHostSideTest {
     private static final String ALLOWBACKUP_APP_APK = "BackupAllowedApp.apk";
 
     @After
+    @Override
     public void tearDown() throws Exception {
         super.tearDown();
 

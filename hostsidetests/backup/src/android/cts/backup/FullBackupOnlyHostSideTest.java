@@ -16,7 +16,7 @@
 
 package android.cts.backup;
 
-import static junit.framework.Assert.assertNull;
+import static org.junit.Assert.assertNull;
 
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -75,6 +75,7 @@ public class FullBackupOnlyHostSideTest extends BaseBackupHostSideTest {
 
 
     @After
+    @Override
     public void tearDown() throws Exception {
         super.tearDown();
 

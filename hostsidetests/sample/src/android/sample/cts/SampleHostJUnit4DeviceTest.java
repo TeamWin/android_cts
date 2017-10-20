@@ -16,14 +16,14 @@
 
 package android.sample.cts;
 
-import com.android.compatibility.common.tradefed.testtype.CompatibilityHostTestBase;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.runner.RunWith;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * Test that collects test results from test package android.sample.cts.app2.
@@ -33,7 +33,7 @@ import org.junit.Test;
  * collected from the hostside and reported accordingly.
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class SampleHostJUnit4DeviceTest extends CompatibilityHostTestBase {
+public class SampleHostJUnit4DeviceTest extends BaseHostJUnit4Test {
 
     private static final String TEST_PKG = "android.sample.cts.app2";
     private static final String TEST_CLASS = TEST_PKG + "." + "SampleDeviceTest";
@@ -65,7 +65,7 @@ public class SampleHostJUnit4DeviceTest extends CompatibilityHostTestBase {
 
     @After
     public void tearDown() throws Exception {
-        uninstallPackage(TEST_PKG);
+        uninstallPackage(getDevice(), TEST_PKG);
     }
 
 }
