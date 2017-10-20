@@ -24,6 +24,7 @@ LOCAL_JAVA_LIBRARIES := android.test.runner android.test.base.stubs
 
 LOCAL_STATIC_JAVA_LIBRARIES += \
     android-support-test \
+    android-support-v4 \
     mockito-target-minus-junit4 \
     compatibility-device-util \
     ctsdeviceutillegacy \
