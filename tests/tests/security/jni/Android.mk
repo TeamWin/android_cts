@@ -46,6 +46,7 @@ LOCAL_SHARED_LIBRARIES := \
 LOCAL_C_INCLUDES += ndk/sources/cpufeatures
 LOCAL_STATIC_LIBRARIES := cpufeatures
 
-LOCAL_CFLAGS := -Wno-unused-parameter
+LOCAL_CFLAGS := -Wall -Werror -Wno-unused-parameter
+LOCAL_CFLAGS += -Wno-sign-compare -Wno-unused-label -Wno-unused-variable
 
 include $(BUILD_SHARED_LIBRARY)
