@@ -17,6 +17,7 @@
 package android.telephony.cts.embmstestapp;
 
 import android.app.Service;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Binder;
@@ -47,13 +48,20 @@ public class CtsStreamingService extends Service {
     private static final Set<String> ALLOWED_PACKAGES = new HashSet<String>() {{
         add("android.telephony.cts");
     }};
+    private static final String TAG = "EmbmsTestStreaming";
+
+    public static final String METHOD_INITIALIZE = "initialize";
+    public static final String METHOD_REQUEST_UPDATE_STREAMING_SERVICES =
+            "requestUpdateStreamingServices";
+    public static final String METHOD_CLOSE = "close";
 
     public static final String CONTROL_INTERFACE_ACTION =
             "android.telephony.cts.embmstestapp.ACTION_CONTROL_MIDDLEWARE";
+    public static final ComponentName CONTROL_INTERFACE_COMPONENT =
+            ComponentName.unflattenFromString(
+                    "android.telephony.cts.embmstestapp/.CtsStreamingService");
 
-    private static final String TAG = "EmbmsTestStreaming";
-
-    private static final StreamingServiceInfo STREAMING_SERVICE_INFO;
+    public static final StreamingServiceInfo STREAMING_SERVICE_INFO;
     static {
         String id = "StreamingServiceId";
         Map<Locale, String> localeDict = new HashMap<Locale, String>() {{
@@ -65,8 +73,8 @@ public class CtsStreamingService extends Service {
             add(Locale.US);
         }};
         STREAMING_SERVICE_INFO = new StreamingServiceInfo(localeDict, "class1", locales,
-                id, new Date(System.currentTimeMillis() - 10000),
-                new Date(System.currentTimeMillis() + 10000));
+                id, new Date(2017, 8, 21, 18, 20, 29),
+                new Date(2017, 8, 21, 18, 23, 9));
     }
 
     private static final int SEND_STREAMING_SERVICES_LIST = 1;
@@ -87,11 +95,16 @@ public class CtsStreamingService extends Service {
         return true;
     };
     private List<List> mReceivedCalls = new LinkedList<>();
+    private int mErrorCodeOverride = MbmsErrors.SUCCESS;
 
     private final MbmsStreamingServiceBase mStreamingServiceImpl = new MbmsStreamingServiceBase() {
         @Override
         public int initialize(MbmsStreamingSessionCallback callback, int subId) {
-            mReceivedCalls.add(Arrays.asList("initialize", subId));
+            mReceivedCalls.add(Arrays.asList(METHOD_INITIALIZE, subId));
+            if (mErrorCodeOverride != MbmsErrors.SUCCESS) {
+                return mErrorCodeOverride;
+            }
+
 
             int packageUid = Binder.getCallingUid();
             String[] packageNames = getPackageManager().getPackagesForUid(packageUid);
@@ -118,8 +131,12 @@ public class CtsStreamingService extends Service {
 
         @Override
         public int requestUpdateStreamingServices(int subscriptionId, List<String> serviceClasses) {
-            mReceivedCalls.add(Arrays.asList("requestUpdateStreamingServices", subscriptionId,
-                    serviceClasses));
+            mReceivedCalls.add(Arrays.asList(METHOD_REQUEST_UPDATE_STREAMING_SERVICES,
+                    subscriptionId, serviceClasses));
+            if (mErrorCodeOverride != MbmsErrors.SUCCESS) {
+                return mErrorCodeOverride;
+            }
+
             List<StreamingServiceInfo> serviceInfos =
                     Collections.singletonList(STREAMING_SERVICE_INFO);
 
@@ -133,6 +150,10 @@ public class CtsStreamingService extends Service {
         public int startStreaming(int subscriptionId, String serviceId,
                 StreamingServiceCallback callback) {
             // TODO
+            if (mErrorCodeOverride != MbmsErrors.SUCCESS) {
+                return mErrorCodeOverride;
+            }
+
             return MbmsErrors.SUCCESS;
         }
 
@@ -149,6 +170,7 @@ public class CtsStreamingService extends Service {
 
         @Override
         public void dispose(int subscriptionId) {
+            mReceivedCalls.add(Arrays.asList(METHOD_CLOSE, subscriptionId));
             // TODO
         }
 
@@ -164,11 +186,17 @@ public class CtsStreamingService extends Service {
             mReceivedCalls.clear();
             mHandler.removeCallbacksAndMessages(null);
             mAppCallback = null;
+            mErrorCodeOverride = MbmsErrors.SUCCESS;
         }
 
         @Override
         public List getStreamingSessionCalls() throws RemoteException {
             return mReceivedCalls;
+        }
+
+        @Override
+        public void forceErrorCode(int error) throws RemoteException {
+            mErrorCodeOverride = error;
         }
     };
 

@@ -24,23 +24,26 @@ import android.content.ServiceConnection;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
-import android.os.Looper;
+import android.os.RemoteException;
 import android.telephony.MbmsStreamingSession;
 import android.telephony.cts.embmstestapp.CtsStreamingService;
 import android.telephony.cts.embmstestapp.ICtsMiddlewareControl;
+import android.telephony.mbms.MbmsErrors;
 import android.telephony.mbms.MbmsStreamingSessionCallback;
+import android.telephony.mbms.ServiceInfo;
 import android.telephony.mbms.StreamingServiceInfo;
 import android.test.InstrumentationTestCase;
 
 import com.android.internal.os.SomeArgs;
 
-import java.util.LinkedList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class MbmsStreamingSessionTest extends InstrumentationTestCase {
     private static final int ASYNC_TIMEOUT = 10000;
@@ -107,6 +110,7 @@ public class MbmsStreamingSessionTest extends InstrumentationTestCase {
     private HandlerThread mHandlerThread;
     private Handler mCallbackHandler;
     private ICtsMiddlewareControl mMiddlewareControl;
+    private MbmsStreamingSession mStreamingSession;
     private TestCallback mCallback = new TestCallback();
 
     @Override
@@ -116,27 +120,87 @@ public class MbmsStreamingSessionTest extends InstrumentationTestCase {
         mHandlerThread.start();
         mCallbackHandler = new Handler(mHandlerThread.getLooper());
         getControlBinder();
+        setupStreamingSession();
     }
 
     @Override
-    public void tearDown() {
+    public void tearDown() throws Exception {
         mHandlerThread.quit();
+        mStreamingSession.close();
+        mMiddlewareControl.reset();
     }
 
-    public void testSessionCreation() throws Exception {
-        MbmsStreamingSession session = MbmsStreamingSession.create(
+    private void setupStreamingSession() throws Exception {
+        mStreamingSession = MbmsStreamingSession.create(
                 mContext, mCallback, mCallbackHandler);
-        assertNotNull(session);
+        assertNotNull(mStreamingSession);
         assertTrue(mCallback.waitOnMiddlewareReady());
         assertEquals(0, mCallback.getNumErrorCalls());
         List initializeCall = (List) mMiddlewareControl.getStreamingSessionCalls().get(0);
-        assertEquals("initialize", initializeCall.get(0));
+        assertEquals(CtsStreamingService.METHOD_INITIALIZE, initializeCall.get(0));
+    }
+
+    public void testDuplicateSession() throws Exception {
+        try {
+            MbmsStreamingSession failure = MbmsStreamingSession.create(
+                    mContext, mCallback, mCallbackHandler);
+            fail("Duplicate create should've thrown an exception");
+        } catch (IllegalStateException e) {
+            // Succeed
+        }
+    }
+
+    public void testRequestUpdateStreamingServices() throws Exception {
+        List<String> testClasses = Arrays.asList("class1", "class2");
+        mStreamingSession.requestUpdateStreamingServices(testClasses);
+
+        // Make sure we got the streaming services
+        List<StreamingServiceInfo> serviceInfos =
+                (List<StreamingServiceInfo>) mCallback.waitOnStreamingServicesUpdated().arg1;
+        assertEquals((ServiceInfo) CtsStreamingService.STREAMING_SERVICE_INFO,
+                (ServiceInfo) serviceInfos.get(0));
+        assertEquals(0, mCallback.getNumErrorCalls());
+
+        // Make sure the middleware got the call with the right args
+        List<List> requestStreamingServicesCalls =
+                getMiddlewareCalls(CtsStreamingService.METHOD_REQUEST_UPDATE_STREAMING_SERVICES);
+        assertEquals(1, requestStreamingServicesCalls.size());
+        assertEquals(3, requestStreamingServicesCalls.get(0).size());
+        List<String> middlewareReceivedServiceClasses =
+                (List<String>) requestStreamingServicesCalls.get(0).get(2);
+        assertEquals(testClasses.size(), middlewareReceivedServiceClasses.size());
+        for (int i = 0; i < testClasses.size(); i++) {
+            assertEquals(testClasses.get(i), middlewareReceivedServiceClasses.get(i));
+        }
+    }
+
+    public void testClose() throws Exception {
+        mStreamingSession.close();
+
+        // Make sure we can't use it anymore
+        try {
+            mStreamingSession.requestUpdateStreamingServices(Collections.emptyList());
+            fail("Streaming session should not be usable after close");
+        } catch (IllegalStateException e) {
+            // Succeed
+        }
+
+        // Make sure that the middleware got the call to close
+        List<List> closeCalls = getMiddlewareCalls(CtsStreamingService.METHOD_CLOSE);
+        assertEquals(1, closeCalls.size());
+    }
+
+    public void testErrorDelivery() throws Exception {
+        mMiddlewareControl.forceErrorCode(
+                MbmsErrors.GeneralErrors.ERROR_MIDDLEWARE_TEMPORARILY_UNAVAILABLE);
+        mStreamingSession.requestUpdateStreamingServices(Collections.emptyList());
+        assertEquals(MbmsErrors.GeneralErrors.ERROR_MIDDLEWARE_TEMPORARILY_UNAVAILABLE,
+                mCallback.waitOnError().arg1);
     }
 
     private void getControlBinder() throws InterruptedException {
         Intent bindIntent = new Intent(CtsStreamingService.CONTROL_INTERFACE_ACTION);
-        bindIntent.setComponent(ComponentName.unflattenFromString(
-                "android.telephony.cts.embmstestapp/.CtsStreamingService"));
+        bindIntent.setComponent(CtsStreamingService.CONTROL_INTERFACE_COMPONENT);
         final CountDownLatch bindLatch = new CountDownLatch(1);
 
         boolean success = mContext.bindService(bindIntent, new ServiceConnection() {
@@ -155,5 +219,11 @@ public class MbmsStreamingSessionTest extends InstrumentationTestCase {
             fail("Failed to get control interface -- bind error");
         }
         bindLatch.await(ASYNC_TIMEOUT, TimeUnit.MILLISECONDS);
+    }
+
+    private List<List> getMiddlewareCalls(String methodName) throws RemoteException {
+        return ((List<List>) mMiddlewareControl.getStreamingSessionCalls()).stream()
+                .filter((elem) -> elem.get(0).equals(methodName))
+                .collect(Collectors.toList());
     }
 }
