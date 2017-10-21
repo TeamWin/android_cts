@@ -4499,6 +4499,15 @@ public class TextViewTest {
     }
 
     @Test
+    public void testXmlTypefaceFontFamilyHierarchy() {
+        // This view has typeface=serif set on the view directly and a fontFamily on the appearance.
+        // In this case, the attr set directly on the view should take precedence.
+        mTextView = findTextView(R.id.textview_textappearance_attrs_serif_fontfamily);
+
+        assertEquals(Typeface.SERIF, mTextView.getTypeface());
+    }
+
+    @Test
     public void testAttributeReading_allCapsAndPassword() {
         // This TextView has all caps & password, therefore all caps should be ignored.
         mTextView = findTextView(R.id.textview_textappearance_attrs_allcaps_password);

@@ -314,6 +314,9 @@ public class DragDropTest {
         mActivity = mActivityRule.getActivity();
         mStartReceived = new CountDownLatch(1);
         mEndReceived = new CountDownLatch(1);
+
+        // Wait for idle
+        mInstrumentation.waitForIdleSync();
     }
 
     @After

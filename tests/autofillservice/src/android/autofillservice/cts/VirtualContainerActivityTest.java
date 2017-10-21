@@ -381,7 +381,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         // Set expectations.
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
-                .setFlags(SaveInfo.FLAG_SAVE_ON_ALL_VIEWS_INVISIBLE)
+                .setSaveInfoFlags(SaveInfo.FLAG_SAVE_ON_ALL_VIEWS_INVISIBLE)
                 .build());
 
         final CountDownLatch latch = new CountDownLatch(1);

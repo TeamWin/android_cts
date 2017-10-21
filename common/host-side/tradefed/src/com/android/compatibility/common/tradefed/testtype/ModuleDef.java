@@ -26,6 +26,7 @@ import com.android.tradefed.config.ConfigurationException;
 import com.android.tradefed.config.OptionSetter;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.invoker.IInvocationContext;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.ITestInvocationListener;
 import com.android.tradefed.result.ResultForwarder;
@@ -37,6 +38,7 @@ import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IAbiReceiver;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IDeviceTest;
+import com.android.tradefed.testtype.IInvocationContextReceiver;
 import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.IRuntimeHintProvider;
 import com.android.tradefed.testtype.ITestCollector;
@@ -68,6 +70,7 @@ public class ModuleDef implements IModuleDef {
     private ITestDevice mDevice;
     private Set<String> mPreparerWhitelist = new HashSet<>();
     private ConfigurationDescriptor mConfigurationDescriptor;
+    private IInvocationContext mContext;
 
     public ModuleDef(String name, IAbi abi, IRemoteTest test,
             List<ITargetPreparer> preparers, ConfigurationDescriptor configurationDescriptor) {
@@ -302,6 +305,9 @@ public class ModuleDef implements IModuleDef {
         if (mTest instanceof IDeviceTest) {
             ((IDeviceTest) mTest).setDevice(mDevice);
         }
+        if (mTest instanceof IInvocationContextReceiver) {
+            ((IInvocationContextReceiver) mTest).setInvocationContext(mContext);
+        }
     }
 
     /**
@@ -408,5 +414,10 @@ public class ModuleDef implements IModuleDef {
     @Override
     public ConfigurationDescriptor getConfigurationDescriptor() {
         return mConfigurationDescriptor;
+    }
+
+    @Override
+    public void setInvocationContext(IInvocationContext invocationContext) {
+        mContext = invocationContext;
     }
 }

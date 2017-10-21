@@ -347,4 +347,11 @@ public class AvailableIntentsTest extends AndroidTestCase {
             assertDefaultHandlerValidPriority(intent);
         }
     }
+
+    public void testFingerprintEnrollStart() {
+        PackageManager packageManager = mContext.getPackageManager();
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)) {
+            assertCanBeHandled(new Intent(Settings.ACTION_FINGERPRINT_ENROLL));
+        }
+    }
 }
