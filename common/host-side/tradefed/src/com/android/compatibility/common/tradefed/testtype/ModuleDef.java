@@ -416,6 +416,13 @@ public class ModuleDef implements IModuleDef {
         return mConfigurationDescriptor;
     }
 
+    /**
+     * @return the {@link IInvocationContext} for the module
+     */
+    protected IInvocationContext getInvocationContext() {
+        return mContext;
+    }
+
     @Override
     public void setInvocationContext(IInvocationContext invocationContext) {
         mContext = invocationContext;
