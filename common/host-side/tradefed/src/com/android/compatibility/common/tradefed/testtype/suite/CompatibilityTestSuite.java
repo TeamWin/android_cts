@@ -26,14 +26,8 @@ import com.android.tradefed.config.Option;
 import com.android.tradefed.config.Option.Importance;
 import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.log.LogUtil.CLog;
-import com.android.tradefed.testtype.Abi;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.suite.ITestSuite;
-import com.android.tradefed.testtype.suite.TestSuiteInfo;
-import com.android.tradefed.util.AbiFormatter;
-import com.android.tradefed.util.AbiUtils;
 import com.android.tradefed.util.ArrayUtil;
 import com.android.tradefed.util.MultiMap;
 import com.android.tradefed.util.xml.AbstractXmlParser.ParseException;
@@ -43,10 +37,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -56,7 +48,6 @@ import java.util.Set;
 @OptionClass(alias = "compatibility")
 public class CompatibilityTestSuite extends ITestSuite {
 
-    public static final String ABI_OPTION = "abi";
     public static final String INCLUDE_FILTER_OPTION = "include-filter";
     public static final String EXCLUDE_FILTER_OPTION = "exclude-filter";
     public static final String SUBPLAN_OPTION = "subplan";
@@ -65,9 +56,6 @@ public class CompatibilityTestSuite extends ITestSuite {
     public static final char TEST_OPTION_SHORT_NAME = 't';
     private static final String MODULE_ARG_OPTION = "module-arg";
     private static final String TEST_ARG_OPTION = "test-arg";
-    private static final String SKIP_HOST_ARCH_CHECK = "skip-host-arch-check";
-    private static final String PRIMARY_ABI_RUN = "primary-abi-only";
-    private static final String PRODUCT_CPU_ABI_KEY = "ro.product.cpu.abi";
 
     // TODO: remove this option when CompatibilityTest goes away
     @Option(name = RetryFactoryTest.RETRY_OPTION,
@@ -113,21 +101,6 @@ public class CompatibilityTestSuite extends ITestSuite {
                     + "\"<test-class>:<arg-name>:[<arg-key>:=]<arg-value>\"",
             importance = Importance.ALWAYS)
     private List<String> mTestArgs = new ArrayList<>();
-
-    @Option(name = ABI_OPTION,
-            shortName = 'a',
-            description = "the abi to test.",
-            importance = Importance.IF_UNSET)
-    private String mAbiName = null;
-
-    @Option(name = SKIP_HOST_ARCH_CHECK,
-            description = "Whether host architecture check should be skipped")
-    private boolean mSkipHostArchCheck = false;
-
-    @Option(name = PRIMARY_ABI_RUN,
-            description = "Whether to run tests with only the device primary abi. "
-                    + "This override the --abi option.")
-    private boolean mPrimaryAbiRun = false;
 
     @Option(name = "module-metadata-include-filter",
             description = "Include modules for execution based on matching of metadata fields: "
@@ -181,64 +154,6 @@ public class CompatibilityTestSuite extends ITestSuite {
     }
 
     /**
-     * Gets the set of ABIs supported by both Compatibility and the device under test
-     *
-     * @return The set of ABIs to run the tests on
-     * @throws DeviceNotAvailableException
-     */
-    Set<IAbi> getAbis(ITestDevice device) throws DeviceNotAvailableException {
-        Set<IAbi> abis = new LinkedHashSet<>();
-        Set<String> archAbis = getAbisForBuildTargetArch();
-        if (mPrimaryAbiRun) {
-            if (mAbiName == null) {
-                // Get the primary from the device and make it the --abi to run.
-                mAbiName = device.getProperty(PRODUCT_CPU_ABI_KEY).trim();
-            } else {
-                CLog.d("Option --%s supersedes the option --%s, using abi: %s", ABI_OPTION,
-                        PRIMARY_ABI_RUN, mAbiName);
-            }
-        }
-        if (mAbiName != null) {
-            // A particular abi was requested, it still needs to be supported by the build.
-            if ((!mSkipHostArchCheck && !archAbis.contains(mAbiName)) ||
-                    !AbiUtils.isAbiSupportedByCompatibility(mAbiName)) {
-                throw new IllegalArgumentException(String.format("Your CTS hasn't been built with "
-                        + "abi '%s' support, this CTS currently supports '%s'.",
-                        mAbiName, archAbis));
-            } else {
-                abis.add(new Abi(mAbiName, AbiUtils.getBitness(mAbiName)));
-                return abis;
-            }
-        } else {
-            // Run on all abi in common between the device and CTS.
-            List<String> deviceAbis = Arrays.asList(AbiFormatter.getSupportedAbis(device, ""));
-            for (String abi : deviceAbis) {
-                if ((mSkipHostArchCheck || archAbis.contains(abi)) &&
-                        AbiUtils.isAbiSupportedByCompatibility(abi)) {
-                    abis.add(new Abi(abi, AbiUtils.getBitness(abi)));
-                } else {
-                    CLog.d("abi '%s' is supported by device but not by this CTS build (%s), tests "
-                            + "will not run against it.", abi, archAbis);
-                }
-            }
-            if (abis.isEmpty()) {
-                throw new IllegalArgumentException(String.format("None of the abi supported by this"
-                       + " CTS build ('%s') are supported by the device ('%s').",
-                       archAbis, deviceAbis));
-            }
-            return abis;
-        }
-    }
-
-    /**
-     * Return the abis supported by the Host build target architecture.
-     * Exposed for testing.
-     */
-    protected Set<String> getAbisForBuildTargetArch() {
-        return AbiUtils.getAbisForArch(TestSuiteInfo.getInstance().getTargetArch());
-    }
-
-    /**
      * Sets the include/exclude filters up based on if a module name was given or whether this is a
      * retry run.
      */
@@ -274,7 +189,8 @@ public class CompatibilityTestSuite extends ITestSuite {
                 String moduleName = modules.get(0);
                 checkFilters(mIncludeFilters, moduleName);
                 checkFilters(mExcludeFilters, moduleName);
-                mIncludeFilters.add(new TestFilter(mAbiName, moduleName, mTestName).toString());
+                mIncludeFilters.add(new TestFilter(getRequestedAbi(), moduleName, mTestName)
+                        .toString());
             }
         } else if (mTestName != null) {
             throw new IllegalArgumentException(
