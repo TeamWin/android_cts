@@ -51,6 +51,14 @@ public abstract class ShortcutManagerCtsTestsBase extends InstrumentationTestCas
 
     private static final boolean DUMPSYS_IN_TEARDOWN = false; // DO NOT SUBMIT WITH true
 
+    /**
+     * Whether to enable strict mode or not.
+     *
+     * TODO Enable it after fixing b/68051728. Somehow violations would happen on the dashboard
+     * only and can't reproduce it locally.
+     */
+    private static final boolean ENABLE_STRICT_MODE = false;
+
     private static class SpoofingContext extends ContextWrapper {
         private final String mPackageName;
 
@@ -280,10 +288,12 @@ public abstract class ShortcutManagerCtsTestsBase extends InstrumentationTestCas
     protected void runWithStrictMode(Runnable r) {
         final ThreadPolicy oldPolicy = StrictMode.getThreadPolicy();
         try {
-            StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
-                    .detectAll()
-                    .penaltyDeath()
-                    .build());
+            if (ENABLE_STRICT_MODE) {
+                StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
+                        .detectAll()
+                        .penaltyDeath()
+                        .build());
+            }
             r.run();
         } finally {
             StrictMode.setThreadPolicy(oldPolicy);
