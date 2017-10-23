@@ -19,7 +19,8 @@ include $(CLEAR_VARS)
 # Don't include this package in any target.
 LOCAL_MODULE_TAGS := tests
 
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
+LOCAL_SRC_FILES := $(call all-java-files-under, src) \
+    ../src/android/server/wm/TestLogClient.java
 
 LOCAL_SDK_VERSION := current
 

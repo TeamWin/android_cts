@@ -18,7 +18,7 @@ package android.server.wm.dndtargetappsdk23;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.util.Log;
+import android.server.wm.TestLogClient;
 import android.view.DragEvent;
 import android.view.View;
 import android.widget.TextView;
@@ -28,14 +28,13 @@ import android.widget.TextView;
  * below do not receive global drags.
  */
 public class DropTarget extends Activity {
-    public static final String LOG_TAG = "DropTarget";
-
     private static final String RESULT_KEY_DRAG_STARTED = "DRAG_STARTED";
     private static final String RESULT_KEY_DROP_RESULT = "DROP";
 
     public static final String RESULT_OK = "OK";
 
     private TextView mTextView;
+    private TestLogClient mLogClient;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -46,12 +45,13 @@ public class DropTarget extends Activity {
 
         mTextView = (TextView) findViewById(R.id.drag_target);
         mTextView.setOnDragListener(new OnDragListener());
+
+        mLogClient = new TestLogClient(this, getIntent().getStringExtra("logtag"));
     }
 
     private void logResult(String key, String value) {
-        String result = key + "=" + value;
-        Log.i(LOG_TAG, result);
-        mTextView.setText(result);
+        mLogClient.record(key, value);
+        mTextView.setText(key + "=" + value);
     }
 
     private class OnDragListener implements View.OnDragListener {

@@ -43,7 +43,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -352,29 +351,6 @@ public class CrossAppDragAndDropTests {
         mDevice.pressMenu();
     }
 
-    private Map<String, String> getLogResults(String className, String lastResultKey)
-            throws Exception {
-        int retryCount = 10;
-        Map<String, String> output = new HashMap<String, String>();
-        do {
-
-            String logs = executeShellCommand("logcat -v brief -d " + className + ":I" + " *:S");
-            for (String line : logs.split("\\n")) {
-                if (line.startsWith("I/" + className)) {
-                    String payload = line.split(":")[1].trim();
-                    final String[] split = payload.split("=");
-                    if (split.length > 1) {
-                        output.put(split[0], split[1]);
-                    }
-                }
-            }
-            if (output.containsKey(lastResultKey)) {
-                return output;
-            }
-        } while (retryCount-- > 0);
-        return output;
-    }
-
     private void assertDropResult(String sourceMode, String targetMode, String expectedDropResult)
             throws Exception {
         assertDragAndDropResults(sourceMode, targetMode, RESULT_OK, expectedDropResult, RESULT_OK);
@@ -414,19 +390,20 @@ public class CrossAppDragAndDropTests {
             return;
         }
 
-        clearLogs();
-
         Point p1 = getWindowCenter(getComponentName(mSourcePackageName, SOURCE_ACTIVITY_NAME));
         assertNotNull(p1);
         Point p2 = getWindowCenter(getComponentName(mTargetPackageName, TARGET_ACTIVITY_NAME));
         assertNotNull(p2);
 
+        TestLogService.registerClient(mSourceLogTag, RESULT_KEY_START_DRAG);
+        TestLogService.registerClient(mTargetLogTag, RESULT_KEY_DRAG_ENDED);
+
         injectInput(p1, p2, SWIPE_STEPS);
 
-        mSourceResults = getLogResults(mSourceLogTag, RESULT_KEY_START_DRAG);
+        mSourceResults = TestLogService.getResultsForClient(mSourceLogTag, 1000);
         assertSourceResult(RESULT_KEY_START_DRAG, expectedStartDragResult);
 
-        mTargetResults = getLogResults(mTargetLogTag, RESULT_KEY_DRAG_ENDED);
+        mTargetResults = TestLogService.getResultsForClient(mTargetLogTag, 1000);
         assertTargetResult(RESULT_KEY_DROP_RESULT, expectedDropResult);
         if (!RESULT_MISSING.equals(expectedDropResult)) {
             assertTargetResult(RESULT_KEY_ACCESS_BEFORE, RESULT_EXCEPTION);
