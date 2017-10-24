@@ -16,28 +16,33 @@
 
 package com.android.server.cts;
 
+import android.app.ActivityManagerProto;
+import android.content.IntentProto;
+import android.os.BatteryManagerProto;
 import android.os.LooperProto;
-import android.service.power.PowerServiceDumpProto;
-import android.service.power.PowerServiceSettingsAndConfigurationDumpProto;
+import android.os.PowerManagerInternalProto;
+import android.os.PowerManagerProto;
+import com.android.server.power.PowerManagerServiceDumpProto;
+import com.android.server.power.PowerServiceSettingsAndConfigurationDumpProto;
 
 /** Test to check that the power manager properly outputs its dump state. */
 public class PowerIncidentTest extends ProtoDumpTestCase {
     private static final int SYSTEM_UID = 1000;
 
     public void testPowerServiceDump() throws Exception {
-        final PowerServiceDumpProto dump =
-                getDump(PowerServiceDumpProto.parser(), "dumpsys power --proto");
+        final PowerManagerServiceDumpProto dump =
+                getDump(PowerManagerServiceDumpProto.parser(), "dumpsys power --proto");
 
         assertTrue(
-                PowerServiceDumpProto.Wakefulness.getDescriptor()
+                PowerManagerInternalProto.Wakefulness.getDescriptor()
                         .getValues()
                         .contains(dump.getWakefulness().getValueDescriptor()));
         assertTrue(
-                PowerServiceDumpProto.PlugType.getDescriptor()
+                BatteryManagerProto.PlugType.getDescriptor()
                         .getValues()
                         .contains(dump.getPlugType().getValueDescriptor()));
         assertTrue(
-                PowerServiceDumpProto.DockState.getDescriptor()
+                IntentProto.DockState.getDescriptor()
                         .getValues()
                         .contains(dump.getDockState().getValueDescriptor()));
 
@@ -54,13 +59,13 @@ public class PowerIncidentTest extends ProtoDumpTestCase {
         assertTrue(brightnessLimits.getSettingDefault() > 0);
         assertTrue(brightnessLimits.getSettingForVrDefault() > 0);
 
-        final PowerServiceDumpProto.UidProto uid = dump.getUids(0);
+        final PowerManagerServiceDumpProto.UidProto uid = dump.getUids(0);
         assertEquals(uid.getUid(), SYSTEM_UID);
         assertEquals(uid.getUidString(), Integer.toString(SYSTEM_UID));
         assertTrue(uid.getIsActive());
         assertFalse(uid.getIsProcessStateUnknown());
         assertTrue(
-                PowerServiceDumpProto.UidProto.ProcessState.getDescriptor()
+                ActivityManagerProto.ProcessState.getDescriptor()
                         .getValues()
                         .contains(uid.getProcessState().getValueDescriptor()));
 
