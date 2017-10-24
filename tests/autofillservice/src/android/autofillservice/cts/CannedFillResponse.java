@@ -80,6 +80,7 @@ final class CannedFillResponse {
     private final int mSaveInfoFlags;
     private final int mFillResponseFlags;
     private final AutofillId mSaveTriggerId;
+    private final long mDisableDuration;
 
     private CannedFillResponse(Builder builder) {
         mResponseType = builder.mResponseType;
@@ -102,6 +103,7 @@ final class CannedFillResponse {
         mSaveInfoFlags = builder.mSaveInfoFlags;
         mFillResponseFlags = builder.mFillResponseFlags;
         mSaveTriggerId = builder.mSaveTriggerId;
+        mDisableDuration = builder.mDisableDuration;
     }
 
     /**
@@ -180,6 +182,9 @@ final class CannedFillResponse {
             builder.setAuthentication(getAutofillIds(nodeResolver, mAuthenticationIds),
                     mAuthentication, mPresentation);
         }
+        if (mDisableDuration > 0) {
+            builder.disableAutofill(mDisableDuration);
+        }
         return builder
                 .setClientState(mExtras)
                 .build();
@@ -202,6 +207,7 @@ final class CannedFillResponse {
                 + ", ignoredIds=" + Arrays.toString(mIgnoredIds)
                 + ", sanitizers =" + mSanitizers
                 + ", saveTriggerId=" + mSaveTriggerId
+                + ", disableDuration=" + mDisableDuration
                 + "]";
     }
 
@@ -232,6 +238,7 @@ final class CannedFillResponse {
         private int mSaveInfoFlags;
         private int mFillResponseFlags;
         private AutofillId mSaveTriggerId;
+        private long mDisableDuration;
 
         public Builder(ResponseType type) {
             mResponseType = type;
@@ -368,6 +375,12 @@ final class CannedFillResponse {
         public Builder setSaveTriggerId(AutofillId id) {
             assertWithMessage("already set").that(mSaveTriggerId).isNull();
             mSaveTriggerId = id;
+            return this;
+        }
+
+        public Builder disableAutofill(long duration) {
+            assertWithMessage("already set").that(mDisableDuration).isEqualTo(0L);
+            mDisableDuration = duration;
             return this;
         }
     }
