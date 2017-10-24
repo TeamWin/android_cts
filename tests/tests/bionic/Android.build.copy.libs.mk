@@ -16,6 +16,7 @@ my_bionic_testlib_files := \
   dt_runpath_b_c_x/libtest_dt_runpath_b.so \
   dt_runpath_b_c_x/libtest_dt_runpath_c.so \
   dt_runpath_b_c_x/libtest_dt_runpath_x.so \
+  inaccessible_libs/libtestshared.so \
   libatest_simple_zip/libatest_simple_zip.so \
   libcfi-test.so \
   libcfi-test-bad.so \
