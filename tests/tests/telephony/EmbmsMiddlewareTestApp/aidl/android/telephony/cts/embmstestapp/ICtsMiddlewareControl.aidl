@@ -27,4 +27,12 @@ interface ICtsMiddlewareControl {
     List getStreamingSessionCalls();
     // Force all methods that can return an error to return this error.
     void forceErrorCode(int error);
+    // Fire the error callback on the current active stream
+    void fireErrorOnStream(int errorCode, String message);
+    // Fire the error callback on the streaming session
+    void fireErrorOnSession(int errorCode, String message);
+    // The following fire callbacks on the active stream, using the provided arguments
+    void fireOnMediaDescriptionUpdated();
+    void fireOnBroadcastSignalStrengthUpdated(int signalStrength);
+    void fireOnStreamMethodUpdated(int methodType);
 }
