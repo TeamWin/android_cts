@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2011 The Android Open Source Project
+/**
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,22 @@
  * limitations under the License.
  */
 
-package android.openglperf.cts;
+package android.security.cts;
 
-/**
- * Interface used to notify the completion of requested rendering.
- */
-public interface RenderCompletionListener {
+import android.platform.test.annotations.SecurityTest;
+
+@SecurityTest
+public class Poc17_11 extends SecurityTestCase {
+
     /**
-     * @param averageFps average of total frames
-     * @param numTriangles Number of triangles in geometric model
-     * @param frameInterval interval for each frame in ms. Do not use the first one and the last one.
+     * b/34705430
      */
-    void onRenderCompletion(float averageFps, int numTriangles, int[] frameInterval,
-            String rendererName);
-
+    @SecurityTest
+    public void testPocCVE_2017_6264() throws Exception {
+        enableAdbRoot(getDevice());
+        if (containsDriver(getDevice(),
+                           "/sys/devices/virtual/thermal/cooling_device2/cur_state")) {
+            AdbUtils.runPocNoOutput("CVE-2017-6264", getDevice(), 60);
+        }
+    }
 }
