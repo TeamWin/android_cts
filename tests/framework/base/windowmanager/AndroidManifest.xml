@@ -23,6 +23,12 @@
 
     <application android:label="CtsWindowManagerDeviceTestCases">
         <uses-library android:name="android.test.runner"/>
+
+        <service
+            android:name="android.server.wm.TestLogService"
+            android:enabled="true"
+            android:exported="true">
+        </service>
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"

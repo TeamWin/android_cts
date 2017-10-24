@@ -24,7 +24,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.PersistableBundle;
-import android.util.Log;
+import android.server.wm.TestLogClient;
 import android.view.DragAndDropPermissions;
 import android.view.DragEvent;
 import android.view.View;
@@ -50,13 +50,13 @@ public class DropTarget extends Activity {
     protected static final String MAGIC_VALUE = "42";
 
     private TextView mTextView;
-    private String mLogTag;
+    private TestLogClient mLogClient;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mLogTag = getIntent().getStringExtra("logtag");
+        mLogClient = new TestLogClient(this, getIntent().getStringExtra("logtag"));
 
         View view = getLayoutInflater().inflate(R.layout.target_activity, null);
         setContentView(view);
@@ -91,7 +91,7 @@ public class DropTarget extends Activity {
     }
 
     private void logResult(String key, String value) {
-        Log.i(mLogTag, key + "=" + value);
+        mLogClient.record(key, value);
         mTextView.setText(mTextView.getText() + "\n" + key + "=" + value);
     }
 
