@@ -39,6 +39,7 @@ import android.os.ParcelFileDescriptor;
 import android.os.StrictMode;
 import android.os.StrictMode.ThreadPolicy;
 import android.os.SystemClock;
+import android.platform.test.annotations.Presubmit;
 import android.print.PageRange;
 import android.print.PrintAttributes;
 import android.print.PrintDocumentAdapter;
@@ -213,6 +214,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         StrictMode.setThreadPolicy(oldPolicy);
     }
 
+    @Presubmit
     @UiThreadTest
     public void testConstructor() {
         if (!NullWebViewUtils.isWebViewAvailable()) {
