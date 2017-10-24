@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,22 +22,22 @@ import javax.net.ssl.X509TrustManager;
 import junit.framework.TestCase;
 
 public class CleartextPermittedTest extends TestCase {
-    public void testDefaultDenied() throws Exception {
-        TestUtils.assertCleartextConnectionFails("example.com", 80);
+    public void testDefaultAllowed() throws Exception {
+        TestUtils.assertCleartextConnectionSucceeds("example.com", 80);
         TestUtils.assertTlsConnectionSucceeds("example.com", 443);
     }
 
-    public void testCleartextAllowed() throws Exception {
-        TestUtils.assertCleartextConnectionSucceeds("android.com", 80);
+    public void testCleartextBlocked() throws Exception {
+        TestUtils.assertCleartextConnectionFails("android.com", 80);
         TestUtils.assertTlsConnectionSucceeds("android.com", 443);
         // subdomains of android.com are also disallowed.
-        TestUtils.assertCleartextConnectionSucceeds("www.android.com", 80);
+        TestUtils.assertCleartextConnectionFails("www.android.com", 80);
         TestUtils.assertTlsConnectionSucceeds("www.android.com", 443);
     }
 
-    public void testNestedCleartextDenied() throws Exception {
-        // developer.android.com is explicitly denied.
-        TestUtils.assertCleartextConnectionFails("developer.android.com", 80);
+    public void testNestedCleartextPermitted() throws Exception {
+        // developer.android.com is explicitly permitted.
+        TestUtils.assertCleartextConnectionSucceeds("developer.android.com", 80);
         TestUtils.assertTlsConnectionSucceeds("developer.android.com", 443);
     }
 }
