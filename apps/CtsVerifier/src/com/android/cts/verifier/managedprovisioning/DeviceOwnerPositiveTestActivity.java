@@ -21,7 +21,6 @@ import static com.android.cts.verifier.managedprovisioning.Utils.createInteracti
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.admin.DevicePolicyManager;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -29,12 +28,10 @@ import android.database.DataSetObserver;
 import android.os.Bundle;
 import android.os.UserManager;
 import android.provider.Settings;
-import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 
 import com.android.cts.verifier.ArrayTestListAdapter;
-import com.android.cts.verifier.IntentDrivenTestActivity;
 import com.android.cts.verifier.IntentDrivenTestActivity.ButtonInfo;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
@@ -60,6 +57,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
     private static final String WIFI_LOCKDOWN_TEST_ID = WifiLockdownTestActivity.class.getName();
     private static final String DISABLE_STATUS_BAR_TEST_ID = "DISABLE_STATUS_BAR";
     private static final String DISABLE_KEYGUARD_TEST_ID = "DISABLE_KEYGUARD";
+    private static final String LOCK_TASK_UI_TEST_ID = "LOCK_TASK_UI";
     private static final String CHECK_PERMISSION_LOCKDOWN_TEST_ID =
             PermissionLockdownTestActivity.class.getName();
     private static final String DISALLOW_CONFIG_BT_ID = "DISALLOW_CONFIG_BT";
@@ -279,6 +277,14 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                                         CommandReceiverActivity.COMMAND_SET_KEYGUARD_DISABLED,
                                                 false))}));
 
+        // setLockTaskFeatures
+        final Intent lockTaskUiTestIntent = new Intent(this, LockTaskUiTestActivity.class);
+        lockTaskUiTestIntent.putExtra(LockTaskUiTestActivity.EXTRA_TEST_ID, LOCK_TASK_UI_TEST_ID);
+        adapter.add(createTestItem(this, LOCK_TASK_UI_TEST_ID,
+                R.string.device_owner_lock_task_ui_test,
+                lockTaskUiTestIntent));
+
+        // setUserIcon
         adapter.add(createInteractiveTestItem(this, SET_USER_ICON_TEST_ID,
                 R.string.device_owner_set_user_icon,
                 R.string.device_owner_set_user_icon_instruction,

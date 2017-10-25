@@ -39,14 +39,12 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.android.cts.verifier.R;
-import com.android.cts.verifier.managedprovisioning.Utils;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class CommandReceiverActivity extends Activity {
@@ -68,6 +66,7 @@ public class CommandReceiverActivity extends Activity {
     public static final String COMMAND_SET_KEYGUARD_DISABLED = "set-keyguard-disabled";
     public static final String COMMAND_SET_LOCK_SCREEN_INFO = "set-lock-screen-info";
     public static final String COMMAND_SET_STATUSBAR_DISABLED = "set-statusbar-disabled";
+    public static final String COMMAND_SET_LOCK_TASK_FEATURES = "set-lock-task-features";
     public static final String COMMAND_ALLOW_ONLY_SYSTEM_INPUT_METHODS =
             "allow-only-system-input-methods";
     public static final String COMMAND_ALLOW_ONLY_SYSTEM_ACCESSIBILITY_SERVICES =
@@ -219,6 +218,11 @@ public class CommandReceiverActivity extends Activity {
                 case COMMAND_SET_STATUSBAR_DISABLED: {
                     boolean enforced = intent.getBooleanExtra(EXTRA_ENFORCED, false);
                     mDpm.setStatusBarDisabled(mAdmin, enforced);
+                } break;
+                case COMMAND_SET_LOCK_TASK_FEATURES: {
+                    int flags = intent.getIntExtra(EXTRA_VALUE,
+                            DevicePolicyManager.LOCK_TASK_FEATURE_NONE);
+                    mDpm.setLockTaskFeatures(mAdmin, flags);
                 } break;
                 case COMMAND_ALLOW_ONLY_SYSTEM_INPUT_METHODS: {
                     boolean enforced = intent.getBooleanExtra(EXTRA_ENFORCED, false);
