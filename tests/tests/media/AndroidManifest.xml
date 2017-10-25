@@ -30,7 +30,7 @@
     <uses-permission android:name="android.permission.SET_VOLUME_KEY_LONG_PRESS_LISTENER" />
     <uses-permission android:name="android.permission.SET_MEDIA_KEY_LISTENER" />
 
-    <application>
+    <application android:usesCleartextTraffic="true">
         <uses-library android:name="android.test.runner" />
         <uses-library android:name="org.apache.http.legacy" android:required="false" />
 

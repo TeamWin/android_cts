@@ -24,7 +24,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.FileUriExposedException;
 import android.os.PersistableBundle;
-import android.util.Log;
+import android.server.wm.TestLogClient;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
@@ -44,13 +44,13 @@ public class DragSource extends Activity{
     private static final long TIMEOUT_CANCEL = 150;
 
     private TextView mTextView;
-    private String mLogTag;
+    private TestLogClient mLogClient;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mLogTag = getIntent().getStringExtra("logtag");
+        mLogClient = new TestLogClient(this, getIntent().getStringExtra("logtag"));
 
         View view = getLayoutInflater().inflate(R.layout.source_activity, null);
         setContentView(view);
@@ -126,7 +126,7 @@ public class DragSource extends Activity{
     }
 
     private void logResult(String key, String value) {
-        Log.i(mLogTag, key + "=" + value);
+        mLogClient.record(key, value);
         mTextView.setText(mTextView.getText() + "\n" + key + "=" + value);
     }
 }

@@ -1,4 +1,4 @@
-# Copyright (C) 2016 The Android Open Source Project
+# Copyright (C) 2017 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,22 +11,26 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-LOCAL_PATH:= $(call my-dir)
+#
+LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
+LOCAL_PACKAGE_NAME := CtsNetSecConfigPrePCleartextTrafficTestCases
 
-# Don't include this package in any target.
 LOCAL_MODULE_TAGS := tests
+LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
-LOCAL_SRC_FILES := $(call all-java-files-under, src) \
-    ../src/android/server/wm/TestLogClient.java
+LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner android-support-test
 
-LOCAL_SDK_VERSION := 23
+LOCAL_JAVA_LIBRARIES := org.apache.http.legacy
+
+LOCAL_SRC_FILES := $(call all-java-files-under, src)
+LOCAL_SRC_FILES += $(call all-java-files-under, ../src)
+
+LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res/
 
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
-LOCAL_PACKAGE_NAME := CtsDragAndDropTargetAppSdk23
-
-include $(BUILD_CTS_SUPPORT_PACKAGE)
+LOCAL_SDK_VERSION := 26
+include $(BUILD_CTS_PACKAGE)
