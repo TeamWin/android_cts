@@ -96,11 +96,11 @@ public class StrictModeTest {
         inspectViolation(
                 () -> leakCloseable("leaked.txt"),
                 info -> {
-                    assertThat(info.getMessagePrefix())
+                    assertThat(info.getViolationDetails())
                             .isEqualTo(
                                     "A resource was acquired at attached stack trace but never released. See java.io.Closeable for information on avoiding resource leaks.");
-                    assertThat(info.getViolationDetails())
-                            .isEqualTo("Explicit termination method 'close' not called");
+                    assertThat(info.getStackTrace())
+                            .contains("Explicit termination method 'close' not called");
                     assertThat(info.getStackTrace()).contains("leakCloseable");
                     assertPolicy(info, StrictMode.DETECT_VM_CLOSABLE_LEAKS);
                 });
@@ -160,7 +160,7 @@ public class StrictModeTest {
                         ((HttpURLConnection) new URL("http://example.com/").openConnection())
                                 .getResponseCode(),
                 info -> {
-                    assertThat(info.getMessagePrefix()).contains("example.com");
+                    assertThat(info.getViolationDetails()).contains("example.com");
                     assertThat(info.getViolationDetails())
                             .startsWith(StrictMode.CLEARTEXT_DETECTED_MSG);
                     assertPolicy(info, StrictMode.DETECT_VM_CLEARTEXT_NETWORK);
@@ -198,7 +198,6 @@ public class StrictModeTest {
                     getContext().startActivity(intent);
                 },
                 violation -> {
-                    assertThat(violation.getMessagePrefix()).isEmpty();
                     assertThat(violation.getStackTrace()).contains(badUri + " exposed beyond app");
                 });
 
@@ -316,6 +315,13 @@ public class StrictModeTest {
 
         StrictMode.setThreadPolicy(
                 new StrictMode.ThreadPolicy.Builder().detectDiskReads().penaltyLog().build());
+        inspectViolation(
+                test::exists,
+                violation -> {
+                    assertThat(violation.getViolationDetails()).isNull();
+                    assertThat(violation.getStackTrace())
+                            .contains("android.os.StrictMode$StrictModeDiskReadViolation");
+                });
 
         Consumer<ViolationInfo> assertDiskReadPolicy =
                 violation -> assertPolicy(violation, StrictMode.DETECT_DISK_READ);
@@ -341,6 +347,14 @@ public class StrictModeTest {
 
         StrictMode.setThreadPolicy(
                 new StrictMode.ThreadPolicy.Builder().detectDiskWrites().penaltyLog().build());
+
+        inspectViolation(
+                file::createNewFile,
+                violation -> {
+                    assertThat(violation.getViolationDetails()).isNull();
+                    assertThat(violation.getStackTrace())
+                            .contains("android.os.StrictMode$StrictModeDiskWriteViolation");
+                });
 
         Consumer<ViolationInfo> assertDiskWritePolicy =
                 violation -> assertPolicy(violation, StrictMode.DETECT_DISK_WRITE);
@@ -397,13 +411,19 @@ public class StrictModeTest {
                                 () -> service.performDiskWrite(),
                                 (violation) -> {
                                     assertPolicy(violation, StrictMode.DETECT_DISK_WRITE);
+                                    assertThat(violation.getViolationDetails())
+                                            .isNull(); // Disk write has no message.
                                     assertThat(violation.getStackTrace())
                                             .contains(
-                                                    "android.os.cts.CtsRemoteService$1.performDiskWrite");
+                                                    "android.os.StrictMode$StrictModeDiskWriteViolation");
+                                    assertThat(violation.getStackTrace())
+                                            .contains(
+                                                    "at android.os.StrictMode$AndroidBlockGuardPolicy.onWriteToDisk");
                                     assertThat(violation.getStackTrace())
                                             .contains("# via Binder call with stack:");
                                     assertThat(violation.getStackTrace())
-                                            .contains("StrictModeTest.testViolationAcrossBinder");
+                                            .contains(
+                                                    "at android.os.cts.ISecondary$Stub$Proxy.performDiskWrite");
                                 });
                         assertNoViolation(() -> service.getPid());
                     } catch (Exception e) {
