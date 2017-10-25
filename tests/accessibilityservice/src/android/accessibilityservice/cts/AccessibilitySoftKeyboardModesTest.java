@@ -17,6 +17,7 @@ package android.accessibilityservice.cts;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.AccessibilityService.SoftKeyboardController;
 import android.app.Activity;
+import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.os.Bundle;
 import android.os.Handler;
@@ -36,6 +37,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Test cases for testing the accessibility APIs for interacting with the soft keyboard show mode.
@@ -70,6 +72,8 @@ public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationT
     private InstrumentedAccessibilityService mService;
     private SoftKeyboardController mKeyboardController;
     private UiAutomation mUiAutomation;
+    private Activity mActivity;
+    private View mKeyboardTargetView;
 
     private Object mLock = new Object();
 
@@ -83,7 +87,7 @@ public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationT
 
         // If we don't call getActivity(), we get an empty list when requesting the number of
         // windows on screen.
-        getActivity();
+        mActivity = getActivity();
 
         mService = InstrumentedAccessibilityService.enableService(
                 getInstrumentation(), InstrumentedAccessibilityService.class);
@@ -93,6 +97,8 @@ public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationT
         AccessibilityServiceInfo info = mUiAutomation.getServiceInfo();
         info.flags |= AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
         mUiAutomation.setServiceInfo(info);
+        getInstrumentation().runOnMainSync(
+                () -> mKeyboardTargetView = mActivity.findViewById(R.id.edit_text));
     }
 
     @Override
@@ -100,8 +106,11 @@ public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationT
         mKeyboardController.setShowMode(SHOW_MODE_AUTO);
         mService.runOnServiceSync(() -> mService.disableSelf());
         Activity activity = getActivity();
-        activity.getSystemService(InputMethodManager.class)
-                .hideSoftInputFromWindow(activity.getCurrentFocus().getWindowToken(), 0);
+        View currentFocus = activity.getCurrentFocus();
+        if (currentFocus != null) {
+            activity.getSystemService(InputMethodManager.class)
+                    .hideSoftInputFromWindow(currentFocus.getWindowToken(), 0);
+        }
     }
 
     public void testApiReturnValues_shouldChangeValueOnRequestAndSendCallback() throws Exception {
@@ -228,20 +237,24 @@ public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationT
      */
     private boolean tryShowSoftInput() throws Exception {
         final BlockingQueue<Integer> queue = new ArrayBlockingQueue<>(1);
+        final AtomicBoolean showSoftInputResult = new AtomicBoolean(false);
+        final Activity activity = getActivity();
+        final ResultReceiver resultReceiver =
+                new ResultReceiver(new Handler(activity.getMainLooper())) {
+                    @Override
+                    protected void onReceiveResult(int resultCode, Bundle resultData) {
+                        queue.add(resultCode);
+                    }
+                };
 
-        getInstrumentation().runOnMainSync(() -> {
-            Activity activity = getActivity();
-            ResultReceiver resultReceiver =
-                    new ResultReceiver(new Handler(activity.getMainLooper())) {
-                            @Override
-                            protected void onReceiveResult(int resultCode, Bundle resultData) {
-                                queue.add(resultCode);
-                            }
-                    };
-            View editText = activity.findViewById(R.id.edit_text);
-            activity.getSystemService(InputMethodManager.class)
-                    .showSoftInput(editText, InputMethodManager.SHOW_FORCED, resultReceiver);
-        });
+        final Instrumentation instrumentation = getInstrumentation();
+        instrumentation.runOnMainSync(() -> mKeyboardTargetView.requestFocus());
+        instrumentation.waitForIdleSync();
+        final InputMethodManager imm = mActivity.getSystemService(InputMethodManager.class);
+        instrumentation.runOnMainSync(() -> showSoftInputResult.set(imm.showSoftInput(
+                mKeyboardTargetView, InputMethodManager.SHOW_FORCED, resultReceiver)));
+
+        assertTrue("InputMethodManager refused to show a soft input", showSoftInputResult.get());
 
         Integer result;
         try {
