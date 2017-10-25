@@ -51,10 +51,10 @@ public class CompatibilityTestSuite extends ITestSuite {
     public static final String EXCLUDE_FILTER_OPTION = "exclude-filter";
     public static final String SUBPLAN_OPTION = "subplan";
     public static final String MODULE_OPTION = "module";
+    public static final String TEST_ARG_OPTION = "test-arg";
     public static final String TEST_OPTION = "test";
     public static final char TEST_OPTION_SHORT_NAME = 't';
     private static final String MODULE_ARG_OPTION = "module-arg";
-    private static final String TEST_ARG_OPTION = "test-arg";
 
     // TODO: remove this option when CompatibilityTest goes away
     @Option(name = RetryFactoryTest.RETRY_OPTION,
