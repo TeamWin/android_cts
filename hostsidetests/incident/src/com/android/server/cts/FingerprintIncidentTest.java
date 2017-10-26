@@ -16,9 +16,9 @@
 
 package com.android.server.cts;
 
-import android.service.fingerprint.FingerprintActionStatsProto;
-import android.service.fingerprint.FingerprintServiceDumpProto;
-import android.service.fingerprint.FingerprintUserStatsProto;
+import com.android.server.fingerprint.FingerprintServiceDumpProto;
+import com.android.server.fingerprint.FingerprintUserStatsProto;
+import com.android.server.fingerprint.PerformanceStatsProto;
 
 import com.android.tradefed.log.LogUtil.CLog;
 
@@ -49,17 +49,19 @@ public class FingerprintIncidentTest extends ProtoDumpTestCase {
         assertEquals(0, userStats.getUserId());
         assertEquals(0, userStats.getNumFingerprints());
 
-        final FingerprintActionStatsProto normal = userStats.getNormal();
+        final PerformanceStatsProto normal = userStats.getNormal();
         assertEquals(0, normal.getAccept());
         assertEquals(0, normal.getReject());
         assertEquals(0, normal.getAcquire());
         assertEquals(0, normal.getLockout());
+        assertEquals(0, normal.getPermanentLockout());
 
-        final FingerprintActionStatsProto crypto = userStats.getCrypto();
+        final PerformanceStatsProto crypto = userStats.getCrypto();
         assertEquals(0, crypto.getAccept());
         assertEquals(0, crypto.getReject());
         assertEquals(0, crypto.getAcquire());
         assertEquals(0, crypto.getLockout());
+        assertEquals(0, crypto.getPermanentLockout());
     }
 }
 
