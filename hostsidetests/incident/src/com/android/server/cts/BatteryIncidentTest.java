@@ -16,6 +16,7 @@
 
 package com.android.server.cts;
 
+import android.os.BatteryManagerProto;
 import android.service.battery.BatteryServiceDumpProto;
 import com.android.tradefed.device.DeviceNotAvailableException;
 
@@ -37,9 +38,7 @@ public class BatteryIncidentTest extends ProtoDumpTestCase {
             return;
         }
 
-        assertTrue(
-                dump.getPlugged()
-                        != BatteryServiceDumpProto.BatteryPlugged.BATTERY_PLUGGED_WIRELESS);
+        assertTrue(dump.getPlugged() != BatteryManagerProto.PlugType.PLUG_TYPE_WIRELESS);
         assertTrue(dump.getChargeCounter() > 0);
         assertTrue(
                 dump.getStatus() != BatteryServiceDumpProto.BatteryStatus.BATTERY_STATUS_INVALID);
