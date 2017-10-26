@@ -462,6 +462,30 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     }
 
     @UiThreadTest
+    public void testStabilizationOneShotPreviewCallback() throws Exception {
+        int nCameras = Camera.getNumberOfCameras();
+        for (int id = 0; id < nCameras; id++) {
+            Log.v(TAG, "Camera id=" + id);
+            testStabilizationOneShotPreviewCallbackByCamera(id);
+        }
+    }
+
+    private void testStabilizationOneShotPreviewCallbackByCamera(int cameraId) throws Exception {
+        initializeMessageLooper(cameraId);
+        Parameters params = mCamera.getParameters();
+        if(!params.isVideoStabilizationSupported()) {
+            return;
+        }
+        //Check whether we can support preview callbacks along with stabilization
+        params.setVideoStabilization(true);
+        mCamera.setParameters(params);
+        mCamera.setOneShotPreviewCallback(mPreviewCallback);
+        checkPreviewCallback();
+        terminateMessageLooper();
+        assertEquals(PREVIEW_CALLBACK_RECEIVED, mPreviewCallbackResult);
+    }
+
+    @UiThreadTest
     public void testSetOneShotPreviewCallback() throws Exception {
         int nCameras = Camera.getNumberOfCameras();
         for (int id = 0; id < nCameras; id++) {
