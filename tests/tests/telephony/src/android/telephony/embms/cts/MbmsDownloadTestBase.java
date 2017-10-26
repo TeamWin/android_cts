@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License
+ */
+
 package android.telephony.embms.cts;
 
 import android.annotation.Nullable;
@@ -5,15 +21,16 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.RemoteException;
-import android.telephony.MbmsStreamingSession;
-import android.telephony.cts.embmstestapp.CtsStreamingService;
-import android.telephony.cts.embmstestapp.ICtsStreamingMiddlewareControl;
-import android.telephony.mbms.MbmsStreamingSessionCallback;
-import android.telephony.mbms.StreamingServiceInfo;
+import android.telephony.MbmsDownloadSession;
+import android.telephony.cts.embmstestapp.CtsDownloadService;
+import android.telephony.cts.embmstestapp.ICtsDownloadMiddlewareControl;
+import android.telephony.mbms.FileServiceInfo;
+import android.telephony.mbms.MbmsDownloadSessionCallback;
 import android.test.InstrumentationTestCase;
 
 import com.android.internal.os.SomeArgs;
@@ -25,12 +42,12 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-public class MbmsStreamingTestBase extends InstrumentationTestCase {
+public class MbmsDownloadTestBase extends InstrumentationTestCase {
     protected static final int ASYNC_TIMEOUT = 10000;
 
-    protected static class TestCallback extends MbmsStreamingSessionCallback {
+    protected static class TestCallback extends MbmsDownloadSessionCallback {
         private final BlockingQueue<SomeArgs> mErrorCalls = new LinkedBlockingQueue<>();
-        private final BlockingQueue<SomeArgs> mStreamingServicesUpdatedCalls =
+        private final BlockingQueue<SomeArgs> mFileServicesUpdatedCalls =
                 new LinkedBlockingQueue<>();
         private final BlockingQueue<SomeArgs> mMiddlewareReadyCalls = new LinkedBlockingQueue<>();
         private int mNumErrorCalls = 0;
@@ -45,10 +62,10 @@ public class MbmsStreamingTestBase extends InstrumentationTestCase {
         }
 
         @Override
-        public void onStreamingServicesUpdated(List<StreamingServiceInfo> services) {
+        public void onFileServicesUpdated(List<FileServiceInfo> services) {
             SomeArgs args = SomeArgs.obtain();
             args.arg1 = services;
-            mStreamingServicesUpdatedCalls.add(args);
+            mFileServicesUpdatedCalls.add(args);
         }
 
         @Override
@@ -64,19 +81,19 @@ public class MbmsStreamingTestBase extends InstrumentationTestCase {
             }
         }
 
-        public SomeArgs waitOnStreamingServicesUpdated() {
-            try {
-                return mStreamingServicesUpdatedCalls.poll(ASYNC_TIMEOUT, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException e) {
-                return null;
-            }
-        }
-
         public boolean waitOnMiddlewareReady() {
             try {
                 return mMiddlewareReadyCalls.poll(ASYNC_TIMEOUT, TimeUnit.MILLISECONDS) != null;
             } catch (InterruptedException e) {
                 return false;
+            }
+        }
+
+        public SomeArgs waitOnFileServicesUpdated() {
+            try {
+                return mFileServicesUpdatedCalls.poll(ASYNC_TIMEOUT, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                return null;
             }
         }
 
@@ -88,8 +105,8 @@ public class MbmsStreamingTestBase extends InstrumentationTestCase {
     Context mContext;
     HandlerThread mHandlerThread;
     Handler mCallbackHandler;
-    ICtsStreamingMiddlewareControl mMiddlewareControl;
-    MbmsStreamingSession mStreamingSession;
+    ICtsDownloadMiddlewareControl mMiddlewareControl;
+    MbmsDownloadSession mDownloadSession;
     TestCallback mCallback = new TestCallback();
 
     @Override
@@ -99,35 +116,36 @@ public class MbmsStreamingTestBase extends InstrumentationTestCase {
         mHandlerThread.start();
         mCallbackHandler = new Handler(mHandlerThread.getLooper());
         getControlBinder();
-        setupStreamingSession();
+        setupDownloadSession();
     }
 
     @Override
     public void tearDown() throws Exception {
         mHandlerThread.quit();
-        mStreamingSession.close();
+        mDownloadSession.close();
         mMiddlewareControl.reset();
     }
 
-    private void setupStreamingSession() throws Exception {
-        mStreamingSession = MbmsStreamingSession.create(
+    private void setupDownloadSession() throws Exception {
+        mDownloadSession = MbmsDownloadSession.create(
                 mContext, mCallback, mCallbackHandler);
-        assertNotNull(mStreamingSession);
+        assertNotNull(mDownloadSession);
         assertTrue(mCallback.waitOnMiddlewareReady());
         assertEquals(0, mCallback.getNumErrorCalls());
-        List initializeCall = (List) mMiddlewareControl.getStreamingSessionCalls().get(0);
-        assertEquals(CtsStreamingService.METHOD_INITIALIZE, initializeCall.get(0));
+        Bundle initializeCall =  mMiddlewareControl.getDownloadSessionCalls().get(0);
+        assertEquals(CtsDownloadService.METHOD_INITIALIZE,
+                initializeCall.getString(CtsDownloadService.METHOD_NAME));
     }
 
     private void getControlBinder() throws InterruptedException {
-        Intent bindIntent = new Intent(CtsStreamingService.CONTROL_INTERFACE_ACTION);
-        bindIntent.setComponent(CtsStreamingService.CONTROL_INTERFACE_COMPONENT);
+        Intent bindIntent = new Intent(CtsDownloadService.CONTROL_INTERFACE_ACTION);
+        bindIntent.setComponent(CtsDownloadService.CONTROL_INTERFACE_COMPONENT);
         final CountDownLatch bindLatch = new CountDownLatch(1);
 
         boolean success = mContext.bindService(bindIntent, new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
-                mMiddlewareControl = ICtsStreamingMiddlewareControl.Stub.asInterface(service);
+                mMiddlewareControl = ICtsDownloadMiddlewareControl.Stub.asInterface(service);
                 bindLatch.countDown();
             }
 
@@ -142,9 +160,9 @@ public class MbmsStreamingTestBase extends InstrumentationTestCase {
         bindLatch.await(ASYNC_TIMEOUT, TimeUnit.MILLISECONDS);
     }
 
-    protected List<List<Object>> getMiddlewareCalls(String methodName) throws RemoteException {
-        return ((List<List<Object>>) mMiddlewareControl.getStreamingSessionCalls()).stream()
-                .filter((elem) -> elem.get(0).equals(methodName))
+    protected List<Bundle> getMiddlewareCalls(String methodName) throws RemoteException {
+        return (mMiddlewareControl.getDownloadSessionCalls()).stream()
+                .filter((elem) -> elem.getString(CtsDownloadService.METHOD_NAME).equals(methodName))
                 .collect(Collectors.toList());
     }
 }
