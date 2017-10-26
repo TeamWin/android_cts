@@ -17,6 +17,8 @@
 package android.telephony.cts.embmstestapp;
 
 import android.os.Bundle;
+import android.telephony.mbms.DownloadRequest;
+import android.telephony.mbms.FileInfo;
 
 interface ICtsDownloadMiddlewareControl {
     // Resets the state of the CTS middleware
@@ -29,4 +31,9 @@ interface ICtsDownloadMiddlewareControl {
     void forceErrorCode(int error);
     // Fire the error callback on the download session
     void fireErrorOnSession(int errorCode, String message);
+    // Fire the download state callback methods
+    void fireOnProgressUpdated(in DownloadRequest request, in FileInfo fileInfo,
+            int currentDownloadSize, int fullDownloadSize,
+            int currentDecodedSize, int fullDecodedSize);
+    void fireOnStateUpdated(in DownloadRequest request, in FileInfo fileInfo, int state);
 }

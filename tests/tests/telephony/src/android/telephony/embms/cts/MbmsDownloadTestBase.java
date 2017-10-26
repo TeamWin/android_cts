@@ -29,6 +29,7 @@ import android.os.RemoteException;
 import android.telephony.MbmsDownloadSession;
 import android.telephony.cts.embmstestapp.CtsDownloadService;
 import android.telephony.cts.embmstestapp.ICtsDownloadMiddlewareControl;
+import android.telephony.mbms.DownloadRequest;
 import android.telephony.mbms.FileServiceInfo;
 import android.telephony.mbms.MbmsDownloadSessionCallback;
 import android.test.InstrumentationTestCase;
@@ -101,6 +102,10 @@ public class MbmsDownloadTestBase extends InstrumentationTestCase {
             return mNumErrorCalls;
         }
     }
+
+    static final DownloadRequest.Builder DOWNLOAD_REQUEST_TEMPLATE =
+            new DownloadRequest.Builder(CtsDownloadService.DOWNLOAD_SOURCE_URI)
+                    .setServiceInfo(CtsDownloadService.FILE_SERVICE_INFO);
 
     Context mContext;
     HandlerThread mHandlerThread;

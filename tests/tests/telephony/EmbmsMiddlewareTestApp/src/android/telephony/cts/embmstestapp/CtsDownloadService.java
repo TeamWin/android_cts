@@ -19,14 +19,17 @@ package android.telephony.cts.embmstestapp;
 import android.app.Service;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.telephony.MbmsDownloadSession;
 import android.telephony.mbms.DownloadRequest;
 import android.telephony.mbms.DownloadStateCallback;
+import android.telephony.mbms.FileInfo;
 import android.telephony.mbms.FileServiceInfo;
 import android.telephony.mbms.MbmsDownloadSessionCallback;
 import android.telephony.mbms.MbmsErrors;
@@ -53,14 +56,20 @@ public class CtsDownloadService extends Service {
 
     public static final String METHOD_NAME = "method_name";
     public static final String METHOD_INITIALIZE = "initialize";
+    public static final String METHOD_DOWNLOAD = "download";
     public static final String METHOD_REQUEST_UPDATE_FILE_SERVICES =
             "requestUpdateFileServices";
     public static final String METHOD_SET_TEMP_FILE_ROOT = "setTempFileRootDirectory";
+    public static final String METHOD_RESET_DOWNLOAD_KNOWLEDGE = "resetDownloadKnowledge";
+    public static final String METHOD_GET_DOWNLOAD_STATUS = "getDownloadStatus";
+    public static final String METHOD_CANCEL_DOWNLOAD = "cancelDownload";
     public static final String METHOD_CLOSE = "close";
 
     public static final String ARGUMENT_SUBSCRIPTION_ID = "subscriptionId";
     public static final String ARGUMENT_SERVICE_CLASSES = "serviceClasses";
     public static final String ARGUMENT_ROOT_DIRECTORY_PATH = "rootDirectoryPath";
+    public static final String ARGUMENT_DOWNLOAD_REQUEST = "downloadRequest";
+    public static final String ARGUMENT_FILE_INFO = "fileInfo";
 
     public static final String CONTROL_INTERFACE_ACTION =
             "android.telephony.cts.embmstestapp.ACTION_CONTROL_MIDDLEWARE";
@@ -68,7 +77,12 @@ public class CtsDownloadService extends Service {
             ComponentName.unflattenFromString(
                     "android.telephony.cts.embmstestapp/.CtsDownloadService");
 
+    public static final Uri DOWNLOAD_SOURCE_URI = Uri.parse("http://www.example.com/file_download");
     public static final FileServiceInfo FILE_SERVICE_INFO;
+    public static final FileInfo FILE_INFO = new FileInfo(
+            DOWNLOAD_SOURCE_URI.buildUpon().appendPath("file1.txt").build(),
+            "text/plain");
+
     static {
         String id = "FileServiceId";
         Map<Locale, String> localeDict = new HashMap<Locale, String>() {{
@@ -81,15 +95,17 @@ public class CtsDownloadService extends Service {
         }};
         FILE_SERVICE_INFO = new FileServiceInfo(localeDict, "class1", locales,
                 id, new Date(2017, 8, 21, 18, 20, 29),
-                new Date(2017, 8, 21, 18, 23, 9), Collections.emptyList());
+                new Date(2017, 8, 21, 18, 23, 9), Collections.singletonList(FILE_INFO));
     }
 
     private MbmsDownloadSessionCallback mAppCallback;
+    private DownloadStateCallback mDownloadStateCallback;
 
     private HandlerThread mHandlerThread;
     private Handler mHandler;
     private List<Bundle> mReceivedCalls = new LinkedList<>();
     private int mErrorCodeOverride = MbmsErrors.SUCCESS;
+    private List<DownloadRequest> mReceivedRequests = new LinkedList<>();
 
     private final MbmsDownloadServiceBase mDownloadServiceImpl = new MbmsDownloadServiceBase() {
         @Override
@@ -150,6 +166,12 @@ public class CtsDownloadService extends Service {
         }
 
         @Override
+        public int download(DownloadRequest downloadRequest) {
+            mReceivedRequests.add(downloadRequest);
+            return MbmsErrors.SUCCESS;
+        }
+
+        @Override
         public int setTempFileRootDirectory(int subscriptionId, String rootDirectoryPath) {
             Bundle b = new Bundle();
             b.putString(METHOD_NAME, METHOD_SET_TEMP_FILE_ROOT);
@@ -163,7 +185,7 @@ public class CtsDownloadService extends Service {
         @Override
         public int registerStateCallback(DownloadRequest downloadRequest,
                 DownloadStateCallback listener) throws RemoteException {
-            // TODO
+            mDownloadStateCallback = listener;
             return MbmsErrors.SUCCESS;
         }
 
@@ -173,8 +195,47 @@ public class CtsDownloadService extends Service {
             b.putString(METHOD_NAME, METHOD_CLOSE);
             b.putInt(ARGUMENT_SUBSCRIPTION_ID, subscriptionId);
             mReceivedCalls.add(b);
+        }
 
-            // TODO
+        @Override
+        public int getDownloadStatus(DownloadRequest downloadRequest, FileInfo fileInfo) {
+            Bundle b = new Bundle();
+            b.putString(METHOD_NAME, METHOD_GET_DOWNLOAD_STATUS);
+            b.putParcelable(ARGUMENT_DOWNLOAD_REQUEST, downloadRequest);
+            b.putParcelable(ARGUMENT_FILE_INFO, fileInfo);
+            mReceivedCalls.add(b);
+            return MbmsDownloadSession.STATUS_ACTIVELY_DOWNLOADING;
+        }
+
+        @Override
+        public int cancelDownload(DownloadRequest request) {
+            Bundle b = new Bundle();
+            b.putString(METHOD_NAME, METHOD_CANCEL_DOWNLOAD);
+            b.putParcelable(ARGUMENT_DOWNLOAD_REQUEST, request);
+            mReceivedCalls.add(b);
+            mReceivedRequests.remove(request);
+            return MbmsErrors.SUCCESS;
+        }
+
+        @Override
+        public List<DownloadRequest> listPendingDownloads(int subscriptionId) {
+            return mReceivedRequests;
+        }
+
+        @Override
+        public int unregisterStateCallback(DownloadRequest downloadRequest,
+                DownloadStateCallback callback) {
+            mDownloadStateCallback = null;
+            return MbmsErrors.SUCCESS;
+        }
+
+        @Override
+        public int resetDownloadKnowledge(DownloadRequest downloadRequest) {
+            Bundle b = new Bundle();
+            b.putString(METHOD_NAME, METHOD_RESET_DOWNLOAD_KNOWLEDGE);
+            b.putParcelable(ARGUMENT_DOWNLOAD_REQUEST, downloadRequest);
+            mReceivedCalls.add(b);
+            return MbmsErrors.SUCCESS;
         }
 
         @Override
@@ -190,6 +251,8 @@ public class CtsDownloadService extends Service {
             mHandler.removeCallbacksAndMessages(null);
             mAppCallback = null;
             mErrorCodeOverride = MbmsErrors.SUCCESS;
+            mReceivedRequests.clear();
+            mDownloadStateCallback = null;
         }
 
         @Override
@@ -205,6 +268,25 @@ public class CtsDownloadService extends Service {
         @Override
         public void fireErrorOnSession(int errorCode, String message) {
             mHandler.post(() -> mAppCallback.onError(errorCode, message));
+        }
+
+        @Override
+        public void fireOnProgressUpdated(DownloadRequest request, FileInfo fileInfo,
+                int currentDownloadSize, int fullDownloadSize,
+                int currentDecodedSize, int fullDecodedSize) {
+            if (mDownloadStateCallback == null) {
+                return;
+            }
+            mHandler.post(() -> mDownloadStateCallback.onProgressUpdated(request, fileInfo,
+                    currentDownloadSize, fullDownloadSize, currentDecodedSize, fullDecodedSize));
+        }
+
+        @Override
+        public void fireOnStateUpdated(DownloadRequest request, FileInfo fileInfo, int state) {
+            if (mDownloadStateCallback == null) {
+                return;
+            }
+            mHandler.post(() -> mDownloadStateCallback.onStateUpdated(request, fileInfo, state));
         }
     };
 
