@@ -23,6 +23,7 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
+import static android.app.ActivityManager.SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT;
 import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logE;
 import static android.view.KeyEvent.KEYCODE_APP_SWITCH;
@@ -33,6 +34,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.ActivityManager;
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
@@ -417,6 +419,11 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected void launchActivityInDockStack(String activityName) throws Exception {
+        launchActivityInDockStack(activityName, SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT);
+    }
+
+    protected void launchActivityInDockStack(String activityName, int createMode)
+            throws Exception {
         launchActivity(activityName);
         // TODO(b/36279415): The way we launch an activity into the docked stack is different from
         // what the user actually does. Long term we should use
@@ -424,7 +431,9 @@ public abstract class ActivityManagerTestBase {
         // the recents button which is consistent with what the user does. However, currently sys-ui
         // does handle FLAG_LONG_PRESS for the app switch key. It just listens for long press on the
         // view. We need to fix that in sys-ui before we can change this.
-        setActivityTaskWindowingMode(activityName, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
+        final int taskId = getActivityTaskId(activityName);
+        mAm.setTaskWindowingModeSplitScreenPrimary(taskId, createMode, true /* onTop */,
+                false /* animate */, null /* initialBounds */);
 
         mAmWmState.waitForValidState(activityName,
                 WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
@@ -535,6 +544,11 @@ public abstract class ActivityManagerTestBase {
         return !hasDeviceFeature("android.software.leanback")
                 && !hasDeviceFeature("android.hardware.type.watch")
                 && !hasDeviceFeature("android.hardware.type.embedded");
+    }
+
+    protected boolean isTablet() {
+        // Larger than approx 7" tablets
+        return mContext.getResources().getConfiguration().smallestScreenWidthDp >= 600;
     }
 
     protected boolean supportsSplitScreenMultiWindow() {
