@@ -235,9 +235,14 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         return 0;
     }
 
+    private void stopUserAsync(int userId) throws Exception {
+        String stopUserCommand = "am stop-user -f " + userId;
+        CLog.d("starting command \"" + stopUserCommand);
+        CLog.d("Output for command " + stopUserCommand + ": "
+                + getDevice().executeShellCommand(stopUserCommand));
+    }
+
     protected void stopUser(int userId) throws Exception {
-        // Wait for the broadcast queue to be idle first to workaround the stop-user timeout issue.
-        waitForBroadcastIdle();
         String stopUserCommand = "am stop-user -w -f " + userId;
         CLog.d("starting command \"" + stopUserCommand + "\" and waiting.");
         CLog.d("Output for command " + stopUserCommand + ": "
@@ -282,7 +287,6 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
 
     protected void removeUser(int userId) throws Exception  {
         if (listUsers().contains(userId) && userId != USER_SYSTEM) {
-            waitForBroadcastIdle();
             // Don't log output, as tests sometimes set no debug user restriction, which
             // causes this to fail, we should still continue and remove the user.
             String stopUserCommand = "am stop-user -w -f " + userId;
@@ -293,7 +297,16 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     }
 
     protected void removeTestUsers() throws Exception {
-        for (int userId : getUsersCreatedByTests()) {
+        List<Integer> usersCreatedByTests = getUsersCreatedByTests();
+
+        // The time spent on stopUser is depend on how busy the broadcast queue is.
+        // To optimize the time to remove multiple test users, we mark all users as
+        // stopping first, so no more broadcasts will be sent to these users, which make the queue
+        // less busy.
+        for (int userId : usersCreatedByTests) {
+            stopUserAsync(userId);
+        }
+        for (int userId : usersCreatedByTests) {
             removeUser(userId);
         }
     }
