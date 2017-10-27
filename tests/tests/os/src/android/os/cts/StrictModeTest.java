@@ -31,6 +31,7 @@ import android.os.RemoteException;
 import android.os.StrictMode;
 import android.os.StrictMode.ThreadPolicy.Builder;
 import android.os.StrictMode.ViolationInfo;
+import android.os.strictmode.UntaggedSocketViolation;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.system.Os;
@@ -257,7 +258,7 @@ public class StrictModeTest {
                                 .getResponseCode(),
                 violation ->
                         assertThat(violation.getStackTrace())
-                                .contains(StrictMode.UNTAGGED_SOCKET_VIOLATION_MESSAGE));
+                                .contains(UntaggedSocketViolation.MESSAGE));
 
         assertNoViolation(
                 () -> {
@@ -299,7 +300,7 @@ public class StrictModeTest {
                 },
                 violation ->
                         assertThat(violation.getStackTrace())
-                                .contains(StrictMode.UNTAGGED_SOCKET_VIOLATION_MESSAGE));
+                                .contains(UntaggedSocketViolation.MESSAGE));
     }
 
     private static final int PERMISSION_USER_ONLY = 0600;
@@ -319,8 +320,7 @@ public class StrictModeTest {
                 test::exists,
                 violation -> {
                     assertThat(violation.getViolationDetails()).isNull();
-                    assertThat(violation.getStackTrace())
-                            .contains("android.os.StrictMode$StrictModeDiskReadViolation");
+                    assertThat(violation.getStackTrace()).contains("DiskReadViolation");
                 });
 
         Consumer<ViolationInfo> assertDiskReadPolicy =
@@ -352,8 +352,7 @@ public class StrictModeTest {
                 file::createNewFile,
                 violation -> {
                     assertThat(violation.getViolationDetails()).isNull();
-                    assertThat(violation.getStackTrace())
-                            .contains("android.os.StrictMode$StrictModeDiskWriteViolation");
+                    assertThat(violation.getStackTrace()).contains("DiskWriteViolation");
                 });
 
         Consumer<ViolationInfo> assertDiskWritePolicy =
@@ -414,8 +413,7 @@ public class StrictModeTest {
                                     assertThat(violation.getViolationDetails())
                                             .isNull(); // Disk write has no message.
                                     assertThat(violation.getStackTrace())
-                                            .contains(
-                                                    "android.os.StrictMode$StrictModeDiskWriteViolation");
+                                            .contains("DiskWriteViolation");
                                     assertThat(violation.getStackTrace())
                                             .contains(
                                                     "at android.os.StrictMode$AndroidBlockGuardPolicy.onWriteToDisk");
@@ -471,7 +469,7 @@ public class StrictModeTest {
     }
 
     private void assertPolicy(ViolationInfo info, int policy) {
-        assertWithMessage("Policy bit incorrect").that(info.policy & policy).isEqualTo(policy);
+        assertWithMessage("Policy bit incorrect").that(info.getViolationBit()).isEqualTo(policy);
     }
 
     private static void inspectViolation(
