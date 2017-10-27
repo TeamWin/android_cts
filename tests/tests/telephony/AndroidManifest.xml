@@ -127,6 +127,9 @@
         </activity>
 
         <uses-library android:name="android.test.runner" />
+
+        <meta-data android:name="mbms-streaming-service-override"
+                   android:value="android.telephony.cts.embmstestapp/.CtsStreamingService"/>
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
