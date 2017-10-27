@@ -44,7 +44,7 @@ LOCAL_SHARED_LIBRARIES := libandroid \
     libz \
 
 # NDK build, shared C++ runtime
-LOCAL_SDK_VERSION := 24
+LOCAL_SDK_VERSION := current
 LOCAL_NDK_STL_VARIANT := c++_shared
 
 include $(BUILD_SHARED_LIBRARY)
