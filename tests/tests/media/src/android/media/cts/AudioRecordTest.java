@@ -20,7 +20,6 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.AudioFormat;
-import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioRecord.OnRecordPositionUpdateListener;
 import android.media.AudioTimestamp;
@@ -32,17 +31,32 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
-import com.android.compatibility.common.util.CtsAndroidTestCase;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
+import com.android.compatibility.common.util.SystemUtil;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ShortBuffer;
 import java.util.ArrayList;
 
-public class AudioRecordTest extends CtsAndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class AudioRecordTest {
     private final static String TAG = "AudioRecordTest";
     private static final String REPORT_LOG_NAME = "CtsMediaTestCases";
     private AudioRecord mAudioRecord;
@@ -62,10 +76,8 @@ public class AudioRecordTest extends CtsAndroidTestCase {
         }
     };
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
+    @Before
+    public void setUp() throws Exception {
         if (!hasMicrophone()) {
             return;
         }
@@ -101,13 +113,12 @@ public class AudioRecordTest extends CtsAndroidTestCase {
         assertNotNull(mAudioRecord);
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         if (hasMicrophone()) {
             mAudioRecord.release();
             mLooper.quit();
         }
-        super.tearDown();
     }
 
     private void reset() {
@@ -116,6 +127,7 @@ public class AudioRecordTest extends CtsAndroidTestCase {
         mIsHandleMessageCalled = false;
     }
 
+    @Test
     public void testAudioRecordProperties() throws Exception {
         if (!hasMicrophone()) {
             return;
@@ -134,6 +146,7 @@ public class AudioRecordTest extends CtsAndroidTestCase {
         assertTrue(bufferSize > 0);
     }
 
+    @Test
     public void testAudioRecordOP() throws Exception {
         if (!hasMicrophone()) {
             return;
@@ -236,6 +249,7 @@ public class AudioRecordTest extends CtsAndroidTestCase {
         assertEquals(AudioRecord.STATE_UNINITIALIZED, mAudioRecord.getState());
     }
 
+    @Test
     public void testAudioRecordResamplerMono8Bit() throws Exception {
         doTest("resampler_mono_8bit", true /*localRecord*/, false /*customHandler*/,
                 1 /*periodsPerSecond*/, 1 /*markerPeriodsPerSecond*/,
@@ -244,6 +258,7 @@ public class AudioRecordTest extends CtsAndroidTestCase {
                 AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_8BIT);
     }
 
+    @Test
     public void testAudioRecordResamplerStereo8Bit() throws Exception {
         doTest("resampler_stereo_8bit", true /*localRecord*/, false /*customHandler*/,
                 0 /*periodsPerSecond*/, 3 /*markerPeriodsPerSecond*/,
@@ -253,6 +268,7 @@ public class AudioRecordTest extends CtsAndroidTestCase {
     }
 
     @Presubmit
+    @Test
     public void testAudioRecordLocalMono16BitShort() throws Exception {
         doTest("local_mono_16bit_short", true /*localRecord*/, false /*customHandler*/,
                 30 /*periodsPerSecond*/, 2 /*markerPeriodsPerSecond*/,
@@ -260,6 +276,8 @@ public class AudioRecordTest extends CtsAndroidTestCase {
                 false /*auditRecording*/, false /*isChannelIndex*/, 8000 /*TEST_SR*/,
                 AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, 500 /*TEST_TIME_MS*/);
     }
+
+    @Test
     public void testAudioRecordLocalMono16Bit() throws Exception {
         doTest("local_mono_16bit", true /*localRecord*/, false /*customHandler*/,
                 30 /*periodsPerSecond*/, 2 /*markerPeriodsPerSecond*/,
@@ -268,6 +286,7 @@ public class AudioRecordTest extends CtsAndroidTestCase {
                 AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
     }
 
+    @Test
     public void testAudioRecordStereo16Bit() throws Exception {
         doTest("stereo_16bit", false /*localRecord*/, false /*customHandler*/,
                 2 /*periodsPerSecond*/, 2 /*markerPeriodsPerSecond*/,
@@ -276,6 +295,7 @@ public class AudioRecordTest extends CtsAndroidTestCase {
                 AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT);
     }
 
+    @Test
     public void testAudioRecordMonoFloat() throws Exception {
         doTest("mono_float", false /*localRecord*/, true /*customHandler*/,
                 30 /*periodsPerSecond*/, 2 /*markerPeriodsPerSecond*/,
@@ -284,6 +304,7 @@ public class AudioRecordTest extends CtsAndroidTestCase {
                 AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_FLOAT);
     }
 
+    @Test
     public void testAudioRecordLocalNonblockingStereoFloat() throws Exception {
         doTest("local_nonblocking_stereo_float", true /*localRecord*/, true /*customHandler*/,
                 2 /*periodsPerSecond*/, 0 /*markerPeriodsPerSecond*/,
@@ -293,6 +314,7 @@ public class AudioRecordTest extends CtsAndroidTestCase {
     }
 
     // Audit modes work best with non-blocking mode
+    @Test
     public void testAudioRecordAuditByteBufferResamplerStereoFloat() throws Exception {
         if (isLowRamDevice()) {
             return; // skip. FIXME: reenable when AF memory allocation is updated.
@@ -305,6 +327,7 @@ public class AudioRecordTest extends CtsAndroidTestCase {
                 AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_FLOAT);
     }
 
+    @Test
     public void testAudioRecordAuditChannelIndexMonoFloat() throws Exception {
         doTest("audit_channel_index_mono_float", true /*localRecord*/, true /*customHandler*/,
                 2 /*periodsPerSecond*/, 0 /*markerPeriodsPerSecond*/,
@@ -315,6 +338,7 @@ public class AudioRecordTest extends CtsAndroidTestCase {
 
     // Audit buffers can run out of space with high sample rate,
     // so keep the channels and pcm encoding low
+    @Test
     public void testAudioRecordAuditChannelIndex2() throws Exception {
         if (isLowRamDevice()) {
             return; // skip. FIXME: reenable when AF memory allocation is updated.
@@ -329,6 +353,7 @@ public class AudioRecordTest extends CtsAndroidTestCase {
 
     // Audit buffers can run out of space with high numbers of channels,
     // so keep the sample rate low.
+    @Test
     public void testAudioRecordAuditChannelIndex5() throws Exception {
         doTest("audit_channel_index_5", true /*localRecord*/, true /*customHandler*/,
                 2 /*periodsPerSecond*/, 0 /*markerPeriodsPerSecond*/,
@@ -340,6 +365,7 @@ public class AudioRecordTest extends CtsAndroidTestCase {
 
     // Test AudioRecord.Builder to verify the observed configuration of an AudioRecord built with
     // an empty Builder matches the documentation / expected values
+    @Test
     public void testAudioRecordBuilderDefault() throws Exception {
         if (!hasMicrophone()) {
             return;
@@ -369,6 +395,7 @@ public class AudioRecordTest extends CtsAndroidTestCase {
 
     // Test AudioRecord.Builder to verify the observed configuration of an AudioRecord built with
     // an incomplete AudioFormat matches the documentation / expected values
+    @Test
     public void testAudioRecordBuilderPartialFormat() throws Exception {
         if (!hasMicrophone()) {
             return;
@@ -400,6 +427,7 @@ public class AudioRecordTest extends CtsAndroidTestCase {
 
     // Test AudioRecord.Builder to verify the observed configuration of an AudioRecord matches
     // the parameters used in the builder
+    @Test
     public void testAudioRecordBuilderParams() throws Exception {
         if (!hasMicrophone()) {
             return;
@@ -441,6 +469,7 @@ public class AudioRecordTest extends CtsAndroidTestCase {
     }
 
     // Test AudioRecord to ensure we can build after a failure.
+    @Test
     public void testAudioRecordBufferSize() throws Exception {
         if (!hasMicrophone()) {
             return;
@@ -476,6 +505,7 @@ public class AudioRecordTest extends CtsAndroidTestCase {
         assertTrue(TEST_NAME + ": buffer frame count", observedBufferSize2 > 0);
     }
 
+    @Test
     public void testTimestamp() throws Exception {
         if (!hasMicrophone()) {
             return;
@@ -571,6 +601,69 @@ public class AudioRecordTest extends CtsAndroidTestCase {
         }
     }
 
+    @Test
+    public void testRecordNoDataForIdleUids() throws Exception {
+        if (!hasMicrophone()) {
+            return;
+        }
+
+        AudioRecord recorder = null;
+
+        // We will record audio for 20 sec from active and idle state expecting
+        // the recording from active state to have data while from idle silence.
+        try {
+            // Setup a recorder
+            final AudioRecord candidateRecorder = new AudioRecord.Builder()
+                    .setAudioSource(MediaRecorder.AudioSource.MIC)
+                    .setBufferSizeInBytes(1024)
+                    .setAudioFormat(new AudioFormat.Builder()
+                            .setSampleRate(8000)
+                            .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
+                            .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                            .build())
+                    .build();
+
+            // Unleash it :P
+            candidateRecorder.startRecording();
+            recorder = candidateRecorder;
+
+            final int sampleCount = AudioHelper.frameCountFromMsec(6000,
+                    candidateRecorder.getFormat()) * candidateRecorder.getFormat()
+                    .getChannelCount();
+            final ShortBuffer buffer = ShortBuffer.allocate(sampleCount);
+
+            // Read five seconds of data
+            readDataTimed(recorder, 5000, buffer);
+            // Ensure we read non-empty bytes
+            assertSilence(buffer, false);
+
+            // Start clean
+            buffer.clear();
+            // Force idle the package
+            makeMyPackageIdle();
+            // Read five seconds of data
+            readDataTimed(recorder, 5000, buffer);
+            // Ensure we read empty bytes
+            assertSilence(buffer, true);
+
+            // Start clean
+            buffer.clear();
+            // Reset to active
+            makeMyPackageActive();
+            // Read five seconds of data
+            readDataTimed(recorder, 5000, buffer);
+            // Ensure we read non-empty bytes
+            assertSilence(buffer, false);
+        } finally {
+            if (recorder != null) {
+                recorder.stop();
+                recorder.release();
+            }
+            makeMyPackageActive();
+        }
+    }
+
+    @Test
     public void testSynchronizedRecord() throws Exception {
         if (!hasMicrophone()) {
             return;
@@ -1167,7 +1260,7 @@ public class AudioRecordTest extends CtsAndroidTestCase {
                 ResultUnit.MS);
         log.setSummary("unified_abs_diff", (periodicStat.getAvgAbs() + markerStat.getAvgAbs()) / 2,
                 ResultType.LOWER_BETTER, ResultUnit.MS);
-        log.submit(getInstrumentation());
+        log.submit(InstrumentationRegistry.getInstrumentation());
     }
 
     private class MockOnRecordPositionUpdateListener
@@ -1285,5 +1378,62 @@ public class AudioRecordTest extends CtsAndroidTestCase {
     // remove if AudioTimestamp has a better toString().
     private void printTimestamp(String s, AudioTimestamp ats) {
         Log.d(TAG, s + ":  pos: " + ats.framePosition + "  time: " + ats.nanoTime);
+    }
+
+    private static void readDataTimed(AudioRecord recorder, long durationMillis,
+            ShortBuffer out) throws IOException {
+        final short[] buffer = new short[1024];
+        final long startTimeMillis = SystemClock.uptimeMillis();
+        final long stopTimeMillis = startTimeMillis + durationMillis;
+        while (SystemClock.uptimeMillis() < stopTimeMillis) {
+            final int readCount = recorder.read(buffer, 0, buffer.length);
+            if (readCount <= 0) {
+                return;
+            }
+            out.put(buffer, 0, readCount);
+        }
+    }
+
+    private static void assertSilence(ShortBuffer buffer, boolean silence) {
+        // Always need some bytes read
+        assertTrue("Buffer should have some data", buffer.position() > 0);
+
+        // It is possible that the transition from empty to non empty bytes
+        // happened in the middle of the read data due to the async nature of
+        // the system. Therefore, we look for the transitions from non-empty
+        // to empty and from empty to non-empty values for robustness.
+        int totalSilenceCount = 0;
+        final int valueCount = buffer.position();
+        for (int i = valueCount - 1; i >= 0; i--) {
+            final short value = buffer.get(i);
+            if (value == 0) {
+                totalSilenceCount++;
+            }
+        }
+        if (silence) {
+            if (totalSilenceCount < valueCount / 2) {
+                fail("Recording was not silenced while UID idle");
+            }
+        } else {
+            if (totalSilenceCount > valueCount / 2) {
+                fail("Recording was silenced while UID active");
+            }
+        }
+    }
+
+    private static void makeMyPackageActive() throws IOException {
+        final String command = "cmd media.audio_policy reset-uid-state "
+                +  InstrumentationRegistry.getTargetContext().getPackageName();
+        SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(), command);
+    }
+
+    private static void makeMyPackageIdle() throws IOException {
+        final String command = "cmd media.audio_policy set-uid-state "
+                + InstrumentationRegistry.getTargetContext().getPackageName() + " idle";
+        SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(), command);
+    }
+
+    private static Context getContext() {
+        return InstrumentationRegistry.getInstrumentation().getTargetContext();
     }
 }
