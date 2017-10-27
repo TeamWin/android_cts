@@ -14,7 +14,15 @@
  * limitations under the License
  */
 
-package com.android.app2;
+package android.server.wm.alertwindowservice;
+
+import static android.graphics.Color.BLUE;
+import static android.view.Gravity.LEFT;
+import static android.view.Gravity.TOP;
+import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+import static android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
+import static android.view.WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH;
+import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
 
 import android.app.Service;
 import android.content.Intent;
@@ -31,26 +39,19 @@ import android.widget.TextView;
 
 import java.util.LinkedList;
 
-import static android.graphics.Color.BLUE;
-import static android.view.Gravity.LEFT;
-import static android.view.Gravity.TOP;
-import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
-import static android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
-import static android.view.WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH;
-import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
-
 /** Service for creating and managing alert windows. */
-public class AlertWindowService extends Service {
+public final class AlertWindowService extends Service {
 
     private static final String TAG = "AlertWindowService";
     private static final boolean DEBUG = false;
+
+    public static final String PACKAGE_NAME = "android.server.wm.alertwindowservice";
+    public static final String EXTRA_MESSENGER = "messenger";
 
     public static final int MSG_ADD_ALERT_WINDOW = 1;
     public static final int MSG_REMOVE_ALERT_WINDOW = 2;
     public static final int MSG_REMOVE_ALL_ALERT_WINDOWS = 3;
 
-    public static String NOTIFICATION_MESSENGER_EXTRA =
-            "com.android.app2.AlertWindowService.NOTIFICATION_MESSENGER_EXTRA";
     public static final int MSG_ON_ALERT_WINDOW_ADDED = 4;
     public static final int MSG_ON_ALERT_WINDOW_REMOVED = 5;
 
@@ -132,7 +133,7 @@ public class AlertWindowService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         if (DEBUG) Log.e(TAG, "onBind");
-        mOutgoingMessenger = intent.getParcelableExtra(NOTIFICATION_MESSENGER_EXTRA);
+        mOutgoingMessenger = intent.getParcelableExtra(EXTRA_MESSENGER);
         return mIncomingMessenger.getBinder();
     }
 
