@@ -271,9 +271,9 @@
     <string name="ble_write_descriptor_name">Bluetooth LE Write Descriptor</string>
     <string name="ble_read_rssi_name">Bluetooth LE Read RSSI</string>
     <string name="ble_client_disconnect_name">Bluetooth LE Client Disconnect</string>
-    <string name="ble_client_test_info">
+    <string name="ble_insecure_client_test_info">
         The Bluetooth LE test must be done simultaneously on two devices. This device is the client.
-        All tests listed here must be done with out pairing.
+        All tests listed here must be done without pairing.
     </string>
     <string name="ble_client_send_connect_info">Type in the Bluetooth address of the remote device to connect to, and verify that the devices are connected.</string>
     <string name="ble_discover_service_info">Verify that the service is discovered when you press the "Discover Service" button.</string>
