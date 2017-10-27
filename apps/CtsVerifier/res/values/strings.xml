@@ -2652,6 +2652,142 @@ You should be prompted to select credentials; choose the ones you just installed
     </string>
     <string name="device_owner_disable_keyguard_button">Disable keyguard</string>
     <string name="device_owner_reenable_keyguard_button">Reenable keyguard</string>
+    <string name="device_owner_lock_task_ui_test">LockTask UI</string>
+    <string name="device_owner_lock_task_ui_test_info">
+            The following tests verify the configurable UI during LockTask, a special mode that
+            prevents the user from leaving the current application.\n\n
+            Please make sure the lock screen is turned on before the test. Press the button below to
+            start LockTask mode. Then mark each item as \'pass\' or \'fail\' according to the
+            instructions.\n\n
+            Finally, execute the last test item to leave LockTask mode.
+    </string>
+    <string name="start_lock_task_button_label">Start LockTask mode</string>
+    <string name="device_owner_lock_task_ui_default_test">Default LockTask UI</string>
+    <string name="device_owner_lock_task_ui_default_test_info">
+            Observe the following UI restrictions. Mark the test as \'pass\' only if ALL of the
+            requirements below are met.\n\n
+            1) Nothing is shown in the status bar, including notification icons, connectivity icons,
+            battery status, clock, etc.\n
+            2) The status bar can\'t be expanded. That is, the \'swipe-down\' gesture doesn\'t work
+            for the status bar.\n
+            3) The Home button is hidden.\n
+            4) The Recents button is hidden.\n
+            5) Long-press the power button. The power button menu, which usually shows the power-off
+            button, etc., isn\'t shown.\n
+            6) Press the power button to turn off the screen, and press it again to turn the screen
+            back on. Lock screen shouldn\'t be shown.\n
+            7) The assist gesture isn\'t available.
+    </string>
+    <string name="device_owner_lock_task_ui_system_info_test">Enable system info</string>
+    <string name="device_owner_lock_task_ui_system_info_test_info">
+            Press the button below to enable system info. Observe the system info area of the status
+            bar is now enabled. This includes the clock, connectivity info, battery info, etc.\n\n
+            The rest of the UI restrictions should still apply:\n
+            1) Notification icons are still hidden on the status bar.\n
+            2) The status bar can\'t be expanded. That is, the \'swipe-down\' gesture doesn\'t work
+            for the status bar.\n
+            3) The Home button is hidden.\n
+            4) The Recents button is hidden.\n
+            5) Long-press the power button. The power button menu, which usually shows the power-off
+            button, etc., isn\'t shown.\n
+            6) Press the power button to turn off the screen, and press it again to turn the screen
+            back on. Lock screen shouldn\'t be shown.\n
+            7) The assist gesture isn\'t available.\n\n
+            Mark the test as \'pass\' only if ALL of the above requirements are met.
+    </string>
+    <string name="device_owner_lock_task_ui_notifications_test">Enable notifications</string>
+    <string name="device_owner_lock_task_ui_notifications_test_info">
+            Press the button below to enable notifications. Observe the notification icons on the
+            status bar are now enabled. The status bar can also be expanded to show the
+            notifications. However, all Settings UI should remain invisible, including Quick
+            Settings and any link to the Settings app.\n\n
+            The rest of the UI restrictions should still apply:\n
+            1) System info area is still hidden on the status bar.\n
+            2) The Home button is hidden.\n
+            3) The Recents button is hidden.\n
+            4) Long-press the power button. The power button menu, which usually shows the power-off
+            button, etc., isn\'t shown.\n
+            5) Press the power button to turn off the screen, and press it again to turn the screen
+            back on. Lock screen shouldn\'t be shown.\n
+            6) The assist gesture isn\'t available.\n\n
+            Mark the test as \'pass\' only if ALL of the above requirements are met.
+    </string>
+    <string name="device_owner_lock_task_ui_home_test">Enable Home button</string>
+    <string name="device_owner_lock_task_ui_home_test_info">
+            Press the button below to enable the Home button. Observe the Home button is now
+            enabled.\n\n
+            The rest of the UI restrictions should still apply:\n
+            1) Nothing is shown in the status bar, including notification icons, connectivity icons,
+            battery status, clock, etc.\n
+            2) The status bar can\'t be expanded. That is, the \'swipe-down\' gesture doesn\'t work
+            for the status bar.\n
+            3) The Recents button is hidden.\n
+            4) Long-press the power button. The power button menu, which usually shows the power-off
+            button, etc., isn\'t shown.\n
+            5) Press the power button to turn off the screen, and press it again to turn the screen
+            back on. Lock screen shouldn\'t be shown.\n
+            6) The assist gesture isn\'t available.\n\n
+            Mark the test as \'pass\' only if ALL of the above requirements are met.
+    </string>
+    <string name="device_owner_lock_task_ui_recents_test">Enable Recents button</string>
+    <string name="device_owner_lock_task_ui_recents_test_info">
+            Press the button below to enable the Recents button. Observe the Recents button is now
+            enabled. Press the Recents button and verify the Recents view can be opened.\n\n
+            The rest of the UI restrictions should still apply:\n
+            1) Nothing is shown in the status bar, including notification icons, connectivity icons,
+            battery status, clock, etc.\n
+            2) The status bar can\'t be expanded. That is, the \'swipe-down\' gesture doesn\'t work
+            for the status bar.\n
+            3) The Home button is hidden.\n
+            4) Long-press the power button. The power button menu, which usually shows the power-off
+            button, etc., isn\'t shown.\n
+            5) Press the power button to turn off the screen, and press it again to turn the screen
+            back on. Lock screen shouldn\'t be shown.\n
+            6) The assist gesture isn\'t available.\n\n
+            Mark the test as \'pass\' only if ALL of the above requirements are met.
+    </string>
+    <string name="device_owner_lock_task_ui_global_actions_test">Enable global actions</string>
+    <string name="device_owner_lock_task_ui_global_actions_test_info">
+            Press the button below to enable global actions (a.k.a. power button menu). Long-press
+            the power button and verify a menu containing power-off and restart buttons is shown.
+            This menu can\'t contain any UI that allows the user to change system settings (such as
+            airplane mode switch) or access the Settings app.\n\n
+            The rest of the UI restrictions should still apply:\n
+            1) Nothing is shown in the status bar, including notification icons, connectivity icons,
+            battery status, clock, etc.\n
+            2) The status bar can\'t be expanded. That is, the \'swipe-down\' gesture doesn\'t work
+            for the status bar.\n
+            3) The Home button is hidden.\n
+            4) The Recents button is hidden.\n
+            5) Long-press the power button. The power button menu, which usually shows the power-off
+            button, etc., isn\'t shown.\n
+            6) The assist gesture isn\'t available.\n\n
+            Mark the test as \'pass\' only if ALL of the above requirements are met.
+    </string>
+    <string name="device_owner_lock_task_ui_keyguard_test">Enable keyguard</string>
+    <string name="device_owner_lock_task_ui_keyguard_test_info">
+            Press the button below to enable keyguard. Press the power button to turn off the screen
+            and press it again to turn the screen back on. Verify that the lock screen is shown.\n\n
+            The rest of the UI restrictions should still apply, both on the lock screen and after
+            the lock screen is dismissed:\n
+            1) Nothing is shown in the status bar, including notification icons, connectivity icons,
+            battery status, clock, etc.\n
+            2) The status bar can\'t be expanded. That is, the \'swipe-down\' gesture doesn\'t work
+            for the status bar, even on the lock screen.\n
+            3) The Home button is hidden.\n
+            4) The Recents button is hidden.\n
+            5) Long-press the power button. The power button menu, which usually shows the power-off
+            button, etc., isn\'t shown.\n
+            6) The assist gesture isn\'t available.\n\n
+            Mark the test as \'pass\' only if ALL of the above requirements are met.
+    </string>
+    <string name="device_owner_lock_task_ui_stop_lock_task_test">Stop LockTask mode</string>
+    <string name="device_owner_lock_task_ui_stop_lock_task_test_info">
+            Press the button below to exit LockTask mode.\n\n
+            Observe that the UI has returned to the normal, unrestricted state, and is no longer
+            subject to any LockTask restriction.\n\n
+            Mark the test as \'pass\' or \'fail\' accordingly.
+    </string>
     <string name="device_owner_lockscreen_secure">Please remove lockscreen password</string>
     <string name="device_profile_owner_permission_lockdown_test">Permissions lockdown</string>
     <string name="device_profile_owner_permission_lockdown_test_instructions">
