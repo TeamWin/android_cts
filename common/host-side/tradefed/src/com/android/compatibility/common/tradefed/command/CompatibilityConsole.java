@@ -195,7 +195,12 @@ public class CompatibilityConsole extends Console {
                 "\t\t\t--screenshot-on-failure: Capture a screenshot when a test fails"
                 + LINE_SEPARATOR +
                 "\t\t\t--shard-count <shards>: Shards a run into the given number of independent " +
-                "chunks, to run on multiple devices in parallel." + LINE_SEPARATOR;
+                "chunks, to run on multiple devices in parallel." + LINE_SEPARATOR +
+                "\t ----- In order to retry a previous run -----" + LINE_SEPARATOR +
+                "\tretry --retry <session id to retry> [--retry-type <FAILED | NOT_EXECUTED>]"
+                + LINE_SEPARATOR +
+                "\t\tWithout --retry-type, retry will run both FAIL and NOT_EXECUTED tests"
+                + LINE_SEPARATOR;
         commandHelp.put(RUN_PATTERN, combinedRunHelp);
 
         commandHelp.put(ADD_PATTERN, String.format(
