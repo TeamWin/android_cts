@@ -32,26 +32,6 @@ import java.util.concurrent.TimeUnit;
 public class Utils {
     public static final int USER_SYSTEM = 0;
 
-    public static void runDeviceTests(ITestDevice device, String packageName)
-            throws DeviceNotAvailableException {
-        runDeviceTests(device, packageName, null, null, USER_SYSTEM, null);
-    }
-
-    public static void runDeviceTests(ITestDevice device, String packageName, int userId)
-            throws DeviceNotAvailableException {
-        runDeviceTests(device, packageName, null, null, userId, null);
-    }
-
-    public static void runDeviceTests(ITestDevice device, String packageName, String testClassName)
-            throws DeviceNotAvailableException {
-        runDeviceTests(device, packageName, testClassName, null, USER_SYSTEM, null);
-    }
-
-    public static void runDeviceTests(ITestDevice device, String packageName, String testClassName,
-            int userId) throws DeviceNotAvailableException {
-        runDeviceTests(device, packageName, testClassName, null, userId, null);
-    }
-
     public static void runDeviceTests(ITestDevice device, String packageName, String testClassName,
             String testMethodName) throws DeviceNotAvailableException {
         runDeviceTests(device, packageName, testClassName, testMethodName, USER_SYSTEM, null);
