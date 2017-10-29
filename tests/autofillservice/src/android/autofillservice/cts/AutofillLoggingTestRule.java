@@ -52,8 +52,12 @@ public class AutofillLoggingTestRule implements TestRule {
                 try {
                     base.evaluate();
                 } catch (Throwable t) {
-                    final String dump = runShellCommand("dumpsys autofill");
-                    Log.e(mTag, "dump for " + description.getDisplayName() + ": \n" + dump, t);
+                    final String name = description.getDisplayName();
+                    final String autofillDump = runShellCommand("dumpsys autofill");
+                    Log.e(mTag, "autofill dump for " + name + ": \n" + autofillDump, t);
+                    final String activityDump =
+                            runShellCommand("dumpsys activity android.autofillservice.cts");
+                    Log.e(mTag, "activity dump for " + name + ": \n" + activityDump, t);
                     throw t;
                 } finally {
                     if (!levelBefore.equals("verbose")) {

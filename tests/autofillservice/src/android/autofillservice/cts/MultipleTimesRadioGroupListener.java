@@ -26,7 +26,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Custom {@link RadioGroup.OnCheckedChangeListener} used to assert an
+ * Custom {@link android.widget.RadioGroup.OnCheckedChangeListener} used to assert an
  * {@link RadioGroup} was auto-filled properly.
  */
 final class MultipleTimesRadioGroupListener implements RadioGroup.OnCheckedChangeListener {

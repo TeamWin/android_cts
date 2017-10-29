@@ -59,7 +59,7 @@ public class PowerIncidentTest extends ProtoDumpTestCase {
         assertTrue(brightnessLimits.getSettingDefault() > 0);
         assertTrue(brightnessLimits.getSettingForVrDefault() > 0);
 
-        final PowerManagerServiceDumpProto.UidProto uid = dump.getUids(0);
+        final PowerManagerServiceDumpProto.UidStateProto uid = dump.getUidStates(0);
         assertEquals(uid.getUid(), SYSTEM_UID);
         assertEquals(uid.getUidString(), Integer.toString(SYSTEM_UID));
         assertTrue(uid.getIsActive());

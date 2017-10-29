@@ -15,6 +15,14 @@
  */
 package com.android.cts.deviceowner;
 
+import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_GLOBAL_ACTIONS;
+import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_HOME;
+import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_KEYGUARD;
+import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_NONE;
+import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_NOTIFICATIONS;
+import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_RECENTS;
+import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_SYSTEM_INFO;
+
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
@@ -171,6 +179,34 @@ public class LockTaskTest {
         mDevicePolicyManager.setLockTaskPackages(ADMIN_COMPONENT, new String[0]);
         assertEquals(0, mDevicePolicyManager.getLockTaskPackages(ADMIN_COMPONENT).length);
         assertFalse(mDevicePolicyManager.isLockTaskPermitted(TEST_PACKAGE));
+    }
+
+    // Setting and unsetting the lock task features. The actual UI behavior is tested with CTS
+    // verifier.
+    @Test
+    public void testSetLockTaskFeatures() {
+        final int[] flags = new int[] {
+                LOCK_TASK_FEATURE_SYSTEM_INFO,
+                LOCK_TASK_FEATURE_NOTIFICATIONS,
+                LOCK_TASK_FEATURE_HOME,
+                LOCK_TASK_FEATURE_RECENTS,
+                LOCK_TASK_FEATURE_GLOBAL_ACTIONS,
+                LOCK_TASK_FEATURE_KEYGUARD
+        };
+
+        int cumulative = LOCK_TASK_FEATURE_NONE;
+        for (int flag : flags) {
+            mDevicePolicyManager.setLockTaskFeatures(ADMIN_COMPONENT, flag);
+            assertEquals(flag, mDevicePolicyManager.getLockTaskFeatures(ADMIN_COMPONENT));
+
+            cumulative |= flag;
+            mDevicePolicyManager.setLockTaskFeatures(ADMIN_COMPONENT, cumulative);
+            assertEquals(cumulative, mDevicePolicyManager.getLockTaskFeatures(ADMIN_COMPONENT));
+
+            mDevicePolicyManager.setLockTaskFeatures(ADMIN_COMPONENT, LOCK_TASK_FEATURE_NONE);
+            assertEquals(LOCK_TASK_FEATURE_NONE,
+                    mDevicePolicyManager.getLockTaskFeatures(ADMIN_COMPONENT));
+        }
     }
 
     // Start lock task, verify that ActivityManager knows thats what is going on.

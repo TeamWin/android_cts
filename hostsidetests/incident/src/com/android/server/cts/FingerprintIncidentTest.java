@@ -16,9 +16,9 @@
 
 package com.android.server.cts;
 
-import android.service.fingerprint.FingerprintActionStatsProto;
-import android.service.fingerprint.FingerprintServiceDumpProto;
-import android.service.fingerprint.FingerprintUserStatsProto;
+import com.android.server.fingerprint.FingerprintServiceDumpProto;
+import com.android.server.fingerprint.FingerprintUserStatsProto;
+import com.android.server.fingerprint.PerformanceStatsProto;
 
 import com.android.tradefed.log.LogUtil.CLog;
 
@@ -27,12 +27,7 @@ import com.android.tradefed.log.LogUtil.CLog;
  * Test to check that the fingerprint service properly outputs its dump state.
  */
 public class FingerprintIncidentTest extends ProtoDumpTestCase {
-    /**
-     * Test that no fingerprints are registered.
-     *
-     * @throws Exception
-     */
-    public void testNoneRegistered() throws Exception {
+    public void testFingerprintServiceDump() throws Exception {
         // If the device doesn't support fingerprints, then pass.
         if (!getDevice().hasFeature("android.hardware.fingerprint")) {
             CLog.d("Bypass as android.hardware.fingerprint is not supported.");
@@ -42,24 +37,28 @@ public class FingerprintIncidentTest extends ProtoDumpTestCase {
         final FingerprintServiceDumpProto dump =
                 getDump(FingerprintServiceDumpProto.parser(), "dumpsys fingerprint --proto");
 
-        // One of them
-        assertEquals(1, dump.getUsersCount());
+        // There should be at least one user.
+        assertTrue(1 <= dump.getUsersCount());
 
-        final FingerprintUserStatsProto userStats = dump.getUsers(0);
-        assertEquals(0, userStats.getUserId());
-        assertEquals(0, userStats.getNumFingerprints());
+        for (int i = 0; i < dump.getUsersCount(); ++i) {
+            final FingerprintUserStatsProto userStats = dump.getUsers(i);
+            assertTrue(0 <= userStats.getUserId());
+            assertTrue(0 <= userStats.getNumFingerprints());
 
-        final FingerprintActionStatsProto normal = userStats.getNormal();
-        assertEquals(0, normal.getAccept());
-        assertEquals(0, normal.getReject());
-        assertEquals(0, normal.getAcquire());
-        assertEquals(0, normal.getLockout());
+            final PerformanceStatsProto normal = userStats.getNormal();
+            assertTrue(0 <= normal.getAccept());
+            assertTrue(0 <= normal.getReject());
+            assertTrue(0 <= normal.getAcquire());
+            assertTrue(0 <= normal.getLockout());
+            assertTrue(0 <= normal.getPermanentLockout());
 
-        final FingerprintActionStatsProto crypto = userStats.getCrypto();
-        assertEquals(0, crypto.getAccept());
-        assertEquals(0, crypto.getReject());
-        assertEquals(0, crypto.getAcquire());
-        assertEquals(0, crypto.getLockout());
+            final PerformanceStatsProto crypto = userStats.getCrypto();
+            assertTrue(0 <= crypto.getAccept());
+            assertTrue(0 <= crypto.getReject());
+            assertTrue(0 <= crypto.getAcquire());
+            assertTrue(0 <= crypto.getLockout());
+            assertTrue(0 <= crypto.getPermanentLockout());
+        }
     }
 }
 

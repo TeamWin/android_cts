@@ -20,6 +20,7 @@ import static android.autofillservice.cts.Helper.CONNECTION_TIMEOUT_MS;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.util.Log;
 import android.view.View;
 import android.view.autofill.AutofillManager.AutofillCallback;
 
@@ -32,15 +33,18 @@ import java.util.concurrent.TimeUnit;
  */
 final class MyAutofillCallback extends AutofillCallback {
 
+    private static final String TAG = "MyAutofillCallback";
     private final BlockingQueue<MyEvent> mEvents = new LinkedBlockingQueue<>();
 
     @Override
     public void onAutofillEvent(View view, int event) {
+        Log.v(TAG, "onAutofillEvent: view=" + view + ", event=" + event);
         mEvents.offer(new MyEvent(view, event));
     }
 
     @Override
     public void onAutofillEvent(View view, int childId, int event) {
+        Log.v(TAG, "onAutofillEvent: view=" + view + ", child=" + childId + ", event=" + event);
         mEvents.offer(new MyEvent(view, childId, event));
     }
 
@@ -53,6 +57,17 @@ final class MyAutofillCallback extends AutofillCallback {
             throw new RetryableException("no event in %d ms", CONNECTION_TIMEOUT_MS);
         }
         return event;
+    }
+
+    /**
+     * Assert no more events were received.
+     */
+    void assertNotCalled() throws InterruptedException {
+        final MyEvent event = mEvents.poll(CONNECTION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        if (event != null) {
+            // Not retryable.
+            throw new IllegalStateException("should not have received " + event);
+        }
     }
 
     /**
