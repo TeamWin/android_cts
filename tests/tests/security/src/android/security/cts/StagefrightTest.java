@@ -45,8 +45,11 @@ import android.util.Log;
 import android.view.Surface;
 import android.webkit.cts.CtsTestServer;
 
+import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -426,10 +429,36 @@ public class StagefrightTest extends InstrumentationTestCase {
         CtsTestServer server = new CtsTestServer(context);
         String rname = resources.getResourceEntryName(rid);
         String url = server.getAssetUrl("raw/" + rname);
+        verifyServer(rid, url);
         doStagefrightTestMediaPlayer(url);
         doStagefrightTestMediaCodec(url);
         doStagefrightTestMediaMetadataRetriever(url);
         server.shutdown();
+    }
+
+    // verify that CtsTestServer is functional by retrieving the asset
+    // and comparing it to the resource
+    private void verifyServer(final int rid, final String uri) throws Exception {
+        Log.i(TAG, "checking server");
+        URL url = new URL(uri);
+        InputStream in1 = new BufferedInputStream(url.openStream());
+
+        AssetFileDescriptor fd = getInstrumentation().getContext().getResources()
+                        .openRawResourceFd(rid);
+        InputStream in2 = new BufferedInputStream(fd.createInputStream());
+
+        while (true) {
+            int b1 = in1.read();
+            int b2 = in2.read();
+            assertEquals("CtsTestServer fail", b1, b2);
+            if (b1 < 0) {
+                break;
+            }
+        }
+
+        in1.close();
+        in2.close();
+        Log.i(TAG, "checked server");
     }
 
     private void doStagefrightTestANR(final int rid) throws Exception {
