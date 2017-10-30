@@ -150,6 +150,7 @@ public class ItsService extends Service implements SensorEventListener {
     private volatile ServerSocket mSocket = null;
     private volatile SocketRunnable mSocketRunnableObj = null;
     private Semaphore mSocketQueueQuota = null;
+    private int mMemoryQuota = -1;
     private LinkedList<Integer> mInflightImageSizes = new LinkedList<>();
     private volatile BlockingQueue<ByteBuffer> mSocketWriteQueue =
             new LinkedBlockingDeque<ByteBuffer>();
@@ -322,6 +323,18 @@ public class ItsService extends Service implements SensorEventListener {
             if (devices == null || devices.length == 0) {
                 throw new ItsException("No camera devices");
             }
+            if (mMemoryQuota == -1) {
+                // Initialize memory quota on this device
+                for (String camId : devices) {
+                    CameraCharacteristics chars =  mCameraManager.getCameraCharacteristics(camId);
+                    Size maxYuvSize = ItsUtils.getYuvOutputSizes(chars)[0];
+                    // 4 bytes per pixel for RGBA8888 Bitmap and at least 3 Bitmaps per CDD
+                    int quota = maxYuvSize.getWidth() * maxYuvSize.getHeight() * 4 * 3;
+                    if (quota > mMemoryQuota) {
+                        mMemoryQuota = quota;
+                    }
+                }
+            }
         } catch (CameraAccessException e) {
             throw new ItsException("Failed to get device ID list", e);
         }
@@ -331,10 +344,7 @@ public class ItsService extends Service implements SensorEventListener {
                     mCameraListener, mCameraHandler);
             mCameraCharacteristics = mCameraManager.getCameraCharacteristics(
                     devices[cameraId]);
-            Size maxYuvSize = ItsUtils.getYuvOutputSizes(mCameraCharacteristics)[0];
-            // 2 bytes per pixel for RGBA Bitmap and at least 3 Bitmaps per CDD
-            int quota = maxYuvSize.getWidth() * maxYuvSize.getHeight() * 2 * 3;
-            mSocketQueueQuota = new Semaphore(quota, true);
+            mSocketQueueQuota = new Semaphore(mMemoryQuota, true);
         } catch (CameraAccessException e) {
             throw new ItsException("Failed to open camera", e);
         } catch (BlockingOpenException e) {
