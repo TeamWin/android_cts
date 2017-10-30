@@ -397,12 +397,17 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     public void testRunEnded(long elapsedTime, Map<String, String> metrics) {
         mCurrentModuleResult.inProgress(false);
         mCurrentModuleResult.addRuntime(elapsedTime);
-        if (!mModuleWasDone && mCanMarkDone && !mTestRunFailed) {
-            // Only mark module done if:
-            // - status of the invocation allows it (mCanMarkDone), and
-            // - module has not already been marked done, and
-            // - no test run failure has been detected
-            mCurrentModuleResult.setDone(mCurrentTestNum >= mTotalTestsInModule);
+        if (!mModuleWasDone && mCanMarkDone) {
+            if (mTestRunFailed) {
+                // set done to false for test run failures
+                mCurrentModuleResult.setDone(false);
+            } else {
+                // Only mark module done if:
+                // - status of the invocation allows it (mCanMarkDone), and
+                // - module has not already been marked done, and
+                // - no test run failure has been detected
+                mCurrentModuleResult.setDone(mCurrentTestNum >= mTotalTestsInModule);
+            }
         }
         if (isShardResultReporter()) {
             // Forward module results to the master.
