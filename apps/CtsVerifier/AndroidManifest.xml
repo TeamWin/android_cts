@@ -3098,7 +3098,7 @@
                 android:value="@string/test_category_telephony"/>
             <meta-data
                 android:name="test_required_features"
-                android:value="android.hardware.telephony"/>
+                android:value="android.hardware.telephony:android.software.sip:android.software.sip.voip"/>
         </activity>
 
         <service
@@ -3142,7 +3142,7 @@
                 android:value="@string/test_category_telecom"/>
             <meta-data
                 android:name="test_required_features"
-                android:value="android.hardware.telephony"/>
+                android:value="android.hardware.telephony:android.software.sip:android.software.sip.voip"/>
         </activity>
 
         <activity
@@ -3158,7 +3158,7 @@
                 android:value="@string/test_category_telecom"/>
             <meta-data
                 android:name="test_required_features"
-                android:value="android.hardware.telephony"/>
+                android:value="android.hardware.telephony:android.software.sip:android.software.sip.voip"/>
             </activity>
 
         <activity
@@ -3190,7 +3190,7 @@
                 android:value="@string/test_category_telecom"/>
             <meta-data
                 android:name="test_required_features"
-                android:value="android.hardware.telephony"/>
+                android:value="android.hardware.telephony:android.software.sip:android.software.sip.voip"/>
         </activity>
 
         <service android:name="com.android.cts.verifier.telecom.CtsConnectionService"
