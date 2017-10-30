@@ -23,7 +23,9 @@ LOCAL_PACKAGE_NAME := CtsActivityManagerDeviceTestCases
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_STATIC_JAVA_LIBRARIES := cts-amwm-util  \
+LOCAL_STATIC_JAVA_LIBRARIES := \
+    android-support-test \
+    cts-amwm-util \
     cts-display-service-app-util
 
 LOCAL_CTS_TEST_PACKAGE := android.server

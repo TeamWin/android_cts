@@ -326,45 +326,6 @@
         <activity android:name="android.app.stubs.ToolbarActivity"
                   android:theme="@android:style/Theme.Material.Light.NoActionBar" />
 
-        <activity android:name="android.app.stubs.MaxAspectRatioActivity"
-                  android:label="MaxAspectRatioActivity"
-                  android:resizeableActivity="false"
-                  android:maxAspectRatio="1.0">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
-            </intent-filter>
-        </activity>
-
-        <activity android:name="android.app.stubs.MetaDataMaxAspectRatioActivity"
-                  android:label="MetaDataMaxAspectRatioActivity"
-                  android:resizeableActivity="false">
-            <meta-data android:name="android.max_aspect" android:value="1.0" />
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
-            </intent-filter>
-        </activity>
-
-        <activity android:name="android.app.stubs.MaxAspectRatioResizeableActivity"
-                  android:label="MaxAspectRatioResizeableActivity"
-                  android:resizeableActivity="true"
-                  android:maxAspectRatio="1.0">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
-            </intent-filter>
-        </activity>
-
-        <activity android:name="android.app.stubs.MaxAspectRatioUnsetActivity"
-                  android:label="MaxAspectRatioUnsetActivity"
-                  android:resizeableActivity="false">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
-            </intent-filter>
-        </activity>
-
         <service
             android:name="android.app.stubs.LiveWallpaper"
             android:icon="@drawable/robot"
