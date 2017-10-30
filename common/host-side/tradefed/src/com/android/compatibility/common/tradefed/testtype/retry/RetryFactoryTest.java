@@ -192,6 +192,8 @@ public class RetryFactoryTest implements IRemoteTest, IDeviceTest, IBuildReceive
         test.setBuild(mBuildInfo);
         test.setSystemStatusChecker(mStatusCheckers);
         test.setInvocationContext(mContext);
+        // reset the retry id - Ensure that retry of retry does not throw
+        test.resetRetryId();
         // clean the helper
         helper.tearDown();
         return test;
