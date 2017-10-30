@@ -44,6 +44,23 @@
         <option name="push" value="CVE-2016-8434->/data/local/tmp/CVE-2016-8434" />
         <option name="push" value="CVE-2016-8435->/data/local/tmp/CVE-2016-8435" />
         <option name="push" value="CVE-2016-9120->/data/local/tmp/CVE-2016-9120" />
+
+        <!--__________________-->
+        <!-- Bulletin 2017-01 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+
+        <!--__________________-->
+        <!-- Bulletin 2017-02 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+
+        <!--__________________-->
+        <!-- Bulletin 2017-03 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+
+        <!--__________________-->
+        <!-- Bulletin 2017-04 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+
         <option name="append-bitness" value="true" />
     </target_preparer>
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
