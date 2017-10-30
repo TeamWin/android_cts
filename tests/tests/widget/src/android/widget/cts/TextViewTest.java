@@ -139,7 +139,6 @@ import android.view.inputmethod.ExtractedText;
 import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
-import android.view.textclassifier.TextClassification;
 import android.view.textclassifier.TextClassifier;
 import android.view.textclassifier.TextSelection;
 import android.widget.EditText;
@@ -190,14 +189,8 @@ public class TextViewTest {
     private static final TextClassifier FAKE_TEXT_CLASSIFIER = new TextClassifier() {
         @Override
         public TextSelection suggestSelection(
-                CharSequence text, int start, int end, LocaleList locales) {
+                CharSequence text, int start, int end, TextSelection.Options options) {
             return new TextSelection.Builder(SMARTSELECT_START, SMARTSELECT_END).build();
-        }
-
-        @Override
-        public TextClassification classifyText(
-                CharSequence text, int start, int end, LocaleList locales) {
-            return new TextClassification.Builder().build();
         }
     };
     private static final int CLICK_TIMEOUT = ViewConfiguration.getDoubleTapTimeout() + 50;
