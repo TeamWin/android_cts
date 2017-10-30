@@ -150,6 +150,24 @@ public class AdbUtils {
         }
     }
 
+    /**
+     * Extracts a resource and pushes it to the device
+     *
+     * @param fullResourceName a string path to resource from the res folder
+     * @param deviceFilePath the remote destination absolute file path
+     * @param device device to be ran on
+     */
+    public static void pushResource(String fullResourceName, String deviceFilePath,
+                                    ITestDevice device) throws Exception {
+        File resFile = File.createTempFile("CTSResource", "");
+        try {
+            resFile = extractResource(fullResourceName, resFile);
+            device.pushFile(resFile, deviceFilePath);
+        } finally {
+            resFile.delete();
+        }
+    }
+
    /**
      * Extracts the binary data from a resource and writes it to a temp file
      */
