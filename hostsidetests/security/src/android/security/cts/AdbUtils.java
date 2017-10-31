@@ -16,6 +16,7 @@
 
 package android.security.cts;
 
+import com.android.ddmlib.NullOutputReceiver;
 import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
@@ -74,6 +75,21 @@ public class AdbUtils {
     }
 
     /**
+     * Pushes and runs a binary to the selected device and ignores any of its output.
+     *
+     * @param pocName a string path to poc from the /res folder
+     * @param device device to be ran on
+     * @param timeout time to wait for output in seconds
+     */
+    public static void runPocNoOutput(String pocName, ITestDevice device, int timeout)
+            throws Exception {
+        device.executeShellCommand("chmod +x /data/local/tmp/" + pocName);
+        NullOutputReceiver receiver = new NullOutputReceiver();
+        device.executeShellCommand("/data/local/tmp/" + pocName, receiver, timeout,
+                TimeUnit.SECONDS, 0);
+    }
+
+    /**
      * Pushes and installs an apk to the selected device
      *
      * @param pathToApk a string path to apk from the /res folder
@@ -109,28 +125,5 @@ public class AdbUtils {
             return file;
         }
 
-    }
-
-    /**
-     * Runs an info disclosure related PoC, pulls logs from the device,
-     * and searches the logs for the info being disclosed.
-     * @param pocName string of the PoC name
-     * @param device device to be ran on
-     * @param timeout time to wait for output in seconds
-     * @param pattern pattern of info being disclosed
-     * @return boolean returns false if the test fails, otherwise returns true
-     **/
-    public static boolean detectInformationDisclosure(
-        String pocName, ITestDevice device, int timeout, String pattern) throws Exception {
-
-           String pocOutput = runPoc(pocName, device, timeout);
-           if (Pattern.matches(pattern, pocOutput))
-             return false;
-
-           String logcatOutput = device.executeShellCommand("logcat -d");
-           if (Pattern.matches(pattern, logcatOutput))
-             return false;
-
-           return true;
     }
 }

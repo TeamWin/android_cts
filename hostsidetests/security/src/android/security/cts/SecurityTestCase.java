@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Scanner;
+import java.util.regex.Pattern;
 
 public class SecurityTestCase extends DeviceTestCase {
 
@@ -47,6 +48,14 @@ public class SecurityTestCase extends DeviceTestCase {
             Integer.parseInt(uptime.substring(0, uptime.indexOf('.')));
         //TODO:(badash@): Watch for other things to track.
         //     Specifically time when app framework starts
+    }
+
+    /**
+     * Allows a CTS test to pass if called after a planned reboot.
+     */
+    public void updateKernelStartTime() throws Exception {
+        kernelStartTime = System.currentTimeMillis()/1000 -
+            Integer.parseInt(getDevice().executeShellCommand("cut -f1 -d. /proc/uptime").trim());
     }
 
     /**
@@ -91,13 +100,11 @@ public class SecurityTestCase extends DeviceTestCase {
         getDevice().executeAdbCommand("unroot");
     }
 
-    /**
-     * Runs an info disclosure
-     **/
-    public void infoDisclosure(
-        String pocName, ITestDevice device, int timeout, String pattern ) throws Exception {
+    public void assertMatches(String pattern, String input) throws Exception {
+        assertTrue("Pattern not found", Pattern.matches(pattern, input));
+    }
 
-        assertTrue("Pattern found. Info Disclosed.",
-                    AdbUtils.detectInformationDisclosure(pocName, device, timeout, pattern));
-     }
+    public void assertNotMatches(String pattern, String input) throws Exception {
+        assertFalse("Pattern found", Pattern.matches(pattern, input));
+    }
 }
