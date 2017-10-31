@@ -19,6 +19,7 @@ package android.security.cts;
 import android.media.audiofx.AudioEffect;
 import android.media.audiofx.EnvironmentalReverb;
 import android.media.audiofx.Equalizer;
+import android.media.audiofx.PresetReverb;
 import android.media.MediaPlayer;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
@@ -215,6 +216,16 @@ public class EffectBundleTest extends InstrumentationTestCase {
                   EnvironmentalReverb.PARAM_DIFFUSION,
                   EnvironmentalReverb.PARAM_DENSITY,
                   10 // EnvironmentalReverb.PARAM_PROPERTIES
+                }
+        );
+    }
+
+    //Testing security bug: 67647856
+    @SecurityTest
+    public void testPresetReverb_setParameter() throws Exception {
+        verifyZeroPVSizeRejectedForSetParameter(
+                AudioEffect.EFFECT_TYPE_PRESET_REVERB, new int[] {
+                  PresetReverb.PARAM_PRESET
                 }
         );
     }
