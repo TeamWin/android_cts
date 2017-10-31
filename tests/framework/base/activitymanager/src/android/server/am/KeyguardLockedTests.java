@@ -59,10 +59,10 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         }
         gotoKeyguard();
         mAmWmState.waitForKeyguardShowingAndNotOccluded();
-        assertShowingAndNotOccluded();
+        mAmWmState.assertKeyguardShowingAndNotOccluded();
         unlockDeviceWithCredential();
         mAmWmState.waitForKeyguardGone();
-        assertKeyguardGone();
+        mAmWmState.assertKeyguardGone();
     }
 
     @Test
@@ -72,11 +72,11 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         }
         gotoKeyguard();
         mAmWmState.waitForKeyguardShowingAndNotOccluded();
-        assertShowingAndNotOccluded();
+        mAmWmState.assertKeyguardShowingAndNotOccluded();
         launchActivity("DismissKeyguardActivity");
         enterAndConfirmLockCredential();
         mAmWmState.waitForKeyguardGone();
-        assertKeyguardGone();
+        mAmWmState.assertKeyguardGone();
         mAmWmState.assertVisibility("DismissKeyguardActivity", true);
     }
 
@@ -87,14 +87,14 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         }
         gotoKeyguard();
         mAmWmState.waitForKeyguardShowingAndNotOccluded();
-        assertShowingAndNotOccluded();
+        mAmWmState.assertKeyguardShowingAndNotOccluded();
         launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
         mAmWmState.computeState(new WaitForValidActivityState.Builder( SHOW_WHEN_LOCKED_ACTIVITY ).build());
         mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
         launchActivity("DismissKeyguardActivity");
         enterAndConfirmLockCredential();
         mAmWmState.waitForKeyguardGone();
-        assertKeyguardGone();
+        mAmWmState.assertKeyguardGone();
         mAmWmState.assertVisibility("DismissKeyguardActivity", true);
         mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, false);
     }
@@ -106,7 +106,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         }
         gotoKeyguard();
         mAmWmState.waitForKeyguardShowingAndNotOccluded();
-        assertShowingAndNotOccluded();
+        mAmWmState.assertKeyguardShowingAndNotOccluded();
         launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
         mAmWmState.computeState(new WaitForValidActivityState.Builder( SHOW_WHEN_LOCKED_ACTIVITY ).build());
         mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
@@ -114,7 +114,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         enterAndConfirmLockCredential();
 
         // Make sure we stay on Keyguard.
-        assertShowingAndOccluded();
+        mAmWmState.assertKeyguardShowingAndOccluded();
         mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
     }
 
@@ -170,14 +170,14 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         launchActivity(PIP_ACTIVITY, EXTRA_SHOW_OVER_KEYGUARD, "true");
         executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_ENTER_PIP);
         mAmWmState.waitForKeyguardShowingAndOccluded();
-        assertShowingAndOccluded();
+        mAmWmState.assertKeyguardShowingAndOccluded();
         mAmWmState.assertDoesNotContainStack("Must not contain pinned stack.",
                 WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
 
         // Enter the credentials and ensure that the activity actually entered picture-in-picture
         enterAndConfirmLockCredential();
         mAmWmState.waitForKeyguardGone();
-        assertKeyguardGone();
+        mAmWmState.assertKeyguardGone();
         mAmWmState.assertContainsStack("Must contain pinned stack.", WINDOWING_MODE_PINNED,
                 ACTIVITY_TYPE_STANDARD);
     }
@@ -202,7 +202,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
 
         gotoKeyguard();
         mAmWmState.waitForKeyguardShowingAndOccluded();
-        assertShowingAndOccluded();
+        mAmWmState.assertKeyguardShowingAndOccluded();
         mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
         mAmWmState.assertVisibility(PIP_ACTIVITY, false);
     }
@@ -222,7 +222,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
 
         gotoKeyguard();
         mAmWmState.waitForKeyguardShowingAndNotOccluded();
-        assertShowingAndNotOccluded();
+        mAmWmState.assertKeyguardShowingAndNotOccluded();
         mAmWmState.assertVisibility(PIP_ACTIVITY, false);
     }
 }
