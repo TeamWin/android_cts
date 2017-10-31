@@ -25,7 +25,6 @@ import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmlpull.v1.XmlSerializer;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
@@ -43,6 +42,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
@@ -114,17 +114,20 @@ public class ResultHandler {
     private static final String SUMMARY_TAG = "Summary";
     private static final String TEST_TAG = "Test";
 
+    private static final String LATEST_RESULT_DIR = "latest";
 
     /**
      * Returns IInvocationResults that can be queried for general reporting information, but that
      * do not store underlying module data. Useful for summarizing invocation history.
      * @param resultsDir
-     * @param useChecksum
      */
     public static List<IInvocationResult> getLightResults(File resultsDir) {
         List<IInvocationResult> results = new ArrayList<>();
         List<File> files = getResultDirectories(resultsDir);
         for (File resultDir : files) {
+            if (LATEST_RESULT_DIR.equals(resultDir.getName())) {
+                continue;
+            }
             IInvocationResult result = getResultFromDir(resultDir, false);
             if (result != null) {
                 results.add(new LightInvocationResult(result));
@@ -490,8 +493,7 @@ public class ResultHandler {
     /**
      * Find the IInvocationResult for the given sessionId.
      */
-    public static IInvocationResult findResult(File resultsDir, Integer sessionId)
-            throws FileNotFoundException {
+    public static IInvocationResult findResult(File resultsDir, Integer sessionId) {
         return findResult(resultsDir, sessionId, true);
     }
 
@@ -499,7 +501,7 @@ public class ResultHandler {
      * Find the IInvocationResult for the given sessionId.
      */
     private static IInvocationResult findResult(
-            File resultsDir, Integer sessionId, Boolean useChecksum) throws FileNotFoundException {
+            File resultsDir, Integer sessionId, Boolean useChecksum) {
         if (sessionId < 0) {
             throw new IllegalArgumentException(
                 String.format("Invalid session id [%d] ", sessionId));
@@ -531,7 +533,7 @@ public class ResultHandler {
     /**
      * Get a list of child directories that contain test invocation results
      * @param resultsDir the root test result directory
-     * @return
+     * @return the list of {@link File} results directory.
      */
     public static List<File> getResultDirectories(File resultsDir) {
         List<File> directoryList = new ArrayList<>();

@@ -204,4 +204,11 @@ public class CompatibilityTestSuite extends ITestSuite {
     public void setExcludeFilter(Set<String> excludeFilters) {
         mExcludeFilters.addAll(excludeFilters);
     }
+
+    /**
+     * Allow to reset the requested session id for retry.
+     */
+    public void resetRetryId() {
+        mRetrySessionId = null;
+    }
 }
