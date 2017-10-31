@@ -46,4 +46,16 @@ public class Poc17_03 extends SecurityTestCase {
             Thread.sleep(60000);
         }
     }
+
+    /**
+     *  b/33899363
+     */
+    @SecurityTest
+    public void testPocCVE_2017_0333() throws Exception {
+        if (containsDriver(getDevice(), "/dev/dri/renderD128")) {
+            AdbUtils.runPocNoOutput("CVE-2017-0333", getDevice(), 30);
+            // Device takes up to 30 seconds to crash after ioctl call
+            Thread.sleep(30000);
+        }
+    }
 }
