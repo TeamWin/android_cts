@@ -91,8 +91,6 @@ public class BleClientTestBaseActivity extends PassFailButtons.Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.ble_server_start);
         setPassFailButtonClickListeners();
-        setInfoResources(R.string.ble_client_test_name,
-                R.string.ble_client_test_info, -1);
         getPassButton().setEnabled(false);
 
         mTestAdapter = new TestAdapter(this, setupTestList());
