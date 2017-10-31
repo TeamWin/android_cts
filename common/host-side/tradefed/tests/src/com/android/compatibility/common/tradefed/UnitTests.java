@@ -32,7 +32,6 @@ import com.android.compatibility.common.tradefed.result.ResultReporterTest;
 import com.android.compatibility.common.tradefed.result.SubPlanHelperTest;
 import com.android.compatibility.common.tradefed.targetprep.PropertyCheckTest;
 import com.android.compatibility.common.tradefed.targetprep.SettingsPreparerTest;
-import com.android.compatibility.common.tradefed.testtype.CompatibilityHostTestBaseTest;
 import com.android.compatibility.common.tradefed.testtype.CompatibilityTestTest;
 import com.android.compatibility.common.tradefed.testtype.JarHostTestTest;
 import com.android.compatibility.common.tradefed.testtype.ModuleDefTest;
@@ -87,7 +86,6 @@ import org.junit.runners.Suite.SuiteClasses;
     SettingsPreparerTest.class,
 
     // testtype
-    CompatibilityHostTestBaseTest.class,
     CompatibilityTestTest.class,
     JarHostTestTest.class,
     ModuleDefTest.class,
