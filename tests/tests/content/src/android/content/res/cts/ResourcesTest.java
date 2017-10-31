@@ -823,6 +823,21 @@ public class ResourcesTest extends AndroidTestCase {
         assertEquals(getLargerTypeface("b", normalFont, italicFont), italicFont);
     }
 
+    public void testGetFont_xmlFileWithVariationSettings() {
+        // Here we test that specifying variation settings for fonts in XMLs works.
+        // We build typefaces from two families containing one font each, using the same font
+        // resource, but having different values for the 'wdth' tag. Then we measure the painted
+        // text to ensure that the tag affects the text width. The font resource used supports
+        // the 'wdth' axis for the dash (-) character.
+        Typeface typeface1 = mResources.getFont(R.font.sample_variation_settings_family1);
+        assertNotNull(typeface1);
+        Typeface typeface2 = mResources.getFont(R.font.sample_variation_settings_family2);
+        assertNotNull(typeface2);
+
+        assertNotSame(typeface1, typeface2);
+        assertEquals(getLargerTypeface("-", typeface1, typeface2), typeface2);
+    }
+
     public void testGetFont_invalidXmlFile() {
         try {
             assertNull(mResources.getFont(R.font.invalid_xmlfamily));
