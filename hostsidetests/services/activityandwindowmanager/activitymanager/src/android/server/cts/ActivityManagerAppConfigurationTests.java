@@ -337,29 +337,13 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         //         1 /* portrait */, updatedReportedSizes.orientation);
     }
 
-    public void testNonFullscreenActivityProhibited() throws Exception {
-        setComponentName(TRANSLUCENT_CURRENT_PACKAGE);
-
-        // We do not wait for the activity as it should not launch based on the restrictions around
-        // specifying orientation. We instead start an activity known to launch immediately after
-        // so that we can ensure processing the first activity occurred.
-        launchActivityNoWait(TRANSLUCENT_ACTIVITY);
-        setDefaultComponentName();
-        launchActivity(PORTRAIT_ACTIVITY_NAME);
-
-        assertFalse("target SDK > 26 non-fullscreen activity should not reach onResume",
-                mAmWmState.getAmState().containsActivity(
-                        ActivityManagerTestBase.getActivityComponentName(
-                                TRANSLUCENT_ACTIVITY, TRANSLUCENT_ACTIVITY)));
-    }
-
     public void testNonFullscreenActivityPermitted() throws Exception {
-        setComponentName(TRANSLUCENT_SDK_26_PACKAGE);
+        setComponentName(TRANSLUCENT_CURRENT_PACKAGE);
         setDeviceRotation(0);
 
         launchActivity(TRANSLUCENT_ACTIVITY);
         mAmWmState.assertResumedActivity(
-                "target SDK <= 26 non-fullscreen activity should be allowed to launch",
+                "target SDK non-fullscreen activity should be allowed to launch",
                 TRANSLUCENT_ACTIVITY);
         assertEquals("non-fullscreen activity requested landscape orientation",
                 0 /* landscape */, mAmWmState.getWmState().getLastOrientation());
