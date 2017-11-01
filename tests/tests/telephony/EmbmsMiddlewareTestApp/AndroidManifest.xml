@@ -26,13 +26,13 @@
         <action android:name="android.telephony.cts.embmstestapp.ACTION_CONTROL_MIDDLEWARE" />
       </intent-filter>
     </service>
-    <!--
-    <service android:name="com.android.phone.testapps.embmsmw.EmbmsSampleDownloadService"
+    <service android:name="android.telephony.cts.embmstestapp.CtsDownloadService"
              android:launchMode="singleInstance">
       <intent-filter>
         <action android:name="android.telephony.action.EmbmsDownload" />
+        <action android:name="android.telephony.cts.embmstestapp.ACTION_CONTROL_MIDDLEWARE" />
       </intent-filter>
-    </service>-->
+    </service>
   </application>
 </manifest>
 
