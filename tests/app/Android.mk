@@ -33,7 +33,6 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 
 LOCAL_SRC_FILES := \
     $(call all-java-files-under, src) \
-    $(call all-java-files-under, app2/src) \
     $(call all-java-files-under, appSdk25/src) \
 
 # Tag this module as a cts test artifact
