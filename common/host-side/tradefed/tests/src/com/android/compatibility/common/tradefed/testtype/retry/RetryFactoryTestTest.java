@@ -15,10 +15,9 @@
  */
 package com.android.compatibility.common.tradefed.testtype.retry;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
-import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
 import com.android.compatibility.common.tradefed.testtype.suite.CompatibilityTestSuite;
 import com.android.compatibility.common.tradefed.util.RetryFilterHelper;
 import com.android.tradefed.config.IConfiguration;
@@ -52,7 +51,7 @@ public class RetryFactoryTestTest {
     private RetryFilterHelper mSpyFilter;
 
     /**
-     * A {@link CompatibilityTest} that does not run anything.
+     * A {@link CompatibilityTestSuite} that does not run anything.
      */
     @OptionClass(alias = "compatibility")
     public static class VoidCompatibilityTest extends CompatibilityTestSuite {
