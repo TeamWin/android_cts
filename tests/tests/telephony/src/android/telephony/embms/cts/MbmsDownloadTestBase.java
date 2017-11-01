@@ -36,6 +36,7 @@ import android.test.InstrumentationTestCase;
 
 import com.android.internal.os.SomeArgs;
 
+import java.io.File;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -169,5 +170,14 @@ public class MbmsDownloadTestBase extends InstrumentationTestCase {
         return (mMiddlewareControl.getDownloadSessionCalls()).stream()
                 .filter((elem) -> elem.getString(CtsDownloadService.METHOD_NAME).equals(methodName))
                 .collect(Collectors.toList());
+    }
+
+    protected static void recursiveDelete(File f) {
+        if (f.isDirectory()) {
+            for (File f1 : f.listFiles()) {
+                recursiveDelete(f1);
+            }
+        }
+        f.delete();
     }
 }

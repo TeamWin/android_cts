@@ -91,6 +91,7 @@ public class MbmsDownloadSessionTest extends MbmsDownloadTestBase {
         assertEquals(1, setTempRootCalls.size());
         assertEquals(tempFileRootDirectory.getCanonicalPath(),
                 setTempRootCalls.get(0).getString(CtsDownloadService.ARGUMENT_ROOT_DIRECTORY_PATH));
+        tempFileRootDirectory.delete();
     }
 
     public void testSetInvalidTempFileRoot() throws Exception {
@@ -135,6 +136,7 @@ public class MbmsDownloadSessionTest extends MbmsDownloadTestBase {
             // success
         }
 
+        tempFileRootDirectory.delete();
     }
 
     public void testResetDownloadKnowledge() throws Exception {

@@ -36,4 +36,7 @@ interface ICtsDownloadMiddlewareControl {
             int currentDownloadSize, int fullDownloadSize,
             int currentDecodedSize, int fullDecodedSize);
     void fireOnStateUpdated(in DownloadRequest request, in FileInfo fileInfo, int state);
+
+    // calling download() does nothing, this is to actually start the file-download flow.
+    void actuallyStartDownloadFlow();
 }

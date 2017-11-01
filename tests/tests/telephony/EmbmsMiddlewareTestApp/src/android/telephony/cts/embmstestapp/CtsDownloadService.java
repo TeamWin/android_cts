@@ -16,8 +16,11 @@
 
 package android.telephony.cts.embmstestapp;
 
+import android.app.Activity;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Binder;
@@ -25,6 +28,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
+import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
 import android.telephony.MbmsDownloadSession;
 import android.telephony.mbms.DownloadRequest;
@@ -33,9 +37,13 @@ import android.telephony.mbms.FileInfo;
 import android.telephony.mbms.FileServiceInfo;
 import android.telephony.mbms.MbmsDownloadSessionCallback;
 import android.telephony.mbms.MbmsErrors;
+import android.telephony.mbms.UriPathPair;
 import android.telephony.mbms.vendor.MbmsDownloadServiceBase;
+import android.telephony.mbms.vendor.VendorUtils;
 import android.util.Log;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -56,7 +64,6 @@ public class CtsDownloadService extends Service {
 
     public static final String METHOD_NAME = "method_name";
     public static final String METHOD_INITIALIZE = "initialize";
-    public static final String METHOD_DOWNLOAD = "download";
     public static final String METHOD_REQUEST_UPDATE_FILE_SERVICES =
             "requestUpdateFileServices";
     public static final String METHOD_SET_TEMP_FILE_ROOT = "setTempFileRootDirectory";
@@ -64,24 +71,32 @@ public class CtsDownloadService extends Service {
     public static final String METHOD_GET_DOWNLOAD_STATUS = "getDownloadStatus";
     public static final String METHOD_CANCEL_DOWNLOAD = "cancelDownload";
     public static final String METHOD_CLOSE = "close";
+    // Not a method call, but it's a form of communication to the middleware so it's included
+    // here for convenience.
+    public static final String METHOD_DOWNLOAD_RESULT_ACK = "downloadResultAck";
 
     public static final String ARGUMENT_SUBSCRIPTION_ID = "subscriptionId";
     public static final String ARGUMENT_SERVICE_CLASSES = "serviceClasses";
     public static final String ARGUMENT_ROOT_DIRECTORY_PATH = "rootDirectoryPath";
     public static final String ARGUMENT_DOWNLOAD_REQUEST = "downloadRequest";
     public static final String ARGUMENT_FILE_INFO = "fileInfo";
+    public static final String ARGUMENT_RESULT_CODE = "resultCode";
 
     public static final String CONTROL_INTERFACE_ACTION =
             "android.telephony.cts.embmstestapp.ACTION_CONTROL_MIDDLEWARE";
     public static final ComponentName CONTROL_INTERFACE_COMPONENT =
             ComponentName.unflattenFromString(
                     "android.telephony.cts.embmstestapp/.CtsDownloadService");
+    public static final ComponentName CTS_TEST_RECEIVER_COMPONENT =
+            ComponentName.unflattenFromString(
+                    "android.telephony.cts/android.telephony.mbms.MbmsDownloadReceiver");
 
     public static final Uri DOWNLOAD_SOURCE_URI = Uri.parse("http://www.example.com/file_download");
     public static final FileServiceInfo FILE_SERVICE_INFO;
     public static final FileInfo FILE_INFO = new FileInfo(
             DOWNLOAD_SOURCE_URI.buildUpon().appendPath("file1.txt").build(),
             "text/plain");
+    public static final byte[] SAMPLE_FILE_DATA = "this is some sample file data".getBytes();
 
     static {
         String id = "FileServiceId";
@@ -106,6 +121,7 @@ public class CtsDownloadService extends Service {
     private List<Bundle> mReceivedCalls = new LinkedList<>();
     private int mErrorCodeOverride = MbmsErrors.SUCCESS;
     private List<DownloadRequest> mReceivedRequests = new LinkedList<>();
+    private String mTempFileRootDirPath = null;
 
     private final MbmsDownloadServiceBase mDownloadServiceImpl = new MbmsDownloadServiceBase() {
         @Override
@@ -178,7 +194,7 @@ public class CtsDownloadService extends Service {
             b.putInt(ARGUMENT_SUBSCRIPTION_ID, subscriptionId);
             b.putString(ARGUMENT_ROOT_DIRECTORY_PATH, rootDirectoryPath);
             mReceivedCalls.add(b);
-
+            mTempFileRootDirPath = rootDirectoryPath;
             return 0;
         }
 
@@ -253,6 +269,7 @@ public class CtsDownloadService extends Service {
             mErrorCodeOverride = MbmsErrors.SUCCESS;
             mReceivedRequests.clear();
             mDownloadStateCallback = null;
+            mTempFileRootDirPath = null;
         }
 
         @Override
@@ -287,6 +304,81 @@ public class CtsDownloadService extends Service {
                 return;
             }
             mHandler.post(() -> mDownloadStateCallback.onStateUpdated(request, fileInfo, state));
+        }
+
+        @Override
+        public void actuallyStartDownloadFlow() {
+            DownloadRequest request = mReceivedRequests.get(0);
+            // Compose the FILE_DESCRIPTOR_REQUEST_INTENT to get some FDs to write to
+            Intent requestIntent = new Intent(VendorUtils.ACTION_FILE_DESCRIPTOR_REQUEST);
+            requestIntent.putExtra(VendorUtils.EXTRA_SERVICE_ID, request.getFileServiceId());
+            requestIntent.putExtra(VendorUtils.EXTRA_FD_COUNT, 1);
+            requestIntent.putExtra(VendorUtils.EXTRA_TEMP_FILE_ROOT, mTempFileRootDirPath);
+            requestIntent.setComponent(CTS_TEST_RECEIVER_COMPONENT);
+
+            // Send as an ordered broadcast, using a BroadcastReceiver to capture the result
+            // containing UriPathPairs.
+            logd("Sending fd-request broadcast");
+            sendOrderedBroadcast(requestIntent,
+                    null, // receiverPermission
+                    new BroadcastReceiver() {
+                        @Override
+                        public void onReceive(Context context, Intent intent) {
+                            logd("Got file-descriptors");
+                            Bundle extras = getResultExtras(false);
+                            UriPathPair tempFile = (UriPathPair) extras.getParcelableArrayList(
+                                    VendorUtils.EXTRA_FREE_URI_LIST).get(0);
+                            int result = MbmsDownloadSession.RESULT_SUCCESSFUL;
+                            try {
+                                ParcelFileDescriptor tempFileFd =
+                                        getContentResolver().openFileDescriptor(
+                                                tempFile.getContentUri(), "rw");
+                                OutputStream destinationStream =
+                                        new ParcelFileDescriptor.AutoCloseOutputStream(tempFileFd);
+
+                                destinationStream.write(SAMPLE_FILE_DATA);
+                                destinationStream.flush();
+                            } catch (IOException e) {
+                                result = MbmsDownloadSession.RESULT_CANCELLED;
+                            }
+
+                            Intent downloadResultIntent =
+                                    new Intent(VendorUtils.ACTION_DOWNLOAD_RESULT_INTERNAL);
+                            downloadResultIntent.putExtra(
+                                    MbmsDownloadSession.EXTRA_MBMS_DOWNLOAD_REQUEST, request);
+                            downloadResultIntent.putExtra(VendorUtils.EXTRA_FINAL_URI,
+                                    tempFile.getFilePathUri());
+                            downloadResultIntent.putExtra(MbmsDownloadSession.EXTRA_MBMS_FILE_INFO,
+                                    FILE_INFO);
+                            downloadResultIntent.putExtra(VendorUtils.EXTRA_TEMP_FILE_ROOT,
+                                    mTempFileRootDirPath);
+                            downloadResultIntent.putExtra(
+                                    MbmsDownloadSession.EXTRA_MBMS_DOWNLOAD_RESULT, result);
+                            downloadResultIntent.setComponent(CTS_TEST_RECEIVER_COMPONENT);
+
+                            logd("Sending broadcast to app: " + downloadResultIntent.toString());
+                            sendOrderedBroadcast(downloadResultIntent,
+                                    null, // receiverPermission
+                                    new BroadcastReceiver() {
+                                        @Override
+                                        public void onReceive(Context context, Intent intent) {
+                                            Bundle b = new Bundle();
+                                            b.putString(METHOD_NAME, METHOD_DOWNLOAD_RESULT_ACK);
+                                            b.putInt(ARGUMENT_RESULT_CODE, getResultCode());
+                                            mReceivedCalls.add(b);
+                                        }
+                                    },
+                                    null, // scheduler
+                                    Activity.RESULT_OK,
+                                    null, // initialData
+                                    null /* initialExtras */);
+                        }
+                    },
+                    mHandler, // scheduler
+                    Activity.RESULT_OK,
+                    null, // initialData
+                    null /* initialExtras */);
+
         }
     };
 
