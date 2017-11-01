@@ -16,15 +16,20 @@
 
 package android.appsecurity.cts;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import com.android.ddmlib.AdbCommandRejectedException;
 import com.android.ddmlib.CollectingOutputReceiver;
 import com.android.ddmlib.Log;
-import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.testtype.DeviceTestCase;
-import com.android.tradefed.testtype.IAbi;
-import com.android.tradefed.testtype.IAbiReceiver;
-import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * Set of tests that verify behavior of direct boot, if supported.
@@ -32,7 +37,8 @@ import com.android.tradefed.testtype.IBuildReceiver;
  * Note that these tests drive PIN setup manually instead of relying on device
  * administrators, which are not supported by all devices.
  */
-public class DirectBootHostTest extends DeviceTestCase implements IAbiReceiver, IBuildReceiver {
+@RunWith(DeviceJUnit4ClassRunner.class)
+public class DirectBootHostTest extends BaseHostJUnit4Test {
     private static final String TAG = "DirectBootHostTest";
 
     private static final String PKG = "com.android.cts.encryptionapp";
@@ -55,35 +61,19 @@ public class DirectBootHostTest extends DeviceTestCase implements IAbiReceiver, 
     private String mFeatureList = null;
 
     private int[] mUsers;
-    private IAbi mAbi;
-    private IBuildInfo mCtsBuild;
 
-    @Override
-    public void setAbi(IAbi abi) {
-        mAbi = abi;
-    }
-
-    @Override
-    public void setBuild(IBuildInfo buildInfo) {
-        mCtsBuild = buildInfo;
-    }
-
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
+    @Before
+    public void setUp() throws Exception {
         mUsers = Utils.prepareSingleUser(getDevice());
-        assertNotNull(mAbi);
-        assertNotNull(mCtsBuild);
+        assertNotNull(getAbi());
+        assertNotNull(getBuild());
 
         getDevice().uninstallPackage(PKG);
         getDevice().uninstallPackage(OTHER_PKG);
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
-
+    @After
+    public void tearDown() throws Exception {
         getDevice().uninstallPackage(PKG);
         getDevice().uninstallPackage(OTHER_PKG);
     }
@@ -91,6 +81,7 @@ public class DirectBootHostTest extends DeviceTestCase implements IAbiReceiver, 
     /**
      * Automotive devices MUST support native FBE.
      */
+    @Test
     public void testAutomotiveNativeFbe() throws Exception {
         if (!isSupportedDevice()) {
             Log.v(TAG, "Device not supported; skipping test");
@@ -107,6 +98,7 @@ public class DirectBootHostTest extends DeviceTestCase implements IAbiReceiver, 
     /**
      * If device has native FBE, verify lifecycle.
      */
+    @Test
     public void testDirectBootNative() throws Exception {
         if (!isSupportedDevice()) {
             Log.v(TAG, "Device not supported; skipping test");
@@ -122,6 +114,7 @@ public class DirectBootHostTest extends DeviceTestCase implements IAbiReceiver, 
     /**
      * If device doesn't have native FBE, enable emulation and verify lifecycle.
      */
+    @Test
     public void testDirectBootEmulated() throws Exception {
         if (!isSupportedDevice()) {
             Log.v(TAG, "Device not supported; skipping test");
@@ -137,6 +130,7 @@ public class DirectBootHostTest extends DeviceTestCase implements IAbiReceiver, 
     /**
      * If device doesn't have native FBE, verify normal lifecycle.
      */
+    @Test
     public void testDirectBootNone() throws Exception {
         if (!isSupportedDevice()) {
             Log.v(TAG, "Device not supported; skipping test");
@@ -213,7 +207,7 @@ public class DirectBootHostTest extends DeviceTestCase implements IAbiReceiver, 
             int... users) throws DeviceNotAvailableException {
         for (int user : users) {
             Log.d(TAG, "runDeviceTests " + testMethodName + " u" + user);
-            Utils.runDeviceTests(getDevice(), packageName, testClassName, testMethodName, user);
+            runDeviceTests(getDevice(), packageName, testClassName, testMethodName, user, null);
         }
     }
 
@@ -269,7 +263,7 @@ public class DirectBootHostTest extends DeviceTestCase implements IAbiReceiver, 
 
     private class InstallMultiple extends BaseInstallMultiple<InstallMultiple> {
         public InstallMultiple() {
-            super(getDevice(), mCtsBuild, mAbi);
+            super(getDevice(), getBuild(), getAbi());
         }
     }
 }
