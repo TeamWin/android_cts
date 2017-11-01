@@ -524,4 +524,39 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
             MPEG2TS_CLEAR_URL, false,
             VIDEO_WIDTH_MPEG2TS, VIDEO_HEIGHT_MPEG2TS, false);
     }
+
+    public void testUnknownPropertyResult() throws Exception {
+        MediaDrm drm = startDrm(new byte[][] { CLEAR_KEY_CENC },
+                "cenc", COMMON_PSSH_SCHEME_UUID);
+
+        if (!drm.isCryptoSchemeSupported(COMMON_PSSH_SCHEME_UUID)) {
+            stopDrm(drm);
+            throw new Error("Crypto scheme is not supported.");
+        }
+
+        // getPropertyString on an invalid property should throw
+        // IllegalArgumentException
+        try {
+            drm.getPropertyString("invalid property");
+        } catch (IllegalArgumentException e) {
+            // Expected result
+        } catch (Exception e) {
+            // Unexpected exception
+            stopDrm(drm);
+            throw new Error("getPropertyString unexpected exception", e);
+        }
+
+        // getPropertyByteArray on an invalid property should throw
+        // IllegalArgumentException
+        try {
+            drm.getPropertyByteArray("invalid property");
+        } catch (IllegalArgumentException e) {
+            // Expected result
+        } catch (Exception e) {
+            // Unexpected exception
+            stopDrm(drm);
+            throw new Error("getPropertyByteArray unexpected exception", e);
+        }
+        stopDrm(drm);
+    }
 }
