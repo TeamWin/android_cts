@@ -19,18 +19,18 @@ package android.telephony.cts.embmstestapp;
 import android.app.Service;
 import android.content.ComponentName;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Binder;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.telephony.mbms.DownloadRequest;
+import android.telephony.mbms.DownloadStateCallback;
+import android.telephony.mbms.FileServiceInfo;
+import android.telephony.mbms.MbmsDownloadSessionCallback;
 import android.telephony.mbms.MbmsErrors;
-import android.telephony.mbms.MbmsStreamingSessionCallback;
-import android.telephony.mbms.StreamingService;
-import android.telephony.mbms.StreamingServiceCallback;
-import android.telephony.mbms.StreamingServiceInfo;
-import android.telephony.mbms.vendor.MbmsStreamingServiceBase;
+import android.telephony.mbms.vendor.MbmsDownloadServiceBase;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -45,30 +45,32 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-public class CtsStreamingService extends Service {
+public class CtsDownloadService extends Service {
     private static final Set<String> ALLOWED_PACKAGES = new HashSet<String>() {{
         add("android.telephony.cts");
     }};
-    private static final String TAG = "EmbmsTestStreaming";
+    private static final String TAG = "EmbmsTestDownload";
 
+    public static final String METHOD_NAME = "method_name";
     public static final String METHOD_INITIALIZE = "initialize";
-    public static final String METHOD_REQUEST_UPDATE_STREAMING_SERVICES =
-            "requestUpdateStreamingServices";
-    public static final String METHOD_START_STREAMING = "startStreaming";
-    public static final String METHOD_GET_PLAYBACK_URI = "getPlaybackUri";
-    public static final String METHOD_STOP_STREAMING = "stopStreaming";
+    public static final String METHOD_REQUEST_UPDATE_FILE_SERVICES =
+            "requestUpdateFileServices";
+    public static final String METHOD_SET_TEMP_FILE_ROOT = "setTempFileRootDirectory";
     public static final String METHOD_CLOSE = "close";
+
+    public static final String ARGUMENT_SUBSCRIPTION_ID = "subscriptionId";
+    public static final String ARGUMENT_SERVICE_CLASSES = "serviceClasses";
+    public static final String ARGUMENT_ROOT_DIRECTORY_PATH = "rootDirectoryPath";
 
     public static final String CONTROL_INTERFACE_ACTION =
             "android.telephony.cts.embmstestapp.ACTION_CONTROL_MIDDLEWARE";
     public static final ComponentName CONTROL_INTERFACE_COMPONENT =
             ComponentName.unflattenFromString(
-                    "android.telephony.cts.embmstestapp/.CtsStreamingService");
-    public static final Uri STREAMING_URI = Uri.parse("http://www.example.com/stream1");
+                    "android.telephony.cts.embmstestapp/.CtsDownloadService");
 
-    public static final StreamingServiceInfo STREAMING_SERVICE_INFO;
+    public static final FileServiceInfo FILE_SERVICE_INFO;
     static {
-        String id = "StreamingServiceId";
+        String id = "FileServiceId";
         Map<Locale, String> localeDict = new HashMap<Locale, String>() {{
             put(Locale.US, "Entertainment Source 1");
             put(Locale.CANADA, "Entertainment Source 1, eh?");
@@ -77,40 +79,29 @@ public class CtsStreamingService extends Service {
             add(Locale.CANADA);
             add(Locale.US);
         }};
-        STREAMING_SERVICE_INFO = new StreamingServiceInfo(localeDict, "class1", locales,
+        FILE_SERVICE_INFO = new FileServiceInfo(localeDict, "class1", locales,
                 id, new Date(2017, 8, 21, 18, 20, 29),
-                new Date(2017, 8, 21, 18, 23, 9));
+                new Date(2017, 8, 21, 18, 23, 9), Collections.emptyList());
     }
 
-    private static final int SEND_STREAMING_SERVICES_LIST = 1;
-
-    private MbmsStreamingSessionCallback mAppCallback;
-    private StreamingServiceCallback mStreamCallback;
+    private MbmsDownloadSessionCallback mAppCallback;
 
     private HandlerThread mHandlerThread;
     private Handler mHandler;
-    private Handler.Callback mWorkerCallback = (msg) -> {
-        switch (msg.what) {
-            case SEND_STREAMING_SERVICES_LIST:
-                List<StreamingServiceInfo> services = (List<StreamingServiceInfo>) msg.obj;
-                if (mAppCallback!= null) {
-                    mAppCallback.onStreamingServicesUpdated(services);
-                }
-                break;
-        }
-        return true;
-    };
-    private List<List> mReceivedCalls = new LinkedList<>();
+    private List<Bundle> mReceivedCalls = new LinkedList<>();
     private int mErrorCodeOverride = MbmsErrors.SUCCESS;
 
-    private final MbmsStreamingServiceBase mStreamingServiceImpl = new MbmsStreamingServiceBase() {
+    private final MbmsDownloadServiceBase mDownloadServiceImpl = new MbmsDownloadServiceBase() {
         @Override
-        public int initialize(MbmsStreamingSessionCallback callback, int subId) {
-            mReceivedCalls.add(Arrays.asList(METHOD_INITIALIZE, subId));
+        public int initialize(int subscriptionId, MbmsDownloadSessionCallback callback) {
+            Bundle b = new Bundle();
+            b.putString(METHOD_NAME, METHOD_INITIALIZE);
+            b.putInt(ARGUMENT_SUBSCRIPTION_ID, subscriptionId);
+            mReceivedCalls.add(b);
+
             if (mErrorCodeOverride != MbmsErrors.SUCCESS) {
                 return mErrorCodeOverride;
             }
-
 
             int packageUid = Binder.getCallingUid();
             String[] packageNames = getPackageManager().getPackagesForUid(packageUid);
@@ -136,50 +127,53 @@ public class CtsStreamingService extends Service {
         }
 
         @Override
-        public int requestUpdateStreamingServices(int subscriptionId, List<String> serviceClasses) {
-            mReceivedCalls.add(Arrays.asList(METHOD_REQUEST_UPDATE_STREAMING_SERVICES,
-                    subscriptionId, serviceClasses));
+        public int requestUpdateFileServices(int subscriptionId, List<String> serviceClasses) {
+            Bundle b = new Bundle();
+            b.putString(METHOD_NAME, METHOD_REQUEST_UPDATE_FILE_SERVICES);
+            b.putInt(ARGUMENT_SUBSCRIPTION_ID, subscriptionId);
+            b.putStringArrayList(ARGUMENT_SERVICE_CLASSES, new ArrayList<>(serviceClasses));
+            mReceivedCalls.add(b);
+
             if (mErrorCodeOverride != MbmsErrors.SUCCESS) {
                 return mErrorCodeOverride;
             }
 
-            List<StreamingServiceInfo> serviceInfos =
-                    Collections.singletonList(STREAMING_SERVICE_INFO);
+            List<FileServiceInfo> serviceInfos = Collections.singletonList(FILE_SERVICE_INFO);
 
-            mHandler.removeMessages(SEND_STREAMING_SERVICES_LIST);
-            mHandler.sendMessage(
-                    mHandler.obtainMessage(SEND_STREAMING_SERVICES_LIST, serviceInfos));
+            mHandler.post(() -> {
+                if (mAppCallback!= null) {
+                    mAppCallback.onFileServicesUpdated(serviceInfos);
+                }
+            });
+
             return MbmsErrors.SUCCESS;
         }
 
         @Override
-        public int startStreaming(int subscriptionId, String serviceId,
-                StreamingServiceCallback callback) {
-            mReceivedCalls.add(Arrays.asList(METHOD_START_STREAMING, subscriptionId, serviceId));
-            if (mErrorCodeOverride != MbmsErrors.SUCCESS) {
-                return mErrorCodeOverride;
-            }
+        public int setTempFileRootDirectory(int subscriptionId, String rootDirectoryPath) {
+            Bundle b = new Bundle();
+            b.putString(METHOD_NAME, METHOD_SET_TEMP_FILE_ROOT);
+            b.putInt(ARGUMENT_SUBSCRIPTION_ID, subscriptionId);
+            b.putString(ARGUMENT_ROOT_DIRECTORY_PATH, rootDirectoryPath);
+            mReceivedCalls.add(b);
 
-            mStreamCallback = callback;
-            mHandler.post(() -> callback.onStreamStateUpdated(StreamingService.STATE_STARTED,
-                    StreamingService.REASON_BY_USER_REQUEST));
+            return 0;
+        }
+
+        @Override
+        public int registerStateCallback(DownloadRequest downloadRequest,
+                DownloadStateCallback listener) throws RemoteException {
+            // TODO
             return MbmsErrors.SUCCESS;
-        }
-
-        @Override
-        public Uri getPlaybackUri(int subscriptionId, String serviceId) {
-            mReceivedCalls.add(Arrays.asList(METHOD_GET_PLAYBACK_URI, subscriptionId, serviceId));
-            return STREAMING_URI;
-        }
-
-        @Override
-        public void stopStreaming(int subscriptionId, String serviceId) {
-            mReceivedCalls.add(Arrays.asList(METHOD_STOP_STREAMING, subscriptionId, serviceId));
         }
 
         @Override
         public void dispose(int subscriptionId) {
-            mReceivedCalls.add(Arrays.asList(METHOD_CLOSE, subscriptionId));
+            Bundle b = new Bundle();
+            b.putString(METHOD_NAME, METHOD_CLOSE);
+            b.putInt(ARGUMENT_SUBSCRIPTION_ID, subscriptionId);
+            mReceivedCalls.add(b);
+
             // TODO
         }
 
@@ -189,7 +183,7 @@ public class CtsStreamingService extends Service {
         }
     };
 
-    private final IBinder mControlInterface = new ICtsStreamingMiddlewareControl.Stub() {
+    private final IBinder mControlInterface = new ICtsDownloadMiddlewareControl.Stub() {
         @Override
         public void reset() {
             mReceivedCalls.clear();
@@ -199,7 +193,7 @@ public class CtsStreamingService extends Service {
         }
 
         @Override
-        public List getStreamingSessionCalls() {
+        public List<Bundle> getDownloadSessionCalls() {
             return mReceivedCalls;
         }
 
@@ -209,28 +203,8 @@ public class CtsStreamingService extends Service {
         }
 
         @Override
-        public void fireErrorOnStream(int errorCode, String message) {
-            mHandler.post(() -> mStreamCallback.onError(errorCode, message));
-        }
-
-        @Override
         public void fireErrorOnSession(int errorCode, String message) {
             mHandler.post(() -> mAppCallback.onError(errorCode, message));
-        }
-
-        @Override
-        public void fireOnMediaDescriptionUpdated() {
-            mHandler.post(() -> mStreamCallback.onMediaDescriptionUpdated());
-        }
-
-        @Override
-        public void fireOnBroadcastSignalStrengthUpdated(int signalStrength) {
-            mHandler.post(() -> mStreamCallback.onBroadcastSignalStrengthUpdated(signalStrength));
-        }
-
-        @Override
-        public void fireOnStreamMethodUpdated(int methodType){
-            mHandler.post(() -> mStreamCallback.onStreamMethodUpdated(methodType));
         }
     };
 
@@ -238,25 +212,25 @@ public class CtsStreamingService extends Service {
     public void onDestroy() {
         super.onCreate();
         mHandlerThread.quitSafely();
-        logd("CtsStreamingService onDestroy");
+        logd("CtsDownloadService onDestroy");
     }
 
     @Override
     public IBinder onBind(Intent intent) {
         if (CONTROL_INTERFACE_ACTION.equals(intent.getAction())) {
-            logd("CtsStreamingService control interface bind");
+            logd("CtsDownloadService control interface bind");
             return mControlInterface;
         }
 
-        logd("CtsStreamingService onBind");
+        logd("CtsDownloadService onBind");
         if (mHandlerThread != null && mHandlerThread.isAlive()) {
-            return mStreamingServiceImpl;
+            return mDownloadServiceImpl;
         }
 
-        mHandlerThread = new HandlerThread("CtsStreamingServiceWorker");
+        mHandlerThread = new HandlerThread("CtsDownloadServiceWorker");
         mHandlerThread.start();
-        mHandler = new Handler(mHandlerThread.getLooper(), mWorkerCallback);
-        return mStreamingServiceImpl;
+        mHandler = new Handler(mHandlerThread.getLooper());
+        return mDownloadServiceImpl;
     }
 
     private static void logd(String s) {
