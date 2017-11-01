@@ -18,7 +18,7 @@ package android.telephony.cts.embmstestapp;
 
 import android.os.Parcel;
 
-interface ICtsMiddlewareControl {
+interface ICtsStreamingMiddlewareControl {
     // Resets the state of the CTS middleware
     void reset();
     // Get a list of calls made to the middleware binder.
