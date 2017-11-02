@@ -130,6 +130,8 @@
 
         <meta-data android:name="mbms-streaming-service-override"
                    android:value="android.telephony.cts.embmstestapp/.CtsStreamingService"/>
+        <meta-data android:name="mbms-download-service-override"
+                   android:value="android.telephony.cts.embmstestapp/.CtsDownloadService"/>
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"

@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package android.app.cts;
+package android.server.wm;
 
 import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_PERCEPTIBLE;
 import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_PERCEPTIBLE_PRE_26;
@@ -23,24 +23,13 @@ import static android.content.Context.BIND_ALLOW_OOM_MANAGEMENT;
 import static android.content.Context.BIND_AUTO_CREATE;
 import static android.content.Context.BIND_NOT_FOREGROUND;
 
-import static com.android.app2.AlertWindowService.MSG_ADD_ALERT_WINDOW;
-import static com.android.app2.AlertWindowService.MSG_ON_ALERT_WINDOW_ADDED;
-import static com.android.app2.AlertWindowService.MSG_ON_ALERT_WINDOW_REMOVED;
-import static com.android.app2.AlertWindowService.MSG_REMOVE_ALERT_WINDOW;
-import static com.android.app2.AlertWindowService.MSG_REMOVE_ALL_ALERT_WINDOWS;
-import static com.android.app2.AlertWindowService.NOTIFICATION_MESSENGER_EXTRA;
-
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 import android.app.ActivityManager;
-import android.app.ActivityManager.RunningAppProcessInfo;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -48,11 +37,11 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.alertwindowservice.AlertWindowService;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
-import com.android.app2.AlertWindowService;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
@@ -61,28 +50,25 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
+import java.util.function.ToIntFunction;
 
 /**
- * Build: mmma -j32 cts/tests/app
- * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsAppTestCases android.app.cts.AlertWindowsTests
+ * Build: mmma -j32 cts/tests/framework/base
+ * Run: cts/tests/framework/base/activitymanager/util/run-test CtsWindowManagerDeviceTestCases android.server.wm.AlertWindowsImportanceTests
  */
 @Presubmit
 @RunWith(AndroidJUnit4.class)
-public class AlertWindowsTests {
+public final class AlertWindowsImportanceTests {
 
     private static final String TAG = "AlertWindowsTests";
 
     private static final boolean DEBUG = false;
     private static final long WAIT_TIME_MS = 2 * 1000;
 
-    private static final String SDK25_PACKAGE_NAME = "com.android.appSdk25";
+    private static final String SDK25_PACKAGE_NAME = "android.server.wm.alertwindowappsdk25";
 
     private Messenger mService;
     private String mServicePackageName;
-    private int mServiceUid;
-
-    private PackageManager mPm;
 
     private ActivityManager mAm;
     private ActivityManager mAm25; // ActivityManager created for an SDK 25 app context.
@@ -96,16 +82,13 @@ public class AlertWindowsTests {
         if (DEBUG) Log.e(TAG, "setUp");
         final Context context = InstrumentationRegistry.getTargetContext();
 
-        mPm = context.getPackageManager();
-
         mAm = context.getSystemService(ActivityManager.class);
         mAm25 = context.createPackageContext(SDK25_PACKAGE_NAME, 0)
                 .getSystemService(ActivityManager.class);
 
-        final Intent intent = new Intent();
-        intent.setClassName(AlertWindowService.class.getPackage().getName(),
-                AlertWindowService.class.getName());
-        intent.putExtra(NOTIFICATION_MESSENGER_EXTRA, mMessenger);
+        final Intent intent = new Intent()
+                .setClassName(AlertWindowService.PACKAGE_NAME, AlertWindowService.class.getName())
+                .putExtra(AlertWindowService.EXTRA_MESSENGER, mMessenger);
         // Needs to be both BIND_NOT_FOREGROUND and BIND_ALLOW_OOM_MANAGEMENT to avoid the binding
         // to this instrumentation test from increasing its importance.
         context.bindService(intent, mConnection,
@@ -120,17 +103,17 @@ public class AlertWindowsTests {
     public void tearDown() throws Exception {
         if (DEBUG) Log.e(TAG, "tearDown");
         if (mService != null) {
-            mService.send(Message.obtain(null, MSG_REMOVE_ALL_ALERT_WINDOWS));
+            mService.send(Message.obtain(null, AlertWindowService.MSG_REMOVE_ALL_ALERT_WINDOWS));
         }
         final Context context = InstrumentationRegistry.getTargetContext();
         context.unbindService(mConnection);
         mAm = null;
+        mAm25 = null;
     }
 
     @Test
     public void testAlertWindowOomAdj() throws Exception {
         setAlertWindowPermission(true /* allow */);
-
 
         assertPackageImportance(IMPORTANCE_PERCEPTIBLE, IMPORTANCE_PERCEPTIBLE_PRE_26);
 
@@ -164,7 +147,7 @@ public class AlertWindowsTests {
     }
 
     private void addAlertWindow() throws Exception {
-        mService.send(Message.obtain(null, MSG_ADD_ALERT_WINDOW));
+        mService.send(Message.obtain(null, AlertWindowService.MSG_ADD_ALERT_WINDOW));
         synchronized (mAddedLock) {
             // Wait for window addition confirmation before proceeding.
             mAddedLock.wait(WAIT_TIME_MS);
@@ -172,7 +155,7 @@ public class AlertWindowsTests {
     }
 
     private void removeAlertWindow() throws Exception {
-        mService.send(Message.obtain(null, MSG_REMOVE_ALERT_WINDOW));
+        mService.send(Message.obtain(null, AlertWindowService.MSG_REMOVE_ALERT_WINDOW));
         synchronized (mRemoveLock) {
             // Wait for window removal confirmation before proceeding.
             mRemoveLock.wait(WAIT_TIME_MS);
@@ -185,7 +168,7 @@ public class AlertWindowsTests {
         SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(), cmd);
     }
 
-    private void assertImportance(Function<ActivityManager, Integer> apiCaller,
+    private void assertImportance(ToIntFunction<ActivityManager> apiCaller,
             int expectedForO, int expectedForPreO) throws Exception {
         final long TIMEOUT = SystemClock.uptimeMillis() + TimeUnit.SECONDS.toMillis(30);
         int actual;
@@ -195,13 +178,13 @@ public class AlertWindowsTests {
             // for changes in the uid importance. However, the way it is currently structured
             // doesn't really work for this use case right now...
             Thread.sleep(500);
-            actual = apiCaller.apply(mAm);
+            actual = apiCaller.applyAsInt(mAm);
         } while (actual != expectedForO && (SystemClock.uptimeMillis() < TIMEOUT));
 
         assertEquals(expectedForO, actual);
 
         // Check the result for pre-O apps.
-        assertEquals(expectedForPreO, (int) apiCaller.apply(mAm25));
+        assertEquals(expectedForPreO, apiCaller.applyAsInt(mAm25));
     }
 
     /**
@@ -212,25 +195,12 @@ public class AlertWindowsTests {
                 expectedForO, expectedForPreO);
     }
 
-    /**
-     * Make sure {@link ActivityManager#getUidImportance(int)} returns the expected value.
-     */
-    private void assertUidImportance(int expectedForO, int expectedForPreO) throws Exception {
-        assertImportance(am -> am.getUidImportance(mServiceUid),
-                expectedForO, expectedForPreO);
-    }
-
     private final ServiceConnection mConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             if (DEBUG) Log.e(TAG, "onServiceConnected");
             mService = new Messenger(service);
             mServicePackageName = name.getPackageName();
-            try {
-                mServiceUid = mPm.getPackageUid(mServicePackageName, 0);
-            } catch (NameNotFoundException e) {
-                throw new RuntimeException("getPackageUid() failed.", e);
-            }
             synchronized (mConnection) {
                 notifyAll();
             }
@@ -241,7 +211,6 @@ public class AlertWindowsTests {
             if (DEBUG) Log.e(TAG, "onServiceDisconnected");
             mService = null;
             mServicePackageName = null;
-            mServiceUid = 0;
         }
     };
 
@@ -254,13 +223,13 @@ public class AlertWindowsTests {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
-                case MSG_ON_ALERT_WINDOW_ADDED:
+                case AlertWindowService.MSG_ON_ALERT_WINDOW_ADDED:
                     synchronized (mAddedLock) {
                         if (DEBUG) Log.e(TAG, "MSG_ON_ALERT_WINDOW_ADDED");
                         mAddedLock.notifyAll();
                     }
                     break;
-                case MSG_ON_ALERT_WINDOW_REMOVED:
+                case AlertWindowService.MSG_ON_ALERT_WINDOW_REMOVED:
                     synchronized (mRemoveLock) {
                         if (DEBUG) Log.e(TAG, "MSG_ON_ALERT_WINDOW_REMOVED");
                         mRemoveLock.notifyAll();

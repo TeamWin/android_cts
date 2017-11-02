@@ -16,15 +16,20 @@
 
 package android.appsecurity.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.ddmlib.Log;
-import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.testtype.DeviceTestCase;
-import com.android.tradefed.testtype.IAbi;
-import com.android.tradefed.testtype.IAbiReceiver;
-import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.AbiUtils;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -33,7 +38,8 @@ import java.io.FileNotFoundException;
  * Set of tests that verify various security checks involving multiple apps are
  * properly enforced.
  */
-public class AppSecurityTests extends DeviceTestCase implements IAbiReceiver, IBuildReceiver {
+@RunWith(DeviceJUnit4ClassRunner.class)
+public class AppSecurityTests extends BaseHostJUnit4Test {
 
     // testSharedUidDifferentCerts constants
     private static final String SHARED_UI_APK = "CtsSharedUidInstall.apk";
@@ -78,39 +84,22 @@ public class AppSecurityTests extends DeviceTestCase implements IAbiReceiver, IB
 
     private static final String LOG_TAG = "AppSecurityTests";
 
-    private IAbi mAbi;
-    private IBuildInfo mCtsBuild;
-
-    @Override
-    public void setAbi(IAbi abi) {
-        mAbi = abi;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void setBuild(IBuildInfo buildInfo) {
-        mCtsBuild = buildInfo;
-    }
-
     private File getTestAppFile(String fileName) throws FileNotFoundException {
-        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(getBuild());
         return buildHelper.getTestFile(fileName);
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
+    @Before
+    public void setUp() throws Exception {
         Utils.prepareSingleUser(getDevice());
-        assertNotNull(mCtsBuild);
+        assertNotNull(getBuild());
     }
 
     /**
      * Test that an app that declares the same shared uid as an existing app, cannot be installed
      * if it is signed with a different certificate.
      */
+    @Test
     public void testSharedUidDifferentCerts() throws Exception {
         Log.i(LOG_TAG, "installing apks with shared uid, but different certs");
         try {
@@ -118,7 +107,7 @@ public class AppSecurityTests extends DeviceTestCase implements IAbiReceiver, IB
             getDevice().uninstallPackage(SHARED_UI_PKG);
             getDevice().uninstallPackage(SHARED_UI_DIFF_CERT_PKG);
 
-            String[] options = {AbiUtils.createAbiFlag(mAbi.getName())};
+            String[] options = {AbiUtils.createAbiFlag(getAbi().getName())};
             String installResult = getDevice().installPackage(getTestAppFile(SHARED_UI_APK),
                     false, options);
             assertNull(String.format("failed to install shared uid app, Reason: %s", installResult),
@@ -139,13 +128,14 @@ public class AppSecurityTests extends DeviceTestCase implements IAbiReceiver, IB
      * Test that an app update cannot be installed over an existing app if it has a different
      * certificate.
      */
+    @Test
     public void testAppUpgradeDifferentCerts() throws Exception {
         Log.i(LOG_TAG, "installing app upgrade with different certs");
         try {
             // cleanup test app that might be installed from previous partial test run
             getDevice().uninstallPackage(SIMPLE_APP_PKG);
 
-            String[] options = {AbiUtils.createAbiFlag(mAbi.getName())};
+            String[] options = {AbiUtils.createAbiFlag(getAbi().getName())};
             String installResult = getDevice().installPackage(getTestAppFile(SIMPLE_APP_APK),
                     false, options);
             assertNull(String.format("failed to install simple app. Reason: %s", installResult),
@@ -164,6 +154,7 @@ public class AppSecurityTests extends DeviceTestCase implements IAbiReceiver, IB
     /**
      * Test that an app cannot access another app's private data.
      */
+    @Test
     public void testAppFailAccessPrivateData() throws Exception {
         Log.i(LOG_TAG, "installing app that attempts to access another app's private data");
         try {
@@ -171,7 +162,7 @@ public class AppSecurityTests extends DeviceTestCase implements IAbiReceiver, IB
             getDevice().uninstallPackage(APP_WITH_DATA_PKG);
             getDevice().uninstallPackage(APP_ACCESS_DATA_PKG);
 
-            String[] options = {AbiUtils.createAbiFlag(mAbi.getName())};
+            String[] options = {AbiUtils.createAbiFlag(getAbi().getName())};
             String installResult = getDevice().installPackage(getTestAppFile(APP_WITH_DATA_APK),
                     false, options);
             assertNull(String.format("failed to install app with data. Reason: %s", installResult),
@@ -194,13 +185,14 @@ public class AppSecurityTests extends DeviceTestCase implements IAbiReceiver, IB
     /**
      * Test that uninstall of an app removes its private data.
      */
+    @Test
     public void testUninstallRemovesData() throws Exception {
         Log.i(LOG_TAG, "Uninstalling app, verifying data is removed.");
         try {
             // cleanup test app that might be installed from previous partial test run
             getDevice().uninstallPackage(APP_WITH_DATA_PKG);
 
-            String[] options = {AbiUtils.createAbiFlag(mAbi.getName())};
+            String[] options = {AbiUtils.createAbiFlag(getAbi().getName())};
             String installResult = getDevice().installPackage(getTestAppFile(APP_WITH_DATA_APK),
                     false, options);
             assertNull(String.format("failed to install app with data. Reason: %s", installResult),
@@ -225,6 +217,7 @@ public class AppSecurityTests extends DeviceTestCase implements IAbiReceiver, IB
     /**
      * Test that an app cannot instrument another app that is signed with different certificate.
      */
+    @Test
     public void testInstrumentationDiffCert() throws Exception {
         Log.i(LOG_TAG, "installing app that attempts to instrument another app");
         try {
@@ -232,7 +225,7 @@ public class AppSecurityTests extends DeviceTestCase implements IAbiReceiver, IB
             getDevice().uninstallPackage(TARGET_INSTRUMENT_PKG);
             getDevice().uninstallPackage(INSTRUMENT_DIFF_CERT_PKG);
 
-            String[] options = {AbiUtils.createAbiFlag(mAbi.getName())};
+            String[] options = {AbiUtils.createAbiFlag(getAbi().getName())};
             String installResult = getDevice().installPackage(
                     getTestAppFile(TARGET_INSTRUMENT_APK), false, options);
             assertNull(String.format("failed to install target instrumentation app. Reason: %s",
@@ -258,6 +251,7 @@ public class AppSecurityTests extends DeviceTestCase implements IAbiReceiver, IB
      * Test that an app cannot use a signature-enforced permission if it is signed with a different
      * certificate than the app that declared the permission.
      */
+    @Test
     public void testPermissionDiffCert() throws Exception {
         Log.i(LOG_TAG, "installing app that attempts to use permission of another app");
         try {
@@ -266,7 +260,7 @@ public class AppSecurityTests extends DeviceTestCase implements IAbiReceiver, IB
             getDevice().uninstallPackage(DECLARE_PERMISSION_COMPAT_PKG);
             getDevice().uninstallPackage(PERMISSION_DIFF_CERT_PKG);
 
-            String[] options = {AbiUtils.createAbiFlag(mAbi.getName())};
+            String[] options = {AbiUtils.createAbiFlag(getAbi().getName())};
             String installResult = getDevice().installPackage(
                     getTestAppFile(DECLARE_PERMISSION_APK), false, options);
             assertNull(String.format("failed to install declare permission app. Reason: %s",
@@ -294,6 +288,7 @@ public class AppSecurityTests extends DeviceTestCase implements IAbiReceiver, IB
     /**
      * Tests that an arbitrary file cannot be installed using the 'cmd' command.
      */
+    @Test
     public void testAdbInstallFile() throws Exception {
         String output = getDevice().executeShellCommand(
                 "cmd package install -S 1024 /data/local/tmp/foo.apk");
@@ -301,11 +296,6 @@ public class AppSecurityTests extends DeviceTestCase implements IAbiReceiver, IB
     }
 
     private void runDeviceTests(String packageName) throws DeviceNotAvailableException {
-        Utils.runDeviceTests(getDevice(), packageName);
-    }
-
-    private void runDeviceTests(String packageName, String testClassName, String testMethodName)
-            throws DeviceNotAvailableException {
-        Utils.runDeviceTests(getDevice(), packageName, testClassName, testMethodName);
+        runDeviceTests(packageName, null);
     }
 }
