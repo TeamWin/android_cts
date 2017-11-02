@@ -325,6 +325,15 @@ public class ResourcesTest extends AndroidTestCase {
         }
     }
 
+    public void testGetDrawable_StackOverflowErrorDrawable_mipmap() {
+        try {
+            mResources.getDrawable(R.mipmap.icon_recursive);
+            fail("Failed at testGetDrawable_StackOverflowErrorDrawable_mipmap");
+        } catch (NotFoundException e) {
+            //expected
+        }
+    }
+
     public void testGetDrawableForDensity() {
         final Drawable ldpi = mResources.getDrawableForDensity(
                 R.drawable.density_test, DisplayMetrics.DENSITY_LOW);
