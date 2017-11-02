@@ -234,6 +234,25 @@ public class SQLiteCursorTest extends AndroidTestCase {
         }
     }
 
+    public void testFillWindowForwardOnly() {
+        mDatabase.execSQL("CREATE TABLE Tst (Num Integer NOT NULL);");
+        mDatabase.beginTransaction();
+        for (int i = 0; i < 100; i++) {
+            mDatabase.execSQL("INSERT INTO Tst VALUES (?)", new Object[]{i});
+        }
+        mDatabase.setTransactionSuccessful();
+        mDatabase.endTransaction();
+        Cursor cursor = mDatabase.rawQuery("SELECT * FROM TST", null);
+        SQLiteCursor ac = (SQLiteCursor) cursor;
+        CursorWindow window = new CursorWindow("test", 1000);
+        ac.setFillWindowForwardOnly(true);
+        ac.setWindow(window);
+        assertTrue(ac.moveToFirst());
+        // Now skip 70 rows and check that the window start position corresponds to row 70
+        ac.move(70);
+        assertEquals(70, window.getStartPosition());
+    }
+
     public void testOnMove() {
         // Do not test this API. It is callback which:
         // 1. The callback mechanism has been tested in super class
