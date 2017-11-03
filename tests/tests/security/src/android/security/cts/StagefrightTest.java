@@ -419,6 +419,17 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.bug_35467107);
     }
 
+    /***********************************************************
+     to prevent merge conflicts, add O tests below this comment,
+     before any existing test methods
+     ***********************************************************/
+
+    @SecurityTest
+    public void testBug_67737022() throws Exception {
+        doStagefrightTest(R.raw.bug_67737022);
+    }
+
+
     private void doStagefrightTest(final int rid) throws Exception {
         doStagefrightTestMediaPlayer(rid);
         doStagefrightTestMediaCodec(rid);
