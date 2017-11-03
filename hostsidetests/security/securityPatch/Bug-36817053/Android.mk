@@ -26,10 +26,9 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 LOCAL_CTS_TEST_PACKAGE := android.security.cts
 
 LOCAL_ARM_MODE := arm
-CFLAGS += -Wall -W -g -O2 -Wimplicit -D_FORTIFY_SOURCE=2 -D__linux__ -Wdeclaration-after-statement
-CFLAGS += -Wformat=2 -Winit-self -Wnested-externs -Wpacked -Wshadow -Wswitch-enum -Wundef
-CFLAGS += -Wwrite-strings -Wno-format-nonliteral -Wstrict-prototypes -Wmissing-prototypes
-CFLAGS += -Iinclude -fPIE
+LOCAL_CFLAGS += -Wall -Werror
+LOCAL_CFLAGS += -Wno-pointer-arith -Wno-incompatible-pointer-types
+LOCAL_CFLAGS += -Wno-unused-parameter -Wno-unused-variable
 LOCAL_LDFLAGS += -fPIE -pie
 LDFLAGS += -rdynamic
 include $(BUILD_CTS_EXECUTABLE)
