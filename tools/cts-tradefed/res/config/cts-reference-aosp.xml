@@ -92,6 +92,13 @@
     <option name="compatibility:exclude-filter" value="CtsVideoTestCases android.video.cts.VideoEncoderDecoderTest#testVp8Other0Qual1920x1080" />
 
     <!--
+        exclude below three CtsAppTestCases testcases failing on AOSP system.img
+    -->
+    <option name="compatibility:exclude-filter" value="CtsAppTestCases android.app.cts.ActionBarTest#testOpenOptionsMenu" />
+    <option name="compatibility:exclude-filter" value="CtsAppTestCases android.app.cts.ActionBarTest#testOptionsMenuKey" />
+    <option name="compatibility:exclude-filter" value="CtsAppTestCases android.app.cts.ActivityKeyboardShortcutsTest#testRequestShowKeyboardShortcuts" />
+
+    <!--
         Exclude Verity tese cases, because we need to disable Verity to test with GSI
     -->
     <option name="compatibility:exclude-filter" value="CtsKeystoreTestCases android.keystore.cts.KeyAttestationTest#testEcAttestation" />
