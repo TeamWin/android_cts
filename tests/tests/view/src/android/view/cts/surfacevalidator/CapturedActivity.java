@@ -57,7 +57,6 @@ public class CapturedActivity extends Activity {
     }
 
     private static final String TAG = "CapturedActivity";
-    private static final long TIME_OUT_MS = 25000;
     private static final int PERMISSION_CODE = 1;
     private MediaProjectionManager mProjectionManager;
     private MediaProjection mMediaProjection;
@@ -65,28 +64,30 @@ public class CapturedActivity extends Activity {
 
     private SurfacePixelValidator mSurfacePixelValidator;
 
-    public static final long CAPTURE_DURATION_MS = 10000;
     private static final int PERMISSION_DIALOG_WAIT_MS = 1000;
     private static final int RETRY_COUNT = 2;
 
     private static final long START_CAPTURE_DELAY_MS = 4000;
-    private static final long END_CAPTURE_DELAY_MS = START_CAPTURE_DELAY_MS + CAPTURE_DURATION_MS;
-    private static final long END_DELAY_MS = END_CAPTURE_DELAY_MS + 1000;
 
     private MediaPlayer mMediaPlayer;
 
     private final Handler mHandler = new Handler(Looper.getMainLooper());
+    private volatile boolean mOnEmbedded;
     private volatile boolean mOnWatch;
     private CountDownLatch mCountDownLatch;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mOnWatch = getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH);
+        final PackageManager packageManager = getPackageManager();
+        mOnWatch = packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH);
         if (mOnWatch) {
             // Don't try and set up test/capture infrastructure - they're not supported
             return;
         }
+        // Embedded devices are significantly slower, and are given
+        // longer duration to capture the expected number of frames
+        mOnEmbedded = packageManager.hasSystemFeature(PackageManager.FEATURE_EMBEDDED);
 
         getWindow().getDecorView().setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_FULLSCREEN);
@@ -150,6 +151,10 @@ public class CapturedActivity extends Activity {
         mCountDownLatch.countDown();
     }
 
+    public long getCaptureDurationMs() {
+        return mOnEmbedded ? 100000 : 10000;
+    }
+
     public TestResult runTest(AnimationTestCase animationTestCase) throws Throwable {
         TestResult testResult = new TestResult();
         if (mOnWatch) {
@@ -165,6 +170,10 @@ public class CapturedActivity extends Activity {
             return testResult;
         }
 
+        final long timeOutMs = mOnEmbedded ? 125000 : 25000;
+        final long endCaptureDelayMs = START_CAPTURE_DELAY_MS + getCaptureDurationMs();
+        final long endDelayMs = endCaptureDelayMs + 1000;
+
         int count = 0;
         // Sometimes system decides to rotate the permission activity to another orientation
         // right after showing it. This results in: uiautomation thinks that accept button appears,
@@ -175,7 +184,7 @@ public class CapturedActivity extends Activity {
             assertTrue("Can't get the permission", count <= RETRY_COUNT);
             dismissPermissionDialog();
             count++;
-        } while (!mCountDownLatch.await(TIME_OUT_MS, TimeUnit.MILLISECONDS));
+        } while (!mCountDownLatch.await(timeOutMs, TimeUnit.MILLISECONDS));
 
         mHandler.post(() -> {
             Log.d(TAG, "Setting up test case");
@@ -215,7 +224,7 @@ public class CapturedActivity extends Activity {
             Log.d(TAG, "Stopping capture");
             mVirtualDisplay.release();
             mVirtualDisplay = null;
-        }, END_CAPTURE_DELAY_MS);
+        }, endCaptureDelayMs);
 
         final CountDownLatch latch = new CountDownLatch(1);
         mHandler.postDelayed(() -> {
@@ -224,9 +233,9 @@ public class CapturedActivity extends Activity {
             mSurfacePixelValidator.finish(testResult);
             latch.countDown();
             mSurfacePixelValidator = null;
-        }, END_DELAY_MS);
+        }, endDelayMs);
 
-        boolean latchResult = latch.await(TIME_OUT_MS, TimeUnit.MILLISECONDS);
+        boolean latchResult = latch.await(timeOutMs, TimeUnit.MILLISECONDS);
         if (!latchResult) {
             testResult.passFrames = 0;
             testResult.failFrames = 1000;
