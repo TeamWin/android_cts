@@ -56,8 +56,8 @@ public class CreateUsersPermissionTest extends BaseMultiUserTest {
         }
         final String setRestriction = "pm set-user-restriction no_fun ";
         final String output = getDevice().executeShellCommand(setRestriction + "1");
-        final boolean isErrorOutput = output.startsWith("Error")
-                && output.contains("SecurityException");
+        final boolean isErrorOutput = output.contains("SecurityException")
+            && output.contains("You need MANAGE_USERS permission");
         assertTrue("Trying to set user restriction should fail with SecurityException. "
                 + "command output: " + output, isErrorOutput);
     }

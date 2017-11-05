@@ -831,14 +831,12 @@ public class ActivityAndWindowManagersState {
 
                 final Rect aTaskBounds = aTask.getBounds();
                 final Rect wTaskBounds = wTask.getBounds();
-                final Rect displayRect = mWmState.getDisplay(aStack.mDisplayId)
-                        .getDisplayRect();
 
                 if (aTaskIsFullscreen) {
                     assertNull("Task bounds in AM must be null for fullscreen taskId=" + taskId,
                             aTaskBounds);
                 } else if (!homeStackIsResizable && mWmState.isDockedStackMinimized()
-                        && displayRect.width() > displayRect.height()) {
+                        && !isScreenPortrait(aStack.mDisplayId)) {
                     // When minimized using non-resizable launcher in landscape mode, it will move
                     // the task offscreen in the negative x direction unlike portrait that crops.
                     // The x value in the task bounds will not match the stack bounds since the
@@ -895,7 +893,7 @@ public class ActivityAndWindowManagersState {
                         } else if (aStack.getWindowingMode() == WINDOWING_MODE_SPLIT_SCREEN_PRIMARY
                                 && homeStackIsResizable && mWmState.isDockedStackMinimized()) {
                             // Portrait if the display height is larger than the width
-                            if (displayRect.height() > displayRect.width()) {
+                            if (isScreenPortrait(aStack.mDisplayId)) {
                                 assertEquals("Task width must be equal to stack width taskId="
                                                 + taskId + ", stackId=" + stackId,
                                         aStackBounds.width(), wTaskBounds.width());
@@ -934,6 +932,17 @@ public class ActivityAndWindowManagersState {
                 }
             }
         }
+    }
+
+    boolean isScreenPortrait() {
+        final int displayId = mAmState.getStandardStackByWindowingMode(
+            WINDOWING_MODE_SPLIT_SCREEN_PRIMARY).mDisplayId;
+        return isScreenPortrait(displayId);
+    }
+
+    boolean isScreenPortrait(int displayId) {
+        final Rect displayRect = mWmState.getDisplay(displayId).getDisplayRect();
+        return displayRect.height() > displayRect.width();
     }
 
     static int dpToPx(float dp, int densityDpi) {

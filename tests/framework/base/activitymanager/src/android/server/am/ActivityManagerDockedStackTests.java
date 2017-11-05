@@ -27,6 +27,8 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.server.am.StateLogger.log;
 import static android.server.am.WindowManagerState.TRANSIT_WALLPAPER_OPEN;
 
+import static android.app.ActivityManager.SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT;
+import static android.app.ActivityManager.SPLIT_SCREEN_CREATE_MODE_BOTTOM_OR_RIGHT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -421,6 +423,26 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     }
 
     @Test
+    public void testMinimizedFromEachDockedSide() throws Exception {
+        if (!supportsSplitScreenMultiWindow()) {
+            log("Skipping test: no split multi-window support");
+            return;
+        }
+
+        for (int i = 0; i < 2; i++) {
+            setDeviceRotation(i);
+            launchActivityInDockStackAndMinimize(TEST_ACTIVITY_NAME);
+            if (!mAmWmState.isScreenPortrait() && isTablet()) {
+                // Test minimize to the right only on tablets in landscape
+                removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
+                launchActivityInDockStackAndMinimize(TEST_ACTIVITY_NAME,
+                        SPLIT_SCREEN_CREATE_MODE_BOTTOM_OR_RIGHT);
+            }
+            removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
+        }
+    }
+
+    @Test
     public void testRotationWhileDockMinimized() throws Exception {
         if (!supportsSplitScreenMultiWindow()) {
             log("Skipping test: no split multi-window support");
@@ -428,12 +450,6 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         }
 
         launchActivityInDockStackAndMinimize(TEST_ACTIVITY_NAME);
-        assertDockMinimized();
-        mAmWmState.computeState(new WaitForValidActivityState.Builder(TEST_ACTIVITY_NAME).build());
-        mAmWmState.assertContainsStack("Must contain docked stack.",
-                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
-        mAmWmState.assertFocusedStack("Home activity should be focused in minimized mode",
-                WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME);
 
         // Rotate device single steps (90°) 0-1-2-3.
         // Each time we compute the state we implicitly assert valid bounds in minimized mode.
@@ -470,7 +486,6 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         for (int i = 0; i < 4; i++) {
             setDeviceRotation(i);
             launchActivityInDockStackAndMinimize(DOCKED_ACTIVITY_NAME);
-            assertDockMinimized();
 
             // Unminimize the docked stack
             pressAppSwitchButton();
@@ -499,7 +514,6 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         }
 
         launchActivityInDockStackAndMinimize(TEST_ACTIVITY_NAME);
-        assertDockMinimized();
 
         executeShellCommand("am broadcast -a " + TEST_ACTIVITY_ACTION_FINISH);
         waitForDockNotMinimized();
@@ -530,7 +544,6 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         }
 
         launchActivityInDockStackAndMinimize(TEST_ACTIVITY_NAME);
-        assertDockMinimized();
 
         sleepDevice();
         wakeUpAndUnlockDevice();
@@ -644,13 +657,28 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     }
 
     private void launchActivityInDockStackAndMinimize(String activityName) throws Exception {
-        launchActivityInDockStack(activityName);
+        launchActivityInDockStackAndMinimize(activityName, SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT);
+    }
+
+    private void launchActivityInDockStackAndMinimize(String activityName, int createMode)
+            throws Exception {
+        launchActivityInDockStack(activityName, createMode);
         pressHomeButton();
-        waitForDockMinimized();
+        waitForAndAssertDockMinimized();
     }
 
     private void assertDockMinimized() {
         assertTrue(mAmWmState.getWmState().isDockedStackMinimized());
+    }
+
+    private void waitForAndAssertDockMinimized() throws Exception {
+        waitForDockMinimized();
+        assertDockMinimized();
+        mAmWmState.computeState(new WaitForValidActivityState.Builder(TEST_ACTIVITY_NAME).build());
+        mAmWmState.assertContainsStack("Must contain docked stack.",
+                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
+        mAmWmState.assertFocusedStack("Home activity should be focused in minimized mode",
+                WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME);
     }
 
     private void assertDockNotMinimized() {

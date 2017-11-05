@@ -275,7 +275,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         assertNotNull(CookieSyncManager.getInstance());
     }
 
-    @UiThreadTest
+    // Static methods should be safe to call on non-UI threads
     public void testFindAddress() {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
