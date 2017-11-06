@@ -883,24 +883,37 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
                 assertTrue(msg, execList.contains(p.procTitle));
             }
         }
+    }
 
-        for (String exe : executables) {
-            List<ProcessDetails> exeProcs = ProcessDetails.getExeMap(mDevice).get(exe);
+    /**
+     * Asserts that an executable exists and is only running in the listed domains.
+     *
+     * @param executable
+     *  The path of the executable to check.
+     * @param domains
+     *  The list of allowed domains.
+     */
+    private void assertExecutableHasDomain(String executable, String... domains)
+        throws DeviceNotAvailableException {
+        List<ProcessDetails> exeProcs = ProcessDetails.getExeMap(mDevice).get(executable);
+        Set<String> domainList = new HashSet<String>(Arrays.asList(domains));
 
-            if (exeProcs != null) {
-                for (ProcessDetails p : exeProcs) {
-                    String msg = "Expected executable \"" + exe + "\" in SELinux domain \""
-                        + domain + "\"" + " Found: \"" + p + "\"";
-                    assertEquals(msg, domain, p.label);
-                }
-            }
+        String msg = "Expected 1 or more processes for executable \"" + executable + "\".";
+        assertNotNull(msg, exeProcs);
+
+        for (ProcessDetails p : exeProcs) {
+            msg = "Expected one of  \"" + domainList + "\" for executable \"" + executable
+                    + "\"" + " Found: \"" + p.label + "\"";
+            assertTrue(msg, domainList.contains(p.label));
         }
     }
 
     /* Init is always there */
     @CddTest(requirement="9.7")
     public void testInitDomain() throws DeviceNotAvailableException {
-        assertDomainOne("u:r:init:s0", "/init");
+        assertDomainHasExecutable("u:r:init:s0", "/init");
+        assertDomainHasExecutable("u:r:vendor_init:s0", "/init");
+        assertExecutableHasDomain("/init", "u:r:init:s0", "u:r:vendor_init:s0");
     }
 
     /* Ueventd is always there */
