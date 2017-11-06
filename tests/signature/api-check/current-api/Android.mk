@@ -22,6 +22,5 @@ LOCAL_SIGNATURE_API_FILES := \
     current.api \
     android-test-mock-current.api \
     android-test-runner-current.api \
-    apache-http-legacy-minus-current.api \
 
 include $(LOCAL_PATH)/../build_signature_apk.mk
