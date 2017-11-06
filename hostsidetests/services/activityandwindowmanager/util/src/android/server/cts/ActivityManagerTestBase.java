@@ -663,9 +663,10 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         runCommandAndPrintOutput("input keyevent KEYCODE_ENTER");
     }
 
-    protected void gotoKeyguard() throws DeviceNotAvailableException {
+    protected void gotoKeyguard() throws Exception {
         sleepDevice();
         wakeUpDevice();
+        mAmWmState.waitForKeyguardShowingAndNotOccluded(mDevice);
     }
 
     protected void setLockCredential() throws DeviceNotAvailableException {
