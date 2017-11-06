@@ -82,8 +82,8 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
         if (!isHandheld()) {
             return;
         }
-        launchActivity("ShowWhenLockedActivity");
         gotoKeyguard();
+        launchActivity("ShowWhenLockedActivity");
         launchActivity("TestActivity");
         mAmWmState.waitForKeyguardShowingAndNotOccluded();
         mAmWmState.computeState();
