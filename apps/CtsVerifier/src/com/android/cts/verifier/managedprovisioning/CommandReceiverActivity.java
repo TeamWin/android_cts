@@ -421,7 +421,7 @@ public class CommandReceiverActivity extends Activity {
                         return;
                     }
                     mDpm.setRecommendedGlobalProxy(mAdmin, null);
-                }
+                } break;
                 case COMMAND_INSTALL_CA_CERT: {
                     if (!mDpm.isDeviceOwnerApp(getPackageName())) {
                         return;
