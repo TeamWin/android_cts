@@ -234,7 +234,7 @@ public class DialogFrameTests extends ParentChildTestBase {
                     // Not only should the dialog be higher, but it should be
                     // leave multiple layers of space inbetween for DimLayers,
                     // etc...
-                    assertTrue(dialog.getLayer() - parent.getLayer() >= 5);
+                    assertTrue(dialog.getZOrder() > parent.getZOrder());
                 });
     }
 }
