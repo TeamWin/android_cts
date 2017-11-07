@@ -61,7 +61,8 @@ public class CreateUsersNoAppCrashesTest extends BaseMultiUserTest {
             throws DeviceNotAvailableException, InterruptedException {
         long ti = System.currentTimeMillis();
         while (System.currentTimeMillis() - ti < BOOT_COMPLETED_TIMEOUT_MS) {
-            String logs = getDevice().executeAdbCommand("logcat", "-v", "brief", "-d");
+            String logs = getDevice().executeAdbCommand("logcat", "-v", "brief", "-d",
+                    "ActivityManager:I", "AndroidRuntime:E", "*:S");
             Scanner in = new Scanner(logs);
             while (in.hasNextLine()) {
                 String line = in.nextLine();
