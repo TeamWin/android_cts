@@ -20,6 +20,9 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
 
     <application>
+
+        <uses-library android:name="android.test.runner" />
+
         <activity android:name=".LoginActivity" >
             <intent-filter>
                 <!-- This intent filter is not really needed by CTS, but it maks easier to launch
