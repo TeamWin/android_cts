@@ -148,16 +148,19 @@ define GEN_JVMTI_RUN_TEST_GENERATED_FILE
 
 GEN_INPUT := $(wildcard $(LOCAL_PATH)/src/$(1)*/expected.txt)
 ifeq (true,$(ANDROID_COMPILE_WITH_JACK))
-GEN_JACK := $(wildcard $(LOCAL_PATH)/src/$(1)*/expected_jack.diff)
+GEN_EXTRA_DIFF := $(wildcard $(LOCAL_PATH)/src/$(1)*/expected_jack.diff)
+else ifeq (true,$(USE_D8))
+GEN_EXTRA_DIFF := $(wildcard $(LOCAL_PATH)/src/$(1)*/expected_d8.diff)
 else
-GEN_JACK :=
+GEN_EXTRA_DIFF :=
 endif
+
 GEN_OUTPUT := $(GENERATED_SRC_DIR)/results.$(1).expected.txt
-$$(GEN_OUTPUT): PRIVATE_GEN_JACK := $$(GEN_JACK)
-$$(GEN_OUTPUT): $$(GEN_INPUT) $$(GEN_JACK)
+$$(GEN_OUTPUT): PRIVATE_GEN_EXTRA_DIFF := $$(GEN_EXTRA_DIFF)
+$$(GEN_OUTPUT): $$(GEN_INPUT) $$(GEN_EXTRA_DIFF)
 	cp $$< $$@
-ifneq (,$$(GEN_JACK))
-	(cd $$(dir $$@) && patch $$(notdir $$@)) < $$(PRIVATE_GEN_JACK)
+ifneq (,$$(GEN_EXTRA_DIFF))
+	(cd $$(dir $$@) && patch $$(notdir $$@)) < $$(PRIVATE_GEN_EXTRA_DIFF)
 endif
 
 GEN_INPUT :=
