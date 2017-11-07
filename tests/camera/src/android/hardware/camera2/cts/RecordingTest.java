@@ -295,7 +295,8 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
     }
 
     public void testConstrainedHighSpeedRecording() throws Exception {
-        constrainedHighSpeedRecording();
+        constrainedHighSpeedRecording(/*enableSessionParams*/ false);
+        constrainedHighSpeedRecording(/*enableSessionParams*/ true);
     }
 
     /**
@@ -495,7 +496,8 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
                     // Start recording
                     SimpleCaptureCallback resultListener = new SimpleCaptureCallback();
                     startSlowMotionRecording(/*useMediaRecorder*/true, videoFramerate, captureRate,
-                            fpsRange, resultListener, /*useHighSpeedSession*/false);
+                            fpsRange, resultListener, /*useHighSpeedSession*/false,
+                            /*enableHighSpeedParams*/ false);
 
                     // Record certain duration.
                     SystemClock.sleep(RECORDING_DURATION_MS);
@@ -517,7 +519,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
         }
     }
 
-    private void constrainedHighSpeedRecording() throws Exception {
+    private void constrainedHighSpeedRecording(boolean enableSessionParams) throws Exception {
         for (String id : mCameraIds) {
             try {
                 Log.i(TAG, "Testing constrained high speed recording for camera " + id);
@@ -562,7 +564,8 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
                         SimpleCaptureCallback resultListener = new SimpleCaptureCallback();
                         startSlowMotionRecording(/*useMediaRecorder*/true, VIDEO_FRAME_RATE,
                                 captureRate, fpsRange, resultListener,
-                                /*useHighSpeedSession*/true);
+                                /*useHighSpeedSession*/true,
+                                /*enableHighSpeedParams*/ enableSessionParams);
 
                         // Record certain duration.
                         SystemClock.sleep(RECORDING_DURATION_MS);
@@ -637,7 +640,8 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
 
     private void startSlowMotionRecording(boolean useMediaRecorder, int videoFrameRate,
             int captureRate, Range<Integer> fpsRange,
-            CameraCaptureSession.CaptureCallback listener, boolean useHighSpeedSession) throws Exception {
+            CameraCaptureSession.CaptureCallback listener, boolean useHighSpeedSession,
+            boolean enableHighSpeedParams) throws Exception {
         List<Surface> outputSurfaces = new ArrayList<Surface>(2);
         assertTrue("Both preview and recording surfaces should be valid",
                 mPreviewSurface.isValid() && mRecordingSurface.isValid());
@@ -648,8 +652,13 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
             outputSurfaces.add(mReaderSurface);
         }
         mSessionListener = new BlockingSessionCallback();
-        mSession = configureCameraSession(mCamera, outputSurfaces, useHighSpeedSession,
-                mSessionListener, mHandler);
+        if (useHighSpeedSession && enableHighSpeedParams) {
+            mSession = buildConstrainedCameraSession(mCamera, outputSurfaces, useHighSpeedSession,
+                    mSessionListener, mHandler);
+        } else {
+            mSession = configureCameraSession(mCamera, outputSurfaces, useHighSpeedSession,
+                    mSessionListener, mHandler);
+        }
 
         // Create slow motion request list
         List<CaptureRequest> slowMoRequests = null;

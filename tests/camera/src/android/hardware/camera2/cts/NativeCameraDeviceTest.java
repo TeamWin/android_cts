@@ -60,6 +60,13 @@ public class NativeCameraDeviceTest extends Camera2SurfaceViewTestCase {
                 testCameraDeviceSimplePreviewNative(mPreviewSurface));
     }
 
+    public void testCameraDevicePreviewWithSessionParameters() {
+        // Init preview surface to a guaranteed working size
+        updatePreviewSurface(new Size(640, 480));
+        assertTrue("testCameraDevicePreviewWithSessionParametersNative fail, see log for details",
+                testCameraDevicePreviewWithSessionParametersNative(mPreviewSurface));
+    }
+
     public void testCameraDeviceSharedOutputUpdate() {
         // Init preview surface to a guaranteed working size
         Size previewSize = new Size(640, 480);
@@ -75,5 +82,7 @@ public class NativeCameraDeviceTest extends Camera2SurfaceViewTestCase {
     private static native boolean testCameraDeviceCreateCaptureRequestNative();
     private static native boolean testCameraDeviceSessionOpenAndCloseNative(Surface preview);
     private static native boolean testCameraDeviceSimplePreviewNative(Surface preview);
+    private static native boolean testCameraDevicePreviewWithSessionParametersNative(
+            Surface preview);
     private static native boolean testCameraDeviceSharedOutputUpdate(Surface src, Surface dst);
 }
