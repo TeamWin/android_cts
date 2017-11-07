@@ -16,6 +16,7 @@
 
 package android.server.am;
 
+import static android.view.Display.DEFAULT_DISPLAY;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
@@ -31,6 +32,7 @@ import android.os.ParcelFileDescriptor;
 import android.support.test.InstrumentationRegistry;
 import android.view.nano.DisplayInfoProto;
 
+import com.android.server.wm.proto.nano.DisplayFramesProto;
 import com.android.server.wm.proto.nano.AppTransitionProto;
 import com.android.server.wm.proto.nano.AppWindowTokenProto;
 import com.android.server.wm.proto.nano.ConfigurationContainerProto;
@@ -97,7 +99,6 @@ public class WindowManagerState {
     private String mLastTransition = null;
     private String mAppTransitionState = null;
     private String mInputMethodWindowAppToken = null;
-    private Rect mStableBounds = new Rect();
     private Rect mDefaultPinnedStackBounds = new Rect();
     private Rect mPinnedStackMovementBounds = new Rect();
     private final LinkedList<String> mSysDump = new LinkedList();
@@ -195,7 +196,7 @@ public class WindowManagerState {
             mDisplayStacks.put(display.mDisplayId, stacks);
 
             // use properties from the default display only
-            if (display.getDisplayId() == ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID) {
+            if (display.getDisplayId() == DEFAULT_DISPLAY) {
                 if (displayProto.dockedStackDividerController != null) {
                     mIsDockedStackMinimized =
                             displayProto.dockedStackDividerController.minimizedDock;
@@ -214,9 +215,6 @@ public class WindowManagerState {
             IdentifierProto identifierProto = state.rootWindowContainer.windows[i];
             String hash_code = Integer.toHexString(identifierProto.hashCode);
             mWindowStates.add(windowMap.get(hash_code));
-        }
-        if (state.policy != null) {
-            mStableBounds = extract(state.policy.stableBounds);
         }
         if (state.inputMethodWindow != null) {
             mInputMethodWindowAppToken = Integer.toHexString(state.inputMethodWindow.hashCode);
@@ -537,7 +535,7 @@ public class WindowManagerState {
     }
 
     Rect getStableBounds() {
-        return mStableBounds;
+        return getDisplay(DEFAULT_DISPLAY).mStableBounds;
     }
 
     Rect getDefaultPinnedStackBounds() {
@@ -576,7 +574,6 @@ public class WindowManagerState {
         mLastTransition = null;
         mInputMethodWindowAppToken = null;
         mIsDockedStackMinimized = false;
-        mStableBounds.setEmpty();
         mDefaultPinnedStackBounds.setEmpty();
         mPinnedStackMovementBounds.setEmpty();
         mRotation = 0;
@@ -704,6 +701,7 @@ public class WindowManagerState {
         private Rect mDisplayRect = new Rect();
         private Rect mAppRect = new Rect();
         private int mDpi;
+        private Rect mStableBounds;
 
         public Display(DisplayProto proto) {
             super(proto.windowContainer);
@@ -722,6 +720,10 @@ public class WindowManagerState {
             if (infoProto != null) {
                 mDisplayRect.set(0, 0, infoProto.logicalWidth, infoProto.logicalHeight);
                 mAppRect.set(0, 0, infoProto.logicalWidth, infoProto.logicalHeight);
+            }
+            final DisplayFramesProto displayFramesProto = proto.displayFrames;
+            if (displayFramesProto != null) {
+                mStableBounds = extract(displayFramesProto.stableBounds);
             }
         }
 
