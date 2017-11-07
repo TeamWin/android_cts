@@ -1428,6 +1428,12 @@ public class CanvasTest {
         // normal case
         mCanvas.drawArc(new RectF(0, 0, 10, 12), 10, 11, false, mPaint);
         mCanvas.drawArc(new RectF(0, 0, 10, 12), 10, 11, true, mPaint);
+
+        // special case: sweepAngle >= abs(360)
+        mCanvas.drawArc(new RectF(0, 0, 10, 12), 10, 400, true, mPaint);
+        mCanvas.drawArc(new RectF(0, 0, 10, 12), 10, -400, true, mPaint);
+        mCanvas.drawArc(new RectF(0, 0, 10, 12), 10, Float.POSITIVE_INFINITY, true, mPaint);
+        mCanvas.drawArc(new RectF(0, 0, 10, 12), 10, Float.NEGATIVE_INFINITY, true, mPaint);
     }
 
     @Test(expected=NullPointerException.class)

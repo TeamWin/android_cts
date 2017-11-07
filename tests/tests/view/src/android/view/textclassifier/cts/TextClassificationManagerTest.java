@@ -57,12 +57,14 @@ public class TextClassificationManagerTest {
 
     @Test
     public void testSmartSelection() {
-        assertValidResult(mClassifier.suggestSelection(TEXT, START, END, LOCALES));
+        assertValidResult(mClassifier.suggestSelection(TEXT, START, END,
+                new TextSelection.Options().setDefaultLocales(LOCALES)));
     }
 
     @Test
     public void testClassifyText() {
-        assertValidResult(mClassifier.classifyText(TEXT, START, END, LOCALES));
+        assertValidResult(mClassifier.classifyText(TEXT, START, END,
+                new TextClassification.Options().setDefaultLocales(LOCALES)));
     }
 
     @Test
@@ -70,14 +72,16 @@ public class TextClassificationManagerTest {
         mManager.setTextClassifier(TextClassifier.NO_OP);
         mClassifier = mManager.getTextClassifier();
 
-        final TextSelection selection = mClassifier.suggestSelection(TEXT, START, END, LOCALES);
+        final TextSelection selection = mClassifier.suggestSelection(TEXT, START, END,
+                new TextSelection.Options().setDefaultLocales(LOCALES));
         assertValidResult(selection);
         assertEquals(START, selection.getSelectionStartIndex());
         assertEquals(END, selection.getSelectionEndIndex());
         assertEquals(0, selection.getEntityCount());
 
         final TextClassification classification =
-                mClassifier.classifyText(TEXT, START, END, LOCALES);
+                mClassifier.classifyText(TEXT, START, END,
+                        new TextClassification.Options().setDefaultLocales(LOCALES));
         assertValidResult(classification);
         assertNull(classification.getText());
         assertEquals(0, classification.getEntityCount());
@@ -116,6 +120,7 @@ public class TextClassificationManagerTest {
             assertTrue(confidenceScore >= 0);
             assertTrue(confidenceScore <= 1);
         }
+        assertTrue(classification.getActionCount() >= 0);
     }
 }
 

@@ -117,6 +117,8 @@
     <option name="compatibility:exclude-filter" value="CtsSecurityHostTestCases android.security.cts.SELinuxHostTest#testAospFileContexts" />
     <!-- b/64221494 -->
     <option name="compatibility:exclude-filter" value="CtsSecurityHostTestCases android.security.cts.SELinuxHostTest#testAospPropertyContexts" />
+    <!-- b/64221494 -->
+    <option name="compatibility:exclude-filter" value="CtsSecurityHostTestCases android.security.cts.SELinuxHostTest#testAospSeappContexts" />
 
     <!-- b/63378294 b/64382381 -->
     <option name="compatibility:exclude-filter" value="CtsSecurityHostTestCases android.security.cts.SELinuxNeverallowRulesTest#testNeverallowRules440" />
