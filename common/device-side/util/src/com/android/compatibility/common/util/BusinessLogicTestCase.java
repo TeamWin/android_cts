@@ -15,6 +15,7 @@
  */
 package com.android.compatibility.common.util;
 
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
@@ -45,16 +46,23 @@ public class BusinessLogicTestCase {
     @Rule public TestName mTestCase = new TestName();
 
     private static BusinessLogic mBusinessLogic;
+    private static boolean mCanReadBusinessLogic = true;
 
     @BeforeClass
     public static void prepareBusinessLogic() {
         File businessLogicFile = new File(BusinessLogic.DEVICE_FILE);
-        mBusinessLogic = BusinessLogicFactory.createFromFile(businessLogicFile);
+        if (businessLogicFile.canRead()) {
+            mBusinessLogic = BusinessLogicFactory.createFromFile(businessLogicFile);
+        } else {
+            mCanReadBusinessLogic = false;
+        }
     }
 
     @Before
     public void executeBusinessLogic() {
         String methodName = mTestCase.getMethodName();
+        assertTrue(String.format("Test \"%s\" is unable to execute as it depends on the missing "
+                + "remote configuration.", methodName), mCanReadBusinessLogic);
         if (methodName.contains(PARAM_START)) {
             // Strip parameter suffix (e.g. "[0]") from method name
             methodName = methodName.substring(0, methodName.lastIndexOf(PARAM_START));
