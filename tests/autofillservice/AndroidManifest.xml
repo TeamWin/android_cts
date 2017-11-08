@@ -20,6 +20,9 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
 
     <application>
+
+        <uses-library android:name="android.test.runner" />
+
         <activity android:name=".LoginActivity" >
             <intent-filter>
                 <!-- This intent filter is not really needed by CTS, but it maks easier to launch
@@ -63,6 +66,14 @@
         <activity android:name=".WebViewActivity"/>
         <activity android:name=".TrampolineWelcomeActivity"/>
         <activity android:name=".AttachedContextActivity"/>
+        <activity android:name=".DialogLauncherActivity" >
+            <intent-filter>
+                <!-- This intent filter is not really needed by CTS, but it maks easier to launch
+                     this app during CTS development... -->
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
         <service
             android:name=".InstrumentedAutoFillService"
