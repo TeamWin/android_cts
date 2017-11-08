@@ -128,7 +128,7 @@ void StreamBuilderHelper::createAndVerifyStream(bool *success) {
 
     mFramesPerBurst = AAudioStream_getFramesPerBurst(mStream);
     ASSERT_GE(mFramesPerBurst, 16);
-    ASSERT_LE(mFramesPerBurst, 3072); // on some devices, it can be 2052
+    ASSERT_LE(mFramesPerBurst, 3080); // 3080 frames = 64 msec @ 48 kHz + 8 frames for resampling.
 
     int32_t actualBufferSize = AAudioStream_getBufferSizeInFrames(mStream);
     ASSERT_GT(actualBufferSize, 0);
