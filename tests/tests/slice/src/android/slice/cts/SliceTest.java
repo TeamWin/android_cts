@@ -36,6 +36,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -51,7 +52,8 @@ public class SliceTest {
     public void testProcess() {
         sFlag = false;
         Slice.bindSlice(mContext.getContentResolver(),
-                BASE_URI.buildUpon().appendPath("set_flag").build());
+                BASE_URI.buildUpon().appendPath("set_flag").build(),
+                Collections.emptyList());
         assertFalse(sFlag);
     }
 
@@ -63,14 +65,16 @@ public class SliceTest {
 
     @Test
     public void testSliceUri() {
-        Slice s = Slice.bindSlice(mContext.getContentResolver(), BASE_URI);
+        Slice s = Slice.bindSlice(mContext.getContentResolver(), BASE_URI,
+                Collections.emptyList());
         assertEquals(BASE_URI, s.getUri());
     }
 
     @Test
     public void testSubSlice() {
         Uri uri = BASE_URI.buildUpon().appendPath("subslice").build();
-        Slice s = Slice.bindSlice(mContext.getContentResolver(), uri);
+        Slice s = Slice.bindSlice(mContext.getContentResolver(), uri,
+                Collections.emptyList());
         assertEquals(uri, s.getUri());
         assertEquals(1, s.getItems().size());
 
@@ -84,7 +88,8 @@ public class SliceTest {
     @Test
     public void testText() {
         Uri uri = BASE_URI.buildUpon().appendPath("text").build();
-        Slice s = Slice.bindSlice(mContext.getContentResolver(), uri);
+        Slice s = Slice.bindSlice(mContext.getContentResolver(), uri,
+                Collections.emptyList());
         assertEquals(uri, s.getUri());
         assertEquals(1, s.getItems().size());
 
@@ -97,7 +102,8 @@ public class SliceTest {
     @Test
     public void testIcon() {
         Uri uri = BASE_URI.buildUpon().appendPath("icon").build();
-        Slice s = Slice.bindSlice(mContext.getContentResolver(), uri);
+        Slice s = Slice.bindSlice(mContext.getContentResolver(), uri,
+                Collections.emptyList());
         assertEquals(uri, s.getUri());
         assertEquals(1, s.getItems().size());
 
@@ -121,7 +127,8 @@ public class SliceTest {
         mContext.registerReceiver(receiver,
                 new IntentFilter(mContext.getPackageName() + ".action"));
         Uri uri = BASE_URI.buildUpon().appendPath("action").build();
-        Slice s = Slice.bindSlice(mContext.getContentResolver(), uri);
+        Slice s = Slice.bindSlice(mContext.getContentResolver(), uri,
+                Collections.emptyList());
         assertEquals(uri, s.getUri());
         assertEquals(1, s.getItems().size());
 
@@ -144,7 +151,8 @@ public class SliceTest {
     @Test
     public void testColor() {
         Uri uri = BASE_URI.buildUpon().appendPath("color").build();
-        Slice s = Slice.bindSlice(mContext.getContentResolver(), uri);
+        Slice s = Slice.bindSlice(mContext.getContentResolver(), uri,
+                Collections.emptyList());
         assertEquals(uri, s.getUri());
         assertEquals(1, s.getItems().size());
 
@@ -156,7 +164,8 @@ public class SliceTest {
     @Test
     public void testTimestamp() {
         Uri uri = BASE_URI.buildUpon().appendPath("timestamp").build();
-        Slice s = Slice.bindSlice(mContext.getContentResolver(), uri);
+        Slice s = Slice.bindSlice(mContext.getContentResolver(), uri,
+                Collections.emptyList());
         assertEquals(uri, s.getUri());
         assertEquals(1, s.getItems().size());
 
@@ -170,7 +179,8 @@ public class SliceTest {
         // Note this tests that hints are propagated through to the client but not that any specific
         // hints have any effects.
         Uri uri = BASE_URI.buildUpon().appendPath("hints").build();
-        Slice s = Slice.bindSlice(mContext.getContentResolver(), uri);
+        Slice s = Slice.bindSlice(mContext.getContentResolver(), uri,
+                Collections.emptyList());
         assertEquals(uri, s.getUri());
 
         assertEquals(Arrays.asList(Slice.HINT_LIST), s.getHints());
