@@ -93,7 +93,7 @@ public class ThemeHostTest extends DeviceTestCase {
         mDevice = getDevice();
         mHardwareType = mDevice.executeShellCommand(HARDWARE_TYPE_CMD).trim();
 
-        final String density = getDensityBucketForDevice(mDevice, mHardwareType);
+        final String density = getDensityBucketForDevice(mDevice);
         final String referenceZipAssetPath = String.format("/%s.zip", density);
         mReferences = extractReferenceImages(referenceZipAssetPath);
 
@@ -231,11 +231,7 @@ public class ThemeHostTest extends DeviceTestCase {
         return receiver.getOutput().contains("OK ");
     }
 
-    private static String getDensityBucketForDevice(ITestDevice device, String hardwareType) {
-        if (hardwareType.contains("android.hardware.type.television")) {
-            // references images for tv are under bucket "tvdpi".
-            return "tvdpi";
-        }
+    private static String getDensityBucketForDevice(ITestDevice device) {
         final int density;
         try {
             density = getDensityForDevice(device);
@@ -249,6 +245,9 @@ public class ThemeHostTest extends DeviceTestCase {
                 break;
             case 160:
                 bucket = "mdpi";
+                break;
+            case 213:
+                bucket = "tvdpi";
                 break;
             case 240:
                 bucket = "hdpi";
