@@ -417,6 +417,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     /**
      * Test that device handles moving between two tasks with different orientations.
      */
+    @Presubmit
     @Test
     public void testTaskMoveToBackOrientation() throws Exception {
         // Start landscape activity.
