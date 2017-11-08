@@ -56,6 +56,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Scanner;
 import java.util.Set;
 
 /**
@@ -271,18 +272,58 @@ public class FileSystemPermissionTest extends AndroidTestCase {
         assertFileOwnedByGroup(f, "net_bw_stats");
     }
 
-    @MediumTest
-    public void testProcSelfOomAdjSane() {
-        File f = new File("/proc/self/oom_adj");
-        assertFalse(f.canWrite());
-        assertFalse(f.canExecute());
+    private static int readInt(File f) throws FileNotFoundException {
+        try (Scanner s = new Scanner(f)) {
+            return s.nextInt();
+        }
+    }
+
+    private static boolean writeInt(File f, int value) throws IOException {
+        try (FileOutputStream os = new FileOutputStream(f)) {
+            try {
+                os.write(Integer.toString(value).getBytes());
+                return true;
+            } catch (IOException e) {
+                return false;
+            }
+        }
     }
 
     @MediumTest
-    public void testProcSelfOomScoreAdjSane() {
-        File f = new File("/proc/self/oom_score_adj");
-        assertFalse(f.canWrite());
+    public void testProcSelfOomAdjSane() throws IOException {
+        final int OOM_DISABLE = -17;
+
+        File f = new File("/proc/self/oom_adj");
+        assertTrue(f.canRead());
         assertFalse(f.canExecute());
+
+        int oom_adj = readInt(f);
+        assertNotSame("unprivileged processes should not be unkillable", OOM_DISABLE, oom_adj);
+        if (f.canWrite())
+            assertFalse("unprivileged processes should not be able to reduce their oom_adj value",
+                    writeInt(f, oom_adj - 1));
+    }
+
+    @MediumTest
+    public void testProcSelfOomScoreAdjSane() throws IOException {
+        final int OOM_SCORE_ADJ_MIN = -1000;
+
+        File f = new File("/proc/self/oom_score_adj");
+        assertTrue(f.canRead());
+        assertFalse(f.canExecute());
+
+        int oom_score_adj = readInt(f);
+        assertNotSame("unprivileged processes should not be unkillable", OOM_SCORE_ADJ_MIN, oom_score_adj);
+        if (f.canWrite()) {
+            assertFalse(
+                    "unprivileged processes should not be able to reduce their oom_score_adj value",
+                    writeInt(f, oom_score_adj - 1));
+            assertTrue(
+                    "unprivileged processes should be able to increase their oom_score_adj value",
+                    writeInt(f, oom_score_adj + 1));
+            assertTrue("unprivileged processes should be able to restore their oom_score_adj value",
+                    writeInt(f, oom_score_adj));
+        }
     }
 
     private static List<Pair<Long, Long>> mappedPageRanges() throws IOException {
