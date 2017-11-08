@@ -31,12 +31,12 @@ public class EmergencyCallMessageTestsActivity extends EmergencyCallBaseTestActi
   }
 
   @Override
-  protected boolean showLocalNumberInputbox() {
-    return true;
+  protected long getPhoneCallDurationMs() {
+    return PHONE_CALL_DURATION_MS;
   }
 
   @Override
-  protected long getPhoneCallDurationMs() {
-    return PHONE_CALL_DURATION_MS;
+  protected boolean showLocalNumberInputbox() {
+    return true;
   }
 }

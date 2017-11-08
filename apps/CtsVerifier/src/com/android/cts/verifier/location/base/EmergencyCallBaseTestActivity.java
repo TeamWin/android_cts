@@ -65,9 +65,7 @@ public abstract class EmergencyCallBaseTestActivity extends GnssCtsTestActivity 
         EmergencyCallUtil.setDefaultDialer(this, defaultPhonePackageName);
     }
 
-    protected boolean showLocalNumberInputbox() {
-        return false;
-    }
+    protected abstract boolean showLocalNumberInputbox();
 
     @Override
     public void onClick(View target) {
