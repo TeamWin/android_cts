@@ -83,7 +83,7 @@ public class GridActivity extends AbstractAutoFillActivity {
         getSystemService(AutofillManager.class).cancel();
     }
 
-    private EditText getCell(int row, int column) {
+    EditText getCell(int row, int column) {
         return mCells[row - 1][column - 1];
     }
 

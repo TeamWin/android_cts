@@ -25,6 +25,7 @@ import android.content.IntentSender;
 import android.os.Bundle;
 import android.service.autofill.CustomDescription;
 import android.service.autofill.Dataset;
+import android.service.autofill.FieldsDetection;
 import android.service.autofill.FillCallback;
 import android.service.autofill.FillResponse;
 import android.service.autofill.Sanitizer;
@@ -81,6 +82,7 @@ final class CannedFillResponse {
     private final int mFillResponseFlags;
     private final AutofillId mSaveTriggerId;
     private final long mDisableDuration;
+    private final FieldsDetection mFieldsDetection;
 
     private CannedFillResponse(Builder builder) {
         mResponseType = builder.mResponseType;
@@ -104,6 +106,7 @@ final class CannedFillResponse {
         mFillResponseFlags = builder.mFillResponseFlags;
         mSaveTriggerId = builder.mSaveTriggerId;
         mDisableDuration = builder.mDisableDuration;
+        mFieldsDetection = builder.mFieldsDetection;
     }
 
     /**
@@ -185,6 +188,9 @@ final class CannedFillResponse {
         if (mDisableDuration > 0) {
             builder.disableAutofill(mDisableDuration);
         }
+        if (mFieldsDetection != null) {
+            builder.setFieldsDetection(mFieldsDetection);
+        }
         return builder
                 .setClientState(mExtras)
                 .build();
@@ -208,6 +214,7 @@ final class CannedFillResponse {
                 + ", sanitizers =" + mSanitizers
                 + ", saveTriggerId=" + mSaveTriggerId
                 + ", disableDuration=" + mDisableDuration
+                + ", fieldsDetection=" + mFieldsDetection
                 + "]";
     }
 
@@ -239,6 +246,7 @@ final class CannedFillResponse {
         private int mFillResponseFlags;
         private AutofillId mSaveTriggerId;
         private long mDisableDuration;
+        private FieldsDetection mFieldsDetection;
 
         public Builder(ResponseType type) {
             mResponseType = type;
@@ -381,6 +389,13 @@ final class CannedFillResponse {
         public Builder disableAutofill(long duration) {
             assertWithMessage("already set").that(mDisableDuration).isEqualTo(0L);
             mDisableDuration = duration;
+            return this;
+        }
+
+        // TODO(b/67867469): document
+        public Builder setFieldDetection(FieldsDetection fieldsDetection) {
+            assertWithMessage("already set").that(mFieldsDetection).isNull();
+            mFieldsDetection = fieldsDetection;
             return this;
         }
     }
