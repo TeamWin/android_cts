@@ -1,4 +1,4 @@
-# Copyright (C) 2015 The Android Open Source Project
+# Copyright (C) 2008 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,33 +16,30 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
+# don't include this package in any target
 LOCAL_MODULE_TAGS := optional
-
+# and when built explicitly put it in the data partition
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
-
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
-
-LOCAL_PACKAGE_NAME := CtsLeanbackJankApp
 
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
-LOCAL_USE_AAPT2 := true
-
-LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res
+LOCAL_JAVA_LIBRARIES := android.test.runner
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
+    android-support-test \
     compatibility-device-util \
+    ctsdeviceutillegacy \
     ctstestrunner \
+    mockito-target-minus-junit4 \
+    platform-test-annotations \
     ub-uiautomator \
-    ub-janktesthelper \
-    glide
+    legacy-android-test
 
-LOCAL_STATIC_ANDROID_LIBRARIES := \
-    android-support-v4 \
-    android-support-v7-recyclerview \
-    android-support-v17-leanback
+LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_PROGUARD_FLAG_FILES := proguard.flags
+LOCAL_PACKAGE_NAME := CtsSliceTestCases
 
-include $(BUILD_CTS_SUPPORT_PACKAGE)
+include $(BUILD_CTS_PACKAGE)
+
+include $(call all-makefiles-under,$(LOCAL_PATH))

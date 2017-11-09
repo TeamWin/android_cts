@@ -347,11 +347,11 @@ public class ContextWrapperTest extends AndroidTestCase {
 
         // Test openOrCreateDatabase with null and actual factory
         mDatabase = mContextWrapper.openOrCreateDatabase(DATABASE_NAME1,
-                ContextWrapper.MODE_PRIVATE, factory);
+                ContextWrapper.MODE_ENABLE_WRITE_AHEAD_LOGGING, factory);
         assertNotNull(mDatabase);
         mDatabase.close();
         mDatabase = mContextWrapper.openOrCreateDatabase(DATABASE_NAME2,
-                ContextWrapper.MODE_PRIVATE, factory);
+                ContextWrapper.MODE_ENABLE_WRITE_AHEAD_LOGGING, factory);
         assertNotNull(mDatabase);
         mDatabase.close();
 
@@ -360,7 +360,7 @@ public class ContextWrapperTest extends AndroidTestCase {
 
         // Test databaseList()
         List<String> list = Arrays.asList(mContextWrapper.databaseList());
-        assertEquals(4, list.size()); // Each database has a journal
+        assertEquals(2, list.size());
         assertTrue("1) database list: " + list, list.contains(DATABASE_NAME1));
         assertTrue("2) database list: " + list, list.contains(DATABASE_NAME2));
 

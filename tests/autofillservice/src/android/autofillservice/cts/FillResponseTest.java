@@ -27,6 +27,7 @@ import static org.testng.Assert.assertThrows;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.service.autofill.Dataset;
+import android.service.autofill.FieldsDetection;
 import android.service.autofill.FillResponse;
 import android.service.autofill.SaveInfo;
 import android.support.test.runner.AndroidJUnit4;
@@ -49,6 +50,8 @@ public class FillResponseTest {
     private final Dataset mDataset = new Dataset.Builder()
             .setValue(new AutofillId(42), AutofillValue.forText("forty-two"))
             .build();
+    private final FieldsDetection mFieldsDetection =
+            new FieldsDetection(new AutofillId(42), "666", "108");
     private final long mDisableDuration = 666;
 
     @Test
@@ -106,15 +109,30 @@ public class FillResponseTest {
         assertThrows(IllegalStateException.class, () -> mBuilder.addDataset(mDataset));
         assertThrows(IllegalStateException.class,
                 () -> mBuilder.setAuthentication(mIds, mIntentSender, mPresentation));
+        assertThrows(IllegalStateException.class,
+                () -> mBuilder.setFieldsDetection(mFieldsDetection));
 
         // And vice-versa...
         final FillResponse.Builder builder1 = new FillResponse.Builder().setSaveInfo(mSaveInfo);
         assertThrows(IllegalStateException.class, () -> builder1.disableAutofill(mDisableDuration));
         final FillResponse.Builder builder2 = new FillResponse.Builder().addDataset(mDataset);
         assertThrows(IllegalStateException.class, () -> builder2.disableAutofill(mDisableDuration));
-        final FillResponse.Builder builder3 = new FillResponse.Builder().setAuthentication(mIds,
-                mIntentSender, mPresentation);
+        final FillResponse.Builder builder3 =
+                new FillResponse.Builder().setAuthentication(mIds, mIntentSender, mPresentation);
         assertThrows(IllegalStateException.class, () -> builder3.disableAutofill(mDisableDuration));
+        final FillResponse.Builder builder4 =
+                new FillResponse.Builder().setFieldsDetection(mFieldsDetection);
+        assertThrows(IllegalStateException.class, () -> builder4.disableAutofill(mDisableDuration));
+    }
+
+    @Test
+    public void testBuilder_setFieldsDetection_invalid() {
+        assertThrows(NullPointerException.class, () -> mBuilder.setFieldsDetection(null));
+    }
+
+    @Test
+    public void testBuilder_setFieldsDetection_valid() {
+        mBuilder.setFieldsDetection(mFieldsDetection);
     }
 
     @Test
@@ -129,12 +147,13 @@ public class FillResponseTest {
                 .build()).isNotNull();
         // save info only
         assertThat(new FillResponse.Builder().setSaveInfo(mSaveInfo).build()).isNotNull();
-
         // dataset only
         assertThat(new FillResponse.Builder().addDataset(mDataset).build()).isNotNull();
-
         // disable autofill only
         assertThat(new FillResponse.Builder().disableAutofill(mDisableDuration).build())
+                .isNotNull();
+        // fill detection only
+        assertThat(new FillResponse.Builder().setFieldsDetection(mFieldsDetection).build())
                 .isNotNull();
     }
 
@@ -151,5 +170,7 @@ public class FillResponseTest {
         assertThrows(IllegalStateException.class, () -> mBuilder.setSaveInfo(mSaveInfo));
         assertThrows(IllegalStateException.class, () -> mBuilder.setClientState(mClientState));
         assertThrows(IllegalStateException.class, () -> mBuilder.setFlags(0));
+        assertThrows(IllegalStateException.class,
+                () -> mBuilder.setFieldsDetection(mFieldsDetection));
     }
 }

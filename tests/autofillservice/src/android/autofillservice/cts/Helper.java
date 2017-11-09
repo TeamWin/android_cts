@@ -21,6 +21,7 @@ import static android.autofillservice.cts.UiBot.PORTRAIT;
 import static android.provider.Settings.Secure.AUTOFILL_SERVICE;
 import static android.provider.Settings.Secure.USER_SETUP_COMPLETE;
 import static android.service.autofill.FillEventHistory.Event.TYPE_AUTHENTICATION_SELECTED;
+import static android.service.autofill.FillEventHistory.Event.TYPE_CONTEXT_COMMITTED;
 import static android.service.autofill.FillEventHistory.Event.TYPE_DATASET_AUTHENTICATION_SELECTED;
 import static android.service.autofill.FillEventHistory.Event.TYPE_DATASET_SELECTED;
 import static android.service.autofill.FillEventHistory.Event.TYPE_SAVE_SHOWN;
@@ -52,6 +53,7 @@ import android.webkit.WebView;
 import com.android.compatibility.common.util.SystemUtil;
 
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 /**
@@ -986,9 +988,11 @@ final class Helper {
      * @param value the only value expected in the client state bundle (or {@code null} if it
      * shouldn't have client state)
      */
+    // TODO(b/67867469): document detected args
     private static void assertFillEvent(@NonNull FillEventHistory.Event event,
             int eventType, @Nullable String datasetId,
-            @Nullable String key, @Nullable String value) {
+            @Nullable String key, @Nullable String value,
+            @Nullable String detectedRemoteId, int detectedScore) {
         assertThat(event).isNotNull();
         assertWithMessage("Wrong type for %s", event).that(event.getType()).isEqualTo(eventType);
         if (datasetId == null) {
@@ -1013,6 +1017,12 @@ final class Helper {
                 .that(event.getChangedFields()).isEmpty();
         assertWithMessage("Event '%s' should not have manually-entered fields", event)
                 .that(event.getManuallyEnteredField()).isEmpty();
+        final Map<String, Integer> detectedFields = event.getDetectedFields();
+        if (detectedRemoteId == null) {
+            assertThat(detectedFields).isEmpty();
+        } else {
+            assertThat(detectedFields).containsExactly(detectedRemoteId, detectedScore);
+        }
     }
 
     /**
@@ -1024,7 +1034,7 @@ final class Helper {
      */
     public static void assertFillEventForDatasetSelected(@NonNull FillEventHistory.Event event,
             @Nullable String datasetId) {
-        assertFillEvent(event, TYPE_DATASET_SELECTED, datasetId, null, null);
+        assertFillEvent(event, TYPE_DATASET_SELECTED, datasetId, null, null, null, -1);
     }
 
     /**
@@ -1038,7 +1048,7 @@ final class Helper {
      */
     public static void assertFillEventForDatasetSelected(@NonNull FillEventHistory.Event event,
             @Nullable String datasetId, @Nullable String key, @Nullable String value) {
-        assertFillEvent(event, TYPE_DATASET_SELECTED, datasetId, key, value);
+        assertFillEvent(event, TYPE_DATASET_SELECTED, datasetId, key, value, null, -1);
     }
 
     /**
@@ -1052,7 +1062,7 @@ final class Helper {
      */
     public static void assertFillEventForSaveShown(@NonNull FillEventHistory.Event event,
             @NonNull String datasetId, @NonNull String key, @NonNull String value) {
-        assertFillEvent(event, TYPE_SAVE_SHOWN, datasetId, key, value);
+        assertFillEvent(event, TYPE_SAVE_SHOWN, datasetId, key, value, null, -1);
     }
 
     /**
@@ -1064,7 +1074,7 @@ final class Helper {
      */
     public static void assertFillEventForSaveShown(@NonNull FillEventHistory.Event event,
             @NonNull String datasetId) {
-        assertFillEvent(event, TYPE_SAVE_SHOWN, datasetId, null, null);
+        assertFillEvent(event, TYPE_SAVE_SHOWN, datasetId, null, null, null, -1);
     }
 
     /**
@@ -1080,7 +1090,8 @@ final class Helper {
     public static void assertFillEventForDatasetAuthenticationSelected(
             @NonNull FillEventHistory.Event event,
             @Nullable String datasetId, @NonNull String key, @NonNull String value) {
-        assertFillEvent(event, TYPE_DATASET_AUTHENTICATION_SELECTED, datasetId, key, value);
+        assertFillEvent(event, TYPE_DATASET_AUTHENTICATION_SELECTED, datasetId, key, value, null,
+                -1);
     }
 
     /**
@@ -1095,7 +1106,18 @@ final class Helper {
     public static void assertFillEventForAuthenticationSelected(
             @NonNull FillEventHistory.Event event,
             @Nullable String datasetId, @NonNull String key, @NonNull String value) {
-        assertFillEvent(event, TYPE_AUTHENTICATION_SELECTED, datasetId, key, value);
+        assertFillEvent(event, TYPE_AUTHENTICATION_SELECTED, datasetId, key, value, null, -1);
+    }
+
+    // TODO(b/67867469): document
+    public static void assertFillEventForFieldsDetected(@NonNull FillEventHistory.Event event,
+            @NonNull String remoteId, int result) {
+        assertFillEvent(event, TYPE_CONTEXT_COMMITTED, null, null, null, remoteId, result);
+    }
+
+    // TODO(b/67867469): document
+    public static void assertFillEventForContextCommitted(@NonNull FillEventHistory.Event event) {
+        assertFillEvent(event, TYPE_CONTEXT_COMMITTED, null, null, null, null, -1);
     }
 
     private Helper() {

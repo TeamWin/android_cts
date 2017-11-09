@@ -566,10 +566,32 @@
         (for example, stationary on a windowsill.  If needed, try again, outside, also with the
         device stationary, and with at least some view of the sky.) and then press Next to run
         the automated tests.</string>
+    <string name="location_emergency_call_test_info">This test verifies whether basic features
+        (wifi, sms, gps) works correctly during the emergency call. Make sure the device is using
+        a special white listed sim card. The wifi and GPS should be on and have internet connection.
+    </string>
+    <string name="emergency_call_confirm_info">This test will dial 911! Please make sure to use a
+        whitelisted sim card to run this test!
+    </string>
+    <string name="emergency_call_emergency_number_hint_text">
+        Emergency Number:
+    </string>
+    <string name="emergency_call_current_number_hint_text">
+        Current Number:
+    </string>
+    <string name="emergency_call_dial_text">
+        Dial 911
+    </string>
+    <string name="emergency_call_emergency_number_text">
+        911
+    </string>
     <string name="location_gnss_test_retry_info">If this test fails, please make sure the device
         has line of sight to GNSS satellites (for example, stationary on a windowsill. If needed,
         try again, outside, also with the device stationary, with as much view of the sky as
         possible.) </string>
+    <string name="location_emergency_call_gps_test">Emergency Call GPS Test</string>
+    <string name="location_emergency_call_message_test">Emergency Call Message Test</string>
+    <string name="location_emergency_call_wifi_test">Emergency Call Wifi Test</string>
 
     <!-- Strings for net.ConnectivityScreenOffTestActivity -->
     <string name="network_screen_off_test">Network Connectivity Screen Off Test</string>

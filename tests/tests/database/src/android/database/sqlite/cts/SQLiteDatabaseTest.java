@@ -33,6 +33,7 @@ import android.database.sqlite.SQLiteCursorDriver;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.database.sqlite.SQLiteDebug;
+import android.database.sqlite.SQLiteGlobal;
 import android.database.sqlite.SQLiteQuery;
 import android.database.sqlite.SQLiteStatement;
 import android.database.sqlite.SQLiteTransactionListener;
@@ -1390,6 +1391,16 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
         assertFalse(mDatabase.isWriteAheadLoggingEnabled());
     }
 
+    public void testDisableWriteAheadLogging() {
+        assertFalse(mDatabase.isWriteAheadLoggingEnabled());
+        mDatabase.disableWriteAheadLogging();
+        assertFalse(mDatabase.isWriteAheadLoggingEnabled());
+        // Verify that default journal mode is set if WAL is disabled
+        String defaultJournalMode = SQLiteGlobal.getDefaultJournalMode();
+        assertTrue(DatabaseUtils.stringForQuery(mDatabase, "PRAGMA journal_mode", null)
+                .equalsIgnoreCase(defaultJournalMode));
+    }
+
     public void testEnableThenDisableWriteAheadLoggingUsingOpenFlag() {
         closeAndDeleteDatabase();
         mDatabase = SQLiteDatabase.openDatabase(mDatabaseFile.getPath(), null,
@@ -1584,4 +1595,24 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
         } catch (IllegalArgumentException expected) {
         }
     }
+
+    public void testDefaultJournalModeNotWAL() {
+        String defaultJournalMode = SQLiteGlobal.getDefaultJournalMode();
+        assertFalse("Default journal mode should not be WAL",
+                DatabaseUtils.stringForQuery(mDatabase, "PRAGMA journal_mode", null)
+                        .equalsIgnoreCase(defaultJournalMode));
+    }
+
+    public void testCompatibilityWALIsDefaultWhenSupported() {
+        if (!SQLiteGlobal.isCompatibilityWalSupported()) {
+            Log.i(TAG, "Compatibility WAL not supported. "
+                    + "Skipping testCompatibilityWALIsDefaultWhenSupported");
+            return;
+        }
+
+        assertTrue("Journal mode should be WAL if compatibility WAL is supported",
+                DatabaseUtils.stringForQuery(mDatabase, "PRAGMA journal_mode", null)
+                        .equalsIgnoreCase("WAL"));
+    }
+
 }

@@ -29,6 +29,7 @@ import android.support.test.runner.AndroidJUnit4;
 import android.view.textclassifier.TextClassification;
 import android.view.textclassifier.TextClassificationManager;
 import android.view.textclassifier.TextClassifier;
+import android.view.textclassifier.TextLinks;
 import android.view.textclassifier.TextSelection;
 
 import org.junit.Before;
@@ -42,7 +43,10 @@ public class TextClassificationManagerTest {
     private static final LocaleList LOCALES = LocaleList.forLanguageTags("en");
     private static final int START = 1;
     private static final int END = 3;
-    private static final String TEXT = "text";
+    // This text has lots of things that are probably entities in many cases.
+    private static final String TEXT = "An email address is test@example.com. A phone number"
+            + " might be +12122537077. Somebody lives at 123 Main Street, Mountain View, CA,"
+            + " and there's good stuff at https://www.android.com :)";
 
     private TextClassificationManager mManager;
     private TextClassifier mClassifier;
@@ -92,6 +96,12 @@ public class TextClassificationManagerTest {
     }
 
     @Test
+    public void testGenerateLinks() {
+        assertValidResult(mClassifier.generateLinks(TEXT,
+                new TextLinks.Options.Builder().setLocaleList(LOCALES).build()));
+    }
+
+    @Test
     public void testSetTextClassifier() {
         final TextClassifier classifier = mock(TextClassifier.class);
         mManager.setTextClassifier(classifier);
@@ -122,5 +132,22 @@ public class TextClassificationManagerTest {
         }
         assertTrue(classification.getActionCount() >= 0);
     }
+
+    private static void assertValidResult(TextLinks links) {
+        assertNotNull(links);
+        for (TextLinks.TextLink link : links.getLinks()) {
+            assertTrue(link.getEntityCount() > 0);
+            assertTrue(link.getStart() >= 0);
+            assertTrue(link.getStart() <= link.getEnd());
+            for (int i = 0; i < link.getEntityCount(); i++) {
+                String entityType = link.getEntity(i);
+                assertNotNull(entityType);
+                final float confidenceScore = link.getConfidenceScore(entityType);
+                assertTrue(confidenceScore >= 0);
+                assertTrue(confidenceScore <= 1);
+            }
+        }
+    }
+
 }
 

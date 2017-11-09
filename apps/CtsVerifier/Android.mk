@@ -42,6 +42,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := android-ex-camera2 \
 
 LOCAL_JAVA_LIBRARIES := legacy-android-test
 
+LOCAL_JAVA_LIBRARIES += telephony-common
+
 LOCAL_PACKAGE_NAME := CtsVerifier
 
 LOCAL_JNI_SHARED_LIBRARIES := libctsverifier_jni \

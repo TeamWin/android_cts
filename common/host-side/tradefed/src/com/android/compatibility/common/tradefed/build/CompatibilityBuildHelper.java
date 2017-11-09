@@ -141,8 +141,20 @@ public class CompatibilityBuildHelper {
         return configMap;
     }
 
+    /**
+     * @return whether the business logic file has been set for this invocation.
+     */
+    public boolean hasBusinessLogicHostFile() {
+        return mBuildInfo.getBuildAttributes().get(BUSINESS_LOGIC_HOST_FILE) != null;
+    }
+
+    /**
+     * @return a {@link File} representing the file containing business logic data for this
+     * invocation, or null if the business logic file has not been set.
+     */
     public File getBusinessLogicHostFile() {
-        return new File(mBuildInfo.getBuildAttributes().get(BUSINESS_LOGIC_HOST_FILE));
+        return (hasBusinessLogicHostFile()) ?
+                new File(mBuildInfo.getBuildAttributes().get(BUSINESS_LOGIC_HOST_FILE)) : null;
     }
 
     /**
