@@ -89,7 +89,7 @@ public class ColorFilterAlphaTest extends ActivityTestBase {
                 0xFFC21A1A, 0xFFC93333, 0xFFD04D4D, 0xFFD66666, 0xFFBB0000 } },
     };
 
-    @Parameterized.Parameters(name = "{0}")
+    @Parameterized.Parameters
     public static List<XfermodeTest.Config> configs() {
         return XfermodeTest.configs(MODES_AND_EXPECTED_COLORS);
     }
