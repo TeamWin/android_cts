@@ -25,11 +25,16 @@ import android.content.IntentFilter;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.net.HttpURLConnection;
 import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.net.URL;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -48,8 +53,6 @@ public class NetworkLoggingTest extends BaseDeviceOwnerTest {
             "google.pl"
     };
 
-    private static final int MAX_VISITING_WEBPAGES_ITERATIONS = 100; // >1500 events
-    // note: make sure URL_LIST has at least 10 urls in it to generate enough network traffic
     private static final String[] LOGGED_URLS_LIST = {
             "example.com",
             "example.net",
@@ -141,14 +144,13 @@ public class NetworkLoggingTest extends BaseDeviceOwnerTest {
 
         // TODO: here test that facts about logging are shown in the UI
 
-        // visit websites in a loop to generate enough network traffic
-        int iterationsDone = 0;
-        while (mGenerateNetworkTraffic && iterationsDone < MAX_VISITING_WEBPAGES_ITERATIONS) {
-            for (final String url : LOGGED_URLS_LIST) {
-                connectToWebsite(url);
-            }
-            iterationsDone++;
+        // visit websites to verify their dns lookups are logged
+        for (final String url : LOGGED_URLS_LIST) {
+            connectToWebsite(url);
         }
+
+        // generate enough traffic to fill a batch.
+        int dummyReqNo = generateDummyTraffic();
 
         // if DeviceAdminReceiver#onNetworkLogsAvailable() hasn't been triggered yet, wait for up to
         // 3 minutes just in case
@@ -166,15 +168,20 @@ public class NetworkLoggingTest extends BaseDeviceOwnerTest {
             fail("Failed to retrieve batch of network logs with batch token " + mCurrentBatchToken);
             return;
         }
-        verifyNetworkLogs(networkEvents, iterationsDone);
+
+        // For each of the real URLs we have two events: one DNS and one connect. Dummy requests
+        // don't require DNS queries.
+        int eventsExpected =
+                Math.min(FULL_LOG_BATCH_SIZE, 2 * LOGGED_URLS_LIST.length + dummyReqNo);
+        verifyNetworkLogs(networkEvents, eventsExpected);
     }
 
-    private void verifyNetworkLogs(List<NetworkEvent> networkEvents, int iterationsDone) {
+    private void verifyNetworkLogs(List<NetworkEvent> networkEvents, int eventsExpected) {
         assertTrue(networkEvents.size() == FULL_LOG_BATCH_SIZE);
         int ctsPackageNameCounter = 0;
-        // allow a small down margin for verification, to avoid flakyness
-        final int iterationsDoneWithMargin = iterationsDone - 5;
-        final int[] visitedFrequencies = new int[LOGGED_URLS_LIST.length];
+        // allow a small down margin for verification, to avoid flakiness
+        final int eventsExpectedWithMargin = eventsExpected - 50;
+        final boolean[] visited = new boolean[LOGGED_URLS_LIST.length];
 
         for (int i = 0; i < networkEvents.size(); i++) {
             final NetworkEvent currentEvent = networkEvents.get(i);
@@ -196,7 +203,7 @@ public class NetworkLoggingTest extends BaseDeviceOwnerTest {
                     // count the frequencies of LOGGED_URLS_LIST's hostnames that were looked up
                     for (int j = 0; j < LOGGED_URLS_LIST.length; j++) {
                         if (dnsEvent.getHostname().contains(LOGGED_URLS_LIST[j])) {
-                            visitedFrequencies[j]++;
+                            visited[j] = true;
                             break;
                         }
                     }
@@ -223,30 +230,93 @@ public class NetworkLoggingTest extends BaseDeviceOwnerTest {
             }
         }
 
-        // verify that each hostname from LOGGED_URLS_LIST was looked-up enough times
+        // verify that each hostname from LOGGED_URLS_LIST was looked-up
         for (int i = 0; i < 10; i++) {
-            // to avoid flakyness account for DNS caching and connection errors
-            assertTrue(visitedFrequencies[i] >= (iterationsDoneWithMargin / 2));
+            assertTrue(LOGGED_URLS_LIST[i] + " wasn't visited", visited[i]);
         }
         // verify that sufficient iterations done by the CTS app were logged
-        assertTrue(ctsPackageNameCounter >= LOGGED_URLS_LIST.length * iterationsDoneWithMargin);
+        assertTrue(ctsPackageNameCounter >= eventsExpectedWithMargin);
     }
 
-    private void connectToWebsite(String urlString) {
+    private void connectToWebsite(String server) {
         HttpURLConnection urlConnection = null;
         try {
-            final URL url = new URL("http://" + urlString);
+            final URL url = new URL("http://" + server);
             urlConnection = (HttpURLConnection) url.openConnection();
             urlConnection.setConnectTimeout(2000);
             urlConnection.setReadTimeout(2000);
             urlConnection.getResponseCode();
         } catch (IOException e) {
-            Log.w(TAG, "Failed to connect to " + urlString, e);
+            Log.w(TAG, "Failed to connect to " + server, e);
         } finally {
             if (urlConnection != null) {
                 urlConnection.disconnect();
             }
         }
+    }
+
+    /** Quickly generate loads of events by repeatedly connecting to a local server. */
+    private int generateDummyTraffic() throws IOException, InterruptedException {
+        ServerSocket serverSocket = new ServerSocket(0);
+        Thread serverThread = startDummyServer(serverSocket);
+
+        int reqNo = makeDummyRequests(serverSocket.getLocalPort());
+
+        serverSocket.close();
+        serverThread.join();
+
+        return reqNo;
+    }
+
+    private int makeDummyRequests(int port) {
+        int reqNo;
+        final String DUMMY_SERVER = "127.0.0.1:" + port + "";
+        for (reqNo = 0; reqNo < FULL_LOG_BATCH_SIZE && mGenerateNetworkTraffic; reqNo++) {
+            connectToWebsite(DUMMY_SERVER);
+            try {
+                // Just to prevent choking the server.
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        return reqNo;
+    }
+
+    private Thread startDummyServer(ServerSocket serverSocket) throws InterruptedException {
+        Thread serverThread = new Thread(() -> {
+            while (true) {
+                try {
+                    Socket socket = serverSocket.accept();
+                    // Consume input.
+                    BufferedReader input =
+                            new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                    String line;
+                    do {
+                        line = input.readLine();
+                    } while (line != null && !line.equals(""));
+                    // Return minimum valid response.
+                    PrintStream output = new PrintStream(socket.getOutputStream());
+                    output.println("HTTP/1.0 200 OK");
+                    output.println("Content-Length: 0");
+                    output.println();
+                    output.flush();
+                    output.close();
+                } catch (IOException e) {
+                    if (mGenerateNetworkTraffic) {
+                        Log.w(TAG, "Failed to serve connection", e);
+                    } else {
+                        break;
+                    }
+                }
+            }
+        });
+        serverThread.start();
+
+        // Allow the server to start accepting.
+        Thread.sleep(1_000);
+
+        return serverThread;
     }
 
     private boolean isIpv4OrIpv6Address(InetAddress addr) {
