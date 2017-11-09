@@ -18,6 +18,7 @@ package android.cts.backup;
 
 import static org.junit.Assert.assertTrue;
 
+import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Test;
@@ -45,6 +46,11 @@ public class FullbackupRulesHostSideTest extends BaseBackupHostSideTest {
 
     @Test
     public void testNoBackupFolder() throws Exception {
+        if (!mIsBackupSupported) {
+            CLog.i("android.software.backup feature is not supported on this device");
+            return;
+        }
+
         // Generate the files that are going to be backed up.
         checkDeviceTest(FULLBACKUP_TESTS_APP_NAME, FULLBACKUP_DEVICE_TEST_CLASS_NAME,
                 "createFiles");
@@ -70,6 +76,11 @@ public class FullbackupRulesHostSideTest extends BaseBackupHostSideTest {
 
     @Test
     public void testIncludeExcludeRules() throws Exception {
+        if (!mIsBackupSupported) {
+            CLog.i("android.software.backup feature is not supported on this device");
+            return;
+        }
+
         // Generate the files that are going to be backed up.
         checkDeviceTest(INCLUDE_EXCLUDE_TESTS_APP_NAME, INCLUDE_EXCLUDE_DEVICE_TEST_CLASS_NAME,
                 "createFiles");
