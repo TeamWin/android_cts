@@ -109,4 +109,13 @@ public class Poc17_03 extends SecurityTestCase {
             Thread.sleep(60000);
         }
     }
+
+    /**
+     *  b/31252965
+     */
+    @SecurityTest
+    public void testPocCVE_2017_0460() throws Exception {
+        enableAdbRoot(getDevice());
+        AdbUtils.runPocNoOutput("CVE-2017-0460", getDevice(), 60);
+    }
 }
