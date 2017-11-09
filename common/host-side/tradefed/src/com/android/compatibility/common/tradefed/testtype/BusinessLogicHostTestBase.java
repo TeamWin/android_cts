@@ -15,6 +15,7 @@
  */
 package com.android.compatibility.common.tradefed.testtype;
 
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
@@ -44,6 +45,7 @@ public class BusinessLogicHostTestBase extends BaseHostJUnit4Test {
     @Rule public TestName mTestCase = new TestName();
 
     private static BusinessLogic mBusinessLogic;
+    private static boolean mCanReadBusinessLogic = true;
 
     @Before
     public void executeBusinessLogic() {
@@ -52,10 +54,16 @@ public class BusinessLogicHostTestBase extends BaseHostJUnit4Test {
         if (mBusinessLogic == null) {
             CompatibilityBuildHelper helper = new CompatibilityBuildHelper(getBuild());
             File businessLogicFile = helper.getBusinessLogicHostFile();
-            mBusinessLogic = BusinessLogicFactory.createFromFile(businessLogicFile);
+            if (businessLogicFile != null && businessLogicFile.canRead()) {
+                mBusinessLogic = BusinessLogicFactory.createFromFile(businessLogicFile);
+            } else {
+                mCanReadBusinessLogic = false; // failed to retrieve business logic
+            }
         }
 
         String methodName = mTestCase.getMethodName();
+        assertTrue(String.format("Test \"%s\" is unable to execute as it depends on the missing "
+                + "remote configuration.", methodName), mCanReadBusinessLogic);
         if (methodName.contains(PARAM_START)) {
             // Strip parameter suffix (e.g. "[0]") from method name
             methodName = methodName.substring(0, methodName.lastIndexOf(PARAM_START));
