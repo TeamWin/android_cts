@@ -112,9 +112,9 @@
     <option name="compatibility:exclude-filter" value="CtsSecurityTestCases android.security.cts.ListeningPortsTest" />
 
     <!-- b/63115400 -->
-    <option name="compatibility:exclude-filter" value="CtsSecurityTestCases android.security.cts.SELinuxHostTest#testAospFileContexts" />
+    <option name="compatibility:exclude-filter" value="CtsSecurityHostTestCases android.security.cts.SELinuxHostTest#testAospFileContexts" />
     <!-- b/64221494 -->
-    <option name="compatibility:exclude-filter" value="CtsSecurityTestCases android.security.cts.SELinuxHostTest#testAospPropertyContexts" />
+    <option name="compatibility:exclude-filter" value="CtsSecurityHostTestCases android.security.cts.SELinuxHostTest#testAospPropertyContexts" />
     <!-- b/63378294 b/64382381 -->
     <option name="compatibility:exclude-filter" value="CtsSecurityTestCases android.security.cts.SELinuxNeverallowRulesTest#testNeverallowRules440" />
 
