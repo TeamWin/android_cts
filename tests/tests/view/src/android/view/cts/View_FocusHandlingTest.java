@@ -151,7 +151,7 @@ public class View_FocusHandlingTest {
         v2.setVisibility(View.VISIBLE);
         v3.setVisibility(View.VISIBLE);
         v4.setVisibility(View.VISIBLE);
-        assertFalse(v1.isFocused());
+        assertEquals(true, v1.isFocused());
         assertFalse(v2.isFocused());
         assertFalse(v3.isFocused());
         assertFalse(v4.isFocused());
@@ -273,6 +273,10 @@ public class View_FocusHandlingTest {
         assertFalse(v3.isFocused());
         assertFalse(v4.isFocused());
         assertFalse(parent.hasFocusable());
+
+        // a view enabled while nothing has focus should get focus.
+        for (View v : new View[]{v1, v2, v3, v4}) v.setEnabled(true);
+        assertEquals(true, v1.isFocused());
     }
 
     @UiThreadTest
@@ -390,29 +394,6 @@ public class View_FocusHandlingTest {
         instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_TAB);
         View first = root.findFocus();
         return new View[]{initial, first};
-    }
-
-    @Test
-    public void testNoInitialFocus() throws Throwable {
-        Activity activity = mActivityRule.getActivity();
-        View[] result = getInitialAndFirstFocus(R.layout.focus_handling_focusables);
-        assertNull(result[0]);
-        assertSame(result[1], activity.findViewById(R.id.focusable1));
-    }
-
-    @Test
-    public void testDefaultFocus() throws Throwable {
-        Activity activity = mActivityRule.getActivity();
-        View[] result = getInitialAndFirstFocus(R.layout.focus_handling_default_focus);
-        assertNull(result[0]);
-        assertSame(result[1], activity.findViewById(R.id.focusable2));
-    }
-
-    @Test
-    public void testInitialFocus() throws Throwable {
-        Activity activity = mActivityRule.getActivity();
-        View[] result = getInitialAndFirstFocus(R.layout.focus_handling_initial_focus);
-        assertSame(result[0], activity.findViewById(R.id.focusable3));
     }
 
     @UiThreadTest
