@@ -1750,7 +1750,9 @@ You should be prompted to select credentials; choose the ones you just installed
         This test verifies keystore cryptographic keys can be bound to device lockscreen challenge or fingerprints (if available).
         These keys should only be available if there was a recent enough authentication. \n
 
-        1. Press "Set up" to open Security settings. Create a lockscreen password and if available, enroll a fingerprint under "Work profile security".\n
+        1. Press "Set up" to open Security settings. (If this device has a separate app for work
+        settings, ignore this button and open that app manually from the launcher.) Create a
+        lockscreen password and if available, enroll a fingerprint under "Work profile security".\n
         2. Go through the list of tests.\n
         3. Mark the overall test pass or fail.\n
         4. Once the set of tests are completed, remove the lockscreen challenge.
@@ -2147,20 +2149,26 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="provisioning_byod_disallow_apps_control_prepare_button">Prepare test</string>
     <string name="provisioning_byod_disabled_uninstall_button">Disabled uninstall button</string>
     <string name="provisioning_byod_disabled_uninstall_button_instruction">
-        Please press the Go button to go to Settings > Apps. Choose a managed app. Check that performing either \"Uninstall\" or \"Disable\" is not possible and triggers a support message when trying to do so.
-        Then please press Back and mark the test as \"Pass\" or \"Fail\".
+        Please press the Go button to go to Settings > Apps.
+        (If this device has a separate app for work settings, ignore the Go button and open that app manually from the launcher).\n
+        Choose a managed app. Check that performing either \"Uninstall\" or \"Disable\" is not possible and triggers a support message when trying to do so.
+        Then please press Back (or navigate back to this app using Recents) and mark the test as \"Pass\" or \"Fail\".
     </string>
     <string name="provisioning_byod_disabled_force_stop_button">Disabled force stop button</string>
     <string name="provisioning_byod_disabled_force_stop_button_instruction">
-        Please press the Go button to go to Settings > Apps. Choose a managed app. Check that performing \"Force stop\" is not possible and triggers a support message when trying to do so.
-        Then please press Back and mark the test as \"Pass\" or \"Fail\".
+        Please press the Go button to go to Settings > Apps.
+        (If this device has a separate app for work settings, ignore the Go button and open that app manually from the launcher).\n
+        Choose a managed app. Check that performing \"Force stop\" is not possible and triggers a support message when trying to do so.
+        Then please press Back (or navigate back to this app using Recents) and mark the test as \"Pass\" or \"Fail\".
     </string>
     <string name="provisioning_byod_disabled_app_storage_buttons">Disabled app storage buttons</string>
     <string name="provisioning_byod_disabled_app_storage_buttons_instruction">
-        Please press the Go button to go to Settings > Apps. Choose a managed (badged) app. Select \"Storage\". Check that performing \"Clear Data\" and \"Clear Cache\" is not possible and triggers a support message when trying to do so.
+        Please press the Go button to go to Settings > Apps.
+        (If this device has a separate app for work settings, ignore the Go button and open that app manually from the launcher).\n
+        Choose a managed (badged) app. Select \"Storage\". Check that performing \"Clear Data\" and \"Clear Cache\" is not possible and triggers a support message when trying to do so.
         Note: if an app has no data then tapping the clear data button has no effect anyway. Make sure you have selected
         the badged version of app with non-zero app data. Badged \"Settings\" may be a good candidate.
-        Then please press Back and mark the test as \"Pass\" or \"Fail\".
+        Then please press Back (or navigate back to this app using Recents) and mark the test as \"Pass\" or \"Fail\".
     </string>
 
     <string name="provisioning_byod_work_status_icon">Work status icon is displayed</string>
@@ -2191,6 +2199,7 @@ You should be prompted to select credentials; choose the ones you just installed
     </string>
     <string name="provisioning_byod_profile_visible_instruction">
         Please press the Go button to open the Settings page.
+        (If this device has a separate app for work settings, ignore the Go button and open that app manually from the launcher).\n
         Navigate to Accounts and confirm that:\n
         \n
         - Both Personal and Work categories exist.\n
@@ -2200,17 +2209,18 @@ You should be prompted to select credentials; choose the ones you just installed
         - There are two auto-sync options present, one for personal and one for work data (either on the screen or in the overflow menu).\n
         - De-selecting either option prompts a warning dialog.\n
         \n
-        Use the Back button to return to this page.
+        Use the Back button (or navigate back to this app using Recents) to return to this page.
     </string>
     <string name="provisioning_byod_admin_visible_instruction">
         Please press the Go button to open the Security page in Settings.
+        (If this device has a separate app for work settings, ignore the Go button and open that app manually from the launcher).\n
         Navigate to Device admin apps and confirm that:\n
         \n
         - Device administrators outside of the work profile (if any) appear in the list, and the managed profile administrators are badged correctly.\n
         - A badged \"CTS Verifier\" exists, and is activated.\n
         - There is no option to deactivate the badged \"CTS Verifier\" version, only an option to \"Remove work profile\".\n
         \n
-        Use the Back button to return to this page.
+        Use the Back button (or navigate back to this app using Recents) to return to this page.
     </string>
     <string name="provisioning_byod_workapps_visible_instruction">
         Please press the Go button to start the launcher.
@@ -2224,33 +2234,36 @@ You should be prompted to select credentials; choose the ones you just installed
 
     <string name="provisioning_byod_app_settings">Profile-aware app settings</string>
     <string name="provisioning_byod_app_settings_instruction">
-        Please press the Go button to open Apps page in settings.\n
+        Please press the Go button to open Apps page in settings.
+        (If this device has a separate app for work settings, ignore the Go button and open that app manually from the launcher).\n
         \n
         Verify that work profile exists in the dropdown list and selecting it will
         bring up apps setting in the work profile.\n
         \n
-        Then use the Back button to return to this test and mark accordingly.
+        Then use the Back button (or navigate back to this app using Recents) to return to this test and mark accordingly.
     </string>
 
     <string name="provisioning_byod_location_settings">Profile-aware location settings</string>
     <string name="provisioning_byod_location_settings_instruction">
-        Please press the Go button to open Location page in settings.\n
+        Please press the Go button to open Location page in settings.
+        (If this device has a separate app for work settings, ignore the Go button and navigate to that app manually).\n
         \n
         Verify that work profile entry exists in the page and it has a toggleable switch.\n
         Switch the main location switch at the top of the screen off. You should see the work profile location switch go disabled and into \'off\' state.\n
         Then switch the main location switch on again. You should see the work profile location switch go enabled and into its previous state.\n
         \n
-        Then use the Back button to return to this test and mark accordingly.
+        Then use the Back button (or navigate back to this app using Recents) to return to this test and mark accordingly.
     </string>
 
     <string name="provisioning_byod_wifi_data_usage_settings">Profile-aware data usage settings (Wi-Fi)</string>
     <string name="provisioning_byod_wifi_data_usage_settings_instruction">
-        Please press the Go button to open the Settings page.\n
+        Please press the Go button to open the Settings page.
+        (If this device has a separate app for work settings, ignore the Go button and navigate to that app manually).\n
         \n
         Navigate to \"Data usage\" page and then into the \"Wi-Fi data usage\" category.\n
         Confirm that \"All work apps\" section is present and that it is possible to see the data usage for work (badged) apps.\n
         \n
-        Then use the Back button to return to this test and mark accordingly.
+        Then use the Back button (or navigate back to this app using Recents) to return to this test and mark accordingly.
     </string>
 
     <string name="provisioning_byod_cellular_data_usage_settings">Profile-aware data usage settings (Mobile)</string>
@@ -2259,12 +2272,13 @@ You should be prompted to select credentials; choose the ones you just installed
         Please make sure you have added a SIM card with data plan to your phone, have enabled data over mobile and in case of dual SIM devices, have selected the right SIM for data connection.\n
         Please carry out operations that will use mobile data using both badged and unbadged apps (e.g. visit a page in a browser).\n
         \n
-        Please press the Go button to open the Settings page.\n
+        Please press the Go button to open the Settings page.
+        (If this device has a separate app for work settings, ignore the Go button and navigate to that app manually).\n
         \n
         Navigate to \"Data usage\" page and then into the \"Mobile data usage\" category.\n
         Confirm that \"All work apps\" section is present and that it is possible to see the data usage for work (badged) apps.\n
         \n
-        Then use the Back button to return to this test and mark accordingly.
+        Then use the Back button (or navigate back to this app using Recents) to return to this test and mark accordingly.
     </string>
 
     <string name="provisioning_byod_cred_settings">Profile-aware trusted credential settings</string>
@@ -2281,11 +2295,12 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="provisioning_byod_print_settings">Profile-aware printing settings</string>
     <string name="provisioning_byod_print_settings_instruction">
         Please press the Go button to open the Printing settings.
+        (If this device has a separate app for work settings, ignore the Go button and open that app manually from the launcher).\n
         \n
         Verify that work profile exists in the dropdown list and selecting it will
         bring up printing setting in the work profile.\n
         \n
-        Then use the Back button to return to this test and mark accordingly.
+        Then use the Back button (or navigate back to this app using Recents) to return to this test and mark accordingly.
     </string>
 
     <string name="provisioning_byod_cross_profile_intent_filters">Cross profile intent filters are set</string>
@@ -2362,7 +2377,8 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="provisioning_byod_turn_off_work_instructions">
         This test verifies the device behavior when work profile is turned off.\n
         Please exercise the following tests in sequence.\n
-        The button below can be used to open the Settings page where you can toggle work mode.
+        The button below can be used to open the Settings page where you can toggle work mode.\n
+        (If this device has a separate app for work settings, ignore the button and open that app manually from the launcher).\n
     </string>
     <string name="provisioning_byod_turn_off_work_prepare_button">Open Settings to toggle work mode</string>
 
@@ -2397,7 +2413,7 @@ You should be prompted to select credentials; choose the ones you just installed
     </string>
 
     <string name="provisioning_byod_turn_off_work_turned_on">Please turn work mode back on</string>
-    <string name="provisioning_byod_turn_off_work_turned_on_toast">Open settings to turn work mode back on, using the button above.</string>
+    <string name="provisioning_byod_turn_off_work_turned_on_toast">Open settings to turn work mode back on, either manually or using the button above.</string>
 
     <string name="provisioning_byod_turn_on_work_icon">Status bar icon when work mode is on</string>
     <string name="provisioning_byod_turn_on_work_icon_instruction">
@@ -2824,7 +2840,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="dummy_accessibility_service_label">Dummy accessibility service</string>
     <string name="policy_transparency_test_instructions">
         1. <xliff:g id="set_step" example="Set policy by turning the switch on">%1$s</xliff:g>\n
-        2. Open Settings app by clicking the "Open settings" button below.\n
+        2. Open Settings app by clicking the "Open settings" button below. (If this device has a separate app for work settings, ignore the button and open that app manually from the launcher)\n
         3. Verify that performing the following action will trigger a support dialog:\n
            <xliff:g id="user_action" example="Adding an account">%2$s</xliff:g>.\n
         4. Verify that the support dialog displays the short support message set earlier.\n
