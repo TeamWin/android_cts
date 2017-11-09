@@ -27,25 +27,21 @@ LOCAL_PACKAGE_NAME := CtsLeanbackJankApp
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
-LOCAL_RESOURCE_DIR := \
-    $(TOP)/frameworks/support/v17/leanback/res \
-    $(TOP)/frameworks/support/v7/recyclerview/res \
-    $(LOCAL_PATH)/res
+LOCAL_USE_AAPT2 := true
+
+LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util \
     ctstestrunner \
     ub-uiautomator \
     ub-janktesthelper \
-    android-support-v4 \
-    android-support-v7-recyclerview \
-    android-support-v17-leanback \
     glide
 
-LOCAL_AAPT_FLAGS := \
-        --auto-add-overlay \
-        --extra-packages android.support.v17.leanback \
-        --extra-packages android.support.v7.recyclerview
+LOCAL_STATIC_ANDROID_LIBRARIES := \
+    android-support-v4 \
+    android-support-v7-recyclerview \
+    android-support-v17-leanback
 
 LOCAL_PROGUARD_FLAG_FILES := proguard.flags
 
