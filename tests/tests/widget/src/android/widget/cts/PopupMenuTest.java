@@ -274,7 +274,7 @@ public class PopupMenuTest {
 
     @Test
     public void testItemViewAttributes() throws Throwable {
-        mBuilder = new Builder().withDismissListener();
+        mBuilder = new Builder().withDismissListener().withAnchorId(R.id.anchor_upper_left);
         WidgetTestUtils.runOnMainAndLayoutSync(mActivityRule, mBuilder::show, true);
 
         Menu menu = mPopupMenu.getMenu();
@@ -311,19 +311,21 @@ public class PopupMenuTest {
     }
 
     private void testGroupDivider(boolean groupDividerEnabled) throws Throwable {
-        mBuilder = new Builder().withGroupDivider(groupDividerEnabled);
+        mBuilder = new Builder().withGroupDivider(groupDividerEnabled)
+            .withAnchorId(R.id.anchor_upper_left);
         WidgetTestUtils.runOnMainAndLayoutSync(mActivityRule, mBuilder::show, true);
 
         Menu menu = mPopupMenu.getMenu();
         ListView menuItemList = mPopupMenu.getMenuListView();
 
-        for (int i = 0; i < menuItemList.getCount(); i++) {
+        for (int i = 0; i < menuItemList.getChildCount(); i++) {
             final int currGroupId = menu.getItem(i).getGroupId();
             final int prevGroupId =
                     i - 1 >= 0 ? menu.getItem(i - 1).getGroupId() : currGroupId;
             View itemView = menuItemList.getChildAt(i);
             ImageView groupDivider = itemView.findViewById(com.android.internal.R.id.group_divider);
 
+            assertNotNull(groupDivider);
             if (!groupDividerEnabled || currGroupId == prevGroupId) {
                 assertEquals(groupDivider.getVisibility(), View.GONE);
             } else {
@@ -346,6 +348,7 @@ public class PopupMenuTest {
         private boolean mHasMenuItemClickListener;
         private boolean mInflateWithInflater;
 
+        private int mAnchorId = R.id.anchor_middle_left;
         private int mPopupMenuContent = R.menu.popup_menu;
 
         private boolean mUseCustomPopupResource;
@@ -398,8 +401,13 @@ public class PopupMenuTest {
             return this;
         }
 
+        public Builder withAnchorId(int anchorId) {
+            mAnchorId = anchorId;
+            return this;
+        }
+
         private void configure() {
-            mAnchor = mActivity.findViewById(R.id.anchor_middle_left);
+            mAnchor = mActivity.findViewById(mAnchorId);
             if (!mUseCustomGravity && !mUseCustomPopupResource) {
                 mPopupMenu = new PopupMenu(mActivity, mAnchor);
             } else if (!mUseCustomPopupResource) {
