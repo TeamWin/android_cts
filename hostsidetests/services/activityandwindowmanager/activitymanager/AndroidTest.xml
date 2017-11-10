@@ -24,7 +24,6 @@
         <option name="test-file-name" value="CtsDeviceDisplaySizeApp.apk" />
         <option name="test-file-name" value="CtsDisplayServiceApp.apk" />
         <option name="test-file-name" value="CtsDeviceTranslucentTestApp.apk" />
-        <option name="test-file-name" value="CtsDeviceTranslucentTestApp26.apk" />
     </target_preparer>
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
         <option name="jar" value="CtsServicesHostTestCases.jar" />
