@@ -27,20 +27,6 @@ import java.util.regex.Pattern;
 
 public class KeyguardTestBase extends ActivityManagerTestBase {
 
-    protected void assertShowingAndOccluded() {
-        assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
-        assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardOccluded);
-    }
-
-    protected void assertShowingAndNotOccluded() {
-        assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
-        assertFalse(mAmWmState.getAmState().getKeyguardControllerState().keyguardOccluded);
-    }
-
-    protected void assertKeyguardGone() {
-        assertFalse(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
-    }
-
     protected void assertOnDismissSucceededInLogcat(String logSeparator) throws Exception {
         assertInLogcat("KeyguardDismissLoggerCallback", "onDismissSucceeded", logSeparator);
     }

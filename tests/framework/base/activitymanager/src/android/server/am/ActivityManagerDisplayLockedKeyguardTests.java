@@ -33,6 +33,8 @@ public class ActivityManagerDisplayLockedKeyguardTests extends ActivityManagerDi
 
     private static final String TEST_ACTIVITY_NAME = "TestActivity";
     private static final String VIRTUAL_DISPLAY_ACTIVITY = "VirtualDisplayActivity";
+    private static final String DISMISS_KEYGUARD_ACTIVITY = "DismissKeyguardActivity";
+    private static final String SHOW_WHEN_LOCKED_ACTIVITY = "ShowWhenLockedActivity";
 
     @Before
     @Override
@@ -74,5 +76,49 @@ public class ActivityManagerDisplayLockedKeyguardTests extends ActivityManagerDi
         mAmWmState.waitForKeyguardGone();
         mAmWmState.waitForActivityState(TEST_ACTIVITY_NAME, STATE_RESUMED);
         mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, true /* visible */);
+    }
+
+    /**
+     * Tests whether a FLAG_DISMISS_KEYGUARD activity on a secondary display dismisses the keyguard.
+     */
+    @Test
+    public void testDismissKeyguard_secondaryDisplay() throws Exception {
+        if (!supportsMultiDisplay() || !isHandheld()) {
+            return;
+        }
+
+        final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
+
+        gotoKeyguard();
+        mAmWmState.waitForKeyguardShowingAndNotOccluded();
+        mAmWmState.assertKeyguardShowingAndNotOccluded();
+        launchActivityOnDisplay(DISMISS_KEYGUARD_ACTIVITY, newDisplay.mDisplayId);
+        enterAndConfirmLockCredential();
+        mAmWmState.waitForKeyguardGone();
+        mAmWmState.assertKeyguardGone();
+        mAmWmState.assertVisibility(DISMISS_KEYGUARD_ACTIVITY, true);
+    }
+
+    @Test
+    public void testDismissKeyguard_whileOccluded_secondaryDisplay() throws Exception {
+        if (!supportsMultiDisplay() || !isHandheld()) {
+            return;
+        }
+
+        final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
+
+        gotoKeyguard();
+        mAmWmState.waitForKeyguardShowingAndNotOccluded();
+        mAmWmState.assertKeyguardShowingAndNotOccluded();
+        launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
+        mAmWmState.computeState(
+                new WaitForValidActivityState.Builder(SHOW_WHEN_LOCKED_ACTIVITY).build());
+        mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
+        launchActivityOnDisplay(DISMISS_KEYGUARD_ACTIVITY, newDisplay.mDisplayId);
+        enterAndConfirmLockCredential();
+        mAmWmState.waitForKeyguardGone();
+        mAmWmState.assertKeyguardGone();
+        mAmWmState.assertVisibility(DISMISS_KEYGUARD_ACTIVITY, true);
+        mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
     }
 }

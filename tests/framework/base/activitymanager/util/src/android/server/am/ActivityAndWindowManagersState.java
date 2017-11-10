@@ -711,6 +711,20 @@ public class ActivityAndWindowManagersState {
         }
     }
 
+    public void assertKeyguardShowingAndOccluded() {
+        assertTrue(getAmState().getKeyguardControllerState().keyguardShowing);
+        assertTrue(getAmState().getKeyguardControllerState().keyguardOccluded);
+    }
+
+    public void assertKeyguardShowingAndNotOccluded() {
+        assertTrue(getAmState().getKeyguardControllerState().keyguardShowing);
+        assertFalse(getAmState().getKeyguardControllerState().keyguardOccluded);
+    }
+
+    public void assertKeyguardGone() {
+        assertFalse(getAmState().getKeyguardControllerState().keyguardShowing);
+    }
+
     private String getWindowNameForActivityName(String activityName) {
         return activityName.replaceAll("(.*)\\/\\.", "$1/$1.");
     }
