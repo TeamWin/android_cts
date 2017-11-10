@@ -18,6 +18,7 @@
 
 DEVICE_INFO_PACKAGE := com.android.compatibility.common.deviceinfo
 DEVICE_INFO_INSTRUMENT := android.support.test.runner.AndroidJUnitRunner
+DEVICE_INFO_USES_LIBRARY := android.test.runner
 DEVICE_INFO_PERMISSIONS += android.permission.WRITE_EXTERNAL_STORAGE
 DEVICE_INFO_ACTIVITIES += \
   $(DEVICE_INFO_PACKAGE).ConfigurationDeviceInfo \
@@ -55,6 +56,7 @@ MANIFEST_GENERATOR := java -jar $(MANIFEST_GENERATOR_JAR)
 manifest_xml := $(call intermediates-dir-for,APPS,$(LOCAL_PACKAGE_NAME))/AndroidManifest.xml
 $(manifest_xml): PRIVATE_INFO_PERMISSIONS := $(foreach permission, $(DEVICE_INFO_PERMISSIONS),-r $(permission))
 $(manifest_xml): PRIVATE_INFO_ACTIVITIES := $(foreach activity,$(DEVICE_INFO_ACTIVITIES),-a $(activity))
+$(manifest_xml): PRIVATE_USES_LIBRARY := $(DEVICE_INFO_USES_LIBRARY)
 $(manifest_xml): PRIVATE_PACKAGE := $(DEVICE_INFO_PACKAGE)
 $(manifest_xml): PRIVATE_INSTRUMENT := $(DEVICE_INFO_INSTRUMENT)
 $(manifest_xml): PRIVATE_MIN_SDK := $(DEVICE_INFO_MIN_SDK)
@@ -67,6 +69,7 @@ $(manifest_xml): $(MANIFEST_GENERATOR_JAR) $(LOCAL_PATH)/Android.mk cts/build/de
 	$(hide) $(MANIFEST_GENERATOR) \
 						$(PRIVATE_INFO_PERMISSIONS) \
 						$(PRIVATE_INFO_ACTIVITIES) \
+						-l $(PRIVATE_USES_LIBRARY) \
 						-p $(PRIVATE_PACKAGE) \
 						-i $(PRIVATE_INSTRUMENT) \
 						-s $(PRIVATE_MIN_SDK) \
