@@ -52,6 +52,14 @@ const char* sharingModeToString(aaudio_sharing_mode_t mode) {
 }
 
 
+// These periods are quite generous. They are not designed to put
+// any restrictions on the implementation, but only to ensure sanity.
+// Use int64_t because 96000 * 30000 is close to int32_t limits.
+const std::map<aaudio_performance_mode_t, int64_t> StreamBuilderHelper::sMaxFramesPerBurstMs =
+{ { AAUDIO_PERFORMANCE_MODE_NONE, 128 },
+  { AAUDIO_PERFORMANCE_MODE_POWER_SAVING, 30 * 1000 },
+  { AAUDIO_PERFORMANCE_MODE_LOW_LATENCY, 40 } };
+
 StreamBuilderHelper::StreamBuilderHelper(
         aaudio_direction_t direction, int32_t sampleRate,
         int32_t channelCount, aaudio_format_t dataFormat,
@@ -66,6 +74,8 @@ StreamBuilderHelper::~StreamBuilderHelper() {
 }
 
 void StreamBuilderHelper::initBuilder() {
+    ASSERT_EQ(1U, sMaxFramesPerBurstMs.count(mRequested.perfMode));
+
     // Use an AAudioStreamBuilder to define the stream.
     aaudio_result_t result = AAudio_createStreamBuilder(&mBuilder);
     ASSERT_EQ(AAUDIO_OK, result);
@@ -128,7 +138,9 @@ void StreamBuilderHelper::createAndVerifyStream(bool *success) {
 
     mFramesPerBurst = AAudioStream_getFramesPerBurst(mStream);
     ASSERT_GE(mFramesPerBurst, 16);
-    ASSERT_LE(mFramesPerBurst, 3080); // 3080 frames = 64 msec @ 48 kHz + 8 frames for resampling.
+    const int32_t maxFramesPerBurst =
+            mActual.sampleRate * sMaxFramesPerBurstMs.at(mActual.perfMode) / MILLIS_PER_SECOND;
+    ASSERT_LE(mFramesPerBurst, maxFramesPerBurst);
 
     int32_t actualBufferSize = AAudioStream_getBufferSizeInFrames(mStream);
     ASSERT_GT(actualBufferSize, 0);
