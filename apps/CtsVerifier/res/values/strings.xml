@@ -1589,6 +1589,8 @@
         under Apps > Gear Icon > Default > Notification Assistant and return here.</string>
     <string name="nls_enable_service">Please enable \"Notification Listener for CTS Verifier\"
         under Apps > Gear Icon > Special Access > Notification Access and return here.</string>
+    <string name="nls_cannot_enable_service">Please make sure you cannot enable
+        \"Notification Listener for CTS Verifier\" and return here.</string>
     <string name="nls_disable_service">Please disable \"Notification Listener for CTS Verifier\"
         under Apps > Gear Icon > Special Access > Notification Access and return here.</string>
     <string name="nls_start_settings">Launch Settings</string>
@@ -1619,10 +1621,11 @@
     <string name="nas_note_missed_enqueued">Check that notification was not enqueued.</string>
     <string name="cp_test">Condition Provider test</string>
     <string name="cp_service_name">Condition Provider for CTS Verifier</string>
-    <string name="cp_info">This test checks that a ConditionProviderService can be enabled
+    <string name="cp_info">This test checks that on non-low ram a ConditionProviderService can be enabled
         and disabled, and that once enabled the service is able to create, query, edit, and delete
-        automatic zen rules.
+        automatic zen rules. On low ram devices condition providers should not be bound.
     </string>
+    <string name="cp_cannot_enable_service">Please make sure you cannot enable \"CTS Verifier\" under Do Not Disturb access and return here.</string>
     <string name="cp_enable_service">Please enable \"CTS Verifier\" under Do Not Disturb access and return here.</string>
     <string name="cp_disable_service">Please disable \"CTS Verifier\" under Do Not Disturb access and return here.</string>
     <string name="cp_start_settings">Launch Settings</string>

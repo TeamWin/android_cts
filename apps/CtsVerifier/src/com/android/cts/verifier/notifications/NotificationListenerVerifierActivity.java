@@ -18,9 +18,11 @@ package com.android.cts.verifier.notifications;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
@@ -83,25 +85,32 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
     @Override
     protected List<InteractiveTestCase> createTestItems() {
         List<InteractiveTestCase> tests = new ArrayList<>(17);
-        tests.add(new IsEnabledTest());
-        tests.add(new ServiceStartedTest());
-        tests.add(new NotificationReceivedTest());
-        tests.add(new DataIntactTest());
-        tests.add(new DismissOneTest());
-        tests.add(new DismissOneWithReasonTest());
-        tests.add(new DismissOneWithStatsTest());
-        tests.add(new DismissAllTest());
-        tests.add(new SnoozeNotificationForTimeTest());
-        tests.add(new SnoozeNotificationForTimeCancelTest());
-        tests.add(new GetSnoozedNotificationTest());
-        tests.add(new EnableHintsTest());
-        tests.add(new RequestUnbindTest());
-        tests.add(new RequestBindTest());
-        tests.add(new MessageBundleTest());
-        tests.add(new EnableHintsTest());
-        tests.add(new IsDisabledTest());
-        tests.add(new ServiceStoppedTest());
-        tests.add(new NotificationNotReceivedTest());
+        ActivityManager am = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        if (am.isLowRamDevice()) {
+            tests.add(new CannotBeEnabledTest());
+            tests.add(new ServiceStoppedTest());
+            tests.add(new NotificationNotReceivedTest());
+        } else {
+            tests.add(new IsEnabledTest());
+            tests.add(new ServiceStartedTest());
+            tests.add(new NotificationReceivedTest());
+            tests.add(new DataIntactTest());
+            tests.add(new DismissOneTest());
+            tests.add(new DismissOneWithReasonTest());
+            tests.add(new DismissOneWithStatsTest());
+            tests.add(new DismissAllTest());
+            tests.add(new SnoozeNotificationForTimeTest());
+            tests.add(new SnoozeNotificationForTimeCancelTest());
+            tests.add(new GetSnoozedNotificationTest());
+            tests.add(new EnableHintsTest());
+            tests.add(new RequestUnbindTest());
+            tests.add(new RequestBindTest());
+            tests.add(new MessageBundleTest());
+            tests.add(new EnableHintsTest());
+            tests.add(new IsDisabledTest());
+            tests.add(new ServiceStoppedTest());
+            tests.add(new NotificationNotReceivedTest());
+        }
         return tests;
     }
 
@@ -512,6 +521,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
     }
 
     private class ServiceStoppedTest extends InteractiveTestCase {
+        int mRetries = 3;
         @Override
         View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.nls_service_stopped);
@@ -519,10 +529,16 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
 
         @Override
         void test() {
-            if (mNm.getEffectsSuppressor() == null) {
+            if (mNm.getEffectsSuppressor() == null && (MockListener.getInstance() == null
+                    || !MockListener.getInstance().isConnected)) {
                 status = PASS;
             } else {
-                status = FAIL;
+                if (--mRetries > 0) {
+                    sleep(100);
+                    status = RETEST;
+                } else {
+                    status = FAIL;
+                }
             }
         }
     }
@@ -543,12 +559,16 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
 
         @Override
         void test() {
-            List<String> result = new ArrayList<>(MockListener.getInstance().mPosted);
-            if (result.size() == 0) {
+            if (MockListener.getInstance() == null) {
                 status = PASS;
             } else {
-                logFail();
-                status = FAIL;
+                List<String> result = new ArrayList<>(MockListener.getInstance().mPosted);
+                if (result.size() == 0) {
+                    status = PASS;
+                } else {
+                    logFail();
+                    status = FAIL;
+                }
             }
             next();
         }
@@ -557,7 +577,9 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         void tearDown() {
             mNm.cancelAll();
             deleteChannel();
-            MockListener.getInstance().resetData();
+            if (MockListener.getInstance() != null) {
+                MockListener.getInstance().resetData();
+            }
         }
     }
 
