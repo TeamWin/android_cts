@@ -16,9 +16,12 @@
 
 package android.telephony.embms.cts;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.telephony.MbmsDownloadSession;
 import android.telephony.cts.embmstestapp.CtsDownloadService;
+import android.telephony.cts.embmstestapp.CtsStreamingService;
+import android.telephony.mbms.DownloadRequest;
 import android.telephony.mbms.FileServiceInfo;
 import android.telephony.mbms.MbmsErrors;
 
@@ -88,6 +91,107 @@ public class MbmsDownloadSessionTest extends MbmsDownloadTestBase {
         assertEquals(1, setTempRootCalls.size());
         assertEquals(tempFileRootDirectory.getCanonicalPath(),
                 setTempRootCalls.get(0).getString(CtsDownloadService.ARGUMENT_ROOT_DIRECTORY_PATH));
+        tempFileRootDirectory.delete();
+    }
+
+    public void testSetInvalidTempFileRoot() throws Exception {
+        File tempFileRootDirectory = new File(mContext.getFilesDir(), "NNN-DoesNotExist");
+        tempFileRootDirectory.delete();
+
+        try {
+            mDownloadSession.setTempFileRootDirectory(tempFileRootDirectory);
+            fail("Should not be able to set temp file root to non-existent directory");
+        } catch (IllegalArgumentException e) {
+            // success
+        }
+
+        tempFileRootDirectory = new File(mContext.getFilesDir(), "this-is-a-file.dat");
+        tempFileRootDirectory.createNewFile();
+
+        try {
+            mDownloadSession.setTempFileRootDirectory(tempFileRootDirectory);
+            fail("Should not be able to set temp file root to a file");
+        } catch (IllegalArgumentException e) {
+            // success
+        }
+
+        try {
+            mDownloadSession.setTempFileRootDirectory(mContext.getFilesDir());
+            fail("Should not be able to set temp file root to the files dir");
+        } catch (IllegalArgumentException e) {
+            // success
+        }
+
+        try {
+            mDownloadSession.setTempFileRootDirectory(mContext.getCacheDir());
+            fail("Should not be able to set temp file root to the cache dir");
+        } catch (IllegalArgumentException e) {
+            // success
+        }
+
+        try {
+            mDownloadSession.setTempFileRootDirectory(mContext.getDataDir());
+            fail("Should not be able to set temp file root to the data dir");
+        } catch (IllegalArgumentException e) {
+            // success
+        }
+
+        tempFileRootDirectory.delete();
+    }
+
+    public void testResetDownloadKnowledge() throws Exception {
+        DownloadRequest request = DOWNLOAD_REQUEST_TEMPLATE.build();
+        mDownloadSession.resetDownloadKnowledge(request);
+
+        List<Bundle> resetDownloadKnowledgeCalls =
+                getMiddlewareCalls(CtsDownloadService.METHOD_RESET_DOWNLOAD_KNOWLEDGE);
+        assertEquals(1, resetDownloadKnowledgeCalls.size());
+        assertEquals(request, resetDownloadKnowledgeCalls.get(0).getParcelable(
+                CtsDownloadService.ARGUMENT_DOWNLOAD_REQUEST));
+    }
+
+    public void testGetDownloadStatus() throws Exception {
+        DownloadRequest request = DOWNLOAD_REQUEST_TEMPLATE.build();
+        mDownloadSession.getDownloadStatus(request, CtsDownloadService.FILE_INFO);
+
+        List<Bundle> getDownloadStatusCalls =
+                getMiddlewareCalls(CtsDownloadService.METHOD_GET_DOWNLOAD_STATUS);
+        assertEquals(1, getDownloadStatusCalls.size());
+        assertEquals(request, getDownloadStatusCalls.get(0).getParcelable(
+                CtsDownloadService.ARGUMENT_DOWNLOAD_REQUEST));
+        assertEquals(CtsDownloadService.FILE_INFO, getDownloadStatusCalls.get(0).getParcelable(
+                CtsDownloadService.ARGUMENT_FILE_INFO));
+    }
+
+    public void testCancelDownload() throws Exception {
+        DownloadRequest request = DOWNLOAD_REQUEST_TEMPLATE.build();
+        mDownloadSession.cancelDownload(request);
+
+        List<Bundle> cancelDownloadCalls =
+                getMiddlewareCalls(CtsDownloadService.METHOD_CANCEL_DOWNLOAD);
+        assertEquals(1, cancelDownloadCalls.size());
+        assertEquals(request, cancelDownloadCalls.get(0).getParcelable(
+                CtsDownloadService.ARGUMENT_DOWNLOAD_REQUEST));
+    }
+
+    public void testListPendingDownloads() throws Exception {
+        DownloadRequest request = DOWNLOAD_REQUEST_TEMPLATE.setAppIntent(new Intent()).build();
+        mDownloadSession.download(request);
+
+        List<DownloadRequest> downloads = mDownloadSession.listPendingDownloads();
+        assertEquals(1, downloads.size());
+        assertEquals(request, downloads.get(0));
+    }
+
+    public void testDownloadRequestOpacity() throws Exception {
+        Intent intent = new Intent("sample_intent_action");
+        DownloadRequest request = DOWNLOAD_REQUEST_TEMPLATE.setAppIntent(intent).build();
+        DownloadRequest newRequest = new DownloadRequest.Builder(request.getSourceUri())
+                .setServiceId(request.getFileServiceId())
+                .setSubscriptionId(request.getSubscriptionId())
+                .setOpaqueData(request.getOpaqueData())
+                .build();
+        assertEquals(request, newRequest);
     }
 
     public void testErrorDelivery() throws Exception {
