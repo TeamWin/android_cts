@@ -38,6 +38,7 @@ public class ManifestGeneratorTest extends TestCase {
         + "%s"
         + "  <application>\r\n"
         + "%s"
+        + "%s"
         + "  </application>\r\n"
         + "  <instrumentation android:name=\"test.package.TestInstrument\" "
         + "android:targetPackage=\"test.package\" />\r\n"
@@ -48,6 +49,8 @@ public class ManifestGeneratorTest extends TestCase {
     private static final String ACTIVITY = "    <activity android:name=\"%s\" />\r\n";
     private static final String ACTIVITY_A = "test.package.ActivityA";
     private static final String ACTIVITY_B = "test.package.ActivityB";
+    private static final String USES_LIBRARY = "    <uses-library android:name=\"%s\" />\r\n";
+    private static final String LIBRARY = "test.runner.library";
 
     public void testManifest() throws Exception {
         List<String> permissions = new ArrayList<>();
@@ -56,6 +59,8 @@ public class ManifestGeneratorTest extends TestCase {
         List<String> activities = new ArrayList<>();
         activities.add(ACTIVITY_A);
         activities.add(ACTIVITY_B);
+        List<String> libraries = new ArrayList<>();
+        libraries.add(LIBRARY);
         OutputStream output = new OutputStream() {
             private StringBuilder string = new StringBuilder();
             @Override
@@ -69,12 +74,13 @@ public class ManifestGeneratorTest extends TestCase {
             }
         };
         ManifestGenerator.generate(output, PACKAGE, INSTRUMENT, MIN_SDK, TARGET_SDK,
-            permissions, activities);
+            permissions, activities, libraries);
         String permissionXml = String.format(PERMISSION, PERMISSION_A)
                 + String.format(PERMISSION, PERMISSION_B);
         String activityXml = String.format(ACTIVITY, ACTIVITY_A)
                 + String.format(ACTIVITY, ACTIVITY_B);
-        String expected = String.format(MANIFEST, permissionXml, activityXml);
+        String libraryXml = String.format(USES_LIBRARY, LIBRARY);
+        String expected = String.format(MANIFEST, permissionXml, libraryXml, activityXml);
         assertEquals("Wrong manifest output", expected, output.toString());
     }
 
