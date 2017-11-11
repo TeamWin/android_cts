@@ -16,7 +16,7 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.server.cts.am">
+    package="android.server.cts.am">
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
@@ -24,12 +24,38 @@
     <uses-permission android:name="android.permission.ACTIVITY_EMBEDDING" />
 
     <application android:label="CtsActivityManagerDeviceTestCases">
-        <uses-library android:name="android.test.runner"/>
+        <uses-library android:name="android.test.runner" />
+
+        <activity
+            android:name="android.server.am.AspectRatioTests$MaxAspectRatioActivity"
+            android:label="MaxAspectRatioActivity"
+            android:maxAspectRatio="1.0"
+            android:resizeableActivity="false" />
+
+        <activity
+            android:name="android.server.am.AspectRatioTests$MetaDataMaxAspectRatioActivity"
+            android:label="MetaDataMaxAspectRatioActivity"
+            android:resizeableActivity="false">
+            <meta-data
+                android:name="android.max_aspect"
+                android:value="1.0" />
+        </activity>
+
+        <activity
+            android:name="android.server.am.AspectRatioTests$MaxAspectRatioResizeableActivity"
+            android:label="MaxAspectRatioResizeableActivity"
+            android:maxAspectRatio="1.0"
+            android:resizeableActivity="true" />
+
+        <activity
+            android:name="android.server.am.AspectRatioTests$MaxAspectRatioUnsetActivity"
+            android:label="MaxAspectRatioUnsetActivity"
+            android:resizeableActivity="false" />
     </application>
 
-    <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
-                     android:targetPackage="android.server.cts.am"
-                     android:label="CTS tests of ActivityManager">
-    </instrumentation>
+    <instrumentation
+        android:name="android.support.test.runner.AndroidJUnitRunner"
+        android:label="CTS tests of ActivityManager"
+        android:targetPackage="android.server.cts.am" />
 
 </manifest>

@@ -1,3 +1,4 @@
+#
 # Copyright (C) 2017 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,24 +13,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-LOCAL_PATH:= $(call my-dir)
+LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-# Don't include this package in any target.
-LOCAL_MODULE_TAGS := tests
+LOCAL_MODULE_TAGS := tests optional
 
-LOCAL_STATIC_JAVA_LIBRARIES := \
-    compatibility-device-util \
+LOCAL_PACKAGE_NAME := CtsActivityManagerDeviceSdk25TestCases
 
-LOCAL_SRC_FILES := \
-    $(call all-java-files-under, src) \
+LOCAL_SRC_FILES := $(call all-java-files-under, src) \
+    ../src/android/server/am/AspectRatioTestsBase.java
 
 LOCAL_SDK_VERSION := 25
 
-# Tag this module as a cts test artifact
+LOCAL_STATIC_JAVA_LIBRARIES := \
+    android-support-test
+
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
-LOCAL_PACKAGE_NAME := CtsAppTestSdk25
-
-include $(BUILD_CTS_SUPPORT_PACKAGE)
+include $(BUILD_CTS_PACKAGE)
