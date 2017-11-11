@@ -672,9 +672,10 @@ public abstract class ActivityManagerTestBase {
         mDevice.pressEnter();
     }
 
-    protected void gotoKeyguard() {
+    protected void gotoKeyguard() throws Exception {
         sleepDevice();
         wakeUpDevice();
+        mAmWmState.waitForKeyguardShowingAndNotOccluded();
     }
 
     protected void setLockCredential() {
