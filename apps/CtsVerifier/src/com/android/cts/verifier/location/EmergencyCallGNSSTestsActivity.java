@@ -36,4 +36,9 @@ public class EmergencyCallGNSSTestsActivity extends EmergencyCallBaseTestActivit
   protected long getPhoneCallDurationMs() {
     return PHONE_CALL_DURATION_MS;
   }
+
+  @Override
+  protected boolean showLocalNumberInputbox() {
+    return false;
+  }
 }

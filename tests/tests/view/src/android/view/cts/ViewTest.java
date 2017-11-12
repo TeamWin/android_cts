@@ -133,6 +133,7 @@ public class ViewTest {
     private ViewTestCtsActivity mActivity;
     private Resources mResources;
     private MockViewParent mMockParent;
+    private Context mContext;
 
     @Rule
     public ActivityTestRule<ViewTestCtsActivity> mActivityRule =
@@ -145,6 +146,7 @@ public class ViewTest {
     @Before
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mContext = mInstrumentation.getTargetContext();
         mActivity = mActivityRule.getActivity();
         PollingCheck.waitFor(mActivity::hasWindowFocus);
         mResources = mActivity.getResources();
@@ -4339,6 +4341,42 @@ public class ViewTest {
         view.onHoverEvent(event);
         assertFalse(view.isHovered());
         event.recycle();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testScaleXNaN() {
+        View view = new View(mContext);
+        view.setScaleX(Float.NaN);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testScaleXPositiveInfinity() {
+        View view = new View(mContext);
+        view.setScaleX(Float.POSITIVE_INFINITY);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testScaleXNegativeInfinity() {
+        View view = new View(mContext);
+        view.setScaleX(Float.NEGATIVE_INFINITY);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testScaleYNaN() {
+        View view = new View(mContext);
+        view.setScaleY(Float.NaN);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testScaleYPositiveInfinity() {
+        View view = new View(mContext);
+        view.setScaleY(Float.POSITIVE_INFINITY);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testScaleYNegativeInfinity() {
+        View view = new View(mContext);
+        view.setScaleY(Float.NEGATIVE_INFINITY);
     }
 
     private static class MockDrawable extends Drawable {

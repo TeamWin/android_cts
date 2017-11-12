@@ -62,7 +62,7 @@ public class KeyguardTests extends KeyguardTestBase {
         mAmWmState.assertVisibility("TestActivity", true);
         gotoKeyguard();
         mAmWmState.computeState();
-        assertShowingAndNotOccluded();
+        mAmWmState.assertKeyguardShowingAndNotOccluded();
         mAmWmState.assertVisibility("TestActivity", false);
         unlockDevice();
     }
@@ -78,7 +78,7 @@ public class KeyguardTests extends KeyguardTestBase {
         gotoKeyguard();
         mAmWmState.computeState();
         mAmWmState.assertVisibility("ShowWhenLockedActivity", true);
-        assertShowingAndOccluded();
+        mAmWmState.assertKeyguardShowingAndOccluded();
         pressHomeButton();
         unlockDevice();
     }
@@ -100,7 +100,7 @@ public class KeyguardTests extends KeyguardTestBase {
         mAmWmState.assertVisibility("ShowWhenLockedWithDialogActivity", true);
         assertTrue(mAmWmState.getWmState().allWindowsVisible(
                 getWindowName("ShowWhenLockedWithDialogActivity")));
-        assertShowingAndOccluded();
+        mAmWmState.assertKeyguardShowingAndOccluded();
         pressHomeButton();
         unlockDevice();
     }
@@ -123,7 +123,7 @@ public class KeyguardTests extends KeyguardTestBase {
         mAmWmState.computeState();
         mAmWmState.assertVisibility("ShowWhenLockedActivity", true);
         mAmWmState.assertVisibility("ShowWhenLockedTranslucentActivity", true);
-        assertShowingAndOccluded();
+        mAmWmState.assertKeyguardShowingAndOccluded();
         pressHomeButton();
         unlockDevice();
     }
@@ -143,7 +143,7 @@ public class KeyguardTests extends KeyguardTestBase {
         mAmWmState.computeState();
         mAmWmState.assertVisibility("ShowWhenLockedTranslucentActivity", true);
         assertWallpaperShowing();
-        assertShowingAndOccluded();
+        mAmWmState.assertKeyguardShowingAndOccluded();
         pressHomeButton();
         unlockDevice();
     }
@@ -166,7 +166,7 @@ public class KeyguardTests extends KeyguardTestBase {
         mAmWmState.computeState();
         mAmWmState.assertVisibility("ShowWhenLockedTranslucentActivity", true);
         mAmWmState.assertVisibility("TestActivity", false);
-        assertShowingAndOccluded();
+        mAmWmState.assertKeyguardShowingAndOccluded();
         pressHomeButton();
         unlockDevice();
     }
@@ -183,7 +183,7 @@ public class KeyguardTests extends KeyguardTestBase {
         mAmWmState.computeState();
         mAmWmState.assertVisibility("ShowWhenLockedDialogActivity", true);
         assertWallpaperShowing();
-        assertShowingAndOccluded();
+        mAmWmState.assertKeyguardShowingAndOccluded();
         pressHomeButton();
         unlockDevice();
     }
@@ -202,7 +202,7 @@ public class KeyguardTests extends KeyguardTestBase {
         gotoKeyguard();
         mAmWmState.computeState(new WaitForValidActivityState.Builder( "ShowWhenLockedActivity" ).build());
         mAmWmState.assertVisibility("ShowWhenLockedActivity", true);
-        assertShowingAndOccluded();
+        mAmWmState.assertKeyguardShowingAndOccluded();
         mAmWmState.assertDoesNotContainStack("Activity must be full screen.",
                 WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
         pressHomeButton();
@@ -224,7 +224,7 @@ public class KeyguardTests extends KeyguardTestBase {
         mAmWmState.waitForKeyguardShowingAndOccluded();
         mAmWmState.computeState(new WaitForValidActivityState.Builder( "DismissKeyguardActivity").build());
         mAmWmState.assertVisibility("DismissKeyguardActivity", true);
-        assertShowingAndOccluded();
+        mAmWmState.assertKeyguardShowingAndOccluded();
     }
 
     @Test
@@ -283,13 +283,13 @@ public class KeyguardTests extends KeyguardTestBase {
         }
         gotoKeyguard();
         mAmWmState.waitForKeyguardShowingAndNotOccluded();
-        assertShowingAndNotOccluded();
+        mAmWmState.assertKeyguardShowingAndNotOccluded();
         launchActivity("ShowWhenLockedActivity");
         mAmWmState.computeState(new WaitForValidActivityState.Builder( "ShowWhenLockedActivity" ).build());
         mAmWmState.assertVisibility("ShowWhenLockedActivity", true);
-        assertShowingAndOccluded();
+        mAmWmState.assertKeyguardShowingAndOccluded();
         executeShellCommand("am broadcast -a trigger_broadcast --ez dismissKeyguard true");
-        assertShowingAndOccluded();
+        mAmWmState.assertKeyguardShowingAndOccluded();
         mAmWmState.assertVisibility("ShowWhenLockedActivity", true);
     }
 
@@ -300,13 +300,13 @@ public class KeyguardTests extends KeyguardTestBase {
         }
         gotoKeyguard();
         mAmWmState.waitForKeyguardShowingAndNotOccluded();
-        assertShowingAndNotOccluded();
+        mAmWmState.assertKeyguardShowingAndNotOccluded();
         launchActivity("KeyguardLockActivity");
         mAmWmState.computeState(new WaitForValidActivityState.Builder( "KeyguardLockActivity" ).build());
         mAmWmState.assertVisibility("KeyguardLockActivity", true);
         executeShellCommand(FINISH_ACTIVITY_BROADCAST);
         mAmWmState.waitForKeyguardShowingAndNotOccluded();
-        assertShowingAndNotOccluded();
+        mAmWmState.assertKeyguardShowingAndNotOccluded();
     }
 
     @Test
@@ -316,7 +316,7 @@ public class KeyguardTests extends KeyguardTestBase {
         }
         gotoKeyguard();
         mAmWmState.waitForKeyguardShowingAndNotOccluded();
-        assertShowingAndNotOccluded();
+        mAmWmState.assertKeyguardShowingAndNotOccluded();
         executeShellCommand(getAmStartCmd("ShowWhenLockedActivity"));
         mAmWmState.computeState(new WaitForValidActivityState.Builder("ShowWhenLockedActivity").build());
         mAmWmState.assertVisibility("ShowWhenLockedActivity", true);
@@ -326,7 +326,7 @@ public class KeyguardTests extends KeyguardTestBase {
         mAmWmState.waitForDisplayUnfrozen();
         mAmWmState.assertSanity();
         mAmWmState.assertHomeActivityVisible(false);
-        assertShowingAndNotOccluded();
+        mAmWmState.assertKeyguardShowingAndNotOccluded();
         mAmWmState.assertVisibility("ShowWhenLockedActivity", false);
     }
 
@@ -386,11 +386,11 @@ public class KeyguardTests extends KeyguardTestBase {
         final String logSeparator = clearLogcat();
         gotoKeyguard();
         mAmWmState.waitForKeyguardShowingAndNotOccluded();
-        assertShowingAndNotOccluded();
+        mAmWmState.assertKeyguardShowingAndNotOccluded();
         launchActivity("ShowWhenLockedAttrActivity");
         mAmWmState.computeState(new WaitForValidActivityState.Builder( "ShowWhenLockedAttrActivity" ).build());
         mAmWmState.assertVisibility("ShowWhenLockedAttrActivity", true);
-        assertShowingAndOccluded();
+        mAmWmState.assertKeyguardShowingAndOccluded();
         sleepDevice();
         assertSingleLaunchAndStop("ShowWhenLockedAttrActivity", logSeparator);
     }

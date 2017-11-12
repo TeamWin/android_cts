@@ -19,7 +19,6 @@ package android.host.multiuser;
 import android.platform.test.annotations.Presubmit;
 
 import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.log.LogUtil.CLog;
 
 import java.util.LinkedHashSet;
 import java.util.Scanner;
@@ -27,11 +26,12 @@ import java.util.Set;
 
 /**
  * Test verifies that users can be created/switched to without error dialogs shown to the user
+ * Run: atest CreateUsersNoAppCrashesTest
  */
 public class CreateUsersNoAppCrashesTest extends BaseMultiUserTest {
     private int mInitialUserId;
     private static final long LOGCAT_POLL_INTERVAL_MS = 5000;
-    private static final long BOOT_COMPLETED_TIMEOUT_MS = 120000;
+    private static final long USER_SWITCH_COMPLETE_TIMEOUT_MS = 120000;
 
     @Override
     protected void setUp() throws Exception {
@@ -48,33 +48,67 @@ public class CreateUsersNoAppCrashesTest extends BaseMultiUserTest {
                 "TestUser_" + System.currentTimeMillis() /* name */,
                 true /* guest */,
                 false /* ephemeral */);
-        getDevice().executeAdbCommand("logcat", "-c"); // Reset log
-        assertTrue("Couldn't switch to user " + userId, getDevice().switchUser(userId));
-        Set<String> appErrors = new LinkedHashSet<>();
-        assertTrue("Didn't receive BOOT_COMPLETED delivered notification. appErrors=" + appErrors,
-                waitForBootCompleted(appErrors, userId));
-        assertTrue("App error dialog(s) are present: " + appErrors, appErrors.isEmpty());
-        assertTrue("Couldn't switch to user " + userId, getDevice().switchUser(mInitialUserId));
+        assertSwitchToNewUser(userId);
+        assertSwitchToUser(userId, mInitialUserId);
     }
 
-    private boolean waitForBootCompleted(Set<String> appErrors, int targetUserId)
-            throws DeviceNotAvailableException, InterruptedException {
+    public void testCanCreateSecondaryUser() throws Exception {
+        if (!mSupportsMultiUser) {
+            return;
+        }
+        int userId = getDevice().createUser(
+                "TestUser_" + System.currentTimeMillis() /* name */,
+                false /* guest */,
+                false /* ephemeral */);
+        assertSwitchToNewUser(userId);
+        assertSwitchToUser(userId, mInitialUserId);
+    }
+
+    private void assertSwitchToNewUser(int toUserId) throws Exception {
+        final String exitString = "Finished processing BOOT_COMPLETED for u" + toUserId;
+        final Set<String> appErrors = new LinkedHashSet<>();
+        getDevice().executeAdbCommand("logcat", "-c"); // Reset log
+        assertTrue("Couldn't switch to user " + toUserId, getDevice().switchUser(toUserId));
+        final boolean result = waitForUserSwitchComplete(appErrors, toUserId, exitString);
+        assertTrue("Didn't receive BOOT_COMPLETED delivered notification. appErrors="
+                + appErrors, result);
+        assertTrue("App error dialog(s) are present: " + appErrors, appErrors.isEmpty());
+    }
+
+    private void assertSwitchToUser(int fromUserId, int toUserId) throws Exception {
+        final String exitString = "Continue user switch oldUser #" + fromUserId + ", newUser #"
+                + toUserId;
+        final Set<String> appErrors = new LinkedHashSet<>();
+        getDevice().executeAdbCommand("logcat", "-c"); // Reset log
+        assertTrue("Couldn't switch to user " + toUserId, getDevice().switchUser(toUserId));
+        final boolean result = waitForUserSwitchComplete(appErrors, toUserId, exitString);
+        assertTrue("Didn't reach \"Continue user switch\" stage. appErrors=" + appErrors, result);
+        assertTrue("App error dialog(s) are present: " + appErrors, appErrors.isEmpty());
+    }
+
+    private boolean waitForUserSwitchComplete(Set<String> appErrors, int targetUserId,
+            String exitString) throws DeviceNotAvailableException, InterruptedException {
+        boolean mExitFound = false;
         long ti = System.currentTimeMillis();
-        while (System.currentTimeMillis() - ti < BOOT_COMPLETED_TIMEOUT_MS) {
+        while (System.currentTimeMillis() - ti < USER_SWITCH_COMPLETE_TIMEOUT_MS) {
             String logs = getDevice().executeAdbCommand("logcat", "-v", "brief", "-d",
-                    "ActivityManager:I", "AndroidRuntime:E", "*:S");
+                    "ActivityManager:D", "AndroidRuntime:E", "*:S");
             Scanner in = new Scanner(logs);
             while (in.hasNextLine()) {
                 String line = in.nextLine();
                 if (line.contains("Showing crash dialog for package")) {
                     appErrors.add(line);
-                } else if (line.contains("Finished processing BOOT_COMPLETED for u" + targetUserId)) {
-                    return true;
+                } else if (line.contains(exitString)) {
+                    // Parse all logs in case crashes occur as a result of onUserChange callbacks
+                    mExitFound = true;
                 } else if (line.contains("FATAL EXCEPTION IN SYSTEM PROCESS")) {
                     throw new IllegalStateException("System process crashed - " + line);
                 }
             }
             in.close();
+            if (mExitFound) {
+                return true;
+            }
             Thread.sleep(LOGCAT_POLL_INTERVAL_MS);
         }
         return false;

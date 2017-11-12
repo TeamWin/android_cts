@@ -18,15 +18,18 @@ package com.android.cts.verifier.notifications;
 
 import com.android.cts.verifier.R;
 
+import android.app.ActivityManager;
 import android.app.AutomaticZenRule;
 import android.app.NotificationManager;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Parcelable;
 import android.provider.Settings;
 import android.provider.Settings.Secure;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -56,17 +59,23 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
     @Override
     protected List<InteractiveTestCase> createTestItems() {
         List<InteractiveTestCase> tests = new ArrayList<>(9);
-        tests.add(new IsEnabledTest());
-        tests.add(new ServiceStartedTest());
-        tests.add(new CreateAutomaticZenRuleTest());
-        tests.add(new UpdateAutomaticZenRuleTest());
-        tests.add(new GetAutomaticZenRuleTest());
-        tests.add(new GetAutomaticZenRulesTest());
-        tests.add(new SubscribeAutomaticZenRuleTest());
-        tests.add(new DeleteAutomaticZenRuleTest());
-        tests.add(new UnsubscribeAutomaticZenRuleTest());
-        tests.add(new IsDisabledTest());
-        tests.add(new ServiceStoppedTest());
+        ActivityManager am = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        if (am.isLowRamDevice()) {
+            tests.add(new CannotBeEnabledTest());
+            tests.add(new ServiceStoppedTest());
+        } else {
+            tests.add(new IsEnabledTest());
+            tests.add(new ServiceStartedTest());
+            tests.add(new CreateAutomaticZenRuleTest());
+            tests.add(new UpdateAutomaticZenRuleTest());
+            tests.add(new GetAutomaticZenRuleTest());
+            tests.add(new GetAutomaticZenRulesTest());
+            tests.add(new SubscribeAutomaticZenRuleTest());
+            tests.add(new DeleteAutomaticZenRuleTest());
+            tests.add(new UnsubscribeAutomaticZenRuleTest());
+            tests.add(new IsDisabledTest());
+            tests.add(new ServiceStoppedTest());
+        }
         return tests;
     }
 
@@ -92,6 +101,40 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
                     status = PASS;
                 } else {
                     status = WAIT_FOR_USER;
+                }
+                next();
+            }
+        }
+
+        void tearDown() {
+            // wait for the service to start
+            delay();
+        }
+    }
+
+    protected class CannotBeEnabledTest extends InteractiveTestCase {
+        @Override
+        View inflate(ViewGroup parent) {
+            return createNlsSettingsItem(parent, R.string.cp_cannot_enable_service);
+        }
+
+        @Override
+        boolean autoStart() {
+            return true;
+        }
+
+        @Override
+        void test() {
+            mNm.cancelAll();
+            Intent settings = new Intent(NOTIFICATION_LISTENER_SETTINGS);
+            if (settings.resolveActivity(mPackageManager) == null) {
+                logFail("no settings activity");
+                status = FAIL;
+            } else {
+                if (mNm.isNotificationPolicyAccessGranted()) {
+                    status = FAIL;
+                } else {
+                    status = PASS;
                 }
                 next();
             }
