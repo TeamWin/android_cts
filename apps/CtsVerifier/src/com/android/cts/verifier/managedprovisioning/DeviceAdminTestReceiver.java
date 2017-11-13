@@ -25,6 +25,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.PersistableBundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.android.cts.verifier.R;
@@ -74,6 +75,20 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
         Log.i(TAG, "Bugreport collection operation failed, code: " + failureCode);
         Utils.showBugreportNotification(context, context.getString(
                 R.string.bugreport_failed_completing), Utils.BUGREPORT_NOTIFICATION_ID);
+    }
+
+    @Override
+    public void onLockTaskModeEntering(Context context, Intent intent, String pkg) {
+        Log.i(TAG, "Entering LockTask mode: " + pkg);
+        LocalBroadcastManager.getInstance(context)
+                .sendBroadcast(new Intent(LockTaskUiTestActivity.ACTION_LOCK_TASK_STARTED));
+    }
+
+    @Override
+    public void onLockTaskModeExiting(Context context, Intent intent) {
+        Log.i(TAG, "Exiting LockTask mode");
+        LocalBroadcastManager.getInstance(context)
+                .sendBroadcast(new Intent(LockTaskUiTestActivity.ACTION_LOCK_TASK_STOPPED));
     }
 
     private void setupProfile(Context context) {

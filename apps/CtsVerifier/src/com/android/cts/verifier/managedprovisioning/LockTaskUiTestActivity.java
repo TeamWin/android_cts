@@ -26,15 +26,21 @@ import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_SYSTEM_INF
 
 import static com.android.cts.verifier.managedprovisioning.Utils.createInteractiveTestItem;
 
+import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.admin.DevicePolicyManager;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.DataSetObserver;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.Toast;
@@ -44,16 +50,27 @@ import com.android.cts.verifier.IntentDrivenTestActivity.ButtonInfo;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.TestListAdapter.TestListItem;
+import com.android.cts.verifier.TestResult;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests for {@link DevicePolicyManager#setLockTaskFeatures(ComponentName, int)}.
  */
 public class LockTaskUiTestActivity extends PassFailButtons.TestListActivity {
 
+    private static final String TAG = LockTaskUiTestActivity.class.getSimpleName();
+
     public static final String EXTRA_TEST_ID =
             "com.android.cts.verifier.managedprovisioning.extra.TEST_ID";
 
-    private static final String TAG = LockTaskUiTestActivity.class.getSimpleName();
+    /** Broadcast action sent by {@link DeviceAdminTestReceiver} when LockTask starts. */
+    static final String ACTION_LOCK_TASK_STARTED =
+            "com.android.cts.verifier.managedprovisioning.action.LOCK_TASK_STARTED";
+    /** Broadcast action sent by {@link DeviceAdminTestReceiver} when LockTask stops. */
+    static final String ACTION_LOCK_TASK_STOPPED =
+            "com.android.cts.verifier.managedprovisioning.action.LOCK_TASK_STOPPED";
 
     private static final ComponentName ADMIN_RECEIVER =
             DeviceAdminTestReceiver.getReceiverComponentName();
@@ -73,6 +90,10 @@ public class LockTaskUiTestActivity extends PassFailButtons.TestListActivity {
     private DevicePolicyManager mDpm;
     private ActivityManager mAm;
     private NotificationManager mNotifyMgr;
+
+    private LockTaskStateChangedReceiver mStateChangedReceiver;
+    private CountDownLatch mLockTaskStartedLatch;
+    private CountDownLatch mLockTaskStoppedLatch;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,15 +117,11 @@ public class LockTaskUiTestActivity extends PassFailButtons.TestListActivity {
 
         Button startLockTaskButton = findViewById(R.id.start_lock_task_button);
         startLockTaskButton.setOnClickListener((view) -> startLockTaskMode());
-    }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        final String action = getIntent().getAction();
-        if (ACTION_STOP_LOCK_TASK.equals(action)) {
+        if (ACTION_STOP_LOCK_TASK.equals(getIntent().getAction())) {
+            // This means we're started by the "stop LockTask mode" test activity (the last one in
+            // the list) in order to stop LockTask.
             stopLockTaskMode();
-            finish();
         }
     }
 
@@ -163,30 +180,140 @@ public class LockTaskUiTestActivity extends PassFailButtons.TestListActivity {
                 )));
     }
 
-    private void startLockTaskMode() {
-        mDpm.setLockTaskPackages(ADMIN_RECEIVER, new String[] {TEST_PACKAGE_NAME});
-        mDpm.setLockTaskFeatures(ADMIN_RECEIVER, LOCK_TASK_FEATURE_NONE);
-        if (mAm.getLockTaskModeState() != ActivityManager.LOCK_TASK_MODE_LOCKED) {
-            startLockTask();
-            if (mAm.getLockTaskModeState() != ActivityManager.LOCK_TASK_MODE_LOCKED) {
-                Log.e(TAG, "Failed to start LockTask mode");
-                Toast.makeText(this, "Failed to start LockTask mode", Toast.LENGTH_SHORT).show();
+    /** Receives LockTask start/stop callbacks forwarded by {@link DeviceAdminTestReceiver}. */
+    private final class LockTaskStateChangedReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            switch (action) {
+                case ACTION_LOCK_TASK_STARTED:
+                    if (mLockTaskStartedLatch != null) {
+                        mLockTaskStartedLatch.countDown();
+                    }
+                    break;
+                case ACTION_LOCK_TASK_STOPPED:
+                    if (mLockTaskStoppedLatch != null) {
+                        mLockTaskStoppedLatch.countDown();
+                    }
+                    break;
             }
         }
-        issueTestNotification();
     }
 
-    private void stopLockTaskMode() {
-        cancelTestNotification();
-        if (mAm.getLockTaskModeState() != ActivityManager.LOCK_TASK_MODE_NONE) {
-            stopLockTask();
-            if (mAm.getLockTaskModeState() != ActivityManager.LOCK_TASK_MODE_NONE) {
-                Log.e(TAG, "Failed to stop LockTask mode");
-                Toast.makeText(this, "Failed to stop LockTask mode", Toast.LENGTH_SHORT).show();
-            }
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mStateChangedReceiver = new LockTaskStateChangedReceiver();
+        final IntentFilter filter = new IntentFilter();
+        filter.addAction(ACTION_LOCK_TASK_STARTED);
+        filter.addAction(ACTION_LOCK_TASK_STOPPED);
+        LocalBroadcastManager.getInstance(this).registerReceiver(mStateChangedReceiver, filter);
+    }
+
+    @Override
+    protected void onPause() {
+        if (mStateChangedReceiver != null) {
+            LocalBroadcastManager.getInstance(this).unregisterReceiver(mStateChangedReceiver);
+            mStateChangedReceiver = null;
         }
-        mDpm.setLockTaskFeatures(ADMIN_RECEIVER, LOCK_TASK_FEATURE_NONE);
-        mDpm.setLockTaskPackages(ADMIN_RECEIVER, new String[] {});
+        super.onPause();
+    }
+
+    /**
+     * Starts LockTask mode and waits for callback from {@link DeviceAdminTestReceiver} to confirm
+     * LockTask has started successfully. If the callback isn't received, the entire test will be
+     * marked as failed.
+     *
+     * @see LockTaskStateChangedReceiver
+     */
+    private void startLockTaskMode() {
+        if (mAm.getLockTaskModeState() == ActivityManager.LOCK_TASK_MODE_LOCKED) {
+            return;
+        }
+
+        mLockTaskStartedLatch = new CountDownLatch(1);
+        try {
+            mDpm.setLockTaskPackages(ADMIN_RECEIVER, new String[] {TEST_PACKAGE_NAME});
+            mDpm.setLockTaskFeatures(ADMIN_RECEIVER, LOCK_TASK_FEATURE_NONE);
+            startLockTask();
+
+            new CheckLockTaskStateTask() {
+                @Override
+                protected void onPostExecute(Boolean success) {
+                    if (success) {
+                        issueTestNotification();
+                    } else {
+                        notifyFailure(getTestId(), "Failed to start LockTask mode");
+                    }
+                }
+            }.execute(mLockTaskStartedLatch);
+        } catch (SecurityException e) {
+            Log.e(TAG, e.getMessage(), e);
+            Toast.makeText(this, "Failed to run test. Did you set up device owner correctly?",
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * Stops LockTask mode and waits for callback from {@link DeviceAdminTestReceiver} to confirm
+     * LockTask has stopped successfully. If the callback isn't received, the "Stop LockTask mode"
+     * test case will be marked as failed.
+     *
+     * Note that we {@link #finish()} this activity here, since it's started by the "Stop LockTask
+     * mode" test activity, and shouldn't be exposed to the tester once its job is done.
+     *
+     * @see LockTaskStateChangedReceiver
+     */
+    private void stopLockTaskMode() {
+        if (mAm.getLockTaskModeState() == ActivityManager.LOCK_TASK_MODE_NONE) {
+            finish();
+            return;
+        }
+
+        mLockTaskStoppedLatch = new CountDownLatch(1);
+        try {
+            stopLockTask();
+
+            new CheckLockTaskStateTask() {
+                @Override
+                protected void onPostExecute(Boolean success) {
+                    if (!success) {
+                        notifyFailure(TEST_ID_STOP_LOCK_TASK, "Failed to stop LockTask mode");
+                    }
+                    cancelTestNotification();
+                    mDpm.setLockTaskFeatures(ADMIN_RECEIVER, LOCK_TASK_FEATURE_NONE);
+                    mDpm.setLockTaskPackages(ADMIN_RECEIVER, new String[] {});
+                    LockTaskUiTestActivity.this.finish();
+                }
+            }.execute(mLockTaskStoppedLatch);
+        } catch (SecurityException e) {
+            Log.e(TAG, e.getMessage(), e);
+            Toast.makeText(this, "Failed to finish test. Did you set up device owner correctly?",
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private abstract class CheckLockTaskStateTask extends AsyncTask<CountDownLatch, Void, Boolean> {
+        @Override
+        protected Boolean doInBackground(CountDownLatch... latches) {
+            if (latches.length > 0 && latches[0] != null) {
+                try {
+                    return latches[0].await(1, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    // Fall through
+                }
+            }
+            return false;
+        }
+
+        @Override
+        protected abstract void onPostExecute(Boolean success);
+    }
+
+    private void notifyFailure(String testId, String message) {
+        Log.e(TAG, message);
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+        TestResult.setFailedResult(this, testId, message);
     }
 
     private void issueTestNotification() {
