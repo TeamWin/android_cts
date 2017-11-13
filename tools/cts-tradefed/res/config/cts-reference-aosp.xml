@@ -163,4 +163,7 @@
     <option name="compatibility:exclude-filter" value="CtsAppTestCases android.app.cts.ActionBarTest#testOptionsMenuKey" />
     <option name="compatibility:exclude-filter" value="CtsAppTestCases android.app.cts.ActivityKeyboardShortcutsTest#testRequestShowKeyboardShortcuts" />
 
+    <!-- b/69072351: Internal bug in the "Freeform" feature of ActivityManager -->
+    <option name="compatibility:exclude-filter" value="CtsServicesHostTestCases android.server.cts.ActivityManagerFreeformStackTests#testFreeformWindowManagementSupport" />
+
 </configuration>
