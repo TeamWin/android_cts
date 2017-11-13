@@ -190,19 +190,7 @@ public class CrossAppDragAndDropTests {
         executeShellCommand(AM_FORCE_STOP + TARGET_PACKAGE_NAME);
         executeShellCommand(AM_FORCE_STOP + TARGET_23_PACKAGE_NAME);
         unlockDevice();
-
-        // Reinitialize the docked stack to force the window manager to reset its default bounds.
-        // See b/29068935.
         clearLogs();
-        final String componentName = getComponentName(mSourcePackageName, SOURCE_ACTIVITY_NAME);
-        executeShellCommand(getStartCommand(componentName, null, null) + " --windowingMode " +
-                WINDOWING_MODE_FULLSCREEN);
-        final int taskId = getActivityTaskId(componentName);
-        // Moving a task from the full screen stack to the docked stack resets
-        // WindowManagerService#mDockedStackCreateBounds.
-        mAm.setTaskWindowingMode(taskId, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, true /* toTop */);
-        waitForResume(mSourcePackageName, SOURCE_ACTIVITY_NAME);
-        executeShellCommand(AM_FORCE_STOP + SOURCE_PACKAGE_NAME);
 
         // Remove special stacks.
         mAm.removeStacksInWindowingModes(new int[] {
