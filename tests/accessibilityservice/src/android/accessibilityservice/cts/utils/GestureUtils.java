@@ -85,7 +85,7 @@ public class GestureUtils {
     }
 
     public static StrokeDescription drag(StrokeDescription from, PointF to) {
-        return new StrokeDescription(
+        return from.continueStroke(
                 path(lastPointOf(from), to),
                 endTimeOf(from), ViewConfiguration.getTapTimeout(), true);
     }
