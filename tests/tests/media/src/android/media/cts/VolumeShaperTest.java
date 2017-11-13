@@ -1130,7 +1130,7 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
                             0.f, volumeShaper.getVolume(), VOLUME_TOLERANCE);
 
                     player.start();
-                    Thread.sleep(WARMUP_TIME_MS);
+                    Thread.sleep(WARMUP_TIME_MS * 2);
 
                     Log.d(TAG, testName + " applying " + (pause != 0 ? "pause" : "stop"));
                     if (pause == 1) {
