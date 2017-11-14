@@ -612,11 +612,7 @@ public abstract class ActivityManagerTestBase {
 
     protected void sleepDevice() {
         int retriesLeft = 5;
-        try {
-            mDevice.sleep();
-        } catch (RemoteException e) {
-            throw new RuntimeException(e);
-        }
+        runCommandAndPrintOutput("input keyevent SLEEP");
         do {
             if (isDisplayOn()) {
                 log("***Waiting for display to turn off...");
@@ -643,12 +639,7 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected void wakeUpDevice() {
-        try {
-            mDevice.wakeUp();
-            setLockDisabled(true);
-        } catch (RemoteException e) {
-            throw new RuntimeException(e);
-        }
+        runCommandAndPrintOutput("input keyevent WAKEUP");
     }
 
     protected void unlockDevice() {
