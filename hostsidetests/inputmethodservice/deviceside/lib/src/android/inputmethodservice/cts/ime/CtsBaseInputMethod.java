@@ -33,6 +33,7 @@ import android.inputmethodservice.cts.ime.ImeCommandReceiver.ImeCommandCallbacks
 import android.os.ResultReceiver;
 import android.util.Log;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputBinding;
 import android.view.inputmethod.InputConnection;
 
 import java.util.function.Consumer;
@@ -80,15 +81,19 @@ public abstract class CtsBaseInputMethod extends InputMethodService implements I
 
     @Override
     public void onStartInput(EditorInfo editorInfo, boolean restarting) {
+        final boolean dummyConnection =
+                getCurrentInputConnection() == getCurrentInputBinding().getConnection();
         if (DEBUG) {
             Log.d(mLogTag, "onStartInput:"
                     + " editorInfo=" + editorInfo
-                    + " restarting=" + restarting);
+                    + " restarting=" + restarting
+                    + " dummyConnection=" + dummyConnection);
         }
 
         sendEvent(DeviceEvent.builder()
                 .setType(ON_START_INPUT)
-                .with(DeviceEventTypeParam.ON_START_INPUT_RESTARTING, restarting));
+                .with(DeviceEventTypeParam.ON_START_INPUT_RESTARTING, restarting)
+                .with(DeviceEventTypeParam.ON_START_INPUT_DUMMY_INPUT_CONNECTION, dummyConnection));
         super.onStartInput(editorInfo, restarting);
     }
 
