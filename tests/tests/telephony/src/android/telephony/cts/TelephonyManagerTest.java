@@ -358,12 +358,12 @@ public class TelephonyManagerTest {
     }
 
     private void assertSerialNumber() {
-        assertNotNull("Non-telephony devices must have a Build.SERIAL number.",
-                Build.SERIAL);
+        assertNotNull("Non-telephony devices must have a Build.getSerial() number.",
+                Build.getSerial());
         assertTrue("Hardware id must be no longer than 20 characters.",
-                Build.SERIAL.length() <= 20);
+                Build.getSerial().length() <= 20);
         assertTrue("Hardware id must be alphanumeric.",
-                Pattern.matches("[0-9A-Za-z]+", Build.SERIAL));
+                Pattern.matches("[0-9A-Za-z]+", Build.getSerial()));
     }
 
     private void assertMacAddress(String macAddress) {
