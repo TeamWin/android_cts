@@ -66,7 +66,7 @@ LOCAL_INSTALLED_MODULE_STEM := android.core.vm-tests-tf.jar
 LOCAL_MODULE_PATH := $(intermediates)
 
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 include $(BUILD_SYSTEM)/base_rules.mk
 

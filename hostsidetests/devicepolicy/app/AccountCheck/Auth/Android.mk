@@ -17,7 +17,7 @@ LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 LOCAL_PACKAGE_NAME := CtsAccountCheckAuthApp
 
@@ -31,7 +31,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-v4  \
     ctstestrunner  \
     ub-uiautomator  \
-    android-support-test
+    android-support-test \
+    legacy-android-test
 
 LOCAL_JAVA_LIBRARIES := legacy-android-test
 

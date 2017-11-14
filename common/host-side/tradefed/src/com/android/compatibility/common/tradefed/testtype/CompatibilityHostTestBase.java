@@ -20,6 +20,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.android.annotations.Nullable;
+import com.android.annotations.VisibleForTesting;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
@@ -236,8 +237,13 @@ public class CompatibilityHostTestBase implements IAbiReceiver, IBuildReceiver, 
             testRunner.setClassName(testClassName);
         }
 
-        CollectingTestListener listener = new CollectingTestListener();
+        CollectingTestListener listener = createCollectingListener();
         assertTrue(mDevice.runInstrumentationTests(testRunner, listener));
         return listener.getCurrentRunResults();
+    }
+
+    @VisibleForTesting
+    protected CollectingTestListener createCollectingListener() {
+        return new CollectingTestListener();
     }
 }

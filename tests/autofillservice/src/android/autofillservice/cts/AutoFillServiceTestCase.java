@@ -24,9 +24,8 @@ import static android.autofillservice.cts.Helper.setLoggingLevel;
 import static android.autofillservice.cts.InstrumentedAutoFillService.SERVICE_NAME;
 import static android.provider.Settings.Secure.AUTOFILL_SERVICE;
 
-import static com.google.common.truth.Truth.assertWithMessage;
-
 import android.autofillservice.cts.InstrumentedAutoFillService.Replier;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
@@ -57,19 +56,33 @@ abstract class AutoFillServiceTestCase {
     public final RetryRule mRetryRule = new RetryRule(2);
 
     @Rule
+    public final AutofillLoggingTestRule mLoggingRule = new AutofillLoggingTestRule(TAG);
+
+    @Rule
     public final RequiredFeatureRule mRequiredFeatureRule =
             new RequiredFeatureRule(PackageManager.FEATURE_AUTOFILL);
 
+    protected final Context mContext;
+    protected final String mPackageName;
     /**
      * Stores the previous logging level so it's restored after the test.
      */
     private String mLoggingLevel;
 
+    protected AutoFillServiceTestCase() {
+        mContext = InstrumentationRegistry.getTargetContext();
+        mPackageName = mContext.getPackageName();
+    }
+
     @BeforeClass
-    public static void removeLockScreen() {
+    public static void prepareScreen() {
         if (!hasAutofillFeature()) return;
 
+        // Unlock screen.
         runShellCommand("input keyevent KEYCODE_WAKEUP");
+
+        // Collapse notifications.
+        runShellCommand("cmd statusbar collapse");
     }
 
     @BeforeClass
@@ -121,7 +134,7 @@ abstract class AutoFillServiceTestCase {
     // exceptions would mask the real cause. A better approach might be using a @Rule or some other
     // visitor pattern.
     @After
-    public void assertNothingIsPending() throws Exception {
+    public void assertNothingIsPending() throws Throwable {
         final MultipleExceptionsCatcher catcher = new MultipleExceptionsCatcher()
             .run(() -> sReplier.assertNumberUnhandledFillRequests(0))
             .run(() -> sReplier.assertNumberUnhandledSaveRequests(0));
@@ -161,24 +174,15 @@ abstract class AutoFillServiceTestCase {
     /**
      * Asserts that the {@link InstrumentedAutoFillService} is enabled for the default user.
      */
-    protected static void assertServiceEnabled() {
-        assertServiceStatus(true);
+    protected void assertServiceEnabled() {
+        Helper.assertAutofillServiceStatus(SERVICE_NAME, true);
     }
 
     /**
      * Asserts that the {@link InstrumentedAutoFillService} is disabled for the default user.
      */
-    protected static void assertServiceDisabled() {
-        assertServiceStatus(false);
-    }
-
-    /**
-     * Asserts that there is no session left in the service.
-     */
-    protected void assertNoDanglingSessions() {
-        final String command = "cmd autofill list sessions";
-        final String result = runShellCommand(command);
-        assertWithMessage("Dangling sessions ('%s'): %s'", command, result).that(result).isEmpty();
+    protected void assertServiceDisabled() {
+        Helper.assertAutofillServiceStatus(SERVICE_NAME, false);
     }
 
     protected RemoteViews createPresentation(String message) {
@@ -186,17 +190,5 @@ abstract class AutoFillServiceTestCase {
                 .getPackageName(), R.layout.list_item);
         presentation.setTextViewText(R.id.text1, message);
         return presentation;
-    }
-
-    private static boolean isServiceEnabled() {
-        final String service = runShellCommand("settings get secure %s", AUTOFILL_SERVICE);
-        return SERVICE_NAME.equals(service);
-    }
-
-    private static void assertServiceStatus(boolean enabled) {
-        final String actual = runShellCommand("settings get secure %s", AUTOFILL_SERVICE);
-        final String expected = enabled ? SERVICE_NAME : "null";
-        assertWithMessage("Invalid value for secure setting %s", AUTOFILL_SERVICE)
-                .that(actual).isEqualTo(expected);
     }
 }

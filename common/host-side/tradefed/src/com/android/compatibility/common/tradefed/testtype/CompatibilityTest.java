@@ -16,7 +16,6 @@
 
 package com.android.compatibility.common.tradefed.testtype;
 
-import com.android.compatibility.SuiteInfo;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.result.InvocationFailureHandler;
 import com.android.compatibility.common.tradefed.result.SubPlanHelper;
@@ -55,6 +54,7 @@ import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.IShardableTest;
 import com.android.tradefed.testtype.IStrictShardableTest;
 import com.android.tradefed.testtype.ITestCollector;
+import com.android.tradefed.testtype.suite.TestSuiteInfo;
 import com.android.tradefed.util.AbiFormatter;
 import com.android.tradefed.util.AbiUtils;
 import com.android.tradefed.util.ArrayUtil;
@@ -605,7 +605,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
      * Exposed for testing.
      */
     protected Set<String> getAbisForBuildTargetArch() {
-        return AbiUtils.getAbisForArch(SuiteInfo.TARGET_ARCH);
+        return AbiUtils.getAbisForArch(TestSuiteInfo.getInstance().getTargetArch());
     }
 
     /**
@@ -664,10 +664,10 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
         if (!failures.isEmpty()) {
             CLog.w("There are failed system status checkers: %s capturing a bugreport",
                     failures.toString());
-            InputStreamSource bugSource = device.getBugreport();
-            logger.testLog(String.format("bugreport-checker-pre-module-%s", moduleName),
-                    LogDataType.BUGREPORT, bugSource);
-            bugSource.cancel();
+            try (InputStreamSource bugSource = device.getBugreport()) {
+                logger.testLog(String.format("bugreport-checker-pre-module-%s", moduleName),
+                        LogDataType.BUGREPORT, bugSource);
+            }
         }
     }
 
@@ -686,10 +686,10 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
         if (!failures.isEmpty()) {
             CLog.w("There are failed system status checkers: %s capturing a bugreport",
                     failures.toString());
-            InputStreamSource bugSource = device.getBugreport();
-            logger.testLog(String.format("bugreport-checker-post-module-%s", moduleName),
-                    LogDataType.BUGREPORT, bugSource);
-            bugSource.cancel();
+            try (InputStreamSource bugSource = device.getBugreport()) {
+                logger.testLog(String.format("bugreport-checker-post-module-%s", moduleName),
+                        LogDataType.BUGREPORT, bugSource);
+            }
         }
     }
 

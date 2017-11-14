@@ -26,7 +26,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := android-support-test legacy-android-test
 LOCAL_PACKAGE_NAME := CtsInstrumentationAppDiffCert
 
 # tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 # sign this app with different cert than CtsTargetInstrumentationApp
 LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/cts-testkey2

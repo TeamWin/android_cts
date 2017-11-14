@@ -15,7 +15,9 @@
  */
 package com.android.compatibility.common.tradefed.build;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.build.IDeviceBuildInfo;
@@ -86,6 +88,9 @@ public class CompatibilityBuildProviderTest {
         EasyMock.verify(mMockDevice);
         assertTrue(info instanceof IDeviceBuildInfo);
         // tests dir should be populated
+        assertNotNull(((IDeviceBuildInfo)info).getTestsDir());
+        // ensure that tests dir is never clean up.
+        mProvider.cleanUp(info);
         assertNotNull(((IDeviceBuildInfo)info).getTestsDir());
     }
 }

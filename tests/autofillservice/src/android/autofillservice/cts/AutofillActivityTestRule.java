@@ -28,6 +28,10 @@ public class AutofillActivityTestRule<T extends Activity> extends ActivityTestRu
         super(activityClass);
     }
 
+    public AutofillActivityTestRule(Class<T> activityClass, boolean launchActivity) {
+        super(activityClass, false, launchActivity);
+    }
+
     @Override
     protected void beforeActivityLaunched() {
         Helper.preTestCleanup();

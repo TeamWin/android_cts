@@ -16,9 +16,6 @@
 
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.Helper.FILL_TIMEOUT_MS;
-import static android.autofillservice.cts.Helper.eventually;
-
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
@@ -422,7 +419,7 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
                 .setField("editText", "filled")
                 .setPresentation(createPresentation("dataset"))
                 .build());
-        MultipleTimesTimeListener timeWatcher = new MultipleTimesTimeListener("timePicker", 2,
+        MultipleTimesTimeListener timeWatcher = new MultipleTimesTimeListener("timePicker", 1,
                 mTimePicker, 12, 32);
         mTimePicker.setOnTimeChangedListener(timeWatcher);
 

@@ -16,10 +16,10 @@
 
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.Helper.runShellCommand;
 import static android.autofillservice.cts.InstrumentedAutoFillService.SERVICE_NAME;
 import static android.autofillservice.cts.UiBot.PORTRAIT;
 import static android.provider.Settings.Secure.AUTOFILL_SERVICE;
+import static android.provider.Settings.Secure.USER_SETUP_COMPLETE;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -30,16 +30,18 @@ import android.app.assist.AssistStructure.WindowNode;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.icu.util.Calendar;
-import android.os.UserManager;
 import android.service.autofill.FillContext;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.Pair;
 import android.view.View;
 import android.view.ViewStructure.HtmlInfo;
 import android.view.autofill.AutofillId;
 import android.view.autofill.AutofillValue;
+import android.webkit.WebView;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -53,9 +55,6 @@ final class Helper {
 
     private static final String TAG = "AutoFillCtsHelper";
 
-    // TODO: should static import Settings.Secure instead, but that's not a @TestApi
-    private static String USER_SETUP_COMPLETE = "user_setup_complete";
-
     static final boolean VERBOSE = false;
 
     static final String ID_USERNAME_LABEL = "username_label";
@@ -64,6 +63,8 @@ final class Helper {
     static final String ID_PASSWORD = "password";
     static final String ID_LOGIN = "login";
     static final String ID_OUTPUT = "output";
+
+    private static final String CMD_LIST_SESSIONS = "cmd autofill list sessions";
 
     /**
      * Timeout (in milliseconds) until framework binds / unbinds from service.
@@ -96,6 +97,11 @@ final class Helper {
     static final int UI_TIMEOUT_MS = 2000;
 
     /**
+     * Timeout (in milliseconds) for an activity to be brought out to top.
+     */
+    static final int ACTIVITY_RESURRECTION_MS = 5000;
+
+    /**
      * Timeout (in milliseconds) for changing the screen orientation.
      */
     static final int UI_SCREEN_ORIENTATION_TIMEOUT_MS = 5000;
@@ -108,6 +114,43 @@ final class Helper {
     private final static String ACCELLEROMETER_CHANGE =
             "content insert --uri content://settings/system --bind name:s:accelerometer_rotation "
                     + "--bind value:i:%d";
+
+    /**
+     * Helper interface used to filter Assist nodes.
+     */
+    interface NodeFilter {
+        /**
+         * Returns whether the node passes the filter for such given id.
+         */
+        boolean matches(ViewNode node, Object id);
+    }
+
+    private static final NodeFilter RESOURCE_ID_FILTER = (node, id) -> {
+        return id.equals(node.getIdEntry());
+    };
+
+    private static final NodeFilter HTML_NAME_FILTER = (node, id) -> {
+        return id.equals(getHtmlName(node));
+    };
+
+    private static final NodeFilter TEXT_FILTER = (node, id) -> {
+        return id.equals(node.getText());
+    };
+
+    private static final NodeFilter WEBVIEW_ROOT_FILTER = (node, id) -> {
+        // TODO(b/66953802): class name should be android.webkit.WebView, and form name should be
+        // inside HtmlInfo, but Chromium 61 does not implement that.
+        final String className = node.getClassName();
+        final String formName;
+        if (className.equals("android.webkit.WebView")) {
+            final HtmlInfo htmlInfo = assertHasHtmlTag(node, "form");
+            formName = getAttributeValue(htmlInfo, "name");
+        } else {
+            formName = className;
+        }
+        return id.equals(formName);
+    };
+
     /**
      * Runs a {@code r}, ignoring all {@link RuntimeException} and {@link Error} until the
      * {@link #UI_TIMEOUT_MS} is reached.
@@ -135,7 +178,7 @@ final class Helper {
                     if (e instanceof RetryableException) {
                         throw e;
                     } else {
-                        throw new Exception("Timedout out after " + timeout + " ms", e);
+                        throw new RetryableException(e, "Timedout out after %d ms", timeout);
                     }
                 }
             }
@@ -228,6 +271,7 @@ final class Helper {
             .append(" class=").append(node.getClassName())
             .append(" text=").append(node.getText())
             .append(" class=").append(node.getClassName())
+            .append(" webDomain=").append(node.getWebDomain())
             .append(" #children=").append(childrenSize);
 
         buffer.append("\n").append(prefix)
@@ -252,51 +296,119 @@ final class Helper {
     }
 
     /**
-     * Gets a node given its Android resource id, or {@code null} if not found.
+     * Gets a node if it matches the filter criteria for the given id.
      */
-    static ViewNode findNodeByResourceId(AssistStructure structure, String resourceId) {
+    static ViewNode findNodeByFilter(@NonNull AssistStructure structure, @NonNull Object id,
+            @NonNull NodeFilter filter) {
         Log.v(TAG, "Parsing request for activity " + structure.getActivityComponent());
         final int nodes = structure.getWindowNodeCount();
         for (int i = 0; i < nodes; i++) {
             final WindowNode windowNode = structure.getWindowNodeAt(i);
             final ViewNode rootNode = windowNode.getRootViewNode();
-            final ViewNode node = findNodeByResourceId(rootNode, resourceId);
+            final ViewNode node = findNodeByFilter(rootNode, id, filter);
             if (node != null) {
                 return node;
             }
         }
         return null;
+    }
+
+    /**
+     * Gets a node if it matches the filter criteria for the given id.
+     */
+    static ViewNode findNodeByFilter(@NonNull List<FillContext> contexts, @NonNull Object id,
+            @NonNull NodeFilter filter) {
+        for (FillContext context : contexts) {
+            ViewNode node = findNodeByFilter(context.getStructure(), id, filter);
+            if (node != null) {
+                return node;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Gets a node if it matches the filter criteria for the given id.
+     */
+    static ViewNode findNodeByFilter(@NonNull ViewNode node, @NonNull Object id,
+            @NonNull NodeFilter filter) {
+        if (filter.matches(node, id)) {
+            return node;
+        }
+        final int childrenSize = node.getChildCount();
+        if (childrenSize > 0) {
+            for (int i = 0; i < childrenSize; i++) {
+                final ViewNode found = findNodeByFilter(node.getChildAt(i), id, filter);
+                if (found != null) {
+                    return found;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Gets a node given its Android resource id, or {@code null} if not found.
+     */
+    static ViewNode findNodeByResourceId(AssistStructure structure, String resourceId) {
+        return findNodeByFilter(structure, resourceId, RESOURCE_ID_FILTER);
     }
 
     /**
      * Gets a node given its Android resource id, or {@code null} if not found.
      */
     static ViewNode findNodeByResourceId(List<FillContext> contexts, String resourceId) {
-        for (FillContext context : contexts) {
-            ViewNode node = findNodeByResourceId(context.getStructure(), resourceId);
-            if (node != null) {
-                return node;
-            }
-        }
-        return null;
+        return findNodeByFilter(contexts, resourceId, RESOURCE_ID_FILTER);
     }
 
     /**
      * Gets a node given its Android resource id, or {@code null} if not found.
      */
     static ViewNode findNodeByResourceId(ViewNode node, String resourceId) {
-        if (resourceId.equals(node.getIdEntry())) {
-            return node;
+        return findNodeByFilter(node, resourceId, RESOURCE_ID_FILTER);
+    }
+
+    /**
+     * Gets a node given the name of its HTML INPUT tag, or {@code null} if not found.
+     */
+    static ViewNode findNodeByHtmlName(AssistStructure structure, String htmlName) {
+        return findNodeByFilter(structure, htmlName, HTML_NAME_FILTER);
+    }
+
+    /**
+     * Gets a node given the name of its HTML INPUT tag, or {@code null} if not found.
+     */
+    static ViewNode findNodeByHtmlName(List<FillContext> contexts, String htmlName) {
+        return findNodeByFilter(contexts, htmlName, HTML_NAME_FILTER);
+    }
+
+    /**
+     * Gets a node given the name of its HTML INPUT tag, or {@code null} if not found.
+     */
+    static ViewNode findNodeByHtmlName(ViewNode node, String htmlName) {
+        return findNodeByFilter(node, htmlName, HTML_NAME_FILTER);
+    }
+
+    /**
+     * Gets the {@code name} attribute of a node representing an HTML input tag.
+     */
+    @Nullable
+    static String getHtmlName(@NonNull ViewNode node) {
+        final HtmlInfo htmlInfo = node.getHtmlInfo();
+        if (htmlInfo == null) {
+            return null;
         }
-        final int childrenSize = node.getChildCount();
-        if (childrenSize > 0) {
-            for (int i = 0; i < childrenSize; i++) {
-                final ViewNode found = findNodeByResourceId(node.getChildAt(i), resourceId);
-                if (found != null) {
-                    return found;
-                }
+        final String tag = htmlInfo.getTag();
+        if (!"input".equals(tag)) {
+            Log.w(TAG, "getHtmlName(): invalid tag (" + tag + ") on " + htmlInfo);
+            return null;
+        }
+        for (Pair<String, String> attr : htmlInfo.getAttributes()) {
+            if ("name".equals(attr.first)) {
+                return attr.second;
             }
         }
+        Log.w(TAG, "getHtmlName(): no 'name' attribute on " + htmlInfo);
         return null;
     }
 
@@ -304,48 +416,26 @@ final class Helper {
      * Gets a node given its expected text, or {@code null} if not found.
      */
     static ViewNode findNodeByText(AssistStructure structure, String text) {
-        Log.v(TAG, "Parsing request for activity " + structure.getActivityComponent());
-        final int nodes = structure.getWindowNodeCount();
-        for (int i = 0; i < nodes; i++) {
-            final WindowNode windowNode = structure.getWindowNodeAt(i);
-            final ViewNode rootNode = windowNode.getRootViewNode();
-            final ViewNode node = findNodeByText(rootNode, text);
-            if (node != null) {
-                return node;
-            }
-        }
-        return null;
+        return findNodeByFilter(structure, text, TEXT_FILTER);
     }
 
     /**
      * Gets a node given its expected text, or {@code null} if not found.
      */
     static ViewNode findNodeByText(ViewNode node, String text) {
-        if (text.equals(node.getText())) {
-            return node;
-        }
-        final int childrenSize = node.getChildCount();
-        if (childrenSize > 0) {
-            for (int i = 0; i < childrenSize; i++) {
-                final ViewNode found = findNodeByText(node.getChildAt(i), text);
-                if (found != null) {
-                    return found;
-                }
-            }
-        }
-        return null;
+        return findNodeByFilter(node, text, TEXT_FILTER);
     }
 
     /**
      * Asserts a text-base node is sanitized.
      */
     static void assertTextIsSanitized(ViewNode node) {
-      final CharSequence text = node.getText();
-      final String resourceId = node.getIdEntry();
-      if (!TextUtils.isEmpty(text)) {
-          throw new AssertionError("text on sanitized field " + resourceId + ": " + text);
-      }
-      assertNodeHasNoAutofillValue(node);
+        final CharSequence text = node.getText();
+        final String resourceId = node.getIdEntry();
+        if (!TextUtils.isEmpty(text)) {
+            throw new AssertionError("text on sanitized field " + resourceId + ": " + text);
+        }
+        assertNodeHasNoAutofillValue(node);
     }
 
     static void assertNodeHasNoAutofillValue(ViewNode node) {
@@ -737,9 +827,17 @@ final class Helper {
      * Asserts that there is no session left in the service.
      */
     public static void assertNoDanglingSessions() {
-        final String command = "cmd autofill list sessions";
-        final String result = runShellCommand(command);
-        assertWithMessage("Dangling sessions ('%s'): %s'", command, result).that(result).isEmpty();
+        final String result = runShellCommand(CMD_LIST_SESSIONS);
+        assertWithMessage("Dangling sessions ('%s'): %s'", CMD_LIST_SESSIONS, result).that(result)
+                .isEmpty();
+    }
+
+    /**
+     * Asserts that there is a pending session for the given package.
+     */
+    public static void assertHasSessions(String packageName) {
+        final String result = runShellCommand(CMD_LIST_SESSIONS);
+        assertThat(result).contains(packageName);
     }
 
     /**
@@ -771,6 +869,53 @@ final class Helper {
         destroyAllSessions();
         InstrumentedAutoFillService.resetStaticState();
         AuthenticationActivity.resetStaticState();
+    }
+
+    /**
+     * Asserts the node has an {@code HTMLInfo} property, with the given tag.
+     */
+    public static HtmlInfo assertHasHtmlTag(ViewNode node, String expectedTag) {
+        final HtmlInfo info = node.getHtmlInfo();
+        assertWithMessage("node doesn't have htmlInfo").that(info).isNotNull();
+        assertWithMessage("wrong tag").that(info.getTag()).isEqualTo(expectedTag);
+        return info;
+    }
+
+    /**
+     * Gets the value of an {@code HTMLInfo} attribute.
+     */
+    @Nullable
+    public static String getAttributeValue(HtmlInfo info, String attribute) {
+        for (Pair<String, String> pair : info.getAttributes()) {
+            if (pair.first.equals(attribute)) {
+                return pair.second;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Asserts a {@code HTMLInfo} has an attribute with a given value.
+     */
+    public static void assertHasAttribute(HtmlInfo info, String attribute, String expectedValue) {
+        final String actualValue = getAttributeValue(info, attribute);
+        assertWithMessage("Attribute %s not found", attribute).that(actualValue).isNotNull();
+        assertWithMessage("Wrong value for Attribute %s", attribute)
+            .that(actualValue).isEqualTo(expectedValue);
+    }
+
+    /**
+     * Finds a {@link WebView} node given its expected form name.
+     */
+    public static ViewNode findWebViewNode(AssistStructure structure, String formName) {
+        return findNodeByFilter(structure, formName, WEBVIEW_ROOT_FILTER);
+    }
+
+    /**
+     * Finds a {@link WebView} node given its expected form name.
+     */
+    public static ViewNode findWebViewNode(ViewNode node, String formName) {
+        return findNodeByFilter(node, formName, WEBVIEW_ROOT_FILTER);
     }
 
     private Helper() {
