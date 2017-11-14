@@ -36,6 +36,7 @@ public class ManifestGenerator {
     private static final String APPLICATION = "application";
     private static final String INSTRUMENTATION = "instrumentation";
     private static final String ACTIVITY = "activity";
+    private static final String USES_LIBRARY = "uses-library";
 
     public static void main(String[] args) {
         String pkgName = null;
@@ -44,6 +45,7 @@ public class ManifestGenerator {
         String targetSdk = null;
         List<String> permissions = new ArrayList<>();
         List<String> activities = new ArrayList<>();
+        List<String> libraries = new ArrayList<>();
         String output = null;
 
         for (int i = 0; i < args.length - 1; i++) {
@@ -51,6 +53,8 @@ public class ManifestGenerator {
                 pkgName = args[++i];
             } else if (args[i].equals("-a")) {
                 activities.add(args[++i]);
+            } else if (args[i].equals("-l")) {
+                libraries.add(args[++i]);
             } else if (args[i].equals("-o")) {
                 output = args[++i];
             } else if (args[i].equals("-i")) {
@@ -77,7 +81,8 @@ public class ManifestGenerator {
         FileOutputStream out = null;
         try {
           out = new FileOutputStream(output);
-          generate(out, pkgName, instrumentName, minSdk, targetSdk, permissions, activities);
+          generate(out, pkgName, instrumentName, minSdk, targetSdk, permissions, activities,
+                libraries);
         } catch (Exception e) {
           System.err.println("Couldn't create manifest file");
         } finally {
@@ -92,7 +97,8 @@ public class ManifestGenerator {
     }
 
     /*package*/ static void generate(OutputStream out, String pkgName, String instrumentName,
-            String minSdk, String targetSdk, List<String> permissions, List<String> activities)
+            String minSdk, String targetSdk, List<String> permissions, List<String> activities,
+            List<String> libraries)
             throws Exception {
         final String ns = null;
         KXmlSerializer serializer = new KXmlSerializer();
@@ -114,6 +120,11 @@ public class ManifestGenerator {
             serializer.endTag(ns, USES_PERMISSION);
         }
         serializer.startTag(ns, APPLICATION);
+        for (String library : libraries) {
+            serializer.startTag(ns, USES_LIBRARY);
+            serializer.attribute(ns, "android:name", library);
+            serializer.endTag(ns, USES_LIBRARY);
+        }
         for (String activity : activities) {
             serializer.startTag(ns, ACTIVITY);
             serializer.attribute(ns, "android:name", activity);
