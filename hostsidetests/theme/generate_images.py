@@ -50,7 +50,7 @@ OUT_FILE = "/sdcard/cts-theme-assets.zip"
 
 
 class ParallelExecutor(threading.Thread):
-    def __init__(self, tasks, q):
+    def __init__(self, tasks, setup, q):
         threading.Thread.__init__(self)
         self._q = q
         self._tasks = tasks
@@ -60,7 +60,7 @@ class ParallelExecutor(threading.Thread):
     def run(self):
         try:
             while True:
-                config = q.get(block=True, timeout=2)
+                config = self._q.get(block=True, timeout=2)
                 for t in self._tasks:
                     try:
                         if t(self._setup, config):
@@ -70,7 +70,7 @@ class ParallelExecutor(threading.Thread):
                     except:
                         print("Failed to execute thread:", sys.exc_info()[0])
                         traceback.print_exc()
-                q.task_done()
+                self._q.task_done()
         except KeyboardInterrupt:
             raise
         except Empty:
@@ -86,7 +86,7 @@ def execute_parallel(tasks, setup, q, num_threads):
     result = 0
     threads = []
     for i in range(num_threads):
-        t = ParallelExecutor(tasks, q)
+        t = ParallelExecutor(tasks, setup, q)
         t.start()
         threads.append(t)
     for t in threads:
@@ -226,18 +226,21 @@ def main(argv):
         tasks = [do_capture]
         setup = (theme_apk, out_path)
 
-        devices = enumerate_android_devices('emulator')
+        devices = enumerate_android_devices()
 
-        device_queue = Queue()
-        for device in devices:
-            device_queue.put(device)
+        if len(devices) > 0:
+            device_queue = Queue()
+            for device in devices:
+                device_queue.put(device)
 
-        result = execute_parallel(tasks, setup, device_queue, len(devices))
+            result = execute_parallel(tasks, setup, device_queue, len(devices))
 
-        if result > 0:
-            print('Generated reference images for %(count)d devices' % {"count": result})
+            if result > 0:
+                print('Generated reference images for %(count)d devices' % {"count": result})
+            else:
+                print('Failed to generate reference images')
         else:
-            print('Failed to generate reference images')
+            print('No devices found')
 
 
 if __name__ == '__main__':
