@@ -73,7 +73,7 @@ public class GenericDeviceInfo extends DeviceInfo {
         store.addResult(BUILD_FINGERPRINT, Build.FINGERPRINT);
         store.addResult(BUILD_ABI, Build.CPU_ABI);
         store.addResult(BUILD_ABI2, Build.CPU_ABI2);
-        store.addResult(BUILD_SERIAL, Build.SERIAL);
+        store.addResult(BUILD_SERIAL, Build.getSerial());
         store.addResult(BUILD_VERSION_RELEASE, Build.VERSION.RELEASE);
         store.addResult(BUILD_VERSION_SDK, Build.VERSION.SDK);
         store.addResult(BUILD_REFERENCE_FINGERPRINT,
