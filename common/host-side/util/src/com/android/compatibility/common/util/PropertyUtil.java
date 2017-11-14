@@ -18,6 +18,11 @@ package com.android.compatibility.common.util;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * Host-side utility class for reading properties and gathering information for testing
  * Android device compatibility.
@@ -31,7 +36,11 @@ public class PropertyUtil {
     public static final String FIRST_API_LEVEL = "ro.product.first_api_level";
     private static final String BUILD_TAGS_PROPERTY = "ro.build.tags";
     private static final String BUILD_TYPE_PROPERTY = "ro.build.type";
+    private static final String MANUFACTURER_PROPERTY = "ro.product.manufacturer";
     private static final String TAG_DEV_KEYS = "dev-keys";
+
+    public static final String GOOGLE_SETTINGS_QUERY =
+            "content query --uri content://com.google.settings/partner";
 
     /** Returns whether the device build is a user build */
     public static boolean isUserBuild(ITestDevice device) throws DeviceNotAvailableException {
@@ -63,6 +72,33 @@ public class PropertyUtil {
     public static int getFirstApiLevel(ITestDevice device) throws DeviceNotAvailableException {
         String propString = device.getProperty(FIRST_API_LEVEL);
         return (propString == null) ? device.getApiLevel() : Integer.parseInt(propString);
+    }
+
+    /**
+     * Return the manufacturer of this product. If unset, return null.
+     */
+    public static String getManufacturer(ITestDevice device) throws DeviceNotAvailableException {
+        return device.getProperty(MANUFACTURER_PROPERTY);
+    }
+
+    /** Returns a mapping from client ID names to client ID values */
+    public static Map<String, String> getClientIds(ITestDevice device)
+            throws DeviceNotAvailableException {
+        Map<String,String> clientIds = new HashMap<>();
+        String queryOutput = device.executeShellCommand(GOOGLE_SETTINGS_QUERY);
+        for (String line : queryOutput.split("[\\r?\\n]+")) {
+            // Expected line format: "Row: 1 _id=123, name=<property_name>, value=<property_value>"
+            Pattern pattern = Pattern.compile("name=([a-z_]*), value=(.*)$");
+            Matcher matcher = pattern.matcher(line);
+            if (matcher.find()) {
+                String name = matcher.group(1);
+                String value = matcher.group(2);
+                if (name.contains("client_id")) {
+                    clientIds.put(name, value); // only add name-value pair for client ids
+                }
+            }
+        }
+        return clientIds;
     }
 
     /** Returns whether the property exists on this device */
