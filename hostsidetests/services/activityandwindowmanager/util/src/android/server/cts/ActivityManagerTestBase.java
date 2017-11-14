@@ -605,7 +605,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     protected void sleepDevice() throws DeviceNotAvailableException {
         int retriesLeft = 5;
-        runCommandAndPrintOutput("input keyevent 26");
+        runCommandAndPrintOutput("input keyevent SLEEP");
         do {
             if (isDisplayOn()) {
                 log("***Waiting for display to turn off...");
@@ -627,7 +627,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     }
 
     protected void wakeUpDevice() throws DeviceNotAvailableException {
-        runCommandAndPrintOutput("input keyevent 224");
+        runCommandAndPrintOutput("input keyevent WAKEUP");
     }
 
     protected void unlockDevice() throws DeviceNotAvailableException {
