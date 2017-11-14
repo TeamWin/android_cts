@@ -18,6 +18,8 @@
 #define LOG_TAG "NativeCamera"
 #include <log/log.h>
 
+#include <chrono>
+#include <condition_variable>
 #include <string>
 #include <map>
 #include <mutex>
@@ -238,6 +240,138 @@ class CaptureSessionListener {
     int mOnActive = 0;
 };
 
+class CaptureResultListener {
+  public:
+    static void onCaptureStart(void* /*obj*/, ACameraCaptureSession* /*session*/,
+            const ACaptureRequest* /*request*/, int64_t /*timestamp*/) {
+        //Not used for now
+    }
+
+    static void onCaptureProgressed(void* /*obj*/, ACameraCaptureSession* /*session*/,
+            ACaptureRequest* /*request*/, const ACameraMetadata* /*result*/) {
+        //Not used for now
+    }
+
+    static void onCaptureCompleted(void* obj, ACameraCaptureSession* /*session*/,
+            ACaptureRequest* /*request*/, const ACameraMetadata* result) {
+        ALOGV("%s", __FUNCTION__);
+        if ((obj == nullptr) || (result == nullptr)) {
+            return;
+        }
+        CaptureResultListener* thiz = reinterpret_cast<CaptureResultListener*>(obj);
+        std::lock_guard<std::mutex> lock(thiz->mMutex);
+        ACameraMetadata_const_entry entry;
+        auto ret = ACameraMetadata_getConstEntry(result, ACAMERA_SYNC_FRAME_NUMBER, &entry);
+        if (ret != ACAMERA_OK) {
+            ALOGE("Error: Sync frame number missing from result!");
+            return;
+        }
+        thiz->mLastCompletedFrameNumber = entry.data.i64[0];
+        thiz->mResultCondition.notify_one();
+    }
+
+    static void onCaptureFailed(void* obj, ACameraCaptureSession* /*session*/,
+            ACaptureRequest* /*request*/, ACameraCaptureFailure* failure) {
+        ALOGV("%s", __FUNCTION__);
+        if ((obj == nullptr) || (failure == nullptr)) {
+            return;
+        }
+        CaptureResultListener* thiz = reinterpret_cast<CaptureResultListener*>(obj);
+        std::lock_guard<std::mutex> lock(thiz->mMutex);
+        thiz->mLastFailedFrameNumber = failure->frameNumber;
+        thiz->mResultCondition.notify_one();
+    }
+
+    static void onCaptureSequenceCompleted(void* obj, ACameraCaptureSession* /*session*/,
+            int sequenceId, int64_t frameNumber) {
+        ALOGV("%s", __FUNCTION__);
+        if (obj == nullptr) {
+            return;
+        }
+        CaptureResultListener* thiz = reinterpret_cast<CaptureResultListener*>(obj);
+        std::lock_guard<std::mutex> lock(thiz->mMutex);
+        thiz->mLastSequenceIdCompleted = sequenceId;
+        thiz->mLastSequenceFrameNumber = frameNumber;
+        thiz->mResultCondition.notify_one();
+    }
+
+    static void onCaptureSequenceAborted(void* /*obj*/, ACameraCaptureSession* /*session*/,
+            int /*sequenceId*/) {
+        //Not used for now
+    }
+
+    static void onCaptureBufferLost(void* obj, ACameraCaptureSession* /*session*/,
+            ACaptureRequest* /*request*/, ANativeWindow* /*window*/, int64_t frameNumber) {
+        ALOGV("%s", __FUNCTION__);
+        if (obj == nullptr) {
+            return;
+        }
+        CaptureResultListener* thiz = reinterpret_cast<CaptureResultListener*>(obj);
+        std::lock_guard<std::mutex> lock(thiz->mMutex);
+        thiz->mLastLostFrameNumber = frameNumber;
+        thiz->mResultCondition.notify_one();
+    }
+
+    int64_t getCaptureSequenceLastFrameNumber(int64_t sequenceId, uint32_t timeoutSec) {
+        int64_t ret = -1;
+        std::unique_lock<std::mutex> l(mMutex);
+
+        while (mLastSequenceIdCompleted != sequenceId) {
+            auto timeout = std::chrono::system_clock::now() +
+                           std::chrono::seconds(timeoutSec);
+            if (std::cv_status::timeout == mResultCondition.wait_until(l, timeout)) {
+                break;
+            }
+        }
+
+        if (mLastSequenceIdCompleted == sequenceId) {
+            ret = mLastSequenceFrameNumber;
+        }
+
+        return ret;
+    }
+
+    bool waitForFrameNumber(int64_t frameNumber, uint32_t timeoutSec) {
+        bool ret = false;
+        std::unique_lock<std::mutex> l(mMutex);
+
+        while ((mLastCompletedFrameNumber != frameNumber) &&
+                (mLastLostFrameNumber != frameNumber) &&
+                (mLastFailedFrameNumber != frameNumber)) {
+            auto timeout = std::chrono::system_clock::now() +
+                           std::chrono::seconds(timeoutSec);
+            if (std::cv_status::timeout == mResultCondition.wait_until(l, timeout)) {
+                break;
+            }
+        }
+
+        if ((mLastCompletedFrameNumber == frameNumber) ||
+                (mLastLostFrameNumber == frameNumber) ||
+                (mLastFailedFrameNumber == frameNumber)) {
+            ret = true;
+        }
+
+        return ret;
+    }
+
+    void reset() {
+        std::lock_guard<std::mutex> lock(mMutex);
+        mLastSequenceIdCompleted = 0;
+        mLastSequenceFrameNumber = 0;
+        mLastCompletedFrameNumber = 0;
+        mLastLostFrameNumber = 0;
+        mLastFailedFrameNumber = 0;
+    }
+
+  private:
+    std::mutex mMutex;
+    std::condition_variable mResultCondition;
+    int64_t mLastSequenceIdCompleted;
+    int64_t mLastSequenceFrameNumber;
+    int64_t mLastCompletedFrameNumber;
+    int64_t mLastLostFrameNumber;
+    int64_t mLastFailedFrameNumber;
+};
 
 class ImageReaderListener {
   public:
@@ -401,6 +535,7 @@ class PreviewTestCase {
     // Free all resources except camera manager
     void resetCamera() {
         mSessionListener.reset();
+        mResultListener.reset();
         if (mSession) {
             ACameraCaptureSession_close(mSession);
             mSession = nullptr;
@@ -502,6 +637,16 @@ class PreviewTestCase {
         return mCameraIdList->cameraIds[idx];
     }
 
+    camera_status_t updateOutput(JNIEnv* env, ACaptureSessionOutput *output) {
+        if (mSession == nullptr) {
+            ALOGE("Testcase cannot update output configuration session %p",
+                    mSession);
+            return ACAMERA_ERROR_UNKNOWN;
+        }
+
+        return ACameraCaptureSession_updateSharedOutput(mSession, output);
+    }
+
     camera_status_t openCamera(const char* cameraId) {
         if (mDevice) {
             ALOGE("Cannot open camera before closing previously open one");
@@ -573,7 +718,7 @@ class PreviewTestCase {
         return mPreviewAnw;
     }
 
-    camera_status_t createCaptureSessionWithLog() {
+    camera_status_t createCaptureSessionWithLog(bool isPreviewShared = false) {
         if (mSession) {
             LOG_ERROR(errorString, "Cannot create session before closing existing one");
             return ACAMERA_ERROR_UNKNOWN;
@@ -611,7 +756,11 @@ class PreviewTestCase {
         }
 
         if (mPreviewInited) {
-            ret = ACaptureSessionOutput_create(mPreviewAnw, &mPreviewOutput);
+            if (isPreviewShared) {
+                ret = ACaptureSessionSharedOutput_create(mPreviewAnw, &mPreviewOutput);
+            } else {
+                ret = ACaptureSessionOutput_create(mPreviewAnw, &mPreviewOutput);
+            }
             if (ret != ACAMERA_OK || mPreviewOutput == nullptr) {
                 LOG_ERROR(errorString,
                         "Sesssion preview output create fail! ret %d output %p",
@@ -743,15 +892,50 @@ class PreviewTestCase {
         return ACAMERA_OK;
     }
 
-    camera_status_t startPreview() {
+    camera_status_t startPreview(int *sequenceId = nullptr) {
         if (mSession == nullptr || mPreviewRequest == nullptr) {
             ALOGE("Testcase cannot start preview: session %p, preview request %p",
                     mSession, mPreviewRequest);
             return ACAMERA_ERROR_UNKNOWN;
         }
         int previewSeqId;
-        return ACameraCaptureSession_setRepeatingRequest(
-                mSession, nullptr, 1, &mPreviewRequest, &previewSeqId);
+        camera_status_t ret;
+        if (sequenceId == nullptr) {
+            ret = ACameraCaptureSession_setRepeatingRequest(
+                   mSession, nullptr, 1, &mPreviewRequest, &previewSeqId);
+        } else {
+            ret = ACameraCaptureSession_setRepeatingRequest(
+                   mSession, &mResultCb, 1, &mPreviewRequest, sequenceId);
+        }
+        return ret;
+    }
+
+    camera_status_t updateRepeatingRequest(ACaptureRequest *updatedRequest,
+            int *sequenceId = nullptr) {
+        if (mSession == nullptr || updatedRequest == nullptr) {
+            ALOGE("Testcase cannot update repeating request: session %p, updated request %p",
+                    mSession, updatedRequest);
+            return ACAMERA_ERROR_UNKNOWN;
+        }
+
+        int previewSeqId;
+        camera_status_t ret;
+        if (sequenceId == nullptr) {
+            ret = ACameraCaptureSession_setRepeatingRequest(
+                    mSession, nullptr, 1, &updatedRequest, &previewSeqId);
+        } else {
+            ret = ACameraCaptureSession_setRepeatingRequest(
+                    mSession, &mResultCb, 1, &updatedRequest, sequenceId);
+        }
+        return ret;
+    }
+
+    int64_t getCaptureSequenceLastFrameNumber(int64_t sequenceId, uint32_t timeoutSec) {
+        return mResultListener.getCaptureSequenceLastFrameNumber(sequenceId, timeoutSec);
+    }
+
+    bool waitForFrameNumber(int64_t frameNumber, uint32_t timeoutSec) {
+        return mResultListener.waitForFrameNumber(frameNumber, timeoutSec);
     }
 
     camera_status_t takePicture() {
@@ -785,6 +969,7 @@ class PreviewTestCase {
             return ACAMERA_ERROR_UNKNOWN;
         }
         mSessionListener.reset();
+        mResultListener.reset();
 
         ret = closeCamera();
         if (ret != ACAMERA_OK) {
@@ -798,6 +983,14 @@ class PreviewTestCase {
 
     CaptureSessionListener* getSessionListener() {
         return &mSessionListener;
+    }
+
+    ACameraDevice* getCameraDevice() {
+        return mDevice;
+    }
+
+    ACaptureSessionOutput *getPreviewOutput() {
+        return mPreviewOutput;
     }
 
   private:
@@ -826,6 +1019,18 @@ class PreviewTestCase {
         CaptureSessionListener::onClosed,
         CaptureSessionListener::onReady,
         CaptureSessionListener::onActive
+    };
+
+    CaptureResultListener mResultListener;
+    ACameraCaptureSession_captureCallbacks mResultCb {
+        &mResultListener,
+        CaptureResultListener::onCaptureStart,
+        CaptureResultListener::onCaptureProgressed,
+        CaptureResultListener::onCaptureCompleted,
+        CaptureResultListener::onCaptureFailed,
+        CaptureResultListener::onCaptureSequenceCompleted,
+        CaptureResultListener::onCaptureSequenceAborted,
+        CaptureResultListener::onCaptureBufferLost
     };
 
     ACameraIdList* mCameraIdList = nullptr;
@@ -1474,6 +1679,263 @@ testCameraDeviceSessionOpenAndCloseNative(
 
     pass = true;
 cleanup:
+    ALOGI("%s %s", __FUNCTION__, pass ? "pass" : "failed");
+    if (!pass) {
+        throwAssertionError(env, errorString);
+    }
+    return pass;
+}
+
+extern "C" jboolean
+Java_android_hardware_camera2_cts_NativeCameraDeviceTest_\
+testCameraDeviceSharedOutputUpdate(
+        JNIEnv* env, jclass /*clazz*/, jobject jPreviewSurface, jobject jSharedSurface) {
+    ALOGV("%s", __FUNCTION__);
+    int numCameras = 0;
+    bool pass = false;
+    PreviewTestCase testCase;
+    int sequenceId = -1;
+    int64_t lastFrameNumber = 0;
+    bool frameArrived = false;
+    ANativeWindow* previewAnw = nullptr;
+    ANativeWindow* sharedAnw = ANativeWindow_fromSurface(env, jSharedSurface);
+    ACaptureRequest* updatedRequest = nullptr;
+    ACameraOutputTarget* reqPreviewOutput = nullptr;
+    ACameraOutputTarget* reqSharedOutput = nullptr;
+    ACaptureSessionOutput *previewOutput = nullptr;
+    uint32_t timeoutSec = 1;
+    uint32_t runPreviewSec = 2;
+
+    camera_status_t ret = testCase.initWithErrorLog();
+    if (ret != ACAMERA_OK) {
+        // Don't log error here. testcase did it
+        goto cleanup;
+    }
+
+    numCameras = testCase.getNumCameras();
+    if (numCameras < 0) {
+        LOG_ERROR(errorString, "Testcase returned negavtive number of cameras: %d", numCameras);
+        goto cleanup;
+    }
+
+    for (int i = 0; i < numCameras; i++) {
+        const char* cameraId = testCase.getCameraId(i);
+        if (cameraId == nullptr) {
+            LOG_ERROR(errorString, "Testcase returned null camera id for camera %d", i);
+            goto cleanup;
+        }
+
+        ret = testCase.openCamera(cameraId);
+        if (ret != ACAMERA_OK) {
+            LOG_ERROR(errorString, "Open camera device %s failure. ret %d", cameraId, ret);
+            goto cleanup;
+        }
+
+        usleep(100000); // sleep to give some time for callbacks to happen
+
+        if (testCase.isCameraAvailable(cameraId)) {
+            LOG_ERROR(errorString, "Camera %s should be unavailable now", cameraId);
+            goto cleanup;
+        }
+
+        previewAnw = testCase.initPreviewAnw(env, jPreviewSurface);
+        if (previewAnw == nullptr) {
+            LOG_ERROR(errorString, "Null ANW from preview surface!");
+            goto cleanup;
+        }
+
+        ret = testCase.createCaptureSessionWithLog(true);
+        if (ret != ACAMERA_OK) {
+            // Don't log error here. testcase did it
+            goto cleanup;
+        }
+
+        ret = testCase.createRequestsWithErrorLog();
+        if (ret != ACAMERA_OK) {
+            // Don't log error here. testcase did it
+            goto cleanup;
+        }
+
+        ret = testCase.startPreview();
+        if (ret != ACAMERA_OK) {
+            LOG_ERROR(errorString, "Start preview failed!");
+            goto cleanup;
+        }
+
+        sleep(runPreviewSec);
+
+        previewOutput = testCase.getPreviewOutput();
+        //Try some bad input
+        ret = ACaptureSessionSharedOutput_add(previewOutput, previewAnw);
+        if (ret != ACAMERA_ERROR_INVALID_PARAMETER) {
+            LOG_ERROR(errorString, "ACaptureSessionSharedOutput_add should return invalid "
+                    "parameter! %d", ret);
+            goto cleanup;
+        }
+
+        ret = ACaptureSessionSharedOutput_remove(previewOutput, previewAnw);
+        if (ret != ACAMERA_ERROR_INVALID_PARAMETER) {
+            LOG_ERROR(errorString, "ACaptureSessionSharedOutput_remove should return invalid "
+                    "parameter! %d", ret);
+            goto cleanup;
+        }
+
+        //Now try with valid input
+        ret = ACaptureSessionSharedOutput_add(previewOutput, sharedAnw);
+        if (ret != ACAMERA_OK) {
+            LOG_ERROR(errorString, "ACaptureSessionSharedOutput_add failed!")
+            goto cleanup;
+        }
+
+        ret = testCase.updateOutput(env, previewOutput);
+        if (ret != ACAMERA_OK) {
+            LOG_ERROR(errorString, "Failed to update output configuration!")
+            goto cleanup;
+        }
+
+        ret = ACameraDevice_createCaptureRequest(
+                testCase.getCameraDevice(), TEMPLATE_PREVIEW, &updatedRequest);
+        if (ret != ACAMERA_OK) {
+            LOG_ERROR(errorString, "Camera %s create preview request failed. ret %d",
+                    cameraId, ret);
+            goto cleanup;
+        }
+
+        ret = ACameraOutputTarget_create(previewAnw, &reqPreviewOutput);
+        if (ret != ACAMERA_OK) {
+            LOG_ERROR(errorString,
+                    "Camera %s create request preview output target failed. ret %d",
+                    cameraId, ret);
+            goto cleanup;
+        }
+
+        ret = ACaptureRequest_addTarget(updatedRequest, reqPreviewOutput);
+        if (ret != ACAMERA_OK) {
+            LOG_ERROR(errorString, "Camera %s add preview request output failed. ret %d",
+                    cameraId, ret);
+            goto cleanup;
+        }
+
+        ret = ACameraOutputTarget_create(sharedAnw, &reqSharedOutput);
+        if (ret != ACAMERA_OK) {
+            LOG_ERROR(errorString,
+                    "Camera %s create request preview output target failed. ret %d",
+                    cameraId, ret);
+            goto cleanup;
+        }
+
+        ret = ACaptureRequest_addTarget(updatedRequest, reqSharedOutput);
+        if (ret != ACAMERA_OK) {
+            LOG_ERROR(errorString, "Camera %s add preview request output failed. ret %d",
+                    cameraId, ret);
+            goto cleanup;
+        }
+
+        ret = testCase.updateRepeatingRequest(updatedRequest, &sequenceId);
+        if (ret != ACAMERA_OK) {
+            LOG_ERROR(errorString, "Camera %s failed to update repeated request. ret %d",
+                    cameraId, ret);
+            goto cleanup;
+        }
+
+        sleep(runPreviewSec);
+
+        ret = ACaptureSessionSharedOutput_remove(previewOutput, sharedAnw);
+        if (ret != ACAMERA_OK) {
+            LOG_ERROR(errorString, "ACaptureSessionSharedOutput_remove failed!");
+            goto cleanup;
+        }
+
+        //Try removing shared output which still has pending camera requests
+        ret = testCase.updateOutput(env, previewOutput);
+        if (ret != ACAMERA_ERROR_INVALID_PARAMETER) {
+            LOG_ERROR(errorString, "updateOutput should fail!");
+            goto cleanup;
+        }
+
+        //Remove the shared output correctly by updating the repeating request
+        //first
+        ret = ACaptureRequest_removeTarget(updatedRequest, reqSharedOutput);
+        if (ret != ACAMERA_OK) {
+            LOG_ERROR(errorString, "Camera %s remove target output failed. ret %d",
+                    cameraId, ret);
+            goto cleanup;
+        }
+
+        ret = testCase.updateRepeatingRequest(updatedRequest);
+        if (ret != ACAMERA_OK) {
+            LOG_ERROR(errorString, "Camera %s failed to update repeated request. ret %d",
+                    cameraId, ret);
+            goto cleanup;
+        }
+
+        //Then wait for all old requests to flush
+        lastFrameNumber = testCase.getCaptureSequenceLastFrameNumber(sequenceId, timeoutSec);
+        if (lastFrameNumber < 0) {
+            LOG_ERROR(errorString, "Camera %s failed to acquire last frame number!",
+                    cameraId);
+            goto cleanup;
+        }
+
+        frameArrived = testCase.waitForFrameNumber(lastFrameNumber, timeoutSec);
+        if (!frameArrived) {
+            LOG_ERROR(errorString, "Camera %s timed out waiting on last frame number!",
+                    cameraId);
+            goto cleanup;
+        }
+
+        ret = testCase.updateOutput(env, previewOutput);
+        if (ret != ACAMERA_OK) {
+            LOG_ERROR(errorString, "updateOutput failed!");
+            goto cleanup;
+        }
+
+        sleep(runPreviewSec);
+
+        ret = testCase.resetWithErrorLog();
+        if (ret != ACAMERA_OK) {
+            // Don't log error here. testcase did it
+            goto cleanup;
+        }
+
+        usleep(100000); // sleep to give some time for callbacks to happen
+
+        if (!testCase.isCameraAvailable(cameraId)) {
+            LOG_ERROR(errorString, "Camera %s should be available now", cameraId);
+            goto cleanup;
+        }
+    }
+
+    ret = testCase.deInit();
+    if (ret != ACAMERA_OK) {
+        LOG_ERROR(errorString, "Testcase deInit failed: ret %d", ret);
+        goto cleanup;
+    }
+
+    pass = true;
+
+cleanup:
+
+    if (updatedRequest != nullptr) {
+        ACaptureRequest_free(updatedRequest);
+        updatedRequest = nullptr;
+    }
+
+    if (reqPreviewOutput != nullptr) {
+        ACameraOutputTarget_free(reqPreviewOutput);
+        reqPreviewOutput = nullptr;
+    }
+
+    if (reqSharedOutput != nullptr) {
+        ACameraOutputTarget_free(reqSharedOutput);
+        reqSharedOutput = nullptr;
+    }
+
+    if (sharedAnw) {
+        ANativeWindow_release(sharedAnw);
+        sharedAnw = nullptr;
+    }
+
     ALOGI("%s %s", __FUNCTION__, pass ? "pass" : "failed");
     if (!pass) {
         throwAssertionError(env, errorString);
