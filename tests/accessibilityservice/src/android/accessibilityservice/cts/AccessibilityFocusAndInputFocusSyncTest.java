@@ -17,8 +17,10 @@ package android.accessibilityservice.cts;
 import static android.view.accessibility.AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS;
 import static android.view.accessibility.AccessibilityNodeInfo.ACTION_CLEAR_ACCESSIBILITY_FOCUS;
 
+import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.test.suitebuilder.annotation.MediumTest;
+import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 
@@ -26,6 +28,7 @@ import android.accessibilityservice.cts.R;
 
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Test cases for testing the accessibility focus APIs exposed to accessibility
@@ -227,5 +230,30 @@ public class AccessibilityFocusAndInputFocusSyncTest
                 }
             }
         }
+    }
+
+    public void testScreenReaderFocusableAttribute_reportedToAccessibility() {
+        final Instrumentation instrumentation = getInstrumentation();
+        final UiAutomation uiAutomation = instrumentation.getUiAutomation();
+        final AccessibilityNodeInfo secondButton = uiAutomation.getRootInActiveWindow()
+                .findAccessibilityNodeInfosByText(getString(R.string.secondButton)).get(0);
+        assertTrue("Screen reader focusability not propagated from xml to accessibility",
+                secondButton.isScreenReaderFocusable());
+
+        // Verify the setter and getter work
+        final AtomicBoolean isScreenReaderFocusableAtomic = new AtomicBoolean(false);
+        instrumentation.runOnMainSync(() -> {
+            View secondButtonView = getActivity().findViewById(R.id.secondButton);
+            secondButtonView.setScreenReaderFocusable(false);
+            isScreenReaderFocusableAtomic.set(secondButtonView.isScreenReaderFocusable());
+        });
+
+        assertFalse("isScreenReaderFocusable did not change after value set",
+                isScreenReaderFocusableAtomic.get());
+
+        secondButton.refresh();
+        assertFalse(
+                "Screen reader focusability not propagated to accessibility after calling setter",
+                secondButton.isScreenReaderFocusable());
     }
 }
