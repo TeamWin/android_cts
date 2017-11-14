@@ -16,6 +16,7 @@
 
 package android.server.am;
 
+import static android.app.ActivityManager.StackId.INVALID_STACK_ID;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
@@ -400,6 +401,16 @@ class ActivityManagerState {
         final ActivityTask recentsTask = getRecentsTask();
         return recentsTask != null ? recentsTask.mActivities.get(recentsTask.mActivities.size() - 1)
                 : null;
+    }
+
+    int getStackIdByActivityName(String activityName) {
+        final ActivityTask task = getTaskByActivityName(activityName);
+
+        if (task == null) {
+            return INVALID_STACK_ID;
+        }
+
+        return task.mStackId;
     }
 
     ActivityTask getTaskByActivityName(String activityName) {

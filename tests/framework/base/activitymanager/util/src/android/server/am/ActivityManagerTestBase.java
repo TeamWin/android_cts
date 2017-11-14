@@ -78,8 +78,8 @@ public abstract class ActivityManagerTestBase {
     protected static final String AM_START_HOME_ACTIVITY_COMMAND =
             "am start -a android.intent.action.MAIN -c android.intent.category.HOME";
 
-    protected static final String AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK_COMMAND =
-            "am stack move-top-activity-to-pinned-stack 1 0 0 500 500";
+    private static final String AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK_COMMAND_FORMAT =
+            "am stack move-top-activity-to-pinned-stack %1d 0 0 500 500";
 
     static final String LAUNCHING_ACTIVITY = "LaunchingActivity";
     static final String ALT_LAUNCHING_ACTIVITY = "AltLaunchingActivity";
@@ -151,6 +151,10 @@ public abstract class ActivityManagerTestBase {
 
     protected static String getAmStartCmdOverHome(final String activityName) {
         return "am start --activity-task-on-home -n " + getActivityComponentName(activityName);
+    }
+
+    protected static String getMoveToPinnedStackCommand(int stackId) {
+        return String.format(AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK_COMMAND_FORMAT, stackId);
     }
 
     protected static String getOrientationBroadcast(int orientation) {
