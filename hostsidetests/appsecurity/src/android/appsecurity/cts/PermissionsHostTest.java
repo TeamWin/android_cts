@@ -46,6 +46,10 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
     private static final String APK_ESCLATE_TO_RUNTIME_PERMISSIONS =
             "CtsEscalateToRuntimePermissions.apk";
 
+    private static final String APK_ACCESS_SERIAL_LEGACY = "CtsAccessSerialLegacy.apk";
+    private static final String APK_ACCESS_SERIAL_MODERN = "CtsAccessSerialModern.apk";
+    private static final String ACCESS_SERIAL_PKG = "android.os.cts";
+
     private static final String SCREEN_OFF_TIMEOUT_NS = "system";
     private static final String SCREEN_OFF_TIMEOUT_KEY = "screen_off_timeout";
     private String mScreenTimeoutBeforeTest;
@@ -74,6 +78,7 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
         getDevice().uninstallPackage(USES_PERMISSION_PKG);
         getDevice().uninstallPackage(ESCALATE_PERMISSION_PKG);
         getDevice().uninstallPackage(PERMISSION_POLICY_25_PKG);
+        getDevice().uninstallPackage(ACCESS_SERIAL_PKG);
 
         // Set screen timeout to 30 min to not timeout while waiting for UI to change
         mScreenTimeoutBeforeTest = getDevice().getSetting(SCREEN_OFF_TIMEOUT_NS,
@@ -95,6 +100,7 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
         getDevice().uninstallPackage(USES_PERMISSION_PKG);
         getDevice().uninstallPackage(ESCALATE_PERMISSION_PKG);
         getDevice().uninstallPackage(PERMISSION_POLICY_25_PKG);
+        getDevice().uninstallPackage(ACCESS_SERIAL_PKG);
     }
 
     public void testFail() throws Exception {
@@ -345,6 +351,30 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
         runDeviceTests(PERMISSION_POLICY_25_PKG,
                 "com.android.cts.permission.policy.PermissionPolicyTest25",
                 "testNoProtectionFlagsAddedToNonSignatureProtectionPermissions");
+    }
+
+    public void testLegacyAppAccessSerial() throws Exception {
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(
+                APK_PERMISSION_POLICY_25), false, false));
+        runDeviceTests(PERMISSION_POLICY_25_PKG,
+                "com.android.cts.permission.policy.PermissionPolicyTest25",
+                "testNoProtectionFlagsAddedToNonSignatureProtectionPermissions");
+    }
+
+    public void testSerialAccessPolicy() throws Exception {
+        // Verify legacy app behavior
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(
+                APK_ACCESS_SERIAL_LEGACY), false, false));
+        runDeviceTests(ACCESS_SERIAL_PKG,
+                "android.os.cts.AccessSerialLegacyTest",
+                "testAccessSerialNoPermissionNeeded");
+
+        // Verify modern app behavior
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(
+                APK_ACCESS_SERIAL_MODERN), true, false));
+        runDeviceTests(ACCESS_SERIAL_PKG,
+                "android.os.cts.AccessSerialModernTest",
+                "testAccessSerialPermissionNeeded");
     }
 
     private void runDeviceTests(String packageName, String testClassName, String testMethodName)

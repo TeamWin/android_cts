@@ -391,10 +391,22 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
                 return; // skip
             }
 
-            // getDefaultBufferingParams should be called after setDataSource.
+            // getBufferingParams should be called after setDataSource.
             try {
-                BufferingParams params = mMediaPlayer.getDefaultBufferingParams();
-                fail("MediaPlayer failed to check state for getDefaultBufferingParams");
+                BufferingParams params = mMediaPlayer.getBufferingParams();
+                fail("MediaPlayer failed to check state for getBufferingParams");
+            } catch (IllegalStateException e) {
+                // expected
+            }
+
+            // setBufferingParams should be called after setDataSource.
+            try {
+                BufferingParams params = new BufferingParams.Builder()
+                        .setInitialMarkMs(2)
+                        .setResumePlaybackMarkMs(3)
+                        .build();
+                mMediaPlayer.setBufferingParams(params);
+                fail("MediaPlayer failed to check state for setBufferingParams");
             } catch (IllegalStateException e) {
                 // expected
             }
@@ -421,33 +433,17 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
 
             assertFalse(mOnBufferingUpdateCalled.isSignalled());
 
-            BufferingParams params = mMediaPlayer.getDefaultBufferingParams();
+            BufferingParams params = mMediaPlayer.getBufferingParams();
 
-            int newMark = -1;
-            BufferingParams newParams = null;
-            int initialBufferingMode = params.getInitialBufferingMode();
-            if (initialBufferingMode == BufferingParams.BUFFERING_MODE_SIZE_ONLY
-                    || initialBufferingMode == BufferingParams.BUFFERING_MODE_TIME_THEN_SIZE) {
-                newMark = params.getInitialBufferingWatermarkKB() + 1;
-                newParams = new BufferingParams.Builder(params).setInitialBufferingWatermarkKB(
-                        newMark).build();
-            } else if (initialBufferingMode == BufferingParams.BUFFERING_MODE_TIME_ONLY) {
-                newMark = params.getInitialBufferingWatermarkMs() + 1;
-                newParams = new BufferingParams.Builder(params).setInitialBufferingWatermarkMs(
-                        newMark).build();
-            } else {
-                newParams = params;
-            }
+            int newMark = params.getInitialMarkMs() + 2;
+            BufferingParams newParams =
+                    new BufferingParams.Builder(params).setInitialMarkMs(newMark).build();
+
             mMediaPlayer.setBufferingParams(newParams);
 
             int checkMark = -1;
             BufferingParams checkParams = mMediaPlayer.getBufferingParams();
-            if (initialBufferingMode == BufferingParams.BUFFERING_MODE_SIZE_ONLY
-                    || initialBufferingMode == BufferingParams.BUFFERING_MODE_TIME_THEN_SIZE) {
-                checkMark = checkParams.getInitialBufferingWatermarkKB();
-            } else if (initialBufferingMode == BufferingParams.BUFFERING_MODE_TIME_ONLY) {
-                checkMark = checkParams.getInitialBufferingWatermarkMs();
-            }
+            checkMark = checkParams.getInitialMarkMs();
             assertEquals("marks do not match", newMark, checkMark);
 
             // TODO: add more dynamic checking, e.g., buffering shall not exceed pre-set mark.

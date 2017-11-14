@@ -2343,7 +2343,7 @@
         </activity>
 
         <activity android:name=".managedprovisioning.LockTaskUiTestActivity"
-                  android:label="@string/device_owner_lock_task_ui_test">
+                android:label="@string/device_owner_lock_task_ui_test">
             <intent-filter>
                 <action android:name="com.android.cts.verifier.managedprovisioning.action.STOP_LOCK_TASK" />
                 <category android:name="android.intent.category.DEFAULT" />

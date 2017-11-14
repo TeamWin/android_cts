@@ -65,7 +65,7 @@ public class TestUsbTest extends DeviceTestCase implements IAbiReceiver, IBuildR
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mBuild);
         File app = buildHelper.getTestFile(APK_NAME);
         String[] options = {AbiUtils.createAbiFlag(mAbi.getName())};
-        mDevice.installPackage(app, false, options);
+        mDevice.installPackage(app, false, true, options);
     }
 
     @Override

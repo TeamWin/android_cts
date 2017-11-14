@@ -28,6 +28,6 @@ public class UsbSerialTest extends AndroidTestCase {
     private static final String TAG = "CtsUsbSerialTest";
 
     public void testSerial() throws Exception {
-        Log.e(TAG, Build.SERIAL);
+        Log.e(TAG, Build.getSerial());
     }
 }
