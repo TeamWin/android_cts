@@ -52,6 +52,7 @@
         <!--__________________-->
         <!-- Bulletin 2017-02 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2016-8420->/data/local/tmp/CVE-2016-8420" />
         <option name="push" value="CVE-2016-8476->/data/local/tmp/CVE-2016-8476" />
         <option name="push" value="CVE-2017-0441->/data/local/tmp/CVE-2017-0441" />
         <option name="push" value="CVE-2017-0438->/data/local/tmp/CVE-2017-0438" />
