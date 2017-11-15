@@ -16,6 +16,7 @@
 
 package android.server.am;
 
+import static android.app.ActivityManager.StackId.INVALID_STACK_ID;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY;
@@ -26,6 +27,7 @@ import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.StateLogger.log;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import android.platform.test.annotations.Presubmit;
@@ -62,6 +64,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         tearDownLockCredentials();
     }
 
+    @Presubmit
     @Test
     public void testTranslucentActivityOnTopOfPinnedStack() throws Exception {
         if (!supportsPip()) {
@@ -72,7 +75,10 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         mAmWmState.waitForValidState(PIP_ON_PIP_ACTIVITY);
         // NOTE: moving to pinned stack will trigger the pip-on-pip activity to launch the
         // translucent activity.
-        executeShellCommand(AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK_COMMAND);
+        final int stackId = mAmWmState.getAmState().getStackIdByActivityName(PIP_ON_PIP_ACTIVITY);
+
+        assertNotEquals(stackId, INVALID_STACK_ID);
+        executeShellCommand(getMoveToPinnedStackCommand(stackId));
 
         mAmWmState.computeState(new String[] {PIP_ON_PIP_ACTIVITY, TRANSLUCENT_ACTIVITY});
         mAmWmState.assertFrontStack("Pinned stack must be the front stack.",
@@ -105,6 +111,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
      * Assert that the home activity is visible if a task that was launched from home is pinned
      * and also assert the next task in the fullscreen stack isn't visible.
      */
+    @Presubmit
     @Test
     public void testHomeVisibleOnActivityTaskPinned() throws Exception {
         if (!supportsPip()) {
@@ -115,7 +122,10 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         launchActivity(TEST_ACTIVITY_NAME);
         launchHomeActivity();
         launchActivity(TRANSLUCENT_ACTIVITY);
-        executeShellCommand(AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK_COMMAND);
+        final int stackId = mAmWmState.getAmState().getStackIdByActivityName(TRANSLUCENT_ACTIVITY);
+
+        assertNotEquals(stackId, INVALID_STACK_ID);
+        executeShellCommand(getMoveToPinnedStackCommand(stackId));
 
         mAmWmState.computeState(new String[]{TRANSLUCENT_ACTIVITY});
 
