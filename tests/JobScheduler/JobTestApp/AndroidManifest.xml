@@ -22,7 +22,9 @@
     <application>
         <service android:name=".TestJobService"
                  android:permission="android.permission.BIND_JOB_SERVICE" />
-        <activity android:name=".TestJobActivity"
+        <activity android:name=".TestActivity"
+                  android:exported="true" />
+        <receiver android:name=".TestJobSchedulerReceiver"
                   android:exported="true" />
     </application>
 

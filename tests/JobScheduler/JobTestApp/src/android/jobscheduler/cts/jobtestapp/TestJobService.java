@@ -31,7 +31,7 @@ public class TestJobService extends JobService {
     @Override
     public boolean onStartJob(JobParameters params) {
         Log.i(TAG, "Test job executing: " + params.getJobId());
-        Intent reportJobStartIntent = new Intent(ACTION_JOB_STARTED);
+        final Intent reportJobStartIntent = new Intent(ACTION_JOB_STARTED);
         reportJobStartIntent.putExtra(JOB_PARAMS_EXTRA_KEY, params);
         sendBroadcast(reportJobStartIntent);
         return true;
@@ -40,7 +40,7 @@ public class TestJobService extends JobService {
     @Override
     public boolean onStopJob(JobParameters params) {
         Log.i(TAG, "Test job stopped executing: " + params.getJobId());
-        Intent reportJobStopIntent = new Intent(ACTION_JOB_STOPPED);
+        final Intent reportJobStopIntent = new Intent(ACTION_JOB_STOPPED);
         reportJobStopIntent.putExtra(JOB_PARAMS_EXTRA_KEY, params);
         sendBroadcast(reportJobStopIntent);
         return true;

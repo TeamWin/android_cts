@@ -33,7 +33,7 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 # Must match the package name in CtsTestCaseList.mk
 LOCAL_PACKAGE_NAME := CtsJobSchedulerTestCases
 
-LOCAL_SDK_VERSION := current
+#LOCAL_SDK_VERSION := current
 
 include $(BUILD_CTS_PACKAGE)
 
