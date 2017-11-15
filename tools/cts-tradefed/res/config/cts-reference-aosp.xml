@@ -166,4 +166,7 @@
     <!-- b/69072351: Internal bug in the "Freeform" feature of ActivityManager -->
     <option name="compatibility:exclude-filter" value="CtsServicesHostTestCases android.server.cts.ActivityManagerFreeformStackTests#testFreeformWindowManagementSupport" />
 
+    <!-- b/69131975: Exclude android.jni.cts.JniStaticTest#test_linker_namespaces -->
+    <option name="compatibility:exclude-filter" value="CtsJniTestCases android.jni.cts.JniStaticTest#test_linker_namespaces" />
+
 </configuration>
