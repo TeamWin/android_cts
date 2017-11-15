@@ -18,6 +18,7 @@ package android.database.sqlite.cts;
 
 import android.app.ActivityManager;
 import android.content.Context;
+import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteCursor;
 import android.database.sqlite.SQLiteCursorDriver;
 import android.database.sqlite.SQLiteDatabase;
@@ -55,6 +56,7 @@ public class SQLiteOpenHelperTest extends AndroidTestCase {
     @Override
     protected void tearDown() throws Exception {
         mOpenHelper.close();
+        SQLiteDatabase.deleteDatabase(mContext.getDatabasePath(TEST_DATABASE_NAME));
         super.tearDown();
     }
 
@@ -204,15 +206,30 @@ public class SQLiteOpenHelperTest extends AndroidTestCase {
                 output.contains("Connection #0:"));
     }
 
+    public void testOpenParamsConstructor() {
+        SQLiteDatabase.OpenParams params = new SQLiteDatabase.OpenParams.Builder()
+                .build();
+
+        MockOpenHelper helper = new MockOpenHelper(mContext, null, 1, params);
+        SQLiteDatabase database = helper.getWritableDatabase();
+        assertNotNull(database);
+        helper.close();
+    }
+
     private MockOpenHelper getOpenHelper() {
         return new MockOpenHelper(mContext, TEST_DATABASE_NAME, mFactory, TEST_VERSION);
     }
 
-    private class MockOpenHelper extends SQLiteOpenHelper {
+    private static class MockOpenHelper extends SQLiteOpenHelper {
         private boolean mHasCalledOnOpen = false;
 
-        public MockOpenHelper(Context context, String name, CursorFactory factory, int version) {
+        MockOpenHelper(Context context, String name, CursorFactory factory, int version) {
             super(context, name, factory, version);
+        }
+
+        MockOpenHelper(Context context, String name, int version,
+                SQLiteDatabase.OpenParams openParams) {
+            super(context, name, version, openParams);
         }
 
         @Override
@@ -237,8 +254,8 @@ public class SQLiteOpenHelperTest extends AndroidTestCase {
         }
     }
 
-    private class MockCursor extends SQLiteCursor {
-        public MockCursor(SQLiteDatabase db, SQLiteCursorDriver driver, String editTable,
+    private static class MockCursor extends SQLiteCursor {
+        MockCursor(SQLiteDatabase db, SQLiteCursorDriver driver, String editTable,
                 SQLiteQuery query) {
             super(db, driver, editTable, query);
         }
