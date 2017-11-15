@@ -62,7 +62,7 @@ include $(LOCAL_PATH)/build_xml_api_file.mk
 include $(CLEAR_VARS)
 LOCAL_MODULE := cts-android-test-mock-current-api
 LOCAL_MODULE_STEM := android-test-mock-current.api
-LOCAL_SRC_FILES := frameworks/base/test-runner/api/android-test-mock-current.txt
+LOCAL_SRC_FILES := frameworks/base/test-mock/api/android-test-mock-current.txt
 
 include $(LOCAL_PATH)/build_xml_api_file.mk
 
