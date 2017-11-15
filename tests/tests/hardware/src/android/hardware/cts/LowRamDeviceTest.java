@@ -52,6 +52,7 @@ public class LowRamDeviceTest extends AndroidTestCase {
 
     private static final long ONE_MEGABYTE = 1048576L;
     private static final String TAG = "LowRamDeviceTest";
+    private static final long LOW_RAM_MAX = 1024;
 
     private PackageManager mPackageManager;
     private ActivityManager mActivityManager;
@@ -155,7 +156,7 @@ public class LowRamDeviceTest extends AndroidTestCase {
     private void assertMinMemoryMb(long minMb) {
 
         long totalMemoryMb = getTotalMemory() / ONE_MEGABYTE;
-        boolean lowRam = totalMemoryMb <= 512;
+        boolean lowRam = totalMemoryMb <= LOW_RAM_MAX;
         boolean lowRamDevice = mActivityManager.isLowRamDevice();
 
         Log.i(TAG, String.format("minMb=%,d", minMb));
