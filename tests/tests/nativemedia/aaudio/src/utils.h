@@ -16,6 +16,8 @@
 #ifndef CTS_MEDIA_TEST_AAUDIO_UTILS_H
 #define CTS_MEDIA_TEST_AAUDIO_UTILS_H
 
+#include <map>
+
 #include <aaudio/AAudio.h>
 
 int64_t getNanoseconds(clockid_t clockId = CLOCK_MONOTONIC);
@@ -68,6 +70,7 @@ class StreamBuilderHelper {
     void streamCommand(
             StreamCommand cmd, aaudio_stream_state_t fromState, aaudio_stream_state_t toState);
 
+    static const std::map<aaudio_performance_mode_t, int64_t> sMaxFramesPerBurstMs;
     const aaudio_direction_t mDirection;
     const Parameters mRequested;
     Parameters mActual;
