@@ -62,4 +62,12 @@ public class Poc17_02 extends SecurityTestCase {
         enableAdbRoot(getDevice());
         AdbUtils.runPoc("CVE-2017-0437", getDevice(), 60);
     }
+   /**
+     *  b/32402604
+     */
+    @SecurityTest
+    public void testPocCVE_2017_0438() throws Exception {
+        enableAdbRoot(getDevice());
+        AdbUtils.runPoc("CVE-2017-0438", getDevice(), 60);
+    }
  }
