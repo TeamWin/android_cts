@@ -16,6 +16,7 @@
 
 package android.hardware.camera2.cts;
 
+import android.graphics.SurfaceTexture;
 import android.hardware.camera2.cts.testcases.Camera2SurfaceViewTestCase;
 import android.util.Log;
 import android.util.Size;
@@ -59,8 +60,20 @@ public class NativeCameraDeviceTest extends Camera2SurfaceViewTestCase {
                 testCameraDeviceSimplePreviewNative(mPreviewSurface));
     }
 
+    public void testCameraDeviceSharedOutputUpdate() {
+        // Init preview surface to a guaranteed working size
+        Size previewSize = new Size(640, 480);
+        updatePreviewSurface(previewSize);
+        SurfaceTexture outputTexture = new SurfaceTexture(/* random texture ID*/ 5);
+        outputTexture.setDefaultBufferSize(previewSize.getWidth(), previewSize.getHeight());
+        Surface outputSurface = new Surface(outputTexture);
+        assertTrue("testCameraDeviceSharedWindowAddRemove fail, see log for details",
+                testCameraDeviceSharedOutputUpdate(mPreviewSurface, outputSurface));
+    }
+
     private static native boolean testCameraDeviceOpenAndCloseNative();
     private static native boolean testCameraDeviceCreateCaptureRequestNative();
     private static native boolean testCameraDeviceSessionOpenAndCloseNative(Surface preview);
     private static native boolean testCameraDeviceSimplePreviewNative(Surface preview);
+    private static native boolean testCameraDeviceSharedOutputUpdate(Surface src, Surface dst);
 }

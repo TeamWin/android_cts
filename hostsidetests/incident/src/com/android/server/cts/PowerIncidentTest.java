@@ -52,7 +52,11 @@ public class PowerIncidentTest extends ProtoDumpTestCase {
         assertTrue(settingsAndConfiguration.getMaximumScreenDimDurationConfigMs() >= 0);
         assertTrue(settingsAndConfiguration.getMaximumScreenDimRatioConfig() > 0);
         assertTrue(settingsAndConfiguration.getScreenOffTimeoutSettingMs() > 0);
+        // Default value is -1.
+        assertTrue(settingsAndConfiguration.getSleepTimeoutSettingMs() >= -1);
         assertTrue(settingsAndConfiguration.getMaximumScreenOffTimeoutFromDeviceAdminMs() > 0);
+        // -1 is used to disable, so is valid.
+        assertTrue(settingsAndConfiguration.getUserActivityTimeoutOverrideFromWindowManagerMs() >= -1);
         final PowerServiceSettingsAndConfigurationDumpProto.ScreenBrightnessSettingLimitsProto
                 brightnessLimits = settingsAndConfiguration.getScreenBrightnessSettingLimits();
         assertTrue(brightnessLimits.getSettingMaximum() > 0);
@@ -75,5 +79,20 @@ public class PowerIncidentTest extends ProtoDumpTestCase {
         assertTrue(looper.getIdentityHashCode() > 0);
 
         assertTrue(dump.getSuspendBlockersCount() > 0);
+
+        // Check that times/durations are not incorrectly negative.
+        assertTrue(dump.getNotifyLongScheduledMs() >= 0);
+        assertTrue(dump.getNotifyLongDispatchedMs() >= 0);
+        assertTrue(dump.getNotifyLongNextCheckMs() >= 0);
+        assertTrue(dump.getLastWakeTimeMs() >= 0);
+        assertTrue(dump.getLastSleepTimeMs() >= 0);
+        assertTrue(dump.getLastUserActivityTimeMs() >= 0);
+        assertTrue(dump.getLastUserActivityTimeNoChangeLightsMs() >= 0);
+        assertTrue(dump.getLastInteractivePowerHintTimeMs() >= 0);
+        assertTrue(dump.getLastScreenBrightnessBoostTimeMs() >= 0);
+        // -1 is a valid value.
+        assertTrue(dump.getSleepTimeoutMs() >= -1);
+        assertTrue(dump.getScreenOffTimeoutMs() >= 0);
+        assertTrue(dump.getScreenDimDurationMs() >= 0);
     }
 }

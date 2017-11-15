@@ -258,6 +258,14 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
         }
     }
 
+    public void testLowRamFeature() {
+        if (mActivityManager.isLowRamDevice()) {
+            assertAvailable(PackageManager.FEATURE_RAM_LOW);
+        } else {
+            assertAvailable(PackageManager.FEATURE_RAM_NORMAL);
+        }
+    }
+
     public void testNfcFeatures() {
         if (NfcAdapter.getDefaultAdapter(mContext) != null) {
             // Watches MAY support all FEATURE_NFC features when an NfcAdapter is available, but
