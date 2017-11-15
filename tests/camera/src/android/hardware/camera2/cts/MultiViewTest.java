@@ -50,7 +50,7 @@ import java.util.List;
  */
 public class MultiViewTest extends Camera2MultiViewTestCase {
     private static final String TAG = "MultiViewTest";
-    private final static long WAIT_FOR_COMMAND_TO_COMPLETE = 2000;
+    private final static long WAIT_FOR_COMMAND_TO_COMPLETE = 5000; //ms
     private final static long PREVIEW_TIME_MS = 2000;
     private final static int NUM_SURFACE_SWITCHES = 10;
     private final static int IMG_READER_COUNT = 2;
