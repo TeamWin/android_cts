@@ -44,4 +44,14 @@ public class Poc17_02 extends SecurityTestCase {
             TimeUnit.SECONDS.sleep(40);
         }
     }
+    /**
+     *  b/32624661
+     */
+    @SecurityTest
+    public void testPocCVE_2017_0436() throws Exception {
+        if(containsDriver(getDevice(), "/dev/usf1")) {
+            enableAdbRoot(getDevice());
+            AdbUtils.runPoc("CVE-2017-0436", getDevice(), 60);
+        }
+    }
  }
