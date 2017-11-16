@@ -1615,4 +1615,44 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
                         .equalsIgnoreCase("WAL"));
     }
 
+    /**
+     * Test that app can specify journal mode/synchronous mode
+     */
+    public void testJournalModeSynchronousModeOverride() {
+        mDatabase.close();
+        SQLiteDatabase.OpenParams params = new SQLiteDatabase.OpenParams.Builder()
+                .setJournalMode("DELETE").setSynchronousMode("OFF").build();
+        mDatabase = SQLiteDatabase.openDatabase(mDatabaseFile, params);
+
+        String journalMode = DatabaseUtils
+                .stringForQuery(mDatabase, "PRAGMA journal_mode", null);
+
+        assertEquals("DELETE", journalMode.toUpperCase());
+        String syncMode = DatabaseUtils
+                .stringForQuery(mDatabase, "PRAGMA synchronous", null);
+
+        assertEquals("0", syncMode);
+    }
+
+    /**
+     * Test that enableWriteAheadLogging is not affected by app's journal mode/synchronous mode
+     * settings
+     */
+    public void testEnableWalOverridesJournalModeSynchronousMode() {
+        mDatabase.close();
+        SQLiteDatabase.OpenParams params = new SQLiteDatabase.OpenParams.Builder()
+                .setJournalMode("DELETE").setSynchronousMode("OFF").build();
+        mDatabase = SQLiteDatabase.openDatabase(mDatabaseFile, params);
+        mDatabase.enableWriteAheadLogging();
+
+        String journalMode = DatabaseUtils
+                .stringForQuery(mDatabase, "PRAGMA journal_mode", null);
+
+        assertEquals("WAL", journalMode.toUpperCase());
+        String syncMode = DatabaseUtils
+                .stringForQuery(mDatabase, "PRAGMA synchronous", null);
+
+        assertEquals("2" /* FULL */, syncMode);
+    }
+
 }

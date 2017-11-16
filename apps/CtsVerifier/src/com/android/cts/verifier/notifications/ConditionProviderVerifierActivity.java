@@ -73,6 +73,8 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
             tests.add(new SubscribeAutomaticZenRuleTest());
             tests.add(new DeleteAutomaticZenRuleTest());
             tests.add(new UnsubscribeAutomaticZenRuleTest());
+            tests.add(new RequestUnbindTest());
+            tests.add(new RequestBindTest());
             tests.add(new IsDisabledTest());
             tests.add(new ServiceStoppedTest());
         }
@@ -177,6 +179,75 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
             delay();
         }
     }
+
+    private class RequestUnbindTest extends InteractiveTestCase {
+        int mRetries = 5;
+
+        @Override
+        View inflate(ViewGroup parent) {
+            return createAutoItem(parent, R.string.nls_snooze);
+
+        }
+
+        @Override
+        void setUp() {
+            status = READY;
+        }
+
+        @Override
+        void test() {
+            if (status == READY) {
+                MockConditionProvider.getInstance().requestUnbind();
+                status = RETEST;
+            } else {
+                if (MockConditionProvider.getInstance() == null ||
+                        !MockConditionProvider.getInstance().isConnected()) {
+                    status = PASS;
+                } else {
+                    if (--mRetries > 0) {
+                        status = RETEST;
+                    } else {
+                        logFail();
+                        status = FAIL;
+                    }
+                }
+                next();
+            }
+        }
+    }
+
+    private class RequestBindTest extends InteractiveTestCase {
+        int mRetries = 5;
+
+        @Override
+        View inflate(ViewGroup parent) {
+            return createAutoItem(parent, R.string.nls_unsnooze);
+
+        }
+
+        @Override
+        void test() {
+            if (status == READY) {
+                MockConditionProvider.requestRebind(MockConditionProvider.COMPONENT_NAME);
+                status = RETEST;
+            } else {
+                if (MockConditionProvider.getInstance().isConnected()
+                        && MockConditionProvider.getInstance().isBound()) {
+                    status = PASS;
+                    next();
+                } else {
+                    if (--mRetries > 0) {
+                        status = RETEST;
+                        next();
+                    } else {
+                        logFail();
+                        status = FAIL;
+                    }
+                }
+            }
+        }
+    }
+
 
     private class CreateAutomaticZenRuleTest extends InteractiveTestCase {
         private String id = null;

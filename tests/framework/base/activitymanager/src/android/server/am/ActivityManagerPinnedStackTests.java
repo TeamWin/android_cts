@@ -16,6 +16,7 @@
 
 package android.server.am;
 
+import static android.app.ActivityManager.StackId.INVALID_STACK_ID;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
@@ -27,17 +28,20 @@ import static android.view.KeyEvent.KEYCODE_WINDOW;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.graphics.Rect;
+import android.platform.test.annotations.Presubmit;
 import android.server.am.ActivityManagerState.ActivityStack;
 import android.server.am.ActivityManagerState.ActivityTask;
 
 import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -128,30 +132,34 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                         + " task size");
     }
 
+    @Presubmit
     @Test
     public void testEnterPictureInPictureMode() throws Exception {
-        pinnedStackTester(getAmStartCmd(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true"), PIP_ACTIVITY,
-                false /* moveTopToPinnedStack */, false /* isFocusable */);
+        pinnedStackTester(getAmStartCmd(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true"),
+                PIP_ACTIVITY, PIP_ACTIVITY, false /* moveTopToPinnedStack */,
+                false /* isFocusable */);
     }
 
+    @Presubmit
     @Test
     public void testMoveTopActivityToPinnedStack() throws Exception {
-        pinnedStackTester(getAmStartCmd(PIP_ACTIVITY), PIP_ACTIVITY,
+        pinnedStackTester(getAmStartCmd(PIP_ACTIVITY), PIP_ACTIVITY, PIP_ACTIVITY,
                 true /* moveTopToPinnedStack */, false /* isFocusable */);
     }
 
     @Test
     public void testAlwaysFocusablePipActivity() throws Exception {
         pinnedStackTester(getAmStartCmd(ALWAYS_FOCUSABLE_PIP_ACTIVITY),
-                ALWAYS_FOCUSABLE_PIP_ACTIVITY, false /* moveTopToPinnedStack */,
-                true /* isFocusable */);
+                ALWAYS_FOCUSABLE_PIP_ACTIVITY, ALWAYS_FOCUSABLE_PIP_ACTIVITY,
+                false /* moveTopToPinnedStack */, true /* isFocusable */);
     }
 
+    @Presubmit
     @Test
     public void testLaunchIntoPinnedStack() throws Exception {
         pinnedStackTester(getAmStartCmd(LAUNCH_INTO_PINNED_STACK_PIP_ACTIVITY),
-                ALWAYS_FOCUSABLE_PIP_ACTIVITY, false /* moveTopToPinnedStack */,
-                true /* isFocusable */);
+                LAUNCH_INTO_PINNED_STACK_PIP_ACTIVITY, ALWAYS_FOCUSABLE_PIP_ACTIVITY,
+                false /* moveTopToPinnedStack */, true /* isFocusable */);
     }
 
     @Test
@@ -1382,12 +1390,17 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
      * TODO: Improve tests check to actually check that apps are not interactive instead of checking
      *       if the stack is focused.
      */
-    private void pinnedStackTester(String startActivityCmd, String topActivityName,
-            boolean moveTopToPinnedStack, boolean isFocusable) throws Exception {
-
+    private void pinnedStackTester(String startActivityCmd, String startActivity,
+            String topActivityName, boolean moveTopToPinnedStack, boolean isFocusable)
+            throws Exception {
         executeShellCommand(startActivityCmd);
+        mAmWmState.waitForValidState(new WaitForValidActivityState.Builder(startActivity).build());
+
         if (moveTopToPinnedStack) {
-            executeShellCommand(AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK_COMMAND);
+            final int stackId = mAmWmState.getAmState().getStackIdByActivityName(topActivityName);
+
+            assertNotEquals(stackId, INVALID_STACK_ID);
+            executeShellCommand(getMoveToPinnedStackCommand(stackId));
         }
 
         mAmWmState.waitForValidState(topActivityName,

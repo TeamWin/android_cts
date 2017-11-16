@@ -138,6 +138,11 @@ public class KeyValueBackupRestoreHostSideTest extends BaseBackupHostSideTest {
      */
     @Test
     public void testSharedPreferencesRestore() throws Exception {
+        if (!mIsBackupSupported) {
+            CLog.i("android.software.backup feature is not supported on this device");
+            return;
+        }
+
         checkDeviceTest("launchSharedPrefActivity");
 
         backupNowAndAssertSuccess(SHARED_PREFERENCES_RESTORE_APP_PACKAGE);

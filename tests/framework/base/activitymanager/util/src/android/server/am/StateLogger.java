@@ -35,6 +35,10 @@ public class StateLogger {
         }
     }
 
+    public static void logAlways(String logText) {
+        Log.i(TAG, logText);
+    }
+
     public static void logE(String logText) {
         Log.e(TAG, logText);
     }

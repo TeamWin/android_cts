@@ -19,6 +19,7 @@ package com.android.cts.verifier.notifications;
 import android.app.Activity;
 import android.app.AutomaticZenRule;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -35,7 +36,8 @@ import java.util.List;
 public class MockConditionProvider extends ConditionProviderService {
     static final String TAG = "MockConditionProvider";
 
-    static final String PACKAGE_NAME = "com.android.cts.verifier.notifications";
+    public static final ComponentName COMPONENT_NAME =
+            new ComponentName("com.android.cts.verifier", MockConditionProvider.class.getName());
     static final String PATH = "mock_cp";
     static final String QUERY = "query_item";
 
@@ -56,6 +58,7 @@ public class MockConditionProvider extends ConditionProviderService {
     private ArrayList<Uri> mSubscriptions = new ArrayList<>();
     private boolean mConnected = false;
     private BroadcastReceiver mReceiver;
+    private static MockConditionProvider sConditionProviderInstance = null;
 
     @Override
     public void onCreate() {
@@ -103,6 +106,20 @@ public class MockConditionProvider extends ConditionProviderService {
         unregisterReceiver(mReceiver);
         mReceiver = null;
         Log.d(TAG, "destroyed");
+        sConditionProviderInstance = null;
+    }
+
+    public void requestUnbindService() {
+        sConditionProviderInstance = null;
+        super.requestUnbind();
+    }
+
+    public boolean isConnected() {
+        return mConnected;
+    }
+
+    public static MockConditionProvider getInstance() {
+        return sConditionProviderInstance;
     }
 
     public void resetData() {
@@ -141,6 +158,7 @@ public class MockConditionProvider extends ConditionProviderService {
     public void onConnected() {
         Log.d(TAG, "connected");
         mConnected = true;
+        sConditionProviderInstance = this;
     }
 
     @Override
