@@ -54,6 +54,8 @@ LOCAL_MODULE := libjni_test_dlclose
 
 LOCAL_SRC_FILES := taxicab_number.cpp
 
+LOCAL_CFLAGS += -Wall -Werror
+
 LOCAL_SDK_VERSION := 23
 
 LOCAL_NDK_STL_VARIANT := c++_static
