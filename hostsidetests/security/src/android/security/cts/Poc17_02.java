@@ -54,4 +54,30 @@ public class Poc17_02 extends SecurityTestCase {
             AdbUtils.runPoc("CVE-2017-0436", getDevice(), 60);
         }
     }
+    /**
+     *  b/32769717
+     */
+    @SecurityTest
+    public void testPocCVE_2017_0445() throws Exception {
+        if(containsDriver(getDevice(), "/dev/touch_fwu")) {
+            enableAdbRoot(getDevice());
+            AdbUtils.runPoc("CVE-2017-0445", getDevice(), 60);
+        }
+    }
+    /**
+     *  b/32402310
+     */
+    @SecurityTest
+    public void testPocCVE_2017_0437() throws Exception {
+        enableAdbRoot(getDevice());
+        AdbUtils.runPoc("CVE-2017-0437", getDevice(), 60);
+    }
+   /**
+     *  b/32402604
+     */
+    @SecurityTest
+    public void testPocCVE_2017_0438() throws Exception {
+        enableAdbRoot(getDevice());
+        AdbUtils.runPoc("CVE-2017-0438", getDevice(), 60);
+    }
  }
