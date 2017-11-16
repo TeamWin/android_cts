@@ -474,7 +474,7 @@ public class RoutingTest extends AndroidTestCase {
     }
 
     private MediaPlayer allocMediaPlayer() {
-        final int resid = R.raw.testmp3;
+        final int resid = R.raw.testmp3_2;
         MediaPlayer mediaPlayer = MediaPlayer.create(mContext, resid);
         mediaPlayer.setAudioAttributes(
             new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).build());
@@ -584,19 +584,25 @@ public class RoutingTest extends AndroidTestCase {
         }
         for (int index = 0; index < deviceList.length; index++) {
             assertTrue(mediaPlayer.setPreferredDevice(deviceList[index]));
-            mRoutingChangedLatch = new CountDownLatch(1);
             boolean routingChanged = false;
             for (int i = 0; i < MAX_WAITING_ROUTING_CHANGED_COUNT; i++) {
+                // Create a new CountDownLatch in case it is triggered by previous routing change.
+                mRoutingChangedLatch = new CountDownLatch(1);
                 try {
                     mRoutingChangedLatch.await(WAIT_ROUTING_CHANGE_TIME_MS, TimeUnit.MILLISECONDS);
                 } catch (InterruptedException e) {
                 }
-                if (mediaPlayer.getRoutedDevice().getId() == deviceList[index].getId()) {
+                AudioDeviceInfo routedDevice = mediaPlayer.getRoutedDevice();
+                if (routedDevice == null) {
+                    continue;
+                }
+                if (routedDevice.getId() == deviceList[index].getId()) {
                     routingChanged = true;
                     break;
                 }
             }
-            assertTrue(routingChanged);
+            assertTrue("Switching to device" + deviceList[index].getType() + " failed",
+                    routingChanged);
         }
 
         mediaPlayer.removeOnRoutingChangedListener(listener);
