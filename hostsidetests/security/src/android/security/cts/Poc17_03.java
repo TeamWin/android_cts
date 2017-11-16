@@ -81,4 +81,41 @@ public class Poc17_03 extends SecurityTestCase {
             AdbUtils.runPocNoOutput("CVE-2017-0519", getDevice(), 30);
         }
     }
+
+    /**
+     *  b/31750232
+     */
+    @SecurityTest
+    public void testPocCVE_2017_0520() throws Exception {
+        enableAdbRoot(getDevice());
+        if (containsDriver(getDevice(), "/dev/qce")) {
+            AdbUtils.runPocNoOutput("CVE-2017-0520", getDevice(), 30);
+            // CTS begins the next test before device finishes rebooting,
+            // sleep to allow time for device to reboot.
+            Thread.sleep(60000);
+        }
+    }
+
+    /**
+     *  b/31695439
+     */
+    @SecurityTest
+    public void testPocCVE_2017_0457() throws Exception {
+        enableAdbRoot(getDevice());
+        if (containsDriver(getDevice(), "/dev/adsprpc-smd")) {
+            AdbUtils.runPocNoOutput("CVE-2017-0457", getDevice(), 30);
+            // CTS begins the next test before device finishes rebooting,
+            // sleep to allow time for device to reboot.
+            Thread.sleep(60000);
+        }
+    }
+
+    /**
+     *  b/31252965
+     */
+    @SecurityTest
+    public void testPocCVE_2017_0460() throws Exception {
+        enableAdbRoot(getDevice());
+        AdbUtils.runPocNoOutput("CVE-2017-0460", getDevice(), 60);
+    }
 }
