@@ -846,7 +846,8 @@ public class FileSystemPermissionTest extends AndroidTestCase {
                 new File("/sys/fs/selinux/relabel"),
                 new File("/sys/fs/selinux/create"),
                 new File("/sys/fs/selinux/access"),
-                new File("/sys/fs/selinux/context")
+                new File("/sys/fs/selinux/context"),
+                new File("/sys/fs/selinux/validatetrans")
             ));
 
     @LargeTest
