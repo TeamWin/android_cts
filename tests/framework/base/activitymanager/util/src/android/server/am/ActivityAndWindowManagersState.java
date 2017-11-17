@@ -757,9 +757,9 @@ public class ActivityAndWindowManagersState {
         return true;
     }
 
-    int getStackPosition(int activityType) {
-        int wmStackIndex = mWmState.getStackPosition(activityType);
-        int amStackIndex = mAmState.getStackPosition(activityType);
+    int getStackIndexByActivityType(int activityType) {
+        int wmStackIndex = mWmState.getStackIndexByActivityType(activityType);
+        int amStackIndex = mAmState.getStackIndexByActivityType(activityType);
         assertEquals("Window and activity manager must have the same stack position index",
                 amStackIndex, wmStackIndex);
         return wmStackIndex;
