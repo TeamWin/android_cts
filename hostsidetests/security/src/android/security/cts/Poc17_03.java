@@ -118,4 +118,18 @@ public class Poc17_03 extends SecurityTestCase {
         enableAdbRoot(getDevice());
         AdbUtils.runPocNoOutput("CVE-2017-0460", getDevice(), 60);
     }
+
+    /**
+     *  b/33106520
+     */
+    @SecurityTest
+    public void testPocCVE_2017_0456() throws Exception {
+        enableAdbRoot(getDevice());
+        if (containsDriver(getDevice(), "/dev/ipa")) {
+            AdbUtils.runPocNoOutput("CVE-2017-0456", getDevice(), 30);
+            // CTS begins the next test before device finishes rebooting,
+            // sleep to allow time for device to reboot.
+            Thread.sleep(60000);
+        }
+    }
 }
