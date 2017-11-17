@@ -94,16 +94,41 @@ public class NotificationManagerTest extends AndroidTestCase {
                 new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
         channel.setGroup(ncg.getId());
         mNotificationManager.createNotificationChannelGroup(ncg);
+        final NotificationChannel ungrouped =
+                new NotificationChannel(mId + "!", "name", NotificationManager.IMPORTANCE_DEFAULT);
         try {
             mNotificationManager.createNotificationChannel(channel);
+            mNotificationManager.createNotificationChannel(ungrouped);
 
             List<NotificationChannelGroup> ncgs =
                     mNotificationManager.getNotificationChannelGroups();
             assertEquals(1, ncgs.size());
-            assertEquals(ncg, ncgs.get(0));
+            assertEquals(ncg.getName(), ncgs.get(0).getName());
+            assertEquals(ncg.getDescription(), ncgs.get(0).getDescription());
+            assertEquals(channel.getId(), ncgs.get(0).getChannels().get(0).getId());
         } finally {
             mNotificationManager.deleteNotificationChannelGroup(ncg.getId());
         }
+    }
+
+    public void testGetChannelGroup() throws Exception {
+        final NotificationChannelGroup ncg = new NotificationChannelGroup("a group", "a label");
+        ncg.setDescription("bananas");
+        final NotificationChannelGroup ncg2 = new NotificationChannelGroup("group 2", "label 2");
+        final NotificationChannel channel =
+                new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
+        channel.setGroup(ncg.getId());
+
+        mNotificationManager.createNotificationChannelGroup(ncg);
+        mNotificationManager.createNotificationChannelGroup(ncg2);
+        mNotificationManager.createNotificationChannel(channel);
+
+        NotificationChannelGroup actual =
+                mNotificationManager.getNotificationChannelGroup(ncg.getId());
+        assertEquals(ncg.getId(), actual.getId());
+        assertEquals(ncg.getName(), actual.getName());
+        assertEquals(ncg.getDescription(), actual.getDescription());
+        assertEquals(channel.getId(), actual.getChannels().get(0).getId());
     }
 
     public void testDeleteChannelGroup() throws Exception {
@@ -777,6 +802,7 @@ public class NotificationManagerTest extends AndroidTestCase {
             found = false;
             final StatusBarNotification[] sbns = mNotificationManager.getActiveNotifications();
             for (StatusBarNotification sbn : sbns) {
+                Log.d(TAG, "Found " + sbn.getKey());
                 if (sbn.getId() == id) {
                     found = true;
                     break;

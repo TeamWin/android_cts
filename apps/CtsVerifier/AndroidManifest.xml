@@ -1877,6 +1877,13 @@
             <meta-data android:name="test_category" android:value="@string/test_category_notifications" />
         </activity>
 
+        <receiver android:name=".notifications.BlockChangeReceiver">
+            <intent-filter>
+                <action android:name="android.app.action.NOTIFICATION_CHANNEL_BLOCK_STATE_CHANGED"/>
+                <action android:name="android.app.action.NOTIFICATION_CHANNEL_GROUP_BLOCK_STATE_CHANGED"/>
+            </intent-filter>
+        </receiver>
+
         <activity android:name=".notifications.ConditionProviderVerifierActivity"
                   android:label="@string/cp_test">
             <intent-filter>
