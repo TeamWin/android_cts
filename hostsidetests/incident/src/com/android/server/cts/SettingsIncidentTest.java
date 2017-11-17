@@ -58,7 +58,7 @@ public class SettingsIncidentTest extends ProtoDumpTestCase {
     private void verifySettings(GeneratedMessage settings) throws Exception {
         verifySettings(getSettingProtos(settings));
 
-        final List<SettingsOperationProto> ops = invoke(settings, "getHistoricalOpList");
+        final List<SettingsOperationProto> ops = invoke(settings, "getHistoricalOperationsList");
         for (SettingsOperationProto op : ops) {
             assertTrue(op.getTimestamp() >= 0);
             assertNotNull(op.getOperation());
