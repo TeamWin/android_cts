@@ -19,6 +19,8 @@ package com.android.server.cts;
 import android.service.notification.NotificationRecordProto;
 import android.service.notification.NotificationServiceDumpProto;
 import android.service.notification.NotificationRecordProto.State;
+import android.service.notification.RankingHelperProto;
+import android.service.notification.RankingHelperProto.RecordProto;
 import android.service.notification.ZenModeProto;
 import android.service.notification.ZenModeProto.ZenMode;
 
@@ -28,7 +30,17 @@ import android.service.notification.ZenModeProto.ZenMode;
  * make -j32 CtsIncidentHostTestCases
  * cts-tradefed run singleCommand cts-dev -d --module CtsIncidentHostTestCases
  */
-public class NotificationTest extends ProtoDumpTestCase {
+public class NotificationIncidentTest extends ProtoDumpTestCase {
+    // Constants from android.app.NotificationManager
+    private static final int IMPORTANCE_UNSPECIFIED = -1000;
+    private static final int IMPORTANCE_NONE = 0;
+    private static final int IMPORTANCE_MAX = 5;
+    private static final int VISIBILITY_NO_OVERRIDE = -1000;
+    // Constants from android.app.Notification
+    private static final int PRIORITY_MIN = -2;
+    private static final int PRIORITY_MAX = 2;
+    private static final int VISIBILITY_SECRET = -1;
+    private static final int VISIBILITY_PUBLIC = 1;
     // These constants are those in PackageManager.
     public static final String FEATURE_WATCH = "android.hardware.type.watch";
 
@@ -45,7 +57,7 @@ public class NotificationTest extends ProtoDumpTestCase {
             if (record.getKey().contains("android")) {
                 found = true;
                 assertEquals(State.POSTED, record.getState());
-                assertTrue(record.getImportance() > 0 /* NotificationManager.IMPORTANCE_NONE */);
+                assertTrue(record.getImportance() > IMPORTANCE_NONE);
 
                 // Ensure these fields exist, at least
                 record.getFlags();
@@ -60,6 +72,31 @@ public class NotificationTest extends ProtoDumpTestCase {
         }
 
         assertTrue(found);
+    }
+
+    /** Test valid values from the RankingHelper. */
+    public void testRankingConfig() throws Exception {
+        final NotificationServiceDumpProto dump = getDump(NotificationServiceDumpProto.parser(),
+                "dumpsys notification --proto");
+
+        RankingHelperProto rhProto = dump.getRankingConfig();
+        for (RecordProto rp : rhProto.getRecordsList()) {
+            verifyRecordProto(rp);
+        }
+        for (RecordProto rp : rhProto.getRecordsRestoredWithoutUidList()) {
+            verifyRecordProto(rp);
+        }
+    }
+
+    private void verifyRecordProto(RecordProto rp) throws Exception {
+        assertTrue(!rp.getPackage().isEmpty());
+        assertTrue(rp.getUid() == -10000 || rp.getUid() >= 0);
+        assertTrue(rp.getImportance() == IMPORTANCE_UNSPECIFIED ||
+                (rp.getImportance() >= IMPORTANCE_NONE && rp.getImportance() <= IMPORTANCE_MAX));
+        assertTrue(rp.getPriority() >= PRIORITY_MIN && rp.getPriority() <= PRIORITY_MAX);
+        assertTrue(rp.getVisibility() == VISIBILITY_NO_OVERRIDE ||
+                (rp.getVisibility() >= VISIBILITY_SECRET &&
+                 rp.getVisibility() <= VISIBILITY_PUBLIC));
     }
 
     // Tests default state: zen mode off, no suppressors
