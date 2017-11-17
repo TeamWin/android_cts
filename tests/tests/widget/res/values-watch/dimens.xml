@@ -15,4 +15,6 @@
 -->
 <resources>
     <dimen name="calendarview_holo_height">200dip</dimen>
+
+    <dimen name="imageview_regular_height">100dip</dimen>
 </resources>
