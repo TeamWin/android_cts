@@ -58,8 +58,9 @@ public class TestUtils {
 
         Bitmap bt = mAutomation.takeScreenshot();
         // Crop-out the top bar where current time is displayed since any time change would
-        // introduce flakiness (we are cutting 5% of the screen height).
-        int yToCut = bt.getHeight() / 20;
+        // introduce flakiness (we are cutting 5% of the screen height, or the real status bar
+        // height if it is larger).
+        int yToCut = Math.max(bt.getHeight() / 20, getStatusBarHeight());
         // Crop the right side for scrollbar which might or might not be visible. But on
         // watch, the scroll bar is a curve and occupies 20% of the screen on the right
         // hand side.
@@ -68,6 +69,21 @@ public class TestUtils {
                 bt, 0, yToCut, bt.getWidth() - xToCut, bt.getHeight() - yToCut);
 
         return bt;
+    }
+
+    /**
+     * get status bar height according to preset value in resources
+     * @return the height of status bar
+     */
+    private int getStatusBarHeight() {
+        int height = 0;
+        Context context = mInstrumentation.getTargetContext();
+        int resourceId = context.getResources().getIdentifier("status_bar_height", "dimen",
+                "android");
+        if (resourceId > 0) {
+            height = context.getResources().getDimensionPixelSize(resourceId);
+        }
+        return height;
     }
 
     void tapOnViewWithText(String searchText) {
