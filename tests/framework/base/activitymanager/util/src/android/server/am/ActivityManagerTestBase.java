@@ -34,7 +34,6 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.ActivityManager;
 import android.content.Context;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
@@ -672,7 +671,7 @@ public abstract class ActivityManagerTestBase {
         runCommandAndPrintOutput("locksettings set-pin " + LOCK_CREDENTIAL);
     }
 
-    private void removeLockCredential() {
+    protected void removeLockCredential() {
         runCommandAndPrintOutput("locksettings clear --old " + LOCK_CREDENTIAL);
     }
 
@@ -1400,7 +1399,7 @@ public abstract class ActivityManagerTestBase {
         }
     }
 
-    void tearDownLockCredentials() throws Exception {
+    protected void tearDownLockCredentials() throws Exception {
         if (!mLockCredentialsSet) {
             return;
         }

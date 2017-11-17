@@ -51,6 +51,10 @@
             android:name="android.server.am.AspectRatioTests$MaxAspectRatioUnsetActivity"
             android:label="MaxAspectRatioUnsetActivity"
             android:resizeableActivity="false" />
+
+        <activity android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$FirstActivity" />
+
+        <activity android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$SecondActivity"/>
     </application>
 
     <instrumentation
