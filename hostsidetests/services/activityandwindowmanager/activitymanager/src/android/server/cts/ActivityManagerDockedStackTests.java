@@ -20,6 +20,7 @@ import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.log.LogUtil.CLog;
 
 import java.awt.Rectangle;
+import static android.server.cts.ActivityManagerState.STATE_RESUMED;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
@@ -123,6 +124,9 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         // Remove the docked stack, and ensure that
         final String logSeparator = clearLogcat();
         removeStacks(DOCKED_STACK_ID);
+        assertRelaunchOrConfigChanged(TEST_ACTIVITY_NAME, 1 /* numRelaunch */,
+                0 /* numConfigChange */, logSeparator);
+        mAmWmState.waitForActivityState(mDevice, TEST_ACTIVITY_NAME, STATE_RESUMED);
         final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(
                 TEST_ACTIVITY_NAME, logSeparator);
         if (lifecycleCounts.mMultiWindowModeChangedCount != 1) {
