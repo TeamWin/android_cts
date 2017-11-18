@@ -724,14 +724,21 @@ public final class TestMeasurementUtil {
                 getGnssNavMessageTypes() + "] actual = " + type,
                     GNSS_NAVIGATION_MESSAGE_TYPE.contains(type));
 
-            int gnssYearOfHardware = testLocationManager.getLocationManager().getGnssYearOfHardware();
+            int gnssYearOfHardware =
+                testLocationManager.getLocationManager().getGnssYearOfHardware();
+            int messageType = message.getType();
             if (gnssYearOfHardware >= YEAR_2016) {
                 softAssert.assertTrue("Message ID cannot be 0", message.getMessageId() != 0);
-                softAssert.assertTrue("Sub Message ID cannot be 0", message.getSubmessageId() != 0);
+                if (messageType == GnssNavigationMessage.TYPE_GAL_I) {
+                    softAssert.assertTrue("Sub Message ID can not be negative.",
+                        message.getSubmessageId() >= 0);
+                } else {
+                    softAssert.assertTrue("Sub Message ID has to be greater than 0.",
+                        message.getSubmessageId() > 0);
+                }
             }
 
             // if message type == TYPE_L1CA, verify PRN & Data Size.
-            int messageType = message.getType();
             if (messageType == GnssNavigationMessage.TYPE_GPS_L1CA) {
                 int svid = message.getSvid();
                 softAssert.assertTrue("Space Vehicle ID : expected = [1, 32], actual = " +
