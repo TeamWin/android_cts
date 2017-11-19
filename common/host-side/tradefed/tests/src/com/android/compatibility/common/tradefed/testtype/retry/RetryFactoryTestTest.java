@@ -89,7 +89,7 @@ public class RetryFactoryTestTest {
         };
         mFactory = new RetryFactoryTest() {
             @Override
-            RetryFilterHelper createFilterHelper(CompatibilityBuildHelper buildHelper) {
+            protected RetryFilterHelper createFilterHelper(CompatibilityBuildHelper buildHelper) {
                 return mSpyFilter;
             }
             @Override
@@ -107,6 +107,7 @@ public class RetryFactoryTestTest {
     public void testRetry_receiveOption() throws Exception {
         OptionSetter setter = new OptionSetter(mFactory);
         setter.setOptionValue("retry", "10599");
+        setter.setOptionValue("test-arg", "abcd");
         EasyMock.replay(mMockListener);
         mFactory.run(mMockListener);
         EasyMock.verify(mMockListener);

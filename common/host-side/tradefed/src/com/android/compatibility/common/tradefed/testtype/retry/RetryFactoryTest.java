@@ -40,6 +40,7 @@ import com.android.tradefed.testtype.IShardableTest;
 
 import com.google.common.annotations.VisibleForTesting;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -99,6 +100,12 @@ public class RetryFactoryTest implements IRemoteTest, IDeviceTest, IBuildReceive
             description = "the test run.",
             importance = Importance.IF_UNSET)
     protected String mTestName = null;
+
+    @Option(name = CompatibilityTestSuite.TEST_ARG_OPTION,
+            description = "the arguments to pass to a test. The expected format is "
+                    + "\"<test-class>:<arg-name>:[<arg-key>:=]<arg-value>\"",
+            importance = Importance.ALWAYS)
+    private List<String> mTestArgs = new ArrayList<>();
 
     @Option(name = RETRY_TYPE_OPTION,
             description = "used with " + RETRY_OPTION + ", retry tests"
@@ -177,11 +184,9 @@ public class RetryFactoryTest implements IRemoteTest, IDeviceTest, IBuildReceive
 
         try {
             OptionSetter setter = new OptionSetter(test);
-            setter.setOptionValue("compatibility:test-arg",
-                    "com.android.tradefed.testtype.AndroidJUnitTest:rerun-from-file:true");
-            setter.setOptionValue("compatibility:test-arg",
-                    "com.android.tradefed.testtype.AndroidJUnitTest:fallback-to-serial-rerun:"
-                    + "false");
+            for (String testArg : mTestArgs) {
+                setter.setOptionValue("compatibility:test-arg", testArg);
+            }
         } catch (ConfigurationException e) {
             throw new RuntimeException(e);
         }
@@ -199,8 +204,10 @@ public class RetryFactoryTest implements IRemoteTest, IDeviceTest, IBuildReceive
         return test;
     }
 
-    @VisibleForTesting
-    RetryFilterHelper createFilterHelper(CompatibilityBuildHelper buildHelper) {
+    /**
+     * @return a {@link RetryFilterHelper} created from the attributes of this object.
+     */
+    protected RetryFilterHelper createFilterHelper(CompatibilityBuildHelper buildHelper) {
         return new RetryFilterHelper(buildHelper, mRetrySessionId, mSubPlan, mIncludeFilters,
                 mExcludeFilters, mAbiName, mModuleName, mTestName, mRetryType);
     }
@@ -208,5 +215,12 @@ public class RetryFactoryTest implements IRemoteTest, IDeviceTest, IBuildReceive
     @VisibleForTesting
     CompatibilityTestSuite createTest() {
         return new CompatibilityTestSuite();
+    }
+
+    /**
+     * @return the ID of the session to be retried.
+     */
+    protected Integer getRetrySessionId() {
+        return mRetrySessionId;
     }
 }

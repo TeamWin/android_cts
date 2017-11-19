@@ -132,6 +132,29 @@ public class AudioManagerTest extends InstrumentationTestCase {
         mAudioManager.playSoundEffect(AudioManager.FX_FOCUS_NAVIGATION_RIGHT, volume);
     }
 
+    public void testCheckingZenModeBlockDoesNotRequireNotificationPolicyAccess() throws Exception {
+        try {
+            // set zen mode to priority only, so playSoundEffect will check notification policy
+            Utils.toggleNotificationPolicyAccess(mContext.getPackageName(), getInstrumentation(),
+                    true);
+            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
+            Settings.System.putInt(mContext.getContentResolver(), SOUND_EFFECTS_ENABLED, 1);
+
+            // take away write-notification policy access from the package
+            Utils.toggleNotificationPolicyAccess(mContext.getPackageName(), getInstrumentation(),
+                    false);
+
+            // playSoundEffect should NOT throw a security exception; all apps have read-access
+            mAudioManager.playSoundEffect(SoundEffectConstants.CLICK);
+        } finally {
+            Utils.toggleNotificationPolicyAccess(mContext.getPackageName(), getInstrumentation(),
+                    true);
+            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
+            Utils.toggleNotificationPolicyAccess(mContext.getPackageName(), getInstrumentation(),
+                    false);
+        }
+    }
+
     public void testMusicActive() throws Exception {
         MediaPlayer mp = MediaPlayer.create(mContext, MP3_TO_PLAY);
         assertNotNull(mp);

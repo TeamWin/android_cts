@@ -18,6 +18,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libdynamiclinker_native_lib_a
 LOCAL_MODULE_TAGS := optional
 LOCAL_SRC_FILES := native_lib_a.cpp
+LOCAL_CFLAGS := -Wall -Werror
 LOCAL_C_INCLUDES := $(JNI_H_INCLUDE)
 LOCAL_SDK_VERSION := 25
 LOCAL_NDK_STL_VARIANT := c++_static
@@ -28,6 +29,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libdynamiclinker_native_lib_b
 LOCAL_MODULE_TAGS := optional
 LOCAL_SRC_FILES := native_lib_b.cpp
+LOCAL_CFLAGS := -Wall -Werror
 LOCAL_C_INCLUDES := $(JNI_H_INCLUDE)
 LOCAL_SDK_VERSION := 25
 LOCAL_NDK_STL_VARIANT := c++_static

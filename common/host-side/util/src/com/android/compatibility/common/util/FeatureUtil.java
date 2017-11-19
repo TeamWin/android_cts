@@ -19,6 +19,9 @@ package com.android.compatibility.common.util;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Host-side utility class for detecting system features
  */
@@ -55,6 +58,17 @@ public class FeatureUtil {
             }
         }
         return true;
+    }
+
+    /** Returns all system features of the device */
+    public static Set<String> getAllFeatures(ITestDevice device)
+            throws DeviceNotAvailableException {
+        Set<String> allFeatures = new HashSet<String>();
+        String output = device.executeShellCommand("pm list features");
+        for (String feature : output.split("[\\r?\\n]+")) {
+            allFeatures.add(feature.substring("feature:".length()));
+        }
+        return allFeatures;
     }
 
     /** Returns true if the device has feature TV_FEATURE or feature LEANBACK_FEATURE */
