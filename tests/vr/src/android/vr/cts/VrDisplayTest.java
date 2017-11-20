@@ -98,24 +98,4 @@ public class VrDisplayTest extends ActivityInstrumentationTestCase2<OpenGLESActi
         assertTrue(displayHeight >= 1080);
     }
 
-    /**
-     * Tests that the display dimensions are between 4.7" and 6".
-     */
-    public void testDisplayDimensions() {
-        mActivity = getGlEsActivity(1, 1);
-        if (!mActivity.supportsVrHighPerformance())
-            return;
-
-        WindowManager windowManager = (WindowManager)mActivity.getSystemService(
-            Context.WINDOW_SERVICE);
-        DisplayMetrics metrics = new DisplayMetrics();
-        windowManager.getDefaultDisplay().getRealMetrics(metrics);
-
-        double width = metrics.widthPixels / metrics.xdpi;
-        double height = metrics.heightPixels / metrics.ydpi;
-        double diagonalLength = Math.sqrt(width * width + height * height);
-
-        assertTrue(diagonalLength >= 4.7);
-        assertTrue(diagonalLength <= 6.3);
-    }
 }
