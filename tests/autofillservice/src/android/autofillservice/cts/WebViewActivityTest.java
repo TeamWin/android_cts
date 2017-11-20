@@ -82,6 +82,7 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
         enableService();
 
         // Set expectations.
+        mActivity.mWebView.expectAutofill("dude", "sweet");
         final MyAutofillCallback callback = mActivity.registerCallback();
         sReplier.addResponse(new CannedDataset.Builder()
                 .setField("username", "dude")
@@ -105,6 +106,7 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
 
         // Now Autofill it.
         sUiBot.selectDataset(datasetPicker, "The Dude");
+        mActivity.mWebView.assertAutofilled();
         sUiBot.assertNoDatasets();
         callback.assertUiHiddenEvent(mActivity.mWebView, passwordChildId);
 
@@ -208,6 +210,7 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
 
         // Set expectations.
         final MyAutofillCallback callback = mActivity.registerCallback();
+        mActivity.mWebView.expectAutofill("dude", "sweet");
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, "username", "password")
                 .addDataset(new CannedDataset.Builder()
@@ -235,6 +238,7 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
 
         // Autofill it.
         sUiBot.selectDataset("The Dude");
+        mActivity.mWebView.assertAutofilled();
         callback.assertUiHiddenEvent(mActivity.mWebView, usernameChildId);
 
         // Make sure screen was autofilled.
