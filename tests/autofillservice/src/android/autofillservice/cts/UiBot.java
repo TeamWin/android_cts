@@ -44,6 +44,7 @@ import android.text.Html;
 import android.util.Log;
 import android.view.accessibility.AccessibilityWindowInfo;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -530,6 +531,8 @@ final class UiBot {
             }
             SystemClock.sleep(napTime);
         }
+        Log.e(TAG, "waitForObject() for " + selector + "failed; dumping screen on System.out");
+        dumpScreen();
         throw new RetryableException("Object with selector '%s' not found in %d ms",
                 selector, UI_TIMEOUT_MS);
 
@@ -646,7 +649,22 @@ final class UiBot {
     /**
      * Dumps the current view hierarchy int the output stream.
      */
-    public void dumpScreen() throws IOException {
-        mDevice.dumpWindowHierarchy(System.out);
+    public void dumpScreen() {
+        try {
+            try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+                mDevice.dumpWindowHierarchy(os);
+                os.flush();
+                Log.w(TAG, "Window hierarchy:");
+                for (String line : os.toString("UTF-8").split("\n")) {
+                    Log.w(TAG, line);
+                    // Sleep a little bit to avoid logs being ignored due to spam
+                    SystemClock.sleep(10);
+                }
+            }
+        } catch (IOException e) {
+            // Just ignore it...
+            Log.e(TAG, "exception dumping window hierarchy", e);
+            return;
+        }
     }
 }
