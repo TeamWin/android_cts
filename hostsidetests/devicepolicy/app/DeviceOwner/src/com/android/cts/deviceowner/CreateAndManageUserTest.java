@@ -36,7 +36,6 @@ import android.provider.Settings;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
-import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Semaphore;
@@ -216,44 +215,13 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
     public void testCreateAndManageEphemeralUser() throws Exception {
         String testUserName = "TestUser_" + System.currentTimeMillis();
 
-        // Use reflection to get the value of the hidden flag to make the new user ephemeral.
-        Field field = DevicePolicyManager.class.getField("MAKE_USER_EPHEMERAL");
-        int makeEphemeralFlag = field.getInt(null);
-
         // Do not assign return value to mUserHandle, so it is not removed in tearDown.
         mDevicePolicyManager.createAndManageUser(
                 getWho(),
                 testUserName,
                 getWho(),
                 null,
-                makeEphemeralFlag);
-    }
-
-    /**
-     * Test creating an ephemeral user using the {@link DevicePolicyManager#createAndManageUser}
-     * method fails on systems without the split system user.
-     *
-     * <p>To be used by host-side test on systems without the split system user.
-     */
-    public void testCreateAndManageEphemeralUserFails() throws Exception {
-        String testUserName = "TestUser_" + System.currentTimeMillis();
-
-        // Use reflection to get the value of the hidden flag to make the new user ephemeral.
-        Field field = DevicePolicyManager.class.getField("MAKE_USER_EPHEMERAL");
-        int makeEphemeralFlag = field.getInt(null);
-
-        try {
-            mDevicePolicyManager.createAndManageUser(
-                    getWho(),
-                    testUserName,
-                    getWho(),
-                    null,
-                    makeEphemeralFlag);
-        } catch (IllegalArgumentException e) {
-            // Success, the expected exception was thrown.
-            return;
-        }
-        fail("createAndManageUser should have thrown IllegalArgumentException");
+                DevicePolicyManager.MAKE_USER_EPHEMERAL);
     }
 
 // Disabled due to b/29072728
