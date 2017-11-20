@@ -26,15 +26,15 @@ import static android.server.am.ProtoExtractors.extract;
 import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logE;
 
+import android.content.ComponentName;
 import android.graphics.Rect;
-import android.graphics.nano.RectProto;
 import android.os.ParcelFileDescriptor;
 import android.support.test.InstrumentationRegistry;
 
-import com.android.server.am.proto.nano.ActivityStackSupervisorProto;
+import com.android.server.am.proto.nano.ActivityDisplayProto;
 import com.android.server.am.proto.nano.ActivityRecordProto;
 import com.android.server.am.proto.nano.ActivityStackProto;
-import com.android.server.am.proto.nano.ActivityDisplayProto;
+import com.android.server.am.proto.nano.ActivityStackSupervisorProto;
 import com.android.server.am.proto.nano.KeyguardControllerProto;
 import com.android.server.am.proto.nano.TaskRecordProto;
 import com.android.server.wm.proto.nano.ConfigurationContainerProto;
@@ -401,22 +401,17 @@ class ActivityManagerState {
         return -1;
     }
 
-    boolean isHomeActivityVisible() {
-        final Activity homeActivity = getHomeActivity();
-        return homeActivity != null && homeActivity.visible;
-    }
-
     boolean isRecentsActivityVisible() {
         final Activity recentsActivity = getRecentsActivity();
         return recentsActivity != null && recentsActivity.visible;
     }
 
-    String getHomeActivityName() {
+    ComponentName getHomeActivityName() {
         Activity activity = getHomeActivity();
         if (activity == null) {
             return null;
         }
-        return activity.name;
+        return ComponentName.unflattenFromString(activity.name);
     }
 
     ActivityTask getHomeTask() {
