@@ -33,7 +33,10 @@ public class WebViewActivity extends AbstractAutoFillActivity {
     private static final String FAKE_URL = "https://" + FAKE_DOMAIN + ":666/login.html";
     static final String ID_WEBVIEW = "webview";
 
-    WebView mWebView;
+    // TODO(b/69557967): WebView currently does not report the nodes content description properties.
+    private static final boolean CONTENT_DESCRIPTION_SUPPORTED = false;
+
+    MyWebView mWebView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,7 +78,6 @@ public class WebViewActivity extends AbstractAutoFillActivity {
         return getLabel(uiBot, "Password: ");
     }
 
-
     public UiObject2 getUsernameInput(UiBot uiBot) {
         return getInput(uiBot, "Username: ");
     }
@@ -85,12 +87,14 @@ public class WebViewActivity extends AbstractAutoFillActivity {
     }
 
     public UiObject2 getLoginButton(UiBot uiBot) {
-        return uiBot.assertShownByContentDescription("Login");
+        return getLabel(uiBot, "Login");
     }
 
     private UiObject2 getLabel(UiBot uiBot, String contentDescription) {
-        final UiObject2 label = uiBot.assertShownByContentDescription(contentDescription);
-        return label;
+        if (!CONTENT_DESCRIPTION_SUPPORTED) {
+            return uiBot.assertShownByText(contentDescription);
+        }
+        return uiBot.assertShownByContentDescription(contentDescription);
     }
 
     private UiObject2 getInput(UiBot uiBot, String contentDescription) {
