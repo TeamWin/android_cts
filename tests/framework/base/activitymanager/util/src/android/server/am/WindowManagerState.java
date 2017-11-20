@@ -62,7 +62,6 @@ import java.util.List;
 import java.util.Map;
 
 public class WindowManagerState {
-
     public static final String TRANSIT_ACTIVITY_OPEN = "TRANSIT_ACTIVITY_OPEN";
     public static final String TRANSIT_ACTIVITY_CLOSE = "TRANSIT_ACTIVITY_CLOSE";
     public static final String TRANSIT_TASK_OPEN = "TRANSIT_TASK_OPEN";
@@ -374,10 +373,6 @@ public class WindowManagerState {
         }
     }
 
-    public void sortWindowsByLayer(List<WindowState> windows) {
-        windows.sort(Comparator.comparingInt(WindowState::getLayer));
-    }
-
     WindowState getWindowStateForAppToken(String appToken) {
         for (WindowState ws : mWindowStates) {
             if (ws.getToken().equals(appToken)) {
@@ -561,6 +556,10 @@ public class WindowManagerState {
 
     public boolean isDockedStackMinimized() {
         return mIsDockedStackMinimized;
+    }
+
+    public int getZOrder(WindowState w) {
+        return mWindowStates.indexOf(w);
     }
 
     private void reset() {
@@ -857,8 +856,8 @@ public class WindowManagerState {
             return mStackId;
         }
 
-        public int getLayer() {
-            return mLayer;
+        public int getZOrder() {
+            return mWindowStates.size() - mWindowStates.indexOf(this);
         }
 
         Rect getContainingFrame() {

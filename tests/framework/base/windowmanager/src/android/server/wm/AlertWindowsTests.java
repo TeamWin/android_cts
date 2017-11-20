@@ -141,14 +141,13 @@ public class AlertWindowsTests extends ActivityManagerTestBase {
 
         assertNotNull(mainAppWindow);
 
-        wMState.sortWindowsByLayer(alertWindows);
         final WindowManagerState.WindowState lowestAlertWindow = alertWindows.get(0);
         final WindowManagerState.WindowState highestAlertWindow =
                 alertWindows.get(alertWindows.size() - 1);
 
         // Assert that the alert windows have higher z-order than the main app window
         assertTrue("lowestAlertWindow=" + lowestAlertWindow + " less than mainAppWindow="
-                + mainAppWindow, lowestAlertWindow.getLayer() > mainAppWindow.getLayer());
+                + mainAppWindow, lowestAlertWindow.getZOrder() > mainAppWindow.getZOrder());
 
         // Assert that legacy alert windows have a lower z-order than the new alert window layer.
         final WindowManagerState.WindowState appOverlayWindow =
@@ -156,18 +155,17 @@ public class AlertWindowsTests extends ActivityManagerTestBase {
         if (appOverlayWindow != null && highestAlertWindow != appOverlayWindow) {
             assertTrue("highestAlertWindow=" + highestAlertWindow
                             + " greater than appOverlayWindow=" + appOverlayWindow,
-                    highestAlertWindow.getLayer() < appOverlayWindow.getLayer());
+                    highestAlertWindow.getZOrder() < appOverlayWindow.getZOrder());
         }
 
         // Assert that alert windows are below key system windows.
         final ArrayList<WindowManagerState.WindowState> systemWindows = new ArrayList();
         wMState.getWindowsByPackageName(packageName, mSystemWindowTypes, systemWindows);
         if (!systemWindows.isEmpty()) {
-            wMState.sortWindowsByLayer(systemWindows);
             final WindowManagerState.WindowState lowestSystemWindow = alertWindows.get(0);
             assertTrue("highestAlertWindow=" + highestAlertWindow
                             + " greater than lowestSystemWindow=" + lowestSystemWindow,
-                    highestAlertWindow.getLayer() < lowestSystemWindow.getLayer());
+                    highestAlertWindow.getZOrder() < lowestSystemWindow.getZOrder());
         }
     }
 
