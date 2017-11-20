@@ -132,4 +132,26 @@ public class Poc17_03 extends SecurityTestCase {
             Thread.sleep(60000);
         }
     }
+
+    /**
+     *  b/32919951
+     */
+    @SecurityTest
+    public void testPocCVE_2017_0521() throws Exception {
+        enableAdbRoot(getDevice());
+        if (containsDriver(getDevice(), "/dev/ion")) {
+            AdbUtils.runPocNoOutput("CVE-2017-0521", getDevice(), 30);
+        }
+    }
+
+    /**
+     *  b/33979145
+     */
+    @SecurityTest
+    public void testPocCVE_2017_0453() throws Exception {
+        enableAdbRoot(getDevice());
+        AdbUtils.runPocNoOutput("CVE-2017-0453", getDevice(), 30);
+        // Device takes up to 90 seconds to crash after PoC run.
+        Thread.sleep(90000);
+    }
 }
