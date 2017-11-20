@@ -62,4 +62,15 @@ public class Poc17_01 extends SecurityTestCase {
         // sleep to allow time for device to reboot.
         Thread.sleep(60000);
     }
+
+   /**
+     *  b/32219453
+     */
+    @SecurityTest
+    public void testPocCVE_2016_8457() throws Exception {
+        enableAdbRoot(getDevice());
+        AdbUtils.runPoc("CVE-2016-8457", getDevice(), 60);
+        // Device takes up to 60 seconds to crash after PoC run.
+        Thread.sleep(60000);
+    }
  }
