@@ -792,7 +792,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
     }
 
     @Test
-    public void testSanitizeOnSave() throws Exception {
+    public void testSanitizeOnSaveWhenAppChangeValues() throws Exception {
         startActivity();
 
         // Set listeners that will change the saved value
@@ -832,7 +832,44 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
     }
 
     @Test
-    public void testDontSaveWhenSanitizedValueDidntChange() throws Exception {
+    public void testSanitizeOnSaveNoChange() throws Exception {
+        startActivity();
+
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        final AutofillId inputId = mActivity.mInput.getAutofillId();
+        final AutofillId passwordId = mActivity.mPassword.getAutofillId();
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT)
+                .setOptionalSavableIds(ID_PASSWORD)
+                .addSanitizer(new TextValueSanitizer(TRIMMER_PATTERN, "$1"), inputId, passwordId)
+                .build());
+
+        // Trigger autofill.
+        mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
+        sReplier.getNextFillRequest();
+        sUiBot.assertNoDatasets();
+
+        // Trigger save.
+        mActivity.syncRunOnUiThread(() -> {
+            mActivity.mInput.setText("#id#");
+            mActivity.mPassword.setText("#pass#");
+            mActivity.mCommit.performClick();
+        });
+
+        // Save it...
+        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_GENERIC);
+
+        // ... and assert results
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+        assertTextValue(findNodeByResourceId(saveRequest.structure, ID_INPUT), "id");
+        assertTextValue(findNodeByResourceId(saveRequest.structure, ID_PASSWORD), "pass");
+    }
+
+    @Test
+    public void testDontSaveWhenSanitizedValueForRequiredFieldDidntChange() throws Exception {
         startActivity();
 
         // Set listeners that will change the saved value
@@ -851,6 +888,107 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
                 .addDataset(new CannedDataset.Builder()
                         .setField(ID_INPUT, "id")
                         .setField(ID_PASSWORD, "pass")
+                        .setPresentation(createPresentation("YO"))
+                        .build())
+                .build());
+
+        // Trigger autofill.
+        mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
+        sReplier.getNextFillRequest();
+
+        mActivity.syncRunOnUiThread(() -> {
+            mActivity.mInput.setText("id");
+            mActivity.mPassword.setText("pass");
+            mActivity.mCommit.performClick();
+        });
+
+        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
+    }
+
+    @Test
+    public void testDontSaveWhenSanitizedValueForOptionalFieldDidntChange() throws Exception {
+        startActivity();
+
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        final AutofillId passwordId = mActivity.mPassword.getAutofillId();
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT)
+                .setOptionalSavableIds(ID_PASSWORD)
+                .addSanitizer(new TextValueSanitizer(Pattern.compile("(pass) "), "$1"), passwordId)
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_INPUT, "id")
+                        .setField(ID_PASSWORD, "pass")
+                        .setPresentation(createPresentation("YO"))
+                        .build())
+                .build());
+
+        // Trigger autofill.
+        mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
+
+        mActivity.syncRunOnUiThread(() -> {
+            mActivity.mInput.setText("id");
+            mActivity.mPassword.setText("#pass#");
+            mActivity.mCommit.performClick();
+        });
+
+        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
+    }
+
+    @Test
+    public void testDontSaveWhenRequiredFieldFailedSanitization() throws Exception {
+        startActivity();
+
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        final AutofillId inputId = mActivity.mInput.getAutofillId();
+        final AutofillId passwordId = mActivity.mPassword.getAutofillId();
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT, ID_PASSWORD)
+                .addSanitizer(new TextValueSanitizer(Pattern.compile("dude"), "$1"),
+                        inputId, passwordId)
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_INPUT, "#id#")
+                        .setField(ID_PASSWORD, "#pass#")
+                        .setPresentation(createPresentation("YO"))
+                        .build())
+                .build());
+
+        // Trigger autofill.
+        mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
+        sReplier.getNextFillRequest();
+
+        mActivity.syncRunOnUiThread(() -> {
+            mActivity.mInput.setText("id");
+            mActivity.mPassword.setText("pass");
+            mActivity.mCommit.performClick();
+        });
+
+        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
+    }
+
+    @Test
+    public void testDontSaveWhenOptionalFieldFailedSanitization() throws Exception {
+        startActivity();
+
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        final AutofillId inputId = mActivity.mInput.getAutofillId();
+        final AutofillId passwordId = mActivity.mPassword.getAutofillId();
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT)
+                .setOptionalSavableIds(ID_PASSWORD)
+                .addSanitizer(new TextValueSanitizer(Pattern.compile("dude"), "$1"),
+                        inputId, passwordId)
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_INPUT, "id")
+                        .setField(ID_PASSWORD, "#pass#")
                         .setPresentation(createPresentation("YO"))
                         .build())
                 .build());
