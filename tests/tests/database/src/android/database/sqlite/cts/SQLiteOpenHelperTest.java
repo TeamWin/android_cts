@@ -18,7 +18,7 @@ package android.database.sqlite.cts;
 
 import android.app.ActivityManager;
 import android.content.Context;
-import android.database.DatabaseUtils;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteCursor;
 import android.database.sqlite.SQLiteCursorDriver;
 import android.database.sqlite.SQLiteDatabase;
@@ -31,6 +31,9 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.UiDevice;
 import android.test.AndroidTestCase;
 import android.util.Log;
+
+import java.io.File;
+import java.util.Arrays;
 
 import static android.database.sqlite.cts.DatabaseTestUtils.getDbInfoOutput;
 import static android.database.sqlite.cts.DatabaseTestUtils.waitForConnectionToClose;
@@ -214,6 +217,47 @@ public class SQLiteOpenHelperTest extends AndroidTestCase {
         SQLiteDatabase database = helper.getWritableDatabase();
         assertNotNull(database);
         helper.close();
+    }
+
+    /**
+     * Tests a scenario in WAL mode with multiple connections, when a connection should see schema
+     * changes made from another connection.
+     */
+    public void testWalSchemaChangeVisibilityOnUpgrade() {
+        File dbPath = mContext.getDatabasePath(TEST_DATABASE_NAME);
+        SQLiteDatabase.deleteDatabase(dbPath);
+        SQLiteDatabase db = SQLiteDatabase.openOrCreateDatabase(dbPath, null);
+        db.execSQL("CREATE TABLE test_table (_id INTEGER PRIMARY KEY AUTOINCREMENT)");
+        db.setVersion(1);
+        db.close();
+        mOpenHelper = new MockOpenHelper(mContext, TEST_DATABASE_NAME, null, 2) {
+            {
+                setWriteAheadLoggingEnabled(true);
+            }
+
+            @Override
+            public void onCreate(SQLiteDatabase db) {
+            }
+
+            @Override
+            public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+                if (oldVersion == 1) {
+                    db.execSQL("ALTER TABLE test_table ADD column2 INT DEFAULT 1234");
+                    db.execSQL("CREATE TABLE test_table2 (_id INTEGER PRIMARY KEY AUTOINCREMENT)");
+                }
+            }
+        };
+        // Check if can see the new column
+        try (Cursor cursor = mOpenHelper.getReadableDatabase()
+                .rawQuery("select * from test_table", null)) {
+            assertEquals("Newly added column should be visible. Returned columns: " + Arrays
+                    .toString(cursor.getColumnNames()), 2, cursor.getColumnCount());
+        }
+        // Check if can see the new table
+        try (Cursor cursor = mOpenHelper.getReadableDatabase()
+                .rawQuery("select * from test_table2", null)) {
+            assertEquals(1, cursor.getColumnCount());
+        }
     }
 
     private MockOpenHelper getOpenHelper() {
