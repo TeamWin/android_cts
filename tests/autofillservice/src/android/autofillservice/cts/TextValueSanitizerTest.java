@@ -50,7 +50,7 @@ public class TextValueSanitizerTest {
     public void testSanitize_nonTextValue() {
         final TextValueSanitizer sanitizer = new TextValueSanitizer(Pattern.compile("42"), "42");
         final AutofillValue value = AutofillValue.forToggle(true);
-        assertThat(sanitizer.sanitize(value)).isSameAs(value);
+        assertThat(sanitizer.sanitize(value)).isNull();
     }
 
     @Test
@@ -58,14 +58,14 @@ public class TextValueSanitizerTest {
         final TextValueSanitizer sanitizer = new TextValueSanitizer(Pattern.compile(".*(\\d*).*"),
                 "$2"); // invalid group
         final AutofillValue value = AutofillValue.forText("blah 42  blaH");
-        assertThat(sanitizer.sanitize(value)).isSameAs(value);
+        assertThat(sanitizer.sanitize(value)).isNull();
     }
 
     @Test
     public void testSanitize_valueMismatch() {
         final TextValueSanitizer sanitizer = new TextValueSanitizer(Pattern.compile("42"), "xxx");
         final AutofillValue value = AutofillValue.forText("43");
-        assertThat(sanitizer.sanitize(value)).isSameAs(value);
+        assertThat(sanitizer.sanitize(value)).isNull();
     }
 
     @Test

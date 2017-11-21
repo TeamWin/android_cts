@@ -22,14 +22,14 @@ import android.widget.EditText;
 import java.util.regex.Pattern;
 
 /**
- * A {@link TextWatcher} that appends dots at the beginning and end of the text.
+ * A {@link TextWatcher} that appends pound signs ({@code #} at the beginning and end of the text.
  */
 public final class AntiTrimmerTextWatcher implements TextWatcher {
 
     /**
      * Regex used to revert a String that was "anti-trimmed".
      */
-    public static final Pattern TRIMMER_PATTERN = Pattern.compile(" (.*) ");
+    public static final Pattern TRIMMER_PATTERN = Pattern.compile("#(.*)#");
 
     private final EditText mView;
 
@@ -41,7 +41,7 @@ public final class AntiTrimmerTextWatcher implements TextWatcher {
     @Override
     public void onTextChanged(CharSequence s, int start, int before, int count) {
         mView.removeTextChangedListener(this);
-        mView.setText(" " + s + " ");
+        mView.setText("#" + s + "#");
     }
 
     @Override

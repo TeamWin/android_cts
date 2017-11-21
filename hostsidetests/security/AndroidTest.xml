@@ -63,6 +63,10 @@
         <!-- Bulletin 2017-01 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
 
+        <option name="push" value="CVE-2016-8457->/data/local/tmp/CVE-2016-8457" />
+        <option name="push" value="CVE-2016-8456->/data/local/tmp/CVE-2016-8456" />
+        <option name="push" value="CVE-2016-8455->/data/local/tmp/CVE-2016-8455" />
+
         <!--__________________-->
         <!-- Bulletin 2017-02 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
@@ -79,6 +83,7 @@
         <!-- Bulletin 2017-03 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
 
+        <option name="push" value="CVE-2017-0453->/data/local/tmp/CVE-2017-0453" />
         <option name="push" value="CVE-2016-8479->/data/local/tmp/CVE-2016-8479" />
         <option name="push" value="CVE-2017-0508->/data/local/tmp/CVE-2017-0508" />
         <option name="push" value="CVE-2017-0333->/data/local/tmp/CVE-2017-0333" />
@@ -88,6 +93,7 @@
         <option name="push" value="CVE-2017-0457->/data/local/tmp/CVE-2017-0457" />
         <option name="push" value="CVE-2017-0460->/data/local/tmp/CVE-2017-0460" />
         <option name="push" value="CVE-2017-0456->/data/local/tmp/CVE-2017-0456" />
+        <option name="push" value="CVE-2017-0521->/data/local/tmp/CVE-2017-0521" />
 
         <!--__________________-->
         <!-- Bulletin 2017-04 -->
@@ -100,6 +106,8 @@
         <!-- Bulletin 2017-05 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
 
+        <option name="push" value="CVE-2016-10283->/data/local/tmp/CVE-2016-10283" />
+        <option name="push" value="CVE-2017-0624->/data/local/tmp/CVE-2017-0624" />
         <option name="push" value="CVE-2016-10288->/data/local/tmp/CVE-2016-10288" />
         <option name="push" value="CVE-2017-0465->/data/local/tmp/CVE-2017-0465" />
         <option name="push" value="CVE-2016-10289->/data/local/tmp/CVE-2016-10289" />
