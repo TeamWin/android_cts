@@ -41,4 +41,25 @@ public class Poc17_01 extends SecurityTestCase {
             AdbUtils.runPoc("CVE-2017-0429", getDevice(), 60);
         }
     }
+
+   /**
+     *  b/32219121
+     */
+    @SecurityTest
+    public void testPocCVE_2016_8455() throws Exception {
+        enableAdbRoot(getDevice());
+        AdbUtils.runPoc("CVE-2016-8455", getDevice(), 60);
+    }
+
+   /**
+     *  b/32219255
+     */
+    @SecurityTest
+    public void testPocCVE_2016_8456() throws Exception {
+        enableAdbRoot(getDevice());
+        AdbUtils.runPoc("CVE-2016-8456", getDevice(), 60);
+        // CTS begins the next test before device finishes rebooting,
+        // sleep to allow time for device to reboot.
+        Thread.sleep(60000);
+    }
  }
