@@ -79,7 +79,8 @@ public class SliceTest {
         assertEquals(1, s.getItems().size());
 
         SliceItem item = s.getItems().get(0);
-        assertEquals(SliceItem.TYPE_SLICE, item.getType());
+        assertEquals(SliceItem.FORMAT_SLICE, item.getFormat());
+        assertEquals("subslice", item.getSubType());
         // The item should start with the same Uri as the parent, but be different.
         assertTrue(item.getSlice().getUri().toString().startsWith(uri.toString()));
         assertNotEquals(uri, item.getSlice().getUri());
@@ -94,7 +95,7 @@ public class SliceTest {
         assertEquals(1, s.getItems().size());
 
         SliceItem item = s.getItems().get(0);
-        assertEquals(SliceItem.TYPE_TEXT, item.getType());
+        assertEquals(SliceItem.FORMAT_TEXT, item.getFormat());
         // TODO: Test spannables here.
         assertEquals("Expected text", item.getText());
     }
@@ -108,7 +109,7 @@ public class SliceTest {
         assertEquals(1, s.getItems().size());
 
         SliceItem item = s.getItems().get(0);
-        assertEquals(SliceItem.TYPE_IMAGE, item.getType());
+        assertEquals(SliceItem.FORMAT_IMAGE, item.getFormat());
         assertEquals(Icon.createWithResource(mContext, R.drawable.size_48x48).toString(),
                 item.getIcon().toString());
     }
@@ -133,7 +134,7 @@ public class SliceTest {
         assertEquals(1, s.getItems().size());
 
         SliceItem item = s.getItems().get(0);
-        assertEquals(SliceItem.TYPE_ACTION, item.getType());
+        assertEquals(SliceItem.FORMAT_ACTION, item.getFormat());
         try {
             item.getAction().send();
         } catch (CanceledException e) {
@@ -157,7 +158,7 @@ public class SliceTest {
         assertEquals(1, s.getItems().size());
 
         SliceItem item = s.getItems().get(0);
-        assertEquals(SliceItem.TYPE_COLOR, item.getType());
+        assertEquals(SliceItem.FORMAT_COLOR, item.getFormat());
         assertEquals(0xff121212, item.getColor());
     }
 
@@ -170,7 +171,7 @@ public class SliceTest {
         assertEquals(1, s.getItems().size());
 
         SliceItem item = s.getItems().get(0);
-        assertEquals(SliceItem.TYPE_TIMESTAMP, item.getType());
+        assertEquals(SliceItem.FORMAT_TIMESTAMP, item.getFormat());
         assertEquals(43, item.getTimestamp());
     }
 
