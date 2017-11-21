@@ -103,4 +103,15 @@ public class Poc17_05 extends SecurityTestCase {
                          "[\\s\\n\\S]*>>> /system/bin/" +
                          "mediaserver <<<[\\s\\n\\S]*", logcatOut);
     }
+
+    /**
+     *  b/34327795
+     */
+    @SecurityTest
+    public void testPocCVE_2017_0624() throws Exception {
+        enableAdbRoot(getDevice());
+        if(containsDriver(getDevice(), "/proc/debugdriver/driverdump")) {
+            AdbUtils.runPoc("CVE-2017-0624", getDevice(), 60);
+        }
+    }
 }
