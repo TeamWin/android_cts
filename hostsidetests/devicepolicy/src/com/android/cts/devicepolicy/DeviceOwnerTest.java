@@ -612,6 +612,13 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         executeDeviceOwnerTest("BluetoothRestrictionTest");
     }
 
+    public void testSetTime() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        executeDeviceOwnerTest("SetTimeTest");
+    }
+
     public void testDeviceOwnerProvisioning() throws Exception {
         if (!mHasFeature) {
             return;
