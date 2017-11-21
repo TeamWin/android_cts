@@ -24,7 +24,8 @@ import android.os.Bundle;
 import android.util.Log;
 
 /**
- * This Activity is to be used as part of {@link com.android.server.BackgroundRestrictedAlarmsTest}
+ * This Activity is to be used as part of
+ * {@link android.alarmmanager.cts.BackgroundRestrictedAlarmsTest}
  */
 public class TestAlarmActivity extends Activity {
     private static final String TAG = TestAlarmActivity.class.getSimpleName();
