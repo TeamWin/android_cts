@@ -570,6 +570,14 @@
             </intent-filter>
         </activity>
 
+        <activity android:name="android.widget.cts.MagnifierCtsActivity"
+                  android:label="MagnifierCtsActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
+            </intent-filter>
+        </activity>
+
         <receiver android:name="android.widget.cts.appwidget.MyAppWidgetProvider" >
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
