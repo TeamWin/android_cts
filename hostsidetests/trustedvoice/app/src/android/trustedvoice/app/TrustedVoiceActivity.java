@@ -42,7 +42,9 @@ public class TrustedVoiceActivity extends Activity {
     super.onCreate(icicle);
 
     // Unlock the keyguard.
-    getWindow().addFlags(LayoutParams.FLAG_DISMISS_KEYGUARD | LayoutParams.FLAG_SHOW_WHEN_LOCKED);
+    getWindow().addFlags(LayoutParams.FLAG_DISMISS_KEYGUARD
+            | LayoutParams.FLAG_TURN_SCREEN_ON
+            | LayoutParams.FLAG_KEEP_SCREEN_ON);
   }
 
   @Override
