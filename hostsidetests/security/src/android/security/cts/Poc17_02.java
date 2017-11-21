@@ -17,10 +17,10 @@
 package android.security.cts;
 
 import android.platform.test.annotations.SecurityTest;
+import java.util.concurrent.TimeUnit;
 
 @SecurityTest
 public class Poc17_02 extends SecurityTestCase {
-
     /**
      *  b/31796345
      */
@@ -29,6 +29,19 @@ public class Poc17_02 extends SecurityTestCase {
 	enableAdbRoot(getDevice());
         if(containsDriver(getDevice(), "/dev/voice_svc")) {
             AdbUtils.runPoc("CVE-2017-0451", getDevice(), 60);
+        }
+    }
+    /**
+     *  b/31906415
+     */
+    @SecurityTest
+    public void testPocCVE_2016_8481() throws Exception {
+        if(containsDriver(getDevice(), "/dev/usf1")) {
+            enableAdbRoot(getDevice());
+            AdbUtils.runPoc("CVE-2016-8481", getDevice(), 60);
+            TimeUnit.SECONDS.sleep(40);
+            // CTS begins the next test before device finishes rebooting,
+            // sleep to allow time for device to reboot
         }
     }
 }
