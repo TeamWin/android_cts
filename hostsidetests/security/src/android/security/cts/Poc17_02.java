@@ -62,4 +62,28 @@ public class Poc17_02 extends SecurityTestCase {
         enableAdbRoot(getDevice());
         AdbUtils.runPoc("CVE-2017-0437", getDevice(), 60);
     }
+   /**
+     *  b/32402604
+     */
+    @SecurityTest
+    public void testPocCVE_2017_0438() throws Exception {
+        enableAdbRoot(getDevice());
+        AdbUtils.runPoc("CVE-2017-0438", getDevice(), 60);
+    }
+   /**
+     *  b/32872662
+     */
+    @SecurityTest
+    public void testPocCVE_2017_0441() throws Exception {
+        enableAdbRoot(getDevice());
+        AdbUtils.runPoc("CVE-2017-0441", getDevice(), 60);
+    }
+   /**
+     *  b/32879283
+     */
+    @SecurityTest
+    public void testPocCVE_2016_8476() throws Exception {
+        enableAdbRoot(getDevice());
+        AdbUtils.runPoc("CVE-2016-8476", getDevice(), 60);
+    }
  }
