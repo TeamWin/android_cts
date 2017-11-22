@@ -77,6 +77,7 @@
         <option name="push" value="CVE-2017-0463->/data/local/tmp/CVE-2017-0463" />
         <option name="push" value="CVE-2017-0519->/data/local/tmp/CVE-2017-0519" />
         <option name="push" value="CVE-2017-0520->/data/local/tmp/CVE-2017-0520" />
+        <option name="push" value="CVE-2017-0457->/data/local/tmp/CVE-2017-0457" />
 
         <!--__________________-->
         <!-- Bulletin 2017-04 -->
