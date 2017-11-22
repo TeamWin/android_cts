@@ -125,7 +125,27 @@ final class UiBot {
     UiObject2 assertDatasets(String...names) {
         final UiObject2 picker = findDatasetPicker(UI_DATASET_PICKER_TIMEOUT_MS);
         assertWithMessage("wrong dataset names").that(getChildrenAsText(picker))
-                .containsExactlyElementsIn(Arrays.asList(names));
+                .containsExactlyElementsIn(Arrays.asList(names)).inOrder();
+        return picker;
+    }
+
+    /**
+     * Asserts the dataset chooser is shown and contains the given datasets, header, and footer.
+     *
+     * @return the dataset picker object.
+     */
+    UiObject2 assertDatasetsWithBorders(String header, String footer, String...names) {
+        final UiObject2 picker = findDatasetPicker(UI_DATASET_PICKER_TIMEOUT_MS);
+        final List<String> expectedChild = new ArrayList<>();
+        if (header != null) {
+            expectedChild.add(header);
+        }
+        expectedChild.addAll(Arrays.asList(names));
+        if (footer != null) {
+            expectedChild.add(footer);
+        }
+        assertWithMessage("wrong elements on dataset picker").that(getChildrenAsText(picker))
+                .containsExactlyElementsIn(expectedChild).inOrder();
         return picker;
     }
 
