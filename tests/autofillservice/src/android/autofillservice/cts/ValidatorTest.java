@@ -37,6 +37,8 @@ import org.junit.Test;
 import java.util.function.BiFunction;
 import java.util.regex.Pattern;
 
+// TODO: this class should only have 2 integration tests (for showing or not showing the UI); all
+// other tests should be moved to ValidatorsTest.
 public class ValidatorTest extends AutoFillServiceTestCase {
     @Rule
     public final AutofillActivityTestRule<LoginActivity> mActivityRule =
