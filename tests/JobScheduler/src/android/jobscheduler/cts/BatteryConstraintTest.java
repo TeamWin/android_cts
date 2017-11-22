@@ -28,6 +28,7 @@ import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
+import android.os.BatteryManager;
 import android.os.SystemClock;
 import android.util.Log;
 
@@ -106,6 +107,10 @@ public class BatteryConstraintTest extends ConstraintTest {
         boolean curNotLow = Boolean.parseBoolean(SystemUtil.runShellCommand(getInstrumentation(),
                 "cmd jobscheduler get-battery-not-low").trim());
         assertEquals(notLow, curNotLow);
+        IntentFilter filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+        Intent batteryState = getContext().registerReceiver(null, filter);
+        assertEquals(notLow,
+                !batteryState.getBooleanExtra(BatteryManager.EXTRA_BATTERY_LOW, notLow));
     }
 
     String getJobState() throws Exception {
