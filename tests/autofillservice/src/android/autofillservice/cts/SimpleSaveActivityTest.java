@@ -227,6 +227,37 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
     }
 
     @Test
+    public void testSave_launchIntent() throws Exception {
+        startActivity();
+
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.setOnSave(WelcomeActivity.createSender(mContext, "Saved by the bell"));
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT)
+                .build());
+
+        // Trigger autofill.
+        mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
+        sReplier.getNextFillRequest();
+        Helper.assertHasSessions(mPackageName);
+
+        // Trigger save.
+        mActivity.syncRunOnUiThread(() -> {
+            mActivity.mInput.setText("108");
+            mActivity.mCommit.performClick();
+        });
+
+        // Save it...
+        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_GENERIC);
+        sReplier.getNextSaveRequest();
+        // ... and assert activity was launched
+        WelcomeActivity.assertShowing(sUiBot, "Saved by the bell");
+    }
+
+    @Test
     public void testSaveThenStartNewSessionRightAway() throws Exception {
         startActivity();
 

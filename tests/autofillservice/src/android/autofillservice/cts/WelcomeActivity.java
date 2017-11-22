@@ -17,7 +17,10 @@ package android.autofillservice.cts;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.test.uiautomator.UiObject2;
@@ -81,5 +84,12 @@ public class WelcomeActivity extends AbstractAutoFillActivity {
         }
         assertWithMessage("wrong text on '%s'", activity).that(activity.getText())
                 .isEqualTo(expectedMessage);
+    }
+
+    public static IntentSender createSender(Context context, String message) {
+        final Intent intent = new Intent(context, WelcomeActivity.class);
+        intent.putExtra(EXTRA_MESSAGE, message);
+        final PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
+        return pendingIntent.getIntentSender();
     }
 }
