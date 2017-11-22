@@ -904,7 +904,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      * is moved correctly.
      * This version launches virtual display creator to fullscreen stack in split-screen.
      */
-    @Presubmit
+    // TODO(b/69573940): Add back to presubmit
     @Test
     public void testStackFocusSwitchOnDisplayRemoved() throws Exception {
         if (!supportsMultiDisplay() || !supportsSplitScreenMultiWindow()) { return; }
