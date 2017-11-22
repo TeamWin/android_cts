@@ -215,6 +215,25 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
         }
     }
 
+    public void testNotUserSelectableAliasCanBeChosenViaPolicy() throws Exception {
+        final String alias = "com.android.test.not-selectable-key-1";
+        final PrivateKey privKey = getPrivateKey(FAKE_RSA_1.privateKey , "RSA");
+        final Certificate cert = getCertificate(FAKE_RSA_1.caCertificate);
+
+        // Install keypair.
+        assertTrue(mDevicePolicyManager.installKeyPair(
+            getWho(), privKey, new Certificate[] {cert}, alias, false, false));
+        try {
+            // Request and retrieve using the alias.
+            assertGranted(alias, false);
+            assertEquals(alias, new KeyChainAliasFuture(alias).get());
+            assertGranted(alias, true);
+        } finally {
+            // Delete regardless of whether the test succeeded.
+            assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
+        }
+    }
+
     private void assertGranted(String alias, boolean expected) throws InterruptedException {
         boolean granted = false;
         try {
