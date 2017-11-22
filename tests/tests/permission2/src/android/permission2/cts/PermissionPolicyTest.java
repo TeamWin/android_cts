@@ -44,7 +44,7 @@ import static android.os.Build.VERSION.SECURITY_PATCH;
  * Tests for permission policy on the platform.
  */
 public class PermissionPolicyTest extends AndroidTestCase {
-    private static final Date HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PATCH_DATE = parseDate("2017-09-05");
+    private static final Date HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PATCH_DATE = parseDate("2017-11-01");
     private static final String HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PERMISSION
             = "android.permission.HIDE_NON_SYSTEM_OVERLAY_WINDOWS";
 
