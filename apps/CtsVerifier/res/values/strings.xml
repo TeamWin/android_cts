@@ -1589,6 +1589,8 @@
         under Apps > Gear Icon > Default > Notification Assistant and return here.</string>
     <string name="nls_enable_service">Please enable \"Notification Listener for CTS Verifier\"
         under Apps > Gear Icon > Special Access > Notification Access and return here.</string>
+    <string name="nls_block_channel">Please block the linked notification channel and return here.</string>
+    <string name="nls_block_group">Please block the linked notification channel group and return here.</string>
     <string name="nls_cannot_enable_service">Please make sure you cannot enable
         \"Notification Listener for CTS Verifier\" and return here.</string>
     <string name="nls_disable_service">Please disable \"Notification Listener for CTS Verifier\"

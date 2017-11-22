@@ -16,6 +16,8 @@
 
 package com.android.cts.verifier.notifications;
 
+import static android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS;
+
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -65,8 +67,6 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
 
     // TODO remove these once b/10023397 is fixed
     public static final String ENABLED_NOTIFICATION_LISTENERS = "enabled_notification_listeners";
-    public static final String NOTIFICATION_LISTENER_SETTINGS =
-            "android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS";
 
     protected InteractiveTestCase mCurrentTest;
     protected PackageManager mPackageManager;
@@ -132,6 +132,12 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
         protected void logFail(String message, Throwable e) {
             Log.e(TAG, "failed " + this.getClass().getSimpleName() +
                     ((message == null) ? "" : ": " + message), e);
+        }
+
+        // If this test contains a button that launches another activity, override this
+        // method to provide the intent to launch.
+        protected Intent getIntent() {
+            return null;
         }
     }
 
@@ -345,16 +351,12 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
 
     // UI callbacks
 
-    public void launchSettings() {
-        startActivity(new Intent(NOTIFICATION_LISTENER_SETTINGS));
-    }
-
     public void actionPressed(View v) {
         Object tag = v.getTag();
         if (tag instanceof Integer) {
             int id = ((Integer) tag).intValue();
-            if (id == R.string.nls_start_settings) {
-                launchSettings();
+            if (mCurrentTest != null && mCurrentTest.getIntent() != null) {
+                startActivity(mCurrentTest.getIntent());
             } else if (id == R.string.attention_ready) {
                 if (mCurrentTest != null) {
                     mCurrentTest.status = READY;
@@ -452,7 +454,7 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
         @Override
         void test() {
             mNm.cancelAll();
-            Intent settings = new Intent(NOTIFICATION_LISTENER_SETTINGS);
+            Intent settings = new Intent(ACTION_NOTIFICATION_LISTENER_SETTINGS);
             if (settings.resolveActivity(mPackageManager) == null) {
                 logFail("no settings activity");
                 status = FAIL;
@@ -468,9 +470,15 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
             }
         }
 
+        @Override
         void tearDown() {
             // wait for the service to start
             delay();
+        }
+
+        @Override
+        protected Intent getIntent() {
+            return new Intent(ACTION_NOTIFICATION_LISTENER_SETTINGS);
         }
     }
 
@@ -488,7 +496,7 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
         @Override
         void test() {
             mNm.cancelAll();
-            Intent settings = new Intent(NOTIFICATION_LISTENER_SETTINGS);
+            Intent settings = new Intent(ACTION_NOTIFICATION_LISTENER_SETTINGS);
             if (settings.resolveActivity(mPackageManager) == null) {
                 logFail("no settings activity");
                 status = FAIL;
@@ -507,6 +515,11 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
         void tearDown() {
             // wait for the service to start
             delay();
+        }
+
+        @Override
+        protected Intent getIntent() {
+            return new Intent(ACTION_NOTIFICATION_LISTENER_SETTINGS);
         }
     }
 
