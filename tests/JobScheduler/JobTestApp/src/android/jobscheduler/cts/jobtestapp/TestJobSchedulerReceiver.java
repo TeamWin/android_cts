@@ -16,41 +16,44 @@
 
 package android.jobscheduler.cts.jobtestapp;
 
-import android.app.Activity;
 import android.app.job.JobInfo;
 import android.app.job.JobScheduler;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Bundle;
 import android.util.Log;
 
-public class TestJobActivity extends Activity {
-    private static final String TAG = TestJobActivity.class.getSimpleName();
-    public static final String EXTRA_JOB_ID_KEY =
-            "android.jobscheduler.cts.jobtestapp.extra.JOB_ID";
-    public static final String ACTION_START_JOB =
-            "android.jobscheduler.cts.jobtestapp.action.START_JOB";
-    public static final String ACTION_CANCEL_JOBS =
-            "android.jobscheduler.cts.jobtestapp.action.CANCEL_JOBS";
+/**
+ * Schedules jobs for this package but does not, by itself, occupy a foreground uid state
+ * while doing so.
+ */
+public class TestJobSchedulerReceiver extends BroadcastReceiver {
+    private static final String TAG = TestJobSchedulerReceiver.class.getSimpleName();
+    private static final String PACKAGE_NAME = "com.android.servicestests.apps.jobtestapp";
+
+    public static final String EXTRA_JOB_ID_KEY = PACKAGE_NAME + ".extra.JOB_ID";
+    public static final String EXTRA_ALLOW_IN_IDLE = PACKAGE_NAME + ".extra.ALLOW_IN_IDLE";
+    public static final String ACTION_SCHEDULE_JOB = PACKAGE_NAME + ".action.SCHEDULE_JOB";
+    public static final String ACTION_CANCEL_JOBS = PACKAGE_NAME + ".action.CANCEL_JOBS";
     public static final int JOB_INITIAL_BACKOFF = 10_000;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        ComponentName jobServiceComponent = new ComponentName(this, TestJobService.class);
-        JobScheduler jobScheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
-        final Intent intent = getIntent();
+    public void onReceive(Context context, Intent intent) {
+        final ComponentName jobServiceComponent = new ComponentName(context, TestJobService.class);
+        final JobScheduler jobScheduler = context.getSystemService(JobScheduler.class);
         switch (intent.getAction()) {
             case ACTION_CANCEL_JOBS:
                 jobScheduler.cancelAll();
-                Log.d(TAG, "Cancelled all jobs for " + getPackageName());
+                Log.d(TAG, "Cancelled all jobs for " + context.getPackageName());
                 break;
-            case ACTION_START_JOB:
+            case ACTION_SCHEDULE_JOB:
                 final int jobId = intent.getIntExtra(EXTRA_JOB_ID_KEY, hashCode());
+                final boolean allowInIdle = intent.getBooleanExtra(EXTRA_ALLOW_IN_IDLE, false);
                 JobInfo.Builder jobBuilder = new JobInfo.Builder(jobId, jobServiceComponent)
                         .setBackoffCriteria(JOB_INITIAL_BACKOFF, JobInfo.BACKOFF_POLICY_LINEAR)
-                        .setOverrideDeadline(0L);
+                        .setOverrideDeadline(0)
+                        .setImportantWhileForeground(allowInIdle);
                 final int result = jobScheduler.schedule(jobBuilder.build());
                 if (result != JobScheduler.RESULT_SUCCESS) {
                     Log.e(TAG, "Could not schedule job " + jobId);
@@ -58,7 +61,8 @@ public class TestJobActivity extends Activity {
                     Log.d(TAG, "Successfully scheduled job with id " + jobId);
                 }
                 break;
+            default:
+                Log.e(TAG, "Unknown action " + intent.getAction());
         }
-        finish();
     }
 }

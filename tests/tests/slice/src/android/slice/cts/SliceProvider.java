@@ -36,28 +36,28 @@ public class SliceProvider extends android.app.slice.SliceProvider {
                 break;
             case "/subslice":
                 Builder b = new Builder(sliceUri);
-                return b.addSubSlice(new Slice.Builder(b).build()).build();
+                return b.addSubSlice(new Slice.Builder(b).build(), "subslice").build();
             case "/text":
-                return new Slice.Builder(sliceUri).addText("Expected text").build();
+                return new Slice.Builder(sliceUri).addText("Expected text", "text").build();
             case "/icon":
                 return new Slice.Builder(sliceUri).addIcon(
-                        Icon.createWithResource(getContext(), R.drawable.size_48x48)).build();
+                        Icon.createWithResource(getContext(), R.drawable.size_48x48), "icon").build();
             case "/action":
                 Builder builder = new Builder(sliceUri);
                 Slice subSlice = new Slice.Builder(builder).build();
                 PendingIntent broadcast = PendingIntent.getBroadcast(getContext(), 0,
                         new Intent(getContext().getPackageName() + ".action"), 0);
-                return builder.addAction(broadcast, subSlice).build();
+                return builder.addAction(broadcast, subSlice, "action").build();
             case "/color":
-                return new Slice.Builder(sliceUri).addColor(0xff121212).build();
+                return new Slice.Builder(sliceUri).addColor(0xff121212, "color").build();
             case "/timestamp":
-                return new Slice.Builder(sliceUri).addTimestamp(43).build();
+                return new Slice.Builder(sliceUri).addTimestamp(43, "timestamp").build();
             case "/hints":
                 return new Slice.Builder(sliceUri)
                         .addHints(Slice.HINT_LIST)
-                        .addText("Text", Slice.HINT_TITLE)
+                        .addText("Text", null, Slice.HINT_TITLE)
                         .addIcon(Icon.createWithResource(getContext(), R.drawable.size_48x48),
-                                Slice.HINT_NO_TINT, Slice.HINT_LARGE)
+                                null, Slice.HINT_NO_TINT, Slice.HINT_LARGE)
                         .build();
         }
         return new Slice.Builder(sliceUri).build();

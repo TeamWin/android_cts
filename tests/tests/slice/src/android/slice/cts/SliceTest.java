@@ -36,6 +36,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -51,7 +52,8 @@ public class SliceTest {
     public void testProcess() {
         sFlag = false;
         Slice.bindSlice(mContext.getContentResolver(),
-                BASE_URI.buildUpon().appendPath("set_flag").build());
+                BASE_URI.buildUpon().appendPath("set_flag").build(),
+                Collections.emptyList());
         assertFalse(sFlag);
     }
 
@@ -63,19 +65,22 @@ public class SliceTest {
 
     @Test
     public void testSliceUri() {
-        Slice s = Slice.bindSlice(mContext.getContentResolver(), BASE_URI);
+        Slice s = Slice.bindSlice(mContext.getContentResolver(), BASE_URI,
+                Collections.emptyList());
         assertEquals(BASE_URI, s.getUri());
     }
 
     @Test
     public void testSubSlice() {
         Uri uri = BASE_URI.buildUpon().appendPath("subslice").build();
-        Slice s = Slice.bindSlice(mContext.getContentResolver(), uri);
+        Slice s = Slice.bindSlice(mContext.getContentResolver(), uri,
+                Collections.emptyList());
         assertEquals(uri, s.getUri());
         assertEquals(1, s.getItems().size());
 
         SliceItem item = s.getItems().get(0);
-        assertEquals(SliceItem.TYPE_SLICE, item.getType());
+        assertEquals(SliceItem.FORMAT_SLICE, item.getFormat());
+        assertEquals("subslice", item.getSubType());
         // The item should start with the same Uri as the parent, but be different.
         assertTrue(item.getSlice().getUri().toString().startsWith(uri.toString()));
         assertNotEquals(uri, item.getSlice().getUri());
@@ -84,12 +89,13 @@ public class SliceTest {
     @Test
     public void testText() {
         Uri uri = BASE_URI.buildUpon().appendPath("text").build();
-        Slice s = Slice.bindSlice(mContext.getContentResolver(), uri);
+        Slice s = Slice.bindSlice(mContext.getContentResolver(), uri,
+                Collections.emptyList());
         assertEquals(uri, s.getUri());
         assertEquals(1, s.getItems().size());
 
         SliceItem item = s.getItems().get(0);
-        assertEquals(SliceItem.TYPE_TEXT, item.getType());
+        assertEquals(SliceItem.FORMAT_TEXT, item.getFormat());
         // TODO: Test spannables here.
         assertEquals("Expected text", item.getText());
     }
@@ -97,12 +103,13 @@ public class SliceTest {
     @Test
     public void testIcon() {
         Uri uri = BASE_URI.buildUpon().appendPath("icon").build();
-        Slice s = Slice.bindSlice(mContext.getContentResolver(), uri);
+        Slice s = Slice.bindSlice(mContext.getContentResolver(), uri,
+                Collections.emptyList());
         assertEquals(uri, s.getUri());
         assertEquals(1, s.getItems().size());
 
         SliceItem item = s.getItems().get(0);
-        assertEquals(SliceItem.TYPE_IMAGE, item.getType());
+        assertEquals(SliceItem.FORMAT_IMAGE, item.getFormat());
         assertEquals(Icon.createWithResource(mContext, R.drawable.size_48x48).toString(),
                 item.getIcon().toString());
     }
@@ -121,12 +128,13 @@ public class SliceTest {
         mContext.registerReceiver(receiver,
                 new IntentFilter(mContext.getPackageName() + ".action"));
         Uri uri = BASE_URI.buildUpon().appendPath("action").build();
-        Slice s = Slice.bindSlice(mContext.getContentResolver(), uri);
+        Slice s = Slice.bindSlice(mContext.getContentResolver(), uri,
+                Collections.emptyList());
         assertEquals(uri, s.getUri());
         assertEquals(1, s.getItems().size());
 
         SliceItem item = s.getItems().get(0);
-        assertEquals(SliceItem.TYPE_ACTION, item.getType());
+        assertEquals(SliceItem.FORMAT_ACTION, item.getFormat());
         try {
             item.getAction().send();
         } catch (CanceledException e) {
@@ -144,24 +152,26 @@ public class SliceTest {
     @Test
     public void testColor() {
         Uri uri = BASE_URI.buildUpon().appendPath("color").build();
-        Slice s = Slice.bindSlice(mContext.getContentResolver(), uri);
+        Slice s = Slice.bindSlice(mContext.getContentResolver(), uri,
+                Collections.emptyList());
         assertEquals(uri, s.getUri());
         assertEquals(1, s.getItems().size());
 
         SliceItem item = s.getItems().get(0);
-        assertEquals(SliceItem.TYPE_COLOR, item.getType());
+        assertEquals(SliceItem.FORMAT_COLOR, item.getFormat());
         assertEquals(0xff121212, item.getColor());
     }
 
     @Test
     public void testTimestamp() {
         Uri uri = BASE_URI.buildUpon().appendPath("timestamp").build();
-        Slice s = Slice.bindSlice(mContext.getContentResolver(), uri);
+        Slice s = Slice.bindSlice(mContext.getContentResolver(), uri,
+                Collections.emptyList());
         assertEquals(uri, s.getUri());
         assertEquals(1, s.getItems().size());
 
         SliceItem item = s.getItems().get(0);
-        assertEquals(SliceItem.TYPE_TIMESTAMP, item.getType());
+        assertEquals(SliceItem.FORMAT_TIMESTAMP, item.getFormat());
         assertEquals(43, item.getTimestamp());
     }
 
@@ -170,7 +180,8 @@ public class SliceTest {
         // Note this tests that hints are propagated through to the client but not that any specific
         // hints have any effects.
         Uri uri = BASE_URI.buildUpon().appendPath("hints").build();
-        Slice s = Slice.bindSlice(mContext.getContentResolver(), uri);
+        Slice s = Slice.bindSlice(mContext.getContentResolver(), uri,
+                Collections.emptyList());
         assertEquals(uri, s.getUri());
 
         assertEquals(Arrays.asList(Slice.HINT_LIST), s.getHints());
