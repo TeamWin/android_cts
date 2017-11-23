@@ -39,8 +39,6 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.runner.RunWith;
 
-import java.util.List;
-
 /**
  * Base class for all other tests.
  */
@@ -61,6 +59,12 @@ abstract class AutoFillServiceTestCase {
     @Rule
     public final RequiredFeatureRule mRequiredFeatureRule =
             new RequiredFeatureRule(PackageManager.FEATURE_AUTOFILL);
+
+    @Rule
+    public final SafeCleanerRule mSafeCleanerRule = new SafeCleanerRule()
+            .run(() -> sReplier.assertNumberUnhandledFillRequests(0))
+            .run(() -> sReplier.assertNumberUnhandledSaveRequests(0))
+            .add(() -> { return sReplier.getExceptions(); });
 
     protected final Context mContext;
     protected final String mPackageName;
@@ -128,24 +132,6 @@ abstract class AutoFillServiceTestCase {
         } catch (Exception e) {
             Log.w(TAG, "Could not restore logging level to " + mLoggingLevel + ": " + e);
         }
-    }
-
-    // TODO: we shouldn't throw exceptions on @After / @AfterClass because if the test failed, these
-    // exceptions would mask the real cause. A better approach might be using a @Rule or some other
-    // visitor pattern.
-    @After
-    public void assertNothingIsPending() throws Throwable {
-        final MultipleExceptionsCatcher catcher = new MultipleExceptionsCatcher()
-            .run(() -> sReplier.assertNumberUnhandledFillRequests(0))
-            .run(() -> sReplier.assertNumberUnhandledSaveRequests(0));
-
-        final List<Exception> replierExceptions = sReplier.getExceptions();
-        if (replierExceptions != null) {
-            for (Exception e : replierExceptions) {
-                catcher.add(e);
-            }
-        }
-        catcher.throwIfAny();
     }
 
     @After
