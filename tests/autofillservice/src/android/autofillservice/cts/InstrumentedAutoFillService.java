@@ -249,7 +249,7 @@ public class InstrumentedAutoFillService extends AutofillService {
         private final BlockingQueue<FillRequest> mFillRequests = new LinkedBlockingQueue<>();
         private final BlockingQueue<SaveRequest> mSaveRequests = new LinkedBlockingQueue<>();
 
-        private List<Exception> mExceptions;
+        private List<Throwable> mExceptions;
 
         private Replier() {
         }
@@ -263,11 +263,11 @@ public class InstrumentedAutoFillService extends AutofillService {
         /**
          * Gets the exceptions thrown asynchronously, if any.
          */
-        @Nullable List<Exception> getExceptions() {
+        @Nullable List<Throwable> getExceptions() {
             return mExceptions;
         }
 
-        private void addException(@Nullable Exception e) {
+        private void addException(@Nullable Throwable e) {
             if (e == null) return;
 
             if (mExceptions == null) {

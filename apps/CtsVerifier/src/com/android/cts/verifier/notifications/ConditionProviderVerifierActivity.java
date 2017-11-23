@@ -112,6 +112,11 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
             // wait for the service to start
             delay();
         }
+
+        @Override
+        protected Intent getIntent() {
+            return new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
+        }
     }
 
     protected class CannotBeEnabledTest extends InteractiveTestCase {
@@ -128,7 +133,7 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
         @Override
         void test() {
             mNm.cancelAll();
-            Intent settings = new Intent(NOTIFICATION_LISTENER_SETTINGS);
+            Intent settings = new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
             if (settings.resolveActivity(mPackageManager) == null) {
                 logFail("no settings activity");
                 status = FAIL;
@@ -145,6 +150,11 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
         void tearDown() {
             // wait for the service to start
             delay();
+        }
+
+        @Override
+        protected Intent getIntent() {
+            return new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
         }
     }
 
@@ -630,6 +640,11 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
             MockConditionProvider.resetData(mContext);
             delay();
         }
+
+        @Override
+        protected Intent getIntent() {
+            return new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
+        }
     }
 
     private class ServiceStoppedTest extends InteractiveTestCase {
@@ -683,22 +698,5 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
 
     protected View createSettingsItem(ViewGroup parent, int messageId) {
         return createUserItem(parent, R.string.cp_start_settings, messageId);
-    }
-
-    public void launchSettings() {
-        startActivity(new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS));
-    }
-
-    public void actionPressed(View v) {
-        Object tag = v.getTag();
-        if (tag instanceof Integer) {
-            int id = ((Integer) tag).intValue();
-            if (id == R.string.cp_start_settings) {
-                launchSettings();
-            } else if (id == R.string.attention_ready) {
-                mCurrentTest.status = READY;
-                next();
-            }
-        }
     }
 }

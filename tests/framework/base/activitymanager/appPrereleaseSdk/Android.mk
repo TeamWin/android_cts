@@ -1,4 +1,4 @@
-# Copyright (C) 2015 The Android Open Source Project
+# Copyright (C) 2016 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,26 +16,16 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
+# don't include this package in any target
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
+LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_SRC_FILES := $(call all-java-files-under, src) \
-        ./app/src/android/leanbackjank/app/IntentKeys.java
-
-LOCAL_PACKAGE_NAME := CtsLeanbackJankTestCases
+LOCAL_SDK_VERSION := test_current
 
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
-LOCAL_STATIC_JAVA_LIBRARIES := \
-    compatibility-device-util \
-    ctstestrunner \
-    ub-uiautomator \
-    ub-janktesthelper \
-    legacy-android-test
+LOCAL_PACKAGE_NAME := CtsDevicePrereleaseSdkApp
 
-include $(BUILD_CTS_PACKAGE)
-
-include $(call all-makefiles-under, $(LOCAL_PATH))
-
+include $(BUILD_CTS_SUPPORT_PACKAGE)

@@ -196,8 +196,8 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
                 WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
     }
 
+    // TODO(b/69573940): Add back to presubmit
     @Test
-    @Presubmit
     public void testTranslucentAssistantActivityStackVisibility() throws Exception {
         enableAssistant();
         // Go home, launch the assistant and check to see that home is visible

@@ -16,22 +16,30 @@
 
 package com.android.cts.verifier.notifications;
 
+import static android.app.NotificationManager.IMPORTANCE_LOW;
+import static android.app.NotificationManager.IMPORTANCE_NONE;
+import static android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS;
+import static android.provider.Settings.EXTRA_APP_PACKAGE;
+import static android.provider.Settings.EXTRA_CHANNEL_GROUP_ID;
+import static android.provider.Settings.EXTRA_CHANNEL_ID;
+
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
-import android.app.NotificationManager;
+import android.app.NotificationChannelGroup;
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.provider.Settings.Secure;
 import android.service.notification.StatusBarNotification;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 
 import com.android.cts.verifier.R;
 
@@ -53,6 +61,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         implements Runnable {
     private static final String TAG = "NoListenerVerifier";
     private static final String NOTIFICATION_CHANNEL_ID = TAG;
+    protected static final String PREFS = "listener_prefs";
 
     private String mTag1;
     private String mTag2;
@@ -103,6 +112,8 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
             tests.add(new SnoozeNotificationForTimeCancelTest());
             tests.add(new GetSnoozedNotificationTest());
             tests.add(new EnableHintsTest());
+            tests.add(new ReceiveChannelBlockNoticeTest());
+            tests.add(new ReceiveGroupBlockNoticeTest());
             tests.add(new RequestUnbindTest());
             tests.add(new RequestBindTest());
             tests.add(new MessageBundleTest());
@@ -116,7 +127,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
 
     private void createChannel() {
         NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL_ID,
-                NOTIFICATION_CHANNEL_ID, NotificationManager.IMPORTANCE_LOW);
+                NOTIFICATION_CHANNEL_ID, IMPORTANCE_LOW);
         mNm.createNotificationChannel(channel);
     }
 
@@ -214,6 +225,161 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
                 logFail();
                 status = FAIL;
             }
+        }
+    }
+
+    /**
+     * Creates a notification channel. Sends the user to settings to block the channel. Waits
+     * to receive the broadcast that the channel was blocked, and confirms that the broadcast
+     * contains the correct extras.
+     */
+    protected class ReceiveChannelBlockNoticeTest extends InteractiveTestCase {
+        private String mChannelId;
+        private int mRetries = 2;
+        private View mView;
+        @Override
+        View inflate(ViewGroup parent) {
+            mView = createNlsSettingsItem(parent, R.string.nls_block_channel);
+            Button button = mView.findViewById(R.id.nls_action_button);
+            button.setEnabled(false);
+            return mView;
+        }
+
+        @Override
+        void setUp() {
+            mChannelId = UUID.randomUUID().toString();
+            NotificationChannel channel = new NotificationChannel(
+                    mChannelId, "ReceiveChannelBlockNoticeTest", IMPORTANCE_LOW);
+            mNm.createNotificationChannel(channel);
+            status = READY;
+            Button button = mView.findViewById(R.id.nls_action_button);
+            button.setEnabled(true);
+        }
+
+        @Override
+        boolean autoStart() {
+            return true;
+        }
+
+        @Override
+        void test() {
+            NotificationChannel channel = mNm.getNotificationChannel(mChannelId);
+            SharedPreferences prefs = mContext.getSharedPreferences(
+                    NotificationListenerVerifierActivity.PREFS, Context.MODE_PRIVATE);
+
+            if (channel.getImportance() == IMPORTANCE_NONE) {
+                if (prefs.contains(mChannelId) && prefs.getBoolean(mChannelId, false)) {
+                    status = PASS;
+                } else {
+                    if (mRetries > 0) {
+                        mRetries--;
+                        status = RETEST;
+                    } else {
+                        status = FAIL;
+                    }
+                }
+            } else {
+                // user hasn't jumped to settings to block the channel yet
+                status = WAIT_FOR_USER;
+            }
+
+            next();
+        }
+
+        void tearDown() {
+            MockListener.getInstance().resetData();
+            mNm.deleteNotificationChannel(mChannelId);
+            SharedPreferences prefs = mContext.getSharedPreferences(
+                    NotificationListenerVerifierActivity.PREFS, Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.remove(mChannelId);
+        }
+
+        @Override
+        protected Intent getIntent() {
+         return new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
+                 .putExtra(EXTRA_APP_PACKAGE, mContext.getPackageName())
+                 .putExtra(EXTRA_CHANNEL_ID, mChannelId);
+        }
+    }
+
+    /**
+     * Creates a notification channel group. Sends the user to settings to block the group. Waits
+     * to receive the broadcast that the group was blocked, and confirms that the broadcast contains
+     * the correct extras.
+     */
+    protected class ReceiveGroupBlockNoticeTest extends InteractiveTestCase {
+        private String mGroupId;
+        private int mRetries = 2;
+        private View mView;
+        @Override
+        View inflate(ViewGroup parent) {
+            mView = createNlsSettingsItem(parent, R.string.nls_block_group);
+            Button button = mView.findViewById(R.id.nls_action_button);
+            button.setEnabled(false);
+            return mView;
+        }
+
+        @Override
+        void setUp() {
+            mGroupId = UUID.randomUUID().toString();
+            NotificationChannelGroup group
+                    = new NotificationChannelGroup(mGroupId, "ReceiveChannelGroupBlockNoticeTest");
+            mNm.createNotificationChannelGroup(group);
+            NotificationChannel channel = new NotificationChannel(
+                    mGroupId, "ReceiveChannelBlockNoticeTest", IMPORTANCE_LOW);
+            channel.setGroup(mGroupId);
+            mNm.createNotificationChannel(channel);
+            status = READY;
+            Button button = mView.findViewById(R.id.nls_action_button);
+            button.setEnabled(true);
+        }
+
+        @Override
+        boolean autoStart() {
+            return true;
+        }
+
+        @Override
+        void test() {
+            NotificationChannelGroup group = mNm.getNotificationChannelGroup(mGroupId);
+            SharedPreferences prefs = mContext.getSharedPreferences(
+                    NotificationListenerVerifierActivity.PREFS, Context.MODE_PRIVATE);
+
+            if (group.isBlocked()) {
+                if (prefs.contains(mGroupId) && prefs.getBoolean(mGroupId, false)) {
+                    status = PASS;
+                } else {
+                    if (mRetries > 0) {
+                        mRetries--;
+                        status = RETEST;
+                    } else {
+                        status = FAIL;
+                    }
+                }
+            } else {
+                // user hasn't jumped to settings to block the channel yet
+                status = WAIT_FOR_USER;
+            }
+
+            next();
+        }
+
+        void tearDown() {
+            MockListener.getInstance().resetData();
+            mNm.deleteNotificationChannelGroup(mGroupId);
+            SharedPreferences prefs = mContext.getSharedPreferences(
+                    NotificationListenerVerifierActivity.PREFS, Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.remove(mGroupId);
+        }
+
+        @Override
+        protected Intent getIntent() {
+            return new Intent(Settings.ACTION_CHANNEL_GROUP_NOTIFICATION_SETTINGS)
+                    .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                    .putExtra(EXTRA_APP_PACKAGE, mContext.getPackageName())
+                    .putExtra(EXTRA_CHANNEL_GROUP_ID, mGroupId);
         }
     }
 
@@ -540,6 +706,11 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
                     status = FAIL;
                 }
             }
+        }
+
+        @Override
+        protected Intent getIntent() {
+            return new Intent(ACTION_NOTIFICATION_LISTENER_SETTINGS);
         }
     }
 
