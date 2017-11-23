@@ -788,10 +788,13 @@ public abstract class BasePrintTest {
     }
 
     protected static void clearPrintSpoolerData() throws Exception {
-        assertTrue("failed to clear print spooler data",
-                SystemUtil.runShellCommand(getInstrumentation(), String.format(
-                        "pm clear --user %d %s", CURRENT_USER_ID, PRINT_SPOOLER_PACKAGE_NAME))
-                        .contains(PM_CLEAR_SUCCESS_OUTPUT));
+        if (getInstrumentation().getContext().getPackageManager().hasSystemFeature(
+                  PackageManager.FEATURE_PRINTING)) {
+            assertTrue("failed to clear print spooler data",
+                    SystemUtil.runShellCommand(getInstrumentation(), String.format(
+                            "pm clear --user %d %s", CURRENT_USER_ID, PRINT_SPOOLER_PACKAGE_NAME))
+                            .contains(PM_CLEAR_SUCCESS_OUTPUT));
+        }
     }
 
     protected void verifyLayoutCall(InOrder inOrder, PrintDocumentAdapter mock,
