@@ -111,6 +111,8 @@ public class FillResponseTest {
                 () -> mBuilder.setAuthentication(mIds, mIntentSender, mPresentation));
         assertThrows(IllegalStateException.class,
                 () -> mBuilder.setFieldsDetection(mFieldsDetection));
+        assertThrows(IllegalStateException.class,
+                () -> mBuilder.setClientState(mClientState));
 
         // And vice-versa...
         final FillResponse.Builder builder1 = new FillResponse.Builder().setSaveInfo(mSaveInfo);
@@ -123,6 +125,9 @@ public class FillResponseTest {
         final FillResponse.Builder builder4 =
                 new FillResponse.Builder().setFieldsDetection(mFieldsDetection);
         assertThrows(IllegalStateException.class, () -> builder4.disableAutofill(mDisableDuration));
+        final FillResponse.Builder builder5 =
+                new FillResponse.Builder().setClientState(mClientState);
+        assertThrows(IllegalStateException.class, () -> builder5.disableAutofill(mDisableDuration));
     }
 
     @Test
@@ -154,6 +159,9 @@ public class FillResponseTest {
                 .isNotNull();
         // fill detection only
         assertThat(new FillResponse.Builder().setFieldsDetection(mFieldsDetection).build())
+                .isNotNull();
+        // client state only
+        assertThat(new FillResponse.Builder().setClientState(mClientState).build())
                 .isNotNull();
     }
 
