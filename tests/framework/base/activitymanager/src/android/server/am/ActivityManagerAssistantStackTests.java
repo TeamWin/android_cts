@@ -210,7 +210,9 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
                 TRANSLUCENT_ASSISTANT_ACTIVITY, ACTIVITY_TYPE_ASSISTANT);
         assertAssistantStackExists();
         mAmWmState.waitForHomeActivityVisible();
-        mAmWmState.assertHomeActivityVisible(true);
+        if (!noHomeScreen()) {
+            mAmWmState.assertHomeActivityVisible(true);
+        }
 
         // Launch a fullscreen app and then launch the assistant and check to see that it is
         // also visible
@@ -237,7 +239,9 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         mAmWmState.waitForFocusedStack(WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_ASSISTANT);
         assertAssistantStackExists();
         mAmWmState.waitForHomeActivityVisible();
-        mAmWmState.assertHomeActivityVisible(true);
+        if (!noHomeScreen()) {
+            mAmWmState.assertHomeActivityVisible(true);
+        }
 
         // Launch a fullscreen and docked app and then launch the assistant and check to see that it
         // is also visible
