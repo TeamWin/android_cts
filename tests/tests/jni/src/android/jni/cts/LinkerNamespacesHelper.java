@@ -16,22 +16,29 @@
 
 package android.jni.cts;
 
-import android.content.Context;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.support.test.InstrumentationRegistry;
 import dalvik.system.PathClassLoader;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.File;
-import java.io.FileReader;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 class LinkerNamespacesHelper {
+    private final static String PUBLIC_CONFIG_DIR = "/system/etc/";
+    private final static String SYSTEM_CONFIG_FILE = PUBLIC_CONFIG_DIR + "public.libraries.txt";
+    private final static String OEM_CONFIG_FILE_PATTERN = "public\\.libraries-([A-Za-z0-9-_]+)\\.txt";
     private final static String VENDOR_CONFIG_FILE = "/vendor/etc/public.libraries.txt";
     private final static String[] PUBLIC_SYSTEM_LIBRARIES = {
         "libaaudio.so",
@@ -59,12 +66,29 @@ class LinkerNamespacesHelper {
         "libvulkan.so",
         "libz.so"
     };
+    // The grey-list.
+    private final static String[] PRIVATE_SYSTEM_LIBRARIES = {
+        "libandroid_runtime.so",
+        "libbinder.so",
+        "libcrypto.so",
+        "libcutils.so",
+        "libexpat.so",
+        "libgui.so",
+        "libmedia.so",
+        "libnativehelper.so",
+        "libskia.so",
+        "libssl.so",
+        "libstagefright.so",
+        "libsqlite.so",
+        "libui.so",
+        "libutils.so",
+        "libvorbisidec.so",
+    };
 
     private final static String WEBVIEW_PLAT_SUPPORT_LIB = "libwebviewchromium_plat_support.so";
 
-    public static String runAccessibilityTest() throws IOException {
-        List<String> vendorLibs = new ArrayList<>();
-        File file = new File(VENDOR_CONFIG_FILE);
+    private static List<String> readPublicLibrariesFile(File file) throws IOException {
+        List<String> libs = new ArrayList<>();
         if (file.exists()) {
             try (BufferedReader br = new BufferedReader(new FileReader(file))) {
                 String line;
@@ -73,17 +97,78 @@ class LinkerNamespacesHelper {
                     if (line.isEmpty() || line.startsWith("#")) {
                         continue;
                     }
-                    vendorLibs.add(line);
+                    libs.add(line);
                 }
             }
         }
+        return libs;
+    }
 
+    public static String runAccessibilityTest() throws IOException {
         List<String> systemLibs = new ArrayList<>();
+
         Collections.addAll(systemLibs, PUBLIC_SYSTEM_LIBRARIES);
 
         if (InstrumentationRegistry.getContext().getPackageManager().
                 hasSystemFeature(PackageManager.FEATURE_WEBVIEW)) {
             systemLibs.add(WEBVIEW_PLAT_SUPPORT_LIB);
+        }
+
+        // Check if public.libraries.txt contains libs other than the
+        // public system libs (NDK libs).
+        for (String lib : readPublicLibrariesFile(new File(SYSTEM_CONFIG_FILE))) {
+            if (!systemLibs.contains(lib)) {
+                return "Library \"" + lib + "\" in " + SYSTEM_CONFIG_FILE
+                        + " is not an allowed system lib.";
+            }
+        }
+
+        Pattern oemConfigFilePattern = Pattern.compile(OEM_CONFIG_FILE_PATTERN);
+        File[] oemConfigFiles = new File(PUBLIC_CONFIG_DIR).listFiles(
+                new FilenameFilter() {
+                    public boolean accept(File dir, String name) {
+                        return oemConfigFilePattern.matcher(name).matches();
+                    }
+                });
+
+        List<String> oemLibs = new ArrayList<>();
+        for (File configFile : oemConfigFiles) {
+            String fileName = configFile.toPath().getFileName().toString();
+            Matcher matcher = oemConfigFilePattern.matcher(fileName);
+            if (matcher.matches()) {
+                String oemName = matcher.group(1);
+                // a lib in /system/etc/public.libraries-acme.txt should be
+                // libFoo.acme.so
+                Pattern libNamePattern = Pattern.compile("lib.+\\." + oemName + "\\.so");
+                List<String> libs = readPublicLibrariesFile(configFile);
+                for (String lib : libs) {
+                    if (libNamePattern.matcher(lib).matches()) {
+                        oemLibs.add(lib);
+                    } else {
+                        return "OEM library \"" + lib + "\" in " + configFile.toString()
+                                + " must have company name " + oemName + " as suffix.";
+                    }
+                }
+            }
+        }
+        // OEM libs that passed above tests are available to Android app via JNI
+        systemLibs.addAll(oemLibs);
+
+        List<String> vendorLibs = readPublicLibrariesFile(new File(VENDOR_CONFIG_FILE));
+
+        // Make sure that the libs in grey-list are not exposed to apps. In fact, it
+        // would be better for us to run this check against all system libraries which
+        // are not NDK libs, but grey-list libs are enough for now since they have been
+        // the most popular violators.
+        Set<String> greyListLibs = new HashSet<>();
+        Collections.addAll(greyListLibs, PRIVATE_SYSTEM_LIBRARIES);
+        // Note: check for systemLibs isn't needed since we already checked
+        // /system/etc/public.libraries.txt against NDK and
+        // /system/etc/public.libraries-<company>.txt against lib<name>.<company>.so.
+        for (String lib : vendorLibs) {
+            if (greyListLibs.contains(lib)) {
+                return "Internal library \"" + lib + "\" must not be available to apps.";
+            }
         }
 
         return runAccessibilityTestImpl(systemLibs.toArray(new String[systemLibs.size()]),
