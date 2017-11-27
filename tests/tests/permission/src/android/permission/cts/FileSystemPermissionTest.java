@@ -66,6 +66,21 @@ import java.util.Set;
  */
 public class FileSystemPermissionTest extends AndroidTestCase {
 
+    private int dumpable;
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        dumpable = Os.prctl(OsConstants.PR_GET_DUMPABLE, 0, 0, 0, 0);
+        Os.prctl(OsConstants.PR_SET_DUMPABLE, 1, 0, 0, 0);
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        Os.prctl(OsConstants.PR_SET_DUMPABLE, dumpable, 0, 0, 0);
+        super.tearDown();
+    }
+
     @MediumTest
     public void testCreateFileHasSanePermissions() throws Exception {
         File myFile = new File(getContext().getFilesDir(), "hello");
