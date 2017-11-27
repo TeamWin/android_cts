@@ -77,8 +77,8 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         disableAssistant();
     }
 
+    // TODO(b/69573940): Add back to presubmit
     @Test
-    @Presubmit
     public void testAssistantStackZOrder() throws Exception {
         if (!supportsPip() || !supportsSplitScreenMultiWindow()) return;
         // Launch a pinned stack task
