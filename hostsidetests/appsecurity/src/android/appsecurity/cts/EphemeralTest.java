@@ -219,11 +219,47 @@ public class EphemeralTest extends DeviceTestCase
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testInstallPermissionGranted");
     }
 
+    /** Test for android.permission.INSTANT_APP_FOREGROUND_SERVICE */
     public void testStartForegrondService() throws Exception {
         // Make sure the test package does not have INSTANT_APP_FOREGROUND_SERVICE
         getDevice().executeShellCommand("cmd package revoke " + EPHEMERAL_1_PKG
                         + " android.permission.INSTANT_APP_FOREGROUND_SERVICE");
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartForegroundService");
+    }
+
+    /** Test for android.permission.RECORD_AUDIO */
+    public void testRecordAudioPermission() throws Exception {
+        runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testRecordAudioPermission");
+    }
+
+    /** Test for android.permission.CAMERA */
+    public void testCameraPermission() throws Exception {
+        runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testCameraPermission");
+    }
+
+    /** Test for android.permission.READ_PHONE_NUMBERS */
+    public void testReadPhoneNumbersPermission() throws Exception {
+        runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testReadPhoneNumbersPermission");
+    }
+
+    /** Test for android.permission.ACCESS_COARSE_LOCATION */
+    public void testAccessCoarseLocationPermission() throws Throwable {
+        runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testAccessCoarseLocationPermission");
+    }
+
+    /** Test for android.permission.NETWORK */
+    public void testInternetPermission() throws Throwable {
+        runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testInternetPermission");
+    }
+
+    /** Test for android.permission.VIBRATE */
+    public void testVibratePermission() throws Throwable {
+        runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testVibratePermission");
+    }
+
+    /** Test for android.permission.WAKE_LOCK */
+    public void testWakeLockPermission() throws Throwable {
+        runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testWakeLockPermission");
     }
 
     private static final HashMap<String, String> makeArgs(

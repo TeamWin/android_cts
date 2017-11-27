@@ -16,17 +16,17 @@
 
 package com.android.cts.ephemeralapp1;
 
+import static android.media.AudioFormat.CHANNEL_IN_MONO;
+import static android.media.AudioFormat.ENCODING_PCM_16BIT;
+import static android.media.MediaRecorder.AudioSource.MIC;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.junit.Assert.assertFalse;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.Manifest;
-import android.annotation.Nullable;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.ActivityNotFoundException;
@@ -41,14 +41,29 @@ import android.content.pm.PackageManager;
 import android.content.pm.ProviderInfo;
 import android.content.pm.ResolveInfo;
 import android.database.Cursor;
+import android.hardware.camera2.CameraDevice;
+import android.hardware.camera2.CameraManager;
+import android.media.AudioRecord;
+import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
+import android.os.Looper;
+import android.os.PowerManager;
+import android.os.PowerManager.WakeLock;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
+import android.telephony.CellLocation;
+import android.telephony.PhoneStateListener;
+import android.telephony.TelephonyManager;
 
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.TestThread;
 import com.android.cts.util.TestResult;
 
 import org.junit.After;
@@ -85,6 +100,7 @@ public class ClientTest {
             "com.android.cts.ephemeraltest.EXTRA_ACTIVITY_RESULT";
 
     private BroadcastReceiver mReceiver;
+    private PhoneStateListener mPhoneStateListener;
     private final SynchronousQueue<TestResult> mResultQueue = new SynchronousQueue<>();
 
     @Before
@@ -992,6 +1008,137 @@ public class ClientTest {
         });
         context.startForegroundService(intent);
         latch2.await(5, TimeUnit.SECONDS);
+    }
+
+    @Test
+    public void testRecordAudioPermission() throws Throwable {
+        final AudioRecord record =
+                new AudioRecord(MIC, 8000, CHANNEL_IN_MONO, ENCODING_PCM_16BIT, 4096);
+        try {
+            assertThat("audio record not initialized",
+                    record.getState(), is(AudioRecord.STATE_INITIALIZED));
+        } finally {
+            record.release();
+        }
+    }
+
+    @Test
+    public void testReadPhoneNumbersPermission() throws Throwable {
+        final Context context = InstrumentationRegistry.getContext();
+        if (!context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        try {
+            final TelephonyManager telephonyManager =
+                    (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+            final String nmbr = telephonyManager.getLine1Number();
+        } catch (SecurityException e) {
+            fail("Permission not granted");
+        }
+    }
+
+    @Test
+    public void testAccessCoarseLocationPermission() throws Throwable {
+        final Context context = InstrumentationRegistry.getContext();
+        final ConnectivityManager mCm =
+                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
+            return;
+        }
+
+        final TelephonyManager mTelephonyManager =
+                (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+        // getCellLocation should never return null, but that is allowed if the cell network type
+        // is LTE (since there is no LteCellLocation class)
+        if (mTelephonyManager.getNetworkType() != TelephonyManager.NETWORK_TYPE_LTE) {
+            assertThat(mTelephonyManager.getCellLocation(), is(notNullValue()));
+        }
+
+        final CountDownLatch latch = new CountDownLatch(1);
+        final TestThread t = new TestThread(() -> {
+            Looper.prepare();
+            mPhoneStateListener = new PhoneStateListener() {
+                @Override
+                public void onCellLocationChanged(CellLocation location) {
+                    latch.countDown();
+                }
+            };
+            mTelephonyManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_CELL_LOCATION);
+            Looper.loop();
+        });
+        t.start();
+
+        try {
+            CellLocation.requestLocationUpdate();
+            assertThat(latch.await(1000, TimeUnit.MILLISECONDS), is(true));
+        } finally {
+            mTelephonyManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_NONE);
+        }
+        t.checkException();
+    }
+
+    @Test
+    public void testCameraPermission() throws Throwable {
+        final Context context = InstrumentationRegistry.getContext();
+        final CameraManager manager =
+                (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
+        final String[] cameraIds = manager.getCameraIdList();
+        if (cameraIds.length == 0) {
+            return;
+        }
+        final CountDownLatch latch = new CountDownLatch(1);
+        final HandlerThread backgroundThread = new HandlerThread("camera_bg");
+        backgroundThread.start();
+        final CameraDevice.StateCallback callback = new CameraDevice.StateCallback() {
+            @Override
+            public void onOpened(CameraDevice camera) {
+                latch.countDown();
+                camera.close();
+            }
+            @Override
+            public void onDisconnected(CameraDevice camera) {
+                camera.close();
+            }
+            @Override
+            public void onError(CameraDevice camera, int error) {
+                camera.close();
+            }
+        };
+        manager.openCamera(cameraIds[0], callback, new Handler(backgroundThread.getLooper()));
+        assertThat(latch.await(1000, TimeUnit.MILLISECONDS), is(true));
+    }
+
+    @Test
+    public void testInternetPermission() throws Throwable {
+        final ConnectivityManager manager = (ConnectivityManager) InstrumentationRegistry.getContext()
+                .getSystemService(Context.CONNECTIVITY_SERVICE);
+        manager.reportNetworkConnectivity(null, false);
+    }
+
+    @Test
+    public void testVibratePermission() throws Throwable {
+        final Vibrator vibrator = (Vibrator) InstrumentationRegistry.getContext()
+                .getSystemService(Context.VIBRATOR_SERVICE);
+        final VibrationEffect effect =
+                VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE);
+        vibrator.vibrate(effect);
+    }
+
+    @Test
+    public void testWakeLockPermission() throws Throwable {
+        WakeLock wakeLock = null;
+        try {
+            final PowerManager powerManager = (PowerManager) InstrumentationRegistry.getContext()
+                    .getSystemService(Context.POWER_SERVICE);
+            wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "test");
+            wakeLock.acquire();
+        }
+        finally {
+            if (wakeLock != null &&  wakeLock.isHeld()) {
+                wakeLock.release();
+            }
+        }
     }
 
     private TestResult getResult() {
