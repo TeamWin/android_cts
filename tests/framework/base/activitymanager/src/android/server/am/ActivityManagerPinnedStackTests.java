@@ -41,12 +41,11 @@ import android.server.am.ActivityManagerState.ActivityTask;
 import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Build: mmma -j32 cts/hostsidetests/services
+ * Build: mmma -j32 cts/tests/framework/base
  * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.ActivityManagerPinnedStackTests
  */
 public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
@@ -238,9 +237,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         final WindowManagerState wmState = mAmWmState.getWmState();
 
         // Launch an activity into the pinned stack
-        launchActivity(PIP_ACTIVITY,
-                EXTRA_ENTER_PIP, "true",
-                EXTRA_TAP_TO_FINISH, "true");
+        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true", EXTRA_TAP_TO_FINISH, "true");
         mAmWmState.waitForValidState(PIP_ACTIVITY, WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
 
         // Get the display dimensions
@@ -324,8 +321,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // Assert that we have entered PIP and that the aspect ratio is correct
         Rect pinnedStackBounds = mAmWmState.getAmState().getStandardStackByWindowingMode(
                 WINDOWING_MODE_PINNED).getBounds();
-        assertTrue(floatEquals((float) pinnedStackBounds.width() / pinnedStackBounds.height(),
-                (float) num / denom));
+        assertFloatEquals((float) pinnedStackBounds.width() / pinnedStackBounds.height(),
+                (float) num / denom);
     }
 
     @Test
@@ -346,20 +343,10 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 EXTRA_SET_ASPECT_RATIO_NUMERATOR, Integer.toString(num),
                 EXTRA_SET_ASPECT_RATIO_DENOMINATOR, Integer.toString(denom));
         assertPinnedStackExists();
-
-        // Hacky, but we need to wait for the enterPictureInPicture animation to complete and
-        // the resize to be called before we can check the pinned stack bounds
-        final boolean[] result = new boolean[1];
-        mAmWmState.waitForWithAmState((state) -> {
-            Rect pinnedStackBounds = state.getStandardStackByWindowingMode(
-                    WINDOWING_MODE_PINNED).getBounds();
-            boolean isValidAspectRatio = floatEquals(
-                    (float) pinnedStackBounds.width() / pinnedStackBounds.height(),
-                    (float) num / denom);
-            result[0] = isValidAspectRatio;
-            return isValidAspectRatio;
-        }, "Waiting for pinned stack to be resized");
-        assertTrue(result[0]);
+        waitForValidAspectRatio(num, denom);
+        Rect bounds = mAmWmState.getAmState().getStandardStackByWindowingMode(
+                WINDOWING_MODE_PINNED).getBounds();
+        assertFloatEquals((float) bounds.width() / bounds.height(), (float) num / denom);
     }
 
     @Test
@@ -413,8 +400,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         assertPinnedStackExists();
         Rect pinnedStackBounds = mAmWmState.getAmState().getStandardStackByWindowingMode(
                 WINDOWING_MODE_PINNED).getBounds();
-        assertTrue(floatEquals((float) pinnedStackBounds.width() / pinnedStackBounds.height(),
-                (float) MAX_ASPECT_RATIO_NUMERATOR / MAX_ASPECT_RATIO_DENOMINATOR));
+        assertFloatEquals((float) pinnedStackBounds.width() / pinnedStackBounds.height(),
+                (float) MAX_ASPECT_RATIO_NUMERATOR / MAX_ASPECT_RATIO_DENOMINATOR);
     }
 
     @Test
@@ -500,19 +487,11 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         launchHomeActivity();
         assertPinnedStackExists();
 
-        // Hacky, but we need to wait for the auto-enter picture-in-picture animation to complete
-        // and before we can check the pinned stack bounds
-        final boolean[] result = new boolean[1];
-        mAmWmState.waitForWithAmState((state) -> {
-            Rect pinnedStackBounds = state.getStandardStackByWindowingMode(
-                    WINDOWING_MODE_PINNED).getBounds();
-            boolean isValidAspectRatio = floatEquals(
-                    (float) pinnedStackBounds.width() / pinnedStackBounds.height(),
-                    (float) MAX_ASPECT_RATIO_NUMERATOR / MAX_ASPECT_RATIO_DENOMINATOR);
-            result[0] = isValidAspectRatio;
-            return isValidAspectRatio;
-        }, "Waiting for pinned stack to be resized");
-        assertTrue(result[0]);
+        waitForValidAspectRatio(MAX_ASPECT_RATIO_NUMERATOR, MAX_ASPECT_RATIO_DENOMINATOR);
+        Rect bounds = mAmWmState.getAmState().getStandardStackByWindowingMode(
+                WINDOWING_MODE_PINNED).getBounds();
+        assertFloatEquals((float) bounds.width() / bounds.height(),
+                (float) MAX_ASPECT_RATIO_NUMERATOR / MAX_ASPECT_RATIO_DENOMINATOR);
     }
 
     @Test
@@ -540,6 +519,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 ALWAYS_FOCUSABLE_PIP_ACTIVITY)));
     }
 
+    @Presubmit
     @Test
     public void testDisallowMultipleTasksInPinnedStack() throws Exception {
         if (!supportsPip()) return;
@@ -560,10 +540,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         assertTrue(pinnedStack.getTasks().get(0).mRealActivity.equals(getActivityComponentName(
                 PIP_ACTIVITY2)));
 
-        final ActivityStack fullScreenStack =
-                mAmWmState.getAmState().getStandardStackByWindowingMode(WINDOWING_MODE_FULLSCREEN);
-        assertTrue(fullScreenStack.getBottomTask().mRealActivity.equals(getActivityComponentName(
-                PIP_ACTIVITY)));
+        assertTrue(mAmWmState.getAmState().containsActivityInWindowingMode(
+                PIP_ACTIVITY, WINDOWING_MODE_FULLSCREEN));
     }
 
     @Test
@@ -573,9 +551,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // Go home
         launchHomeActivity();
         // Launch an auto pip activity
-        launchActivity(PIP_ACTIVITY,
-                EXTRA_ENTER_PIP, "true",
-                EXTRA_REENTER_PIP_ON_EXIT, "true");
+        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true", EXTRA_REENTER_PIP_ON_EXIT, "true");
         assertPinnedStackExists();
 
         // Relaunch the activity to fullscreen to trigger the activity to exit and re-enter pip
@@ -615,6 +591,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         mAmWmState.assertVisibility(TEST_ACTIVITY, true);
     }
 
+    @Presubmit
     @Test
     public void testRemovePipWithNoFullscreenStack() throws Exception {
         if (!supportsPip()) return;
@@ -630,10 +607,10 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // fullscreen stack existed before)
         removeStacksInWindowingModes(WINDOWING_MODE_PINNED);
         assertPinnedStackStateOnMoveToFullscreen(PIP_ACTIVITY,
-                WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME,
-                true /* expectTopTaskHasActivity */, true /* expectBottomTaskHasActivity */);
+                WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME);
     }
 
+    @Presubmit
     @Test
     public void testRemovePipWithVisibleFullscreenStack() throws Exception {
         if (!supportsPip()) return;
@@ -647,10 +624,10 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // top fullscreen activity
         removeStacksInWindowingModes(WINDOWING_MODE_PINNED);
         assertPinnedStackStateOnMoveToFullscreen(PIP_ACTIVITY,
-                WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD,
-                false /* expectTopTaskHasActivity */, true /* expectBottomTaskHasActivity */);
+                WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD);
     }
 
+    @Presubmit
     @Test
     public void testRemovePipWithHiddenFullscreenStack() throws Exception {
         if (!supportsPip()) return;
@@ -666,8 +643,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // stack, but that the home stack is still focused
         removeStacksInWindowingModes(WINDOWING_MODE_PINNED);
         assertPinnedStackStateOnMoveToFullscreen(PIP_ACTIVITY,
-                WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME,
-                false /* expectTopTaskHasActivity */, true /* expectBottomTaskHasActivity */);
+                WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME);
     }
 
     @Test
@@ -685,10 +661,10 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // fullscreen stack existed before)
         executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_MOVE_TO_BACK);
         assertPinnedStackStateOnMoveToFullscreen(PIP_ACTIVITY,
-                WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME,
-                false /* expectTopTaskHasActivity */, true /* expectBottomTaskHasActivity */);
+                WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME);
     }
 
+    @Presubmit
     @Test
     public void testMovePipToBackWithVisibleFullscreenStack() throws Exception {
         if (!supportsPip()) return;
@@ -702,10 +678,10 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // top fullscreen activity
         executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_MOVE_TO_BACK);
         assertPinnedStackStateOnMoveToFullscreen(PIP_ACTIVITY,
-                WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD,
-                false /* expectTopTaskHasActivity */, true /* expectBottomTaskHasActivity */);
+                WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD);
     }
 
+    @Presubmit
     @Test
     public void testMovePipToBackWithHiddenFullscreenStack() throws Exception {
         if (!supportsPip()) return;
@@ -721,8 +697,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // stack, but that the home stack is still focused
         executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_MOVE_TO_BACK);
         assertPinnedStackStateOnMoveToFullscreen(
-                PIP_ACTIVITY, WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME,
-                false /* expectTopTaskHasActivity */, true /* expectBottomTaskHasActivity */);
+                PIP_ACTIVITY, WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME);
     }
 
     @Test
@@ -828,6 +803,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         executeShellCommand("am task lock stop");
     }
 
+    @Presubmit
     @Test
     public void testConfigurationChangeOrderDuringTransition() throws Exception {
         if (!supportsPip()) return;
@@ -884,6 +860,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         setWindowTransitionAnimationDurationScale(1);
     }
 
+    @Presubmit
     @Test
     public void testStopBeforeMultiWindowCallbacksOnDismiss() throws Exception {
         if (!supportsPip()) return;
@@ -1203,26 +1180,14 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
      * {@param expectTopTaskHasActivity} or {@param expectBottomTaskHasActivity} are set respectively.
      */
     private void assertPinnedStackStateOnMoveToFullscreen(String activityName, int windowingMode,
-            int activityType, boolean expectTopTaskHasActivity, boolean expectBottomTaskHasActivity)
-                    throws Exception {
+            int activityType) throws Exception {
         mAmWmState.waitForFocusedStack(windowingMode, activityType);
         mAmWmState.assertFocusedStack("Wrong focused stack", windowingMode, activityType);
         mAmWmState.waitForActivityState(activityName, STATE_STOPPED);
         assertTrue(mAmWmState.getAmState().hasActivityState(activityName, STATE_STOPPED));
+        assertTrue(mAmWmState.getAmState().containsActivityInWindowingMode(
+                activityName, WINDOWING_MODE_FULLSCREEN));
         assertPinnedStackDoesNotExist();
-
-        if (expectTopTaskHasActivity) {
-            ActivityTask topTask = mAmWmState.getAmState().getStandardStackByWindowingMode(
-                    WINDOWING_MODE_FULLSCREEN).getTopTask();
-            assertTrue(topTask.containsActivity(ActivityManagerTestBase.getActivityComponentName(
-                    activityName)));
-        }
-        if (expectBottomTaskHasActivity) {
-            ActivityTask bottomTask = mAmWmState.getAmState().getStandardStackByWindowingMode(
-                    WINDOWING_MODE_FULLSCREEN).getBottomTask();
-            assertTrue(bottomTask.containsActivity(ActivityManagerTestBase.getActivityComponentName(
-                    activityName)));
-        }
     }
 
     /**
@@ -1333,6 +1298,15 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         }, "Waiting for picture-in-picture activity callbacks...");
     }
 
+    private void waitForValidAspectRatio(int num, int denom) throws Exception {
+        // Hacky, but we need to wait for the auto-enter picture-in-picture animation to complete
+        // and before we can check the pinned stack bounds
+        mAmWmState.waitForWithAmState((state) -> {
+            Rect bounds = state.getStandardStackByWindowingMode(WINDOWING_MODE_PINNED).getBounds();
+            return floatEquals((float) bounds.width() / bounds.height(), (float) num / denom);
+        }, "waitForValidAspectRatio");
+    }
+
     /**
      * @return the window state for the given {@param activity}'s window.
      */
@@ -1347,8 +1321,14 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     /**
      * Compares two floats with a common epsilon.
      */
-    private boolean floatEquals(float f1, float f2) {
-        return Math.abs(f1 - f2) < FLOAT_COMPARE_EPSILON;
+    private void assertFloatEquals(float actual, float expected) {
+        if (!floatEquals(actual, expected)) {
+            fail(expected + " not equal to " + actual);
+        }
+    }
+
+    private boolean floatEquals(float a, float b) {
+        return Math.abs(a - b) < FLOAT_COMPARE_EPSILON;
     }
 
     /**

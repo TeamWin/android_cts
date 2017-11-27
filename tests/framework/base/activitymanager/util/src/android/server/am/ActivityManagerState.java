@@ -332,6 +332,21 @@ class ActivityManagerState {
         return false;
     }
 
+    boolean containsActivityInWindowingMode(String activityName, int windowingMode) {
+        final String fullName = ActivityManagerTestBase.getActivityComponentName(activityName);
+        for (ActivityStack stack : mStacks) {
+            for (ActivityTask task : stack.mTasks) {
+                for (Activity activity : task.mActivities) {
+                    if (activity.name.equals(fullName)
+                            && activity.getWindowingMode() == windowingMode) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     boolean isActivityVisible(String activityName) {
         for (ActivityStack stack : mStacks) {
             for (ActivityTask task : stack.mTasks) {
