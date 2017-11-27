@@ -44,6 +44,7 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.service.autofill.FillEventHistory;
+import android.service.autofill.FillEventHistory.Event;
 import android.service.autofill.FillResponse;
 import android.support.test.uiautomator.UiObject2;
 import android.view.View;
@@ -56,6 +57,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -118,8 +120,9 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         FillEventHistory selection =
                 InstrumentedAutoFillService.peekInstance().getFillEventHistory();
         assertDeprecatedClientState(selection, "clientStateKey", "clientStateValue");
-        assertThat(selection.getEvents().size()).isEqualTo(1);
-        assertFillEventForDatasetAuthenticationSelected(selection.getEvents().get(0), "name",
+        List<Event> events = selection.getEvents();
+        assertWithMessage("Wrong number of events: %s", events).that(events.size()).isEqualTo(1);
+        assertFillEventForDatasetAuthenticationSelected(events.get(0), "name",
                 "clientStateKey", "clientStateValue");
     }
 
@@ -158,8 +161,9 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         FillEventHistory selection =
                 InstrumentedAutoFillService.peekInstance().getFillEventHistory();
         assertDeprecatedClientState(selection, "clientStateKey", "clientStateValue");
-        assertThat(selection.getEvents().size()).isEqualTo(1);
-        assertFillEventForAuthenticationSelected(selection.getEvents().get(0), NULL_DATASET_ID,
+        List<Event> events = selection.getEvents();
+        assertWithMessage("Wrong number of events: %s", events).that(events.size()).isEqualTo(1);
+        assertFillEventForAuthenticationSelected(events.get(0), NULL_DATASET_ID,
                 "clientStateKey", "clientStateValue");
     }
 
@@ -192,8 +196,10 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
             FillEventHistory selection = InstrumentedAutoFillService.peekInstance()
                     .getFillEventHistory();
             assertDeprecatedClientState(selection, "clientStateKey", "Value1");
-            assertThat(selection.getEvents().size()).isEqualTo(1);
-            assertFillEventForDatasetSelected(selection.getEvents().get(0), NULL_DATASET_ID,
+            List<Event> events = selection.getEvents();
+            assertWithMessage("Wrong number of events: %s", events).that(events.size())
+                    .isEqualTo(1);
+            assertFillEventForDatasetSelected(events.get(0), NULL_DATASET_ID,
                     "clientStateKey", "Value1");
         }
 
@@ -229,7 +235,10 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
             FillEventHistory selection = InstrumentedAutoFillService.peekInstance()
                     .getFillEventHistory();
             assertDeprecatedClientState(selection, "clientStateKey", "Value2");
-            assertFillEventForDatasetSelected(selection.getEvents().get(0), "name3",
+            List<Event> events = selection.getEvents();
+            assertWithMessage("Wrong number of events: %s", events).that(events.size())
+                    .isEqualTo(1);
+            assertFillEventForDatasetSelected(events.get(0), "name3",
                     "clientStateKey", "Value2");
         }
 
@@ -243,10 +252,12 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
                     .getFillEventHistory();
             assertDeprecatedClientState(selection, "clientStateKey", "Value2");
 
-            assertThat(selection.getEvents().size()).isEqualTo(2);
-            assertFillEventForDatasetSelected(selection.getEvents().get(0), "name3",
+            List<Event> events = selection.getEvents();
+            assertWithMessage("Wrong number of events: %s", events).that(events.size())
+                    .isEqualTo(2);
+            assertFillEventForDatasetSelected(events.get(0), "name3",
                     "clientStateKey", "Value2");
-            assertFillEventForSaveShown(selection.getEvents().get(1), NULL_DATASET_ID,
+            assertFillEventForSaveShown(events.get(1), NULL_DATASET_ID,
                     "clientStateKey", "Value2");
         }
     }
@@ -275,8 +286,10 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
             FillEventHistory selection = InstrumentedAutoFillService.peekInstance()
                     .getFillEventHistory();
             assertNoDeprecatedClientState(selection);
-            assertThat(selection.getEvents().size()).isEqualTo(1);
-            assertFillEventForDatasetSelected(selection.getEvents().get(0), NULL_DATASET_ID);
+            List<Event> events = selection.getEvents();
+            assertWithMessage("Wrong number of events: %s", events).that(events.size())
+                    .isEqualTo(1);
+            assertFillEventForDatasetSelected(events.get(0), NULL_DATASET_ID);
         }
 
         // Second request
@@ -318,8 +331,10 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
             FillEventHistory selection = InstrumentedAutoFillService.peekInstance()
                     .getFillEventHistory();
             assertNoDeprecatedClientState(selection);
-            assertThat(selection.getEvents().size()).isEqualTo(1);
-            assertFillEventForDatasetSelected(selection.getEvents().get(0), NULL_DATASET_ID);
+            List<Event> events = selection.getEvents();
+            assertWithMessage("Wrong number of events: %s", events).that(events.size())
+                    .isEqualTo(1);
+            assertFillEventForDatasetSelected(events.get(0), NULL_DATASET_ID);
         }
 
         // Second request
@@ -361,8 +376,10 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
             FillEventHistory selection = InstrumentedAutoFillService.peekInstance()
                     .getFillEventHistory();
             assertNoDeprecatedClientState(selection);
-            assertThat(selection.getEvents().size()).isEqualTo(1);
-            assertFillEventForDatasetSelected(selection.getEvents().get(0), NULL_DATASET_ID);
+            List<Event> events = selection.getEvents();
+            assertWithMessage("Wrong number of events: %s", events).that(events.size())
+                    .isEqualTo(1);
+            assertFillEventForDatasetSelected(events.get(0), NULL_DATASET_ID);
         }
 
         // Second request
@@ -511,8 +528,9 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         // Assert it
         final FillEventHistory selection =
                 InstrumentedAutoFillService.peekInstance().getFillEventHistory();
-        assertThat(selection.getEvents().size()).isEqualTo(1);
-        assertFillEventForSaveShown(selection.getEvents().get(0), NULL_DATASET_ID);
+        final List<Event> events = selection.getEvents();
+        assertWithMessage("Wrong number of events: %s", events).that(events.size()).isEqualTo(1);
+        assertFillEventForSaveShown(events.get(0), NULL_DATASET_ID);
     }
 
     @Test
@@ -536,8 +554,10 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         {
             final FillEventHistory selection =
                     InstrumentedAutoFillService.peekInstance().getFillEventHistory();
-            assertThat(selection.getEvents().size()).isEqualTo(1);
-            assertFillEventForDatasetSelected(selection.getEvents().get(0), "id1");
+            final List<Event> events = selection.getEvents();
+            assertWithMessage("Wrong number of events: %s", events).that(events.size())
+                    .isEqualTo(1);
+            assertFillEventForDatasetSelected(events.get(0), "id1");
         }
 
         // Trigger 2st autofill request (which will clear the fill event history)
@@ -558,8 +578,10 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         {
             final FillEventHistory selection =
                     InstrumentedAutoFillService.peekInstance().getFillEventHistory();
-            assertThat(selection.getEvents().size()).isEqualTo(1);
-            assertFillEventForDatasetSelected(selection.getEvents().get(0), "id2");
+            final List<Event> events = selection.getEvents();
+            assertWithMessage("Wrong number of events: %s", events).that(events.size())
+                    .isEqualTo(1);
+            assertFillEventForDatasetSelected(events.get(0), "id2");
         }
 
         // Finish the context by login in
@@ -572,9 +594,11 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
             // Verify fill history
             final FillEventHistory selection =
                     InstrumentedAutoFillService.peekInstance().getFillEventHistory();
-            assertThat(selection.getEvents().size()).isEqualTo(1);
+            final List<Event> events = selection.getEvents();
+            assertWithMessage("Wrong number of events: %s", events).that(events.size())
+                    .isEqualTo(1);
 
-            assertFillEventForDatasetSelected(selection.getEvents().get(0), "id2");
+            assertFillEventForDatasetSelected(events.get(0), "id2");
         }
     }
 
@@ -609,8 +633,10 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         {
             final FillEventHistory selection =
                     InstrumentedAutoFillService.peekInstance().getFillEventHistory();
-            assertThat(selection.getEvents().size()).isEqualTo(1);
-            assertFillEventForDatasetSelected(selection.getEvents().get(0), NULL_DATASET_ID);
+            final List<Event> events = selection.getEvents();
+            assertWithMessage("Wrong number of events: %s", events).that(events.size())
+                    .isEqualTo(1);
+            assertFillEventForDatasetSelected(events.get(0), NULL_DATASET_ID);
         }
 
         // Finish the context by login in
@@ -626,8 +652,10 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         {
             final FillEventHistory selection =
                     InstrumentedAutoFillService.peekInstance().getFillEventHistory();
-            assertThat(selection.getEvents().size()).isEqualTo(1);
-            assertFillEventForDatasetSelected(selection.getEvents().get(0), NULL_DATASET_ID);
+            final List<Event> events = selection.getEvents();
+            assertWithMessage("Wrong number of events: %s", events).that(events.size())
+                    .isEqualTo(1);
+            assertFillEventForDatasetSelected(events.get(0), NULL_DATASET_ID);
         }
     }
 
@@ -664,8 +692,10 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         {
             final FillEventHistory selection =
                     InstrumentedAutoFillService.peekInstance().getFillEventHistory();
-            assertThat(selection.getEvents().size()).isEqualTo(1);
-            assertFillEventForDatasetSelected(selection.getEvents().get(0), NULL_DATASET_ID);
+            final List<Event> events = selection.getEvents();
+            assertWithMessage("Wrong number of events: %s", events).that(events.size())
+                    .isEqualTo(1);
+            assertFillEventForDatasetSelected(events.get(0), NULL_DATASET_ID);
         }
 
         // Finish the context by login in
@@ -680,10 +710,12 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         {
             final FillEventHistory selection =
                     InstrumentedAutoFillService.peekInstance().getFillEventHistory();
-            assertThat(selection.getEvents().size()).isEqualTo(2);
-            assertFillEventForDatasetSelected(selection.getEvents().get(0), NULL_DATASET_ID);
+            final List<Event> events = selection.getEvents();
+            assertWithMessage("Wrong number of events: %s", events).that(events.size())
+                    .isEqualTo(2);
+            assertFillEventForDatasetSelected(events.get(0), NULL_DATASET_ID);
 
-            FillEventHistory.Event event2 = selection.getEvents().get(1);
+            FillEventHistory.Event event2 = events.get(1);
             assertThat(event2.getType()).isEqualTo(TYPE_CONTEXT_COMMITTED);
             assertThat(event2.getDatasetId()).isNull();
             assertThat(event2.getClientState()).isNull();
@@ -729,8 +761,10 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         {
             final FillEventHistory selection =
                     InstrumentedAutoFillService.peekInstance().getFillEventHistory();
-            assertThat(selection.getEvents().size()).isEqualTo(1);
-            assertFillEventForDatasetSelected(selection.getEvents().get(0), "id2");
+            final List<Event> events = selection.getEvents();
+            assertWithMessage("Wrong number of events: %s", events).that(events.size())
+                    .isEqualTo(1);
+            assertFillEventForDatasetSelected(events.get(0), "id2");
         }
 
         // Finish the context by login in
@@ -745,10 +779,12 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         {
             final FillEventHistory selection =
                     InstrumentedAutoFillService.peekInstance().getFillEventHistory();
-            assertThat(selection.getEvents().size()).isEqualTo(2);
-            assertFillEventForDatasetSelected(selection.getEvents().get(0), "id2");
+            final List<Event> events = selection.getEvents();
+            assertWithMessage("Wrong number of events: %s", events).that(events.size())
+                    .isEqualTo(2);
+            assertFillEventForDatasetSelected(events.get(0), "id2");
 
-            FillEventHistory.Event event2 = selection.getEvents().get(1);
+            final FillEventHistory.Event event2 = events.get(1);
             assertThat(event2.getType()).isEqualTo(TYPE_CONTEXT_COMMITTED);
             assertThat(event2.getDatasetId()).isNull();
             assertThat(event2.getClientState()).isNull();
@@ -810,7 +846,9 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         {
             final FillEventHistory selection =
                     InstrumentedAutoFillService.peekInstance().getFillEventHistory();
-            assertThat(selection.getEvents().size()).isEqualTo(1);
+            final List<Event> events = selection.getEvents();
+            assertWithMessage("Wrong number of events: %s", events).that(events.size())
+                    .isEqualTo(1);
         }
     }
 
@@ -851,8 +889,10 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         {
             final FillEventHistory selection =
                     InstrumentedAutoFillService.peekInstance().getFillEventHistory();
-            assertThat(selection.getEvents().size()).isEqualTo(1);
-            assertFillEventForDatasetSelected(selection.getEvents().get(0), "id1");
+            final List<Event> events = selection.getEvents();
+            assertWithMessage("Wrong number of events: %s", events).that(events.size())
+                    .isEqualTo(1);
+            assertFillEventForDatasetSelected(events.get(0), "id1");
         }
 
         // Finish the context by login in
@@ -868,11 +908,12 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         {
             final FillEventHistory selection =
                     InstrumentedAutoFillService.peekInstance().getFillEventHistory();
-            assertThat(selection.getEvents().size()).isEqualTo(2);
+            final List<Event> events = selection.getEvents();
+            assertWithMessage("Wrong number of events: %s", events).that(events.size())
+                    .isEqualTo(2);
+            assertFillEventForDatasetSelected(events.get(0), "id1");
 
-            assertFillEventForDatasetSelected(selection.getEvents().get(0), "id1");
-
-            FillEventHistory.Event event2 = selection.getEvents().get(1);
+            final FillEventHistory.Event event2 = events.get(1);
             assertThat(event2.getType()).isEqualTo(TYPE_CONTEXT_COMMITTED);
             assertThat(event2.getDatasetId()).isNull();
             assertThat(event2.getClientState()).isNull();
@@ -921,8 +962,10 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
             // Verify fill history
             final FillEventHistory selection =
                     InstrumentedAutoFillService.peekInstance().getFillEventHistory();
-            assertThat(selection.getEvents().size()).isEqualTo(1);
-            assertFillEventForDatasetSelected(selection.getEvents().get(0), "id1");
+            final List<Event> events = selection.getEvents();
+            assertWithMessage("Wrong number of events: %s", events).that(events.size())
+                    .isEqualTo(1);
+            assertFillEventForDatasetSelected(events.get(0), "id1");
         }
 
         // Autofill password
@@ -936,10 +979,12 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
             // Verify fill history
             final FillEventHistory selection =
                     InstrumentedAutoFillService.peekInstance().getFillEventHistory();
-            assertThat(selection.getEvents().size()).isEqualTo(2);
+            final List<Event> events = selection.getEvents();
+            assertWithMessage("Wrong number of events: %s", events).that(events.size())
+                    .isEqualTo(2);
 
-            assertFillEventForDatasetSelected(selection.getEvents().get(0), "id1");
-            assertFillEventForDatasetSelected(selection.getEvents().get(1), "id2");
+            assertFillEventForDatasetSelected(events.get(0), "id1");
+            assertFillEventForDatasetSelected(events.get(1), "id2");
         }
 
         // Finish the context by login in
@@ -954,12 +999,14 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
             // Verify fill history
             final FillEventHistory selection =
                     InstrumentedAutoFillService.peekInstance().getFillEventHistory();
-            assertThat(selection.getEvents().size()).isEqualTo(3);
+            final List<Event> events = selection.getEvents();
+            assertWithMessage("Wrong number of events: %s", events).that(events.size())
+                    .isEqualTo(3);
 
-            assertFillEventForDatasetSelected(selection.getEvents().get(0), "id1");
-            assertFillEventForDatasetSelected(selection.getEvents().get(1), "id2");
+            assertFillEventForDatasetSelected(events.get(0), "id1");
+            assertFillEventForDatasetSelected(events.get(1), "id2");
 
-            final FillEventHistory.Event event3 = selection.getEvents().get(2);
+            final FillEventHistory.Event event3 = events.get(2);
             assertThat(event3.getType()).isEqualTo(TYPE_CONTEXT_COMMITTED);
             assertThat(event3.getDatasetId()).isNull();
             assertThat(event3.getClientState()).isNull();
@@ -1006,8 +1053,10 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
             // Verify fill history
             final FillEventHistory selection =
                     InstrumentedAutoFillService.peekInstance().getFillEventHistory();
-            assertThat(selection.getEvents().size()).isEqualTo(1);
-            assertFillEventForDatasetSelected(selection.getEvents().get(0), "id1");
+            final List<Event> events = selection.getEvents();
+            assertWithMessage("Wrong number of events: %s", events).that(events.size())
+                    .isEqualTo(1);
+            assertFillEventForDatasetSelected(events.get(0), "id1");
         }
 
         // Autofill password
@@ -1021,10 +1070,12 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
             // Verify fill history
             final FillEventHistory selection =
                     InstrumentedAutoFillService.peekInstance().getFillEventHistory();
-            assertThat(selection.getEvents().size()).isEqualTo(2);
+            final List<Event> events = selection.getEvents();
+            assertWithMessage("Wrong number of events: %s", events).that(events.size())
+                    .isEqualTo(2);
 
-            assertFillEventForDatasetSelected(selection.getEvents().get(0), "id1");
-            assertFillEventForDatasetSelected(selection.getEvents().get(1), "id2");
+            assertFillEventForDatasetSelected(events.get(0), "id1");
+            assertFillEventForDatasetSelected(events.get(1), "id2");
         }
 
         // Finish the context by login in
@@ -1037,12 +1088,14 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
             // Verify fill history
             final FillEventHistory selection =
                     InstrumentedAutoFillService.peekInstance().getFillEventHistory();
-            assertThat(selection.getEvents().size()).isEqualTo(3);
+            final List<Event> events = selection.getEvents();
+            assertWithMessage("Wrong number of events: %s", events).that(events.size())
+                    .isEqualTo(3);
 
-            assertFillEventForDatasetSelected(selection.getEvents().get(0), "id1");
-            assertFillEventForDatasetSelected(selection.getEvents().get(1), "id2");
+            assertFillEventForDatasetSelected(events.get(0), "id1");
+            assertFillEventForDatasetSelected(events.get(1), "id2");
 
-            final FillEventHistory.Event event3 = selection.getEvents().get(2);
+            final FillEventHistory.Event event3 = events.get(2);
             assertThat(event3.getType()).isEqualTo(TYPE_CONTEXT_COMMITTED);
             assertThat(event3.getDatasetId()).isNull();
             assertThat(event3.getClientState()).isNull();
@@ -1085,8 +1138,10 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         {
             final FillEventHistory selection =
                     InstrumentedAutoFillService.peekInstance().getFillEventHistory();
-            assertThat(selection.getEvents().size()).isEqualTo(1);
-            assertFillEventForDatasetSelected(selection.getEvents().get(0), "id1");
+            final List<Event> events = selection.getEvents();
+            assertWithMessage("Wrong number of events: %s", events).that(events.size())
+                    .isEqualTo(1);
+            assertFillEventForDatasetSelected(events.get(0), "id1");
         }
 
         // Change the fields to different values from datasets
@@ -1106,10 +1161,12 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         {
             final FillEventHistory selection =
                     InstrumentedAutoFillService.peekInstance().getFillEventHistory();
-            assertThat(selection.getEvents().size()).isEqualTo(2);
-            assertFillEventForDatasetSelected(selection.getEvents().get(0), "id1");
+            final List<Event> events = selection.getEvents();
+            assertWithMessage("Wrong number of events: %s", events).that(events.size())
+                    .isEqualTo(2);
+            assertFillEventForDatasetSelected(events.get(0), "id1");
 
-            FillEventHistory.Event event2 = selection.getEvents().get(1);
+            FillEventHistory.Event event2 = events.get(1);
             assertThat(event2.getType()).isEqualTo(TYPE_CONTEXT_COMMITTED);
             assertThat(event2.getDatasetId()).isNull();
             assertThat(event2.getClientState()).isNull();
@@ -1170,9 +1227,10 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         {
             final FillEventHistory selection =
                     InstrumentedAutoFillService.peekInstance().getFillEventHistory();
-            assertThat(selection.getEvents().size()).isEqualTo(1);
-
-            FillEventHistory.Event event = selection.getEvents().get(0);
+            final List<Event> events = selection.getEvents();
+            assertWithMessage("Wrong number of events: %s", events).that(events.size())
+                    .isEqualTo(1);
+            FillEventHistory.Event event = events.get(0);
             assertThat(event.getType()).isEqualTo(TYPE_CONTEXT_COMMITTED);
             assertThat(event.getDatasetId()).isNull();
             assertThat(event.getClientState()).isNull();
@@ -1248,9 +1306,11 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         {
             final FillEventHistory selection =
                     InstrumentedAutoFillService.peekInstance().getFillEventHistory();
-            assertThat(selection.getEvents().size()).isEqualTo(1);
+            final List<Event> events = selection.getEvents();
+            assertWithMessage("Wrong number of events: %s", events).that(events.size())
+                    .isEqualTo(1);
 
-            FillEventHistory.Event event = selection.getEvents().get(0);
+            final FillEventHistory.Event event = events.get(0);
             assertThat(event.getType()).isEqualTo(TYPE_CONTEXT_COMMITTED);
             assertThat(event.getDatasetId()).isNull();
             assertThat(event.getClientState()).isNull();

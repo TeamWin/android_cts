@@ -1005,7 +1005,7 @@ final class Helper {
                 .that(event.getChangedFields()).isEmpty();
         assertWithMessage("Event '%s' should not have manually-entered fields", event)
                 .that(event.getManuallyEnteredField()).isEmpty();
-        final Map<String, Integer> detectedFields = event.getDetectedFields();
+        final Map<String, Integer> detectedFields = event.getFieldsClassification();
         if (detectedRemoteId == null) {
             assertThat(detectedFields).isEmpty();
         } else {

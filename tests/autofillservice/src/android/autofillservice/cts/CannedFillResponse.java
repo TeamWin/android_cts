@@ -25,11 +25,11 @@ import android.content.IntentSender;
 import android.os.Bundle;
 import android.service.autofill.CustomDescription;
 import android.service.autofill.Dataset;
-import android.service.autofill.FieldsDetection;
 import android.service.autofill.FillCallback;
 import android.service.autofill.FillResponse;
 import android.service.autofill.Sanitizer;
 import android.service.autofill.SaveInfo;
+import android.service.autofill.UserData;
 import android.service.autofill.Validator;
 import android.util.Pair;
 import android.view.autofill.AutofillId;
@@ -82,7 +82,8 @@ final class CannedFillResponse {
     private final int mFillResponseFlags;
     private final AutofillId mSaveTriggerId;
     private final long mDisableDuration;
-    private final FieldsDetection mFieldsDetection;
+    private final AutofillId[] mFieldClassificationIds;
+    private final boolean mFieldClassificationIdsOverflow;
 
     private CannedFillResponse(Builder builder) {
         mResponseType = builder.mResponseType;
@@ -106,7 +107,8 @@ final class CannedFillResponse {
         mFillResponseFlags = builder.mFillResponseFlags;
         mSaveTriggerId = builder.mSaveTriggerId;
         mDisableDuration = builder.mDisableDuration;
-        mFieldsDetection = builder.mFieldsDetection;
+        mFieldClassificationIds = builder.mFieldClassificationIds;
+        mFieldClassificationIdsOverflow = builder.mFieldClassificationIdsOverflow;
     }
 
     /**
@@ -136,6 +138,16 @@ final class CannedFillResponse {
      * structure.
      */
     FillResponse asFillResponse(Function<String, ViewNode> nodeResolver) {
+        return asFillResponse(null, nodeResolver);
+
+    }
+
+    /**
+     * Creates a new response, replacing the dataset field ids by the real ids from the assist
+     * structure.
+     */
+    FillResponse asFillResponse(InstrumentedAutoFillService service,
+            Function<String, ViewNode> nodeResolver) {
         final FillResponse.Builder builder = new FillResponse.Builder()
                 .setFlags(mFillResponseFlags);
         if (mDatasets != null) {
@@ -188,8 +200,15 @@ final class CannedFillResponse {
         if (mDisableDuration > 0) {
             builder.disableAutofill(mDisableDuration);
         }
-        if (mFieldsDetection != null) {
-            builder.setFieldsDetection(mFieldsDetection);
+        if (mFieldClassificationIdsOverflow) {
+            final int length = UserData.getMaxFieldClassificationIdsSize() + 1;
+            final AutofillId[] fieldIds = new AutofillId[length];
+            for (int i = 0; i < length; i++) {
+                fieldIds[i] = new AutofillId(i);
+            }
+            builder.setFieldClassificationIds(fieldIds);
+        } else if (mFieldClassificationIds != null) {
+            builder.setFieldClassificationIds(mFieldClassificationIds);
         }
         if (mExtras != null) {
             builder.setClientState(mExtras);
@@ -215,7 +234,8 @@ final class CannedFillResponse {
                 + ", sanitizers =" + mSanitizers
                 + ", saveTriggerId=" + mSaveTriggerId
                 + ", disableDuration=" + mDisableDuration
-                + ", fieldsDetection=" + mFieldsDetection
+                + ", fieldClassificationIds=" + Arrays.toString(mFieldClassificationIds)
+                + ", fieldClassificationIdsOverflow=" + mFieldClassificationIdsOverflow
                 + "]";
     }
 
@@ -247,7 +267,8 @@ final class CannedFillResponse {
         private int mFillResponseFlags;
         private AutofillId mSaveTriggerId;
         private long mDisableDuration;
-        private FieldsDetection mFieldsDetection;
+        private AutofillId[] mFieldClassificationIds;
+        private boolean mFieldClassificationIdsOverflow;
 
         public Builder(ResponseType type) {
             mResponseType = type;
@@ -394,9 +415,15 @@ final class CannedFillResponse {
         }
 
         // TODO(b/67867469): document
-        public Builder setFieldDetection(FieldsDetection fieldsDetection) {
-            assertWithMessage("already set").that(mFieldsDetection).isNull();
-            mFieldsDetection = fieldsDetection;
+        public Builder setFieldClassificationIds(AutofillId... ids) {
+            assertWithMessage("already set").that(mFieldClassificationIds).isNull();
+            mFieldClassificationIds = ids;
+            return this;
+        }
+
+        // TODO(b/67867469): document
+        public Builder setFieldClassificationIdsOverflow() {
+            mFieldClassificationIdsOverflow = true;
             return this;
         }
     }
