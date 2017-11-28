@@ -21,9 +21,12 @@ import static com.android.cts.deviceowner.BaseDeviceOwnerTest.getWho;
 import android.app.Activity;
 import android.app.admin.DevicePolicyManager;
 import android.net.Uri;
+import android.security.AttestedKeyPair;
 import android.security.KeyChain;
 import android.security.KeyChainAliasCallback;
 import android.security.KeyChainException;
+import android.security.keystore.KeyGenParameterSpec;
+import android.security.keystore.KeyProperties;
 import android.test.ActivityInstrumentationTestCase2;
 
 import java.io.ByteArrayInputStream;
@@ -38,8 +41,10 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.cert.Certificate;
 import java.security.KeyFactory;
+import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
+import java.security.Signature;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Arrays;
@@ -230,6 +235,58 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
             assertGranted(alias, true);
         } finally {
             // Delete regardless of whether the test succeeded.
+            assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
+        }
+    }
+
+    public void verifySignatureOverData(String algoIdentifier, KeyPair keyPair) throws Exception {
+        byte[] data = new String("hello").getBytes();
+        Signature sign = Signature.getInstance(algoIdentifier);
+        sign.initSign(keyPair.getPrivate());
+        sign.update(data);
+        byte[] signature = sign.sign();
+
+        Signature verify = Signature.getInstance(algoIdentifier);
+        verify.initVerify(keyPair.getPublic());
+        verify.update(data);
+        assertTrue(verify.verify(signature));
+    }
+
+    public void testCanGenerateRSAKeyPair() throws Exception {
+        final String alias = "com.android.test.generated-rsa-1";
+        try {
+            KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(
+                    alias,
+                    KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_VERIFY)
+                    .setKeySize(2048)
+                    .setDigests(KeyProperties.DIGEST_SHA256)
+                    .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PSS,
+                        KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)
+                    .build();
+
+            AttestedKeyPair generated = mDevicePolicyManager.generateKeyPair(
+                    getWho(), "RSA", spec);
+            assertNotNull(generated);
+            verifySignatureOverData("SHA256withRSA", generated.getKeyPair());
+        } finally {
+            assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
+        }
+    }
+
+    public void testCanGenerateECKeyPair() throws Exception {
+        final String alias = "com.android.test.generated-ec-1";
+        try {
+            KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(
+                    alias,
+                    KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_VERIFY)
+                    .setDigests(KeyProperties.DIGEST_SHA256)
+                    .build();
+
+            AttestedKeyPair generated = mDevicePolicyManager.generateKeyPair(
+                    getWho(), "EC", spec);
+            assertNotNull(generated);
+            verifySignatureOverData("SHA256withECDSA", generated.getKeyPair());
+        } finally {
             assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
         }
     }
