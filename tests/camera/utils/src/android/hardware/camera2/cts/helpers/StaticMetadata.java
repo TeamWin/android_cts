@@ -2258,6 +2258,13 @@ public class StaticMetadata {
     }
 
     /**
+     * Check if AF scene change key is supported.
+     */
+    public boolean isAfSceneChangeSupported() {
+        return areKeysAvailable(CaptureResult.CONTROL_AF_SCENE_CHANGE);
+    }
+
+    /**
      * Get the value in index for a fixed-size array from a given key.
      *
      * <p>If the camera device is incorrectly reporting values, log a warning and return
