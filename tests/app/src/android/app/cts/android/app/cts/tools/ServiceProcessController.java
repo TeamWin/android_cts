@@ -123,6 +123,11 @@ public final class ServiceProcessController {
         String result = SystemUtil.runShellCommand(mInstrumentation, cmd);
     }
 
+    public void removeFromTempWhitelist() throws IOException {
+        String cmd = "cmd deviceidle tempwhitelist -r " + mServicePackage;
+        SystemUtil.runShellCommand(mInstrumentation, cmd);
+    }
+
     public void cleanup() throws IOException {
         removeFromWhitelist();
         allowBackgroundOp();
