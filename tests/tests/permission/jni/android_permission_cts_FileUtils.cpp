@@ -173,7 +173,7 @@ jboolean android_permission_cts_FileUtils_CapabilitySet_fileHasOnly(JNIEnv* env,
     struct vfs_cap_data expectedCapData;
     memset(&expectedCapData, 0, sizeof(expectedCapData));
 
-    expectedCapData.magic_etc = VFS_CAP_REVISION | VFS_CAP_FLAGS_EFFECTIVE;
+    expectedCapData.magic_etc = VFS_CAP_REVISION_2 | VFS_CAP_FLAGS_EFFECTIVE;
     if (!fillPermittedCaps(&expectedCapData, env, capIds))
     {
         // exception thrown
