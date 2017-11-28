@@ -13,18 +13,20 @@
 # limitations under the License.
 
 import copy
+import math
 import os
 import os.path
-import tempfile
+import re
 import subprocess
-import time
 import sys
+import tempfile
+import time
 
 import its.caps
 import its.cv2image
 import its.device
-import its.image
 from its.device import ItsSession
+import its.image
 
 CHART_DELAY = 1  # seconds
 CHART_DISTANCE = 30.0  # cm
@@ -39,6 +41,22 @@ SCENE3_FILE = os.path.join(os.environ['CAMERA_ITS_TOP'], 'pymodules', 'its',
 SKIP_RET_CODE = 101  # note this must be same as tests/scene*/test_*
 VGA_HEIGHT = 480
 VGA_WIDTH = 640
+
+
+def calc_camera_fov():
+    """Determine the camera field of view from internal params."""
+    with ItsSession() as cam:
+        props = cam.get_camera_properties()
+    try:
+        focal_l = props['android.lens.info.availableFocalLengths'][0]
+        sensor_size = props['android.sensor.info.physicalSize']
+        diag = math.sqrt(sensor_size['height'] ** 2 +
+                         sensor_size['width'] ** 2)
+        fov = str(round(2 * math.degrees(math.atan(diag / (2 * focal_l))), 2))
+    except ValueError:
+        fov = str(0)
+    print 'Calculated FoV: %s' % fov
+    return fov
 
 
 def evaluate_socket_failure(err_file_path):
@@ -90,6 +108,7 @@ def main():
         tmp_dir: location of temp directory for output files
         skip_scene_validation: force skip scene validation. Used when test scene
                  is setup up front and don't require tester validation.
+        dist:    [Experimental] chart distance in cm.
     """
 
     # Not yet mandated tests
@@ -151,6 +170,10 @@ def main():
     rot_rig_id = None
     tmp_dir = None
     skip_scene_validation = False
+    chart_distance = CHART_DISTANCE
+    chart_height = CHART_HEIGHT
+    approx_equal = lambda a, b, t: abs(a - b) < t
+
     for s in sys.argv[1:]:
         if s[:7] == "camera=" and len(s) > 7:
             camera_ids = s[7:].split(',')
@@ -167,6 +190,8 @@ def main():
             tmp_dir = s[8:]
         elif s == 'skip_scene_validation':
             skip_scene_validation = True
+        elif s[:5] == 'dist=' and len(s) > 5:
+            chart_distance = float(re.sub('cm', '', s[5:]))
 
     auto_scene_switch = chart_host_id is not None
     merge_result_switch = result_device_id is not None
@@ -195,7 +220,7 @@ def main():
                     break
 
         if not valid_scenes:
-            print "Unknown scene specifiied:", s
+            print 'Unknown scene specified:', s
             assert False
         scenes = temp_scenes
 
@@ -257,6 +282,7 @@ def main():
             assert wake_code == 0
 
     for camera_id in camera_ids:
+        camera_fov = calc_camera_fov()
         # Loop capturing images until user confirm test scene is correct
         camera_id_arg = "camera=" + camera_id
         print "Preparing to run ITS on camera", camera_id
@@ -292,9 +318,11 @@ def main():
                     if (not merge_result_switch or
                             (merge_result_switch and camera_ids[0] == '0')):
                         scene_arg = 'scene=' + scene
+                        chart_dist_arg = 'dist= ' + str(chart_distance)
+                        fov_arg = 'fov=' + camera_fov
                         cmd = ['python',
                                os.path.join(os.getcwd(), 'tools/load_scene.py'),
-                               scene_arg, screen_id_arg]
+                               scene_arg, chart_dist_arg, fov_arg, screen_id_arg]
                     else:
                         time.sleep(CHART_DELAY)
                 else:
@@ -314,8 +342,11 @@ def main():
             # Extract chart from scene for scene3 once up front
             chart_loc_arg = ''
             if scene == 'scene3':
-                chart = its.cv2image.Chart(SCENE3_FILE, CHART_HEIGHT,
-                                           CHART_DISTANCE, CHART_SCALE_START,
+                if float(camera_fov) < 90 and approx_equal(chart_distance, 20,
+                                                           1E-6):
+                    chart_height *= 0.67
+                chart = its.cv2image.Chart(SCENE3_FILE, chart_height,
+                                           chart_distance, CHART_SCALE_START,
                                            CHART_SCALE_STOP, CHART_SCALE_STEP)
                 chart_loc_arg = 'chart_loc=%.2f,%.2f,%.2f,%.2f,%.3f' % (
                         chart.xnorm, chart.ynorm, chart.wnorm, chart.hnorm,
