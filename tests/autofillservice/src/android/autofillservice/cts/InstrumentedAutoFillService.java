@@ -30,6 +30,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.app.assist.AssistStructure;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.content.ComponentName;
+import android.content.IntentSender;
 import android.os.Bundle;
 import android.os.CancellationSignal;
 import android.service.autofill.AutofillService;
@@ -250,6 +251,7 @@ public class InstrumentedAutoFillService extends AutofillService {
         private final BlockingQueue<SaveRequest> mSaveRequests = new LinkedBlockingQueue<>();
 
         private List<Throwable> mExceptions;
+        private IntentSender mOnSaveIntentSender;
 
         private Replier() {
         }
@@ -295,6 +297,14 @@ public class InstrumentedAutoFillService extends AutofillService {
             }
             mResponses.add(response);
             return this;
+        }
+
+        /**
+         * Sets the {@link IntentSender} that is passed to
+         * {@link SaveCallback#onSuccess(IntentSender)}.
+         */
+        void setOnSave(IntentSender intentSender) {
+            mOnSaveIntentSender = intentSender;
         }
 
         /**
@@ -360,6 +370,7 @@ public class InstrumentedAutoFillService extends AutofillService {
             mFillRequests.clear();
             mSaveRequests.clear();
             mExceptions = null;
+            mOnSaveIntentSender = null;
         }
 
         private void onFillRequest(List<FillContext> contexts, Bundle data,
@@ -425,9 +436,13 @@ public class InstrumentedAutoFillService extends AutofillService {
 
         private void onSaveRequest(List<FillContext> contexts, Bundle data, SaveCallback callback,
                 List<String> datasetIds) {
-            Log.d(TAG, "onSaveRequest()");
+            Log.d(TAG, "onSaveRequest(): sender=" + mOnSaveIntentSender);
             mSaveRequests.offer(new SaveRequest(contexts, data, callback, datasetIds));
-            callback.onSuccess();
+            if (mOnSaveIntentSender != null) {
+                callback.onSuccess(mOnSaveIntentSender);
+            } else {
+                callback.onSuccess();
+            }
         }
     }
 }

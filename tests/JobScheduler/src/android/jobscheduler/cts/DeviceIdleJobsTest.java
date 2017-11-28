@@ -112,6 +112,7 @@ public class DeviceIdleJobsTest {
         mContext.registerReceiver(mReceiver, intentFilter);
         assertFalse("Test package already in temp whitelist", isTestAppTempWhitelisted());
         makeTestPackageIdle();
+        makeTestPackageStandbyActive();
     }
 
 
@@ -220,6 +221,10 @@ public class DeviceIdleJobsTest {
 
     private void makeTestPackageIdle() throws Exception {
         mUiDevice.executeShellCommand("am make-uid-idle --user current " + TEST_APP_PACKAGE);
+    }
+
+    private void makeTestPackageStandbyActive() throws Exception {
+        mUiDevice.executeShellCommand("am set-standby-bucket " + TEST_APP_PACKAGE + " 0");
     }
 
     private boolean waitUntilTestAppNotInTempWhitelist() throws Exception {
