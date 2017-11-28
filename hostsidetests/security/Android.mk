@@ -54,6 +54,7 @@ LOCAL_JAVA_RESOURCE_FILES := \
     $(HOST_OUT_EXECUTABLES)/checkseapp \
     $(HOST_OUT_EXECUTABLES)/checkfc \
     $(HOST_OUT_EXECUTABLES)/sepolicy_tests \
+    $(HOST_OUT_EXECUTABLES)/treble_sepolicy_tests \
     $(HOST_OUT)/lib64/libsepolwrap.$(SHAREDLIB_EXT) \
     $(HOST_OUT)/lib64/libc++.$(SHAREDLIB_EXT) \
     $(selinux_plat_seapp_contexts) \
