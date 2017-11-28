@@ -676,9 +676,9 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         libcpp.deleteOnExit();
     }
 
-    private void assertSepolicyTests(String Test) throws Exception {
+    private void assertSepolicyTests(String test, String testExecutable) throws Exception {
         setupLibraries();
-        sepolicyTests = copyResourceToTempFile("/sepolicy_tests");
+        sepolicyTests = copyResourceToTempFile(testExecutable);
         sepolicyTests.setExecutable(true);
         ProcessBuilder pb = new ProcessBuilder(
                 sepolicyTests.getAbsolutePath(),
@@ -686,7 +686,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
                 "-f", devicePlatFcFile.getAbsolutePath(),
                 "-f", deviceNonplatFcFile.getAbsolutePath(),
                 "-p", devicePolicyFile.getAbsolutePath(),
-                "--test", Test);
+                "--test", test);
         Map<String, String> env = pb.environment();
         if (isMac()) {
             env.put("DYLD_LIBRARY_PATH", System.getProperty("java.io.tmpdir"));
@@ -713,7 +713,18 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      * @throws Exception
      */
     public void testDataTypeViolators() throws Exception {
-        assertSepolicyTests("TestDataTypeViolations");
+        assertSepolicyTests("TestDataTypeViolations", "/sepolicy_tests");
+    }
+
+    /**
+     * Tests that all domains with entrypoints on /system have the coredomain
+     * attribute, and that all domains with entrypoints on /vendor do not have the
+     * coredomain attribute.
+     *
+     * @throws Exception
+     */
+    public void testCoredomainViolators() throws Exception {
+        assertSepolicyTests("CoredomainViolations", "/treble_sepolicy_tests");
     }
 
    /**
