@@ -36,7 +36,7 @@ public class KeyValueQuotaTest extends BaseBackupCtsTest {
         if (!isBackupSupported()) {
             return;
         }
-        String separator = clearLogcat();
+        String separator = markLogcat();
         // Launch test app and create file exceeding limit for local transport
         createTestFileOfSize(BACKUP_APP_NAME, LOCAL_TRANSPORT_EXCEEDING_FILE_SIZE);
 
@@ -50,7 +50,7 @@ public class KeyValueQuotaTest extends BaseBackupCtsTest {
         if (!isBackupSupported()) {
             return;
         }
-        String separator = clearLogcat();
+        String separator = markLogcat();
         exec("bmgr backupnow " + BACKUP_APP_NAME);
         waitForLogcat(TIMEOUT_SECONDS, separator,
             "quota is " + LOCAL_TRANSPORT_BACKUP_QUOTA);

@@ -78,9 +78,9 @@ public class BaseBackupCtsTest extends InstrumentationTestCase {
         return output.contains("* " + LOCAL_TRANSPORT);
     }
 
-    /** See {@link LogcatInspector#clearAndMark(String)}. */
-    protected String clearLogcat() throws Exception {
-        return mLogcatInspector.clearAndMark(APP_LOG_TAG);
+    /** See {@link LogcatInspector#mark(String)}. */
+    protected String markLogcat() throws Exception {
+        return mLogcatInspector.mark(APP_LOG_TAG);
     }
 
     /** See {@link LogcatInspector#assertLogcatContainsInOrder(String, int, String...)}. */
