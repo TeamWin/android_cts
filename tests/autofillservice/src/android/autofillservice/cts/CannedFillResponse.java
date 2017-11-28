@@ -191,9 +191,10 @@ final class CannedFillResponse {
         if (mFieldsDetection != null) {
             builder.setFieldsDetection(mFieldsDetection);
         }
-        return builder
-                .setClientState(mExtras)
-                .build();
+        if (mExtras != null) {
+            builder.setClientState(mExtras);
+        }
+        return builder.build();
     }
 
     @Override
