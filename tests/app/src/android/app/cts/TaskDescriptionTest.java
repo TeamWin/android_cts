@@ -27,6 +27,7 @@ import android.app.ActivityManager.RecentTaskInfo;
 import android.app.ActivityManager.TaskDescription;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.platform.test.annotations.Presubmit;
 import java.util.List;
 import org.junit.After;
 import org.junit.Before;
@@ -45,6 +46,7 @@ import android.support.test.runner.AndroidJUnit4;
  * Run: cts/tests/framework/base/activitymanager/util/run-test CtsAppTestCases android.app.cts.TaskDescriptionTest
  */
 @RunWith(AndroidJUnit4.class)
+@Presubmit
 public class TaskDescriptionTest {
     private static final String TEST_LABEL = "test-label";
     private static final int TEST_NO_DATA = 0;
