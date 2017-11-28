@@ -123,7 +123,7 @@ public class MagnificationGestureHandlerTest {
             view.setOnTouchListener(mTouchListener);
             int[] xy = new int[2];
             view.getLocationOnScreen(xy);
-            mTapLocation = new PointF(xy[0] + 251, xy[1] + 249);
+            mTapLocation = new PointF(xy[0] + view.getWidth() / 2, xy[1] + view.getHeight() / 2);
             mTapLocation2 = add(mTapLocation, 31, 29);
         });
     }
