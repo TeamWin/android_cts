@@ -553,6 +553,21 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
     }
 
     /**
+     * Test that images captured after discarding free buffers are valid.
+     */
+    public void testDiscardFreeBuffers() throws Exception {
+        for (String id : mCameraIds) {
+            try {
+                Log.v(TAG, "Testing jpeg capture for Camera " + id);
+                openDevice(id);
+                discardFreeBuffersTestByCamera();
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
+    /**
      * Convert a rectangular patch in a YUV image to an ARGB color array.
      *
      * @param w width of the patch.
@@ -760,6 +775,38 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         img.close();
 
         imageInvalidAccessTestAfterClose(img, firstPlane, buffer);
+    }
+
+    /**
+     * Test that images captured after discarding free buffers are valid.
+     */
+    private void discardFreeBuffersTestByCamera() throws Exception {
+        final int FORMAT = mStaticInfo.isColorOutputSupported() ?
+            ImageFormat.YUV_420_888 : ImageFormat.DEPTH16;
+
+        final Size SIZE = mStaticInfo.getAvailableSizesForFormatChecked(FORMAT,
+                StaticMetadata.StreamDirection.Output)[0];
+        Image img = null;
+        // Create ImageReader.
+        mListener = new SimpleImageListener();
+        createDefaultImageReader(SIZE, FORMAT, MAX_NUM_IMAGES, mListener);
+
+        // Start capture.
+        final boolean REPEATING = true;
+        CaptureRequest request = prepareCaptureRequest();
+        SimpleCaptureCallback listener = new SimpleCaptureCallback();
+        startCapture(request, REPEATING, listener, mHandler);
+
+        // Validate images and capture results.
+        validateImage(SIZE, FORMAT, NUM_FRAME_VERIFIED, REPEATING);
+        validateCaptureResult(FORMAT, SIZE, listener, NUM_FRAME_VERIFIED);
+
+        // Discard free buffers.
+        mReader.discardFreeBuffers();
+
+        // Validate images and capture resulst again.
+        validateImage(SIZE, FORMAT, NUM_FRAME_VERIFIED, REPEATING);
+        validateCaptureResult(FORMAT, SIZE, listener, NUM_FRAME_VERIFIED);
     }
 
     private void bufferFormatTestByCamera(int format, boolean repeating) throws Exception {
