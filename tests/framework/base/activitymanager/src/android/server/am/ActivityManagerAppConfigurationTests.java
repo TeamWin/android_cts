@@ -464,6 +464,11 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      */
     private void requestOrientationInSplitScreen(int orientation, String activity)
             throws Exception {
+        if (!supportsSplitScreenMultiWindow()) {
+            log("Skipping test: no multi-window support");
+            return;
+        }
+
         // Set initial orientation.
         setDeviceRotation(orientation);
 
