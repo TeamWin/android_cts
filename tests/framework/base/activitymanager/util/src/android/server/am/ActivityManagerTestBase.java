@@ -113,6 +113,9 @@ public abstract class ActivityManagerTestBase {
 
     private static final String DEFAULT_COMPONENT_NAME = "android.server.am";
 
+    private static final int UI_MODE_TYPE_MASK = 0x0f;
+    private static final int UI_MODE_TYPE_VR_HEADSET = 0x07;
+
     // TODO: Remove this when all activity name are specified by {@link ComponentName}.
     static String componentName = DEFAULT_COMPONENT_NAME;
 
@@ -566,6 +569,34 @@ public abstract class ActivityManagerTestBase {
     protected boolean isTablet() {
         // Larger than approx 7" tablets
         return mContext.getResources().getConfiguration().smallestScreenWidthDp >= 600;
+    }
+
+    // TODO: Switch to using a feature flag, when available.
+    protected boolean isUiModeLockedToVrHeadset() {
+        final String output = runCommandAndPrintOutput("dumpsys uimode");
+
+        Integer curUiMode = null;
+        Boolean uiModeLocked = null;
+        for (String line : output.split("\\n")) {
+            line = line.trim();
+            Matcher matcher = sCurrentUiModePattern.matcher(line);
+            if (matcher.find()) {
+                curUiMode = Integer.parseInt(matcher.group(1), 16);
+            }
+            matcher = sUiModeLockedPattern.matcher(line);
+            if (matcher.find()) {
+                uiModeLocked = matcher.group(1).equals("true");
+            }
+        }
+
+        boolean uiModeLockedToVrHeadset = (curUiMode != null) && (uiModeLocked != null)
+                && ((curUiMode & UI_MODE_TYPE_MASK) == UI_MODE_TYPE_VR_HEADSET) && uiModeLocked;
+
+        if (uiModeLockedToVrHeadset) {
+            log("UI mode is locked to VR headset");
+        }
+
+        return uiModeLockedToVrHeadset;
     }
 
     protected boolean supportsSplitScreenMultiWindow() {
@@ -1101,6 +1132,9 @@ public abstract class ActivityManagerTestBase {
             + " orientation=(\\d+)");
     private static final Pattern sDisplayStatePattern =
             Pattern.compile("Display Power: state=(.+)");
+    private static final Pattern sCurrentUiModePattern = Pattern.compile("mCurUiMode=0x(\\d+)");
+    private static final Pattern sUiModeLockedPattern =
+            Pattern.compile("mUiModeLocked=(true|false)");
 
     class ReportedSizes {
         int widthDp;
