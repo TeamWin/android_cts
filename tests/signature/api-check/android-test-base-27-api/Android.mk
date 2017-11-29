@@ -16,9 +16,9 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_PACKAGE_NAME := CtsLegacyTest26ApiSignatureTestCases
+LOCAL_PACKAGE_NAME := CtsAndroidTestBase27ApiSignatureTestCases
 
 LOCAL_SIGNATURE_API_FILES := \
-    legacy-test-current.api \
+    android-test-base-current.api \
 
 include $(LOCAL_PATH)/../build_signature_apk.mk

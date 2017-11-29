@@ -104,38 +104,40 @@ public class DisableAutofillTest extends AutoFillServiceTestCase {
         final SimpleSaveActivity activity = startSimpleSaveActivity();
         final MyAutofillCallback callback = activity.registerCallback();
 
-        // Trigger autofill
-        activity.syncRunOnUiThread(() -> activity.mInput.requestFocus());
+        try {
+            // Trigger autofill
+            activity.syncRunOnUiThread(() -> activity.mInput.requestFocus());
 
-        if (action == PostLaunchAction.ASSERT_DISABLING) {
-            callback.assertUiUnavailableEvent(activity.mInput);
-            sReplier.getNextFillRequest();
+            if (action == PostLaunchAction.ASSERT_DISABLING) {
+                callback.assertUiUnavailableEvent(activity.mInput);
+                sReplier.getNextFillRequest();
 
-            // Make sure other fields are not triggered.
-            activity.syncRunOnUiThread(() -> activity.mPassword.requestFocus());
-            callback.assertNotCalled();
-        } else if (action == PostLaunchAction.ASSERT_DISABLED) {
-            // Make sure forced requests are ignored as well.
-            activity.getAutofillManager().requestAutofill(activity.mInput);
-            callback.assertNotCalled();
-        } else if (action == PostLaunchAction.ASSERT_ENABLED_AND_AUTOFILL) {
-            callback.assertUiShownEvent(activity.mInput);
-            sReplier.getNextFillRequest();
-            final SimpleSaveActivity.FillExpectation autofillExpectation =
-                    activity.expectAutoFill("id", "pass");
-            sUiBot.selectDataset("YO");
-            autofillExpectation.assertAutoFilled();
+                // Make sure other fields are not triggered.
+                activity.syncRunOnUiThread(() -> activity.mPassword.requestFocus());
+                callback.assertNotCalled();
+            } else if (action == PostLaunchAction.ASSERT_DISABLED) {
+                // Make sure forced requests are ignored as well.
+                activity.getAutofillManager().requestAutofill(activity.mInput);
+                callback.assertNotCalled();
+            } else if (action == PostLaunchAction.ASSERT_ENABLED_AND_AUTOFILL) {
+                callback.assertUiShownEvent(activity.mInput);
+                sReplier.getNextFillRequest();
+                final SimpleSaveActivity.FillExpectation autofillExpectation =
+                        activity.expectAutoFill("id", "pass");
+                sUiBot.selectDataset("YO");
+                autofillExpectation.assertAutoFilled();
+            }
+
+            // Asserts isEnabled() status.
+            if (action == PostLaunchAction.ASSERT_ENABLED_AND_AUTOFILL) {
+                assertThat(activity.getAutofillManager().isEnabled()).isTrue();
+            } else {
+                assertThat(activity.getAutofillManager().isEnabled()).isFalse();
+            }
+        } finally {
+            activity.unregisterCallback();
+            activity.finish();
         }
-
-        // Asserts isEnabled() status.
-        if (action == PostLaunchAction.ASSERT_ENABLED_AND_AUTOFILL) {
-            assertThat(activity.getAutofillManager().isEnabled()).isTrue();
-        } else {
-            assertThat(activity.getAutofillManager().isEnabled()).isFalse();
-        }
-
-        activity.unregisterCallback();
-        activity.finish();
         sReplier.assertNumberUnhandledFillRequests(0);
     }
 
@@ -155,33 +157,35 @@ public class DisableAutofillTest extends AutoFillServiceTestCase {
         final PreSimpleSaveActivity activity = startPreSimpleSaveActivity();
         final MyAutofillCallback callback = activity.registerCallback();
 
-        // Trigger autofill
-        activity.syncRunOnUiThread(() -> activity.mPreInput.requestFocus());
+        try {
+            // Trigger autofill
+            activity.syncRunOnUiThread(() -> activity.mPreInput.requestFocus());
 
-        if (action == PostLaunchAction.ASSERT_DISABLING) {
-            callback.assertUiUnavailableEvent(activity.mPreInput);
-            sReplier.getNextFillRequest();
-        } else if (action == PostLaunchAction.ASSERT_DISABLED) {
-            activity.getAutofillManager().requestAutofill(activity.mPreInput);
-            callback.assertNotCalled();
-        } else if (action == PostLaunchAction.ASSERT_ENABLED_AND_AUTOFILL) {
-            callback.assertUiShownEvent(activity.mPreInput);
-            sReplier.getNextFillRequest();
-            final PreSimpleSaveActivity.FillExpectation autofillExpectation =
-                    activity.expectAutoFill("yo");
-            sUiBot.selectDataset("YO");
-            autofillExpectation.assertAutoFilled();
+            if (action == PostLaunchAction.ASSERT_DISABLING) {
+                callback.assertUiUnavailableEvent(activity.mPreInput);
+                sReplier.getNextFillRequest();
+            } else if (action == PostLaunchAction.ASSERT_DISABLED) {
+                activity.getAutofillManager().requestAutofill(activity.mPreInput);
+                callback.assertNotCalled();
+            } else if (action == PostLaunchAction.ASSERT_ENABLED_AND_AUTOFILL) {
+                callback.assertUiShownEvent(activity.mPreInput);
+                sReplier.getNextFillRequest();
+                final PreSimpleSaveActivity.FillExpectation autofillExpectation =
+                        activity.expectAutoFill("yo");
+                sUiBot.selectDataset("YO");
+                autofillExpectation.assertAutoFilled();
+            }
+
+            // Asserts isEnabled() status.
+            if (action == PostLaunchAction.ASSERT_ENABLED_AND_AUTOFILL) {
+                assertThat(activity.getAutofillManager().isEnabled()).isTrue();
+            } else {
+                assertThat(activity.getAutofillManager().isEnabled()).isFalse();
+            }
+        } finally {
+            activity.unregisterCallback();
+            activity.finish();
         }
-
-        // Asserts isEnabled() status.
-        if (action == PostLaunchAction.ASSERT_ENABLED_AND_AUTOFILL) {
-            assertThat(activity.getAutofillManager().isEnabled()).isTrue();
-        } else {
-            assertThat(activity.getAutofillManager().isEnabled()).isFalse();
-        }
-
-        activity.unregisterCallback();
-        activity.finish();
         sReplier.assertNumberUnhandledFillRequests(0);
     }
 

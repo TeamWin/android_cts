@@ -204,7 +204,9 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     private void performFinishActivityWithMoveTaskToBack(String finishPoint) throws Exception {
         // Make sure home activity is visible.
         launchHomeActivity();
-        mAmWmState.assertHomeActivityVisible(true /* visible */);
+        if (!noHomeScreen()) {
+            mAmWmState.assertHomeActivityVisible(true /* visible */);
+        }
 
         // Launch an activity that calls "moveTaskToBack" to finish itself.
         launchActivity(MOVE_TASK_TO_BACK_ACTIVITY_NAME, "finish_point", finishPoint);
@@ -224,8 +226,10 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         // BroadcastActivity finishes, so homeActivity is not visible afterwards
 
         // Home must be visible.
-        mAmWmState.waitForHomeActivityVisible();
-        mAmWmState.assertHomeActivityVisible(true /* visible */);
+        if (!noHomeScreen()) {
+            mAmWmState.waitForHomeActivityVisible();
+            mAmWmState.assertHomeActivityVisible(true /* visible */);
+        }
     }
 
     /**
@@ -236,7 +240,9 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     public void testReorderToFrontBackstack() throws Exception {
         // Start with home on top
         launchHomeActivity();
-        mAmWmState.assertHomeActivityVisible(true /* visible */);
+        if (!noHomeScreen()) {
+            mAmWmState.assertHomeActivityVisible(true /* visible */);
+        }
 
         // Launch the launching activity to the foreground
         launchActivity(LAUNCHING_ACTIVITY);
@@ -269,7 +275,9 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     public void testReorderToFrontChangingStack() throws Exception {
         // Start with home on top
         launchHomeActivity();
-        mAmWmState.assertHomeActivityVisible(true /* visible */);
+        if (!noHomeScreen()) {
+            mAmWmState.assertHomeActivityVisible(true /* visible */);
+        }
 
         // Launch the launching activity to the foreground
         launchActivity(LAUNCHING_ACTIVITY);
@@ -280,7 +288,9 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
 
         // Return home
         launchHomeActivity();
-        mAmWmState.assertHomeActivityVisible(true /* visible */);
+        if (!noHomeScreen()) {
+            mAmWmState.assertHomeActivityVisible(true /* visible */);
+        }
         // Launch the launching activity from the alternate launching activity with reorder to
         // front.
 
@@ -307,6 +317,10 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
      */
     @Test
     public void testNoHistoryActivityFinishedResumedActivityNotIdle() throws Exception {
+        if (noHomeScreen()) {
+            return;
+        }
+
         // Start with home on top
         launchHomeActivity();
 

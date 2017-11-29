@@ -66,7 +66,6 @@ import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.platform.test.annotations.Presubmit;
 import android.service.autofill.SaveInfo;
 import android.support.test.uiautomator.UiObject2;
 import android.util.Log;
@@ -541,7 +540,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
-    @Presubmit
     public void testAutoFillOneDatasetAndSave() throws Exception {
         // Set service.
         enableService();
