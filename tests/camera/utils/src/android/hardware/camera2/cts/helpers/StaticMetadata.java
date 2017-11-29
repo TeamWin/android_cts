@@ -1546,6 +1546,36 @@ public class StaticMetadata {
         return edgeModes;
     }
 
+      public int[] getAvailableShadingModesChecked() {
+        Key<int[]> key = CameraCharacteristics.SHADING_AVAILABLE_MODES;
+        int[] shadingModes = getValueFromKeyNonNull(key);
+
+        if (shadingModes == null) {
+            return new int[0];
+        }
+
+        List<Integer> modeList = Arrays.asList(CameraTestUtils.toObject(shadingModes));
+        // Full device should always include OFF and FAST
+        if (isHardwareLevelAtLeastFull()) {
+            checkTrueForKey(key, "Full device must contain OFF and FAST shading modes",
+                    modeList.contains(CameraMetadata.SHADING_MODE_OFF) &&
+                    modeList.contains(CameraMetadata.SHADING_MODE_FAST));
+        }
+
+        if (isHardwareLevelAtLeastLimited()) {
+            // FAST and HIGH_QUALITY mode must be both present or both not present
+            List<Integer> coupledModes = Arrays.asList(new Integer[] {
+                    CameraMetadata.SHADING_MODE_FAST,
+                    CameraMetadata.SHADING_MODE_HIGH_QUALITY
+            });
+            checkTrueForKey(
+                    key, " FAST and HIGH_QUALITY mode must both present or both not present",
+                    containsAllOrNone(modeList, coupledModes));
+        }
+
+        return shadingModes;
+    }
+
     public int[] getAvailableNoiseReductionModesChecked() {
         Key<int[]> key =
                 CameraCharacteristics.NOISE_REDUCTION_AVAILABLE_NOISE_REDUCTION_MODES;
@@ -1860,7 +1890,7 @@ public class StaticMetadata {
 
         checkArrayValuesInRange(key, availableCaps,
                 CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE,
-                CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_CONSTRAINED_HIGH_SPEED_VIDEO);
+                CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MOTION_TRACKING);
         capList = Arrays.asList(CameraTestUtils.toObject(availableCaps));
         return capList;
     }

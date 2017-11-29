@@ -80,7 +80,10 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
     private static final int REPEATING_CAPTURE_EXPECTED_RESULT_COUNT = 5;
     private static final int MAX_NUM_IMAGES = 5;
     private static final int MIN_FPS_REQUIRED_FOR_STREAMING = 20;
+    private static final int FPS_REQUIRED_FOR_MOTION_TRACKING_BASE = 30;
+    private static final int FPS_REQUIRED_FOR_MOTION_TRACKING_HIGH = 60;
     private static final int DEFAULT_POST_RAW_SENSITIVITY_BOOST = 100;
+    private static final float MAX_MOTION_TRACKING_FOCUS_DISTANCE = 0.5f;
 
     private CameraCaptureSession mSession;
 
@@ -94,12 +97,14 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
             CameraDevice.TEMPLATE_PREVIEW,
             CameraDevice.TEMPLATE_RECORD,
             CameraDevice.TEMPLATE_STILL_CAPTURE,
-            CameraDevice.TEMPLATE_VIDEO_SNAPSHOT
+            CameraDevice.TEMPLATE_VIDEO_SNAPSHOT,
+            CameraDevice.TEMPLATE_MOTION_TRACKING_PREVIEW,
+            CameraDevice.TEMPLATE_MOTION_TRACKING_BEST
     };
 
     private static int[] sInvalidTemplates = new int[] {
             CameraDevice.TEMPLATE_PREVIEW - 1,
-            CameraDevice.TEMPLATE_MANUAL + 1,
+            CameraDevice.TEMPLATE_MOTION_TRACKING_BEST + 1,
     };
 
     // Request templates that are unsupported by LEGACY mode.
@@ -108,6 +113,8 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
         sLegacySkipTemplates.add(CameraDevice.TEMPLATE_VIDEO_SNAPSHOT);
         sLegacySkipTemplates.add(CameraDevice.TEMPLATE_ZERO_SHUTTER_LAG);
         sLegacySkipTemplates.add(CameraDevice.TEMPLATE_MANUAL);
+        sLegacySkipTemplates.add(CameraDevice.TEMPLATE_MOTION_TRACKING_PREVIEW);
+        sLegacySkipTemplates.add(CameraDevice.TEMPLATE_MOTION_TRACKING_BEST);
     }
 
     @Override
@@ -281,6 +288,26 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
         }
     }
 
+    /**
+     * <p>
+     * Test camera capture request motion tracking templates
+     * </p>
+     *
+     * <p>
+     * The request template returned by the camera device must include a
+     * necessary set of metadata keys, and their values must be set correctly.
+     * The motion tracking templates are mostly like preview.
+     * </p>
+     */
+    public void testCameraDeviceMotionTrackinTemplates() throws Exception {
+        for (int i = 0; i < mCameraIds.length; i++) {
+            captureTemplateTestByCamera(mCameraIds[i],
+                    CameraDevice.TEMPLATE_MOTION_TRACKING_PREVIEW);
+            captureTemplateTestByCamera(mCameraIds[i],
+                    CameraDevice.TEMPLATE_MOTION_TRACKING_BEST);
+        }
+    }
+
     public void testCameraDeviceCreateCaptureBuilder() throws Exception {
         for (int i = 0; i < mCameraIds.length; i++) {
             try {
@@ -298,6 +325,12 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
                     // Skip non-PREVIEW templates for non-color output
                     if (!mStaticInfo.isColorOutputSupported() &&
                             sTemplates[j] != CameraDevice.TEMPLATE_PREVIEW) {
+                        continue;
+                    }
+                    if (!mStaticInfo.isCapabilitySupported(
+                            CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MOTION_TRACKING) &&
+                        (sTemplates[j] == CameraDevice.TEMPLATE_MOTION_TRACKING_PREVIEW ||
+                            sTemplates[j] == CameraDevice.TEMPLATE_MOTION_TRACKING_BEST)) {
                         continue;
                     }
                     CaptureRequest.Builder capReq = mCamera.createCaptureRequest(sTemplates[j]);
@@ -1415,6 +1448,14 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
                                 sTemplates[j] != CameraDevice.TEMPLATE_PREVIEW) {
                             continue;
                         }
+                        // Skip MOTION_TRACKING templates for non-MOTION_TRACKING devices
+                        if (!mStaticInfo.isCapabilitySupported(CameraCharacteristics.
+                                    REQUEST_AVAILABLE_CAPABILITIES_MOTION_TRACKING) &&
+                                (sTemplates[j] == CameraDevice.TEMPLATE_MOTION_TRACKING_PREVIEW ||
+                                 sTemplates[j] == CameraDevice.TEMPLATE_MOTION_TRACKING_BEST)) {
+                            continue;
+                        }
+
                         captureSingleShot(mCameraIds[i], sTemplates[j], repeating, abort);
                     }
                 }
@@ -1436,9 +1477,11 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
                     // Test: burst of 5 shots of the same template type
                     captureBurstShot(mCameraIds[i], templates, templates.length, repeating, abort);
 
-                    // Test: burst of 5 shots of different template types
-                    captureBurstShot(
+                    if (mStaticInfo.isColorOutputSupported()) {
+                        // Test: burst of 6 shots of different template types
+                        captureBurstShot(
                             mCameraIds[i], sTemplates, sTemplates.length, repeating, abort);
+                    }
                 }
                 verify(mCameraMockListener, never())
                         .onError(
@@ -1530,6 +1573,13 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
                     templates[i] != CameraDevice.TEMPLATE_PREVIEW) {
                 continue;
             }
+            if (!mStaticInfo.isCapabilitySupported(
+                    CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MOTION_TRACKING) &&
+                    (templates[i] == CameraDevice.TEMPLATE_MOTION_TRACKING_PREVIEW ||
+                     templates[i] == CameraDevice.TEMPLATE_MOTION_TRACKING_BEST)) {
+                continue;
+            }
+
             CaptureRequest.Builder requestBuilder = mCamera.createCaptureRequest(templates[i]);
             assertNotNull("Failed to create capture request", requestBuilder);
             requestBuilder.addTarget(mReaderSurface);
@@ -1686,7 +1736,26 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
         }
 
 
-        if (template != CameraDevice.TEMPLATE_MANUAL &&
+        if (template == CameraDevice.TEMPLATE_MOTION_TRACKING_PREVIEW) {
+            mCollector.expectEquals(
+                    "AE_TARGET_FPS_RANGE min FPS must be 30 for MOTION_TRACKING_PREVIEW",
+                    minFps, FPS_REQUIRED_FOR_MOTION_TRACKING_BASE);
+            mCollector.expectEquals(
+                    "AE_TARGET_FPS_RANGE max FPS must be 30 for MOTION_TRACKING_PREVIEW",
+                    maxFps, FPS_REQUIRED_FOR_MOTION_TRACKING_BASE);
+        } else if (template == CameraDevice.TEMPLATE_MOTION_TRACKING_BEST) {
+            if (minFps != FPS_REQUIRED_FOR_MOTION_TRACKING_BASE &&
+                minFps != FPS_REQUIRED_FOR_MOTION_TRACKING_HIGH) {
+                mCollector.addMessage("Min FPS for MOTION_TRACKING_BEST must be 30 or 60");
+            }
+            if (maxFps != FPS_REQUIRED_FOR_MOTION_TRACKING_BASE &&
+                maxFps != FPS_REQUIRED_FOR_MOTION_TRACKING_HIGH) {
+                mCollector.addMessage("Max FPS for MOTION_TRACKING_BEST must be 30 or 60");
+            }
+            if (minFps != maxFps) {
+                mCollector.addMessage("Min and Max FPS for MOTION_TRACKING_BEST must be the same");
+            }
+        } else if (template != CameraDevice.TEMPLATE_MANUAL &&
                 template != CameraDevice.TEMPLATE_STILL_CAPTURE) {
             if (maxFps < MIN_FPS_REQUIRED_FOR_STREAMING) {
                 mCollector.addMessage("Max fps should be at least "
@@ -1739,6 +1808,17 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
             }
         } else if (template == CameraDevice.TEMPLATE_MANUAL) {
             targetAfMode = CaptureRequest.CONTROL_AF_MODE_OFF;
+        } else if (template == CameraDevice.TEMPLATE_MOTION_TRACKING_PREVIEW ||
+                template == CameraDevice.TEMPLATE_MOTION_TRACKING_BEST) {
+            targetAfMode = CaptureRequest.CONTROL_AF_MODE_OFF;
+            if (mStaticInfo.isCapabilitySupported(CameraCharacteristics.
+                    REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR)) {
+                mCollector.expectKeyValueInRange(request, CaptureRequest.LENS_FOCUS_DISTANCE,
+                    0.f, MAX_MOTION_TRACKING_FOCUS_DISTANCE);
+            } else {
+                mCollector.expectKeyValueEquals(request, CaptureRequest.LENS_FOCUS_DISTANCE,
+                    0.f);
+            }
         }
 
         mCollector.expectKeyValueEquals(request, CONTROL_AF_MODE, targetAfMode);
@@ -1798,12 +1878,6 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
      */
     private void checkRequestForTemplate(CaptureRequest.Builder request, int template,
             CameraCharacteristics props) {
-        // 3A settings--control.mode.
-        if (template != CameraDevice.TEMPLATE_MANUAL) {
-            mCollector.expectKeyValueEquals(request, CONTROL_MODE,
-                    CaptureRequest.CONTROL_MODE_AUTO);
-        }
-
         // 3A settings--AE/AWB/AF.
         Integer maxRegionsAeVal = props.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AE);
         int maxRegionsAe = maxRegionsAeVal != null ? maxRegionsAeVal : 0;
@@ -1824,6 +1898,8 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
             mCollector.expectKeyValueEquals(request, CONTROL_AWB_MODE,
                     CaptureRequest.CONTROL_AWB_MODE_OFF);
         } else {
+            mCollector.expectKeyValueEquals(request, CONTROL_MODE,
+                    CaptureRequest.CONTROL_MODE_AUTO);
             if (mStaticInfo.isColorOutputSupported()) {
                 mCollector.expectKeyValueEquals(request, CONTROL_AE_MODE,
                         CaptureRequest.CONTROL_AE_MODE_ON);
@@ -1913,7 +1989,17 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
                     props.get(CameraCharacteristics.LENS_INFO_AVAILABLE_OPTICAL_STABILIZATION);
             if (availableOIS.length > 1) {
                 mCollector.expectKeyValueNotNull(request, LENS_OPTICAL_STABILIZATION_MODE);
+                if (template == CameraDevice.TEMPLATE_MOTION_TRACKING_PREVIEW ||
+                        template == CameraDevice.TEMPLATE_MOTION_TRACKING_BEST) {
+                    mCollector.expectKeyValueEquals(request, LENS_OPTICAL_STABILIZATION_MODE,
+                            LENS_OPTICAL_STABILIZATION_MODE_OFF);
+                }
             }
+        }
+
+        if (mStaticInfo.areKeysAvailable(SENSOR_TEST_PATTERN_MODE)) {
+            mCollector.expectKeyValueEquals(request, SENSOR_TEST_PATTERN_MODE,
+                    CaptureRequest.SENSOR_TEST_PATTERN_MODE_OFF);
         }
 
         if (mStaticInfo.areKeysAvailable(BLACK_LEVEL_LOCK)) {
@@ -1954,9 +2040,10 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
                 availableCaps.contains(REQUEST_AVAILABLE_CAPABILITIES_YUV_REPROCESSING) ||
                 availableCaps.contains(REQUEST_AVAILABLE_CAPABILITIES_PRIVATE_REPROCESSING);
 
+
         if (template == CameraDevice.TEMPLATE_STILL_CAPTURE) {
-            // Not enforce high quality here, as some devices may not effectively have high quality
-            // mode.
+
+            // Ok with either FAST or HIGH_QUALITY
             if (mStaticInfo.areKeysAvailable(COLOR_CORRECTION_MODE)) {
                 mCollector.expectKeyValueNotEquals(
                         request, COLOR_CORRECTION_MODE,
@@ -1981,6 +2068,12 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
                             CaptureRequest.EDGE_MODE_OFF);
                 }
             }
+            if (mStaticInfo.areKeysAvailable(SHADING_MODE)) {
+                List<Integer> availableShadingModes =
+                        Arrays.asList(toObject(mStaticInfo.getAvailableShadingModesChecked()));
+                mCollector.expectKeyValueEquals(request, SHADING_MODE,
+                        CaptureRequest.SHADING_MODE_HIGH_QUALITY);
+            }
 
             mCollector.expectEquals("Noise reduction mode must be present in request if " +
                             "available noise reductions are present in metadata, and vice-versa.",
@@ -2000,6 +2093,27 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
                 } else {
                     mCollector.expectKeyValueEquals(
                             request, NOISE_REDUCTION_MODE, CaptureRequest.NOISE_REDUCTION_MODE_OFF);
+                }
+            }
+
+            mCollector.expectEquals("Hot pixel mode must be present in request if " +
+                            "available hot pixel modes are present in metadata, and vice-versa.",
+                    mStaticInfo.areKeysAvailable(CameraCharacteristics.
+                            HOT_PIXEL_AVAILABLE_HOT_PIXEL_MODES),
+                    mStaticInfo.areKeysAvailable(CaptureRequest.HOT_PIXEL_MODE));
+
+            if (mStaticInfo.areKeysAvailable(HOT_PIXEL_MODE)) {
+                List<Integer> availableHotPixelModes =
+                        Arrays.asList(toObject(
+                                mStaticInfo.getAvailableHotPixelModesChecked()));
+                if (availableHotPixelModes
+                        .contains(CaptureRequest.HOT_PIXEL_MODE_HIGH_QUALITY)) {
+                    mCollector.expectKeyValueEquals(
+                            request, HOT_PIXEL_MODE,
+                            CaptureRequest.HOT_PIXEL_MODE_HIGH_QUALITY);
+                } else {
+                    mCollector.expectKeyValueEquals(
+                            request, HOT_PIXEL_MODE, CaptureRequest.HOT_PIXEL_MODE_OFF);
                 }
             }
 
@@ -2031,7 +2145,17 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
             mCollector.expectKeyValueEquals(request, NOISE_REDUCTION_MODE,
                     CaptureRequest.NOISE_REDUCTION_MODE_ZERO_SHUTTER_LAG);
         } else if (template == CameraDevice.TEMPLATE_PREVIEW ||
-                template == CameraDevice.TEMPLATE_RECORD){
+                template == CameraDevice.TEMPLATE_RECORD ||
+                template == CameraDevice.TEMPLATE_MOTION_TRACKING_PREVIEW ||
+                template == CameraDevice.TEMPLATE_MOTION_TRACKING_BEST) {
+
+            // Ok with either FAST or HIGH_QUALITY
+            if (mStaticInfo.areKeysAvailable(COLOR_CORRECTION_MODE)) {
+                mCollector.expectKeyValueNotEquals(
+                        request, COLOR_CORRECTION_MODE,
+                        CaptureRequest.COLOR_CORRECTION_MODE_TRANSFORM_MATRIX);
+            }
+
             if (mStaticInfo.areKeysAvailable(EDGE_MODE)) {
                 List<Integer> availableEdgeModes =
                         Arrays.asList(toObject(mStaticInfo.getAvailableEdgeModesChecked()));
@@ -2042,6 +2166,13 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
                     mCollector.expectKeyValueEquals(request, EDGE_MODE,
                             CaptureRequest.EDGE_MODE_OFF);
                 }
+            }
+
+            if (mStaticInfo.areKeysAvailable(SHADING_MODE)) {
+                List<Integer> availableShadingModes =
+                        Arrays.asList(toObject(mStaticInfo.getAvailableShadingModesChecked()));
+                mCollector.expectKeyValueEquals(request, SHADING_MODE,
+                        CaptureRequest.SHADING_MODE_FAST);
             }
 
             if (mStaticInfo.areKeysAvailable(NOISE_REDUCTION_MODE)) {
@@ -2056,6 +2187,21 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
                 } else {
                     mCollector.expectKeyValueEquals(
                             request, NOISE_REDUCTION_MODE, CaptureRequest.NOISE_REDUCTION_MODE_OFF);
+                }
+            }
+
+            if (mStaticInfo.areKeysAvailable(HOT_PIXEL_MODE)) {
+                List<Integer> availableHotPixelModes =
+                        Arrays.asList(toObject(
+                                mStaticInfo.getAvailableHotPixelModesChecked()));
+                if (availableHotPixelModes
+                        .contains(CaptureRequest.HOT_PIXEL_MODE_FAST)) {
+                    mCollector.expectKeyValueEquals(
+                            request, HOT_PIXEL_MODE,
+                            CaptureRequest.HOT_PIXEL_MODE_FAST);
+                } else {
+                    mCollector.expectKeyValueEquals(
+                            request, HOT_PIXEL_MODE, CaptureRequest.HOT_PIXEL_MODE_OFF);
                 }
             }
 
@@ -2124,7 +2270,12 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
                         CaptureRequest.TONEMAP_MODE_PRESET_CURVE);
             }
             if (mStaticInfo.areKeysAvailable(STATISTICS_LENS_SHADING_MAP_MODE)) {
-                mCollector.expectKeyValueNotNull(request, STATISTICS_LENS_SHADING_MAP_MODE);
+                mCollector.expectKeyValueEquals(request, STATISTICS_LENS_SHADING_MAP_MODE,
+                        CaptureRequest.STATISTICS_LENS_SHADING_MAP_MODE_OFF);
+            }
+            if (mStaticInfo.areKeysAvailable(STATISTICS_HOT_PIXEL_MAP_MODE)) {
+                mCollector.expectKeyValueEquals(request, STATISTICS_HOT_PIXEL_MAP_MODE,
+                        false);
             }
         }
 
@@ -2151,7 +2302,39 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
                     DEFAULT_POST_RAW_SENSITIVITY_BOOST);
         }
 
-        mCollector.expectKeyValueEquals(request, CONTROL_CAPTURE_INTENT, template);
+        switch(template) {
+            case CameraDevice.TEMPLATE_PREVIEW:
+                mCollector.expectKeyValueEquals(request, CONTROL_CAPTURE_INTENT,
+                        CameraCharacteristics.CONTROL_CAPTURE_INTENT_PREVIEW);
+                break;
+            case CameraDevice.TEMPLATE_STILL_CAPTURE:
+                mCollector.expectKeyValueEquals(request, CONTROL_CAPTURE_INTENT,
+                        CameraCharacteristics.CONTROL_CAPTURE_INTENT_STILL_CAPTURE);
+                break;
+            case CameraDevice.TEMPLATE_RECORD:
+                mCollector.expectKeyValueEquals(request, CONTROL_CAPTURE_INTENT,
+                        CameraCharacteristics.CONTROL_CAPTURE_INTENT_VIDEO_RECORD);
+                break;
+            case CameraDevice.TEMPLATE_VIDEO_SNAPSHOT:
+                mCollector.expectKeyValueEquals(request, CONTROL_CAPTURE_INTENT,
+                        CameraCharacteristics.CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT);
+                break;
+            case CameraDevice.TEMPLATE_ZERO_SHUTTER_LAG:
+                mCollector.expectKeyValueEquals(request, CONTROL_CAPTURE_INTENT,
+                        CameraCharacteristics.CONTROL_CAPTURE_INTENT_ZERO_SHUTTER_LAG);
+                break;
+            case CameraDevice.TEMPLATE_MANUAL:
+                mCollector.expectKeyValueEquals(request, CONTROL_CAPTURE_INTENT,
+                        CameraCharacteristics.CONTROL_CAPTURE_INTENT_MANUAL);
+                break;
+            case CameraDevice.TEMPLATE_MOTION_TRACKING_PREVIEW:
+            case CameraDevice.TEMPLATE_MOTION_TRACKING_BEST:
+                mCollector.expectKeyValueEquals(request, CONTROL_CAPTURE_INTENT,
+                        CameraCharacteristics.CONTROL_CAPTURE_INTENT_MOTION_TRACKING);
+                break;
+            default:
+                // Skip unknown templates here
+        }
 
         // TODO: use the list of keys from CameraCharacteristics to avoid expecting
         //       keys which are not available by this CameraDevice.
@@ -2163,7 +2346,7 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
 
             assertTrue("Camera template " + template + " is out of range!",
                     template >= CameraDevice.TEMPLATE_PREVIEW
-                            && template <= CameraDevice.TEMPLATE_MANUAL);
+                            && template <= CameraDevice.TEMPLATE_MOTION_TRACKING_BEST);
 
             mCollector.setCameraId(cameraId);
 
@@ -2181,6 +2364,11 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
                 } else if (template == CameraDevice.TEMPLATE_ZERO_SHUTTER_LAG &&
                         !mStaticInfo.isCapabilitySupported(CameraCharacteristics.
                                 REQUEST_AVAILABLE_CAPABILITIES_PRIVATE_REPROCESSING)) {
+                    // OK.
+                } else if ((template == CameraDevice.TEMPLATE_MOTION_TRACKING_PREVIEW ||
+                        template == CameraDevice.TEMPLATE_MOTION_TRACKING_BEST) &&
+                        !mStaticInfo.isCapabilitySupported(CameraCharacteristics.
+                                REQUEST_AVAILABLE_CAPABILITIES_MOTION_TRACKING)) {
                     // OK.
                 } else if (sLegacySkipTemplates.contains(template) &&
                         mStaticInfo.isHardwareLevelLegacy()) {
