@@ -30,4 +30,4 @@ public class Poc17_01 extends SecurityTestCase {
             AdbUtils.runPoc("CVE-2016-8482", getDevice(), 60);
         }
     }
- }
+}
