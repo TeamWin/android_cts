@@ -30,7 +30,7 @@ LOCAL_SDK_VERSION := current
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     cts-signature-common \
-    repackaged-legacy-test \
+    repackaged.android.test.base \
     repackaged.android.test.runner \
     repackaged.android.test.mock \
 
