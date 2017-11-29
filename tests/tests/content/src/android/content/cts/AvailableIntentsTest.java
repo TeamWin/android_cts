@@ -354,4 +354,11 @@ public class AvailableIntentsTest extends AndroidTestCase {
             assertCanBeHandled(new Intent(Settings.ACTION_FINGERPRINT_ENROLL));
         }
     }
+
+    public void testPictureInPictureSettings() {
+        PackageManager packageManager = mContext.getPackageManager();
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)) {
+            assertCanBeHandled(new Intent(Settings.ACTION_PICTURE_IN_PICTURE_SETTINGS));
+        }
+    }
 }
