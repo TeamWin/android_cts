@@ -187,7 +187,7 @@ public class UseSharedLibraryTest {
         // Make sure we see the lib we depend on via getting installed packages
         List<PackageInfo> installedPackages = InstrumentationRegistry.getInstrumentation()
                 .getContext().getPackageManager().getInstalledPackages(0);
-        int usedLibraryVersionCode = -1;
+        long usedLibraryVersionCode = -1;
         for (PackageInfo installedPackage : installedPackages) {
             if (STATIC_LIB_PROVIDER_PKG.equals(installedPackage.packageName)) {
                 if (usedLibraryVersionCode != -1) {
