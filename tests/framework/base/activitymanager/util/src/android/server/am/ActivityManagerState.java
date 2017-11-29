@@ -274,10 +274,38 @@ class ActivityManagerState {
         return null;
     }
 
-    int getStackPosition(int activityType) {
+    int getStandardTaskCountByWindowingMode(int windowingMode) {
+        int count = 0;
+        for (ActivityStack stack : mStacks) {
+            if (stack.getActivityType() != ACTIVITY_TYPE_STANDARD) {
+                continue;
+            }
+            if (stack.getWindowingMode() == windowingMode) {
+                count += stack.mTasks.size();
+            }
+        }
+        return count;
+    }
+
+    int getStackIndexByActivityType(int activityType) {
         for (int i = 0; i < mStacks.size(); i++) {
             if (activityType == mStacks.get(i).getActivityType()) {
                 return i;
+            }
+        }
+        return -1;
+    }
+
+    int getStackIndexByActivityName(String activityName) {
+        final String fullName = ActivityManagerTestBase.getActivityComponentName(activityName);
+        for (int i = mStacks.size() - 1; i >=0 ; --i) {
+            final ActivityStack stack = mStacks.get(i);
+            for (ActivityTask task : stack.mTasks) {
+                for (Activity activity : task.mActivities) {
+                    if (activity.name.equals(fullName)) {
+                        return i;
+                    }
+                }
             }
         }
         return -1;
@@ -296,6 +324,21 @@ class ActivityManagerState {
             for (ActivityTask task : stack.mTasks) {
                 for (Activity activity : task.mActivities) {
                     if (activity.name.equals(activityName)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    boolean containsActivityInWindowingMode(String activityName, int windowingMode) {
+        final String fullName = ActivityManagerTestBase.getActivityComponentName(activityName);
+        for (ActivityStack stack : mStacks) {
+            for (ActivityTask task : stack.mTasks) {
+                for (Activity activity : task.mActivities) {
+                    if (activity.name.equals(fullName)
+                            && activity.getWindowingMode() == windowingMode) {
                         return true;
                     }
                 }

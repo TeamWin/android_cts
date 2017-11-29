@@ -516,7 +516,7 @@ public class WindowManagerState {
         return null;
     }
 
-    int getStackPosition(int activityType) {
+    int getStackIndexByActivityType(int activityType) {
         for (int i = 0; i < mStacks.size(); i++) {
             if (activityType == mStacks.get(i).getActivityType()) {
                 return i;
