@@ -169,6 +169,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
     }
 
     @Test
+    @Presubmit
     public void testLaunchToSideAndBringToFront() throws Exception {
         if (!supportsSplitScreenMultiWindow()) {
             log("Skipping test: no split multi-window support");
