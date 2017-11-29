@@ -115,6 +115,11 @@ public class SubPlanHelper {
             importance = Importance.NEVER)
     private String mAbiName = null;
 
+    @Option(name = CompatibilityTest.SUBPLAN_OPTION,
+            description = "the subplan used in the previous session",
+            importance = Importance.NEVER)
+    private String mLastSubPlan;
+
     File mSubPlanFile = null;
     IInvocationResult mResult = null;
 
@@ -214,6 +219,11 @@ public class SubPlanHelper {
         // add filters from previous session to track which tests must run
         subPlan.addAllIncludeFilters(mIncludeFilters);
         subPlan.addAllExcludeFilters(mExcludeFilters);
+        if (mLastSubPlan != null) {
+            ISubPlan lastSubPlan = SubPlanHelper.getSubPlanByName(buildHelper, mLastSubPlan);
+            subPlan.addAllIncludeFilters(lastSubPlan.getIncludeFilters());
+            subPlan.addAllExcludeFilters(lastSubPlan.getExcludeFilters());
+        }
         if (mModuleName != null) {
             addIncludeToSubPlan(subPlan, new TestFilter(mAbiName, mModuleName, mTestName));
         }
