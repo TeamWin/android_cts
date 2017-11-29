@@ -120,16 +120,9 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
 
         // Assert structure passed to service.
         try {
-            final ViewNode webViewNode = Helper.findWebViewNode(fillRequest.structure, "FORM AM I");
-            // TODO(b/66953802): class name should be android.webkit.WebView, and form name should
-            // be inside HtmlInfo, but Chromium 61 does not implement that.
-            if (webViewNode.getClassName().equals("android.webkit.WebView")) {
-                final HtmlInfo htmlInfo = Helper.assertHasHtmlTag(webViewNode, "form");
-                Helper.assertHasAttribute(htmlInfo, "name", "FORM AM I");
-            } else {
-                assertThat(webViewNode.getClassName()).isEqualTo("FORM AM I");
-                assertThat(webViewNode.getHtmlInfo()).isNull();
-            }
+            final ViewNode webViewNode =
+                    Helper.findWebViewNodeByFormName(fillRequest.structure, "FORM AM I");
+            assertThat(webViewNode.getClassName()).isEqualTo("android.webkit.WebView");
             assertThat(webViewNode.getWebDomain()).isEqualTo(WebViewActivity.FAKE_DOMAIN);
             assertThat(webViewNode.getWebScheme()).isEqualTo("https");
 
