@@ -51,4 +51,7 @@
     <dimen name="calendarview_holo_height">320dip</dimen>
 
     <dimen name="imageview_regular_height">240dip</dimen>
+
+    <dimen name="listviewfixed_layout_width">300dp</dimen>
+    <dimen name="listviewfixed_layout_height">300dp</dimen>
 </resources>
