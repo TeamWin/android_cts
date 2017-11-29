@@ -97,8 +97,7 @@ public class TextClassificationManagerTest {
 
     @Test
     public void testGenerateLinks() {
-        assertValidResult(mClassifier.generateLinks(TEXT,
-                new TextLinks.Options.Builder().setLocaleList(LOCALES).build()));
+        assertValidResult(mClassifier.generateLinks(TEXT, null));
     }
 
     @Test
