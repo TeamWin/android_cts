@@ -18,6 +18,7 @@ package android.autofillservice.cts;
 
 import static android.autofillservice.cts.Helper.NOT_SHOWING_TIMEOUT_MS;
 import static android.autofillservice.cts.Helper.SAVE_TIMEOUT_MS;
+import static android.autofillservice.cts.Helper.UI_DATASET_PICKER_TIMEOUT_MS;
 import static android.autofillservice.cts.Helper.UI_TIMEOUT_MS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_ADDRESS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_CREDIT_CARD;
@@ -119,7 +120,7 @@ final class UiBot {
      * @return the dataset picker object.
      */
     UiObject2 assertDatasets(String...names) {
-        final UiObject2 picker = findDatasetPicker();
+        final UiObject2 picker = findDatasetPicker(UI_DATASET_PICKER_TIMEOUT_MS);
         assertWithMessage("wrong dataset names").that(getChildrenAsText(picker))
                 .containsExactlyElementsIn(Arrays.asList(names));
         return picker;
@@ -148,7 +149,7 @@ final class UiBot {
      * Selects a dataset that should be visible in the floating UI.
      */
     void selectDataset(String name) {
-        final UiObject2 picker = findDatasetPicker();
+        final UiObject2 picker = findDatasetPicker(UI_DATASET_PICKER_TIMEOUT_MS);
         selectDataset(picker, name);
     }
 
@@ -576,10 +577,6 @@ final class UiBot {
         }
         throw new RetryableException("Objects with selector '%s' not found in %d ms",
                 selector, UI_TIMEOUT_MS);
-    }
-
-    private UiObject2 findDatasetPicker() {
-        return findDatasetPicker(UI_TIMEOUT_MS);
     }
 
     private UiObject2 findDatasetPicker(long timeout) {
