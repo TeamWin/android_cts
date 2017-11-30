@@ -20,49 +20,6 @@ import android.platform.test.annotations.SecurityTest;
 
 @SecurityTest
 public class Poc17_05 extends SecurityTestCase {
-    /**
-     * b/33863909
-     */
-    @SecurityTest
-    public void testPocCve_2016_10288() throws Exception {
-        enableAdbRoot(getDevice());
-        if(containsDriver(getDevice(), "/sys/kernel/debug/flashLED/strobe")) {
-            AdbUtils.runPocNoOutput("CVE-2016-10288", getDevice(), 60);
-        }
-     }
-
-    /**
-     * b/34112914
-     */
-    @SecurityTest
-    public void testPocCve_2017_0465() throws Exception {
-        enableAdbRoot(getDevice());
-        if(containsDriver(getDevice(), "/dev/adsprpc-smd")) {
-            AdbUtils.runPocNoOutput("CVE-2017-0465", getDevice(), 60);
-        }
-    }
-
-    /**
-     * b/33899710
-     */
-    @SecurityTest
-    public void testPocCve_2016_10289() throws Exception {
-        enableAdbRoot(getDevice());
-        if(containsDriver(getDevice(), "/sys/kernel/debug/qcrypto/stats-1")) {
-            AdbUtils.runPocNoOutput("CVE-2016-10289", getDevice(), 60);
-        }
-     }
-
-    /**
-     *  b/33898330
-     */
-    @SecurityTest
-    public void testPocCve_2016_10290() throws Exception {
-        enableAdbRoot(getDevice());
-        if (containsDriver(getDevice(), "/sys/kernel/debug/rmt_storage/info")) {
-          AdbUtils.runPocNoOutput("CVE-2016-10290", getDevice(), 60);
-        }
-    }
 
     /**
      * b/34705519
@@ -78,20 +35,6 @@ public class Poc17_05 extends SecurityTestCase {
     }
 
     /**
-     * b/34617444
-     */
-    @SecurityTest
-    public void testPocCve_2017_0594() throws Exception {
-        enableAdbRoot(getDevice());
-        AdbUtils.enableLibcMallocDebug("mediaserver", getDevice());
-        AdbUtils.runCommandLine("logcat -c" , getDevice());
-        AdbUtils.runPocNoOutput("CVE-2017-0594", getDevice(), 60);
-        String logcatOut = AdbUtils.runCommandLine("logcat -d", getDevice());
-        assertNotMatches("[\\s\\n\\S]*HAS A CORRUPTED REAR GUARD" +
-                         "[\\s\\n\\S]*", logcatOut);
-     }
-
-    /**
      * b/34749392
      */
     @SecurityTest
@@ -102,28 +45,5 @@ public class Poc17_05 extends SecurityTestCase {
         assertNotMatches("[\\s\\n\\S]*Fatal signal 11 \\(SIGSEGV\\)" +
                          "[\\s\\n\\S]*>>> /system/bin/" +
                          "mediaserver <<<[\\s\\n\\S]*", logcatOut);
-    }
-
-    /**
-     *  b/34327795
-     */
-    @SecurityTest
-    public void testPocCVE_2017_0624() throws Exception {
-        enableAdbRoot(getDevice());
-        if(containsDriver(getDevice(), "/proc/debugdriver/driverdump")) {
-            AdbUtils.runPoc("CVE-2017-0624", getDevice(), 60);
-        }
-    }
-
-    /**
-     *  b/32094986
-     */
-    @SecurityTest
-    public void testPocCVE_2016_10283() throws Exception {
-        enableAdbRoot(getDevice());
-        AdbUtils.runPoc("CVE-2016-10283", getDevice(), 60);
-        // CTS begins the next test before device finishes rebooting,
-        // sleep to allow time for device to reboot.
-        Thread.sleep(60000);
     }
 }

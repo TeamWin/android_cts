@@ -21,64 +21,6 @@ import android.platform.test.annotations.SecurityTest;
 @SecurityTest
 public class Poc17_09 extends SecurityTestCase {
 
-    /**
-     *  b/33039685
-     */
-    @SecurityTest
-    public void testPocBug_33039685() throws Exception {
-        enableAdbRoot(getDevice());
-        if (containsDriver(getDevice(), "/sys/kernel/debug/pci-msm/")) {
-          AdbUtils.runPocNoOutput("Bug-33039685", getDevice(), 60);
-        }
-    }
-
-    /**
-     *  b/35676417
-     */
-    @SecurityTest
-    public void testPocBug_35676417() throws Exception {
-        enableAdbRoot(getDevice());
-        if (containsDriver(getDevice(), "/sys/devices/soc/7544000.qcom,sps-dma/driver_override")) {
-          AdbUtils.runPocNoOutput("Bug-35676417", getDevice(), 60);
-        }
-    }
-
-    /**
-     *  b/35644812
-     */
-    @SecurityTest
-    public void testPocBug_35644812() throws Exception {
-        enableAdbRoot(getDevice());
-        if (containsDriver(getDevice(), "/dev/sg0")) {
-          AdbUtils.runPocNoOutput("Bug-35644812", getDevice(), 60);
-        }
-    }
-
-    /**
-     * b/36492827
-     */
-    @SecurityTest
-    public void testPocBug_36492827() throws Exception {
-     enableAdbRoot(getDevice());
-      if (containsDriver(getDevice(), "/dev/v4l-subdev*")) {
-        AdbUtils.runPocNoOutput("Bug-36492827", getDevice(), 60);
-      }
-    }
-
-    /**
-     * b/38340117
-     */
-    @SecurityTest
-    public void testPocBug_38340117() throws Exception {
-        enableAdbRoot(getDevice());
-        AdbUtils.runCommandLine("logcat -c", getDevice());
-        AdbUtils.runPoc("Bug-38340117", getDevice(), 30);
-        String logcatOutput = AdbUtils.runCommandLine("logcat -d", getDevice());
-        assertNotMatches("[\\s\\n\\S]*Fatal signal 11 \\(SIGSEGV\\)" +
-                         "[\\s\\n\\S]*>>> /system/bin/" +
-                         "audioserver <<<[\\s\\n\\S]*", logcatOutput);
-    }
-
     /*
      * b/38234812
      */
@@ -91,21 +33,4 @@ public class Poc17_09 extends SecurityTestCase {
                          "[\\s\\n\\S]*>>> /system/bin/" +
                          "mediaserver <<<[\\s\\n\\S]*", logcat);
     }
-
-    /**
-     * b/34621073
-     */
-    @SecurityTest
-    public void testPocCve_2017_0756() throws Exception {
-        enableAdbRoot(getDevice());
-        AdbUtils.enableLibcMallocDebug("mediaserver", getDevice());
-        AdbUtils.runCommandLine("logcat -c" , getDevice());
-        AdbUtils.runPocNoOutput("CVE-2017-0756", getDevice(), 60);
-        String logcatOut = AdbUtils.runCommandLine("logcat -d", getDevice());
-        assertNotMatches("[\\s\\n\\S]*HAS A CORRUPTED REAR GUARD" +
-                         "[\\s\\n\\S]*", logcatOut);
-        assertNotMatches("[\\s\\n\\S]*Fatal signal 11 \\(SIGSEGV\\)" +
-                         "[\\s\\n\\S]*>>> /system/bin/" +
-                         "mediaserver <<<[\\s\\n\\S]*", logcatOut);
-     }
 }
