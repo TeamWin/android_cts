@@ -55,6 +55,13 @@
         <activity android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$FirstActivity" />
 
         <activity android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$SecondActivity"/>
+
+        <activity android:name="android.server.am.ActivityManagerSplitScreenTests$SplitScreenActivity"/>
+
+        <activity
+            android:name="android.server.am.ActivityManagerSplitScreenTests$ToSideActivity"
+            android:taskAffinity="nobody.butActivityManagerSplitScreenTests.ToSideActivity" />
+
     </application>
 
     <instrumentation

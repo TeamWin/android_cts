@@ -154,17 +154,12 @@ final class Helper {
         return id.equals(node.getText());
     };
 
-    private static final NodeFilter WEBVIEW_ROOT_FILTER = (node, id) -> {
-        // TODO(b/66953802): class name should be android.webkit.WebView, and form name should be
-        // inside HtmlInfo, but Chromium 61 does not implement that.
+    private static final NodeFilter WEBVIEW_FORM_FILTER = (node, id) -> {
         final String className = node.getClassName();
-        final String formName;
-        if (className.equals("android.webkit.WebView")) {
-            final HtmlInfo htmlInfo = assertHasHtmlTag(node, "form");
-            formName = getAttributeValue(htmlInfo, "name");
-        } else {
-            formName = className;
-        }
+        if (!className.equals("android.webkit.WebView")) return false;
+
+        final HtmlInfo htmlInfo = assertHasHtmlTag(node, "form");
+        final String formName = getAttributeValue(htmlInfo, "name");
         return id.equals(formName);
     };
 
@@ -926,15 +921,8 @@ final class Helper {
     /**
      * Finds a {@link WebView} node given its expected form name.
      */
-    public static ViewNode findWebViewNode(AssistStructure structure, String formName) {
-        return findNodeByFilter(structure, formName, WEBVIEW_ROOT_FILTER);
-    }
-
-    /**
-     * Finds a {@link WebView} node given its expected form name.
-     */
-    public static ViewNode findWebViewNode(ViewNode node, String formName) {
-        return findNodeByFilter(node, formName, WEBVIEW_ROOT_FILTER);
+    public static ViewNode findWebViewNodeByFormName(AssistStructure structure, String formName) {
+        return findNodeByFilter(structure, formName, WEBVIEW_FORM_FILTER);
     }
 
     private static void assertClientState(Object container, Bundle clientState,

@@ -21,9 +21,12 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_ASSISTANT;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.app.ActivityManager.SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT;
+import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logE;
 import static android.view.KeyEvent.KEYCODE_APP_SWITCH;
@@ -32,13 +35,18 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import android.app.Activity;
 import android.app.ActivityManager;
+import android.app.Instrumentation;
 import android.content.Context;
+import android.content.Intent;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
+import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
-import android.os.RemoteException;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.UiDevice;
+import android.util.Log;
 import android.view.Display;
 
 import com.android.compatibility.common.util.SystemUtil;
@@ -276,6 +284,7 @@ public abstract class ActivityManagerTestBase {
 
     protected void removeStacksInWindowingModes(int... windowingModes) {
         mAm.removeStacksInWindowingModes(windowingModes);
+        waitForIdle();
     }
 
     public static String executeShellCommand(String command) {
@@ -308,6 +317,7 @@ public abstract class ActivityManagerTestBase {
         return InstrumentationRegistry.getInstrumentation().getUiAutomation().takeScreenshot();
     }
 
+    @Deprecated
     protected void launchActivityInComponent(final String componentName,
             final String targetActivityName, final String... keyValuePairs) throws Exception {
         final String originalComponentName = ActivityManagerTestBase.componentName;
@@ -316,17 +326,20 @@ public abstract class ActivityManagerTestBase {
         setComponentName(originalComponentName);
     }
 
+    @Deprecated
     protected void launchActivity(final String targetActivityName, final String... keyValuePairs)
             throws Exception {
         executeShellCommand(getAmStartCmd(targetActivityName, keyValuePairs));
         mAmWmState.waitForValidState(targetActivityName);
     }
 
+    @Deprecated
     protected void launchActivityNoWait(final String targetActivityName,
             final String... keyValuePairs) throws Exception {
         executeShellCommand(getAmStartCmd(targetActivityName, keyValuePairs));
     }
 
+    @Deprecated
     protected void launchActivityInNewTask(final String targetActivityName) throws Exception {
         executeShellCommand(getAmStartCmdInNewTask(targetActivityName));
         mAmWmState.waitForValidState(targetActivityName);
@@ -336,6 +349,7 @@ public abstract class ActivityManagerTestBase {
      * Starts an activity in a new stack.
      * @return the stack id of the newly created stack.
      */
+    @Deprecated
     protected int launchActivityInNewDynamicStack(final String activityName) throws Exception {
         HashSet<Integer> stackIds = getStackIds();
         executeShellCommand("am stack start " + ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID
@@ -350,9 +364,11 @@ public abstract class ActivityManagerTestBase {
         }
     }
 
-    /**
-     * Returns the set of stack ids.
-     */
+    private void waitForIdle() {
+        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+    }
+
+    /** Returns the set of stack ids. */
     private HashSet<Integer> getStackIds() throws Exception {
         mAmWmState.computeState();
         final List<ActivityManagerState.ActivityStack> stacks = mAmWmState.getAmState().getStacks();
@@ -421,10 +437,12 @@ public abstract class ActivityManagerTestBase {
                 .build());
     }
 
+    @Deprecated
     protected void launchActivityInDockStack(String activityName) throws Exception {
         launchActivityInDockStack(activityName, SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT);
     }
 
+    @Deprecated
     protected void launchActivityInDockStack(String activityName, int createMode)
             throws Exception {
         launchActivity(activityName);
@@ -1410,5 +1428,153 @@ public abstract class ActivityManagerTestBase {
         pressBackButton();
         sleepDevice();
         wakeUpAndUnlockDevice();
+    }
+
+    /** Helper class to makes sure we are reference the same activity across relaunches */
+    protected static class TestActivityHolder extends Instrumentation.ActivityMonitor {
+
+        final Class<?> mClass;
+        final Instrumentation mInstrumentation;
+        final Context mContext;
+
+        TestActivityHolder(Class<?> cls, Context context) {
+            super(cls.getName(), null, false);
+            mClass = cls;
+            mInstrumentation = InstrumentationRegistry.getInstrumentation();
+            mInstrumentation.addMonitor(this);
+            mContext = context;
+        }
+
+        protected TestActivityBase getCurrentActivity() {
+            return (TestActivityBase) getLastActivity();
+        }
+
+        protected void launchActivity(int flags, Bundle options) {
+            final Intent intent = new Intent(mContext, mClass);
+            intent.addFlags(flags | FLAG_ACTIVITY_NEW_TASK);
+            mInstrumentation.startActivitySync(intent, options);
+            mInstrumentation.waitForIdleSync();
+        }
+
+        /** Launches another activity from this activities context. */
+        protected TestActivityHolder launchOtherActivity(Class<?> cls, int flags, Bundle options) {
+            final TestActivityHolder activityHolder =
+                    new TestActivityHolder(cls, getCurrentActivity());
+
+            final Activity activity = getCurrentActivity();
+            final Intent intent = new Intent(activity, cls);
+            intent.addFlags(flags);
+            activity.startActivity(intent, options);
+            mInstrumentation.waitForIdleSync();
+            return activityHolder;
+        }
+
+        protected void launchActivityInSplitScreen() {
+            launchActivity(0, null);
+            final int taskId = getLastActivity().getTaskId();
+            final ActivityManager am = mContext.getSystemService(ActivityManager.class);
+            am.setTaskWindowingModeSplitScreenPrimary(taskId, SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT,
+                    true /* onTop */, false /* animate */, null /* initialBounds */);
+            waitForWindowingMode(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, 5000 /* timeoutMs */);
+        }
+
+        synchronized void waitForWindowingMode(int windowingMode, long timeoutMs) {
+            final boolean inMultiWindowMode = windowingMode != WINDOWING_MODE_FULLSCREEN;
+            final long startTime = System.currentTimeMillis();
+            TestActivityBase activity = getCurrentActivity();
+            if (activity != null) {
+                activity.setMonitor(this);
+            }
+            while(timeoutMs > 0 && (windowingMode != getWindowingMode()
+                    || inMultiWindowMode != getLastReportedInMultiWindowMode())) {
+                try {
+                    wait(timeoutMs);
+                    final long waitedTime = System.currentTimeMillis() - startTime;
+                    timeoutMs -=waitedTime;
+                    if (activity != getCurrentActivity()) {
+                        activity = getCurrentActivity();
+                        activity.setMonitor(this);
+                    }
+                } catch (InterruptedException e) {
+                }
+            }
+            assertEquals(windowingMode, getWindowingMode());
+            assertEquals(inMultiWindowMode, getLastReportedInMultiWindowMode());
+        }
+
+        void assertWindowingMode(int windowingMode) {
+            waitForWindowingMode(windowingMode, 5000 /* timeoutMs */);
+            final boolean inMultiWindowMode = windowingMode != WINDOWING_MODE_FULLSCREEN;
+            final TestActivityBase activity = getCurrentActivity();
+            assertEquals(inMultiWindowMode, activity.isInMultiWindowMode());
+            assertEquals(inMultiWindowMode, activity.mLastReportedInMultiWindowMode);
+            assertEquals(windowingMode, activity.getWindowingMode());
+        }
+
+        protected int getWindowingMode() {
+            final TestActivityBase activity = getCurrentActivity();
+            return (activity != null) ? activity.getWindowingMode() : WINDOWING_MODE_UNDEFINED;
+        }
+
+        protected boolean getLastReportedInMultiWindowMode() {
+            final TestActivityBase activity = getCurrentActivity();
+            return (activity != null) ? activity.mLastReportedInMultiWindowMode : false;
+        }
+    }
+
+    protected static class TestActivityBase extends Activity {
+        protected boolean mLastReportedInMultiWindowMode;
+        private Instrumentation.ActivityMonitor mMonitor = new Instrumentation.ActivityMonitor();
+
+        protected Activity startActivity(Class<?> cls, int flags, Instrumentation instrumentation) {
+            final Intent intent = new Intent(this, cls);
+            intent.addFlags(flags);
+            final Activity activity = instrumentation.startActivitySync(intent);
+            instrumentation.waitForIdleSync();
+            return activity;
+        }
+
+        protected void setMonitor(Instrumentation.ActivityMonitor monitor) {
+            synchronized (mMonitor) {
+                mMonitor = monitor;
+            }
+        }
+
+        protected int getWindowingMode() {
+            return getResources().getConfiguration().windowConfiguration.getWindowingMode();
+        }
+
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            mLastReportedInMultiWindowMode = isInMultiWindowMode();
+        }
+
+        @Override
+        public void onMultiWindowModeChanged(
+                boolean isInMultiWindowMode, Configuration newConfig) {
+            super.onMultiWindowModeChanged(isInMultiWindowMode, newConfig);
+            mLastReportedInMultiWindowMode = isInMultiWindowMode;
+            synchronized (mMonitor) {
+                mMonitor.notifyAll();
+            }
+        }
+
+        @Override
+        public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode,
+                Configuration newConfig) {
+            super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig);
+            synchronized (mMonitor) {
+                mMonitor.notifyAll();
+            }
+        }
+
+        @Override
+        public void onConfigurationChanged(Configuration newConfig) {
+            super.onConfigurationChanged(newConfig);
+            synchronized (mMonitor) {
+                mMonitor.notifyAll();
+            }
+        }
     }
 }

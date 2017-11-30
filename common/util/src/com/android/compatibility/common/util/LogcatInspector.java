@@ -25,31 +25,27 @@ public abstract class LogcatInspector {
     protected abstract InputStream executeShellCommand(String command) throws IOException;
 
     /**
-     * Attempts to clear logcat and logs an unique string using tag {@param tag}.
-     *
-     * <p>Clearing logcat is known to be unreliable. This unique string is returned and can be used
-     * to find this point in the log even if clearing failed.
+     * Logs an unique string using tag {@param tag} and wait until it appears to continue execution.
      *
      * @return a unique separator string.
      * @throws IOException if error while executing command.
      */
-    public String clearAndMark(String tag) throws IOException {
-        executeShellCommand("logcat -c");
+    public String mark(String tag) throws IOException {
         String uniqueString = ":::" + UUID.randomUUID().toString();
         executeShellCommand("log -t " + tag + " " + uniqueString);
         // This is to guarantee that we only return after the string has been logged, otherwise
         // in practice the case where calling Log.?(<message1>) right after clearAndMark() resulted
         // in <message1> appearing before the unique identifier. It's not guaranteed per the docs
-        // that log command will have written when returning, so better be safe. 3s should be fine.
-        assertLogcatContainsInOrder(tag + ":* *:S", 3, uniqueString);
+        // that log command will have written when returning, so better be safe. 5s should be fine.
+        assertLogcatContainsInOrder(tag + ":* *:S", 5, uniqueString);
         return uniqueString;
     }
 
     /**
      * Wait for up to {@param maxTimeoutInSeconds} for the given {@param logcatStrings} strings to
      * appear in logcat in the given order. By passing the separator returned by {@link
-     * #clearAndMark(String)} as the first string you can ensure that only logs emitted after that
-     * call to clearAndMark() are found. Repeated strings are not supported.
+     * #mark(String)} as the first string you can ensure that only logs emitted after that
+     * call to mark() are found. Repeated strings are not supported.
      *
      * @throws AssertionError if the strings are not found in the given time.
      * @throws IOException if error while reading.

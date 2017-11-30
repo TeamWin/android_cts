@@ -23,6 +23,7 @@
 #include <string>
 #include <map>
 #include <mutex>
+#include <vector>
 #include <unistd.h>
 #include <assert.h>
 #include <jni.h>
@@ -242,6 +243,11 @@ class CaptureSessionListener {
 
 class CaptureResultListener {
   public:
+    ~CaptureResultListener() {
+        std::unique_lock<std::mutex> l(mMutex);
+        clearSavedRequestsLocked();
+    }
+
     static void onCaptureStart(void* /*obj*/, ACameraCaptureSession* /*session*/,
             const ACaptureRequest* /*request*/, int64_t /*timestamp*/) {
         //Not used for now
@@ -253,7 +259,7 @@ class CaptureResultListener {
     }
 
     static void onCaptureCompleted(void* obj, ACameraCaptureSession* /*session*/,
-            ACaptureRequest* /*request*/, const ACameraMetadata* result) {
+            ACaptureRequest* request, const ACameraMetadata* result) {
         ALOGV("%s", __FUNCTION__);
         if ((obj == nullptr) || (result == nullptr)) {
             return;
@@ -266,6 +272,11 @@ class CaptureResultListener {
             ALOGE("Error: Sync frame number missing from result!");
             return;
         }
+
+        if (thiz->mSaveCompletedRequests) {
+            thiz->mCompletedRequests.push_back(ACaptureRequest_copy(request));
+        }
+
         thiz->mLastCompletedFrameNumber = entry.data.i64[0];
         thiz->mResultCondition.notify_one();
     }
@@ -354,23 +365,48 @@ class CaptureResultListener {
         return ret;
     }
 
+    void setRequestSave(bool enable) {
+        std::unique_lock<std::mutex> l(mMutex);
+        if (!enable) {
+            clearSavedRequestsLocked();
+        }
+        mSaveCompletedRequests = enable;
+    }
+
+    // The lifecycle of returned ACaptureRequest* is still managed by CaptureResultListener
+    void getCompletedRequests(std::vector<ACaptureRequest*>* out) {
+        std::unique_lock<std::mutex> l(mMutex);
+        *out = mCompletedRequests;
+    }
+
     void reset() {
         std::lock_guard<std::mutex> lock(mMutex);
-        mLastSequenceIdCompleted = 0;
-        mLastSequenceFrameNumber = 0;
-        mLastCompletedFrameNumber = 0;
-        mLastLostFrameNumber = 0;
-        mLastFailedFrameNumber = 0;
+        mLastSequenceIdCompleted = -1;
+        mLastSequenceFrameNumber = -1;
+        mLastCompletedFrameNumber = -1;
+        mLastLostFrameNumber = -1;
+        mLastFailedFrameNumber = -1;
+        mSaveCompletedRequests = false;
+        clearSavedRequestsLocked();
     }
 
   private:
     std::mutex mMutex;
     std::condition_variable mResultCondition;
-    int64_t mLastSequenceIdCompleted;
-    int64_t mLastSequenceFrameNumber;
-    int64_t mLastCompletedFrameNumber;
-    int64_t mLastLostFrameNumber;
-    int64_t mLastFailedFrameNumber;
+    int mLastSequenceIdCompleted = -1;
+    int64_t mLastSequenceFrameNumber = -1;
+    int64_t mLastCompletedFrameNumber = -1;
+    int64_t mLastLostFrameNumber = -1;
+    int64_t mLastFailedFrameNumber = -1;
+    bool    mSaveCompletedRequests = false;
+    std::vector<ACaptureRequest*> mCompletedRequests;
+
+    void clearSavedRequestsLocked() {
+        for (ACaptureRequest* req : mCompletedRequests) {
+            ACaptureRequest_free(req);
+        }
+        mCompletedRequests.clear();
+    }
 };
 
 class ImageReaderListener {
@@ -892,6 +928,16 @@ class PreviewTestCase {
         return ACAMERA_OK;
     }
 
+    // The output ACaptureRequest* is still managed by testcase class
+    camera_status_t getStillRequest(ACaptureRequest** out) {
+        if (mStillRequest == nullptr) {
+            ALOGE("Camera %s Still capture request hasn't been created", mCameraId);
+            return ACAMERA_ERROR_INVALID_PARAMETER;
+        }
+        *out = mStillRequest;
+        return ACAMERA_OK;
+    }
+
     camera_status_t startPreview(int *sequenceId = nullptr) {
         if (mSession == nullptr || mPreviewRequest == nullptr) {
             ALOGE("Testcase cannot start preview: session %p, preview request %p",
@@ -947,6 +993,18 @@ class PreviewTestCase {
         int seqId;
         return ACameraCaptureSession_capture(
                 mSession, nullptr, 1, &mStillRequest, &seqId);
+    }
+
+    camera_status_t capture(ACaptureRequest* request,
+            ACameraCaptureSession_captureCallbacks* listener,
+            /*out*/int* seqId) {
+        if (mSession == nullptr || request == nullptr) {
+            ALOGE("Testcase cannot capture session: session %p, request %p",
+                    mSession, request);
+            return ACAMERA_ERROR_UNKNOWN;
+        }
+        return ACameraCaptureSession_capture(
+                mSession, listener, 1, &request, seqId);
     }
 
     camera_status_t resetWithErrorLog() {
@@ -1444,6 +1502,34 @@ testCameraDeviceCreateCaptureRequestNative(
                     LOG_ERROR(errorString, "Unknown tagId %u, sectionId %u", tagId, sectionId);
                     goto cleanup;
                 }
+            }
+
+            void* context = nullptr;
+            ret = ACaptureRequest_getUserContext(request, &context);
+            if (ret != ACAMERA_OK) {
+                LOG_ERROR(errorString, "Get capture request context failed: ret %d", ret);
+                goto cleanup;
+            }
+            if (context != nullptr) {
+                LOG_ERROR(errorString, "Capture request context is not null: %p", context);
+                goto cleanup;
+            }
+
+            intptr_t magic_num = 0xBEEF;
+            ret = ACaptureRequest_setUserContext(request, (void*) magic_num);
+            if (ret != ACAMERA_OK) {
+                LOG_ERROR(errorString, "Set capture request context failed: ret %d", ret);
+                goto cleanup;
+            }
+
+            ret = ACaptureRequest_getUserContext(request, &context);
+            if (ret != ACAMERA_OK) {
+                LOG_ERROR(errorString, "Get capture request context failed: ret %d", ret);
+                goto cleanup;
+            }
+            if (context != (void*) magic_num) {
+                LOG_ERROR(errorString, "Capture request context is wrong: %p", context);
+                goto cleanup;
             }
 
             // try get/set capture request fields
@@ -2111,12 +2197,66 @@ bool nativeImageReaderTestBase(
             goto cleanup;
         }
 
+        CaptureResultListener resultListener;
+        ACameraCaptureSession_captureCallbacks resultCb {
+            &resultListener,
+            CaptureResultListener::onCaptureStart,
+            CaptureResultListener::onCaptureProgressed,
+            CaptureResultListener::onCaptureCompleted,
+            CaptureResultListener::onCaptureFailed,
+            CaptureResultListener::onCaptureSequenceCompleted,
+            CaptureResultListener::onCaptureSequenceAborted,
+            CaptureResultListener::onCaptureBufferLost
+        };
+        resultListener.setRequestSave(true);
+        ACaptureRequest* requestTemplate = nullptr;
+        ret = testCase.getStillRequest(&requestTemplate);
+        if (ret != ACAMERA_OK || requestTemplate == nullptr) {
+            // Don't log error here. testcase did it
+            goto cleanup;
+        }
+
         // Do some still capture
-        for (int capture = 0; capture < NUM_TEST_IMAGES; capture++) {
-            ret = testCase.takePicture();
+        int lastSeqId = -1;
+        for (intptr_t capture = 0; capture < NUM_TEST_IMAGES; capture++) {
+            ACaptureRequest* req = ACaptureRequest_copy(requestTemplate);
+            ACaptureRequest_setUserContext(req, (void*) capture);
+            int seqId;
+            ret = testCase.capture(req, &resultCb, &seqId);
             if (ret != ACAMERA_OK) {
-                LOG_ERROR(errorString, "Camera %s capture(%d) failed. ret %d",
+                LOG_ERROR(errorString, "Camera %s capture(%" PRIdPTR ") failed. ret %d",
                         cameraId, capture, ret);
+                goto cleanup;
+            }
+            if (capture == NUM_TEST_IMAGES - 1) {
+                lastSeqId = seqId;
+            }
+            ACaptureRequest_free(req);
+        }
+
+        // wait until last sequence complete
+        resultListener.getCaptureSequenceLastFrameNumber(lastSeqId, /*timeoutSec*/ 3);
+
+        std::vector<ACaptureRequest*> completedRequests;
+        resultListener.getCompletedRequests(&completedRequests);
+
+        if (completedRequests.size() != NUM_TEST_IMAGES) {
+            LOG_ERROR(errorString, "Camera %s fails to capture %d capture results. Got %zu",
+                    cameraId, NUM_TEST_IMAGES, completedRequests.size());
+            goto cleanup;
+        }
+
+        for (intptr_t i = 0; i < NUM_TEST_IMAGES; i++) {
+            intptr_t userContext = -1;
+            ret = ACaptureRequest_getUserContext(completedRequests[i], (void**) &userContext);
+            if (ret != ACAMERA_OK) {
+                LOG_ERROR(errorString, "Camera %s fails to get request user context", cameraId);
+                goto cleanup;
+            }
+
+            if (userContext != i) {
+                LOG_ERROR(errorString, "Camera %s fails to return matching user context. "
+                        "Expect %" PRIdPTR ", got %" PRIdPTR, cameraId, i, userContext);
                 goto cleanup;
             }
         }

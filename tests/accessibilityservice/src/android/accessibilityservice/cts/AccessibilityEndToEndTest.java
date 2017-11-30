@@ -16,6 +16,11 @@
 
 package android.accessibilityservice.cts;
 
+import static android.accessibilityservice.cts.utils.AsyncUtils.await;
+
+import android.accessibilityservice.AccessibilityServiceInfo;
+import android.accessibilityservice.cts.R;
+import android.accessibilityservice.cts.utils.AsyncUtils;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Notification;
@@ -30,16 +35,18 @@ import android.content.res.Configuration;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 
-import android.accessibilityservice.cts.R;
-
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 /**
  * This class performs end-to-end testing of the accessibility feature by
@@ -428,6 +435,67 @@ public class AccessibilityEndToEndTest extends
         } finally {
             service.disableSelfAndRemove();
         }
+    }
+
+    @MediumTest
+    public void testNotObservedEventTypesNotGeneratedEvent() throws Throwable {
+        // Make sure we get only click events
+        await(updateServiceInfo(info -> info.eventTypes = AccessibilityEvent.TYPE_VIEW_SELECTED));
+        try {
+            AccessibilityManager am = getActivity().getSystemService(AccessibilityManager.class);
+            assertFalse(am.isObservedEventType(AccessibilityEvent.TYPE_ANNOUNCEMENT));
+            assertTrue(am.isObservedEventType(AccessibilityEvent.TYPE_VIEW_SELECTED));
+
+            Runnable triggerEvent = () -> {
+                getActivity().runOnUiThread(() -> {
+                    final ListView listView = getActivity().findViewById(R.id.listview);
+                    // Enforce only AccessibilityEvents of the observed type are being created
+                    listView.getRootView().setAccessibilityDelegate(
+                            new View.AccessibilityDelegate() {
+                                @Override
+                                public boolean onRequestSendAccessibilityEvent(ViewGroup host,
+                                        View child, AccessibilityEvent event) {
+                                    assertNotSame("TYPE_ANNOUNCEMENT events shouldn't be fired",
+                                            AccessibilityEvent.TYPE_ANNOUNCEMENT,
+                                            event.getEventType());
+                                    return true;
+                                }
+                            });
+                    listView.announceForAccessibility("Foo");
+                    listView.setSelection(1);
+                });
+            };
+            AccessibilityEvent awaitedEvent = getInstrumentation().getUiAutomation()
+                    .executeAndWaitForEvent(triggerEvent,
+                            event -> event.getEventType() == AccessibilityEvent.TYPE_VIEW_SELECTED,
+                            TIMEOUT_ASYNC_PROCESSING);
+            assertNotNull("Did not receive expected event", awaitedEvent);
+        } finally {
+            // Reset to listen to all events
+            updateServiceInfo(info -> info.eventTypes = AccessibilityEvent.TYPES_ALL_MASK);
+        }
+    }
+
+    private CompletableFuture<Void> updateServiceInfo(Consumer<AccessibilityServiceInfo> update) {
+        final UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
+        final AccessibilityServiceInfo info = uiAutomation.getServiceInfo();
+
+        CompletableFuture<Void> result = new CompletableFuture<>();
+        getActivity().getSystemService(AccessibilityManager.class)
+                .addAccessibilityServicesStateChangeListener(
+                        new AccessibilityManager.AccessibilityServicesStateChangeListener() {
+                            @Override
+                            public void onAccessibilityServicesStateChanged(
+                                    AccessibilityManager a) {
+                                result.complete(null);
+                                a.removeAccessibilityServicesStateChangeListener(this);
+                            }
+                        }, null);
+
+        update.accept(info);
+        uiAutomation.setServiceInfo(info);
+
+        return result;
     }
 
     /**
