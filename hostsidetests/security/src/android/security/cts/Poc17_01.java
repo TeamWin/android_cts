@@ -30,47 +30,4 @@ public class Poc17_01 extends SecurityTestCase {
             AdbUtils.runPoc("CVE-2016-8482", getDevice(), 60);
         }
     }
-
-   /**
-     *  b/32636619
-     */
-    @SecurityTest
-    public void testPocCVE_2017_0429() throws Exception {
-        if(containsDriver(getDevice(), "/dev/nvhost-as-gpu")) {
-            enableAdbRoot(getDevice());
-            AdbUtils.runPoc("CVE-2017-0429", getDevice(), 60);
-        }
-    }
-
-   /**
-     *  b/32219121
-     */
-    @SecurityTest
-    public void testPocCVE_2016_8455() throws Exception {
-        enableAdbRoot(getDevice());
-        AdbUtils.runPoc("CVE-2016-8455", getDevice(), 60);
-    }
-
-   /**
-     *  b/32219255
-     */
-    @SecurityTest
-    public void testPocCVE_2016_8456() throws Exception {
-        enableAdbRoot(getDevice());
-        AdbUtils.runPoc("CVE-2016-8456", getDevice(), 60);
-        // CTS begins the next test before device finishes rebooting,
-        // sleep to allow time for device to reboot.
-        Thread.sleep(60000);
-    }
-
-   /**
-     *  b/32219453
-     */
-    @SecurityTest
-    public void testPocCVE_2016_8457() throws Exception {
-        enableAdbRoot(getDevice());
-        AdbUtils.runPoc("CVE-2016-8457", getDevice(), 60);
-        // Device takes up to 60 seconds to crash after PoC run.
-        Thread.sleep(60000);
-    }
  }
