@@ -16,6 +16,10 @@
 package android.autofillservice.cts;
 
 import static android.autofillservice.cts.Helper.runShellCommand;
+import static android.autofillservice.cts.WebViewActivity.HTML_NAME_PASSWORD;
+import static android.autofillservice.cts.WebViewActivity.HTML_NAME_USERNAME;
+import static android.autofillservice.cts.WebViewActivity.ID_OUTSIDE1;
+import static android.autofillservice.cts.WebViewActivity.ID_OUTSIDE2;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -81,12 +85,15 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
         // Set service.
         enableService();
 
+        // Load WebView
+        final MyWebView myWebView = mActivity.loadWebView();
+
         // Set expectations.
-        mActivity.mWebView.expectAutofill("dude", "sweet");
+        myWebView.expectAutofill("dude", "sweet");
         final MyAutofillCallback callback = mActivity.registerCallback();
         sReplier.addResponse(new CannedDataset.Builder()
-                .setField("username", "dude")
-                .setField("password", "sweet")
+                .setField(HTML_NAME_USERNAME, "dude")
+                .setField(HTML_NAME_PASSWORD, "sweet")
                 .setPresentation(createPresentation("The Dude"))
                 .build());
 
@@ -96,19 +103,19 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
         sUiBot.assertDatasets("The Dude");
 
         // Change focus around.
-        final int usernameChildId = callback.assertUiShownEventForVirtualChild(mActivity.mWebView);
+        final int usernameChildId = callback.assertUiShownEventForVirtualChild(myWebView);
         mActivity.getUsernameLabel(sUiBot).click();
-        callback.assertUiHiddenEvent(mActivity.mWebView, usernameChildId);
+        callback.assertUiHiddenEvent(myWebView, usernameChildId);
         sUiBot.assertNoDatasets();
         mActivity.getPasswordInput(sUiBot).click();
-        final int passwordChildId = callback.assertUiShownEventForVirtualChild(mActivity.mWebView);
+        final int passwordChildId = callback.assertUiShownEventForVirtualChild(myWebView);
         final UiObject2 datasetPicker = sUiBot.assertDatasets("The Dude");
 
         // Now Autofill it.
         sUiBot.selectDataset(datasetPicker, "The Dude");
-        mActivity.mWebView.assertAutofilled();
+        myWebView.assertAutofilled();
         sUiBot.assertNoDatasets();
-        callback.assertUiHiddenEvent(mActivity.mWebView, passwordChildId);
+        callback.assertUiHiddenEvent(myWebView, passwordChildId);
 
         // Make sure screen was autofilled.
         assertThat(mActivity.getUsernameInput(sUiBot).getText()).isEqualTo("dude");
@@ -127,7 +134,7 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
             assertThat(webViewNode.getWebScheme()).isEqualTo("https");
 
             final ViewNode usernameNode =
-                    Helper.findNodeByHtmlName(fillRequest.structure, "username");
+                    Helper.findNodeByHtmlName(fillRequest.structure, HTML_NAME_USERNAME);
             Helper.assertTextIsSanitized(usernameNode);
             final HtmlInfo usernameHtmlInfo = Helper.assertHasHtmlTag(usernameNode, "input");
             Helper.assertHasAttribute(usernameHtmlInfo, "type", "text");
@@ -137,7 +144,7 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
             assertThat(usernameNode.getHint()).isEqualTo("There's no place like a holder");
 
             final ViewNode passwordNode =
-                    Helper.findNodeByHtmlName(fillRequest.structure, "password");
+                    Helper.findNodeByHtmlName(fillRequest.structure, HTML_NAME_PASSWORD);
             Helper.assertTextIsSanitized(passwordNode);
             final HtmlInfo passwordHtmlInfo = Helper.assertHasHtmlTag(passwordNode, "input");
             Helper.assertHasAttribute(passwordHtmlInfo, "type", "password");
@@ -157,9 +164,13 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
         // Set service.
         enableService();
 
+        // Load WebView
+        mActivity.loadWebView();
+
         // Set expectations.
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, "username", "password")
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD,
+                        HTML_NAME_USERNAME, HTML_NAME_PASSWORD)
                 .build());
 
         // Trigger autofill.
@@ -186,8 +197,10 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
 
         // Assert results
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
-        final ViewNode usernameNode = Helper.findNodeByHtmlName(saveRequest.structure, "username");
-        final ViewNode passwordNode = Helper.findNodeByHtmlName(saveRequest.structure, "password");
+        final ViewNode usernameNode = Helper.findNodeByHtmlName(saveRequest.structure,
+                HTML_NAME_USERNAME);
+        final ViewNode passwordNode = Helper.findNodeByHtmlName(saveRequest.structure,
+                HTML_NAME_PASSWORD);
         if (INJECT_EVENTS) {
             Helper.assertTextAndValue(usernameNode, "u");
             Helper.assertTextAndValue(passwordNode, "p");
@@ -202,14 +215,18 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
         // Set service.
         enableService();
 
+        // Load WebView
+        final MyWebView myWebView = mActivity.loadWebView();
+
         // Set expectations.
         final MyAutofillCallback callback = mActivity.registerCallback();
-        mActivity.mWebView.expectAutofill("dude", "sweet");
+        myWebView.expectAutofill("dude", "sweet");
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, "username", "password")
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD,
+                        HTML_NAME_USERNAME, HTML_NAME_PASSWORD)
                 .addDataset(new CannedDataset.Builder()
-                        .setField("username", "dude")
-                        .setField("password", "sweet")
+                        .setField(HTML_NAME_USERNAME, "dude")
+                        .setField(HTML_NAME_PASSWORD, "sweet")
                         .setPresentation(createPresentation("The Dude"))
                         .build())
                 .build());
@@ -218,22 +235,24 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
         mActivity.getUsernameInput(sUiBot).click();
         final FillRequest fillRequest = sReplier.getNextFillRequest();
         sUiBot.assertDatasets("The Dude");
-        final int usernameChildId = callback.assertUiShownEventForVirtualChild(mActivity.mWebView);
+        final int usernameChildId = callback.assertUiShownEventForVirtualChild(myWebView);
 
         // Assert structure passed to service.
-        final ViewNode usernameNode = Helper.findNodeByHtmlName(fillRequest.structure, "username");
+        final ViewNode usernameNode = Helper.findNodeByHtmlName(fillRequest.structure,
+                HTML_NAME_USERNAME);
         Helper.assertTextIsSanitized(usernameNode);
         assertThat(usernameNode.isFocused()).isTrue();
         assertThat(usernameNode.getAutofillHints()).asList().containsExactly("username");
-        final ViewNode passwordNode = Helper.findNodeByHtmlName(fillRequest.structure, "password");
+        final ViewNode passwordNode = Helper.findNodeByHtmlName(fillRequest.structure,
+                HTML_NAME_PASSWORD);
         Helper.assertTextIsSanitized(passwordNode);
         assertThat(passwordNode.getAutofillHints()).asList().containsExactly("current-password");
         assertThat(passwordNode.isFocused()).isFalse();
 
         // Autofill it.
         sUiBot.selectDataset("The Dude");
-        mActivity.mWebView.assertAutofilled();
-        callback.assertUiHiddenEvent(mActivity.mWebView, usernameChildId);
+        myWebView.assertAutofilled();
+        callback.assertUiHiddenEvent(myWebView, usernameChildId);
 
         // Make sure screen was autofilled.
         assertThat(mActivity.getUsernameInput(sUiBot).getText()).isEqualTo("dude");
@@ -260,8 +279,10 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
 
         // Assert results
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
-        final ViewNode usernameNode2 = Helper.findNodeByHtmlName(saveRequest.structure, "username");
-        final ViewNode passwordNode2 = Helper.findNodeByHtmlName(saveRequest.structure, "password");
+        final ViewNode usernameNode2 = Helper.findNodeByHtmlName(saveRequest.structure,
+                HTML_NAME_USERNAME);
+        final ViewNode passwordNode2 = Helper.findNodeByHtmlName(saveRequest.structure,
+                HTML_NAME_PASSWORD);
         if (INJECT_EVENTS) {
             Helper.assertTextAndValue(usernameNode2, "dudeu");
             Helper.assertTextAndValue(passwordNode2, "sweetp");
@@ -269,5 +290,286 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
             Helper.assertTextAndValue(usernameNode2, "DUDE");
             Helper.assertTextAndValue(passwordNode2, "SWEET");
         }
+    }
+
+    @Test
+    public void testAutofillAndSave_withExternalViews_loadWebViewFirst() throws Exception {
+        // Set service.
+        enableService();
+
+        // Load views
+        final MyWebView myWebView = mActivity.loadWebView();
+        mActivity.loadOutsideViews();
+
+        // Set expectations.
+        myWebView.expectAutofill("dude", "sweet");
+        final OneTimeTextWatcher outside1Watcher = new OneTimeTextWatcher("outside1",
+                mActivity.mOutside1, "duder");
+        final OneTimeTextWatcher outside2Watcher = new OneTimeTextWatcher("outside2",
+                mActivity.mOutside2, "sweeter");
+        mActivity.mOutside1.addTextChangedListener(outside1Watcher);
+        mActivity.mOutside2.addTextChangedListener(outside2Watcher);
+
+        final MyAutofillCallback callback = mActivity.registerCallback();
+        sReplier.setIdMode(IdMode.HTML_NAME_OR_RESOURCE_ID);
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD,
+                        HTML_NAME_USERNAME, HTML_NAME_PASSWORD, ID_OUTSIDE1, ID_OUTSIDE2)
+                .addDataset(new CannedDataset.Builder()
+                        .setField(HTML_NAME_USERNAME, "dude", createPresentation("USER"))
+                        .setField(HTML_NAME_PASSWORD, "sweet", createPresentation("PASS"))
+                        .setField(ID_OUTSIDE1, "duder", createPresentation("OUT1"))
+                        .setField(ID_OUTSIDE2, "sweeter", createPresentation("OUT2"))
+                        .build())
+                .build());
+
+        // Trigger autofill.
+        mActivity.getUsernameInput(sUiBot).click();
+        final FillRequest fillRequest = sReplier.getNextFillRequest();
+        sUiBot.assertDatasets("USER");
+        final int usernameChildId = callback.assertUiShownEventForVirtualChild(myWebView);
+
+        // Assert structure passed to service.
+        final ViewNode usernameFillNode = Helper.findNodeByHtmlName(fillRequest.structure,
+                HTML_NAME_USERNAME);
+        Helper.assertTextIsSanitized(usernameFillNode);
+        assertThat(usernameFillNode.isFocused()).isTrue();
+        assertThat(usernameFillNode.getAutofillHints()).asList().containsExactly("username");
+        final ViewNode passwordFillNode = Helper.findNodeByHtmlName(fillRequest.structure,
+                HTML_NAME_PASSWORD);
+        Helper.assertTextIsSanitized(passwordFillNode);
+        assertThat(passwordFillNode.getAutofillHints()).asList()
+                .containsExactly("current-password");
+        assertThat(passwordFillNode.isFocused()).isFalse();
+
+        final ViewNode outside1FillNode = Helper.findNodeByResourceId(fillRequest.structure,
+                ID_OUTSIDE1);
+        Helper.assertTextIsSanitized(outside1FillNode);
+        final ViewNode outside2FillNode = Helper.findNodeByResourceId(fillRequest.structure,
+                ID_OUTSIDE2);
+        Helper.assertTextIsSanitized(outside2FillNode);
+
+        // Move focus around to make sure UI is shown accordingly
+        mActivity.runOnUiThread(() -> mActivity.mOutside1.requestFocus());
+        callback.assertUiHiddenEvent(myWebView, usernameChildId);
+        sUiBot.assertDatasets("OUT1");
+        callback.assertUiShownEvent(mActivity.mOutside1);
+
+        mActivity.getPasswordInput(sUiBot).click();
+        callback.assertUiHiddenEvent(mActivity.mOutside1);
+        sUiBot.assertDatasets("PASS");
+        final int passwordChildId = callback.assertUiShownEventForVirtualChild(myWebView);
+
+        mActivity.runOnUiThread(() -> mActivity.mOutside2.requestFocus());
+        callback.assertUiHiddenEvent(myWebView, passwordChildId);
+        final UiObject2 datasetPicker = sUiBot.assertDatasets("OUT2");
+        callback.assertUiShownEvent(mActivity.mOutside2);
+
+        // Autofill it.
+        sUiBot.selectDataset(datasetPicker, "OUT2");
+        callback.assertUiHiddenEvent(mActivity.mOutside2);
+
+        myWebView.assertAutofilled();
+        outside1Watcher.assertAutoFilled();
+        outside2Watcher.assertAutoFilled();
+
+        // Now trigger save.
+        if (INJECT_EVENTS) {
+            mActivity.getUsernameInput(sUiBot).click();
+            runShellCommand("input keyevent KEYCODE_U");
+            mActivity.getPasswordInput(sUiBot).click();
+            runShellCommand("input keyevent KEYCODE_P");
+        } else {
+            mActivity.getUsernameInput(sUiBot).setText("DUDE");
+            mActivity.getPasswordInput(sUiBot).setText("SWEET");
+        }
+        mActivity.runOnUiThread(() -> {
+            mActivity.mOutside1.setText("DUDER");
+            mActivity.mOutside2.setText("SWEETER");
+        });
+
+        mActivity.getLoginButton(sUiBot).click();
+
+        // Assert save UI shown.
+        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+
+        // Assert results
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+        final ViewNode usernameSaveNode = Helper.findNodeByHtmlName(saveRequest.structure,
+                HTML_NAME_USERNAME);
+        final ViewNode passwordSaveNode = Helper.findNodeByHtmlName(saveRequest.structure,
+                HTML_NAME_PASSWORD);
+        if (INJECT_EVENTS) {
+            Helper.assertTextAndValue(usernameSaveNode, "dudeu");
+            Helper.assertTextAndValue(passwordSaveNode, "sweetp");
+        } else {
+            Helper.assertTextAndValue(usernameSaveNode, "DUDE");
+            Helper.assertTextAndValue(passwordSaveNode, "SWEET");
+        }
+
+        final ViewNode outside1SaveNode = Helper.findNodeByResourceId(saveRequest.structure,
+                ID_OUTSIDE1);
+        Helper.assertTextAndValue(outside1SaveNode, "DUDER");
+        final ViewNode outside2SaveNode = Helper.findNodeByResourceId(saveRequest.structure,
+                ID_OUTSIDE2);
+        Helper.assertTextAndValue(outside2SaveNode, "SWEETER");
+    }
+
+
+    @Test
+    public void testAutofillAndSave_withExternalViews_loadExternalViewsFirst() throws Exception {
+        if (true) return; // TODO(b/69461853): re-enable once WebView fixes it
+
+        // Set service.
+        enableService();
+
+        // Load outside views
+        mActivity.loadOutsideViews();
+
+        // Set expectations.
+        final OneTimeTextWatcher outside1Watcher = new OneTimeTextWatcher("outside1",
+                mActivity.mOutside1, "duder");
+        final OneTimeTextWatcher outside2Watcher = new OneTimeTextWatcher("outside2",
+                mActivity.mOutside2, "sweeter");
+        mActivity.mOutside1.addTextChangedListener(outside1Watcher);
+        mActivity.mOutside2.addTextChangedListener(outside2Watcher);
+
+        final MyAutofillCallback callback = mActivity.registerCallback();
+        sReplier.setIdMode(IdMode.RESOURCE_ID);
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_OUTSIDE1, "duder", createPresentation("OUT1"))
+                        .setField(ID_OUTSIDE2, "sweeter", createPresentation("OUT2"))
+                        .build())
+                .build());
+
+        // Trigger autofill.
+        mActivity.runOnUiThread(() -> mActivity.mOutside1.requestFocus());
+        final FillRequest fillRequest1 = sReplier.getNextFillRequest();
+        sUiBot.assertDatasets("OUT1");
+        callback.assertUiShownEvent(mActivity.mOutside1);
+
+        // Move focus around to make sure UI is shown accordingly
+        mActivity.runOnUiThread(() -> mActivity.mOutside2.requestFocus());
+        callback.assertUiHiddenEvent(mActivity.mOutside1);
+        sUiBot.assertDatasets("OUT2");
+        callback.assertUiShownEvent(mActivity.mOutside2);
+
+        // Assert structure passed to service.
+        final ViewNode outside1FillNode = Helper.findNodeByResourceId(fillRequest1.structure,
+                ID_OUTSIDE1);
+        Helper.assertTextIsSanitized(outside1FillNode);
+        final ViewNode outside2FillNode = Helper.findNodeByResourceId(fillRequest1.structure,
+                ID_OUTSIDE2);
+        Helper.assertTextIsSanitized(outside2FillNode);
+
+        // Now load Webiew
+        final MyWebView myWebView = mActivity.loadWebView();
+
+        // Set expectations
+        myWebView.expectAutofill("dude", "sweet");
+        sReplier.setIdMode(IdMode.HTML_NAME_OR_RESOURCE_ID);
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD,
+                        HTML_NAME_USERNAME, HTML_NAME_PASSWORD, ID_OUTSIDE1, ID_OUTSIDE2)
+                .addDataset(new CannedDataset.Builder()
+                        .setField(HTML_NAME_USERNAME, "dude", createPresentation("USER"))
+                        .setField(HTML_NAME_PASSWORD, "sweet", createPresentation("PASS"))
+                        .build())
+                .build());
+
+        // Trigger autofill.
+        mActivity.getUsernameInput(sUiBot).click();
+        final FillRequest fillRequest2 = sReplier.getNextFillRequest();
+        callback.assertUiHiddenEvent(mActivity.mOutside2);
+        sUiBot.assertDatasets("USER");
+        final int usernameChildId = callback.assertUiShownEventForVirtualChild(myWebView);
+
+        // Move focus around to make sure UI is shown accordingly
+        mActivity.runOnUiThread(() -> mActivity.mOutside1.requestFocus());
+        callback.assertUiHiddenEvent(myWebView, usernameChildId);
+        sUiBot.assertDatasets("OUT1");
+        callback.assertUiShownEvent(mActivity.mOutside1);
+
+        mActivity.runOnUiThread(() -> mActivity.mOutside2.requestFocus());
+        callback.assertUiHiddenEvent(mActivity.mOutside1);
+        sUiBot.assertDatasets("OUT2");
+        callback.assertUiShownEvent(mActivity.mOutside2);
+
+        mActivity.getPasswordInput(sUiBot).click();
+        callback.assertUiHiddenEvent(mActivity.mOutside2);
+        sUiBot.assertDatasets("PASS");
+        final int passwordChildId = callback.assertUiShownEventForVirtualChild(myWebView);
+
+        mActivity.runOnUiThread(() -> mActivity.mOutside2.requestFocus());
+        callback.assertUiHiddenEvent(myWebView, passwordChildId);
+        final UiObject2 datasetPicker = sUiBot.assertDatasets("OUT2");
+        callback.assertUiShownEvent(mActivity.mOutside2);
+
+        // Assert structure passed to service.
+        final ViewNode usernameFillNode = Helper.findNodeByHtmlName(fillRequest2.structure,
+                HTML_NAME_USERNAME);
+        Helper.assertTextIsSanitized(usernameFillNode);
+        assertThat(usernameFillNode.isFocused()).isTrue();
+        assertThat(usernameFillNode.getAutofillHints()).asList().containsExactly("username");
+        final ViewNode passwordFillNode = Helper.findNodeByHtmlName(fillRequest2.structure,
+                HTML_NAME_PASSWORD);
+        Helper.assertTextIsSanitized(passwordFillNode);
+        assertThat(passwordFillNode.getAutofillHints()).asList()
+                .containsExactly("current-password");
+        assertThat(passwordFillNode.isFocused()).isFalse();
+
+        // Autofill external views (2nd partition)
+        sUiBot.selectDataset(datasetPicker, "OUT2");
+        callback.assertUiHiddenEvent(mActivity.mOutside2);
+        outside1Watcher.assertAutoFilled();
+        outside2Watcher.assertAutoFilled();
+
+        // Autofill Webview (1st partition)
+        mActivity.getUsernameInput(sUiBot).click();
+        callback.assertUiShownEventForVirtualChild(myWebView);
+        sUiBot.selectDataset("USER");
+        myWebView.assertAutofilled();
+
+        // Now trigger save.
+        if (INJECT_EVENTS) {
+            mActivity.getUsernameInput(sUiBot).click();
+            runShellCommand("input keyevent KEYCODE_U");
+            mActivity.getPasswordInput(sUiBot).click();
+            runShellCommand("input keyevent KEYCODE_P");
+        } else {
+            mActivity.getUsernameInput(sUiBot).setText("DUDE");
+            mActivity.getPasswordInput(sUiBot).setText("SWEET");
+        }
+        mActivity.runOnUiThread(() -> {
+            mActivity.mOutside1.setText("DUDER");
+            mActivity.mOutside2.setText("SWEETER");
+        });
+
+        mActivity.getLoginButton(sUiBot).click();
+
+        // Assert save UI shown.
+        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+
+        // Assert results
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+        final ViewNode usernameSaveNode = Helper.findNodeByHtmlName(saveRequest.structure,
+                HTML_NAME_USERNAME);
+        final ViewNode passwordSaveNode = Helper.findNodeByHtmlName(saveRequest.structure,
+                HTML_NAME_PASSWORD);
+        if (INJECT_EVENTS) {
+            Helper.assertTextAndValue(usernameSaveNode, "dudeu");
+            Helper.assertTextAndValue(passwordSaveNode, "sweetp");
+        } else {
+            Helper.assertTextAndValue(usernameSaveNode, "DUDE");
+            Helper.assertTextAndValue(passwordSaveNode, "SWEET");
+        }
+
+        final ViewNode outside1SaveNode = Helper.findNodeByResourceId(saveRequest.structure,
+                ID_OUTSIDE1);
+        Helper.assertTextAndValue(outside1SaveNode, "DUDER");
+        final ViewNode outside2SaveNode = Helper.findNodeByResourceId(saveRequest.structure,
+                ID_OUTSIDE2);
+        Helper.assertTextAndValue(outside2SaveNode, "SWEETER");
     }
 }

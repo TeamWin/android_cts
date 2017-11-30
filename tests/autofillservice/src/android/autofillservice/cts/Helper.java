@@ -150,6 +150,10 @@ final class Helper {
         return id.equals(getHtmlName(node));
     };
 
+    private static final NodeFilter HTML_NAME_OR_RESOURCE_ID_FILTER = (node, id) -> {
+        return id.equals(getHtmlName(node)) || id.equals(node.getIdEntry());
+    };
+
     private static final NodeFilter TEXT_FILTER = (node, id) -> {
         return id.equals(node.getText());
     };
@@ -399,6 +403,14 @@ final class Helper {
      */
     static ViewNode findNodeByHtmlName(ViewNode node, String htmlName) {
         return findNodeByFilter(node, htmlName, HTML_NAME_FILTER);
+    }
+
+    /**
+     * Gets a node given the name of its HTML INPUT tag or Android resoirce id, or {@code null} if
+     * not found.
+     */
+    static ViewNode findNodeByHtmlNameOrResourceId(List<FillContext> contexts, String id) {
+        return findNodeByFilter(contexts, id, HTML_NAME_OR_RESOURCE_ID_FILTER);
     }
 
     /**

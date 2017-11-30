@@ -420,6 +420,10 @@ public class InstrumentedAutoFillService extends AutofillService {
                         fillResponse = response.asFillResponse(
                                 (name) -> Helper.findNodeByHtmlName(contexts, name));
                         break;
+                    case HTML_NAME_OR_RESOURCE_ID:
+                        fillResponse = response.asFillResponse(
+                                (id) -> Helper.findNodeByHtmlNameOrResourceId(contexts, id));
+                        break;
                     default:
                         throw new IllegalStateException("Unknown id mode: " + mIdMode);
                 }
