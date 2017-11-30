@@ -114,6 +114,16 @@ final class Helper {
     static final int UI_TIMEOUT_MS = 2000;
 
     /**
+     * Timeout (in milliseconds) for showing the autofill dataset picker UI.
+     *
+     * <p>The value is usually higher than {@link #UI_TIMEOUT_MS} because the performance of the
+     * dataset picker UI can be affect by external factors in some low-level devices.
+     *
+     * <p>Typically used by {@link UiBot}.
+     */
+    static final int UI_DATASET_PICKER_TIMEOUT_MS = 4000;
+
+    /**
      * Timeout (in milliseconds) for an activity to be brought out to top.
      */
     static final int ACTIVITY_RESURRECTION_MS = 5000;
