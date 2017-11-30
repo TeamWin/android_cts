@@ -406,7 +406,7 @@ final class UiBot {
         }
 
         final String negativeButtonText = (negativeButtonStyle
-                == SaveInfo.NEGATIVE_BUTTON_STYLE_REJECT) ? "NOT NOW" : "NO THANKS";
+                == SaveInfo.NEGATIVE_BUTTON_STYLE_REJECT) ? "Not now" : "No thanks";
         UiObject2 negativeButton = snackbar.findObject(By.text(negativeButtonText));
         assertWithMessage("negative button (%s)", negativeButtonText)
                 .that(negativeButton).isNotNull();
