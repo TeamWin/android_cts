@@ -22,18 +22,6 @@ import android.platform.test.annotations.SecurityTest;
 public class Poc17_11 extends SecurityTestCase {
 
     /**
-     * b/34705430
-     */
-    @SecurityTest
-    public void testPocCVE_2017_6264() throws Exception {
-        enableAdbRoot(getDevice());
-        if (containsDriver(getDevice(),
-                           "/sys/devices/virtual/thermal/cooling_device2/cur_state")) {
-            AdbUtils.runPocNoOutput("CVE-2017-6264", getDevice(), 60);
-        }
-    }
-
-    /**
      * b/36075131
      */
     @SecurityTest
