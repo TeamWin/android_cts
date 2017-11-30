@@ -181,7 +181,10 @@ def get_emulator_path():
 
 
 def start_emulator(name, density):
-    emu_path = get_emulator_path()
+    if name == "local":
+        emu_path = ""
+    else:
+        emu_path = get_emulator_path()
 
     # Start emulator for 560dpi, normal screen size.
     test_avd = AVD(name, emu_path)
