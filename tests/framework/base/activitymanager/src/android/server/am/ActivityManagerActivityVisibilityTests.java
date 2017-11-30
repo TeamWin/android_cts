@@ -36,7 +36,7 @@ import org.junit.After;
 import org.junit.Test;
 
 /**
- * Build: mmma -j32 cts/hostsidetests/services
+ * Build: mmma -j32 cts/tests/framework/base
  * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.ActivityManagerActivityVisibilityTests
  */
 public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestBase {
@@ -395,6 +395,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     }
 
     @Test
+    @Presubmit
     public void testTurnScreenOnSingleTask() throws Exception {
         sleepDevice();
         String logSeparator = clearLogcat();
