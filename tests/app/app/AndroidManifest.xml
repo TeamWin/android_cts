@@ -104,6 +104,8 @@
 
         <service android:name="android.app.stubs.MockService" />
 
+        <service android:name="android.app.stubs.NullService" />
+
         <activity android:name="android.app.stubs.SearchManagerStubActivity"
                 android:label="SearchManagerStubActivity">
             <intent-filter>
