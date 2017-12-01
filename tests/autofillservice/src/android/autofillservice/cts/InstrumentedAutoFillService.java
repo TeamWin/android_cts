@@ -127,7 +127,8 @@ public class InstrumentedAutoFillService extends AutofillService {
         final ComponentName component = contexts.get(contexts.size() - 1).getStructure()
                 .getActivityComponent();
         final String actualPackage = component.getPackageName();
-        if (!actualPackage.equals(getPackageName())) {
+        if (!actualPackage.equals(getPackageName())
+                && !actualPackage.equals(sReplier.mAcceptedPackageName)) {
             Log.w(TAG, "Got request from package " + actualPackage);
             return false;
         }
@@ -252,6 +253,7 @@ public class InstrumentedAutoFillService extends AutofillService {
 
         private List<Throwable> mExceptions;
         private IntentSender mOnSaveIntentSender;
+        private String mAcceptedPackageName;
 
         private Replier() {
         }
@@ -260,6 +262,10 @@ public class InstrumentedAutoFillService extends AutofillService {
 
         public void setIdMode(IdMode mode) {
             this.mIdMode = mode;
+        }
+
+        public void acceptRequestsFromPackage(String packageName) {
+            mAcceptedPackageName = packageName;
         }
 
         /**
@@ -371,6 +377,7 @@ public class InstrumentedAutoFillService extends AutofillService {
             mSaveRequests.clear();
             mExceptions = null;
             mOnSaveIntentSender = null;
+            mAcceptedPackageName = null;
         }
 
         private void onFillRequest(List<FillContext> contexts, Bundle data,
