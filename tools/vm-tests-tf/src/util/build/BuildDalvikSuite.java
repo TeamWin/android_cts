@@ -445,7 +445,7 @@ public class BuildDalvikSuite {
 
         }
 
-        DxBuildStep dexBuildStep = new DxBuildStep(
+        D8BuildStep dexBuildStep = new D8BuildStep(
             new BuildStep.BuildFile(new File(CLASSES_OUTPUT_FOLDER)),
             new BuildStep.BuildFile(new File(mainsJar)),
             false);
@@ -571,7 +571,7 @@ public class BuildDalvikSuite {
                 OUTPUT_FOLDER,
                 classFileName + ".jar");
 
-        DxBuildStep dexBuildStep = new DxBuildStep(tmpJarFile,
+        D8BuildStep dexBuildStep = new D8BuildStep(tmpJarFile,
                 outputFile,
                 true);
 
