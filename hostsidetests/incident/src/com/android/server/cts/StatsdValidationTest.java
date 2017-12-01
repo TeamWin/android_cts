@@ -32,6 +32,7 @@ import com.android.internal.os.StatsdConfigProto.Alert;
 import com.android.internal.os.StatsdConfigProto.Bucket;
 import com.android.internal.os.StatsdConfigProto.CountMetric;
 import com.android.internal.os.StatsdConfigProto.EventMetric;
+import com.android.internal.os.StatsdConfigProto.KeyMatcher;
 import com.android.internal.os.StatsdConfigProto.KeyValueMatcher;
 import com.android.internal.os.StatsdConfigProto.LogEntryMatcher;
 import com.android.internal.os.StatsdConfigProto.SimpleLogEntryMatcher;
@@ -181,24 +182,27 @@ public class StatsdValidationTest extends ProtoDumpTestCase {
         StatsdConfig.Builder configBuilder = StatsdConfig.newBuilder();
         configBuilder.setName("12345");
         configBuilder.addLogEntryMatcher(
-                LogEntryMatcher.newBuilder()
-                        .setName("SCREEN_TURNED_ON")
-                        .setSimpleLogEntryMatcher(
-                                SimpleLogEntryMatcher.newBuilder()
-                                        .setTag(Atom.SCREEN_STATE_CHANGED_FIELD_NUMBER)
-                                        .addKeyValueMatcher(KeyValueMatcher.newBuilder()
-                                                .setEqInt(
-                                                        ScreenStateChanged.State.STATE_ON_VALUE))));
+            LogEntryMatcher.newBuilder()
+                .setName("SCREEN_TURNED_ON")
+                .setSimpleLogEntryMatcher(
+                    SimpleLogEntryMatcher.newBuilder()
+                        .setTag(Atom.SCREEN_STATE_CHANGED_FIELD_NUMBER)
+                        .addKeyValueMatcher(KeyValueMatcher.newBuilder()
+                            .setKeyMatcher(
+                                KeyMatcher.newBuilder()
+                                    .setKey(ScreenStateChanged.DISPLAY_STATE_FIELD_NUMBER)
+                            ).setEqInt(ScreenStateChanged.State.STATE_ON_VALUE))));
         configBuilder.addLogEntryMatcher(
                 LogEntryMatcher.newBuilder()
-                        .setName("SCREEN_TURNED_OFF")
-                        .setSimpleLogEntryMatcher(
-                                SimpleLogEntryMatcher.newBuilder()
-                                        .setTag(Atom.SCREEN_STATE_CHANGED_FIELD_NUMBER)
-                                        .addKeyValueMatcher(KeyValueMatcher.newBuilder()
-                                                .setEqInt(
-                                                        ScreenStateChanged.State.STATE_OFF_VALUE)
-                                        )));
+                    .setName("SCREEN_TURNED_OFF")
+                    .setSimpleLogEntryMatcher(
+                        SimpleLogEntryMatcher.newBuilder()
+                            .setTag(Atom.SCREEN_STATE_CHANGED_FIELD_NUMBER)
+                            .addKeyValueMatcher(KeyValueMatcher.newBuilder()
+                                .setKeyMatcher(
+                                    KeyMatcher.newBuilder()
+                                        .setKey(ScreenStateChanged.DISPLAY_STATE_FIELD_NUMBER)
+                                ).setEqInt(ScreenStateChanged.State.STATE_OFF_VALUE))));
         return configBuilder;
     }
 
