@@ -121,6 +121,19 @@ public class PropertyUtil {
     }
 
     /**
+     * Returns whether the property value matches a given regular expression. The method uses
+     * String.matches(), requiring a complete match (i.e. expression matches entire value string)
+     */
+    public static boolean propertyMatches(String property, String regex) {
+        if (regex == null || regex.isEmpty()) {
+            // null or empty pattern implies property does not exist
+            return !propertyExists(property);
+        }
+        String value = getProperty(property);
+        return (value == null) ? false : value.matches(regex);
+    }
+
+    /**
      * Retrieves the desired integer property, returning INT_VALUE_IF_UNSET if not found.
      */
     public static int getPropertyInt(String property) {

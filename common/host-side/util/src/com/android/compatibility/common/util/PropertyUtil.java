@@ -115,4 +115,18 @@ public class PropertyUtil {
         }
         return value.equals(device.getProperty(property));
     }
+
+    /**
+     * Returns whether the property value matches a given regular expression. The method uses
+     * String.matches(), requiring a complete match (i.e. expression matches entire value string)
+     */
+    public static boolean propertyMatches(ITestDevice device, String property, String regex)
+            throws DeviceNotAvailableException {
+        if (regex == null || regex.isEmpty()) {
+            // null or empty pattern implies property does not exist
+            return !propertyExists(device, property);
+        }
+        String value = device.getProperty(property);
+        return (value == null) ? false : value.matches(regex);
+    }
 }
