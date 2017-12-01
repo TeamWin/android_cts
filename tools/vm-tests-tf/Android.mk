@@ -44,7 +44,7 @@ LOCAL_MODULE := cts-tf-dalvik-buildutil
 LOCAL_MODULE_CLASS := JAVA_LIBRARIES
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_JAVA_LIBRARIES := dx dasm cfassembler junit-host jsr305lib
+LOCAL_JAVA_LIBRARIES := dx dasm cfassembler junit-host jsr305lib d8
 
 LOCAL_CLASSPATH := $(HOST_JDK_TOOLS_JAR)
 
@@ -73,7 +73,7 @@ include $(BUILD_SYSTEM)/base_rules.mk
 vmteststf_dep_jars := \
     $(HOST_JDK_TOOLS_JAR) \
     $(cts-tf-dalvik-lib.jar) \
-    $(addprefix $(HOST_OUT_JAVA_LIBRARIES)/, cts-tf-dalvik-buildutil.jar dasm.jar dx.jar cfassembler.jar junit-host.jar)
+    $(addprefix $(HOST_OUT_JAVA_LIBRARIES)/, cts-tf-dalvik-buildutil.jar dasm.jar dx.jar cfassembler.jar junit-host.jar d8.jar)
 
 $(LOCAL_BUILT_MODULE): PRIVATE_SRC_FOLDER := $(LOCAL_PATH)/src
 $(LOCAL_BUILT_MODULE): PRIVATE_INTERMEDIATES_CLASSES := $(call intermediates-dir-for,JAVA_LIBRARIES,cts-tf-dalvik-buildutil,HOST)/classes
