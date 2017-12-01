@@ -56,7 +56,8 @@ def test_flip_mirror(cam, props, fmt, chart):
     template = cv2.imread(CHART_FILE, cv2.IMREAD_ANYDEPTH)
 
     # take img, crop chart, scale and prep for cv2 template match
-    req = its.objects.auto_capture_request()
+    s, e, _, _, fd = cam.do_3a(get_results=True)
+    req = its.objects.manual_capture_request(s, e, fd)
     cap = cam.do_capture(req, fmt)
     y, _, _ = its.image.convert_capture_to_planes(cap, props)
     y = its.image.rotate_img_per_argv(y)
@@ -64,6 +65,9 @@ def test_flip_mirror(cam, props, fmt, chart):
                                       chart.wnorm, chart.hnorm)
     patch = 255 * its.cv2image.gray_scale_img(patch)
     patch = its.cv2image.scale_img(patch.astype(np.uint8), chart.scale)
+
+    # sanity check on image
+    assert np.max(patch)-np.min(patch) > 255/8
 
     # save full images if in debug
     if debug:
