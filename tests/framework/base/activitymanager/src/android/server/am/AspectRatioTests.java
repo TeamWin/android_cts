@@ -32,6 +32,8 @@ import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.WindowManager;
 
+import com.android.compatibility.common.util.PollingCheck;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -134,9 +136,19 @@ public class AspectRatioTests extends AspectRatioTestsBase {
     public void testMaxAspectRatioResizeableActivity() throws Exception {
         final Context context = InstrumentationRegistry.getInstrumentation().getContext();
         final float expected = getAspectRatio(context);
+        final Activity testActivity = launchActivity(mMaxAspectRatioResizeableActivity);
+        PollingCheck.waitFor(testActivity::hasWindowFocus);
+
+        Display testDisplay = testActivity.findViewById(android.R.id.content).getDisplay();
+
+        // TODO(b/69982434): Fix DisplayManager NPE when getting display from Instrumentation
+        // context, then can use DisplayManager to get the aspect ratio of the correct display.
+        if (testDisplay.getDisplayId() != Display.DEFAULT_DISPLAY) {
+            return;
+        }
 
         // Since this activity is resizeable, its aspect ratio shouldn't be less than the device's
-        runAspectRatioTest(mMaxAspectRatioResizeableActivity, actual -> {
+        runTest(testActivity, actual -> {
             if (aspectRatioEqual(expected, actual) || expected < actual) return;
             fail("actual=" + actual + " is less than expected=" + expected);
         });
