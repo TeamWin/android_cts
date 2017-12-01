@@ -527,11 +527,11 @@ public class WindowManagerState {
     }
 
     Rect getDefaultPinnedStackBounds() {
-        return mDefaultPinnedStackBounds;
+        return new Rect(mDefaultPinnedStackBounds);
     }
 
     Rect getPinnedStackMomentBounds() {
-        return mPinnedStackMovementBounds;
+        return new Rect(mPinnedStackMovementBounds);
     }
 
     WindowState findFirstWindowWithType(int type) {

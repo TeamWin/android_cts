@@ -23,6 +23,8 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.server.am.ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID;
+import static android.server.am.ActivityManagerState.STATE_DESTROYED;
+import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.ActivityManagerState.STATE_STOPPED;
 import static android.view.KeyEvent.KEYCODE_WINDOW;
 
@@ -176,6 +178,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 EXTRA_ENTER_PIP, "true",
                 EXTRA_TAP_TO_FINISH, "true");
         mAmWmState.waitForValidState(PIP_ACTIVITY, WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
+        mAmWmState.waitForAppTransitionIdle();
         assertPinnedStackExists();
 
         // Tap the screen at a known location in the pinned stack bounds, and ensure that it is
@@ -254,9 +257,10 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         Rect displayRect = display.getDisplayRect();
 
         // Move the pinned stack offscreen
-        String moveStackOffscreenCommand = String.format("am stack resize 4 %d %d %d %d",
-                displayRect.width() - 200, 0, displayRect.width() + 200, 500);
-        executeShellCommand(moveStackOffscreenCommand);
+        final int stackId = getPinnedStack().mStackId;
+        final int top = 0;
+        final int left = displayRect.width() - 200;
+        resizeStack(stackId, left, top, left + 500, top + 500);
 
         // Ensure that the surface insets are not negative
         windowState = getWindowState(PIP_ACTIVITY);
@@ -327,8 +331,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         assertPinnedStackExists();
 
         // Assert that we have entered PIP and that the aspect ratio is correct
-        Rect pinnedStackBounds = mAmWmState.getAmState().getStandardStackByWindowingMode(
-                WINDOWING_MODE_PINNED).getBounds();
+        Rect pinnedStackBounds = getPinnedStackBounds();
         assertFloatEquals((float) pinnedStackBounds.width() / pinnedStackBounds.height(),
                 (float) num / denom);
     }
@@ -352,8 +355,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 EXTRA_SET_ASPECT_RATIO_DENOMINATOR, Integer.toString(denom));
         assertPinnedStackExists();
         waitForValidAspectRatio(num, denom);
-        Rect bounds = mAmWmState.getAmState().getStandardStackByWindowingMode(
-                WINDOWING_MODE_PINNED).getBounds();
+        Rect bounds = getPinnedStackBounds();
         assertFloatEquals((float) bounds.width() / bounds.height(), (float) num / denom);
     }
 
@@ -406,8 +408,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 EXTRA_SET_ASPECT_RATIO_NUMERATOR, Integer.toString(num),
                 EXTRA_SET_ASPECT_RATIO_DENOMINATOR, Integer.toString(denom));
         assertPinnedStackExists();
-        Rect pinnedStackBounds = mAmWmState.getAmState().getStandardStackByWindowingMode(
-                WINDOWING_MODE_PINNED).getBounds();
+        Rect pinnedStackBounds = getPinnedStackBounds();
         assertFloatEquals((float) pinnedStackBounds.width() / pinnedStackBounds.height(),
                 (float) MAX_ASPECT_RATIO_NUMERATOR / MAX_ASPECT_RATIO_DENOMINATOR);
     }
@@ -481,6 +482,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         assertPinnedStackDoesNotExist();
     }
 
+    @Presubmit
     @Test
     public void testAutoEnterPictureInPictureAspectRatio() throws Exception {
         assumeTrue(supportsPip());
@@ -496,12 +498,12 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         assertPinnedStackExists();
 
         waitForValidAspectRatio(MAX_ASPECT_RATIO_NUMERATOR, MAX_ASPECT_RATIO_DENOMINATOR);
-        Rect bounds = mAmWmState.getAmState().getStandardStackByWindowingMode(
-                WINDOWING_MODE_PINNED).getBounds();
+        Rect bounds = getPinnedStackBounds();
         assertFloatEquals((float) bounds.width() / bounds.height(),
                 (float) MAX_ASPECT_RATIO_NUMERATOR / MAX_ASPECT_RATIO_DENOMINATOR);
     }
 
+    @Presubmit
     @Test
     public void testAutoEnterPictureInPictureOverPip() throws Exception {
         assumeTrue(supportsPip());
@@ -520,8 +522,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
         // Ensure that auto-enter pip failed and that the resumed activity in the pinned stack is
         // still the first activity
-        final ActivityStack pinnedStack =
-                mAmWmState.getAmState().getStandardStackByWindowingMode(WINDOWING_MODE_PINNED);
+        final ActivityStack pinnedStack = getPinnedStack();
         assertTrue(pinnedStack.getTasks().size() == 1);
         assertTrue(pinnedStack.getTasks().get(0).mRealActivity.equals(getActivityComponentName(
                 ALWAYS_FOCUSABLE_PIP_ACTIVITY)));
@@ -541,13 +542,10 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // Launch second PIP activity
         launchActivity(PIP_ACTIVITY2, EXTRA_ENTER_PIP, "true");
 
-        final ActivityStack pinnedStack =
-                mAmWmState.getAmState().getStandardStackByWindowingMode(WINDOWING_MODE_PINNED);
+        final ActivityStack pinnedStack = getPinnedStack();
         assertEquals(1, pinnedStack.getTasks().size());
-
-        assertTrue(pinnedStack.getTasks().get(0).mRealActivity.equals(getActivityComponentName(
-                PIP_ACTIVITY2)));
-
+        assertTrue(mAmWmState.getAmState().containsActivityInWindowingMode(
+                PIP_ACTIVITY2, WINDOWING_MODE_PINNED));
         assertTrue(mAmWmState.getAmState().containsActivityInWindowingMode(
                 PIP_ACTIVITY, WINDOWING_MODE_FULLSCREEN));
     }
@@ -985,8 +983,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // Finish the PiP activity and ensure that there is no pinned stack
         executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_FINISH);
         mAmWmState.waitForWithAmState((amState) -> {
-            ActivityStack stack = amState.getStandardStackByWindowingMode(WINDOWING_MODE_PINNED);
-            return stack == null;
+            return getPinnedStack() == null;
         }, "Waiting for pinned stack to be removed...");
         assertPinnedStackDoesNotExist();
     }
@@ -1174,6 +1171,93 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 finalAppBounds.height());
     }
 
+    @Presubmit
+    @Test
+    public void testEnterPictureInPictureSavePosition() throws Exception {
+        if (!supportsPip()) return;
+
+        // Launch PiP activity with auto-enter PiP, save the default position of the PiP
+        // (while the PiP is still animating sleep)
+        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
+        mAmWmState.waitForAppTransitionIdle();
+        assertPinnedStackExists();
+
+        // Move the PiP to a new position on screen
+        final int stackId = getPinnedStack().mStackId;
+        final Rect initialDefaultBounds = mAmWmState.getWmState().getDefaultPinnedStackBounds();
+        final Rect offsetStackBounds = getPinnedStackBounds();
+        offsetStackBounds.offset(0, -100);
+        resizeStack(stackId, offsetStackBounds.left, offsetStackBounds.top, offsetStackBounds.right,
+                offsetStackBounds.bottom);
+
+        // Expand the PiP back to fullscreen and back into PiP and ensure that it is in the same
+        // position as before we expanded (and that the default bounds reflect that)
+        executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_EXPAND_PIP);
+        mAmWmState.waitForValidState(PIP_ACTIVITY, WINDOWING_MODE_FULLSCREEN,
+                ACTIVITY_TYPE_STANDARD);
+        executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_ENTER_PIP);
+        mAmWmState.waitForValidState(PIP_ACTIVITY, WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
+        mAmWmState.waitForAppTransitionIdle();
+        mAmWmState.computeState(true);
+        // Due to rounding in how we save and apply the snap fraction we may be a pixel off, so just
+        // account for that in this check
+        offsetStackBounds.inset(-1, -1);
+        assertTrue("Expected offsetBounds=" + offsetStackBounds + " to contain bounds="
+                + getPinnedStackBounds(), offsetStackBounds.contains(getPinnedStackBounds()));
+
+        // Expand the PiP, then launch an activity in a new task, and ensure that the PiP goes back
+        // to the default position (and not the saved position) the next time it is launched
+        executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_EXPAND_PIP);
+        mAmWmState.waitForValidState(PIP_ACTIVITY, WINDOWING_MODE_FULLSCREEN,
+                ACTIVITY_TYPE_STANDARD);
+        launchActivity(TEST_ACTIVITY);
+        executeShellCommand("am broadcast -a " + TEST_ACTIVITY_ACTION_FINISH);
+        mAmWmState.waitForActivityState(PIP_ACTIVITY, STATE_RESUMED);
+        executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_ENTER_PIP);
+        mAmWmState.waitForValidState(PIP_ACTIVITY, WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
+        mAmWmState.waitForAppTransitionIdle();
+        mAmWmState.computeState(true);
+        assertTrue("Expected initialBounds=" + initialDefaultBounds + " to equal bounds="
+                + getPinnedStackBounds(), initialDefaultBounds.equals(getPinnedStackBounds()));
+    }
+
+    @Presubmit
+    @Test
+    public void testEnterPictureInPictureDiscardSavedPositionOnFinish() throws Exception {
+        if (!supportsPip()) return;
+
+        // Launch PiP activity with auto-enter PiP, save the default position of the PiP
+        // (while the PiP is still animating sleep)
+        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
+        assertPinnedStackExists();
+        mAmWmState.waitForAppTransitionIdle();
+
+        // Move the PiP to a new position on screen
+        final int stackId = getPinnedStack().mStackId;
+        final Rect initialDefaultBounds = mAmWmState.getWmState().getDefaultPinnedStackBounds();
+        final Rect offsetStackBounds = getPinnedStackBounds();
+        offsetStackBounds.offset(0, -100);
+        resizeStack(stackId, offsetStackBounds.left, offsetStackBounds.top, offsetStackBounds.right,
+                offsetStackBounds.bottom);
+
+        // Finish the activity
+        executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_FINISH);
+        mAmWmState.waitForActivityState(PIP_ACTIVITY, STATE_DESTROYED);
+        mAmWmState.waitForWithAmState((amState) -> {
+            return getPinnedStack() == null;
+        }, "Waiting for pinned stack to be removed...");
+        assertPinnedStackDoesNotExist();
+
+        // Ensure that starting the same PiP activity after it finished will go to the default
+        // bounds
+        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
+        assertPinnedStackExists();
+        mAmWmState.waitForAppTransitionIdle();
+        mAmWmState.computeState(true);
+        assertTrue("Expected initialBounds=" + initialDefaultBounds + " to equal bounds="
+                + getPinnedStackBounds(), initialDefaultBounds.equals(getPinnedStackBounds()));
+    }
+
     private static final Pattern sAppBoundsPattern = Pattern.compile(
             "(.+)mAppBounds=Rect\\((\\d+), (\\d+) - (\\d+), (\\d+)\\)(.*)");
 
@@ -1242,8 +1326,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         final WindowManagerState.Display display = mAmWmState.getWmState().getDisplay(
                 windowState.getDisplayId());
         final Rect displayRect = display.getDisplayRect();
-        final Rect pinnedStackBounds = mAmWmState.getAmState().getStandardStackByWindowingMode(
-                WINDOWING_MODE_PINNED).getBounds();
+        final Rect pinnedStackBounds = getPinnedStackBounds();
         assertTrue(displayRect.contains(pinnedStackBounds));
     }
 
@@ -1340,6 +1423,20 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     /**
+     * @return the current pinned stack.
+     */
+    private ActivityStack getPinnedStack() {
+        return mAmWmState.getAmState().getStandardStackByWindowingMode(WINDOWING_MODE_PINNED);
+    }
+
+    /**
+     * @return the current pinned stack bounds.
+     */
+    private Rect getPinnedStackBounds() {
+        return getPinnedStack().getBounds();
+    }
+
+    /**
      * Compares two floats with a common epsilon.
      */
     private void assertFloatEquals(float actual, float expected) {
@@ -1356,8 +1453,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
      * Triggers a tap over the pinned stack bounds to trigger the PIP to close.
      */
     private void tapToFinishPip() throws Exception {
-        Rect pinnedStackBounds = mAmWmState.getAmState().getStandardStackByWindowingMode(
-                WINDOWING_MODE_PINNED).getBounds();
+        Rect pinnedStackBounds = getPinnedStackBounds();
         int tapX = pinnedStackBounds.left + pinnedStackBounds.width() - 100;
         int tapY = pinnedStackBounds.top + pinnedStackBounds.height() - 100;
         executeShellCommand(String.format("input tap %d %d", tapX, tapY));
