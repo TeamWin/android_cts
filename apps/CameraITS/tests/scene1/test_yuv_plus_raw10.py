@@ -38,6 +38,9 @@ def main():
         e, s = its.target.get_target_exposure_combos(cam)["midExposureTime"]
         req = its.objects.manual_capture_request(s, e, 0.0, True, props)
 
+        if 0 in props['android.shading.availableModes']:
+            req["android.shading.mode"] = 0
+
         max_raw10_size = \
                 its.objects.get_available_output_sizes("raw10", props)[0]
         w,h = its.objects.get_available_output_sizes(
