@@ -43,6 +43,7 @@ import android.view.autofill.AutofillValue;
 
 import com.android.compatibility.common.util.SystemUtil;
 
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.function.Function;
 
@@ -755,6 +756,50 @@ final class Helper {
      */
     public static Context getContext() {
         return InstrumentationRegistry.getInstrumentation().getContext();
+    }
+
+    private static Field getField(Class<?> clazz, String fieldName) {
+        final Field[] fields = clazz.getDeclaredFields();
+        final StringBuilder fieldNames = new StringBuilder();
+        for (Field field : fields) {
+            fieldNames.append(field.getName()).append(" ");
+            field.setAccessible(true);
+            if (field.getName().equals(fieldName)) {
+                return field;
+            }
+        }
+        throw new IllegalArgumentException(
+                "no field " + fieldName + " on " + clazz.getName() + ": " + fieldNames);
+    }
+
+    /**
+     * Uses reflection to get a field from an object.
+     */
+    static <T> T getField(Object object, String fieldName) {
+        try {
+            final Class<?> clazz = object.getClass();
+            final Field field = getField(clazz, fieldName);
+            @SuppressWarnings("unchecked")
+            final T value = (T) field.get(object);
+            return value;
+        } catch (Exception e) {
+            throw new IllegalArgumentException(
+                    "error getting field " + fieldName + " from object" + object, e);
+        }
+    }
+
+    /**
+     * Uses reflection to set a field in an object.
+     */
+    static void setField(Object object, String fieldName, Object value) {
+        try {
+            final Class<?> clazz = object.getClass();
+            final Field field = getField(clazz, fieldName);
+            field.set(object, value);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("error setting field " + fieldName + " on object "
+                    + object, e);
+        }
     }
 
     /**

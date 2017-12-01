@@ -35,9 +35,8 @@ import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.VirtualContainerView.Line;
+import android.content.ComponentName;
 import android.graphics.Rect;
-import android.os.SystemClock;
-import android.service.autofill.SaveInfo;
 import android.support.test.uiautomator.UiObject2;
 import android.view.autofill.AutofillManager;
 
@@ -370,6 +369,30 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
     }
 
+
+    @Test
+    public void testAppCannotFakePackageName() throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.acceptRequestsFromPackage("MALICIOUS");
+        mActivity.mCustomView.fakePackageName(new ComponentName("MALICIOUS", "AM.I"));
+        sReplier.addResponse(new CannedDataset.Builder()
+                .setField(ID_USERNAME, "dude")
+                .setField(ID_PASSWORD, "sweet")
+                .setPresentation(createPresentation("The Dude"))
+                .build());
+
+        // Trigger auto-fill.
+        mActivity.mUsername.changeFocus(true);
+        assertDatasetShown(mActivity.mUsername, "The Dude");
+
+        // Make sure package name was sanitized.
+        final FillRequest request = sReplier.getNextFillRequest();
+        assertThat(request.structure.getActivityComponent().getPackageName())
+                .isEqualTo(mPackageName);
+    }
 
     /**
      * Asserts the dataset picker is properly displayed in a give line.
