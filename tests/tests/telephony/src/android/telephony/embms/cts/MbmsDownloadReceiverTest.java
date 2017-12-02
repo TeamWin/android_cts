@@ -95,7 +95,12 @@ public class MbmsDownloadReceiverTest extends MbmsDownloadTestBase {
         tempFileRootDir = new File(mContext.getFilesDir(), "CtsTestDir");
         tempFileRootDir.mkdir();
         tempFileRootDirPath = tempFileRootDir.getCanonicalPath();
-        mDownloadSession.setTempFileRootDirectory(tempFileRootDir);
+        try {
+            mDownloadSession.setTempFileRootDirectory(tempFileRootDir);
+        } catch (IllegalStateException e) {
+            tearDown();
+            throw e;
+        }
     }
 
     @Override
