@@ -17,6 +17,7 @@
 package com.android.server.cts;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.ddmlib.IShellOutputReceiver;
 import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
 import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.ddmlib.testrunner.TestResult;
@@ -31,11 +32,14 @@ import com.android.tradefed.result.CollectingTestListener;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
 
+import com.google.common.base.Charsets;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.MessageLite;
 import com.google.protobuf.Parser;
 
 import java.io.FileNotFoundException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -176,4 +180,66 @@ public class ProtoDumpTestCase extends DeviceTestCase implements IBuildReceiver 
         assertTrue("No group found for pattern '" + pattern + "'", matcher.groupCount() > 0);
         return matcher.group(1);
     }
+
+    /**
+     * Runs logcat and waits (for a maximumum of maxTimeMs) until the desired text is displayed with
+     * the given tag.
+     * Logcat is not cleared, so make sure that text is unique (won't get false hits from old data).
+     * Note that, in practice, the actual max wait time seems to be about 10s longer than maxTimeMs.
+     * Returns true means the desired log line is found.
+     */
+    protected boolean checkLogcatForText(String logcatTag, String text, int maxTimeMs) {
+        IShellOutputReceiver receiver = new IShellOutputReceiver() {
+            private final StringBuilder mOutputBuffer = new StringBuilder();
+            private final AtomicBoolean mIsCanceled = new AtomicBoolean(false);
+
+            @Override
+            public void addOutput(byte[] data, int offset, int length) {
+                if (!isCancelled()) {
+                    synchronized (mOutputBuffer) {
+                        String s = new String(data, offset, length, Charsets.UTF_8);
+                        mOutputBuffer.append(s);
+                        if (checkBufferForText()) {
+                            mIsCanceled.set(true);
+                        }
+                    }
+                }
+            }
+
+            private boolean checkBufferForText() {
+                if (mOutputBuffer.indexOf(text) > -1) {
+                    return true;
+                } else {
+                    // delete all old data (except the last few chars) since they don't contain text
+                    // (presumably large chunks of data will be added at a time, so this is
+                    // sufficiently efficient.)
+                    int newStart = mOutputBuffer.length() - text.length();
+                    if (newStart > 0) {
+                        mOutputBuffer.delete(0, newStart);
+                    }
+                    return false;
+                }
+            }
+
+            @Override
+            public boolean isCancelled() {
+                return mIsCanceled.get();
+            }
+
+            @Override
+            public void flush() {
+            }
+        };
+
+        try {
+            // Wait for at most maxTimeMs for logcat to display the desired text.
+            getDevice().executeShellCommand(String.format("logcat -s %s -e '%s'", logcatTag, text),
+                    receiver, maxTimeMs, TimeUnit.MILLISECONDS, 0);
+            return receiver.isCancelled();
+        } catch (com.android.tradefed.device.DeviceNotAvailableException e) {
+            System.err.println(e);
+        }
+        return false;
+    }
+
 }

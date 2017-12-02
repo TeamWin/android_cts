@@ -15,14 +15,9 @@
  */
 package com.android.server.cts;
 
-import com.android.ddmlib.IShellOutputReceiver;
 import com.android.tradefed.log.LogUtil;
 
-import com.google.common.base.Charsets;
-
 import java.util.Random;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Test for "dumpsys batterystats -c
@@ -707,64 +702,6 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
      */
     private String getCompletedActionString(String actionValue, String requestCode) {
         return String.format("Completed performing %s for request %s", actionValue, requestCode);
-    }
-
-    /**
-    * Runs logcat and waits (for a maximumum of maxTimeMs) until the desired text is displayed with
-    * the given tag.
-    * Logcat is not cleared, so make sure that text is unique (won't get false hits from old data).
-    * Note that, in practice, the actual max wait time seems to be about 10s longer than maxTimeMs.
-    */
-    private void checkLogcatForText(String logcatTag, String text, int maxTimeMs) {
-        IShellOutputReceiver receiver = new IShellOutputReceiver() {
-            private final StringBuilder mOutputBuffer = new StringBuilder();
-            private final AtomicBoolean mIsCanceled = new AtomicBoolean(false);
-
-            @Override
-            public void addOutput(byte[] data, int offset, int length) {
-                if (!isCancelled()) {
-                    synchronized (mOutputBuffer) {
-                        String s = new String(data, offset, length, Charsets.UTF_8);
-                        mOutputBuffer.append(s);
-                        if (checkBufferForText()) {
-                            mIsCanceled.set(true);
-                        }
-                    }
-                }
-            }
-
-            private boolean checkBufferForText() {
-                if (mOutputBuffer.indexOf(text) > -1) {
-                    return true;
-                } else {
-                    // delete all old data (except the last few chars) since they don't contain text
-                    // (presumably large chunks of data will be added at a time, so this is
-                    // sufficiently efficient.)
-                    int newStart = mOutputBuffer.length() - text.length();
-                    if (newStart > 0) {
-                        mOutputBuffer.delete(0, newStart);
-                    }
-                    return false;
-                }
-            }
-
-            @Override
-            public boolean isCancelled() {
-                return mIsCanceled.get();
-            }
-
-            @Override
-            public void flush() {
-            }
-        };
-
-        try {
-            // Wait for at most maxTimeMs for logcat to display the desired text.
-            getDevice().executeShellCommand(String.format("logcat -s %s -e '%s'", logcatTag, text),
-                    receiver, maxTimeMs, TimeUnit.MILLISECONDS, 0);
-        } catch (com.android.tradefed.device.DeviceNotAvailableException e) {
-            System.err.println(e);
-        }
     }
 
     /**
