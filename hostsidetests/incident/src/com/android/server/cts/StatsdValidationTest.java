@@ -15,30 +15,30 @@
  */
 package com.android.server.cts;
 
-import java.nio.charset.Charset;
-
 import com.android.ddmlib.IShellOutputReceiver;
-import com.android.tradefed.log.LogUtil;
-
-import com.google.common.base.Charsets;
-
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import com.android.os.StatsLog.ConfigMetricsReport;
-import com.android.os.StatsLog.ConfigMetricsReportList;
-import com.android.internal.os.StatsdConfigProto.Alert;
 import com.android.internal.os.StatsdConfigProto.Bucket;
-import com.android.internal.os.StatsdConfigProto.CountMetric;
+import com.android.internal.os.StatsdConfigProto.Condition;
 import com.android.internal.os.StatsdConfigProto.EventMetric;
+import com.android.internal.os.StatsdConfigProto.GaugeMetric;
 import com.android.internal.os.StatsdConfigProto.KeyMatcher;
 import com.android.internal.os.StatsdConfigProto.KeyValueMatcher;
 import com.android.internal.os.StatsdConfigProto.LogEntryMatcher;
+import com.android.internal.os.StatsdConfigProto.SimpleCondition;
 import com.android.internal.os.StatsdConfigProto.SimpleLogEntryMatcher;
 import com.android.internal.os.StatsdConfigProto.StatsdConfig;
 import com.android.os.AtomsProto.Atom;
 import com.android.os.AtomsProto.ScreenStateChanged;
+import com.android.os.StatsLog.ConfigMetricsReport;
+import com.android.os.StatsLog.ConfigMetricsReportList;
+import com.android.tradefed.log.LogUtil;
+
+import com.google.common.base.Charsets;
+import com.google.common.io.Files;
+
+import java.io.File;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Test for statsd
@@ -106,7 +106,7 @@ public class StatsdValidationTest extends ProtoDumpTestCase {
     }
 
     public void testScreenOnAtom() throws Exception {
-        if (!TESTS_ENABLED) return;
+        if (!TESTS_ENABLED) {return;}
         StatsdConfig config = getDefaultConfig()
                 .addEventMetric(
                         EventMetric.newBuilder().setName("METRIC").setWhat("SCREEN_TURNED_ON"))
@@ -134,7 +134,7 @@ public class StatsdValidationTest extends ProtoDumpTestCase {
     }
 
     public void testScreenOffAtom() throws Exception {
-        if (!TESTS_ENABLED) return;
+        if (!TESTS_ENABLED) {return;}
         StatsdConfig config = getDefaultConfig()
                 .addEventMetric(
                         EventMetric.newBuilder().setName("METRIC").setWhat("SCREEN_TURNED_OFF"))
@@ -166,11 +166,14 @@ public class StatsdValidationTest extends ProtoDumpTestCase {
 
     private void uploadConfig(StatsdConfig config, String configName) throws Exception {
         LogUtil.CLog.d("uploading the config named " + configName + ":\n" + config.toString());
-        String configStr =
-                "$'" + new String(config.toByteArray(), Charset.forName("UTF-8")) + "'";
+        File configFile = File.createTempFile("statsdconfig", ".config");
+        Files.write(config.toByteArray(), configFile);
+        String remotePath = "/data/" + configFile.getName();
+        getDevice().pushFile(configFile, remotePath);
         getDevice().executeShellCommand(
-                String.join(" ", "echo -n", configStr, "|", UPDATE_CONFIG_CMD, CONFIG_UID,
+                String.join(" ", "cat", remotePath, "|", UPDATE_CONFIG_CMD, CONFIG_UID,
                         configName));
+        getDevice().executeShellCommand("rm " + remotePath);
     }
 
     /**
@@ -182,27 +185,49 @@ public class StatsdValidationTest extends ProtoDumpTestCase {
         StatsdConfig.Builder configBuilder = StatsdConfig.newBuilder();
         configBuilder.setName("12345");
         configBuilder.addLogEntryMatcher(
-            LogEntryMatcher.newBuilder()
-                .setName("SCREEN_TURNED_ON")
-                .setSimpleLogEntryMatcher(
-                    SimpleLogEntryMatcher.newBuilder()
-                        .setTag(Atom.SCREEN_STATE_CHANGED_FIELD_NUMBER)
-                        .addKeyValueMatcher(KeyValueMatcher.newBuilder()
-                            .setKeyMatcher(
-                                KeyMatcher.newBuilder()
-                                    .setKey(ScreenStateChanged.DISPLAY_STATE_FIELD_NUMBER)
-                            ).setEqInt(ScreenStateChanged.State.STATE_ON_VALUE))));
+                LogEntryMatcher.newBuilder()
+                        .setName("SCREEN_TURNED_ON")
+                        .setSimpleLogEntryMatcher(
+                                SimpleLogEntryMatcher.newBuilder()
+                                        .setTag(Atom.SCREEN_STATE_CHANGED_FIELD_NUMBER)
+                                        .addKeyValueMatcher(KeyValueMatcher.newBuilder()
+                                                .setKeyMatcher(
+                                                        KeyMatcher.newBuilder()
+                                                                .setKey(ScreenStateChanged
+                                                                        .DISPLAY_STATE_FIELD_NUMBER)
+                                                ).setEqInt(
+                                                        ScreenStateChanged.State.STATE_ON_VALUE))));
         configBuilder.addLogEntryMatcher(
                 LogEntryMatcher.newBuilder()
-                    .setName("SCREEN_TURNED_OFF")
-                    .setSimpleLogEntryMatcher(
-                        SimpleLogEntryMatcher.newBuilder()
-                            .setTag(Atom.SCREEN_STATE_CHANGED_FIELD_NUMBER)
-                            .addKeyValueMatcher(KeyValueMatcher.newBuilder()
-                                .setKeyMatcher(
-                                    KeyMatcher.newBuilder()
-                                        .setKey(ScreenStateChanged.DISPLAY_STATE_FIELD_NUMBER)
-                                ).setEqInt(ScreenStateChanged.State.STATE_OFF_VALUE))));
+                        .setName("SCREEN_TURNED_OFF")
+                        .setSimpleLogEntryMatcher(
+                                SimpleLogEntryMatcher.newBuilder()
+                                        .setTag(Atom.SCREEN_STATE_CHANGED_FIELD_NUMBER)
+                                        .addKeyValueMatcher(KeyValueMatcher.newBuilder()
+                                                .setKeyMatcher(
+                                                        KeyMatcher.newBuilder()
+                                                                .setKey(ScreenStateChanged
+                                                                        .DISPLAY_STATE_FIELD_NUMBER)
+                                                ).setEqInt(
+                                                        ScreenStateChanged.State.STATE_OFF_VALUE)
+                                        )));
+        configBuilder.addLogEntryMatcher(
+                LogEntryMatcher.newBuilder()
+                        .setName("UID_PROCESS_STATE_CHANGED")
+                        .setSimpleLogEntryMatcher(
+                                SimpleLogEntryMatcher.newBuilder()
+                                        .setTag(Atom.UID_PROCESS_STATE_CHANGED_FIELD_NUMBER)));
+        // up to 110 is fine. 128 not good
+        configBuilder.addLogEntryMatcher(
+                LogEntryMatcher.newBuilder()
+                        .setName("KERNEL_WAKELOCK_PULLED")
+                        .setSimpleLogEntryMatcher(
+                                SimpleLogEntryMatcher.newBuilder()
+                                        .setTag(Atom.KERNEL_WAKELOCK_PULLED_FIELD_NUMBER)));
+        configBuilder
+                .addCondition(Condition.newBuilder().setName("SCREEN_IS_ON").setSimpleCondition(
+                        SimpleCondition.newBuilder().setStart("SCREEN_TURNED_ON")
+                                .setStop("SCREEN_TURNED_OFF")));
         return configBuilder;
     }
 
@@ -423,4 +448,5 @@ public class StatsdValidationTest extends ProtoDumpTestCase {
         }
         return hasIt;
     }
+
 }
