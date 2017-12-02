@@ -33,6 +33,7 @@ import android.telephony.mbms.DownloadRequest;
 import android.telephony.mbms.FileServiceInfo;
 import android.telephony.mbms.MbmsDownloadSessionCallback;
 import android.test.InstrumentationTestCase;
+import android.util.Log;
 
 import com.android.internal.os.SomeArgs;
 
@@ -61,6 +62,8 @@ public class MbmsDownloadTestBase extends InstrumentationTestCase {
             args.arg1 = errorCode;
             args.arg2 = message;
             mErrorCalls.add(args);
+            Log.i(MbmsDownloadTestBase.class.getSimpleName(),
+                    "Got error: " + errorCode + ": " + message);
         }
 
         @Override
@@ -121,6 +124,7 @@ public class MbmsDownloadTestBase extends InstrumentationTestCase {
         mHandlerThread = new HandlerThread("EmbmsCtsTestWorker");
         mHandlerThread.start();
         mCallbackHandler = new Handler(mHandlerThread.getLooper());
+        mCallback = new TestCallback();
         getControlBinder();
         setupDownloadSession();
     }
