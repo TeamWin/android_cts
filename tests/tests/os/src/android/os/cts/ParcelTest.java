@@ -2951,6 +2951,39 @@ public class ParcelTest extends AndroidTestCase {
         p.recycle();
     }
 
+    public void testBinderDataProtection() {
+        Parcel p;
+        IBinder b = new Binder();
+
+        p = Parcel.obtain();
+        p.writeInt(1);
+        p.writeStrongBinder(b);
+        p.writeInt(2);
+        p.writeStrongBinder(b);
+
+        int finalIntPos = p.dataPosition();
+        p.writeInt(3);
+
+        for (int i = 0; i <= finalIntPos; i++) {
+            p.setDataPosition(i);
+            switch (i) {
+                case 0:
+                    assertEquals(1, p.readInt());
+                    break;
+                case 28:
+                    assertEquals(2, p.readInt());
+                    break;
+                case 56:
+                    assertEquals(3, p.readInt());
+                    break;
+                default:
+                    assertEquals(0, p.readInt());
+            }
+        }
+
+        p.recycle();
+    }
+
     private class MockClassLoader extends ClassLoader {
         public MockClassLoader() {
             super();
