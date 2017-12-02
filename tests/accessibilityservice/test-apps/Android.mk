@@ -1,4 +1,4 @@
-# Copyright (C) 2010 The Android Open Source Project
+# Copyright (C) 2017 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,26 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-LOCAL_PATH:= $(call my-dir)
+LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_MODULE_TAGS := optional
-
-LOCAL_STATIC_JAVA_LIBRARIES := \
-	ctstestrunner \
-	mockito-target-minus-junit4 \
-	legacy-android-test
-
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
-
-# Tag this module as a cts test artifact
+# tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
-LOCAL_PACKAGE_NAME := CtsAccessibilityServiceTestCases
-
-LOCAL_SDK_VERSION := test_current
-
-include $(BUILD_CTS_PACKAGE)
-
+# Build the test APKs using their own makefiles
 include $(call all-makefiles-under,$(LOCAL_PATH))
