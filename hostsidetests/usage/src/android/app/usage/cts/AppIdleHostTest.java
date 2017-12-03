@@ -16,9 +16,15 @@
 
 package android.app.usage.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceTestCase;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class AppIdleHostTest extends DeviceTestCase {
     private static final String SETTINGS_APP_IDLE_CONSTANTS = "app_idle_constants";
@@ -27,6 +33,12 @@ public class AppIdleHostTest extends DeviceTestCase {
     private static final String TEST_APP_CLASS = "TestActivity";
 
     private static final long ACTIVITY_LAUNCH_WAIT_MILLIS = 500;
+
+    private static final int SB_ACTIVE = 10;
+    private static final int SB_WORKING_SET = 20;
+    private static final int SB_FREQUENT = 30;
+    private static final int SB_RARE = 40;
+    private static final int SB_NEVER = 50;
 
     /**
      * A reference to the device under test.
@@ -102,6 +114,47 @@ public class AppIdleHostTest extends DeviceTestCase {
         } finally {
             setAppIdleSettings(previousState);
         }
+    }
+
+    private void setAppStandbyBucket(String packageName, int bucket) throws Exception {
+        mDevice.executeShellCommand(
+                String.format("am set-standby-bucket %s %s", packageName, bucket));
+    }
+
+    private int getAppStandbyBucket(String packageName) throws Exception {
+        String bucketString = mDevice.executeShellCommand(
+                String.format("am get-standby-bucket %s", packageName));
+        System.err.println(bucketString);
+        try {
+            return Integer.parseInt(bucketString.trim());
+        } catch (NumberFormatException nfe) {
+        }
+        return -1;
+    }
+
+    public void testSetAppStandbyBucket() throws Exception {
+        // Set to ACTIVE
+        setAppStandbyBucket(TEST_APP_PACKAGE, SB_ACTIVE);
+        assertEquals(SB_ACTIVE, getAppStandbyBucket(TEST_APP_PACKAGE));
+        // set to WORKING_SET
+        setAppStandbyBucket(TEST_APP_PACKAGE, 20);
+        assertEquals(20, getAppStandbyBucket(TEST_APP_PACKAGE));
+    }
+
+    public void testCantSetOwnStandbyBucket() throws Exception {
+        setAppStandbyBucket("com.android.shell", 40);
+        assertNotEquals(40, getAppStandbyBucket("com.android.shell"));
+    }
+
+    public void testOutOfBoundsStandbyBucket() throws Exception {
+        setAppStandbyBucket(TEST_APP_PACKAGE, SB_ACTIVE);
+        assertEquals(SB_ACTIVE, getAppStandbyBucket(TEST_APP_PACKAGE));
+        // Try lower than min
+        setAppStandbyBucket(TEST_APP_PACKAGE, SB_ACTIVE - 1);
+        assertEquals(SB_ACTIVE, getAppStandbyBucket(TEST_APP_PACKAGE));
+        // Try higher than max
+        setAppStandbyBucket(TEST_APP_PACKAGE, 50 + 1);
+        assertEquals(SB_ACTIVE, getAppStandbyBucket(TEST_APP_PACKAGE));
     }
 
     private static void sleepUninterrupted(long timeMillis) {

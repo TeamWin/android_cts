@@ -224,7 +224,7 @@ public class DeviceIdleJobsTest {
     }
 
     private void makeTestPackageStandbyActive() throws Exception {
-        mUiDevice.executeShellCommand("am set-standby-bucket " + TEST_APP_PACKAGE + " 0");
+        mUiDevice.executeShellCommand("am set-standby-bucket " + TEST_APP_PACKAGE + " active");
     }
 
     private boolean waitUntilTestAppNotInTempWhitelist() throws Exception {
