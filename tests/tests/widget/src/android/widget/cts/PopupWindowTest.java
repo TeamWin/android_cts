@@ -47,6 +47,7 @@ import android.transition.Transition;
 import android.transition.Transition.TransitionListener;
 import android.transition.TransitionValues;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -1429,6 +1430,16 @@ public class PopupWindowTest {
 
     @Test
     public void testAnchorInPopup() throws Throwable {
+        DisplayMetrics displayMetrics = mActivity.getResources().getDisplayMetrics();
+        float dpWidth = displayMetrics.widthPixels / displayMetrics.density;
+        float dpHeight = displayMetrics.heightPixels / displayMetrics.density;
+        final int minDisplaySize = 320;
+        if (dpWidth < minDisplaySize || dpHeight < minDisplaySize) {
+            // On smaller screens the popups that this test is creating
+            // are not guaranteed to be properly aligned to their anchors.
+            return;
+        }
+
         mPopupWindow = createPopupWindow(
                 mActivity.getLayoutInflater().inflate(R.layout.popup_window, null));
 

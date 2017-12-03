@@ -2457,7 +2457,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
-    public void testDatasetAuthFiltering() throws Exception {
+    public void testDatasetAuthNoFiltering() throws Exception {
         // Set service.
         enableService();
         final MyAutofillCallback callback = mActivity.registerCallback();
@@ -2506,6 +2506,93 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // ...and select it this time
         sUiBot.selectDataset("Tap to auth dataset");
+        callback.assertUiHiddenEvent(username);
+        sUiBot.assertNoDatasets();
+
+        // Check the results.
+        mActivity.assertAutoFilled();
+    }
+
+    @Test
+    public void testDatasetAuthFilteringUsingAutofillValue() throws Exception {
+        // Set service.
+        enableService();
+        final MyAutofillCallback callback = mActivity.registerCallback();
+
+        // Create the authentication intents
+        final CannedDataset unlockedDataset = new CannedDataset.Builder()
+                .setField(ID_USERNAME, "dude")
+                .setField(ID_PASSWORD, "sweet")
+                .build();
+        final IntentSender authentication = AuthenticationActivity.createSender(mContext, 1,
+                unlockedDataset);
+
+        // Configure the service behavior
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setField(ID_PASSWORD, "sweet")
+                        .setPresentation(createPresentation("DS1"))
+                        .setAuthentication(authentication)
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "DUDE,THE")
+                        .setField(ID_PASSWORD, "SWEET")
+                        .setPresentation(createPresentation("DS2"))
+                        .setAuthentication(authentication)
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "ZzBottom")
+                        .setField(ID_PASSWORD, "top")
+                        .setPresentation(createPresentation("DS3"))
+                        .setAuthentication(authentication)
+                        .build())
+                .build());
+
+        // Set expectation for the activity
+        mActivity.expectAutoFill("dude", "sweet");
+
+        // Trigger auto-fill.
+        mActivity.onUsername(View::requestFocus);
+
+        // Wait for onFill() before proceeding.
+        sReplier.getNextFillRequest();
+        final View username = mActivity.getUsername();
+
+        // Make sure it's showing initially...
+        callback.assertUiShownEvent(username);
+        sUiBot.assertDatasets("DS1", "DS2", "DS3");
+
+        // ...then type something to hide them.
+        runShellCommand("input keyevent KEYCODE_A");
+        callback.assertUiHiddenEvent(username);
+        sUiBot.assertNoDatasets();
+
+        // Now delete the char and assert they're shown again...
+        runShellCommand("input keyevent KEYCODE_DEL");
+        callback.assertUiShownEvent(username);
+        sUiBot.assertDatasets("DS1", "DS2", "DS3");
+
+        // ...then filter for 2
+        runShellCommand("input keyevent KEYCODE_D");
+        sUiBot.assertDatasets("DS1", "DS2");
+
+        // ...up to 1
+        runShellCommand("input keyevent KEYCODE_U");
+        sUiBot.assertDatasets("DS1", "DS2");
+        runShellCommand("input keyevent KEYCODE_D");
+        sUiBot.assertDatasets("DS1", "DS2");
+        runShellCommand("input keyevent KEYCODE_E");
+        sUiBot.assertDatasets("DS1", "DS2");
+        runShellCommand("input keyevent KEYCODE_COMMA");
+        sUiBot.assertDatasets("DS2");
+
+        // Now delete the char and assert 2 are shown again...
+        runShellCommand("input keyevent KEYCODE_DEL");
+        final UiObject2 picker = sUiBot.assertDatasets("DS1", "DS2");
+
+        // ...and select it this time
+        sUiBot.selectDataset(picker, "DS1");
         callback.assertUiHiddenEvent(username);
         sUiBot.assertNoDatasets();
 

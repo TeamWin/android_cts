@@ -52,6 +52,7 @@ import android.webkit.WebView;
 
 import com.android.compatibility.common.util.SystemUtil;
 
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -114,6 +115,16 @@ final class Helper {
     static final int UI_TIMEOUT_MS = 2000;
 
     /**
+     * Timeout (in milliseconds) for showing the autofill dataset picker UI.
+     *
+     * <p>The value is usually higher than {@link #UI_TIMEOUT_MS} because the performance of the
+     * dataset picker UI can be affect by external factors in some low-level devices.
+     *
+     * <p>Typically used by {@link UiBot}.
+     */
+    static final int UI_DATASET_PICKER_TIMEOUT_MS = 4000;
+
+    /**
      * Timeout (in milliseconds) for an activity to be brought out to top.
      */
     static final int ACTIVITY_RESURRECTION_MS = 5000;
@@ -148,6 +159,10 @@ final class Helper {
 
     private static final NodeFilter HTML_NAME_FILTER = (node, id) -> {
         return id.equals(getHtmlName(node));
+    };
+
+    private static final NodeFilter HTML_NAME_OR_RESOURCE_ID_FILTER = (node, id) -> {
+        return id.equals(getHtmlName(node)) || id.equals(node.getIdEntry());
     };
 
     private static final NodeFilter TEXT_FILTER = (node, id) -> {
@@ -399,6 +414,14 @@ final class Helper {
      */
     static ViewNode findNodeByHtmlName(ViewNode node, String htmlName) {
         return findNodeByFilter(node, htmlName, HTML_NAME_FILTER);
+    }
+
+    /**
+     * Gets a node given the name of its HTML INPUT tag or Android resoirce id, or {@code null} if
+     * not found.
+     */
+    static ViewNode findNodeByHtmlNameOrResourceId(List<FillContext> contexts, String id) {
+        return findNodeByFilter(contexts, id, HTML_NAME_OR_RESOURCE_ID_FILTER);
     }
 
     /**
@@ -867,6 +890,50 @@ final class Helper {
      */
     public static Context getContext() {
         return InstrumentationRegistry.getInstrumentation().getContext();
+    }
+
+    private static Field getField(Class<?> clazz, String fieldName) {
+        final Field[] fields = clazz.getDeclaredFields();
+        final StringBuilder fieldNames = new StringBuilder();
+        for (Field field : fields) {
+            fieldNames.append(field.getName()).append(" ");
+            field.setAccessible(true);
+            if (field.getName().equals(fieldName)) {
+                return field;
+            }
+        }
+        throw new IllegalArgumentException(
+                "no field " + fieldName + " on " + clazz.getName() + ": " + fieldNames);
+    }
+
+    /**
+     * Uses reflection to get a field from an object.
+     */
+    static <T> T getField(Object object, String fieldName) {
+        try {
+            final Class<?> clazz = object.getClass();
+            final Field field = getField(clazz, fieldName);
+            @SuppressWarnings("unchecked")
+            final T value = (T) field.get(object);
+            return value;
+        } catch (Exception e) {
+            throw new IllegalArgumentException(
+                    "error getting field " + fieldName + " from object" + object, e);
+        }
+    }
+
+    /**
+     * Uses reflection to set a field in an object.
+     */
+    static void setField(Object object, String fieldName, Object value) {
+        try {
+            final Class<?> clazz = object.getClass();
+            final Field field = getField(clazz, fieldName);
+            field.set(object, value);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("error setting field " + fieldName + " on object "
+                    + object, e);
+        }
     }
 
     /**

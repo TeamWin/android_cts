@@ -19,7 +19,9 @@ package android.systemui.cts;
 import static android.support.test.InstrumentationRegistry.getInstrumentation;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -48,6 +50,8 @@ public class LightBarThemeTest extends LightBarTestBase {
 
     @Before
     public void setUp() {
+        assumeFalse(getInstrumentation().getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_EMBEDDED));
         mDevice = UiDevice.getInstance(getInstrumentation());
     }
 

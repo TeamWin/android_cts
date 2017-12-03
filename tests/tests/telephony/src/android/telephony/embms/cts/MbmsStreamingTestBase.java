@@ -98,6 +98,7 @@ public class MbmsStreamingTestBase extends InstrumentationTestCase {
         mHandlerThread = new HandlerThread("EmbmsCtsTestWorker");
         mHandlerThread.start();
         mCallbackHandler = new Handler(mHandlerThread.getLooper());
+        mCallback = new TestCallback();
         getControlBinder();
         setupStreamingSession();
     }

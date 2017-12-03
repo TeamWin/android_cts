@@ -18,11 +18,13 @@ package android.autofillservice.cts;
 import android.os.Bundle;
 import android.support.test.uiautomator.UiObject2;
 import android.util.Log;
+import android.view.View;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 
 import java.io.IOException;
 
@@ -33,10 +35,21 @@ public class WebViewActivity extends AbstractAutoFillActivity {
     private static final String FAKE_URL = "https://" + FAKE_DOMAIN + ":666/login.html";
     static final String ID_WEBVIEW = "webview";
 
+    static final String HTML_NAME_USERNAME = "username";
+    static final String HTML_NAME_PASSWORD = "password";
+
+    static final String ID_OUTSIDE1 = "outside1";
+    static final String ID_OUTSIDE2 = "outside2";
+
     // TODO(b/69557967): WebView currently does not report the nodes content description properties.
     private static final boolean CONTENT_DESCRIPTION_SUPPORTED = false;
 
-    MyWebView mWebView;
+    private MyWebView mWebView;
+
+    private LinearLayout mOutsideContainer1;
+    private LinearLayout mOutsideContainer2;
+    EditText mOutside1;
+    EditText mOutside2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,7 +80,23 @@ public class WebViewActivity extends AbstractAutoFillActivity {
                 }
             }
         });
-        mWebView.loadUrl(FAKE_URL);
+
+        mOutsideContainer1 = findViewById(R.id.outsideContainer1);
+        mOutsideContainer2 = findViewById(R.id.outsideContainer2);
+        mOutside1 = findViewById(R.id.outside1);
+        mOutside2 = findViewById(R.id.outside2);
+    }
+
+    public MyWebView loadWebView() {
+        syncRunOnUiThread(() -> mWebView.loadUrl(FAKE_URL));
+        return mWebView;
+    }
+
+    public void loadOutsideViews() {
+        syncRunOnUiThread(() -> {
+            mOutsideContainer1.setVisibility(View.VISIBLE);
+            mOutsideContainer2.setVisibility(View.VISIBLE);
+        });
     }
 
     public UiObject2 getUsernameLabel(UiBot uiBot) {
