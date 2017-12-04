@@ -109,6 +109,8 @@ public class TextClassificationManagerTest {
 
     private static void assertValidResult(TextSelection selection) {
         assertNotNull(selection);
+        assertTrue(selection.getSelectionStartIndex() >= 0);
+        assertTrue(selection.getSelectionEndIndex() > selection.getSelectionStartIndex());
         assertTrue(selection.getEntityCount() >= 0);
         for (int i = 0; i < selection.getEntityCount(); i++) {
             final String entity = selection.getEntity(i);
@@ -129,7 +131,7 @@ public class TextClassificationManagerTest {
             assertTrue(confidenceScore >= 0);
             assertTrue(confidenceScore <= 1);
         }
-        assertTrue(classification.getActionCount() >= 0);
+        assertTrue(classification.getSecondaryActionsCount() >= 0);
     }
 
     private static void assertValidResult(TextLinks links) {
@@ -147,6 +149,4 @@ public class TextClassificationManagerTest {
             }
         }
     }
-
 }
-
