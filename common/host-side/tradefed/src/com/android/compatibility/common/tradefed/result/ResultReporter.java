@@ -84,6 +84,7 @@ import java.util.concurrent.TimeUnit;
 public class ResultReporter implements ILogSaverListener, ITestInvocationListener,
        ITestSummaryListener, IShardableListener {
 
+    public static final String INCLUDE_HTML_IN_ZIP = "html-in-zip";
     private static final String UNKNOWN_DEVICE = "unknown_device";
     private static final String RESULT_KEY = "COMPATIBILITY_TEST_RESULT";
     private static final String CTS_PREFIX = "cts:";
@@ -132,6 +133,10 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
 
     @Option(name = "compress-logs", description = "Whether logs will be saved with compression")
     private boolean mCompressLogs = true;
+
+    @Option(name = INCLUDE_HTML_IN_ZIP,
+            description = "Whether failure summary report is included in the zip fie.")
+    private boolean mIncludeHtml = false;
 
     private CompatibilityBuildHelper mBuildHelper;
     private File mResultDir = null;
@@ -540,10 +545,17 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
                 copyRetryFiles(ResultHandler.getResultDirectory(
                         mBuildHelper.getResultsDir(), mRetrySessionId), mResultDir);
             }
+            File failureReport = null;
+            if (mIncludeHtml) {
+                // Create the html report before the zip file.
+                failureReport = ResultHandler.createFailureReport(resultFile);
+            }
             File zippedResults = zipResults(mResultDir);
-            // Create failure report after zip file so extra data is not uploaded
-            File failureReport = ResultHandler.createFailureReport(resultFile);
-            if (failureReport.exists()) {
+            if (!mIncludeHtml) {
+                // Create failure report after zip file so extra data is not uploaded
+                failureReport = ResultHandler.createFailureReport(resultFile);
+            }
+            if (failureReport != null && failureReport.exists()) {
                 info("Test Result: %s", failureReport.getCanonicalPath());
             } else {
                 info("Test Result: %s", resultFile.getCanonicalPath());
