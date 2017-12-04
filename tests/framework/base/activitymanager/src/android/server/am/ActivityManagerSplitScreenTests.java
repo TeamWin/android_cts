@@ -256,6 +256,8 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
         launchTargetToSide(SINGLE_TASK_ACTIVITY_NAME, false);
     }
 
+
+    @Presubmit
     @Test
     public void testLaunchToSideMultipleWithDifferentIntent() throws Exception {
         launchTargetToSide(TEST_ACTIVITY_NAME, true);
@@ -325,6 +327,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
                         targetActivityName, WINDOWING_MODE_SPLIT_SCREEN_SECONDARY));
     }
 
+    @Presubmit
     @Test
     public void testLaunchToSideMultipleWithFlag() throws Exception {
         if (!supportsSplitScreenMultiWindow()) {
