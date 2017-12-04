@@ -16,8 +16,25 @@
 package com.android.server.cts;
 
 import com.android.ddmlib.IShellOutputReceiver;
+import com.android.tradefed.log.LogUtil;
+
+import com.google.common.base.Charsets;
+import com.google.common.io.Files;
+
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import com.android.os.StatsLog.ConfigMetricsReport;
+import com.android.os.StatsLog.ConfigMetricsReportList;
+import com.android.internal.os.StatsdConfigProto.Alert;
 import com.android.internal.os.StatsdConfigProto.Bucket;
+import com.android.internal.os.StatsdConfigProto.CountMetric;
 import com.android.internal.os.StatsdConfigProto.Condition;
+import com.android.internal.os.StatsdConfigProto.DurationMetric;
 import com.android.internal.os.StatsdConfigProto.EventMetric;
 import com.android.internal.os.StatsdConfigProto.GaugeMetric;
 import com.android.internal.os.StatsdConfigProto.KeyMatcher;
@@ -30,15 +47,6 @@ import com.android.os.AtomsProto.Atom;
 import com.android.os.AtomsProto.ScreenStateChanged;
 import com.android.os.StatsLog.ConfigMetricsReport;
 import com.android.os.StatsLog.ConfigMetricsReportList;
-import com.android.tradefed.log.LogUtil;
-
-import com.google.common.base.Charsets;
-import com.google.common.io.Files;
-
-import java.io.File;
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Test for statsd
@@ -84,6 +92,7 @@ public class StatsdValidationTest extends ProtoDumpTestCase {
     private static final String DUMP_REPORT_CMD = "cmd stats dump-report";
     private static final String REMOVE_CONFIG_CMD = "cmd stats config remove";
     private static final String CONFIG_UID = "1000";
+    private static final String CONFIG_NAME = "cts_config";
 
     @Override
     protected void setUp() throws Exception {
@@ -97,11 +106,13 @@ public class StatsdValidationTest extends ProtoDumpTestCase {
         // Uninstall to clear the history in case it's still on the device.
         getDevice().uninstallPackage(DEVICE_SIDE_TEST_PACKAGE);
         removeConfig("fake");
+        removeConfig(CONFIG_NAME);
     }
 
     @Override
     protected void tearDown() throws Exception {
         getDevice().uninstallPackage(DEVICE_SIDE_TEST_PACKAGE);
+        removeConfig(CONFIG_NAME);
         super.tearDown();
     }
 
@@ -111,17 +122,14 @@ public class StatsdValidationTest extends ProtoDumpTestCase {
                 .addEventMetric(
                         EventMetric.newBuilder().setName("METRIC").setWhat("SCREEN_TURNED_ON"))
                 .build();
-        String configName = "testScreenOnAtom";
-        removeConfig(configName);
-        uploadConfig(config, configName);
+        uploadConfig(config);
 
         turnScreenOff();
         Thread.sleep(2000);
         turnScreenOn();
         Thread.sleep(2000);
 
-        ConfigMetricsReportList reportList = getReportList(configName);
-        removeConfig(configName);
+        ConfigMetricsReportList reportList = getReportList();
 
         assertTrue(reportList.getReportsCount() == 1);
         ConfigMetricsReport report = reportList.getReports(0);
@@ -139,17 +147,14 @@ public class StatsdValidationTest extends ProtoDumpTestCase {
                 .addEventMetric(
                         EventMetric.newBuilder().setName("METRIC").setWhat("SCREEN_TURNED_OFF"))
                 .build();
-        String configName = "testScreenOffAtom";
-        removeConfig(configName);
-        uploadConfig(config, configName);
+        uploadConfig(config);
 
         turnScreenOn();
         Thread.sleep(2000);
         turnScreenOff();
         Thread.sleep(2000);
 
-        ConfigMetricsReportList reportList = getReportList(configName);
-        removeConfig(configName);
+        ConfigMetricsReportList reportList = getReportList();
 
         assertTrue(reportList.getReportsCount() == 1);
         ConfigMetricsReport report = reportList.getReports(0);
@@ -164,15 +169,136 @@ public class StatsdValidationTest extends ProtoDumpTestCase {
                         == ScreenStateChanged.State.STATE_DOZE_VALUE);
     }
 
-    private void uploadConfig(StatsdConfig config, String configName) throws Exception {
-        LogUtil.CLog.d("uploading the config named " + configName + ":\n" + config.toString());
+    // Tests that anomaly detection for count works.
+    // Also tests that anomaly detection works when spanning multiple buckets.
+    public void testCountAnomalyDetection() throws Exception {
+        if (!TESTS_ENABLED) return;
+        // TODO: Don't use screen-state as the atom.
+        StatsdConfig config = getDefaultConfig()
+                .addCountMetric(CountMetric.newBuilder()
+                    .setName("METRIC")
+                    .setWhat("SCREEN_TURNED_ON")
+                    .setBucket(Bucket.newBuilder().setBucketSizeMillis(5_000))
+                )
+                .addAlert(Alert.newBuilder()
+                    .setName("testCountAnomalyDetectionAlert")
+                    .setMetricName("METRIC")
+                    .setNumberOfBuckets(4)
+                    .setRefractoryPeriodSecs(20)
+                    .setTriggerIfSumGt(2)
+                    .setIncidentdDetails(Alert.IncidentdDetails.newBuilder()
+                        .addSection(-1)
+                    )
+                )
+                .build();
+        uploadConfig(config);
+
+        String markDeviceDate = getCurrentLogcatDate();
+        turnScreenOn(); // count -> 1 (not an anomaly, since not "greater than 2")
+        Thread.sleep(1000);
+        turnScreenOff();
+        Thread.sleep(3000);
+        assertFalse(didIncidentdFireSince(markDeviceDate));
+
+        turnScreenOn(); // count ->2 (not an anomaly, since not "greater than 2")
+        Thread.sleep(1000);
+        turnScreenOff();
+        Thread.sleep(1000);
+        assertFalse(didIncidentdFireSince(markDeviceDate));
+
+        turnScreenOn(); // count ->3 (anomaly, since "greater than 2"!)
+        Thread.sleep(1000);
+        assertTrue(didIncidentdFireSince(markDeviceDate));
+
+        turnScreenOff();
+    }
+
+    // Tests that anomaly detection for duration works.
+    // Also tests that refractory periods in anomaly detection work.
+    public void testDurationAnomalyDetection() throws Exception {
+        if (!TESTS_ENABLED) return;
+        // TODO: Do NOT use screenState for this, since screens auto-turn-off after a variable time.
+        StatsdConfig config = getDefaultConfig()
+                .addDurationMetric(DurationMetric.newBuilder()
+                        .setName("METRIC")
+                        .setWhat("SCREEN_IS_ON")
+                        .setAggregationType(DurationMetric.AggregationType.SUM)
+                        .setBucket(Bucket.newBuilder().setBucketSizeMillis(5_000))
+                )
+                .addCondition(Condition.newBuilder()
+                        .setName("SCREEN_IS_ON")
+                        .setSimpleCondition(SimpleCondition.newBuilder()
+                                .setStart("SCREEN_TURNED_ON")
+                                .setStop("SCREEN_TURNED_OFF")
+                                .setCountNesting(false)
+                        )
+                )
+                .addAlert(Alert.newBuilder()
+                        .setName("testDurationAnomalyDetectionAlert")
+                        .setMetricName("METRIC")
+                        .setNumberOfBuckets(12)
+                        .setRefractoryPeriodSecs(20)
+                        .setTriggerIfSumGt(15_000_000_000L) // 15 seconds in nanoseconds
+                        .setIncidentdDetails(Alert.IncidentdDetails.newBuilder()
+                                .addSection(-1)
+                        )
+                )
+                .build();
+        uploadConfig(config);
+
+        // Test that alarm doesn't fire early.
+        String markDeviceDate = getCurrentLogcatDate();
+        turnScreenOn();
+        Thread.sleep(6_000);
+        assertFalse(didIncidentdFireSince(markDeviceDate));
+
+        turnScreenOff();
+        Thread.sleep(1_000);
+        assertFalse(didIncidentdFireSince(markDeviceDate));
+
+        // Test that alarm does fire when it is supposed to.
+        turnScreenOn();
+        Thread.sleep(13_000);
+        assertTrue(didIncidentdFireSince(markDeviceDate));
+
+        // Now test that the refractory period is obeyed.
+        markDeviceDate = getCurrentLogcatDate();
+        turnScreenOff();
+        Thread.sleep(1_000);
+        turnScreenOn();
+        Thread.sleep(1_000);
+        assertFalse(didIncidentdFireSince(markDeviceDate));
+
+        // Test that detection works again after refractory period finishes.
+        turnScreenOff();
+        Thread.sleep(20_000);
+        turnScreenOn();
+        Thread.sleep(15_000);
+        assertTrue(didIncidentdFireSince(markDeviceDate));
+    }
+
+    /**
+     * Determines whether logcat indicates that incidentd fired since the given device date.
+     */
+    private boolean didIncidentdFireSince(String date) throws Exception {
+        final String INCIDENTD_TAG = "incidentd";
+        final String INCIDENTD_STARTED_STRING = "reportIncident";
+        // TODO: Do something more robust than this in case of delayed logging.
+        Thread.sleep(1000);
+        String log = getLogcatSince(date, String.format(
+                "-s %s -e %s", INCIDENTD_TAG, INCIDENTD_STARTED_STRING));
+        return log.contains(INCIDENTD_STARTED_STRING);
+    }
+
+    private void uploadConfig(StatsdConfig config) throws Exception {
+        LogUtil.CLog.d("uploading the config:\n" + config.toString());
         File configFile = File.createTempFile("statsdconfig", ".config");
         Files.write(config.toByteArray(), configFile);
         String remotePath = "/data/" + configFile.getName();
         getDevice().pushFile(configFile, remotePath);
         getDevice().executeShellCommand(
                 String.join(" ", "cat", remotePath, "|", UPDATE_CONFIG_CMD, CONFIG_UID,
-                        configName));
+                        CONFIG_NAME));
         getDevice().executeShellCommand("rm " + remotePath);
     }
 
@@ -236,9 +362,9 @@ public class StatsdValidationTest extends ProtoDumpTestCase {
                 String.join(" ", REMOVE_CONFIG_CMD, CONFIG_UID, configName));
     }
 
-    private ConfigMetricsReportList getReportList(String configName) throws Exception {
+    private ConfigMetricsReportList getReportList() throws Exception {
         ConfigMetricsReportList reportList = getDump(ConfigMetricsReportList.parser(),
-                String.join(" ", DUMP_REPORT_CMD, CONFIG_UID, configName, "--proto"));
+                String.join(" ", DUMP_REPORT_CMD, CONFIG_UID, CONFIG_NAME, "--proto"));
         LogUtil.CLog.d("get report list as following:\n" + reportList.toString());
         return reportList;
     }
@@ -264,6 +390,18 @@ public class StatsdValidationTest extends ProtoDumpTestCase {
 
     private void installTestApp() throws Exception {
         installPackage(DEVICE_SIDE_TEST_APK, true);
+    }
+
+    private String getCurrentLogcatDate() throws Exception {
+        // TODO: Do something more robust than this for getting logcat markers.
+        long timestampSecs = getDevice().getDeviceDate();
+        return new SimpleDateFormat("MM-dd HH:mm:ss.SSS")
+                .format(new Date(timestampSecs * 1000L));
+    }
+
+    private String getLogcatSince(String date, String logcatParams) throws Exception {
+        return getDevice().executeShellCommand(String.format(
+                "logcat -v threadtime -t '%s' -d %s", date, logcatParams));
     }
 
     // TODO: All the following code is entirely taken verbatim from BatteryStatsValidationTest.
