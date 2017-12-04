@@ -79,7 +79,7 @@ public class InstrumentedAutoFillService extends AutofillService {
         sInstance.set(this);
     }
 
-    public static AutofillService peekInstance() {
+    public static InstrumentedAutoFillService peekInstance() {
         return sInstance.get();
     }
 
@@ -105,7 +105,7 @@ public class InstrumentedAutoFillService extends AutofillService {
                 return;
             }
         }
-        sReplier.onFillRequest(request.getFillContexts(), request.getClientState(),
+        sReplier.onFillRequest(this, request.getFillContexts(), request.getClientState(),
                 cancellationSignal, callback, request.getFlags());
     }
 
@@ -380,7 +380,8 @@ public class InstrumentedAutoFillService extends AutofillService {
             mAcceptedPackageName = null;
         }
 
-        private void onFillRequest(List<FillContext> contexts, Bundle data,
+        private void onFillRequest(InstrumentedAutoFillService service,
+                List<FillContext> contexts, Bundle data,
                 CancellationSignal cancellationSignal, FillCallback callback, int flags) {
             try {
                 CannedFillResponse response = null;
@@ -420,11 +421,11 @@ public class InstrumentedAutoFillService extends AutofillService {
 
                 switch (mIdMode) {
                     case RESOURCE_ID:
-                        fillResponse = response.asFillResponse(
+                        fillResponse = response.asFillResponse(service,
                                 (id) -> Helper.findNodeByResourceId(contexts, id));
                         break;
                     case HTML_NAME:
-                        fillResponse = response.asFillResponse(
+                        fillResponse = response.asFillResponse(service,
                                 (name) -> Helper.findNodeByHtmlName(contexts, name));
                         break;
                     case HTML_NAME_OR_RESOURCE_ID:
