@@ -16,7 +16,7 @@
 package android.autofillservice.cts;
 
 import static android.autofillservice.cts.Helper.assertFillEventForContextCommitted;
-import static android.autofillservice.cts.Helper.assertFillEventForFieldsDetected;
+import static android.autofillservice.cts.Helper.assertFillEventForFieldsClassification;
 import static android.autofillservice.cts.Helper.runShellCommand;
 import static android.service.autofill.FillResponse.FLAG_TRACK_CONTEXT_COMMITED;
 
@@ -116,7 +116,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
                 InstrumentedAutoFillService.peekInstance().getFillEventHistory();
         final List<Event> events = history.getEvents();
         assertWithMessage("Wrong number of events: %s", events).that(events.size()).isEqualTo(1);
-        assertFillEventForFieldsDetected(events.get(0), "myId", 0);
+        assertFillEventForFieldsClassification(events.get(0), fieldId, "myId", 1000000);
     }
 
     @Test
