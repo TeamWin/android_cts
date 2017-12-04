@@ -30,6 +30,7 @@ import com.android.compatibility.common.util.BusinessLogicFactory;
 import com.android.compatibility.common.util.BusinessLogicHostExecutor;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
+import com.android.tradefed.testtype.suite.TestSuiteInfo;
 
 import java.io.File;
 
@@ -44,23 +45,16 @@ public class BusinessLogicHostTestBase extends BaseHostJUnit4Test {
     /* Test name rule that tracks the current test method under execution */
     @Rule public TestName mTestCase = new TestName();
 
-    private static BusinessLogic mBusinessLogic;
-    private static boolean mCanReadBusinessLogic = true;
+    protected BusinessLogic mBusinessLogic;
+    protected boolean mCanReadBusinessLogic = true;
 
     @Before
-    public void executeBusinessLogic() {
-        // Business logic must be retrieved in this @Before method, since the build info contains
-        // the location of the business logic file and cannot be referenced from a static context
-        if (mBusinessLogic == null) {
-            CompatibilityBuildHelper helper = new CompatibilityBuildHelper(getBuild());
-            File businessLogicFile = helper.getBusinessLogicHostFile();
-            if (businessLogicFile != null && businessLogicFile.canRead()) {
-                mBusinessLogic = BusinessLogicFactory.createFromFile(businessLogicFile);
-            } else {
-                mCanReadBusinessLogic = false; // failed to retrieve business logic
-            }
-        }
+    public void handleBusinessLogic() {
+        loadBusinessLogic();
+        executeBusinessLogic();
+    }
 
+    protected void executeBusinessLogic() {
         String methodName = mTestCase.getMethodName();
         assertTrue(String.format("Test \"%s\" is unable to execute as it depends on the missing "
                 + "remote configuration.", methodName), mCanReadBusinessLogic);
@@ -77,6 +71,16 @@ public class BusinessLogicHostTestBase extends BaseHostJUnit4Test {
         }
     }
 
+    protected void loadBusinessLogic() {
+        CompatibilityBuildHelper helper = new CompatibilityBuildHelper(getBuild());
+        File businessLogicFile = helper.getBusinessLogicHostFile();
+        if (businessLogicFile != null && businessLogicFile.canRead()) {
+            mBusinessLogic = BusinessLogicFactory.createFromFile(businessLogicFile);
+        } else {
+            mCanReadBusinessLogic = false; // failed to retrieve business logic
+        }
+    }
+
     public static void skipTest(String message) {
         assumeTrue(message, false);
     }
@@ -85,3 +89,4 @@ public class BusinessLogicHostTestBase extends BaseHostJUnit4Test {
         fail(message);
     }
 }
+
