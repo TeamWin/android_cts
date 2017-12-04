@@ -24,8 +24,6 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
-import static android.content.Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT;
-import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.am.StateLogger.log;
 import static android.server.am.WindowManagerState.TRANSIT_WALLPAPER_OPEN;
 
@@ -36,8 +34,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
-import android.app.ActivityOptions;
 import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
 
@@ -145,27 +143,62 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
     }
 
     @Test
+    @Presubmit
     public void testLaunchToSideMultiWindowCallbacks() throws Exception {
         if (!supportsSplitScreenMultiWindow()) {
             log("Skipping test: no split multi-window support");
             return;
         }
 
-        // Launch two activities, one split-screen primary and the other adjacent
-        final TestActivityHolder splitScreenActivity =
-                new TestActivityHolder(SplitScreenActivity.class, mContext);
-        splitScreenActivity.launchActivityInSplitScreen();
-        splitScreenActivity.assertWindowingMode(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
+        // Launch two activities, one docked, one adjacent
+        launchActivityInDockStack(LAUNCHING_ACTIVITY);
+        getLaunchActivityBuilder()
+                .setToSide(true)
+                .setWaitForLaunched(true)
+                .execute();
+        mAmWmState.assertContainsStack("Must contain fullscreen stack.",
+                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY, ACTIVITY_TYPE_STANDARD);
+        mAmWmState.assertContainsStack("Must contain docked stack.",
+                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
 
-        final TestActivityHolder toSideActivity = splitScreenActivity.launchOtherActivity(
-                ToSideActivity.class, FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_LAUNCH_ADJACENT, null);
-        toSideActivity.assertWindowingMode(WINDOWING_MODE_SPLIT_SCREEN_SECONDARY);
-
-        // Remove split-screen stack, and ensure that we are in the right fullscreen state and also
-        // reported to the client.
+        // Exit split-screen mode and ensure we only get 1 multi-window mode changed callback.
+        final String logSeparator = clearLogcat();
         removeStacksInWindowingModes(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
-        splitScreenActivity.assertWindowingMode(WINDOWING_MODE_FULLSCREEN);
-        toSideActivity.assertWindowingMode(WINDOWING_MODE_FULLSCREEN);
+        final ActivityLifecycleCounts lifecycleCounts = waitForOnMultiWindowModeChanged(
+                TEST_ACTIVITY_NAME, logSeparator);
+        assertEquals(1, lifecycleCounts.mMultiWindowModeChangedCount);
+    }
+
+    @Test
+    @Presubmit
+    public void testNoUserLeaveHintOnMultiWindowModeChanged() throws Exception {
+        if (!supportsSplitScreenMultiWindow()) {
+            log("Skipping test: no multi-window support");
+            return;
+        }
+
+        launchActivity(TEST_ACTIVITY_NAME, WINDOWING_MODE_FULLSCREEN);
+
+        // Move to docked stack.
+        String logSeparator = clearLogcat();
+        setActivityTaskWindowingMode(TEST_ACTIVITY_NAME, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
+        ActivityLifecycleCounts lifecycleCounts = waitForOnMultiWindowModeChanged(
+                TEST_ACTIVITY_NAME, logSeparator);
+        assertEquals("mMultiWindowModeChangedCount",
+                1, lifecycleCounts.mMultiWindowModeChangedCount);
+        assertEquals("mUserLeaveHintCount", 0, lifecycleCounts.mUserLeaveHintCount);
+
+        // Make sure docked stack is focused. This way when we dismiss it later fullscreen stack
+        // will come up.
+        launchActivity(TEST_ACTIVITY_NAME, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
+
+        // Move activity back to fullscreen stack.
+        logSeparator = clearLogcat();
+        setActivityTaskWindowingMode(TEST_ACTIVITY_NAME, WINDOWING_MODE_FULLSCREEN);
+        lifecycleCounts = waitForOnMultiWindowModeChanged(TEST_ACTIVITY_NAME, logSeparator);
+        assertEquals("mMultiWindowModeChangedCount",
+                1, lifecycleCounts.mMultiWindowModeChangedCount);
+        assertEquals("mUserLeaveHintCount", 0, lifecycleCounts.mUserLeaveHintCount);
     }
 
     @Test
@@ -733,8 +766,4 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
         mAmWmState.waitForWithWmState(state -> !state.isDockedStackMinimized(),
                 "***Waiting for Dock stack to not be minimized");
     }
-
-    public static class SplitScreenActivity extends TestActivityBase {}
-
-    public static class ToSideActivity extends TestActivityBase {}
 }
