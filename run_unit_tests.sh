@@ -73,3 +73,4 @@ ${CTS_DIR}/common/host-side/util/tests/run_tests.sh
 ${CTS_DIR}/common/util/tests/run_tests.sh
 
 ${CTS_DIR}/tools/cts-tradefed/tests/run_tests.sh
+

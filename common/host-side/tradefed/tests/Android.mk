@@ -17,8 +17,6 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_SRC_FILES := $(call all-java-files-under, ../src)
-LOCAL_JAVA_RESOURCE_DIRS := ../res
 include cts/error_prone_rules.mk
 
 LOCAL_SUITE_BUILD_NUMBER := 2
@@ -28,6 +26,7 @@ LOCAL_SUITE_FULLNAME := "Compatibility Tests"
 LOCAL_SUITE_VERSION := 1
 
 LOCAL_MODULE := compatibility-mock-tradefed
+LOCAL_STATIC_JAVA_LIBRARIES := cts-tradefed-harness
 include cts/error_prone_rules.mk
 include $(BUILD_COMPATIBILITY_SUITE)
 
