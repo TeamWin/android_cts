@@ -35,10 +35,13 @@ import android.os.Parcel;
 import android.os.PowerManager;
 import android.os.RemoteException;
 import android.test.InstrumentationTestCase;
+import android.util.Log;
 
 import com.android.compatibility.common.util.SystemUtil;
 
 public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
+    private static final String TAG = ActivityManagerProcessStateTest.class.getName();
+
     private static final String STUB_PACKAGE_NAME = "android.app.stubs";
     private static final int WAIT_TIME = 2000;
     // A secondary test activity from another APK.
@@ -49,6 +52,8 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
     static final String SIMPLE_ACTIVITY_START_SERVICE = ".SimpleActivityStartService";
     public static String ACTION_SIMPLE_ACTIVITY_START_SERVICE_RESULT =
             "com.android.cts.launcherapps.simpleapp.SimpleActivityStartService.RESULT";
+
+    private static final int TEMP_WHITELIST_DURATION_MS = 2000;
 
     private Context mContext;
     private Instrumentation mInstrumentation;
@@ -70,11 +75,18 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         mAllProcesses[1] = mService2Intent;
         mContext.stopService(mServiceIntent);
         mContext.stopService(mService2Intent);
+        removeTestAppFromWhitelists();
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
+    private void removeTestAppFromWhitelists() throws Exception {
+        executeShellCmd("cmd deviceidle whitelist -" + SIMPLE_PACKAGE_NAME);
+        executeShellCmd("cmd deviceidle tempwhitelist -r " + SIMPLE_PACKAGE_NAME);
+    }
+
+    private String executeShellCmd(String cmd) throws Exception {
+        final String result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+        Log.d(TAG, String.format("Output for '%s': %s", cmd, result));
+        return result;
     }
 
     /**
@@ -162,7 +174,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             // Also make sure the uid state reports are as expected.  Wait for active because
             // there may be some intermediate states as the process comes up.
             uidWatcher.waitFor(WatchUidRunner.CMD_ACTIVE, null, WAIT_TIME);
-            uidWatcher.expect(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
+            uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
             uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "FGS", WAIT_TIME);
 
             // Pull out the service IBinder for a kludy hack...
@@ -206,7 +218,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
 
             // Also make sure the uid state reports are as expected.
             uidWatcher.waitFor(WatchUidRunner.CMD_ACTIVE, null, WAIT_TIME);
-            uidWatcher.expect(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
+            uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
             uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "FGS", WAIT_TIME);
 
             // Bring down one service, app state should remain foreground.
@@ -232,7 +244,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             assertEquals(ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE,
                     am.getPackageImportance(SIMPLE_PACKAGE_NAME));
 
-            uidWatcher.expect(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
+            uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
             uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "FGS", WAIT_TIME);
 
             // Bring up other service, should remain foreground.
@@ -350,7 +362,8 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             }
 
             // Put app on temporary whitelist to see if this allows the service start.
-            cmd = "cmd deviceidle tempwhitelist -d 2000 " + SIMPLE_PACKAGE_NAME;
+            cmd = String.format("cmd deviceidle tempwhitelist -d %d %s",
+                    TEMP_WHITELIST_DURATION_MS, SIMPLE_PACKAGE_NAME);
             result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
 
             // Try starting the service now that the app is whitelisted...  should work!
@@ -359,7 +372,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
 
             // Also make sure the uid state reports are as expected.
             uidWatcher.waitFor(WatchUidRunner.CMD_ACTIVE, null, WAIT_TIME);
-            uidWatcher.expect(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
+            uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
             uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "SVC", WAIT_TIME);
 
             // Good, now stop the service and give enough time to get off the temp whitelist.
@@ -369,7 +382,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             uidWatcher.expect(WatchUidRunner.CMD_CACHED, null, WAIT_TIME);
             uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "CEM", WAIT_TIME);
 
-            Thread.sleep(3000);
+            executeShellCmd("cmd deviceidle tempwhitelist -r " + SIMPLE_PACKAGE_NAME);
 
             // Going off the temp whitelist causes a spurious proc state report...  that's
             // not ideal, but okay.
@@ -401,7 +414,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             mContext.startService(serviceIntent);
             conn.waitForConnect(WAIT_TIME);
 
-            uidWatcher.expect(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
+            uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
             uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "SVC", WAIT_TIME);
 
             // Okay, bring down the service.
@@ -533,7 +546,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
 
             // Also make sure the uid state reports are as expected.
             uidWatcher.waitFor(WatchUidRunner.CMD_ACTIVE, null, WAIT_TIME);
-            uidWatcher.expect(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
+            uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
             uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "FGS", WAIT_TIME);
 
             conn2.unbind(WAIT_TIME);
@@ -551,7 +564,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             mContext.startService(mServiceIntent);
             conn.waitForConnect(WAIT_TIME);
 
-            uidWatcher.expect(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
+            uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
             uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "SVC", WAIT_TIME);
 
             // And also start the second service.
@@ -636,13 +649,13 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
 
             // Track the uid proc state changes from the broadcast (but not service execution)
             controller.getUidWatcher().waitFor(WatchUidRunner.CMD_IDLE, null, WAIT_TIME);
-            controller.getUidWatcher().expect(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
+            controller.getUidWatcher().waitFor(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
             controller.getUidWatcher().expect(WatchUidRunner.CMD_PROCSTATE, "RCVR", WAIT_TIME);
             controller.getUidWatcher().expect(WatchUidRunner.CMD_CACHED, null, WAIT_TIME);
             controller.getUidWatcher().expect(WatchUidRunner.CMD_PROCSTATE, "CEM", WAIT_TIME);
 
             // Put app on temporary whitelist to see if this allows the service start.
-            controller.tempWhitelist(2000);
+            controller.tempWhitelist(TEMP_WHITELIST_DURATION_MS);
 
             // Being on the whitelist means the uid is now active.
             controller.getUidWatcher().expect(WatchUidRunner.CMD_ACTIVE, null, WAIT_TIME);
@@ -657,7 +670,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             conn.waitForConnect(WAIT_TIME);
 
             // Also make sure the uid state reports are as expected.
-            controller.getUidWatcher().expect(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
+            controller.getUidWatcher().waitFor(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
             // We are going to wait until 'SVC', because we may see an intermediate 'RCVR'
             // proc state depending on timing.
             controller.getUidWatcher().waitFor(WatchUidRunner.CMD_PROCSTATE, "SVC", WAIT_TIME);
@@ -669,7 +682,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             controller.getUidWatcher().expect(WatchUidRunner.CMD_CACHED, null, WAIT_TIME);
             controller.getUidWatcher().expect(WatchUidRunner.CMD_PROCSTATE, "CEM", WAIT_TIME);
 
-            Thread.sleep(3000);
+            controller.removeFromTempWhitelist();
 
             // Going off the temp whitelist causes a spurious proc state report...  that's
             // not ideal, but okay.
@@ -711,7 +724,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             conn.waitForConnect(WAIT_TIME);
 
             // Also make sure the uid state reports are as expected.
-            controller.getUidWatcher().expect(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
+            controller.getUidWatcher().waitFor(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
             controller.getUidWatcher().waitFor(WatchUidRunner.CMD_PROCSTATE, "SVC", WAIT_TIME);
 
             // Okay, bring down the service.
@@ -770,7 +783,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
                     ? "TOP" : "TPSL";
             // Also make sure the uid state reports are as expected.
             controller.getUidWatcher().waitFor(WatchUidRunner.CMD_ACTIVE, null, WAIT_TIME);
-            controller.getUidWatcher().expect(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
+            controller.getUidWatcher().waitFor(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
             controller.getUidWatcher().expect(WatchUidRunner.CMD_PROCSTATE,
                     expectedActivityState, WAIT_TIME);
             controller.getUidWatcher().expect(WatchUidRunner.CMD_PROCSTATE, "SVC", WAIT_TIME);
@@ -785,7 +798,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             // App isn't yet idle, so we should be able to start the service again.
             mContext.startService(mServiceIntent);
             conn.waitForConnect(WAIT_TIME);
-            controller.getUidWatcher().expect(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
+            controller.getUidWatcher().waitFor(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
             controller.getUidWatcher().expect(WatchUidRunner.CMD_PROCSTATE, "SVC", WAIT_TIME);
 
             // And now fast-forward to the app going idle, service should be stopped.
