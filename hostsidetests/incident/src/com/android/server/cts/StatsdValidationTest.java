@@ -22,9 +22,9 @@ import com.android.internal.os.StatsdConfigProto.EventMetric;
 import com.android.internal.os.StatsdConfigProto.GaugeMetric;
 import com.android.internal.os.StatsdConfigProto.KeyMatcher;
 import com.android.internal.os.StatsdConfigProto.KeyValueMatcher;
-import com.android.internal.os.StatsdConfigProto.LogEntryMatcher;
+import com.android.internal.os.StatsdConfigProto.AtomMatcher;
 import com.android.internal.os.StatsdConfigProto.SimpleCondition;
-import com.android.internal.os.StatsdConfigProto.SimpleLogEntryMatcher;
+import com.android.internal.os.StatsdConfigProto.SimpleAtomMatcher;
 import com.android.internal.os.StatsdConfigProto.StatsdConfig;
 import com.android.os.AtomsProto.Atom;
 import com.android.os.AtomsProto.ScreenStateChanged;
@@ -184,11 +184,11 @@ public class StatsdValidationTest extends ProtoDumpTestCase {
     private StatsdConfig.Builder getDefaultConfig() {
         StatsdConfig.Builder configBuilder = StatsdConfig.newBuilder();
         configBuilder.setName("12345");
-        configBuilder.addLogEntryMatcher(
-                LogEntryMatcher.newBuilder()
+        configBuilder.addAtomMatcher(
+                AtomMatcher.newBuilder()
                         .setName("SCREEN_TURNED_ON")
-                        .setSimpleLogEntryMatcher(
-                                SimpleLogEntryMatcher.newBuilder()
+                        .setSimpleAtomMatcher(
+                                SimpleAtomMatcher.newBuilder()
                                         .setTag(Atom.SCREEN_STATE_CHANGED_FIELD_NUMBER)
                                         .addKeyValueMatcher(KeyValueMatcher.newBuilder()
                                                 .setKeyMatcher(
@@ -197,11 +197,11 @@ public class StatsdValidationTest extends ProtoDumpTestCase {
                                                                         .DISPLAY_STATE_FIELD_NUMBER)
                                                 ).setEqInt(
                                                         ScreenStateChanged.State.STATE_ON_VALUE))));
-        configBuilder.addLogEntryMatcher(
-                LogEntryMatcher.newBuilder()
+        configBuilder.addAtomMatcher(
+                AtomMatcher.newBuilder()
                         .setName("SCREEN_TURNED_OFF")
-                        .setSimpleLogEntryMatcher(
-                                SimpleLogEntryMatcher.newBuilder()
+                        .setSimpleAtomMatcher(
+                                SimpleAtomMatcher.newBuilder()
                                         .setTag(Atom.SCREEN_STATE_CHANGED_FIELD_NUMBER)
                                         .addKeyValueMatcher(KeyValueMatcher.newBuilder()
                                                 .setKeyMatcher(
@@ -211,18 +211,18 @@ public class StatsdValidationTest extends ProtoDumpTestCase {
                                                 ).setEqInt(
                                                         ScreenStateChanged.State.STATE_OFF_VALUE)
                                         )));
-        configBuilder.addLogEntryMatcher(
-                LogEntryMatcher.newBuilder()
+        configBuilder.addAtomMatcher(
+                AtomMatcher.newBuilder()
                         .setName("UID_PROCESS_STATE_CHANGED")
-                        .setSimpleLogEntryMatcher(
-                                SimpleLogEntryMatcher.newBuilder()
+                        .setSimpleAtomMatcher(
+                                SimpleAtomMatcher.newBuilder()
                                         .setTag(Atom.UID_PROCESS_STATE_CHANGED_FIELD_NUMBER)));
         // up to 110 is fine. 128 not good
-        configBuilder.addLogEntryMatcher(
-                LogEntryMatcher.newBuilder()
+        configBuilder.addAtomMatcher(
+                AtomMatcher.newBuilder()
                         .setName("KERNEL_WAKELOCK_PULLED")
-                        .setSimpleLogEntryMatcher(
-                                SimpleLogEntryMatcher.newBuilder()
+                        .setSimpleAtomMatcher(
+                                SimpleAtomMatcher.newBuilder()
                                         .setTag(Atom.KERNEL_WAKELOCK_PULLED_FIELD_NUMBER)));
         configBuilder
                 .addCondition(Condition.newBuilder().setName("SCREEN_IS_ON").setSimpleCondition(
