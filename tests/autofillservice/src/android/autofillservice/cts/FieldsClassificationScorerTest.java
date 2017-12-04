@@ -56,4 +56,29 @@ public class FieldsClassificationScorerTest {
         assertThat(FieldsClassificationScorer.getScore(AutofillValue.forText("D'OH!"), "D'oH!"))
                 .isEqualTo(100_0000);
     }
+
+    // TODO(b/67867469): might need to change it once it supports different sizes
+    @Test
+    public void testGetScore_mismatchDifferentSizes() {
+        assertThat(FieldsClassificationScorer.getScore(AutofillValue.forText("One"), "MoreThanOne"))
+                .isEqualTo(0);
+        assertThat(FieldsClassificationScorer.getScore(AutofillValue.forText("MoreThanOne"), "One"))
+                .isEqualTo(0);
+    }
+
+    @Test
+    public void testGetScore_partialMatch() {
+        assertThat(FieldsClassificationScorer.getScore(AutofillValue.forText("Dude"), "Dxxx"))
+                .isEqualTo(25_0000);
+        assertThat(FieldsClassificationScorer.getScore(AutofillValue.forText("Dude"), "DUxx"))
+                .isEqualTo(50_0000);
+        assertThat(FieldsClassificationScorer.getScore(AutofillValue.forText("Dude"), "DUDx"))
+                .isEqualTo(75_0000);
+        assertThat(FieldsClassificationScorer.getScore(AutofillValue.forText("Dxxx"), "Dude"))
+                .isEqualTo(25_0000);
+        assertThat(FieldsClassificationScorer.getScore(AutofillValue.forText("DUxx"), "Dude"))
+                .isEqualTo(50_0000);
+        assertThat(FieldsClassificationScorer.getScore(AutofillValue.forText("DUDx"), "Dude"))
+                .isEqualTo(75_0000);
+    }
 }

@@ -72,6 +72,11 @@ public class UserDataTest {
     }
 
     @Test
+    public void testAdd_duplicatedValue() {
+        assertThrows(IllegalStateException.class, () -> mBuilder.add(mRemoteId2, mValue));
+    }
+
+    @Test
     public void testAdd_maximumReached() {
         // Must start from 1 because first is added on builder
         for (int i = 1; i < UserData.getMaxFieldClassificationIdsSize() - 1; i++) {
