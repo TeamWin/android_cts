@@ -21,12 +21,9 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_ASSISTANT;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
-import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.app.ActivityManager.SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT;
-import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
-import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logE;
 import static android.view.KeyEvent.KEYCODE_APP_SWITCH;
@@ -35,18 +32,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import android.app.Activity;
 import android.app.ActivityManager;
-import android.app.Instrumentation;
 import android.content.Context;
-import android.content.Intent;
-import android.content.res.Configuration;
 import android.graphics.Bitmap;
-import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.UiDevice;
-import android.util.Log;
 import android.view.Display;
 
 import com.android.compatibility.common.util.SystemUtil;
@@ -448,7 +439,7 @@ public abstract class ActivityManagerTestBase {
         launchActivity(activityName);
         final int taskId = getActivityTaskId(activityName);
         mAm.setTaskWindowingModeSplitScreenPrimary(taskId, createMode, true /* onTop */,
-                false /* animate */, null /* initialBounds */);
+                false /* animate */, null /* initialBounds */, false /* showRecents */);
 
         mAmWmState.waitForValidState(activityName,
                 WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
@@ -1093,6 +1084,8 @@ public abstract class ActivityManagerTestBase {
         return null;
     }
 
+    // TODO: Now that our test are device side, we can convert these to a more direct communication
+    // channel vs. depending on logs.
     private static final Pattern sCreatePattern = Pattern.compile("(.+): onCreate");
     private static final Pattern sStartPattern = Pattern.compile("(.+): onStart");
     private static final Pattern sResumePattern = Pattern.compile("(.+): onResume");
@@ -1107,6 +1100,7 @@ public abstract class ActivityManagerTestBase {
             Pattern.compile("(.+): onMultiWindowModeChanged");
     private static final Pattern sPictureInPictureModeChangedPattern =
             Pattern.compile("(.+): onPictureInPictureModeChanged");
+    private static final Pattern sUserLeaveHintPattern = Pattern.compile("(.+): onUserLeaveHint");
     private static final Pattern sNewConfigPattern = Pattern.compile(
             "(.+): config size=\\((\\d+),(\\d+)\\) displaySize=\\((\\d+),(\\d+)\\)"
             + " metricsSize=\\((\\d+),(\\d+)\\) smallestScreenWidth=(\\d+) densityDpi=(\\d+)"
@@ -1193,6 +1187,31 @@ public abstract class ActivityManagerTestBase {
         return null;
     }
 
+    /** Waits for at least one onMultiWindowModeChanged event. */
+    ActivityLifecycleCounts waitForOnMultiWindowModeChanged(
+            String activityName, String logSeparator) {
+        int retriesLeft = 5;
+        ActivityLifecycleCounts result;
+        do {
+            result = new ActivityLifecycleCounts(activityName, logSeparator);
+            if (result.mMultiWindowModeChangedCount < 1) {
+                log("***waitForOnMultiWindowModeChanged...");
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    log(e.toString());
+                    // Well I guess we are not waiting...
+                }
+            } else {
+                break;
+            }
+        } while (retriesLeft-- > 0);
+        return result;
+
+    }
+
+    // TODO: Now that our test are device side, we can convert these to a more direct communication
+    // channel vs. depending on logs.
     class ActivityLifecycleCounts {
         int mCreateCount;
         int mStartCount;
@@ -1204,13 +1223,15 @@ public abstract class ActivityManagerTestBase {
         int mLastMultiWindowModeChangedLineIndex;
         int mPictureInPictureModeChangedCount;
         int mLastPictureInPictureModeChangedLineIndex;
+        int mUserLeaveHintCount;
         int mPauseCount;
         int mStopCount;
         int mLastStopLineIndex;
         int mDestroyCount;
 
-        public ActivityLifecycleCounts(String activityName, String logSeparator) {
+        ActivityLifecycleCounts(String activityName, String logSeparator) {
             int lineIndex = 0;
+            waitForIdle();
             for (String line : getDeviceLogsForComponent(activityName, logSeparator)) {
                 line = line.trim();
                 lineIndex++;
@@ -1260,6 +1281,12 @@ public abstract class ActivityManagerTestBase {
                     continue;
                 }
 
+                matcher = sUserLeaveHintPattern.matcher(line);
+                if (matcher.matches()) {
+                    mUserLeaveHintCount++;
+                    continue;
+                }
+
                 matcher = sPausePattern.matcher(line);
                 if (matcher.matches()) {
                     mPauseCount++;
@@ -1293,13 +1320,15 @@ public abstract class ActivityManagerTestBase {
     protected static class LaunchActivityBuilder {
         private final ActivityAndWindowManagersState mAmWmState;
 
-        private String mTargetActivityName;
+        // The activity to be launched
+        private String mTargetActivityName = "TestActivity";
         private String mTargetPackage = componentName;
         private boolean mToSide;
         private boolean mRandomData;
         private boolean mNewTask;
         private boolean mMultipleTask;
         private int mDisplayId = INVALID_DISPLAY_ID;
+        // A proxy activity that launches other activities including mTargetActivityName
         private String mLaunchingActivityName = LAUNCHING_ACTIVITY;
         private boolean mReorderToFront;
         private boolean mWaitForLaunched;
@@ -1428,153 +1457,5 @@ public abstract class ActivityManagerTestBase {
         pressBackButton();
         sleepDevice();
         wakeUpAndUnlockDevice();
-    }
-
-    /** Helper class to makes sure we are reference the same activity across relaunches */
-    protected static class TestActivityHolder extends Instrumentation.ActivityMonitor {
-
-        final Class<?> mClass;
-        final Instrumentation mInstrumentation;
-        final Context mContext;
-
-        TestActivityHolder(Class<?> cls, Context context) {
-            super(cls.getName(), null, false);
-            mClass = cls;
-            mInstrumentation = InstrumentationRegistry.getInstrumentation();
-            mInstrumentation.addMonitor(this);
-            mContext = context;
-        }
-
-        protected TestActivityBase getCurrentActivity() {
-            return (TestActivityBase) getLastActivity();
-        }
-
-        protected void launchActivity(int flags, Bundle options) {
-            final Intent intent = new Intent(mContext, mClass);
-            intent.addFlags(flags | FLAG_ACTIVITY_NEW_TASK);
-            mInstrumentation.startActivitySync(intent, options);
-            mInstrumentation.waitForIdleSync();
-        }
-
-        /** Launches another activity from this activities context. */
-        protected TestActivityHolder launchOtherActivity(Class<?> cls, int flags, Bundle options) {
-            final TestActivityHolder activityHolder =
-                    new TestActivityHolder(cls, getCurrentActivity());
-
-            final Activity activity = getCurrentActivity();
-            final Intent intent = new Intent(activity, cls);
-            intent.addFlags(flags);
-            activity.startActivity(intent, options);
-            mInstrumentation.waitForIdleSync();
-            return activityHolder;
-        }
-
-        protected void launchActivityInSplitScreen() {
-            launchActivity(0, null);
-            final int taskId = getLastActivity().getTaskId();
-            final ActivityManager am = mContext.getSystemService(ActivityManager.class);
-            am.setTaskWindowingModeSplitScreenPrimary(taskId, SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT,
-                    true /* onTop */, false /* animate */, null /* initialBounds */);
-            waitForWindowingMode(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, 5000 /* timeoutMs */);
-        }
-
-        synchronized void waitForWindowingMode(int windowingMode, long timeoutMs) {
-            final boolean inMultiWindowMode = windowingMode != WINDOWING_MODE_FULLSCREEN;
-            final long startTime = System.currentTimeMillis();
-            TestActivityBase activity = getCurrentActivity();
-            if (activity != null) {
-                activity.setMonitor(this);
-            }
-            while(timeoutMs > 0 && (windowingMode != getWindowingMode()
-                    || inMultiWindowMode != getLastReportedInMultiWindowMode())) {
-                try {
-                    wait(timeoutMs);
-                    final long waitedTime = System.currentTimeMillis() - startTime;
-                    timeoutMs -=waitedTime;
-                    if (activity != getCurrentActivity()) {
-                        activity = getCurrentActivity();
-                        activity.setMonitor(this);
-                    }
-                } catch (InterruptedException e) {
-                }
-            }
-            assertEquals(windowingMode, getWindowingMode());
-            assertEquals(inMultiWindowMode, getLastReportedInMultiWindowMode());
-        }
-
-        void assertWindowingMode(int windowingMode) {
-            waitForWindowingMode(windowingMode, 5000 /* timeoutMs */);
-            final boolean inMultiWindowMode = windowingMode != WINDOWING_MODE_FULLSCREEN;
-            final TestActivityBase activity = getCurrentActivity();
-            assertEquals(inMultiWindowMode, activity.isInMultiWindowMode());
-            assertEquals(inMultiWindowMode, activity.mLastReportedInMultiWindowMode);
-            assertEquals(windowingMode, activity.getWindowingMode());
-        }
-
-        protected int getWindowingMode() {
-            final TestActivityBase activity = getCurrentActivity();
-            return (activity != null) ? activity.getWindowingMode() : WINDOWING_MODE_UNDEFINED;
-        }
-
-        protected boolean getLastReportedInMultiWindowMode() {
-            final TestActivityBase activity = getCurrentActivity();
-            return (activity != null) ? activity.mLastReportedInMultiWindowMode : false;
-        }
-    }
-
-    protected static class TestActivityBase extends Activity {
-        protected boolean mLastReportedInMultiWindowMode;
-        private Instrumentation.ActivityMonitor mMonitor = new Instrumentation.ActivityMonitor();
-
-        protected Activity startActivity(Class<?> cls, int flags, Instrumentation instrumentation) {
-            final Intent intent = new Intent(this, cls);
-            intent.addFlags(flags);
-            final Activity activity = instrumentation.startActivitySync(intent);
-            instrumentation.waitForIdleSync();
-            return activity;
-        }
-
-        protected void setMonitor(Instrumentation.ActivityMonitor monitor) {
-            synchronized (mMonitor) {
-                mMonitor = monitor;
-            }
-        }
-
-        protected int getWindowingMode() {
-            return getResources().getConfiguration().windowConfiguration.getWindowingMode();
-        }
-
-        @Override
-        protected void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            mLastReportedInMultiWindowMode = isInMultiWindowMode();
-        }
-
-        @Override
-        public void onMultiWindowModeChanged(
-                boolean isInMultiWindowMode, Configuration newConfig) {
-            super.onMultiWindowModeChanged(isInMultiWindowMode, newConfig);
-            mLastReportedInMultiWindowMode = isInMultiWindowMode;
-            synchronized (mMonitor) {
-                mMonitor.notifyAll();
-            }
-        }
-
-        @Override
-        public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode,
-                Configuration newConfig) {
-            super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig);
-            synchronized (mMonitor) {
-                mMonitor.notifyAll();
-            }
-        }
-
-        @Override
-        public void onConfigurationChanged(Configuration newConfig) {
-            super.onConfigurationChanged(newConfig);
-            synchronized (mMonitor) {
-                mMonitor.notifyAll();
-            }
-        }
     }
 }

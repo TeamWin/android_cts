@@ -82,6 +82,12 @@ public abstract class AbstractLifecycleLogActivity extends Activity {
         Log.i(getTag(), "onDestroy");
     }
 
+    @Override
+    protected void onUserLeaveHint() {
+        super.onUserLeaveHint();
+        Log.i(getTag(), "onUserLeaveHint");
+    }
+
     protected abstract String getTag();
 
     protected void dumpConfiguration(Configuration config) {
