@@ -687,7 +687,8 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
                         new MockListener.IntegerResultCatcher() {
                             @Override
                             public void accept(int result) {
-                                if (result == MockListener.HINT_HOST_DISABLE_CALL_EFFECTS) {
+                                if ((result & MockListener.HINT_HOST_DISABLE_CALL_EFFECTS)
+                                        == MockListener.HINT_HOST_DISABLE_CALL_EFFECTS) {
                                     status = PASS;
                                 } else {
                                     logFail();
