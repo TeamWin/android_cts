@@ -31,7 +31,7 @@ public class DisplaySizeTest extends DeviceTestCase {
     private static final String DENSITY_PROP_DEVICE = "ro.sf.lcd_density";
     private static final String DENSITY_PROP_EMULATOR = "qemu.sf.lcd_density";
 
-    private static final String AM_START_COMMAND = "am start -n %s/%s.%s";
+    private static final String AM_START_COMMAND = "am start -n %s/%s.%s --display 0";
     private static final String AM_FORCE_STOP = "am force-stop %s";
 
     private static final int ACTIVITY_TIMEOUT_MILLIS = 1000;
