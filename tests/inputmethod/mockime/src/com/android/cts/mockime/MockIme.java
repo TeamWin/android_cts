@@ -169,6 +169,8 @@ public final class MockIme extends InputMethodService {
                     getResources().getColor(android.R.color.holo_orange_dark, null);
             setBackgroundColor(mSettings.getBackgroundColor(defaultBackgroundColor));
 
+            final int mainSpacerHeight = mSettings.getInputViewHeightWithoutSystemWindowInset(
+                    LayoutParams.WRAP_CONTENT);
             {
                 final RelativeLayout layout = new RelativeLayout(getContext());
                 final TextView textView = new TextView(getContext());
@@ -181,7 +183,7 @@ public final class MockIme extends InputMethodService {
                 textView.setGravity(Gravity.CENTER);
                 textView.setText(getImeId(getContext().getPackageName()));
                 layout.addView(textView);
-                addView(layout, LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+                addView(layout, LayoutParams.MATCH_PARENT, mainSpacerHeight);
             }
         }
     }

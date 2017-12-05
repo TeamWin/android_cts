@@ -31,6 +31,8 @@ public class ImeSettings {
     private final String mEventCallbackActionName;
 
     private static final String BACKGROUND_COLOR_KEY = "BackgroundColor";
+    private static final String INPUT_VIEW_HEIGHT_WITHOUT_SYSTEM_WINDOW_INSET =
+            "InputViewHeightWithoutSystemWindowInset";
     private static final String FULLSCREEN_MODE_ALLOWED = "FullscreenModeAllowed";
 
     @NonNull
@@ -53,6 +55,10 @@ public class ImeSettings {
     @ColorInt
     public int getBackgroundColor(@ColorInt int defaultColor) {
         return mBundle.getInt(BACKGROUND_COLOR_KEY, defaultColor);
+    }
+
+    public int getInputViewHeightWithoutSystemWindowInset(int defaultHeight) {
+        return mBundle.getInt(INPUT_VIEW_HEIGHT_WITHOUT_SYSTEM_WINDOW_INSET, defaultHeight);
     }
 
     static void writeToParcel(@NonNull Parcel parcel, @NonNull String eventCallbackActionName,
@@ -90,6 +96,16 @@ public class ImeSettings {
          */
         public Builder setBackgroundColor(@ColorInt int color) {
             mBundle.putInt(BACKGROUND_COLOR_KEY, color);
+            return this;
+        }
+
+        /**
+         * Sets the input view height measured from the bottom system window inset.
+         * @param height height of the soft input view. This does not include the system window
+         *               inset such as navigation bar
+         */
+        public Builder setInputViewHeightWithoutSystemWindowInset(int height) {
+            mBundle.putInt(INPUT_VIEW_HEIGHT_WITHOUT_SYSTEM_WINDOW_INSET, height);
             return this;
         }
     }
