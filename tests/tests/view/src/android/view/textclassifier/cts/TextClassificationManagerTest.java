@@ -119,6 +119,7 @@ public class TextClassificationManagerTest {
             assertTrue(confidenceScore >= 0);
             assertTrue(confidenceScore <= 1);
         }
+        assertNotNull(selection.getSignature());
     }
 
     private static void assertValidResult(TextClassification classification) {
@@ -132,6 +133,7 @@ public class TextClassificationManagerTest {
             assertTrue(confidenceScore <= 1);
         }
         assertTrue(classification.getSecondaryActionsCount() >= 0);
+        assertNotNull(classification.getSignature());
     }
 
     private static void assertValidResult(TextLinks links) {
