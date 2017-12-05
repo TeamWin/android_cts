@@ -35,6 +35,7 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
+import android.view.Window;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputBinding;
 import android.widget.LinearLayout;
@@ -139,6 +140,12 @@ public final class MockIme extends InputMethodService {
         });
     }
 
+    @Override
+    public void onConfigureWindow(Window win, boolean isFullscreen, boolean isCandidatesOnly) {
+        getTracer().onConfigureWindow(win, isFullscreen, isCandidatesOnly,
+                () -> super.onConfigureWindow(win, isFullscreen, isCandidatesOnly));
+    }
+
     private static final class KeyboardLayoutView extends LinearLayout {
 
         public KeyboardLayoutView(Context context) {
@@ -168,6 +175,34 @@ public final class MockIme extends InputMethodService {
     @Override
     public View onCreateInputView() {
         return getTracer().onCreateInputView(() -> new KeyboardLayoutView(this));
+    }
+
+    @Override
+    public void onStartInput(EditorInfo editorInfo, boolean restarting) {
+        getTracer().onStartInput(editorInfo, restarting,
+                () -> super.onStartInput(editorInfo, restarting));
+    }
+
+    @Override
+    public void onStartInputView(EditorInfo editorInfo, boolean restarting) {
+        getTracer().onStartInputView(editorInfo, restarting,
+                () -> super.onStartInputView(editorInfo, restarting));
+    }
+
+    @Override
+    public void onFinishInputView(boolean finishingInput) {
+        getTracer().onFinishInputView(finishingInput,
+                () -> super.onFinishInputView(finishingInput));
+    }
+
+    @Override
+    public void onFinishInput() {
+        getTracer().onFinishInput(() -> super.onFinishInput());
+    }
+
+    @Override
+    public void onDestroy() {
+        getTracer().onDestroy(() -> super.onDestroy());
     }
 
     @Override
@@ -275,8 +310,46 @@ public final class MockIme extends InputMethodService {
             recordEventInternal("onCreate", runnable);
         }
 
+        public void onConfigureWindow(Window win, boolean isFullscreen,
+                boolean isCandidatesOnly, @NonNull Runnable runnable) {
+            final Bundle arguments = new Bundle();
+            arguments.putBoolean("isFullscreen", isFullscreen);
+            arguments.putBoolean("isCandidatesOnly", isCandidatesOnly);
+            recordEventInternal("onConfigureWindow", runnable, arguments);
+        }
+
         public View onCreateInputView(@NonNull Supplier<View> supplier) {
             return recordEventInternal("onCreateInputView", supplier);
+        }
+
+        public void onStartInput(EditorInfo editorInfo, boolean restarting,
+                @NonNull Runnable runnable) {
+            final Bundle arguments = new Bundle();
+            arguments.putParcelable("editorInfo", editorInfo);
+            arguments.putBoolean("restarting", restarting);
+            recordEventInternal("onStartInput", runnable, arguments);
+        }
+
+        public void onStartInputView(EditorInfo editorInfo, boolean restarting,
+                @NonNull Runnable runnable) {
+            final Bundle arguments = new Bundle();
+            arguments.putParcelable("editorInfo", editorInfo);
+            arguments.putBoolean("restarting", restarting);
+            recordEventInternal("onStartInputView", runnable, arguments);
+        }
+
+        public void onFinishInputView(boolean finishingInput, @NonNull Runnable runnable) {
+            final Bundle arguments = new Bundle();
+            arguments.putBoolean("finishingInput", finishingInput);
+            recordEventInternal("onFinishInputView", runnable, arguments);
+        }
+
+        public void onFinishInput(@NonNull Runnable runnable) {
+            recordEventInternal("onFinishInput", runnable);
+        }
+
+        public void onDestroy(@NonNull Runnable runnable) {
+            recordEventInternal("onDestroy", runnable);
         }
 
         public void attachToken(IBinder token, @NonNull Runnable runnable) {
