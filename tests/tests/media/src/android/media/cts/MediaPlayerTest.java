@@ -97,10 +97,6 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         }
     }
 
-    public void testonInputBufferFilledSigsegv() throws Exception {
-        testIfMediaServerDied(R.raw.on_input_buffer_filled_sigsegv);
-    }
-
     public void testFlacHeapOverflow() throws Exception {
         testIfMediaServerDied(R.raw.heap_oob_flac);
     }
