@@ -20,8 +20,6 @@ include $(CLEAR_VARS)
 # We use the DefaultManifestAttributesTest from the android.cts.dpi package.
 LOCAL_STATIC_JAVA_LIBRARIES := android.cts.dpi ctstestrunner junit
 
-LOCAL_JAVA_LIBRARIES := legacy-android-test
-
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_PACKAGE_NAME := CtsDpiTestCases2

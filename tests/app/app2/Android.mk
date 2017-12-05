@@ -20,6 +20,7 @@ LOCAL_MODULE_TAGS := tests
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util \
+    legacy-android-test \
 
 LOCAL_SRC_FILES := \
     ../app/src/android/app/stubs/LocalService.java

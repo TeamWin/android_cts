@@ -36,7 +36,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestrunner \
     ub-uiautomator \
     ub-janktesthelper \
-    glide
+    glide \
+    legacy-android-test
 
 LOCAL_STATIC_ANDROID_LIBRARIES := \
     android-support-v4 \

@@ -29,6 +29,7 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util \
-    ctstestrunner
+    ctstestrunner \
+    legacy-android-test
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)

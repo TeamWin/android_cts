@@ -23,9 +23,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-test \
     compatibility-device-util \
     ctstestrunner \
-    ub-uiautomator
-
-LOCAL_JAVA_LIBRARIES := legacy-android-test
+    ub-uiautomator \
+    legacy-android-test
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src) \
     ../ExternalStorageApp/src/com/android/cts/externalstorageapp/CommonExternalStorageTest.java
