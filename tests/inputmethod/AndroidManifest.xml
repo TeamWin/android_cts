@@ -34,6 +34,15 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name="android.view.inputmethod.cts.util.TestActivity"
+            android:label="TestActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
+            </intent-filter>
+        </activity>
+
         <!-- In order to test typical use cases, let this MockIME run in a separate process -->
         <!--
           TODO: Move this sevice definition into MockIME package and let the build system to merge
