@@ -35,6 +35,7 @@ public class ImeSettings {
             "InputViewHeightWithoutSystemWindowInset";
     private static final String WINDOW_FLAGS = "WindowFlags";
     private static final String FULLSCREEN_MODE_ALLOWED = "FullscreenModeAllowed";
+    private static final String INPUT_VIEW_SYSTEM_UI_VISIBILITY = "InputViewSystemUiVisibility";
 
     @NonNull
     private final PersistableBundle mBundle;
@@ -64,6 +65,10 @@ public class ImeSettings {
 
     public int getWindowFlags(int defaultFlags) {
         return mBundle.getInt(WINDOW_FLAGS, defaultFlags);
+    }
+
+    public int getInputViewSystemUiVisibility(int defaultFlags) {
+        return mBundle.getInt(INPUT_VIEW_SYSTEM_UI_VISIBILITY, defaultFlags);
     }
 
     static void writeToParcel(@NonNull Parcel parcel, @NonNull String eventCallbackActionName,
@@ -126,6 +131,18 @@ public class ImeSettings {
          */
         public Builder setWindowFlags(int flags) {
             mBundle.putInt(WINDOW_FLAGS, flags);
+            return this;
+        }
+
+        /**
+         * Sets flags to be specified to {@link android.view.View#setSystemUiVisibility(int)} of
+         * the main soft input view (the returned view from {@link MockIme#onCreateInputView()}).
+         *
+         * @param visibilityFlags flags to be specified
+         * @see android.view.View
+         */
+        public Builder setInputViewSystemUiVisibility(int visibilityFlags) {
+            mBundle.putInt(INPUT_VIEW_SYSTEM_UI_VISIBILITY, visibilityFlags);
             return this;
         }
     }

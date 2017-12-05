@@ -192,6 +192,11 @@ public final class MockIme extends InputMethodService {
                 layout.addView(textView);
                 addView(layout, LayoutParams.MATCH_PARENT, mainSpacerHeight);
             }
+
+            final int systemUiVisibility = mSettings.getInputViewSystemUiVisibility(0);
+            if (systemUiVisibility != 0) {
+                setSystemUiVisibility(systemUiVisibility);
+            }
         }
 
         @Override
