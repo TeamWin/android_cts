@@ -33,6 +33,7 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
+import android.view.inputmethod.InputBinding;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -148,6 +149,15 @@ public final class MockIme extends InputMethodService {
         return tracer;
     }
 
+    @NonNull
+    private ImeState getState() {
+        final boolean hasInputBinding = getCurrentInputBinding() != null;
+        final boolean hasDummyInputConnectionConnection =
+                !hasInputBinding
+                        || getCurrentInputConnection() == getCurrentInputBinding().getConnection();
+        return new ImeState(hasInputBinding, hasDummyInputConnectionConnection);
+    }
+
     /**
      * Event tracing helper class for {@link MockIme}.
      */
@@ -204,6 +214,7 @@ public final class MockIme extends InputMethodService {
 
         private <T> T recordEventInternal(@NonNull String eventName,
                 @NonNull Supplier<T> supplier, @NonNull Bundle arguments) {
+            final ImeState enterState = mIme.getState();
             final long enterTimestamp = SystemClock.elapsedRealtimeNanos();
             final long enterWallTime = System.currentTimeMillis();
             final int nestLevel = mNestLevel;
@@ -216,9 +227,10 @@ public final class MockIme extends InputMethodService {
             }
             final long exitTimestamp = SystemClock.elapsedRealtimeNanos();
             final long exitWallTime = System.currentTimeMillis();
+            final ImeState exitState = mIme.getState();
             sendEventInternal(new ImeEvent(eventName, nestLevel, mThreadName,
                     mThreadId, mIsMainThread, enterTimestamp, exitTimestamp, enterWallTime,
-                    exitWallTime, arguments));
+                    exitWallTime, enterState, exitState, arguments));
             return result;
         }
 

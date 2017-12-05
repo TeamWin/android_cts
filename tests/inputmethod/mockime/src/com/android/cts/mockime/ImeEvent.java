@@ -26,7 +26,8 @@ public final class ImeEvent {
 
     ImeEvent(@NonNull String eventName, int nestLevel, @NonNull String threadName, int threadId,
             boolean isMainThread, long enterTimestamp, long exitTimestamp, long enterWallTime,
-            long exitWallTime, @NonNull Bundle arguments) {
+            long exitWallTime, @NonNull ImeState enterState, @NonNull ImeState exitState,
+            @NonNull Bundle arguments) {
         mEventName = eventName;
         mNestLevel = nestLevel;
         mThreadName = threadName;
@@ -36,6 +37,8 @@ public final class ImeEvent {
         mExitTimestamp = exitTimestamp;
         mEnterWallTime = enterWallTime;
         mExitWallTime = exitWallTime;
+        mEnterState = enterState;
+        mExitState = exitState;
         mArguments = arguments;
     }
 
@@ -51,6 +54,8 @@ public final class ImeEvent {
         bundle.putLong("mExitTimestamp", mExitTimestamp);
         bundle.putLong("mEnterWallTime", mEnterWallTime);
         bundle.putLong("mExitWallTime", mExitWallTime);
+        bundle.putBundle("mEnterState", mEnterState.toBundle());
+        bundle.putBundle("mExitState", mExitState.toBundle());
         bundle.putBundle("mArguments", mArguments);
         return bundle;
     }
@@ -66,10 +71,12 @@ public final class ImeEvent {
         final long exitTimestamp = bundle.getLong("mExitTimestamp");
         final long enterWallTime = bundle.getLong("mEnterWallTime");
         final long exitWallTime = bundle.getLong("mExitWallTime");
+        final ImeState enterState = ImeState.fromBundle(bundle.getBundle("mEnterState"));
+        final ImeState exitState = ImeState.fromBundle(bundle.getBundle("mExitState"));
         final Bundle arguments = bundle.getBundle("mArguments");
         return new ImeEvent(eventName, nestLevel, threadName,
                 threadId, isMainThread, enterTimestamp, exitTimestamp, enterWallTime, exitWallTime,
-                arguments);
+                enterState, exitState, arguments);
     }
 
     /**
@@ -150,6 +157,21 @@ public final class ImeEvent {
         return mExitWallTime;
     }
 
+    /**
+     * @return IME state snapshot taken when the corresponding event handler was called back.
+     */
+    @NonNull
+    public ImeState getEnterState() {
+        return mEnterState;
+    }
+
+    /**
+     * @return IME state snapshot taken when the corresponding event handler finished.
+     */
+    @NonNull
+    public ImeState getExitState() {
+        return mExitState;
+    }
 
     /**
      * @return {@link Bundle} that stores parameters passed to the corresponding event handler.
@@ -170,6 +192,10 @@ public final class ImeEvent {
     private final long mExitTimestamp;
     private final long mEnterWallTime;
     private final long mExitWallTime;
+    @NonNull
+    private final ImeState mEnterState;
+    @NonNull
+    private final ImeState mExitState;
     @NonNull
     private final Bundle mArguments;
 }
