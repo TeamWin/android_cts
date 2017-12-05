@@ -516,10 +516,14 @@ public class WindowManagerState {
         return null;
     }
 
+    /** Get the stack position on its display. */
     int getStackIndexByActivityType(int activityType) {
-        for (int i = 0; i < mStacks.size(); i++) {
-            if (activityType == mStacks.get(i).getActivityType()) {
-                return i;
+        for (Integer displayId : mDisplayStacks.keySet()) {
+            List<WindowStack> stacks = mDisplayStacks.get(displayId);
+            for (int i = 0; i < stacks.size(); i++) {
+                if (activityType == stacks.get(i).getActivityType()) {
+                    return i;
+                }
             }
         }
         return -1;

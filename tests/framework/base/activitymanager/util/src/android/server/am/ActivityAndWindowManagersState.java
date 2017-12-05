@@ -757,6 +757,7 @@ public class ActivityAndWindowManagersState {
         return true;
     }
 
+    /** Get the stack position on its display. */
     int getStackIndexByActivityType(int activityType) {
         int wmStackIndex = mWmState.getStackIndexByActivityType(activityType);
         int amStackIndex = mAmState.getStackIndexByActivityType(activityType);
