@@ -25,6 +25,8 @@ import android.test.UiThreadTest;
 import android.view.KeyEvent;
 import android.view.Window;
 
+import java.util.concurrent.TimeUnit;
+
 public class ActionBarTest extends ActivityInstrumentationTestCase2<ActionBarActivity> {
 
     private ActionBarActivity mActivity;
@@ -83,13 +85,16 @@ public class ActionBarTest extends ActivityInstrumentationTestCase2<ActionBarAct
         assertEquals(t3, mBar.getTabAt(4));
     }
 
-    public void testOptionsMenuKey() {
+    public void testOptionsMenuKey() throws Exception {
         if (!mActivity.getWindow().hasFeature(Window.FEATURE_OPTIONS_PANEL)) {
             return;
         }
         final boolean menuIsVisible[] = {false};
         mActivity.getActionBar().addOnMenuVisibilityListener(
                 isVisible -> menuIsVisible[0] = isVisible);
+        // Wait here for test activity to gain focus before sending keyevent.
+        // Visibility listener needs the action bar to be visible.
+        assertTrue(mActivity.windowFocusSignal.await(1000, TimeUnit.MILLISECONDS));
         getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_MENU);
         getInstrumentation().waitForIdleSync();
         assertTrue(menuIsVisible[0]);
