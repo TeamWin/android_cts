@@ -155,12 +155,19 @@ public final class MockIme extends InputMethodService {
 
     private static final class KeyboardLayoutView extends LinearLayout {
 
-        public KeyboardLayoutView(Context context) {
+        @NonNull
+        final ImeSettings mSettings;
+
+        public KeyboardLayoutView(Context context, @NonNull ImeSettings imeSettings) {
             super(context);
+
+            mSettings = imeSettings;
 
             setOrientation(VERTICAL);
 
-            setBackgroundColor(getResources().getColor(android.R.color.holo_orange_dark, null));
+            final int defaultBackgroundColor =
+                    getResources().getColor(android.R.color.holo_orange_dark, null);
+            setBackgroundColor(mSettings.getBackgroundColor(defaultBackgroundColor));
 
             {
                 final RelativeLayout layout = new RelativeLayout(getContext());
@@ -181,7 +188,7 @@ public final class MockIme extends InputMethodService {
 
     @Override
     public View onCreateInputView() {
-        return getTracer().onCreateInputView(() -> new KeyboardLayoutView(this));
+        return getTracer().onCreateInputView(() -> new KeyboardLayoutView(this, mSettings));
     }
 
     @Override

@@ -18,6 +18,7 @@ package com.android.cts.mockime;
 
 import android.os.Parcel;
 import android.os.PersistableBundle;
+import android.support.annotation.ColorInt;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
@@ -29,6 +30,7 @@ public class ImeSettings {
     @NonNull
     private final String mEventCallbackActionName;
 
+    private static final String BACKGROUND_COLOR_KEY = "BackgroundColor";
     private static final String FULLSCREEN_MODE_ALLOWED = "FullscreenModeAllowed";
 
     @NonNull
@@ -46,6 +48,11 @@ public class ImeSettings {
 
     public boolean fullscreenModeAllowed(boolean defaultValue) {
         return mBundle.getBoolean(FULLSCREEN_MODE_ALLOWED, defaultValue);
+    }
+
+    @ColorInt
+    public int getBackgroundColor(@ColorInt int defaultColor) {
+        return mBundle.getInt(BACKGROUND_COLOR_KEY, defaultColor);
     }
 
     static void writeToParcel(@NonNull Parcel parcel, @NonNull String eventCallbackActionName,
@@ -74,6 +81,15 @@ public class ImeSettings {
          */
         public Builder setFullscreenModeAllowed(boolean allowed) {
             mBundle.putBoolean(FULLSCREEN_MODE_ALLOWED, allowed);
+            return this;
+        }
+
+        /**
+         * Sets the background color of the {@link MockIme}.
+         * @param color background color to be used
+         */
+        public Builder setBackgroundColor(@ColorInt int color) {
+            mBundle.putInt(BACKGROUND_COLOR_KEY, color);
             return this;
         }
     }
