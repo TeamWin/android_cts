@@ -23,9 +23,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.inputmethodservice.InputMethodService;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.os.Looper;
 import android.os.Parcel;
 import android.os.Process;
+import android.os.ResultReceiver;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -33,6 +35,7 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputBinding;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -66,6 +69,35 @@ public final class MockIme extends InputMethodService {
     @Nullable
     String getImeEventActionName() {
         return mImeEventActionName.get();
+    }
+
+    private class MockInputMethodImpl extends InputMethodImpl {
+        @Override
+        public void showSoftInput(int flags, ResultReceiver resultReceiver) {
+            getTracer().showSoftInput(flags, resultReceiver,
+                    () -> super.showSoftInput(flags, resultReceiver));
+        }
+
+        @Override
+        public void hideSoftInput(int flags, ResultReceiver resultReceiver) {
+            getTracer().hideSoftInput(flags, resultReceiver,
+                    () -> super.hideSoftInput(flags, resultReceiver));
+        }
+
+        @Override
+        public void attachToken(IBinder token) {
+            getTracer().attachToken(token, () -> super.attachToken(token));
+        }
+
+        @Override
+        public void bindInput(InputBinding binding) {
+            getTracer().bindInput(binding, () -> super.bindInput(binding));
+        }
+
+        @Override
+        public void unbindInput() {
+            getTracer().unbindInput(() -> super.unbindInput());
+        }
     }
 
     @Nullable
@@ -136,6 +168,11 @@ public final class MockIme extends InputMethodService {
     @Override
     public View onCreateInputView() {
         return getTracer().onCreateInputView(() -> new KeyboardLayoutView(this));
+    }
+
+    @Override
+    public AbstractInputMethodImpl onCreateInputMethodInterface() {
+        return getTracer().onCreateInputMethodInterface(() -> new MockInputMethodImpl());
     }
 
     private final ThreadLocal<Tracer> mThreadLocalTracer = new ThreadLocal<>();
@@ -240,6 +277,44 @@ public final class MockIme extends InputMethodService {
 
         public View onCreateInputView(@NonNull Supplier<View> supplier) {
             return recordEventInternal("onCreateInputView", supplier);
+        }
+
+        public void attachToken(IBinder token, @NonNull Runnable runnable) {
+            final Bundle arguments = new Bundle();
+            arguments.putBinder("token", token);
+            recordEventInternal("attachToken", runnable, arguments);
+
+        }
+
+        public void bindInput(InputBinding binding, @NonNull Runnable runnable) {
+            final Bundle arguments = new Bundle();
+            arguments.putParcelable("binding", binding);
+            recordEventInternal("bindInput", runnable, arguments);
+        }
+
+        public void unbindInput(@NonNull Runnable runnable) {
+            recordEventInternal("unbindInput", runnable);
+        }
+
+        public void showSoftInput(int flags, ResultReceiver resultReceiver,
+                @NonNull Runnable runnable) {
+            final Bundle arguments = new Bundle();
+            arguments.putInt("flags", flags);
+            arguments.putParcelable("resultReceiver", resultReceiver);
+            recordEventInternal("showSoftInput", runnable, arguments);
+        }
+
+        public void hideSoftInput(int flags, ResultReceiver resultReceiver,
+                @NonNull Runnable runnable) {
+            final Bundle arguments = new Bundle();
+            arguments.putInt("flags", flags);
+            arguments.putParcelable("resultReceiver", resultReceiver);
+            recordEventInternal("hideSoftInput", runnable, arguments);
+        }
+
+        public AbstractInputMethodImpl onCreateInputMethodInterface(
+                @NonNull Supplier<AbstractInputMethodImpl> supplier) {
+            return recordEventInternal("onCreateInputMethodInterface", supplier);
         }
     }
 }
