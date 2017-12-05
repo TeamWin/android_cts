@@ -222,6 +222,11 @@ public class StagefrightTest extends InstrumentationTestCase {
      ***********************************************************/
 
     @SecurityTest
+    public void testStagefright_bug_65717533() throws Exception {
+        doStagefrightTest(R.raw.bug_65717533_header_corrupt);
+    }
+
+    @SecurityTest
     public void testStagefright_cve_2016_0842() throws Exception {
         doStagefrightTest(R.raw.cve_2016_0842);
     }
@@ -648,6 +653,7 @@ public class StagefrightTest extends InstrumentationTestCase {
                     MediaCodecInfo.CodecCapabilities caps = info.getCapabilitiesForType(mime);
                     if (caps != null) {
                         matchingCodecs.add(info.getName());
+                        Log.i(TAG, "Found matching codec " + info.getName() + " for track " + t);
                     }
                 } catch (IllegalArgumentException e) {
                     // type is not supported
