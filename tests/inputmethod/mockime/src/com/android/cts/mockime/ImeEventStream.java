@@ -16,9 +16,14 @@
 
 package com.android.cts.mockime;
 
+import android.os.Bundle;
 import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
+import android.view.inputmethod.EditorInfo;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -120,6 +125,69 @@ public final class ImeEventStream {
             }
             ++mCurrentPosition;
         }
+    }
+
+    /**
+     * @return Debug info as a {@link String}.
+     */
+    public String dump() {
+        final ImeEventArray latest = mEventSupplier.get();
+        final StringBuilder sb = new StringBuilder();
+        final SimpleDateFormat dataFormat =
+                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US);
+        sb.append("ImeEventStream:\n");
+        sb.append("  latest: array[").append(latest.mArray.length).append("] + {\n");
+        for (int i = 0; i < latest.mLength; ++i) {
+            final ImeEvent event = latest.mArray[i];
+            if (i == mCurrentPosition) {
+                sb.append("  ======== CurrentPosition ========  \n");
+            }
+            sb.append("   ").append(i).append(" :");
+            if (event != null) {
+                for (int j = 0; j < event.getNestLevel(); ++j) {
+                    sb.append(' ');
+                }
+                sb.append('{');
+                sb.append(dataFormat.format(new Date(event.getEnterWallTime())));
+                sb.append(" event=").append(event.getEventName());
+                sb.append(": args=");
+                dumpBundle(sb, event.getArguments());
+                sb.append("},\n");
+            } else {
+                sb.append("{null},\n");
+            }
+        }
+        if (mCurrentPosition >= latest.mLength) {
+            sb.append("  ======== CurrentPosition ========  \n");
+        }
+        sb.append("}\n");
+        return sb.toString();
+    }
+
+    private static final void dumpBundle(@NonNull StringBuilder sb, @NonNull Bundle bundle) {
+        sb.append('{');
+        boolean first = true;
+        for (String key : bundle.keySet()) {
+            if (first) {
+                first = false;
+            } else {
+                sb.append(' ');
+            }
+            final Object object = bundle.get(key);
+            sb.append(key);
+            sb.append('=');
+            if (object instanceof EditorInfo) {
+                final EditorInfo info = (EditorInfo) object;
+                sb.append("EditorInfo{packageName=").append(info.packageName);
+                sb.append(" fieldId=").append(info.fieldId);
+                sb.append(" hintText=").append(info.hintText);
+                sb.append(" privateImeOptions=").append(info.privateImeOptions);
+                sb.append("}");
+            } else {
+                sb.append(object);
+            }
+        }
+        sb.append('}');
     }
 
     final static class ImeEventArray {
