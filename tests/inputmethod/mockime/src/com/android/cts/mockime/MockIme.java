@@ -16,6 +16,8 @@
 
 package com.android.cts.mockime;
 
+import static android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_OVERSCAN;
+
 import static com.android.cts.mockime.MockImeSession.MOCK_IME_SETTINGS_FILE;
 
 import android.content.ComponentName;
@@ -36,6 +38,7 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.Window;
+import android.view.WindowInsets;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputBinding;
 import android.widget.LinearLayout;
@@ -138,6 +141,10 @@ public final class MockIme extends InputMethodService {
                         + "Make sure MockImeSession.create() is used to launch Mock IME.");
             }
             mImeEventActionName.set(mSettings.getEventCallbackActionName());
+            final int windowFlags = mSettings.getWindowFlags(0);
+            if (windowFlags != 0) {
+                getWindow().getWindow().setFlags(windowFlags, windowFlags);
+            }
         });
     }
 
@@ -185,6 +192,26 @@ public final class MockIme extends InputMethodService {
                 layout.addView(textView);
                 addView(layout, LayoutParams.MATCH_PARENT, mainSpacerHeight);
             }
+        }
+
+        @Override
+        public WindowInsets onApplyWindowInsets(WindowInsets insets) {
+            final int windowFlags = mSettings.getWindowFlags(0);
+            if ((windowFlags & FLAG_LAYOUT_IN_OVERSCAN) == 0) {
+                return insets;
+            }
+
+            final int insetBottom = insets.getSystemWindowInsetBottom();
+
+            // Somehow immediately calling setPadding doesn't properly update the layout.
+            // TODO: Figure out why we have to delay this task.
+            post(() -> setPadding(0, 0, 0, insetBottom));
+
+            return insets.replaceSystemWindowInsets(
+                    insets.getSystemWindowInsetLeft(),
+                    insets.getSystemWindowInsetTop(),
+                    insets.getSystemWindowInsetRight(),
+                    0 /* bottom */);
         }
     }
 

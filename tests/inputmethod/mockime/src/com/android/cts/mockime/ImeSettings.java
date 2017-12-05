@@ -33,6 +33,7 @@ public class ImeSettings {
     private static final String BACKGROUND_COLOR_KEY = "BackgroundColor";
     private static final String INPUT_VIEW_HEIGHT_WITHOUT_SYSTEM_WINDOW_INSET =
             "InputViewHeightWithoutSystemWindowInset";
+    private static final String WINDOW_FLAGS = "WindowFlags";
     private static final String FULLSCREEN_MODE_ALLOWED = "FullscreenModeAllowed";
 
     @NonNull
@@ -59,6 +60,10 @@ public class ImeSettings {
 
     public int getInputViewHeightWithoutSystemWindowInset(int defaultHeight) {
         return mBundle.getInt(INPUT_VIEW_HEIGHT_WITHOUT_SYSTEM_WINDOW_INSET, defaultHeight);
+    }
+
+    public int getWindowFlags(int defaultFlags) {
+        return mBundle.getInt(WINDOW_FLAGS, defaultFlags);
     }
 
     static void writeToParcel(@NonNull Parcel parcel, @NonNull String eventCallbackActionName,
@@ -106,6 +111,21 @@ public class ImeSettings {
          */
         public Builder setInputViewHeightWithoutSystemWindowInset(int height) {
             mBundle.putInt(INPUT_VIEW_HEIGHT_WITHOUT_SYSTEM_WINDOW_INSET, height);
+            return this;
+        }
+
+        /**
+         * Sets window flags to be specified to {@link android.view.Window#setFlags(int, int)} of
+         * the main {@link MockIme} window.
+         *
+         * <p>When {@link android.view.WindowManager.LayoutParams#FLAG_LAYOUT_IN_OVERSCAN} is set,
+         * {@link MockIme} tries to render the navigation bar by itself.</p>
+         *
+         * @param flags flags to be specified
+         * @see android.view.WindowManager
+         */
+        public Builder setWindowFlags(int flags) {
+            mBundle.putInt(WINDOW_FLAGS, flags);
             return this;
         }
     }
