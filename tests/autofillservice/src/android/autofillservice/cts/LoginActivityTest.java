@@ -202,15 +202,53 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
     @Test
     public void testAutoFillOneDataset() throws Exception {
+        autofillOneDatasetTest(BorderType.NONE);
+    }
+
+    @Test
+    public void testAutoFillOneDataset_withHeader() throws Exception {
+        autofillOneDatasetTest(BorderType.HEADER_ONLY);
+    }
+
+    @Test
+    public void testAutoFillOneDataset_withFooter() throws Exception {
+        autofillOneDatasetTest(BorderType.FOOTER_ONLY);
+    }
+
+    @Test
+    public void testAutoFillOneDataset_withHeaderAndFooter() throws Exception {
+        autofillOneDatasetTest(BorderType.BOTH);
+    }
+
+    private enum BorderType {
+        NONE,
+        HEADER_ONLY,
+        FOOTER_ONLY,
+        BOTH
+    }
+
+    private void autofillOneDatasetTest(BorderType borderType) throws Exception {
         // Set service.
         enableService();
 
         // Set expectations.
-        sReplier.addResponse(new CannedDataset.Builder()
-                .setField(ID_USERNAME, "dude")
-                .setField(ID_PASSWORD, "sweet")
-                .setPresentation(createPresentation("The Dude"))
-                .build());
+        String expectedHeader = null, expectedFooter = null;
+
+        final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setField(ID_PASSWORD, "sweet")
+                        .setPresentation(createPresentation("The Dude"))
+                        .build());
+        if (borderType == BorderType.BOTH || borderType == BorderType.HEADER_ONLY) {
+            expectedHeader = "Head";
+            builder.setHeader(createPresentation(expectedHeader));
+        }
+        if (borderType == BorderType.BOTH || borderType == BorderType.FOOTER_ONLY) {
+            expectedFooter = "Tails";
+            builder.setFooter(createPresentation(expectedFooter));
+        }
+        sReplier.addResponse(builder.build());
         mActivity.expectAutoFill("dude", "sweet");
 
         // Dynamically set password to make sure it's sanitized.
@@ -220,7 +258,10 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.onUsername(View::requestFocus);
 
         // Auto-fill it.
-        sUiBot.selectDataset("The Dude");
+        final UiObject2 picker = sUiBot.assertDatasetsWithBorders(expectedHeader, expectedFooter,
+                "The Dude");
+
+        sUiBot.selectDataset(picker, "The Dude");
 
         // Check the results.
         mActivity.assertAutoFilled();

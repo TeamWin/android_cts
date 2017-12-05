@@ -20,11 +20,12 @@ import static android.autofillservice.cts.Helper.assertFillEventForFieldsDetecte
 import static android.autofillservice.cts.Helper.runShellCommand;
 import static android.service.autofill.FillResponse.FLAG_TRACK_CONTEXT_COMMITED;
 
-import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.provider.Settings;
-import android.service.autofill.FieldsDetection;
 import android.service.autofill.FillEventHistory;
+import android.service.autofill.FillEventHistory.Event;
+import android.service.autofill.UserData;
 import android.view.autofill.AutofillId;
 import android.widget.EditText;
 
@@ -33,14 +34,17 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-public class FieldsDetectionTest extends AutoFillServiceTestCase {
+import java.util.List;
+
+public class FieldsClassificationTest extends AutoFillServiceTestCase {
 
     @Rule
     public final AutofillActivityTestRule<GridActivity> mActivityRule =
             new AutofillActivityTestRule<GridActivity>(GridActivity.class);
 
     private GridActivity mActivity;
-    private int mEnabledBedore;
+    private int mEnabledBefore;
+
 
     @Before
     public void setActivity() {
@@ -50,9 +54,9 @@ public class FieldsDetectionTest extends AutoFillServiceTestCase {
     // TODO(b/67867469): remove once feature is stable
     @Before
     public void enableFeature() {
-        mEnabledBedore = Settings.Secure.getInt(
+        mEnabledBefore = Settings.Secure.getInt(
                 mContext.getContentResolver(), Settings.Secure.AUTOFILL_FEATURE_FIELD_DETECTION, 0);
-        if (mEnabledBedore == 1) {
+        if (mEnabledBefore == 1) {
             // Already enabled, ignore.
             return;
         }
@@ -66,14 +70,14 @@ public class FieldsDetectionTest extends AutoFillServiceTestCase {
     // TODO(b/67867469): remove once feature is stable
     @After
     public void restoreFeatureStatus() {
-        if (mEnabledBedore == 1) {
+        if (mEnabledBefore == 1) {
             // Already enabled, ignore.
             return;
         }
         final OneTimeSettingsListener observer = new OneTimeSettingsListener(mContext,
                 Settings.Secure.AUTOFILL_FEATURE_FIELD_DETECTION);
         runShellCommand("settings put secure %s %s default",
-                Settings.Secure.AUTOFILL_FEATURE_FIELD_DETECTION, mEnabledBedore);
+                Settings.Secure.AUTOFILL_FEATURE_FIELD_DETECTION, mEnabledBefore);
         observer.assertCalled();
     }
 
@@ -83,12 +87,14 @@ public class FieldsDetectionTest extends AutoFillServiceTestCase {
         enableService();
 
         // Set expectations.
+        mActivity.getAutofillManager()
+                .setUserData(new UserData.Builder("myId", "FULLY").build());
         final MyAutofillCallback callback = mActivity.registerCallback();
         final EditText field = mActivity.getCell(1, 1);
         final AutofillId fieldId = field.getAutofillId();
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .setFillResponseFlags(FLAG_TRACK_CONTEXT_COMMITED)
-                .setFieldDetection(new FieldsDetection(fieldId, "myId", "FULL"))
+                .setFieldClassificationIds(fieldId)
                 .build());
 
         // Trigger autofill
@@ -100,7 +106,7 @@ public class FieldsDetectionTest extends AutoFillServiceTestCase {
 
         // Simulate user input
         mActivity.focusCell(1, 1);
-        mActivity.setText(1, 1, "full");
+        mActivity.setText(1, 1, "fully");
 
         // Finish context.
         mActivity.getAutofillManager().commit();
@@ -108,8 +114,9 @@ public class FieldsDetectionTest extends AutoFillServiceTestCase {
         // Assert results
         final FillEventHistory history =
                 InstrumentedAutoFillService.peekInstance().getFillEventHistory();
-        assertThat(history.getEvents().size()).isEqualTo(1);
-        assertFillEventForFieldsDetected(history.getEvents().get(0), "myId", 0);
+        final List<Event> events = history.getEvents();
+        assertWithMessage("Wrong number of events: %s", events).that(events.size()).isEqualTo(1);
+        assertFillEventForFieldsDetected(events.get(0), "myId", 0);
     }
 
     @Test
@@ -118,17 +125,20 @@ public class FieldsDetectionTest extends AutoFillServiceTestCase {
         enableService();
 
         // Set expectations.
+        mActivity.getAutofillManager()
+                .setUserData(new UserData.Builder("myId", "ABCDEF").build());
         final MyAutofillCallback callback = mActivity.registerCallback();
         final EditText field = mActivity.getCell(1, 1);
         final AutofillId fieldId = field.getAutofillId();
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .setFillResponseFlags(FLAG_TRACK_CONTEXT_COMMITED)
-                .setFieldDetection(new FieldsDetection(fieldId, "myId", "ABC"))
+                .setFieldClassificationIds(fieldId)
                 .build());
 
         // Trigger autofill
         mActivity.focusCell(1, 1);
         sReplier.getNextFillRequest();
+
         sUiBot.assertNoDatasets();
         callback.assertUiUnavailableEvent(field);
 
@@ -141,8 +151,9 @@ public class FieldsDetectionTest extends AutoFillServiceTestCase {
         // Assert results
         final FillEventHistory history =
                 InstrumentedAutoFillService.peekInstance().getFillEventHistory();
-        assertThat(history.getEvents().size()).isEqualTo(1);
-        assertFillEventForContextCommitted(history.getEvents().get(0));
+        final List<Event> events = history.getEvents();
+        assertWithMessage("Wrong number of events: %s", events).that(events.size()).isEqualTo(1);
+        assertFillEventForContextCommitted(events.get(0));
     }
 
     @Test
@@ -151,12 +162,14 @@ public class FieldsDetectionTest extends AutoFillServiceTestCase {
         enableService();
 
         // Set expectations.
+        mActivity.getAutofillManager()
+                .setUserData(new UserData.Builder("myId", "FULLY").build());
         final MyAutofillCallback callback = mActivity.registerCallback();
         final EditText field = mActivity.getCell(1, 1);
         final AutofillId fieldId = field.getAutofillId();
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .setFillResponseFlags(FLAG_TRACK_CONTEXT_COMMITED)
-                .setFieldDetection(new FieldsDetection(fieldId, "myId", "Full"))
+                .setFieldClassificationIds(fieldId)
                 .build());
 
         // Trigger autofill
@@ -172,8 +185,9 @@ public class FieldsDetectionTest extends AutoFillServiceTestCase {
         // Assert results
         final FillEventHistory history =
                 InstrumentedAutoFillService.peekInstance().getFillEventHistory();
-        assertThat(history.getEvents().size()).isEqualTo(1);
-        assertFillEventForContextCommitted(history.getEvents().get(0));
+        final List<Event> events = history.getEvents();
+        assertWithMessage("Wrong number of events: %s", events).that(events.size()).isEqualTo(1);
+        assertFillEventForContextCommitted(events.get(0));
     }
 
     /*
@@ -182,7 +196,7 @@ public class FieldsDetectionTest extends AutoFillServiceTestCase {
      * - Multipartition (for example, one response with FieldsDetection, others with datasets,
      *   saveinfo, and/or ignoredIds)
      * - make sure detectable fields don't trigger a new partition
-     * - test partial hit (for example, 'fool' insteadl of 'full'
+     * - test partial hit (for example, 'fool' instead of 'full'
      * - multiple fields
      * - multiple value
      * - combinations of above items

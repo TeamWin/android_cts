@@ -61,6 +61,7 @@ final class UiBot {
     private static final String RESOURCE_ID_SAVE_ICON = "autofill_save_icon";
     private static final String RESOURCE_ID_SAVE_TITLE = "autofill_save_title";
     private static final String RESOURCE_ID_CONTEXT_MENUITEM = "floating_toolbar_menu_item_text";
+    private static final String RESOURCE_ID_SAVE_BUTTON_NO = "autofill_save_no";
 
     private static final String RESOURCE_STRING_SAVE_TITLE = "autofill_save_title";
     private static final String RESOURCE_STRING_SAVE_TITLE_WITH_TYPE =
@@ -72,6 +73,9 @@ final class UiBot {
     private static final String RESOURCE_STRING_SAVE_TYPE_USERNAME = "autofill_save_type_username";
     private static final String RESOURCE_STRING_SAVE_TYPE_EMAIL_ADDRESS =
             "autofill_save_type_email_address";
+    private static final String RESOURCE_STRING_SAVE_BUTTON_NOT_NOW = "save_password_notnow";
+    private static final String RESOURCE_STRING_SAVE_BUTTON_NO_THANKS = "autofill_save_no";
+
     private static final String RESOURCE_STRING_AUTOFILL = "autofill";
     private static final String RESOURCE_STRING_DATASET_PICKER_ACCESSIBILITY_TITLE =
             "autofill_picker_accessibility_title";
@@ -86,13 +90,12 @@ final class UiBot {
     /** Pass to {@link #setScreenOrientation(int)} to change the display to landscape mode */
     public static int LANDSCAPE = 1;
 
-
     private final UiDevice mDevice;
     private final Context mContext;
     private final String mPackageName;
     private final UiAutomation mAutoman;
 
-    UiBot(Instrumentation instrumentation) throws Exception {
+    UiBot(Instrumentation instrumentation) {
         mDevice = UiDevice.getInstance(instrumentation);
         mContext = instrumentation.getContext();
         mPackageName = mContext.getPackageName();
@@ -122,7 +125,27 @@ final class UiBot {
     UiObject2 assertDatasets(String...names) {
         final UiObject2 picker = findDatasetPicker(UI_DATASET_PICKER_TIMEOUT_MS);
         assertWithMessage("wrong dataset names").that(getChildrenAsText(picker))
-                .containsExactlyElementsIn(Arrays.asList(names));
+                .containsExactlyElementsIn(Arrays.asList(names)).inOrder();
+        return picker;
+    }
+
+    /**
+     * Asserts the dataset chooser is shown and contains the given datasets, header, and footer.
+     *
+     * @return the dataset picker object.
+     */
+    UiObject2 assertDatasetsWithBorders(String header, String footer, String...names) {
+        final UiObject2 picker = findDatasetPicker(UI_DATASET_PICKER_TIMEOUT_MS);
+        final List<String> expectedChild = new ArrayList<>();
+        if (header != null) {
+            expectedChild.add(header);
+        }
+        expectedChild.addAll(Arrays.asList(names));
+        if (footer != null) {
+            expectedChild.add(footer);
+        }
+        assertWithMessage("wrong elements on dataset picker").that(getChildrenAsText(picker))
+                .containsExactlyElementsIn(expectedChild).inOrder();
         return picker;
     }
 
@@ -405,11 +428,15 @@ final class UiBot {
             assertWithMessage("save subtitle(%s)", description).that(saveSubTitle).isNotNull();
         }
 
-        final String negativeButtonText = (negativeButtonStyle
-                == SaveInfo.NEGATIVE_BUTTON_STYLE_REJECT) ? "Not now" : "No thanks";
-        UiObject2 negativeButton = snackbar.findObject(By.text(negativeButtonText));
-        assertWithMessage("negative button (%s)", negativeButtonText)
-                .that(negativeButton).isNotNull();
+        final String negativeButtonStringId =
+                (negativeButtonStyle == SaveInfo.NEGATIVE_BUTTON_STYLE_REJECT)
+                ? RESOURCE_STRING_SAVE_BUTTON_NOT_NOW
+                : RESOURCE_STRING_SAVE_BUTTON_NO_THANKS;
+        final String expectedNegativeButtonText = getString(negativeButtonStringId).toUpperCase();
+        final UiObject2 negativeButton = waitForObject(snackbar,
+                By.res("android", RESOURCE_ID_SAVE_BUTTON_NO), UI_TIMEOUT_MS);
+        assertWithMessage("wrong text on negative button")
+                .that(negativeButton.getText().toUpperCase()).isEqualTo(expectedNegativeButtonText);
 
         final String expectedAccessibilityTitle =
                 getString(RESOURCE_STRING_SAVE_SNACKBAR_ACCESSIBILITY_TITLE);
@@ -655,7 +682,7 @@ final class UiBot {
                 for (String line : os.toString("UTF-8").split("\n")) {
                     Log.w(TAG, line);
                     // Sleep a little bit to avoid logs being ignored due to spam
-                    SystemClock.sleep(10);
+                    SystemClock.sleep(100);
                 }
             }
         } catch (IOException e) {
