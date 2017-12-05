@@ -42,7 +42,7 @@ public class KeyguardTests extends KeyguardTestBase {
     }
 
     public void testKeyguardHidesActivity() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
         launchActivity("TestActivity");
@@ -56,7 +56,7 @@ public class KeyguardTests extends KeyguardTestBase {
     }
 
     public void testShowWhenLockedActivity() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
         launchActivity("ShowWhenLockedActivity");
@@ -75,7 +75,7 @@ public class KeyguardTests extends KeyguardTestBase {
      * showing.
      */
     public void testShowWhenLockedActivity_withDialog() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
         launchActivity("ShowWhenLockedWithDialogActivity");
@@ -95,7 +95,7 @@ public class KeyguardTests extends KeyguardTestBase {
      * Tests whether multiple SHOW_WHEN_LOCKED activities are shown if the topmost is translucent.
      */
     public void testMultipleShowWhenLockedActivities() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
         launchActivity("ShowWhenLockedActivity");
@@ -117,7 +117,7 @@ public class KeyguardTests extends KeyguardTestBase {
      * If we have a translucent SHOW_WHEN_LOCKED_ACTIVITY, the wallpaper should also be showing.
      */
     public void testTranslucentShowWhenLockedActivity() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
         launchActivity("ShowWhenLockedTranslucentActivity");
@@ -136,7 +136,7 @@ public class KeyguardTests extends KeyguardTestBase {
      * If we have a translucent SHOW_WHEN_LOCKED activity, the activity behind should not be shown.
      */
     public void testTranslucentDoesntRevealBehind() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
         launchActivity("TestActivity");
@@ -155,7 +155,7 @@ public class KeyguardTests extends KeyguardTestBase {
     }
 
     public void testDialogShowWhenLockedActivity() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
         launchActivity("ShowWhenLockedDialogActivity");
@@ -174,7 +174,7 @@ public class KeyguardTests extends KeyguardTestBase {
      * Test that showWhenLocked activity is fullscreen when shown over keyguard
      */
     public void testShowWhenLockedActivityWhileSplit() throws Exception {
-        if (!isHandheld() || !supportsSplitScreenMultiWindow()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset() || !supportsSplitScreenMultiWindow()) {
             return;
         }
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
@@ -194,7 +194,7 @@ public class KeyguardTests extends KeyguardTestBase {
      * Tests whether a FLAG_DISMISS_KEYGUARD activity occludes Keyguard.
      */
     public void testDismissKeyguardActivity() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
         gotoKeyguard();
@@ -208,7 +208,7 @@ public class KeyguardTests extends KeyguardTestBase {
     }
 
     public void testDismissKeyguardActivity_method() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
         final String logSeparator = clearLogcat();
@@ -224,7 +224,7 @@ public class KeyguardTests extends KeyguardTestBase {
     }
 
     public void testDismissKeyguardActivity_method_notTop() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
         final String logSeparator = clearLogcat();
@@ -238,7 +238,7 @@ public class KeyguardTests extends KeyguardTestBase {
     }
 
     public void testDismissKeyguardActivity_method_turnScreenOn() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
         final String logSeparator = clearLogcat();
@@ -254,7 +254,7 @@ public class KeyguardTests extends KeyguardTestBase {
     }
 
     public void testDismissKeyguard_fromShowWhenLocked_notAllowed() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
         gotoKeyguard();
@@ -270,7 +270,7 @@ public class KeyguardTests extends KeyguardTestBase {
     }
 
     public void testKeyguardLock() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
         gotoKeyguard();
@@ -285,7 +285,7 @@ public class KeyguardTests extends KeyguardTestBase {
     }
 
     public void testUnoccludeRotationChange() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
         gotoKeyguard();
