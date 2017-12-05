@@ -40,7 +40,6 @@ public class BatteryIncidentTest extends ProtoDumpTestCase {
         assertTrue(
                 dump.getPlugged()
                         != BatteryServiceDumpProto.BatteryPlugged.BATTERY_PLUGGED_WIRELESS);
-        assertTrue(dump.getChargeCounter() > 0);
         assertTrue(
                 dump.getStatus() != BatteryServiceDumpProto.BatteryStatus.BATTERY_STATUS_INVALID);
         assertTrue(
