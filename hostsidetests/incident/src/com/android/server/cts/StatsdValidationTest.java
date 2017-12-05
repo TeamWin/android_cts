@@ -19,15 +19,15 @@ import com.android.ddmlib.IShellOutputReceiver;
 import com.android.internal.os.StatsdConfigProto.Alert;
 import com.android.internal.os.StatsdConfigProto.AtomMatcher;
 import com.android.internal.os.StatsdConfigProto.Bucket;
-import com.android.internal.os.StatsdConfigProto.Condition;
 import com.android.internal.os.StatsdConfigProto.CountMetric;
 import com.android.internal.os.StatsdConfigProto.DurationMetric;
 import com.android.internal.os.StatsdConfigProto.EventMetric;
 import com.android.internal.os.StatsdConfigProto.GaugeMetric;
 import com.android.internal.os.StatsdConfigProto.KeyMatcher;
 import com.android.internal.os.StatsdConfigProto.KeyValueMatcher;
+import com.android.internal.os.StatsdConfigProto.Predicate;
 import com.android.internal.os.StatsdConfigProto.SimpleAtomMatcher;
-import com.android.internal.os.StatsdConfigProto.SimpleCondition;
+import com.android.internal.os.StatsdConfigProto.SimplePredicate;
 import com.android.internal.os.StatsdConfigProto.StatsdConfig;
 import com.android.os.AtomsProto.Atom;
 import com.android.os.AtomsProto.KernelWakelockPulled;
@@ -222,9 +222,9 @@ public class StatsdValidationTest extends ProtoDumpTestCase {
                         .setAggregationType(DurationMetric.AggregationType.SUM)
                         .setBucket(Bucket.newBuilder().setBucketSizeMillis(5_000))
                 )
-                .addCondition(Condition.newBuilder()
+                .addPredicate(Predicate.newBuilder()
                         .setName("SCREEN_IS_ON")
-                        .setSimpleCondition(SimpleCondition.newBuilder()
+                        .setSimplePredicate(SimplePredicate.newBuilder()
                                 .setStart("SCREEN_TURNED_ON")
                                 .setStop("SCREEN_TURNED_OFF")
                                 .setCountNesting(false)
@@ -288,7 +288,7 @@ public class StatsdValidationTest extends ProtoDumpTestCase {
     }
 
     private void uploadConfig(StatsdConfig config) throws Exception {
-        LogUtil.CLog.d("uploading the config\n" + config.toString());
+        LogUtil.CLog.d("uploading the config:\n" + config.toString());
         File configFile = File.createTempFile("statsdconfig", ".config");
         Files.write(config.toByteArray(), configFile);
         String remotePath = "/data/" + configFile.getName();
@@ -403,6 +403,7 @@ public class StatsdValidationTest extends ProtoDumpTestCase {
                         .setSimpleAtomMatcher(
                                 SimpleAtomMatcher.newBuilder()
                                         .setTag(Atom.UID_PROCESS_STATE_CHANGED_FIELD_NUMBER)));
+        // up to 110 is fine. 128 not good
         configBuilder.addAtomMatcher(
                 AtomMatcher.newBuilder()
                         .setName("KERNEL_WAKELOCK_PULLED")
@@ -421,9 +422,9 @@ public class StatsdValidationTest extends ProtoDumpTestCase {
                         .setSimpleAtomMatcher(
                                 SimpleAtomMatcher.newBuilder()
                                         .setTag(Atom.CPU_TIME_PER_FREQ_PULLED_FIELD_NUMBER)));
-        configBuilder.addCondition(Condition.newBuilder()
+        configBuilder.addPredicate(Predicate.newBuilder()
                 .setName("SCREEN_IS_ON")
-                .setSimpleCondition(SimpleCondition.newBuilder()
+                .setSimplePredicate(SimplePredicate.newBuilder()
                         .setStart("SCREEN_TURNED_ON")
                         .setStop("SCREEN_TURNED_OFF")
                         .setCountNesting(false)));
