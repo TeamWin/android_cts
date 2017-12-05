@@ -51,6 +51,8 @@ public class FillResponseTest {
             .build();
     private final long mDisableDuration = 666;
     @Mock private RemoteViews mPresentation;
+    @Mock private RemoteViews mHeader;
+    @Mock private RemoteViews mFooter;
     @Mock private IntentSender mIntentSender;
 
     @Test
@@ -74,6 +76,30 @@ public class FillResponseTest {
     public void testBuilder_setAuthentication_valid() {
         new FillResponse.Builder().setAuthentication(mIds, null, null);
         new FillResponse.Builder().setAuthentication(mIds, mIntentSender, mPresentation);
+    }
+
+    @Test
+    public void testBuilder_setAuthentication_illegalState() {
+        assertThrows(IllegalStateException.class,
+                () -> new FillResponse.Builder().setHeader(mHeader).setAuthentication(mIds,
+                        mIntentSender, mPresentation));
+        assertThrows(IllegalStateException.class,
+                () -> new FillResponse.Builder().setFooter(mFooter).setAuthentication(mIds,
+                        mIntentSender, mPresentation));
+    }
+
+    @Test
+    public void testBuilder_setHeaderOrFooterInvalid() {
+        assertThrows(NullPointerException.class, () -> new FillResponse.Builder().setHeader(null));
+        assertThrows(NullPointerException.class, () -> new FillResponse.Builder().setFooter(null));
+    }
+
+    @Test
+    public void testBuilder_setHeaderOrFooterAfterAuthentication() {
+        FillResponse.Builder builder =
+                new FillResponse.Builder().setAuthentication(mIds, mIntentSender, mPresentation);
+        assertThrows(IllegalStateException.class, () -> builder.setHeader(mHeader));
+        assertThrows(IllegalStateException.class, () -> builder.setHeader(mFooter));
     }
 
     @Test
@@ -175,6 +201,14 @@ public class FillResponseTest {
     }
 
     @Test
+    public void testBuilder_build_headerOrFooterWithoutDatasets() {
+        assertThrows(IllegalStateException.class,
+                () -> new FillResponse.Builder().setHeader(mHeader).build());
+        assertThrows(IllegalStateException.class,
+                () -> new FillResponse.Builder().setFooter(mFooter).build());
+    }
+
+    @Test
     public void testNoMoreInteractionsAfterBuild() {
         assertThat(mBuilder.setAuthentication(mIds, mIntentSender, mPresentation).build())
                 .isNotNull();
@@ -189,5 +223,7 @@ public class FillResponseTest {
         assertThrows(IllegalStateException.class, () -> mBuilder.setFlags(0));
         assertThrows(IllegalStateException.class,
                 () -> mBuilder.setFieldClassificationIds(mAutofillId));
+        assertThrows(IllegalStateException.class, () -> mBuilder.setHeader(mHeader));
+        assertThrows(IllegalStateException.class, () -> mBuilder.setFooter(mFooter));
     }
 }

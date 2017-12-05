@@ -73,6 +73,8 @@ final class CannedFillResponse {
     private final CustomDescription mCustomDescription;
     private final Bundle mExtras;
     private final RemoteViews mPresentation;
+    private final RemoteViews mHeader;
+    private final RemoteViews mFooter;
     private final IntentSender mAuthentication;
     private final String[] mAuthenticationIds;
     private final String[] mIgnoredIds;
@@ -97,6 +99,8 @@ final class CannedFillResponse {
         mSaveType = builder.mSaveType;
         mExtras = builder.mExtras;
         mPresentation = builder.mPresentation;
+        mHeader = builder.mHeader;
+        mFooter = builder.mFooter;
         mAuthentication = builder.mAuthentication;
         mAuthenticationIds = builder.mAuthenticationIds;
         mIgnoredIds = builder.mIgnoredIds;
@@ -213,6 +217,12 @@ final class CannedFillResponse {
         if (mExtras != null) {
             builder.setClientState(mExtras);
         }
+        if (mHeader != null) {
+            builder.setHeader(mHeader);
+        }
+        if (mFooter != null) {
+            builder.setFooter(mFooter);
+        }
         return builder.build();
     }
 
@@ -228,6 +238,8 @@ final class CannedFillResponse {
                 + ", saveDescription=" + mSaveDescription
                 + ", mCustomDescription=" + mCustomDescription
                 + ", hasPresentation=" + (mPresentation != null)
+                + ", hasHeader=" + (mHeader != null)
+                + ", hasFooter=" + (mFooter != null)
                 + ", hasAuthentication=" + (mAuthentication != null)
                 + ", authenticationIds=" + Arrays.toString(mAuthenticationIds)
                 + ", ignoredIds=" + Arrays.toString(mIgnoredIds)
@@ -258,6 +270,8 @@ final class CannedFillResponse {
         public int mSaveType = -1;
         private Bundle mExtras;
         private RemoteViews mPresentation;
+        private RemoteViews mFooter;
+        private RemoteViews mHeader;
         private IntentSender mAuthentication;
         private String[] mAuthenticationIds;
         private String[] mIgnoredIds;
@@ -424,6 +438,18 @@ final class CannedFillResponse {
         // TODO(b/67867469): document
         public Builder setFieldClassificationIdsOverflow() {
             mFieldClassificationIdsOverflow = true;
+            return this;
+        }
+
+        public Builder setHeader(RemoteViews header) {
+            assertWithMessage("already set").that(mHeader).isNull();
+            mHeader = header;
+            return this;
+        }
+
+        public Builder setFooter(RemoteViews footer) {
+            assertWithMessage("already set").that(mFooter).isNull();
+            mFooter = footer;
             return this;
         }
     }
