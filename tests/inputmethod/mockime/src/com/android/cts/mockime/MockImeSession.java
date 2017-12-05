@@ -33,6 +33,7 @@ import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.provider.Settings;
+import android.support.annotation.GuardedBy;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
@@ -45,7 +46,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -69,9 +69,45 @@ public class MockImeSession implements AutoCloseable {
 
     private final HandlerThread mHandlerThread = new HandlerThread("EventReceiver");
 
-    private static final class MockImeEventReceiver extends BroadcastReceiver {
+    private final static class EventStore {
+        private final static int INITIAL_ARRAY_SIZE = 32;
+
         @NonNull
-        private final ArrayList<ImeEvent> mCurrentEventStore = new ArrayList<>();
+        public final ImeEvent[] mArray;
+        public int mLength;
+
+        public EventStore() {
+            mArray = new ImeEvent[INITIAL_ARRAY_SIZE];
+            mLength = 0;
+        }
+
+        public EventStore(EventStore src, int newLength) {
+            mArray = new ImeEvent[newLength];
+            mLength = src.mLength;
+            System.arraycopy(src.mArray, 0, mArray, 0, src.mLength);
+        }
+
+        public EventStore add(ImeEvent event) {
+            if (mLength + 1 <= mArray.length) {
+                mArray[mLength] = event;
+                ++mLength;
+                return this;
+            } else {
+                return new EventStore(this, mLength * 2).add(event);
+            }
+        }
+
+        public ImeEventStream.ImeEventArray takeSnapshot() {
+            return new ImeEventStream.ImeEventArray(mArray, mLength);
+        }
+    }
+
+    private static final class MockImeEventReceiver extends BroadcastReceiver {
+        private final Object mLock = new Object();
+
+        @GuardedBy("mLock")
+        @NonNull
+        private EventStore mCurrentEventStore = new EventStore();
 
         @NonNull
         private final String mActionName;
@@ -83,12 +119,24 @@ public class MockImeSession implements AutoCloseable {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (TextUtils.equals(mActionName, intent.getAction())) {
-                mCurrentEventStore.add(ImeEvent.fromBundle(intent.getExtras()));
+                synchronized (mLock) {
+                    mCurrentEventStore =
+                            mCurrentEventStore.add(ImeEvent.fromBundle(intent.getExtras()));
+                }
+            }
+        }
+
+        public ImeEventStream.ImeEventArray takeEventSnapshot() {
+            synchronized (mLock) {
+                return mCurrentEventStore.takeSnapshot();
             }
         }
     }
     private final MockImeEventReceiver mEventReceiver =
             new MockImeEventReceiver(mImeEventActionName);
+
+    private final ImeEventStream mEventStream =
+            new ImeEventStream(mEventReceiver::takeEventSnapshot);
 
     private static String executeShellCommand(
             @NonNull UiAutomation uiAutomation, @NonNull String command) {
@@ -201,6 +249,14 @@ public class MockImeSession implements AutoCloseable {
         final MockImeSession client = new MockImeSession(context);
         client.initialize(uiAutomation, imeSettings);
         return client;
+    }
+
+    /**
+     * @return {@link ImeEventStream} object that stores events sent from {@link MockIme} since the
+     *         session is created.
+     */
+    public ImeEventStream openEventStream() {
+        return mEventStream.copy();
     }
 
     /**
