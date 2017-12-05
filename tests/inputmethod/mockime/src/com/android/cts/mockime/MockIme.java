@@ -23,7 +23,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.inputmethodservice.InputMethodService;
 import android.os.Bundle;
+import android.os.Looper;
 import android.os.Parcel;
+import android.os.Process;
+import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -153,6 +156,17 @@ public final class MockIme extends InputMethodService {
         @NonNull
         private final MockIme mIme;
 
+        private final int mThreadId = Process.myTid();
+
+        @NonNull
+        private final String mThreadName =
+                Thread.currentThread().getName() != null ? Thread.currentThread().getName() : "";
+
+        private final boolean mIsMainThread =
+                Looper.getMainLooper().getThread() == Thread.currentThread();
+
+        private int mNestLevel = 0;
+
         private String mImeEventActionName;
 
         public Tracer(@NonNull MockIme mockIme) {
@@ -180,8 +194,7 @@ public final class MockIme extends InputMethodService {
 
         private void recordEventInternal(@NonNull String eventName, @NonNull Runnable runnable,
                 @NonNull Bundle arguments) {
-            runnable.run();
-            sendEventInternal(new ImeEvent(eventName, arguments));
+            recordEventInternal(eventName, () -> { runnable.run(); return null; }, arguments);
         }
 
         private <T> T recordEventInternal(@NonNull String eventName,
@@ -191,8 +204,21 @@ public final class MockIme extends InputMethodService {
 
         private <T> T recordEventInternal(@NonNull String eventName,
                 @NonNull Supplier<T> supplier, @NonNull Bundle arguments) {
-            final T result = supplier.get();
-            sendEventInternal(new ImeEvent(eventName, arguments));
+            final long enterTimestamp = SystemClock.elapsedRealtimeNanos();
+            final long enterWallTime = System.currentTimeMillis();
+            final int nestLevel = mNestLevel;
+            ++mNestLevel;
+            T result;
+            try {
+                result = supplier.get();
+            } finally {
+                --mNestLevel;
+            }
+            final long exitTimestamp = SystemClock.elapsedRealtimeNanos();
+            final long exitWallTime = System.currentTimeMillis();
+            sendEventInternal(new ImeEvent(eventName, nestLevel, mThreadName,
+                    mThreadId, mIsMainThread, enterTimestamp, exitTimestamp, enterWallTime,
+                    exitWallTime, arguments));
             return result;
         }
 

@@ -24,8 +24,18 @@ import android.support.annotation.NonNull;
  */
 public final class ImeEvent {
 
-    ImeEvent(@NonNull String eventName, @NonNull Bundle arguments) {
+    ImeEvent(@NonNull String eventName, int nestLevel, @NonNull String threadName, int threadId,
+            boolean isMainThread, long enterTimestamp, long exitTimestamp, long enterWallTime,
+            long exitWallTime, @NonNull Bundle arguments) {
         mEventName = eventName;
+        mNestLevel = nestLevel;
+        mThreadName = threadName;
+        mThreadId = threadId;
+        mIsMainThread = isMainThread;
+        mEnterTimestamp = enterTimestamp;
+        mExitTimestamp = exitTimestamp;
+        mEnterWallTime = enterWallTime;
+        mExitWallTime = exitWallTime;
         mArguments = arguments;
     }
 
@@ -33,6 +43,14 @@ public final class ImeEvent {
     final Bundle toBundle() {
         final Bundle bundle = new Bundle();
         bundle.putString("mEventName", mEventName);
+        bundle.putInt("mNestLevel", mNestLevel);
+        bundle.putString("mThreadName", mThreadName);
+        bundle.putInt("mThreadId", mThreadId);
+        bundle.putBoolean("mIsMainThread", mIsMainThread);
+        bundle.putLong("mEnterTimestamp", mEnterTimestamp);
+        bundle.putLong("mExitTimestamp", mExitTimestamp);
+        bundle.putLong("mEnterWallTime", mEnterWallTime);
+        bundle.putLong("mExitWallTime", mExitWallTime);
         bundle.putBundle("mArguments", mArguments);
         return bundle;
     }
@@ -40,8 +58,18 @@ public final class ImeEvent {
     @NonNull
     static ImeEvent fromBundle(@NonNull Bundle bundle) {
         final String eventName = bundle.getString("mEventName");
+        final int nestLevel = bundle.getInt("mNestLevel");
+        final String threadName = bundle.getString("mThreadName");
+        final int threadId = bundle.getInt("mThreadId");
+        final boolean isMainThread = bundle.getBoolean("mIsMainThread");
+        final long enterTimestamp = bundle.getLong("mEnterTimestamp");
+        final long exitTimestamp = bundle.getLong("mExitTimestamp");
+        final long enterWallTime = bundle.getLong("mEnterWallTime");
+        final long exitWallTime = bundle.getLong("mExitWallTime");
         final Bundle arguments = bundle.getBundle("mArguments");
-        return new ImeEvent(eventName, arguments);
+        return new ImeEvent(eventName, nestLevel, threadName,
+                threadId, isMainThread, enterTimestamp, exitTimestamp, enterWallTime, exitWallTime,
+                arguments);
     }
 
     /**
@@ -58,6 +86,72 @@ public final class ImeEvent {
     }
 
     /**
+     * Returns the nest level of this event.
+     *
+     * <p>For instance, when &quot;showSoftInput&quot; internally calls
+     * &quot;onStartInputView&quot;, the event for &quot;onStartInputView&quot; has 1 level higher
+     * nest level than &quot;showSoftInput&quot;.</p>
+     */
+    public int getNestLevel() {
+        return mNestLevel;
+    }
+
+    /**
+     * @return Name of the thread, where the event was consumed.
+     */
+    @NonNull
+    public String getThreadName() {
+        return mThreadName;
+    }
+
+    /**
+     * @return Thread ID (TID) of the thread, where the event was consumed.
+     */
+    public int getThreadId() {
+        return mThreadId;
+    }
+
+    /**
+     * @return {@code true} if the event was being consumed in the main thread.
+     */
+    public boolean isMainThread() {
+        return mIsMainThread;
+    }
+
+    /**
+     * @return Monotonic time measured by {@link android.os.SystemClock#elapsedRealtimeNanos()} when
+     *         the corresponding event handler was called back.
+     */
+    public long getEnterTimestamp() {
+        return mEnterTimestamp;
+    }
+
+    /**
+     * @return Monotonic time measured by {@link android.os.SystemClock#elapsedRealtimeNanos()} when
+     *         the corresponding event handler finished.
+     */
+    public long getExitTimestamp() {
+        return mExitTimestamp;
+    }
+
+    /**
+     * @return Wall-clock time measured by {@link System#currentTimeMillis()} when the corresponding
+     *         event handler was called back.
+     */
+    public long getEnterWallTime() {
+        return mEnterWallTime;
+    }
+
+    /**
+     * @return Wall-clock time measured by {@link System#currentTimeMillis()} when the corresponding
+     *         event handler finished.
+     */
+    public long getExitWallTime() {
+        return mExitWallTime;
+    }
+
+
+    /**
      * @return {@link Bundle} that stores parameters passed to the corresponding event handler.
      */
     @NonNull
@@ -67,6 +161,15 @@ public final class ImeEvent {
 
     @NonNull
     private final String mEventName;
+    private final int mNestLevel;
+    @NonNull
+    private final String mThreadName;
+    private final int mThreadId;
+    private final boolean mIsMainThread;
+    private final long mEnterTimestamp;
+    private final long mExitTimestamp;
+    private final long mEnterWallTime;
+    private final long mExitWallTime;
     @NonNull
     private final Bundle mArguments;
 }
