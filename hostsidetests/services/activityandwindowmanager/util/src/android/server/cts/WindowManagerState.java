@@ -529,9 +529,12 @@ public class WindowManagerState {
 
 
     int getStackPosition(int stackId) {
-        for (int i = 0; i < mStacks.size(); i++) {
-            if (stackId == mStacks.get(i).mStackId) {
-                return i;
+        for (Integer displayId : mDisplayStacks.keySet()) {
+            List<WindowStack> stacks = mDisplayStacks.get(displayId);
+            for (int i = 0; i < stacks.size(); i++) {
+                if (stackId == stacks.get(i).mStackId) {
+                    return i;
+                }
             }
         }
         return -1;
