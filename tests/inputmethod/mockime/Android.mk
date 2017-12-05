@@ -16,28 +16,18 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-# don't include this package in any target
+LOCAL_MODULE := CtsMockInputMethod
 LOCAL_MODULE_TAGS := tests
-# and when built explicitly put it in the data partition
-LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
-# Tag this module as a cts test artifact
+LOCAL_SDK_VERSION := current
+
+# tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
-LOCAL_MULTILIB := both
-
-LOCAL_JAVA_LIBRARIES := android.test.runner
-
-LOCAL_STATIC_JAVA_LIBRARIES := \
-    android-support-test \
-    compatibility-device-util \
-    ctstestrunner \
-    CtsMockInputMethod
-
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
+LOCAL_JAVA_LIBRARIES := junit
+LOCAL_STATIC_JAVA_LIBRARIES := \
+   android-support-annotations \
+   compatibility-device-util
 
-LOCAL_PACKAGE_NAME := CtsInputMethodTestCases
-
-include $(BUILD_CTS_PACKAGE)
-
-include $(call all-makefiles-under,$(LOCAL_PATH))
+include $(BUILD_STATIC_JAVA_LIBRARY)
