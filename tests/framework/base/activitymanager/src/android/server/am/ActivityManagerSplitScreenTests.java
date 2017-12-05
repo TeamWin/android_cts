@@ -564,6 +564,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
     }
 
     @Test
+    @Presubmit
     public void testDockedStackToMinimizeWhenUnlocked() throws Exception {
         if (!supportsSplitScreenMultiWindow()) {
             log("Skipping test: no split multi-window support");
@@ -571,6 +572,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
         }
 
         launchActivityInDockStack(TEST_ACTIVITY_NAME);
+        pressAppSwitchButton();
         mAmWmState.computeState(new WaitForValidActivityState.Builder(TEST_ACTIVITY_NAME).build());
         sleepDevice();
         wakeUpAndUnlockDevice();
