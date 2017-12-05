@@ -38,6 +38,7 @@ import android.app.ActivityManager.RunningAppProcessInfo;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
@@ -129,6 +130,10 @@ public class AlertWindowsTests {
 
     @Test
     public void testAlertWindowOomAdj() throws Exception {
+        // Alert windows are always hidden when running in VR.
+        if (isRunningInVR()) {
+            return;
+        }
         setAlertWindowPermission(true /* allow */);
 
 
@@ -270,5 +275,14 @@ public class AlertWindowsTests {
                     super.handleMessage(msg);
             }
         }
+    }
+
+    private boolean isRunningInVR() {
+        final Context context = InstrumentationRegistry.getTargetContext();
+        if ((context.getResources().getConfiguration().uiMode & Configuration.UI_MODE_TYPE_MASK)
+             == Configuration.UI_MODE_TYPE_VR_HEADSET) {
+            return true;
+        }
+        return false;
     }
 }
