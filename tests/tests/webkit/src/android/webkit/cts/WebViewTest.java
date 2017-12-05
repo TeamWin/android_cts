@@ -2085,7 +2085,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         }
         final String p = "<p style=\"height:1000px;width:1000px\">Test setInitialScale.</p>";
         final float defaultScale =
-            getInstrumentation().getTargetContext().getResources().getDisplayMetrics().density;
+            getActivity().getResources().getDisplayMetrics().density;
 
         mOnUiThread.loadDataAndWaitForCompletion("<html><body>" + p
                 + "</body></html>", "text/html", null);
