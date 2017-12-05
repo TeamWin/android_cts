@@ -114,13 +114,14 @@ public class MockImeSession implements AutoCloseable {
 
     @Nullable
     private static void writeMockImeSettings(@NonNull Context context,
-            @NonNull String imeEventActionName) throws Exception {
+            @NonNull String imeEventActionName,
+            @Nullable ImeSettings.Builder imeSettings) throws Exception {
         context.deleteFile(MOCK_IME_SETTINGS_FILE);
         try (OutputStream os = context.openFileOutput(MOCK_IME_SETTINGS_FILE, MODE_PRIVATE)) {
             Parcel parcel = null;
             try {
                 parcel = Parcel.obtain();
-                ImeSettings.writeToParcel(parcel, imeEventActionName);
+                ImeSettings.writeToParcel(parcel, imeEventActionName, imeSettings);
                 os.write(parcel.marshall());
             } finally {
                 if (parcel != null) {
@@ -143,7 +144,8 @@ public class MockImeSession implements AutoCloseable {
         mContext = context;
     }
 
-    private void initialize(@NonNull UiAutomation uiAutomation) throws Exception {
+    private void initialize(@NonNull UiAutomation uiAutomation,
+            @Nullable ImeSettings.Builder imeSettings) throws Exception {
         // Make sure that MockIME is not selected.
         mContext.getPackageManager().setComponentEnabledSetting(getMockImeComponentName(),
                 COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
@@ -154,7 +156,7 @@ public class MockImeSession implements AutoCloseable {
                         .stream()
                         .noneMatch(info -> getMockImeComponentName().equals(info.getComponent())));
 
-        writeMockImeSettings(mContext, mImeEventActionName);
+        writeMockImeSettings(mContext, mImeEventActionName, imeSettings);
 
         mHandlerThread.start();
         mContext.registerReceiver(mEventReceiver,
@@ -187,15 +189,17 @@ public class MockImeSession implements AutoCloseable {
      *                {@link MockIme} (e.g. via {@link BroadcastReceiver}
      * @param uiAutomation {@link UiAutomation} object to change the device state that are typically
      *                     guarded by permissions.
+     * @param imeSettings Key-value pairs to be passed to the {@link MockIme}.
      * @return A session object, with which you can retrieve event logs from the {@link MockIme} and
      *         can clean up the session.
      */
     @NonNull
     public static MockImeSession create(
             @NonNull Context context,
-            @NonNull UiAutomation uiAutomation) throws Exception {
+            @NonNull UiAutomation uiAutomation,
+            @Nullable ImeSettings.Builder imeSettings) throws Exception {
         final MockImeSession client = new MockImeSession(context);
-        client.initialize(uiAutomation);
+        client.initialize(uiAutomation, imeSettings);
         return client;
     }
 

@@ -45,6 +45,7 @@ import android.widget.TextView;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 /**
@@ -144,6 +145,12 @@ public final class MockIme extends InputMethodService {
     public void onConfigureWindow(Window win, boolean isFullscreen, boolean isCandidatesOnly) {
         getTracer().onConfigureWindow(win, isFullscreen, isCandidatesOnly,
                 () -> super.onConfigureWindow(win, isFullscreen, isCandidatesOnly));
+    }
+
+    @Override
+    public boolean onEvaluateFullscreenMode() {
+        return getTracer().onEvaluateFullscreenMode(() ->
+                mSettings.fullscreenModeAllowed(false) && super.onEvaluateFullscreenMode());
     }
 
     private static final class KeyboardLayoutView extends LinearLayout {
@@ -279,6 +286,11 @@ public final class MockIme extends InputMethodService {
             recordEventInternal(eventName, () -> { runnable.run(); return null; }, arguments);
         }
 
+        private boolean recordEventInternal(@NonNull String eventName,
+                @NonNull BooleanSupplier supplier) {
+            return recordEventInternal(eventName, () -> supplier.getAsBoolean(), new Bundle());
+        }
+
         private <T> T recordEventInternal(@NonNull String eventName,
                 @NonNull Supplier<T> supplier) {
             return recordEventInternal(eventName, supplier, new Bundle());
@@ -316,6 +328,10 @@ public final class MockIme extends InputMethodService {
             arguments.putBoolean("isFullscreen", isFullscreen);
             arguments.putBoolean("isCandidatesOnly", isCandidatesOnly);
             recordEventInternal("onConfigureWindow", runnable, arguments);
+        }
+
+        public boolean onEvaluateFullscreenMode(@NonNull BooleanSupplier runnable) {
+            return recordEventInternal("onEvaluateFullscreenMode", runnable);
         }
 
         public View onCreateInputView(@NonNull Supplier<View> supplier) {
