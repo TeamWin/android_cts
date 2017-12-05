@@ -957,6 +957,65 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         }
     }
 
+    public void testAfSceneChange() throws Exception {
+        final int NUM_FRAMES_VERIFIED = 3;
+
+        for (String id : mCameraIds) {
+            Log.i(TAG, String.format("Testing Camera %s for AF scene change", id));
+
+            StaticMetadata staticInfo =
+                    new StaticMetadata(mCameraManager.getCameraCharacteristics(id));
+            if (!staticInfo.isAfSceneChangeSupported()) {
+                continue;
+            }
+
+            openDevice(id);
+
+            try {
+                SurfaceTexture preview = new SurfaceTexture(/*random int*/ 1);
+                Surface previewSurface = new Surface(preview);
+
+                CaptureRequest.Builder previewRequest = preparePreviewTestSession(preview);
+                SimpleCaptureCallback previewListener = new CameraTestUtils.SimpleCaptureCallback();
+
+                int[] availableAfModes = mStaticInfo.getAfAvailableModesChecked();
+
+                // Test AF scene change in each AF mode.
+                for (int afMode : availableAfModes) {
+                    previewRequest.set(CaptureRequest.CONTROL_AF_MODE, afMode);
+
+                    int sequenceId = mCameraSession.setRepeatingRequest(previewRequest.build(),
+                            previewListener, mHandler);
+
+                    // Verify that AF scene change is NOT_DETECTED or DETECTED in CONTINUOUS_VIDEO
+                    // and CONTINUOUS_PICTURE AF modes, and NOT_DETECTED in other AF modes.
+                    for (int i = 0; i < NUM_FRAMES_VERIFIED; i++) {
+                        TotalCaptureResult result =
+                            previewListener.getTotalCaptureResult(CAPTURE_TIMEOUT);
+                        if (afMode == CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO ||
+                                afMode == CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE) {
+                            mCollector.expectKeyValueIsIn(result,
+                                    CaptureResult.CONTROL_AF_SCENE_CHANGE,
+                                    CaptureResult.CONTROL_AF_SCENE_CHANGE_DETECTED,
+                                    CaptureResult.CONTROL_AF_SCENE_CHANGE_NOT_DETECTED);
+                        } else {
+                            mCollector.expectKeyValueEquals(result,
+                                    CaptureResult.CONTROL_AF_SCENE_CHANGE,
+                                    CaptureResult.CONTROL_AF_SCENE_CHANGE_NOT_DETECTED);
+                        }
+                    }
+
+                    mCameraSession.stopRepeating();
+                    previewListener.getCaptureSequenceLastFrameNumber(sequenceId, CAPTURE_TIMEOUT);
+                    previewListener.drain();
+                }
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
+
     private CaptureRequest.Builder preparePreviewTestSession(SurfaceTexture preview)
             throws Exception {
         Surface previewSurface = new Surface(preview);
