@@ -227,49 +227,6 @@ public class InputMethodInfoTest {
     }
 
     @Test
-    public void testInputMethodSubtypesOfSystemImes() {
-        if (!mContext.getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_INPUT_METHODS)) {
-            return;
-        }
-
-        final InputMethodManager imm = mContext.getSystemService(InputMethodManager.class);
-        final List<InputMethodInfo> imis = imm.getInputMethodList();
-        final ArrayList<String> localeList = new ArrayList<>(Arrays.asList(
-                Resources.getSystem().getAssets().getLocales()));
-        boolean foundEnabledSystemImeSubtypeWithValidLanguage = false;
-        for (InputMethodInfo imi : imis) {
-            if ((imi.getServiceInfo().applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0) {
-                continue;
-            }
-            final int subtypeCount = imi.getSubtypeCount();
-            // System IME must have one subtype at least.
-            assertTrue(subtypeCount > 0);
-            if (foundEnabledSystemImeSubtypeWithValidLanguage) {
-                continue;
-            }
-            final List<InputMethodSubtype> enabledSubtypes =
-                    imm.getEnabledInputMethodSubtypeList(imi, true);
-            SUBTYPE_LOOP:
-            for (InputMethodSubtype subtype : enabledSubtypes) {
-                final String subtypeLocale = subtype.getLocale();
-                if (subtypeLocale.length() < 2) {
-                    continue;
-                }
-                // TODO: Detect language more strictly.
-                final String subtypeLanguage = subtypeLocale.substring(0, 2);
-                for (final String locale : localeList) {
-                    if (locale.startsWith(subtypeLanguage)) {
-                        foundEnabledSystemImeSubtypeWithValidLanguage = true;
-                        break SUBTYPE_LOOP;
-                    }
-                }
-            }
-        }
-        assertTrue(foundEnabledSystemImeSubtypeWithValidLanguage);
-    }
-
-    @Test
     public void testAtLeastOneEncryptionAwareInputMethodIsAvailable() {
         if (!mContext.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_INPUT_METHODS)) {
