@@ -36,7 +36,7 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src) ../../apps/CtsVerifier/src/
 LOCAL_SDK_VERSION := test_current
 
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 include $(BUILD_CTS_PACKAGE)
 

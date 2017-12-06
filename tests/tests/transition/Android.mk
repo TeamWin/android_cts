@@ -27,6 +27,7 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 LOCAL_STATIC_JAVA_LIBRARIES += \
     android-support-test \
     mockito-target-minus-junit4 \
+    hamcrest-library \
     android-common \
     compatibility-device-util \
     ctstestrunner \
@@ -38,6 +39,6 @@ LOCAL_JAVA_LIBRARIES := android.test.runner
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 include $(BUILD_CTS_PACKAGE)

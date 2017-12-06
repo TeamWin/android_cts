@@ -101,6 +101,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
     private DialogTestListItem mConfirmWorkCredentials;
     private DialogTestListItem mParentProfilePassword;
     private TestListItem mVpnTest;
+    private TestListItem mAlwaysOnVpnSettingsTest;
     private TestListItem mRecentsTest;
     private TestListItem mDisallowAppsControlTest;
     private TestListItem mOrganizationInfoTest;
@@ -362,6 +363,12 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 new Intent(VpnTestActivity.ACTION_VPN),
                 null);
 
+        mAlwaysOnVpnSettingsTest = TestListItem.newTest(this,
+                R.string.provisioning_byod_always_on_vpn,
+                AlwaysOnVpnSettingsTestActivity.class.getName(),
+                new Intent(AlwaysOnVpnSettingsTestActivity.ACTION_ALWAYS_ON_VPN_SETTINGS_TEST),
+                null);
+
         mDisallowAppsControlTest = TestListItem.newTest(this,
                 R.string.provisioning_byod_disallow_apps_control,
                 DisallowAppsControlActivity.class.getName(),
@@ -458,6 +465,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
         adapter.add(mKeyguardDisabledFeaturesTest);
         adapter.add(mAuthenticationBoundKeyTest);
         adapter.add(mVpnTest);
+        adapter.add(mAlwaysOnVpnSettingsTest);
         adapter.add(mTurnOffWorkFeaturesTest);
         adapter.add(mSelectWorkChallenge);
         if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {

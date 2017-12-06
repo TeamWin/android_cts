@@ -47,7 +47,7 @@ LOCAL_JNI_SHARED_LIBRARIES := libjavacoretests libsqlite_jni libnativehelper_com
 LOCAL_MULTILIB := both
 
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 # NOTE: virtualdeviceknownfailures.txt is only used for simulated/cloud-based
 # continuous build configurations, so it's not referenced in AndroidTest.xml

@@ -14,14 +14,15 @@
      limitations under the License.
 -->
 <configuration description="Config for CTS JVMTI test cases">
-    <target_preparer class="android.jvmti.cts.JvmtiPreparer">
+    <option name="config-descriptor:metadata" key="component" value="art" />
+    <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsJvmtiRunTest912DeviceApp.apk" />
-        <option name="package-name" value="android.jvmti.cts.run_test_912" />
     </target_preparer>
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
         <option name="jar" value="CtsJvmtiRunTest912HostTestCases.jar" />
         <option name="set-option" value="test-file-name:CtsJvmtiRunTest912DeviceApp.apk" />
         <option name="set-option" value="package-name:android.jvmti.cts.run_test_912" />
+        <option name="runtime-hint" value="8s"/>
     </test>
 </configuration>

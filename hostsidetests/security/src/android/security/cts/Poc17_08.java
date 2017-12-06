@@ -100,4 +100,23 @@ public class Poc17_08 extends SecurityTestCase {
             AdbUtils.runPocNoOutput("CVE-2017-9680", getDevice(), 120);
         }
     }
+
+    /**
+     *  b/36818198
+     *
+     *  This test relies upon the existence of the following hddLog call in the function
+     *  "__wlan_hdd_cfg80211_extscan_set_bssid_hotlist" in
+     *  drivers/staging/qcacld-2.0/CORE/HDD/src/wlan_hdd_cfg80211.c:
+     *  "hddLog(VOS_TRACE_LEVEL_ERROR, FL("attr mac address failed"));"
+     */
+    @SecurityTest
+    public void testPocBug_36818198() throws Exception {
+        enableAdbRoot(getDevice());
+        AdbUtils.runCommandLine("dmesg -C", getDevice());
+        AdbUtils.runPoc("Bug-36818198", getDevice(), 60);
+        String pocOut = AdbUtils.runCommandLine("dmesg", getDevice());
+        assertNotMatches("[\\s\\n\\S]*wlan: \\[[0-9]+:E :HDD\\] " +
+                         "__wlan_hdd_cfg80211_extscan_set_bssid_hotlist: " +
+                         "2775: attr mac address failed[\\s\\n\\S]*", pocOut);
+    }
 }

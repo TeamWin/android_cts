@@ -2280,9 +2280,12 @@ public class CameraTestUtils extends Assert {
             }
             if (staticInfo.areKeysAvailable(CaptureResult.CONTROL_POST_RAW_SENSITIVITY_BOOST)) {
                 expectedIso = expectedIso *
-                        result.get(CaptureResult.CONTROL_POST_RAW_SENSITIVITY_BOOST) / 100;
+                        result.get(CaptureResult.CONTROL_POST_RAW_SENSITIVITY_BOOST);
+            } else {
+                expectedIso *= 100;
             }
-            collector.expectEquals("Exif TAG_ISO is incorrect", expectedIso, iso);
+            collector.expectInRange("Exif TAG_ISO is incorrect", iso,
+                    expectedIso/100, (expectedIso+50)/100);
         }
 
         // TAG_DATETIME_DIGITIZED (a.k.a Create time for digital cameras).

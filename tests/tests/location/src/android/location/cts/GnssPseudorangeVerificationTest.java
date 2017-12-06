@@ -89,8 +89,9 @@ public class GnssPseudorangeVerificationTest extends GnssTestCase {
   public void testPseudorangeValue() throws Exception {
     // Checks if Gnss hardware feature is present, skips test (pass) if not,
     // and hard asserts that Location/Gnss (Provider) is turned on if is Cts Verifier.
+    // From android O, CTS tests should run in the lab with GPS signal.
     if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager,
-        TAG, MIN_HARDWARE_YEAR_MEASUREMENTS_REQUIRED, isCtsVerifierTest())) {
+        TAG, MIN_HARDWARE_YEAR_MEASUREMENTS_REQUIRED, true)) {
       return;
     }
 
@@ -227,7 +228,16 @@ public class GnssPseudorangeVerificationTest extends GnssTestCase {
  * Use pseudorange calculation library to calculate position then compare to location from
  * Location Manager.
  */
+  @CddTest(requirement="7.3.3")
   public void testPseudoPosition() throws Exception {
+    // Checks if Gnss hardware feature is present, skips test (pass) if not,
+    // and hard asserts that Location/Gnss (Provider) is turned on if is Cts Verifier.
+    // From android O, CTS tests should run in the lab with GPS signal.
+    if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager,
+        TAG, MIN_HARDWARE_YEAR_MEASUREMENTS_REQUIRED, true)) {
+      return;
+    }
+
     mLocationListener = new TestLocationListener(LOCATION_TO_COLLECT_COUNT);
     mTestLocationManager.requestLocationUpdates(mLocationListener);
 
@@ -251,11 +261,11 @@ public class GnssPseudorangeVerificationTest extends GnssTestCase {
     int eventCount = events.size();
     Log.i(TAG, "Number of Gps Event received = " + eventCount);
     int gnssYearOfHardware = mTestLocationManager.getLocationManager().getGnssYearOfHardware();
-    if (eventCount == 0 && gnssYearOfHardware <= MIN_HARDWARE_YEAR_MEASUREMENTS_REQUIRED) {
+    if (eventCount == 0 && gnssYearOfHardware < MIN_HARDWARE_YEAR_MEASUREMENTS_REQUIRED) {
       return;
     }
 
-    Log.i(TAG, "This is a device from 2017 or later.");
+    Log.i(TAG, "This is a device from 2016 or later.");
     assertTrue("GnssMeasurementEvent count: expected > 0, received = " + eventCount,
         eventCount > 0);
 

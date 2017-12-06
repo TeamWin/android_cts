@@ -94,9 +94,14 @@ public class InputTestCase {
         mDeviceAddedSignal = new CountDownLatch(1);
         sendHidCommands(resourceId);
         try {
-            mDeviceAddedSignal.await(2L, TimeUnit.SECONDS);
+            // Found that in kernel 3.10, the device registration takes a very long time
+            // The wait can be decreased to 2 seconds after kernel 3.10 is no longer supported
+            mDeviceAddedSignal.await(20L, TimeUnit.SECONDS);
+            if (mDeviceAddedSignal.getCount() != 0) {
+                fail("Device added notification was not received in time.");
+            }
         } catch (InterruptedException ex) {
-            fail("Device added notification was not received within the allotted time.");
+            fail("Unexpectedly interrupted while waiting for device added notification.");
         }
     }
 

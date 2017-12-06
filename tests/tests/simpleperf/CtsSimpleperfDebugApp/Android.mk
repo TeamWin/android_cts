@@ -30,6 +30,6 @@ LOCAL_PACKAGE_NAME := CtsSimpleperfDebugApp
 
 LOCAL_SDK_VERSION := current
 
-LOCAL_COMPATIBILITY_SUITE := cts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 include $(BUILD_CTS_PACKAGE)

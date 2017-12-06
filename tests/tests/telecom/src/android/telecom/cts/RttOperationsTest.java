@@ -43,6 +43,10 @@ public class RttOperationsTest extends BaseTelecomTestWithMockServices {
     }
 
     public void testOutgoingRttCall() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
         placeRttCall(false);
         final MockConnection connection = verifyConnectionForOutgoingCall();
         final MockInCallService inCallService = mInCallCallbacks.getService();
@@ -52,6 +56,10 @@ public class RttOperationsTest extends BaseTelecomTestWithMockServices {
     }
 
     public void testIncomingRttCall() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
         placeRttCall(true);
         final MockConnection connection = verifyConnectionForIncomingCall();
         final MockInCallService inCallService = mInCallCallbacks.getService();
@@ -61,6 +69,10 @@ public class RttOperationsTest extends BaseTelecomTestWithMockServices {
     }
 
     public void testLocalRttUpgradeAccepted() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
         placeAndVerifyCall();
         final MockConnection connection = verifyConnectionForOutgoingCall();
         final MockInCallService inCallService = mInCallCallbacks.getService();
@@ -79,6 +91,10 @@ public class RttOperationsTest extends BaseTelecomTestWithMockServices {
     }
 
     public void testLocalRttUpgradeRejected() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
         placeAndVerifyCall();
         final MockConnection connection = verifyConnectionForOutgoingCall();
         final MockInCallService inCallService = mInCallCallbacks.getService();
@@ -99,6 +115,10 @@ public class RttOperationsTest extends BaseTelecomTestWithMockServices {
     }
 
     public void testAcceptRemoteRttUpgrade() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
         placeAndVerifyCall();
         final MockConnection connection = verifyConnectionForOutgoingCall();
         final MockInCallService inCallService = mInCallCallbacks.getService();
@@ -118,6 +138,10 @@ public class RttOperationsTest extends BaseTelecomTestWithMockServices {
     }
 
     public void testRejectRemoteRttRequest() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
         placeAndVerifyCall();
         final MockConnection connection = verifyConnectionForOutgoingCall();
         final MockInCallService inCallService = mInCallCallbacks.getService();
@@ -138,6 +162,10 @@ public class RttOperationsTest extends BaseTelecomTestWithMockServices {
     }
 
     public void testLocalRttTermination() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
         placeRttCall(false);
         final MockConnection connection = verifyConnectionForOutgoingCall();
         final MockInCallService inCallService = mInCallCallbacks.getService();
@@ -153,6 +181,10 @@ public class RttOperationsTest extends BaseTelecomTestWithMockServices {
     }
 
     public void testRemoteRttTermination() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
         placeRttCall(false);
         final MockConnection connection = verifyConnectionForOutgoingCall();
         final MockInCallService inCallService = mInCallCallbacks.getService();

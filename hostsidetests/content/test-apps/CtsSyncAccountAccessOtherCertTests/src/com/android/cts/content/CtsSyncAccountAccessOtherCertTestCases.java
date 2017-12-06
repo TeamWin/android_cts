@@ -127,10 +127,10 @@ public class CtsSyncAccountAccessOtherCertTestCases {
                 notification.click();
             } else {
                 uiDevice.openNotification();
-                uiDevice.wait(Until.hasObject(By.text(PERMISSION_REQUESTED)),
+                uiDevice.wait(Until.hasObject(By.text("Permission requested")),
                         UI_TIMEOUT_MILLIS);
 
-                uiDevice.findObject(By.text(PERMISSION_REQUESTED)).click();
+                uiDevice.findObject(By.text("Permission requested")).click();
             }
 
             uiDevice.wait(Until.hasObject(By.text("ALLOW")),
@@ -152,16 +152,16 @@ public class CtsSyncAccountAccessOtherCertTestCases {
     private UiObject2 findPermissionNotificationInStream(UiDevice uiDevice) {
         uiDevice.pressHome();
         swipeUp(uiDevice);
-        if (uiDevice.hasObject(By.text(PERMISSION_REQUESTED))) {
-          return uiDevice.findObject(By.text(PERMISSION_REQUESTED));
+        if (uiDevice.hasObject(By.text("Permission requested"))) {
+          return uiDevice.findObject(By.text("Permission requested"));
         }
         for (int i = 0; i < 100; i++) {
           if (!swipeUp(uiDevice)) {
             // We have reached the end of the stream and not found the target.
             break;
           }
-          if (uiDevice.hasObject(By.text(PERMISSION_REQUESTED))) {
-            return uiDevice.findObject(By.text(PERMISSION_REQUESTED));
+          if (uiDevice.hasObject(By.text("Permission requested"))) {
+            return uiDevice.findObject(By.text("Permission requested"));
           }
         }
         return null;
@@ -205,8 +205,9 @@ public class CtsSyncAccountAccessOtherCertTestCases {
     }
 
     private boolean hasNotificationSupport() {
-        return !getContext().getPackageManager()
-                .hasSystemFeature(PackageManager.FEATURE_LEANBACK);
+        final PackageManager manager = getContext().getPackageManager();
+        return !manager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+                && !manager.hasSystemFeature(PackageManager.FEATURE_EMBEDDED);
     }
 
     private void allowSyncAdapterRunInBackgroundAndDataInBackground() throws IOException {

@@ -30,4 +30,6 @@ LOCAL_SHARED_LIBRARIES := libandroid libnativehelper_compat_libc++ liblog libEGL
 
 LOCAL_SDK_VERSION := current
 
+LOCAL_NDK_STL_VARIANT := c++_static
+
 include $(BUILD_SHARED_LIBRARY)

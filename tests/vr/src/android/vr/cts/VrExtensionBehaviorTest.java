@@ -157,6 +157,8 @@ public class VrExtensionBehaviorTest extends ActivityInstrumentationTestCase2<Op
 
     /**
      * Test that a layered EGLImage can be created and attached to a FBO.
+     * For more information, see the EGL_image_array spec:
+     * https://www.khronos.org/registry/OpenGL/extensions/EXT/EXT_EGL_image_array.txt
      */
     public void testEglImageArray() throws Throwable {
         mActivity = getGlEsActivity(OpenGLESActivity.RENDERER_BASIC, 0, 0, 0);
@@ -168,6 +170,25 @@ public class VrExtensionBehaviorTest extends ActivityInstrumentationTestCase2<Op
         mActivity.runOnGlThread(new Runnable() {
             public void run() {
               nativeTestEglImageArray();
+            }
+        });
+    }
+
+    /**
+     * Test that an external buffer can be created, written to, and read from.
+     * For more information, see the GL_EXT_external_buffer spec:
+     * https://www.khronos.org/registry/OpenGL/extensions/EXT/EXT_external_buffer.txt
+     */
+    public void testExternalBuffer() throws Throwable {
+        mActivity = getGlEsActivity(OpenGLESActivity.RENDERER_BASIC, 0, 0, 0);
+        if (!mActivity.supportsVrHighPerformance())
+            return;
+
+        assertEquals(GLES32.GL_NO_ERROR, mActivity.glGetError());
+
+        mActivity.runOnGlThread(new Runnable() {
+            public void run() {
+              nativeTestExternalBuffer();
             }
         });
     }
@@ -201,4 +222,5 @@ public class VrExtensionBehaviorTest extends ActivityInstrumentationTestCase2<Op
     }
 
     private static native boolean nativeTestEglImageArray();
+    private static native boolean nativeTestExternalBuffer();
 }

@@ -809,7 +809,7 @@ public class MediaPlayerDrmTestBase extends ActivityInstrumentationTestCase2<Med
                     // Can skip conversion if ClearKey adds support for BMFF initData (b/64863112)
                     initData = makeCencPSSH(CLEARKEY_SCHEME_UUID, psshData);
                 }
-                Log.d(TAG, "setupDrm: initData[" + drmScheme + "]: " + initData);
+                Log.d(TAG, "setupDrm: initData[" + drmScheme + "]: " + Arrays.toString(initData));
 
                 // diverging from GTS
                 mime = "cenc";
@@ -848,7 +848,7 @@ public class MediaPlayerDrmTestBase extends ActivityInstrumentationTestCase2<Med
             byte[] keySetId = mMediaPlayer.provideKeyResponse(
                     (keyType == MediaDrm.KEY_TYPE_RELEASE) ? mKeySetId : null,
                     response);
-            Log.d(TAG, "setupDrm: provideKeyResponse -> " + keySetId);
+            Log.d(TAG, "setupDrm: provideKeyResponse -> " + Arrays.toString(keySetId));
             // storing offline key for a later restore
             mKeySetId = (keyType == MediaDrm.KEY_TYPE_OFFLINE) ? keySetId : null;
 

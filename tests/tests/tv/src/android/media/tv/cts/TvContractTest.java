@@ -1431,29 +1431,41 @@ public class TvContractTest extends AndroidTestCase {
         final Uri CHANNEL_URI_FOR_PASSTHROUGH_INPUT =
                 TvContract.buildChannelUriForPassthroughInput("inputId");
         final Uri PROGRAM_URI = TvContract.buildProgramUri(0);
+        final Uri RECORDED_PROGRAM_URI = TvContract.buildRecordedProgramUri(0);
 
         // Test isChannelUri
         assertTrue(TvContract.isChannelUri(CHANNEL_URI_FOR_TUNER));
         assertTrue(TvContract.isChannelUri(CHANNEL_URI_FOR_PASSTHROUGH_INPUT));
         assertFalse(TvContract.isChannelUri(PROGRAM_URI));
+        assertFalse(TvContract.isChannelUri(RECORDED_PROGRAM_URI));
         assertFalse(TvContract.isChannelUri(null));
 
         // Test isChannelUriForPassthroughInput
         assertFalse(TvContract.isChannelUriForPassthroughInput(CHANNEL_URI_FOR_TUNER));
         assertTrue(TvContract.isChannelUriForPassthroughInput(CHANNEL_URI_FOR_PASSTHROUGH_INPUT));
         assertFalse(TvContract.isChannelUriForPassthroughInput(PROGRAM_URI));
+        assertFalse(TvContract.isChannelUriForPassthroughInput(RECORDED_PROGRAM_URI));
         assertFalse(TvContract.isChannelUriForPassthroughInput(null));
 
         // Test isChannelUriForTunerInput
         assertTrue(TvContract.isChannelUriForTunerInput(CHANNEL_URI_FOR_TUNER));
         assertFalse(TvContract.isChannelUriForTunerInput(CHANNEL_URI_FOR_PASSTHROUGH_INPUT));
         assertFalse(TvContract.isChannelUriForTunerInput(PROGRAM_URI));
+        assertFalse(TvContract.isChannelUriForTunerInput(RECORDED_PROGRAM_URI));
         assertFalse(TvContract.isChannelUriForTunerInput(null));
 
         // Test isProgramUri
         assertFalse(TvContract.isProgramUri(CHANNEL_URI_FOR_TUNER));
         assertFalse(TvContract.isProgramUri(CHANNEL_URI_FOR_PASSTHROUGH_INPUT));
         assertTrue(TvContract.isProgramUri(PROGRAM_URI));
+        assertFalse(TvContract.isProgramUri(RECORDED_PROGRAM_URI));
         assertFalse(TvContract.isProgramUri(null));
+
+        // Test isRecordedProgramUri
+        assertFalse(TvContract.isRecordedProgramUri(CHANNEL_URI_FOR_TUNER));
+        assertFalse(TvContract.isRecordedProgramUri(CHANNEL_URI_FOR_PASSTHROUGH_INPUT));
+        assertFalse(TvContract.isRecordedProgramUri(PROGRAM_URI));
+        assertTrue(TvContract.isRecordedProgramUri(RECORDED_PROGRAM_URI));
+        assertFalse(TvContract.isRecordedProgramUri(null));
     }
 }
