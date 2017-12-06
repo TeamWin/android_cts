@@ -17,6 +17,7 @@
 package android.view.textclassifier.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -31,6 +32,8 @@ import android.view.textclassifier.TextClassificationManager;
 import android.view.textclassifier.TextClassifier;
 import android.view.textclassifier.TextLinks;
 import android.view.textclassifier.TextSelection;
+import android.view.textclassifier.logging.Logger;
+import android.view.textclassifier.logging.Logger.Config;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -57,6 +60,13 @@ public class TextClassificationManagerTest {
                 .getSystemService(TextClassificationManager.class);
         mManager.setTextClassifier(null); // Resets the classifier.
         mClassifier = mManager.getTextClassifier();
+    }
+
+    @Test
+    public void testSetTextClassifier() {
+        final TextClassifier classifier = mock(TextClassifier.class);
+        mManager.setTextClassifier(classifier);
+        assertEquals(classifier, mManager.getTextClassifier());
     }
 
     @Test
@@ -101,10 +111,16 @@ public class TextClassificationManagerTest {
     }
 
     @Test
-    public void testSetTextClassifier() {
-        final TextClassifier classifier = mock(TextClassifier.class);
-        mManager.setTextClassifier(classifier);
-        assertEquals(classifier, mManager.getTextClassifier());
+    public void testGetLogger() {
+        final Logger logger = mClassifier.getLogger(new Config(
+                InstrumentationRegistry.getTargetContext(), Logger.WIDGET_TEXTVIEW, null));
+        assertNotNull(logger);
+        assertNotNull(logger.getTokenIterator(LOCALES.get(0)));
+    }
+
+    @Test
+    public void testDisabledLogger() {
+        assertFalse(Logger.DISABLED.isSmartSelection("sig.na.ture"));
     }
 
     private static void assertValidResult(TextSelection selection) {
