@@ -85,10 +85,12 @@ import android.text.Editable;
 import android.text.InputFilter;
 import android.text.InputType;
 import android.text.Layout;
+import android.text.PremeasuredText;
 import android.text.Selection;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;
+import android.text.TextDirectionHeuristics;
 import android.text.TextPaint;
 import android.text.TextUtils;
 import android.text.TextUtils.TruncateAt;
@@ -1631,6 +1633,16 @@ public class TextViewTest {
             fail("Should throw exception with illegal id");
         } catch (NotFoundException e) {
         }
+    }
+
+    @UiThreadTest
+    @Test
+    public void testSetText_PremeasuredText() {
+        final TextView tv = findTextView(R.id.textview_text);
+        final PremeasuredText premeasured = PremeasuredText.build(
+                "This is an example text.", new TextPaint(), TextDirectionHeuristics.LTR);
+        tv.setText(premeasured);
+        assertEquals(premeasured.toString(), tv.getText().toString());
     }
 
     @Test
