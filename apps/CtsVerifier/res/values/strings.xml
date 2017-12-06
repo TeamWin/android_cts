@@ -77,7 +77,7 @@
     <string name="da_uninstall_test">Device Admin Uninstall Test</string>
     <string name="da_uninstall_test_info">This test checks that an active device administrator
         can be easily uninstalled from the application details screen in a way similar to other
-        apps.
+        apps. This test requires CtsEmptyDeviceAdmin.apk to be installed on the device.
     </string>
     <string name="da_tapjacking_test">Device Admin Tapjacking Test</string>
     <string name="da_tapjacking_test_info">This test checks that an activity cannot tapjack the
@@ -124,10 +124,10 @@
     <string name="da_lock_success">It appears the screen was locked successfully!</string>
     <string name="da_lock_error">It does not look like the screen was locked...</string>
 
-    <string name="da_install_admin_instructions">Please install the \'Test Device Admin\' app on the device.
-        If needed, grant \'Cts Verifier\' permission to install unknown apps, and return when install succeeds.
+    <string name="da_install_admin_instructions">
+        Please install the \'Test Device Admin\' app (packaged as CtsEmptyDeviceAdmin.apk) on the device.
     </string>
-    <string name="da_install_admin_button_text">Install admin</string>
+    <string name="da_admin_installed_status_text">\'Test Device Admin\' installed on the device.</string>
     <string name="da_enable_admin_instructions">Add \'Test Device Admin\' as an active administrator on the device.
         Tap the button below to review the device admin details and activate the administrator.
     </string>
@@ -557,6 +557,7 @@
     <string name="location_gnss_measure_no_location_test">GNSS Measurement Before Location Test</string>
     <string name="location_gnss_reg_test">GNSS Measurement Registration Test</string>
     <string name="location_gnss_value_test">GNSS Measurement Values Test</string>
+    <string name="location_pseudorange_value_test">GNSS Pseudorange Test</string>
     <string name="location_gnss_ttff_test">GNSS TTFF Test</string>
     <string name="location_gnss_nav_msg_test">GNSS Navigation Message Test</string>
     <string name="location_gnss_status_test">GNSS Status Test</string>
@@ -956,6 +957,25 @@
     <string name="sample_framework_test">Sample Framework Test</string>
     <string name="sample_test">Sample Test</string>
     <string name="sample_test_info">This test verifies that bluetooth sharing is working properly.\nThe test assumes the Device Under Test has bluetooth enabled and is already paired with a second device, also with bluetooth enabled.\nStart this test by clicking share, choose bluetooth from the options, and then select a device to share with.\nNote: This is a sample test, used to demonstrate how to write CTS Verifier tests, so just click pass.</string>
+
+    <!-- Strings for UsbDebuggingDialogTapjackingTest -->
+    <string name="usb_tapjacking_button_text">Escalate</string>
+    <string name="usb_tapjacking_test">Usb Debugging Dialog Tapjacking Test</string>
+    <string name="usb_tapjacking_test_info">This test verifies that tapjacking on the usb dialog is not possible by disallowing users from accepting usb debugging pemissions when dialog is obscured.</string>
+    <string name="usb_tapjacking_test_instructions">
+        1. Connect device via usb to computer.\n
+        2. Unroot device: adb unroot\n
+        3. Connect over tcpip: adb tcpip 5555\n
+        4. Click "Escalate".  Settings may appear if the CTS Verifier app doesn\'t have display over apps permission.  Enable this permission and then click back to navigate back to the app.\n
+        5. Wait for a USB debugging dialog to appear and for the text \"This message covers the USB debugging RSA prompt\" to appear.  There is around a 5 second delay.\n
+        ** If no dialog appears, close the CTS Verifier app and try again. \n
+        6. Try clicking OK. \n
+        Test pass if you cannot click OK when the text quoted above is on top of the USB debugging dialog.  Toast should appear saying there is an overlay so Settings cannot verify your response. \n
+        Note: Fake message overlay may remain on screen until you leave the test. This is working as intended. \n
+    </string>
+    <string name="usb_tapjacking_overlay_message">This message covers the USB debugging RSA prompt</string>
+    <string name="usb_tapjacking_error_toast">Please restart the application and try again.</string>
+    <string name="usb_tapjacking_error_toast2">Please enable display over apps permission for this application before proceeding.</string>
 
     <!-- Strings for Camera Orientation -->
     <string name="camera_orientation">Camera Orientation</string>
@@ -1696,7 +1716,7 @@ You should be prompted to select credentials; choose the ones you just installed
         2. If \'Cts Verifier\' is not allowed to install apps, a warning dialog will appear
         blocking the install. In this case go to step 3, else skip to step 4.\n
         3. Allow \'Cts Verifier\' to install apps. Return to package installer.\n
-        4. Accept the package and verify that it installs.
+        4. Accept the installation and verify that it succeeds (no error message is displayed).
     </string>
 
     <string name="provisioning_byod_nonmarket_deny">Disable non-market apps</string>
@@ -1761,6 +1781,66 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="provisioning_byod_lockscreen_bound_key">Lockscreen-bound key test</string>
     <string name="provisioning_byod_fingerprint_bound_key">Fingerprint-bound key test</string>
     <string name="provisioning_byod_vpn">VPN test</string>
+    <string name="provisioning_byod_always_on_vpn">Always-on VPN Settings</string>
+    <string name="provisioning_byod_always_on_vpn_info">
+        In this test, you\'ll verify that the Settings UI for always-on VPN is correct for different
+        VPN apps.
+    </string>
+    <string name="provisioning_byod_always_on_vpn_instruction">
+        In this test, you\'ll verify the Settings UI for always-on VPN for different VPN apps.
+        You should have received three VPN app apks with this CTS Verifier package.
+        They\'re named in the form of \"CtsVpnFirewallApp*.apk\".\n
+
+        1. Before the test, make sure CtsVpnFirewallApp isn\'t installed on your device. You can
+           uninstall either by UI, or by\n
+           \"adb uninstall com.android.cts.vpnfirewall\"\n
+
+        2. Install the first test app, by running\n
+           \"adb install /path/to/CtsVpnFirewallAppApi23.apk\"\n
+
+        3. Tap \"Prepare VPN\" button below and consent to the VPN connection.\n
+
+        4. Finish all three test cases listed below.\n
+
+        5. Repeat step 1 to remove CtsVpnFirewallApp.
+    </string>
+    <string name="provisioning_byod_always_on_vpn_prepare_button">Prepare VPN</string>
+    <string name="provisioning_byod_always_on_vpn_vpn_not_found_note">
+        Can\'t find VPN app. Did you install it correctly?
+    </string>
+    <string name="provisioning_byod_always_on_vpn_api23">VPN app targeting SDK 23</string>
+    <string name="provisioning_byod_always_on_vpn_api23_instruction">
+        1. Re-install CtsVpnFirewallAppApi23.apk (skip this if you already have the correct version
+           installed):\n
+           \"adb install -r /path/to/CtsVpnFirewallAppApi23.apk\"\n
+        2. Tap \"Go\" button below to go to the VPN settings page.\n
+        3. Open configuration details page for CtsVpnFirewallApp.\n
+        4. Confirm the \"Always-on VPN\" and \"Block connections without VPN\" switches are both off
+           and disabled.\n
+    </string>
+    <string name="provisioning_byod_always_on_vpn_api24">VPN app targeting SDK 24</string>
+    <string name="provisioning_byod_always_on_vpn_api24_instruction">
+        1. Re-install CtsVpnFirewallAppApi24.apk (skip this if you already have the correct version
+           installed):\n
+           \"adb install -r /path/to/CtsVpnFirewallAppApi24.apk\"\n
+        2. Tap \"Go\" button below to go to the VPN settings page.\n
+        3. Open configuration details page for CtsVpnFirewallApp.\n
+        4. Confirm\n
+           4.1. \"Always-on VPN\" switch is enabled and in off position\n
+           4.2. \"Block connections without VPN\" switch is disabled and in off position\n
+           4.3. \"Block connections without VPN\" becomes enabled once the \"Always-on VPN\" switch
+                is turned on\n
+    </string>
+    <string name="provisioning_byod_always_on_vpn_not_always_on">VPN app with opt-out</string>
+    <string name="provisioning_byod_always_on_vpn_not_always_on_instruction">
+        1. Re-install CtsVpnFirewallAppNotAlwaysOn.apk (skip this if you already have the correct
+           version installed):\n
+           \"adb install -r /path/to/CtsVpnFirewallAppNotAlwaysOn.apk\"\n
+        2. Tap \"Go\" button below to go to the VPN settings page.\n
+        3. Open configuration details page for CtsVpnFirewallApp.\n
+        4. Confirm the \"Always-on VPN\" and \"Block connections without VPN\" switches are both off
+           and disabled.\n
+    </string>
     <string name="provisioning_byod_select_work_challenge">Select work lock test</string>
     <string name="provisioning_byod_select_work_challenge_description">
         This test verifies that a work lock can be chosen.\n
@@ -1957,7 +2037,9 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="device_admin_keyguard_disable_camera_instruction">
         Please press the Go button to lock the screen. Then try to open the camera
         from the lower right corner of the screen. Expected result is you cannot
-        open the camera from lock screen and it will ask for password instead.
+        open the camera from lock screen and it will ask for password instead.\n
+        Also, it shouldn\'t be possible to open the camera on the lockscreen by
+        any other device specific gesture (such as double press on power button).
     </string>
     <string name="device_admin_disable_notifications">Disable notifications</string>
     <string name="device_admin_disable_notifications_instruction">
@@ -2136,6 +2218,7 @@ You should be prompted to select credentials; choose the ones you just installed
         Verify that the notification is badged (see sample badge below). Then mark this test accordingly.
     </string>
     <string name="provisioning_byod_notification_title">This is a notification</string>
+    <string name="provisioning_byod_notification_public_title">Contents hidden by policy</string>
 
     <string name="provisioning_byod_disallow_apps_control">Disallow apps control</string>
     <string name="provisioning_byod_disallow_apps_control_info">
@@ -2881,7 +2964,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="disallow_outgoing_beam">Disallow outgoing beam</string>
     <string name="disallow_outgoing_beam_action">Switching on android beam</string>
     <string name="disallow_remove_user">Disallow remove user</string>
-    <string name="disallow_remove_user_action">Removing other users</string>
+    <string name="disallow_remove_user_action">Removing other users (please create a user and attempt to remove it to verify)</string>
     <string name="disallow_remove_managed_profile">Disallow remove managed profile</string>
     <string name="disallow_remove_managed_profile_action">Removing the work profile. It shouldn\'t be possible neither from the Accounts screen nor the Device Administrators screen (after selecting the Device Administrator that corresponds to the badged version of \"CTS Verifier\")</string>
     <string name="disallow_share_location">Disallow share location</string>

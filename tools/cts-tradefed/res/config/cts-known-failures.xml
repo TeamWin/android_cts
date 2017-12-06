@@ -30,9 +30,8 @@
     <option name="compatibility:exclude-filter" value="CtsAccessibilityServiceTestCases android.accessibilityservice.cts.AccessibilityTextTraversalTest#testActionNextAndPreviousAtGranularityPageOverText" />
     <option name="compatibility:exclude-filter" value="CtsAccessibilityServiceTestCases android.accessibilityservice.cts.AccessibilityTextTraversalTest#testActionNextAndPreviousAtGranularityPageOverTextExtend" />
 
-    <!-- b/17530117 -->
-    <option name="compatibility:exclude-filter" value="CtsCameraTestCases android.hardware.camera2.cts.AllocationTest#testBlackWhite" />
-    <option name="compatibility:exclude-filter" value="CtsCameraTestCases android.hardware.camera2.cts.AllocationTest#testParamSensitivity" />
+    <!-- b/17989532 -->
+    <option name="compatibility:exclude-filter" value="CtsCameraTestCases android.hardware.camera2.cts.SurfaceViewPreviewTest#testPreparePerformance" />
 
     <!-- These test cases are only applicable to Android Auto Embedded targets.-->
     <option name="compatibility:exclude-filter" value="CtsCarTestCases" />
@@ -94,6 +93,9 @@
     <option name="compatibility:exclude-filter" value="CtsSecurityTestCases android.security.cts.MediaCryptoTest#testMediaCryptoClearKey" />
     <option name="compatibility:exclude-filter" value="CtsSecurityTestCases android.security.cts.MediaCryptoTest#testMediaCryptoWidevine" />
 
+    <!-- b/63916274 -->
+    <option name="compatibility:exclude-filter" value="CtsTelecomTestCases android.telecom.cts.WiredHeadsetTest" />
+
     <!-- b/62302163 -->
     <option name="compatibility:exclude-filter" value="CtsSecurityHostTestCases android.security.cts.Poc17_04#testPocCVE_2017_0564" />
 
@@ -124,18 +126,6 @@
     <!-- b/36686383 -->
     <option name="compatibility:exclude-filter" value="CtsIncidentHostTestCases com.android.server.cts.ErrorsTest#testANR" />
 
-    <!-- b/63916274 -->
-    <option name="compatibility:exclude-filter" value="CtsTelecomTestCases android.telecom.cts.WiredHeadsetTest" />
-
-    <!-- b/33090965 -->
-    <option name="compatibility:exclude-filter" value="CtsVideoTestCases android.video.cts.VideoEncoderDecoderTest#testVp9Goog0Perf0320x0180" />
-    <option name="compatibility:exclude-filter" value="CtsVideoTestCases android.video.cts.VideoEncoderDecoderTest#testVp9Goog0Perf0640x0360" />
-    <option name="compatibility:exclude-filter" value="CtsVideoTestCases android.video.cts.VideoEncoderDecoderTest#testVp9Goog0Perf1280x0720" />
-    <option name="compatibility:exclude-filter" value="CtsVideoTestCases android.video.cts.VideoEncoderDecoderTest#testVp9Goog0Perf1920x1080" />
-
-    <!-- b/37545399 -->
-    <option name="compatibility:exclude-filter" value="CtsSystemUiTestCases android.systemui.cts.LightBarTests#testLightNavigationBar" />
-
     <!-- b/37482372 -->
     <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityFlowPortraitTest#multiWindowHistoryPreservePortraitTest" />
     <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityFlowPortraitTest#multiWindowInOutPortraitTest" />
@@ -143,6 +133,9 @@
     <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityFlowPortraitTest#multiWindowInnerFragmentInOutPortraitTest" />
     <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityFlowPortraitTest#startWithFragmentAndInitTitleMultiWindowPortraitTest" />
     <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityFlowPortraitTest#startWithFragmentNoHeadersMultiWindowPortraitTest" />
+
+    <!-- b/63916274 -->
+    <option name="compatibility:exclude-filter" value="CtsTelecomTestCases android.telecom.cts.WiredHeadsetTest" />
 
     <!-- b/38177396 -->
     <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityFlowLandscapeTest#multiWindowHistoryPreserveLandscapeTest" />
@@ -177,22 +170,10 @@
     <!-- b/62481870 -->
     <option name="compatibility:exclude-filter" value="CtsNativeMediaAAudioTestCases android.nativemedia.aaudio.AAudioOutputStreamCallbackTest#testPlayback" />
 
-    <!-- b/62844160 -->
-    <option name="compatibility:exclude-filter" value="CtsWidgetTestCases android.widget.cts.TextViewTest#testAutoSizeCallers_setText" />
-    <option name="compatibility:exclude-filter" value="CtsWidgetTestCases android.widget.cts.TextViewTest#testGetOffsetForPositionSingleLineLtr" />
-    <option name="compatibility:exclude-filter" value="CtsWidgetTestCases android.widget.cts.TextViewTest#testGetOffsetForPositionMultiLineLtr" />
-    <option name="compatibility:exclude-filter" value="CtsWidgetTestCases android.widget.cts.TextViewTest#testGetOffsetForPositionMultiLineRtl" />
-
     <!-- b/62976713 -->
     <option name="compatibility:exclude-filter" value="arm64-v8a CtsMediaBitstreamsTestCases" />
     <option name="compatibility:exclude-filter" value="x86_64 CtsMediaBitstreamsTestCases" />
     <option name="compatibility:exclude-filter" value="mips64 CtsMediaBitstreamsTestCases" />
-
-    <!-- b/38280830 -->
-    <option name="compatibility:exclude-filter" value="CtsMediaTestCases android.media.cts.VideoDecoderPerfTest#testVp8Goog0Perf1280x0720" />
-
-    <!-- b/63566721 -->
-    <option name="compatibility:exclude-filter" value="CtsWrapWrapDebugTestCases android.wrap.cts.WrapTest" />
 
     <!-- b/38420898 -->
     <option name="compatibility:exclude-filter" value="CtsSensorTestCases android.hardware.cts.SensorDirectReportTest#testRateIndependencyAccelMultiChannel" />
@@ -218,6 +199,12 @@
     <option name="compatibility:exclude-filter" value="CtsSensorTestCases android.hardware.cts.SensorDirectReportTest#testRegisterMultipleChannels" />
     <option name="compatibility:exclude-filter" value="CtsSensorTestCases android.hardware.cts.SensorDirectReportTest#testReconfigure" />
 
-    <!-- b/64690009 -->
-    <option name="compatibility:exclude-filter" value="CtsPermission2TestCases android.permission2.cts.PrivappPermissionsTest" />
+    <!-- b/65843095 -->
+    <option name="compatibility:exclude-filter" value="CtsLogdTestCases logd#statistics" />
+    <option name="compatibility:exclude-filter" value="CtsLogdTestCases logd#sepolicy_rate_limiter" />
+
+    <!-- b/67377433 -->
+    <!-- fails only on angler/bullhead userdebug -->
+    <option name="compatibility:exclude-filter" value="CtsLiblogTestCases liblog#wrap_mode_blocks" />
+
 </configuration>

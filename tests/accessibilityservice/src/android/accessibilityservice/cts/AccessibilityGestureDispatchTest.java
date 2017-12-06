@@ -26,7 +26,6 @@ import android.accessibilityservice.GestureDescription;
 import android.accessibilityservice.GestureDescription.StrokeDescription;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.graphics.Matrix;
 import android.graphics.Path;
 import android.graphics.Point;

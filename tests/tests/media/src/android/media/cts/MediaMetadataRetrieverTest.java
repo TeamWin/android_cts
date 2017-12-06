@@ -336,4 +336,180 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
             fail("Exception getting bitmap: " + e);
         }
     }
+
+    /**
+     * The following tests verifies MediaMetadataRetriever.getScaledFrameAtTime behavior.
+     */
+    public void testGetScaledFrameAtTime() {
+        int resId = R.raw.binary_counter_320x240_30fps_600frames;
+        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+        Resources resources = getContext().getResources();
+        AssetFileDescriptor afd = resources.openRawResourceFd(resId);
+
+        retriever.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
+        try {
+            afd.close();
+        } catch (IOException e) {
+            fail("Unable to close file");
+        }
+
+        try {
+            Bitmap bitmap = retriever.getScaledFrameAtTime(
+                    2066666 /*timeUs*/ , OPTION_CLOSEST, 0 /*width*/, 120 /*height*/);
+            fail("Failed to receive exception");
+        } catch (IllegalArgumentException e) {
+            // Expect exception
+        }
+
+        try {
+            Bitmap bitmap = retriever.getScaledFrameAtTime(
+                    2066666 /*timeUs*/ , OPTION_CLOSEST, -1 /*width*/, 0 /*height*/);
+            fail("Failed to receive exception");
+        } catch (IllegalArgumentException e) {
+            // Expect exception
+        }
+
+        try {
+            Bitmap bitmap = retriever.getScaledFrameAtTime(
+                    2066666 /*timeUs*/ , OPTION_CLOSEST, -1 /*width*/, 120 /*height*/);
+            fail("Failed to receive exception");
+        } catch (IllegalArgumentException e) {
+            // Expect exception
+        }
+
+        try {
+            Bitmap bitmap = retriever.getScaledFrameAtTime(
+                2066666 /*timeUs */, OPTION_CLOSEST, 140 /*width*/, -1 /*height*/);
+            fail("Failed to receive exception");
+        } catch (IllegalArgumentException e) {
+            // Expect exception
+        }
+
+        try {
+            Bitmap bitmap = retriever.getScaledFrameAtTime(
+                2066666 /*timeUs */, OPTION_CLOSEST, -1 /*width*/, -1 /*height*/);
+            fail("Failed to receive exception");
+        } catch (IllegalArgumentException e) {
+            // Expect exception
+        }
+
+        // Test desided size of 160 x 120. Return should be 160 x 120
+        try {
+            Bitmap bitmap = retriever.getScaledFrameAtTime(
+                2066666 /*timeUs */, OPTION_CLOSEST, 160 /*width*/, 120 /*height*/);
+            if (bitmap == null) {
+                fail("Failed to get scaled bitmap");
+            }
+            if (SAVE_BITMAP_OUTPUT) {
+                CodecUtils.saveBitmapToFile(bitmap, "test_160x120" + ".jpg");
+            }
+
+            if (bitmap.getWidth() != 160 /* width */) {
+                fail("Bitmap width is " + bitmap.getWidth() + "Expect: 160");
+            }
+            if (bitmap.getHeight() != 120 /* height */) {
+                fail("Bitmap height is " + bitmap.getHeight() + "Expect: 120");
+            }
+
+        } catch (Exception e) {
+            fail("Exception getting bitmap: " + e);
+        }
+
+        // Test scaled up bitmap to 640 x 480. Return should be 640 x 480
+        try {
+            Bitmap bitmap = retriever.getScaledFrameAtTime(
+                2066666 /*timeUs */, OPTION_CLOSEST, 640 /*width*/, 480 /*height*/);
+            if (bitmap == null) {
+                fail("Failed to get scaled bitmap");
+            }
+            if (SAVE_BITMAP_OUTPUT) {
+                CodecUtils.saveBitmapToFile(bitmap, "test_640x480" + ".jpg");
+            }
+
+            if (bitmap.getWidth() != 640 /* width */) {
+                fail("Bitmap width is " + bitmap.getWidth() + "Expect: 640");
+            }
+            if (bitmap.getHeight() != 480 /* height */) {
+                fail("Bitmap height is " + bitmap.getHeight() + "Expect: 480");
+            }
+
+        } catch (Exception e) {
+            fail("Exception getting bitmap: " + e);
+        }
+
+        // Test scaled up bitmap to 320 x 120. Return should be 160 x 120
+        try {
+            Bitmap bitmap = retriever.getScaledFrameAtTime(
+                2066666 /*timeUs */, OPTION_CLOSEST, 320 /*width*/, 120 /*height*/);
+            if (bitmap == null) {
+                fail("Failed to get scaled bitmap");
+            }
+            if (SAVE_BITMAP_OUTPUT) {
+                CodecUtils.saveBitmapToFile(bitmap, "test_320x120" + ".jpg");
+            }
+
+            if (bitmap.getWidth() != 160 /* width */) {
+                fail("Bitmap width is " + bitmap.getWidth() + "Expect: 160");
+            }
+            if (bitmap.getHeight() != 120 /* height */) {
+                fail("Bitmap height is " + bitmap.getHeight() + "Expect: 120");
+            }
+
+        } catch (Exception e) {
+            fail("Exception getting bitmap: " + e);
+        }
+
+        // Test scaled up bitmap to 160 x 240. Return should be 160 x 120
+        try {
+            Bitmap bitmap = retriever.getScaledFrameAtTime(
+                2066666 /*timeUs */, OPTION_CLOSEST, 160 /*width*/, 240 /*height*/);
+            if (bitmap == null) {
+                fail("Failed to get scaled bitmap");
+            }
+            if (SAVE_BITMAP_OUTPUT) {
+                CodecUtils.saveBitmapToFile(bitmap, "test_160x240" + ".jpg");
+            }
+
+            if (bitmap.getWidth() != 160 /* width */) {
+                fail("Bitmap width is " + bitmap.getWidth() + "Expect: 160");
+            }
+            if (bitmap.getHeight() != 120 /* height */) {
+                fail("Bitmap height is " + bitmap.getHeight() + "Expect: 120");
+            }
+
+        } catch (Exception e) {
+            fail("Exception getting bitmap: " + e);
+        }
+
+        // Test scaled the video with aspect ratio
+        resId = R.raw.binary_counter_320x240_720x240_30fps_600frames;
+        afd = resources.openRawResourceFd(resId);
+
+        retriever.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
+        try {
+            afd.close();
+        } catch (IOException e) {
+            fail("Unable to close file");
+        }
+        try {
+            Bitmap bitmap = retriever.getScaledFrameAtTime(
+                2066666 /*timeUs */, OPTION_CLOSEST, 330 /*width*/, 240 /*height*/);
+            if (bitmap == null) {
+                fail("Failed to get scaled bitmap");
+            }
+            if (SAVE_BITMAP_OUTPUT) {
+                CodecUtils.saveBitmapToFile(bitmap, "test_330x240" + ".jpg");
+            }
+
+            if (bitmap.getWidth() != 330 /* width */) {
+                fail("Bitmap width is " + bitmap.getWidth() + "Expect: 330");
+            }
+            if (bitmap.getHeight() != 110 /* height */) {
+                fail("Bitmap height is " + bitmap.getHeight() + "Expect: 110");
+            }
+
+        } catch (Exception e) {
+            fail("Exception getting bitmap: " + e);
+        }
+    }
 }

@@ -89,18 +89,31 @@ LOCAL_PREBUILT_STATIC_JAVA_LIBRARIES := \
 
 include $(BUILD_MULTI_PREBUILT)
 
+pre-installed-apps := \
+    CtsEmptyDeviceAdmin \
+    CtsPermissionApp \
+    NotificationBot
 
-notification-bot := $(call intermediates-dir-for,APPS,NotificationBot)/package.apk
-permission-app := $(call intermediates-dir-for,APPS,CtsPermissionApp)/package.apk
-usb-companion := $(call intermediates-dir-for,APPS,CtsVerifierUSBCompanion)/package.apk
-empty-device-admin := $(call intermediates-dir-for,APPS,CtsEmptyDeviceAdmin)/package.apk
+other-required-apps := \
+    CtsVerifierUSBCompanion \
+    CtsVpnFirewallAppApi23 \
+    CtsVpnFirewallAppApi24 \
+    CtsVpnFirewallAppNotAlwaysOn
+
+apps-to-include := \
+    $(pre-installed-apps) \
+    $(other-required-apps)
+
+define apk-location-for
+    $(call intermediates-dir-for,APPS,$(1))/package.apk
+endef
 
 # Builds and launches CTS Verifier on a device.
 .PHONY: cts-verifier
-cts-verifier: CtsVerifier adb NotificationBot CtsPermissionApp
+cts-verifier: CtsVerifier adb $(pre-installed-apps)
 	adb install -r $(PRODUCT_OUT)/data/app/CtsVerifier/CtsVerifier.apk \
-		&& adb install -r $(notification-bot) \
-		&& adb install -r $(permission-app) \
+		$(foreach app,$(pre-installed-apps), \
+		    && adb install -r $(call apk-location-for,$(app))) \
 		&& adb shell "am start -n com.android.cts.verifier/.CtsVerifierActivity"
 
 #
@@ -133,17 +146,12 @@ verifier-zip := $(cts-dir)/$(verifier-zip-name)
 
 cts : $(verifier-zip)
 $(verifier-zip) : $(HOST_OUT)/CameraITS
-$(verifier-zip) : $(notification-bot)
-$(verifier-zip) : $(permission-app)
-$(verifier-zip) : $(usb-companion)
-$(verifier-zip) : $(empty-device-admin)
+$(verifier-zip) : $(foreach app,$(apps-to-include),$(call apk-location-for,$(app)))
 $(verifier-zip) : $(call intermediates-dir-for,APPS,CtsVerifier)/package.apk | $(ACP)
 		$(hide) mkdir -p $(verifier-dir)
 		$(hide) $(ACP) -fp $< $(verifier-dir)/CtsVerifier.apk
-		$(ACP) -fp $(notification-bot) $(verifier-dir)/NotificationBot.apk
-		$(ACP) -fp $(permission-app) $(verifier-dir)/CtsPermissionApp.apk
-		$(ACP) -fp $(usb-companion) $(verifier-dir)/CtsVerifierUSBCompanion.apk
-		$(ACP) -fp $(empty-device-admin) $(verifier-dir)/CtsEmptyDeviceAdmin.apk
+		$(foreach app,$(apps-to-include), \
+		    $(ACP) -fp $(call apk-location-for,$(app)) $(verifier-dir)/$(app).apk;)
 		$(hide) $(ACP) -fpr $(HOST_OUT)/CameraITS $(verifier-dir)
 		$(hide) cd $(cts-dir) && zip -rq $(verifier-dir-name) $(verifier-dir-name)
 

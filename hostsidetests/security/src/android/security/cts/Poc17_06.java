@@ -28,7 +28,7 @@ public class Poc17_06 extends SecurityTestCase {
     public void testPocBug_34328139() throws Exception {
         enableAdbRoot(getDevice());
         if(containsDriver(getDevice(), "/dev/mdss_rotator")) {
-            AdbUtils.runPoc("Bug-34328139", getDevice(), 60);
+            AdbUtils.runPocNoOutput("Bug-34328139", getDevice(), 60);
         }
     }
 
@@ -105,8 +105,8 @@ public class Poc17_06 extends SecurityTestCase {
     public void testPocBug_35644815() throws Exception {
         enableAdbRoot(getDevice());
         if(containsDriver(getDevice(), "/sys/kernel/debug/ion/clients/pids/")) {
-            String pocOut = AdbUtils.runPoc("Bug-35644815", getDevice(), 60);
-            assertNotMatches("[\\s\\n\\S]*INFO DISC FLAG[\\s\\n\\S]*", pocOut);
+          String pocOut = AdbUtils.runPoc("Bug-35644815", getDevice(), 60);
+          assertNotMatches("[\\s\\n\\S]*INFO DISC FLAG[\\s\\n\\S]*", pocOut);
         }
     }
 

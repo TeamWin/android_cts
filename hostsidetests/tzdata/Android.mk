@@ -28,6 +28,6 @@ LOCAL_STATIC_JAVA_LIBRARIES := tzdata-testing-host time_zone_distro-host time_zo
 LOCAL_CTS_TEST_PACKAGE := android.host.tzdata
 
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 include $(BUILD_CTS_HOST_JAVA_LIBRARY)

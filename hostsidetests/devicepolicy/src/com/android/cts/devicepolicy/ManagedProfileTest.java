@@ -80,9 +80,12 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     private static final String SIMPLE_APP_APK = "CtsSimpleApp.apk";
     private static final String SIMPLE_APP_PKG = "com.android.cts.launcherapps.simpleapp";
 
-    private static final long TIMEOUT_USER_LOCKED_MILLIS = TimeUnit.SECONDS.toMillis(15);
+    private static final long TIMEOUT_USER_LOCKED_MILLIS = TimeUnit.SECONDS.toMillis(30);
 
     private static final String PARAM_PROFILE_ID = "profile-id";
+
+    // Password needs to be in sync with ResetPasswordWithTokenTest.PASSWORD1
+    private static final String RESET_PASSWORD_TEST_DEFAULT_PASSWORD = "123456";
 
     private int mParentUserId;
 
@@ -157,6 +160,10 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         changeUserCredential("1234", null, mProfileUserId);
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".LockNowTest",
                 "testLockNowWithKeyEviction", mProfileUserId);
+        waitUntilProfileLocked();
+    }
+
+    private void waitUntilProfileLocked() throws Exception {
         final String cmd = "dumpsys activity | grep 'User #" + mProfileUserId + ": state='";
         final Pattern p = Pattern.compile("state=([\\p{Upper}_]+)$");
         SuccessCondition userLocked = () -> {
@@ -970,6 +977,55 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         // Managed profile owner should be able to control it via DISALLOW_BLUETOOTH_SHARING.
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".BluetoothSharingRestrictionTest",
                 "testOppDisabledWhenRestrictionSet", mProfileUserId);
+    }
+
+    public void testResetPasswordWithTokenBeforeUnlock() throws Exception {
+        if (!mHasFeature || !mSupportsFbe) {
+            return;
+        }
+
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ResetPasswordWithTokenTest",
+                "testSetupWorkProfileAndLock", mProfileUserId);
+        waitUntilProfileLocked();
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ResetPasswordWithTokenTest",
+                "testResetPasswordBeforeUnlock", mProfileUserId);
+        // Password needs to be in sync with ResetPasswordWithTokenTest.PASSWORD1
+        verifyUserCredential(RESET_PASSWORD_TEST_DEFAULT_PASSWORD, mProfileUserId);
+    }
+
+    /**
+     * Test password reset token is still functional after the primary user clears and
+     * re-adds back its device lock. This is to detect a regression where the work profile
+     * undergoes an untrusted credential reset (causing synthetic password to change, invalidating
+     * existing password reset token) if it has unified work challenge and the primary user clears
+     * the device lock.
+     */
+    public void testResetPasswordTokenUsableAfterClearingLock() throws Exception {
+        if (!mHasFeature || !mSupportsFbe) {
+            return;
+        }
+        final String devicePassword = "1234";
+
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ResetPasswordWithTokenTest",
+                "testSetResetPasswordToken", mProfileUserId);
+        try {
+            changeUserCredential(devicePassword, null, mParentUserId);
+            changeUserCredential(null, devicePassword, mParentUserId);
+            changeUserCredential(devicePassword, null, mParentUserId);
+
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ResetPasswordWithTokenTest",
+                    "testLockWorkProfile", mProfileUserId);
+            waitUntilProfileLocked();
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ResetPasswordWithTokenTest",
+                    "testResetPasswordBeforeUnlock", mProfileUserId);
+            verifyUserCredential(RESET_PASSWORD_TEST_DEFAULT_PASSWORD, mProfileUserId);
+        } finally {
+            changeUserCredential(null, devicePassword, mParentUserId);
+            // Cycle the device screen to flush stale password information from keyguard,
+            // otherwise it will still ask for the non-existent password.
+            executeShellCommand("input keyevent KEYCODE_WAKEUP");
+            executeShellCommand("input keyevent KEYCODE_SLEEP");
+        }
     }
 
     private void disableActivityForUser(String activityName, int userId)

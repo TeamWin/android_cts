@@ -370,10 +370,21 @@ public class PrintJobStateTransitionsTest extends BasePrintTest {
         // Wait until adapter is done
         waitForWriteAdapterCallback(1);
 
-        clickPrintButton();
+        for (int i = 0; i < 2; i++) {
+            clickPrintButton();
 
-        // Wait for print job to be queued
-        waitForServiceOnPrintJobQueuedCallbackCalled(1);
+            try {
+                // Wait for print job to be queued
+                waitForServiceOnPrintJobQueuedCallbackCalled(1);
+                break;
+            } catch (Throwable e) {
+                if (i == 0) {
+                    Log.i(LOG_TAG, "Print job was not queued, retrying", e);
+                } else {
+                    throw e;
+                }
+            }
+        }
 
         // Wait for discovery session to be destroyed to isolate tests from each other
         waitForPrinterDiscoverySessionDestroyCallbackCalled(1);

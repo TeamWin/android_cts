@@ -25,6 +25,7 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
+import android.telephony.TelephonyManager;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.URLSpan;
@@ -353,10 +354,15 @@ public class LinkifyTest {
                 + " " + numbersUSLocal
                 + " " + numbersIntl);
 
-        // phonenumber linkify is locale-dependent
-        if (Locale.US.equals(Locale.getDefault())) {
-            assertTrue(Linkify.addLinks(spannable, Linkify.PHONE_NUMBERS));
-            URLSpan[] spans = spannable.getSpans(0, spannable.length(), URLSpan.class);
+        // phonenumber linkify depends on the device's SIM card country.
+        final TelephonyManager tm =
+                (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
+        final String region = tm.getSimCountryIso().toUpperCase(Locale.US);
+
+        assertTrue(Linkify.addLinks(spannable, Linkify.PHONE_NUMBERS));
+        final URLSpan[] spans = spannable.getSpans(0, spannable.length(), URLSpan.class);
+        if ("US".equals(region)) {
+            // For the US, these specific phone numbers should be detected.
             assertEquals(9, spans.length);
             assertEquals("tel:8121234562", spans[0].getURL());
             assertEquals("tel:8121234563", spans[1].getURL());
@@ -367,6 +373,16 @@ public class LinkifyTest {
             assertEquals("tel:+4408121234565", spans[6].getURL());
             assertEquals("tel:+18005551213", spans[7].getURL());
             assertEquals("tel:+18005551214", spans[8].getURL());
+        } else {
+            // For other countries, the phone numbers that would be detected are based on the
+            // country, so the exact list is unknown, but the various international phone numbers,
+            // starting with '+', must always be detected, and must appear next to each other and
+            // at the end of the list.
+            assertTrue(spans.length >= 4);
+            assertEquals("tel:+4408121234564", spans[spans.length - 4].getURL());
+            assertEquals("tel:+4408121234565", spans[spans.length - 3].getURL());
+            assertEquals("tel:+18005551213", spans[spans.length - 2].getURL());
+            assertEquals("tel:+18005551214", spans[spans.length - 1].getURL());
         }
 
         assertFalse(Linkify.addLinks((Spannable) null, 0));
@@ -689,6 +705,9 @@ public class LinkifyTest {
     @Test
     public void testAddLinks_email_matchesShortValidEmail() {
         String email = "a@a.co";
+        verifyAddLinksWithEmailSucceeds("Should match email: " + email, email);
+
+        email = "ab@a.co";
         verifyAddLinksWithEmailSucceeds("Should match email: " + email, email);
     }
 

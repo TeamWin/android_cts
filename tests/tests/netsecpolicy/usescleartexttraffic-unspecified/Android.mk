@@ -33,7 +33,7 @@ LOCAL_PACKAGE_NAME := CtsNetSecPolicyUsesCleartextTrafficUnspecifiedTestCases
 LOCAL_INSTRUMENTATION_FOR := CtsNetSecPolicyUsesCleartextTrafficUnspecified
 
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 LOCAL_SDK_VERSION := current
 

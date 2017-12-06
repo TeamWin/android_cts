@@ -37,7 +37,7 @@ endif
 LOCAL_STATIC_JAVA_LIBRARIES := CtsJvmtiHostTestBase
 LOCAL_JARJAR_RULES := $(LOCAL_PATH)/jarjar-rules.txt
 LOCAL_MODULE_TAGS := tests
-LOCAL_COMPATIBILITY_SUITE := cts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 include $(BUILD_HOST_JAVA_LIBRARY)
 

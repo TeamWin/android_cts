@@ -103,7 +103,6 @@
         <option name="push" value="Bug-35950805->/data/local/tmp/Bug-35950805" />
         <option name="push" value="Bug-35139833->/data/local/tmp/Bug-35139833" />
         <option name="push" value="Bug-35468048->/data/local/tmp/Bug-35468048" />
-        <option name="push" value="Bug-35470735->/data/local/tmp/Bug-35470735" />
 
         <!--__________________-->
         <!-- Bulletin 2017-08 -->
@@ -116,6 +115,7 @@
         <option name="push" value="Bug-35764875->/data/local/tmp/Bug-35764875" />
         <option name="push" value="Bug-35644510->/data/local/tmp/Bug-35644510" />
         <option name="push" value="CVE-2017-9680->/data/local/tmp/CVE-2017-9680" />
+        <option name="push" value="Bug-36818198->/data/local/tmp/Bug-36818198" />
 
         <!--__________________-->
         <!-- Bulletin 2017-09 -->
@@ -124,6 +124,17 @@
         <option name="push" value="Bug-33039685->/data/local/tmp/Bug-33039685" />
         <option name="push" value="Bug-35676417->/data/local/tmp/Bug-35676417" />
         <option name="push" value="Bug-35644812->/data/local/tmp/Bug-35644812" />
+        <option name="push" value="Bug-36492827->/data/local/tmp/Bug-36492827" />
+
+        <!--__________________-->
+        <!-- Bulletin 2017-10 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+
+        <option name="push" value="Bug-62058746->/data/local/tmp/Bug-62058746" />
+        <option name="push" value="Bug-37093119->/data/local/tmp/Bug-37093119" />
+        <option name="push" value="Bug-36817053->/data/local/tmp/Bug-36817053" />
+        <option name="push" value="Bug-36730104->/data/local/tmp/Bug-36730104" />
+
 
         <option name="append-bitness" value="true" />
     </target_preparer>

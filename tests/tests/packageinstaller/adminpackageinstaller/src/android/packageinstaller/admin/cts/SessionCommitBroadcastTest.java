@@ -49,7 +49,7 @@ public class SessionCommitBroadcastTest extends BasePackageInstallTest {
         mThisAppLauncher = new ComponentName(mContext, LauncherActivity.class);
     }
 
-    public void testBroadcastReceivedForDifferentLauncher() throws Exception {
+    public void testBroadcastNotReceivedForDifferentLauncher() throws Exception {
         if (!mHasFeature) {
             return;
         }

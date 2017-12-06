@@ -516,7 +516,11 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         assertTrue("+ or - is not found", index != -1);
         assertTrue("+ or - is only found at the beginning", index != 0);
         float latitude = Float.parseFloat(location.substring(0, index - 1));
-        float longitude = Float.parseFloat(location.substring(index));
+        int lastIndex = location.lastIndexOf('/', index);
+        if (lastIndex == -1) {
+            lastIndex = location.length();
+        }
+        float longitude = Float.parseFloat(location.substring(index, lastIndex - 1));
         assertTrue("Incorrect latitude: " + latitude, Math.abs(latitude - LATITUDE) <= TOLERANCE);
         assertTrue("Incorrect longitude: " + longitude, Math.abs(longitude - LONGITUDE) <= TOLERANCE);
         retriever.release();
@@ -859,7 +863,13 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
             String mime = format.getString(MediaFormat.KEY_MIME);
             if (mime.startsWith("video/")) {
                 int finalProfile = format.getInteger(MediaFormat.KEY_PROFILE);
-                if (finalProfile != profile) {
+                if (!(finalProfile == profile ||
+                        (mediaType.equals(AVC)
+                                && profile == AVCProfileBaseline
+                                && finalProfile == AVCProfileConstrainedBaseline) ||
+                        (mediaType.equals(AVC)
+                                && profile == AVCProfileHigh
+                                && finalProfile == AVCProfileConstrainedHigh))) {
                     fail("Incorrect profile: " + finalProfile + " Expected: " + profile);
                 }
                 int finalLevel = format.getInteger(MediaFormat.KEY_LEVEL);

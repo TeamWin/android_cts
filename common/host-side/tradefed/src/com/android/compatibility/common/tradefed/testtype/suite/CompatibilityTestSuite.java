@@ -15,10 +15,9 @@
  */
 package com.android.compatibility.common.tradefed.testtype.suite;
 
-import com.android.compatibility.SuiteInfo;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
 import com.android.compatibility.common.tradefed.testtype.ISubPlan;
-import com.android.compatibility.common.tradefed.testtype.ModuleRepo;
 import com.android.compatibility.common.tradefed.testtype.SubPlan;
 import com.android.compatibility.common.util.TestFilter;
 import com.android.tradefed.build.IBuildInfo;
@@ -32,6 +31,7 @@ import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.Abi;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.suite.ITestSuite;
+import com.android.tradefed.testtype.suite.TestSuiteInfo;
 import com.android.tradefed.util.AbiFormatter;
 import com.android.tradefed.util.AbiUtils;
 import com.android.tradefed.util.ArrayUtil;
@@ -67,6 +67,12 @@ public class CompatibilityTestSuite extends ITestSuite {
     private static final String SKIP_HOST_ARCH_CHECK = "skip-host-arch-check";
     private static final String PRIMARY_ABI_RUN = "primary-abi-only";
     private static final String PRODUCT_CPU_ABI_KEY = "ro.product.cpu.abi";
+
+    // TODO: remove this option when CompatibilityTest goes away
+    @Option(name = CompatibilityTest.RETRY_OPTION,
+            shortName = 'r',
+            description = "Copy of --retry from CompatibilityTest to prevent using it.")
+    private Integer mRetrySessionId = null;
 
     @Option(name = SUBPLAN_OPTION,
             description = "the subplan to run",
@@ -147,6 +153,10 @@ public class CompatibilityTestSuite extends ITestSuite {
      */
     @Override
     public LinkedHashMap<String, IConfiguration> loadTests() {
+        if (mRetrySessionId != null) {
+            throw new IllegalArgumentException("--retry cannot be specified with cts-suite.xml. "
+                    + "Use 'run cts --retry <session id>' instead.");
+        }
         try {
             setupFilters();
             Set<IAbi> abis = getAbis(getDevice());
@@ -224,7 +234,7 @@ public class CompatibilityTestSuite extends ITestSuite {
      * Exposed for testing.
      */
     protected Set<String> getAbisForBuildTargetArch() {
-        return AbiUtils.getAbisForArch(SuiteInfo.TARGET_ARCH);
+        return AbiUtils.getAbisForArch(TestSuiteInfo.getInstance().getTargetArch());
     }
 
     /**
@@ -250,7 +260,7 @@ public class CompatibilityTestSuite extends ITestSuite {
             }
         }
         if (mModuleName != null) {
-            List<String> modules = ModuleRepo.getModuleNamesMatching(
+            List<String> modules = ModuleRepoSuite.getModuleNamesMatching(
                     mBuildHelper.getTestsDir(), mModuleName);
             if (modules.size() == 0) {
                 throw new IllegalArgumentException(
@@ -281,5 +291,19 @@ public class CompatibilityTestSuite extends ITestSuite {
         }
         filters.clear();
         filters.addAll(cleanedFilters);
+    }
+
+    /**
+     * Sets include-filters for the compatibility test
+     */
+    public void setIncludeFilter(Set<String> includeFilters) {
+        mIncludeFilters.addAll(includeFilters);
+    }
+
+    /**
+     * Sets exclude-filters for the compatibility test
+     */
+    public void setExcludeFilter(Set<String> excludeFilters) {
+        mExcludeFilters.addAll(excludeFilters);
     }
 }
