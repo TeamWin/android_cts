@@ -59,6 +59,10 @@ public abstract class ParentChildTestBase extends ActivityManagerTestBase {
 
     void doDockedTest(String testCase, ParentChildTest t) throws Exception {
         CLog.logAndDisplay(LogLevel.INFO, "Running test docked");
+        if (!supportsSplitScreenMultiWindow()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no split multi-window support");
+            return;
+        }
         startTestCaseDocked(testCase);
         doSingleTest(t);
         stopTestCase();
