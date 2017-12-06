@@ -23,6 +23,8 @@ import static android.server.am.WindowManagerState.TRANSIT_KEYGUARD_OCCLUDE;
 import static android.server.am.WindowManagerState.TRANSIT_KEYGUARD_UNOCCLUDE;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -38,15 +40,15 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
     public void setUp() throws Exception {
         super.setUp();
 
+        assumeTrue(isHandheld());
+        assumeFalse(isUiModeLockedToVrHeadset());
+
         // Set screen lock (swipe)
         setLockDisabled(false);
     }
 
     @Test
     public void testUnlock() throws Exception {
-        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
-            return;
-        }
         launchActivity("TestActivity");
         gotoKeyguard();
         unlockDevice();
@@ -56,9 +58,6 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
     }
     @Test
     public void testUnlockWallpaper() throws Exception {
-        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
-            return;
-        }
         launchActivity("WallpaperActivity");
         gotoKeyguard();
         unlockDevice();
@@ -68,9 +67,6 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
     }
     @Test
     public void testOcclude() throws Exception {
-        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
-            return;
-        }
         gotoKeyguard();
         launchActivity("ShowWhenLockedActivity");
         mAmWmState.computeState(new WaitForValidActivityState("ShowWhenLockedActivity"));
@@ -79,9 +75,6 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
     }
     @Test
     public void testUnocclude() throws Exception {
-        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
-            return;
-        }
         gotoKeyguard();
         launchActivity("ShowWhenLockedActivity");
         launchActivity("TestActivity");
@@ -92,9 +85,6 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
     }
     @Test
     public void testNewActivityDuringOccluded() throws Exception {
-        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
-            return;
-        }
         launchActivity("ShowWhenLockedActivity");
         gotoKeyguard();
         launchActivity("ShowWhenLockedWithDialogActivity");
@@ -104,10 +94,6 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
     }
     @Test
     public void testOccludeManifestAttr() throws Exception {
-        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
-             return;
-         }
-
          String activityName = "ShowWhenLockedAttrActivity";
 
          gotoKeyguard();
@@ -120,10 +106,6 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
     }
     @Test
     public void testOccludeAttrRemove() throws Exception {
-        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
-            return;
-        }
-
         String activityName = "ShowWhenLockedAttrRemoveAttrActivity";
 
         gotoKeyguard();
@@ -142,10 +124,6 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
     }
     @Test
     public void testNewActivityDuringOccludedWithAttr() throws Exception {
-        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
-            return;
-        }
-
         String activityName1 = "ShowWhenLockedAttrActivity";
         String activityName2 = "ShowWhenLockedAttrWithDialogActivity";
 
@@ -156,5 +134,4 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
         assertEquals("Picked wrong transition", TRANSIT_ACTIVITY_OPEN,
                 mAmWmState.getWmState().getLastTransition());
     }
-
 }

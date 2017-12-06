@@ -21,6 +21,7 @@ import static android.server.am.StateLogger.log;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import org.junit.Test;
 
@@ -66,10 +67,7 @@ public class ActivityAndWindowManagerOverrideConfigTests extends ActivityManager
 
     @Test
     public void testReceiveOverrideConfigFromRelayout() throws Exception {
-        if (!supportsFreeform()) {
-            log("Device doesn't support freeform. Skipping test.");
-            return;
-        }
+        assumeTrue("Device doesn't support freeform. Skipping test.", supportsFreeform());
 
         launchActivity(TEST_ACTIVITY_NAME, WINDOWING_MODE_FREEFORM);
 

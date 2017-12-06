@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License
  */
-package android.server.am;
 
+package android.server.am;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
@@ -31,6 +31,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.Presubmit;
 import android.server.am.displayservice.DisplayHelper;
@@ -73,6 +75,11 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
     /** Physical display metrics and overrides in the beginning of the test. */
     private ReportedDisplayMetrics mInitialDisplayMetrics;
 
+    // TODO: We might consider breaking this class up into
+    //   ActivityManagerDisplayTests for general
+    //   ActivityManagerMultiDisplayTests
+    //   ActivityManagerVrDisplayTests
+    // so the assumption can be put in the setUp().
     @Before
     @Override
     public void setUp() throws Exception {
@@ -149,10 +156,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     @Test
     public void testMultiDisplayDisabled() throws Exception {
-        if (supportsMultiDisplay()) {
-            // Only check devices with the feature disabled.
-            return;
-        }
+        // Only check devices with the feature disabled.
+        assumeFalse(supportsMultiDisplay());
 
         // Create new virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
@@ -179,10 +184,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     @Test
     public void testVrActivityLaunch() throws Exception {
-        if (!supportsVrMode() || !supportsMultiDisplay()) {
-            // VR Mode is not supported on this device, bail from this test.
-            return;
-        }
+        assumeTrue(supportsVrMode());
+        assumeTrue(supportsMultiDisplay());
 
         // Put the device in persistent vr mode.
         enablePersistentVrMode(true);
@@ -227,10 +230,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     @Test
     public void testVrActivityReLaunch() throws Exception {
-        if (!supportsVrMode() || !supportsMultiDisplay()) {
-            // VR Mode is not supported on this device, bail from this test.
-            return;
-        }
+        assumeTrue(supportsVrMode());
+        assumeTrue(supportsMultiDisplay());
 
         // Launch a 2D activity.
         launchActivity(LAUNCHING_ACTIVITY);
@@ -278,10 +279,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     @Test
     public void testActivityLaunchPostVr() throws Exception {
-        if (!supportsVrMode() || !supportsMultiDisplay()) {
-            // VR Mode is not supported on this device, bail from this test.
-            return;
-        }
+        assumeTrue(supportsVrMode());
+        assumeTrue(supportsMultiDisplay());
 
         // Put the device in persistent vr mode.
         enablePersistentVrMode(true);
@@ -361,7 +360,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
     @Presubmit
     @Test
     public void testLaunchActivityOnSecondaryDisplay() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        assumeTrue(supportsMultiDisplay());
 
         // Create new virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
@@ -395,7 +394,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     @Test
     public void testLaunchNonResizeableActivityOnSecondaryDisplay() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        assumeTrue(supportsMultiDisplay());
 
         // Create new virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
@@ -423,7 +422,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     @Test
     public void testLaunchNonResizeableActivityWithSplitScreen() throws Exception {
-        if (!supportsMultiDisplay() || !supportsSplitScreenMultiWindow()) { return; }
+        assumeTrue(supportsMultiDisplay());
+        assumeTrue(supportsSplitScreenMultiWindow());
 
         // Start launching activity.
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
@@ -456,7 +456,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     @Test
     public void testMoveNonResizeableActivityToSecondaryDisplay() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        assumeTrue(supportsMultiDisplay());
 
         // Create new virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
@@ -489,7 +489,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     @Test
     public void testLaunchNonResizeableActivityFromSecondaryDisplaySameTask() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        assumeTrue(supportsMultiDisplay());
 
         // Create new virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).setSimulateDisplay(true)
@@ -530,7 +530,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     @Test
     public void testLaunchNonResizeableActivityFromSecondaryDisplayNewTask() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        assumeTrue(supportsMultiDisplay());
 
         // Create new virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
@@ -570,7 +570,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     @Test
     public void testLaunchWithoutPermissionOnVirtualDisplay() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        assumeTrue(supportsMultiDisplay());
 
         // Create new virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
@@ -600,7 +600,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     @Test
     public void testLaunchWithoutPermissionOnVirtualDisplayByOwner() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        assumeTrue(supportsMultiDisplay());
 
         // Create new virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
@@ -634,7 +634,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
     @Presubmit
     @Test
     public void testConsequentLaunchActivity() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        assumeTrue(supportsMultiDisplay());
 
         // Create new virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
@@ -668,7 +668,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
     @Presubmit
     @Test
     public void testConsequentLaunchActivityFromSecondaryDisplay() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        assumeTrue(supportsMultiDisplay());
 
         // Create new virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).setSimulateDisplay(true)
@@ -700,7 +700,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     @Test
     public void testConsequentLaunchActivityFromVirtualDisplay() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        assumeTrue(supportsMultiDisplay());
 
         // Create new virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
@@ -731,7 +731,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     @Test
     public void testConsequentLaunchActivityFromVirtualDisplayToTargetDisplay() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        assumeTrue(supportsMultiDisplay());
 
         // Create new virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
@@ -784,7 +784,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     @Test
     public void testConsequentLaunchActivityFromVirtualDisplayNoEmbedding() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        assumeTrue(supportsMultiDisplay());
 
         // Create new virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
@@ -811,7 +811,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     @Test
     public void testLaunchActivityFromAppToSecondaryDisplay() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        assumeTrue(supportsMultiDisplay());
 
         // Start launching activity.
         launchActivity(LAUNCHING_ACTIVITY);
@@ -841,7 +841,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
     @Presubmit
     @Test
     public void testLaunchActivitiesAffectsVisibility() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        assumeTrue(supportsMultiDisplay());
 
         // Start launching activity.
         launchActivity(LAUNCHING_ACTIVITY);
@@ -868,7 +868,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
     @Presubmit
     @Test
     public void testMoveTaskBetweenDisplays() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        assumeTrue(supportsMultiDisplay());
 
         // Create new virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
@@ -907,7 +907,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
     // TODO(b/69573940): Add back to presubmit
     @Test
     public void testStackFocusSwitchOnDisplayRemoved() throws Exception {
-        if (!supportsMultiDisplay() || !supportsSplitScreenMultiWindow()) { return; }
+        assumeTrue(supportsMultiDisplay());
+        assumeTrue(supportsSplitScreenMultiWindow());
 
         // Start launching activity into docked stack.
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
@@ -924,7 +925,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     @Test
     public void testStackFocusSwitchOnDisplayRemoved2() throws Exception {
-        if (!supportsMultiDisplay() || !supportsSplitScreenMultiWindow()) { return; }
+        assumeTrue(supportsMultiDisplay());
+        assumeTrue(supportsSplitScreenMultiWindow());
 
         // Setup split-screen.
         launchActivityInDockStack(RESIZEABLE_ACTIVITY_NAME);
@@ -944,7 +946,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     @Test
     public void testStackFocusSwitchOnDisplayRemoved3() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        assumeTrue(supportsMultiDisplay());
 
         // Start an activity on default display to determine default stack.
         launchActivity(BROADCAST_RECEIVER_ACTIVITY);
@@ -1004,7 +1006,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     @Test
     public void testStackFocusSwitchOnStackEmptied() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        assumeTrue(supportsMultiDisplay());
 
         // Create new virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
@@ -1036,7 +1038,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     @Test
     public void testStackFocusSwitchOnTouchEvent() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        assumeTrue(supportsMultiDisplay());
 
         // Create new virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
@@ -1064,7 +1066,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
     /** Test that shell is allowed to launch on secondary displays. */
     @Test
     public void testPermissionLaunchFromShell() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        assumeTrue(supportsMultiDisplay());
 
         // Create new virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
@@ -1103,7 +1105,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
     /** Test that launching from app that is on external display is allowed. */
     @Test
     public void testPermissionLaunchFromAppOnSecondary() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        assumeTrue(supportsMultiDisplay());
 
         // Create new virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).setSimulateDisplay(true)
@@ -1145,7 +1147,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
     /** Tests that an activity can launch an activity from a different UID into its own task. */
     @Test
     public void testPermissionLaunchMultiUidTask() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        assumeTrue(supportsMultiDisplay());
 
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).setSimulateDisplay(true)
                 .build();
@@ -1180,7 +1182,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     @Test
     public void testPermissionLaunchFromOwner() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        assumeTrue(supportsMultiDisplay());
 
         // Create new virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
@@ -1225,7 +1227,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     @Test
     public void testPermissionLaunchFromDifferentApp() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        assumeTrue(supportsMultiDisplay());
 
         // Create new virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
@@ -1293,9 +1295,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     @Test
     public void testFlagShowWithInsecureKeyguardOnPublicVirtualDisplay() throws Exception {
-        if (!supportsMultiDisplay()) {
-            return;
-        }
+        assumeTrue(supportsMultiDisplay());
 
         // Try to create new show-with-insecure-keyguard public virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this)
@@ -1314,7 +1314,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
     // TODO: Flaky, add to presubmit when b/63404575 is fixed.
     @Test
     public void testContentDestroyOnDisplayRemoved() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        assumeTrue(supportsMultiDisplay());
 
         // Create new private virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
@@ -1370,7 +1370,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
     @Presubmit
     @Test
     public void testDisplayResize() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        assumeTrue(supportsMultiDisplay());
 
         // Create new virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
@@ -1430,7 +1430,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     @Test
     public void testMoveToDisplayOnLaunch() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        assumeTrue(supportsMultiDisplay());
 
         // Launch activity with unique affinity, so it will the only one in its task.
         launchActivity(LAUNCHING_ACTIVITY);
@@ -1487,7 +1487,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     @Test
     public void testRotationNotAffectingSecondaryScreen() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        assumeTrue(supportsMultiDisplay());
 
         // Create new virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this)
@@ -1538,7 +1538,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     @Test
     public void testTaskMatchAcrossDisplays() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        assumeTrue(supportsMultiDisplay());
 
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
 
@@ -1590,7 +1590,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     @Test
     public void testLaunchDisplayAffinityMatch() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        assumeTrue(supportsMultiDisplay());
 
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
 
@@ -1634,7 +1634,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     @Test
     public void testNewTaskSameDisplay() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        assumeTrue(supportsMultiDisplay());
 
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).setSimulateDisplay(true)
                 .build();
@@ -1727,7 +1727,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     @Test
     public void testImmediateLaunchOnNewDisplay() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        assumeTrue(supportsMultiDisplay());
 
         // Create new virtual display and immediately launch an activity on it.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this)
@@ -1751,7 +1751,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     @Test
     public void testExternalDisplayActivityTurnPrimaryOff() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        assumeTrue(supportsMultiDisplay());
 
         // Launch something on the primary display so we know there is a resumed activity there
         launchActivity(RESIZEABLE_ACTIVITY_NAME);
@@ -1783,7 +1783,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     @Test
     public void testLaunchExternalDisplayActivityWhilePrimaryOff() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        assumeTrue(supportsMultiDisplay());
 
         // Launch something on the primary display so we know there is a resumed activity there
         launchActivity(RESIZEABLE_ACTIVITY_NAME);
@@ -1813,7 +1813,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     @Test
     public void testExternalDisplayToggleState() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        assumeTrue(supportsMultiDisplay());
 
         final DisplayState newDisplay = createExternalVirtualDisplay(
                 false /* showContentWhenLocked */);
@@ -1843,7 +1843,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     @Test
     public void testStackFocusSwitchOnTouchEventAfterKeyguard() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        assumeTrue(supportsMultiDisplay());
 
         // Launch something on the primary display so we know there is a resumed activity there
         launchActivity(RESIZEABLE_ACTIVITY_NAME);
@@ -1910,7 +1910,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      * Tests that showWhenLocked works on a secondary display.
      */
     public void testSecondaryDisplayShowWhenLocked() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        assumeTrue(supportsMultiDisplay());
 
         try {
             setLockCredential();
