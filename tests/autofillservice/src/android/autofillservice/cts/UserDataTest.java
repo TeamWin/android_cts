@@ -20,15 +20,19 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
+import android.service.autofill.InternalScorer;
+import android.service.autofill.Scorer;
 import android.service.autofill.UserData;
-import android.support.test.runner.AndroidJUnit4;
 
 import com.google.common.base.Strings;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
-@RunWith(AndroidJUnit4.class)
+@RunWith(MockitoJUnitRunner.class)
 public class UserDataTest {
 
     private final String mShortValue = Strings.repeat("k", UserData.getMinValueLength() - 1);
@@ -38,22 +42,34 @@ public class UserDataTest {
     private final String mRemoteId2 = "id2";
     private final String mValue = mShortValue + "-1";
     private final String mValue2 = mShortValue + "-2";
-    private final UserData.Builder mBuilder = new UserData.Builder(mRemoteId, mValue);
+
+    @Mock private InternalScorer mValidScorer;
+    @Mock private Scorer mInvalidScorer;
+    private UserData.Builder mBuilder;
+
+    @Before
+    public void setFixtures() {
+        mBuilder = new UserData.Builder(mValidScorer, mRemoteId, mValue);
+    }
 
     @Test
     public void testBuilder_invalid() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new UserData.Builder(null, mRemoteId, mValue));
+        assertThrows(IllegalArgumentException.class,
+                () -> new UserData.Builder(mInvalidScorer, mRemoteId, mValue));
         assertThrows(NullPointerException.class,
-                () -> new UserData.Builder(mRemoteId, null));
+                () -> new UserData.Builder(mValidScorer, mRemoteId, null));
         assertThrows(IllegalArgumentException.class,
-                () -> new UserData.Builder(mRemoteId, ""));
+                () -> new UserData.Builder(mValidScorer, mRemoteId, ""));
         assertThrows(IllegalArgumentException.class,
-                () -> new UserData.Builder(mRemoteId, mShortValue));
+                () -> new UserData.Builder(mValidScorer, mRemoteId, mShortValue));
         assertThrows(IllegalArgumentException.class,
-                () -> new UserData.Builder(mRemoteId, mLongValue));
+                () -> new UserData.Builder(mValidScorer, mRemoteId, mLongValue));
         assertThrows(NullPointerException.class,
-                () -> new UserData.Builder(null, mValue));
+                () -> new UserData.Builder(mValidScorer, null, mValue));
         assertThrows(IllegalArgumentException.class,
-                () -> new UserData.Builder("", mValue));
+                () -> new UserData.Builder(mValidScorer, "", mValue));
     }
 
     @Test
