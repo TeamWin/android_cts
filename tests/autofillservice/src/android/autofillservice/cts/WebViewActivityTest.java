@@ -69,6 +69,9 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
         // Set service.
         enableService();
 
+        // Load WebView
+        mActivity.loadWebView();
+
         // Set expectations.
         sReplier.addResponse(CannedFillResponse.NO_RESPONSE);
 
