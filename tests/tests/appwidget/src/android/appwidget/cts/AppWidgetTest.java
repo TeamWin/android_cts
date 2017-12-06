@@ -33,6 +33,7 @@ import android.appwidget.AppWidgetHostView;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.appwidget.cts.provider.AppWidgetProviderCallbacks;
+import android.appwidget.cts.provider.AppWidgetProviderWithFeatures;
 import android.appwidget.cts.provider.FirstAppWidgetProvider;
 import android.appwidget.cts.provider.SecondAppWidgetProvider;
 import android.appwidget.cts.service.MyAppWidgetService;
@@ -1306,6 +1307,25 @@ public class AppWidgetTest extends AppWidgetTestCase {
             host.deleteHost();
             revokeBindAppWidgetPermission();
         }
+    }
+
+    public void testWidgetFeaturesParsed() throws Exception {
+        if (!hasAppWidgets()) {
+            return;
+        }
+        assertEquals(0, getFirstAppWidgetProviderInfo().widgetFeatures);
+        String packageName = getInstrumentation().getTargetContext().getPackageName();
+
+        assertEquals(AppWidgetProviderInfo.WIDGET_FEATURE_RECONFIGURABLE,
+                getProviderInfo(new ComponentName(packageName,
+                AppWidgetProviderWithFeatures.Provider1.class.getName())).widgetFeatures);
+        assertEquals(AppWidgetProviderInfo.WIDGET_FEATURE_HIDE_FROM_PICKER,
+                getProviderInfo(new ComponentName(packageName,
+                        AppWidgetProviderWithFeatures.Provider2.class.getName())).widgetFeatures);
+        assertEquals(AppWidgetProviderInfo.WIDGET_FEATURE_RECONFIGURABLE
+                | AppWidgetProviderInfo.WIDGET_FEATURE_HIDE_FROM_PICKER,
+                getProviderInfo(new ComponentName(packageName,
+                        AppWidgetProviderWithFeatures.Provider3.class.getName())).widgetFeatures);
     }
 
     private void waitForCallCount(AtomicInteger counter, int expectedCount) {
