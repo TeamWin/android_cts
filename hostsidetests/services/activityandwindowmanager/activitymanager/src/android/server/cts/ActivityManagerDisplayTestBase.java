@@ -43,6 +43,7 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
     static final int CUSTOM_DENSITY_DPI = 222;
 
     private static final String DUMPSYS_ACTIVITY_PROCESSES = "dumpsys activity processes";
+    private static final String DUMPSYS_DISPLAY = "dumpsys display";
     private static final String VIRTUAL_DISPLAY_ACTIVITY = "VirtualDisplayActivity";
     private static final int INVALID_DENSITY_DPI = -1;
 
@@ -51,6 +52,7 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
 
     /** Temp storage used for parsing. */
     final LinkedList<String> mDumpLines = new LinkedList<>();
+    final LinkedList<String> mAltDumpLines = new LinkedList<>();
 
     @Override
     protected void tearDown() throws Exception {
@@ -67,10 +69,12 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
     static final class DisplayState {
         int mDisplayId;
         String mOverrideConfig;
+        String mDisplayViewportId;
 
-        private DisplayState(int displayId, String overrideConfig) {
+        private DisplayState(int displayId, String overrideConfig, String uniqueId) {
             mDisplayId = displayId;
             mOverrideConfig = overrideConfig;
+            mDisplayViewportId = uniqueId;
         }
 
         private int getWidth() {
@@ -108,6 +112,10 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
 
             return -1;
         }
+
+        String getDisplayViewPortId() {
+            return mDisplayViewportId;
+        }
     }
 
     /** Contains the configurations applied to attached displays. */
@@ -118,35 +126,55 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
                 Pattern.compile("Display override configurations:");
         private static final Pattern sDisplayConfigPattern =
                 Pattern.compile("(\\d+): (\\{.*\\})");
+        private static final Pattern sVirtualTouchViewportPattern =
+                Pattern.compile("mVirtualTouchViewports.*displayId=(\\d+), uniqueId='([^']+)', .*");
 
         String mGlobalConfig;
         private Map<Integer, DisplayState> mDisplayStates = new HashMap<>();
 
-        static ReportedDisplays create(LinkedList<String> dump) {
+        static ReportedDisplays create(LinkedList<String> activityProcessDump,
+                LinkedList<String> displayDump) {
             final ReportedDisplays result = new ReportedDisplays();
+            HashMap<String, String> virtualUniqueIdMap = new HashMap<String, String>();
 
-            while (!dump.isEmpty()) {
-                final String line = dump.pop().trim();
+            while (!displayDump.isEmpty()) {
+                final String line = displayDump.pop().trim();
 
-                Matcher matcher = sDisplayOverrideConfigurationsPattern.matcher(line);
+                Matcher matcher = sVirtualTouchViewportPattern.matcher(line);
                 if (matcher.matches()) {
+                    virtualUniqueIdMap.put(matcher.group(1), matcher.group(2));
+                }
+            }
+
+            while (!activityProcessDump.isEmpty()) {
+                final String line = activityProcessDump.pop().trim();
+
+
+                Matcher actMatcher = sDisplayOverrideConfigurationsPattern.matcher(line);
+                if (actMatcher.matches()) {
                     log(line);
-                    while (ReportedDisplays.shouldContinueExtracting(dump, sDisplayConfigPattern)) {
-                        final String displayOverrideConfigLine = dump.pop().trim();
+                    while (ReportedDisplays.shouldContinueExtracting(activityProcessDump,
+                              sDisplayConfigPattern)) {
+                        final String displayOverrideConfigLine = activityProcessDump.pop().trim();
                         log(displayOverrideConfigLine);
-                        matcher = sDisplayConfigPattern.matcher(displayOverrideConfigLine);
-                        matcher.matches();
-                        final Integer displayId = Integer.valueOf(matcher.group(1));
+                        actMatcher = sDisplayConfigPattern.matcher(displayOverrideConfigLine);
+                        actMatcher.matches();
+                        final String tempUniqueId = "local:" + actMatcher.group(1);
+                        final Integer displayId = Integer.valueOf(actMatcher.group(1));
+                        // Default unique ids for non virtual display.
+                        final String uniqueId =
+                                (virtualUniqueIdMap.containsKey(actMatcher.group(1)))
+                                ? virtualUniqueIdMap.get(actMatcher.group(1)) : tempUniqueId;
                         result.mDisplayStates.put(displayId,
-                                new DisplayState(displayId, matcher.group(2)));
+                                new DisplayState(displayId, actMatcher.group(2), uniqueId));
                     }
                     continue;
                 }
 
-                matcher = sGlobalConfigurationPattern.matcher(line);
-                if (matcher.matches()) {
+                actMatcher = sGlobalConfigurationPattern.matcher(line);
+                if (actMatcher.matches()) {
                     log(line);
-                    result.mGlobalConfig = matcher.group(1);
+                    result.mGlobalConfig = actMatcher.group(1);
                 }
             }
 
@@ -183,6 +211,17 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
             return null;
         }
 
+        /** Return the display state with the given unique id */
+        DisplayState getDisplayState(String viewportId) {
+            for (Map.Entry<Integer, DisplayState> entry : mDisplayStates.entrySet()) {
+                final DisplayState ds = entry.getValue();
+                if (ds.mDisplayViewportId.equals(viewportId)) {
+                    return ds;
+                }
+            }
+            return null;
+        }
+
         /** Check if reported state is valid. */
         boolean isValidState(int expectedDisplayCount) {
             if (mDisplayStates.size() != expectedDisplayCount) {
@@ -200,6 +239,7 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
     }
 
     ReportedDisplays getDisplaysStates() throws DeviceNotAvailableException {
+        // Parse dumpsys activity processes.
         final CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
         mDevice.executeShellCommand(DUMPSYS_ACTIVITY_PROCESSES, outputReceiver);
         String dump = outputReceiver.getOutput();
@@ -207,7 +247,15 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
 
         Collections.addAll(mDumpLines, dump.split("\\n"));
 
-        return ReportedDisplays.create(mDumpLines);
+        // Parse dumpsys display
+        final CollectingOutputReceiver outputReceiverNew = new CollectingOutputReceiver();
+        mDevice.executeShellCommand(DUMPSYS_DISPLAY, outputReceiverNew);
+        String dumpNew = outputReceiverNew.getOutput();
+        mAltDumpLines.clear();
+
+        Collections.addAll(mAltDumpLines, dumpNew.split("\\n"));
+
+        return ReportedDisplays.create(mDumpLines, mAltDumpLines);
     }
 
     /** Find the display that was not originally reported in oldDisplays and added in newDisplays */
