@@ -47,6 +47,7 @@ import android.os.ParcelFileDescriptor;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.UiDevice;
 import android.view.Display;
+import android.view.Surface;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -112,6 +113,7 @@ public abstract class ActivityManagerTestBase {
 
     private static final String DEFAULT_COMPONENT_NAME = "android.server.am";
 
+    // TODO: Remove this when all activity name are specified by {@link ComponentName}.
     static String componentName = DEFAULT_COMPONENT_NAME;
 
     protected static final int INVALID_DEVICE_ROTATION = -1;
@@ -165,6 +167,7 @@ public abstract class ActivityManagerTestBase {
         return "am broadcast -a trigger_broadcast --ei orientation " + orientation;
     }
 
+    // TODO: Remove this when all activity name are specified by {@link ComponentName}.
     static String getActivityComponentName(final String activityName) {
         return getActivityComponentName(componentName, activityName);
     }
@@ -178,6 +181,7 @@ public abstract class ActivityManagerTestBase {
                 activityName;
     }
 
+    // TODO: Remove this when all activity name are specified by {@link ComponentName}.
     // A little ugly, but lets avoid having to strip static everywhere for
     // now.
     public static void setComponentName(String name) {
@@ -200,6 +204,7 @@ public abstract class ActivityManagerTestBase {
         return packageName + "/" + (prependPackageName ? packageName + "." : "");
     }
 
+    // TODO: Remove this when all activity name are specified by {@link ComponentName}.
     static String getWindowName(final String activityName) {
         return getWindowName(componentName, activityName);
     }
@@ -695,8 +700,8 @@ public abstract class ActivityManagerTestBase {
     }
 
     /**
-     * Sets the device rotation, value corresponds to one of {@link Surface.ROTATION_0},
-     * {@link Surface.ROTATION_90}, {@link Surface.ROTATION_180}, {@link Surface.ROTATION_270}.
+     * Sets the device rotation, value corresponds to one of {@link Surface#ROTATION_0},
+     * {@link Surface#ROTATION_90}, {@link Surface#ROTATION_180}, {@link Surface#ROTATION_270}.
      */
     protected void setDeviceRotation(int rotation) throws Exception {
         setAccelerometerRotation(0);

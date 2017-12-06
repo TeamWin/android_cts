@@ -35,6 +35,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.content.ComponentName;
 import android.graphics.Rect;
 import android.server.am.ActivityManagerState.ActivityStack;
 import android.server.am.ActivityManagerState.ActivityTask;
@@ -276,7 +277,7 @@ public class ActivityAndWindowManagersState {
     }
 
     void waitForHomeActivityVisible() throws Exception {
-        String homeActivity = mAmState.getHomeActivityName();
+        ComponentName homeActivity = mAmState.getHomeActivityName();
         // Sometimes this function is called before we know what Home Activity is
         if (homeActivity == null) {
             log("Computing state to determine Home Activity");
@@ -284,7 +285,7 @@ public class ActivityAndWindowManagersState {
             homeActivity = mAmState.getHomeActivityName();
         }
         assertNotNull("homeActivity should not be null", homeActivity);
-        waitForValidState(homeActivity);
+        waitForValidState(new WaitForValidActivityState(homeActivity));
     }
 
     /**
@@ -448,12 +449,22 @@ public class ActivityAndWindowManagersState {
         boolean tasksInCorrectStacks = true;
         List<WindowState> matchingWindowStates = new ArrayList<>();
         for (int i = 0; i < waitForActivitiesVisible.length; i++) {
-            final String activityName = waitForActivitiesVisible[i].activityName;
-            // Check if window is visible - it should be represented as one of the window states.
-            final String windowName = mUseActivityNames ?
-                    ActivityManagerTestBase.getWindowName(packageName, activityName) : activityName;
-            final String activityComponentName =
-                    ActivityManagerTestBase.getActivityComponentName(packageName, activityName);
+            final WaitForValidActivityState state = waitForActivitiesVisible[i];
+            final String activityComponentName;
+            final String windowName;
+            if (state.componentName != null) {
+                activityComponentName = state.componentName.flattenToShortString();
+                windowName = state.componentName.flattenToString();
+            } else {
+                final String activityName = waitForActivitiesVisible[i].activityName;
+                activityComponentName =
+                        ActivityManagerTestBase.getActivityComponentName(packageName, activityName);
+                // Check if window is visible - it should be represented as one of the window
+                // states.
+                windowName = mUseActivityNames
+                        ? ActivityManagerTestBase.getWindowName(packageName, activityName)
+                        : activityName;
+            }
             final int stackId = waitForActivitiesVisible[i].stackId;
             final int windowingMode = waitForActivitiesVisible[i].windowingMode;
             final int activityType = waitForActivitiesVisible[i].activityType;
@@ -677,6 +688,12 @@ public class ActivityAndWindowManagersState {
         assertVisibility(activityComponentName, windowName, visible);
     }
 
+    private void assertVisibility(final ComponentName activityName, final boolean visible) {
+        final String activityComponentName = activityName.flattenToShortString();
+        final String windowName = activityName.flattenToString();
+        assertVisibility(activityComponentName, windowName, visible);
+    }
+
     private void assertVisibility(String activityComponentName, String windowName,
             boolean visible) {
         final boolean activityVisible = mAmState.isActivityVisible(activityComponentName);
@@ -693,9 +710,9 @@ public class ActivityAndWindowManagersState {
     }
 
     void assertHomeActivityVisible(boolean visible) {
-        String name = mAmState.getHomeActivityName();
-        assertNotNull(name);
-        assertVisibility(name, getWindowNameForActivityName(name), visible);
+        final ComponentName homeActivity = mAmState.getHomeActivityName();
+        assertNotNull(homeActivity);
+        assertVisibility(homeActivity, visible);
     }
 
     /**
@@ -723,10 +740,6 @@ public class ActivityAndWindowManagersState {
 
     public void assertKeyguardGone() {
         assertFalse(getAmState().getKeyguardControllerState().keyguardShowing);
-    }
-
-    private String getWindowNameForActivityName(String activityName) {
-        return activityName.replaceAll("(.*)\\/\\.", "$1/$1.");
     }
 
     boolean taskListsInAmAndWmAreEqual() {
