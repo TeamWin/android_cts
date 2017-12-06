@@ -94,6 +94,7 @@ for JAR in $JARS; do
     checkFile ${JAR_DIR}/${JAR}.jar
     JAR_PATH=${JAR_PATH}:${JAR_DIR}/${JAR}.jar
 done
+JAR_PATH=${JAR_PATH:1} # Strip off leading ':'
 
 OPTIONAL_JARS="
   google-tradefed
