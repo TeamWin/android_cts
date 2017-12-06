@@ -16,6 +16,7 @@
 
 package android.server.am;
 
+import static android.content.pm.PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS;
 import static android.server.am.ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID;
 import static android.server.am.StateLogger.log;
 
@@ -449,7 +450,7 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
     }
 
     /** Checks if the device supports multi-display. */
-    boolean supportsMultiDisplay() throws Exception {
-        return hasDeviceFeature("android.software.activities_on_secondary_displays");
+    boolean supportsMultiDisplay() {
+        return hasDeviceFeature(FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS);
     }
 }

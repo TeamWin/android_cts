@@ -17,10 +17,10 @@
 package android.server.wm;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
-import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
-import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY;
+import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT;
 import static android.server.am.ActivityManagerTestBase.executeShellCommand;
 import static android.server.am.StateLogger.log;
 
@@ -34,7 +34,6 @@ import android.content.Context;
 import android.graphics.Point;
 import android.os.RemoteException;
 import android.os.SystemClock;
-import android.platform.test.annotations.Presubmit;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
@@ -452,8 +451,9 @@ public class CrossAppDragAndDropTests {
     }
 
     private boolean supportsFreeformMultiWindow() {
-        final String output = executeShellCommand("pm list features");
-        return output.contains("feature:android.software.freeform_window_management");
+        return InstrumentationRegistry.getContext()
+                .getPackageManager()
+                .hasSystemFeature(FEATURE_FREEFORM_WINDOW_MANAGEMENT);
     }
 
     @Test
