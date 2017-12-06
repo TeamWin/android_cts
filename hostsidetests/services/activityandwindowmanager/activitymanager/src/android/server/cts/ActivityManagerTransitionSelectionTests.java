@@ -226,6 +226,11 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
             boolean testOpen, boolean testNewTask,
             boolean bottomWallpaper, boolean topWallpaper, boolean topTranslucent,
             boolean testSlowStop, String expectedTransit) throws Exception {
+        // There is no wallpaper in VR mode.
+        if (isUiModeLockedToVrHeadset() && (bottomWallpaper || topWallpaper)) {
+            return;
+        }
+
         String bottomStartCmd = getAmStartCmd(BOTTOM_ACTIVITY_NAME);
         if (bottomWallpaper) {
             bottomStartCmd += " --ez USE_WALLPAPER true";

@@ -50,7 +50,6 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
     private static final String THIRD_PACKAGE_NAME = "android.server.cts.third";
     private static final String VR_UNIQUE_DISPLAY_ID =
             "virtual:android:277f1a09-b88d-4d1e-8716-796f114d080b";
-    private static final String VR_STANDALONE_DEVICE_PROPERTY = "ro.boot.vr";
 
     /** Physical display metrics and overrides in the beginning of the test. */
     private ReportedDisplayMetrics mInitialDisplayMetrics;
@@ -64,7 +63,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
     protected void setUp() throws Exception {
         super.setUp();
         mInitialDisplayMetrics = getDisplayMetrics();
-        mVrHeadset = isVrHeadset();
+        mVrHeadset = isUiModeLockedToVrHeadset();
         final DisplayState vrDisplay = getDisplaysStates().getDisplayState(VR_UNIQUE_DISPLAY_ID);
         mVrVirtualDisplayId = mVrHeadset ? vrDisplay.mDisplayId : -1;
     }
@@ -87,18 +86,6 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
         } else {
             executeShellCommand("vr set-persistent-vr-mode-enabled false");
             executeShellCommand("setprop vr_virtualdisplay false");
-        }
-    }
-
-    private boolean isVrHeadset() {
-        try {
-            if ("1".equals(mDevice.getProperty(VR_STANDALONE_DEVICE_PROPERTY))) {
-              return true;
-            }
-
-            return false;
-        } catch (DeviceNotAvailableException e) {
-            return false;
         }
     }
 
