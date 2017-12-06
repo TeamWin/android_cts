@@ -16,7 +16,7 @@
 package android.autofillservice.cts;
 
 import static android.autofillservice.cts.Helper.assertFillEventForContextCommitted;
-import static android.autofillservice.cts.Helper.assertFillEventForFieldsDetected;
+import static android.autofillservice.cts.Helper.assertFillEventForFieldsClassification;
 import static android.autofillservice.cts.Helper.runShellCommand;
 import static android.service.autofill.FillResponse.FLAG_TRACK_CONTEXT_COMMITED;
 
@@ -82,7 +82,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
     }
 
     @Test
-    public void testFullHit() throws Exception {
+    public void testHit_oneUserData_oneDetectableField() throws Exception {
         // Set service.
         enableService();
 
@@ -105,7 +105,6 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         callback.assertUiUnavailableEvent(field);
 
         // Simulate user input
-        mActivity.focusCell(1, 1);
         mActivity.setText(1, 1, "fully");
 
         // Finish context.
@@ -116,7 +115,157 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
                 InstrumentedAutoFillService.peekInstance().getFillEventHistory();
         final List<Event> events = history.getEvents();
         assertWithMessage("Wrong number of events: %s", events).that(events.size()).isEqualTo(1);
-        assertFillEventForFieldsDetected(events.get(0), "myId", 0);
+        assertFillEventForFieldsClassification(events.get(0), fieldId, "myId", 1000000);
+    }
+
+    @Test
+    public void testHit_manyUserData_oneDetectableField_bestMatchIsFirst() throws Exception {
+        manyUserData_oneDetectableField(true);
+    }
+
+    @Test
+    public void testHit_manyUserData_oneDetectableField_bestMatchIsSecond() throws Exception {
+        manyUserData_oneDetectableField(false);
+    }
+
+    private void manyUserData_oneDetectableField(boolean firstMatch) throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        final String expectedId;
+        final String typedText;
+        if (firstMatch) {
+            expectedId = "1stId";
+            typedText = "IAM111";
+        } else {
+            expectedId = "2ndId";
+            typedText = "IAM222";
+        }
+        mActivity.getAutofillManager().setUserData(new UserData.Builder("1stId", "Iam1ST")
+                .add("2ndId", "Iam2ND").build());
+        final MyAutofillCallback callback = mActivity.registerCallback();
+        final EditText field = mActivity.getCell(1, 1);
+        final AutofillId fieldId = field.getAutofillId();
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setFillResponseFlags(FLAG_TRACK_CONTEXT_COMMITED)
+                .setFieldClassificationIds(fieldId)
+                .build());
+
+        // Trigger autofill
+        mActivity.focusCell(1, 1);
+        sReplier.getNextFillRequest();
+
+        sUiBot.assertNoDatasets();
+        callback.assertUiUnavailableEvent(field);
+
+        // Simulate user input
+        mActivity.setText(1, 1, typedText);
+
+        // Finish context.
+        mActivity.getAutofillManager().commit();
+
+        // Assert results
+        final FillEventHistory history =
+                InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+        final List<Event> events = history.getEvents();
+        assertWithMessage("Wrong number of events: %s", events).that(events.size()).isEqualTo(1);
+        // Matches 4 of 6 chars - 66.6666%
+        assertFillEventForFieldsClassification(events.get(0), fieldId, expectedId, 666666);
+    }
+
+    @Test
+    public void testHit_oneUserData_manyDetectableFields() throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        mActivity.getAutofillManager()
+                .setUserData(new UserData.Builder("myId", "FULLY").build());
+        final MyAutofillCallback callback = mActivity.registerCallback();
+        final EditText field1 = mActivity.getCell(1, 1);
+        final AutofillId fieldId1 = field1.getAutofillId();
+        final EditText field2 = mActivity.getCell(1, 2);
+        final AutofillId fieldId2 = field2.getAutofillId();
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setFillResponseFlags(FLAG_TRACK_CONTEXT_COMMITED)
+                .setFieldClassificationIds(fieldId1, fieldId2)
+                .build());
+
+        // Trigger autofill
+        mActivity.focusCell(1, 1);
+        sReplier.getNextFillRequest();
+
+        sUiBot.assertNoDatasets();
+        callback.assertUiUnavailableEvent(field1);
+
+        // Simulate user input
+        mActivity.setText(1, 1, "fully"); // 100%
+        mActivity.setText(1, 2, "fooly"); // 60%
+
+        // Finish context.
+        mActivity.getAutofillManager().commit();
+
+        // Assert results
+        final FillEventHistory history =
+                InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+        final List<Event> events = history.getEvents();
+        assertWithMessage("Wrong number of events: %s", events).that(events.size()).isEqualTo(1);
+        assertFillEventForFieldsClassification(events.get(0),
+                new AutofillId[] { fieldId1, fieldId2 },
+                new String[] { "myId", "myId" },
+                new int[] { 1000000, 600000 });
+    }
+
+    @Test
+    public void testHit_manyUserData_manyDetectableFields() throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        mActivity.getAutofillManager()
+                .setUserData(new UserData.Builder("myId", "FULLY")
+                        .add("otherId", "EMPTY")
+                        .build());
+        final MyAutofillCallback callback = mActivity.registerCallback();
+        final EditText field1 = mActivity.getCell(1, 1);
+        final AutofillId fieldId1 = field1.getAutofillId();
+        final EditText field2 = mActivity.getCell(1, 2);
+        final AutofillId fieldId2 = field2.getAutofillId();
+        final EditText field3 = mActivity.getCell(2, 1);
+        final AutofillId fieldId3 = field3.getAutofillId();
+        final EditText field4 = mActivity.getCell(2, 2);
+        final AutofillId fieldId4 = field4.getAutofillId();
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setFillResponseFlags(FLAG_TRACK_CONTEXT_COMMITED)
+                .setFieldClassificationIds(fieldId1, fieldId2)
+                .build());
+
+        // Trigger autofill
+        mActivity.focusCell(1, 1);
+        sReplier.getNextFillRequest();
+
+        sUiBot.assertNoDatasets();
+        callback.assertUiUnavailableEvent(field1);
+
+        // Simulate user input
+        mActivity.setText(1, 1, "fully"); // 100%
+        mActivity.setText(1, 2, "empty"); // 100%
+        mActivity.setText(2, 1, "fooly"); // 60%
+        mActivity.setText(2, 2, "emppy"); // 80%
+
+        // Finish context.
+        mActivity.getAutofillManager().commit();
+
+        // Assert results
+        final FillEventHistory history =
+                InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+        final List<Event> events = history.getEvents();
+        assertWithMessage("Wrong number of events: %s", events).that(events.size()).isEqualTo(1);
+        assertFillEventForFieldsClassification(events.get(0),
+                new AutofillId[] { fieldId1, fieldId2, fieldId3, fieldId4 },
+                new String[] { "myId", "otherId", "myId", "otherId" },
+                new int[] { 1000000, 1000000, 600000, 800000});
     }
 
     @Test
@@ -196,9 +345,9 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
      * - Multipartition (for example, one response with FieldsDetection, others with datasets,
      *   saveinfo, and/or ignoredIds)
      * - make sure detectable fields don't trigger a new partition
-     * - test partial hit (for example, 'fool' instead of 'full'
-     * - multiple fields
-     * - multiple value
+     * v test partial hit (for example, 'fool' instead of 'full'
+     * v multiple fields
+     * v multiple value
      * - combinations of above items
      */
 }
