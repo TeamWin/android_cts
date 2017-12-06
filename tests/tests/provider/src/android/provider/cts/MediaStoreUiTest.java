@@ -183,6 +183,9 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
         mActivity.startActivityForResult(intent, REQUEST_CODE);
         mDevice.waitForIdle();
 
+        // To ensure camera app is launched
+        SystemClock.sleep(5 * DateUtils.SECOND_IN_MILLIS);
+
         // Try a couple different strategies for taking a photo: first take a
         // photo and confirm using hardware keys
         mDevice.pressKeyCode(KeyEvent.KEYCODE_CAMERA);
