@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.HashMap;
@@ -79,6 +80,18 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
     private static final String MIME_VIDEO_AVC = MediaFormat.MIMETYPE_VIDEO_AVC;
     private static final String MIME_VIDEO_VP8 = MediaFormat.MIMETYPE_VIDEO_VP8;
 
+    // Property Keys
+    private static final String ALGORITHMS_PROPERTY_KEY = MediaDrm.PROPERTY_ALGORITHMS;
+    private static final String DESCRIPTION_PROPERTY_KEY = MediaDrm.PROPERTY_DESCRIPTION;
+    private static final String DEVICEID_PROPERTY_KEY = "deviceId";
+    private static final String INVALID_PROPERTY_KEY = "invalid property key";
+    private static final String LISTENER_TEST_SUPPORT_PROPERTY_KEY = "listenerTestSupport";
+    private static final String VENDOR_PROPERTY_KEY = MediaDrm.PROPERTY_VENDOR;
+    private static final String VERSION_PROPERTY_KEY = MediaDrm.PROPERTY_VERSION;
+
+    // Error message
+    private static final String ERR_MSG_CRYPTO_SCHEME_NOT_SUPPORTED = "Crypto scheme is not supported";
+
     private static final Uri CENC_AUDIO_URL = Uri.parse(
             "https://storage.googleapis.com/wvmedia/clear/h264/llama/llama_aac_audio.mp4");
     private static final Uri CENC_VIDEO_URL = Uri.parse(
@@ -100,7 +113,7 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
     private Looper mLooper;
     private MediaCodecClearKeyPlayer mMediaCodecPlayer;
     private MediaDrm mDrm;
-    private Object mLock = new Object();
+    private final Object mLock = new Object();
     private SurfaceHolder mSurfaceHolder;
 
     @Override
@@ -348,7 +361,7 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
             drm = startDrm(clearKeys, initDataType, drmSchemeUuid);
             if (!drm.isCryptoSchemeSupported(drmSchemeUuid)) {
                 stopDrm(drm);
-                throw new Error("Crypto scheme is not supported.");
+                throw new Error(ERR_MSG_CRYPTO_SCHEME_NOT_SUPPORTED);
             }
             mSessionId = openSession(drm);
         }
@@ -435,7 +448,7 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
         MediaDrm drm = startDrm(new byte[][] { CLEAR_KEY_CENC }, "cenc", COMMON_PSSH_SCHEME_UUID);
         if (!drm.isCryptoSchemeSupported(COMMON_PSSH_SCHEME_UUID)) {
             stopDrm(drm);
-            throw new Error("Crypto scheme is not supported.");
+            throw new Error(ERR_MSG_CRYPTO_SCHEME_NOT_SUPPORTED);
         }
 
         mSessionId = openSession(drm);
@@ -525,38 +538,171 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
             VIDEO_WIDTH_MPEG2TS, VIDEO_HEIGHT_MPEG2TS, false);
     }
 
-    public void testUnknownPropertyResult() throws Exception {
+    private String getStringProperty(final MediaDrm drm,  final String key) {
+        String value = "";
+        try {
+            value = drm.getPropertyString(key);
+        } catch (IllegalArgumentException e) {
+            // Expected exception for invalid key
+            Log.d(TAG, "Expected result: " + e.getMessage());
+        } catch (Exception e) {
+            throw new Error(e.getMessage() + "-" + key);
+        }
+        return value;
+    }
+
+    private byte[] getByteArrayProperty(final MediaDrm drm,  final String key) {
+        byte[] bytes = new byte[0];
+        try {
+            bytes = drm.getPropertyByteArray(key);
+        } catch (IllegalArgumentException e) {
+            // Expected exception for invalid key
+            Log.d(TAG, "Expected: " + e.getMessage() + " - " + key);
+        } catch (Exception e) {
+            throw new Error(e.getMessage() + "-" + key);
+        }
+        return bytes;
+    }
+
+    private void setStringProperty(final MediaDrm drm, final String key, final String value) {
+        try {
+            drm.setPropertyString(key, value);
+        } catch (IllegalArgumentException e) {
+            // Expected exception for invalid key
+            Log.d(TAG, "Expected: " + e.getMessage() + " - " + key);
+        } catch (Exception e) {
+            throw new Error(e.getMessage() + "-" + key);
+        }
+    }
+
+    private void setByteArrayProperty(final MediaDrm drm, final String key, final byte[] bytes) {
+        try {
+            drm.setPropertyByteArray(key, bytes);
+        } catch (IllegalArgumentException e) {
+            // Expected exception for invalid key
+            Log.d(TAG, "Expected: " + e.getMessage() + " - " + key);
+        } catch (Exception e) {
+            throw new Error(e.getMessage() + "-" + key);
+        }
+    }
+
+    public void testGetProperties() throws Exception {
         MediaDrm drm = startDrm(new byte[][] { CLEAR_KEY_CENC },
                 "cenc", COMMON_PSSH_SCHEME_UUID);
 
-        if (!drm.isCryptoSchemeSupported(COMMON_PSSH_SCHEME_UUID)) {
-            stopDrm(drm);
-            throw new Error("Crypto scheme is not supported.");
-        }
-
-        // getPropertyString on an invalid property should throw
-        // IllegalArgumentException
         try {
-            drm.getPropertyString("invalid property");
-        } catch (IllegalArgumentException e) {
-            // Expected result
-        } catch (Exception e) {
-            // Unexpected exception
-            stopDrm(drm);
-            throw new Error("getPropertyString unexpected exception", e);
-        }
+            // The following tests will not verify the value we are getting
+            // back since it could change in the future.
+            final String[] sKeys = {
+                    DESCRIPTION_PROPERTY_KEY, LISTENER_TEST_SUPPORT_PROPERTY_KEY,
+                    VENDOR_PROPERTY_KEY, VERSION_PROPERTY_KEY};
+            String value;
+            for (String key : sKeys) {
+                value = getStringProperty(drm, key);
+                Log.d(TAG, "getPropertyString returns: " + key + ", " + value);
+                if (value.isEmpty()) {
+                    throw new Error("Failed to get property for: " + key);
+                }
+            }
 
-        // getPropertyByteArray on an invalid property should throw
-        // IllegalArgumentException
-        try {
-            drm.getPropertyByteArray("invalid property");
-        } catch (IllegalArgumentException e) {
-            // Expected result
-        } catch (Exception e) {
-            // Unexpected exception
+            byte[] bytes = getByteArrayProperty(drm, DEVICEID_PROPERTY_KEY);
+            if (0 == bytes.length) {
+                throw new Error("Failed to get property for: " + DEVICEID_PROPERTY_KEY);
+            }
+
+            // Test with an invalid property key.
+            value = getStringProperty(drm, INVALID_PROPERTY_KEY);
+            bytes = getByteArrayProperty(drm, INVALID_PROPERTY_KEY);
+            if (!value.isEmpty() || 0 != bytes.length) {
+                throw new Error("get property failed using an invalid property key");
+            }
+        } finally {
             stopDrm(drm);
-            throw new Error("getPropertyByteArray unexpected exception", e);
         }
-        stopDrm(drm);
     }
+
+    public void testSetProperties() throws Exception {
+        MediaDrm drm = startDrm(new byte[][]{CLEAR_KEY_CENC},
+                "cenc", COMMON_PSSH_SCHEME_UUID);
+
+        try {
+            // Test setting predefined string property
+            // - Save the value to be restored later
+            // - Set the property value
+            // - Check the value that was set
+            // - Restore previous value
+            String listenerTestSupport = getStringProperty(drm, LISTENER_TEST_SUPPORT_PROPERTY_KEY);
+
+            setStringProperty(drm, LISTENER_TEST_SUPPORT_PROPERTY_KEY, "testing");
+
+            String value = getStringProperty(drm, LISTENER_TEST_SUPPORT_PROPERTY_KEY);
+            if (!value.equals("testing")) {
+                throw new Error("Failed to set property: " + LISTENER_TEST_SUPPORT_PROPERTY_KEY);
+            }
+
+            setStringProperty(drm, LISTENER_TEST_SUPPORT_PROPERTY_KEY, listenerTestSupport);
+
+            // Test setting new string property
+            setStringProperty(drm, "NewStringPropertyKeyTest", "test value");
+
+            value = getStringProperty(drm, "NewStringPropertyKeyTest");
+            if (!value.equals("test value")) {
+                throw new Error("Failed to set property: NewStringPropertyKeyTest");
+            }
+
+            // Test setting immutable properties
+            HashMap<String, String> defaultImmutableProperties = new HashMap<String, String>();
+            defaultImmutableProperties.put(ALGORITHMS_PROPERTY_KEY,
+                    getStringProperty(drm, ALGORITHMS_PROPERTY_KEY));
+            defaultImmutableProperties.put(DESCRIPTION_PROPERTY_KEY,
+                    getStringProperty(drm, DESCRIPTION_PROPERTY_KEY));
+            defaultImmutableProperties.put(VENDOR_PROPERTY_KEY,
+                    getStringProperty(drm, VENDOR_PROPERTY_KEY));
+            defaultImmutableProperties.put(VERSION_PROPERTY_KEY,
+                    getStringProperty(drm, VERSION_PROPERTY_KEY));
+
+            HashMap<String, String> immutableProperties = new HashMap<String, String>();
+            immutableProperties.put(ALGORITHMS_PROPERTY_KEY, "brute force");
+            immutableProperties.put(DESCRIPTION_PROPERTY_KEY, "testing only");
+            immutableProperties.put(VENDOR_PROPERTY_KEY, "my Google");
+            immutableProperties.put(VERSION_PROPERTY_KEY, "undefined");
+
+            for (String key : immutableProperties.keySet()) {
+                setStringProperty(drm, key, immutableProperties.get(key));
+            }
+
+            // Verify the immutable properties have not been set
+            for (String key : immutableProperties.keySet()) {
+                value = getStringProperty(drm, key);
+                if (!defaultImmutableProperties.get(key).equals(getStringProperty(drm, key))) {
+                    throw new Error("Immutable property has changed, key=" + key);
+                }
+            }
+
+            // Test setPropertyByteArray
+            final byte[] bytes = new byte[] {
+                    0xf, 0xe, 0xd, 0xc, 0xb, 0xa, 0x9, 0x8,
+                    0x7, 0x6, 0x5, 0x4, 0x3, 0x2, 0x1, 0x0};
+
+            setByteArrayProperty(drm, "someBytes", bytes);
+
+            // Verify new property value
+            if (!Arrays.equals(bytes, getByteArrayProperty(drm, "someBytes"))) {
+                throw new Error("Failed to set byte array for key=" + "someBytes");
+            }
+
+            // Test setPropertyByteArray for immutable property
+            final byte[] deviceId = getByteArrayProperty(drm, DEVICEID_PROPERTY_KEY);
+
+            setByteArrayProperty(drm, DEVICEID_PROPERTY_KEY, bytes);
+
+            // Verify deviceId has not changed
+            if (!Arrays.equals(deviceId, getByteArrayProperty(drm, DEVICEID_PROPERTY_KEY))) {
+                throw new Error("Failed to set byte array for key=" + DEVICEID_PROPERTY_KEY);
+            }
+        } finally {
+            stopDrm(drm);
+        }
+    }
+
 }

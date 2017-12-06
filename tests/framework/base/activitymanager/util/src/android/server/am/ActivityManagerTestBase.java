@@ -16,6 +16,7 @@
 
 package android.server.am;
 
+import static android.app.ActivityManager.SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT;
 import static android.app.ActivityManager.StackId.INVALID_STACK_ID;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_ASSISTANT;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
@@ -23,12 +24,19 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
-import static android.app.ActivityManager.SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT;
+import static android.content.pm.PackageManager.FEATURE_EMBEDDED;
+import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT;
+import static android.content.pm.PackageManager.FEATURE_LEANBACK;
+import static android.content.pm.PackageManager.FEATURE_PICTURE_IN_PICTURE;
+import static android.content.pm.PackageManager.FEATURE_SCREEN_LANDSCAPE;
+import static android.content.pm.PackageManager.FEATURE_SCREEN_PORTRAIT;
+import static android.content.pm.PackageManager.FEATURE_VR_MODE;
+import static android.content.pm.PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE;
+import static android.content.pm.PackageManager.FEATURE_WATCH;
 import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logE;
 import static android.view.KeyEvent.KEYCODE_APP_SWITCH;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -111,8 +119,6 @@ public abstract class ActivityManagerTestBase {
     protected Context mContext;
     protected ActivityManager mAm;
     protected UiDevice mDevice;
-
-    private HashSet<String> mAvailableFeatures;
 
     private boolean mLockCredentialsSet;
 
@@ -532,24 +538,24 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected boolean supportsVrMode() {
-        return hasDeviceFeature("android.software.vr.mode") &&
-                hasDeviceFeature("android.hardware.vr.high_performance");
+        return hasDeviceFeature(FEATURE_VR_MODE)
+                && hasDeviceFeature(FEATURE_VR_MODE_HIGH_PERFORMANCE);
     }
 
     protected boolean supportsPip() {
-        return hasDeviceFeature("android.software.picture_in_picture")
+        return hasDeviceFeature(FEATURE_PICTURE_IN_PICTURE)
                 || PRETEND_DEVICE_SUPPORTS_PIP;
     }
 
     protected boolean supportsFreeform() {
-        return hasDeviceFeature("android.software.freeform_window_management")
+        return hasDeviceFeature(FEATURE_FREEFORM_WINDOW_MANAGEMENT)
                 || PRETEND_DEVICE_SUPPORTS_FREEFORM;
     }
 
     protected boolean isHandheld() {
-        return !hasDeviceFeature("android.software.leanback")
-                && !hasDeviceFeature("android.hardware.type.watch")
-                && !hasDeviceFeature("android.hardware.type.embedded");
+        return !hasDeviceFeature(FEATURE_LEANBACK)
+                && !hasDeviceFeature(FEATURE_WATCH)
+                && !hasDeviceFeature(FEATURE_EMBEDDED);
     }
 
     protected boolean isTablet() {
@@ -571,33 +577,16 @@ public abstract class ActivityManagerTestBase {
      * features or not listing either at all.
      */
     protected boolean supportsRotation() {
-        return (hasDeviceFeature("android.hardware.screen.landscape")
-                    && hasDeviceFeature("android.hardware.screen.portrait"))
-            || (!hasDeviceFeature("android.hardware.screen.landscape")
-                    && !hasDeviceFeature("android.hardware.screen.portrait"));
+        final boolean supportsLandscape = hasDeviceFeature(FEATURE_SCREEN_LANDSCAPE);
+        final boolean supportsPortrait = hasDeviceFeature(FEATURE_SCREEN_PORTRAIT);
+        return (supportsLandscape && supportsPortrait)
+                || (!supportsLandscape && !supportsPortrait);
     }
 
-    protected boolean hasDeviceFeature(String requiredFeature) {
-        if (mAvailableFeatures == null) {
-            // TODO: Move this logic to ITestDevice.
-            final String output = runCommandAndPrintOutput("pm list features");
-
-            // Extract the id of the new user.
-            mAvailableFeatures = new HashSet<>();
-            for (String feature: output.split("\\s+")) {
-                // Each line in the output of the command has the format "feature:{FEATURE_VALUE}".
-                String[] tokens = feature.split(":");
-                assertTrue("\"" + feature + "\" expected to have format feature:{FEATURE_VALUE}",
-                        tokens.length > 1);
-                assertEquals(feature, "feature", tokens[0]);
-                mAvailableFeatures.add(tokens[1]);
-            }
-        }
-        boolean result = mAvailableFeatures.contains(requiredFeature);
-        if (!result) {
-            log("Device doesn't support " + requiredFeature);
-        }
-        return result;
+    protected boolean hasDeviceFeature(final String requiredFeature) {
+        return InstrumentationRegistry.getContext()
+                .getPackageManager()
+                .hasSystemFeature(requiredFeature);
     }
 
     protected boolean isDisplayOn() {

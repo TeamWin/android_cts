@@ -877,6 +877,24 @@ public class CameraErrorCollector extends ErrorCollector {
     }
 
     /**
+     * Check if the key is non-null, and the key value is one of the expected values.
+     *
+     * @param result {@link CaptureResult} to get the key from.
+     * @param key The {@link CaptureResult} key to be checked.
+     * @param expected The expected values of the CaptureResult key.
+     */
+    public <T> void expectKeyValueIsIn(CaptureResult result,
+                                       CaptureResult.Key<T> key, T... expected) {
+        T value = expectKeyValueNotNull(result, key);
+        if (value == null) {
+            return;
+        }
+        String reason = "Key " + key.getName() + " value " + value
+                + " isn't one of the expected values " + Arrays.deepToString(expected);
+        expectContains(reason, expected, value);
+    }
+
+    /**
      * Check if the key is non-null, and the key value contains the expected element.
      *
      * @param characteristics {@link CameraCharacteristics} to check.

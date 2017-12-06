@@ -19,6 +19,12 @@
     <option name="config-descriptor:metadata" key="component" value="framework" />
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
+        <!--
+            TODO(yukawa): come up with a proper way to take care of devices that do not support
+            installable IMEs.  Ideally target_preparer should have an option to annotate required
+            features, e.g. android.software.input_methods so that we can conditionally install APKs
+            based on the feature supported in the target device.
+        -->
         <option name="test-file-name" value="CtsInputMethodTestCases.apk" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >

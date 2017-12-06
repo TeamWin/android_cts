@@ -16,8 +16,25 @@
 package com.android.server.cts;
 
 import com.android.ddmlib.IShellOutputReceiver;
+import com.android.internal.os.StatsdConfigProto.Alert;
+import com.android.internal.os.StatsdConfigProto.AtomMatcher;
+import com.android.internal.os.StatsdConfigProto.Bucket;
+import com.android.internal.os.StatsdConfigProto.CountMetric;
+import com.android.internal.os.StatsdConfigProto.DurationMetric;
+import com.android.internal.os.StatsdConfigProto.EventMetric;
+import com.android.internal.os.StatsdConfigProto.GaugeMetric;
+import com.android.internal.os.StatsdConfigProto.KeyMatcher;
+import com.android.internal.os.StatsdConfigProto.KeyValueMatcher;
+import com.android.internal.os.StatsdConfigProto.Predicate;
+import com.android.internal.os.StatsdConfigProto.SimpleAtomMatcher;
+import com.android.internal.os.StatsdConfigProto.SimplePredicate;
+import com.android.internal.os.StatsdConfigProto.StatsdConfig;
+import com.android.os.AtomsProto.Atom;
+import com.android.os.AtomsProto.KernelWakelockPulled;
+import com.android.os.AtomsProto.ScreenStateChanged;
+import com.android.os.StatsLog.ConfigMetricsReport;
+import com.android.os.StatsLog.ConfigMetricsReportList;
 import com.android.tradefed.log.LogUtil;
-
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 
@@ -27,26 +44,6 @@ import java.util.Date;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import com.android.os.StatsLog.ConfigMetricsReport;
-import com.android.os.StatsLog.ConfigMetricsReportList;
-import com.android.internal.os.StatsdConfigProto.Alert;
-import com.android.internal.os.StatsdConfigProto.Bucket;
-import com.android.internal.os.StatsdConfigProto.CountMetric;
-import com.android.internal.os.StatsdConfigProto.Condition;
-import com.android.internal.os.StatsdConfigProto.DurationMetric;
-import com.android.internal.os.StatsdConfigProto.EventMetric;
-import com.android.internal.os.StatsdConfigProto.GaugeMetric;
-import com.android.internal.os.StatsdConfigProto.KeyMatcher;
-import com.android.internal.os.StatsdConfigProto.KeyValueMatcher;
-import com.android.internal.os.StatsdConfigProto.AtomMatcher;
-import com.android.internal.os.StatsdConfigProto.SimpleCondition;
-import com.android.internal.os.StatsdConfigProto.SimpleAtomMatcher;
-import com.android.internal.os.StatsdConfigProto.StatsdConfig;
-import com.android.os.AtomsProto.Atom;
-import com.android.os.AtomsProto.ScreenStateChanged;
-import com.android.os.StatsLog.ConfigMetricsReport;
-import com.android.os.StatsLog.ConfigMetricsReportList;
 
 /**
  * Test for statsd
@@ -225,9 +222,9 @@ public class StatsdValidationTest extends ProtoDumpTestCase {
                         .setAggregationType(DurationMetric.AggregationType.SUM)
                         .setBucket(Bucket.newBuilder().setBucketSizeMillis(5_000))
                 )
-                .addCondition(Condition.newBuilder()
+                .addPredicate(Predicate.newBuilder()
                         .setName("SCREEN_IS_ON")
-                        .setSimpleCondition(SimpleCondition.newBuilder()
+                        .setSimplePredicate(SimplePredicate.newBuilder()
                                 .setStart("SCREEN_TURNED_ON")
                                 .setStop("SCREEN_TURNED_OFF")
                                 .setCountNesting(false)
@@ -302,6 +299,69 @@ public class StatsdValidationTest extends ProtoDumpTestCase {
         getDevice().executeShellCommand("rm " + remotePath);
     }
 
+    public void testKernelWakelockCount() throws Exception {
+        if (!TESTS_ENABLED) {return;}
+        StatsdConfig config = getDefaultConfig()
+                .addGaugeMetric(
+                        GaugeMetric.newBuilder()
+                                .setName("METRIC")
+                                .setWhat("KERNEL_WAKELOCK_PULLED")
+                                .setCondition("SCREEN_IS_ON")
+                                .addDimension(KeyMatcher.newBuilder()
+                                        .setKey(KernelWakelockPulled.NAME_FIELD_NUMBER))
+                                .setGaugeField(KernelWakelockPulled.COUNT_FIELD_NUMBER)
+                                .setBucket(Bucket.newBuilder().setBucketSizeMillis(10)))
+                .build();
+
+        turnScreenOff();
+
+        uploadConfig(config);
+
+        Thread.sleep(2000);
+        turnScreenOn();
+        Thread.sleep(2000);
+
+        ConfigMetricsReportList reportList = getReportList();
+
+        assertTrue(reportList.getReportsCount() == 1);
+        ConfigMetricsReport report = reportList.getReports(0);
+        assertTrue(report.getMetricsCount() >= 1);
+        assertTrue(report.getMetrics(0).getGaugeMetrics().getDataCount() >= 1);
+    }
+
+    public void testKernelWakelockTime() throws Exception {
+        if (!TESTS_ENABLED) {return;}
+        StatsdConfig config = getDefaultConfig()
+                .addGaugeMetric(
+                        GaugeMetric.newBuilder()
+                                .setName("METRIC")
+                                .setWhat("KERNEL_WAKELOCK_PULLED")
+                                .setCondition("SCREEN_IS_ON")
+                                .addDimension(KeyMatcher.newBuilder()
+                                        .setKey(KernelWakelockPulled.NAME_FIELD_NUMBER))
+                                .setGaugeField(KernelWakelockPulled.TIME_FIELD_NUMBER)
+                                .setBucket(Bucket.newBuilder().setBucketSizeMillis(10)))
+                .build();
+        String configName = "testKernelWakelockPulledAtom";
+        removeConfig(configName);
+        turnScreenOff();
+
+        uploadConfig(config);
+
+        Thread.sleep(2000);
+        turnScreenOn();
+        Thread.sleep(2000);
+
+        ConfigMetricsReportList reportList = getReportList();
+
+        assertTrue(reportList.getReportsCount() == 1);
+        ConfigMetricsReport report = reportList.getReports(0);
+        assertTrue(report.getMetricsCount() >= 1);
+        assertTrue(report.getMetrics(0).getGaugeMetrics().getDataCount() >= 1);
+    }
+
+
+
     /**
      * Get default config builder for atoms CTS testing.
      * All matchers are included. One just need to add event metric for pushed events or
@@ -350,10 +410,24 @@ public class StatsdValidationTest extends ProtoDumpTestCase {
                         .setSimpleAtomMatcher(
                                 SimpleAtomMatcher.newBuilder()
                                         .setTag(Atom.KERNEL_WAKELOCK_PULLED_FIELD_NUMBER)));
-        configBuilder
-                .addCondition(Condition.newBuilder().setName("SCREEN_IS_ON").setSimpleCondition(
-                        SimpleCondition.newBuilder().setStart("SCREEN_TURNED_ON")
-                                .setStop("SCREEN_TURNED_OFF")));
+        configBuilder.addAtomMatcher(
+                AtomMatcher.newBuilder()
+                        .setName("CPU_TIME_PER_UID_PULLED")
+                        .setSimpleAtomMatcher(
+                                SimpleAtomMatcher.newBuilder()
+                                        .setTag(Atom.CPU_TIME_PER_UID_PULLED_FIELD_NUMBER)));
+        configBuilder.addAtomMatcher(
+                AtomMatcher.newBuilder()
+                        .setName("CPU_TIME_PER_FREQ_PULLED")
+                        .setSimpleAtomMatcher(
+                                SimpleAtomMatcher.newBuilder()
+                                        .setTag(Atom.CPU_TIME_PER_FREQ_PULLED_FIELD_NUMBER)));
+        configBuilder.addPredicate(Predicate.newBuilder()
+                .setName("SCREEN_IS_ON")
+                .setSimplePredicate(SimplePredicate.newBuilder()
+                        .setStart("SCREEN_TURNED_ON")
+                        .setStop("SCREEN_TURNED_OFF")
+                        .setCountNesting(false)));
         return configBuilder;
     }
 
