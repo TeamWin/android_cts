@@ -590,7 +590,8 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
                 status = RETEST;
             } else {
                 int result = MockListener.getInstance().getCurrentListenerHints();
-                if (result == MockListener.HINT_HOST_DISABLE_CALL_EFFECTS) {
+                if ((result & MockListener.HINT_HOST_DISABLE_CALL_EFFECTS)
+                        == MockListener.HINT_HOST_DISABLE_CALL_EFFECTS) {
                     status = PASS;
                     next();
                 } else {
