@@ -79,7 +79,8 @@ public class VrDisplayTest extends ActivityInstrumentationTestCase2<OpenGLESActi
         if (!mActivity.supportsVrHighPerformance())
             return;
 
-        WindowManager windowManager = (WindowManager)mActivity.getSystemService(
+        Context context = mActivity.getApplicationContext();
+        WindowManager windowManager = (WindowManager)context.getSystemService(
             Context.WINDOW_SERVICE);
         DisplayMetrics metrics = new DisplayMetrics();
 
