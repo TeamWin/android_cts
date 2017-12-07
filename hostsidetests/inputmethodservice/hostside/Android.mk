@@ -30,7 +30,6 @@ LOCAL_JAVA_LIBRARIES := \
     cts-tradefed \
     tradefed
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    cts-inputmethodservice-common-host \
-    hamcrest-library
+    cts-inputmethodservice-common-host
 
 include $(BUILD_CTS_HOST_JAVA_LIBRARY)
