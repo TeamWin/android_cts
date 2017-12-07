@@ -50,6 +50,9 @@ import android.test.InstrumentationTestCase;
 import android.util.Log;
 import android.view.SoundEffectConstants;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class AudioManagerTest extends InstrumentationTestCase {
 
     private final static int MP3_TO_PLAY = R.raw.testmp3;
@@ -64,6 +67,9 @@ public class AudioManagerTest extends InstrumentationTestCase {
     private boolean mSkipRingerTests;
     private Context mContext;
     private final static int ASYNC_TIMING_TOLERANCE_MS = 50;
+
+    private int mOriginalRingerMode;
+    private Map<Integer, Integer> mOriginalStreamVolumes = new HashMap<>();
 
     @Override
     protected void setUp() throws Exception {
@@ -83,11 +89,40 @@ public class AudioManagerTest extends InstrumentationTestCase {
         mIsSingleVolume = mContext.getResources().getBoolean(
                 Resources.getSystem().getIdentifier("config_single_volume", "bool", "android"));
         mSkipRingerTests = mUseFixedVolume || mIsTelevision || mIsSingleVolume;
+
+        // Store the original volumes that that they can be recovered in tearDown().
+        final int[] streamTypes = {
+            AudioManager.STREAM_VOICE_CALL,
+            AudioManager.STREAM_SYSTEM,
+            AudioManager.STREAM_RING,
+            AudioManager.STREAM_MUSIC,
+            AudioManager.STREAM_ALARM,
+            AudioManager.STREAM_NOTIFICATION,
+            AudioManager.STREAM_DTMF,
+            AudioManager.STREAM_ACCESSIBILITY,
+        };
+        mOriginalRingerMode = mAudioManager.getRingerMode();
+        for (int streamType : streamTypes) {
+            mOriginalStreamVolumes.put(streamType, mAudioManager.getStreamVolume(streamType));
+        }
     }
+
     @Override
     protected void tearDown() throws Exception {
-        Utils.toggleNotificationPolicyAccess(
-                mContext.getPackageName(), getInstrumentation(), false);
+        try {
+            Utils.toggleNotificationPolicyAccess(
+                    mContext.getPackageName(), getInstrumentation(), true);
+
+            // Recover the volume and the ringer mode that the test may have overwritten.
+            for (Map.Entry<Integer, Integer> e : mOriginalStreamVolumes.entrySet()) {
+                mAudioManager.setStreamVolume(e.getKey(), e.getValue(),
+                                              AudioManager.FLAG_ALLOW_RINGER_MODES);
+            }
+            mAudioManager.setRingerMode(mOriginalRingerMode);
+        } finally {
+            Utils.toggleNotificationPolicyAccess(
+                    mContext.getPackageName(), getInstrumentation(), false);
+        }
     }
 
     public void testMicrophoneMute() throws Exception {
