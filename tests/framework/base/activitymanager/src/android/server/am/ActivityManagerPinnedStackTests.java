@@ -803,7 +803,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         executeShellCommand("am task lock stop");
     }
 
-    @Presubmit
+    // @Presubmit. b/70328524 flaky
     @Test
     public void testConfigurationChangeOrderDuringTransition() throws Exception {
         if (!supportsPip()) return;
