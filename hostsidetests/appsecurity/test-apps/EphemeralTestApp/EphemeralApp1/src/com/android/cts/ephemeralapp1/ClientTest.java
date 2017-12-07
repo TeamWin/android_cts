@@ -19,11 +19,16 @@ package com.android.cts.ephemeralapp1;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.Manifest;
 import android.annotation.Nullable;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -40,14 +45,10 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.os.ServiceManager.ServiceNotFoundException;
-import android.provider.CalendarContract;
-import android.provider.ContactsContract;
-import android.provider.MediaStore;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
-import android.test.InstrumentationTestCase;
 
+import com.android.compatibility.common.util.SystemUtil;
 import com.android.cts.util.TestResult;
 
 import org.junit.After;
@@ -55,10 +56,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.io.IOException;
 import java.util.List;
-import java.util.ServiceConfigurationError;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -958,6 +958,42 @@ public class ClientTest {
         }
     }
 
+    @Test
+    public void testStartForegroundService() throws Exception {
+        final Context context = InstrumentationRegistry.getContext();
+        final Intent intent = new Intent(context, SomeService.class);
+
+        // Create a notification channel for the foreground notification
+        final NotificationChannel channel = new NotificationChannel("foo", "foo",
+                NotificationManager.IMPORTANCE_DEFAULT);
+        final NotificationManager notificationManager = context.getSystemService(
+                NotificationManager.class);
+        notificationManager.createNotificationChannel(channel);
+
+        // Shouldn't be able to start without a permission
+        final CountDownLatch latch1 = new CountDownLatch(1);
+        SomeService.setOnStartCommandCallback((int result) -> {
+            assertSame("Shouldn't be able to start without "
+                    + " INSTANT_APP_FOREGROUND_SERVICE permission", 0, result);
+            latch1.countDown();
+        });
+        context.startForegroundService(intent);
+        latch1.await(5, TimeUnit.SECONDS);
+
+        // Now grant ourselves INSTANT_APP_FOREGROUND_SERVICE
+        grantInstantAppForegroundServicePermission();
+
+        // Should be able to start with a permission
+        final CountDownLatch latch2 = new CountDownLatch(1);
+        SomeService.setOnStartCommandCallback((int result) -> {
+            assertSame("Should be able to start with "
+                    + " INSTANT_APP_FOREGROUND_SERVICE permission", 1, result);
+            latch2.countDown();
+        });
+        context.startForegroundService(intent);
+        latch2.await(5, TimeUnit.SECONDS);
+    }
+
     private TestResult getResult() {
         final TestResult result;
         try {
@@ -969,6 +1005,12 @@ public class ClientTest {
             throw new IllegalStateException("Activity didn't receive a Result in 5 seconds");
         }
         return result;
+    }
+
+    private static void grantInstantAppForegroundServicePermission() throws IOException {
+        SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(),
+                "pm grant " + InstrumentationRegistry.getContext().getPackageName()
+                        + " " + Manifest.permission.INSTANT_APP_FOREGROUND_SERVICE);
     }
 
     private static Intent makeIntent(String action, String category, String mimeType) {
