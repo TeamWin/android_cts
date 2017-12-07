@@ -125,9 +125,9 @@ public class AbsListViewTest {
     @Before
     public void setup() throws Exception {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
-        mContext = mInstrumentation.getTargetContext();
-
         final Activity activity = mActivityRule.getActivity();
+        // Always use the activity context
+        mContext = activity;
 
         PollingCheck.waitFor(activity::hasWindowFocus);
 
