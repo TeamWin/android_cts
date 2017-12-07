@@ -826,7 +826,7 @@ final class Helper {
 
         final OneTimeSettingsListener observer = new OneTimeSettingsListener(context,
                 AUTOFILL_SERVICE);
-        runShellCommand("settings put secure %s %s default", AUTOFILL_SERVICE, serviceName);
+        setAutofillServiceOnSettings(serviceName);
         observer.assertCalled();
         assertAutofillServiceStatus(serviceName, true);
     }
@@ -840,7 +840,7 @@ final class Helper {
 
         final OneTimeSettingsListener observer = new OneTimeSettingsListener(context,
                 AUTOFILL_SERVICE);
-        runShellCommand("settings delete secure %s", AUTOFILL_SERVICE);
+        resetAutofillServiceOnSettings();
         observer.assertCalled();
         assertAutofillServiceStatus(serviceName, false);
     }
@@ -849,7 +849,7 @@ final class Helper {
      * Checks whether the given service is set as the autofill service for the default user.
      */
     public static boolean isAutofillServiceEnabled(String serviceName) {
-        final String actualName = runShellCommand("settings get secure %s", AUTOFILL_SERVICE);
+        final String actualName = getAutofillServiceFromSettings();
         return serviceName.equals(actualName);
     }
 
@@ -857,10 +857,22 @@ final class Helper {
      * Asserts whether the given service is enabled as the autofill service for the default user.
      */
     public static void assertAutofillServiceStatus(String serviceName, boolean enabled) {
-        final String actual = runShellCommand("settings get secure %s", AUTOFILL_SERVICE);
+        final String actual = getAutofillServiceFromSettings();
         final String expected = enabled ? serviceName : "null";
         assertWithMessage("Invalid value for secure setting %s", AUTOFILL_SERVICE)
                 .that(actual).isEqualTo(expected);
+    }
+
+    public static String getAutofillServiceFromSettings() {
+        return runShellCommand("settings get secure %s", AUTOFILL_SERVICE);
+    }
+
+    public static void setAutofillServiceOnSettings(String serviceName) {
+        runShellCommand("settings put secure %s %s default", AUTOFILL_SERVICE, serviceName);
+    }
+
+    public static void resetAutofillServiceOnSettings() {
+        runShellCommand("settings delete secure %s", AUTOFILL_SERVICE);
     }
 
     /**
