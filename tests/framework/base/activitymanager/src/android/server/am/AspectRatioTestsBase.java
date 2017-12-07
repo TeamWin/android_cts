@@ -33,7 +33,7 @@ class AspectRatioTestsBase {
     void runAspectRatioTest(final ActivityTestRule activityRule,
             final AssertAspectRatioCallback callback) {
         final Activity activity = launchActivity(activityRule);
-        callback.assertAspectRatio(getAspectRatio(activity));
+        runTest(activity, callback);
         finishActivity(activityRule);
 
         // TODO(b/35810513): All this rotation stuff doesn't really work yet. Need to make sure
@@ -48,6 +48,10 @@ class AspectRatioTestsBase {
 //        callback.assertAspectRatio(getAspectRatio(activity));
     }
 
+    protected void runTest(Activity activity, AssertAspectRatioCallback callback) {
+        callback.assertAspectRatio(getAspectRatio(activity));
+    }
+
      static float getAspectRatio(Context context) {
         final Display display =
                 context.getSystemService(WindowManager.class).getDefaultDisplay();
@@ -58,7 +62,7 @@ class AspectRatioTestsBase {
         return longSide / shortSide;
     }
 
-    private Activity launchActivity(final ActivityTestRule activityRule) {
+    protected Activity launchActivity(final ActivityTestRule activityRule) {
         final Activity activity = activityRule.launchActivity(null);
         waitForIdle();
         return activity;

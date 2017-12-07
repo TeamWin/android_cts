@@ -891,7 +891,7 @@
     <string name="snsr_mag_verify_calibrated_uncalibrated">Verifying the relationship between
         calibrated and uncalibrated measurements...</string>
     <string name="snsr_mag_calibration_description">Please calibrate the Magnetometer by moving
-        it in 8 shapes in different orientations.</string>
+        it in 8 shapes in different orientations. Click \"Next\" to start and click \"Next\" once again to end calibration.</string>
     <string name="snsr_mag_calibration_complete">When done, leave the device in a flat surface, far
         from all metallic objects (if the test does not pass, try re-running it outdoors).</string>
     <string name="snsr_mag_measurement">-&gt; (%1$.2f, %2$.2f, %3$.2f) : %4$.2f uT</string>

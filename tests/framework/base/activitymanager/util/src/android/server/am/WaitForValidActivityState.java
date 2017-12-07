@@ -20,28 +20,45 @@ import static android.app.ActivityManager.StackId.INVALID_STACK_ID;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 
+import android.content.ComponentName;
+
 public class WaitForValidActivityState {
+    public final ComponentName componentName;
+    /** Use {@link #componentName}. */
+    @Deprecated
     public final String activityName;
     public final int stackId;
     public final int windowingMode;
     public final int activityType;
 
+    public WaitForValidActivityState(final ComponentName activityName) {
+        this.componentName = activityName;
+        this.activityName = activityName.getShortClassName();
+        this.stackId = INVALID_STACK_ID;
+        this.windowingMode = WINDOWING_MODE_UNDEFINED;
+        this.activityType = ACTIVITY_TYPE_UNDEFINED;
+    }
+
+    /** Use {@link #WaitForValidActivityState(ComponentName)}. */
+    @Deprecated
     public WaitForValidActivityState(String activityName) {
+        this.componentName = null;
         this.activityName = activityName;
         this.stackId = INVALID_STACK_ID;
         this.windowingMode = WINDOWING_MODE_UNDEFINED;
         this.activityType = ACTIVITY_TYPE_UNDEFINED;
     }
 
-    private WaitForValidActivityState(String activityName, int stackId, int windowingMode,
-            int activityType) {
-        this.activityName = activityName;
-        this.stackId = stackId;
-        this.windowingMode = windowingMode;
-        this.activityType = activityType;
+    private WaitForValidActivityState(final Builder builder) {
+        this.componentName = builder.mComponentName;
+        this.activityName = builder.mActivityName;
+        this.stackId = builder.mStackId;
+        this.windowingMode = builder.mWindowingMode;
+        this.activityType = builder.mActivityType;
     }
 
     public static class Builder {
+        private ComponentName mComponentName = null;
         private String mActivityName = null;
         private int mStackId = INVALID_STACK_ID;
         private int mWindowingMode = WINDOWING_MODE_UNDEFINED;
@@ -49,10 +66,25 @@ public class WaitForValidActivityState {
 
         public Builder() {}
 
+        public Builder(final ComponentName activityName) {
+            mComponentName = activityName;
+            mActivityName = activityName.getShortClassName();
+        }
+
+        /** Use {@link #Builder(ComponentName)}. */
+        @Deprecated
         public Builder(String activityName) {
             mActivityName = activityName;
         }
 
+        public Builder setActivityName(final ComponentName activityName) {
+            mComponentName = activityName;
+            mActivityName = activityName.getShortClassName();
+            return this;
+        }
+
+        /** Use {@link #setActivityName(ComponentName)}. */
+        @Deprecated
         public Builder setActivityName(String activityName) {
             mActivityName = activityName;
             return this;
@@ -74,8 +106,7 @@ public class WaitForValidActivityState {
         }
 
         public WaitForValidActivityState build() {
-            return new WaitForValidActivityState(
-                    mActivityName, mStackId, mWindowingMode, mActivityType);
+            return new WaitForValidActivityState(this);
         }
     }
 }

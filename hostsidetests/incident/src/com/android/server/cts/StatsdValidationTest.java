@@ -29,21 +29,20 @@ import com.android.internal.os.StatsdConfigProto.Predicate;
 import com.android.internal.os.StatsdConfigProto.SimpleAtomMatcher;
 import com.android.internal.os.StatsdConfigProto.SimplePredicate;
 import com.android.internal.os.StatsdConfigProto.StatsdConfig;
+import com.android.internal.os.StatsdConfigProto.ValueMetric;
 import com.android.os.AtomsProto.Atom;
 import com.android.os.AtomsProto.KernelWakelockPulled;
 import com.android.os.AtomsProto.ScreenStateChanged;
 import com.android.os.StatsLog.ConfigMetricsReport;
 import com.android.os.StatsLog.ConfigMetricsReportList;
 import com.android.tradefed.log.LogUtil;
-import com.google.common.base.Charsets;
+
 import com.google.common.io.Files;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Random;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Test for statsd
@@ -55,6 +54,8 @@ public class StatsdValidationTest extends ProtoDumpTestCase {
     private static final String TAG = "StatsdValidationTest";
 
     private static final boolean TESTS_ENABLED = false;
+    // For tests that require incidentd. Keep as true until TESTS_ENABLED is permanently enabled.
+    private static final boolean INCIDENTD_TESTS_ENABLED = true;
 
     // TODO: Use a statsd-specific app (temporarily just borrowing the batterystats app)
     private static final String DEVICE_SIDE_TEST_APK = "CtsStatsDApp.apk";
@@ -170,6 +171,7 @@ public class StatsdValidationTest extends ProtoDumpTestCase {
     // Also tests that anomaly detection works when spanning multiple buckets.
     public void testCountAnomalyDetection() throws Exception {
         if (!TESTS_ENABLED) return;
+        if (!INCIDENTD_TESTS_ENABLED) return;
         // TODO: Don't use screen-state as the atom.
         StatsdConfig config = getDefaultConfig()
                 .addCountMetric(CountMetric.newBuilder()
@@ -214,6 +216,7 @@ public class StatsdValidationTest extends ProtoDumpTestCase {
     // Also tests that refractory periods in anomaly detection work.
     public void testDurationAnomalyDetection() throws Exception {
         if (!TESTS_ENABLED) return;
+        if (!INCIDENTD_TESTS_ENABLED) return;
         // TODO: Do NOT use screenState for this, since screens auto-turn-off after a variable time.
         StatsdConfig config = getDefaultConfig()
                 .addDurationMetric(DurationMetric.newBuilder()
@@ -221,14 +224,6 @@ public class StatsdValidationTest extends ProtoDumpTestCase {
                         .setWhat("SCREEN_IS_ON")
                         .setAggregationType(DurationMetric.AggregationType.SUM)
                         .setBucket(Bucket.newBuilder().setBucketSizeMillis(5_000))
-                )
-                .addPredicate(Predicate.newBuilder()
-                        .setName("SCREEN_IS_ON")
-                        .setSimplePredicate(SimplePredicate.newBuilder()
-                                .setStart("SCREEN_TURNED_ON")
-                                .setStop("SCREEN_TURNED_OFF")
-                                .setCountNesting(false)
-                        )
                 )
                 .addAlert(Alert.newBuilder()
                         .setName("testDurationAnomalyDetectionAlert")
@@ -274,6 +269,81 @@ public class StatsdValidationTest extends ProtoDumpTestCase {
         assertTrue(didIncidentdFireSince(markDeviceDate));
     }
 
+    // TODO: There is no value anomaly detection code yet! So this will fail.
+    // Tests that anomaly detection for value works.
+    public void testValueAnomalyDetection() throws Exception {
+        if (!TESTS_ENABLED) return;
+        if (!INCIDENTD_TESTS_ENABLED) return;
+        // TODO: Definitely don't use screen-state as the atom. This MUST be changed.
+        StatsdConfig config = getDefaultConfig()
+                .addValueMetric(ValueMetric.newBuilder()
+                        .setName("METRIC")
+                        .setWhat("SCREEN_TURNED_ON")
+                        .setValueField(ScreenStateChanged.DISPLAY_STATE_FIELD_NUMBER)
+                        .setBucket(Bucket.newBuilder().setBucketSizeMillis(5_000))
+                )
+                .addAlert(Alert.newBuilder()
+                        .setName("testValueAnomalyDetectionAlert")
+                        .setMetricName("METRIC")
+                        .setNumberOfBuckets(4)
+                        .setRefractoryPeriodSecs(20)
+                        .setTriggerIfSumGt(ScreenStateChanged.State.STATE_OFF.getNumber())
+                        .setIncidentdDetails(Alert.IncidentdDetails.newBuilder()
+                                .addSection(-1)
+                        )
+                )
+                .build();
+        uploadConfig(config);
+
+        turnScreenOff();
+        String markDeviceDate = getCurrentLogcatDate();
+        turnScreenOff(); // value = STATE_OFF = 1 (probably)
+        Thread.sleep(2000);
+        assertFalse(didIncidentdFireSince(markDeviceDate));
+        turnScreenOn(); // value = STATE_ON = 2 (probably)
+        Thread.sleep(2000);
+        assertTrue(didIncidentdFireSince(markDeviceDate));
+
+        turnScreenOff();
+    }
+
+    // Tests that anomaly detection for gauge works.
+    public void testGaugeAnomalyDetection() throws Exception {
+        if (!TESTS_ENABLED) return;
+        if (!INCIDENTD_TESTS_ENABLED) return;
+        // TODO: Definitely don't use screen-state as the atom. This MUST be changed.
+        StatsdConfig config = getDefaultConfig()
+                .addGaugeMetric(GaugeMetric.newBuilder()
+                        .setName("METRIC")
+                        .setWhat("SCREEN_TURNED_ON")
+                        .setGaugeField(ScreenStateChanged.DISPLAY_STATE_FIELD_NUMBER)
+                        .setBucket(Bucket.newBuilder().setBucketSizeMillis(10_000))
+                )
+                .addAlert(Alert.newBuilder()
+                        .setName("testGaugeAnomalyDetectionAlert")
+                        .setMetricName("METRIC")
+                        .setNumberOfBuckets(1)
+                        .setRefractoryPeriodSecs(20)
+                        .setTriggerIfSumGt(ScreenStateChanged.State.STATE_OFF.getNumber())
+                        .setIncidentdDetails(Alert.IncidentdDetails.newBuilder()
+                                .addSection(-1)
+                        )
+                )
+                .build();
+        uploadConfig(config);
+
+        turnScreenOff();
+        String markDeviceDate = getCurrentLogcatDate();
+        turnScreenOff(); // gauge = STATE_OFF = 1 (probably)
+        Thread.sleep(2000);
+        assertFalse(didIncidentdFireSince(markDeviceDate));
+        turnScreenOn(); // gauge = STATE_ON = 2 (probably)
+        Thread.sleep(2000);
+        assertTrue(didIncidentdFireSince(markDeviceDate));
+
+        turnScreenOff();
+    }
+
     /**
      * Determines whether logcat indicates that incidentd fired since the given device date.
      */
@@ -288,7 +358,6 @@ public class StatsdValidationTest extends ProtoDumpTestCase {
     }
 
     private void uploadConfig(StatsdConfig config) throws Exception {
-        LogUtil.CLog.d("uploading the config:\n" + config.toString());
         File configFile = File.createTempFile("statsdconfig", ".config");
         Files.write(config.toByteArray(), configFile);
         String remotePath = "/data/" + configFile.getName();
@@ -370,64 +439,62 @@ public class StatsdValidationTest extends ProtoDumpTestCase {
     private StatsdConfig.Builder getDefaultConfig() {
         StatsdConfig.Builder configBuilder = StatsdConfig.newBuilder();
         configBuilder.setName("12345");
-        configBuilder.addAtomMatcher(
-                AtomMatcher.newBuilder()
-                        .setName("SCREEN_TURNED_ON")
-                        .setSimpleAtomMatcher(
-                                SimpleAtomMatcher.newBuilder()
-                                        .setTag(Atom.SCREEN_STATE_CHANGED_FIELD_NUMBER)
-                                        .addKeyValueMatcher(KeyValueMatcher.newBuilder()
-                                                .setKeyMatcher(
-                                                        KeyMatcher.newBuilder()
-                                                                .setKey(ScreenStateChanged
-                                                                        .DISPLAY_STATE_FIELD_NUMBER)
-                                                ).setEqInt(
-                                                        ScreenStateChanged.State.STATE_ON_VALUE))));
-        configBuilder.addAtomMatcher(
-                AtomMatcher.newBuilder()
-                        .setName("SCREEN_TURNED_OFF")
-                        .setSimpleAtomMatcher(
-                                SimpleAtomMatcher.newBuilder()
-                                        .setTag(Atom.SCREEN_STATE_CHANGED_FIELD_NUMBER)
-                                        .addKeyValueMatcher(KeyValueMatcher.newBuilder()
-                                                .setKeyMatcher(
-                                                        KeyMatcher.newBuilder()
-                                                                .setKey(ScreenStateChanged
-                                                                        .DISPLAY_STATE_FIELD_NUMBER)
-                                                ).setEqInt(
-                                                        ScreenStateChanged.State.STATE_OFF_VALUE)
-                                        )));
-        configBuilder.addAtomMatcher(
-                AtomMatcher.newBuilder()
-                        .setName("UID_PROCESS_STATE_CHANGED")
-                        .setSimpleAtomMatcher(
-                                SimpleAtomMatcher.newBuilder()
-                                        .setTag(Atom.UID_PROCESS_STATE_CHANGED_FIELD_NUMBER)));
-        // up to 110 is fine. 128 not good
-        configBuilder.addAtomMatcher(
-                AtomMatcher.newBuilder()
-                        .setName("KERNEL_WAKELOCK_PULLED")
-                        .setSimpleAtomMatcher(
-                                SimpleAtomMatcher.newBuilder()
-                                        .setTag(Atom.KERNEL_WAKELOCK_PULLED_FIELD_NUMBER)));
-        configBuilder.addAtomMatcher(
-                AtomMatcher.newBuilder()
-                        .setName("CPU_TIME_PER_UID_PULLED")
-                        .setSimpleAtomMatcher(
-                                SimpleAtomMatcher.newBuilder()
-                                        .setTag(Atom.CPU_TIME_PER_UID_PULLED_FIELD_NUMBER)));
-        configBuilder.addAtomMatcher(
-                AtomMatcher.newBuilder()
-                        .setName("CPU_TIME_PER_FREQ_PULLED")
-                        .setSimpleAtomMatcher(
-                                SimpleAtomMatcher.newBuilder()
-                                        .setTag(Atom.CPU_TIME_PER_FREQ_PULLED_FIELD_NUMBER)));
-        configBuilder.addPredicate(Predicate.newBuilder()
+        configBuilder
+            .addAtomMatcher(AtomMatcher.newBuilder()
+                .setName("SCREEN_TURNED_ON")
+                .setSimpleAtomMatcher(SimpleAtomMatcher.newBuilder()
+                    .setTag(Atom.SCREEN_STATE_CHANGED_FIELD_NUMBER)
+                    .addKeyValueMatcher(KeyValueMatcher.newBuilder()
+                        .setKeyMatcher(KeyMatcher.newBuilder()
+                            .setKey(ScreenStateChanged.DISPLAY_STATE_FIELD_NUMBER)
+                        )
+                        .setEqInt(ScreenStateChanged.State.STATE_ON_VALUE)
+                    )
+                )
+            )
+            .addAtomMatcher(AtomMatcher.newBuilder()
+                .setName("SCREEN_TURNED_OFF")
+                .setSimpleAtomMatcher(SimpleAtomMatcher.newBuilder()
+                    .setTag(Atom.SCREEN_STATE_CHANGED_FIELD_NUMBER)
+                    .addKeyValueMatcher(KeyValueMatcher.newBuilder()
+                        .setKeyMatcher(KeyMatcher.newBuilder()
+                            .setKey(ScreenStateChanged.DISPLAY_STATE_FIELD_NUMBER)
+                        )
+                        .setEqInt(ScreenStateChanged.State.STATE_OFF_VALUE)
+                    )
+                )
+            )
+            .addAtomMatcher(AtomMatcher.newBuilder()
+                .setName("UID_PROCESS_STATE_CHANGED")
+                .setSimpleAtomMatcher(SimpleAtomMatcher.newBuilder()
+                    .setTag(Atom.UID_PROCESS_STATE_CHANGED_FIELD_NUMBER)
+                )
+            )
+            .addAtomMatcher(AtomMatcher.newBuilder()
+                .setName("KERNEL_WAKELOCK_PULLED")
+                .setSimpleAtomMatcher(SimpleAtomMatcher.newBuilder()
+                    .setTag(Atom.KERNEL_WAKELOCK_PULLED_FIELD_NUMBER)
+                )
+            )
+            .addAtomMatcher(AtomMatcher.newBuilder()
+                .setName("CPU_TIME_PER_UID_PULLED")
+                .setSimpleAtomMatcher(SimpleAtomMatcher.newBuilder()
+                    .setTag(Atom.CPU_TIME_PER_UID_PULLED_FIELD_NUMBER))
+            )
+            .addAtomMatcher(AtomMatcher.newBuilder()
+                .setName("CPU_TIME_PER_FREQ_PULLED")
+                .setSimpleAtomMatcher(SimpleAtomMatcher.newBuilder()
+                    .setTag(Atom.CPU_TIME_PER_FREQ_PULLED_FIELD_NUMBER))
+            )
+            .addPredicate(Predicate.newBuilder()
                 .setName("SCREEN_IS_ON")
                 .setSimplePredicate(SimplePredicate.newBuilder()
-                        .setStart("SCREEN_TURNED_ON")
-                        .setStop("SCREEN_TURNED_OFF")
-                        .setCountNesting(false)));
+                    .setStart("SCREEN_TURNED_ON")
+                    .setStop("SCREEN_TURNED_OFF")
+                    .setCountNesting(false)
+                )
+            )
+        ;
         return configBuilder;
     }
 
@@ -587,64 +654,6 @@ public class StatsdValidationTest extends ProtoDumpTestCase {
      */
     private String getCompletedActionString(String actionValue, String requestCode) {
         return String.format("Completed performing %s for request %s", actionValue, requestCode);
-    }
-
-    /**
-     * Runs logcat and waits (for a maximumum of maxTimeMs) until the desired text is displayed with
-     * the given tag.
-     * Logcat is not cleared, so make sure that text is unique (won't get false hits from old data).
-     * Note that, in practice, the actual max wait time seems to be about 10s longer than maxTimeMs.
-     */
-    private void checkLogcatForText(String logcatTag, String text, int maxTimeMs) {
-        IShellOutputReceiver receiver = new IShellOutputReceiver() {
-            private final StringBuilder mOutputBuffer = new StringBuilder();
-            private final AtomicBoolean mIsCanceled = new AtomicBoolean(false);
-
-            @Override
-            public void addOutput(byte[] data, int offset, int length) {
-                if (!isCancelled()) {
-                    synchronized (mOutputBuffer) {
-                        String s = new String(data, offset, length, Charsets.UTF_8);
-                        mOutputBuffer.append(s);
-                        if (checkBufferForText()) {
-                            mIsCanceled.set(true);
-                        }
-                    }
-                }
-            }
-
-            private boolean checkBufferForText() {
-                if (mOutputBuffer.indexOf(text) > -1) {
-                    return true;
-                } else {
-                    // delete all old data (except the last few chars) since they don't contain text
-                    // (presumably large chunks of data will be added at a time, so this is
-                    // sufficiently efficient.)
-                    int newStart = mOutputBuffer.length() - text.length();
-                    if (newStart > 0) {
-                        mOutputBuffer.delete(0, newStart);
-                    }
-                    return false;
-                }
-            }
-
-            @Override
-            public boolean isCancelled() {
-                return mIsCanceled.get();
-            }
-
-            @Override
-            public void flush() {
-            }
-        };
-
-        try {
-            // Wait for at most maxTimeMs for logcat to display the desired text.
-            getDevice().executeShellCommand(String.format("logcat -s %s -e '%s'", logcatTag, text),
-                    receiver, maxTimeMs, TimeUnit.MILLISECONDS, 0);
-        } catch (com.android.tradefed.device.DeviceNotAvailableException e) {
-            System.err.println(e);
-        }
     }
 
     /**

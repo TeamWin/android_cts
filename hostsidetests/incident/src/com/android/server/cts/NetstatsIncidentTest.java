@@ -374,16 +374,14 @@ public class NetstatsIncidentTest extends ProtoDumpTestCase {
                 assertNotNegative("TX bytes", bucket.getTxBytes());
                 assertNotNegative("TX packets", bucket.getTxPackets());
 
-// 10 was still too big?                // It should be safe to say # of bytes >= 10 * 10 of packets, due to headers, etc...
-                final long FACTOR = 4;
                 assertTrue(
                         String.format("# of bytes %d too small for # of packets %d",
                                 bucket.getRxBytes(), bucket.getRxPackets()),
-                        bucket.getRxBytes() >= bucket.getRxPackets() * FACTOR);
+                        bucket.getRxBytes() >= bucket.getRxPackets());
                 assertTrue(
                         String.format("# of bytes %d too small for # of packets %d",
                                 bucket.getTxBytes(), bucket.getTxPackets()),
-                        bucket.getTxBytes() >= bucket.getTxPackets() * FACTOR);
+                        bucket.getTxBytes() >= bucket.getTxPackets());
             }
         }
 

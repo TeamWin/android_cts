@@ -38,6 +38,30 @@
               android:resource="@xml/second_appwidget_info" />
       </receiver>
 
+      <receiver android:name="android.appwidget.cts.provider.AppWidgetProviderWithFeatures$Provider1" >
+          <intent-filter>
+              <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+          </intent-filter>
+          <meta-data android:name="android.appwidget.provider"
+              android:resource="@xml/appwidget_info_with_feature1" />
+      </receiver>
+
+      <receiver android:name="android.appwidget.cts.provider.AppWidgetProviderWithFeatures$Provider2" >
+          <intent-filter>
+              <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+          </intent-filter>
+          <meta-data android:name="android.appwidget.provider"
+              android:resource="@xml/appwidget_info_with_feature2" />
+      </receiver>
+
+      <receiver android:name="android.appwidget.cts.provider.AppWidgetProviderWithFeatures$Provider3" >
+          <intent-filter>
+              <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+          </intent-filter>
+          <meta-data android:name="android.appwidget.provider"
+              android:resource="@xml/appwidget_info_with_feature3" />
+      </receiver>
+
       <service android:name="android.appwidget.cts.service.MyAppWidgetService"
           android:permission="android.permission.BIND_REMOTEVIEWS">
       </service>

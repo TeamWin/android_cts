@@ -54,7 +54,7 @@ public class KeyguardTests extends KeyguardTestBase {
 
     @Test
     public void testKeyguardHidesActivity() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
         launchActivity("TestActivity");
@@ -69,7 +69,7 @@ public class KeyguardTests extends KeyguardTestBase {
 
     @Test
     public void testShowWhenLockedActivity() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
         launchActivity("ShowWhenLockedActivity");
@@ -89,7 +89,7 @@ public class KeyguardTests extends KeyguardTestBase {
      */
     @Test
     public void testShowWhenLockedActivity_withDialog() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
         launchActivity("ShowWhenLockedWithDialogActivity");
@@ -110,7 +110,7 @@ public class KeyguardTests extends KeyguardTestBase {
      */
     @Test
     public void testMultipleShowWhenLockedActivities() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
         launchActivity("ShowWhenLockedActivity");
@@ -133,7 +133,7 @@ public class KeyguardTests extends KeyguardTestBase {
      */
     @Test
     public void testTranslucentShowWhenLockedActivity() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
         launchActivity("ShowWhenLockedTranslucentActivity");
@@ -153,7 +153,7 @@ public class KeyguardTests extends KeyguardTestBase {
      */
     @Test
     public void testTranslucentDoesntRevealBehind() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
         launchActivity("TestActivity");
@@ -173,7 +173,7 @@ public class KeyguardTests extends KeyguardTestBase {
 
     @Test
     public void testDialogShowWhenLockedActivity() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
         launchActivity("ShowWhenLockedDialogActivity");
@@ -193,7 +193,7 @@ public class KeyguardTests extends KeyguardTestBase {
      */
     @Test
     public void testShowWhenLockedActivityWhileSplit() throws Exception {
-        if (!isHandheld() || !supportsSplitScreenMultiWindow()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset() || !supportsSplitScreenMultiWindow()) {
             return;
         }
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
@@ -214,7 +214,7 @@ public class KeyguardTests extends KeyguardTestBase {
      */
     @Test
     public void testDismissKeyguardActivity() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
         gotoKeyguard();
@@ -229,7 +229,7 @@ public class KeyguardTests extends KeyguardTestBase {
 
     @Test
     public void testDismissKeyguardActivity_method() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
         final String logSeparator = clearLogcat();
@@ -246,7 +246,7 @@ public class KeyguardTests extends KeyguardTestBase {
 
     @Test
     public void testDismissKeyguardActivity_method_notTop() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
         final String logSeparator = clearLogcat();
@@ -261,7 +261,7 @@ public class KeyguardTests extends KeyguardTestBase {
 
     @Test
     public void testDismissKeyguardActivity_method_turnScreenOn() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
         final String logSeparator = clearLogcat();
@@ -278,7 +278,7 @@ public class KeyguardTests extends KeyguardTestBase {
 
     @Test
     public void testDismissKeyguard_fromShowWhenLocked_notAllowed() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
         gotoKeyguard();
@@ -295,7 +295,7 @@ public class KeyguardTests extends KeyguardTestBase {
 
     @Test
     public void testKeyguardLock() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
         gotoKeyguard();
@@ -311,7 +311,7 @@ public class KeyguardTests extends KeyguardTestBase {
 
     @Test
     public void testUnoccludeRotationChange() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
         gotoKeyguard();
@@ -339,7 +339,7 @@ public class KeyguardTests extends KeyguardTestBase {
 
     @Test
     public void testDismissKeyguardAttrActivity_method_turnScreenOn() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
 
@@ -359,7 +359,7 @@ public class KeyguardTests extends KeyguardTestBase {
 
     @Test
     public void testDismissKeyguardAttrActivity_method_turnScreenOn_withSecureKeyguard() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
 
@@ -379,7 +379,7 @@ public class KeyguardTests extends KeyguardTestBase {
 
     @Test
     public void testScreenOffWhileOccludedStopsActivity() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
 
@@ -397,7 +397,7 @@ public class KeyguardTests extends KeyguardTestBase {
 
     @Test
     public void testScreenOffCausesSingleStop() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
 

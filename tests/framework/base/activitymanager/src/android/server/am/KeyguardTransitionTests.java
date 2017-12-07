@@ -44,7 +44,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
 
     @Test
     public void testUnlock() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
         launchActivity("TestActivity");
@@ -56,7 +56,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
     }
     @Test
     public void testUnlockWallpaper() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
         launchActivity("WallpaperActivity");
@@ -68,7 +68,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
     }
     @Test
     public void testOcclude() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
         gotoKeyguard();
@@ -79,7 +79,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
     }
     @Test
     public void testUnocclude() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
         gotoKeyguard();
@@ -92,7 +92,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
     }
     @Test
     public void testNewActivityDuringOccluded() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
         launchActivity("ShowWhenLockedActivity");
@@ -104,7 +104,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
     }
     @Test
     public void testOccludeManifestAttr() throws Exception {
-         if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
              return;
          }
 
@@ -120,7 +120,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
     }
     @Test
     public void testOccludeAttrRemove() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
 
@@ -142,7 +142,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
     }
     @Test
     public void testNewActivityDuringOccludedWithAttr() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
             return;
         }
 
