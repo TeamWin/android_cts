@@ -1051,7 +1051,7 @@ final class Helper {
             int eventType, @Nullable String datasetId,
             @Nullable String key, @Nullable String value,
             @Nullable AutofillId[] detectedAutofillIds, @Nullable String[] detectedRemoteIds,
-            @Nullable int[] detectedScores) {
+            @Nullable float[] detectedScores) {
         assertThat(event).isNotNull();
         assertWithMessage("Wrong type for %s", event).that(event.getType()).isEqualTo(eventType);
         if (datasetId == null) {
@@ -1085,11 +1085,11 @@ final class Helper {
             for (Entry<AutofillId, FieldClassification> entry : detectedFields.entrySet()) {
                 assertWithMessage("Wrong field id at %s", i).that(entry.getKey())
                         .isEqualTo(detectedAutofillIds[i]);
-                final Match topMatch = entry.getValue().getTopMatch();
+                final Match topMatch = entry.getValue().getMatches().get(0);
                 assertWithMessage("Wrong remote id at %s", i).that(topMatch.getRemoteId())
                         .isEqualTo(detectedRemoteIds[i]);
                 assertWithMessage("Wrong score at %s", i).that(topMatch.getScore())
-                        .isEqualTo(detectedScores[i]);
+                        .isWithin(detectedScores[i]);
                 i++;
             }
         }
@@ -1182,14 +1182,14 @@ final class Helper {
 
     // TODO(b/67867469): document
     public static void assertFillEventForFieldsClassification(@NonNull FillEventHistory.Event event,
-            @NonNull AutofillId fieldId, @NonNull String remoteId, int score) {
+            @NonNull AutofillId fieldId, @NonNull String remoteId, float score) {
         assertFillEvent(event, TYPE_CONTEXT_COMMITTED, null, null, null,
-                new AutofillId[] { fieldId }, new String[] { remoteId }, new int[] { score });
+                new AutofillId[] { fieldId }, new String[] { remoteId }, new float[] { score });
     }
 
     // TODO(b/67867469): document
     public static void assertFillEventForFieldsClassification(@NonNull FillEventHistory.Event event,
-            @NonNull AutofillId[] fieldIds, @NonNull String[] remoteIds, @NonNull int[] scores) {
+            @NonNull AutofillId[] fieldIds, @NonNull String[] remoteIds, @NonNull float[] scores) {
         assertFillEvent(event, TYPE_CONTEXT_COMMITTED, null, null, null, fieldIds, remoteIds,
                 scores);
     }
