@@ -29,6 +29,7 @@ import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.content.ServiceConnection;
 import android.os.Handler;
 import android.os.IBinder;
@@ -113,6 +114,10 @@ public final class AlertWindowsImportanceTests {
 
     @Test
     public void testAlertWindowOomAdj() throws Exception {
+        // Alert windows are always hidden when running in VR.
+        if (isRunningInVR()) {
+            return;
+        }
         setAlertWindowPermission(true /* allow */);
 
         assertPackageImportance(IMPORTANCE_PERCEPTIBLE, IMPORTANCE_PERCEPTIBLE_PRE_26);
@@ -239,5 +244,14 @@ public final class AlertWindowsImportanceTests {
                     super.handleMessage(msg);
             }
         }
+    }
+
+    private boolean isRunningInVR() {
+        final Context context = InstrumentationRegistry.getTargetContext();
+        if ((context.getResources().getConfiguration().uiMode & Configuration.UI_MODE_TYPE_MASK)
+             == Configuration.UI_MODE_TYPE_VR_HEADSET) {
+            return true;
+        }
+        return false;
     }
 }

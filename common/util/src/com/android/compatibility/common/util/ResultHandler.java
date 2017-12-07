@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -565,7 +566,8 @@ public class ResultHandler {
      * @param time the epoch time in ms since midnight Jan 1, 1970
      */
     static String toReadableDateString(long time) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy");
+    SimpleDateFormat dateFormat =
+        new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.ENGLISH);
         return dateFormat.format(new Date(time));
     }
 
