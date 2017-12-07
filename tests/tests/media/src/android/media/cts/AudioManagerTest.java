@@ -41,6 +41,7 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.media.AudioManager;
 import android.content.pm.PackageManager;
+import android.media.AudioSystem;
 import android.media.MediaPlayer;
 import android.os.Vibrator;
 import android.provider.Settings;
@@ -59,6 +60,8 @@ public class AudioManagerTest extends InstrumentationTestCase {
     private boolean mHasVibrator;
     private boolean mUseFixedVolume;
     private boolean mIsTelevision;
+    private boolean mIsSingleVolume;
+    private boolean mSkipRingerTests;
     private Context mContext;
     private final static int ASYNC_TIMING_TOLERANCE_MS = 50;
 
@@ -77,6 +80,9 @@ public class AudioManagerTest extends InstrumentationTestCase {
         mIsTelevision = packageManager != null
                 && (packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
                         || packageManager.hasSystemFeature(PackageManager.FEATURE_TELEVISION));
+        mIsSingleVolume = mContext.getResources().getBoolean(
+                Resources.getSystem().getIdentifier("config_single_volume", "bool", "android"));
+        mSkipRingerTests = mUseFixedVolume || mIsTelevision || mIsSingleVolume;
     }
     @Override
     protected void tearDown() throws Exception {
@@ -156,6 +162,9 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     public void testMusicActive() throws Exception {
+        if (mAudioManager.isMusicActive()) {
+            return;
+        }
         MediaPlayer mp = MediaPlayer.create(mContext, MP3_TO_PLAY);
         assertNotNull(mp);
         mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
@@ -353,14 +362,14 @@ public class AudioManagerTest extends InstrumentationTestCase {
         mAudioManager.setRingerMode(RINGER_MODE_SILENT);
         // AudioService#setRingerMode() has:
         // if (isTelevision) return;
-        if (mUseFixedVolume || mIsTelevision) {
+        if (mSkipRingerTests) {
             assertEquals(RINGER_MODE_NORMAL, mAudioManager.getRingerMode());
         } else {
             assertEquals(RINGER_MODE_SILENT, mAudioManager.getRingerMode());
         }
 
         mAudioManager.setRingerMode(RINGER_MODE_VIBRATE);
-        if (mUseFixedVolume || mIsTelevision) {
+        if (mSkipRingerTests) {
             assertEquals(RINGER_MODE_NORMAL, mAudioManager.getRingerMode());
         } else {
             assertEquals(mHasVibrator ? RINGER_MODE_VIBRATE : RINGER_MODE_SILENT,
@@ -369,7 +378,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     public void testSetRingerModePolicyAccess() throws Exception {
-        if (mUseFixedVolume || mIsTelevision) {
+        if (mSkipRingerTests) {
             return;
         }
         // Apps without policy access cannot change silent -> normal or silent -> vibrate.
@@ -432,7 +441,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     public void testVolumeDndAffectedStream() throws Exception {
-        if (mUseFixedVolume || mHasVibrator || mIsTelevision) {
+        if (mHasVibrator || mSkipRingerTests) {
             return;
         }
         Utils.toggleNotificationPolicyAccess(
@@ -575,6 +584,11 @@ public class AudioManagerTest extends InstrumentationTestCase {
         mAudioManager.adjustVolume(ADJUST_RAISE, 0);
         Thread.sleep(ASYNC_TIMING_TOLERANCE_MS);
 
+        boolean isMusicPlayingBeforeTest = false;
+        if (mAudioManager.isMusicActive()) {
+            isMusicPlayingBeforeTest = true;
+        }
+
         MediaPlayer mp = MediaPlayer.create(mContext, MP3_TO_PLAY);
         assertNotNull(mp);
         mp.setAudioStreamType(STREAM_MUSIC);
@@ -610,7 +624,9 @@ public class AudioManagerTest extends InstrumentationTestCase {
         mp.stop();
         mp.release();
         Thread.sleep(TIME_TO_PLAY);
-        assertFalse(mAudioManager.isMusicActive());
+        if (!isMusicPlayingBeforeTest) {
+            assertFalse(mAudioManager.isMusicActive());
+        }
     }
 
     public void testAccessibilityVolume() throws Exception {
@@ -680,7 +696,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     public void testMuteDndAffectedStreams() throws Exception {
-        if (mUseFixedVolume || mIsTelevision) {
+        if (mSkipRingerTests) {
             return;
         }
         int[] streams = { AudioManager.STREAM_RING };
@@ -754,7 +770,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     public void testMuteDndUnaffectedStreams() throws Exception {
-        if (mUseFixedVolume  || mIsTelevision) {
+        if (mSkipRingerTests) {
             return;
         }
         int[] streams = {
@@ -840,7 +856,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     public void testAdjustVolumeInTotalSilenceMode() throws Exception {
-        if (mUseFixedVolume || mIsTelevision) {
+        if (mSkipRingerTests) {
             return;
         }
         try {
@@ -860,7 +876,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     public void testAdjustVolumeInAlarmsOnlyMode() throws Exception {
-        if (mUseFixedVolume || mIsTelevision) {
+        if (mSkipRingerTests) {
             return;
         }
         try {
@@ -883,7 +899,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     public void testSetStreamVolumeInTotalSilenceMode() throws Exception {
-        if (mUseFixedVolume || mIsTelevision) {
+        if (mSkipRingerTests) {
             return;
         }
         try {
@@ -905,7 +921,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     public void testSetStreamVolumeInAlarmsOnlyMode() throws Exception {
-        if (mUseFixedVolume || mIsTelevision) {
+        if (mSkipRingerTests) {
             return;
         }
         try {
