@@ -448,7 +448,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     @Test
     public void testSplitscreenPortraitAppOrientationRequests() throws Exception {
         if (!supportsSplitScreenMultiWindow()) {
-          CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no multi-window support");
+          log("Skipping test: no multi-window support");
           return;
         }
         requestOrientationInSplitScreen(1 /* portrait */, LANDSCAPE_ACTIVITY_NAME);
@@ -460,7 +460,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     @Test
     public void testSplitscreenLandscapeAppOrientationRequests() throws Exception {
         if (!supportsSplitScreenMultiWindow()) {
-          CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no multi-window support");
+          log("Skipping test: no multi-window support");
           return;
         }
         requestOrientationInSplitScreen(0 /* landscape */, PORTRAIT_ACTIVITY_NAME);
