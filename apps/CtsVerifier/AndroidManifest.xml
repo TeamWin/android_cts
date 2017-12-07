@@ -892,7 +892,7 @@
                 android:value="@string/test_category_sensors" />
             <meta-data
                 android:name="test_required_features"
-                android:value="android.hardware.sensor.accelerometer:android.hardware.sensor.gyroscope:android.hardware.sensor.compass:android.hardware.camera.any" />
+                android:value="android.hardware.sensor.accelerometer:android.hardware.sensor.gyroscope:android.hardware.sensor.compass:android.hardware.camera" />
         </activity>
         <activity
             android:name=".sensors.RVCVRecordActivity"
