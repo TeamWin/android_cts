@@ -27,6 +27,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestserver \
     ctstestrunner
 
+LOCAL_JAVA_LIBRARIES := android.test.runner.stubs
+
 # When built, explicitly put it in the data partition.
 #LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 

@@ -41,7 +41,9 @@ include $(BUILD_CTS_PACKAGE)
 # CTS tests, so drop it into a library that other tests can use.
 include $(CLEAR_VARS)
 
-LOCAL_STATIC_JAVA_LIBRARIES := junit legacy-android-test
+LOCAL_STATIC_JAVA_LIBRARIES := junit
+
+LOCAL_JAVA_LIBRARIES := android.test.base
 
 LOCAL_SRC_FILES := src/android/dpi/cts/DefaultManifestAttributesTest.java
 

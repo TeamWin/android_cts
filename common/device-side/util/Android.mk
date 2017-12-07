@@ -23,8 +23,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-common-util-devicesidelib \
     android-support-test \
     ub-uiautomator \
-    mockito-target-minus-junit4 \
-    legacy-android-test
+    mockito-target-minus-junit4
 
 LOCAL_JAVA_LIBRARIES := android.test.runner
 

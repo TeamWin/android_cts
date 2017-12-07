@@ -29,7 +29,11 @@ LOCAL_SRC_FILES := \
     $(call all-java-files-under, ../../common)
 
 
-LOCAL_STATIC_JAVA_LIBRARIES := android-support-test compatibility-device-util
+LOCAL_STATIC_JAVA_LIBRARIES := \
+    android-support-test \
+    compatibility-device-util \
+    legacy-android-test \
+
 
 LOCAL_SDK_VERSION := current
 

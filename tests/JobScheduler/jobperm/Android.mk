@@ -21,6 +21,7 @@ LOCAL_MODULE_TAGS := tests
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util \
+    legacy-android-test \
 
 LOCAL_SRC_FILES := \
     $(call all-java-files-under, src) \
