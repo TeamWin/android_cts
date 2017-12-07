@@ -210,7 +210,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
                 TRANSLUCENT_ASSISTANT_ACTIVITY, ACTIVITY_TYPE_ASSISTANT);
         assertAssistantStackExists();
         mAmWmState.waitForHomeActivityVisible();
-        if (!noHomeScreen()) {
+        if (hasHomeScreen()) {
             mAmWmState.assertHomeActivityVisible(true);
         }
 
@@ -239,7 +239,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         mAmWmState.waitForFocusedStack(WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_ASSISTANT);
         assertAssistantStackExists();
         mAmWmState.waitForHomeActivityVisible();
-        if (!noHomeScreen()) {
+        if (hasHomeScreen()) {
             mAmWmState.assertHomeActivityVisible(true);
         }
 
