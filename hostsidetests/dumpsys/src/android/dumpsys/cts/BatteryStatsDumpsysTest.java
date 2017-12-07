@@ -442,7 +442,7 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
     }
 
     private void checkBatteryDischarge(String[] parts) {
-        assertEquals(12, parts.length);
+        assertEquals(14, parts.length);
         assertInteger(parts[4]); // low
         assertInteger(parts[5]); // high
         assertInteger(parts[6]); // screenOn
@@ -451,6 +451,8 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
         assertInteger(parts[9]); // dischargeScreenOffMah
         assertInteger(parts[10]); // dischargeDozeCount
         assertInteger(parts[11]); // dischargeDozeMah
+        assertInteger(parts[12]); // dischargeLightDozeMah
+        assertInteger(parts[13]); // dischargeDeepDozeMah
     }
 
     private void checkBatteryLevel(String[] parts) {
