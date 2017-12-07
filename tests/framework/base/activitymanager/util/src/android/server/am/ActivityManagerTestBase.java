@@ -116,6 +116,8 @@ public abstract class ActivityManagerTestBase {
     private static final int UI_MODE_TYPE_MASK = 0x0f;
     private static final int UI_MODE_TYPE_VR_HEADSET = 0x07;
 
+    private static Boolean sHasHomeScreen = null;
+
     // TODO: Remove this when all activity name are specified by {@link ComponentName}.
     static String componentName = DEFAULT_COMPONENT_NAME;
 
@@ -603,9 +605,11 @@ public abstract class ActivityManagerTestBase {
         return ActivityManager.supportsSplitScreenMultiWindow(mContext);
     }
 
-    protected boolean noHomeScreen() {
-        String output = executeShellCommand(AM_NO_HOME_SCREEN);
-        return output.startsWith("true");
+    protected boolean hasHomeScreen() {
+        if (sHasHomeScreen == null) {
+            sHasHomeScreen = !executeShellCommand(AM_NO_HOME_SCREEN).startsWith("true");
+        }
+        return sHasHomeScreen;
     }
 
     /**
