@@ -741,7 +741,7 @@ enum qca_wlan_vendor_attr {
 #define GENL_ID_VFS_DQUOT (NLMSG_MIN_TYPE + 1)
 #define GENL_ID_PMCRAID (NLMSG_MIN_TYPE + 2)
 
-#define GENLMSG_DATA(glh) ((void *)(NLMSG_DATA(glh) + GENL_HDRLEN))
+#define GENLMSG_DATA(glh) ((void *)((char *)(NLMSG_DATA(glh)) + GENL_HDRLEN))
 #define NLA_DATA(na) ((void *)((char *)(na) + NLA_HDRLEN))
 #define QCA_NL80211_VENDOR_ID 0x001374
 
@@ -808,7 +808,7 @@ static int send_cmd(int sd, __u16 nlmsg_type, __u32 nlmsg_pid, __u8 genl_cmd,
                     __u16 nla_type, void *nla_data, int nla_len) {
   struct nlattr *na;
   struct sockaddr_nl nladdr;
-  int r, buflen;
+  int buflen;
   char *buf;
 
   struct msgtemplate msg;
@@ -871,9 +871,8 @@ static int get_family_id(int sd) {
 
 int start_p2p(int id, int fd) {
   struct nlattr *na;
-  struct nlattr *na_data;
   struct sockaddr_nl nladdr;
-  int r, buflen, ret;
+  int buflen, ret;
   char *buf;
   struct msgtemplate msg, ans;
 
@@ -928,9 +927,8 @@ unsigned if_nametoindex(const char *ifname) {
 
 int get_wiphy_idx(int id, int fd, int *ifindex, int *wiphyid, char *ifname) {
   struct nlattr *na;
-  struct nlattr *na_data;
   struct sockaddr_nl nladdr;
-  int r, buflen, ret;
+  int buflen, ret;
   char *buf;
   struct msgtemplate msg, ans;
 
@@ -973,7 +971,7 @@ int get_wiphy_idx(int id, int fd, int *ifindex, int *wiphyid, char *ifname) {
   return ret;
 }
 
-int main(int argc, const char *argv[]) {
+int main(int argc __unused, const char *argv[] __unused) {
   int ret;
 
   int fd;
@@ -1000,7 +998,7 @@ int main(int argc, const char *argv[]) {
   struct nlattr *na;
   struct nlattr *na_data;
   struct sockaddr_nl nladdr;
-  int r, buflen;
+  int buflen;
   char *buf;
   struct msgtemplate msg;
 
@@ -1032,7 +1030,7 @@ int main(int argc, const char *argv[]) {
 
   char data[1024] = {0};
   int data_size = 0;
-  na_data = data;
+  na_data = (struct nlattr *)data;
 
   na_data = (struct nlattr *)((char *)na_data + NLMSG_ALIGN(na_data->nla_len));
   na_data->nla_type =
@@ -1049,7 +1047,7 @@ int main(int argc, const char *argv[]) {
 
   char apTh[256] = {0};
   int apTh_size = 0;
-  struct nlattr *na_apTh = apTh;
+  struct nlattr *na_apTh = (struct nlattr *)apTh;
 
   na_apTh = (struct nlattr *)((char *)na_apTh + NLMSG_ALIGN(na_apTh->nla_len));
   na_apTh->nla_type = QCA_WLAN_VENDOR_ATTR_EXTSCAN_AP_THRESHOLD_PARAM_RSSI_LOW;
@@ -1065,7 +1063,7 @@ int main(int argc, const char *argv[]) {
 
   char middlebuf[256] = {0};
   int middlebuf_size = 0;
-  struct nlattr *na_middle = middlebuf;
+  struct nlattr *na_middle = (struct nlattr *)middlebuf;
 
   na_middle =
       (struct nlattr *)((char *)na_middle + NLMSG_ALIGN(na_middle->nla_len));
@@ -1105,7 +1103,6 @@ int main(int argc, const char *argv[]) {
 
   ret = recv(fd, &ans, sizeof(ans), 0);
   na = (struct nlattr *)GENLMSG_DATA(&ans);
-  char *temp = na;
 
   struct nlattr *nla;
   int rem;
