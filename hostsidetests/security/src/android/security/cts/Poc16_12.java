@@ -128,6 +128,16 @@ public class Poc16_12 extends SecurityTestCase {
     }
 
     /**
+     *  b/32125137
+     */
+    @SecurityTest
+    public void testPocCVE_2016_8434() throws Exception {
+        if(containsDriver(getDevice(), "/dev/kgsl-3d0")) {
+            AdbUtils.runPoc("CVE-2016-8434", getDevice(), 60);
+        }
+    }
+
+    /**
      *  b/31668540
      */
     @SecurityTest
@@ -136,5 +146,15 @@ public class Poc16_12 extends SecurityTestCase {
             String result = AdbUtils.runPoc("CVE-2016-8460", getDevice(), 60);
             assertTrue(!result.equals("Vulnerable"));
         }
+    }
+
+    /**
+     *  b/32659848
+     */
+    @SecurityTest
+    public void testPoc32659848() throws Exception {
+        String command =
+            "echo 18014398509481980 > /sys/kernel/debug/tracing/buffer_size_kb";
+        AdbUtils.runCommandLine(command, getDevice());
     }
 }
