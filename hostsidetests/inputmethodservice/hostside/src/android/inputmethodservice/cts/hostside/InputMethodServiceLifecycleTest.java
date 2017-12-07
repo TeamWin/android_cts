@@ -23,6 +23,9 @@ import static android.inputmethodservice.cts.common.DeviceEventConstants.RECEIVE
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.TEST_START;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
@@ -84,7 +87,12 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         sendTestStartEvent(testIme1IsNotCurrentIme);
         uninstallPackageIfExists(Ime1Constants.PACKAGE);
         assertTrue(runDeviceTestMethod(testIme1IsNotCurrentIme));
-        assertEquals(shell(ShellCommandUtils.getCurrentIme()), mDefaultImeId);
+
+        // There should be a new IME that is different from the IME1
+        final String newIme = shell(ShellCommandUtils.getCurrentIme());
+        assertNotNull(newIme);
+        assertFalse(newIme.isEmpty());
+        assertNotEquals(newIme, Ime1Constants.IME_ID);
     }
 
     @Test
@@ -96,7 +104,12 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         sendTestStartEvent(testIme1IsNotCurrentIme);
         shell(ShellCommandUtils.disableIme(Ime1Constants.IME_ID));
         assertTrue(runDeviceTestMethod(testIme1IsNotCurrentIme));
-        assertEquals(shell(ShellCommandUtils.getCurrentIme()), mDefaultImeId);
+
+        // There should be a new IME that is different from the IME1
+        final String newIme = shell(ShellCommandUtils.getCurrentIme());
+        assertNotNull(newIme);
+        assertFalse(newIme.isEmpty());
+        assertNotEquals(newIme, Ime1Constants.IME_ID);
     }
 
     @Test
