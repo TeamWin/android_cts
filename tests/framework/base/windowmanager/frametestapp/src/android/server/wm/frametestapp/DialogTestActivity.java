@@ -19,11 +19,15 @@ package android.server.wm.frametestapp;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.graphics.Rect;
+import android.os.Bundle;
 import android.view.Gravity;
+import android.view.View;
 import android.view.Window;
+import android.view.WindowInsets;
 import android.view.WindowManager;
 
-public class DialogTestActivity extends Activity {
+public class DialogTestActivity extends Activity implements View.OnApplyWindowInsetsListener{
 
     private static final String DIALOG_WINDOW_NAME = "TestDialog";
 
@@ -35,16 +39,28 @@ public class DialogTestActivity extends Activity {
 
     private AlertDialog mDialog;
 
+    private Rect mOutsets = new Rect();
+
+    protected void onCreate(Bundle icicle) {
+        super.onCreate(icicle);
+        View content = new View(this);
+        content.setOnApplyWindowInsetsListener(this);
+        setContentView(content);
+    }
+
     @Override
     protected void onStop() {
         super.onStop();
         mDialog.dismiss();
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
+    public WindowInsets onApplyWindowInsets(View v, WindowInsets in) {
+        if (in.isRound()) {
+            mOutsets = new Rect(in.getSystemWindowInsetLeft(), in.getSystemWindowInsetTop(),
+                    in.getSystemWindowInsetRight(), in.getSystemWindowInsetBottom());
+        }
         setupTest(getIntent());
+        return in;
     }
 
     private void setupTest(Intent intent) {
@@ -125,23 +141,23 @@ public class DialogTestActivity extends Activity {
 
     private void testExplicitSize() {
         doLayoutParamTest((WindowManager.LayoutParams params) -> {
-            params.width = 200;
-            params.height = 200;
+            params.width = 200 - mOutsets.left - mOutsets.right;
+            params.height = 200 - mOutsets.bottom - mOutsets.top;
         });
     }
 
     private void testExplicitSizeTopLeftGravity() {
         doLayoutParamTest((WindowManager.LayoutParams params) -> {
-            params.width = 200;
-            params.height = 200;
+            params.width = 200 - mOutsets.left - mOutsets.right;
+            params.height = 200 - mOutsets.bottom - mOutsets.top;
             params.gravity = Gravity.TOP | Gravity.LEFT;
         });
     }
 
     private void testExplicitSizeBottomRightGravity() {
         doLayoutParamTest((WindowManager.LayoutParams params) -> {
-            params.width = 200;
-            params.height = 200;
+            params.width = 200 - mOutsets.left - mOutsets.right;
+            params.height = 200 - mOutsets.bottom - mOutsets.top;
             params.gravity = Gravity.BOTTOM | Gravity.RIGHT;
         });
     }
@@ -166,8 +182,6 @@ public class DialogTestActivity extends Activity {
         doLayoutParamTest((WindowManager.LayoutParams params) -> {
             params.width = WindowManager.LayoutParams.MATCH_PARENT;
             params.height = WindowManager.LayoutParams.MATCH_PARENT;
-            params.x = 100;
-            params.y = 100;
         });
     }
 
@@ -177,8 +191,6 @@ public class DialogTestActivity extends Activity {
             params.height = WindowManager.LayoutParams.MATCH_PARENT;
             params.gravity = Gravity.LEFT | Gravity.TOP;
             params.flags |= WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS;
-            params.x = 100;
-            params.y = 100;
         });
     }
 
@@ -192,9 +204,9 @@ public class DialogTestActivity extends Activity {
         doLayoutParamTest((WindowManager.LayoutParams params) -> {
             params.gravity = Gravity.LEFT | Gravity.TOP;
             params.horizontalMargin = .25f;
-            params.verticalMargin = .35f;
-            params.width = 200;
-            params.height = 200;
+            params.verticalMargin = .25f;
+            params.width = 200 - mOutsets.left - mOutsets.right;
+            params.height = 200 - mOutsets.bottom - mOutsets.top;
             params.x = 0;
             params.y = 0;
         });
