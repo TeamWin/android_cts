@@ -22,6 +22,8 @@
         <option name="test-file-name" value="CtsAppTestStubs.apk" />
         <option name="test-file-name" value="CtsAppTestStubsDifferentUid.apk" />
         <option name="test-file-name" value="CtsAppTestCases.apk" />
+        <option name="test-file-name" value="CtsCantSaveState1.apk" />
+        <option name="test-file-name" value="CtsCantSaveState2.apk" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.app.cts" />
