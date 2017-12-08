@@ -29,8 +29,7 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_STATIC_JAVA_LIBRARIES := \
 	ub-uiautomator \
 	android-support-test \
-	android-support-v4 \
-	legacy-android-test
+	android-support-v4
 
 LOCAL_SDK_VERSION := test_current
 

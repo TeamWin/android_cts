@@ -29,8 +29,7 @@ LOCAL_JAVA_LIBRARIES := android.test.runner
 LOCAL_STATIC_JAVA_LIBRARIES := \
 	android-support-v4 \
 	ctstestrunner \
-	ub-uiautomator \
-	legacy-android-test
+	ub-uiautomator
 
 LOCAL_SDK_VERSION := current
 

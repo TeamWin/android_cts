@@ -30,7 +30,6 @@ LOCAL_MULTILIB := both
 LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util \
     ctstestrunner \
-    legacy-android-test \
 
 
 LOCAL_JNI_SHARED_LIBRARIES := libctsabioverride

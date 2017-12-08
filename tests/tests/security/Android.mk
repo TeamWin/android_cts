@@ -28,10 +28,13 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestrunner \
     compatibility-device-util \
     guava \
-    platform-test-annotations \
-    legacy-android-test
+    platform-test-annotations
 
-LOCAL_JAVA_LIBRARIES := android.test.runner org.apache.http.legacy
+LOCAL_JAVA_LIBRARIES := \
+    android.test.runner \
+    org.apache.http.legacy \
+    android.test.base \
+
 
 LOCAL_JNI_SHARED_LIBRARIES := libctssecurity_jni libcts_jni libnativehelper_compat_libc++ \
                       libnativehelper \

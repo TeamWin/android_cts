@@ -22,7 +22,7 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 LOCAL_MODULE_TAGS := tests
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_SDK_VERSION := current
-LOCAL_STATIC_JAVA_LIBRARIES := android-support-test legacy-android-test
+LOCAL_STATIC_JAVA_LIBRARIES := android-support-test
 LOCAL_PACKAGE_NAME := CtsKeySetTestApp
 LOCAL_DEX_PREOPT := false
 

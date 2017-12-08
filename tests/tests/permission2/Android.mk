@@ -28,8 +28,7 @@ LOCAL_JAVA_LIBRARIES := telephony-common
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
 	compatibility-device-util \
-	ctstestrunner \
-	legacy-android-test
+	ctstestrunner
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 

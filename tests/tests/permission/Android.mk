@@ -32,8 +32,7 @@ LOCAL_JAVA_LIBRARIES := telephony-common
 LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestrunner \
     guava \
-    android-ex-camera2 \
-    legacy-android-test
+    android-ex-camera2
 
 LOCAL_JNI_SHARED_LIBRARIES := libctspermission_jni libnativehelper_compat_libc++
 
@@ -44,6 +43,7 @@ LOCAL_PACKAGE_NAME := CtsPermissionTestCases
 # uncomment when b/13249777 is fixed
 #LOCAL_SDK_VERSION := current
 LOCAL_JAVA_LIBRARIES += android.test.runner
+LOCAL_JAVA_LIBRARIES += android.test.base
 
 include $(BUILD_CTS_PACKAGE)
 

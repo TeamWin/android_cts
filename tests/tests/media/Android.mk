@@ -51,7 +51,6 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestrunner \
     ctstestserver \
     junit \
-    legacy-android-test \
     ndkaudio \
     testng
 
@@ -75,6 +74,7 @@ LOCAL_PACKAGE_NAME := CtsMediaTestCases
 #LOCAL_SDK_VERSION := current
 
 LOCAL_JAVA_LIBRARIES += android.test.runner org.apache.http.legacy
+LOCAL_JAVA_LIBRARIES += android.test.base
 
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests

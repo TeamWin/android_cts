@@ -26,8 +26,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestrunner \
     ctstestrunner \
     ub-uiautomator \
-    junit \
-    legacy-android-test
+    junit
 
 LOCAL_JAVA_LIBRARIES := android.test.runner
 

@@ -30,7 +30,6 @@ LOCAL_STATIC_JAVA_LIBRARIES = \
 	android-support-v4 \
 	ctstestrunner \
 	android-support-test \
-	legacy-android-test \
 	truth-prebuilt \
 	ub-uiautomator
 

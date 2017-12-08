@@ -32,8 +32,7 @@ LOCAL_STATIC_JAVA_LIBRARIES = \
 	compatibility-device-util \
 	ub-uiautomator \
 	android-support-test \
-	guava \
-	legacy-android-test
+	guava
 
 LOCAL_SDK_VERSION := test_current
 

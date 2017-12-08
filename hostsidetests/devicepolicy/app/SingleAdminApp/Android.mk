@@ -31,8 +31,7 @@ LOCAL_STATIC_JAVA_LIBRARIES = \
     ctstestrunner \
     compatibility-device-util \
     ub-uiautomator \
-    android-support-test \
-    legacy-android-test
+    android-support-test
 
 LOCAL_SDK_VERSION := test_current
 

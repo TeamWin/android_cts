@@ -33,8 +33,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util \
     ctstestrunner \
     ub-uiautomator \
-    ShortcutManagerTestUtils \
-    legacy-android-test
+    ShortcutManagerTestUtils
 
 LOCAL_SDK_VERSION := current
 
@@ -64,8 +63,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util \
     ctstestrunner \
     ub-uiautomator \
-    ShortcutManagerTestUtils \
-    legacy-android-test
+    ShortcutManagerTestUtils
 
 LOCAL_SDK_VERSION := current
 
@@ -95,8 +93,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util \
     ctstestrunner \
     ub-uiautomator \
-    ShortcutManagerTestUtils \
-    legacy-android-test
+    ShortcutManagerTestUtils
 
 LOCAL_SDK_VERSION := current
 
