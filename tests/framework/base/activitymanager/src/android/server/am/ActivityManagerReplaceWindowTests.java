@@ -16,12 +16,14 @@
 
 package android.server.am;
 
-
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.server.am.StateLogger.log;
 
+import static org.junit.Assume.assumeTrue;
+
 import junit.framework.Assert;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -38,6 +40,14 @@ public class ActivityManagerReplaceWindowTests extends ActivityManagerTestBase {
 
     private List<String> mTempWindowTokens = new ArrayList();
 
+    @Before
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
+
+        assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
+    }
+
     @Test
     public void testReplaceWindow_Dock_Relaunch() throws Exception {
         testReplaceWindow_Dock(true);
@@ -49,11 +59,6 @@ public class ActivityManagerReplaceWindowTests extends ActivityManagerTestBase {
     }
 
     private void testReplaceWindow_Dock(boolean relaunch) throws Exception {
-        if (!supportsSplitScreenMultiWindow()) {
-            log("Skipping test: no multi-window support");
-            return;
-        }
-
         final String activityName =
                 relaunch ? SLOW_CREATE_ACTIVITY_NAME : NO_RELAUNCH_ACTIVITY_NAME;
         final String windowName = getWindowName(activityName);

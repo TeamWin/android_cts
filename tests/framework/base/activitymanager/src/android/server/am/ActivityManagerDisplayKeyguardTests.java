@@ -13,7 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License
  */
+
 package android.server.am;
+
+import static org.junit.Assume.assumeTrue;
 
 import org.junit.After;
 import org.junit.Before;
@@ -32,6 +35,10 @@ public class ActivityManagerDisplayKeyguardTests extends ActivityManagerDisplayT
     @Override
     public void setUp() throws Exception {
         super.setUp();
+
+        assumeTrue(supportsMultiDisplay());
+        assumeTrue(isHandheld());
+
         setLockDisabled(false);
     }
 
@@ -48,10 +55,6 @@ public class ActivityManagerDisplayKeyguardTests extends ActivityManagerDisplayT
      */
     @Test
     public void testDismissKeyguardActivity_secondaryDisplay() throws Exception {
-        if (!supportsMultiDisplay() || !isHandheld()) {
-            return;
-        }
-
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
 
         gotoKeyguard();

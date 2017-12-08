@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package android.server.am;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
@@ -28,6 +29,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
@@ -71,10 +73,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      */
     @Test
     public void testConfigurationUpdatesWhenResizedFromFullscreen() throws Exception {
-        if (!supportsSplitScreenMultiWindow()) {
-            log("Skipping test: no multi-window support");
-            return;
-        }
+        assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
         String logSeparator = clearLogcat();
         launchActivity(RESIZEABLE_ACTIVITY_NAME, WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
@@ -96,10 +95,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     // TODO: Flaky, add to presubmit when b/63404575 is fixed.
     @Test
     public void testConfigurationUpdatesWhenResizedFromDockedStack() throws Exception {
-        if (!supportsSplitScreenMultiWindow()) {
-            log("Skipping test: no multi-window support");
-            return;
-        }
+        assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
         String logSeparator = clearLogcat();
         launchActivity(RESIZEABLE_ACTIVITY_NAME, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
@@ -119,10 +115,8 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      */
     @Test
     public void testConfigurationUpdatesWhenRotatingWhileFullscreen() throws Exception {
-        if (!supportsRotation()) {
-            log("Skipping test: no rotation support");
-            return;
-        }
+        assumeTrue("Skipping test: no rotation support", supportsRotation());
+
         setDeviceRotation(0);
         final String logSeparator = clearLogcat();
         launchActivity(RESIZEABLE_ACTIVITY_NAME,
@@ -140,10 +134,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     // TODO: Flaky, add to presubmit when b/63404575 is fixed.
     @Test
     public void testConfigurationUpdatesWhenRotatingWhileDocked() throws Exception {
-        if (!supportsSplitScreenMultiWindow()) {
-            log("Skipping test: no multi-window support");
-            return;
-        }
+        assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
         setDeviceRotation(0);
         final String logSeparator = clearLogcat();
@@ -166,10 +157,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      */
     @Test
     public void testConfigurationUpdatesWhenRotatingToSideFromDocked() throws Exception {
-        if (!supportsSplitScreenMultiWindow()) {
-            log("Skipping test: no multi-window support");
-            return;
-        }
+        assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
         setDeviceRotation(0);
 
@@ -234,10 +222,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * Asserts that initial and final reported sizes in fullscreen stack are the same.
      */
     private void moveActivityFullSplitFull(String activityName) throws Exception {
-        if (!supportsSplitScreenMultiWindow()) {
-            log("Skipping test: no multi-window support");
-            return;
-        }
+        assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
         // Launch to fullscreen stack and record size.
         String logSeparator = clearLogcat();
@@ -298,10 +283,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     @Presubmit
     @Test
     public void testDialogWhenLargeSplitSmall() throws Exception {
-        if (!supportsSplitScreenMultiWindow()) {
-            log("Skipping test: no multi-window support");
-            return;
-        }
+        assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
         launchActivity(DIALOG_WHEN_LARGE_ACTIVITY, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
         final ActivityManagerState.ActivityStack stack = mAmWmState.getAmState()
@@ -339,6 +321,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
                 1 /* portrait */, mAmWmState.getWmState().getLastOrientation());
     }
 
+    @Test
     public void testNonfullscreenAppOrientationRequests() throws Exception {
         String logSeparator = clearLogcat();
         launchActivity(PORTRAIT_ACTIVITY_NAME);
@@ -359,6 +342,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         //         1 /* portrait */, updatedReportedSizes.orientation);
     }
 
+    @Test
     public void testNonFullscreenActivityProhibited() throws Exception {
         setComponentName(TRANSLUCENT_CURRENT_PACKAGE);
 
@@ -374,6 +358,8 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
                         ActivityManagerTestBase.getActivityComponentName(
                                 TRANSLUCENT_ACTIVITY, TRANSLUCENT_ACTIVITY)));
     }
+
+    @Test
     public void testNonFullscreenActivityPermitted() throws Exception {
         setComponentName(TRANSLUCENT_SDK_26_PACKAGE);
         setDeviceRotation(0);
@@ -472,10 +458,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      */
     private void requestOrientationInSplitScreen(int orientation, String activity)
             throws Exception {
-        if (!supportsSplitScreenMultiWindow()) {
-            log("Skipping test: no multi-window support");
-            return;
-        }
+        assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
         // Set initial orientation.
         setDeviceRotation(orientation);
@@ -502,10 +485,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * Asserts that initial and final reported sizes in docked stack are the same.
      */
     private void moveActivitySplitFullSplit(String activityName) throws Exception {
-        if (!supportsSplitScreenMultiWindow()) {
-            log("Skipping test: no multi-window support");
-            return;
-        }
+        assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
         // Launch to docked stack and record size.
         String logSeparator = clearLogcat();
