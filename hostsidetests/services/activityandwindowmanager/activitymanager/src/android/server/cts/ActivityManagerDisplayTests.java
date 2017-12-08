@@ -104,7 +104,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
 
     private boolean isVrHeadset() {
         try {
-            if (mDevice.getProperty(VR_STANDALONE_DEVICE_PROPERTY).equals("1")) {
+            if ("1".equals(mDevice.getProperty(VR_STANDALONE_DEVICE_PROPERTY))) {
               return true;
             }
 
