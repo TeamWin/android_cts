@@ -219,6 +219,13 @@ public class EphemeralTest extends DeviceTestCase
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testInstallPermissionGranted");
     }
 
+    public void testStartForegrondService() throws Exception {
+        // Make sure the test package does not have INSTANT_APP_FOREGROUND_SERVICE
+        getDevice().executeShellCommand("cmd package revoke " + EPHEMERAL_1_PKG
+                        + " android.permission.INSTANT_APP_FOREGROUND_SERVICE");
+        runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartForegroundService");
+    }
+
     private static final HashMap<String, String> makeArgs(
             String action, String category, String mimeType) {
         if (action == null || action.length() == 0) {
