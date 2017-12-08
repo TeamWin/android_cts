@@ -69,6 +69,7 @@ public class CtsConfigLoadingTest {
             "neuralnetworks",
             "renderscript",
             "security",
+            "statsd",
             "systems",
             "sysui",
             "telecom",
