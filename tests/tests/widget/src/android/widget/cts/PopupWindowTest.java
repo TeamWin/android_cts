@@ -1533,6 +1533,10 @@ public class PopupWindowTest {
                 () -> container.scrollBy(deltaX, deltaY),
                 false  /* force layout */);
 
+        // Since the first layout might have been caused by the original scroll event (and not by
+        // the anchor change), we need to wait until all traversals are done.
+        mInstrumentation.waitForIdleSync();
+
         final int[] newPopupLocation = mPopupWindow.getContentView().getLocationOnScreen();
         assertEquals(popupLocation[0] - deltaX, newPopupLocation[0]);
         assertEquals(popupLocation[1] - deltaY, newPopupLocation[1]);
