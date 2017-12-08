@@ -53,7 +53,6 @@ int fd;
 void in_cpu() {
   int num_processors = sysconf(_SC_NPROCESSORS_CONF);
   cpu_set_t get;
-  int i = 0;
   CPU_ZERO(&get);
   sched_getaffinity(0, sizeof(cpu_set_t), &get);
   for (int i = 0; i < num_processors; i++) {
@@ -62,20 +61,11 @@ void in_cpu() {
     }
   }
 }
-static void bind_child_to_cpu() {
-  in_cpu();
-  cpu_set_t set;
-  CPU_ZERO(&set);
-  CPU_SET(1, &set);
-  sched_setaffinity(0, sizeof(set), &set);
-  in_cpu();
-}
 
 #define BLKTRACETEARDOWN _IO(0x12, 118)
 #define SG_SET_RESERVED_SIZE 0x2275
 #define SG_GET_RESERVED_SIZE 0x2272
 static void* overwrite(void* param) {
-  int ret;
   for (int i = 0; i < 100000; i++) {
     int size = 0x100;
     int n = ioctl(fd, SG_SET_RESERVED_SIZE, &size);
@@ -103,4 +93,4 @@ int functionOne() {
   return 0;
 }
 
-int main(int argc, char** argv, char** env) { return functionOne(); }
+int main(int argc __unused, char** argv __unused, char** env __unused) { return functionOne(); }

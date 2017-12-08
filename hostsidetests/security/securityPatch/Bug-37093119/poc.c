@@ -31,7 +31,7 @@
 #include <sys/types.h>
 #include "local_poc.h"
 
-int main(int argc, char **argv) {
+int main(int argc __unused, char **argv __unused) {
   int ret, count;
   int j = 0;
   int fd;
