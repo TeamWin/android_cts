@@ -22,8 +22,7 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestrunner \
-    ctstestserver \
-    legacy-android-test
+    ctstestserver
 
 LOCAL_JAVA_LIBRARIES := org.apache.http.legacy
 

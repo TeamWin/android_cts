@@ -37,8 +37,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util \
     ctstestrunner \
     ub-uiautomator \
-    ShortcutManagerTestUtils \
-    legacy-android-test
+    ShortcutManagerTestUtils
 
 LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/cts-testkey1
 

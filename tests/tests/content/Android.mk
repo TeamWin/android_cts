@@ -24,14 +24,13 @@ LOCAL_USE_AAPT2 := true
 
 LOCAL_JNI_SHARED_LIBRARIES := libnativecursorwindow_jni libnativehelper_compat_libc++
 
-LOCAL_JAVA_LIBRARIES := android.test.runner
+LOCAL_JAVA_LIBRARIES := android.test.runner android.test.base android.test.mock
 
 LOCAL_STATIC_JAVA_LIBRARIES :=  \
     compatibility-device-util \
     ctstestrunner \
     services.core \
     junit \
-    legacy-android-test \
     truth-prebuilt
 
 LOCAL_STATIC_ANDROID_LIBRARIES := android-support-v4

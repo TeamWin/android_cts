@@ -31,8 +31,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
         compatibility-device-util \
         ctstestrunner \
         guava \
-        junit \
-        legacy-android-test
+        junit
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
@@ -49,6 +48,7 @@ LOCAL_PACKAGE_NAME := CtsKeystoreTestCases
 # Uncomment when b/13282254 is fixed.
 # LOCAL_SDK_VERSION := current
 LOCAL_JAVA_LIBRARIES += android.test.runner
+LOCAL_JAVA_LIBRARIES += android.test.base
 
 include $(BUILD_CTS_PACKAGE)
 

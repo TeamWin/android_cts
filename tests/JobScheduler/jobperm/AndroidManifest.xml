@@ -27,6 +27,8 @@
     <uses-permission android:name="android.jobscheduler.cts.jobperm.perm" />
 
     <application>
+        <uses-library android:name="android.test.runner" />
+
         <!-- Need a way for another app to try to access the permission. So create a content
         provider which is enforced by the permission -->
         <provider android:name=".JobPermProvider"

@@ -33,8 +33,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestrunner \
     mockito-target-minus-junit4 \
     platform-test-annotations \
-    ub-uiautomator \
-    legacy-android-test
+    ub-uiautomator
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 

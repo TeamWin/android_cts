@@ -24,8 +24,7 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestrunner \
-    compatibility-device-util \
-    legacy-android-test
+    compatibility-device-util
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
@@ -35,5 +34,6 @@ LOCAL_PACKAGE_NAME := CtsTelephony2TestCases
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 LOCAL_JAVA_LIBRARIES += android.test.runner
+LOCAL_JAVA_LIBRARIES += android.test.base
 
 include $(BUILD_CTS_PACKAGE)

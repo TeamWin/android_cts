@@ -32,8 +32,9 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util \
     ctstestrunner \
     ub-uiautomator \
-    ub-janktesthelper \
-    legacy-android-test
+    ub-janktesthelper
+
+LOCAL_JAVA_LIBRARIES := android.test.base
 
 include $(BUILD_CTS_PACKAGE)
 

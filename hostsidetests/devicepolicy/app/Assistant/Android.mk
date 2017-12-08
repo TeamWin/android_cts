@@ -33,7 +33,6 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-v4 \
     compatibility-device-util \
     android-support-test \
-    legacy-android-test \
 
 
 LOCAL_SDK_VERSION := current

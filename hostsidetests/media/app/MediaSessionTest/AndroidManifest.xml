@@ -21,6 +21,8 @@
 
     <application
         android:testOnly="true">
+        <uses-library android:name="android.test.runner" />
+
         <service
             android:name=".MediaSessionManagerTest"
             android:label="MediaSessionManagerTest"

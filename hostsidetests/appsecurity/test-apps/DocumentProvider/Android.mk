@@ -25,7 +25,6 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util \
     ctstestrunner \
     ub-uiautomator \
-    legacy-android-test \
 
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
