@@ -56,6 +56,8 @@ import java.util.List;
  */
 final class UiBot {
 
+    private static final String TAG = "AutoFillCtsUiBot";
+
     private static final String RESOURCE_ID_DATASET_PICKER = "autofill_dataset_picker";
     private static final String RESOURCE_ID_SAVE_SNACKBAR = "autofill_save";
     private static final String RESOURCE_ID_SAVE_ICON = "autofill_save_icon";
@@ -82,7 +84,12 @@ final class UiBot {
     private static final String RESOURCE_STRING_SAVE_SNACKBAR_ACCESSIBILITY_TITLE =
             "autofill_save_accessibility_title";
 
-    private static final String TAG = "AutoFillCtsUiBot";
+    private static final BySelector DATASET_PICKER_SELECTOR = By.res("android",
+            RESOURCE_ID_DATASET_PICKER);
+    private static final BySelector SAVE_UI_SELECTOR = By.res("android", RESOURCE_ID_SAVE_SNACKBAR);
+
+    private static final boolean DONT_DUMP_ON_ERROR = false;
+    private static final boolean DUMP_ON_ERROR = true;
 
     /** Pass to {@link #setScreenOrientation(int)} to change the display to portrait mode */
     public static int PORTRAIT = 0;
@@ -106,15 +113,7 @@ final class UiBot {
      * Asserts the dataset chooser is not shown.
      */
     void assertNoDatasets() {
-        final UiObject2 picker;
-        try {
-            picker = findDatasetPicker(NOT_SHOWING_TIMEOUT_MS);
-        } catch (Throwable t) {
-            // Use a more elegant check than catching the expection because it's not showing...
-            return;
-        }
-        throw new RetryableException(
-                "Should not be showing datasets, but got " + getChildrenAsText(picker));
+        assertNotShowing("datasets", DATASET_PICKER_SELECTOR, NOT_SHOWING_TIMEOUT_MS);
     }
 
     /**
@@ -263,6 +262,21 @@ final class UiBot {
     }
 
     /**
+     * Asserts that a {@code selector} is not showing after {@code timeout} milliseconds.
+     */
+    private void assertNotShowing(String description, BySelector selector, long timeout) {
+        final UiObject2 object;
+        try {
+            object = waitForObject(null, selector, timeout, DONT_DUMP_ON_ERROR);
+        } catch (RetryableException t) {
+            // Not found as expected.
+            return;
+        }
+        throw new RetryableException(
+                "Should not be showing " + description + ", but got " + getChildrenAsText(object));
+    }
+
+    /**
      * Gets the text set on a view.
      */
     String getTextById(String id) {
@@ -331,14 +345,7 @@ final class UiBot {
      * Asserts the save snackbar is not showing and returns it.
      */
     void assertSaveNotShowing(int type) {
-        try {
-            assertSaveShowing(NOT_SHOWING_TIMEOUT_MS, type);
-        } catch (Throwable t) {
-            // TODO: use a more elegant check than catching the expection because it's not showing
-            // (in which case it wouldn't need a type as parameter).
-            return;
-        }
-        throw new RetryableException("snack bar is showing");
+        assertNotShowing("save UI for type " + type, SAVE_UI_SELECTOR, NOT_SHOWING_TIMEOUT_MS);
     }
 
     private String getSaveTypeString(int type) {
@@ -382,8 +389,7 @@ final class UiBot {
 
     UiObject2 assertSaveShowing(int negativeButtonStyle, String description, long timeout,
             int... types) {
-        final UiObject2 snackbar = waitForObject(By.res("android", RESOURCE_ID_SAVE_SNACKBAR),
-                timeout);
+        final UiObject2 snackbar = waitForObject(SAVE_UI_SELECTOR, timeout);
 
         final UiObject2 titleView =
                 waitForObject(snackbar, By.res("android", RESOURCE_ID_SAVE_TITLE), UI_TIMEOUT_MS);
@@ -499,7 +505,7 @@ final class UiBot {
         field.click(3000);
 
         final List<UiObject2> menuItems = waitForObjects(
-                By.res("android", RESOURCE_ID_CONTEXT_MENUITEM));
+                By.res("android", RESOURCE_ID_CONTEXT_MENUITEM), UI_TIMEOUT_MS);
         final String expectedText = getString(RESOURCE_STRING_AUTOFILL);
         final StringBuffer menuNames = new StringBuffer();
         for (UiObject2 menuItem : menuItems) {
@@ -544,9 +550,11 @@ final class UiBot {
      *
      * @param parent where to find the object (or {@code null} to use device's root).
      * @param selector {@link BySelector} that identifies the object.
-     * @param timeout timeout in ms
+     * @param timeout timeout in ms.
+     * @param dumpOnError whether the window hierarchy should be dumped if the object is not found.
      */
-    private UiObject2 waitForObject(UiObject2 parent, BySelector selector, long timeout) {
+    private UiObject2 waitForObject(UiObject2 parent, BySelector selector, long timeout,
+            boolean dumpOnError) {
         // NOTE: mDevice.wait does not work for the save snackbar, so we need a polling approach.
         final int maxTries = 5;
         final long napTime = timeout / maxTries;
@@ -559,11 +567,15 @@ final class UiBot {
             }
             SystemClock.sleep(napTime);
         }
-        Log.e(TAG, "waitForObject() for " + selector + "failed; dumping screen on System.out");
-        dumpScreen();
+        if (dumpOnError) {
+            dumpScreen("waitForObject() for " + selector + "failed");
+        }
         throw new RetryableException("Object with selector '%s' not found in %d ms",
                 selector, UI_TIMEOUT_MS);
+    }
 
+    private UiObject2 waitForObject(UiObject2 parent, BySelector selector, long timeout) {
+        return waitForObject(parent, selector, timeout, DUMP_ON_ERROR);
     }
 
     /**
@@ -574,15 +586,6 @@ final class UiBot {
      */
     private UiObject2 waitForObject(BySelector selector, long timeout) {
         return waitForObject(null, selector, timeout);
-    }
-
-    /**
-     * Waits for and returns a list of objects.
-     *
-     * @param selector {@link BySelector} that identifies the object.
-     */
-    private List<UiObject2> waitForObjects(BySelector selector) {
-        return waitForObjects(selector, UI_TIMEOUT_MS);
     }
 
     /**
@@ -602,13 +605,13 @@ final class UiBot {
             }
             SystemClock.sleep(napTime);
         }
+        dumpScreen("waitForObjects() for " + selector + "failed");
         throw new RetryableException("Objects with selector '%s' not found in %d ms",
                 selector, UI_TIMEOUT_MS);
     }
 
     private UiObject2 findDatasetPicker(long timeout) {
-        final UiObject2 picker = waitForObject(By.res("android", RESOURCE_ID_DATASET_PICKER),
-                timeout);
+        final UiObject2 picker = waitForObject(DATASET_PICKER_SELECTOR, timeout);
 
         final String expectedTitle = getString(RESOURCE_STRING_DATASET_PICKER_ACCESSIBILITY_TITLE);
         assertAccessibilityTitle(picker, expectedTitle);
@@ -673,12 +676,12 @@ final class UiBot {
     /**
      * Dumps the current view hierarchy int the output stream.
      */
-    public void dumpScreen() {
+    public void dumpScreen(String cause) {
         try {
             try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
                 mDevice.dumpWindowHierarchy(os);
                 os.flush();
-                Log.w(TAG, "Window hierarchy:");
+                Log.w(TAG, "Dumping window hierarchy because " + cause);
                 for (String line : os.toString("UTF-8").split("\n")) {
                     Log.w(TAG, line);
                     // Sleep a little bit to avoid logs being ignored due to spam
