@@ -72,6 +72,7 @@ abstract class AutoFillServiceTestCase {
 
     protected final Context mContext;
     protected final String mPackageName;
+
     /**
      * Stores the previous logging level so it's restored after the test.
      */

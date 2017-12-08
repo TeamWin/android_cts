@@ -67,6 +67,7 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
                     PostSaveLinkTappedAction.ROTATE_THEN_TAP_BACK_BUTTON);
         } finally {
             sUiBot.setScreenOrientation(UiBot.PORTRAIT);
+            cleanUpAfterScreenOrientationIsBackToPortrait();
         }
     }
 
@@ -82,6 +83,9 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
 
     protected abstract void saveUiRestoredAfterTappingLinkTest(PostSaveLinkTappedAction type)
             throws Exception;
+
+    protected void cleanUpAfterScreenOrientationIsBackToPortrait() throws Exception {
+    }
 
     /**
      * Tests scenarios when user taps a link in the custom description, taps back to return to the
