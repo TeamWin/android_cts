@@ -252,6 +252,9 @@ public class PermissionPolicyTest extends AndroidTestCase {
                 case "privileged": {
                     protectionLevel |= PermissionInfo.PROTECTION_FLAG_PRIVILEGED;
                 } break;
+                case "vendorPrivileged": {
+                    protectionLevel |= PermissionInfo.PROTECTION_FLAG_VENDOR_PRIVILEGED;
+                } break;
                 case "setup": {
                     protectionLevel |= PermissionInfo.PROTECTION_FLAG_SETUP;
                 } break;
