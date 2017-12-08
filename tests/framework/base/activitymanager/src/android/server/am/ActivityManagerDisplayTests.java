@@ -36,6 +36,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.Presubmit;
 import android.server.am.displayservice.DisplayHelper;
+import android.support.test.filters.FlakyTest;
 
 import org.junit.After;
 import org.junit.Before;
@@ -904,7 +905,9 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      * is moved correctly.
      * This version launches virtual display creator to fullscreen stack in split-screen.
      */
-    // TODO(b/69573940): Add back to presubmit
+    // TODO(b/69573940): Flaky, add back to presubmit.
+    @FlakyTest
+    @Presubmit
     @Test
     public void testStackFocusSwitchOnDisplayRemoved() throws Exception {
         assumeTrue(supportsMultiDisplay());
@@ -1311,7 +1314,9 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
     /**
      * Test that all activities that were on the private display are destroyed on display removal.
      */
-    // TODO: Flaky, add to presubmit when b/63404575 is fixed.
+    // TODO(b/63404575): Flaky, add back to presubmit.
+    @FlakyTest
+    @Presubmit
     @Test
     public void testContentDestroyOnDisplayRemoved() throws Exception {
         assumeTrue(supportsMultiDisplay());
