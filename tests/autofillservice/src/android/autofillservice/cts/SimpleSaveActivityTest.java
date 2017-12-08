@@ -173,6 +173,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
             saveTest(true);
         } finally {
             sUiBot.setScreenOrientation(UiBot.PORTRAIT);
+            cleanUpAfterScreenOrientationIsBackToPortrait();
         }
     }
 
@@ -200,6 +201,9 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         UiObject2 saveUi = sUiBot.assertSaveShowing(SAVE_DATA_TYPE_GENERIC);
 
         if (rotate) {
+            // After the device rotates, the input field get focus and generate a new session.
+            sReplier.addResponse(CannedFillResponse.NO_RESPONSE);
+
             sUiBot.setScreenOrientation(UiBot.LANDSCAPE);
             saveUi = sUiBot.assertSaveShowing(SAVE_DATA_TYPE_GENERIC);
         }
@@ -493,6 +497,9 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         // .. then do something to return to previous activity...
         switch (type) {
             case ROTATE_THEN_TAP_BACK_BUTTON:
+                // After the device rotates, the input field get focus and generate a new session.
+                sReplier.addResponse(CannedFillResponse.NO_RESPONSE);
+
                 sUiBot.setScreenOrientation(UiBot.LANDSCAPE);
                 // not breaking on purpose
             case TAP_BACK_BUTTON:
@@ -515,6 +522,12 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
 
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
         assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_INPUT), "108");
+
+    }
+
+    @Override
+    protected void cleanUpAfterScreenOrientationIsBackToPortrait() throws Exception {
+        sReplier.getNextFillRequest();
     }
 
     @Override
