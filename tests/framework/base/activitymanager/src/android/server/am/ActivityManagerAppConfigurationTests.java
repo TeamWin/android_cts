@@ -321,6 +321,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
                 1 /* portrait */, mAmWmState.getWmState().getLastOrientation());
     }
 
+    @Test
     public void testNonfullscreenAppOrientationRequests() throws Exception {
         String logSeparator = clearLogcat();
         launchActivity(PORTRAIT_ACTIVITY_NAME);
@@ -341,6 +342,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         //         1 /* portrait */, updatedReportedSizes.orientation);
     }
 
+    @Test
     public void testNonFullscreenActivityProhibited() throws Exception {
         setComponentName(TRANSLUCENT_CURRENT_PACKAGE);
 
@@ -356,6 +358,8 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
                         ActivityManagerTestBase.getActivityComponentName(
                                 TRANSLUCENT_ACTIVITY, TRANSLUCENT_ACTIVITY)));
     }
+
+    @Test
     public void testNonFullscreenActivityPermitted() throws Exception {
         setComponentName(TRANSLUCENT_SDK_26_PACKAGE);
         setDeviceRotation(0);
