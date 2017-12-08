@@ -31,10 +31,8 @@
 #include <sys/types.h>
 #include "local_poc.h"
 
-int main(int argc, char **argv) {
+int main(int argc __unused, char **argv __unused) {
   int fd, ret, i, count;
-  pthread_t tid[2];
-  char buf[256];
   char subdev[32] = {0};
 
   struct msm_ois_cfg_data data;
@@ -85,7 +83,7 @@ retry:
 
     close(fd);
   }
-  sleep(0.5);
+  sleep(1);
   printf("[pid:%d] try %d again!\n", getpid(), ++count);
   goto retry;
   return 0;
