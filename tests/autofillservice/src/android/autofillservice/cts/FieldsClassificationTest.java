@@ -49,7 +49,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
 
     private GridActivity mActivity;
 
-    // TODO(b/67867469): set userdata constraints as well to avoid failures if setchanged
+    // TODO(b/70407264): set userdata constraints as well to avoid failures if setchanged
     // externally
     private int mEnabledBefore;
 
@@ -58,7 +58,6 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         mActivity = mActivityRule.getActivity();
     }
 
-    // TODO(b/67867469): remove once feature is stable
     @Before
     public void enableFeature() {
         mEnabledBefore = Settings.Secure.getInt(
@@ -75,7 +74,6 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         observer.assertCalled();
     }
 
-    // TODO(b/67867469): remove once feature is stable
     @After
     public void restoreFeatureStatus() {
         if (mEnabledBefore == 1) {
@@ -353,7 +351,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
     }
 
     /*
-     * TODO(b/67867469): other scenarios:
+     * TODO(b/70407264): other scenarios:
      *
      * - Multipartition (for example, one response with FieldsDetection, others with datasets,
      *   saveinfo, and/or ignoredIds)

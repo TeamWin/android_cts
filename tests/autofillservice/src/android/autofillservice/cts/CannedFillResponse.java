@@ -428,14 +428,18 @@ final class CannedFillResponse {
             return this;
         }
 
-        // TODO(b/67867469): document
+        /**
+         * Sets the ids used for field classification.
+         */
         public Builder setFieldClassificationIds(AutofillId... ids) {
             assertWithMessage("already set").that(mFieldClassificationIds).isNull();
             mFieldClassificationIds = ids;
             return this;
         }
 
-        // TODO(b/67867469): document
+        /**
+         * Forces the service to throw an exception when setting the fields classification ids.
+         */
         public Builder setFieldClassificationIdsOverflow() {
             mFieldClassificationIdsOverflow = true;
             return this;

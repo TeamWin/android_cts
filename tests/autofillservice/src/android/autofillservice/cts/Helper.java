@@ -1057,8 +1057,10 @@ final class Helper {
      * have client state)
      * @param value the only value expected in the client state bundle (or {@code null} if it
      * shouldn't have client state)
+     * @param detectedAutofillIds expected field ids when asserting field classification
+     * @param detectedRemoteIds expected user data ids when asserting field classification
+     * @param detectedScores expected match scores when asserting field classification
      */
-    // TODO(b/67867469): document detected args
     private static void assertFillEvent(@NonNull FillEventHistory.Event event,
             int eventType, @Nullable String datasetId,
             @Nullable String key, @Nullable String value,
@@ -1192,21 +1194,18 @@ final class Helper {
                 null);
     }
 
-    // TODO(b/67867469): document
     public static void assertFillEventForFieldsClassification(@NonNull FillEventHistory.Event event,
             @NonNull AutofillId fieldId, @NonNull String remoteId, float score) {
         assertFillEvent(event, TYPE_CONTEXT_COMMITTED, null, null, null,
                 new AutofillId[] { fieldId }, new String[] { remoteId }, new float[] { score });
     }
 
-    // TODO(b/67867469): document
     public static void assertFillEventForFieldsClassification(@NonNull FillEventHistory.Event event,
             @NonNull AutofillId[] fieldIds, @NonNull String[] remoteIds, @NonNull float[] scores) {
         assertFillEvent(event, TYPE_CONTEXT_COMMITTED, null, null, null, fieldIds, remoteIds,
                 scores);
     }
 
-    // TODO(b/67867469): document
     public static void assertFillEventForContextCommitted(@NonNull FillEventHistory.Event event) {
         assertFillEvent(event, TYPE_CONTEXT_COMMITTED, null, null, null, null, null, null);
     }
