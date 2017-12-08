@@ -190,6 +190,7 @@ public class TelephonyManagerTest {
         mTelephonyManager.getPhoneCount();
         mTelephonyManager.getDataEnabled();
         mTelephonyManager.getNetworkSpecifier();
+        mTelephonyManager.getNai();
         TelecomManager telecomManager = (TelecomManager) getContext()
                 .getSystemService(Context.TELECOM_SERVICE);
         PhoneAccountHandle defaultAccount = telecomManager
