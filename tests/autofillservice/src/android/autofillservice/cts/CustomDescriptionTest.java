@@ -39,7 +39,6 @@ import android.view.View;
 import android.view.autofill.AutofillId;
 import android.widget.RemoteViews;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -57,11 +56,6 @@ public class CustomDescriptionTest extends AutoFillServiceTestCase {
     @Before
     public void setActivity() {
         mActivity = mActivityRule.getActivity();
-    }
-
-    @After
-    public void finishWelcomeActivity() {
-        WelcomeActivity.finishIt();
     }
 
     /**

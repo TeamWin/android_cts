@@ -41,6 +41,7 @@ import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
+import android.support.test.uiautomator.Until;
 import android.text.Html;
 import android.util.Log;
 import android.view.accessibility.AccessibilityWindowInfo;
@@ -256,9 +257,28 @@ final class UiBot {
      * Asserts the id is shown on the screen, using a resource id from the test package.
      */
     UiObject2 assertShownByRelativeId(String id) {
-        final UiObject2 obj = waitForObject(By.res(mPackageName, id));
+        return assertShownByRelativeId(id, UI_TIMEOUT_MS);
+    }
+
+    UiObject2 assertShownByRelativeId(String id, long timeout) {
+        final UiObject2 obj = waitForObject(By.res(mPackageName, id), timeout);
         assertThat(obj).isNotNull();
         return obj;
+    }
+    /**
+     * Asserts the id is not shown on the screen anymore, using a resource id from the test package.
+     *
+     * <p><b>Note:</b> this method should only called AFTER the id was previously shown, otherwise
+     * it might pass without really asserting anything.
+     */
+    void assertGoneByRelativeId(String id, long timeout) {
+        boolean gone = mDevice.wait(Until.gone(By.res(mPackageName, id)), timeout);
+        if (!gone) {
+            final String message = "Object with id '" + id + "' should be gone after "
+                    + timeout + " ms";
+            dumpScreen(message);
+            throw new RetryableException(message);
+        }
     }
 
     /**

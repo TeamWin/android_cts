@@ -140,6 +140,15 @@ abstract class AutoFillServiceTestCase {
         }
     }
 
+    /**
+     * Cleans up activities that might have been left over.
+     */
+    @Before
+    @After
+    public void finishActivities() {
+        WelcomeActivity.finishIt(sUiBot);
+    }
+
     @After
     public void resetVerboseLogging() {
         try {

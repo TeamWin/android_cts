@@ -552,7 +552,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
                 break;
             case FINISH_ACTIVITY:
                 // ..then finishes it.
-                WelcomeActivity.finishIt();
+                WelcomeActivity.finishIt(sUiBot);
                 break;
             default:
                 throw new IllegalArgumentException("invalid type: " + type);
@@ -714,7 +714,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
                 throw new IllegalArgumentException("invalid type: " + type);
         }
         // Make sure right activity is showing
-        sUiBot.assertShownByRelativeId(ID_INPUT);
+        sUiBot.assertShownByRelativeId(ID_INPUT, Helper.ACTIVITY_RESURRECTION_MS);
 
         sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
     }

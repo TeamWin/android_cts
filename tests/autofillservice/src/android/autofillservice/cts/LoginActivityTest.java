@@ -79,7 +79,6 @@ import android.view.autofill.AutofillManager;
 import android.view.autofill.AutofillValue;
 import android.widget.RemoteViews;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -106,11 +105,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     @Before
     public void setActivity() {
         mActivity = mActivityRule.getActivity();
-    }
-
-    @After
-    public void finishWelcomeActivity() {
-        WelcomeActivity.finishIt();
     }
 
     @Test
@@ -1331,7 +1325,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
             saveGoesAway(DismissType.RECENTS_BUTTON);
         } finally {
-            CheckoutActivity.finishIt();
+            CheckoutActivity.finishIt(sUiBot);
         }
     }
 

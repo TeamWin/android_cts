@@ -38,9 +38,12 @@ public class WelcomeActivity extends AbstractAutoFillActivity {
     private static final String TAG = "WelcomeActivity";
 
     static final String EXTRA_MESSAGE = "message";
-    static final String ID_OUTPUT = "output";
+    static final String ID_WELCOME = "welcome";
 
-    private TextView mOutput;
+    private static int sPendingIntentId;
+    private static PendingIntent sPendingIntent;
+
+    private TextView mWelcome;
 
     public WelcomeActivity() {
         sInstance = this;
@@ -52,22 +55,34 @@ public class WelcomeActivity extends AbstractAutoFillActivity {
 
         setContentView(R.layout.welcome_activity);
 
-        mOutput = (TextView) findViewById(R.id.output);
+        mWelcome = (TextView) findViewById(R.id.welcome);
 
         final Intent intent = getIntent();
         final String message = intent.getStringExtra(EXTRA_MESSAGE);
 
         if (!TextUtils.isEmpty(message)) {
-            mOutput.setText(message);
+            mWelcome.setText(message);
         }
 
-        Log.d(TAG, "Output: " + mOutput.getText());
+        Log.d(TAG, "Message: " + message);
     }
 
-    static void finishIt() {
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        Log.v(TAG, "Setting sInstance to null onDestroy()");
+        sInstance = null;
+    }
+
+    static void finishIt(UiBot uiBot) {
         if (sInstance != null) {
             Log.d(TAG, "So long and thanks for all the fish!");
             sInstance.finish();
+            uiBot.assertGoneByRelativeId(ID_WELCOME, Helper.ACTIVITY_RESURRECTION_MS);
+        }
+        if (sPendingIntent != null) {
+            sPendingIntent.cancel();
         }
     }
 
@@ -78,7 +93,7 @@ public class WelcomeActivity extends AbstractAutoFillActivity {
 
     // TODO: reuse in other places
     static void assertShowing(UiBot uiBot, @Nullable String expectedMessage) throws Exception {
-        final UiObject2 activity = uiBot.assertShownByRelativeId(ID_OUTPUT);
+        final UiObject2 activity = uiBot.assertShownByRelativeId(ID_WELCOME);
         if (expectedMessage == null) {
             expectedMessage = "Welcome to the jungle!";
         }
@@ -87,9 +102,16 @@ public class WelcomeActivity extends AbstractAutoFillActivity {
     }
 
     public static IntentSender createSender(Context context, String message) {
-        final Intent intent = new Intent(context, WelcomeActivity.class);
-        intent.putExtra(EXTRA_MESSAGE, message);
-        final PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
-        return pendingIntent.getIntentSender();
+        if (sPendingIntent != null) {
+            throw new IllegalArgumentException("Already have pending intent (id="
+                    + sPendingIntentId + "): " + sPendingIntent);
+        }
+        ++sPendingIntentId;
+        Log.v(TAG, "createSender: id=" + sPendingIntentId + " message=" + message);
+        final Intent intent = new Intent(context, WelcomeActivity.class)
+                .putExtra(EXTRA_MESSAGE, message)
+                .setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+        sPendingIntent = PendingIntent.getActivity(context, sPendingIntentId, intent, 0);
+        return sPendingIntent.getIntentSender();
     }
 }

@@ -52,7 +52,6 @@ import android.view.autofill.AutofillId;
 
 import com.google.common.collect.ImmutableMap;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -75,11 +74,6 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
     @Before
     public void setActivity() {
         mActivity = mActivityRule.getActivity();
-    }
-
-    @After
-    public void finishWelcomeActivity() {
-        WelcomeActivity.finishIt();
     }
 
     @Test
