@@ -55,7 +55,7 @@ public class EditDistanceScorerTest {
         assertThat(mScorer.getScore(AutofillValue.forText("D'OH!"), "D'oH!")).isWithin(1);
     }
 
-    // TODO(b/67867469): might need to change it once it supports different sizes
+    // TODO(b/70291841): might need to change it once it supports different sizes
     @Test
     public void testGetScore_mismatchDifferentSizes() {
         assertThat(mScorer.getScore(AutofillValue.forText("One"), "MoreThanOne")).isWithin(0);
