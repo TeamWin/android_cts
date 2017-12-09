@@ -31,7 +31,6 @@ import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.icu.util.Calendar;
 
-import org.junit.After;
 import org.junit.Test;
 
 /**
@@ -41,11 +40,6 @@ abstract class TimePickerTestCase<T extends AbstractTimePickerActivity>
         extends AutoFillServiceTestCase {
 
     protected abstract T getTimePickerActivity();
-
-    @After
-    public void finishWelcomeActivity() {
-        WelcomeActivity.finishIt();
-    }
 
     @Test
     public void testAutoFillAndSave() throws Exception {

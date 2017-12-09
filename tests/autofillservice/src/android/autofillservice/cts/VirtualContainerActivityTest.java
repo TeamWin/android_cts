@@ -42,7 +42,6 @@ import android.service.autofill.SaveInfo;
 import android.support.test.uiautomator.UiObject2;
 import android.view.autofill.AutofillManager;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -64,11 +63,6 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
     @Before
     public void setActivity() {
         mActivity = mActivityRule.getActivity();
-    }
-
-    @After
-    public void finishWelcomeActivity() {
-        WelcomeActivity.finishIt();
     }
 
     @Test
