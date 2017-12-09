@@ -40,6 +40,7 @@ import android.graphics.drawable.Drawable;
 import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
+import android.support.test.filters.FlakyTest;
 import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -68,6 +69,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+@FlakyTest
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class PopupWindowTest {
