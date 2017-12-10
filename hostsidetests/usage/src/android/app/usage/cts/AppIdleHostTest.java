@@ -31,6 +31,7 @@ public class AppIdleHostTest extends DeviceTestCase {
 
     private static final String TEST_APP_PACKAGE = "android.app.usage.app";
     private static final String TEST_APP_CLASS = "TestActivity";
+    private static final String TEST_APP_PACKAGE2 = "android.app.usage.apptoo";
 
     private static final long ACTIVITY_LAUNCH_WAIT_MILLIS = 500;
 
@@ -124,7 +125,6 @@ public class AppIdleHostTest extends DeviceTestCase {
     private int getAppStandbyBucket(String packageName) throws Exception {
         String bucketString = mDevice.executeShellCommand(
                 String.format("am get-standby-bucket %s", packageName));
-        System.err.println(bucketString);
         try {
             return Integer.parseInt(bucketString.trim());
         } catch (NumberFormatException nfe) {
@@ -139,6 +139,15 @@ public class AppIdleHostTest extends DeviceTestCase {
         // set to WORKING_SET
         setAppStandbyBucket(TEST_APP_PACKAGE, 20);
         assertEquals(20, getAppStandbyBucket(TEST_APP_PACKAGE));
+    }
+
+    public void testSetAppStandbyBuckets() throws Exception {
+        // Set multiple packages states
+        String command = String.format("am set-standby-bucket %s %d %s %d",
+                TEST_APP_PACKAGE, SB_FREQUENT, TEST_APP_PACKAGE2, SB_WORKING_SET);
+        mDevice.executeShellCommand(command);
+        assertEquals(SB_FREQUENT, getAppStandbyBucket(TEST_APP_PACKAGE));
+        assertEquals(SB_WORKING_SET, getAppStandbyBucket(TEST_APP_PACKAGE2));
     }
 
     public void testCantSetOwnStandbyBucket() throws Exception {
