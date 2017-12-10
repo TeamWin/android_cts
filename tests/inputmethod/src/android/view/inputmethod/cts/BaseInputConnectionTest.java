@@ -493,8 +493,8 @@ public class BaseInputConnectionTest {
     public void testCloseConnection() {
         final CharSequence source = "0123456789";
         mConnection.commitText(source, source.length());
+        mConnection.setComposingRegion(2, 5);
         final Editable text = mConnection.getEditable();
-        BaseInputConnection.setComposingSpans(text, 2, 5);
         assertEquals(2, BaseInputConnection.getComposingSpanStart(text));
         assertEquals(5, BaseInputConnection.getComposingSpanEnd(text));
 

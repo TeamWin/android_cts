@@ -250,7 +250,7 @@ public class InputMethodInfoTest {
                     ApplicationInfo.FLAG_SYSTEM) {
                 continue;
             }
-            if (serviceInfo.encryptionAware) {
+            if (serviceInfo.directBootAware) {
                 hasEncryptionAwareInputMethod = true;
                 break;
             }
