@@ -23,6 +23,8 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
+import static android.server.am.ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID;
+
 /**
  * Build: mmma -j32 cts/tests/framework/base
  * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.AnimationBackgroundTests
@@ -31,7 +33,7 @@ public class AnimationBackgroundTests extends ActivityManagerTestBase {
 
     @Test
     public void testAnimationBackground_duringAnimation() throws Exception {
-        launchActivity(LAUNCHING_ACTIVITY);
+        launchActivityOnDisplay(LAUNCHING_ACTIVITY, DEFAULT_DISPLAY_ID);
         getLaunchActivityBuilder()
                 .setTargetActivityName("AnimationTestActivity")
                 .setWaitForLaunched(false)
@@ -49,7 +51,7 @@ public class AnimationBackgroundTests extends ActivityManagerTestBase {
 
     @Test
     public void testAnimationBackground_gone() throws Exception {
-        launchActivity(LAUNCHING_ACTIVITY);
+        launchActivityOnDisplay(LAUNCHING_ACTIVITY, DEFAULT_DISPLAY_ID);
         getLaunchActivityBuilder().setTargetActivityName("AnimationTestActivity").execute();
         mAmWmState.computeState(new WaitForValidActivityState.Builder("AnimationTestActivity").build());
         assertFalse("window animation background needs to be gone", mAmWmState.getWmState()
