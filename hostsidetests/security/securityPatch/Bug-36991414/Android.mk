@@ -32,7 +32,7 @@ LOCAL_SHARED_LIBRARIES += \
 	libjpeg libgui libcutils liblog libui libEGL
 
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts
+LOCAL_COMPATIBILITY_SUITE := cts sts
 LOCAL_CTS_TEST_PACKAGE := android.security.cts
 
 LOCAL_ARM_MODE := arm
