@@ -44,7 +44,6 @@ BUILD_TARGETS="
     cts-tradefed-tests\
     compatibility-device-info-tests\
     compatibility-manifest-generator-tests
-    compatibility-host-media-preconditions-tests\
     CompatibilityTestApp"
 
 pushd ${CTS_DIR}/..
@@ -74,5 +73,3 @@ ${CTS_DIR}/common/host-side/util/tests/run_tests.sh
 ${CTS_DIR}/common/util/tests/run_tests.sh
 
 ${CTS_DIR}/tools/cts-tradefed/tests/run_tests.sh
-
-${CTS_DIR}/tests/tests/mediastress/preconditions/tests/run_tests.sh
