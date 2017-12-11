@@ -110,6 +110,11 @@ public class CellInfoTest extends AndroidTestCase{
     }
 
     private void verifyCdmaInfo(CellInfoCdma cdma) {
+        String alphaLong = (String) cdma.getCellIdentity().getOperatorAlphaLong();
+        assertNotNull("getOperatorAlphaLong() returns NULL!", alphaLong);
+        String alphaShort = (String) cdma.getCellIdentity().getOperatorAlphaShort();
+        assertNotNull("getOperatorAlphaShort() returns NULL!", alphaShort);
+
         int level = cdma.getCellSignalStrength().getLevel();
         assertTrue("getLevel() out of range [0,4], level=" + level, level >=0 && level <= 4);
     }
@@ -122,6 +127,29 @@ public class CellInfoTest extends AndroidTestCase{
         int pci = lte.getCellIdentity().getPci();
         // Physical cell id should be within [0, 503].
         assertTrue("getPci() out of range [0, 503], pci=" + pci, pci >= 0 && pci <= 503);
+
+        String alphaLong = (String) lte.getCellIdentity().getOperatorAlphaLong();
+        assertNotNull("getOperatorAlphaLong() returns NULL!", alphaLong);
+        String alphaShort = (String) lte.getCellIdentity().getOperatorAlphaShort();
+        assertNotNull("getOperatorAlphaShort() returns NULL!", alphaShort);
+
+        String mccStr = lte.getCellIdentity().getMccStr();
+        // mccStr is set as NULL if empty, unknown or invalid.
+        assertTrue("getMccStr() out of range [0, 999], mcc=" + mccStr,
+                mccStr == null || mccStr.matches("^[0-9]{3}$"));
+        String mncStr = lte.getCellIdentity().getMncStr();
+        // mncStr is set as NULL if empty, unknown or invalid.
+        assertTrue("getMncStr() out of range [0, 999], mnc=" + mncStr,
+                mncStr == null || mncStr.matches("^[0-9]{2,3}$"));
+
+        int mcc = lte.getCellIdentity().getMcc();
+        // getMcc() returns Integer.MAX_VALUE if mccStr is null.
+        assertTrue("getMcc() out of range [0, 999], mcc=" + mcc,
+                (mcc >= 0 && mcc <= 999) || mcc == Integer.MAX_VALUE);
+        int mnc = lte.getCellIdentity().getMnc();
+        // getMnc() returns Integer.MAX_VALUE if mccStr is null.
+        assertTrue("getMnc() out of range [0, 999], mnc=" + mnc,
+                (mnc >= 0 && mnc <= 999) || mnc == Integer.MAX_VALUE);
 
         int earfcn = lte.getCellIdentity().getEarfcn();
         // Reference 3GPP 36.101 Table 5.7.3-1
@@ -162,6 +190,29 @@ public class CellInfoTest extends AndroidTestCase{
         assertTrue("getUarfcn() out of range [400,11000], uarfcn=" + uarfcn,
             uarfcn >= 400 && uarfcn <= 11000);
 
+        String alphaLong = (String) wcdma.getCellIdentity().getOperatorAlphaLong();
+        assertNotNull("getOperatorAlphaLong() returns NULL!", alphaLong);
+        String alphaShort = (String) wcdma.getCellIdentity().getOperatorAlphaShort();
+        assertNotNull("getOperatorAlphaShort() returns NULL!", alphaShort);
+
+        String mccStr = wcdma.getCellIdentity().getMccStr();
+        // mccStr is set as NULL if empty, unknown or invalid.
+        assertTrue("getMccStr() out of range [0, 999], mcc=" + mccStr,
+                mccStr == null || mccStr.matches("^[0-9]{3}$"));
+        String mncStr = wcdma.getCellIdentity().getMncStr();
+        // mncStr is set as NULL if empty, unknown or invalid.
+        assertTrue("getMncStr() out of range [0, 999], mnc=" + mncStr,
+                mncStr == null || mncStr.matches("^[0-9]{2,3}$"));
+
+        int mcc = wcdma.getCellIdentity().getMcc();
+        // getMcc() returns Integer.MAX_VALUE if mccStr is null.
+        assertTrue("getMcc() out of range [0, 999], mcc=" + mcc,
+                (mcc >= 0 && mcc <= 999) || mcc == Integer.MAX_VALUE);
+        int mnc = wcdma.getCellIdentity().getMnc();
+        // getMnc() returns Integer.MAX_VALUE if mccStr is null.
+        assertTrue("getMnc() out of range [0, 999], mnc=" + mnc,
+                (mnc >= 0 && mnc <= 999) || mnc == Integer.MAX_VALUE);
+
         int level = wcdma.getCellSignalStrength().getLevel();
         assertTrue("getLevel() out of range [0,4], level=" + level, level >=0 && level <= 4);
     }
@@ -182,6 +233,29 @@ public class CellInfoTest extends AndroidTestCase{
         // Reference 3GPP 45.005 Table 2-2
         assertTrue("getArfcn() out of range [0,1024], arfcn=" + arfcn,
             arfcn >= 0 && arfcn <= 1024);
+
+        String alphaLong = (String) gsm.getCellIdentity().getOperatorAlphaLong();
+        assertNotNull("getOperatorAlphaLong() returns NULL!", alphaLong);
+        String alphaShort = (String) gsm.getCellIdentity().getOperatorAlphaShort();
+        assertNotNull("getOperatorAlphaShort() returns NULL!", alphaShort);
+
+        String mccStr = gsm.getCellIdentity().getMccStr();
+        // mccStr is set as NULL if empty, unknown or invalid.
+        assertTrue("getMccStr() out of range [0, 999], mcc=" + mccStr,
+                mccStr == null || mccStr.matches("^[0-9]{3}$"));
+        String mncStr = gsm.getCellIdentity().getMncStr();
+        // mncStr is set as NULL if empty, unknown or invalid.
+        assertTrue("getMncStr() out of range [0, 999], mnc=" + mncStr,
+                mncStr == null || mncStr.matches("^[0-9]{2,3}$"));
+
+        int mcc = gsm.getCellIdentity().getMcc();
+        // getMcc() returns Integer.MAX_VALUE if mccStr is null.
+        assertTrue("getMcc() out of range [0, 999], mcc=" + mcc,
+                (mcc >= 0 && mcc <= 999) || mcc == Integer.MAX_VALUE);
+        int mnc = gsm.getCellIdentity().getMnc();
+        // getMnc() returns Integer.MAX_VALUE if mccStr is null.
+        assertTrue("getMnc() out of range [0, 999], mnc=" + mnc,
+                (mnc >= 0 && mnc <= 999) || mnc == Integer.MAX_VALUE);
 
         int level = gsm.getCellSignalStrength().getLevel();
         assertTrue("getLevel() out of range [0,4], level=" + level, level >=0 && level <= 4);
