@@ -1057,15 +1057,12 @@ final class Helper {
      * have client state)
      * @param value the only value expected in the client state bundle (or {@code null} if it
      * shouldn't have client state)
-     * @param detectedAutofillIds expected field ids when asserting field classification
-     * @param detectedRemoteIds expected user data ids when asserting field classification
-     * @param detectedScores expected match scores when asserting field classification
+     * @param fieldClassificationResults expected results when asserting field classification
      */
     private static void assertFillEvent(@NonNull FillEventHistory.Event event,
             int eventType, @Nullable String datasetId,
             @Nullable String key, @Nullable String value,
-            @Nullable AutofillId[] detectedAutofillIds, @Nullable String[] detectedRemoteIds,
-            @Nullable float[] detectedScores) {
+            @Nullable FieldClassificationResult[] fieldClassificationResults) {
         assertThat(event).isNotNull();
         assertWithMessage("Wrong type for %s", event).that(event.getType()).isEqualTo(eventType);
         if (datasetId == null) {
@@ -1091,21 +1088,31 @@ final class Helper {
         assertWithMessage("Event '%s' should not have manually-entered fields", event)
                 .that(event.getManuallyEnteredField()).isEmpty();
         final Map<AutofillId, FieldClassification> detectedFields = event.getFieldsClassification();
-        if (detectedAutofillIds == null) {
+        if (fieldClassificationResults == null) {
             assertThat(detectedFields).isEmpty();
         } else {
-            assertThat(detectedFields).hasSize(detectedAutofillIds.length);
+            assertThat(detectedFields).hasSize(fieldClassificationResults.length);
             int i = 0;
             for (Entry<AutofillId, FieldClassification> entry : detectedFields.entrySet()) {
-                assertWithMessage("Wrong field id at %s", i).that(entry.getKey())
-                        .isEqualTo(detectedAutofillIds[i]);
-                final Match topMatch = entry.getValue().getMatches().get(0);
-                assertWithMessage("Wrong remote id at %s", i).that(topMatch.getRemoteId())
-                        .isEqualTo(detectedRemoteIds[i]);
-                assertWithMessage("Wrong score at %s", i).that(topMatch.getScore())
-                        .isWithin(detectedScores[i]);
+                assertMatches(i, entry, fieldClassificationResults[i]);
                 i++;
             }
+        }
+    }
+
+    private static void assertMatches(int i, Entry<AutofillId, FieldClassification> actualResult,
+            FieldClassificationResult expectedResult) {
+        assertWithMessage("Wrong field id at index %s", i).that(actualResult.getKey())
+                .isEqualTo(expectedResult.id);
+        final List<Match> matches = actualResult.getValue().getMatches();
+        assertWithMessage("Wrong number of matches: " + matches).that(matches.size())
+                .isEqualTo(expectedResult.remoteIds.length);
+        for (int j = 0; j < matches.size(); j++) {
+            final Match match = matches.get(j);
+            assertWithMessage("Wrong remoteId at (%s, %s): %s", i, j, match)
+                .that(match.getRemoteId()).isEqualTo(expectedResult.remoteIds[j]);
+            assertWithMessage("Wrong score at (%s, %s): %s", i, j, match)
+                .that(match.getScore()).isWithin(expectedResult.scores[j]);
         }
     }
 
@@ -1118,7 +1125,7 @@ final class Helper {
      */
     public static void assertFillEventForDatasetSelected(@NonNull FillEventHistory.Event event,
             @Nullable String datasetId) {
-        assertFillEvent(event, TYPE_DATASET_SELECTED, datasetId, null, null, null, null, null);
+        assertFillEvent(event, TYPE_DATASET_SELECTED, datasetId, null, null, null);
     }
 
     /**
@@ -1132,7 +1139,7 @@ final class Helper {
      */
     public static void assertFillEventForDatasetSelected(@NonNull FillEventHistory.Event event,
             @Nullable String datasetId, @Nullable String key, @Nullable String value) {
-        assertFillEvent(event, TYPE_DATASET_SELECTED, datasetId, key, value, null, null, null);
+        assertFillEvent(event, TYPE_DATASET_SELECTED, datasetId, key, value, null);
     }
 
     /**
@@ -1146,7 +1153,7 @@ final class Helper {
      */
     public static void assertFillEventForSaveShown(@NonNull FillEventHistory.Event event,
             @NonNull String datasetId, @NonNull String key, @NonNull String value) {
-        assertFillEvent(event, TYPE_SAVE_SHOWN, datasetId, key, value, null, null, null);
+        assertFillEvent(event, TYPE_SAVE_SHOWN, datasetId, key, value, null);
     }
 
     /**
@@ -1158,7 +1165,7 @@ final class Helper {
      */
     public static void assertFillEventForSaveShown(@NonNull FillEventHistory.Event event,
             @NonNull String datasetId) {
-        assertFillEvent(event, TYPE_SAVE_SHOWN, datasetId, null, null, null, null, null);
+        assertFillEvent(event, TYPE_SAVE_SHOWN, datasetId, null, null, null);
     }
 
     /**
@@ -1174,8 +1181,7 @@ final class Helper {
     public static void assertFillEventForDatasetAuthenticationSelected(
             @NonNull FillEventHistory.Event event,
             @Nullable String datasetId, @NonNull String key, @NonNull String value) {
-        assertFillEvent(event, TYPE_DATASET_AUTHENTICATION_SELECTED, datasetId, key, value, null,
-                null, null);
+        assertFillEvent(event, TYPE_DATASET_AUTHENTICATION_SELECTED, datasetId, key, value, null);
     }
 
     /**
@@ -1190,26 +1196,43 @@ final class Helper {
     public static void assertFillEventForAuthenticationSelected(
             @NonNull FillEventHistory.Event event,
             @Nullable String datasetId, @NonNull String key, @NonNull String value) {
-        assertFillEvent(event, TYPE_AUTHENTICATION_SELECTED, datasetId, key, value, null, null,
-                null);
+        assertFillEvent(event, TYPE_AUTHENTICATION_SELECTED, datasetId, key, value, null);
     }
 
     public static void assertFillEventForFieldsClassification(@NonNull FillEventHistory.Event event,
             @NonNull AutofillId fieldId, @NonNull String remoteId, float score) {
         assertFillEvent(event, TYPE_CONTEXT_COMMITTED, null, null, null,
-                new AutofillId[] { fieldId }, new String[] { remoteId }, new float[] { score });
+                new FieldClassificationResult[] {
+                        new FieldClassificationResult(fieldId, remoteId, score)
+                });
     }
 
     public static void assertFillEventForFieldsClassification(@NonNull FillEventHistory.Event event,
-            @NonNull AutofillId[] fieldIds, @NonNull String[] remoteIds, @NonNull float[] scores) {
-        assertFillEvent(event, TYPE_CONTEXT_COMMITTED, null, null, null, fieldIds, remoteIds,
-                scores);
+            @NonNull FieldClassificationResult[] results) {
+        assertFillEvent(event, TYPE_CONTEXT_COMMITTED, null, null, null, results);
     }
 
     public static void assertFillEventForContextCommitted(@NonNull FillEventHistory.Event event) {
-        assertFillEvent(event, TYPE_CONTEXT_COMMITTED, null, null, null, null, null, null);
+        assertFillEvent(event, TYPE_CONTEXT_COMMITTED, null, null, null, null);
     }
 
     private Helper() {
+    }
+
+    static class FieldClassificationResult {
+        public final AutofillId id;
+        public final String[] remoteIds;
+        public final float[] scores;
+
+        FieldClassificationResult(@NonNull AutofillId id, @NonNull String remoteId, float score) {
+            this(id, new String[] { remoteId }, new float[] { score });
+        }
+
+        FieldClassificationResult(@NonNull AutofillId id, @NonNull String[] remoteIds,
+                float[] scores) {
+            this.id = id;
+            this.remoteIds = remoteIds;
+            this.scores = scores;
+        }
     }
 }

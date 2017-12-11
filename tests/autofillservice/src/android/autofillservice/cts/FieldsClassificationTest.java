@@ -23,6 +23,7 @@ import static android.service.autofill.FillResponse.FLAG_TRACK_CONTEXT_COMMITED;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.autofillservice.cts.Helper.FieldClassificationResult;
 import android.provider.Settings;
 import android.service.autofill.EditDistanceScorer;
 import android.service.autofill.FillEventHistory;
@@ -144,15 +145,6 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         enableService();
 
         // Set expectations.
-        final String expectedId;
-        final String typedText;
-        if (firstMatch) {
-            expectedId = "1stId";
-            typedText = "IAM111";
-        } else {
-            expectedId = "2ndId";
-            typedText = "IAM222";
-        }
         mActivity.getAutofillManager().setUserData(new UserData.Builder(mScorer, "1stId", "Iam1ST")
                 .add("2ndId", "Iam2ND").build());
         final MyAutofillCallback callback = mActivity.registerCallback();
@@ -171,7 +163,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         callback.assertUiUnavailableEvent(field);
 
         // Simulate user input
-        mActivity.setText(1, 1, typedText);
+        mActivity.setText(1, 1, firstMatch ? "IAM111" : "IAM222");
 
         // Finish context.
         mActivity.getAutofillManager().commit();
@@ -181,8 +173,16 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
                 InstrumentedAutoFillService.peekInstance().getFillEventHistory();
         final List<Event> events = history.getEvents();
         assertWithMessage("Wrong number of events: %s", events).that(events.size()).isEqualTo(1);
-        // Matches 4 of 6 chars - 66.6666%
-        assertFillEventForFieldsClassification(events.get(0), fieldId, expectedId, 0.66F);
+        // Best match is 0.66 (4 of 6), worst is 0.5 (3 of 6)
+        if (firstMatch) {
+            assertFillEventForFieldsClassification(events.get(0), new FieldClassificationResult[] {
+                    new FieldClassificationResult(fieldId,
+                            new String[] { "1stId", "2ndId" }, new float[] { 0.66F, 0.5F }) });
+        } else {
+            assertFillEventForFieldsClassification(events.get(0), new FieldClassificationResult[] {
+                    new FieldClassificationResult(fieldId,
+                            new String[] { "2ndId", "1stId" }, new float[] { 0.66F, 0.5F }) });
+        }
     }
 
     @Test
@@ -223,9 +223,10 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         final List<Event> events = history.getEvents();
         assertWithMessage("Wrong number of events: %s", events).that(events.size()).isEqualTo(1);
         assertFillEventForFieldsClassification(events.get(0),
-                new AutofillId[] { fieldId1, fieldId2 },
-                new String[] { "myId", "myId" },
-                new float[] { 1.0F, 1.0F });
+                new FieldClassificationResult[] {
+                        new FieldClassificationResult(fieldId1, "myId", 1.0F),
+                        new FieldClassificationResult(fieldId2, "myId", 1.0F),
+                });
     }
 
     @Test
@@ -236,6 +237,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         // Set expectations.
         mActivity.getAutofillManager()
                 .setUserData(new UserData.Builder(mScorer, "myId", "FULLY")
+                        .add("totalMiss", "ZZZZZZZZZZ") // should not have matched any
                         .add("otherId", "EMPTY")
                         .build());
         final MyAutofillCallback callback = mActivity.registerCallback();
@@ -260,10 +262,10 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         callback.assertUiUnavailableEvent(field1);
 
         // Simulate user input
-        mActivity.setText(1, 1, "fully"); // 100%
-        mActivity.setText(1, 2, "empty"); // 100%
-        mActivity.setText(2, 1, "fooly"); // 60%
-        mActivity.setText(2, 2, "emppy"); // 80%
+        mActivity.setText(1, 1, "fully"); // u1: 100% u2:  20%
+        mActivity.setText(1, 2, "empty"); // u1:  20% u2: 100%
+        mActivity.setText(2, 1, "fooly"); // u1:  60% u2:  20%
+        mActivity.setText(2, 2, "emppy"); // u1:  20% u2:  80%
 
         // Finish context.
         mActivity.getAutofillManager().commit();
@@ -274,9 +276,19 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         final List<Event> events = history.getEvents();
         assertWithMessage("Wrong number of events: %s", events).that(events.size()).isEqualTo(1);
         assertFillEventForFieldsClassification(events.get(0),
-                new AutofillId[] { fieldId1, fieldId2, fieldId3, fieldId4 },
-                new String[] { "myId", "otherId", "myId", "otherId" },
-                new float[] { 1.0F, 1.0F, 0.60F, 0.80F });
+                new FieldClassificationResult[] {
+                        new FieldClassificationResult(fieldId1,
+                                new String[] { "myId", "otherId" },
+                                new float[] { 1.0F, 0.2F }),
+                        new FieldClassificationResult(fieldId2,
+                                new String[] { "otherId", "myId" },
+                                new float[] { 1.0F, 0.2F }),
+                        new FieldClassificationResult(fieldId3,
+                                new String[] { "myId", "otherId" },
+                                new float[] { 0.6F, 0.2F }),
+                        new FieldClassificationResult(fieldId4,
+                                new String[] { "otherId", "myId"},
+                                new float[] { 0.80F, 0.2F })});
     }
 
     @Test
