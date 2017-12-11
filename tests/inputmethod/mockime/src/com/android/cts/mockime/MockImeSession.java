@@ -17,9 +17,6 @@
 package com.android.cts.mockime;
 
 import static android.content.Context.MODE_PRIVATE;
-import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
-import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
-import static android.content.pm.PackageManager.DONT_KILL_APP;
 
 import android.app.UiAutomation;
 import android.content.BroadcastReceiver;
@@ -41,11 +38,8 @@ import android.view.inputmethod.InputMethodManager;
 
 import com.android.compatibility.common.util.PollingCheck;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -66,6 +60,8 @@ public class MockImeSession implements AutoCloseable {
 
     @NonNull
     private final Context mContext;
+    @NonNull
+    private final UiAutomation mUiAutomation;
 
     private final HandlerThread mHandlerThread = new HandlerThread("EventReceiver");
 
@@ -139,17 +135,20 @@ public class MockImeSession implements AutoCloseable {
             new ImeEventStream(mEventReceiver::takeEventSnapshot);
 
     private static String executeShellCommand(
-            @NonNull UiAutomation uiAutomation, @NonNull String command) {
+            @NonNull UiAutomation uiAutomation, @NonNull String command) throws IOException {
         try (ParcelFileDescriptor.AutoCloseInputStream in =
                      new ParcelFileDescriptor.AutoCloseInputStream(
                              uiAutomation.executeShellCommand(command))) {
-            try (BufferedReader br =
-                         new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
-                final String line = br.readLine();
-                return line != null ? line.trim() : "";
+            final StringBuilder sb = new StringBuilder();
+            final byte[] buffer = new byte[4096];
+            while (true) {
+                final int numRead = in.read(buffer);
+                if (numRead <= 0) {
+                    break;
+                }
+                sb.append(new String(buffer, 0, numRead));
             }
-        } catch (IOException e) {
-            return "";
+            return sb.toString();
         }
     }
 
@@ -188,21 +187,25 @@ public class MockImeSession implements AutoCloseable {
         return MockIme.getImeId(mContext.getPackageName());
     }
 
-    private MockImeSession(Context context) {
+    private MockImeSession(@NonNull Context context, @NonNull UiAutomation uiAutomation) {
         mContext = context;
+        mUiAutomation = uiAutomation;
     }
 
-    private void initialize(@NonNull UiAutomation uiAutomation,
-            @Nullable ImeSettings.Builder imeSettings) throws Exception {
+    private void initialize(@Nullable ImeSettings.Builder imeSettings) throws Exception {
         // Make sure that MockIME is not selected.
-        mContext.getPackageManager().setComponentEnabledSetting(getMockImeComponentName(),
-                COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
-
-        PollingCheck.check("Make sure that MockIME becomes unavailable", TIMEOUT, () ->
-                mContext.getSystemService(InputMethodManager.class)
-                        .getInputMethodList()
-                        .stream()
-                        .noneMatch(info -> getMockImeComponentName().equals(info.getComponent())));
+        if (mContext.getSystemService(InputMethodManager.class)
+                .getInputMethodList()
+                .stream()
+                .anyMatch(info -> getMockImeComponentName().equals(info.getComponent()))) {
+            executeShellCommand(mUiAutomation, "ime reset-ime");
+        }
+        if (mContext.getSystemService(InputMethodManager.class)
+                .getEnabledInputMethodList()
+                .stream()
+                .anyMatch(info -> getMockImeComponentName().equals(info.getComponent()))) {
+            throw new IllegalStateException();
+        }
 
         writeMockImeSettings(mContext, mImeEventActionName, imeSettings);
 
@@ -211,19 +214,8 @@ public class MockImeSession implements AutoCloseable {
                 new IntentFilter(mImeEventActionName), null /* broadcastPermission */,
                 new Handler(mHandlerThread.getLooper()));
 
-        // Enable MockIME
-        mContext.getPackageManager().setComponentEnabledSetting(
-                getMockImeComponentName(), COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP);
-
-        PollingCheck.check("Wait until the Mock IME is recognized by the IMMS again",
-                TIMEOUT,
-                () -> mContext.getSystemService(InputMethodManager.class)
-                        .getInputMethodList()
-                        .stream()
-                        .anyMatch(info -> getMockImeComponentName().equals(info.getComponent())));
-
-        executeShellCommand(uiAutomation, "ime enable " + getMockImeId());
-        executeShellCommand(uiAutomation, "ime set " + getMockImeId());
+        executeShellCommand(mUiAutomation, "ime enable " + getMockImeId());
+        executeShellCommand(mUiAutomation, "ime set " + getMockImeId());
 
         PollingCheck.check("Make sure that MockIME becomes available", TIMEOUT,
                 () -> getMockImeId().equals(getCurrentInputMethodId()));
@@ -246,8 +238,8 @@ public class MockImeSession implements AutoCloseable {
             @NonNull Context context,
             @NonNull UiAutomation uiAutomation,
             @Nullable ImeSettings.Builder imeSettings) throws Exception {
-        final MockImeSession client = new MockImeSession(context);
-        client.initialize(uiAutomation, imeSettings);
+        final MockImeSession client = new MockImeSession(context, uiAutomation);
+        client.initialize(imeSettings);
         return client;
     }
 
@@ -264,16 +256,11 @@ public class MockImeSession implements AutoCloseable {
      * selected next is up to the system.
      */
     public void close() throws Exception {
-        final ComponentName mockImeComponent = MockIme.getComponentName(mContext.getPackageName());
-
-        // Kill Mock IME process
-        // TODO: Add a new Test API to make which IME will be selected next deterministic.
-        mContext.getPackageManager().setComponentEnabledSetting(
-                mockImeComponent, COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
+        executeShellCommand(mUiAutomation, "ime reset-ime");
 
         PollingCheck.check("Make sure that MockIME becomes unavailable", TIMEOUT, () ->
                 mContext.getSystemService(InputMethodManager.class)
-                        .getInputMethodList()
+                        .getEnabledInputMethodList()
                         .stream()
                         .noneMatch(info -> getMockImeComponentName().equals(info.getComponent())));
 
