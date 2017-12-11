@@ -33,6 +33,8 @@ public class AssistantActivity extends Activity {
     public static final String EXTRA_FINISH_SELF = "finish_self";
     // Attempts to enter picture-in-picture in onResume
     public static final String EXTRA_ENTER_PIP = "enter_pip";
+    // Display on which Assistant runs
+    public static final String EXTRA_ASSISTANT_DISPLAY_ID = "assistant_display_id";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,7 +49,14 @@ public class AssistantActivity extends Activity {
             i.setComponent(new ComponentName(this, getPackageName() + "."
                     + getIntent().getStringExtra(EXTRA_LAUNCH_NEW_TASK)));
             i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            startActivity(i);
+            if (getIntent().hasExtra(EXTRA_ASSISTANT_DISPLAY_ID)) {
+                ActivityOptions displayOptions = ActivityOptions.makeBasic();
+                displayOptions.setLaunchDisplayId(Integer.parseInt(getIntent()
+                        .getStringExtra(EXTRA_ASSISTANT_DISPLAY_ID)));
+                startActivity(i, displayOptions.toBundle());
+            } else {
+                startActivity(i);
+            }
         }
 
         // Enter pip if requested
