@@ -113,9 +113,6 @@ public class CrossAppDragAndDropTests {
     private static final String RESULT_EXCEPTION = "Exception";
     private static final String RESULT_NULL_DROP_PERMISSIONS = "Null DragAndDropPermissions";
 
-    private static final String AM_SUPPORTS_SPLIT_SCREEN_MULTIWINDOW =
-            "am supports-split-screen-multi-window";
-
     protected Context mContext;
     protected ActivityManager mAm;
     private UiDevice mDevice;
@@ -425,19 +422,11 @@ public class CrossAppDragAndDropTests {
     }
 
     private static boolean supportsDragAndDrop() {
-        String supportsMultiwindow = executeShellCommand("am supports-multiwindow").trim();
-        if ("true".equals(supportsMultiwindow)) {
-            return true;
-        } else if ("false".equals(supportsMultiwindow)) {
-            return false;
-        } else {
-            throw new RuntimeException(
-                    "device does not support \"am supports-multiwindow\" shell command.");
-        }
+        return ActivityManager.supportsMultiWindow(InstrumentationRegistry.getContext());
     }
 
     private static boolean supportsSplitScreenMultiWindow() {
-        return !executeShellCommand(AM_SUPPORTS_SPLIT_SCREEN_MULTIWINDOW).startsWith("false");
+        return ActivityManager.supportsSplitScreenMultiWindow(InstrumentationRegistry.getContext());
     }
 
     private static boolean supportsFreeformMultiWindow() {
