@@ -23,8 +23,9 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util \
     android-support-test \
-    junit \
-    legacy-android-test
+    junit
+
+LOCAL_JAVA_LIBRARIES := android.test.base
 
 LOCAL_MODULE := compatibility-device-info
 

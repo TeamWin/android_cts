@@ -32,7 +32,6 @@ import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -62,11 +61,6 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
     @Before
     public void setActivity() {
         mActivity = mActivityRule.getActivity();
-    }
-
-    @After
-    public void finishWelcomeActivity() {
-        WelcomeActivity.finishIt();
     }
 
     /**

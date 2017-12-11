@@ -51,7 +51,6 @@ import android.widget.ArrayAdapter;
 import android.widget.RemoteViews;
 import android.widget.Spinner;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -73,11 +72,6 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
     @Before
     public void setActivity() {
         mActivity = mActivityRule.getActivity();
-    }
-
-    @After
-    public void finishWelcomeActivity() {
-        WelcomeActivity.finishIt();
     }
 
     @Test

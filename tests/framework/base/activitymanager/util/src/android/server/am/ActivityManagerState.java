@@ -287,23 +287,32 @@ class ActivityManagerState {
         return count;
     }
 
+    /** Get the stack position on its display. */
     int getStackIndexByActivityType(int activityType) {
-        for (int i = 0; i < mStacks.size(); i++) {
-            if (activityType == mStacks.get(i).getActivityType()) {
-                return i;
+        for (Integer displayId : mDisplayStacks.keySet()) {
+            List<ActivityStack> stacks = mDisplayStacks.get(displayId);
+            for (int i = 0; i < stacks.size(); i++) {
+                if (activityType == stacks.get(i).getActivityType()) {
+                    return i;
+                }
             }
         }
         return -1;
     }
 
+    /** Get the stack position on its display. */
     int getStackIndexByActivityName(String activityName) {
         final String fullName = ActivityManagerTestBase.getActivityComponentName(activityName);
-        for (int i = mStacks.size() - 1; i >=0 ; --i) {
-            final ActivityStack stack = mStacks.get(i);
-            for (ActivityTask task : stack.mTasks) {
-                for (Activity activity : task.mActivities) {
-                    if (activity.name.equals(fullName)) {
-                        return i;
+
+        for (Integer displayId : mDisplayStacks.keySet()) {
+            List<ActivityStack> stacks = mDisplayStacks.get(displayId);
+            for (int i = stacks.size() - 1; i >= 0; --i) {
+                final ActivityStack stack = stacks.get(i);
+                for (ActivityTask task : stack.mTasks) {
+                    for (Activity activity : task.mActivities) {
+                        if (activity.name.equals(fullName)) {
+                            return i;
+                        }
                     }
                 }
             }

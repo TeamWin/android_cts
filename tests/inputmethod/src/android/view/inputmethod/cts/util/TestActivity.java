@@ -16,10 +16,10 @@
 
 package android.view.inputmethod.cts.util;
 
-import android.annotation.NonNull;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.test.InstrumentationRegistry;
 import android.view.View;
 

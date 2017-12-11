@@ -17,6 +17,7 @@
 package android.app.cts;
 
 import android.Manifest;
+import android.accessibilityservice.AccessibilityService;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Instrumentation;
@@ -34,8 +35,12 @@ import android.os.IBinder;
 import android.os.Parcel;
 import android.os.PowerManager;
 import android.os.RemoteException;
+import android.support.test.uiautomator.BySelector;
+import android.support.test.uiautomator.UiDevice;
+import android.support.test.uiautomator.UiSelector;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
+import android.view.accessibility.AccessibilityEvent;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -52,6 +57,10 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
     static final String SIMPLE_ACTIVITY_START_SERVICE = ".SimpleActivityStartService";
     public static String ACTION_SIMPLE_ACTIVITY_START_SERVICE_RESULT =
             "com.android.cts.launcherapps.simpleapp.SimpleActivityStartService.RESULT";
+
+    // APKs for testing heavy weight app interactions.
+    static final String CANT_SAVE_STATE_1_PACKAGE_NAME = "com.android.test.cantsavestate1";
+    static final String CANT_SAVE_STATE_2_PACKAGE_NAME = "com.android.test.cantsavestate2";
 
     private static final int TEMP_WHITELIST_DURATION_MS = 2000;
 
@@ -87,6 +96,39 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         final String result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
         Log.d(TAG, String.format("Output for '%s': %s", cmd, result));
         return result;
+    }
+
+    private boolean isScreenInteractive() {
+        final PowerManager powerManager =
+                (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
+        return powerManager.isInteractive();
+    }
+
+    private boolean isKeyguardLocked() {
+        final KeyguardManager keyguardManager =
+                (KeyguardManager) mContext.getSystemService(Context.KEYGUARD_SERVICE);
+        return keyguardManager.isKeyguardLocked();
+    }
+
+    private void startActivityAndWaitForShow(final Intent intent) throws Exception {
+        getInstrumentation().getUiAutomation().executeAndWaitForEvent(
+                () -> {
+                    try {
+                        mContext.startActivity(intent);
+                    } catch (Exception e) {
+                        fail("Cannot start activity: " + intent);
+                    }
+                }, (AccessibilityEvent event) -> event.getEventType()
+                        == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
+                , WAIT_TIME);
+    }
+
+    private void maybeClick(UiDevice device, UiSelector sel) {
+        try { device.findObject(sel).click(); } catch (Throwable ignored) { }
+    }
+
+    private void maybeClick(UiDevice device, BySelector sel) {
+        try { device.findObject(sel).click(); } catch (Throwable ignored) { }
     }
 
     /**
@@ -827,15 +869,257 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         }
     }
 
-    private boolean isScreenInteractive() {
-        final PowerManager powerManager =
-                (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
-        return powerManager.isInteractive();
+    /**
+     * Test that a single "can't save state" app has the proper process management
+     * semantics.
+     */
+    public void testCantSaveStateLaunchAndBackground() throws Exception {
+        final Intent activityIntent = new Intent();
+        activityIntent.setPackage(CANT_SAVE_STATE_1_PACKAGE_NAME);
+        activityIntent.setAction(Intent.ACTION_MAIN);
+        activityIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+        activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+        final Intent homeIntent = new Intent();
+        homeIntent.setAction(Intent.ACTION_MAIN);
+        homeIntent.addCategory(Intent.CATEGORY_HOME);
+        homeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+        ActivityManager am = mContext.getSystemService(ActivityManager.class);
+
+        String cmd = "pm grant " + STUB_PACKAGE_NAME + " "
+                + Manifest.permission.PACKAGE_USAGE_STATS;
+        String result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+
+        // We don't want to wait for the uid to actually go idle, we can force it now.
+        cmd = "am make-uid-idle " + CANT_SAVE_STATE_1_PACKAGE_NAME;
+        result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+
+        ApplicationInfo appInfo = mContext.getPackageManager().getApplicationInfo(
+                CANT_SAVE_STATE_1_PACKAGE_NAME, 0);
+
+        // This test is also using UidImportanceListener to make sure the correct
+        // heavy-weight state is reported there.
+        UidImportanceListener uidForegroundListener = new UidImportanceListener(appInfo.uid);
+        am.addOnUidImportanceListener(uidForegroundListener,
+                ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND);
+        UidImportanceListener uidBackgroundListener = new UidImportanceListener(appInfo.uid);
+        am.addOnUidImportanceListener(uidBackgroundListener,
+                ActivityManager.RunningAppProcessInfo.IMPORTANCE_CANT_SAVE_STATE-1);
+
+        WatchUidRunner uidWatcher = new WatchUidRunner(getInstrumentation(), appInfo.uid);
+
+        try {
+            // Start the heavy-weight app, should launch like a normal app.
+            mContext.startActivity(activityIntent);
+
+            // Wait for process state to reflect running activity.
+            uidForegroundListener.waitForValue(
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND,
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND, WAIT_TIME);
+            assertEquals(ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND,
+                    am.getPackageImportance(CANT_SAVE_STATE_1_PACKAGE_NAME));
+
+            // Also make sure the uid state reports are as expected.
+            uidWatcher.waitFor(WatchUidRunner.CMD_ACTIVE, null, WAIT_TIME);
+            uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "TOP", WAIT_TIME);
+
+            // Now go to home, leaving the app.  It should be put in the heavy weight state.
+            mContext.startActivity(homeIntent);
+
+            // Wait for process to go down to background heavy-weight.
+            uidBackgroundListener.waitForValue(
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_CANT_SAVE_STATE,
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_CANT_SAVE_STATE, WAIT_TIME);
+            assertEquals(ActivityManager.RunningAppProcessInfo.IMPORTANCE_CANT_SAVE_STATE,
+                    am.getPackageImportance(CANT_SAVE_STATE_1_PACKAGE_NAME));
+
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "HVY", WAIT_TIME);
+
+            // While in background, should go in to normal idle state.
+            // Force app to go idle now
+            cmd = "am make-uid-idle " + CANT_SAVE_STATE_1_PACKAGE_NAME;
+            result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+            uidWatcher.expect(WatchUidRunner.CMD_IDLE, null, WAIT_TIME);
+
+            // Switch back to heavy-weight app to see if it correctly returns to foreground.
+            startActivityAndWaitForShow(activityIntent);
+
+            // Wait for process state to reflect running activity.
+            uidForegroundListener.waitForValue(
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND,
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND, WAIT_TIME);
+            assertEquals(ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND,
+                    am.getPackageImportance(CANT_SAVE_STATE_1_PACKAGE_NAME));
+
+            // Also make sure the uid state reports are as expected.
+            uidWatcher.waitFor(WatchUidRunner.CMD_ACTIVE, null, WAIT_TIME);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "TOP", WAIT_TIME);
+
+            // Exit activity, check to see if we are now cached.
+            getInstrumentation().getUiAutomation().performGlobalAction(
+                    AccessibilityService.GLOBAL_ACTION_BACK);
+
+            // Wait for process to become cached
+            uidBackgroundListener.waitForValue(
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED,
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED, WAIT_TIME);
+            assertEquals(ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED,
+                    am.getPackageImportance(CANT_SAVE_STATE_1_PACKAGE_NAME));
+
+            uidWatcher.expect(WatchUidRunner.CMD_CACHED, null, WAIT_TIME);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "CRE", WAIT_TIME);
+
+            // While in background, should go in to normal idle state.
+            // Force app to go idle now
+            cmd = "am make-uid-idle " + CANT_SAVE_STATE_1_PACKAGE_NAME;
+            result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+            uidWatcher.expect(WatchUidRunner.CMD_IDLE, null, WAIT_TIME);
+
+        } finally {
+            uidWatcher.finish();
+
+            am.removeOnUidImportanceListener(uidForegroundListener);
+            am.removeOnUidImportanceListener(uidBackgroundListener);
+        }
     }
 
-    private boolean isKeyguardLocked() {
-        final KeyguardManager keyguardManager =
-                (KeyguardManager) mContext.getSystemService(Context.KEYGUARD_SERVICE);
-        return keyguardManager.isKeyguardLocked();
+    /**
+     * Test that switching between two "can't save state" apps is handled properly.
+     */
+    public void testCantSaveStateLaunchAndSwitch() throws Exception {
+        final Intent activity1Intent = new Intent();
+        activity1Intent.setPackage(CANT_SAVE_STATE_1_PACKAGE_NAME);
+        activity1Intent.setAction(Intent.ACTION_MAIN);
+        activity1Intent.addCategory(Intent.CATEGORY_LAUNCHER);
+        activity1Intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+        final Intent activity2Intent = new Intent();
+        activity2Intent.setPackage(CANT_SAVE_STATE_2_PACKAGE_NAME);
+        activity2Intent.setAction(Intent.ACTION_MAIN);
+        activity2Intent.addCategory(Intent.CATEGORY_LAUNCHER);
+        activity2Intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+        final Intent homeIntent = new Intent();
+        homeIntent.setAction(Intent.ACTION_MAIN);
+        homeIntent.addCategory(Intent.CATEGORY_HOME);
+        homeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+        ActivityManager am = mContext.getSystemService(ActivityManager.class);
+        UiDevice device = UiDevice.getInstance(getInstrumentation());
+
+        String cmd = "pm grant " + STUB_PACKAGE_NAME + " "
+                + Manifest.permission.PACKAGE_USAGE_STATS;
+        String result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+
+        // We don't want to wait for the uid to actually go idle, we can force it now.
+        cmd = "am make-uid-idle " + CANT_SAVE_STATE_1_PACKAGE_NAME;
+        result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+        cmd = "am make-uid-idle " + CANT_SAVE_STATE_2_PACKAGE_NAME;
+        result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+
+        ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
+                CANT_SAVE_STATE_1_PACKAGE_NAME, 0);
+        WatchUidRunner uid1Watcher = new WatchUidRunner(getInstrumentation(), app1Info.uid);
+
+        ApplicationInfo app2Info = mContext.getPackageManager().getApplicationInfo(
+                CANT_SAVE_STATE_2_PACKAGE_NAME, 0);
+        WatchUidRunner uid2Watcher = new WatchUidRunner(getInstrumentation(), app2Info.uid);
+
+        try {
+            // Start the first heavy-weight app, should launch like a normal app.
+            mContext.startActivity(activity1Intent);
+
+            // Make sure the uid state reports are as expected.
+            uid1Watcher.waitFor(WatchUidRunner.CMD_ACTIVE, null, WAIT_TIME);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
+            uid1Watcher.expect(WatchUidRunner.CMD_PROCSTATE, "TOP", WAIT_TIME);
+
+            // Now go to home, leaving the app.  It should be put in the heavy weight state.
+            mContext.startActivity(homeIntent);
+
+            // Wait for process to go down to background heavy-weight.
+            uid1Watcher.expect(WatchUidRunner.CMD_PROCSTATE, "HVY", WAIT_TIME);
+
+            // Start the second heavy-weight app, should ask us what to do with the two apps
+            startActivityAndWaitForShow(activity2Intent);
+
+            // First, let's try returning to the original app.
+            maybeClick(device, new UiSelector().resourceId("android:id/switch_old"));
+            device.waitForIdle();
+
+            // App should now be back in foreground.
+            uid1Watcher.expect(WatchUidRunner.CMD_PROCSTATE, "TOP", WAIT_TIME);
+
+            // Return to home.
+            mContext.startActivity(homeIntent);
+            uid1Watcher.expect(WatchUidRunner.CMD_PROCSTATE, "HVY", WAIT_TIME);
+
+            // Again try starting second heavy-weight app to get prompt.
+            startActivityAndWaitForShow(activity2Intent);
+
+            // Now we'll switch to the new app.
+            maybeClick(device, new UiSelector().resourceId("android:id/switch_new"));
+            device.waitForIdle();
+
+            // The original app should now become cached.
+            uid1Watcher.expect(WatchUidRunner.CMD_CACHED, null, WAIT_TIME);
+            uid1Watcher.expect(WatchUidRunner.CMD_PROCSTATE, "CRE", WAIT_TIME);
+
+            // And the new app should start.
+            uid2Watcher.waitFor(WatchUidRunner.CMD_ACTIVE, null, WAIT_TIME);
+            uid2Watcher.waitFor(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
+            uid2Watcher.expect(WatchUidRunner.CMD_PROCSTATE, "TOP", WAIT_TIME);
+
+            // Make sure the original app is idle for cleanliness
+            cmd = "am make-uid-idle " + CANT_SAVE_STATE_1_PACKAGE_NAME;
+            result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+            uid1Watcher.expect(WatchUidRunner.CMD_IDLE, null, WAIT_TIME);
+
+            // Return to home.
+            mContext.startActivity(homeIntent);
+            uid2Watcher.expect(WatchUidRunner.CMD_PROCSTATE, "HVY", WAIT_TIME);
+
+            // Try starting the first heavy weight app, but return to the existing second.
+            startActivityAndWaitForShow(activity1Intent);
+            maybeClick(device, new UiSelector().resourceId("android:id/switch_old"));
+            device.waitForIdle();
+            uid2Watcher.expect(WatchUidRunner.CMD_PROCSTATE, "TOP", WAIT_TIME);
+
+            // Return to home.
+            mContext.startActivity(homeIntent);
+            uid2Watcher.expect(WatchUidRunner.CMD_PROCSTATE, "HVY", WAIT_TIME);
+
+            // Again start the first heavy weight app, this time actually switching to it
+            startActivityAndWaitForShow(activity1Intent);
+            maybeClick(device, new UiSelector().resourceId("android:id/switch_new"));
+            device.waitForIdle();
+
+            // The second app should now become cached.
+            uid2Watcher.expect(WatchUidRunner.CMD_CACHED, null, WAIT_TIME);
+            uid2Watcher.expect(WatchUidRunner.CMD_PROCSTATE, "CRE", WAIT_TIME);
+
+            // And the first app should start.
+            uid1Watcher.waitFor(WatchUidRunner.CMD_ACTIVE, null, WAIT_TIME);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
+            uid1Watcher.expect(WatchUidRunner.CMD_PROCSTATE, "TOP", WAIT_TIME);
+
+            // Exit activity, check to see if we are now cached.
+            getInstrumentation().getUiAutomation().performGlobalAction(
+                    AccessibilityService.GLOBAL_ACTION_BACK);
+            uid1Watcher.expect(WatchUidRunner.CMD_CACHED, null, WAIT_TIME);
+            uid1Watcher.expect(WatchUidRunner.CMD_PROCSTATE, "CRE", WAIT_TIME);
+
+            // Make both apps idle for cleanliness.
+            cmd = "am make-uid-idle " + CANT_SAVE_STATE_1_PACKAGE_NAME;
+            result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+            cmd = "am make-uid-idle " + CANT_SAVE_STATE_2_PACKAGE_NAME;
+            result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+
+        } finally {
+            uid2Watcher.finish();
+            uid1Watcher.finish();
+        }
     }
 }

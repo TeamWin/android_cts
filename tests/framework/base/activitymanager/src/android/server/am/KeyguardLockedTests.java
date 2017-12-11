@@ -16,11 +16,11 @@
 
 package android.server.am;
 
-
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import org.junit.After;
 import org.junit.Before;
@@ -42,6 +42,9 @@ public class KeyguardLockedTests extends KeyguardTestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
+
+        assumeTrue(isHandheld());
+
         setLockCredential();
     }
 
@@ -54,9 +57,6 @@ public class KeyguardLockedTests extends KeyguardTestBase {
 
     @Test
     public void testLockAndUnlock() throws Exception {
-        if (!isHandheld()) {
-            return;
-        }
         gotoKeyguard();
         mAmWmState.waitForKeyguardShowingAndNotOccluded();
         mAmWmState.assertKeyguardShowingAndNotOccluded();
@@ -67,9 +67,6 @@ public class KeyguardLockedTests extends KeyguardTestBase {
 
     @Test
     public void testDismissKeyguard() throws Exception {
-        if (!isHandheld()) {
-            return;
-        }
         gotoKeyguard();
         mAmWmState.waitForKeyguardShowingAndNotOccluded();
         mAmWmState.assertKeyguardShowingAndNotOccluded();
@@ -82,9 +79,6 @@ public class KeyguardLockedTests extends KeyguardTestBase {
 
     @Test
     public void testDismissKeyguard_whileOccluded() throws Exception {
-        if (!isHandheld()) {
-            return;
-        }
         gotoKeyguard();
         mAmWmState.waitForKeyguardShowingAndNotOccluded();
         mAmWmState.assertKeyguardShowingAndNotOccluded();
@@ -101,9 +95,6 @@ public class KeyguardLockedTests extends KeyguardTestBase {
 
     @Test
     public void testDismissKeyguard_fromShowWhenLocked_notAllowed() throws Exception {
-        if (!isHandheld()) {
-            return;
-        }
         gotoKeyguard();
         mAmWmState.waitForKeyguardShowingAndNotOccluded();
         mAmWmState.assertKeyguardShowingAndNotOccluded();
@@ -120,9 +111,6 @@ public class KeyguardLockedTests extends KeyguardTestBase {
 
     @Test
     public void testDismissKeyguardActivity_method() throws Exception {
-        if (!isHandheld()) {
-            return;
-        }
         final String logSeparator = clearLogcat();
         gotoKeyguard();
         mAmWmState.computeState();
@@ -138,9 +126,6 @@ public class KeyguardLockedTests extends KeyguardTestBase {
 
     @Test
     public void testDismissKeyguardActivity_method_cancelled() throws Exception {
-        if (!isHandheld()) {
-            return;
-        }
         final String logSeparator = clearLogcat();
         gotoKeyguard();
         mAmWmState.computeState();
@@ -156,9 +141,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
 
     @Test
     public void testEnterPipOverKeyguard() throws Exception {
-        if (!isHandheld() || !supportsPip()) {
-            return;
-        }
+        assumeTrue(supportsPip());
 
         // Go to the keyguard
         gotoKeyguard();
@@ -184,9 +167,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
 
     @Test
     public void testShowWhenLockedActivityAndPipActivity() throws Exception {
-        if (!isHandheld() || !supportsPip()) {
-            return;
-        }
+        assumeTrue(supportsPip());
 
         launchActivity(PIP_ACTIVITY);
         executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_ENTER_PIP);
@@ -209,9 +190,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
 
     @Test
     public void testShowWhenLockedPipActivity() throws Exception {
-        if (!isHandheld() || !supportsPip()) {
-            return;
-        }
+        assumeTrue(supportsPip());
 
         launchActivity(PIP_ACTIVITY, EXTRA_SHOW_OVER_KEYGUARD, "true");
         executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_ENTER_PIP);

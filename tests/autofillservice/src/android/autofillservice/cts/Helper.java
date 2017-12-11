@@ -826,7 +826,7 @@ final class Helper {
 
         final OneTimeSettingsListener observer = new OneTimeSettingsListener(context,
                 AUTOFILL_SERVICE);
-        runShellCommand("settings put secure %s %s default", AUTOFILL_SERVICE, serviceName);
+        setAutofillServiceOnSettings(serviceName);
         observer.assertCalled();
         assertAutofillServiceStatus(serviceName, true);
     }
@@ -840,7 +840,7 @@ final class Helper {
 
         final OneTimeSettingsListener observer = new OneTimeSettingsListener(context,
                 AUTOFILL_SERVICE);
-        runShellCommand("settings delete secure %s", AUTOFILL_SERVICE);
+        resetAutofillServiceOnSettings();
         observer.assertCalled();
         assertAutofillServiceStatus(serviceName, false);
     }
@@ -849,7 +849,7 @@ final class Helper {
      * Checks whether the given service is set as the autofill service for the default user.
      */
     public static boolean isAutofillServiceEnabled(String serviceName) {
-        final String actualName = runShellCommand("settings get secure %s", AUTOFILL_SERVICE);
+        final String actualName = getAutofillServiceFromSettings();
         return serviceName.equals(actualName);
     }
 
@@ -857,10 +857,22 @@ final class Helper {
      * Asserts whether the given service is enabled as the autofill service for the default user.
      */
     public static void assertAutofillServiceStatus(String serviceName, boolean enabled) {
-        final String actual = runShellCommand("settings get secure %s", AUTOFILL_SERVICE);
+        final String actual = getAutofillServiceFromSettings();
         final String expected = enabled ? serviceName : "null";
         assertWithMessage("Invalid value for secure setting %s", AUTOFILL_SERVICE)
                 .that(actual).isEqualTo(expected);
+    }
+
+    public static String getAutofillServiceFromSettings() {
+        return runShellCommand("settings get secure %s", AUTOFILL_SERVICE);
+    }
+
+    public static void setAutofillServiceOnSettings(String serviceName) {
+        runShellCommand("settings put secure %s %s default", AUTOFILL_SERVICE, serviceName);
+    }
+
+    public static void resetAutofillServiceOnSettings() {
+        runShellCommand("settings delete secure %s", AUTOFILL_SERVICE);
     }
 
     /**
@@ -1045,13 +1057,15 @@ final class Helper {
      * have client state)
      * @param value the only value expected in the client state bundle (or {@code null} if it
      * shouldn't have client state)
+     * @param detectedAutofillIds expected field ids when asserting field classification
+     * @param detectedRemoteIds expected user data ids when asserting field classification
+     * @param detectedScores expected match scores when asserting field classification
      */
-    // TODO(b/67867469): document detected args
     private static void assertFillEvent(@NonNull FillEventHistory.Event event,
             int eventType, @Nullable String datasetId,
             @Nullable String key, @Nullable String value,
             @Nullable AutofillId[] detectedAutofillIds, @Nullable String[] detectedRemoteIds,
-            @Nullable int[] detectedScores) {
+            @Nullable float[] detectedScores) {
         assertThat(event).isNotNull();
         assertWithMessage("Wrong type for %s", event).that(event.getType()).isEqualTo(eventType);
         if (datasetId == null) {
@@ -1085,11 +1099,11 @@ final class Helper {
             for (Entry<AutofillId, FieldClassification> entry : detectedFields.entrySet()) {
                 assertWithMessage("Wrong field id at %s", i).that(entry.getKey())
                         .isEqualTo(detectedAutofillIds[i]);
-                final Match topMatch = entry.getValue().getTopMatch();
+                final Match topMatch = entry.getValue().getMatches().get(0);
                 assertWithMessage("Wrong remote id at %s", i).that(topMatch.getRemoteId())
                         .isEqualTo(detectedRemoteIds[i]);
                 assertWithMessage("Wrong score at %s", i).that(topMatch.getScore())
-                        .isEqualTo(detectedScores[i]);
+                        .isWithin(detectedScores[i]);
                 i++;
             }
         }
@@ -1180,21 +1194,18 @@ final class Helper {
                 null);
     }
 
-    // TODO(b/67867469): document
     public static void assertFillEventForFieldsClassification(@NonNull FillEventHistory.Event event,
-            @NonNull AutofillId fieldId, @NonNull String remoteId, int score) {
+            @NonNull AutofillId fieldId, @NonNull String remoteId, float score) {
         assertFillEvent(event, TYPE_CONTEXT_COMMITTED, null, null, null,
-                new AutofillId[] { fieldId }, new String[] { remoteId }, new int[] { score });
+                new AutofillId[] { fieldId }, new String[] { remoteId }, new float[] { score });
     }
 
-    // TODO(b/67867469): document
     public static void assertFillEventForFieldsClassification(@NonNull FillEventHistory.Event event,
-            @NonNull AutofillId[] fieldIds, @NonNull String[] remoteIds, @NonNull int[] scores) {
+            @NonNull AutofillId[] fieldIds, @NonNull String[] remoteIds, @NonNull float[] scores) {
         assertFillEvent(event, TYPE_CONTEXT_COMMITTED, null, null, null, fieldIds, remoteIds,
                 scores);
     }
 
-    // TODO(b/67867469): document
     public static void assertFillEventForContextCommitted(@NonNull FillEventHistory.Event event) {
         assertFillEvent(event, TYPE_CONTEXT_COMMITTED, null, null, null, null, null, null);
     }

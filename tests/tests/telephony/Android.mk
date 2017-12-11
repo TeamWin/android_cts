@@ -26,8 +26,7 @@ LOCAL_JAVA_LIBRARIES := telephony-common
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestrunner \
-    compatibility-device-util \
-    legacy-android-test
+    compatibility-device-util
 
 LOCAL_HOST_SHARED_LIBRARIES := compatibility-device-telephony-preconditions
 
@@ -45,6 +44,7 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 # uncomment when b/13250611 is fixed
 #LOCAL_SDK_VERSION := current
 LOCAL_JAVA_LIBRARIES += android.test.runner
+LOCAL_JAVA_LIBRARIES += android.test.base
 
 include $(BUILD_CTS_PACKAGE)
 include $(call all-makefiles-under,$(LOCAL_PATH))

@@ -21,7 +21,9 @@
 
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
 
-    <application/>
+    <application>
+        <uses-library android:name="android.test.runner" />
+    </application>
 
     <instrumentation
             android:name="android.support.test.runner.AndroidJUnitRunner"

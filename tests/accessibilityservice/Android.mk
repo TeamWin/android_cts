@@ -20,8 +20,9 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
 	ctstestrunner \
-	mockito-target-minus-junit4 \
-	legacy-android-test
+	mockito-target-minus-junit4
+
+LOCAL_JAVA_LIBRARIES := android.test.runner.stubs
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
@@ -33,3 +34,5 @@ LOCAL_PACKAGE_NAME := CtsAccessibilityServiceTestCases
 LOCAL_SDK_VERSION := test_current
 
 include $(BUILD_CTS_PACKAGE)
+
+include $(call all-makefiles-under,$(LOCAL_PATH))

@@ -29,8 +29,7 @@ LOCAL_STATIC_JAVA_LIBRARIES += \
     ctsdeviceutillegacy \
     ctstestrunner \
     android-support-annotations \
-    junit \
-    legacy-android-test
+    junit
 
 LOCAL_JNI_SHARED_LIBRARIES := libctsgraphics_jni
 

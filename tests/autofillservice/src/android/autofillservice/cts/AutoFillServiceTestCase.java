@@ -22,7 +22,6 @@ import static android.autofillservice.cts.Helper.hasAutofillFeature;
 import static android.autofillservice.cts.Helper.runShellCommand;
 import static android.autofillservice.cts.Helper.setLoggingLevel;
 import static android.autofillservice.cts.InstrumentedAutoFillService.SERVICE_NAME;
-import static android.provider.Settings.Secure.AUTOFILL_SERVICE;
 
 import android.autofillservice.cts.InstrumentedAutoFillService.Replier;
 import android.content.Context;
@@ -50,6 +49,11 @@ abstract class AutoFillServiceTestCase {
 
     protected static final Replier sReplier = InstrumentedAutoFillService.getReplier();
 
+    /**
+     * Name of the Autofill service that was running before the test - it will be restored after.
+     */
+    private static String sRealService;
+
     @Rule
     public final RetryRule mRetryRule = new RetryRule(2);
 
@@ -68,6 +72,7 @@ abstract class AutoFillServiceTestCase {
 
     protected final Context mContext;
     protected final String mPackageName;
+
     /**
      * Stores the previous logging level so it's restored after the test.
      */
@@ -96,13 +101,23 @@ abstract class AutoFillServiceTestCase {
         sUiBot = new UiBot(InstrumentationRegistry.getInstrumentation());
     }
 
+    @BeforeClass
+    public static void setSettings() {
+        if (!hasAutofillFeature()) return;
+        sRealService = Helper.getAutofillServiceFromSettings();
+    }
+
     @AfterClass
     public static void resetSettings() {
         if (!hasAutofillFeature()) return;
 
-        // Clean up only - no need to call disableService() because it doesn't need to fail if
-        // it's not reset.
-        runShellCommand("settings delete secure %s", AUTOFILL_SERVICE);
+        if (sRealService == null) {
+            // Clean up only - no need to call disableService() because it doesn't need to fail if
+            // it's not reset.
+            Helper.resetAutofillServiceOnSettings();
+        } else {
+            Helper.setAutofillServiceOnSettings(sRealService);
+        }
     }
 
     @Before
@@ -123,6 +138,15 @@ abstract class AutoFillServiceTestCase {
         } catch (Exception e) {
             Log.w(TAG, "Could not change logging level to verbose: " + e);
         }
+    }
+
+    /**
+     * Cleans up activities that might have been left over.
+     */
+    @Before
+    @After
+    public void finishActivities() {
+        WelcomeActivity.finishIt(sUiBot);
     }
 
     @After

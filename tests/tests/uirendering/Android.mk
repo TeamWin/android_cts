@@ -31,8 +31,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ctsdeviceutillegacy \
     ctstestrunner \
     mockito-target-minus-junit4 \
-    android-support-test \
-    legacy-android-test
+    android-support-test
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 

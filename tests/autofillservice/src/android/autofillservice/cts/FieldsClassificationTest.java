@@ -20,11 +20,14 @@ import static android.autofillservice.cts.Helper.assertFillEventForFieldsClassif
 import static android.autofillservice.cts.Helper.runShellCommand;
 import static android.service.autofill.FillResponse.FLAG_TRACK_CONTEXT_COMMITED;
 
+import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.provider.Settings;
+import android.service.autofill.EditDistanceScorer;
 import android.service.autofill.FillEventHistory;
 import android.service.autofill.FillEventHistory.Event;
+import android.service.autofill.Scorer;
 import android.service.autofill.UserData;
 import android.view.autofill.AutofillId;
 import android.widget.EditText;
@@ -42,32 +45,35 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
     public final AutofillActivityTestRule<GridActivity> mActivityRule =
             new AutofillActivityTestRule<GridActivity>(GridActivity.class);
 
-    private GridActivity mActivity;
-    private int mEnabledBefore;
+    private final Scorer mScorer = EditDistanceScorer.getInstance();
 
+    private GridActivity mActivity;
+
+    // TODO(b/70407264): set userdata constraints as well to avoid failures if setchanged
+    // externally
+    private int mEnabledBefore;
 
     @Before
     public void setActivity() {
         mActivity = mActivityRule.getActivity();
     }
 
-    // TODO(b/67867469): remove once feature is stable
     @Before
     public void enableFeature() {
         mEnabledBefore = Settings.Secure.getInt(
-                mContext.getContentResolver(), Settings.Secure.AUTOFILL_FEATURE_FIELD_DETECTION, 0);
+                mContext.getContentResolver(),
+                Settings.Secure.AUTOFILL_FEATURE_FIELD_CLASSIFICATION, 0);
         if (mEnabledBefore == 1) {
             // Already enabled, ignore.
             return;
         }
         final OneTimeSettingsListener observer = new OneTimeSettingsListener(mContext,
-                Settings.Secure.AUTOFILL_FEATURE_FIELD_DETECTION);
+                Settings.Secure.AUTOFILL_FEATURE_FIELD_CLASSIFICATION);
         runShellCommand("settings put secure %s %s default",
-                Settings.Secure.AUTOFILL_FEATURE_FIELD_DETECTION, 1);
+                Settings.Secure.AUTOFILL_FEATURE_FIELD_CLASSIFICATION, 1);
         observer.assertCalled();
     }
 
-    // TODO(b/67867469): remove once feature is stable
     @After
     public void restoreFeatureStatus() {
         if (mEnabledBefore == 1) {
@@ -75,10 +81,15 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
             return;
         }
         final OneTimeSettingsListener observer = new OneTimeSettingsListener(mContext,
-                Settings.Secure.AUTOFILL_FEATURE_FIELD_DETECTION);
+                Settings.Secure.AUTOFILL_FEATURE_FIELD_CLASSIFICATION);
         runShellCommand("settings put secure %s %s default",
-                Settings.Secure.AUTOFILL_FEATURE_FIELD_DETECTION, mEnabledBefore);
+                Settings.Secure.AUTOFILL_FEATURE_FIELD_CLASSIFICATION, mEnabledBefore);
         observer.assertCalled();
+    }
+
+    @Test
+    public void testFeatureIsEnabled() throws Exception {
+        assertThat(mActivity.getAutofillManager().isFieldClassificationEnabled()).isTrue();
     }
 
     @Test
@@ -88,7 +99,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
 
         // Set expectations.
         mActivity.getAutofillManager()
-                .setUserData(new UserData.Builder("myId", "FULLY").build());
+                .setUserData(new UserData.Builder(mScorer, "myId", "FULLY").build());
         final MyAutofillCallback callback = mActivity.registerCallback();
         final EditText field = mActivity.getCell(1, 1);
         final AutofillId fieldId = field.getAutofillId();
@@ -115,7 +126,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
                 InstrumentedAutoFillService.peekInstance().getFillEventHistory();
         final List<Event> events = history.getEvents();
         assertWithMessage("Wrong number of events: %s", events).that(events.size()).isEqualTo(1);
-        assertFillEventForFieldsClassification(events.get(0), fieldId, "myId", 1000000);
+        assertFillEventForFieldsClassification(events.get(0), fieldId, "myId", 1);
     }
 
     @Test
@@ -142,7 +153,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
             expectedId = "2ndId";
             typedText = "IAM222";
         }
-        mActivity.getAutofillManager().setUserData(new UserData.Builder("1stId", "Iam1ST")
+        mActivity.getAutofillManager().setUserData(new UserData.Builder(mScorer, "1stId", "Iam1ST")
                 .add("2ndId", "Iam2ND").build());
         final MyAutofillCallback callback = mActivity.registerCallback();
         final EditText field = mActivity.getCell(1, 1);
@@ -171,7 +182,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         final List<Event> events = history.getEvents();
         assertWithMessage("Wrong number of events: %s", events).that(events.size()).isEqualTo(1);
         // Matches 4 of 6 chars - 66.6666%
-        assertFillEventForFieldsClassification(events.get(0), fieldId, expectedId, 666666);
+        assertFillEventForFieldsClassification(events.get(0), fieldId, expectedId, 0.66F);
     }
 
     @Test
@@ -181,7 +192,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
 
         // Set expectations.
         mActivity.getAutofillManager()
-                .setUserData(new UserData.Builder("myId", "FULLY").build());
+                .setUserData(new UserData.Builder(mScorer, "myId", "FULLY").build());
         final MyAutofillCallback callback = mActivity.registerCallback();
         final EditText field1 = mActivity.getCell(1, 1);
         final AutofillId fieldId1 = field1.getAutofillId();
@@ -214,7 +225,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         assertFillEventForFieldsClassification(events.get(0),
                 new AutofillId[] { fieldId1, fieldId2 },
                 new String[] { "myId", "myId" },
-                new int[] { 1000000, 600000 });
+                new float[] { 1.0F, 1.0F });
     }
 
     @Test
@@ -224,7 +235,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
 
         // Set expectations.
         mActivity.getAutofillManager()
-                .setUserData(new UserData.Builder("myId", "FULLY")
+                .setUserData(new UserData.Builder(mScorer, "myId", "FULLY")
                         .add("otherId", "EMPTY")
                         .build());
         final MyAutofillCallback callback = mActivity.registerCallback();
@@ -265,7 +276,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         assertFillEventForFieldsClassification(events.get(0),
                 new AutofillId[] { fieldId1, fieldId2, fieldId3, fieldId4 },
                 new String[] { "myId", "otherId", "myId", "otherId" },
-                new int[] { 1000000, 1000000, 600000, 800000});
+                new float[] { 1.0F, 1.0F, 0.60F, 0.80F });
     }
 
     @Test
@@ -275,7 +286,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
 
         // Set expectations.
         mActivity.getAutofillManager()
-                .setUserData(new UserData.Builder("myId", "ABCDEF").build());
+                .setUserData(new UserData.Builder(mScorer, "myId", "ABCDEF").build());
         final MyAutofillCallback callback = mActivity.registerCallback();
         final EditText field = mActivity.getCell(1, 1);
         final AutofillId fieldId = field.getAutofillId();
@@ -312,7 +323,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
 
         // Set expectations.
         mActivity.getAutofillManager()
-                .setUserData(new UserData.Builder("myId", "FULLY").build());
+                .setUserData(new UserData.Builder(mScorer, "myId", "FULLY").build());
         final MyAutofillCallback callback = mActivity.registerCallback();
         final EditText field = mActivity.getCell(1, 1);
         final AutofillId fieldId = field.getAutofillId();
@@ -340,7 +351,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
     }
 
     /*
-     * TODO(b/67867469): other scenarios:
+     * TODO(b/70407264): other scenarios:
      *
      * - Multipartition (for example, one response with FieldsDetection, others with datasets,
      *   saveinfo, and/or ignoredIds)

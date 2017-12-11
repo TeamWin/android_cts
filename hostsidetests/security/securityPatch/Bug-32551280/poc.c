@@ -32,7 +32,6 @@
 
 static int subsystem_get(void) {
   int fd, ret;
-  unsigned long buf;
   char *cmd[3] = {"get", "put", "restart"};
 
   fd = open("/sys/kernel/debug/msm_subsys/adsp", O_RDWR);
@@ -49,7 +48,6 @@ static int subsystem_get(void) {
 
 static int subsystem_put(void) {
   int fd, ret;
-  unsigned long buf;
   char *cmd[3] = {"get", "put", "restart"};
 
   fd = open("/sys/kernel/debug/msm_subsys/adsp", O_RDWR);

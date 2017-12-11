@@ -24,11 +24,11 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
-import static android.server.am.StateLogger.log;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.Presubmit;
 
@@ -67,9 +67,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     @Presubmit
     @Test
     public void testTranslucentActivityOnTopOfPinnedStack() throws Exception {
-        if (!supportsPip()) {
-            return;
-        }
+        assumeTrue(supportsPip());
 
         executeShellCommand(getAmStartCmdOverHome(PIP_ON_PIP_ACTIVITY));
         mAmWmState.waitForValidState(PIP_ON_PIP_ACTIVITY);
@@ -93,9 +91,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
      */
     @Test
     public void testTranslucentActivityOnTopOfHome() throws Exception {
-        if (noHomeScreen()) {
-            return;
-        }
+        assumeTrue(hasHomeScreen());
 
         launchHomeActivity();
         launchActivity(TRANSLUCENT_ACTIVITY);
@@ -114,9 +110,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     @Presubmit
     @Test
     public void testHomeVisibleOnActivityTaskPinned() throws Exception {
-        if (!supportsPip()) {
-            return;
-        }
+        assumeTrue(supportsPip());
 
         launchHomeActivity();
         launchActivity(TEST_ACTIVITY_NAME);
@@ -136,10 +130,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
 
     @Test
     public void testTranslucentActivityOverDockedStack() throws Exception {
-        if (!supportsSplitScreenMultiWindow()) {
-            log("Skipping test: no multi-window support");
-            return;
-        }
+        assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
         launchActivityInDockStack(DOCKED_ACTIVITY_NAME);
         mAmWmState.computeState(new String[] {DOCKED_ACTIVITY_NAME});
@@ -170,10 +161,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
 
     @Test
     public void testFinishActivityInNonFocusedStack() throws Exception {
-        if (!supportsSplitScreenMultiWindow()) {
-            log("Skipping test: no multi-window support");
-            return;
-        }
+        assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
         // Launch two activities in docked stack.
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
@@ -204,7 +192,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     private void performFinishActivityWithMoveTaskToBack(String finishPoint) throws Exception {
         // Make sure home activity is visible.
         launchHomeActivity();
-        if (!noHomeScreen()) {
+        if (hasHomeScreen()) {
             mAmWmState.assertHomeActivityVisible(true /* visible */);
         }
 
@@ -226,7 +214,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         // BroadcastActivity finishes, so homeActivity is not visible afterwards
 
         // Home must be visible.
-        if (!noHomeScreen()) {
+        if (hasHomeScreen()) {
             mAmWmState.waitForHomeActivityVisible();
             mAmWmState.assertHomeActivityVisible(true /* visible */);
         }
@@ -240,7 +228,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     public void testReorderToFrontBackstack() throws Exception {
         // Start with home on top
         launchHomeActivity();
-        if (!noHomeScreen()) {
+        if (hasHomeScreen()) {
             mAmWmState.assertHomeActivityVisible(true /* visible */);
         }
 
@@ -275,7 +263,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     public void testReorderToFrontChangingStack() throws Exception {
         // Start with home on top
         launchHomeActivity();
-        if (!noHomeScreen()) {
+        if (hasHomeScreen()) {
             mAmWmState.assertHomeActivityVisible(true /* visible */);
         }
 
@@ -288,7 +276,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
 
         // Return home
         launchHomeActivity();
-        if (!noHomeScreen()) {
+        if (hasHomeScreen()) {
             mAmWmState.assertHomeActivityVisible(true /* visible */);
         }
         // Launch the launching activity from the alternate launching activity with reorder to
@@ -317,9 +305,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
      */
     @Test
     public void testNoHistoryActivityFinishedResumedActivityNotIdle() throws Exception {
-        if (noHomeScreen()) {
-            return;
-        }
+        assumeTrue(hasHomeScreen());
 
         // Start with home on top
         launchHomeActivity();
@@ -349,10 +335,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
 
     @Test
     public void testTurnScreenOnAttrWithLockScreen() throws Exception {
-        if (!isHandheld()) {
-            // This test requires the ability to have a lock screen.
-            return;
-        }
+        assumeTrue(isHandheld());
 
         setLockCredential();
         sleepDevice();

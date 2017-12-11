@@ -19,5 +19,6 @@
           package="android.jobscheduler.cts.shareduid"
           android:sharedUserId="android.jobscheduler.cts.shared.uid">
     <application>
+        <uses-library android:name="android.test.runner" />
     </application>
 </manifest>

@@ -19,6 +19,8 @@ package android.server.am;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.ActivityManagerState.STATE_STOPPED;
 
+import static org.junit.Assume.assumeTrue;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,8 +42,13 @@ public class ActivityManagerDisplayLockedKeyguardTests extends ActivityManagerDi
     @Override
     public void setUp() throws Exception {
         super.setUp();
+
+        assumeTrue(supportsMultiDisplay());
+        assumeTrue(isHandheld());
+
         setLockCredential();
     }
+
 
     @After
     @Override
@@ -55,8 +62,6 @@ public class ActivityManagerDisplayLockedKeyguardTests extends ActivityManagerDi
      */
     @Test
     public void testVirtualDisplayHidesContentWhenLocked() throws Exception {
-        if (!supportsMultiDisplay() || !isHandheld()) { return; }
-
         // Create new usual virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
@@ -83,10 +88,6 @@ public class ActivityManagerDisplayLockedKeyguardTests extends ActivityManagerDi
      */
     @Test
     public void testDismissKeyguard_secondaryDisplay() throws Exception {
-        if (!supportsMultiDisplay() || !isHandheld()) {
-            return;
-        }
-
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
 
         gotoKeyguard();
@@ -101,10 +102,6 @@ public class ActivityManagerDisplayLockedKeyguardTests extends ActivityManagerDi
 
     @Test
     public void testDismissKeyguard_whileOccluded_secondaryDisplay() throws Exception {
-        if (!supportsMultiDisplay() || !isHandheld()) {
-            return;
-        }
-
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
 
         gotoKeyguard();

@@ -26,7 +26,7 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 LOCAL_MULTILIB := both
 
-LOCAL_JAVA_LIBRARIES := android.test.runner
+LOCAL_JAVA_LIBRARIES := android.test.runner android.test.base
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-test \
@@ -35,8 +35,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestrunner \
     mockito-target-minus-junit4 \
     platform-test-annotations \
-    ub-uiautomator \
-    legacy-android-test
+    ub-uiautomator
 
 LOCAL_JNI_SHARED_LIBRARIES := libctsview_jni libnativehelper_compat_libc++
 

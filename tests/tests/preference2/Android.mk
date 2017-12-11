@@ -29,8 +29,9 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestrunner \
     compatibility-device-util \
     mockito-target-minus-junit4 \
-    ub-uiautomator \
-    legacy-android-test
+    ub-uiautomator
+
+LOCAL_JAVA_LIBRARIES := android.test.runner.stubs
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 

@@ -27,6 +27,7 @@ import static android.server.am.ActivityManagerState.STATE_RESUMED;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.Presubmit;
 
@@ -80,7 +81,9 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
     // TODO(b/69573940): Add back to presubmit
     @Test
     public void testAssistantStackZOrder() throws Exception {
-        if (!supportsPip() || !supportsSplitScreenMultiWindow()) return;
+        assumeTrue(supportsPip());
+        assumeTrue(supportsSplitScreenMultiWindow());
+
         // Launch a pinned stack task
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
         mAmWmState.waitForValidState(PIP_ACTIVITY, WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
@@ -120,7 +123,8 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
     @Test
     @Presubmit
     public void testAssistantStackLaunchNewTaskWithDockedStack() throws Exception {
-        if (!supportsSplitScreenMultiWindow()) return;
+        assumeTrue(supportsSplitScreenMultiWindow());
+
         // Dock a task
         launchActivity(TEST_ACTIVITY);
         launchActivityInDockStack(DOCKED_ACTIVITY);
@@ -210,7 +214,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
                 TRANSLUCENT_ASSISTANT_ACTIVITY, ACTIVITY_TYPE_ASSISTANT);
         assertAssistantStackExists();
         mAmWmState.waitForHomeActivityVisible();
-        if (!noHomeScreen()) {
+        if (hasHomeScreen()) {
             mAmWmState.assertHomeActivityVisible(true);
         }
 
@@ -239,7 +243,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         mAmWmState.waitForFocusedStack(WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_ASSISTANT);
         assertAssistantStackExists();
         mAmWmState.waitForHomeActivityVisible();
-        if (!noHomeScreen()) {
+        if (hasHomeScreen()) {
             mAmWmState.assertHomeActivityVisible(true);
         }
 
@@ -299,7 +303,8 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
 
     @Test
     public void testPinnedStackWithAssistant() throws Exception {
-        if (!supportsPip() || !supportsSplitScreenMultiWindow()) return;
+        assumeTrue(supportsPip());
+        assumeTrue(supportsSplitScreenMultiWindow());
 
         enableAssistant();
 

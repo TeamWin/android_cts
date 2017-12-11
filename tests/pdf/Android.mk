@@ -28,8 +28,7 @@ LOCAL_STATIC_JAVA_LIBRARIES += \
     compatibility-device-util \
     ctstestrunner \
     android-support-annotations \
-    junit \
-    legacy-android-test
+    junit
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 

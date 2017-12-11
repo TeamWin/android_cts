@@ -138,12 +138,12 @@ public class WebViewActivity extends AbstractAutoFillActivity {
                 if (child.getClassName().equals(EditText.class.getName())) {
                     return child;
                 }
-                uiBot.dumpScreen();
+                uiBot.dumpScreen("getInput() for " + child + "failed");
                 throw new IllegalStateException("Invalid class for " + child);
             }
             previous = child;
         }
-        uiBot.dumpScreen();
+        uiBot.dumpScreen("getInput() for label " + label + "failed");
         throw new IllegalStateException("could not find username (label=" + label + ")");
     }
 }

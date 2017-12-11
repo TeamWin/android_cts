@@ -103,7 +103,7 @@ public class PreSimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase
                 break;
             case FINISH_ACTIVITY:
                 // ..then finishes it.
-                WelcomeActivity.finishIt();
+                WelcomeActivity.finishIt(sUiBot);
                 break;
             default:
                 throw new IllegalArgumentException("invalid type: " + type);

@@ -27,8 +27,7 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-annotations \
     android-support-test \
-    ctstestrunner \
-    legacy-android-test
+    ctstestrunner
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 

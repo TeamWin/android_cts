@@ -28,6 +28,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.ActivityManager;
 import android.content.Context;
@@ -131,6 +132,8 @@ public class CrossAppDragAndDropTests {
 
     @Before
     public void setUp() throws Exception {
+        assumeTrue(supportsDragAndDrop());
+
         // Use uptime in seconds as unique test invocation id.
         mSessionId = Long.toString(SystemClock.uptimeMillis() / 1000);
         mSourceLogTag = SOURCE_LOG_TAG + mSessionId;
@@ -139,9 +142,6 @@ public class CrossAppDragAndDropTests {
         mContext = InstrumentationRegistry.getContext();
         mAm = mContext.getSystemService(ActivityManager.class);
         mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
-        if (!supportsDragAndDrop()) {
-            return;
-        }
 
         mSourcePackageName = SOURCE_PACKAGE_NAME;
         mTargetPackageName = TARGET_PACKAGE_NAME;
@@ -150,9 +150,7 @@ public class CrossAppDragAndDropTests {
 
     @After
     public void tearDown() throws Exception {
-        if (!supportsDragAndDrop()) {
-            return;
-        }
+        assumeTrue(supportsDragAndDrop());
 
         executeShellCommand(AM_FORCE_STOP + mSourcePackageName);
         executeShellCommand(AM_FORCE_STOP + mTargetPackageName);
@@ -352,10 +350,6 @@ public class CrossAppDragAndDropTests {
     private void assertDragAndDropResults(String sourceMode, String targetMode,
             String expectedStartDragResult, String expectedDropResult,
             String expectedListenerResults) throws Exception {
-        if (!supportsDragAndDrop()) {
-            return;
-        }
-
         Log.e(TAG, "session: " + mSessionId + ", source: " + sourceMode
                 + ", target: " + targetMode);
 
@@ -419,10 +413,6 @@ public class CrossAppDragAndDropTests {
 
     private void assertResult(Map<String, String> results, String resultKey, String expectedResult)
             throws Exception {
-        if (!supportsDragAndDrop()) {
-            return;
-        }
-
         if (RESULT_MISSING.equals(expectedResult)) {
             if (results.containsKey(resultKey)) {
                 fail("Unexpected " + resultKey + "=" + results.get(resultKey));
@@ -434,7 +424,7 @@ public class CrossAppDragAndDropTests {
         }
     }
 
-    private boolean supportsDragAndDrop() {
+    private static boolean supportsDragAndDrop() {
         String supportsMultiwindow = executeShellCommand("am supports-multiwindow").trim();
         if ("true".equals(supportsMultiwindow)) {
             return true;
@@ -446,11 +436,11 @@ public class CrossAppDragAndDropTests {
         }
     }
 
-    private boolean supportsSplitScreenMultiWindow() {
+    private static boolean supportsSplitScreenMultiWindow() {
         return !executeShellCommand(AM_SUPPORTS_SPLIT_SCREEN_MULTIWINDOW).startsWith("false");
     }
 
-    private boolean supportsFreeformMultiWindow() {
+    private static boolean supportsFreeformMultiWindow() {
         return InstrumentationRegistry.getContext()
                 .getPackageManager()
                 .hasSystemFeature(FEATURE_FREEFORM_WINDOW_MANAGEMENT);

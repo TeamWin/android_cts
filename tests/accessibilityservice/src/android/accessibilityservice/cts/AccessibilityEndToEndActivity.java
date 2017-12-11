@@ -21,6 +21,8 @@ import android.accessibilityservice.cts.R;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.BaseAdapter;
 import android.widget.ListAdapter;
 import android.widget.ListView;
@@ -32,6 +34,8 @@ import android.widget.TextView;
  * UI widgets.
  */
 public class AccessibilityEndToEndActivity extends AccessibilityTestActivity {
+    private PackageNameInjector mPackageNameInjector;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -64,5 +68,48 @@ public class AccessibilityEndToEndActivity extends AccessibilityTestActivity {
 
         ListView listView = (ListView) findViewById(R.id.listview);
         listView.setAdapter(listAdapter);
+    }
+
+    void setReportedPackageName(String packageName) {
+        if (packageName != null) {
+            mPackageNameInjector = new PackageNameInjector(packageName);
+        } else {
+            mPackageNameInjector = null;
+        }
+        setPackageNameInjector(getWindow().getDecorView(), mPackageNameInjector);
+    }
+
+    private static void setPackageNameInjector(View node, PackageNameInjector injector) {
+        if (node == null) {
+            return;
+        }
+        node.setAccessibilityDelegate(injector);
+        if (node instanceof ViewGroup) {
+            final ViewGroup viewGroup = (ViewGroup) node;
+            final int childCount = viewGroup.getChildCount();
+            for (int i = 0; i < childCount; i++) {
+                setPackageNameInjector(viewGroup.getChildAt(i), injector);
+            }
+        }
+    }
+
+    private static class PackageNameInjector extends View.AccessibilityDelegate {
+        private final String mPackageName;
+
+        PackageNameInjector(String packageName) {
+            mPackageName = packageName;
+        }
+
+        @Override
+        public void onInitializeAccessibilityEvent(View host, AccessibilityEvent event) {
+            super.onInitializeAccessibilityEvent(host, event);
+            event.setPackageName(mPackageName);
+        }
+
+        @Override
+        public void onInitializeAccessibilityNodeInfo(View host, AccessibilityNodeInfo info) {
+            super.onInitializeAccessibilityNodeInfo(host, info);
+            info.setPackageName(mPackageName);
+        }
     }
 }

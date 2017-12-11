@@ -18,7 +18,7 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE_TAGS := tests
 LOCAL_SDK_VERSION := test_current
-LOCAL_STATIC_JAVA_LIBRARIES := android-support-test ub-uiautomator legacy-android-test
+LOCAL_STATIC_JAVA_LIBRARIES := android-support-test ub-uiautomator
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src) \
 	$(call all-java-files-under, ../StorageApp/src)

@@ -28,8 +28,9 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-test \
     ctstestrunner \
     junit \
-    legacy-android-test \
     ub-uiautomator
+
+LOCAL_JAVA_LIBRARIES := android.test.base android.test.runner
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 

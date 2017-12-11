@@ -16,11 +16,11 @@
 
 package android.server.am;
 
-
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.server.am.ActivityAndWindowManagersState.dpToPx;
-import static android.server.am.StateLogger.log;
+
+import static org.junit.Assume.assumeTrue;
 
 import android.graphics.Rect;
 import android.server.am.WindowManagerState.Display;
@@ -80,19 +80,15 @@ public class ActivityManagerManifestLayoutTests extends ActivityManagerTestBase 
 
     @Test
     public void testMinimalSizeFreeform() throws Exception {
-        if (!supportsFreeform()) {
-            log("Skipping test: no freeform support");
-            return;
-        }
+        assumeTrue("Skipping test: no freeform support", supportsFreeform());
+
         testMinimalSize(WINDOWING_MODE_FREEFORM);
     }
 
     @Test
     public void testMinimalSizeDocked() throws Exception {
-        if (!supportsSplitScreenMultiWindow()) {
-            log("Skipping test: no multi-window support");
-            return;
-        }
+        assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
+
         testMinimalSize(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
     }
 
@@ -120,10 +116,7 @@ public class ActivityManagerManifestLayoutTests extends ActivityManagerTestBase 
 
     private void testLayout(
             int vGravity, int hGravity, boolean fraction) throws Exception {
-        if (!supportsFreeform()) {
-            log("Skipping test: no freeform support");
-            return;
-        }
+        assumeTrue("Skipping test: no freeform support", supportsFreeform());
 
         final String activityName = (vGravity == GRAVITY_VER_TOP ? "Top" : "Bottom")
                 + (hGravity == GRAVITY_HOR_LEFT ? "Left" : "Right") + "LayoutActivity";
