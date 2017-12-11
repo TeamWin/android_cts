@@ -150,16 +150,16 @@ public class SliceTest {
     }
 
     @Test
-    public void testColor() {
-        Uri uri = BASE_URI.buildUpon().appendPath("color").build();
+    public void testInt() {
+        Uri uri = BASE_URI.buildUpon().appendPath("int").build();
         Slice s = Slice.bindSlice(mContext.getContentResolver(), uri,
                 Collections.emptyList());
         assertEquals(uri, s.getUri());
         assertEquals(1, s.getItems().size());
 
         SliceItem item = s.getItems().get(0);
-        assertEquals(SliceItem.FORMAT_COLOR, item.getFormat());
-        assertEquals(0xff121212, item.getColor());
+        assertEquals(SliceItem.FORMAT_INT, item.getFormat());
+        assertEquals(0xff121212, item.getInt());
     }
 
     @Test
