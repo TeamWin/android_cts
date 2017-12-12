@@ -277,16 +277,19 @@ public final class DeviceEvent {
     public static Boolean getEventParamBoolean(
             DeviceEventTypeParam eventParam, final DeviceEvent event) {
         StringReader stringReader = new StringReader(event.paramsString);
-        try (JsonReader reader = new JsonReader(stringReader)) {
+        JsonReader reader = new JsonReader(stringReader);
+
+        try {
             reader.beginObject();
             while (reader.hasNext()) {
                 String name = reader.nextName();
                 if (name.equals(eventParam.getName())) {
                     Boolean value = reader.nextBoolean();
+                    reader.endObject();
                     return value;
                 }
-                reader.skipValue();
             }
+            reader.endObject();
         } catch (IOException e) {
             throw new RuntimeException("DeviceEvent.getEventParamBoolean() failed.", e);
         }
