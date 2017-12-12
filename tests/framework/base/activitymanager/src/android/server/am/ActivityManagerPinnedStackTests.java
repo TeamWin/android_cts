@@ -40,6 +40,7 @@ import android.server.am.ActivityManagerState.ActivityStack;
 import android.server.am.ActivityManagerState.ActivityTask;
 import android.support.test.filters.FlakyTest;
 
+import android.support.test.filters.FlakyTest;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -1017,18 +1018,21 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         assumeTrue(supportsSplitScreenMultiWindow());
 
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
-        launchActivityInDockStack(LAUNCHING_ACTIVITY);
-        launchActivityToSide(true, false, TEST_ACTIVITY);
+        launchActivitiesInSplitScreen(
+                getLaunchActivityBuilder().setTargetActivityName(LAUNCHING_ACTIVITY),
+                getLaunchActivityBuilder().setTargetActivityName(TEST_ACTIVITY).setRandomData(true)
+                        .setMultipleTask(false)
+        );
         mAmWmState.assertVisibility(PIP_ACTIVITY, true);
         mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true);
         mAmWmState.assertVisibility(TEST_ACTIVITY, true);
 
         // Launch the activities again to take focus and make sure nothing is hidden
-        launchActivityInDockStack(LAUNCHING_ACTIVITY);
-        mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true);
-        mAmWmState.assertVisibility(TEST_ACTIVITY, true);
-
-        launchActivityToSide(true, false, TEST_ACTIVITY);
+        launchActivitiesInSplitScreen(
+                getLaunchActivityBuilder().setTargetActivityName(LAUNCHING_ACTIVITY),
+                getLaunchActivityBuilder().setTargetActivityName(TEST_ACTIVITY).setRandomData(true)
+                        .setMultipleTask(false)
+        );
         mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true);
         mAmWmState.assertVisibility(TEST_ACTIVITY, true);
 
@@ -1125,6 +1129,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     /** Test that reported display size corresponds to fullscreen after exiting PiP. */
     @Presubmit
+    @FlakyTest
     @Test
     public void testDisplayMetricsPinUnpin() throws Exception {
         assumeTrue(supportsPip());

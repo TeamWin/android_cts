@@ -427,7 +427,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
         assumeTrue(supportsSplitScreenMultiWindow());
 
         // Start launching activity.
-        launchActivityInDockStack(LAUNCHING_ACTIVITY);
+        launchActivityInSplitScreenWithRecents(LAUNCHING_ACTIVITY);
         // Create new virtual display.
         final DisplayState newDisplay =
                 new VirtualDisplayBuilder(this).setLaunchInSplitScreen(true).build();
@@ -914,7 +914,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
         assumeTrue(supportsSplitScreenMultiWindow());
 
         // Start launching activity into docked stack.
-        launchActivityInDockStack(LAUNCHING_ACTIVITY);
+        launchActivityInSplitScreenWithRecents(LAUNCHING_ACTIVITY);
         mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true /* visible */);
 
         tryCreatingAndRemovingDisplayWithActivity(true /* splitScreen */,
@@ -932,10 +932,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
         assumeTrue(supportsSplitScreenMultiWindow());
 
         // Setup split-screen.
-        launchActivityInDockStack(RESIZEABLE_ACTIVITY_NAME);
-
-        // Start launching activity into fullscreen stack.
-        launchActivity(LAUNCHING_ACTIVITY, WINDOWING_MODE_SPLIT_SCREEN_SECONDARY);
+        launchActivitiesInSplitScreen(RESIZEABLE_ACTIVITY_NAME, LAUNCHING_ACTIVITY);
         mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true /* visible */);
 
         tryCreatingAndRemovingDisplayWithActivity(true /* splitScreen */,

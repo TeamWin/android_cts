@@ -25,7 +25,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.platform.test.annotations.Presubmit;
 import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.FlakyTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.DisplayMetrics;
