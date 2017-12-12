@@ -16,6 +16,8 @@
 
 package android.view.inputmethod.cts;
 
+import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
+
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectBindInput;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
@@ -24,6 +26,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Process;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
@@ -33,6 +36,7 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.cts.util.TestActivity;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.cts.mockime.ImeEvent;
@@ -110,6 +114,74 @@ public class FocusHandlingTest {
             // There shouldn't be onStartInput any more.
             notExpectEvent(stream, event -> "onStartInput".equals(event.getEventName()),
                     NOT_EXPECT_TIMEOUT);
+        }
+    }
+
+    @Test
+    public void testSoftInputStateAlwaysVisibleWithoutFocusedEditorView() throws Exception {
+        try(MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final TestActivity testActivity = TestActivity.startSync((TestActivity activity) -> {
+                final LinearLayout layout = new LinearLayout(activity);
+                layout.setOrientation(LinearLayout.VERTICAL);
+
+                final TextView textView = new TextView(activity) {
+                    @Override
+                    public boolean onCheckIsTextEditor() {
+                        return false;
+                    }
+                };
+                textView.setText("textView");
+                textView.requestFocus();
+
+                activity.getWindow().setSoftInputMode(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+                layout.addView(textView);
+                return layout;
+            });
+
+            // Wait until the MockIme gets bound to the TestActivity.
+            expectBindInput(stream, Process.myPid(), TIMEOUT);
+
+            if (testActivity.getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.P) {
+                // There shouldn't be onStartInput because the focused view is not an editor.
+                notExpectEvent(stream, event -> "showSoftInput".equals(event.getEventName()),
+                        TIMEOUT);
+            } else {
+                // For apps that target pre-P devices, onStartInput() should be called.
+                expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
+            }
+        }
+    }
+
+    @Test
+    public void testSoftInputStateAlwaysVisibleFocusedEditorView() throws Exception {
+        try(MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            TestActivity.startSync((TestActivity activity) -> {
+                final LinearLayout layout = new LinearLayout(activity);
+                layout.setOrientation(LinearLayout.VERTICAL);
+
+                final EditText editText = new EditText(activity);
+                editText.setText("editText");
+                editText.requestFocus();
+
+                activity.getWindow().setSoftInputMode(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+                layout.addView(editText);
+                return layout;
+            });
+
+            // Wait until the MockIme gets bound to the TestActivity.
+            expectBindInput(stream, Process.myPid(), TIMEOUT);
+
+            expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
         }
     }
 }
