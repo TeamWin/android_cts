@@ -22,6 +22,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.content.res.ColorStateList;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Typeface;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
@@ -30,16 +33,19 @@ import android.support.test.runner.AndroidJUnit4;
 import android.text.Editable;
 import android.text.Layout;
 import android.text.Layout.Alignment;
+import android.text.PremeasuredText;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.SpannedString;
 import android.text.StaticLayout;
+import android.text.TextDirectionHeuristics;
 import android.text.TextPaint;
 import android.text.TextUtils;
 import android.text.TextUtils.TruncateAt;
 import android.text.method.cts.EditorState;
 import android.text.style.StyleSpan;
+import android.text.style.TextAppearanceSpan;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -1350,5 +1356,45 @@ public class StaticLayoutTest {
         for (int i = 0; i < layout.getLineCount(); i++) {
             assertTrue(layout.getLineWidth(i) <= lineWidth - indentWidth);
         }
+    }
+
+    private static Bitmap drawToBitmap(Layout l) {
+        final Bitmap bmp = Bitmap.createBitmap(l.getWidth(), l.getHeight(), Bitmap.Config.RGB_565);
+        final Canvas c = new Canvas(bmp);
+
+        c.save();
+        c.translate(0, 0);
+        l.draw(c);
+        c.restore();
+        return bmp;
+    }
+
+    @Test
+    public void testPremeasured() {
+        final float wholeWidth = mDefaultPaint.measureText(LOREM_IPSUM);
+        final int lineWidth = (int) (wholeWidth / 10.0f);  // Make 10 lines per paragraph.
+
+        final ColorStateList textColor = ColorStateList.valueOf(0x88FF0000);
+        final TextAppearanceSpan span = new TextAppearanceSpan(
+                "serif", Typeface.BOLD, 64 /* text size */, textColor, textColor);
+        final SpannableStringBuilder ssb = new SpannableStringBuilder(
+                LOREM_IPSUM + "\n" + LOREM_IPSUM);
+        ssb.setSpan(span, 0, LOREM_IPSUM.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+
+        final Layout layout = StaticLayout.Builder.obtain(ssb, 0, ssb.length(), mDefaultPaint,
+                lineWidth).build();
+
+        final PremeasuredText premeasuredText = PremeasuredText.build(ssb, mDefaultPaint,
+                TextDirectionHeuristics.FIRSTSTRONG_LTR);
+        final Layout premLayout = StaticLayout.Builder.obtain(premeasuredText, 0,
+                premeasuredText.length(), mDefaultPaint, lineWidth)
+                .setTextDirection(TextDirectionHeuristics.FIRSTSTRONG_LTR).build();
+
+        assertEquals(layout.getHeight(), premLayout.getHeight(), 0.0f);
+
+        final Bitmap bmp = drawToBitmap(layout);
+        final Bitmap premBmp = drawToBitmap(premLayout);
+
+        assertTrue(bmp.sameAs(premBmp));  // Need to be pixel perfect.
     }
 }
