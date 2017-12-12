@@ -72,7 +72,8 @@ public class InputMethodServiceDeviceTest {
 
         pollingCheck(() -> helper.queryAllEvents()
                         .collect(startingFrom(helper.isStartOfTest()))
-                        .anyMatch(isFrom(Ime1Constants.CLASS).and(isType(ON_CREATE))),
+                        .filter(isFrom(Ime1Constants.CLASS).and(isType(ON_CREATE)))
+                        .findAny().isPresent(),
                 TIMEOUT, "CtsInputMethod1.onCreate is called");
 
         final long startActivityTime = SystemClock.uptimeMillis();
@@ -80,7 +81,8 @@ public class InputMethodServiceDeviceTest {
 
         pollingCheck(() -> helper.queryAllEvents()
                         .filter(isNewerThan(startActivityTime))
-                        .anyMatch(isFrom(Ime1Constants.CLASS).and(isType(ON_START_INPUT))),
+                        .filter(isFrom(Ime1Constants.CLASS).and(isType(ON_START_INPUT)))
+                        .findAny().isPresent(),
                 TIMEOUT, "CtsInputMethod1.onStartInput is called");
     }
 
@@ -92,7 +94,8 @@ public class InputMethodServiceDeviceTest {
 
         pollingCheck(() -> helper.queryAllEvents()
                         .collect(startingFrom(helper.isStartOfTest()))
-                        .anyMatch(isFrom(Ime1Constants.CLASS).and(isType(ON_CREATE))),
+                        .filter(isFrom(Ime1Constants.CLASS).and(isType(ON_CREATE)))
+                        .findAny().isPresent(),
                 TIMEOUT, "CtsInputMethod1.onCreate is called");
 
         final long startActivityTime = SystemClock.uptimeMillis();
@@ -100,7 +103,8 @@ public class InputMethodServiceDeviceTest {
 
         pollingCheck(() -> helper.queryAllEvents()
                         .filter(isNewerThan(startActivityTime))
-                        .anyMatch(isFrom(Ime1Constants.CLASS).and(isType(ON_START_INPUT))),
+                        .filter(isFrom(Ime1Constants.CLASS).and(isType(ON_START_INPUT)))
+                        .findAny().isPresent(),
                 TIMEOUT, "CtsInputMethod1.onStartInput is called");
 
         helper.findUiObject(R.id.text_entry).click();
@@ -117,7 +121,8 @@ public class InputMethodServiceDeviceTest {
                 TIMEOUT, "CtsInputMethod2 is current IME");
         pollingCheck(() -> helper.queryAllEvents()
                         .filter(isNewerThan(switchImeTime))
-                        .anyMatch(isFrom(Ime1Constants.CLASS).and(isType(ON_DESTROY))),
+                        .filter(isFrom(Ime1Constants.CLASS).and(isType(ON_DESTROY)))
+                        .findAny().isPresent(),
                 TIMEOUT, "CtsInputMethod1.onDestroy is called");
         pollingCheck(() -> helper.queryAllEvents()
                         .filter(isNewerThan(switchImeTime))
@@ -152,11 +157,13 @@ public class InputMethodServiceDeviceTest {
         helper.findUiObject(R.id.search_view).click();
         pollingCheck(() -> helper.queryAllEvents()
                         .collect(startingFrom(helper.isStartOfTest()))
-                        .anyMatch(isFrom(Ime1Constants.CLASS).and(isType(SHOW_SOFT_INPUT))),
+                        .filter(isFrom(Ime1Constants.CLASS).and(isType(SHOW_SOFT_INPUT)))
+                        .findAny().isPresent(),
                 TIMEOUT, "CtsInputMethod1.showSoftInput is called");
         pollingCheck(() -> helper.queryAllEvents()
                         .collect(startingFrom(helper.isStartOfTest()))
-                        .anyMatch(isFrom(Ime1Constants.CLASS).and(isType(ON_START_INPUT))),
+                        .filter(isFrom(Ime1Constants.CLASS).and(isType(ON_START_INPUT)))
+                        .findAny().isPresent(),
                 TIMEOUT, "CtsInputMethod1.onStartInput is called");
     }
 
@@ -175,11 +182,13 @@ public class InputMethodServiceDeviceTest {
 
         pollingCheck(() -> helper.queryAllEvents()
                         .collect(startingFrom(helper.isStartOfTest()))
-                        .anyMatch(isFrom(Ime1Constants.CLASS).and(isType(ON_FINISH_INPUT))),
+                        .filter(isFrom(Ime1Constants.CLASS).and(isType(ON_FINISH_INPUT)))
+                        .findAny().isPresent(),
                 TIMEOUT, "CtsInputMethod1.onFinishInput is called");
         pollingCheck(() -> helper.queryAllEvents()
                         .collect(startingFrom(helper.isStartOfTest()))
-                        .anyMatch(isFrom(Ime1Constants.CLASS).and(isType(HIDE_SOFT_INPUT))),
+                        .filter(isFrom(Ime1Constants.CLASS).and(isType(HIDE_SOFT_INPUT)))
+                        .findAny().isPresent(),
                 TIMEOUT, "CtsInputMethod1.hideSoftInput is called");
     }
 
@@ -194,7 +203,9 @@ public class InputMethodServiceDeviceTest {
         // we should've only one onStartInput call.
         pollingCheck(() -> helper.queryAllEvents()
                         .collect(startingFrom(helper.isStartOfTest()))
-                        .anyMatch(isFrom(Ime1Constants.CLASS).and(isType(ON_START_INPUT))),
+                        .filter(isFrom(Ime1Constants.CLASS).and(isType(ON_START_INPUT)))
+                        .findAny()
+                        .isPresent(),
                 TIMEOUT, "CtsInputMethod1.onStartInput is called");
         List<DeviceEvent> startInputEvents = helper.queryAllEvents()
                 .collect(startingFrom(helper.isStartOfTest()))
