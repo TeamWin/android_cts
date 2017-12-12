@@ -38,6 +38,7 @@ import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
 import android.server.am.ActivityManagerState.ActivityStack;
 import android.server.am.ActivityManagerState.ActivityTask;
+import android.support.test.filters.FlakyTest;
 
 import org.junit.Test;
 
@@ -807,7 +808,9 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         executeShellCommand("am task lock stop");
     }
 
-    // @Presubmit. b/70328524 flaky
+    // TODO(b/70328524): Flaky, add back to presubmit.
+    @FlakyTest
+    @Presubmit
     @Test
     public void testConfigurationChangeOrderDuringTransition() throws Exception {
         assumeTrue(supportsPip());
