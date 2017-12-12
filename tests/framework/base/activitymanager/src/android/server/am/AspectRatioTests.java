@@ -43,7 +43,6 @@ import org.junit.runner.RunWith;
  * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.AspectRatioTests
  */
 @RunWith(AndroidJUnit4.class)
-@Presubmit
 public class AspectRatioTests extends AspectRatioTestsBase {
 
     // The max. aspect ratio the test activities are using.
@@ -94,6 +93,7 @@ public class AspectRatioTests extends AspectRatioTestsBase {
                     false /* initialTouchMode */, false /* launchActivity */);
 
     @Test
+    @Presubmit
     public void testDeviceAspectRatio() throws Exception {
         final Context context = InstrumentationRegistry.getInstrumentation().getContext();
         final WindowManager wm = (WindowManager) context.getSystemService(WINDOW_SERVICE);
@@ -114,6 +114,7 @@ public class AspectRatioTests extends AspectRatioTestsBase {
     }
 
     @Test
+    @Presubmit
     public void testMaxAspectRatio() throws Exception {
         runAspectRatioTest(mMaxAspectRatioActivity, actual -> {
             if (MAX_ASPECT_RATIO >= actual) return;
@@ -122,6 +123,7 @@ public class AspectRatioTests extends AspectRatioTestsBase {
     }
 
     @Test
+    @Presubmit
     public void testMetaDataMaxAspectRatio() throws Exception {
         runAspectRatioTest(mMetaDataMaxAspectRatioActivity, actual -> {
             if (MAX_ASPECT_RATIO >= actual) return;
@@ -129,9 +131,8 @@ public class AspectRatioTests extends AspectRatioTestsBase {
         });
     }
 
-    // TODO(b/70483763): Currently 10% flaky so not part of pre-submit for now.
-    @FlakyTest
     @Test
+    @FlakyTest // TODO: Currently 10% flaky so not part of pre-submit for now
     public void testMaxAspectRatioResizeableActivity() throws Exception {
         final Context context = InstrumentationRegistry.getInstrumentation().getContext();
         final float expected = getAspectRatio(context);
@@ -154,6 +155,7 @@ public class AspectRatioTests extends AspectRatioTestsBase {
     }
 
     @Test
+    @Presubmit
     public void testMaxAspectRatioUnsetActivity() throws Exception {
         final Context context = InstrumentationRegistry.getInstrumentation().getContext();
         final float expected = getAspectRatio(context);

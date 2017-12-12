@@ -33,7 +33,6 @@ import static org.junit.Assume.assumeTrue;
 
 import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
-import android.support.test.filters.FlakyTest;
 
 import org.junit.Test;
 
@@ -93,9 +92,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * Same as {@link #testConfigurationUpdatesWhenResizedFromFullscreen()} but resizing
      * from docked state to fullscreen (reverse).
      */
-    // TODO(b/63404575): Flaky, add back to presubmit.
-    @FlakyTest
-    @Presubmit
+    // TODO: Flaky, add to presubmit when b/63404575 is fixed.
     @Test
     public void testConfigurationUpdatesWhenResizedFromDockedStack() throws Exception {
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
@@ -134,9 +131,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * Same as {@link #testConfigurationUpdatesWhenRotatingWhileFullscreen()} but when the Activity
      * is in the docked stack.
      */
-    // TODO(b/63404575): Flaky, add back to presubmit.
-    @FlakyTest
-    @Presubmit
+    // TODO: Flaky, add to presubmit when b/63404575 is fixed.
     @Test
     public void testConfigurationUpdatesWhenRotatingWhileDocked() throws Exception {
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
