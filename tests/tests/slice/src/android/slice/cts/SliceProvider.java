@@ -20,6 +20,9 @@ import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.app.slice.Slice;
 import android.app.slice.Slice.Builder;
+import android.os.Bundle;
+import android.os.Parcel;
+import android.os.Parcelable;
 
 public class SliceProvider extends android.app.slice.SliceProvider {
 
@@ -59,7 +62,56 @@ public class SliceProvider extends android.app.slice.SliceProvider {
                         .addIcon(Icon.createWithResource(getContext(), R.drawable.size_48x48),
                                 null, Slice.HINT_NO_TINT, Slice.HINT_LARGE)
                         .build();
+            case "/bundle":
+                Bundle b1 = new Bundle();
+                b1.putParcelable("a", new TestParcel());
+                return new Slice.Builder(sliceUri).addBundle(b1, "bundle").build();
         }
         return new Slice.Builder(sliceUri).build();
+    }
+
+    public static class TestParcel implements Parcelable {
+
+        private final int mValue;
+
+        public TestParcel() {
+            mValue = 42;
+        }
+
+        protected TestParcel(Parcel in) {
+            mValue = in.readInt();
+        }
+
+        @Override
+        public void writeToParcel(Parcel dest, int flags) {
+            dest.writeInt(mValue);
+        }
+
+        @Override
+        public int describeContents() {
+            return 0;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            try {
+                TestParcel p = (TestParcel) obj;
+                return p.mValue == mValue;
+            } catch (ClassCastException e) {
+                return false;
+            }
+        }
+
+        public static final Creator<TestParcel> CREATOR = new Creator<TestParcel>() {
+            @Override
+            public TestParcel createFromParcel(Parcel in) {
+                return new TestParcel(in);
+            }
+
+            @Override
+            public TestParcel[] newArray(int size) {
+                return new TestParcel[size];
+            }
+        };
     }
 }
