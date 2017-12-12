@@ -80,14 +80,7 @@ public final class DeviceEventConstants {
         /**
          *  Param for {@link DeviceEventType#ON_START_INPUT}. Represents if IME is restarting.
          */
-        ON_START_INPUT_RESTARTING(DeviceEventType.ON_START_INPUT, "onStartInput.restarting"),
-
-        /**
-         *  Param for {@link DeviceEventType#ON_START_INPUT}. Represents if it's backed by a dummy
-         *  {@link android.view.inputmethod.InputConnection}.
-         */
-        ON_START_INPUT_DUMMY_INPUT_CONNECTION(DeviceEventType.ON_START_INPUT,
-                "onStartInput.dummyinputconnection");
+        ON_START_INPUT_RESTARTING(DeviceEventType.ON_START_INPUT, "onStartInput.restarting");
 
         private final DeviceEventType mType;
         private final String mName;

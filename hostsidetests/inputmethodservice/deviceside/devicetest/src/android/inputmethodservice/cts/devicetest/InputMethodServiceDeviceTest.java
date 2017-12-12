@@ -18,7 +18,6 @@ package android.inputmethodservice.cts.devicetest;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import static android.inputmethodservice.cts.DeviceEvent.isFrom;
@@ -208,15 +207,10 @@ public class InputMethodServiceDeviceTest {
 
         // check if that single event didn't cause IME restart.
         final DeviceEvent event = startInputEvents.get(0);
-        final Boolean isRestarting = DeviceEvent.getEventParamBoolean(
+        Boolean isRestarting = DeviceEvent.getEventParamBoolean(
                         DeviceEventTypeParam.ON_START_INPUT_RESTARTING, event);
-        assertNotNull(isRestarting);
+        assertTrue(isRestarting != null);
         assertFalse(isRestarting);
-
-        final Boolean isDummyInputConnection = DeviceEvent.getEventParamBoolean(
-                DeviceEventTypeParam.ON_START_INPUT_DUMMY_INPUT_CONNECTION, event);
-        assertNotNull(isDummyInputConnection);
-        assertFalse(isDummyInputConnection);
     }
 
     /**

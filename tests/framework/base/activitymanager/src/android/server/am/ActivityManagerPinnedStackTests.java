@@ -234,6 +234,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         setDeviceRotation(ROTATION_0);
     }
 
+    @Presubmit
     @Test
     public void testPinnedStackOutOfBoundsInsetsNonNegative() throws Exception {
         assumeTrue(supportsPip());
@@ -243,6 +244,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // Launch an activity into the pinned stack
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true", EXTRA_TAP_TO_FINISH, "true");
         mAmWmState.waitForValidState(PIP_ACTIVITY, WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
+        mAmWmState.waitForAppTransitionIdle();
 
         // Get the display dimensions
         WindowManagerState.WindowState windowState = getWindowState(PIP_ACTIVITY);
@@ -1119,15 +1121,15 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     /** Test that reported display size corresponds to fullscreen after exiting PiP. */
+    @Presubmit
     @Test
     public void testDisplayMetricsPinUnpin() throws Exception {
         assumeTrue(supportsPip());
 
         String logSeparator = clearLogcat();
         launchActivity(TEST_ACTIVITY);
-        final int defaultWindowingMode = WINDOWING_MODE_FULLSCREEN;
-        // TODO: Uncomment the line below after we start dumping AM to proto.
-        //final int defaultWindowingMode = mAmWmState.getAmState().getActivity(TEST_ACTIVITY).getWindowingMode();
+        final int defaultWindowingMode = mAmWmState.getAmState()
+                .getTaskByActivityName(TEST_ACTIVITY).getWindowingMode();
         final ReportedSizes initialSizes = getLastReportedSizesForActivity(TEST_ACTIVITY,
                 logSeparator);
         final Rect initialAppBounds = readAppBounds(TEST_ACTIVITY, logSeparator);
@@ -1137,6 +1139,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         logSeparator = clearLogcat();
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
         mAmWmState.waitForValidState(PIP_ACTIVITY, WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
+        mAmWmState.waitForAppTransitionIdle();
         final ReportedSizes pinnedSizes = getLastReportedSizesForActivity(PIP_ACTIVITY,
                 logSeparator);
         final Rect pinnedAppBounds = readAppBounds(PIP_ACTIVITY, logSeparator);
