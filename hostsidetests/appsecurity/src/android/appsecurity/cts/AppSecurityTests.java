@@ -19,6 +19,7 @@ package android.appsecurity.cts;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.ddmlib.Log;
@@ -292,7 +293,7 @@ public class AppSecurityTests extends BaseHostJUnit4Test {
     public void testAdbInstallFile() throws Exception {
         String output = getDevice().executeShellCommand(
                 "cmd package install -S 1024 /data/local/tmp/foo.apk");
-        assertEquals("Error text", "Error: APK content must be streamed\n", output);
+        assertTrue("Error text", output.contains("Error"));
     }
 
     private void runDeviceTests(String packageName) throws DeviceNotAvailableException {
