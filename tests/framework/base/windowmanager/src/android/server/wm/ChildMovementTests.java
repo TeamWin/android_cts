@@ -31,19 +31,17 @@ import java.util.List;
 
 public class ChildMovementTests extends ParentChildTestBase {
 
-    private List<WindowState> mWindowList = new ArrayList();
+    /** @see android.server.wm.frametestapp.MovingChildTestActivity#POPUP_WINDOW_NAME */
+    private static final String POPUP_WINDOW_NAME = "ChildWindow";
 
-    @Override
-    String intentKey() {
-        return "android.server.FrameTestApp.ChildTestCase";
-    }
+    private List<WindowState> mWindowList = new ArrayList<>();
 
     @Override
     String activityName() {
         return "MovingChildTestActivity";
     }
 
-    WindowState getSingleWindow(String fullWindowName) {
+    private WindowState getSingleWindow(String fullWindowName) {
         try {
             mAmWmState.getWmState().getMatchingVisibleWindowState(fullWindowName, mWindowList);
             return mWindowList.get(0);
@@ -53,36 +51,25 @@ public class ChildMovementTests extends ParentChildTestBase {
         }
     }
 
-    WindowState getSingleWindowByPrefix(String prefix) {
-        try {
-            mAmWmState.getWmState().getPrefixMatchingVisibleWindowState(prefix, mWindowList);
-            return mWindowList.get(0);
-        } catch (Exception e) {
-            logE("Couldn't find window: " + prefix);
-            return null;
-        }
-    }
-
+    @Override
     void doSingleTest(ParentChildTest t) throws Exception {
-        String popupName = "ChildWindow";
-        final WaitForValidActivityState waitForVisible =
-                new WaitForValidActivityState.Builder(popupName).build();
+        final WaitForValidActivityState waitForVisible = new WaitForValidActivityState.Builder()
+                .setWindowName(POPUP_WINDOW_NAME).build();
 
-        mAmWmState.setUseActivityNamesForWindowNames(false);
         mAmWmState.computeState(waitForVisible);
-        WindowState popup = getSingleWindowByPrefix(popupName);
+        WindowState popup = getSingleWindow(POPUP_WINDOW_NAME);
         WindowState parent = getSingleWindow(getBaseWindowName() + activityName());
 
         t.doTest(parent, popup);
     }
 
+    private final Object monitor = new Object();
+    private boolean testPassed = false;
+    private String popupName = null;
+    private String mainName = null;
 
-    Object monitor = new Object();
-    boolean testPassed = false;
-    String popupName = null;
-    String mainName = null;
-
-    SurfaceTraceReceiver.SurfaceObserver observer = new SurfaceTraceReceiver.SurfaceObserver() {
+    private final SurfaceTraceReceiver.SurfaceObserver observer =
+            new SurfaceTraceReceiver.SurfaceObserver() {
         int transactionCount = 0;
         boolean sawChildMove = false;
         boolean sawMainMove = false;

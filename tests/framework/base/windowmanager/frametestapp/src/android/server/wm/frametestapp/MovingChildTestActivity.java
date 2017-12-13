@@ -14,29 +14,27 @@
  * limitations under the License.
  */
 
-package android.server.FrameTestApp;
+package android.server.wm.frametestapp;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.content.Context;
 import android.os.Bundle;
-import android.view.WindowManager;
-import android.view.Window;
-import android.view.Gravity;
-import android.view.View;
-import android.widget.Space;
-import android.widget.Button;
 import android.view.ViewGroup.LayoutParams;
+import android.view.Window;
 import android.view.WindowManager;
-import android.widget.FrameLayout;
+import android.widget.Button;
+import android.widget.Space;
 
 // This activity will parent a Child to the main window, and then move
 // the main window around. We can use this to verify the Child
 // is properly updated.
 public class MovingChildTestActivity extends Activity {
-    Space mView;
-    int mX = 0;
-    int mY = 0;
+
+    private static final String POPUP_WINDOW_NAME = "ChildWindow";
+
+    private Space mView;
+    private int mX = 0;
+    private int mY = 0;
 
     final Runnable moveWindow = new Runnable() {
             @Override
@@ -63,7 +61,7 @@ public class MovingChildTestActivity extends Activity {
                 p.x = 0;
                 p.y = 0;
                 p.token = mView.getWindowToken();
-                p.setTitle("ChildWindow");
+                p.setTitle(POPUP_WINDOW_NAME);
 
                 ((WindowManager)getSystemService(Context.WINDOW_SERVICE)).addView(b, p);
 
