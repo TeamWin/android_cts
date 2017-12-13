@@ -20,6 +20,7 @@ import static android.server.am.StateLogger.logE;
 
 import static org.junit.Assert.assertTrue;
 
+import android.content.ComponentName;
 import android.server.am.SurfaceTraceReceiver;
 import android.server.am.WaitForValidActivityState;
 import android.server.am.WindowManagerState.WindowState;
@@ -31,22 +32,25 @@ import java.util.List;
 
 public class ChildMovementTests extends ParentChildTestBase {
 
+    private static final ComponentName MOVING_CHILD_TEST_ACTIVITY = ComponentName
+            .unflattenFromString("android.server.wm.frametestapp/.MovingChildTestActivity");
+
     /** @see android.server.wm.frametestapp.MovingChildTestActivity#POPUP_WINDOW_NAME */
     private static final String POPUP_WINDOW_NAME = "ChildWindow";
 
     private List<WindowState> mWindowList = new ArrayList<>();
 
     @Override
-    String activityName() {
-        return "MovingChildTestActivity";
+    ComponentName activityName() {
+        return MOVING_CHILD_TEST_ACTIVITY;
     }
 
-    private WindowState getSingleWindow(String fullWindowName) {
+    private WindowState getSingleWindow(final String windowName) {
         try {
-            mAmWmState.getWmState().getMatchingVisibleWindowState(fullWindowName, mWindowList);
+            mAmWmState.getWmState().getMatchingVisibleWindowState(windowName, mWindowList);
             return mWindowList.get(0);
         } catch (Exception e) {
-            logE("Couldn't find window: " + fullWindowName);
+            logE("Couldn't find window: " + windowName);
             return null;
         }
     }
@@ -58,7 +62,7 @@ public class ChildMovementTests extends ParentChildTestBase {
 
         mAmWmState.computeState(waitForVisible);
         WindowState popup = getSingleWindow(POPUP_WINDOW_NAME);
-        WindowState parent = getSingleWindow(getBaseWindowName() + activityName());
+        WindowState parent = getSingleWindow(activityName().flattenToString());
 
         t.doTest(parent, popup);
     }

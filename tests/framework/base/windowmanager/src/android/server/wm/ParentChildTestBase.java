@@ -19,13 +19,12 @@ package android.server.wm;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.server.am.StateLogger.log;
 
+import android.content.ComponentName;
 import android.server.am.ActivityManagerTestBase;
 import android.server.am.WindowManagerState.WindowState;
 
 abstract class ParentChildTestBase extends ActivityManagerTestBase {
 
-    /** Package name of test app. */
-    private static final String COMPONENT_NAME = "android.server.wm.frametestapp";
     /** Extra key for test case name. */
     private static final String EXTRA_TEST_CASE = "test-case";
 
@@ -34,9 +33,7 @@ abstract class ParentChildTestBase extends ActivityManagerTestBase {
     }
 
     private void startTestCase(String testCase) throws Exception {
-        setComponentName(COMPONENT_NAME);
-        String cmd = getAmStartCmd(activityName(), EXTRA_TEST_CASE, testCase);
-        executeShellCommand(cmd);
+        executeShellCommand(getAmStartCmd(activityName(), EXTRA_TEST_CASE, testCase));
     }
 
     private void startTestCaseDocked(String testCase) throws Exception {
@@ -44,7 +41,7 @@ abstract class ParentChildTestBase extends ActivityManagerTestBase {
         setActivityTaskWindowingMode(activityName(), WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
     }
 
-    abstract String activityName();
+    abstract ComponentName activityName();
 
     abstract void doSingleTest(ParentChildTest t) throws Exception;
 
@@ -52,7 +49,7 @@ abstract class ParentChildTestBase extends ActivityManagerTestBase {
         log("Running test fullscreen");
         startTestCase(testCase);
         doSingleTest(t);
-        stopTestCase();
+        stopTestPackage(activityName());
     }
 
     private void doDockedTest(String testCase, ParentChildTest t) throws Exception {
@@ -63,7 +60,7 @@ abstract class ParentChildTestBase extends ActivityManagerTestBase {
         }
         startTestCaseDocked(testCase);
         doSingleTest(t);
-        stopTestCase();
+        stopTestPackage(activityName());
     }
 
     void doParentChildTest(String testCase, ParentChildTest t) throws Exception {

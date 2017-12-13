@@ -189,6 +189,16 @@ public class ActivityAndWindowManagersState {
                         .build());
     }
 
+    void waitForValidState(final ComponentName activityName, final int windowingMode,
+            final int activityType) throws Exception {
+        waitForValidState(false /* compareTaskAndStackBounds */,
+                new WaitForValidActivityState.Builder(activityName)
+                        .setActivityType(activityType)
+                        .setWindowingMode(windowingMode)
+                        .build());
+    }
+
+    @Deprecated
     void waitForValidState(String waitForActivityVisible, int windowingMode, int activityType)
             throws Exception {
         waitForValidState(false /* compareTaskAndStackBounds */,

@@ -41,6 +41,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.app.ActivityManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.ParcelFileDescriptor;
@@ -131,6 +132,7 @@ public abstract class ActivityManagerTestBase {
 
     private boolean mLockDisabled;
 
+    @Deprecated
     protected static String getAmStartCmd(final String activityName) {
         return "am start -n " + getActivityComponentName(activityName);
     }
@@ -139,16 +141,29 @@ public abstract class ActivityManagerTestBase {
      * @return the am command to start the given activity with the following extra key/value pairs.
      *         {@param keyValuePairs} must be a list of arguments defining each key/value extra.
      */
+    protected static String getAmStartCmd(final ComponentName activityName,
+            final String... keyValuePairs) {
+        return getAmStartCmdInternal(activityName.flattenToShortString(), keyValuePairs);
+    }
+
+    @Deprecated
     protected static String getAmStartCmd(final String activityName,
             final String... keyValuePairs) {
-        String base = getAmStartCmd(activityName);
+        return getAmStartCmdInternal(getActivityComponentName(activityName), keyValuePairs);
+    }
+
+    private static String getAmStartCmdInternal(final String activityName,
+            final String... keyValuePairs) {
+        final StringBuilder cmd = new StringBuilder("am start -n ").append(activityName);
         if (keyValuePairs.length % 2 != 0) {
             throw new RuntimeException("keyValuePairs must be pairs of key/value arguments");
         }
         for (int i = 0; i < keyValuePairs.length; i += 2) {
-            base += " --es " + keyValuePairs[i] + " " + keyValuePairs[i + 1];
+            final String key = keyValuePairs[i];
+            final String value = keyValuePairs[i + 1];
+            cmd.append(String.format(" --es %s %s", key, value));
         }
-        return base;
+        return cmd.toString();
     }
 
     protected static String getAmStartCmd(final String activityName, final int displayId) {
@@ -472,6 +487,14 @@ public abstract class ActivityManagerTestBase {
                 WINDOWING_MODE_SPLIT_SCREEN_SECONDARY, ACTIVITY_TYPE_STANDARD);
     }
 
+    protected void setActivityTaskWindowingMode(final ComponentName activityName,
+            final int windowingMode) throws Exception {
+        final int taskId = getActivityTaskId(activityName);
+        mAm.setTaskWindowingMode(taskId, windowingMode, true /* toTop */);
+        mAmWmState.waitForValidState(activityName, windowingMode, ACTIVITY_TYPE_STANDARD);
+    }
+
+    @Deprecated
     protected void setActivityTaskWindowingMode(String activityName, int windowingMode)
             throws Exception {
         final int taskId = getActivityTaskId(activityName);
@@ -530,11 +553,20 @@ public abstract class ActivityManagerTestBase {
         }
     }
 
-    protected int getActivityTaskId(String name) {
-        String output = executeShellCommand(AM_STACK_LIST);
-        final Pattern activityPattern = Pattern.compile("(.*) " + getWindowName(name) + " (.*)");
-        for (String line : output.split("\\n")) {
-            Matcher matcher = activityPattern.matcher(line);
+    protected int getActivityTaskId(final ComponentName activityName) {
+        return getWindowTaskId(activityName.flattenToString());
+    }
+
+    @Deprecated
+    protected int getActivityTaskId(final String activityName) {
+        return getWindowTaskId(getWindowName(activityName));
+    }
+
+    private int getWindowTaskId(final String windowName) {
+        final String output = executeShellCommand(AM_STACK_LIST);
+        final Pattern activityPattern = Pattern.compile("(.*) " + windowName + " (.*)");
+        for (final String line : output.split("\\n")) {
+            final Matcher matcher = activityPattern.matcher(line);
             if (matcher.matches()) {
                 for (String word : line.split("\\s+")) {
                     if (word.startsWith(TASK_ID_PREFIX)) {
@@ -1341,8 +1373,8 @@ public abstract class ActivityManagerTestBase {
         }
     }
 
-    protected void stopTestCase() throws Exception {
-        executeShellCommand("am force-stop " + componentName);
+    protected void stopTestPackage(final ComponentName activityName) throws Exception {
+        executeShellCommand("am force-stop " + activityName.getPackageName());
     }
 
     protected LaunchActivityBuilder getLaunchActivityBuilder() {

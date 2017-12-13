@@ -21,6 +21,7 @@ import static android.server.am.StateLogger.logE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import android.content.ComponentName;
 import android.graphics.Rect;
 import android.server.am.WaitForValidActivityState;
 import android.server.am.WindowManagerState.WindowState;
@@ -32,22 +33,25 @@ import java.util.List;
 
 public class DialogFrameTests extends ParentChildTestBase {
 
+    private static final ComponentName DIALOG_TEST_ACTIVITY = ComponentName
+            .unflattenFromString("android.server.wm.frametestapp/.DialogTestActivity");
+
     /** @see android.server.wm.frametestapp.DialogTestActivity#DIALOG_WINDOW_NAME */
     private static final String DIALOG_WINDOW_NAME = "TestDialog";
 
     private List<WindowState> mWindowList = new ArrayList<>();
 
     @Override
-    String activityName() {
-        return "DialogTestActivity";
+    ComponentName activityName() {
+        return DIALOG_TEST_ACTIVITY;
     }
 
-    private WindowState getSingleWindow(String fullwindowName) {
+    private WindowState getSingleWindow(final String windowName) {
         try {
-            mAmWmState.getWmState().getMatchingVisibleWindowState(fullwindowName, mWindowList);
+            mAmWmState.getWmState().getMatchingVisibleWindowState(windowName, mWindowList);
             return mWindowList.get(0);
         } catch (Exception e) {
-            logE("Couldn't find window: " + fullwindowName);
+            logE("Couldn't find window: " + windowName);
             return null;
         }
     }
@@ -59,7 +63,7 @@ public class DialogFrameTests extends ParentChildTestBase {
 
         mAmWmState.computeState(waitForVisible);
         WindowState dialog = getSingleWindow(DIALOG_WINDOW_NAME);
-        WindowState parent = getSingleWindow(getBaseWindowName() + activityName());
+        WindowState parent = getSingleWindow(activityName().flattenToString());
 
         t.doTest(parent, dialog);
     }
