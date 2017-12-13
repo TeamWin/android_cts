@@ -129,8 +129,6 @@ public class AspectRatioTests extends AspectRatioTestsBase {
         });
     }
 
-    // TODO(b/70483763): Currently 10% flaky so not part of pre-submit for now.
-    @FlakyTest
     @Test
     public void testMaxAspectRatioResizeableActivity() throws Exception {
         final Context context = InstrumentationRegistry.getInstrumentation().getContext();
