@@ -22,27 +22,27 @@ import static android.server.am.StateLogger.log;
 import android.server.am.ActivityManagerTestBase;
 import android.server.am.WindowManagerState.WindowState;
 
-public abstract class ParentChildTestBase extends ActivityManagerTestBase {
+abstract class ParentChildTestBase extends ActivityManagerTestBase {
 
-    private static final String COMPONENT_NAME = "android.server.FrameTestApp";
+    /** Package name of test app. */
+    private static final String COMPONENT_NAME = "android.server.wm.frametestapp";
+    /** Extra key for test case name. */
+    private static final String EXTRA_TEST_CASE = "test-case";
 
     interface ParentChildTest {
-
         void doTest(WindowState parent, WindowState child);
     }
 
-    public void startTestCase(String testCase) throws Exception {
+    private void startTestCase(String testCase) throws Exception {
         setComponentName(COMPONENT_NAME);
-        String cmd = getAmStartCmd(activityName(), intentKey(), testCase);
+        String cmd = getAmStartCmd(activityName(), EXTRA_TEST_CASE, testCase);
         executeShellCommand(cmd);
     }
 
-    public void startTestCaseDocked(String testCase) throws Exception {
+    private void startTestCaseDocked(String testCase) throws Exception {
         startTestCase(testCase);
         setActivityTaskWindowingMode(activityName(), WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
     }
-
-    abstract String intentKey();
 
     abstract String activityName();
 
@@ -55,7 +55,7 @@ public abstract class ParentChildTestBase extends ActivityManagerTestBase {
         stopTestCase();
     }
 
-    void doDockedTest(String testCase, ParentChildTest t) throws Exception {
+    private void doDockedTest(String testCase, ParentChildTest t) throws Exception {
         log("Running test docked");
         if (!supportsSplitScreenMultiWindow()) {
             log("Skipping test: no split multi-window support");
