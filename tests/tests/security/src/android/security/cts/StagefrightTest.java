@@ -881,11 +881,6 @@ public class StagefrightTest extends InstrumentationTestCase {
     }
 
     @SecurityTest
-    public void testCve_2017_0762() throws Exception {
-        doStagefrightTestRawBlob(R.raw.cve_2017_0762, "video/hevc", 320, 240);
-    }
-
-    @SecurityTest
     public void testCve_2017_0687() throws Exception {
         doStagefrightTestRawBlob(R.raw.cve_2017_0687, "video/avc", 320, 240);
     }
