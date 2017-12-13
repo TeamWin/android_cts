@@ -16,12 +16,20 @@
 
 package android.security.cts;
 
+import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.device.NativeDevice;
 import com.android.tradefed.testtype.DeviceTestCase;
-import com.android.tradefed.log.LogUtil.CLog;
 
+import android.platform.test.annotations.RootPermissionTest;
+
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Scanner;
 import java.util.regex.Pattern;
 
 public class SecurityTestCase extends DeviceTestCase {
@@ -54,18 +62,18 @@ public class SecurityTestCase extends DeviceTestCase {
     }
 
     /**
-     * Use {@link NativeDevice#enableAdbRoot()} internally.
-     *
-     * The test methods calling this function should run even if enableAdbRoot fails, which is why 
-     * the return value is ignored. However, we may want to act on that data point in the future.
+     * Takes a device and runs a root command.  There is a more robust version implemented by
+     * NativeDevice, but due to some other changes it isnt trivially acessible, but I can get
+     * that implementation fairly easy if we think it is a better idea.
      */
-    public boolean enableAdbRoot(ITestDevice mDevice) throws DeviceNotAvailableException {
-        if(mDevice.enableAdbRoot()) {
-            return true;
-        } else {
-            CLog.w("\"enable-root\" set to false! Root is required to check if device is vulnerable.");
-            return false;
+    public void enableAdbRoot(ITestDevice mDevice) throws DeviceNotAvailableException {
+        boolean isUserDebug =
+            "userdebug".equals(mDevice.executeShellCommand("getprop ro.build.type").trim());
+        if (!isUserDebug) {
+            //TODO(badash@): This would Noop once cl: ag/1594311 is in
+            return;
         }
+        mDevice.executeAdbCommand("root");
     }
 
     /**
@@ -92,7 +100,7 @@ public class SecurityTestCase extends DeviceTestCase {
         assertTrue("Phone has had a hard reset",
             (System.currentTimeMillis()/1000 - uptime - kernelStartTime < 2));
         //TODO(badash@): add ability to catch runtime restart
-        getDevice().disableAdbRoot();
+        getDevice().executeAdbCommand("unroot");
     }
 
     public void assertMatches(String pattern, String input) throws Exception {
