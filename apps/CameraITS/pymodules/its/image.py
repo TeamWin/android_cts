@@ -700,6 +700,22 @@ def compute_image_snrs(img):
     return snr
 
 
+def compute_image_max_gradients(img):
+    """Calculate the maximum gradient of each color channel in the image.
+
+    Args:
+        img: Numpy float image array, with pixel values in [0,1].
+
+    Returns:
+        A list of gradient max values, one per color channel in the image.
+    """
+    grads = []
+    chans = img.shape[2]
+    for i in xrange(chans):
+        grads.append(numpy.amax(numpy.gradient(img[:, :, i])))
+    return grads
+
+
 def write_image(img, fname, apply_gamma=False):
     """Save a float-3 numpy array image to a file.
 
