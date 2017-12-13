@@ -71,10 +71,10 @@ public class NetworkLoggingTest extends BaseDeviceOwnerTest {
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (BaseDeviceOwnerTest.ACTION_NETWORK_LOGS_AVAILABLE.equals(intent.getAction())) {
+            if (BasicAdminReceiver.ACTION_NETWORK_LOGS_AVAILABLE.equals(intent.getAction())) {
                 mGenerateNetworkTraffic = false;
                 mCurrentBatchToken = intent.getLongExtra(
-                        BaseDeviceOwnerTest.EXTRA_NETWORK_LOGS_BATCH_TOKEN, FAKE_BATCH_TOKEN);
+                        BasicAdminReceiver.EXTRA_NETWORK_LOGS_BATCH_TOKEN, FAKE_BATCH_TOKEN);
                 if (mCountDownLatch != null) {
                     mCountDownLatch.countDown();
                 }
@@ -129,7 +129,7 @@ public class NetworkLoggingTest extends BaseDeviceOwnerTest {
         mGenerateNetworkTraffic = true;
         // register a receiver that listens for DeviceAdminReceiver#onNetworkLogsAvailable()
         final IntentFilter filterNetworkLogsAvailable = new IntentFilter(
-                BaseDeviceOwnerTest.ACTION_NETWORK_LOGS_AVAILABLE);
+                BasicAdminReceiver.ACTION_NETWORK_LOGS_AVAILABLE);
         LocalBroadcastManager.getInstance(mContext).registerReceiver(mNetworkLogsReceiver,
                 filterNetworkLogsAvailable);
 

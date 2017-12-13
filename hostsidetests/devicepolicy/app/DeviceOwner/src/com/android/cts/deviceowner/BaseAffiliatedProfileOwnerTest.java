@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,14 +20,13 @@ import android.content.ComponentName;
 import android.test.AndroidTestCase;
 
 /**
- * Base class for device-owner based tests.
+ * Base class for affiliated profile-owner based tests.
  *
- * This class handles making sure that the test is the device owner
- * and that it has an active admin registered, so that all tests may
- * assume these are done. The admin component can be accessed through
- * {@link #getWho()}.
+ * This class handles making sure that the test is the affiliated profile owner and that it has an
+ * active admin registered, so that all tests may assume these are done. The admin component can be
+ * accessed through {@link #getWho()}.
  */
-public abstract class BaseDeviceOwnerTest extends AndroidTestCase {
+public abstract class BaseAffiliatedProfileOwnerTest extends AndroidTestCase {
 
     protected DevicePolicyManager mDevicePolicyManager;
 
@@ -36,14 +35,17 @@ public abstract class BaseDeviceOwnerTest extends AndroidTestCase {
         super.setUp();
 
         mDevicePolicyManager = mContext.getSystemService(DevicePolicyManager.class);
-        assertDeviceOwner();
+        assertDeviceOrAffiliatedProfileOwner();
     }
 
-    private void assertDeviceOwner() {
+    private void assertDeviceOrAffiliatedProfileOwner() {
         assertNotNull(mDevicePolicyManager);
         assertTrue(mDevicePolicyManager.isAdminActive(getWho()));
-        assertTrue(mDevicePolicyManager.isDeviceOwnerApp(mContext.getPackageName()));
-        assertFalse(mDevicePolicyManager.isManagedProfile(getWho()));
+        boolean isDeviceOwner = mDevicePolicyManager.isDeviceOwnerApp(mContext.getPackageName());
+        boolean isAffiliatedProfileOwner = mDevicePolicyManager.isProfileOwnerApp(
+                mContext.getPackageName())
+                && mDevicePolicyManager.isAffiliatedUser();
+        assertTrue(isDeviceOwner || isAffiliatedProfileOwner);
     }
 
     protected ComponentName getWho() {
