@@ -29,6 +29,8 @@ import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.app.slice.Slice;
 import android.app.slice.SliceItem;
+import android.os.Bundle;
+import android.slice.cts.SliceProvider.TestParcel;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 
@@ -188,5 +190,20 @@ public class SliceTest {
         assertEquals(Arrays.asList(Slice.HINT_TITLE), s.getItems().get(0).getHints());
         assertEquals(Arrays.asList(Slice.HINT_NO_TINT, Slice.HINT_LARGE),
                 s.getItems().get(1).getHints());
+    }
+
+    @Test
+    public void testBundle() {
+        Uri uri = BASE_URI.buildUpon().appendPath("bundle").build();
+        Slice s = Slice.bindSlice(mContext.getContentResolver(), uri,
+                Collections.emptyList());
+        assertEquals(uri, s.getUri());
+        assertEquals(1, s.getItems().size());
+
+        SliceItem item = s.getItems().get(0);
+        assertEquals(SliceItem.FORMAT_BUNDLE, item.getFormat());
+        Bundle b = item.getBundle();
+        b.setClassLoader(getClass().getClassLoader());
+        assertEquals(new TestParcel(), b.getParcelable("a"));
     }
 }

@@ -21,6 +21,7 @@ public class FontScaleNoRelaunchActivity extends FontScaleActivity {
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
+        dumpActivityDpi();
         dumpFontSize();
     }
 

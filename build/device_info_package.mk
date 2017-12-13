@@ -42,7 +42,7 @@ DEVICE_INFO_MIN_SDK := 8
 endif
 
 ifeq ($(DEVICE_INFO_TARGET_SDK),)
-DEVICE_INFO_TARGET_SDK := 8
+DEVICE_INFO_TARGET_SDK := 17
 endif
 
 # Add the base device info

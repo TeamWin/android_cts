@@ -38,7 +38,6 @@ public final class TestActivity extends Activity {
         super.onCreate(savedInstanceState);
         if (mInitializer == null) {
             mInitializer = sInitializer.get();
-            sInitializer.set(null);
         }
         setContentView(mInitializer.apply(this));
     }
