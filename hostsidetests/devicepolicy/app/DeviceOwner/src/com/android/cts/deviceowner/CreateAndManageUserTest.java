@@ -29,6 +29,7 @@ import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.IBinder;
 import android.os.PersistableBundle;
+import android.os.Process;
 import android.os.RemoteException;
 import android.os.UserHandle;
 import android.os.UserManager;
@@ -133,75 +134,74 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
         }
     }
 
-// Disabled due to b/29072728
-//    // This test will create a user that will get passed a bundle that we specify. The bundle will
-//    // contain an action and a serial (for user handle) to broadcast to notify the test that the
-//    // configuration was triggered.
-//    private void createAndManageUserTest(final int flags) {
-//        // This test sets a profile owner on the user, which requires the managed_users feature.
-//        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS)) {
-//            return;
-//        }
-//
-//        final boolean expectedSetupComplete = (flags & DevicePolicyManager.SKIP_SETUP_WIZARD) != 0;
-//        UserManager userManager = (UserManager) mContext.getSystemService(Context.USER_SERVICE);
-//
-//        UserHandle firstUser = Process.myUserHandle();
-//        final String testUserName = "TestUser_" + System.currentTimeMillis();
-//        String action = "com.android.cts.TEST_USER_ACTION";
-//        PersistableBundle bundle = new PersistableBundle();
-//        bundle.putBoolean(BROADCAST_EXTRA, true);
-//        bundle.putLong(SERIAL_EXTRA, userManager.getSerialNumberForUser(firstUser));
-//        bundle.putString(ACTION_EXTRA, action);
-//
-//        mReceived = false;
-//        mTestProfileOwnerWasUsed = false;
-//        mSetupComplete = !expectedSetupComplete;
-//        BroadcastReceiver receiver = new BroadcastReceiver() {
-//            @Override
-//            public void onReceive(Context context, Intent intent) {
-//                mReceived = true;
-//                if (intent.getBooleanExtra(PROFILE_OWNER_EXTRA, false)) {
-//                    mTestProfileOwnerWasUsed = true;
-//                }
-//                mSetupComplete = intent.getBooleanExtra(SETUP_COMPLETE_EXTRA,
-//                        !expectedSetupComplete);
-//                synchronized (CreateAndManageUserTest.this) {
-//                    CreateAndManageUserTest.this.notify();
-//                }
-//            }
-//        };
-//
-//        IntentFilter filter = new IntentFilter();
-//        filter.addAction(action);
-//        mContext.registerReceiver(receiver, filter);
-//
-//        synchronized (this) {
-//            mUserHandle = mDevicePolicyManager.createAndManageUser(getWho(), testUserName,
-//                    TestProfileOwner.getComponentName(), bundle, flags);
-//            assertNotNull(mUserHandle);
-//
-//            mDevicePolicyManager.switchUser(getWho(), mUserHandle);
-//            try {
-//                wait(USER_SWITCH_DELAY);
-//            } catch (InterruptedException e) {
-//                fail("InterruptedException: " + e.getMessage());
-//            }
-//            mDevicePolicyManager.switchUser(getWho(), firstUser);
-//
-//            waitForBroadcastLocked();
-//
-//            assertTrue(mReceived);
-//            assertTrue(mTestProfileOwnerWasUsed);
-//            assertEquals(expectedSetupComplete, mSetupComplete);
-//
-//            assertTrue(mDevicePolicyManager.removeUser(getWho(), mUserHandle));
-//
-//            mUserHandle = null;
-//        }
-//
-//        mContext.unregisterReceiver(receiver);
-//    }
+    // This test will create a user that will get passed a bundle that we specify. The bundle will
+    // contain an action and a serial (for user handle) to broadcast to notify the test that the
+    // configuration was triggered.
+    private void createAndManageUserTest(final int flags) {
+        // This test sets a profile owner on the user, which requires the managed_users feature.
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS)) {
+            return;
+        }
+
+        final boolean expectedSetupComplete = (flags & DevicePolicyManager.SKIP_SETUP_WIZARD) != 0;
+        UserManager userManager = (UserManager) mContext.getSystemService(Context.USER_SERVICE);
+
+        UserHandle firstUser = Process.myUserHandle();
+        final String testUserName = "TestUser_" + System.currentTimeMillis();
+        String action = "com.android.cts.TEST_USER_ACTION";
+        PersistableBundle bundle = new PersistableBundle();
+        bundle.putBoolean(BROADCAST_EXTRA, true);
+        bundle.putLong(SERIAL_EXTRA, userManager.getSerialNumberForUser(firstUser));
+        bundle.putString(ACTION_EXTRA, action);
+
+        mReceived = false;
+        mTestProfileOwnerWasUsed = false;
+        mSetupComplete = !expectedSetupComplete;
+        BroadcastReceiver receiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                mReceived = true;
+                if (intent.getBooleanExtra(PROFILE_OWNER_EXTRA, false)) {
+                    mTestProfileOwnerWasUsed = true;
+                }
+                mSetupComplete = intent.getBooleanExtra(SETUP_COMPLETE_EXTRA,
+                        !expectedSetupComplete);
+                synchronized (CreateAndManageUserTest.this) {
+                    CreateAndManageUserTest.this.notify();
+                }
+            }
+        };
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(action);
+        mContext.registerReceiver(receiver, filter);
+
+        synchronized (this) {
+            mUserHandle = mDevicePolicyManager.createAndManageUser(getWho(), testUserName,
+                    TestProfileOwner.getComponentName(), bundle, flags);
+            assertNotNull(mUserHandle);
+
+            mDevicePolicyManager.switchUser(getWho(), mUserHandle);
+            try {
+                wait(USER_SWITCH_DELAY);
+            } catch (InterruptedException e) {
+                fail("InterruptedException: " + e.getMessage());
+            }
+            mDevicePolicyManager.switchUser(getWho(), firstUser);
+
+            waitForBroadcastLocked();
+
+            assertTrue(mReceived);
+            assertTrue(mTestProfileOwnerWasUsed);
+            assertEquals(expectedSetupComplete, mSetupComplete);
+
+            assertTrue(mDevicePolicyManager.removeUser(getWho(), mUserHandle));
+
+            mUserHandle = null;
+        }
+
+        mContext.unregisterReceiver(receiver);
+    }
 
     /**
      * Test creating an ephemeral user using the {@link DevicePolicyManager#createAndManageUser}
@@ -224,18 +224,17 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
                 DevicePolicyManager.MAKE_USER_EPHEMERAL);
     }
 
-// Disabled due to b/29072728
-//    public void testCreateAndManageUser_SkipSetupWizard() {
-//        createAndManageUserTest(DevicePolicyManager.SKIP_SETUP_WIZARD);
-//    }
-//
-//    public void testCreateAndManageUser_DontSkipSetupWizard() {
-//        if (!mActivityManager.isRunningInTestHarness()) {
-//            // In test harness, the setup wizard will be disabled by default, so this test is always
-//            // failing.
-//            createAndManageUserTest(0);
-//        }
-//    }
+    public void testCreateAndManageUser_SkipSetupWizard() {
+        createAndManageUserTest(DevicePolicyManager.SKIP_SETUP_WIZARD);
+    }
+
+    public void testCreateAndManageUser_DontSkipSetupWizard() {
+        if (!mActivityManager.isRunningInTestHarness()) {
+            // In test harness, the setup wizard will be disabled by default, so this test is always
+            // failing.
+            createAndManageUserTest(0);
+        }
+    }
 
     // createAndManageUser should circumvent the DISALLOW_ADD_USER restriction
     public void testCreateAndManageUser_AddRestrictionSet() {
