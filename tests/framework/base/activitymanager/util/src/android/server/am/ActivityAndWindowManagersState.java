@@ -675,6 +675,7 @@ public class ActivityAndWindowManagersState {
         assertEquals(msg, windowName, mWmState.getFrontWindow());
     }
 
+    @Deprecated
     public void assertVisibility(String activityName, boolean visible) {
         final String activityComponentName =
                 ActivityManagerTestBase.getActivityComponentName(activityName);
@@ -683,7 +684,7 @@ public class ActivityAndWindowManagersState {
         assertVisibility(activityComponentName, windowName, visible);
     }
 
-    private void assertVisibility(final ComponentName activityName, final boolean visible) {
+    public void assertVisibility(final ComponentName activityName, final boolean visible) {
         final String activityComponentName = activityName.flattenToShortString();
         final String windowName = activityName.flattenToString();
         assertVisibility(activityComponentName, windowName, visible);
