@@ -141,6 +141,7 @@ public abstract class ActivityManagerTestBase {
      * @return the am command to start the given activity with the following extra key/value pairs.
      *         {@param keyValuePairs} must be a list of arguments defining each key/value extra.
      */
+    // TODO: Make this more generic, for instance accepting flags or extras of other types.
     protected static String getAmStartCmd(final ComponentName activityName,
             final String... keyValuePairs) {
         return getAmStartCmdInternal(activityName.flattenToShortString(), keyValuePairs);
@@ -346,6 +347,12 @@ public abstract class ActivityManagerTestBase {
         setComponentName(componentName);
         launchActivity(targetActivityName, keyValuePairs);
         setComponentName(originalComponentName);
+    }
+
+    protected void launchActivity(final ComponentName activityName, final String... keyValuePairs)
+            throws Exception {
+        executeShellCommand(getAmStartCmd(activityName, keyValuePairs));
+        mAmWmState.waitForValidState(new WaitForValidActivityState(activityName));
     }
 
     @Deprecated
