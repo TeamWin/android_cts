@@ -29,8 +29,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.ActivityAndWindowManagerOverrideConfigTests
+ * Build/Install/Run:
+ *     atest CtsActivityManagerDeviceTestCases:ActivityAndWindowManagerOverrideConfigTests
  */
 public class ActivityAndWindowManagerOverrideConfigTests extends ActivityManagerTestBase {
     private static final String TEST_ACTIVITY_NAME = "LogConfigurationActivity";

@@ -17,6 +17,7 @@
 package android.server.am;
 
 import static org.junit.Assume.assumeTrue;
+import android.server.am.ActivityManagerState.ActivityDisplay;
 
 import org.junit.After;
 import org.junit.Before;
@@ -25,8 +26,8 @@ import org.junit.Test;
 /**
  * Display tests that require a keyguard.
  *
- * <p>Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.ActivityManagerDisplayKeyguardTests
+ * <p>Build/Install/Run:
+ *     atest CtsActivityManagerDeviceTestCases:ActivityManagerDisplayKeyguardTests
  */
 public class ActivityManagerDisplayKeyguardTests extends ActivityManagerDisplayTestBase {
     private static final String DISMISS_KEYGUARD_ACTIVITY = "DismissKeyguardActivity";
@@ -55,12 +56,12 @@ public class ActivityManagerDisplayKeyguardTests extends ActivityManagerDisplayT
      */
     @Test
     public void testDismissKeyguardActivity_secondaryDisplay() throws Exception {
-        final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
+        final ActivityDisplay newDisplay = new VirtualDisplayBuilder(this).build();
 
         gotoKeyguard();
         mAmWmState.waitForKeyguardShowingAndNotOccluded();
         mAmWmState.assertKeyguardShowingAndNotOccluded();
-        launchActivityOnDisplay(DISMISS_KEYGUARD_ACTIVITY, newDisplay.mDisplayId);
+        launchActivityOnDisplay(DISMISS_KEYGUARD_ACTIVITY, newDisplay.mId);
         mAmWmState.waitForKeyguardShowingAndNotOccluded();
         mAmWmState.assertKeyguardShowingAndNotOccluded();
         mAmWmState.assertVisibility(DISMISS_KEYGUARD_ACTIVITY, true);

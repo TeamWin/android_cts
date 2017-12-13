@@ -40,8 +40,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Build: mmma -j32 cts/tests/framework/base
- * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.ActivityManagerAppConfigurationTests
+ * Build/Install/Run:
+ *     atest CtsActivityManagerDeviceTestCases:ActivityManagerAppConfigurationTests
  */
 public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBase {
     private static final String RESIZEABLE_ACTIVITY_NAME = "ResizeableActivity";

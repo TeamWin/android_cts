@@ -26,8 +26,8 @@ import android.graphics.Rect;
 import org.junit.Test;
 
 /**
- * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.SplashscreenTests
+ * Build/Install/Run:
+ *     atest CtsActivityManagerDeviceTestCases:SplashscreenTests
  */
 public class SplashscreenTests extends ActivityManagerTestBase {
 

@@ -37,7 +37,7 @@ import org.junit.Test;
 
 /**
  * Build/Install/Run:
- *     atest CtsActivityManagerDeviceTestCases:android.server.am.ActivityManagerActivityVisibilityTests
+ *     atest CtsActivityManagerDeviceTestCases:ActivityManagerActivityVisibilityTests
  */
 public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestBase {
     private static final String TRANSLUCENT_ACTIVITY = "AlwaysFocusablePipActivity";

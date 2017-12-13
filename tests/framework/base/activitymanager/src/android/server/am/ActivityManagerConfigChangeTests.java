@@ -31,8 +31,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.ActivityManagerConfigChangeTests
+ * Build/Install/Run:
+ *     atest CtsActivityManagerDeviceTestCases:ActivityManagerConfigChangeTests
  */
 public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
     private static final String TEST_ACTIVITY_NAME = "TestActivity";
