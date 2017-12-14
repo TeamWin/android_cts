@@ -15,8 +15,6 @@
  */
 package android.telecom.cts;
 
-import com.android.compatibility.common.util.ApiLevelUtil;
-
 import android.app.Instrumentation;
 import android.content.ComponentName;
 import android.content.Context;
@@ -28,7 +26,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
-import android.os.Process;
 import android.os.SystemClock;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
@@ -53,6 +50,8 @@ public class TestUtils {
     static final long WAIT_FOR_STATE_CHANGE_TIMEOUT_MS = 10000;
     static final long WAIT_FOR_CALL_ADDED_TIMEOUT_S = 15;
     static final long WAIT_FOR_STATE_CHANGE_TIMEOUT_CALLBACK = 50;
+    static final long WAIT_FOR_PHONE_STATE_LISTENER_REGISTERED_TIMEOUT_S = 15;
+    static final long WAIT_FOR_PHONE_STATE_LISTENER_CALLBACK_TIMEOUT_S = 15;
 
     // Non-final to allow modification by tests not in this package (e.g. permission-related
     // tests in the Telecom2 test package.
