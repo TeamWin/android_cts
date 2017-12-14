@@ -1461,6 +1461,30 @@ public class AudioTrackTest extends CtsAndroidTestCase {
         track.release();
     }
 
+    public void testPlayStaticDataShort() throws Exception {
+        if (!hasAudioOutput()) {
+            Log.w(TAG,"AUDIO_OUTPUT feature not found. This system might not have a valid "
+                    + "audio output HAL");
+            return;
+        }
+        // constants for test
+        final String TEST_NAME = "testPlayStaticDataShort";
+        final int TEST_FORMAT = AudioFormat.ENCODING_PCM_FLOAT;
+        final int TEST_SR = 48000;
+        final int TEST_CONF = AudioFormat.CHANNEL_OUT_MONO;
+        final int TEST_MODE = AudioTrack.MODE_STATIC;
+        final int TEST_STREAM_TYPE = AudioManager.STREAM_MUSIC;
+        final double TEST_SWEEP = 100;
+        final int TEST_LOOPS = 1;
+        final double TEST_FREQUENCY = 400;
+        final long NO_WAIT = 0;
+        final double TEST_LOOP_DURATION = 0.25;
+
+        playOnceStaticData(TEST_NAME, TEST_MODE, TEST_STREAM_TYPE, TEST_SWEEP,
+                TEST_LOOPS, TEST_FORMAT, TEST_FREQUENCY, TEST_SR, TEST_CONF, NO_WAIT, TEST_LOOP_DURATION);
+
+    }
+
     public void testPlayStaticData() throws Exception {
         if (!hasAudioOutput()) {
             Log.w(TAG,"AUDIO_OUTPUT feature not found. This system might not have a valid "
@@ -1487,88 +1511,115 @@ public class AudioTrackTest extends CtsAndroidTestCase {
         final int TEST_STREAM_TYPE = AudioManager.STREAM_MUSIC;
         final double TEST_SWEEP = 100;
         final int TEST_LOOPS = 1;
+        final double TEST_LOOP_DURATION=1;
 
         for (int TEST_FORMAT : TEST_FORMAT_ARRAY) {
             double frequency = 400; // frequency changes for each test
             for (int TEST_SR : TEST_SR_ARRAY) {
                 for (int TEST_CONF : TEST_CONF_ARRAY) {
-                    // -------- initialization --------------
-                    final int seconds = 1;
-                    final int channelCount = Integer.bitCount(TEST_CONF);
-                    final int bufferFrames = seconds * TEST_SR;
-                    final int bufferSamples = bufferFrames * channelCount;
-                    final int bufferSize = bufferSamples
-                            * AudioFormat.getBytesPerSample(TEST_FORMAT);
-                    final double testFrequency = frequency / channelCount;
-                    final long MILLISECONDS_PER_SECOND = 1000;
-                    AudioTrack track = new AudioTrack(TEST_STREAM_TYPE, TEST_SR,
-                            TEST_CONF, TEST_FORMAT, bufferSize, TEST_MODE);
-                    assertEquals(TEST_NAME, AudioTrack.STATE_NO_STATIC_DATA, track.getState());
+                    playOnceStaticData(TEST_NAME, TEST_MODE, TEST_STREAM_TYPE, TEST_SWEEP,
+                            TEST_LOOPS, TEST_FORMAT, frequency, TEST_SR, TEST_CONF, WAIT_MSEC, TEST_LOOP_DURATION);
 
-                    // -------- test --------------
-
-                    // test setLoopPoints and setPosition can be called here.
-                    assertEquals(TEST_NAME,
-                            android.media.AudioTrack.SUCCESS,
-                            track.setPlaybackHeadPosition(bufferFrames/2));
-                    assertEquals(TEST_NAME,
-                            android.media.AudioTrack.SUCCESS,
-                            track.setLoopPoints(
-                                    0 /*startInFrames*/, bufferFrames, 10 /*loopCount*/));
-                    // only need to write once to the static track
-                    switch (TEST_FORMAT) {
-                    case AudioFormat.ENCODING_PCM_8BIT: {
-                        byte data[] = AudioHelper.createSoundDataInByteArray(
-                                bufferSamples, TEST_SR,
-                                testFrequency, TEST_SWEEP);
-                        assertEquals(TEST_NAME,
-                                bufferSamples,
-                                track.write(data, 0 /*offsetInBytes*/, data.length));
-                        } break;
-                    case AudioFormat.ENCODING_PCM_16BIT: {
-                        short data[] = AudioHelper.createSoundDataInShortArray(
-                                bufferSamples, TEST_SR,
-                                testFrequency, TEST_SWEEP);
-                        assertEquals(TEST_NAME,
-                                bufferSamples,
-                                track.write(data, 0 /*offsetInBytes*/, data.length));
-                        } break;
-                    case AudioFormat.ENCODING_PCM_FLOAT: {
-                        float data[] = AudioHelper.createSoundDataInFloatArray(
-                                bufferSamples, TEST_SR,
-                                testFrequency, TEST_SWEEP);
-                        assertEquals(TEST_NAME,
-                                bufferSamples,
-                                track.write(data, 0 /*offsetInBytes*/, data.length,
-                                        AudioTrack.WRITE_BLOCKING));
-                        } break;
-                    }
-                    assertEquals(TEST_NAME, AudioTrack.STATE_INITIALIZED, track.getState());
-                    // test setLoopPoints and setPosition can be called here.
-                    assertEquals(TEST_NAME,
-                            android.media.AudioTrack.SUCCESS,
-                            track.setPlaybackHeadPosition(0 /*positionInFrames*/));
-                    assertEquals(TEST_NAME,
-                            android.media.AudioTrack.SUCCESS,
-                            track.setLoopPoints(0 /*startInFrames*/, bufferFrames, TEST_LOOPS));
-
-                    track.play();
-                    Thread.sleep(seconds * MILLISECONDS_PER_SECOND * (TEST_LOOPS + 1));
-                    Thread.sleep(WAIT_MSEC);
-
-                    // Check position after looping. AudioTrack.getPlaybackHeadPosition() returns
-                    // the running count of frames played, not the actual static buffer position.
-                    int position = track.getPlaybackHeadPosition();
-                    assertEquals(TEST_NAME, bufferFrames * (TEST_LOOPS + 1), position);
-
-                    track.stop();
-                    Thread.sleep(WAIT_MSEC);
-                    // -------- tear down --------------
-                    track.release();
                     frequency += 70; // increment test tone frequency
                 }
             }
         }
+    }
+
+    private void playOnceStaticData(String testName, int testMode, int testStreamType,
+            double testSweep, int testLoops, int testFormat, double testFrequency, int testSr,
+            int testConf, long waitMsec, double testLoopDuration)
+            throws InterruptedException {
+        // -------- initialization --------------
+        final int channelCount = Integer.bitCount(testConf);
+        final int bufferFrames = (int)(testLoopDuration * testSr);
+        final int bufferSamples = bufferFrames * channelCount;
+        final int bufferSize = bufferSamples
+                * AudioFormat.getBytesPerSample(testFormat);
+        final double frequency = testFrequency / channelCount;
+        final long MILLISECONDS_PER_SECOND = 1000;
+        AudioTrack track = new AudioTrack(testStreamType, testSr,
+                testConf, testFormat, bufferSize, testMode);
+        assertEquals(testName, AudioTrack.STATE_NO_STATIC_DATA, track.getState());
+
+        // -------- test --------------
+
+        // test setLoopPoints and setPosition can be called here.
+        assertEquals(testName,
+                android.media.AudioTrack.SUCCESS,
+                track.setPlaybackHeadPosition(bufferFrames/2));
+        assertEquals(testName,
+                android.media.AudioTrack.SUCCESS,
+                track.setLoopPoints(
+                        0 /*startInFrames*/, bufferFrames, 10 /*loopCount*/));
+        // only need to write once to the static track
+        switch (testFormat) {
+        case AudioFormat.ENCODING_PCM_8BIT: {
+            byte data[] = AudioHelper.createSoundDataInByteArray(
+                    bufferSamples, testSr,
+                    frequency, testSweep);
+            assertEquals(testName,
+                    bufferSamples,
+                    track.write(data, 0 /*offsetInBytes*/, data.length));
+            } break;
+        case AudioFormat.ENCODING_PCM_16BIT: {
+            short data[] = AudioHelper.createSoundDataInShortArray(
+                    bufferSamples, testSr,
+                    frequency, testSweep);
+            assertEquals(testName,
+                    bufferSamples,
+                    track.write(data, 0 /*offsetInBytes*/, data.length));
+            } break;
+        case AudioFormat.ENCODING_PCM_FLOAT: {
+            float data[] = AudioHelper.createSoundDataInFloatArray(
+                    bufferSamples, testSr,
+                    frequency, testSweep);
+            assertEquals(testName,
+                    bufferSamples,
+                    track.write(data, 0 /*offsetInBytes*/, data.length,
+                            AudioTrack.WRITE_BLOCKING));
+            } break;
+        }
+        assertEquals(testName, AudioTrack.STATE_INITIALIZED, track.getState());
+        // test setLoopPoints and setPosition can be called here.
+        assertEquals(testName,
+                android.media.AudioTrack.SUCCESS,
+                track.setPlaybackHeadPosition(0 /*positionInFrames*/));
+        assertEquals(testName,
+                android.media.AudioTrack.SUCCESS,
+                track.setLoopPoints(0 /*startInFrames*/, bufferFrames, testLoops));
+
+        track.play();
+        Thread.sleep((int)(testLoopDuration * MILLISECONDS_PER_SECOND) * (testLoops + 1));
+        Thread.sleep(waitMsec);
+
+        // Check position after looping. AudioTrack.getPlaybackHeadPosition() returns
+        // the running count of frames played, not the actual static buffer position.
+        int position = track.getPlaybackHeadPosition();
+        assertEquals(testName, bufferFrames * (testLoops + 1), position);
+
+        track.stop();
+        Thread.sleep(waitMsec);
+        // -------- tear down --------------
+        track.release();
+    }
+
+    public void testPlayStreamDataShort() throws Exception {
+        // constants for test
+        final String TEST_NAME = "testPlayStreamDataShort";
+        final int TEST_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
+        final int TEST_SR = 48000;
+        final int TEST_CONF = AudioFormat.CHANNEL_OUT_STEREO;
+        final int TEST_MODE = AudioTrack.MODE_STREAM;
+        final int TEST_STREAM_TYPE = AudioManager.STREAM_MUSIC;
+        final float TEST_SWEEP = 0; // sine wave only
+        final boolean TEST_IS_LOW_RAM_DEVICE = isLowRamDevice();
+        final double TEST_FREQUENCY = 1000;
+        final long NO_WAIT = 0;
+
+        playOnceStreamData(TEST_NAME, TEST_MODE, TEST_STREAM_TYPE, TEST_SWEEP,
+                TEST_IS_LOW_RAM_DEVICE, TEST_FORMAT, TEST_FREQUENCY, TEST_SR, TEST_CONF,
+                NO_WAIT);
     }
 
     public void testPlayStreamData() throws Exception {
@@ -1607,92 +1658,103 @@ public class AudioTrackTest extends CtsAndroidTestCase {
             double frequency = 400; // frequency changes for each test
             for (int TEST_SR : TEST_SR_ARRAY) {
                 for (int TEST_CONF : TEST_CONF_ARRAY) {
-                    final int channelCount = Integer.bitCount(TEST_CONF);
-                    if (TEST_IS_LOW_RAM_DEVICE
-                            && (TEST_SR > 96000 || channelCount > 4)) {
-                        continue; // ignore. FIXME: reenable when AF memory allocation is updated.
-                    }
-                    // -------- initialization --------------
-                    final int minBufferSize = AudioTrack.getMinBufferSize(TEST_SR,
-                            TEST_CONF, TEST_FORMAT); // in bytes
-                    AudioTrack track = new AudioTrack(TEST_STREAM_TYPE, TEST_SR,
-                            TEST_CONF, TEST_FORMAT, minBufferSize, TEST_MODE);
-                    assertTrue(TEST_NAME, track.getState() == AudioTrack.STATE_INITIALIZED);
-
-                    // compute parameters for the source signal data.
-                    AudioFormat format = track.getFormat();
-                    assertEquals(TEST_NAME, TEST_SR, format.getSampleRate());
-                    assertEquals(TEST_NAME, TEST_CONF, format.getChannelMask());
-                    assertEquals(TEST_NAME, channelCount, format.getChannelCount());
-                    assertEquals(TEST_NAME, TEST_FORMAT, format.getEncoding());
-                    final int sourceSamples = channelCount
-                            * AudioHelper.frameCountFromMsec(500,
-                                    format); // duration of test tones
-                    final double testFrequency = frequency / channelCount;
-
-                    int written = 0;
-                    // For streaming tracks, it's ok to issue the play() command
-                    // before any audio is written.
-                    track.play();
-                    // -------- test --------------
-
-                    // samplesPerWrite can be any positive value.
-                    // We prefer this to be a multiple of channelCount so write()
-                    // does not return a short count.
-                    // If samplesPerWrite is very large, it is limited to the data length
-                    // and we simply write (blocking) the entire source data and not even loop.
-                    // We choose a value here which simulates double buffer writes.
-                    final int buffers = 2; // double buffering mode
-                    final int samplesPerWrite =
-                            (track.getBufferSizeInFrames() / buffers) * channelCount;
-                    switch (TEST_FORMAT) {
-                    case AudioFormat.ENCODING_PCM_8BIT: {
-                        byte data[] = AudioHelper.createSoundDataInByteArray(
-                                sourceSamples, TEST_SR,
-                                testFrequency, TEST_SWEEP);
-                        while (written < data.length) {
-                            int samples = Math.min(data.length - written, samplesPerWrite);
-                            int ret = track.write(data, written, samples);
-                            assertEquals(TEST_NAME, samples, ret);
-                            written += ret;
-                        }
-                        } break;
-                    case AudioFormat.ENCODING_PCM_16BIT: {
-                        short data[] = AudioHelper.createSoundDataInShortArray(
-                                sourceSamples, TEST_SR,
-                                testFrequency, TEST_SWEEP);
-                        while (written < data.length) {
-                            int samples = Math.min(data.length - written, samplesPerWrite);
-                            int ret = track.write(data, written, samples);
-                            assertEquals(TEST_NAME, samples, ret);
-                            written += ret;
-                        }
-                        } break;
-                    case AudioFormat.ENCODING_PCM_FLOAT: {
-                        float data[] = AudioHelper.createSoundDataInFloatArray(
-                                sourceSamples, TEST_SR,
-                                testFrequency, TEST_SWEEP);
-                        while (written < data.length) {
-                            int samples = Math.min(data.length - written, samplesPerWrite);
-                            int ret = track.write(data, written, samples,
-                                    AudioTrack.WRITE_BLOCKING);
-                            assertEquals(TEST_NAME, samples, ret);
-                            written += ret;
-                        }
-                        } break;
-                    }
-
-                    // For streaming tracks, AudioTrack.stop() doesn't immediately stop playback.
-                    // Rather, it allows the remaining data in the internal buffer to drain.
-                    track.stop();
-                    Thread.sleep(WAIT_MSEC); // wait for the data to drain.
-                    // -------- tear down --------------
-                    track.release();
-                    Thread.sleep(WAIT_MSEC); // wait for release to complete
+                    playOnceStreamData(TEST_NAME, TEST_MODE, TEST_STREAM_TYPE, TEST_SWEEP,
+                            TEST_IS_LOW_RAM_DEVICE, TEST_FORMAT, frequency, TEST_SR, TEST_CONF,
+                            WAIT_MSEC);
                     frequency += 50; // increment test tone frequency
                 }
             }
         }
+    }
+
+    private void playOnceStreamData(String testName, int testMode, int testStream,
+            float testSweep, boolean isLowRamDevice, int testFormat, double testFrequency,
+            int testSr, int testConf, long waitMsec) throws InterruptedException {
+        final int channelCount = Integer.bitCount(testConf);
+        if (isLowRamDevice
+                && (testSr > 96000 || channelCount > 4)) {
+            return; // ignore. FIXME: reenable when AF memory allocation is updated.
+        }
+        // -------- initialization --------------
+        final int minBufferSize = AudioTrack.getMinBufferSize(testSr,
+                testConf, testFormat); // in bytes
+        AudioTrack track = new AudioTrack(testStream, testSr,
+                testConf, testFormat, minBufferSize, testMode);
+        assertTrue(testName, track.getState() == AudioTrack.STATE_INITIALIZED);
+
+        // compute parameters for the source signal data.
+        AudioFormat format = track.getFormat();
+        assertEquals(testName, testSr, format.getSampleRate());
+        assertEquals(testName, testConf, format.getChannelMask());
+        assertEquals(testName, channelCount, format.getChannelCount());
+        assertEquals(testName, testFormat, format.getEncoding());
+        final int sourceSamples = channelCount
+                * AudioHelper.frameCountFromMsec(500,
+                format); // duration of test tones
+        final double frequency = testFrequency / channelCount;
+
+        int written = 0;
+        // For streaming tracks, it's ok to issue the play() command
+        // before any audio is written.
+        track.play();
+        // -------- test --------------
+
+        // samplesPerWrite can be any positive value.
+        // We prefer this to be a multiple of channelCount so write()
+        // does not return a short count.
+        // If samplesPerWrite is very large, it is limited to the data length
+        // and we simply write (blocking) the entire source data and not even loop.
+        // We choose a value here which simulates double buffer writes.
+        final int buffers = 2; // double buffering mode
+        final int samplesPerWrite =
+                (track.getBufferSizeInFrames() / buffers) * channelCount;
+        switch (testFormat) {
+            case AudioFormat.ENCODING_PCM_8BIT: {
+                byte data[] = AudioHelper.createSoundDataInByteArray(
+                        sourceSamples, testSr,
+                        frequency, testSweep);
+                while (written < data.length) {
+                    int samples = Math.min(data.length - written, samplesPerWrite);
+                    int ret = track.write(data, written, samples);
+                    assertEquals(testName, samples, ret);
+                    written += ret;
+                }
+            }
+            break;
+            case AudioFormat.ENCODING_PCM_16BIT: {
+                short data[] = AudioHelper.createSoundDataInShortArray(
+                        sourceSamples, testSr,
+                        frequency, testSweep);
+                while (written < data.length) {
+                    int samples = Math.min(data.length - written, samplesPerWrite);
+                    int ret = track.write(data, written, samples);
+                    assertEquals(testName, samples, ret);
+                    written += ret;
+                }
+            }
+            break;
+            case AudioFormat.ENCODING_PCM_FLOAT: {
+                float data[] = AudioHelper.createSoundDataInFloatArray(
+                        sourceSamples, testSr,
+                        frequency, testSweep);
+                while (written < data.length) {
+                    int samples = Math.min(data.length - written, samplesPerWrite);
+                    int ret = track.write(data, written, samples,
+                            AudioTrack.WRITE_BLOCKING);
+                    assertEquals(testName, samples, ret);
+                    written += ret;
+                }
+            }
+            break;
+        }
+
+        // For streaming tracks, AudioTrack.stop() doesn't immediately stop playback.
+        // Rather, it allows the remaining data in the internal buffer to drain.
+        track.stop();
+        Thread.sleep(waitMsec); // wait for the data to drain.
+        // -------- tear down --------------
+        track.release();
+        Thread.sleep(waitMsec); // wait for release to complete
     }
 
     public void testPlayStreamByteBuffer() throws Exception {
