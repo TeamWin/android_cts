@@ -44,6 +44,7 @@ import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.Signature;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -51,6 +52,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.List;
+import java.util.Set;
 
 import android.content.ComponentName;
 import android.content.Context;
@@ -239,17 +242,26 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
         }
     }
 
-    public void verifySignatureOverData(String algoIdentifier, KeyPair keyPair) throws Exception {
+    byte[] signDataWithKey(String algoIdentifier, PrivateKey privateKey) throws Exception {
         byte[] data = new String("hello").getBytes();
         Signature sign = Signature.getInstance(algoIdentifier);
-        sign.initSign(keyPair.getPrivate());
+        sign.initSign(privateKey);
         sign.update(data);
-        byte[] signature = sign.sign();
+        return sign.sign();
+    }
 
+    void verifySignature(String algoIdentifier, PublicKey publicKey, byte[] signature)
+            throws Exception {
+        byte[] data = new String("hello").getBytes();
         Signature verify = Signature.getInstance(algoIdentifier);
-        verify.initVerify(keyPair.getPublic());
+        verify.initVerify(publicKey);
         verify.update(data);
         assertTrue(verify.verify(signature));
+    }
+
+    void verifySignatureOverData(String algoIdentifier, KeyPair keyPair) throws Exception {
+        verifySignature(algoIdentifier, keyPair.getPublic(),
+                signDataWithKey(algoIdentifier, keyPair.getPrivate()));
     }
 
     public void testCanGenerateRSAKeyPair() throws Exception {
@@ -286,6 +298,52 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
                     getWho(), "EC", spec);
             assertNotNull(generated);
             verifySignatureOverData("SHA256withECDSA", generated.getKeyPair());
+        } finally {
+            assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
+        }
+    }
+
+    public void testCanGenerateECKeyPairWithKeyAttestation() throws Exception {
+        final String alias = "com.android.test.attested-ec-1";
+        byte[] attestationChallenge = new byte[] {0x01, 0x02, 0x03};
+        try {
+            KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(
+                    alias,
+                    KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_VERIFY)
+                    .setDigests(KeyProperties.DIGEST_SHA256)
+                    .setAttestationChallenge(attestationChallenge)
+                    .build();
+
+            AttestedKeyPair generated = mDevicePolicyManager.generateKeyPair(
+                    getWho(), "EC", spec);
+            final KeyPair keyPair = generated.getKeyPair();
+            final String algorithmIdentifier = "SHA256withECDSA";
+            assertNotNull(generated);
+            verifySignatureOverData(algorithmIdentifier, keyPair);
+            List<Certificate> attestation = generated.getAttestationRecord();
+            assertNotNull(attestation);
+            assertTrue(attestation.size() >= 2);
+            X509Certificate leaf = (X509Certificate) attestation.get(0);
+            final String attestationExtensionOID = "1.3.6.1.4.1.11129.2.1.17";
+            Set<String> extensions = leaf.getNonCriticalExtensionOIDs();
+            assertTrue(extensions.contains(attestationExtensionOID));
+            PublicKey keyFromCert = leaf.getPublicKey();
+            // The public key from the certificate doesn't have to be equal to the public key
+            // from the pair, but must be usable for verifying signatures produced with
+            // corresponding private key.
+            verifySignature(algorithmIdentifier, keyFromCert,
+                    signDataWithKey(algorithmIdentifier, keyPair.getPrivate()));
+            // Check that the certificate chain is valid.
+            for (int i = 1; i < attestation.size(); i++) {
+                X509Certificate intermediate = (X509Certificate) attestation.get(i);
+                PublicKey intermediateKey = intermediate.getPublicKey();
+                leaf.verify(intermediateKey);
+                leaf = intermediate;
+            }
+
+            // leaf is now the root, verify the root is self-signed.
+            PublicKey rootKey = leaf.getPublicKey();
+            leaf.verify(rootKey);
         } finally {
             assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
         }
