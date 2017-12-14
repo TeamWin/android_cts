@@ -18,8 +18,8 @@ package android.appsecurity.cts;
 
 import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.ddmlib.testrunner.TestResult;
-import com.android.ddmlib.testrunner.TestRunResult;
 import com.android.ddmlib.testrunner.TestResult.TestStatus;
+import com.android.ddmlib.testrunner.TestRunResult;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
@@ -73,8 +73,8 @@ public class StorageHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
-    public void testVerifyQuota() throws Exception {
-        Utils.runDeviceTests(getDevice(), PKG_STATS, CLASS_STATS, "testVerifyQuota");
+    public void testVerify() throws Exception {
+        Utils.runDeviceTests(getDevice(), PKG_STATS, CLASS_STATS, "testVerify");
     }
 
     @Test

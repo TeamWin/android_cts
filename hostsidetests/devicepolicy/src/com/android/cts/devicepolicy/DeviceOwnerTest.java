@@ -55,6 +55,9 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
      */
     private boolean mHasDisabledForceEphemeralUserFeature;
 
+    /** CreateAndManageUser is available and an additional user can be created. */
+    private boolean mHasCreateAndManageUserFeature;
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -71,6 +74,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
                 && hasUserSplit();
         mHasDisabledForceEphemeralUserFeature = mHasFeature && canCreateAdditionalUsers(1)
                 && !hasUserSplit();
+        mHasCreateAndManageUserFeature = mHasFeature && canCreateAdditionalUsers(1);
     }
 
     @Override
@@ -237,20 +241,19 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         assertEquals("Ephemeral flag must be set", FLAG_EPHEMERAL, flags & FLAG_EPHEMERAL);
     }
 
-// Disabled due to b/29072728
-//    public void testCreateAndManageUser_SkipSetupWizard() throws Exception {
-//        if (mHasCreateAndManageUserFeature) {
-//            executeDeviceTestMethod(".CreateAndManageUserTest",
-//                "testCreateAndManageUser_SkipSetupWizard");
-//        }
-//    }
-//
-//    public void testCreateAndManageUser_DontSkipSetupWizard() throws Exception {
-//        if (mHasCreateAndManageUserFeature) {
-//            executeDeviceTestMethod(".CreateAndManageUserTest",
-//                "testCreateAndManageUser_DontSkipSetupWizard");
-//        }
-//    }
+    public void testCreateAndManageUser_SkipSetupWizard() throws Exception {
+        if (mHasCreateAndManageUserFeature) {
+            executeDeviceTestMethod(".CreateAndManageUserTest",
+                "testCreateAndManageUser_SkipSetupWizard");
+        }
+    }
+
+    public void testCreateAndManageUser_DontSkipSetupWizard() throws Exception {
+        if (mHasCreateAndManageUserFeature) {
+            executeDeviceTestMethod(".CreateAndManageUserTest",
+                "testCreateAndManageUser_DontSkipSetupWizard");
+        }
+    }
 
     public void testCreateAndManageUser_AddRestrictionSet() throws Exception {
         if (mHasFeature && canCreateAdditionalUsers(1)) {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.FrameTestApp;
+package android.server.wm.frametestapp;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -26,7 +26,15 @@ import android.view.Gravity;
 
 public class DialogTestActivity extends Activity {
 
-    AlertDialog mDialog;
+    private static final String DIALOG_WINDOW_NAME = "TestDialog";
+
+    /**
+     * Extra key for test case name.
+     * @see android.server.wm.ParentChildTestBase#EXTRA_TEST_CASE
+     */
+    private static final String EXTRA_TEST_CASE = "test-case";
+
+    private AlertDialog mDialog;
 
     protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
@@ -36,59 +44,50 @@ public class DialogTestActivity extends Activity {
         super.onStop();
         mDialog.dismiss();
     }
+
     protected void onResume() {
         super.onResume();
         setupTest(getIntent());
     }
 
     private void setupTest(Intent intent) {
-        String testCase = intent.getStringExtra(
-                "android.server.FrameTestApp.DialogTestCase");
+        final String testCase = intent.getStringExtra(EXTRA_TEST_CASE);
         switch (testCase) {
-           case "MatchParent": {
-               testMatchParent();
-               break;
-           } case "MatchParentLayoutInOverscan": {
-               testMatchParentLayoutInOverscan();
-           }  break;
-           case "ExplicitSize": {
-               testExplicitSize();
-               break;
-           }
-           case "ExplicitSizeTopLeftGravity": {
-               testExplicitSizeTopLeftGravity();
-               break;
-           }
-           case "ExplicitSizeBottomRightGravity": {
-               testExplicitSizeBottomRightGravity();
-               break;
-           }
-           case "OversizedDimensions": {
-               testOversizedDimensions();
-               break;
-           }
-           case "OversizedDimensionsNoLimits": {
-               testOversizedDimensionsNoLimits();
-               break;
-           }
-           case "ExplicitPositionMatchParent": {
-               testExplicitPositionMatchParent();
-               break;
-           }
-           case "ExplicitPositionMatchParentNoLimits": {
-               testExplicitPositionMatchParentNoLimits();
-               break;
-           }
-           case "NoFocus": {
-               testNoFocus();
-               break;
-           }
-           case "WithMargins": {
-               testWithMargins();
-               break;
-           }
-           default:
-               break;
+            case "MatchParent":
+                testMatchParent();
+                break;
+            case "MatchParentLayoutInOverscan":
+                testMatchParentLayoutInOverscan();
+                break;
+            case "ExplicitSize":
+                testExplicitSize();
+                break;
+            case "ExplicitSizeTopLeftGravity":
+                testExplicitSizeTopLeftGravity();
+                break;
+            case "ExplicitSizeBottomRightGravity":
+                testExplicitSizeBottomRightGravity();
+                break;
+            case "OversizedDimensions":
+                testOversizedDimensions();
+                break;
+            case "OversizedDimensionsNoLimits":
+                testOversizedDimensionsNoLimits();
+                break;
+            case "ExplicitPositionMatchParent":
+                testExplicitPositionMatchParent();
+                break;
+            case "ExplicitPositionMatchParentNoLimits":
+                testExplicitPositionMatchParentNoLimits();
+                break;
+            case "NoFocus":
+                testNoFocus();
+                break;
+            case "WithMargins":
+                testWithMargins();
+                break;
+            default:
+                break;
         }
     }
 
@@ -100,7 +99,7 @@ public class DialogTestActivity extends Activity {
         mDialog = new AlertDialog.Builder(this).create();
 
         mDialog.setMessage("Testing is fun!");
-        mDialog.setTitle("android.server.FrameTestApp/android.server.FrameTestApp.TestDialog");
+        mDialog.setTitle(DIALOG_WINDOW_NAME);
         mDialog.create();
 
         Window w = mDialog.getWindow();

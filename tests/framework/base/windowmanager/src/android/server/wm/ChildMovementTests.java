@@ -20,6 +20,7 @@ import static android.server.am.StateLogger.logE;
 
 import static org.junit.Assert.assertTrue;
 
+import android.content.ComponentName;
 import android.server.am.SurfaceTraceReceiver;
 import android.server.am.WaitForValidActivityState;
 import android.server.am.WindowManagerState.WindowState;
@@ -31,58 +32,48 @@ import java.util.List;
 
 public class ChildMovementTests extends ParentChildTestBase {
 
-    private List<WindowState> mWindowList = new ArrayList();
+    private static final ComponentName MOVING_CHILD_TEST_ACTIVITY = ComponentName
+            .unflattenFromString("android.server.wm.frametestapp/.MovingChildTestActivity");
+
+    /** @see android.server.wm.frametestapp.MovingChildTestActivity#POPUP_WINDOW_NAME */
+    private static final String POPUP_WINDOW_NAME = "ChildWindow";
+
+    private List<WindowState> mWindowList = new ArrayList<>();
 
     @Override
-    String intentKey() {
-        return "android.server.FrameTestApp.ChildTestCase";
+    ComponentName activityName() {
+        return MOVING_CHILD_TEST_ACTIVITY;
     }
 
-    @Override
-    String activityName() {
-        return "MovingChildTestActivity";
-    }
-
-    WindowState getSingleWindow(String fullWindowName) {
+    private WindowState getSingleWindow(final String windowName) {
         try {
-            mAmWmState.getWmState().getMatchingVisibleWindowState(fullWindowName, mWindowList);
+            mAmWmState.getWmState().getMatchingVisibleWindowState(windowName, mWindowList);
             return mWindowList.get(0);
         } catch (Exception e) {
-            logE("Couldn't find window: " + fullWindowName);
+            logE("Couldn't find window: " + windowName);
             return null;
         }
     }
 
-    WindowState getSingleWindowByPrefix(String prefix) {
-        try {
-            mAmWmState.getWmState().getPrefixMatchingVisibleWindowState(prefix, mWindowList);
-            return mWindowList.get(0);
-        } catch (Exception e) {
-            logE("Couldn't find window: " + prefix);
-            return null;
-        }
-    }
-
+    @Override
     void doSingleTest(ParentChildTest t) throws Exception {
-        String popupName = "ChildWindow";
-        final WaitForValidActivityState waitForVisible =
-                new WaitForValidActivityState.Builder(popupName).build();
+        final WaitForValidActivityState waitForVisible = new WaitForValidActivityState.Builder()
+                .setWindowName(POPUP_WINDOW_NAME).build();
 
-        mAmWmState.setUseActivityNamesForWindowNames(false);
         mAmWmState.computeState(waitForVisible);
-        WindowState popup = getSingleWindowByPrefix(popupName);
-        WindowState parent = getSingleWindow(getBaseWindowName() + activityName());
+        WindowState popup = getSingleWindow(POPUP_WINDOW_NAME);
+        WindowState parent = getSingleWindow(activityName().flattenToString());
 
         t.doTest(parent, popup);
     }
 
+    private final Object monitor = new Object();
+    private boolean testPassed = false;
+    private String popupName = null;
+    private String mainName = null;
 
-    Object monitor = new Object();
-    boolean testPassed = false;
-    String popupName = null;
-    String mainName = null;
-
-    SurfaceTraceReceiver.SurfaceObserver observer = new SurfaceTraceReceiver.SurfaceObserver() {
+    private final SurfaceTraceReceiver.SurfaceObserver observer =
+            new SurfaceTraceReceiver.SurfaceObserver() {
         int transactionCount = 0;
         boolean sawChildMove = false;
         boolean sawMainMove = false;

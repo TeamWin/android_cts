@@ -74,8 +74,6 @@ public class ActivityAndWindowManagersState {
     private ActivityManagerState mAmState = new ActivityManagerState();
     private WindowManagerState mWmState = new WindowManagerState();
 
-    private boolean mUseActivityNames = true;
-
     @Deprecated
     public void computeState(String... waitForActivitiesVisible)
             throws Exception {
@@ -118,17 +116,6 @@ public class ActivityAndWindowManagersState {
         waitForValidState(compareTaskAndStackBounds, waitForActivitiesVisible);
         assertSanity();
         assertValidBounds(compareTaskAndStackBounds);
-    }
-
-    /**
-     * By default computeState allows you to pass only the activity name it and
-     * it will generate the full window name for the main activity window. In the
-     * case of secondary application windows though this isn't helpful, as they
-     * may follow a different format, so this method lets you disable that behavior,
-     * prior to calling a computeState variant
-     */
-    public void setUseActivityNamesForWindowNames(boolean useActivityNames) {
-        mUseActivityNames = useActivityNames;
     }
 
     /**
@@ -202,6 +189,16 @@ public class ActivityAndWindowManagersState {
                         .build());
     }
 
+    void waitForValidState(final ComponentName activityName, final int windowingMode,
+            final int activityType) throws Exception {
+        waitForValidState(false /* compareTaskAndStackBounds */,
+                new WaitForValidActivityState.Builder(activityName)
+                        .setActivityType(activityType)
+                        .setWindowingMode(windowingMode)
+                        .build());
+    }
+
+    @Deprecated
     void waitForValidState(String waitForActivityVisible, int windowingMode, int activityType)
             throws Exception {
         waitForValidState(false /* compareTaskAndStackBounds */,
@@ -448,26 +445,24 @@ public class ActivityAndWindowManagersState {
         boolean allActivityWindowsVisible = true;
         boolean tasksInCorrectStacks = true;
         List<WindowState> matchingWindowStates = new ArrayList<>();
-        for (int i = 0; i < waitForActivitiesVisible.length; i++) {
-            final WaitForValidActivityState state = waitForActivitiesVisible[i];
+        for (final WaitForValidActivityState state : waitForActivitiesVisible) {
             final String activityComponentName;
             final String windowName;
             if (state.componentName != null) {
-                activityComponentName = state.componentName.flattenToShortString();
-                windowName = state.componentName.flattenToString();
+                activityComponentName = state.componentName;
+                windowName = state.windowName;
             } else {
-                final String activityName = waitForActivitiesVisible[i].activityName;
+                final String activityName = state.activityName;
                 activityComponentName =
                         ActivityManagerTestBase.getActivityComponentName(packageName, activityName);
                 // Check if window is visible - it should be represented as one of the window
                 // states.
-                windowName = mUseActivityNames
-                        ? ActivityManagerTestBase.getWindowName(packageName, activityName)
-                        : activityName;
+                windowName = (state.windowName != null) ? state.windowName
+                        : ActivityManagerTestBase.getWindowName(packageName, activityName);
             }
-            final int stackId = waitForActivitiesVisible[i].stackId;
-            final int windowingMode = waitForActivitiesVisible[i].windowingMode;
-            final int activityType = waitForActivitiesVisible[i].activityType;
+            final int stackId = state.stackId;
+            final int windowingMode = state.windowingMode;
+            final int activityType = state.activityType;
 
             mWmState.getMatchingVisibleWindowState(windowName, matchingWindowStates);
             boolean activityWindowVisible = !matchingWindowStates.isEmpty();
@@ -497,7 +492,7 @@ public class ActivityAndWindowManagersState {
                 }
 
                 if (!windowInCorrectState) {
-                    log("Window in incorrect stack: " + waitForActivitiesVisible[i]);
+                    log("Window in incorrect stack: " + state);
                     tasksInCorrectStacks = false;
                 }
             }
@@ -680,6 +675,7 @@ public class ActivityAndWindowManagersState {
         assertEquals(msg, windowName, mWmState.getFrontWindow());
     }
 
+    @Deprecated
     public void assertVisibility(String activityName, boolean visible) {
         final String activityComponentName =
                 ActivityManagerTestBase.getActivityComponentName(activityName);
@@ -688,7 +684,7 @@ public class ActivityAndWindowManagersState {
         assertVisibility(activityComponentName, windowName, visible);
     }
 
-    private void assertVisibility(final ComponentName activityName, final boolean visible) {
+    public void assertVisibility(final ComponentName activityName, final boolean visible) {
         final String activityComponentName = activityName.flattenToShortString();
         final String windowName = activityName.flattenToString();
         assertVisibility(activityComponentName, windowName, visible);

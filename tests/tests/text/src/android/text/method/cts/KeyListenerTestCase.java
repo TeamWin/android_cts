@@ -16,7 +16,12 @@
 
 package android.text.method.cts;
 
+import static android.provider.Settings.System.TEXT_AUTO_CAPS;
+
 import android.app.Instrumentation;
+import android.content.ContentResolver;
+import android.content.Context;
+import android.provider.Settings;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.text.cts.R;
@@ -26,6 +31,7 @@ import android.widget.EditText;
 
 import com.android.compatibility.common.util.PollingCheck;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 
@@ -36,6 +42,7 @@ public abstract class KeyListenerTestCase {
     protected KeyListenerCtsActivity mActivity;
     protected Instrumentation mInstrumentation;
     protected EditText mTextView;
+    private int mAutoCapSetting;
 
     @Rule
     public ActivityTestRule<KeyListenerCtsActivity> mActivityRule =
@@ -45,9 +52,38 @@ public abstract class KeyListenerTestCase {
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mActivity = mActivityRule.getActivity();
-        mTextView = (EditText) mActivity.findViewById(R.id.keylistener_textview);
+        mTextView = mActivity.findViewById(R.id.keylistener_textview);
 
         PollingCheck.waitFor(5000, mActivity::hasWindowFocus);
+    }
+
+    protected void enableAutoCapSettings() {
+        try {
+            final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+            final Context context = instrumentation.getContext();
+            instrumentation.runOnMainSync(() -> {
+                final ContentResolver resolver = context.getContentResolver();
+                mAutoCapSetting = Settings.System.getInt(resolver, TEXT_AUTO_CAPS, 1);
+                Settings.System.putInt(resolver, TEXT_AUTO_CAPS, 1);
+            });
+            instrumentation.waitForIdleSync();
+        } catch (Throwable throwable) {
+            Assert.fail("Cannot set Settings.System.TEXT_AUTO_CAPS to enabled");
+        }
+    }
+
+    protected void resetAutoCapSettings() {
+        try {
+            final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+            final Context context = instrumentation.getContext();
+            instrumentation.runOnMainSync(() -> {
+                final ContentResolver resolver = context.getContentResolver();
+                Settings.System.putInt(resolver, TEXT_AUTO_CAPS, mAutoCapSetting);
+            });
+            instrumentation.waitForIdleSync();
+        } catch (Throwable throwable) {
+            Assert.fail("Cannot reset Settings.System.TEXT_AUTO_CAPS");
+        }
     }
 
     /**

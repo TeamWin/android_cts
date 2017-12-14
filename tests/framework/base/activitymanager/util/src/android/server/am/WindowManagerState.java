@@ -16,13 +16,13 @@
 
 package android.server.am;
 
-import static android.view.Display.DEFAULT_DISPLAY;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.server.am.ProtoExtractors.extract;
 import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logE;
+import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.junit.Assert.fail;
 
@@ -30,12 +30,13 @@ import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.os.ParcelFileDescriptor;
 import android.support.test.InstrumentationRegistry;
+import android.util.Log;
 import android.view.nano.DisplayInfoProto;
 
-import com.android.server.wm.proto.nano.DisplayFramesProto;
 import com.android.server.wm.proto.nano.AppTransitionProto;
 import com.android.server.wm.proto.nano.AppWindowTokenProto;
 import com.android.server.wm.proto.nano.ConfigurationContainerProto;
+import com.android.server.wm.proto.nano.DisplayFramesProto;
 import com.android.server.wm.proto.nano.DisplayProto;
 import com.android.server.wm.proto.nano.IdentifierProto;
 import com.android.server.wm.proto.nano.PinnedStackControllerProto;
@@ -55,7 +56,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -328,16 +328,6 @@ public class WindowManagerState {
         windowList.clear();
         for (WindowState ws : mWindowStates) {
             if (ws.isShown() && windowName.equals(ws.getName())) {
-                windowList.add(ws);
-            }
-        }
-    }
-
-    public void getPrefixMatchingVisibleWindowState(final String windowName,
-            List<WindowState> windowList) {
-        windowList.clear();
-        for (WindowState ws : mWindowStates) {
-            if (ws.isShown() && ws.getName().startsWith(windowName)) {
                 windowList.add(ws);
             }
         }

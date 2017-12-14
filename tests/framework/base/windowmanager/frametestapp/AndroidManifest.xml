@@ -16,15 +16,14 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          xmlns:androidprv="http://schemas.android.com/apk/prv/res/android"
-          package="android.server.FrameTestApp">
+    package="android.server.wm.frametestapp">
+
     <application android:theme="@android:style/Theme.Material">
-        <activity android:name=".DialogTestActivity"
-                android:exported="true"
-        />
-        <activity android:name=".MovingChildTestActivity"
-                  android:exported="true"
-        />
+        <activity
+            android:name=".DialogTestActivity"
+            android:exported="true" />
+        <activity
+            android:name=".MovingChildTestActivity"
+            android:exported="true" />
     </application>
 </manifest>
-

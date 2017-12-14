@@ -1403,6 +1403,9 @@ public class PopupWindowTest {
                 mPopupWindow.getContentView().getRootView(),
                 () -> container.scrollBy(deltaX, deltaY),
                 false  /* force layout */);
+        // Since the first layout might have been caused by the original scroll event (and not by
+        // the anchor change), we need to wait until all traversals are done.
+        mInstrumentation.waitForIdleSync();
         assertPopupLocation(originalLocation, deltaX, deltaY);
 
         // Detach the anchor, the popup should stay in the same location.
@@ -1419,6 +1422,7 @@ public class PopupWindowTest {
                 mActivity.getWindow().getDecorView(),
                 () -> container.scrollBy(deltaX, deltaY),
                 true  /* force layout */);
+        mInstrumentation.waitForIdleSync();
         assertPopupLocation(originalLocation, deltaX, deltaY);
 
         // Re-attach the anchor, the popup should snap back to the new anchor location.

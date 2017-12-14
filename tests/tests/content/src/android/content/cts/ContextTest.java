@@ -25,6 +25,8 @@ import android.content.res.TypedArray;
 import android.content.res.XmlResourceParser;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Handler;
+import android.os.Looper;
 import android.test.AndroidTestCase;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -333,6 +335,21 @@ public class ContextTest extends AndroidTestCase {
         longDir.mkdir();
         final File longFile = new File(longDir, longName);
         assertValidFile(longFile);
+    }
+
+    public void testMainLooper() throws Exception {
+        final Thread mainThread = Looper.getMainLooper().getThread();
+        final Handler handler = new Handler(mContext.getMainLooper());
+        handler.post(() -> {
+            assertEquals(mainThread, Thread.currentThread());
+        });
+    }
+
+    public void testMainExecutor() throws Exception {
+        final Thread mainThread = Looper.getMainLooper().getThread();
+        mContext.getMainExecutor().execute(() -> {
+            assertEquals(mainThread, Thread.currentThread());
+        });
     }
 
     private void assertValidFile(File file) throws Exception {

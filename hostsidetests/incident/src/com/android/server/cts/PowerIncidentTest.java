@@ -16,7 +16,7 @@
 
 package com.android.server.cts;
 
-import android.app.ActivityManagerProto;
+import android.app.ProcessState;
 import android.content.IntentProto;
 import android.os.BatteryManagerProto;
 import android.os.LooperProto;
@@ -68,8 +68,7 @@ public class PowerIncidentTest extends ProtoDumpTestCase {
         assertEquals(uid.getUidString(), Integer.toString(SYSTEM_UID));
         assertTrue(uid.getIsActive());
         assertFalse(uid.getIsProcessStateUnknown());
-        assertTrue(
-                ActivityManagerProto.ProcessState.getDescriptor()
+        assertTrue(ProcessState.getDescriptor()
                         .getValues()
                         .contains(uid.getProcessState().getValueDescriptor()));
 

@@ -49,8 +49,6 @@ import com.android.ex.camera2.blocking.BlockingSessionCallback;
 import com.android.ex.camera2.blocking.BlockingStateCallback;
 import com.android.ex.camera2.utils.StateWaiter;
 
-import org.mockito.compat.ArgumentMatcher;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.locks.Condition;
@@ -62,6 +60,9 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Set;
 import android.util.Size;
+
+import org.mockito.ArgumentMatcher;
+
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -1151,14 +1152,13 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
     }
 
     private class IsCaptureResultNotEmpty
-            extends ArgumentMatcher<TotalCaptureResult> {
+            implements ArgumentMatcher<TotalCaptureResult> {
         @Override
-        public boolean matchesObject(Object obj) {
+        public boolean matches(TotalCaptureResult result) {
             /**
              * Do the simple verification here. Only verify the timestamp for now.
              * TODO: verify more required capture result metadata fields.
              */
-            TotalCaptureResult result = (TotalCaptureResult) obj;
             Long timeStamp = result.get(CaptureResult.SENSOR_TIMESTAMP);
             if (timeStamp != null && timeStamp.longValue() > 0L) {
                 return true;

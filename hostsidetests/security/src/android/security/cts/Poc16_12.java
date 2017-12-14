@@ -1,5 +1,5 @@
 /**
-0;256;0c * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2016 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceTestCase;
 
-import android.platform.test.annotations.RootPermissionTest;
 import android.platform.test.annotations.SecurityTest;
 
 import java.io.BufferedOutputStream;

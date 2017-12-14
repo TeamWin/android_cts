@@ -16,8 +16,7 @@
 
 package com.android.cts.deviceandprofileowner;
 
-import android.os.Handler;
-import android.os.HandlerThread;
+import android.os.AsyncTask;
 
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -30,30 +29,13 @@ public class ClearApplicationDataTest extends BaseDeviceAdminTest {
     private static final Semaphore mSemaphore = new Semaphore(0);
     private static final long CLEAR_APPLICATION_DATA_TIMEOUT_S = 10;
 
-    private HandlerThread mHandlerThread;
-    private Handler mHandler;
-
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
-        mHandlerThread = new HandlerThread("ClearApplicationData");
-        mHandlerThread.start();
-        mHandler = new Handler(mHandlerThread.getLooper());
-    }
-
-    @Override
-    public void tearDown() throws Exception {
-        mHandlerThread.quitSafely();
-        super.tearDown();
-    }
-
     public void testClearApplicationData() throws Exception {
         mDevicePolicyManager.clearApplicationUserData(ADMIN_RECEIVER_COMPONENT, TEST_PKG,
                 (String pkg, boolean succeeded) -> {
                     assertEquals(TEST_PKG, pkg);
                     assertTrue(succeeded);
                     mSemaphore.release();
-                }, mHandler);
+                }, AsyncTask.THREAD_POOL_EXECUTOR);
 
         assertTrue("Clearing application data took too long",
                 mSemaphore.tryAcquire(CLEAR_APPLICATION_DATA_TIMEOUT_S, TimeUnit.SECONDS));

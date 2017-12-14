@@ -19,32 +19,29 @@ package android.server.wm;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.server.am.StateLogger.log;
 
+import android.content.ComponentName;
 import android.server.am.ActivityManagerTestBase;
 import android.server.am.WindowManagerState.WindowState;
 
-public abstract class ParentChildTestBase extends ActivityManagerTestBase {
+abstract class ParentChildTestBase extends ActivityManagerTestBase {
 
-    private static final String COMPONENT_NAME = "android.server.FrameTestApp";
+    /** Extra key for test case name. */
+    private static final String EXTRA_TEST_CASE = "test-case";
 
     interface ParentChildTest {
-
         void doTest(WindowState parent, WindowState child);
     }
 
-    public void startTestCase(String testCase) throws Exception {
-        setComponentName(COMPONENT_NAME);
-        String cmd = getAmStartCmd(activityName(), intentKey(), testCase);
-        executeShellCommand(cmd);
+    private void startTestCase(String testCase) throws Exception {
+        executeShellCommand(getAmStartCmd(activityName(), EXTRA_TEST_CASE, testCase));
     }
 
-    public void startTestCaseDocked(String testCase) throws Exception {
+    private void startTestCaseDocked(String testCase) throws Exception {
         startTestCase(testCase);
         setActivityTaskWindowingMode(activityName(), WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
     }
 
-    abstract String intentKey();
-
-    abstract String activityName();
+    abstract ComponentName activityName();
 
     abstract void doSingleTest(ParentChildTest t) throws Exception;
 
@@ -52,10 +49,10 @@ public abstract class ParentChildTestBase extends ActivityManagerTestBase {
         log("Running test fullscreen");
         startTestCase(testCase);
         doSingleTest(t);
-        stopTestCase();
+        stopTestPackage(activityName());
     }
 
-    void doDockedTest(String testCase, ParentChildTest t) throws Exception {
+    private void doDockedTest(String testCase, ParentChildTest t) throws Exception {
         log("Running test docked");
         if (!supportsSplitScreenMultiWindow()) {
             log("Skipping test: no split multi-window support");
@@ -63,7 +60,7 @@ public abstract class ParentChildTestBase extends ActivityManagerTestBase {
         }
         startTestCaseDocked(testCase);
         doSingleTest(t);
-        stopTestCase();
+        stopTestPackage(activityName());
     }
 
     void doParentChildTest(String testCase, ParentChildTest t) throws Exception {

@@ -21,6 +21,7 @@ import static android.server.am.StateLogger.logE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import android.content.ComponentName;
 import android.graphics.Rect;
 import android.server.am.WaitForValidActivityState;
 import android.server.am.WindowManagerState.WindowState;
@@ -32,22 +33,22 @@ import java.util.List;
 
 public class DialogFrameTests extends ParentChildTestBase {
 
-    private List<WindowState> mWindowList = new ArrayList();
+    private static final ComponentName DIALOG_TEST_ACTIVITY = ComponentName
+            .unflattenFromString("android.server.wm.frametestapp/.DialogTestActivity");
+
+    /** @see android.server.wm.frametestapp.DialogTestActivity#DIALOG_WINDOW_NAME */
+    private static final String DIALOG_WINDOW_NAME = "TestDialog";
+
+    private List<WindowState> mWindowList = new ArrayList<>();
 
     @Override
-    String intentKey() {
-        return "android.server.FrameTestApp.DialogTestCase";
+    ComponentName activityName() {
+        return DIALOG_TEST_ACTIVITY;
     }
 
-    @Override
-    String activityName() {
-        return "DialogTestActivity";
-    }
-
-    WindowState getSingleWindow(String windowName) {
+    private WindowState getSingleWindow(final String windowName) {
         try {
-            mAmWmState.getWmState().getMatchingVisibleWindowState(
-                    getBaseWindowName() + windowName, mWindowList);
+            mAmWmState.getWmState().getMatchingVisibleWindowState(windowName, mWindowList);
             return mWindowList.get(0);
         } catch (Exception e) {
             logE("Couldn't find window: " + windowName);
@@ -55,13 +56,14 @@ public class DialogFrameTests extends ParentChildTestBase {
         }
     }
 
+    @Override
     void doSingleTest(ParentChildTest t) throws Exception {
-        final WaitForValidActivityState waitForVisible =
-                new WaitForValidActivityState.Builder("TestDialog").build();
+        final WaitForValidActivityState waitForVisible = new WaitForValidActivityState.Builder()
+                .setWindowName(DIALOG_WINDOW_NAME).build();
 
         mAmWmState.computeState(waitForVisible);
-        WindowState dialog = getSingleWindow("TestDialog");
-        WindowState parent = getSingleWindow("DialogTestActivity");
+        WindowState dialog = getSingleWindow(DIALOG_WINDOW_NAME);
+        WindowState parent = getSingleWindow(activityName().flattenToString());
 
         t.doTest(parent, dialog);
     }
@@ -87,7 +89,7 @@ public class DialogFrameTests extends ParentChildTestBase {
                 });
     }
 
-    static final int explicitDimension = 200;
+    private static final int explicitDimension = 200;
 
     // The default gravity for dialogs should center them.
     @Test

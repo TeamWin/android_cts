@@ -123,18 +123,12 @@ public class TextClockTest {
 
         final CountDownLatch otherChange = registerForChanges(Settings.System.TEXT_AUTO_CAPS, 1);
         mActivityRule.runOnUiThread(() -> {
-            int autoCaps = 0;
+            int oldAutoCaps = Settings.System.getInt(resolver, Settings.System.TEXT_AUTO_CAPS, 1);
             try {
-                autoCaps = Settings.System.getInt(resolver, Settings.System.TEXT_AUTO_CAPS);
-            } catch (Settings.SettingNotFoundException e) {
-                // the setting hasn't been set before. Just default to 0
-            }
-            try {
-                int newVal = autoCaps == 0 ? 1 : 0;
-                Settings.System.putInt(resolver, Settings.System.TEXT_AUTO_CAPS, newVal);
+                int newAutoCaps = oldAutoCaps == 0 ? 1 : 0;
+                Settings.System.putInt(resolver, Settings.System.TEXT_AUTO_CAPS, newAutoCaps);
             } finally {
-                Settings.System.putInt(resolver, Settings.System.TEXT_AUTO_CAPS,
-                        autoCaps);
+                Settings.System.putInt(resolver, Settings.System.TEXT_AUTO_CAPS, oldAutoCaps);
             }
         });
 

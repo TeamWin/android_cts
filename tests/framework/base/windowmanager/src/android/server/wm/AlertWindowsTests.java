@@ -19,6 +19,7 @@ package android.server.wm;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
 import android.server.am.ActivityManagerTestBase;
 import android.server.am.WaitForValidActivityState;
@@ -38,10 +39,10 @@ import java.util.List;
 @Presubmit
 public class AlertWindowsTests extends ActivityManagerTestBase {
 
-    private static final String PACKAGE_NAME = "android.server.wm.alertwindowapp";
-    private static final String ACTIVITY_NAME = "AlertWindowTestActivity";
-    private static final String SDK_25_PACKAGE_NAME = "android.server.wm.alertwindowappsdk25";
-    private static final String SDK_25_ACTIVITY_NAME = "AlertWindowTestActivitySdk25";
+    private static final ComponentName TEST_ACTIVITY = ComponentName.createRelative(
+            "android.server.wm.alertwindowapp", ".AlertWindowTestActivity");
+    private static final ComponentName SDK25_TEST_ACTIVITY = ComponentName.createRelative(
+            "android.server.wm.alertwindowappsdk25", ".AlertWindowTestActivitySdk25");
 
     // From WindowManager.java
     private static final int TYPE_BASE_APPLICATION      = 1;
@@ -74,53 +75,53 @@ public class AlertWindowsTests extends ActivityManagerTestBase {
     @Override
     public void tearDown() throws Exception {
         super.tearDown();
-        setAlertWindowPermission(PACKAGE_NAME, false);
-        setAlertWindowPermission(SDK_25_PACKAGE_NAME, false);
-        executeShellCommand("am force-stop " + PACKAGE_NAME);
-        executeShellCommand("am force-stop " + SDK_25_PACKAGE_NAME);
+        setAlertWindowPermission(TEST_ACTIVITY, false);
+        setAlertWindowPermission(SDK25_TEST_ACTIVITY, false);
+        stopTestPackage(TEST_ACTIVITY);
+        stopTestPackage(SDK25_TEST_ACTIVITY);
     }
 
     @Test
     public void testAlertWindowAllowed() throws Exception {
-        runAlertWindowTest(PACKAGE_NAME, ACTIVITY_NAME, true /* hasAlertWindowPermission */,
+        runAlertWindowTest(TEST_ACTIVITY, true /* hasAlertWindowPermission */,
                 true /* atLeastO */);
     }
 
     @Test
     public void testAlertWindowDisallowed() throws Exception {
-        runAlertWindowTest(PACKAGE_NAME, ACTIVITY_NAME, false /* hasAlertWindowPermission */,
+        runAlertWindowTest(TEST_ACTIVITY, false /* hasAlertWindowPermission */,
                 true /* atLeastO */);
     }
 
     @Test
     public void testAlertWindowAllowedSdk25() throws Exception {
-        runAlertWindowTest(SDK_25_PACKAGE_NAME, SDK_25_ACTIVITY_NAME,
-                true /* hasAlertWindowPermission */, false /* atLeastO */);
+        runAlertWindowTest(SDK25_TEST_ACTIVITY, true /* hasAlertWindowPermission */,
+                false /* atLeastO */);
     }
 
     @Test
     public void testAlertWindowDisallowedSdk25() throws Exception {
-        runAlertWindowTest(SDK_25_PACKAGE_NAME, SDK_25_ACTIVITY_NAME,
-                false /* hasAlertWindowPermission */, false /* atLeastO */);
+        runAlertWindowTest(SDK25_TEST_ACTIVITY, false /* hasAlertWindowPermission */,
+                false /* atLeastO */);
     }
 
-    private void runAlertWindowTest(String packageName, String activityName,
-            boolean hasAlertWindowPermission, boolean atLeastO) throws Exception {
-        setComponentName(packageName);
-        setAlertWindowPermission(packageName, hasAlertWindowPermission);
+    private void runAlertWindowTest(final ComponentName activityName,
+            final boolean hasAlertWindowPermission, final boolean atLeastO) throws Exception {
+        setAlertWindowPermission(activityName, hasAlertWindowPermission);
 
         executeShellCommand(getAmStartCmd(activityName));
         mAmWmState.computeState(new WaitForValidActivityState.Builder(activityName).build());
         mAmWmState.assertVisibility(activityName, true);
 
-        assertAlertWindows(packageName, hasAlertWindowPermission, atLeastO);
+        assertAlertWindows(activityName, hasAlertWindowPermission, atLeastO);
     }
 
-    private void assertAlertWindows(String packageName, boolean hasAlertWindowPermission,
-            boolean atLeastO) {
+    private void assertAlertWindows(final ComponentName activityName,
+            final boolean hasAlertWindowPermission, final boolean atLeastO) {
+        final String packageName = activityName.getPackageName();
         final WindowManagerState wMState = mAmWmState.getWmState();
 
-        final ArrayList<WindowManagerState.WindowState> alertWindows = new ArrayList();
+        final ArrayList<WindowManagerState.WindowState> alertWindows = new ArrayList<>();
         wMState.getWindowsByPackageName(packageName, mAlertWindowTypes, alertWindows);
 
         if (!hasAlertWindowPermission) {
@@ -159,7 +160,7 @@ public class AlertWindowsTests extends ActivityManagerTestBase {
         }
 
         // Assert that alert windows are below key system windows.
-        final ArrayList<WindowManagerState.WindowState> systemWindows = new ArrayList();
+        final ArrayList<WindowManagerState.WindowState> systemWindows = new ArrayList<>();
         wMState.getWindowsByPackageName(packageName, mSystemWindowTypes, systemWindows);
         if (!systemWindows.isEmpty()) {
             final WindowManagerState.WindowState lowestSystemWindow = alertWindows.get(0);
@@ -169,7 +170,8 @@ public class AlertWindowsTests extends ActivityManagerTestBase {
         }
     }
 
-    private void setAlertWindowPermission(String packageName, boolean allow) {
+    private void setAlertWindowPermission(final ComponentName activityName, final boolean allow) {
+        final String packageName = activityName.getPackageName();
         executeShellCommand("appops set " + packageName + " android:system_alert_window "
                 + (allow ? "allow" : "deny"));
     }
