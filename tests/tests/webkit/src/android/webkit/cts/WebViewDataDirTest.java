@@ -19,6 +19,7 @@ package android.webkit.cts;
 
 import android.content.Context;
 import android.test.AndroidTestCase;
+import android.webkit.CookieManager;
 import android.webkit.WebView;
 
 import com.android.compatibility.common.util.NullWebViewUtils;
@@ -26,6 +27,10 @@ import com.android.compatibility.common.util.NullWebViewUtils;
 public class WebViewDataDirTest extends AndroidTestCase {
 
     private static final long REMOTE_TIMEOUT_MS = 5000;
+    private static final String ALTERNATE_DIR_NAME = "test";
+    private static final String COOKIE_URL = "https://www.example.com/";
+    private static final String COOKIE_VALUE = "foo=main";
+    private static final String SET_COOKIE_PARAMS = "; Max-Age=86400";
 
     static class TestDisableThenUseImpl extends TestProcessClient.TestRunnable {
         @Override
@@ -66,6 +71,117 @@ public class WebViewDataDirTest extends AndroidTestCase {
 
         try (TestProcessClient process = TestProcessClient.createProcessA(getContext())) {
             process.run(TestUseThenDisableImpl.class, REMOTE_TIMEOUT_MS);
+        }
+    }
+
+    static class TestUseThenChangeDirImpl extends TestProcessClient.TestRunnable {
+        @Override
+        public void run(Context ctx) {
+            new WebView(ctx);
+            try {
+                WebView.setDataDirectorySuffix("test");
+                fail("didn't throw IllegalStateException");
+            } catch (IllegalStateException e) {}
+        }
+    }
+
+    public void testUseThenChangeDir() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+
+        try (TestProcessClient process = TestProcessClient.createProcessA(getContext())) {
+            process.run(TestUseThenChangeDirImpl.class, REMOTE_TIMEOUT_MS);
+        }
+    }
+
+    static class TestInvalidDirImpl extends TestProcessClient.TestRunnable {
+        @Override
+        public void run(Context ctx) {
+            try {
+                WebView.setDataDirectorySuffix("no/path/separators");
+                fail("didn't throw IllegalArgumentException");
+            } catch (IllegalArgumentException e) {}
+        }
+    }
+
+    public void testInvalidDir() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+
+        try (TestProcessClient process = TestProcessClient.createProcessA(getContext())) {
+            process.run(TestInvalidDirImpl.class, REMOTE_TIMEOUT_MS);
+        }
+    }
+
+    static class WebViewInDefaultDir extends TestProcessClient.TestRunnable {
+        @Override
+        public void run(Context ctx) {
+            new WebView(ctx);
+        }
+    }
+
+    static class TestDefaultDirDisallowed extends TestProcessClient.TestRunnable {
+        @Override
+        public void run(Context ctx) {
+            try {
+                new WebView(ctx);
+                fail("didn't throw RuntimeException");
+            } catch (RuntimeException e) {}
+        }
+    }
+
+    public void testSameDirTwoProcesses() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+
+        try (TestProcessClient processA = TestProcessClient.createProcessA(getContext());
+             TestProcessClient processB = TestProcessClient.createProcessB(getContext())) {
+            processA.run(WebViewInDefaultDir.class, REMOTE_TIMEOUT_MS);
+            processB.run(TestDefaultDirDisallowed.class, REMOTE_TIMEOUT_MS);
+        }
+    }
+
+    static class SetCookieInDefaultDir extends TestProcessClient.TestRunnable {
+        @Override
+        public void run(Context ctx) {
+            CookieManager cm = CookieManager.getInstance();
+            cm.setCookie(COOKIE_URL, COOKIE_VALUE + SET_COOKIE_PARAMS);
+            cm.flush();
+        }
+    }
+
+    static class TestCookieInDefaultDir extends TestProcessClient.TestRunnable {
+        @Override
+        public void run(Context ctx) {
+            CookieManager cm = CookieManager.getInstance();
+            String cookie = cm.getCookie(COOKIE_URL);
+            assertEquals("wrong cookie in default cookie jar", COOKIE_VALUE, cookie);
+        }
+    }
+
+    static class TestCookieInAlternateDir extends TestProcessClient.TestRunnable {
+        @Override
+        public void run(Context ctx) {
+            WebView.setDataDirectorySuffix(ALTERNATE_DIR_NAME);
+            CookieManager cm = CookieManager.getInstance();
+            String cookie = cm.getCookie(COOKIE_URL);
+            assertNull("cookie leaked to alternate cookie jar", cookie);
+        }
+    }
+
+    public void testCookieJarsSeparate() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+
+        try (TestProcessClient processA = TestProcessClient.createProcessA(getContext());
+             TestProcessClient processB = TestProcessClient.createProcessB(getContext())) {
+            processA.run(SetCookieInDefaultDir.class, REMOTE_TIMEOUT_MS);
+            processA.run(TestCookieInDefaultDir.class, REMOTE_TIMEOUT_MS);
+            processB.run(TestCookieInAlternateDir.class, REMOTE_TIMEOUT_MS);
         }
     }
 }
