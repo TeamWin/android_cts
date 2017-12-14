@@ -36,8 +36,8 @@ import org.junit.After;
 import org.junit.Test;
 
 /**
- * Build: mmma -j32 cts/tests/framework/base
- * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.ActivityManagerActivityVisibilityTests
+ * Build/Install/Run:
+ *     atest CtsActivityManagerDeviceTestCases:android.server.am.ActivityManagerActivityVisibilityTests
  */
 public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestBase {
     private static final String TRANSLUCENT_ACTIVITY = "AlwaysFocusablePipActivity";
@@ -128,14 +128,12 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         mAmWmState.assertHomeActivityVisible(true);
     }
 
+    @Presubmit
     @Test
     public void testTranslucentActivityOverDockedStack() throws Exception {
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
-        launchActivityInDockStack(DOCKED_ACTIVITY_NAME);
-        mAmWmState.computeState(new String[] {DOCKED_ACTIVITY_NAME});
-        launchActivity(TEST_ACTIVITY_NAME, WINDOWING_MODE_SPLIT_SCREEN_SECONDARY);
-        mAmWmState.computeState(new String[] {DOCKED_ACTIVITY_NAME, TEST_ACTIVITY_NAME});
+        launchActivitiesInSplitScreen(DOCKED_ACTIVITY_NAME, TEST_ACTIVITY_NAME);
         launchActivity(TRANSLUCENT_ACTIVITY_NAME, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
         mAmWmState.computeState(false /* compareTaskAndStackBounds */,
                 new WaitForValidActivityState.Builder(TEST_ACTIVITY_NAME).build(),
@@ -159,12 +157,13 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         mAmWmState.assertVisibility(TURN_SCREEN_ON_ACTIVITY_NAME, true);
     }
 
+    @Presubmit
     @Test
     public void testFinishActivityInNonFocusedStack() throws Exception {
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
         // Launch two activities in docked stack.
-        launchActivityInDockStack(LAUNCHING_ACTIVITY);
+        launchActivityInSplitScreenWithRecents(LAUNCHING_ACTIVITY);
         getLaunchActivityBuilder().setTargetActivityName(BROADCAST_RECEIVER_ACTIVITY).execute();
         mAmWmState.computeState(new String[] { BROADCAST_RECEIVER_ACTIVITY });
         mAmWmState.assertVisibility(BROADCAST_RECEIVER_ACTIVITY, true);

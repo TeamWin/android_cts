@@ -178,11 +178,16 @@ public class KeyguardTests extends KeyguardTestBase {
     public void testShowWhenLockedActivityWhileSplit() throws Exception {
         assumeTrue(supportsSplitScreenMultiWindow());
 
-        launchActivityInDockStack(LAUNCHING_ACTIVITY);
-        launchActivityToSide(true, false, "ShowWhenLockedActivity");
+        launchActivitiesInSplitScreen(
+                getLaunchActivityBuilder().setTargetActivityName(LAUNCHING_ACTIVITY),
+                getLaunchActivityBuilder().setTargetActivityName("ShowWhenLockedActivity")
+                        .setRandomData(true)
+                        .setMultipleTask(false)
+        );
         mAmWmState.assertVisibility("ShowWhenLockedActivity", true);
         gotoKeyguard();
-        mAmWmState.computeState(new WaitForValidActivityState.Builder( "ShowWhenLockedActivity" ).build());
+        mAmWmState.computeState(
+                new WaitForValidActivityState.Builder("ShowWhenLockedActivity").build());
         mAmWmState.assertVisibility("ShowWhenLockedActivity", true);
         mAmWmState.assertKeyguardShowingAndOccluded();
         mAmWmState.assertDoesNotContainStack("Activity must be full screen.",

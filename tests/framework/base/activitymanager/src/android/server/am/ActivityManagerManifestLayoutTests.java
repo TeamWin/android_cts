@@ -101,7 +101,7 @@ public class ActivityManagerManifestLayoutTests extends ActivityManagerTestBase 
             launchActivity(activityName, WINDOWING_MODE_FREEFORM);
             resizeActivityTask(activityName, 0, 0, 1, 1);
         } else { // stackId == DOCKED_STACK_ID
-            launchActivityInDockStack(activityName);
+            launchActivityInSplitScreenWithRecents(activityName);
             resizeDockedStack(1, 1, 1, 1);
         }
         getDisplayAndWindowState(activityName, false);
