@@ -100,6 +100,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
 
         @Override
         public void onCallStateChanged(int state, String number) {
+            Log.i(TAG, "onCallStateChanged: state=" + state + ", number=%s" + number);
             mCallStates.add(Pair.create(state, number));
             mCallbackSemaphore.release();
         }
@@ -571,7 +572,11 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
     void verifyPhoneStateListenerCallbacksForCall(int expectedCallState) throws Exception {
         assertTrue(mPhoneStateListener.mCallbackSemaphore.tryAcquire(
                 TestUtils.WAIT_FOR_PHONE_STATE_LISTENER_CALLBACK_TIMEOUT_S, TimeUnit.SECONDS));
-        Pair<Integer, String> callState = mPhoneStateListener.mCallStates.get(0);
+        // Get the most recent callback; it is possible that there was an initial state reported due
+        // to the fact that TelephonyManager will sometimes give an initial state back to the caller
+        // when the listener is registered.
+        Pair<Integer, String> callState = mPhoneStateListener.mCallStates.get(
+                mPhoneStateListener.mCallStates.size() - 1);
         assertEquals(expectedCallState, (int) callState.first);
         assertEquals(getTestNumber().getSchemeSpecificPart(), callState.second);
     }
