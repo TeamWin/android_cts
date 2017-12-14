@@ -15,18 +15,21 @@
  */
 
 package android.telecom.cts;
+
 import static android.telecom.cts.TestUtils.PACKAGE;
 import static android.telecom.cts.TestUtils.TAG;
 import static android.telecom.cts.TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS;
 
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertThat;
 
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.telecom.Call;
 import android.telecom.CallAudioState;
 import android.telecom.Conference;
@@ -37,13 +40,18 @@ import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
 import android.telecom.VideoProfile;
 import android.telecom.cts.MockInCallService.InCallServiceCallbacks;
+import android.telephony.PhoneStateListener;
+import android.telephony.TelephonyManager;
 import android.test.InstrumentationTestCase;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.Pair;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -59,6 +67,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
 
     Context mContext;
     TelecomManager mTelecomManager;
+    TelephonyManager mTelephonyManager;
 
     TestUtils.InvokeCounter mOnBringToForegroundCounter;
     TestUtils.InvokeCounter mOnCallAudioStateChangedCounter;
@@ -79,33 +88,86 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
     String mPreviousDefaultDialer = null;
     MockConnectionService connectionService = null;
 
+    HandlerThread mPhoneStateListenerThread;
+    Handler mPhoneStateListenerHandler;
+    TestPhoneStateListener mPhoneStateListener;
+
+    static class TestPhoneStateListener extends PhoneStateListener {
+        /** Semaphore released for every callback invocation. */
+        public Semaphore mCallbackSemaphore = new Semaphore(0);
+
+        List<Pair<Integer, String>> mCallStates = new ArrayList<>();
+
+        @Override
+        public void onCallStateChanged(int state, String number) {
+            mCallStates.add(Pair.create(state, number));
+            mCallbackSemaphore.release();
+        }
+    }
+
     boolean mShouldTestTelecom = true;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         mContext = getInstrumentation().getContext();
-        mTelecomManager = (TelecomManager) mContext.getSystemService(Context.TELECOM_SERVICE);
 
         mShouldTestTelecom = TestUtils.shouldTestTelecom(mContext);
-        if (mShouldTestTelecom) {
-            mPreviousDefaultDialer = TestUtils.getDefaultDialer(getInstrumentation());
-            TestUtils.setDefaultDialer(getInstrumentation(), PACKAGE);
-            setupCallbacks();
+        if (!mShouldTestTelecom) {
+            return;
         }
+
+        mTelecomManager = (TelecomManager) mContext.getSystemService(Context.TELECOM_SERVICE);
+        mTelephonyManager = (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
+
+        mPreviousDefaultDialer = TestUtils.getDefaultDialer(getInstrumentation());
+        TestUtils.setDefaultDialer(getInstrumentation(), PACKAGE);
+        setupCallbacks();
+
+        // PhoneStateListener's public API registers the listener on the calling thread, which must
+        // be a looper thread. So we need to create and register the listener in a custom looper
+        // thread.
+        mPhoneStateListenerThread = new HandlerThread("PhoneStateListenerThread");
+        mPhoneStateListenerThread.start();
+        mPhoneStateListenerHandler = new Handler(mPhoneStateListenerThread.getLooper());
+        final CountDownLatch registeredLatch = new CountDownLatch(1);
+        mPhoneStateListenerHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                mPhoneStateListener = new TestPhoneStateListener();
+                mTelephonyManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_CALL_STATE);
+                registeredLatch.countDown();
+            }
+        });
+        registeredLatch.await(
+                TestUtils.WAIT_FOR_PHONE_STATE_LISTENER_REGISTERED_TIMEOUT_S, TimeUnit.SECONDS);
     }
 
     @Override
     protected void tearDown() throws Exception {
-        if (mShouldTestTelecom) {
-            cleanupCalls();
-            if (!TextUtils.isEmpty(mPreviousDefaultDialer)) {
-                TestUtils.setDefaultDialer(getInstrumentation(), mPreviousDefaultDialer);
-            }
-            tearDownConnectionService(TestUtils.TEST_PHONE_ACCOUNT_HANDLE);
-            assertMockInCallServiceUnbound();
-        }
         super.tearDown();
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        final CountDownLatch unregisteredLatch = new CountDownLatch(1);
+        mPhoneStateListenerHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                mTelephonyManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_NONE);
+                unregisteredLatch.countDown();
+            }
+        });
+        unregisteredLatch.await(
+                TestUtils.WAIT_FOR_PHONE_STATE_LISTENER_REGISTERED_TIMEOUT_S, TimeUnit.SECONDS);
+        mPhoneStateListenerThread.quit();
+
+        cleanupCalls();
+        if (!TextUtils.isEmpty(mPreviousDefaultDialer)) {
+            TestUtils.setDefaultDialer(getInstrumentation(), mPreviousDefaultDialer);
+        }
+        tearDownConnectionService(TestUtils.TEST_PHONE_ACCOUNT_HANDLE);
+        assertMockInCallServiceUnbound();
     }
 
     protected PhoneAccount setupConnectionService(MockConnectionService connectionService,
@@ -504,6 +566,14 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
     void setAndVerifyConferenceForOutgoingCall(MockConference conference) {
         conference.setActive();
         assertConferenceState(conference, Connection.STATE_ACTIVE);
+    }
+
+    void verifyPhoneStateListenerCallbacksForCall(int expectedCallState) throws Exception {
+        assertTrue(mPhoneStateListener.mCallbackSemaphore.tryAcquire(
+                TestUtils.WAIT_FOR_PHONE_STATE_LISTENER_CALLBACK_TIMEOUT_S, TimeUnit.SECONDS));
+        Pair<Integer, String> callState = mPhoneStateListener.mCallStates.get(0);
+        assertEquals(expectedCallState, (int) callState.first);
+        assertEquals(getTestNumber().getSchemeSpecificPart(), callState.second);
     }
 
     /**
