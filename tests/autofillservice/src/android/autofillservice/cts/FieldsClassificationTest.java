@@ -88,7 +88,11 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
 
     @Test
     public void testFeatureIsEnabled() throws Exception {
+        enableService();
         assertThat(mActivity.getAutofillManager().isFieldClassificationEnabled()).isTrue();
+
+        disableService();
+        assertThat(mActivity.getAutofillManager().isFieldClassificationEnabled()).isFalse();
     }
 
     @Test

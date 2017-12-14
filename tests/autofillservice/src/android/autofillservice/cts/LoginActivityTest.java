@@ -33,6 +33,8 @@ import static android.autofillservice.cts.Helper.dumpStructure;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.Helper.runShellCommand;
 import static android.autofillservice.cts.Helper.setUserComplete;
+import static android.autofillservice.cts.InstrumentedAutoFillService.SERVICE_CLASS;
+import static android.autofillservice.cts.InstrumentedAutoFillService.SERVICE_PACKAGE;
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilConnected;
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilDisconnected;
 import static android.autofillservice.cts.LoginActivity.AUTHENTICATION_MESSAGE;
@@ -60,6 +62,7 @@ import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -3420,6 +3423,19 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         } finally {
             disableService();
         }
+    }
+
+    @Test
+    public void testGetAutofillServiceComponentName() throws Exception {
+        final AutofillManager afm = mActivity.getAutofillManager();
+
+        enableService();
+        final ComponentName componentName = afm.getAutofillServiceComponentName();
+        assertThat(componentName.getPackageName()).isEqualTo(SERVICE_PACKAGE);
+        assertThat(componentName.getClassName()).endsWith(SERVICE_CLASS);
+
+        disableService();
+        assertThat(afm.getAutofillServiceComponentName()).isNull();
     }
 
     @Test
