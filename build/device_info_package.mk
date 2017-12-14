@@ -19,7 +19,9 @@
 DEVICE_INFO_PACKAGE := com.android.compatibility.common.deviceinfo
 DEVICE_INFO_INSTRUMENT := android.support.test.runner.AndroidJUnitRunner
 DEVICE_INFO_USES_LIBRARY := android.test.runner
-DEVICE_INFO_PERMISSIONS += android.permission.WRITE_EXTERNAL_STORAGE
+DEVICE_INFO_PERMISSIONS += \
+  android.permission.READ_PHONE_STATE \
+  android.permission.WRITE_EXTERNAL_STORAGE
 DEVICE_INFO_ACTIVITIES += \
   $(DEVICE_INFO_PACKAGE).ConfigurationDeviceInfo \
   $(DEVICE_INFO_PACKAGE).CpuDeviceInfo \
