@@ -25,11 +25,17 @@ import android.util.Log;
  */
 public final class UidImportanceListener implements ActivityManager.OnUidImportanceListener {
     final int mUid;
+    final long mDefaultWaitTime;
 
     int mLastValue = -1;
 
     public UidImportanceListener(int uid) {
+        this(uid, 5*1000);
+    }
+
+    public UidImportanceListener(int uid, long defaultWaitTime) {
         mUid = uid;
+        mDefaultWaitTime = defaultWaitTime;
     }
 
     @Override
@@ -41,6 +47,10 @@ public final class UidImportanceListener implements ActivityManager.OnUidImporta
                 notifyAll();
             }
         }
+    }
+
+    public int waitForValue(int minValue, int maxValue) {
+        return waitForValue(minValue, maxValue, mDefaultWaitTime);
     }
 
     public int waitForValue(int minValue, int maxValue, long timeout) {

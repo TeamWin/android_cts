@@ -29,7 +29,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestserver \
     mockito-target-minus-junit4 \
     android-support-test \
-    platform-test-annotations
+    platform-test-annotations \
+    cts-amwm-util
 
 LOCAL_SRC_FILES := \
     $(call all-java-files-under, src)
