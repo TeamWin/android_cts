@@ -56,7 +56,7 @@ public class LockTaskTest {
 
     private static final String PACKAGE_NAME = LockTaskTest.class.getPackage().getName();
     private static final ComponentName ADMIN_COMPONENT =
-            new ComponentName(PACKAGE_NAME, BaseDeviceOwnerTest.BasicAdminReceiver.class.getName());
+            new ComponentName(PACKAGE_NAME, BasicAdminReceiver.class.getName());
     private static final String TEST_PACKAGE = "com.google.android.example.somepackage";
 
     private static final String UTILITY_ACTIVITY

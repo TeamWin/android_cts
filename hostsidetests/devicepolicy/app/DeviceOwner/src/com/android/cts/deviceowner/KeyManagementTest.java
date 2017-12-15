@@ -16,10 +16,11 @@
 package com.android.cts.deviceowner;
 
 import static com.android.compatibility.common.util.FakeKeys.FAKE_RSA_1;
-import static com.android.cts.deviceowner.BaseDeviceOwnerTest.getWho;
 
-import android.app.Activity;
 import android.app.admin.DevicePolicyManager;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.res.AssetManager;
 import android.net.Uri;
 import android.security.AttestedKeyPair;
 import android.security.KeyChain;
@@ -31,21 +32,20 @@ import android.test.ActivityInstrumentationTestCase2;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
-import java.security.cert.Certificate;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Arrays;
@@ -54,10 +54,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.List;
 import java.util.Set;
-
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.res.AssetManager;
 
 public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManagementActivity> {
 
@@ -75,7 +71,7 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
         // Confirm our DeviceOwner is set up
         mDevicePolicyManager = (DevicePolicyManager)
                 getActivity().getSystemService(Context.DEVICE_POLICY_SERVICE);
-        BaseDeviceOwnerTest.assertDeviceOwner(mDevicePolicyManager);
+        assertDeviceOwner(mDevicePolicyManager);
 
         // Hostside test has set a device lockscreen in order to enable credential storage
     }
@@ -425,5 +421,16 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
             assertTrue("Chooser timeout", mLatch.await(KEYCHAIN_TIMEOUT_MINS, TimeUnit.MINUTES));
             return mChosenAlias;
         }
+    }
+
+    private void assertDeviceOwner(DevicePolicyManager devicePolicyManager) {
+        assertNotNull(devicePolicyManager);
+        assertTrue(devicePolicyManager.isAdminActive(getWho()));
+        assertTrue(devicePolicyManager.isDeviceOwnerApp(getActivity().getPackageName()));
+        assertFalse(devicePolicyManager.isManagedProfile(getWho()));
+    }
+
+    private ComponentName getWho() {
+        return BasicAdminReceiver.getComponentName(getActivity());
     }
 }
