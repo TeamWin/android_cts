@@ -61,6 +61,14 @@
                 android:resource="@xml/method" />
         </service>
 
+        <!--
+          In order to test window-focus-stealing from other process, let this service run in a
+          separate process. -->
+        <service android:name="android.view.inputmethod.cts.util.WindowFocusStealerService"
+            android:process=":focusstealer"
+            android:exported="false">
+        </service>
+
     </application>
 
     <instrumentation
