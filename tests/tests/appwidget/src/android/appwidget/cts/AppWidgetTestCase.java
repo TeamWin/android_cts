@@ -16,6 +16,8 @@
 
 package android.appwidget.cts;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.appwidget.AppWidgetProviderInfo;
 import android.appwidget.cts.provider.FirstAppWidgetProvider;
 import android.appwidget.cts.provider.SecondAppWidgetProvider;
@@ -35,6 +37,12 @@ public abstract class AppWidgetTestCase extends InstrumentationTestCase {
 
     private static final String SECOND_APP_WIDGET_CONFIGURE_ACTIVITY =
             "android.appwidget.cts.provider.SecondAppWidgetConfigureActivity";
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        assumeTrue(hasAppWidgets());
+    }
 
     public boolean hasAppWidgets() {
         return getInstrumentation().getTargetContext().getPackageManager()
