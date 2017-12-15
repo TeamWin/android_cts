@@ -34,7 +34,11 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestrunner \
     CtsMockInputMethod
 
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
+LOCAL_SRC_FILES := \
+    $(call all-java-files-under, src) \
+    $(call all-Iaidl-files-under, src)
+
+LOCAL_AIDL_INCLUDES += $(LOCAL_PATH)/src
 
 LOCAL_PACKAGE_NAME := CtsInputMethodTestCases
 
