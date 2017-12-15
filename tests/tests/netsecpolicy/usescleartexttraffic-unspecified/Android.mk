@@ -24,7 +24,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestrunner \
     ctstestserver
 
-LOCAL_JAVA_LIBRARIES := org.apache.http.legacy
+LOCAL_JAVA_LIBRARIES := org.apache.http.legacy android.test.base.stubs
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src common)
 

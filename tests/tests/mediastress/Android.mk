@@ -28,7 +28,7 @@ LOCAL_MULTILIB := both
 
 LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner compatibility-device-util
 
-LOCAL_JAVA_LIBRARIES := android.test.runner.stubs
+LOCAL_JAVA_LIBRARIES := android.test.runner.stubs android.test.base.stubs
 
 LOCAL_HOST_SHARED_LIBRARIES := compatibility-device-media-preconditions
 

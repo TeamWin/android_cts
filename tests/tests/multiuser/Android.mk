@@ -29,6 +29,8 @@ LOCAL_PACKAGE_NAME := CtsMultiUserTestCases
 
 LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner compatibility-device-util
 
+LOCAL_JAVA_LIBRARIES := android.test.base.stubs
+
 LOCAL_SDK_VERSION := test_current
 
 include $(BUILD_CTS_PACKAGE)

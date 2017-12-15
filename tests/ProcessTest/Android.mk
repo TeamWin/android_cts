@@ -26,6 +26,8 @@ LOCAL_SRC_FILES := $(call all-subdir-java-files)
 
 LOCAL_STATIC_JAVA_LIBRARIES := junit
 
+LOCAL_JAVA_LIBRARIES := android.test.base.stubs
+
 LOCAL_PACKAGE_NAME := ProcessTests
 
 LOCAL_DEX_PREOPT := false

@@ -25,7 +25,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ub-uiautomator \
     mockito-target-minus-junit4
 
-LOCAL_JAVA_LIBRARIES := android.test.runner
+LOCAL_JAVA_LIBRARIES := android.test.runner android.test.base.stubs
 
 LOCAL_MODULE_TAGS := optional
 

@@ -28,6 +28,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 	compatibility-device-util \
 	ctstestrunner
 
+LOCAL_JAVA_LIBRARIES := android.test.base.stubs
+
 src_dirs := src \
     ../telecom/src/android/telecom/cts/SelfManagedConnection.java \
     ../telecom/src/android/telecom/cts/CtsSelfManagedConnectionService.java \
