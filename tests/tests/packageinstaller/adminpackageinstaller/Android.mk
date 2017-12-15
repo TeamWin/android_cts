@@ -31,6 +31,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 	android-support-test \
 	android-support-v4
 
+LOCAL_JAVA_LIBRARIES := android.test.base.stubs
+
 LOCAL_SDK_VERSION := test_current
 
 # Tag this module as a cts test artifact

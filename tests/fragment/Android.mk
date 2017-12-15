@@ -34,6 +34,7 @@ LOCAL_STATIC_JAVA_LIBRARIES += \
     android-common \
     compatibility-device-util \
     ctstestrunner
+LOCAL_JAVA_LIBRARIES := android.test.base.stubs
 #LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util android-support-test
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)

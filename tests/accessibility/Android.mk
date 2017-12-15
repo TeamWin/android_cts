@@ -26,6 +26,8 @@ LOCAL_PACKAGE_NAME := CtsAccessibilityTestCases
 
 LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util ctstestrunner
 
+LOCAL_JAVA_LIBRARIES := android.test.base.stubs
+
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 

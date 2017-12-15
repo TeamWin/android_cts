@@ -29,6 +29,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-test \
     compatibility-device-preconditions
 
+LOCAL_JAVA_LIBRARIES := android.test.base.stubs
+
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 # Tag this module as a cts test artifact
