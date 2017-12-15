@@ -124,6 +124,7 @@ def main():
 
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
+        its.caps.skip_unless(its.caps.read_3a(props))
         fmt = {'format': 'yuv', 'width': VGA_WIDTH, 'height': VGA_HEIGHT}
 
         # test that image is not flipped, mirrored, or rotated

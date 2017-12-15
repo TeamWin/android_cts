@@ -110,7 +110,8 @@ def main():
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
         its.caps.skip_unless(not its.caps.fixed_focus(props))
-        its.caps.skip_unless(its.caps.lens_approx_calibrated(props))
+        its.caps.skip_unless(its.caps.read_3a(props) and
+                             its.caps.lens_approx_calibrated(props))
         min_fd = props['android.lens.info.minimumFocusDistance']
         fmt = {'format': 'yuv', 'width': VGA_WIDTH, 'height': VGA_HEIGHT}
 
