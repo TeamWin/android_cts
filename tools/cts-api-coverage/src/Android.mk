@@ -20,6 +20,7 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := $(call all-subdir-java-files)
+LOCAL_PROTOC_OPTIMIZE_TYPE := full
 LOCAL_JAVA_RESOURCE_DIRS := res 
 LOCAL_JAR_MANIFEST := MANIFEST.mf
 
@@ -28,13 +29,11 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
   dexlib2
 
 LOCAL_MODULE := cts-api-coverage
-LOCAL_MODULE_TAGS := optional
 
 # This tool is not checking any dependencies or metadata, so all of the
 # dependencies of all of the tests must be on its classpath. This is
 # super fragile.
 LOCAL_STATIC_JAVA_LIBRARIES += \
-        host-libprotobuf-java-full \
         platformprotos
 
 include $(BUILD_HOST_JAVA_LIBRARY)
