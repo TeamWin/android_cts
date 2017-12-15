@@ -119,9 +119,13 @@ my_bionic_testlib_files := \
   private_namespace_libs/libnstest_private.so \
   private_namespace_libs/libnstest_root.so \
   private_namespace_libs/libnstest_root_not_isolated.so \
+  private_namespace_libs/libtest_missing_symbol_child_private.so \
+  private_namespace_libs/libtest_missing_symbol_root.so \
   private_namespace_libs_external/libnstest_private_external.so \
   public_namespace_libs/libnstest_public.so \
   public_namespace_libs/libnstest_public_internal.so \
+  public_namespace_libs/libtest_missing_symbol.so \
+  public_namespace_libs/libtest_missing_symbol_child_public.so \
 
 # These libraries are not built for mips.
 my_bionic_testlib_files_non_mips := \
