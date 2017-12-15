@@ -35,8 +35,8 @@ import android.support.test.filters.FlakyTest;
 import org.junit.Test;
 
 /**
- * Build: mmma -j32 cts/tests/framework/base
- * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.ActivityManagerAssistantStackTests
+ * Build/Install/Run:
+ *     atest CtsActivityManagerDeviceTestCases:ActivityManagerAssistantStackTests
  */
 //@Presubmit b/67706642
 public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase {

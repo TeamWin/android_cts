@@ -46,9 +46,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 class ActivityManagerState {
 
@@ -61,10 +59,10 @@ class ActivityManagerState {
 
     private static final String DUMPSYS_ACTIVITY_ACTIVITIES = "dumpsys activity --proto activities";
 
+    // Displays in z-order with the top most at the front of the list, starting with primary.
+    private final List<ActivityDisplay> mDisplays = new ArrayList<>();
     // Stacks in z-order with the top most at the front of the list, starting with primary display.
     private final List<ActivityStack> mStacks = new ArrayList<>();
-    // Stacks on all attached displays, in z-order with the top most at the front of the list.
-    private final Map<Integer, List<ActivityStack>> mDisplayStacks = new HashMap<>();
     private KeyguardControllerState mKeyguardControllerState;
     private int mFocusedStackId = -1;
     private String mResumedActivityRecord = null;
@@ -154,17 +152,8 @@ class ActivityManagerState {
 
         ActivityStackSupervisorProto state = ActivityStackSupervisorProto.parseFrom(sysDump);
         for (int i = 0; i < state.displays.length; i++) {
-            ActivityDisplayProto displayStack = state.displays[i];
-            List<ActivityStack> activityStacks = new ArrayList<>();
-            for (int j = 0; j < displayStack.stacks.length; j++) {
-                ActivityStack activityStack = new ActivityStack(displayStack.stacks[j]);
-                mStacks.add(activityStack);
-                activityStacks.add(activityStack);
-                if (activityStack.mResumedActivity != null) {
-                    mResumedActivities.add(activityStack.mResumedActivity);
-                }
-            }
-            mDisplayStacks.put(displayStack.id, activityStacks);
+            ActivityDisplayProto activityDisplay = state.displays[i];
+            mDisplays.add(new ActivityDisplay(activityDisplay, this));
         }
         mKeyguardControllerState = new KeyguardControllerState(state.keyguardController);
         mFocusedStackId = state.focusedStackId;
@@ -175,24 +164,33 @@ class ActivityManagerState {
 
 
     private void reset() {
+        mDisplays.clear();
         mStacks.clear();
-        mDisplayStacks.clear();
         mFocusedStackId = -1;
         mResumedActivityRecord = null;
         mResumedActivities.clear();
         mKeyguardControllerState = null;
     }
 
+    ActivityDisplay getDisplay(int displayId) {
+        for (ActivityDisplay display : mDisplays) {
+            if (display.mId == displayId) {
+                return display;
+            }
+        }
+        return null;
+    }
+
     int getFrontStackId(int displayId) {
-        return mDisplayStacks.get(displayId).get(0).mStackId;
+        return getDisplay(displayId).mStacks.get(0).mStackId;
     }
 
     int getFrontStackActivityType(int displayId) {
-        return mDisplayStacks.get(displayId).get(0).getActivityType();
+        return getDisplay(displayId).mStacks.get(0).getActivityType();
     }
 
     int getFrontStackWindowingMode(int displayId) {
-        return mDisplayStacks.get(displayId).get(0).getWindowingMode();
+        return getDisplay(displayId).mStacks.get(0).getWindowingMode();
     }
 
     int getFocusedStackId() {
@@ -289,10 +287,9 @@ class ActivityManagerState {
 
     /** Get the stack position on its display. */
     int getStackIndexByActivityType(int activityType) {
-        for (Integer displayId : mDisplayStacks.keySet()) {
-            List<ActivityStack> stacks = mDisplayStacks.get(displayId);
-            for (int i = 0; i < stacks.size(); i++) {
-                if (activityType == stacks.get(i).getActivityType()) {
+        for (ActivityDisplay display : mDisplays) {
+            for (int i = 0; i < display.mStacks.size(); i++) {
+                if (activityType == display.mStacks.get(i).getActivityType()) {
                     return i;
                 }
             }
@@ -304,10 +301,9 @@ class ActivityManagerState {
     int getStackIndexByActivityName(String activityName) {
         final String fullName = ActivityManagerTestBase.getActivityComponentName(activityName);
 
-        for (Integer displayId : mDisplayStacks.keySet()) {
-            List<ActivityStack> stacks = mDisplayStacks.get(displayId);
-            for (int i = stacks.size() - 1; i >= 0; --i) {
-                final ActivityStack stack = stacks.get(i);
+        for (ActivityDisplay display : mDisplays) {
+            for (int i = display.mStacks.size() - 1; i >= 0; --i) {
+                final ActivityStack stack = display.mStacks.get(i);
                 for (ActivityTask task : stack.mTasks) {
                     for (Activity activity : task.mActivities) {
                         if (activity.name.equals(fullName)) {
@@ -318,6 +314,10 @@ class ActivityManagerState {
             }
         }
         return -1;
+    }
+
+    List<ActivityDisplay> getDisplays() {
+        return new ArrayList<>(mDisplays);
     }
 
     List<ActivityStack> getStacks() {
@@ -479,6 +479,26 @@ class ActivityManagerState {
             }
         }
         return null;
+    }
+
+    static class ActivityDisplay extends ActivityContainer {
+
+        int mId;
+        ArrayList<ActivityStack> mStacks = new ArrayList<>();
+
+        ActivityDisplay(ActivityDisplayProto proto, ActivityManagerState amState) {
+            super(proto.configurationContainer);
+            mId = proto.id;
+            for (int i = 0; i < proto.stacks.length; i++) {
+                ActivityStack activityStack = new ActivityStack(proto.stacks[i]);
+                mStacks.add(activityStack);
+                // Also update activity manager state
+                amState.mStacks.add(activityStack);
+                if (activityStack.mResumedActivity != null) {
+                    amState.mResumedActivities.add(activityStack.mResumedActivity);
+                }
+            }
+        }
     }
 
     static class ActivityStack extends ActivityContainer {

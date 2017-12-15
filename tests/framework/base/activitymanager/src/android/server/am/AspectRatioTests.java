@@ -38,8 +38,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
- * Build: mmma -j32 cts/tests/framework/base/activitymanager
- * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.AspectRatioTests
+ * Build/Install/Run:
+ *     atest CtsActivityManagerDeviceTestCases:AspectRatioTests
  */
 @RunWith(AndroidJUnit4.class)
 @Presubmit

@@ -44,7 +44,7 @@ import org.junit.Test;
 
 /**
  * Build/Install/Run:
- *     atest CtsActivityManagerDeviceTestCases:android.server.am.ActivityManagerSplitScreenTests
+ *     atest CtsActivityManagerDeviceTestCases:ActivityManagerSplitScreenTests
  */
 public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
 

@@ -40,8 +40,8 @@ import org.junit.Test;
  * TRANSIT_TASK_CLOSE, TRANSIT_WALLPAPER_OPEN, etc.). The exact animation is unspecified and can be
  * overridden.
  *
- * Build: mmma -j32 cts/tests/framework/base
- * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.ActivityManagerTransitionSelectionTests
+ * <p>Build/Install/Run:
+ *     atest CtsActivityManagerDeviceTestCases:ActivityManagerTransitionSelectionTests
  */
 @Presubmit
 public class ActivityManagerTransitionSelectionTests extends ActivityManagerTestBase {

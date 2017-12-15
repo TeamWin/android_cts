@@ -49,8 +49,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Build: mmma -j32 cts/tests/framework/base
- * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.ActivityManagerPinnedStackTests
+ * Build/Install/Run:
+ *     atest CtsActivityManagerDeviceTestCases:ActivityManagerPinnedStackTests
  */
 public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     private static final String TEST_ACTIVITY = "TestActivity";

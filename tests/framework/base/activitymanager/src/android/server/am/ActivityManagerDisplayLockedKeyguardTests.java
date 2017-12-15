@@ -20,6 +20,7 @@ import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.ActivityManagerState.STATE_STOPPED;
 
 import static org.junit.Assume.assumeTrue;
+import android.server.am.ActivityManagerState.ActivityDisplay;
 
 import org.junit.After;
 import org.junit.Before;
@@ -28,8 +29,8 @@ import org.junit.Test;
 /**
  * Display tests that require a locked keyguard.
  *
- * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.ActivityManagerDisplayLockedKeyguardTests
+ * <p>Build/Install/Run:
+ *     atest CtsActivityManagerDeviceTestCases:ActivityManagerDisplayLockedKeyguardTests
  */
 public class ActivityManagerDisplayLockedKeyguardTests extends ActivityManagerDisplayTestBase {
 
@@ -63,11 +64,11 @@ public class ActivityManagerDisplayLockedKeyguardTests extends ActivityManagerDi
     @Test
     public void testVirtualDisplayHidesContentWhenLocked() throws Exception {
         // Create new usual virtual display.
-        final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
+        final ActivityDisplay newDisplay = new VirtualDisplayBuilder(this).build();
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
 
         // Launch activity on new secondary display.
-        launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mDisplayId);
+        launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mId);
         mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, true /* visible */);
 
         // Lock the device.
@@ -88,12 +89,12 @@ public class ActivityManagerDisplayLockedKeyguardTests extends ActivityManagerDi
      */
     @Test
     public void testDismissKeyguard_secondaryDisplay() throws Exception {
-        final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
+        final ActivityDisplay newDisplay = new VirtualDisplayBuilder(this).build();
 
         gotoKeyguard();
         mAmWmState.waitForKeyguardShowingAndNotOccluded();
         mAmWmState.assertKeyguardShowingAndNotOccluded();
-        launchActivityOnDisplay(DISMISS_KEYGUARD_ACTIVITY, newDisplay.mDisplayId);
+        launchActivityOnDisplay(DISMISS_KEYGUARD_ACTIVITY, newDisplay.mId);
         enterAndConfirmLockCredential();
         mAmWmState.waitForKeyguardGone();
         mAmWmState.assertKeyguardGone();
@@ -102,7 +103,7 @@ public class ActivityManagerDisplayLockedKeyguardTests extends ActivityManagerDi
 
     @Test
     public void testDismissKeyguard_whileOccluded_secondaryDisplay() throws Exception {
-        final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
+        final ActivityDisplay newDisplay = new VirtualDisplayBuilder(this).build();
 
         gotoKeyguard();
         mAmWmState.waitForKeyguardShowingAndNotOccluded();
@@ -111,7 +112,7 @@ public class ActivityManagerDisplayLockedKeyguardTests extends ActivityManagerDi
         mAmWmState.computeState(
                 new WaitForValidActivityState.Builder(SHOW_WHEN_LOCKED_ACTIVITY).build());
         mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
-        launchActivityOnDisplay(DISMISS_KEYGUARD_ACTIVITY, newDisplay.mDisplayId);
+        launchActivityOnDisplay(DISMISS_KEYGUARD_ACTIVITY, newDisplay.mId);
         enterAndConfirmLockCredential();
         mAmWmState.waitForKeyguardGone();
         mAmWmState.assertKeyguardGone();

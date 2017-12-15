@@ -27,8 +27,8 @@ import org.junit.Test;
  * Ensure that compatibility dialog is shown when launching an application with
  * an unsupported smallest width.
  *
- * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.DisplaySizeTest
+ * <p>Build/Install/Run:
+ *     atest CtsActivityManagerDeviceTestCases:DisplaySizeTest
  */
 public class DisplaySizeTest extends ActivityManagerTestBase {
     private static final String DENSITY_PROP_DEVICE = "ro.sf.lcd_density";

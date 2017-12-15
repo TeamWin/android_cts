@@ -4,6 +4,7 @@ import static android.support.test.runner.lifecycle.Stage.STOPPED;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.platform.test.annotations.Presubmit;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 import org.junit.After;
@@ -12,11 +13,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
- * Build/Install/Run: atest CtsActivityManagerDeviceTestCases:ActivityLifecycleKeyguardTests
+ * Build/Install/Run:
+ *     atest CtsActivityManagerDeviceTestCases:ActivityLifecycleKeyguardTests
  */
-// TODO(lifecycler): Add to @Presubmit.
 @MediumTest
 @RunWith(AndroidJUnit4.class)
+@Presubmit
 public class ActivityLifecycleKeyguardTests extends ActivityLifecycleClientTestBase {
 
     @Before

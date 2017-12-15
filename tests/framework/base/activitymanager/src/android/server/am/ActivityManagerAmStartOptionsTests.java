@@ -25,8 +25,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.ActivityManagerAmStartOptionsTests
+ * Build/Install/Run:
+ *     atest CtsActivityManagerDeviceTestCases:ActivityManagerAmStartOptionsTests
  */
 public class ActivityManagerAmStartOptionsTests extends ActivityManagerTestBase {
 

@@ -30,8 +30,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.ActivityManagerReplaceWindowTests
+ * Build/Install/Run:
+ *     atest CtsActivityManagerDeviceTestCases:ActivityManagerReplaceWindowTests
  */
 public class ActivityManagerReplaceWindowTests extends ActivityManagerTestBase {
 
