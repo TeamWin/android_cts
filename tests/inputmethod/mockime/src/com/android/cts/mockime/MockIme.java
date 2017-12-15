@@ -20,19 +20,26 @@ import static android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_OVERSCAN;
 
 import static com.android.cts.mockime.MockImeSession.MOCK_IME_SETTINGS_FILE;
 
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.inputmethodservice.InputMethodService;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Parcel;
 import android.os.Process;
 import android.os.ResultReceiver;
 import android.os.SystemClock;
+import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.WorkerThread;
+import android.text.TextUtils;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -49,6 +56,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -65,6 +73,69 @@ public final class MockIme extends InputMethodService {
     static String getImeId(@NonNull String packageName) {
         return new ComponentName(packageName, MockIme.class.getName()).flattenToShortString();
     }
+
+    static String getCommandActionName(@NonNull String eventActionName) {
+        return eventActionName + ".command";
+    }
+
+    private final HandlerThread mHandlerThread = new HandlerThread("CommandReceiver");
+
+    private final Handler mMainHandler = new Handler();
+
+    private static final class CommandReceiver extends BroadcastReceiver {
+        @NonNull
+        private final String mActionName;
+        @NonNull
+        private final Consumer<ImeCommand> mOnReceiveCommand;
+
+        public CommandReceiver(@NonNull String actionName,
+                @NonNull Consumer<ImeCommand> onReceiveCommand) {
+            mActionName = actionName;
+            mOnReceiveCommand = onReceiveCommand;
+        }
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (TextUtils.equals(mActionName, intent.getAction())) {
+                mOnReceiveCommand.accept(ImeCommand.fromBundle(intent.getExtras()));
+            }
+        }
+    }
+
+    @WorkerThread
+    private void onReceiveCommand(@NonNull ImeCommand command) {
+        getTracer().onReceiveCommand(command, () -> {
+            if (command.shouldDispatchToMainThread()) {
+                mMainHandler.post(() -> onHandleCommand(command));
+            } else {
+                onHandleCommand(command);
+            }
+        });
+    }
+
+    @AnyThread
+    private void onHandleCommand(@NonNull ImeCommand command) {
+        getTracer().onHandleCommand(command, () -> {
+            if (command.shouldDispatchToMainThread()) {
+                if (Looper.myLooper() != Looper.getMainLooper()) {
+                    throw new IllegalStateException("command " + command
+                            + " should be handled on the main thread");
+                }
+                switch (command.getName()) {
+                    case "commitText": {
+                        final CharSequence text = command.getExtras().getString("text");
+                        final int newCursorPosition =
+                                command.getExtras().getInt("newCursorPosition");
+                        getCurrentInputConnection().commitText(text, newCursorPosition);
+                        break;
+                    }
+                }
+            }
+        });
+    }
+
+    @Nullable
+    private CommandReceiver mCommandReceiver;
 
     @Nullable
     private ImeSettings mSettings;
@@ -140,6 +211,14 @@ public final class MockIme extends InputMethodService {
                 throw new IllegalStateException("Settings file is not found. "
                         + "Make sure MockImeSession.create() is used to launch Mock IME.");
             }
+
+            mHandlerThread.start();
+            final String actionName = getCommandActionName(mSettings.getEventCallbackActionName());
+            mCommandReceiver = new CommandReceiver(actionName, this::onReceiveCommand);
+            registerReceiver(mCommandReceiver,
+                    new IntentFilter(actionName), null /* broadcastPermission */,
+                    new Handler(mHandlerThread.getLooper()));
+
             mImeEventActionName.set(mSettings.getEventCallbackActionName());
             final int windowFlags = mSettings.getWindowFlags(0);
             if (windowFlags != 0) {
@@ -250,7 +329,11 @@ public final class MockIme extends InputMethodService {
 
     @Override
     public void onDestroy() {
-        getTracer().onDestroy(() -> super.onDestroy());
+        getTracer().onDestroy(() -> {
+            super.onDestroy();
+            unregisterReceiver(mCommandReceiver);
+            mHandlerThread.quitSafely();
+        });
     }
 
     @Override
@@ -445,6 +528,20 @@ public final class MockIme extends InputMethodService {
         public AbstractInputMethodImpl onCreateInputMethodInterface(
                 @NonNull Supplier<AbstractInputMethodImpl> supplier) {
             return recordEventInternal("onCreateInputMethodInterface", supplier);
+        }
+
+        public void onReceiveCommand(
+                @NonNull ImeCommand command, @NonNull Runnable runnable) {
+            final Bundle arguments = new Bundle();
+            arguments.putBundle("command", command.toBundle());
+            recordEventInternal("onReceiveCommand", runnable, arguments);
+        }
+
+        public void onHandleCommand(
+                @NonNull ImeCommand command, @NonNull Runnable runnable) {
+            final Bundle arguments = new Bundle();
+            arguments.putBundle("command", command.toBundle());
+            recordEventInternal("onHandleCommand", runnable, arguments);
         }
     }
 }
