@@ -17,14 +17,18 @@
 package android.view.inputmethod.cts;
 
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
+import static android.widget.PopupWindow.INPUT_METHOD_NOT_NEEDED;
 
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectBindInput;
+import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assume.assumeTrue;
 
+import android.app.Instrumentation;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Process;
@@ -33,12 +37,16 @@ import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.text.TextUtils;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.cts.util.TestActivity;
+import android.view.inputmethod.cts.util.TestUtils;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
+import com.android.cts.mockime.ImeCommand;
 import com.android.cts.mockime.ImeEvent;
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;
@@ -182,6 +190,118 @@ public class FocusHandlingTest {
             expectBindInput(stream, Process.myPid(), TIMEOUT);
 
             expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
+        }
+    }
+
+    /**
+     * Makes sure that an existing {@link android.view.inputmethod.InputConnection} will not be
+     * invalidated by showing a focusable {@link PopupWindow} with
+     * {@link PopupWindow#INPUT_METHOD_NOT_NEEDED}.
+     *
+     * <p>If {@link android.view.WindowManager.LayoutParams#FLAG_ALT_FOCUSABLE_IM} is set and
+     * {@link android.view.WindowManager.LayoutParams#FLAG_NOT_FOCUSABLE} is not set to a
+     * {@link android.view.Window}, showing that window must not invalidate an existing valid
+     * {@link android.view.inputmethod.InputConnection}.</p>
+     *
+     * @see android.view.WindowManager.LayoutParams#mayUseInputMethod(int)
+     */
+    @Test
+    public void testFocusableWindowDoesNotInvalidateExistingInputConnection() throws Exception {
+        final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        try(MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getContext(),
+                instrumentation.getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final EditText editText = launchTestActivity();
+            instrumentation.runOnMainSync(() -> editText.requestFocus());
+
+            // Wait until the MockIme gets bound to the TestActivity.
+            expectBindInput(stream, Process.myPid(), TIMEOUT);
+
+            expectEvent(stream, event -> {
+                if (!TextUtils.equals("onStartInput", event.getEventName())) {
+                    return false;
+                }
+                final EditorInfo editorInfo = event.getArguments().getParcelable("editorInfo");
+                return TextUtils.equals(TEST_MARKER, editorInfo.privateImeOptions);
+            }, TIMEOUT);
+
+            // Make sure that InputConnection#commitText() works.
+            final ImeCommand commit1 = imeSession.callCommitText("test commit", 1);
+            expectCommand(stream, commit1, TIMEOUT);
+            TestUtils.waitOnMainUntil(
+                    () -> TextUtils.equals(editText.getText(), "test commit"), TIMEOUT);
+            instrumentation.runOnMainSync(() -> editText.setText(""));
+
+            // Create a popup window that cannot be the IME target.
+            final PopupWindow popupWindow = TestUtils.getOnMainSync(() -> {
+                final Context context = instrumentation.getTargetContext();
+                final PopupWindow popup = new PopupWindow(context);
+                popup.setFocusable(true);
+                popup.setInputMethodMode(INPUT_METHOD_NOT_NEEDED);
+                final TextView textView = new TextView(context);
+                textView.setText("Test Text");
+                popup.setContentView(textView);
+                return popup;
+            });
+
+            // Show the popup window.
+            instrumentation.runOnMainSync(() -> popupWindow.showAsDropDown(editText));
+            instrumentation.waitForIdleSync();
+
+            // Make sure that the EditText no longer has window-focus
+            TestUtils.waitOnMainUntil(() -> !editText.hasWindowFocus(), TIMEOUT);
+
+            // Make sure that InputConnection#commitText() works.
+            final ImeCommand commit2 = imeSession.callCommitText("Hello!", 1);
+            expectCommand(stream, commit2, TIMEOUT);
+            TestUtils.waitOnMainUntil(
+                    () -> TextUtils.equals(editText.getText(), "Hello!"), TIMEOUT);
+            instrumentation.runOnMainSync(() -> editText.setText(""));
+
+            stream.skipAll();
+
+            // Call InputMethodManager#restartInput()
+            instrumentation.runOnMainSync(() -> {
+                editText.getContext()
+                        .getSystemService(InputMethodManager.class)
+                        .restartInput(editText);
+            });
+
+            // Make sure that onStartInput() is called with restarting == true.
+            expectEvent(stream, event -> {
+                if (!TextUtils.equals("onStartInput", event.getEventName())) {
+                    return false;
+                }
+                if (!event.getArguments().getBoolean("restarting")) {
+                    return false;
+                }
+                final EditorInfo editorInfo = event.getArguments().getParcelable("editorInfo");
+                return TextUtils.equals(TEST_MARKER, editorInfo.privateImeOptions);
+            }, TIMEOUT);
+
+            // Make sure that InputConnection#commitText() works.
+            final ImeCommand commit3 = imeSession.callCommitText("World!", 1);
+            expectCommand(stream, commit3, TIMEOUT);
+            TestUtils.waitOnMainUntil(
+                    () -> TextUtils.equals(editText.getText(), "World!"), TIMEOUT);
+            instrumentation.runOnMainSync(() -> editText.setText(""));
+
+            // Dismiss the popup window.
+            instrumentation.runOnMainSync(() -> popupWindow.dismiss());
+            instrumentation.waitForIdleSync();
+
+            // Make sure that the EditText now has window-focus again.
+            TestUtils.waitOnMainUntil(() -> editText.hasWindowFocus(), TIMEOUT);
+
+            // Make sure that InputConnection#commitText() works.
+            final ImeCommand commit4 = imeSession.callCommitText("Done!", 1);
+            expectCommand(stream, commit4, TIMEOUT);
+            TestUtils.waitOnMainUntil(
+                    () -> TextUtils.equals(editText.getText(), "Done!"), TIMEOUT);
+            instrumentation.runOnMainSync(() -> editText.setText(""));
         }
     }
 }
