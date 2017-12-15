@@ -78,6 +78,30 @@ public final class ImeEventStreamTestUtils {
     }
 
     /**
+     * Wait until an event that matches the given command is consumed by the {@link MockIme}.
+     *
+     * @param stream {@link ImeEventStream} to be checked.
+     * @param command {@link ImeCommand} to be waited for.
+     * @param timeout timeout in millisecond
+     * @return {@link ImeEvent} found
+     * @throws TimeoutException when the no event is matched to the given condition within
+     *                          {@code timeout}
+     */
+    @NonNull
+    public static ImeEvent expectCommand(@NonNull ImeEventStream stream,
+            @NonNull ImeCommand command, long timeout) throws TimeoutException {
+        final Predicate<ImeEvent> predicate = event -> {
+            if (!TextUtils.equals("onHandleCommand", event.getEventName())) {
+                return false;
+            }
+            final ImeCommand eventCommand =
+                    ImeCommand.fromBundle(event.getArguments().getBundle("command"));
+            return eventCommand.getId() == command.getId();
+        };
+        return expectEvent(stream, predicate, timeout);
+    }
+
+    /**
      * Assert that an event that matches the given {@code condition} will no be found in the stream
      * within the given {@code timeout}.
      *
