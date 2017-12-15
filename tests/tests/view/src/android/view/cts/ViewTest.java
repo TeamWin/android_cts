@@ -3991,7 +3991,9 @@ public class ViewTest {
         final MockEditText editText = new MockEditText(mActivity);
 
         mActivityRule.runOnUiThread(() -> {
-            viewGroup.addView(editText);
+            // Give a fixed size since, on most devices, the edittext is off-screen
+            // and therefore doesn't get laid-out properly.
+            viewGroup.addView(editText, 100, 30);
             editText.requestFocus();
         });
         mInstrumentation.waitForIdleSync();
