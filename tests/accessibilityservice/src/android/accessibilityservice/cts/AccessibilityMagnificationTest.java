@@ -19,11 +19,14 @@ package android.accessibilityservice.cts;
 import android.accessibilityservice.AccessibilityService.MagnificationController;
 import android.accessibilityservice.AccessibilityService.MagnificationController.OnMagnificationChangedListener;
 import android.accessibilityservice.AccessibilityServiceInfo;
+import android.app.Instrumentation;
+import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Region;
 import android.provider.Settings;
 import android.test.InstrumentationTestCase;
 import android.util.DisplayMetrics;
+import android.view.WindowManager;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -39,6 +42,7 @@ public class AccessibilityMagnificationTest extends InstrumentationTestCase {
     public static final String ACCESSIBILITY_DISPLAY_MAGNIFICATION_ENABLED =
             "accessibility_display_magnification_enabled";
     private StubMagnificationAccessibilityService mService;
+    private Instrumentation mInstrumentation;
 
     @Override
     public void setUp() throws Exception {
@@ -49,6 +53,7 @@ public class AccessibilityMagnificationTest extends InstrumentationTestCase {
         // Starting the service will force the accessibility subsystem to examine its settings, so
         // it will update magnification in the process to disable it.
         mService = StubMagnificationAccessibilityService.enableSelf(this);
+        mInstrumentation = getInstrumentation();
     }
 
     @Override
@@ -79,8 +84,11 @@ public class AccessibilityMagnificationTest extends InstrumentationTestCase {
 
     public void testSetScaleAndCenter() {
         final MagnificationController controller = mService.getMagnificationController();
-        final Resources res = getInstrumentation().getTargetContext().getResources();
-        final DisplayMetrics metrics = res.getDisplayMetrics();
+        final WindowManager wm = (WindowManager) mInstrumentation.getContext().getSystemService(
+                Context.WINDOW_SERVICE);
+        final DisplayMetrics metrics = new DisplayMetrics();
+        wm.getDefaultDisplay().getRealMetrics(metrics);
+
         final float scale = 2.0f;
         final float x = metrics.widthPixels / 4.0f;
         final float y = metrics.heightPixels / 4.0f;
