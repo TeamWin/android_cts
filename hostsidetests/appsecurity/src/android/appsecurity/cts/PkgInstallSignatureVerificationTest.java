@@ -234,6 +234,16 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
                 );
     }
 
+    public void testInstallV1SignatureOnlyDoesNotVerify() throws Exception {
+        // APK signed with v1 scheme only, but not all digests match those recorded in
+        // META-INF/MANIFEST.MF.
+        String error = "META-INF/MANIFEST.MF has invalid digest";
+
+        // Bitflip in classes.dex of otherwise good file.
+        assertInstallFailsWithError(
+                "v1-only-with-tampered-classes-dex.apk", error);
+    }
+
     public void testInstallV2SignatureDoesNotVerify() throws Exception {
         // APK signed with v2 scheme only, but the signature over signed-data does not verify.
         String error = "signature did not verify";
