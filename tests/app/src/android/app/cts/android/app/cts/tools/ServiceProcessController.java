@@ -42,6 +42,7 @@ public final class ServiceProcessController {
     final String mMyPackageName;
     final Intent[] mServiceIntents;
     final String mServicePackage;
+    final long mDefaultWaitTime;
 
     final ActivityManager mAm;
     final Parcel mData;
@@ -54,11 +55,18 @@ public final class ServiceProcessController {
     public ServiceProcessController(Context context, Instrumentation instrumentation,
             String myPackageName, Intent[] serviceIntents)
             throws IOException, PackageManager.NameNotFoundException {
+        this(context, instrumentation, myPackageName, serviceIntents, 5*1000);
+    }
+
+    public ServiceProcessController(Context context, Instrumentation instrumentation,
+            String myPackageName, Intent[] serviceIntents, long defaultWaitTime)
+            throws IOException, PackageManager.NameNotFoundException {
         mContext = context;
         mInstrumentation = instrumentation;
         mMyPackageName = myPackageName;
         mServiceIntents = serviceIntents;
         mServicePackage = mServiceIntents[0].getComponent().getPackageName();
+        mDefaultWaitTime = defaultWaitTime;
         String cmd = "pm grant " + mMyPackageName + " " + Manifest.permission.PACKAGE_USAGE_STATS;
         String result = SystemUtil.runShellCommand(mInstrumentation, cmd);
         /*
@@ -72,21 +80,26 @@ public final class ServiceProcessController {
         mData = Parcel.obtain();
         mConnections = new ServiceConnectionHandler[serviceIntents.length];
         for (int i=0; i<serviceIntents.length; i++) {
-            mConnections[i] = new ServiceConnectionHandler(mContext, serviceIntents[i]);
+            mConnections[i] = new ServiceConnectionHandler(mContext, serviceIntents[i],
+                    mDefaultWaitTime);
         }
 
         ApplicationInfo appInfo = mContext.getPackageManager().getApplicationInfo(
                 mServicePackage, 0);
         mUid = appInfo.uid;
 
-        mUidForegroundListener = new UidImportanceListener(appInfo.uid);
+        mUidForegroundListener = new UidImportanceListener(appInfo.uid, mDefaultWaitTime);
         mAm.addOnUidImportanceListener(mUidForegroundListener,
                 ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE);
-        mUidGoneListener = new UidImportanceListener(appInfo.uid);
+        mUidGoneListener = new UidImportanceListener(appInfo.uid, mDefaultWaitTime);
         mAm.addOnUidImportanceListener(mUidGoneListener,
                 ActivityManager.RunningAppProcessInfo.IMPORTANCE_EMPTY);
 
-        mUidWatcher = new WatchUidRunner(instrumentation, appInfo.uid);
+        mUidWatcher = new WatchUidRunner(instrumentation, appInfo.uid, mDefaultWaitTime);
+    }
+
+    public void denyBackgroundOp() throws IOException {
+        denyBackgroundOp(mDefaultWaitTime);
     }
 
     public void denyBackgroundOp(long timeout) throws IOException {
@@ -155,6 +168,10 @@ public final class ServiceProcessController {
 
     public WatchUidRunner getUidWatcher() {
         return mUidWatcher;
+    }
+
+    public void ensureProcessGone() {
+        ensureProcessGone(mDefaultWaitTime);
     }
 
     public void ensureProcessGone(long timeout) {

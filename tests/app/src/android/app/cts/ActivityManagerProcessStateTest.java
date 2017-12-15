@@ -28,6 +28,7 @@ import android.app.cts.android.app.cts.tools.SyncOrderedBroadcast;
 import android.app.cts.android.app.cts.tools.UidImportanceListener;
 import android.app.cts.android.app.cts.tools.WaitForBroadcast;
 import android.app.cts.android.app.cts.tools.WatchUidRunner;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
@@ -35,6 +36,8 @@ import android.os.IBinder;
 import android.os.Parcel;
 import android.os.PowerManager;
 import android.os.RemoteException;
+import android.os.SystemClock;
+import android.server.am.WindowManagerState;
 import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiSelector;
@@ -110,6 +113,30 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         return keyguardManager.isKeyguardLocked();
     }
 
+    private void waitForAppFocus(String waitForApp, long waitTime) {
+        long waitUntil = SystemClock.elapsedRealtime() + waitTime;
+        while (true) {
+            WindowManagerState wms = new WindowManagerState();
+            wms.computeState();
+            String appName = wms.getFocusedApp();
+            if (appName != null) {
+                ComponentName comp = ComponentName.unflattenFromString(appName);
+                if (waitForApp.equals(comp.getPackageName())) {
+                    break;
+                }
+            }
+            if (SystemClock.elapsedRealtime() > waitUntil) {
+                throw new IllegalStateException("Timed out waiting for focus on app "
+                        + waitForApp + ", last was " + appName);
+            }
+            Log.i(TAG, "Waiting for app focus, current: " + appName);
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+            }
+        };
+    }
+
     private void startActivityAndWaitForShow(final Intent intent) throws Exception {
         getInstrumentation().getUiAutomation().executeAndWaitForEvent(
                 () -> {
@@ -136,14 +163,17 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
      */
     public void testUidImportanceListener() throws Exception {
         final Parcel data = Parcel.obtain();
-        ServiceConnectionHandler conn = new ServiceConnectionHandler(mContext, mServiceIntent);
-        ServiceConnectionHandler conn2 = new ServiceConnectionHandler(mContext, mService2Intent);
+        ServiceConnectionHandler conn = new ServiceConnectionHandler(mContext, mServiceIntent,
+                WAIT_TIME);
+        ServiceConnectionHandler conn2 = new ServiceConnectionHandler(mContext, mService2Intent,
+                WAIT_TIME);
 
         ActivityManager am = mContext.getSystemService(ActivityManager.class);
 
         ApplicationInfo appInfo = mContext.getPackageManager().getApplicationInfo(
                 SIMPLE_PACKAGE_NAME, 0);
-        UidImportanceListener uidForegroundListener = new UidImportanceListener(appInfo.uid);
+        UidImportanceListener uidForegroundListener = new UidImportanceListener(appInfo.uid,
+                WAIT_TIME);
 
         String cmd = "pm revoke " + STUB_PACKAGE_NAME + " "
                 + Manifest.permission.PACKAGE_USAGE_STATS;
@@ -173,20 +203,21 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         am.addOnUidImportanceListener(uidForegroundListener,
                 ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE);
 
-        UidImportanceListener uidGoneListener = new UidImportanceListener(appInfo.uid);
+        UidImportanceListener uidGoneListener = new UidImportanceListener(appInfo.uid, WAIT_TIME);
         am.addOnUidImportanceListener(uidGoneListener,
                 ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED);
 
-        WatchUidRunner uidWatcher = new WatchUidRunner(getInstrumentation(), appInfo.uid);
+        WatchUidRunner uidWatcher = new WatchUidRunner(getInstrumentation(), appInfo.uid,
+                WAIT_TIME);
 
         try {
             // First kill the processes to start out in a stable state.
-            conn.bind(WAIT_TIME);
-            conn2.bind(WAIT_TIME);
+            conn.bind();
+            conn2.bind();
             IBinder service1 = conn.getServiceIBinder();
             IBinder service2 = conn2.getServiceIBinder();
-            conn.unbind(WAIT_TIME);
-            conn2.unbind(WAIT_TIME);
+            conn.unbind();
+            conn2.unbind();
             try {
                 service1.transact(IBinder.FIRST_CALL_TRANSACTION, data, null, 0);
             } catch (RemoteException e) {
@@ -199,38 +230,38 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
 
             // Wait for uid's processes to go away.
             uidGoneListener.waitForValue(ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE,
-                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE, WAIT_TIME);
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE);
             assertEquals(ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE,
                     am.getPackageImportance(SIMPLE_PACKAGE_NAME));
 
             // And wait for the uid report to be gone.
-            uidWatcher.waitFor(WatchUidRunner.CMD_GONE, null, WAIT_TIME);
+            uidWatcher.waitFor(WatchUidRunner.CMD_GONE, null);
 
             // Now bind and see if we get told about the uid coming in to the foreground.
-            conn.bind(WAIT_TIME);
+            conn.bind();
             uidForegroundListener.waitForValue(ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND,
-                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE, WAIT_TIME);
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE);
             assertEquals(ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE,
                     am.getPackageImportance(SIMPLE_PACKAGE_NAME));
 
             // Also make sure the uid state reports are as expected.  Wait for active because
             // there may be some intermediate states as the process comes up.
-            uidWatcher.waitFor(WatchUidRunner.CMD_ACTIVE, null, WAIT_TIME);
-            uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
-            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "FGS", WAIT_TIME);
+            uidWatcher.waitFor(WatchUidRunner.CMD_ACTIVE, null);
+            uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
 
             // Pull out the service IBinder for a kludy hack...
             IBinder service = conn.getServiceIBinder();
 
             // Now unbind and see if we get told about it going to the background.
-            conn.unbind(WAIT_TIME);
+            conn.unbind();
             uidForegroundListener.waitForValue(ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED,
-                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED, WAIT_TIME);
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED);
             assertEquals(ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED,
                     am.getPackageImportance(SIMPLE_PACKAGE_NAME));
 
-            uidWatcher.waitFor(WatchUidRunner.CMD_CACHED, null, WAIT_TIME);
-            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "CEM", WAIT_TIME);
+            uidWatcher.waitFor(WatchUidRunner.CMD_CACHED, null);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
 
             // Now kill the process and see if we are told about it being gone.
             try {
@@ -240,74 +271,74 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             }
 
             uidGoneListener.waitForValue(ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE,
-                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE, WAIT_TIME);
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE);
             assertEquals(ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE,
                     am.getPackageImportance(SIMPLE_PACKAGE_NAME));
 
-            uidWatcher.expect(WatchUidRunner.CMD_IDLE, null, WAIT_TIME);
-            uidWatcher.expect(WatchUidRunner.CMD_GONE, null, WAIT_TIME);
+            uidWatcher.expect(WatchUidRunner.CMD_IDLE, null);
+            uidWatcher.expect(WatchUidRunner.CMD_GONE, null);
 
             // Now we are going to try different combinations of binding to two processes to
             // see if they are correctly combined together for the app.
 
             // Bring up both services.
-            conn.bind(WAIT_TIME);
-            conn2.bind(WAIT_TIME);
+            conn.bind();
+            conn2.bind();
             uidForegroundListener.waitForValue(ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND,
-                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE, WAIT_TIME);
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE);
             assertEquals(ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE,
                     am.getPackageImportance(SIMPLE_PACKAGE_NAME));
 
             // Also make sure the uid state reports are as expected.
-            uidWatcher.waitFor(WatchUidRunner.CMD_ACTIVE, null, WAIT_TIME);
-            uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
-            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "FGS", WAIT_TIME);
+            uidWatcher.waitFor(WatchUidRunner.CMD_ACTIVE, null);
+            uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
 
             // Bring down one service, app state should remain foreground.
-            conn2.unbind(WAIT_TIME);
+            conn2.unbind();
             assertEquals(ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE,
                     am.getPackageImportance(SIMPLE_PACKAGE_NAME));
 
             // Bring down other service, app state should now be cached.  (If the processes both
             // actually get killed immediately, this is also not a correctly behaving system.)
-            conn.unbind(WAIT_TIME);
+            conn.unbind();
             uidGoneListener.waitForValue(ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED,
-                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED, WAIT_TIME);
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED);
             assertEquals(ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED,
                     am.getPackageImportance(SIMPLE_PACKAGE_NAME));
 
-            uidWatcher.waitFor(WatchUidRunner.CMD_CACHED, null, WAIT_TIME);
-            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "CEM", WAIT_TIME);
+            uidWatcher.waitFor(WatchUidRunner.CMD_CACHED, null);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
 
             // Bring up one service, this should be sufficient to become foreground.
-            conn2.bind(WAIT_TIME);
+            conn2.bind();
             uidForegroundListener.waitForValue(ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND,
-                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE, WAIT_TIME);
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE);
             assertEquals(ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE,
                     am.getPackageImportance(SIMPLE_PACKAGE_NAME));
 
-            uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
-            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "FGS", WAIT_TIME);
+            uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
 
             // Bring up other service, should remain foreground.
-            conn.bind(WAIT_TIME);
+            conn.bind();
             assertEquals(ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE,
                     am.getPackageImportance(SIMPLE_PACKAGE_NAME));
 
             // Bring down one service, should remain foreground.
-            conn.unbind(WAIT_TIME);
+            conn.unbind();
             assertEquals(ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE,
                     am.getPackageImportance(SIMPLE_PACKAGE_NAME));
 
             // And bringing down other service should put us back to cached.
-            conn2.unbind(WAIT_TIME);
+            conn2.unbind();
             uidGoneListener.waitForValue(ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED,
-                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED, WAIT_TIME);
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED);
             assertEquals(ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED,
                     am.getPackageImportance(SIMPLE_PACKAGE_NAME));
 
-            uidWatcher.waitFor(WatchUidRunner.CMD_CACHED, null, WAIT_TIME);
-            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "CEM", WAIT_TIME);
+            uidWatcher.waitFor(WatchUidRunner.CMD_CACHED, null);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
         } finally {
             data.recycle();
 
@@ -327,7 +358,8 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         Intent serviceIntent = new Intent();
         serviceIntent.setClassName(SIMPLE_PACKAGE_NAME,
                 SIMPLE_PACKAGE_NAME + SIMPLE_SERVICE);
-        ServiceConnectionHandler conn = new ServiceConnectionHandler(mContext, serviceIntent);
+        ServiceConnectionHandler conn = new ServiceConnectionHandler(mContext, serviceIntent,
+                WAIT_TIME);
 
         ActivityManager am = mContext.getSystemService(ActivityManager.class);
 
@@ -344,20 +376,22 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         ApplicationInfo appInfo = mContext.getPackageManager().getApplicationInfo(
                 SIMPLE_PACKAGE_NAME, 0);
 
-        UidImportanceListener uidForegroundListener = new UidImportanceListener(appInfo.uid);
+        UidImportanceListener uidForegroundListener = new UidImportanceListener(appInfo.uid,
+                WAIT_TIME);
         am.addOnUidImportanceListener(uidForegroundListener,
                 ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE);
-        UidImportanceListener uidGoneListener = new UidImportanceListener(appInfo.uid);
+        UidImportanceListener uidGoneListener = new UidImportanceListener(appInfo.uid, WAIT_TIME);
         am.addOnUidImportanceListener(uidGoneListener,
                 ActivityManager.RunningAppProcessInfo.IMPORTANCE_EMPTY);
 
-        WatchUidRunner uidWatcher = new WatchUidRunner(getInstrumentation(), appInfo.uid);
+        WatchUidRunner uidWatcher = new WatchUidRunner(getInstrumentation(), appInfo.uid,
+                WAIT_TIME);
 
         // First kill the process to start out in a stable state.
         mContext.stopService(serviceIntent);
-        conn.bind(WAIT_TIME);
+        conn.bind();
         IBinder service = conn.getServiceIBinder();
-        conn.unbind(WAIT_TIME);
+        conn.unbind();
         try {
             service.transact(IBinder.FIRST_CALL_TRANSACTION, data, null, 0);
         } catch (RemoteException e) {
@@ -366,19 +400,19 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
 
         // Wait for uid's process to go away.
         uidGoneListener.waitForValue(ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE,
-                ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE, WAIT_TIME);
+                ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE);
         assertEquals(ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE,
                 am.getPackageImportance(SIMPLE_PACKAGE_NAME));
 
         // And wait for the uid report to be gone.
-        uidWatcher.waitFor(WatchUidRunner.CMD_GONE, null, WAIT_TIME);
+        uidWatcher.waitFor(WatchUidRunner.CMD_GONE, null);
 
         cmd = "appops set " + SIMPLE_PACKAGE_NAME + " RUN_IN_BACKGROUND deny";
         result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
 
         // This is a side-effect of the app op command.
-        uidWatcher.expect(WatchUidRunner.CMD_IDLE, null, WAIT_TIME);
-        uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "NONE", WAIT_TIME);
+        uidWatcher.expect(WatchUidRunner.CMD_IDLE, null);
+        uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "NONE");
 
         // We don't want to wait for the uid to actually go idle, we can force it now.
         cmd = "am make-uid-idle " + SIMPLE_PACKAGE_NAME;
@@ -410,32 +444,32 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
 
             // Try starting the service now that the app is whitelisted...  should work!
             mContext.startService(serviceIntent);
-            conn.waitForConnect(WAIT_TIME);
+            conn.waitForConnect();
 
             // Also make sure the uid state reports are as expected.
-            uidWatcher.waitFor(WatchUidRunner.CMD_ACTIVE, null, WAIT_TIME);
-            uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
-            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "SVC", WAIT_TIME);
+            uidWatcher.waitFor(WatchUidRunner.CMD_ACTIVE, null);
+            uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_SERVICE);
 
             // Good, now stop the service and give enough time to get off the temp whitelist.
             mContext.stopService(serviceIntent);
-            conn.waitForDisconnect(WAIT_TIME);
+            conn.waitForDisconnect();
 
-            uidWatcher.expect(WatchUidRunner.CMD_CACHED, null, WAIT_TIME);
-            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "CEM", WAIT_TIME);
+            uidWatcher.expect(WatchUidRunner.CMD_CACHED, null);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
 
             executeShellCmd("cmd deviceidle tempwhitelist -r " + SIMPLE_PACKAGE_NAME);
 
             // Going off the temp whitelist causes a spurious proc state report...  that's
             // not ideal, but okay.
-            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "CEM", WAIT_TIME);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
 
             // We don't want to wait for the uid to actually go idle, we can force it now.
             cmd = "am make-uid-idle " + SIMPLE_PACKAGE_NAME;
             result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
 
-            uidWatcher.expect(WatchUidRunner.CMD_IDLE, null, WAIT_TIME);
-            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "CEM", WAIT_TIME);
+            uidWatcher.expect(WatchUidRunner.CMD_IDLE, null);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
 
             // Now that we should be off the temp whitelist, make sure we again can't start.
             failed = false;
@@ -454,17 +488,17 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
 
             // Try starting the service now that the app is whitelisted...  should work!
             mContext.startService(serviceIntent);
-            conn.waitForConnect(WAIT_TIME);
+            conn.waitForConnect();
 
-            uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
-            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "SVC", WAIT_TIME);
+            uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_SERVICE);
 
             // Okay, bring down the service.
             mContext.stopService(serviceIntent);
-            conn.waitForDisconnect(WAIT_TIME);
+            conn.waitForDisconnect();
 
-            uidWatcher.expect(WatchUidRunner.CMD_CACHED, null, WAIT_TIME);
-            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "CEM", WAIT_TIME);
+            uidWatcher.expect(WatchUidRunner.CMD_CACHED, null);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
 
         } finally {
             mContext.stopService(serviceIntent);
@@ -490,8 +524,10 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
      */
     public void testBackgroundCheckStopsService() throws Exception {
         final Parcel data = Parcel.obtain();
-        ServiceConnectionHandler conn = new ServiceConnectionHandler(mContext, mServiceIntent);
-        ServiceConnectionHandler conn2 = new ServiceConnectionHandler(mContext, mService2Intent);
+        ServiceConnectionHandler conn = new ServiceConnectionHandler(mContext, mServiceIntent,
+                WAIT_TIME);
+        ServiceConnectionHandler conn2 = new ServiceConnectionHandler(mContext, mService2Intent,
+                WAIT_TIME);
 
         ActivityManager am = mContext.getSystemService(ActivityManager.class);
 
@@ -508,24 +544,26 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         ApplicationInfo appInfo = mContext.getPackageManager().getApplicationInfo(
                 SIMPLE_PACKAGE_NAME, 0);
 
-        UidImportanceListener uidServiceListener = new UidImportanceListener(appInfo.uid);
+        UidImportanceListener uidServiceListener = new UidImportanceListener(appInfo.uid,
+                WAIT_TIME);
         am.addOnUidImportanceListener(uidServiceListener,
                 ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE);
-        UidImportanceListener uidGoneListener = new UidImportanceListener(appInfo.uid);
+        UidImportanceListener uidGoneListener = new UidImportanceListener(appInfo.uid, WAIT_TIME);
         am.addOnUidImportanceListener(uidGoneListener,
                 ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED);
 
-        WatchUidRunner uidWatcher = new WatchUidRunner(getInstrumentation(), appInfo.uid);
+        WatchUidRunner uidWatcher = new WatchUidRunner(getInstrumentation(), appInfo.uid,
+                WAIT_TIME);
 
         // First kill the process to start out in a stable state.
         mContext.stopService(mServiceIntent);
         mContext.stopService(mService2Intent);
-        conn.bind(WAIT_TIME);
-        conn2.bind(WAIT_TIME);
+        conn.bind();
+        conn2.bind();
         IBinder service = conn.getServiceIBinder();
         IBinder service2 = conn2.getServiceIBinder();
-        conn.unbind(WAIT_TIME);
-        conn2.unbind(WAIT_TIME);
+        conn.unbind();
+        conn2.unbind();
         try {
             service.transact(IBinder.FIRST_CALL_TRANSACTION, data, null, 0);
         } catch (RemoteException e) {
@@ -538,7 +576,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
 
         // Wait for uid's process to go away.
         uidGoneListener.waitForValue(ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE,
-                ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE, WAIT_TIME);
+                ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE);
         assertEquals(ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE,
                 am.getPackageImportance(SIMPLE_PACKAGE_NAME));
 
@@ -549,8 +587,8 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
 
         // This is a side-effect of the app op command.
-        uidWatcher.expect(WatchUidRunner.CMD_IDLE, null, WAIT_TIME);
-        uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "NONE", WAIT_TIME);
+        uidWatcher.expect(WatchUidRunner.CMD_IDLE, null);
+        uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_NONEXISTENT);
 
         // We don't want to wait for the uid to actually go idle, we can force it now.
         cmd = "am make-uid-idle " + SIMPLE_PACKAGE_NAME;
@@ -576,43 +614,43 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             }
 
             // First poke the process into the foreground, so we can avoid background check.
-            conn2.bind(WAIT_TIME);
-            conn2.waitForConnect(WAIT_TIME);
+            conn2.bind();
+            conn2.waitForConnect();
 
             // Wait for process state to reflect running service.
             uidServiceListener.waitForValue(
                     ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE,
-                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_PERCEPTIBLE, WAIT_TIME);
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_PERCEPTIBLE);
             assertEquals(ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE,
                     am.getPackageImportance(SIMPLE_PACKAGE_NAME));
 
             // Also make sure the uid state reports are as expected.
-            uidWatcher.waitFor(WatchUidRunner.CMD_ACTIVE, null, WAIT_TIME);
-            uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
-            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "FGS", WAIT_TIME);
+            uidWatcher.waitFor(WatchUidRunner.CMD_ACTIVE, null);
+            uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
 
-            conn2.unbind(WAIT_TIME);
+            conn2.unbind();
 
             // Wait for process to recover back down to being cached.
             uidServiceListener.waitForValue(ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED,
-                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE, WAIT_TIME);
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE);
             assertEquals(ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED,
                     am.getPackageImportance(SIMPLE_PACKAGE_NAME));
 
-            uidWatcher.waitFor(WatchUidRunner.CMD_CACHED, null, WAIT_TIME);
-            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "CEM", WAIT_TIME);
+            uidWatcher.waitFor(WatchUidRunner.CMD_CACHED, null);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
 
             // Try starting the service now that the app is waiting to idle...  should work!
             mContext.startService(mServiceIntent);
-            conn.waitForConnect(WAIT_TIME);
+            conn.waitForConnect();
 
-            uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
-            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "SVC", WAIT_TIME);
+            uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_SERVICE);
 
             // And also start the second service.
             conn2.startMonitoring();
             mContext.startService(mService2Intent);
-            conn2.waitForConnect(WAIT_TIME);
+            conn2.waitForConnect();
 
             // Force app to go idle now
             cmd = "am make-uid-idle " + SIMPLE_PACKAGE_NAME;
@@ -620,24 +658,24 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
 
             // Wait for services to be stopped by system.
             uidServiceListener.waitForValue(ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED,
-                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE, WAIT_TIME);
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE);
             assertEquals(ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED,
                     am.getPackageImportance(SIMPLE_PACKAGE_NAME));
 
             // And service should be stopped by system, so just make sure it is disconnected.
-            conn.waitForDisconnect(WAIT_TIME);
-            conn2.waitForDisconnect(WAIT_TIME);
+            conn.waitForDisconnect();
+            conn2.waitForDisconnect();
 
-            uidWatcher.expect(WatchUidRunner.CMD_IDLE, null, WAIT_TIME);
+            uidWatcher.expect(WatchUidRunner.CMD_IDLE, null);
             // There may be a transient 'SVC' proc state here.
-            uidWatcher.waitFor(WatchUidRunner.CMD_CACHED, null, WAIT_TIME);
-            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "CEM", WAIT_TIME);
+            uidWatcher.waitFor(WatchUidRunner.CMD_CACHED, null);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
 
         } finally {
             mContext.stopService(mServiceIntent);
             mContext.stopService(mService2Intent);
-            conn.cleanup(WAIT_TIME);
-            conn2.cleanup(WAIT_TIME);
+            conn.cleanup();
+            conn2.cleanup();
 
             uidWatcher.finish();
 
@@ -664,16 +702,17 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
                 SIMPLE_PACKAGE_NAME + SIMPLE_RECEIVER_START_SERVICE);
 
         final ServiceProcessController controller = new ServiceProcessController(mContext,
-                getInstrumentation(), STUB_PACKAGE_NAME, mAllProcesses);
+                getInstrumentation(), STUB_PACKAGE_NAME, mAllProcesses, WAIT_TIME);
         final ServiceConnectionHandler conn = new ServiceConnectionHandler(mContext,
-                mServiceIntent);
+                mServiceIntent, WAIT_TIME);
+        final WatchUidRunner uidWatcher = controller.getUidWatcher();
 
         try {
             // First kill the process to start out in a stable state.
-            controller.ensureProcessGone(WAIT_TIME);
+            controller.ensureProcessGone();
 
             // Do initial setup.
-            controller.denyBackgroundOp(WAIT_TIME);
+            controller.denyBackgroundOp();
             controller.makeUidIdle();
             controller.removeFromWhitelist();
 
@@ -690,18 +729,18 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             }
 
             // Track the uid proc state changes from the broadcast (but not service execution)
-            controller.getUidWatcher().waitFor(WatchUidRunner.CMD_IDLE, null, WAIT_TIME);
-            controller.getUidWatcher().waitFor(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
-            controller.getUidWatcher().expect(WatchUidRunner.CMD_PROCSTATE, "RCVR", WAIT_TIME);
-            controller.getUidWatcher().expect(WatchUidRunner.CMD_CACHED, null, WAIT_TIME);
-            controller.getUidWatcher().expect(WatchUidRunner.CMD_PROCSTATE, "CEM", WAIT_TIME);
+            uidWatcher.waitFor(WatchUidRunner.CMD_IDLE, null, WAIT_TIME);
+            uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_RECEIVER, WAIT_TIME);
+            uidWatcher.expect(WatchUidRunner.CMD_CACHED, null, WAIT_TIME);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY, WAIT_TIME);
 
             // Put app on temporary whitelist to see if this allows the service start.
             controller.tempWhitelist(TEMP_WHITELIST_DURATION_MS);
 
             // Being on the whitelist means the uid is now active.
-            controller.getUidWatcher().expect(WatchUidRunner.CMD_ACTIVE, null, WAIT_TIME);
-            controller.getUidWatcher().expect(WatchUidRunner.CMD_PROCSTATE, "CEM", WAIT_TIME);
+            uidWatcher.expect(WatchUidRunner.CMD_ACTIVE, null, WAIT_TIME);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY, WAIT_TIME);
 
             // Try starting the service now that the app is whitelisted...  should work!
             br.sendAndWait(mContext, broadcastIntent, Activity.RESULT_OK, null, null, WAIT_TIME);
@@ -709,34 +748,34 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             if (brCode != Activity.RESULT_FIRST_USER) {
                 fail("Failed starting service, result=" + brCode);
             }
-            conn.waitForConnect(WAIT_TIME);
+            conn.waitForConnect();
 
             // Also make sure the uid state reports are as expected.
-            controller.getUidWatcher().waitFor(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
+            uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null);
             // We are going to wait until 'SVC', because we may see an intermediate 'RCVR'
             // proc state depending on timing.
-            controller.getUidWatcher().waitFor(WatchUidRunner.CMD_PROCSTATE, "SVC", WAIT_TIME);
+            uidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_SERVICE);
 
             // Good, now stop the service and give enough time to get off the temp whitelist.
             mContext.stopService(mServiceIntent);
-            conn.waitForDisconnect(WAIT_TIME);
+            conn.waitForDisconnect();
 
-            controller.getUidWatcher().expect(WatchUidRunner.CMD_CACHED, null, WAIT_TIME);
-            controller.getUidWatcher().expect(WatchUidRunner.CMD_PROCSTATE, "CEM", WAIT_TIME);
+            uidWatcher.expect(WatchUidRunner.CMD_CACHED, null);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
 
             controller.removeFromTempWhitelist();
 
             // Going off the temp whitelist causes a spurious proc state report...  that's
             // not ideal, but okay.
-            controller.getUidWatcher().expect(WatchUidRunner.CMD_PROCSTATE, "CEM", WAIT_TIME);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
 
             // We don't want to wait for the uid to actually go idle, we can force it now.
             controller.makeUidIdle();
 
-            controller.getUidWatcher().expect(WatchUidRunner.CMD_IDLE, null, WAIT_TIME);
+            uidWatcher.expect(WatchUidRunner.CMD_IDLE, null);
 
             // Make sure the process is gone so we start over fresh.
-            controller.ensureProcessGone(WAIT_TIME);
+            controller.ensureProcessGone();
 
             // Now that we should be off the temp whitelist, make sure we again can't start.
             br.sendAndWait(mContext, broadcastIntent, Activity.RESULT_OK, null, null, WAIT_TIME);
@@ -746,13 +785,13 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             }
 
             // Track the uid proc state changes from the broadcast (but not service execution)
-            controller.getUidWatcher().waitFor(WatchUidRunner.CMD_IDLE, null, WAIT_TIME);
+            uidWatcher.waitFor(WatchUidRunner.CMD_IDLE, null);
             // There could be a transient 'cached' state here before 'uncached' if uid state
             // changes are dispatched before receiver is started.
-            controller.getUidWatcher().waitFor(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
-            controller.getUidWatcher().expect(WatchUidRunner.CMD_PROCSTATE, "RCVR", WAIT_TIME);
-            controller.getUidWatcher().expect(WatchUidRunner.CMD_CACHED, null, WAIT_TIME);
-            controller.getUidWatcher().expect(WatchUidRunner.CMD_PROCSTATE, "CEM", WAIT_TIME);
+            uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_RECEIVER);
+            uidWatcher.expect(WatchUidRunner.CMD_CACHED, null);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
 
             // Now put app on whitelist, should allow service to run.
             controller.addToWhitelist();
@@ -763,18 +802,18 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             if (brCode != Activity.RESULT_FIRST_USER) {
                 fail("Failed starting service, result=" + brCode);
             }
-            conn.waitForConnect(WAIT_TIME);
+            conn.waitForConnect();
 
             // Also make sure the uid state reports are as expected.
-            controller.getUidWatcher().waitFor(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
-            controller.getUidWatcher().waitFor(WatchUidRunner.CMD_PROCSTATE, "SVC", WAIT_TIME);
+            uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null);
+            uidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_SERVICE);
 
             // Okay, bring down the service.
             mContext.stopService(mServiceIntent);
-            conn.waitForDisconnect(WAIT_TIME);
+            conn.waitForDisconnect();
 
-            controller.getUidWatcher().expect(WatchUidRunner.CMD_CACHED, null, WAIT_TIME);
-            controller.getUidWatcher().expect(WatchUidRunner.CMD_PROCSTATE, "CEM", WAIT_TIME);
+            uidWatcher.expect(WatchUidRunner.CMD_CACHED, null);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
 
         } finally {
             mContext.stopService(mServiceIntent);
@@ -793,16 +832,17 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
                 SIMPLE_PACKAGE_NAME + SIMPLE_ACTIVITY_START_SERVICE);
 
         final ServiceProcessController controller = new ServiceProcessController(mContext,
-                getInstrumentation(), STUB_PACKAGE_NAME, mAllProcesses);
+                getInstrumentation(), STUB_PACKAGE_NAME, mAllProcesses, WAIT_TIME);
         final ServiceConnectionHandler conn = new ServiceConnectionHandler(mContext,
-                mServiceIntent);
+                mServiceIntent, WAIT_TIME);
+        final WatchUidRunner uidWatcher = controller.getUidWatcher();
 
         try {
             // First kill the process to start out in a stable state.
-            controller.ensureProcessGone(WAIT_TIME);
+            controller.ensureProcessGone();
 
             // Do initial setup.
-            controller.denyBackgroundOp(WAIT_TIME);
+            controller.denyBackgroundOp();
             controller.makeUidIdle();
             controller.removeFromWhitelist();
 
@@ -819,37 +859,36 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             if (brCode != Activity.RESULT_FIRST_USER) {
                 fail("Failed starting service, result=" + brCode);
             }
-            conn.waitForConnect(WAIT_TIME);
+            conn.waitForConnect();
 
             final String expectedActivityState = (isScreenInteractive() && !isKeyguardLocked())
-                    ? "TOP" : "TPSL";
+                    ? WatchUidRunner.STATE_TOP : WatchUidRunner.STATE_TOP_SLEEPING;
             // Also make sure the uid state reports are as expected.
-            controller.getUidWatcher().waitFor(WatchUidRunner.CMD_ACTIVE, null, WAIT_TIME);
-            controller.getUidWatcher().waitFor(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
-            controller.getUidWatcher().expect(WatchUidRunner.CMD_PROCSTATE,
-                    expectedActivityState, WAIT_TIME);
-            controller.getUidWatcher().expect(WatchUidRunner.CMD_PROCSTATE, "SVC", WAIT_TIME);
+            uidWatcher.waitFor(WatchUidRunner.CMD_ACTIVE, null);
+            uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, expectedActivityState);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_SERVICE);
 
             // Okay, bring down the service.
             mContext.stopService(mServiceIntent);
-            conn.waitForDisconnect(WAIT_TIME);
+            conn.waitForDisconnect();
 
-            controller.getUidWatcher().expect(WatchUidRunner.CMD_CACHED, null, WAIT_TIME);
-            controller.getUidWatcher().expect(WatchUidRunner.CMD_PROCSTATE, "CEM", WAIT_TIME);
+            uidWatcher.expect(WatchUidRunner.CMD_CACHED, null);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
 
             // App isn't yet idle, so we should be able to start the service again.
             mContext.startService(mServiceIntent);
-            conn.waitForConnect(WAIT_TIME);
-            controller.getUidWatcher().waitFor(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
-            controller.getUidWatcher().expect(WatchUidRunner.CMD_PROCSTATE, "SVC", WAIT_TIME);
+            conn.waitForConnect();
+            uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_SERVICE);
 
             // And now fast-forward to the app going idle, service should be stopped.
             controller.makeUidIdle();
-            controller.getUidWatcher().waitFor(WatchUidRunner.CMD_IDLE, null, WAIT_TIME);
+            uidWatcher.waitFor(WatchUidRunner.CMD_IDLE, null);
 
-            conn.waitForDisconnect(WAIT_TIME);
-            controller.getUidWatcher().waitFor(WatchUidRunner.CMD_CACHED, null, WAIT_TIME);
-            controller.getUidWatcher().expect(WatchUidRunner.CMD_PROCSTATE, "CEM", WAIT_TIME);
+            conn.waitForDisconnect();
+            uidWatcher.waitFor(WatchUidRunner.CMD_CACHED, null);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
 
             // No longer should be able to start service.
             boolean failed = false;
@@ -900,14 +939,17 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
 
         // This test is also using UidImportanceListener to make sure the correct
         // heavy-weight state is reported there.
-        UidImportanceListener uidForegroundListener = new UidImportanceListener(appInfo.uid);
+        UidImportanceListener uidForegroundListener = new UidImportanceListener(appInfo.uid,
+                WAIT_TIME);
         am.addOnUidImportanceListener(uidForegroundListener,
                 ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND);
-        UidImportanceListener uidBackgroundListener = new UidImportanceListener(appInfo.uid);
+        UidImportanceListener uidBackgroundListener = new UidImportanceListener(appInfo.uid,
+                WAIT_TIME);
         am.addOnUidImportanceListener(uidBackgroundListener,
                 ActivityManager.RunningAppProcessInfo.IMPORTANCE_CANT_SAVE_STATE-1);
 
-        WatchUidRunner uidWatcher = new WatchUidRunner(getInstrumentation(), appInfo.uid);
+        WatchUidRunner uidWatcher = new WatchUidRunner(getInstrumentation(), appInfo.uid,
+                WAIT_TIME);
 
         try {
             // Start the heavy-weight app, should launch like a normal app.
@@ -916,14 +958,14 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             // Wait for process state to reflect running activity.
             uidForegroundListener.waitForValue(
                     ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND,
-                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND, WAIT_TIME);
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND);
             assertEquals(ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND,
                     am.getPackageImportance(CANT_SAVE_STATE_1_PACKAGE_NAME));
 
             // Also make sure the uid state reports are as expected.
-            uidWatcher.waitFor(WatchUidRunner.CMD_ACTIVE, null, WAIT_TIME);
-            uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
-            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "TOP", WAIT_TIME);
+            uidWatcher.waitFor(WatchUidRunner.CMD_ACTIVE, null);
+            uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP);
 
             // Now go to home, leaving the app.  It should be put in the heavy weight state.
             mContext.startActivity(homeIntent);
@@ -931,31 +973,33 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             // Wait for process to go down to background heavy-weight.
             uidBackgroundListener.waitForValue(
                     ActivityManager.RunningAppProcessInfo.IMPORTANCE_CANT_SAVE_STATE,
-                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_CANT_SAVE_STATE, WAIT_TIME);
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_CANT_SAVE_STATE);
             assertEquals(ActivityManager.RunningAppProcessInfo.IMPORTANCE_CANT_SAVE_STATE,
                     am.getPackageImportance(CANT_SAVE_STATE_1_PACKAGE_NAME));
 
-            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "HVY", WAIT_TIME);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_HEAVY_WEIGHT);
 
             // While in background, should go in to normal idle state.
             // Force app to go idle now
             cmd = "am make-uid-idle " + CANT_SAVE_STATE_1_PACKAGE_NAME;
             result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
-            uidWatcher.expect(WatchUidRunner.CMD_IDLE, null, WAIT_TIME);
+            uidWatcher.expect(WatchUidRunner.CMD_IDLE, null);
 
             // Switch back to heavy-weight app to see if it correctly returns to foreground.
-            startActivityAndWaitForShow(activityIntent);
+            mContext.startActivity(activityIntent);
 
             // Wait for process state to reflect running activity.
             uidForegroundListener.waitForValue(
                     ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND,
-                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND, WAIT_TIME);
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND);
             assertEquals(ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND,
                     am.getPackageImportance(CANT_SAVE_STATE_1_PACKAGE_NAME));
 
             // Also make sure the uid state reports are as expected.
-            uidWatcher.waitFor(WatchUidRunner.CMD_ACTIVE, null, WAIT_TIME);
-            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "TOP", WAIT_TIME);
+            uidWatcher.waitFor(WatchUidRunner.CMD_ACTIVE, null);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP);
+
+            waitForAppFocus(CANT_SAVE_STATE_1_PACKAGE_NAME, WAIT_TIME);
 
             // Exit activity, check to see if we are now cached.
             getInstrumentation().getUiAutomation().performGlobalAction(
@@ -964,18 +1008,18 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             // Wait for process to become cached
             uidBackgroundListener.waitForValue(
                     ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED,
-                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED, WAIT_TIME);
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED);
             assertEquals(ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED,
                     am.getPackageImportance(CANT_SAVE_STATE_1_PACKAGE_NAME));
 
-            uidWatcher.expect(WatchUidRunner.CMD_CACHED, null, WAIT_TIME);
-            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "CRE", WAIT_TIME);
+            uidWatcher.expect(WatchUidRunner.CMD_CACHED, null);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_RECENT);
 
             // While in background, should go in to normal idle state.
             // Force app to go idle now
             cmd = "am make-uid-idle " + CANT_SAVE_STATE_1_PACKAGE_NAME;
             result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
-            uidWatcher.expect(WatchUidRunner.CMD_IDLE, null, WAIT_TIME);
+            uidWatcher.expect(WatchUidRunner.CMD_IDLE, null);
 
         } finally {
             uidWatcher.finish();
@@ -1021,26 +1065,28 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
 
         ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
                 CANT_SAVE_STATE_1_PACKAGE_NAME, 0);
-        WatchUidRunner uid1Watcher = new WatchUidRunner(getInstrumentation(), app1Info.uid);
+        WatchUidRunner uid1Watcher = new WatchUidRunner(getInstrumentation(), app1Info.uid,
+                WAIT_TIME);
 
         ApplicationInfo app2Info = mContext.getPackageManager().getApplicationInfo(
                 CANT_SAVE_STATE_2_PACKAGE_NAME, 0);
-        WatchUidRunner uid2Watcher = new WatchUidRunner(getInstrumentation(), app2Info.uid);
+        WatchUidRunner uid2Watcher = new WatchUidRunner(getInstrumentation(), app2Info.uid,
+                WAIT_TIME);
 
         try {
             // Start the first heavy-weight app, should launch like a normal app.
             mContext.startActivity(activity1Intent);
 
             // Make sure the uid state reports are as expected.
-            uid1Watcher.waitFor(WatchUidRunner.CMD_ACTIVE, null, WAIT_TIME);
-            uid1Watcher.waitFor(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
-            uid1Watcher.expect(WatchUidRunner.CMD_PROCSTATE, "TOP", WAIT_TIME);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_ACTIVE, null);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_UNCACHED, null);
+            uid1Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP);
 
             // Now go to home, leaving the app.  It should be put in the heavy weight state.
             mContext.startActivity(homeIntent);
 
             // Wait for process to go down to background heavy-weight.
-            uid1Watcher.expect(WatchUidRunner.CMD_PROCSTATE, "HVY", WAIT_TIME);
+            uid1Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_HEAVY_WEIGHT);
 
             // Start the second heavy-weight app, should ask us what to do with the two apps
             startActivityAndWaitForShow(activity2Intent);
@@ -1050,11 +1096,11 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             device.waitForIdle();
 
             // App should now be back in foreground.
-            uid1Watcher.expect(WatchUidRunner.CMD_PROCSTATE, "TOP", WAIT_TIME);
+            uid1Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP);
 
             // Return to home.
             mContext.startActivity(homeIntent);
-            uid1Watcher.expect(WatchUidRunner.CMD_PROCSTATE, "HVY", WAIT_TIME);
+            uid1Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_HEAVY_WEIGHT);
 
             // Again try starting second heavy-weight app to get prompt.
             startActivityAndWaitForShow(activity2Intent);
@@ -1064,32 +1110,32 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             device.waitForIdle();
 
             // The original app should now become cached.
-            uid1Watcher.expect(WatchUidRunner.CMD_CACHED, null, WAIT_TIME);
-            uid1Watcher.expect(WatchUidRunner.CMD_PROCSTATE, "CRE", WAIT_TIME);
+            uid1Watcher.expect(WatchUidRunner.CMD_CACHED, null);
+            uid1Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_RECENT);
 
             // And the new app should start.
-            uid2Watcher.waitFor(WatchUidRunner.CMD_ACTIVE, null, WAIT_TIME);
-            uid2Watcher.waitFor(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
-            uid2Watcher.expect(WatchUidRunner.CMD_PROCSTATE, "TOP", WAIT_TIME);
+            uid2Watcher.waitFor(WatchUidRunner.CMD_ACTIVE, null);
+            uid2Watcher.waitFor(WatchUidRunner.CMD_UNCACHED, null);
+            uid2Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP);
 
             // Make sure the original app is idle for cleanliness
             cmd = "am make-uid-idle " + CANT_SAVE_STATE_1_PACKAGE_NAME;
             result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
-            uid1Watcher.expect(WatchUidRunner.CMD_IDLE, null, WAIT_TIME);
+            uid1Watcher.expect(WatchUidRunner.CMD_IDLE, null);
 
             // Return to home.
             mContext.startActivity(homeIntent);
-            uid2Watcher.expect(WatchUidRunner.CMD_PROCSTATE, "HVY", WAIT_TIME);
+            uid2Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_HEAVY_WEIGHT);
 
             // Try starting the first heavy weight app, but return to the existing second.
             startActivityAndWaitForShow(activity1Intent);
             maybeClick(device, new UiSelector().resourceId("android:id/switch_old"));
             device.waitForIdle();
-            uid2Watcher.expect(WatchUidRunner.CMD_PROCSTATE, "TOP", WAIT_TIME);
+            uid2Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP);
 
             // Return to home.
             mContext.startActivity(homeIntent);
-            uid2Watcher.expect(WatchUidRunner.CMD_PROCSTATE, "HVY", WAIT_TIME);
+            uid2Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_HEAVY_WEIGHT);
 
             // Again start the first heavy weight app, this time actually switching to it
             startActivityAndWaitForShow(activity1Intent);
@@ -1097,19 +1143,20 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             device.waitForIdle();
 
             // The second app should now become cached.
-            uid2Watcher.expect(WatchUidRunner.CMD_CACHED, null, WAIT_TIME);
-            uid2Watcher.expect(WatchUidRunner.CMD_PROCSTATE, "CRE", WAIT_TIME);
+            uid2Watcher.expect(WatchUidRunner.CMD_CACHED, null);
+            uid2Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_RECENT);
 
             // And the first app should start.
-            uid1Watcher.waitFor(WatchUidRunner.CMD_ACTIVE, null, WAIT_TIME);
-            uid1Watcher.waitFor(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
-            uid1Watcher.expect(WatchUidRunner.CMD_PROCSTATE, "TOP", WAIT_TIME);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_ACTIVE, null);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_UNCACHED, null);
+            uid1Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP);
 
             // Exit activity, check to see if we are now cached.
+            waitForAppFocus(CANT_SAVE_STATE_1_PACKAGE_NAME, WAIT_TIME);
             getInstrumentation().getUiAutomation().performGlobalAction(
                     AccessibilityService.GLOBAL_ACTION_BACK);
-            uid1Watcher.expect(WatchUidRunner.CMD_CACHED, null, WAIT_TIME);
-            uid1Watcher.expect(WatchUidRunner.CMD_PROCSTATE, "CRE", WAIT_TIME);
+            uid1Watcher.expect(WatchUidRunner.CMD_CACHED, null);
+            uid1Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_RECENT);
 
             // Make both apps idle for cleanliness.
             cmd = "am make-uid-idle " + CANT_SAVE_STATE_1_PACKAGE_NAME;

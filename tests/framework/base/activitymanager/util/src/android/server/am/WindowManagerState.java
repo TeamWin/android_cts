@@ -391,7 +391,7 @@ public class WindowManagerState {
         return mFocusedWindow;
     }
 
-    String getFocusedApp() {
+    public String getFocusedApp() {
         return mFocusedApp;
     }
 
