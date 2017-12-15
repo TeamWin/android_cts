@@ -566,4 +566,11 @@ public class CommandReceiverActivity extends Activity {
             mDpm.removeUser(mAdmin, userHandle);
         }
     }
+
+    public static Intent createSetUserRestrictionIntent(String restriction, boolean enforced) {
+        return new Intent(ACTION_EXECUTE_COMMAND)
+                .putExtra(EXTRA_COMMAND,COMMAND_SET_USER_RESTRICTION)
+                .putExtra(EXTRA_USER_RESTRICTION, restriction)
+                .putExtra(EXTRA_ENFORCED, enforced);
+    }
 }

@@ -49,7 +49,8 @@ public class UserRestrictions {
         UserManager.DISALLOW_REMOVE_MANAGED_PROFILE,
         UserManager.DISALLOW_REMOVE_USER,
         UserManager.DISALLOW_SHARE_LOCATION,
-        UserManager.DISALLOW_UNINSTALL_APPS
+        UserManager.DISALLOW_UNINSTALL_APPS,
+        UserManager.DISALLOW_UNIFIED_PASSWORD,
     };
 
     private static final ArrayMap<String, UserRestrictionItem> USER_RESTRICTION_ITEMS;
@@ -73,7 +74,8 @@ public class UserRestrictions {
             R.string.disallow_remove_managed_profile,
             R.string.disallow_remove_user,
             R.string.disallow_share_location,
-            R.string.disallow_uninstall_apps
+            R.string.disallow_uninstall_apps,
+            R.string.disallow_unified_challenge,
         };
 
         final int[] restrictionActions = new int[] {
@@ -95,7 +97,8 @@ public class UserRestrictions {
             R.string.disallow_remove_managed_profile_action,
             R.string.disallow_remove_user_action,
             R.string.disallow_share_location_action,
-            R.string.disallow_uninstall_apps_action
+            R.string.disallow_uninstall_apps_action,
+            R.string.disallow_unified_challenge_action,
         };
 
         final String[] settingsIntentActions = new String[] {
@@ -118,6 +121,7 @@ public class UserRestrictions {
             Settings.ACTION_SETTINGS,
             Settings.ACTION_LOCATION_SOURCE_SETTINGS,
             Settings.ACTION_APPLICATION_SETTINGS,
+            Settings.ACTION_SECURITY_SETTINGS,
         };
 
         if (RESTRICTION_IDS_FOR_POLICY_TRANSPARENCY.length != restrictionLabels.length
@@ -143,6 +147,7 @@ public class UserRestrictions {
         ALSO_VALID_FOR_PO_POLICY_TRANSPARENCY.add(UserManager.DISALLOW_UNINSTALL_APPS);
         ALSO_VALID_FOR_PO_POLICY_TRANSPARENCY.add(UserManager.DISALLOW_MODIFY_ACCOUNTS);
         ALSO_VALID_FOR_PO_POLICY_TRANSPARENCY.add(UserManager.DISALLOW_SHARE_LOCATION);
+        ALSO_VALID_FOR_PO_POLICY_TRANSPARENCY.add(UserManager.DISALLOW_UNIFIED_PASSWORD);
     }
 
     public static String getRestrictionLabel(Context context, String restriction) {
@@ -168,7 +173,8 @@ public class UserRestrictions {
             ArrayList<String> result = new ArrayList<String>();
             // They are all valid except for DISALLOW_REMOVE_MANAGED_PROFILE
             for (String st : RESTRICTION_IDS_FOR_POLICY_TRANSPARENCY) {
-                if (!st.equals(UserManager.DISALLOW_REMOVE_MANAGED_PROFILE)) {
+                if (!st.equals(UserManager.DISALLOW_REMOVE_MANAGED_PROFILE)
+                        && !st.equals(UserManager.DISALLOW_UNIFIED_PASSWORD)) {
                     result.add(st);
                 }
             }
