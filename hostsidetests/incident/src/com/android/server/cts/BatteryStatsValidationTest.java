@@ -266,7 +266,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testBleScans() throws Exception {
-        if (isTV() || !hasFeature(FEATURE_BLUETOOTH_LE, true)) {
+        if (noBattery() || !hasFeature(FEATURE_BLUETOOTH_LE, true)) {
             return;
         }
 
@@ -290,7 +290,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
 
 
     public void testUnoptimizedBleScans() throws Exception {
-        if (isTV() || !hasFeature(FEATURE_BLUETOOTH_LE, true)) {
+        if (noBattery() || !hasFeature(FEATURE_BLUETOOTH_LE, true)) {
             return;
         }
         batteryOnScreenOff();
@@ -341,7 +341,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testGpsUpdates() throws Exception {
-        if (isTV() || !hasFeature(FEATURE_LOCATION_GPS, true)) {
+        if (noBattery() || !hasFeature(FEATURE_LOCATION_GPS, true)) {
             return;
         }
 
@@ -380,7 +380,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testJobBgVsFg() throws Exception {
-        if (isTV()) {
+        if (noBattery()) {
             return;
         }
         batteryOnScreenOff();
@@ -403,7 +403,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testSyncBgVsFg() throws Exception {
-        if (isTV()) {
+        if (noBattery()) {
             return;
         }
         batteryOnScreenOff();
@@ -631,9 +631,14 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         return String.format("Completed performing %s for request %s", actionValue, requestCode);
     }
 
-    /** Determine if device is just a TV and is not expected to have proper batterystats. */
-    private boolean isTV() throws Exception {
-        return hasFeature(FEATURE_LEANBACK_ONLY, false);
+    /** Determine if device has no battery and is not expected to have proper batterystats. */
+    private boolean noBattery() throws Exception {
+        final String batteryinfo = getDevice().executeShellCommand("dumpsys battery");
+        boolean hasBattery = batteryinfo.contains("present: true");
+        if (!hasBattery) {
+            LogUtil.CLog.w("Device does not have a battery");
+        }
+        return !hasBattery;
     }
 
     /**
