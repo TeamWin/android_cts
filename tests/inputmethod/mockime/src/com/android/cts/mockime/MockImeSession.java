@@ -199,7 +199,7 @@ public class MockImeSession implements AutoCloseable {
                 .getInputMethodList()
                 .stream()
                 .anyMatch(info -> getMockImeComponentName().equals(info.getComponent()))) {
-            executeShellCommand(mUiAutomation, "ime reset-ime");
+            executeShellCommand(mUiAutomation, "ime reset");
         }
         if (mContext.getSystemService(InputMethodManager.class)
                 .getEnabledInputMethodList()
@@ -257,7 +257,7 @@ public class MockImeSession implements AutoCloseable {
      * selected next is up to the system.
      */
     public void close() throws Exception {
-        executeShellCommand(mUiAutomation, "ime reset-ime");
+        executeShellCommand(mUiAutomation, "ime reset");
 
         PollingCheck.check("Make sure that MockIME becomes unavailable", TIMEOUT, () ->
                 mContext.getSystemService(InputMethodManager.class)
