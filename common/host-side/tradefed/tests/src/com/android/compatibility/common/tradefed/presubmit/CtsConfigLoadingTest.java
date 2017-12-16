@@ -32,6 +32,8 @@ import com.android.tradefed.testtype.IRemoteTest;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -43,6 +45,7 @@ import java.util.Set;
 /**
  * Test that configuration in CTS can load and have expected properties.
  */
+@RunWith(JUnit4.class)
 public class CtsConfigLoadingTest {
 
     private static final String METADATA_COMPONENT = "component";
@@ -171,6 +174,13 @@ public class CtsConfigLoadingTest {
             Assert.assertTrue(String.format("Module config contains unknown \"component\" metadata "
                     + "field \"%s\", supported ones are: %s\nconfig: %s",
                     cmp, KNOWN_COMPONENTS, config), KNOWN_COMPONENTS.contains(cmp));
+
+            // Ensure each CTS module is tagged with <option name="test-suite-tag" value="cts" />
+            Assert.assertTrue(String.format(
+                    "Module config %s does not contains "
+                    + "'<option name=\"test-suite-tag\" value=\"cts\" />'", config.getName()),
+                    cd.getSuiteTags().contains("cts"));
+
             // Check not-shardable: JarHostTest cannot create empty shards so it should never need
             // to be not-shardable.
             if (cd.isNotShardable()) {
