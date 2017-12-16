@@ -31,15 +31,18 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.IBinder;
 import android.os.Process;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.text.TextUtils;
+import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.cts.util.TestActivity;
 import android.view.inputmethod.cts.util.TestUtils;
+import android.view.inputmethod.cts.util.WindowFocusStealer;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
@@ -302,6 +305,68 @@ public class FocusHandlingTest {
             TestUtils.waitOnMainUntil(
                     () -> TextUtils.equals(editText.getText(), "Done!"), TIMEOUT);
             instrumentation.runOnMainSync(() -> editText.setText(""));
+        }
+    }
+
+    /**
+     * Test case for Bug 70629102.
+     *
+     * {@link InputMethodManager#restartInput(View)} can be called even when another process
+     * temporarily owns focused window. {@link InputMethodManager} should continue to work after
+     * the IME target application gains window focus again.
+     */
+    @Test
+    public void testRestartInputWhileOtherProcessHasWindowFocus() throws Exception {
+        final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        try(MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getContext(),
+                instrumentation.getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final EditText editText = launchTestActivity();
+            instrumentation.runOnMainSync(() -> editText.requestFocus());
+
+            // Wait until the MockIme gets bound to the TestActivity.
+            expectBindInput(stream, Process.myPid(), TIMEOUT);
+
+            expectEvent(stream, event -> {
+                if (!TextUtils.equals("onStartInput", event.getEventName())) {
+                    return false;
+                }
+                final EditorInfo editorInfo = event.getArguments().getParcelable("editorInfo");
+                return TextUtils.equals(TEST_MARKER, editorInfo.privateImeOptions);
+            }, TIMEOUT);
+
+            // Get app window token
+            final IBinder appWindowToken = TestUtils.getOnMainSync(
+                    () -> editText.getApplicationWindowToken());
+
+            try (WindowFocusStealer focusStealer =
+                         WindowFocusStealer.connect(instrumentation.getTargetContext(), TIMEOUT)) {
+
+                focusStealer.stealWindowFocus(appWindowToken, TIMEOUT);
+
+                // Wait until the edit text loses window focus.
+                TestUtils.waitOnMainUntil(() -> !editText.hasWindowFocus(), TIMEOUT);
+
+                // Call InputMethodManager#restartInput()
+                instrumentation.runOnMainSync(() -> {
+                    editText.getContext()
+                            .getSystemService(InputMethodManager.class)
+                            .restartInput(editText);
+                });
+            }
+
+            // Wait until the edit text gains window focus again.
+            TestUtils.waitOnMainUntil(() -> editText.hasWindowFocus(), TIMEOUT);
+
+            // Make sure that InputConnection#commitText() still works.
+            final ImeCommand command = imeSession.callCommitText("test commit", 1);
+            expectCommand(stream, command, TIMEOUT);
+
+            TestUtils.waitOnMainUntil(
+                    () -> TextUtils.equals(editText.getText(), "test commit"), TIMEOUT);
         }
     }
 }
