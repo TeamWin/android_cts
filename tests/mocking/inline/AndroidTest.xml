@@ -15,6 +15,7 @@
   ~ limitations under the License.
   -->
 <configuration description="Config for Mockito inline mocking test cases">
+    <option name="test-suite-tag" value="cts" />
     <option name="config-descriptor:metadata" key="component" value="framework" />
 
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">

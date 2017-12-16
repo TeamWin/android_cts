@@ -15,6 +15,7 @@
 -->
 
 <configuration description="Config for CtsGpuToolsHostTestCases">
+    <option name="test-suite-tag" value="cts" />
     <option name="config-descriptor:metadata" key="component" value="misc" />
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
