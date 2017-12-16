@@ -56,6 +56,11 @@ public final class ShellCommandUtils {
         return "ime disable " + imeId;
     }
 
+    /** Command to reset currently selected/enabled IMEs to the default ones. */
+    public static String resetImes() {
+        return "ime reset";
+    }
+
     /** Command to delete all records of IME event provider. */
     public static String deleteContent(final String contentUri) {
         return "content delete --uri " + contentUri;

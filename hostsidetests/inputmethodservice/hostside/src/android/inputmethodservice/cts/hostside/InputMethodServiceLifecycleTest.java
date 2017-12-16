@@ -47,21 +47,18 @@ import org.junit.runner.RunWith;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
 
-    private String mDefaultImeId;
-
     @Before
     public void setUp() throws Exception {
         // Skip whole tests when DUT has no android.software.input_methods feature.
         assumeTrue(Boolean.parseBoolean(shell(
                 ShellCommandUtils.hasFeature(ShellCommandUtils.FEATURE_INPUT_METHODS))));
-        mDefaultImeId = shell(ShellCommandUtils.getCurrentIme());
         cleanUpTestImes();
         shell(ShellCommandUtils.deleteContent(EventTableConstants.CONTENT_URI));
     }
 
     @After
     public void tearDown() throws Exception {
-        shell(ShellCommandUtils.setCurrentIme(mDefaultImeId));
+        shell(ShellCommandUtils.resetImes());
     }
 
     @Test
