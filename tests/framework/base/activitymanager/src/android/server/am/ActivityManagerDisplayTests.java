@@ -1924,6 +1924,9 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
         // Unlock the device and tap on the middle of the primary display
         wakeUpDevice();
         executeShellCommand("wm dismiss-keyguard");
+        mAmWmState.waitForKeyguardGone();
+        mAmWmState.waitForValidState(new WaitForValidActivityState.Builder(TEST_ACTIVITY_NAME)
+                .build());
         final ReportedDisplayMetrics displayMetrics = getDisplayMetrics();
         final int width = displayMetrics.getWidth();
         final int height = displayMetrics.getHeight();
