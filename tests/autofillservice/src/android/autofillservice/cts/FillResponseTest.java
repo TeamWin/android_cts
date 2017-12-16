@@ -176,6 +176,19 @@ public class FillResponseTest {
     }
 
     @Test
+    public void testBuilder_setFieldClassificationIds_setsFlag() {
+        mBuilder.setFieldClassificationIds(mAutofillId);
+        assertThat(mBuilder.build().getFlags()).isEqualTo(FLAG_TRACK_CONTEXT_COMMITED);
+    }
+
+    @Test
+    public void testBuilder_setFieldClassificationIds_addsFlag() {
+        mBuilder.setFlags(FLAG_DISABLE_ACTIVITY_ONLY).setFieldClassificationIds(mAutofillId);
+        assertThat(mBuilder.build().getFlags())
+                .isEqualTo(FLAG_TRACK_CONTEXT_COMMITED | FLAG_DISABLE_ACTIVITY_ONLY);
+    }
+
+    @Test
     public void testBuild_invalid() {
         assertThrows(IllegalStateException.class, () -> mBuilder.build());
     }
