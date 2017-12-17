@@ -17,15 +17,11 @@
 package android.inputmethodservice.cts.hostside;
 
 import static android.inputmethodservice.cts.common.DeviceEventConstants.ACTION_DEVICE_EVENT;
+import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.TEST_START;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.EXTRA_EVENT_SENDER;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.EXTRA_EVENT_TYPE;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.RECEIVER_COMPONENT;
-import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.TEST_START;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
@@ -44,8 +40,14 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
+
+    private static final long TIMEOUT = TimeUnit.MICROSECONDS.toMillis(20000);
+    private static final long POLLING_INTERVAL = TimeUnit.MICROSECONDS.toMillis(200);
 
     @Before
     public void setUp() throws Exception {
@@ -84,17 +86,8 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         shell(ShellCommandUtils.setCurrentIme(Ime1Constants.IME_ID));
         assertTrue(runDeviceTestMethod(testCreateIme1));
 
-        final TestInfo testIme1IsNotCurrentIme = new TestInfo(DeviceTestConstants.PACKAGE,
-                DeviceTestConstants.TEST_CLASS, DeviceTestConstants.TEST_IME1_IS_NOT_CURRENT_IME);
-        sendTestStartEvent(testIme1IsNotCurrentIme);
         uninstallPackageIfExists(Ime1Constants.PACKAGE);
-        assertTrue(runDeviceTestMethod(testIme1IsNotCurrentIme));
-
-        // There should be a new IME that is different from the IME1
-        final String newIme = shell(ShellCommandUtils.getCurrentIme());
-        assertNotNull(newIme);
-        assertFalse(newIme.isEmpty());
-        assertNotEquals(newIme, Ime1Constants.IME_ID);
+        assertImeNotSelectedInSecureSettings(Ime1Constants.IME_ID, TIMEOUT);
     }
 
     @Test
@@ -107,17 +100,8 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         shell(ShellCommandUtils.setCurrentIme(Ime1Constants.IME_ID));
         assertTrue(runDeviceTestMethod(testCreateIme1));
 
-        final TestInfo testIme1IsNotCurrentIme = new TestInfo(DeviceTestConstants.PACKAGE,
-                DeviceTestConstants.TEST_CLASS, DeviceTestConstants.TEST_IME1_IS_NOT_CURRENT_IME);
-        sendTestStartEvent(testIme1IsNotCurrentIme);
         shell(ShellCommandUtils.disableIme(Ime1Constants.IME_ID));
-        assertTrue(runDeviceTestMethod(testIme1IsNotCurrentIme));
-
-        // There should be a new IME that is different from the IME1
-        final String newIme = shell(ShellCommandUtils.getCurrentIme());
-        assertNotNull(newIme);
-        assertFalse(newIme.isEmpty());
-        assertNotEquals(newIme, Ime1Constants.IME_ID);
+        assertImeNotSelectedInSecureSettings(Ime1Constants.IME_ID, TIMEOUT);
     }
 
     private void sendTestStartEvent(final TestInfo deviceTest) throws Exception {
@@ -145,6 +129,26 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
     private void uninstallPackageIfExists(final String packageName) throws Exception {
         if (isPackageInstalled(getDevice(), packageName)) {
             uninstallPackage(getDevice(), packageName);
+        }
+    }
+
+    /**
+     * Makes sure that the given IME is not in the stored in the secure settings as the current IME.
+     *
+     * @param imeId IME ID to be monitored
+     * @param timeout timeout in millisecond
+     */
+    private void assertImeNotSelectedInSecureSettings(String imeId, long timeout) throws Exception {
+        while (true) {
+            if (timeout < 0) {
+                throw new TimeoutException(imeId + " is still the current IME even after "
+                        + timeout + " msec.");
+            }
+            if (!imeId.equals(shell(ShellCommandUtils.getCurrentIme()))) {
+                break;
+            }
+            Thread.sleep(POLLING_INTERVAL);
+            timeout -= POLLING_INTERVAL;
         }
     }
 }
