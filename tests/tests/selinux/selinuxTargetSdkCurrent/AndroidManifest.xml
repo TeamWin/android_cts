@@ -16,7 +16,7 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.selinuxtargetsdk2.cts">
+    package="android.selinuxtargetsdkcurrent.cts">
 
     <!-- This app tests that apps with current targetSdkValue are placed in the
          untrusted_app selinux domain -->
@@ -27,7 +27,7 @@
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
-                     android:targetPackage="android.selinuxtargetsdk2.cts"
+                     android:targetPackage="android.selinuxtargetsdkcurrent.cts"
                      android:label="CTS tests for permissions enforce by selinux based on targetSdkVersion">
         <meta-data android:name="listener"
             android:value="com.android.cts.runner.CtsTestRunListener" />

@@ -12,19 +12,34 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
+
 LOCAL_PATH:= $(call my-dir)
+
 include $(CLEAR_VARS)
 LOCAL_MODULE_TAGS := tests
-LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+LOCAL_MULTILIB := both
+
 LOCAL_STATIC_JAVA_LIBRARIES := \
+    ctstestrunner \
     compatibility-device-util \
-    ctstestrunner
-LOCAL_JAVA_LIBRARIES := android.test.base.stubs
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
-LOCAL_PACKAGE_NAME := CtsSelinuxTargetSdk2TestCases
-LOCAL_SDK_VERSION := current
+    legacy-android-test \
+
+LOCAL_JAVA_LIBRARIES := android.test.runner
+
+LOCAL_JNI_SHARED_LIBRARIES := \
+    libc++ \
+    libcrypto \
+    libcts_jni \
+    libctsselinux_jni \
+    libnativehelper \
+    libnativehelper_compat_libc++ \
+    libpackagelistparser \
+    libpcre2 \
+    libselinux \
+
+LOCAL_SRC_FILES := $(call all-java-files-under, src common)
+LOCAL_PACKAGE_NAME := CtsSelinuxTargetSdk27TestCases
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 include $(BUILD_CTS_PACKAGE)
 
 include $(call all-makefiles-under,$(LOCAL_PATH))

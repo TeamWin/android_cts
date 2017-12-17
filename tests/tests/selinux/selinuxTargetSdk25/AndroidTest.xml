@@ -19,10 +19,10 @@
     <option name="not-shardable" value="true" />
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
-        <option name="test-file-name" value="CtsSelinuxTargetSdkTestCases.apk" />
+        <option name="test-file-name" value="CtsSelinuxTargetSdk25TestCases.apk" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
-        <option name="package" value="android.selinuxtargetsdk.cts" />
+        <option name="package" value="android.selinuxtargetsdk25.cts" />
         <option name="runtime-hint" value="2m" />
     </test>
 </configuration>
