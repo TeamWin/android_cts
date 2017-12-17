@@ -6,7 +6,9 @@ import static android.support.test.runner.lifecycle.Stage.STOPPED;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.platform.test.annotations.Presubmit;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.FlakyTest;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 
@@ -14,11 +16,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
- * Build/Install/Run: atest CtsActivityManagerDeviceTestCases:ActivityLifecycleTests
+ * Build/Install/Run:
+ *     atest CtsActivityManagerDeviceTestCases:ActivityLifecycleTests
  */
-// TODO(lifecycler): Add to @Presubmit.
 @MediumTest
 @RunWith(AndroidJUnit4.class)
+@Presubmit
 public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
 
     @Test
@@ -44,6 +47,8 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     }
 
     @Test
+    @FlakyTest
+    // TODO: b/70649184
     public void testLaunchAndDestroy() throws Exception {
         final Activity activity = mFirstActivityTestRule.launchActivity(new Intent());
 

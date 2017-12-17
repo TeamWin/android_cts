@@ -25,7 +25,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.platform.test.annotations.Presubmit;
 import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.FlakyTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.DisplayMetrics;
@@ -39,8 +38,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
- * Build: mmma -j32 cts/tests/framework/base/activitymanager
- * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.AspectRatioTests
+ * Build/Install/Run:
+ *     atest CtsActivityManagerDeviceTestCases:AspectRatioTests
  */
 @RunWith(AndroidJUnit4.class)
 @Presubmit

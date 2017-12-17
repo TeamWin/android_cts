@@ -16,8 +16,11 @@
 
 package android.server.am;
 
+import static android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP;
+
 import static org.junit.Assert.assertTrue;
 
+import android.content.ComponentName;
 import android.os.Build;
 
 import org.junit.After;
@@ -27,18 +30,23 @@ import org.junit.Test;
  * Ensure that compatibility dialog is shown when launching an application with
  * an unsupported smallest width.
  *
- * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.DisplaySizeTest
+ * <p>Build/Install/Run:
+ *     atest CtsActivityManagerDeviceTestCases:DisplaySizeTest
  */
 public class DisplaySizeTest extends ActivityManagerTestBase {
     private static final String DENSITY_PROP_DEVICE = "ro.sf.lcd_density";
     private static final String DENSITY_PROP_EMULATOR = "qemu.sf.lcd_density";
 
-    private static final String AM_START_COMMAND = "am start -n %s/%s.%s";
-    private static final String AM_FORCE_STOP = "am force-stop %s";
+    private static final ComponentName TEST_ACTIVITY = ComponentName.createRelative(
+            "android.server.am", ".TestActivity");
+    private static final ComponentName SMALLEST_WIDTH_ACTIVITY = ComponentName.createRelative(
+            "android.server.am.displaysize", ".SmallestWidthActivity");
+    /** @see android.server.am.displaysize.SmallestWidthActivity#EXTRA_LAUNCH_ANOTHER_ACTIVITY */
+    private static final String EXTRA_LAUNCH_ANOTHER_ACTIVITY = "launch_another_activity";
 
-    private static final int ACTIVITY_TIMEOUT_MILLIS = 1000;
-    private static final int WINDOW_TIMEOUT_MILLIS = 1000;
+    /** @see com.android.server.am.UnsupportedDisplaySizeDialog */
+    private static final String UNSUPPORTED_DISPLAY_SIZE_DIALOG_NAME =
+            "UnsupportedDisplaySizeDialog";
 
     @After
     @Override
@@ -47,50 +55,52 @@ public class DisplaySizeTest extends ActivityManagerTestBase {
         resetDensity();
 
         // Ensure app process is stopped.
-        forceStopPackage("android.server.am.displaysize");
-        forceStopPackage("android.server.am");
+        stopTestPackage(SMALLEST_WIDTH_ACTIVITY);
+        stopTestPackage(TEST_ACTIVITY);
     }
 
     @Test
     public void testCompatibilityDialog() throws Exception {
         // Launch some other app (not to perform density change on launcher).
-        startActivity("android.server.am", "TestActivity");
-        verifyWindowDisplayed("TestActivity", ACTIVITY_TIMEOUT_MILLIS);
+        executeShellCommand(getAmStartCmd(TEST_ACTIVITY));
+        assertActivityDisplayed(TEST_ACTIVITY);
 
         setUnsupportedDensity();
 
         // Launch target app.
-        startActivity("android.server.am.displaysize", "SmallestWidthActivity");
-        verifyWindowDisplayed("SmallestWidthActivity", ACTIVITY_TIMEOUT_MILLIS);
-        verifyWindowDisplayed("UnsupportedDisplaySizeDialog", WINDOW_TIMEOUT_MILLIS);
+        executeShellCommand(getAmStartCmd(SMALLEST_WIDTH_ACTIVITY));
+        assertActivityDisplayed(SMALLEST_WIDTH_ACTIVITY);
+        assertWindowDisplayed(UNSUPPORTED_DISPLAY_SIZE_DIALOG_NAME);
     }
 
     @Test
     public void testCompatibilityDialogWhenFocused() throws Exception {
-        startActivity("android.server.am.displaysize", "SmallestWidthActivity");
-        verifyWindowDisplayed("SmallestWidthActivity", ACTIVITY_TIMEOUT_MILLIS);
+        executeShellCommand(getAmStartCmd(SMALLEST_WIDTH_ACTIVITY));
+        assertActivityDisplayed(SMALLEST_WIDTH_ACTIVITY);
 
         setUnsupportedDensity();
 
-        verifyWindowDisplayed("UnsupportedDisplaySizeDialog", WINDOW_TIMEOUT_MILLIS);
+        assertWindowDisplayed(UNSUPPORTED_DISPLAY_SIZE_DIALOG_NAME);
     }
 
     @Test
     public void testCompatibilityDialogAfterReturn() throws Exception {
         // Launch target app.
-        startActivity("android.server.am.displaysize", "SmallestWidthActivity");
-        verifyWindowDisplayed("SmallestWidthActivity", ACTIVITY_TIMEOUT_MILLIS);
+        executeShellCommand(getAmStartCmd(SMALLEST_WIDTH_ACTIVITY));
+        assertActivityDisplayed(SMALLEST_WIDTH_ACTIVITY);
         // Launch another activity.
-        startOtherActivityOnTop("android.server.am.displaysize", "SmallestWidthActivity");
-        verifyWindowDisplayed("TestActivity", ACTIVITY_TIMEOUT_MILLIS);
+        final String startActivityOnTop = String.format("%s -f 0x%x --es %s %s",
+                getAmStartCmd(SMALLEST_WIDTH_ACTIVITY), FLAG_ACTIVITY_SINGLE_TOP,
+                EXTRA_LAUNCH_ANOTHER_ACTIVITY, TEST_ACTIVITY.flattenToShortString());
+        executeShellCommand(startActivityOnTop);
+        assertActivityDisplayed(TEST_ACTIVITY);
 
         setUnsupportedDensity();
 
-        // Go back.
-        executeShellCommand("input keyevent 4");
+        pressBackButton();
 
-        verifyWindowDisplayed("SmallestWidthActivity", ACTIVITY_TIMEOUT_MILLIS);
-        verifyWindowDisplayed("UnsupportedDisplaySizeDialog", WINDOW_TIMEOUT_MILLIS);
+        assertActivityDisplayed(SMALLEST_WIDTH_ACTIVITY);
+        assertWindowDisplayed(UNSUPPORTED_DISPLAY_SIZE_DIALOG_NAME);
     }
 
     private void setUnsupportedDensity() {
@@ -126,35 +136,14 @@ public class DisplaySizeTest extends ActivityManagerTestBase {
         executeShellCommand("wm density reset");
     }
 
-    private void forceStopPackage(String packageName) {
-        final String forceStopCmd = String.format(AM_FORCE_STOP, packageName);
-        executeShellCommand(forceStopCmd);
+    private void assertActivityDisplayed(final ComponentName activityName) throws Exception {
+        assertWindowDisplayed(activityName.flattenToString());
     }
 
-    private void startActivity(String packageName, String activityName){
-        executeShellCommand(getStartCommand(packageName, activityName));
-    }
-
-    private void startOtherActivityOnTop(String packageName, String activityName) {
-        final String startCmd = getStartCommand(packageName, activityName)
-                + " -f 0x20000000 --ez launch_another_activity true";
-        executeShellCommand(startCmd);
-    }
-
-    private String getStartCommand(String packageName, String activityName) {
-        return String.format(AM_START_COMMAND, packageName, packageName, activityName);
-    }
-
-    private void verifyWindowDisplayed(String windowName, long timeoutMillis) {
-        boolean success = false;
-
-        // Verify that compatibility dialog is shown within 1000ms.
-        final long timeoutTimeMillis = System.currentTimeMillis() + timeoutMillis;
-        while (!success && System.currentTimeMillis() < timeoutTimeMillis) {
-            final String output = executeShellCommand("dumpsys window");
-            success = output.contains(windowName);
-        }
-
-        assertTrue(windowName + " was not displayed", success);
+    private void assertWindowDisplayed(final String windowName) throws Exception {
+        mAmWmState.waitForValidState(new WaitForValidActivityState.Builder()
+                .setWindowName(windowName)
+                .build());
+        assertTrue(windowName + "is visible", mAmWmState.getWmState().isWindowVisible(windowName));
     }
 }

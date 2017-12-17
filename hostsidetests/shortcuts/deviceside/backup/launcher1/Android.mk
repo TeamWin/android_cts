@@ -37,6 +37,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ub-uiautomator \
     ShortcutManagerTestUtils
 
+LOCAL_JAVA_LIBRARIES := android.test.base.stubs
+
 LOCAL_SDK_VERSION := current
 
 include $(BUILD_CTS_PACKAGE)

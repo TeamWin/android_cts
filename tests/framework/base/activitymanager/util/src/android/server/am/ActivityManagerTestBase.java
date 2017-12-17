@@ -141,6 +141,7 @@ public abstract class ActivityManagerTestBase {
      * @return the am command to start the given activity with the following extra key/value pairs.
      *         {@param keyValuePairs} must be a list of arguments defining each key/value extra.
      */
+    // TODO: Make this more generic, for instance accepting flags or extras of other types.
     protected static String getAmStartCmd(final ComponentName activityName,
             final String... keyValuePairs) {
         return getAmStartCmdInternal(activityName.flattenToShortString(), keyValuePairs);
@@ -348,6 +349,12 @@ public abstract class ActivityManagerTestBase {
         setComponentName(originalComponentName);
     }
 
+    protected void launchActivity(final ComponentName activityName, final String... keyValuePairs)
+            throws Exception {
+        executeShellCommand(getAmStartCmd(activityName, keyValuePairs));
+        mAmWmState.waitForValidState(new WaitForValidActivityState(activityName));
+    }
+
     @Deprecated
     protected void launchActivity(final String targetActivityName, final String... keyValuePairs)
             throws Exception {
@@ -414,41 +421,6 @@ public abstract class ActivityManagerTestBase {
         mAmWmState.waitForValidState(targetActivityName);
     }
 
-    /**
-     * Launch specific target activity. It uses existing instance of {@link #LAUNCHING_ACTIVITY}, so
-     * that one should be started first.
-     * @param toSide Launch to side in split-screen.
-     * @param randomData Make intent URI random by generating random data.
-     * @param multipleTask Allow multiple task launch.
-     * @param targetActivityName Target activity to be launched. Only class name should be provided,
-     *                           package name of {@link #LAUNCHING_ACTIVITY} will be added
-     *                           automatically.
-     * @param displayId Display id where target activity should be launched.
-     */
-    protected void launchActivityFromLaunching(boolean toSide, boolean randomData,
-            boolean multipleTask, String targetActivityName, int displayId) throws Exception {
-        StringBuilder commandBuilder = new StringBuilder(getAmStartCmd(LAUNCHING_ACTIVITY));
-        commandBuilder.append(" -f 0x20000000");
-        if (toSide) {
-            commandBuilder.append(" --ez launch_to_the_side true");
-        }
-        if (randomData) {
-            commandBuilder.append(" --ez random_data true");
-        }
-        if (multipleTask) {
-            commandBuilder.append(" --ez multiple_task true");
-        }
-        if (targetActivityName != null) {
-            commandBuilder.append(" --es target_activity ").append(targetActivityName);
-        }
-        if (displayId != INVALID_DISPLAY_ID) {
-            commandBuilder.append(" --ei display_id ").append(displayId);
-        }
-        executeShellCommand(commandBuilder.toString());
-
-        mAmWmState.waitForValidState(targetActivityName);
-    }
-
     protected void launchActivity(String activityName, int windowingMode,
             final String... keyValuePairs) throws Exception {
         executeShellCommand(getAmStartCmd(activityName, keyValuePairs)
@@ -459,32 +431,71 @@ public abstract class ActivityManagerTestBase {
                 .build());
     }
 
-    @Deprecated
-    protected void launchActivityInDockStack(String activityName) throws Exception {
-        launchActivityInDockStack(activityName, SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT);
+    /**
+     * Launches {@param  activityName} into split-screen primary windowing mode and also makes
+     * the recents activity visible to the side of it.
+     */
+    protected void launchActivityInSplitScreenWithRecents(String activityName) throws Exception {
+        launchActivityInSplitScreenWithRecents(activityName, SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT);
     }
 
-    @Deprecated
-    protected void launchActivityInDockStack(String activityName, int createMode)
+    protected void launchActivityInSplitScreenWithRecents(String activityName, int createMode)
             throws Exception {
         launchActivity(activityName);
-        final int taskId = getActivityTaskId(activityName);
+        final int taskId = mAmWmState.getAmState().getTaskByActivityName(activityName).mTaskId;
         mAm.setTaskWindowingModeSplitScreenPrimary(taskId, createMode, true /* onTop */,
-                false /* animate */, null /* initialBounds */, false /* showRecents */);
+                false /* animate */, null /* initialBounds */, true /* showRecents */);
 
         mAmWmState.waitForValidState(activityName,
                 WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
+        mAmWmState.waitForRecentsActivityVisible();
     }
 
-    protected void launchActivityToSide(boolean randomData, boolean multipleTaskFlag,
-            String targetActivity) throws Exception {
-        final String activityToLaunch = targetActivity != null ? targetActivity : "TestActivity";
-        getLaunchActivityBuilder().setToSide(true).setRandomData(randomData)
-                .setMultipleTask(multipleTaskFlag).setTargetActivityName(activityToLaunch)
-                .execute();
+    /** @see #launchActivitiesInSplitScreen(LaunchActivityBuilder, LaunchActivityBuilder) */
+    protected void launchActivitiesInSplitScreen(String primaryActivity, String secondaryActivity)
+            throws Exception {
+        launchActivitiesInSplitScreen(
+                getLaunchActivityBuilder().setTargetActivityName(primaryActivity),
+                getLaunchActivityBuilder().setTargetActivityName(secondaryActivity));
+    }
 
-        mAmWmState.waitForValidState(activityToLaunch,
-                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY, ACTIVITY_TYPE_STANDARD);
+    /**
+     * Launches {@param primaryActivity} into split-screen primary windowing mode
+     * and {@param secondaryActivity} to the side in split-screen secondary windowing mode.
+     */
+    protected void launchActivitiesInSplitScreen(LaunchActivityBuilder primaryActivity,
+            LaunchActivityBuilder secondaryActivity) throws Exception {
+        // Launch split-screen primary.
+        String tmpLaunchingActivityName = primaryActivity.mLaunchingActivityName;
+        primaryActivity
+                // TODO(b/70618153): Work around issues with the activity launch builder where
+                // launching activity doesn't work. We don't really need launching activity in this
+                // case and should probably change activity launcher to work without a launching
+                // activity.
+                .setLaunchingActivityName(primaryActivity.mTargetActivityName)
+                .setWaitForLaunched(true)
+                .execute();
+        primaryActivity.setLaunchingActivityName(tmpLaunchingActivityName);
+
+        final int taskId = mAmWmState.getAmState().getTaskByActivityName(
+                primaryActivity.mTargetActivityName).mTaskId;
+        mAm.setTaskWindowingModeSplitScreenPrimary(taskId, SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT,
+                true /* onTop */, false /* animate */, null /* initialBounds */,
+                true /* showRecents */);
+        mAmWmState.waitForRecentsActivityVisible();
+
+        // Launch split-screen secondary
+        tmpLaunchingActivityName = secondaryActivity.mLaunchingActivityName;
+        secondaryActivity
+                // TODO(b/70618153): Work around issues with the activity launch builder where
+                // launching activity doesn't work. We don't really need launching activity in this
+                // case and should probably change activity launcher to work without a launching
+                // activity.
+                .setLaunchingActivityName(secondaryActivity.mTargetActivityName)
+                .setWaitForLaunched(true)
+                .setToSide(true)
+                .execute();
+        secondaryActivity.setLaunchingActivityName(tmpLaunchingActivityName);
     }
 
     protected void setActivityTaskWindowingMode(final ComponentName activityName,
@@ -553,6 +564,7 @@ public abstract class ActivityManagerTestBase {
         }
     }
 
+    @Deprecated
     protected int getActivityTaskId(final ComponentName activityName) {
         return getWindowTaskId(activityName.flattenToString());
     }
@@ -562,6 +574,7 @@ public abstract class ActivityManagerTestBase {
         return getWindowTaskId(getWindowName(activityName));
     }
 
+    @Deprecated
     private int getWindowTaskId(final String windowName) {
         final String output = executeShellCommand(AM_STACK_LIST);
         final Pattern activityPattern = Pattern.compile("(.*) " + windowName + " (.*)");

@@ -35,7 +35,7 @@
 
         <uses-library android:name="android.test.runner" />
         <receiver
-            android:name="com.android.cts.deviceowner.BaseDeviceOwnerTest$BasicAdminReceiver"
+            android:name="com.android.cts.deviceowner.BasicAdminReceiver"
             android:permission="android.permission.BIND_DEVICE_ADMIN">
             <meta-data android:name="android.app.device_admin"
                        android:resource="@xml/device_admin" />

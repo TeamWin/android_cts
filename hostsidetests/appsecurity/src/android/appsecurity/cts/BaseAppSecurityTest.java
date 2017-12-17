@@ -28,7 +28,7 @@ import java.util.ArrayList;
 /**
  * Base class.
  */
-public class BaseAppSecurityTest extends BaseHostJUnit4Test {
+abstract class BaseAppSecurityTest extends BaseHostJUnit4Test {
 
     /** Whether multi-user is supported. */
     protected boolean mSupportsMultiUser;

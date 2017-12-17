@@ -42,7 +42,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     private static final String WIFI_CONFIG_CREATOR_APK = "CtsWifiConfigCreator.apk";
 
     private static final String ADMIN_RECEIVER_TEST_CLASS =
-            DEVICE_OWNER_PKG + ".BaseDeviceOwnerTest$BasicAdminReceiver";
+            DEVICE_OWNER_PKG + ".BasicAdminReceiver";
     private static final String DEVICE_OWNER_COMPONENT = DEVICE_OWNER_PKG + "/"
             + ADMIN_RECEIVER_TEST_CLASS;
 
@@ -106,6 +106,14 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
 
     public void testLockScreenInfo() throws Exception {
         executeDeviceOwnerTest("LockScreenInfoTest");
+    }
+
+    public void testLockScreenInfo_affiliatedSecondaryUser() throws Exception {
+        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
+            return;
+        }
+        final int userId = createAffiliatedSecondaryUser();
+        executeAffiliatedProfileOwnerTest("LockScreenInfoTest", userId);
     }
 
     public void testWifi() throws Exception {
@@ -433,21 +441,8 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature || !canCreateAdditionalUsers(1)) {
             return;
         }
-
-        final int userId = createUser();
-        installAppAsUser(INTENT_RECEIVER_APK, userId);
-        installAppAsUser(DEVICE_OWNER_APK, userId);
-        setProfileOwnerOrFail(DEVICE_OWNER_COMPONENT, userId);
-
-        switchUser(userId);
-        wakeupAndDismissKeyguard();
-
-        // Setting the same affiliation ids on both users and running the lock task tests.
-        runDeviceTestsAsUser(
-                DEVICE_OWNER_PKG, ".AffiliationTest", "testSetAffiliationId1", mPrimaryUserId);
-        runDeviceTestsAsUser(
-                DEVICE_OWNER_PKG, ".AffiliationTest", "testSetAffiliationId1", userId);
-        runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".LockTaskTest", userId);
+        final int userId = createAffiliatedSecondaryUser();
+        executeAffiliatedProfileOwnerTest("LockTaskTest", userId);
     }
 
     public void testSystemUpdatePolicy() throws Exception {
@@ -601,11 +596,37 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         runDeviceTestsAsUser(DEVICE_OWNER_PKG, testClass, mPrimaryUserId);
     }
 
+    private void executeAffiliatedProfileOwnerTest(String testClassName, int userId)
+            throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        String testClass = DEVICE_OWNER_PKG + "." + testClassName;
+        runDeviceTestsAsUser(DEVICE_OWNER_PKG, testClass, userId);
+    }
+
     private void executeDeviceTestMethod(String className, String testName) throws Exception {
         if (!mHasFeature) {
             return;
         }
         runDeviceTestsAsUser(DEVICE_OWNER_PKG, className, testName,
                 /* deviceOwnerUserId */ mPrimaryUserId);
+    }
+
+    private int createAffiliatedSecondaryUser() throws Exception  {
+        final int userId = createUser();
+        installAppAsUser(INTENT_RECEIVER_APK, userId);
+        installAppAsUser(DEVICE_OWNER_APK, userId);
+        setProfileOwnerOrFail(DEVICE_OWNER_COMPONENT, userId);
+
+        switchUser(userId);
+        wakeupAndDismissKeyguard();
+
+        // Setting the same affiliation ids on both users and running the lock task tests.
+        runDeviceTestsAsUser(
+                DEVICE_OWNER_PKG, ".AffiliationTest", "testSetAffiliationId1", mPrimaryUserId);
+        runDeviceTestsAsUser(
+                DEVICE_OWNER_PKG, ".AffiliationTest", "testSetAffiliationId1", userId);
+        return userId;
     }
 }

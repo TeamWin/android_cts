@@ -2333,14 +2333,6 @@
             <meta-data android:name="test_required_features" android:value="android.software.device_admin" />
         </activity>
 
-        <activity android:name=".managedprovisioning.DeviceOwnerPositiveTestActivity$CommandReceiver"
-                android:exported="false"
-                android:theme="@android:style/Theme.NoDisplay"
-                android:noHistory="true"
-                android:autoRemoveFromRecents="true"
-                android:stateNotNeeded="true">
-        </activity>
-
         <activity android:name=".managedprovisioning.KeyguardDisabledFeaturesActivity"
                 android:label="@string/provisioning_byod_keyguard_disabled_features">
         </activity>

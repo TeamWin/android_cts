@@ -23,16 +23,14 @@ import static android.server.am.StateLogger.log;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import android.content.res.Configuration;
+import android.server.am.ActivityManagerState.ActivityDisplay;
+
 import org.junit.After;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Base class for ActivityManager display tests.
@@ -44,7 +42,6 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
 
     static final int CUSTOM_DENSITY_DPI = 222;
 
-    private static final String DUMPSYS_ACTIVITY_PROCESSES = "dumpsys activity processes";
     private static final String VIRTUAL_DISPLAY_ACTIVITY = "VirtualDisplayActivity";
     private static final int INVALID_DENSITY_DPI = -1;
 
@@ -62,163 +59,48 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
         super.tearDown();
     }
 
-    /** Contains the configurations applied to attached displays. */
-    static final class DisplayState {
-        int mDisplayId;
-        String mOverrideConfig;
-
-        private DisplayState(int displayId, String overrideConfig) {
-            mDisplayId = displayId;
-            mOverrideConfig = overrideConfig;
-        }
-
-        private int getWidth() {
-            final String[] configParts = mOverrideConfig.split(" ");
-            for (String part : configParts) {
-                if (part.endsWith("dp") && part.startsWith("w")) {
-                    final String widthString = part.substring(1, part.length() - 3);
-                    return Integer.parseInt(widthString);
-                }
+    ActivityDisplay getDisplayState(List<ActivityDisplay> displays, int displayId) {
+        for (ActivityDisplay display : displays) {
+            if (display.mId == displayId) {
+                return display;
             }
-
-            return -1;
         }
-
-        private int getHeight() {
-            final String[] configParts = mOverrideConfig.split(" ");
-            for (String part : configParts) {
-                if (part.endsWith("dp") && part.startsWith("h")) {
-                    final String heightString = part.substring(1, part.length() - 3);
-                    return Integer.parseInt(heightString);
-                }
-            }
-
-            return -1;
-        }
-
-        int getDpi() {
-            final String[] configParts = mOverrideConfig.split(" ");
-            for (String part : configParts) {
-                if (part.endsWith("dpi")) {
-                    final String densityDpiString = part.substring(0, part.length() - 3);
-                    return Integer.parseInt(densityDpiString);
-                }
-            }
-
-            return -1;
-        }
+        return null;
     }
 
-    /** Contains the configurations applied to attached displays. */
-    static final class ReportedDisplays {
-        private static final Pattern sGlobalConfigurationPattern =
-                Pattern.compile("mGlobalConfiguration: (\\{.*\\})");
-        private static final Pattern sDisplayOverrideConfigurationsPattern =
-                Pattern.compile("Display override configurations:");
-        private static final Pattern sDisplayConfigPattern =
-                Pattern.compile("(\\d+): (\\{.*\\})");
-
-        String mGlobalConfig;
-        private Map<Integer, DisplayState> mDisplayStates = new HashMap<>();
-
-        static ReportedDisplays create(LinkedList<String> dump) {
-            final ReportedDisplays result = new ReportedDisplays();
-
-            while (!dump.isEmpty()) {
-                final String line = dump.pop().trim();
-
-                Matcher matcher = sDisplayOverrideConfigurationsPattern.matcher(line);
-                if (matcher.matches()) {
-                    log(line);
-                    while (ReportedDisplays.shouldContinueExtracting(dump, sDisplayConfigPattern)) {
-                        final String displayOverrideConfigLine = dump.pop().trim();
-                        log(displayOverrideConfigLine);
-                        matcher = sDisplayConfigPattern.matcher(displayOverrideConfigLine);
-                        matcher.matches();
-                        final Integer displayId = Integer.valueOf(matcher.group(1));
-                        result.mDisplayStates.put(displayId,
-                                new DisplayState(displayId, matcher.group(2)));
-                    }
-                    continue;
-                }
-
-                matcher = sGlobalConfigurationPattern.matcher(line);
-                if (matcher.matches()) {
-                    log(line);
-                    result.mGlobalConfig = matcher.group(1);
-                }
+    /** Return the display state with width, height, dpi. Always not default display. */
+    ActivityDisplay getDisplayState(List<ActivityDisplay> displays, int width, int height,
+            int dpi) {
+        for (ActivityDisplay display : displays) {
+            if (display.mId == DEFAULT_DISPLAY_ID) {
+                continue;
             }
-
-            return result;
-        }
-
-        /** Check if next line in dump matches the pattern and we should continue extracting. */
-        static boolean shouldContinueExtracting(LinkedList<String> dump, Pattern matchingPattern) {
-            if (dump.isEmpty()) {
-                return false;
+            final Configuration config = display.mFullConfiguration;
+            if (config.densityDpi == dpi && config.screenWidthDp == width
+                    && config.screenHeightDp == height) {
+                return display;
             }
-
-            final String line = dump.peek().trim();
-            return matchingPattern.matcher(line).matches();
         }
-
-        DisplayState getDisplayState(int displayId) {
-            return mDisplayStates.get(displayId);
-        }
-
-        int getNumberOfDisplays() {
-            return mDisplayStates.size();
-        }
-
-        /** Return the display state with width, height, dpi */
-        DisplayState getDisplayState(int width, int height, int dpi) {
-            for (Map.Entry<Integer, DisplayState> entry : mDisplayStates.entrySet()) {
-                final DisplayState ds = entry.getValue();
-                if (ds.mDisplayId != DEFAULT_DISPLAY_ID && ds.getDpi() == dpi
-                        && ds.getWidth() == width && ds.getHeight() == height) {
-                    return ds;
-                }
-            }
-            return null;
-        }
-
-        /** Check if reported state is valid. */
-        boolean isValidState(int expectedDisplayCount) {
-            if (mDisplayStates.size() != expectedDisplayCount) {
-                return false;
-            }
-
-            for (Map.Entry<Integer, DisplayState> entry : mDisplayStates.entrySet()) {
-                final DisplayState ds = entry.getValue();
-                if (ds.mDisplayId != DEFAULT_DISPLAY_ID && ds.getDpi() == -1) {
-                    return false;
-                }
-            }
-            return true;
-        }
+        return null;
     }
 
-    ReportedDisplays getDisplaysStates() {
-        String dump = executeShellCommand(DUMPSYS_ACTIVITY_PROCESSES);
-        mDumpLines.clear();
-
-        Collections.addAll(mDumpLines, dump.split("\\n"));
-
-        return ReportedDisplays.create(mDumpLines);
+    List<ActivityDisplay> getDisplaysStates() {
+        mAmWmState.getAmState().computeState();
+        return mAmWmState.getAmState().getDisplays();
     }
 
     /** Find the display that was not originally reported in oldDisplays and added in newDisplays */
-    protected List<ActivityManagerDisplayTests.DisplayState> findNewDisplayStates(
-            ReportedDisplays oldDisplays, ReportedDisplays newDisplays) {
-        final ArrayList<DisplayState> displays = new ArrayList();
+    List<ActivityDisplay> findNewDisplayStates(List<ActivityDisplay> oldDisplays,
+            List<ActivityDisplay> newDisplays) {
+        final ArrayList<ActivityDisplay> result = new ArrayList<>();
 
-        for (Integer displayId : newDisplays.mDisplayStates.keySet()) {
-            if (!oldDisplays.mDisplayStates.containsKey(displayId)) {
-                displays.add(newDisplays.getDisplayState(displayId));
+        for (ActivityDisplay newDisplay : newDisplays) {
+            if (oldDisplays.stream().noneMatch(d -> d.mId == newDisplay.mId)) {
+                result.add(newDisplay);
             }
         }
 
-        return displays;
+        return result;
     }
 
     /**
@@ -232,10 +114,10 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
      * @param publicDisplay make display public.
      * @param resizeDisplay should resize display when surface size changes.
      * @param launchActivity should launch test activity immediately after display creation.
-     * @return {@link ActivityManagerDisplayTests.DisplayState} of newly created display.
+     * @return A list of {@link ActivityDisplay} that represent newly created displays.
      * @throws Exception
      */
-    private List<ActivityManagerDisplayTests.DisplayState> createVirtualDisplays(int densityDpi,
+    private List<ActivityDisplay> createVirtualDisplays(int densityDpi,
             boolean launchInSplitScreen, boolean canShowWithInsecureKeyguard, boolean mustBeCreated,
             boolean publicDisplay, boolean resizeDisplay, String launchActivity, int displayCount)
             throws Exception {
@@ -248,7 +130,7 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
         }
         mAmWmState.computeState(false /* compareTaskAndStackBounds */,
                 new WaitForValidActivityState.Builder(VIRTUAL_DISPLAY_ACTIVITY).build());
-        final ActivityManagerDisplayTests.ReportedDisplays originalDS = getDisplaysStates();
+        final List<ActivityDisplay> originalDS = getDisplaysStates();
 
         // Create virtual display with custom density dpi.
         executeShellCommand(getCreateVirtualDisplayCommand(densityDpi, canShowWithInsecureKeyguard,
@@ -261,11 +143,11 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
     /**
      * Simulate new display.
      * @param densityDpi provide custom density for the display.
-     * @return {@link ActivityManagerDisplayTests.DisplayState} of newly created display.
+     * @return {@link ActivityDisplay} of newly created display.
      */
-    private List<ActivityManagerDisplayTests.DisplayState> simulateDisplay(int densityDpi)
+    private List<ActivityDisplay> simulateDisplay(int densityDpi)
             throws Exception {
-        final ActivityManagerDisplayTests.ReportedDisplays originalDs = getDisplaysStates();
+        final List<ActivityDisplay> originalDs = getDisplaysStates();
 
         // Create virtual display with custom density dpi.
         executeShellCommand(getSimulateDisplayCommand(densityDpi));
@@ -279,26 +161,24 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
      * @param newDisplayCount expected display count, -1 if display should not be created.
      * @param originalDS display states before creation of new display(s).
      */
-    private List<ActivityManagerDisplayTests.DisplayState> assertAndGetNewDisplays(
-            int newDisplayCount, ActivityManagerDisplayTests.ReportedDisplays originalDS)
-            throws Exception {
-        final int originalDisplayCount = originalDS.mDisplayStates.size();
+    private List<ActivityDisplay> assertAndGetNewDisplays(int newDisplayCount,
+            List<ActivityDisplay> originalDS) throws Exception {
+        final int originalDisplayCount = originalDS.size();
 
         // Wait for the display(s) to be created and get configurations.
-        final ActivityManagerDisplayTests.ReportedDisplays ds =
-                getDisplayStateAfterChange(originalDisplayCount + newDisplayCount);
+        final List<ActivityDisplay> ds = getDisplayStateAfterChange(
+                originalDisplayCount + newDisplayCount);
         if (newDisplayCount != -1) {
             assertEquals("New virtual display(s) must be created",
-                    originalDisplayCount + newDisplayCount, ds.mDisplayStates.size());
+                    originalDisplayCount + newDisplayCount, ds.size());
         } else {
             assertEquals("New virtual display must not be created",
-                    originalDisplayCount, ds.mDisplayStates.size());
+                    originalDisplayCount, ds.size());
             return null;
         }
 
         // Find the newly added display(s).
-        final List<ActivityManagerDisplayTests.DisplayState> newDisplays
-                = findNewDisplayStates(originalDS, ds);
+        final List<ActivityDisplay> newDisplays = findNewDisplayStates(originalDS, ds);
         assertTrue("New virtual display must be created", newDisplayCount == newDisplays.size());
 
         return newDisplays;
@@ -381,12 +261,12 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
             return this;
         }
 
-        public DisplayState build() throws Exception {
-            final List<DisplayState> displays = build(1);
+        public ActivityDisplay build() throws Exception {
+            final List<ActivityDisplay> displays = build(1);
             return displays != null && !displays.isEmpty() ? displays.get(0) : null;
         }
 
-        public List<DisplayState> build(int count) throws Exception {
+        public List<ActivityDisplay> build(int count) throws Exception {
             if (mSimulateDisplay) {
                 return mTests.simulateDisplay(mDensityDpi);
             }
@@ -432,11 +312,11 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
     }
 
     /** Wait for provided number of displays and report their configurations. */
-    ReportedDisplays getDisplayStateAfterChange(int expectedDisplayCount) {
-        ReportedDisplays ds = getDisplaysStates();
+    List<ActivityDisplay> getDisplayStateAfterChange(int expectedDisplayCount) {
+        List<ActivityDisplay> ds = getDisplaysStates();
 
         int retriesLeft = 5;
-        while (!ds.isValidState(expectedDisplayCount) && retriesLeft-- > 0) {
+        while (!areDisplaysValid(ds, expectedDisplayCount) && retriesLeft-- > 0) {
             log("***Waiting for the correct number of displays...");
             try {
                 Thread.sleep(1000);
@@ -447,6 +327,18 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
         }
 
         return ds;
+    }
+
+    private boolean areDisplaysValid(List<ActivityDisplay> displays, int expectedDisplayCount) {
+        if (displays.size() != expectedDisplayCount) {
+            return false;
+        }
+        for (ActivityDisplay display : displays) {
+            if (display.mOverrideConfiguration.densityDpi == 0) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /** Checks if the device supports multi-display. */

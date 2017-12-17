@@ -24,8 +24,8 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 /**
- * Build: mmma -j32 cts/tests/framework/base
- * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.AnimationBackgroundTests
+ * Build/Install/Run:
+ *     atest CtsActivityManagerDeviceTestCases:AnimationBackgroundTests
  */
 public class AnimationBackgroundTests extends ActivityManagerTestBase {
 

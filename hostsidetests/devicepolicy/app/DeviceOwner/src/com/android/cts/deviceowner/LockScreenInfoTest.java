@@ -18,7 +18,7 @@ package com.android.cts.deviceowner;
 
 import java.lang.Character;
 
-public class LockScreenInfoTest extends BaseDeviceOwnerTest {
+public class LockScreenInfoTest extends BaseAffiliatedProfileOwnerTest {
 
     @Override
     public void tearDown() throws Exception {

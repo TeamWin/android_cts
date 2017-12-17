@@ -73,6 +73,13 @@ public final class ImeEventStream {
     }
 
     /**
+     * Advances the current event position to the next to the last position.
+     */
+    public void skipAll() {
+        mCurrentPosition = mEventSupplier.get().mLength;
+    }
+
+    /**
      * Find the first event that matches the given condition from the current position.
      *
      * <p>If there is such an event, this method returns such an event without moving the current

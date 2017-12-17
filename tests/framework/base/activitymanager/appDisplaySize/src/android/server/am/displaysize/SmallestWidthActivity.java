@@ -19,20 +19,21 @@ package android.server.am.displaysize;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
-import android.os.Bundle;
 
 public class SmallestWidthActivity extends Activity {
 
+    /**
+     * Extra key to launch another activity. The extra value is activity's component name.
+     */
+    private static final String EXTRA_LAUNCH_ANOTHER_ACTIVITY = "launch_another_activity";
+
     @Override
-    protected void onNewIntent(Intent intent) {
+    protected void onNewIntent(final Intent intent) {
         super.onNewIntent(intent);
 
-        final Bundle extras = intent.getExtras();
-        if (extras != null && extras.getBoolean("launch_another_activity")) {
-            Intent startIntent = new Intent();
-            startIntent.setComponent(
-                    new ComponentName("android.server.am", "android.server.am.TestActivity"));
-            startActivity(startIntent);
+        if (intent.hasExtra(EXTRA_LAUNCH_ANOTHER_ACTIVITY)) {
+            startActivity(new Intent().setComponent(ComponentName.unflattenFromString(
+                    intent.getStringExtra(EXTRA_LAUNCH_ANOTHER_ACTIVITY))));
         }
     }
 }

@@ -33,6 +33,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ub-uiautomator  \
     android-support-test
 
+LOCAL_JAVA_LIBRARIES := android.test.base.stubs
+
 LOCAL_SDK_VERSION := test_current
 
 include $(BUILD_CTS_PACKAGE)

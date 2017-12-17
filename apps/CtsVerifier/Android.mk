@@ -41,6 +41,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := android-ex-camera2 \
                                platform-test-annotations
 
 LOCAL_JAVA_LIBRARIES += telephony-common
+LOCAL_JAVA_LIBRARIES += android.test.runner.stubs
+LOCAL_JAVA_LIBRARIES += android.test.base.stubs
 
 LOCAL_PACKAGE_NAME := CtsVerifier
 

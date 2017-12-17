@@ -453,8 +453,9 @@ public class ActivityAndWindowManagersState {
                 windowName = state.windowName;
             } else {
                 final String activityName = state.activityName;
-                activityComponentName =
-                        ActivityManagerTestBase.getActivityComponentName(packageName, activityName);
+                activityComponentName = (activityName != null)
+                        ? ActivityManagerTestBase.getActivityComponentName(packageName, activityName)
+                        : null;
                 // Check if window is visible - it should be represented as one of the window
                 // states.
                 windowName = (state.windowName != null) ? state.windowName
@@ -469,7 +470,8 @@ public class ActivityAndWindowManagersState {
             if (!activityWindowVisible) {
                 log("Activity window not visible: " + windowName);
                 allActivityWindowsVisible = false;
-            } else if (!mAmState.isActivityVisible(activityComponentName)) {
+            } else if (activityComponentName != null
+                    && !mAmState.isActivityVisible(activityComponentName)) {
                 log("Activity not visible: " + activityComponentName);
                 allActivityWindowsVisible = false;
             } else {

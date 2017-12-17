@@ -47,7 +47,6 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     private static final String INTENT_RECEIVER_PKG = "com.android.cts.intent.receiver";
     private static final String INTENT_RECEIVER_APK = "CtsIntentReceiverApp.apk";
 
-    private static final String WIFI_CONFIG_CREATOR_PKG = "com.android.cts.wificonfigcreator";
     private static final String WIFI_CONFIG_CREATOR_APK = "CtsWifiConfigCreator.apk";
 
     private static final String WIDGET_PROVIDER_APK = "CtsWidgetProviderApp.apk";
@@ -65,8 +64,6 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     private static final String NOTIFICATION_APK = "CtsNotificationSenderApp.apk";
     private static final String NOTIFICATION_PKG =
             "com.android.cts.managedprofiletests.notificationsender";
-    private static final String NOTIFICATION_ACTIVITY =
-            NOTIFICATION_PKG + ".SendNotification";
 
     private static final String ADMIN_RECEIVER_TEST_CLASS =
             MANAGED_PROFILE_PKG + ".BaseManagedProfileTest$BasicAdminReceiver";
@@ -78,7 +75,6 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     private static final String FEATURE_CONNECTION_SERVICE = "android.software.connectionservice";
 
     private static final String SIMPLE_APP_APK = "CtsSimpleApp.apk";
-    private static final String SIMPLE_APP_PKG = "com.android.cts.launcherapps.simpleapp";
 
     private static final long TIMEOUT_USER_LOCKED_MILLIS = TimeUnit.SECONDS.toMillis(30);
 
@@ -91,7 +87,6 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
 
     // ID of the profile we'll create. This will always be a profile of the parent.
     private int mProfileUserId;
-    private String mPackageVerifier;
 
     private boolean mHasNfcFeature;
 
@@ -1050,6 +1045,26 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             executeShellCommand("input keyevent KEYCODE_WAKEUP");
             executeShellCommand("input keyevent KEYCODE_SLEEP");
         }
+    }
+
+    public void testIsUsingUnifiedPassword() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        // Freshly created profile profile has no separate challenge.
+        verifyUnifiedPassword(true);
+
+        // Set separate challenge and verify that the API reports it correctly.
+        changeUserCredential("1234" /* newCredential */, null /* oldCredential */, mProfileUserId);
+        verifyUnifiedPassword(false);
+    }
+
+    private void verifyUnifiedPassword(boolean unified) throws DeviceNotAvailableException {
+        final String testMethod =
+                unified ? "testUsingUnifiedPassword" : "testNotUsingUnifiedPassword";
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".IsUsingUnifiedPasswordTest",
+                testMethod, mProfileUserId);
     }
 
     private void disableActivityForUser(String activityName, int userId)

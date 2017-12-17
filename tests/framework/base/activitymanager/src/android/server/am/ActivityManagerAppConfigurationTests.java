@@ -33,7 +33,6 @@ import static org.junit.Assume.assumeTrue;
 
 import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
-import android.support.test.filters.FlakyTest;
 
 import org.junit.Test;
 
@@ -41,8 +40,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Build: mmma -j32 cts/tests/framework/base
- * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.ActivityManagerAppConfigurationTests
+ * Build/Install/Run:
+ *     atest CtsActivityManagerDeviceTestCases:ActivityManagerAppConfigurationTests
  */
 public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBase {
     private static final String RESIZEABLE_ACTIVITY_NAME = "ResizeableActivity";
@@ -93,8 +92,6 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * Same as {@link #testConfigurationUpdatesWhenResizedFromFullscreen()} but resizing
      * from docked state to fullscreen (reverse).
      */
-    // TODO(b/63404575): Flaky, add back to presubmit.
-    @FlakyTest
     @Presubmit
     @Test
     public void testConfigurationUpdatesWhenResizedFromDockedStack() throws Exception {
@@ -134,8 +131,6 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * Same as {@link #testConfigurationUpdatesWhenRotatingWhileFullscreen()} but when the Activity
      * is in the docked stack.
      */
-    // TODO(b/63404575): Flaky, add back to presubmit.
-    @FlakyTest
     @Presubmit
     @Test
     public void testConfigurationUpdatesWhenRotatingWhileDocked() throws Exception {
@@ -143,11 +138,9 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
 
         setDeviceRotation(0);
         final String logSeparator = clearLogcat();
-        launchActivityInDockStack(LAUNCHING_ACTIVITY);
         // Launch our own activity to side in case Recents (or other activity to side) doesn't
         // support rotation.
-        getLaunchActivityBuilder().setToSide(true).setTargetActivityName(TEST_ACTIVITY_NAME)
-                .execute();
+        launchActivitiesInSplitScreen(LAUNCHING_ACTIVITY, TEST_ACTIVITY_NAME);
         // Launch target activity in docked stack.
         getLaunchActivityBuilder().setTargetActivityName(RESIZEABLE_ACTIVITY_NAME).execute();
         final ReportedSizes initialSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
@@ -160,6 +153,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * Same as {@link #testConfigurationUpdatesWhenRotatingWhileDocked()} but when the Activity
      * is launched to side from docked stack.
      */
+    @Presubmit
     @Test
     public void testConfigurationUpdatesWhenRotatingToSideFromDocked() throws Exception {
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
@@ -167,10 +161,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         setDeviceRotation(0);
 
         final String logSeparator = clearLogcat();
-        launchActivityInDockStack(LAUNCHING_ACTIVITY);
-
-        getLaunchActivityBuilder().setToSide(true).setTargetActivityName(RESIZEABLE_ACTIVITY_NAME)
-                .execute();
+        launchActivitiesInSplitScreen(LAUNCHING_ACTIVITY, RESIZEABLE_ACTIVITY_NAME);
         final ReportedSizes initialSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
                 logSeparator);
 
@@ -436,6 +427,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     /**
      * Test that device doesn't change device orientation by app request while in multi-window.
      */
+    @Presubmit
     @Test
     public void testSplitscreenPortraitAppOrientationRequests() throws Exception {
         if (!supportsSplitScreenMultiWindow()) {
@@ -448,6 +440,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     /**
      * Test that device doesn't change device orientation by app request while in multi-window.
      */
+    @Presubmit
     @Test
     public void testSplitscreenLandscapeAppOrientationRequests() throws Exception {
         if (!supportsSplitScreenMultiWindow()) {
@@ -469,11 +462,10 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         setDeviceRotation(orientation);
 
         // Launch activities that request orientations and check that device doesn't rotate.
-        launchActivityInDockStack(LAUNCHING_ACTIVITY);
+        launchActivitiesInSplitScreen(
+                getLaunchActivityBuilder().setTargetActivityName(LAUNCHING_ACTIVITY),
+                getLaunchActivityBuilder().setTargetActivityName(activity).setMultipleTask(true));
 
-        getLaunchActivityBuilder().setToSide(true).setMultipleTask(true)
-                .setTargetActivityName(activity).execute();
-        mAmWmState.computeState(new String[] {activity});
         mAmWmState.assertVisibility(activity, true /* visible */);
         assertEquals("Split-screen apps shouldn't influence device orientation",
                 orientation, mAmWmState.getWmState().getRotation());

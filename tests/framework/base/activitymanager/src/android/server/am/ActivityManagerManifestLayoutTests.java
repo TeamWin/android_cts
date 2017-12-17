@@ -34,8 +34,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.ActivityManagerManifestLayoutTests
+ * Build/Install/Run:
+ *     atest CtsActivityManagerDeviceTestCases:ActivityManagerManifestLayoutTests
  */
 public class ActivityManagerManifestLayoutTests extends ActivityManagerTestBase {
 
@@ -101,7 +101,7 @@ public class ActivityManagerManifestLayoutTests extends ActivityManagerTestBase 
             launchActivity(activityName, WINDOWING_MODE_FREEFORM);
             resizeActivityTask(activityName, 0, 0, 1, 1);
         } else { // stackId == DOCKED_STACK_ID
-            launchActivityInDockStack(activityName);
+            launchActivityInSplitScreenWithRecents(activityName);
             resizeDockedStack(1, 1, 1, 1);
         }
         getDisplayAndWindowState(activityName, false);

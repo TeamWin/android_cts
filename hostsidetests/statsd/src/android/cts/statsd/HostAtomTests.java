@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.server.cts;
+package android.cts.statsd;
 
-import com.android.ddmlib.IShellOutputReceiver;
 import com.android.internal.os.StatsdConfigProto.Alert;
 import com.android.internal.os.StatsdConfigProto.AtomMatcher;
 import com.android.internal.os.StatsdConfigProto.Bucket;
@@ -35,84 +34,17 @@ import com.android.os.AtomsProto.KernelWakelockPulled;
 import com.android.os.AtomsProto.ScreenStateChanged;
 import com.android.os.StatsLog.ConfigMetricsReport;
 import com.android.os.StatsLog.ConfigMetricsReportList;
-import com.android.tradefed.log.LogUtil;
-
-import com.google.common.io.Files;
-
-import java.io.File;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Random;
 
 /**
- * Test for statsd
- *
- * Validates reporting of statsd logging based on different events
+ * Statsd atom tests that are done via adb (hostside).
  */
-public class StatsdValidationTest extends ProtoDumpTestCase {
+public class HostAtomTests extends AtomTestCase {
 
-    private static final String TAG = "StatsdValidationTest";
+    private static final String TAG = "Statsd.HostAtomTests";
 
     private static final boolean TESTS_ENABLED = false;
     // For tests that require incidentd. Keep as true until TESTS_ENABLED is permanently enabled.
     private static final boolean INCIDENTD_TESTS_ENABLED = true;
-
-    // TODO: Use a statsd-specific app (temporarily just borrowing the batterystats app)
-    private static final String DEVICE_SIDE_TEST_APK = "CtsStatsDApp.apk";
-    private static final String DEVICE_SIDE_TEST_PACKAGE
-            = "com.android.server.cts.device.statsd";
-    private static final String DEVICE_SIDE_SIMPLE_ACTIVITY_COMPONENT
-            = "com.android.server.cts.device.statsd/.SimpleActivity";
-    private static final String DEVICE_SIDE_FG_ACTIVITY_COMPONENT
-            = "com.android.server.cts.device.statsd/.ForegroundActivity";
-    private static final String DEVICE_SIDE_BG_SERVICE_COMPONENT
-            = "com.android.server.cts.device.statsd/.BackgroundActivity";
-
-    // These constants are those in PackageManager.
-    private static final String FEATURE_BLUETOOTH_LE = "android.hardware.bluetooth_le";
-    private static final String FEATURE_LEANBACK_ONLY = "android.software.leanback_only";
-    private static final String FEATURE_LOCATION_GPS = "android.hardware.location.gps";
-    private static final String FEATURE_WIFI = "android.hardware.wifi";
-
-    // Constants from BatteryStatsBgVsFgActions.java (not directly accessible here).
-    private static final String KEY_ACTION = "action";
-    private static final String ACTION_BLE_SCAN_OPTIMIZED = "action.ble_scan_optimized";
-    private static final String ACTION_BLE_SCAN_UNOPTIMIZED = "action.ble_scan_unoptimized";
-    private static final String ACTION_GPS = "action.gps";
-    private static final String ACTION_JOB_SCHEDULE = "action.jobs";
-    private static final String ACTION_SYNC = "action.sync";
-    private static final String ACTION_WIFI_SCAN = "action.wifi_scan";
-
-    private static final String KEY_REQUEST_CODE = "request_code";
-    private static final String BG_VS_FG_TAG = "BatteryStatsBgVsFgActions";
-
-    private static final String UPDATE_CONFIG_CMD = "cmd stats config update";
-    private static final String DUMP_REPORT_CMD = "cmd stats dump-report";
-    private static final String REMOVE_CONFIG_CMD = "cmd stats config remove";
-    private static final String CONFIG_UID = "1000";
-    private static final String CONFIG_NAME = "cts_config";
-
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        // TODO: need to do these before running real test:
-        // 1. compile statsd and push to device
-        // 2. make sure StatsCompanionService is running
-        // 3. start statsd
-        // These should go away once we have statsd properly set up.
-
-        // Uninstall to clear the history in case it's still on the device.
-        getDevice().uninstallPackage(DEVICE_SIDE_TEST_PACKAGE);
-        removeConfig("fake");
-        removeConfig(CONFIG_NAME);
-    }
-
-    @Override
-    protected void tearDown() throws Exception {
-        getDevice().uninstallPackage(DEVICE_SIDE_TEST_PACKAGE);
-        removeConfig(CONFIG_NAME);
-        super.tearDown();
-    }
 
     public void testScreenOnAtom() throws Exception {
         if (!TESTS_ENABLED) {return;}
@@ -167,6 +99,7 @@ public class StatsdValidationTest extends ProtoDumpTestCase {
                         == ScreenStateChanged.State.STATE_DOZE_VALUE);
     }
 
+    // TODO: Anomaly detection will be moved to general statsd device-side tests.
     // Tests that anomaly detection for count works.
     // Also tests that anomaly detection works when spanning multiple buckets.
     public void testCountAnomalyDetection() throws Exception {
@@ -344,30 +277,6 @@ public class StatsdValidationTest extends ProtoDumpTestCase {
         turnScreenOff();
     }
 
-    /**
-     * Determines whether logcat indicates that incidentd fired since the given device date.
-     */
-    private boolean didIncidentdFireSince(String date) throws Exception {
-        final String INCIDENTD_TAG = "incidentd";
-        final String INCIDENTD_STARTED_STRING = "reportIncident";
-        // TODO: Do something more robust than this in case of delayed logging.
-        Thread.sleep(1000);
-        String log = getLogcatSince(date, String.format(
-                "-s %s -e %s", INCIDENTD_TAG, INCIDENTD_STARTED_STRING));
-        return log.contains(INCIDENTD_STARTED_STRING);
-    }
-
-    private void uploadConfig(StatsdConfig config) throws Exception {
-        File configFile = File.createTempFile("statsdconfig", ".config");
-        Files.write(config.toByteArray(), configFile);
-        String remotePath = "/data/" + configFile.getName();
-        getDevice().pushFile(configFile, remotePath);
-        getDevice().executeShellCommand(
-                String.join(" ", "cat", remotePath, "|", UPDATE_CONFIG_CMD, CONFIG_UID,
-                        CONFIG_NAME));
-        getDevice().executeShellCommand("rm " + remotePath);
-    }
-
     public void testKernelWakelockCount() throws Exception {
         if (!TESTS_ENABLED) {return;}
         StatsdConfig config = getDefaultConfig()
@@ -429,14 +338,12 @@ public class StatsdValidationTest extends ProtoDumpTestCase {
         assertTrue(report.getMetrics(0).getGaugeMetrics().getDataCount() >= 1);
     }
 
-
-
     /**
      * Get default config builder for atoms CTS testing.
      * All matchers are included. One just need to add event metric for pushed events or
      * gauge metric for pulled metric.
      */
-    private StatsdConfig.Builder getDefaultConfig() {
+    protected StatsdConfig.Builder getDefaultConfig() {
         StatsdConfig.Builder configBuilder = StatsdConfig.newBuilder();
         configBuilder.setName("12345");
         configBuilder
@@ -493,181 +400,7 @@ public class StatsdValidationTest extends ProtoDumpTestCase {
                     .setStop("SCREEN_TURNED_OFF")
                     .setCountNesting(false)
                 )
-            )
-        ;
+            );
         return configBuilder;
     }
-
-    private void removeConfig(String configName) throws Exception {
-        getDevice().executeShellCommand(
-                String.join(" ", REMOVE_CONFIG_CMD, CONFIG_UID, configName));
-    }
-
-    private ConfigMetricsReportList getReportList() throws Exception {
-        ConfigMetricsReportList reportList = getDump(ConfigMetricsReportList.parser(),
-                String.join(" ", DUMP_REPORT_CMD, CONFIG_UID, CONFIG_NAME, "--proto"));
-        LogUtil.CLog.d("get report list as following:\n" + reportList.toString());
-        return reportList;
-    }
-
-    private void turnScreenOn() throws Exception {
-        getDevice().executeShellCommand("input keyevent KEYCODE_WAKEUP");
-        getDevice().executeShellCommand("wm dismiss-keyguard");
-    }
-
-    private void turnScreenOff() throws Exception {
-        getDevice().executeShellCommand("input keyevent KEYCODE_SLEEP");
-    }
-
-    private void rebootDevice() throws Exception {
-        getDevice().rebootUntilOnline();
-    }
-
-    private void startSimpleActivity() throws Exception {
-        getDevice().executeShellCommand(
-                "am start -n com.android.server.cts.device.batterystats/.SimpleActivity");
-        // TODO: assertTrue() on something pulled from statsd report using getStatsOutput.
-    }
-
-    private void installTestApp() throws Exception {
-        installPackage(DEVICE_SIDE_TEST_APK, true);
-    }
-
-    private String getCurrentLogcatDate() throws Exception {
-        // TODO: Do something more robust than this for getting logcat markers.
-        long timestampSecs = getDevice().getDeviceDate();
-        return new SimpleDateFormat("MM-dd HH:mm:ss.SSS")
-                .format(new Date(timestampSecs * 1000L));
-    }
-
-    private String getLogcatSince(String date, String logcatParams) throws Exception {
-        return getDevice().executeShellCommand(String.format(
-                "logcat -v threadtime -t '%s' -d %s", date, logcatParams));
-    }
-
-    // TODO: All the following code is entirely taken verbatim from BatteryStatsValidationTest.
-    //       If we end up needing it, we should refactor the code so that they share these commands.
-
-    private int getUid() throws Exception {
-        String uidLine = getDevice().executeShellCommand("cmd package list packages -U "
-                + DEVICE_SIDE_TEST_PACKAGE);
-        String[] uidLineParts = uidLine.split(":");
-        // 3rd entry is package uid
-        assertTrue(uidLineParts.length > 2);
-        int uid = Integer.parseInt(uidLineParts[2].trim());
-        assertTrue(uid > 10000);
-        return uid;
-    }
-
-    /**
-     * Runs a (background) service to perform the given action, and waits for
-     * the device to report that the action has finished (via a logcat message) before returning.
-     *
-     * @param actionValue one of the constants in BatteryStatsBgVsFgActions indicating the desired
-     *                    action to perform.
-     * @param maxTimeMs   max time to wait (in ms) for action to report that it has completed.
-     * @return A string, representing a random integer, assigned to this particular request for the
-     * device to perform the given action. This value can be used to receive communications via
-     * logcat
-     * from the device about this action.
-     */
-    private String executeBackground(String actionValue, int maxTimeMs) throws Exception {
-        String requestCode = executeBackground(actionValue);
-        String searchString = getCompletedActionString(actionValue, requestCode);
-        checkLogcatForText(BG_VS_FG_TAG, searchString, maxTimeMs);
-        return requestCode;
-    }
-
-    /**
-     * Runs a (background) service to perform the given action.
-     *
-     * @param actionValue one of the constants in BatteryStatsBgVsFgActions indicating the desired
-     *                    action to perform.
-     * @return A string, representing a random integer, assigned to this particular request for the
-     * device to perform the given action. This value can be used to receive communications via
-     * logcat
-     * from the device about this action.
-     */
-    private String executeBackground(String actionValue) throws Exception {
-        allowBackgroundServices();
-        String requestCode = Integer.toString(new Random().nextInt());
-        getDevice().executeShellCommand(String.format(
-                "am startservice -n '%s' -e %s %s -e %s %s",
-                DEVICE_SIDE_BG_SERVICE_COMPONENT,
-                KEY_ACTION, actionValue,
-                KEY_REQUEST_CODE, requestCode));
-        return requestCode;
-    }
-
-    /**
-     * Required to successfully start a background service from adb in O.
-     */
-    private void allowBackgroundServices() throws Exception {
-        getDevice().executeShellCommand(String.format(
-                "cmd deviceidle tempwhitelist %s", DEVICE_SIDE_TEST_PACKAGE));
-    }
-
-    /**
-     * Runs an activity (in the foreground) to perform the given action, and waits
-     * for the device to report that the action has finished (via a logcat message) before
-     * returning.
-     *
-     * @param actionValue one of the constants in BatteryStatsBgVsFgActions indicating the desired
-     *                    action to perform.
-     * @param maxTimeMs   max time to wait (in ms) for action to report that it has completed.
-     * @return A string, representing a random integer, assigned to this particular request for the
-     * device to perform the given action. This value can be used to receive communications via
-     * logcat
-     * from the device about this action.
-     */
-    private String executeForeground(String actionValue, int maxTimeMs) throws Exception {
-        String requestCode = executeForeground(actionValue);
-        String searchString = getCompletedActionString(actionValue, requestCode);
-        checkLogcatForText(BG_VS_FG_TAG, searchString, maxTimeMs);
-        return requestCode;
-    }
-
-    /**
-     * Runs an activity (in the foreground) to perform the given action.
-     *
-     * @param actionValue one of the constants in BatteryStatsBgVsFgActions indicating the desired
-     *                    action to perform.
-     * @return A string, representing a random integer, assigned to this particular request for the
-     * device to perform the given action. This value can be used to receive communications via
-     * logcat
-     * from the device about this action.
-     */
-    private String executeForeground(String actionValue) throws Exception {
-        String requestCode = Integer.toString(new Random().nextInt());
-        getDevice().executeShellCommand(String.format(
-                "am start -n '%s' -e %s %s -e %s %s",
-                DEVICE_SIDE_FG_ACTIVITY_COMPONENT,
-                KEY_ACTION, actionValue,
-                KEY_REQUEST_CODE, requestCode));
-        return requestCode;
-    }
-
-    /**
-     * The string that will be printed in the logcat when the action completes. This needs to be
-     * identical to
-     * {@link com.android.server.cts.device.batterystats.BatteryStatsBgVsFgActions#tellHostActionFinished}.
-     */
-    private String getCompletedActionString(String actionValue, String requestCode) {
-        return String.format("Completed performing %s for request %s", actionValue, requestCode);
-    }
-
-    /**
-     * Determines if the device has the given feature.
-     * Prints a warning if its value differs from requiredAnswer.
-     */
-    private boolean hasFeature(String featureName, boolean requiredAnswer) throws Exception {
-        final String features = getDevice().executeShellCommand("pm list features");
-        boolean hasIt = features.contains(featureName);
-        if (hasIt != requiredAnswer) {
-            LogUtil.CLog.w("Device does " + (requiredAnswer ? "not " : "") + "have feature "
-                    + featureName);
-        }
-        return hasIt;
-    }
-
 }

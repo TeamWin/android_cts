@@ -19,7 +19,6 @@ package android.bluetooth.cts;
 import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
-import android.bluetooth.cts.BluetoothScanReceiver;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanFilter;
@@ -61,8 +60,10 @@ public class BluetoothLeScanTest extends AndroidTestCase {
 
     private static final String TAG = "BluetoothLeScanTest";
 
-    private static final int SCAN_DURATION_MILLIS = 5000;
+    private static final int SCAN_DURATION_MILLIS = 10000;
     private static final int BATCH_SCAN_REPORT_DELAY_MILLIS = 20000;
+    private static final int SCAN_STOP_TIMEOUT = 2000;
+    private static final int ADAPTER_ENABLE_TIMEOUT = 3000;
     private CountDownLatch mFlushBatchScanLatch;
 
     private BluetoothAdapter mBluetoothAdapter;
@@ -82,7 +83,7 @@ public class BluetoothLeScanTest extends AndroidTestCase {
             // Note it's not reliable to listen for Adapter.ACTION_STATE_CHANGED broadcast and check
             // bluetooth state.
             mBluetoothAdapter.enable();
-            sleep(3000);
+            sleep(ADAPTER_ENABLE_TIMEOUT);
         }
         mScanner = mBluetoothAdapter.getBluetoothLeScanner();
         mLocationOn = TestUtils.isLocationOn(getContext());
@@ -99,6 +100,8 @@ public class BluetoothLeScanTest extends AndroidTestCase {
         if (!mLocationOn) {
             TestUtils.disableLocation(getContext());
         }
+        mBluetoothAdapter.disable();
+        sleep(ADAPTER_ENABLE_TIMEOUT);
     }
 
     /**
@@ -112,6 +115,7 @@ public class BluetoothLeScanTest extends AndroidTestCase {
         long scanStartMillis = SystemClock.elapsedRealtime();
         Collection<ScanResult> scanResults = scan();
         long scanEndMillis = SystemClock.elapsedRealtime();
+        Log.d(TAG, "scan result size:" + scanResults.size());
         assertTrue("Scan results shouldn't be empty", !scanResults.isEmpty());
         verifyTimestamp(scanResults, scanStartMillis, scanEndMillis);
     }
@@ -140,7 +144,7 @@ public class BluetoothLeScanTest extends AndroidTestCase {
         mScanner.startScan(filters, settings, filterLeScanCallback);
         sleep(SCAN_DURATION_MILLIS);
         mScanner.stopScan(filterLeScanCallback);
-        sleep(1000);
+        sleep(SCAN_STOP_TIMEOUT);
         Collection<ScanResult> scanResults = filterLeScanCallback.getScanResults();
         for (ScanResult result : scanResults) {
             assertTrue(filter.matches(result));
@@ -190,12 +194,16 @@ public class BluetoothLeScanTest extends AndroidTestCase {
                 .setScanMode(ScanSettings.SCAN_MODE_OPPORTUNISTIC)
                 .build();
         BleScanCallback emptyScanCallback = new BleScanCallback();
+        assertTrue("opportunistic scan shouldn't have scan results",
+                emptyScanCallback.getScanResults().isEmpty());
 
         // No scans are really started with opportunistic scans only.
         mScanner.startScan(Collections.<ScanFilter>emptyList(), opportunisticScanSettings,
                 emptyScanCallback);
         sleep(SCAN_DURATION_MILLIS);
-        assertTrue(emptyScanCallback.getScanResults().isEmpty());
+        Log.d(TAG, "result: " + emptyScanCallback.getScanResults());
+        assertTrue("opportunistic scan shouldn't have scan results",
+                emptyScanCallback.getScanResults().isEmpty());
 
         BleScanCallback regularScanCallback = new BleScanCallback();
         ScanSettings regularScanSettings = new ScanSettings.Builder()
@@ -217,7 +225,7 @@ public class BluetoothLeScanTest extends AndroidTestCase {
         // stops.
         mScanner.stopScan(regularScanCallback);
         // In case we got scan results before scan was completely stopped.
-        sleep(1000);
+        sleep(SCAN_STOP_TIMEOUT);
         emptyScanCallback.clear();
         sleep(SCAN_DURATION_MILLIS);
         assertTrue("opportunistic scan shouldn't have scan results",
@@ -370,7 +378,7 @@ public class BluetoothLeScanTest extends AndroidTestCase {
         mScanner.startScan(regularLeScanCallback);
         sleep(SCAN_DURATION_MILLIS);
         mScanner.stopScan(regularLeScanCallback);
-        sleep(1000);
+        sleep(SCAN_STOP_TIMEOUT);
         return regularLeScanCallback.getScanResults();
     }
 

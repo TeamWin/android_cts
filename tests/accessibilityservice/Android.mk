@@ -22,7 +22,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 	ctstestrunner \
 	mockito-target-minus-junit4
 
-LOCAL_JAVA_LIBRARIES := android.test.runner.stubs
+LOCAL_JAVA_LIBRARIES := android.test.runner.stubs android.test.base.stubs
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 

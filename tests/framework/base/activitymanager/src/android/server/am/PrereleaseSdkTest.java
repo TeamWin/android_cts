@@ -24,6 +24,8 @@ import org.junit.Test;
 /**
  * Ensure that compatibility dialog is shown when launching an application built
  * against a prerelease SDK.
+ * <p>Build/Install/Run:
+ *     atest CtsActivityManagerDeviceTestCases:PrereleaseSdkTest
  */
 public class PrereleaseSdkTest extends ActivityManagerTestBase {
     private static final String AM_START_COMMAND = "am start -n %s/%s.%s";

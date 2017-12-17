@@ -30,12 +30,13 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.Presubmit;
+import android.support.test.filters.FlakyTest;
 
 import org.junit.Test;
 
 /**
- * Build: mmma -j32 cts/tests/framework/base
- * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.ActivityManagerAssistantStackTests
+ * Build/Install/Run:
+ *     atest CtsActivityManagerDeviceTestCases:ActivityManagerAssistantStackTests
  */
 //@Presubmit b/67706642
 public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase {
@@ -79,6 +80,8 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
     }
 
     // TODO(b/69573940): Add back to presubmit
+    @FlakyTest
+    @Presubmit
     @Test
     public void testAssistantStackZOrder() throws Exception {
         assumeTrue(supportsPip());
@@ -91,8 +94,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
                 WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
 
         // Dock a task
-        launchActivity(TEST_ACTIVITY);
-        launchActivityInDockStack(DOCKED_ACTIVITY);
+        launchActivitiesInSplitScreen(DOCKED_ACTIVITY, TEST_ACTIVITY);
         mAmWmState.assertContainsStack("Must contain fullscreen stack.",
                 WINDOWING_MODE_SPLIT_SCREEN_SECONDARY, ACTIVITY_TYPE_STANDARD);
         mAmWmState.assertContainsStack("Must contain docked stack.",
@@ -126,8 +128,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         assumeTrue(supportsSplitScreenMultiWindow());
 
         // Dock a task
-        launchActivity(TEST_ACTIVITY);
-        launchActivityInDockStack(DOCKED_ACTIVITY);
+        launchActivitiesInSplitScreen(DOCKED_ACTIVITY, TEST_ACTIVITY);
         mAmWmState.assertContainsStack("Must contain fullscreen stack.",
                 WINDOWING_MODE_SPLIT_SCREEN_SECONDARY, ACTIVITY_TYPE_STANDARD);
         mAmWmState.assertContainsStack("Must contain docked stack.",
@@ -201,6 +202,8 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
     }
 
     // TODO(b/69573940): Add back to presubmit
+    @FlakyTest
+    @Presubmit
     @Test
     public void testTranslucentAssistantActivityStackVisibility() throws Exception {
         enableAssistant();
@@ -251,8 +254,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         // is also visible
         if (supportsSplitScreenMultiWindow()) {
             removeStacksWithActivityTypes(ACTIVITY_TYPE_ASSISTANT);
-            launchActivityInDockStack(DOCKED_ACTIVITY);
-            launchActivity(TEST_ACTIVITY);
+            launchActivitiesInSplitScreen(DOCKED_ACTIVITY, TEST_ACTIVITY);
             mAmWmState.assertContainsStack("Must contain docked stack.",
                     WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
             launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,

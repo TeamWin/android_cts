@@ -31,7 +31,7 @@ LOCAL_JNI_SHARED_LIBRARIES := libopengltest_jni
 
 LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner
 
-LOCAL_JAVA_LIBRARIES := android.test.runner.stubs
+LOCAL_JAVA_LIBRARIES := android.test.runner.stubs android.test.base.stubs
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 

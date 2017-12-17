@@ -31,8 +31,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
- * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceTestCases android.server.am.KeyguardTests
+ * Build/Install/Run:
+ *     atest CtsActivityManagerDeviceTestCases:KeyguardTests
  */
 public class KeyguardTests extends KeyguardTestBase {
 
@@ -178,11 +178,16 @@ public class KeyguardTests extends KeyguardTestBase {
     public void testShowWhenLockedActivityWhileSplit() throws Exception {
         assumeTrue(supportsSplitScreenMultiWindow());
 
-        launchActivityInDockStack(LAUNCHING_ACTIVITY);
-        launchActivityToSide(true, false, "ShowWhenLockedActivity");
+        launchActivitiesInSplitScreen(
+                getLaunchActivityBuilder().setTargetActivityName(LAUNCHING_ACTIVITY),
+                getLaunchActivityBuilder().setTargetActivityName("ShowWhenLockedActivity")
+                        .setRandomData(true)
+                        .setMultipleTask(false)
+        );
         mAmWmState.assertVisibility("ShowWhenLockedActivity", true);
         gotoKeyguard();
-        mAmWmState.computeState(new WaitForValidActivityState.Builder( "ShowWhenLockedActivity" ).build());
+        mAmWmState.computeState(
+                new WaitForValidActivityState.Builder("ShowWhenLockedActivity").build());
         mAmWmState.assertVisibility("ShowWhenLockedActivity", true);
         mAmWmState.assertKeyguardShowingAndOccluded();
         mAmWmState.assertDoesNotContainStack("Activity must be full screen.",

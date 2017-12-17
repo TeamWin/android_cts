@@ -251,6 +251,13 @@ public class AudioRecordTest extends CtsAndroidTestCase {
                 AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_8BIT);
     }
 
+    public void testAudioRecordLocalMono16BitShort() throws Exception {
+        doTest("local_mono_16bit_short", true /*localRecord*/, false /*customHandler*/,
+                30 /*periodsPerSecond*/, 2 /*markerPeriodsPerSecond*/,
+                false /*useByteBuffer*/, true /*blocking*/,
+                false /*auditRecording*/, false /*isChannelIndex*/, 8000 /*TEST_SR*/,
+                AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, 500 /*TEST_TIME_MS*/);
+    }
     public void testAudioRecordLocalMono16Bit() throws Exception {
         doTest("local_mono_16bit", true /*localRecord*/, false /*customHandler*/,
                 30 /*periodsPerSecond*/, 2 /*markerPeriodsPerSecond*/,
@@ -743,11 +750,21 @@ public class AudioRecordTest extends CtsAndroidTestCase {
             boolean useByteBuffer, boolean blocking,
             final boolean auditRecording, final boolean isChannelIndex,
             final int TEST_SR, final int TEST_CONF, final int TEST_FORMAT) throws Exception {
+        final int TEST_TIME_MS = auditRecording ? 60000 : 2000;
+        doTest(reportName, localRecord, customHandler, periodsPerSecond, markerPeriodsPerSecond,
+                useByteBuffer, blocking, auditRecording, isChannelIndex,
+                TEST_SR, TEST_CONF, TEST_FORMAT, TEST_TIME_MS);
+    }
+    private void doTest(String reportName, boolean localRecord, boolean customHandler,
+            int periodsPerSecond, int markerPeriodsPerSecond,
+            boolean useByteBuffer, boolean blocking,
+            final boolean auditRecording, final boolean isChannelIndex,
+            final int TEST_SR, final int TEST_CONF, final int TEST_FORMAT, final int TEST_TIME_MS)
+            throws Exception {
         if (!hasMicrophone()) {
             return;
         }
         // audit recording plays back recorded audio, so use longer test timing
-        final int TEST_TIME_MS = auditRecording ? 60000 : 2000;
         final int TEST_SOURCE = MediaRecorder.AudioSource.DEFAULT;
         mIsHandleMessageCalled = false;
 

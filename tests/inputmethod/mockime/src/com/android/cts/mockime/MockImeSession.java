@@ -24,6 +24,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Parcel;
@@ -198,7 +199,7 @@ public class MockImeSession implements AutoCloseable {
                 .getInputMethodList()
                 .stream()
                 .anyMatch(info -> getMockImeComponentName().equals(info.getComponent()))) {
-            executeShellCommand(mUiAutomation, "ime reset-ime");
+            executeShellCommand(mUiAutomation, "ime reset");
         }
         if (mContext.getSystemService(InputMethodManager.class)
                 .getEnabledInputMethodList()
@@ -256,7 +257,7 @@ public class MockImeSession implements AutoCloseable {
      * selected next is up to the system.
      */
     public void close() throws Exception {
-        executeShellCommand(mUiAutomation, "ime reset-ime");
+        executeShellCommand(mUiAutomation, "ime reset");
 
         PollingCheck.check("Make sure that MockIME becomes unavailable", TIMEOUT, () ->
                 mContext.getSystemService(InputMethodManager.class)
@@ -267,5 +268,33 @@ public class MockImeSession implements AutoCloseable {
         mContext.unregisterReceiver(mEventReceiver);
         mHandlerThread.quitSafely();
         mContext.deleteFile(MOCK_IME_SETTINGS_FILE);
+    }
+
+    /**
+     * Lets {@link MockIme} to call
+     * {@link android.view.inputmethod.InputConnection#commitText(CharSequence, int)} with the given
+     * parameters.
+     *
+     * <p>This triggers {@code getCurrentInputConnection().commitText(text, newCursorPosition)}.</p>
+     *
+     * @param text to be passed as the {@code text} parameter
+     * @param newCursorPosition to be passed as the {@code newCursorPosition} parameter
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}
+     */
+    @NonNull
+    public ImeCommand callCommitText(@NonNull CharSequence text, int newCursorPosition) {
+        final Bundle params = new Bundle();
+        params.putCharSequence("text", text);
+        params.putInt("newCursorPosition", newCursorPosition);
+        final ImeCommand command = new ImeCommand(
+                "commitText", SystemClock.elapsedRealtimeNanos(), true, params);
+        final Intent intent = new Intent();
+        intent.setPackage(mContext.getPackageName());
+        intent.setAction(MockIme.getCommandActionName(mImeEventActionName));
+        intent.putExtras(command.toBundle());
+        mContext.sendBroadcast(intent);
+        return command;
     }
 }

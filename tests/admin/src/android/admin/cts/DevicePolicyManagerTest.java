@@ -746,8 +746,7 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
     }
 
     private void assertProfileOwnerMessage(String message) {
-        assertTrue("message is: "+ message,
-                message.contains("does not own the profile"));
+        assertTrue("message is: "+ message, message.contains("does not own the profile"));
     }
 
     public void testSetDelegatedCertInstaller_failIfNotProfileOwner() {
@@ -896,6 +895,19 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         }
         try {
             mDevicePolicyManager.resetPasswordWithToken(mComponent, "1234", new byte[32], 0);
+            fail("did not throw expected SecurityException");
+        } catch (SecurityException e) {
+            assertProfileOwnerMessage(e.getMessage());
+        }
+    }
+
+    public void testIsUsingUnifiedPassword_failIfNotProfileOwner() {
+        if (!mDeviceAdmin) {
+            Log.w(TAG, "Skipping testIsUsingUnifiedPassword_failIfNotProfileOwner");
+            return;
+        }
+        try {
+            mDevicePolicyManager.isUsingUnifiedPassword(mComponent);
             fail("did not throw expected SecurityException");
         } catch (SecurityException e) {
             assertProfileOwnerMessage(e.getMessage());

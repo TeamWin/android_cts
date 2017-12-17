@@ -262,7 +262,8 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
         LocalBroadcastReceiver receiver = new LocalBroadcastReceiver();
         LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(
                 getContext());
-        localBroadcastManager.registerReceiver(receiver, new IntentFilter(ACTION_USER_ADDED));
+        localBroadcastManager.registerReceiver(receiver,
+                new IntentFilter(BasicAdminReceiver.ACTION_USER_ADDED));
         try {
             mUserHandle = mDevicePolicyManager.createAndManageUser(getWho(), "Test User", getWho(),
                     null, 0);
@@ -271,7 +272,8 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
         } finally {
             localBroadcastManager.unregisterReceiver(receiver);
         }
-        localBroadcastManager.registerReceiver(receiver, new IntentFilter(ACTION_USER_REMOVED));
+        localBroadcastManager.registerReceiver(receiver,
+                new IntentFilter(BasicAdminReceiver.ACTION_USER_REMOVED));
         try {
             assertTrue(mDevicePolicyManager.removeUser(getWho(), mUserHandle));
             assertEquals(mUserHandle, receiver.waitForBroadcastReceived());
@@ -308,7 +310,7 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            UserHandle userHandle = intent.getParcelableExtra(EXTRA_USER_HANDLE);
+            UserHandle userHandle = intent.getParcelableExtra(BasicAdminReceiver.EXTRA_USER_HANDLE);
             Log.d(TAG, "broadcast receiver received " + intent + " with userHandle "
                     + userHandle);
             mQueue.offer(userHandle);

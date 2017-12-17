@@ -24,5 +24,6 @@ public class CantSave2Activity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.cant_save_2_activity);
+        getWindow().getDecorView().requestFocus();
     }
 }

@@ -30,7 +30,6 @@ import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.os.ParcelFileDescriptor;
 import android.support.test.InstrumentationRegistry;
-import android.util.Log;
 import android.view.nano.DisplayInfoProto;
 
 import com.android.server.wm.proto.nano.AppTransitionProto;
@@ -392,7 +391,7 @@ public class WindowManagerState {
         return mFocusedWindow;
     }
 
-    String getFocusedApp() {
+    public String getFocusedApp() {
         return mFocusedApp;
     }
 

@@ -18,7 +18,6 @@ package android.autofillservice.cts;
 import static android.autofillservice.cts.Helper.assertFillEventForContextCommitted;
 import static android.autofillservice.cts.Helper.assertFillEventForFieldsClassification;
 import static android.autofillservice.cts.Helper.runShellCommand;
-import static android.service.autofill.FillResponse.FLAG_TRACK_CONTEXT_COMMITED;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -104,7 +103,6 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         final EditText field = mActivity.getCell(1, 1);
         final AutofillId fieldId = field.getAutofillId();
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setFillResponseFlags(FLAG_TRACK_CONTEXT_COMMITED)
                 .setFieldClassificationIds(fieldId)
                 .build());
 
@@ -159,7 +157,6 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         final EditText field = mActivity.getCell(1, 1);
         final AutofillId fieldId = field.getAutofillId();
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setFillResponseFlags(FLAG_TRACK_CONTEXT_COMMITED)
                 .setFieldClassificationIds(fieldId)
                 .build());
 
@@ -199,7 +196,6 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         final EditText field2 = mActivity.getCell(1, 2);
         final AutofillId fieldId2 = field2.getAutofillId();
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setFillResponseFlags(FLAG_TRACK_CONTEXT_COMMITED)
                 .setFieldClassificationIds(fieldId1, fieldId2)
                 .build());
 
@@ -248,7 +244,6 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         final EditText field4 = mActivity.getCell(2, 2);
         final AutofillId fieldId4 = field4.getAutofillId();
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setFillResponseFlags(FLAG_TRACK_CONTEXT_COMMITED)
                 .setFieldClassificationIds(fieldId1, fieldId2)
                 .build());
 
@@ -291,7 +286,6 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         final EditText field = mActivity.getCell(1, 1);
         final AutofillId fieldId = field.getAutofillId();
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setFillResponseFlags(FLAG_TRACK_CONTEXT_COMMITED)
                 .setFieldClassificationIds(fieldId)
                 .build());
 
@@ -328,7 +322,6 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         final EditText field = mActivity.getCell(1, 1);
         final AutofillId fieldId = field.getAutofillId();
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setFillResponseFlags(FLAG_TRACK_CONTEXT_COMMITED)
                 .setFieldClassificationIds(fieldId)
                 .build());
 
