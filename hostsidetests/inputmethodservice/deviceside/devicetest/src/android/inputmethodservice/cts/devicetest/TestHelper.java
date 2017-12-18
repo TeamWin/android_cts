@@ -29,7 +29,9 @@ import android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventTyp
 import android.inputmethodservice.cts.common.EventProviderConstants.EventTableConstants;
 import android.inputmethodservice.cts.common.test.TestInfo;
 import android.net.Uri;
+import android.provider.Settings;
 import android.support.annotation.IdRes;
+import android.support.annotation.NonNull;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
@@ -37,6 +39,7 @@ import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.Until;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -49,6 +52,16 @@ final class TestHelper {
     /** Content URI of device event provider. */
     private static final Uri DEVICE_EVENTS_CONTENT_URI = Uri.parse(EventTableConstants.CONTENT_URI);
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
+
+    /**
+     * Copied from com.android.internal.inputmethod.InputMethodUtils#INPUT_METHOD_SEPARATOR
+     */
+    private static final String INPUT_METHOD_SEPARATOR = ":";
+
+    /**
+     * Copied from com.android.internal.inputmethod.InputMethodUtils#INPUT_METHOD_SUBTYPE_SEPARATOR
+     */
+    private static final String INPUT_METHOD_SUBTYPE_SEPARATOR = ";";
 
     private final TestInfo mTestInfo;
     private final ContentResolver mResolver;
@@ -127,5 +140,35 @@ final class TestHelper {
      */
     Predicate<DeviceEvent> isStartOfTest() {
         return isFrom(mTestInfo.getTestName()).and(isType(TEST_START));
+    }
+
+    /**
+     * @return {@link android.app.Instrumentation#getTargetContext()}
+     */
+    Context getTargetContext() {
+        return mTargetContext;
+    }
+
+    /**
+     * Add the given {@code imeId} to {@link Settings.Secure#ENABLED_INPUT_METHODS}
+     * with preserving already enabled IMEs.
+     *
+     * <p>TODO: Support {@link android.view.inputmethod.InputMethodSubtype}</p>
+     * @param imeId IME ID that corresponds to
+     *              {@link android.view.inputmethod.InputMethodInfo#getId()}
+     */
+    void enableIme(@NonNull String imeId) {
+        final ContentResolver contentResolver = mTargetContext.getContentResolver();
+        // First, get the current IME ID list.
+        final String currentIds = Settings.Secure.getString(
+                contentResolver, Settings.Secure.ENABLED_INPUT_METHODS);
+        // Check if already enabled.
+        if (Arrays.stream(currentIds.split(INPUT_METHOD_SEPARATOR)).anyMatch(
+                id -> id.equals(imeId) || id.startsWith(imeId + INPUT_METHOD_SUBTYPE_SEPARATOR))) {
+            // Already enabled.  Nothing to do.
+            return;
+        }
+        final String newIds = currentIds + INPUT_METHOD_SEPARATOR + imeId;
+        Settings.Secure.putString(contentResolver, Settings.Secure.ENABLED_INPUT_METHODS, newIds);
     }
 }

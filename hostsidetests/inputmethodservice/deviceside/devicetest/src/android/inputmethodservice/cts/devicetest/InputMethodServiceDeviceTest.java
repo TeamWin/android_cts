@@ -29,6 +29,8 @@ import static android.inputmethodservice.cts.common.ImeCommandConstants.EXTRA_CO
 import static android.inputmethodservice.cts.devicetest.BusyWaitUtils.pollingCheck;
 import static android.inputmethodservice.cts.devicetest.MoreCollectors.startingFrom;
 
+import static org.junit.Assert.assertTrue;
+
 import android.inputmethodservice.cts.DeviceEvent;
 import android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType;
 import android.inputmethodservice.cts.common.Ime1Constants;
@@ -38,7 +40,9 @@ import android.inputmethodservice.cts.common.test.ShellCommandUtils;
 import android.inputmethodservice.cts.devicetest.SequenceMatcher.MatchResult;
 import android.os.SystemClock;
 import android.support.test.runner.AndroidJUnit4;
-
+import android.text.TextUtils;
+import android.view.inputmethod.InputMethodManager;
+import android.support.annotation.NonNull;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -52,6 +56,44 @@ import java.util.stream.Collector;
 public class InputMethodServiceDeviceTest {
 
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
+
+    /** Test CtsInputMethod1 is recognized by the system then can be enabled via secure settings. */
+    @Test
+    public void testEnableIme1() throws Throwable {
+        final TestHelper helper = new TestHelper(getClass(), DeviceTestConstants.TEST_ENABLE_IME1);
+        assertEnableImeMain(helper, Ime1Constants.IME_ID);
+    }
+
+    /** Test CtsInputMethod2 is recognized by the system then can be enabled via secure settings. */
+    @Test
+    public void testEnableIme2() throws Throwable {
+        final TestHelper helper = new TestHelper(getClass(), DeviceTestConstants.TEST_ENABLE_IME2);
+        assertEnableImeMain(helper, Ime2Constants.IME_ID);
+    }
+
+    private static void assertEnableImeMain(@NonNull TestHelper helper, @NonNull String imeId)
+            throws Throwable{
+        // The host side is responsible for installing the IME that has "imeId".
+        // Make sure that the system recognizes it within a certain time.
+        final InputMethodManager imm =
+                helper.getTargetContext().getSystemService(InputMethodManager.class);
+        pollingCheck(() -> imm.getInputMethodList().stream().anyMatch(
+                imi -> TextUtils.equals(imi.getId(), imeId)),
+                TIMEOUT,
+                "Installed IME should be included in InputMethodManager#getInputMethodList()");
+
+        assertTrue(imeId + " must not be enabled yet",
+                imm.getEnabledInputMethodList().stream().noneMatch(
+                        imi -> TextUtils.equals(imi.getId(), imeId)));
+
+        helper.enableIme(imeId);
+
+        // Make sure that the system changes the
+        pollingCheck(() -> imm.getEnabledInputMethodList().stream().anyMatch(
+                imi -> TextUtils.equals(imi.getId(), imeId)),
+                TIMEOUT,
+                "Enabled IME should be included in InputMethodManager#getEnabledInputMethodList()");
+    }
 
     /** Test to check CtsInputMethod1 receives onCreate and onStartInput. */
     @Test
