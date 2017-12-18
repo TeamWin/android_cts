@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package android.server.cts.second;
+package android.server.am.second;
 
 import android.app.Activity;
 
