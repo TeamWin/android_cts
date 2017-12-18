@@ -40,7 +40,6 @@ import android.server.am.ActivityManagerState.ActivityStack;
 import android.server.am.ActivityManagerState.ActivityTask;
 import android.support.test.filters.FlakyTest;
 
-import android.support.test.filters.FlakyTest;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -635,6 +634,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD);
     }
 
+    @FlakyTest // TODO(b/70746098): Add back to presubmit once flakiness is addressed.
     @Presubmit
     @Test
     public void testRemovePipWithHiddenFullscreenStack() throws Exception {
