@@ -50,8 +50,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
     @Before
     public void setUp() throws Exception {
         // Skip whole tests when DUT has no android.software.input_methods feature.
-        assumeTrue(Boolean.parseBoolean(shell(
-                ShellCommandUtils.hasFeature(ShellCommandUtils.FEATURE_INPUT_METHODS))));
+        assumeTrue(hasDeviceFeature(ShellCommandUtils.FEATURE_INPUT_METHODS));
         cleanUpTestImes();
         shell(ShellCommandUtils.deleteContent(EventTableConstants.CONTENT_URI));
     }
