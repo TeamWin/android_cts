@@ -121,21 +121,6 @@ public class InputMethodServiceDeviceTest {
                 "CtsInputMethod2.onCreate and onStartInput are called in sequence");
     }
 
-    /** Test to check CtsInputMethod1 isn't current IME. */
-    @Test
-    public void testIme1IsNotCurrentIme() throws Throwable {
-        final TestHelper helper =
-                new TestHelper(getClass(), DeviceTestConstants.TEST_IME1_IS_NOT_CURRENT_IME);
-
-        helper.launchActivity(DeviceTestConstants.PACKAGE, DeviceTestConstants.TEST_ACTIVITY_CLASS);
-        helper.findUiObject(R.id.text_entry).click();
-
-        pollingCheck(() -> !helper.shell(ShellCommandUtils.getCurrentIme())
-                        .equals(Ime1Constants.IME_ID),
-                TIMEOUT,
-                "CtsInputMethod1 is uninstalled or disabled, and current IME becomes other IME");
-    }
-
     /**
      * Build stream collector of {@link DeviceEvent} collecting sequence that elements have
      * specified types.
