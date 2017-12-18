@@ -125,24 +125,27 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Make sure UI is not shown.
         mUiBot.assertNoDatasets();
 
-        // Try to trigger it again...
-
-        mActivity.onPassword(View::requestFocus);
-        // ...and make sure it didn't
-        mUiBot.assertNoDatasets();
-        sReplier.assertNumberUnhandledFillRequests(0);
-
         // Test connection lifecycle.
         waitUntilDisconnected();
     }
 
     @Test
     public void testAutofillManuallyAfterServiceReturnedNoDatasets() throws Exception {
+        autofillAfterServiceReturnedNoDatasets(true);
+    }
+
+    @Test
+    public void testAutofillAutomaticallyAfterServiceReturnedNoDatasets() throws Exception {
+        autofillAfterServiceReturnedNoDatasets(false);
+    }
+
+    private void autofillAfterServiceReturnedNoDatasets(boolean manually) throws Exception {
         // Set service.
         enableService();
 
         // Set expectations.
         sReplier.addResponse(NO_RESPONSE);
+        mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger autofill.
         mActivity.onUsername(View::requestFocus);
@@ -157,14 +160,20 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 .setField(ID_PASSWORD, "sweet")
                 .setPresentation(createPresentation("The Dude"))
                 .build());
-        mActivity.expectAutoFill("dude", "sweet");
 
-        mActivity.forceAutofillOnUsername();
+        final int expectedFlags;
+        if (manually) {
+            expectedFlags = FLAG_MANUAL_REQUEST;
+            mActivity.forceAutofillOnUsername();
+        } else {
+            expectedFlags = 0;
+            mActivity.onPassword(View::requestFocus);
+        }
 
         final FillRequest fillRequest = sReplier.getNextFillRequest();
-        assertThat(fillRequest.flags).isEqualTo(FLAG_MANUAL_REQUEST);
+        assertThat(fillRequest.flags).isEqualTo(expectedFlags);
 
-        // Selects the dataset.
+        // Select the dataset.
         mUiBot.selectDataset("The Dude");
 
         // Check the results.
@@ -173,6 +182,15 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
     @Test
     public void testAutofillManuallyAndSaveAfterServiceReturnedNoDatasets() throws Exception {
+        autofillAndSaveAfterServiceReturnedNoDatasets(true);
+    }
+
+    @Test
+    public void testAutofillAutomaticallyAndSaveAfterServiceReturnedNoDatasets() throws Exception {
+        autofillAndSaveAfterServiceReturnedNoDatasets(false);
+    }
+
+    private void autofillAndSaveAfterServiceReturnedNoDatasets(boolean manually) throws Exception {
         // Set service.
         enableService();
 
@@ -180,7 +198,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.addResponse(NO_RESPONSE);
 
         // Trigger autofill.
-        mActivity.onUsername(View::requestFocus);
+        // NOTE: must be on password, as saveOnlyTest() will trigger on username
+        mActivity.onPassword(View::requestFocus);
         sReplier.getNextFillRequest();
 
         // Make sure UI is not shown.
@@ -191,7 +210,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.assertNumberUnhandledFillRequests(0);
 
         // Try again, forcing it
-        saveOnlyTest(true);
+        saveOnlyTest(manually);
     }
 
     @Test
