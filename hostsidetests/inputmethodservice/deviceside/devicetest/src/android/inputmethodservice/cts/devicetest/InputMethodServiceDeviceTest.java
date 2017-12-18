@@ -60,8 +60,7 @@ public class InputMethodServiceDeviceTest {
 
         pollingCheck(() -> helper.queryAllEvents()
                         .collect(startingFrom(helper.isStartOfTest()))
-                        .filter(isFrom(Ime1Constants.CLASS).and(isType(ON_CREATE)))
-                        .findAny().isPresent(),
+                        .anyMatch(isFrom(Ime1Constants.CLASS).and(isType(ON_CREATE))),
                 TIMEOUT, "CtsInputMethod1.onCreate is called");
 
         final long startActivityTime = SystemClock.uptimeMillis();
@@ -69,8 +68,7 @@ public class InputMethodServiceDeviceTest {
 
         pollingCheck(() -> helper.queryAllEvents()
                         .filter(isNewerThan(startActivityTime))
-                        .filter(isFrom(Ime1Constants.CLASS).and(isType(ON_START_INPUT)))
-                        .findAny().isPresent(),
+                        .anyMatch(isFrom(Ime1Constants.CLASS).and(isType(ON_START_INPUT))),
                 TIMEOUT, "CtsInputMethod1.onStartInput is called");
     }
 
@@ -82,8 +80,7 @@ public class InputMethodServiceDeviceTest {
 
         pollingCheck(() -> helper.queryAllEvents()
                         .collect(startingFrom(helper.isStartOfTest()))
-                        .filter(isFrom(Ime1Constants.CLASS).and(isType(ON_CREATE)))
-                        .findAny().isPresent(),
+                        .anyMatch(isFrom(Ime1Constants.CLASS).and(isType(ON_CREATE))),
                 TIMEOUT, "CtsInputMethod1.onCreate is called");
 
         final long startActivityTime = SystemClock.uptimeMillis();
@@ -91,8 +88,7 @@ public class InputMethodServiceDeviceTest {
 
         pollingCheck(() -> helper.queryAllEvents()
                         .filter(isNewerThan(startActivityTime))
-                        .filter(isFrom(Ime1Constants.CLASS).and(isType(ON_START_INPUT)))
-                        .findAny().isPresent(),
+                        .anyMatch(isFrom(Ime1Constants.CLASS).and(isType(ON_START_INPUT))),
                 TIMEOUT, "CtsInputMethod1.onStartInput is called");
 
         helper.findUiObject(R.id.text_entry).click();
@@ -109,8 +105,7 @@ public class InputMethodServiceDeviceTest {
                 TIMEOUT, "CtsInputMethod2 is current IME");
         pollingCheck(() -> helper.queryAllEvents()
                         .filter(isNewerThan(switchImeTime))
-                        .filter(isFrom(Ime1Constants.CLASS).and(isType(ON_DESTROY)))
-                        .findAny().isPresent(),
+                        .anyMatch(isFrom(Ime1Constants.CLASS).and(isType(ON_DESTROY))),
                 TIMEOUT, "CtsInputMethod1.onDestroy is called");
         pollingCheck(() -> helper.queryAllEvents()
                         .filter(isNewerThan(switchImeTime))
@@ -119,21 +114,6 @@ public class InputMethodServiceDeviceTest {
                         .matched(),
                 TIMEOUT,
                 "CtsInputMethod2.onCreate and onStartInput are called in sequence");
-    }
-
-    /** Test to check CtsInputMethod1 isn't current IME. */
-    @Test
-    public void testIme1IsNotCurrentIme() throws Throwable {
-        final TestHelper helper =
-                new TestHelper(getClass(), DeviceTestConstants.TEST_IME1_IS_NOT_CURRENT_IME);
-
-        helper.launchActivity(DeviceTestConstants.PACKAGE, DeviceTestConstants.TEST_ACTIVITY_CLASS);
-        helper.findUiObject(R.id.text_entry).click();
-
-        pollingCheck(() -> !helper.shell(ShellCommandUtils.getCurrentIme())
-                        .equals(Ime1Constants.IME_ID),
-                TIMEOUT,
-                "CtsInputMethod1 is uninstalled or disabled, and current IME becomes other IME");
     }
 
     /**
