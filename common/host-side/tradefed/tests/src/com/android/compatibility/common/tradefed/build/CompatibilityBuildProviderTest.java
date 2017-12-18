@@ -15,7 +15,6 @@
  */
 package com.android.compatibility.common.tradefed.build;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -69,7 +68,10 @@ public class CompatibilityBuildProviderTest {
         EasyMock.replay(mMockDevice);
         IBuildInfo info = mProvider.getBuild(mMockDevice);
         EasyMock.verify(mMockDevice);
-        assertFalse(info instanceof IDeviceBuildInfo);
+        // Still creates a device build for us.
+        assertTrue(info instanceof IDeviceBuildInfo);
+        // tests dir should be populated
+        assertNotNull(((IDeviceBuildInfo)info).getTestsDir());
     }
 
     /**
