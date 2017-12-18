@@ -479,9 +479,10 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
     }
 
     public void testInstallEphemeralRequiresV2Signature() throws Exception {
-        String expectedNoSigError = "No APK Signature Scheme v2 signature in ephemeral package";
-        assertInstallEphemeralFailsWithError("unsigned-ephemeral.apk", expectedNoSigError);
-        assertInstallEphemeralFailsWithError("v1-only-ephemeral.apk", expectedNoSigError);
+        assertInstallEphemeralFailsWithError("unsigned-ephemeral.apk",
+                "Failed to collect certificates");
+        assertInstallEphemeralFailsWithError("v1-only-ephemeral.apk",
+                "No APK Signature Scheme v2 signature");
         assertInstallEphemeralSucceeds("v2-only-ephemeral.apk");
         assertInstallEphemeralSucceeds("v1-v2-ephemeral.apk"); // signed with both schemes
     }
