@@ -163,10 +163,11 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         getDevice().executeShellCommand(
                 "am start -n com.android.server.cts.device.batterystats/.SimpleActivity");
         assertValueRange("st", "", 5, 0, 0); // No foreground service time before test
+        final long startTime = System.nanoTime();
         runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".BatteryStatsProcessStateTests",
                 "testForegroundService");
-        assertValueRange("st", "", 5, (long) (2000 * 0.8), 4000);
-
+        assertValueRange("st", "", 5, (long) (2000 * 0.8),
+                (System.nanoTime() - startTime) / 1000000);
         batteryOffScreenOn();
     }
 
