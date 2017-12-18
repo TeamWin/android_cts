@@ -40,8 +40,6 @@ public final class DeviceTestConstants {
      */
     public static final String TEST_CLASS =
            "android.inputmethodservice.cts.devicetest.InputMethodServiceDeviceTest";
-    public static final String TEST_ENABLE_IME1 = "testEnableIme1";
-    public static final String TEST_ENABLE_IME2 = "testEnableIme2";
     public static final String TEST_CREATE_IME1 = "testCreateIme1";
     public static final String TEST_SWITCH_IME1_TO_IME2 = "testSwitchIme1ToIme2";
 }
