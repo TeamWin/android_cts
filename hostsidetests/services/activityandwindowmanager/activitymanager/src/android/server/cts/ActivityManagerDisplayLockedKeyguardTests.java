@@ -54,7 +54,7 @@ public class ActivityManagerDisplayLockedKeyguardTests extends ActivityManagerDi
      * Test that virtual display content is hidden when device is locked.
      */
     public void testVirtualDisplayHidesContentWhenLocked() throws Exception {
-        if (!supportsMultiDisplay() || !isHandheld()) { return; }
+        if (!supportsMultiDisplay() || !supportsKeyguard()) { return; }
 
         // Create new usual virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();

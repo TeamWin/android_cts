@@ -45,7 +45,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
     }
 
     public void testUnlock() throws Exception {
-        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
+        if (!supportsKeyguard()) {
             return;
         }
         launchActivity("TestActivity");
@@ -57,7 +57,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
     }
 
     public void testUnlockWallpaper() throws Exception {
-        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
+        if (!supportsKeyguard()) {
             return;
         }
         launchActivity("WallpaperActivity");
@@ -69,7 +69,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
     }
 
     public void testOcclude() throws Exception {
-        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
+        if (!supportsKeyguard()) {
             return;
         }
         gotoKeyguard();
@@ -80,7 +80,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
     }
 
     public void testUnocclude() throws Exception {
-        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
+        if (!supportsKeyguard()) {
             return;
         }
         gotoKeyguard();
@@ -93,7 +93,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
     }
 
     public void testNewActivityDuringOccluded() throws Exception {
-        if (!isHandheld() || isUiModeLockedToVrHeadset()) {
+        if (!supportsKeyguard()) {
             return;
         }
         launchActivity("ShowWhenLockedActivity");
