@@ -23,7 +23,6 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
-import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.content.pm.PackageManager.FEATURE_EMBEDDED;
 import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT;
 import static android.content.pm.PackageManager.FEATURE_LEANBACK;
@@ -425,8 +424,7 @@ public abstract class ActivityManagerTestBase {
             final String... keyValuePairs) throws Exception {
         executeShellCommand(getAmStartCmd(activityName, keyValuePairs)
                 + " --windowingMode " + windowingMode);
-        mAmWmState.waitForValidState(new WaitForValidActivityState.Builder()
-                .setActivityName(activityName)
+        mAmWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
                 .setWindowingMode(windowingMode)
                 .build());
     }
