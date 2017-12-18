@@ -64,24 +64,26 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
 
     @Test
     public void testSwitchIme() throws Exception {
-        assertIme1CanBeInstalledAndEnabled();
-        assertIme2CanBeInstalledAndEnabled();
-        shell(ShellCommandUtils.setCurrentIme(Ime1Constants.IME_ID));
-
         final TestInfo testSwitchIme1ToIme2 = new TestInfo(DeviceTestConstants.PACKAGE,
                 DeviceTestConstants.TEST_CLASS, DeviceTestConstants.TEST_SWITCH_IME1_TO_IME2);
         sendTestStartEvent(testSwitchIme1ToIme2);
+        installPackage(Ime1Constants.APK, "-r");
+        installPackage(Ime2Constants.APK, "-r");
+        shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
+        shell(ShellCommandUtils.enableIme(Ime2Constants.IME_ID));
+        shell(ShellCommandUtils.setCurrentIme(Ime1Constants.IME_ID));
+
         assertTrue(runDeviceTestMethod(testSwitchIme1ToIme2));
     }
 
     @Test
     public void testUninstallCurrentIme() throws Exception {
-        assertIme1CanBeInstalledAndEnabled();
-        shell(ShellCommandUtils.setCurrentIme(Ime1Constants.IME_ID));
-
         final TestInfo testCreateIme1 = new TestInfo(DeviceTestConstants.PACKAGE,
                 DeviceTestConstants.TEST_CLASS, DeviceTestConstants.TEST_CREATE_IME1);
         sendTestStartEvent(testCreateIme1);
+        installPackage(Ime1Constants.APK, "-r");
+        shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
+        shell(ShellCommandUtils.setCurrentIme(Ime1Constants.IME_ID));
         assertTrue(runDeviceTestMethod(testCreateIme1));
 
         uninstallPackageIfExists(Ime1Constants.PACKAGE);
@@ -90,12 +92,12 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
 
     @Test
     public void testDisableCurrentIme() throws Exception {
-        assertIme1CanBeInstalledAndEnabled();
-        shell(ShellCommandUtils.setCurrentIme(Ime1Constants.IME_ID));
-
         final TestInfo testCreateIme1 = new TestInfo(DeviceTestConstants.PACKAGE,
                 DeviceTestConstants.TEST_CLASS, DeviceTestConstants.TEST_CREATE_IME1);
         sendTestStartEvent(testCreateIme1);
+        installPackage(Ime1Constants.APK, "-r");
+        shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
+        shell(ShellCommandUtils.setCurrentIme(Ime1Constants.IME_ID));
         assertTrue(runDeviceTestMethod(testCreateIme1));
 
         shell(ShellCommandUtils.disableIme(Ime1Constants.IME_ID));
@@ -117,22 +119,6 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
 
     private String shell(final String command) throws Exception {
         return getDevice().executeShellCommand(command).trim();
-    }
-
-    private void assertIme1CanBeInstalledAndEnabled() throws Exception {
-        installPackage(Ime1Constants.APK, "-r");
-        final TestInfo testEnableIme1 = new TestInfo(DeviceTestConstants.PACKAGE,
-                DeviceTestConstants.TEST_CLASS, DeviceTestConstants.TEST_ENABLE_IME1);
-        sendTestStartEvent(testEnableIme1);
-        assertTrue(runDeviceTestMethod(testEnableIme1));
-    }
-
-    private void assertIme2CanBeInstalledAndEnabled() throws Exception {
-        installPackage(Ime2Constants.APK, "-r");
-        final TestInfo testEnableIme2 = new TestInfo(DeviceTestConstants.PACKAGE,
-                DeviceTestConstants.TEST_CLASS, DeviceTestConstants.TEST_ENABLE_IME2);
-        sendTestStartEvent(testEnableIme2);
-        assertTrue(runDeviceTestMethod(testEnableIme2));
     }
 
     private void cleanUpTestImes() throws Exception {

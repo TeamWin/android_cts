@@ -24,12 +24,6 @@
     -->
     <uses-sdk android:minSdkVersion="19" android:targetSdkVersion="25" />
 
-    <!--
-      This is a "development" protection-level permission so technically this is allowed for CTS
-      as long as the test code is running in the self-instrumentated process.
-    -->
-    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
-
     <application
         android:label="CtsInputMethodServiceDeviceTests"
         android:icon="@mipmap/ic_launcher"
