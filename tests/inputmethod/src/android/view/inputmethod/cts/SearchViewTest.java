@@ -19,15 +19,13 @@ package android.view.inputmethod.cts;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectBindInput;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 
-import static org.junit.Assume.assumeTrue;
-
-import android.content.pm.PackageManager;
 import android.os.Process;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.text.InputType;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.cts.util.EndToEndImeTestBase;
 import android.view.inputmethod.cts.util.TestActivity;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -38,7 +36,6 @@ import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
 
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -47,15 +44,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
-public class SearchViewTest {
+public class SearchViewTest extends EndToEndImeTestBase {
     static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
-
-    @BeforeClass
-    public static void setUpClass() {
-        assumeTrue("MockIme cannot be used for devices that do not support installable IMEs",
-                InstrumentationRegistry.getContext().getPackageManager().hasSystemFeature(
-                        PackageManager.FEATURE_INPUT_METHODS));
-    }
 
     public SearchView launchTestActivity() {
         final AtomicReference<SearchView> searchViewRef = new AtomicReference<>();
