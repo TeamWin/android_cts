@@ -361,6 +361,11 @@ public abstract class ActivityManagerTestBase {
         mAmWmState.waitForValidState(targetActivityName);
     }
 
+    protected void launchActivityNoWait(final ComponentName targetActivityName,
+            final String... keyValuePairs) throws Exception {
+        executeShellCommand(getAmStartCmd(targetActivityName, keyValuePairs));
+    }
+
     @Deprecated
     protected void launchActivityNoWait(final String targetActivityName,
             final String... keyValuePairs) throws Exception {
