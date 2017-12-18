@@ -17,6 +17,7 @@
 package android.widget.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
@@ -75,8 +76,16 @@ public class TextClockTest {
     @Test
     public void testUpdate12_24() throws Throwable {
         grantWriteSettingsPermission();
+
+        mActivityRule.runOnUiThread(() -> {
+            mTextClock.setFormat12Hour("h");
+            mTextClock.setFormat24Hour("H");
+        });
+
         final ContentResolver resolver = mActivity.getContentResolver();
         Calendar mNow = Calendar.getInstance();
+        mNow.setTimeInMillis(System.currentTimeMillis()); // just like TextClock uses
+
         // make sure the clock is showing some time > 12pm and not near midnight
         for (String id : TimeZone.getAvailableIDs()) {
             final TimeZone timeZone = TimeZone.getTimeZone(id);
@@ -90,26 +99,31 @@ public class TextClockTest {
             }
         }
 
-        final CountDownLatch twelveTwentyFourChange = registerForChanges(Settings.System.TIME_12_24,
-                2);
+        final CountDownLatch change12 = registerForChanges(Settings.System.TIME_12_24);
 
         mActivityRule.runOnUiThread(() -> {
             Settings.System.putInt(resolver, Settings.System.TIME_12_24, 12);
-            mTextClock.setFormat12Hour("h");
-            mTextClock.setFormat24Hour("H");
         });
 
+        assertTrue(change12.await(1, TimeUnit.SECONDS));
+
+        final CountDownLatch change24 = registerForChanges(Settings.System.TIME_12_24);
+
         mActivityRule.runOnUiThread(() -> {
+            assertFalse(mTextClock.is24HourModeEnabled());
             int hour = Integer.parseInt(mTextClock.getText().toString());
-            assertTrue(hour >= 1 && hour < 12);
+            assertTrue("Expecting hour to be between 1 and 11, but was " + hour,
+                    hour >= 1 && hour < 12);
             Settings.System.putInt(resolver, Settings.System.TIME_12_24, 24);
         });
 
-        assertTrue(twelveTwentyFourChange.await(1, TimeUnit.SECONDS));
+        assertTrue(change24.await(1, TimeUnit.SECONDS));
 
         mActivityRule.runOnUiThread(() -> {
+            assertTrue(mTextClock.is24HourModeEnabled());
             int hour = Integer.parseInt(mTextClock.getText().toString());
-            assertTrue(hour > 12 && hour < 24);
+            assertTrue("Expecting hour to be between 13 and 23, but was " + hour,
+                    hour > 12 && hour < 24);
         });
 
         // Now test that it isn't updated when a non-12/24 hour setting is set
@@ -121,7 +135,7 @@ public class TextClockTest {
             assertEquals("Nothing", mTextClock.getText().toString());
         });
 
-        final CountDownLatch otherChange = registerForChanges(Settings.System.TEXT_AUTO_CAPS, 1);
+        final CountDownLatch otherChange = registerForChanges(Settings.System.TEXT_AUTO_CAPS);
         mActivityRule.runOnUiThread(() -> {
             int autoCaps = 0;
             try {
@@ -145,8 +159,8 @@ public class TextClockTest {
         });
     }
 
-    private CountDownLatch registerForChanges(String setting, int changes) throws Throwable {
-        final CountDownLatch latch = new CountDownLatch(changes);
+    private CountDownLatch registerForChanges(String setting) throws Throwable {
+        final CountDownLatch latch = new CountDownLatch(1);
 
         mActivityRule.runOnUiThread(() -> {
             final ContentResolver resolver = mActivity.getContentResolver();
@@ -165,9 +179,7 @@ public class TextClockTest {
 
                         private void countDownAndRemove() {
                             latch.countDown();
-                            if (latch.getCount() == 0) {
-                                resolver.unregisterContentObserver(this);
-                            }
+                            resolver.unregisterContentObserver(this);
                         }
                     });
         });
