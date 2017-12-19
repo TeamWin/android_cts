@@ -79,7 +79,7 @@ public class AutoFinishSessionTest extends AutoFillServiceTestCase {
 
         sReplier.getNextFillRequest();
 
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // remove first set of views
         mActivity.syncRunOnUiThread(() -> {
@@ -99,7 +99,7 @@ public class AutoFinishSessionTest extends AutoFillServiceTestCase {
         }
 
         // Save should be shows after all remove operations were executed
-        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_GENERIC);
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_GENERIC);
 
         SaveRequest saveRequest = sReplier.getNextSaveRequest();
         for (String view : viewsToSave) {
@@ -112,7 +112,7 @@ public class AutoFinishSessionTest extends AutoFillServiceTestCase {
     public void removeBothViewsToFinishSession() throws Exception {
         removeViewsBaseTest(
                 () -> ((ViewGroup) mEditText1.getParent()).removeView(mEditText1),
-                () -> sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC),
+                () -> mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC),
                 () -> ((ViewGroup) mEditText2.getParent()).removeView(mEditText2),
                 "editText1", "editText2");
     }
@@ -196,7 +196,7 @@ public class AutoFinishSessionTest extends AutoFillServiceTestCase {
 
         sReplier.getNextFillRequest();
 
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         mActivity.syncRunOnUiThread(() -> {
             mEditText1.setText("editText1-filled");
@@ -212,20 +212,20 @@ public class AutoFinishSessionTest extends AutoFillServiceTestCase {
             mActivity.syncRunOnUiThread(removeInBackGround);
         }
 
-        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
+        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
 
         // Remove previously started activity from top
-        sUiBot.selectById("android.autofillservice.cts:id/button");
+        mUiBot.selectById("android.autofillservice.cts:id/button");
         mActivity.waitUntilResumed();
 
         if (removeInForeGroup != null) {
-            sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
+            mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
 
             mActivity.syncRunOnUiThread(removeInForeGroup);
         }
 
         // Save should be shows after all remove operations were executed
-        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_GENERIC);
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_GENERIC);
 
         SaveRequest saveRequest = sReplier.getNextSaveRequest();
         assertThat(findNodeByResourceId(saveRequest.structure, "editText1")

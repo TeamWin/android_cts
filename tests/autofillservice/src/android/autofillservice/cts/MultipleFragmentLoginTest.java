@@ -94,8 +94,8 @@ public class MultipleFragmentLoginTest extends AutoFillServiceTestCase {
         assertThat(findNodeByResourceId(structure, "editText5")).isNull();
 
         // Wait until autofill has been applied
-        sUiBot.selectDataset("dataset1");
-        sUiBot.assertShownByText("editText1-autofilled");
+        mUiBot.selectDataset("dataset1");
+        mUiBot.assertShownByText("editText1-autofilled");
 
         // Manually fill view
         mActivity.syncRunOnUiThread(() -> mEditText2.setText("editText2-manually-filled"));
@@ -153,16 +153,16 @@ public class MultipleFragmentLoginTest extends AutoFillServiceTestCase {
         assertThat(findNodeByResourceId(structure2, "editText5")).isNotNull();
 
         // Wait until autofill has been applied
-        sUiBot.selectDataset("dataset2");
-        sUiBot.assertShownByText("editText3-autofilled");
-        sUiBot.assertShownByText("editText4-autofilled");
+        mUiBot.selectDataset("dataset2");
+        mUiBot.assertShownByText("editText3-autofilled");
+        mUiBot.assertShownByText("editText4-autofilled");
 
         // Manually fill view
         mActivity.syncRunOnUiThread(() -> editText5.setText("editText5-manually-filled"));
 
         // Finish activity and save data
         mActivity.finish();
-        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_GENERIC);
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_GENERIC);
 
         // The saveRequest should have a fillContext for each partition with all the data
         InstrumentedAutoFillService.SaveRequest saveRequest = sReplier.getNextSaveRequest();
@@ -229,7 +229,7 @@ public class MultipleFragmentLoginTest extends AutoFillServiceTestCase {
 
         // Check UI is shown, but don't select it.
         sReplier.getNextFillRequest();
-        sUiBot.assertDatasets("dataset1");
+        mUiBot.assertDatasets("dataset1");
 
         // Switch fragments
         sReplier.addResponse(NO_RESPONSE);
@@ -239,7 +239,7 @@ public class MultipleFragmentLoginTest extends AutoFillServiceTestCase {
                         FRAGMENT_TAG).commitNow());
         // Make sure UI is gone.
         sReplier.getNextFillRequest();
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
     }
 
     // TODO: add similar tests for fragment with virtual view

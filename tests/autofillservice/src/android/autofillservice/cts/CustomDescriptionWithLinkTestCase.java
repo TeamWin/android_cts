@@ -61,12 +61,12 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
      */
     @Test
     public final void testTapLink_changeOrientationThenTapBack() throws Exception {
-        sUiBot.setScreenOrientation(UiBot.PORTRAIT);
+        mUiBot.setScreenOrientation(UiBot.PORTRAIT);
         try {
             saveUiRestoredAfterTappingLinkTest(
                     PostSaveLinkTappedAction.ROTATE_THEN_TAP_BACK_BUTTON);
         } finally {
-            sUiBot.setScreenOrientation(UiBot.PORTRAIT);
+            mUiBot.setScreenOrientation(UiBot.PORTRAIT);
             cleanUpAfterScreenOrientationIsBackToPortrait();
         }
     }
@@ -271,7 +271,7 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
 
     protected final UiObject2 assertSaveUiWithLinkIsShown(int saveType, String expectedText) {
         // First make sure the UI is shown...
-        final UiObject2 saveUi = sUiBot.assertSaveShowing(saveType);
+        final UiObject2 saveUi = mUiBot.assertSaveShowing(saveType);
         // Then make sure it does have the custom view with link on it...
         final UiObject2 link = getLink(saveUi);
         assertThat(link.getText()).isEqualTo(expectedText);

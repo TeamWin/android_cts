@@ -116,7 +116,7 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
         mActivity.syncRunOnUiThread(() -> mActivity.mAddress1.requestFocus());
 
         // Sanity check.
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // Wait for onFill() before proceeding, otherwise the fields might be changed before
         // the session started.
@@ -129,7 +129,7 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
         mActivity.save();
 
         // Assert the snack bar is shown and tap "Save".
-        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_ADDRESS);
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_ADDRESS);
 
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
         assertWithMessage("onSave() not called").that(saveRequest).isNotNull();
@@ -176,7 +176,7 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
         mActivity.syncRunOnUiThread(() -> mActivity.mAddress1.requestFocus());
 
         // Sanity check.
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // Wait for onFill() before proceeding, otherwise the fields might be changed before
         // the session started.
@@ -189,7 +189,7 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
         mActivity.save();
 
         // Assert the snack bar is shown and tap "Save".
-        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_ADDRESS);
+        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_ADDRESS);
 
         // Once saved, the session should be finsihed.
         assertNoDanglingSessions();
@@ -314,7 +314,7 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Auto-fill it.
-        sUiBot.selectDataset("Da Dataset");
+        mUiBot.selectDataset("Da Dataset");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -326,7 +326,7 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
         mActivity.save();
 
         // Assert the snack bar is shown and tap "Save".
-        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_ADDRESS);
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_ADDRESS);
 
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
         assertWithMessage("onSave() not called").that(saveRequest).isNotNull();
@@ -413,7 +413,7 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Auto-fill it.
-        sUiBot.selectDataset("Da Dataset");
+        mUiBot.selectDataset("Da Dataset");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -425,7 +425,7 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
         mActivity.save();
 
         // Assert the snack bar is not shown.
-        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_ADDRESS);
+        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_ADDRESS);
 
         // Once saved, the session should be finsihed.
         assertNoDanglingSessions();
@@ -579,16 +579,16 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
 
         // Make sure the snack bar is not shown.
         if (expectSaveUi) {
-            sUiBot.assertSaveShowing(SAVE_DATA_TYPE_ADDRESS);
+            mUiBot.assertSaveShowing(SAVE_DATA_TYPE_ADDRESS);
         } else {
-            sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_ADDRESS);
+            mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_ADDRESS);
         }
 
         // ...then tap save.
         mActivity.save();
 
         // Assert the snack bar is not shown.
-        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_ADDRESS);
+        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_ADDRESS);
     }
 
     @Test
@@ -615,7 +615,7 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
         mActivity.syncRunOnUiThread(() -> mActivity.mAddress1.requestFocus());
         sReplier.getNextFillRequest();
 
-        sUiBot.selectDataset("SF");
+        mUiBot.selectDataset("SF");
         mActivity.assertAutoFilled();
 
         // Clear the field.
@@ -625,7 +625,7 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
         mActivity.save();
 
         // ...and make sure the snack bar is not shown.
-        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_ADDRESS);
+        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_ADDRESS);
     }
 
     @Test
@@ -652,7 +652,7 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
         mActivity.syncRunOnUiThread(() -> mActivity.mAddress1.requestFocus());
         sReplier.getNextFillRequest();
 
-        sUiBot.selectDataset("SF");
+        mUiBot.selectDataset("SF");
         mActivity.assertAutoFilled();
 
         // Clear the field.
@@ -662,7 +662,7 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
         mActivity.save();
 
         // ...and make sure the snack bar is shown.
-        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_ADDRESS);
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_ADDRESS);
 
         // Finally, assert values.
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();

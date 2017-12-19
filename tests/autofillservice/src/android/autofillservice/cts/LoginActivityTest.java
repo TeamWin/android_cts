@@ -123,13 +123,13 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Make sure UI is not shown.
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // Try to trigger it again...
 
         mActivity.onPassword(View::requestFocus);
         // ...and make sure it didn't
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
         sReplier.assertNumberUnhandledFillRequests(0);
 
         // Test connection lifecycle.
@@ -149,7 +149,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Make sure UI is not shown.
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // Try again, forcing it
         sReplier.addResponse(new CannedDataset.Builder()
@@ -165,7 +165,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertThat(fillRequest.flags).isEqualTo(FLAG_MANUAL_REQUEST);
 
         // Selects the dataset.
-        sUiBot.selectDataset("The Dude");
+        mUiBot.selectDataset("The Dude");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -184,10 +184,10 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Make sure UI is not shown.
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
         sReplier.assertNumberUnhandledFillRequests(0);
         mActivity.onPassword(View::requestFocus);
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
         sReplier.assertNumberUnhandledFillRequests(0);
 
         // Try again, forcing it
@@ -252,10 +252,10 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.onUsername(View::requestFocus);
 
         // Auto-fill it.
-        final UiObject2 picker = sUiBot.assertDatasetsWithBorders(expectedHeader, expectedFooter,
+        final UiObject2 picker = mUiBot.assertDatasetsWithBorders(expectedHeader, expectedFooter,
                 "The Dude");
 
-        sUiBot.selectDataset(picker, "The Dude");
+        mUiBot.selectDataset(picker, "The Dude");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -299,14 +299,14 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Make sure all datasets are available...
-        sUiBot.assertDatasets("The Dude", "THE DUDE");
+        mUiBot.assertDatasets("The Dude", "THE DUDE");
 
         // ... on all fields.
         mActivity.onPassword(View::requestFocus);
-        sUiBot.assertDatasets("The Dude", "THE DUDE");
+        mUiBot.assertDatasets("The Dude", "THE DUDE");
 
         // Auto-fill it.
-        sUiBot.selectDataset("The Dude");
+        mUiBot.selectDataset("The Dude");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -349,19 +349,19 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Make sure all datasets are available on username...
-        sUiBot.assertDatasets("The Dude", "THE DUDE");
+        mUiBot.assertDatasets("The Dude", "THE DUDE");
 
         // ... but just one for password
         mActivity.onPassword(View::requestFocus);
-        sUiBot.assertDatasets("The Dude");
+        mUiBot.assertDatasets("The Dude");
 
         // Auto-fill it.
         mActivity.onUsername(View::requestFocus);
-        sUiBot.assertDatasets("The Dude", "THE DUDE");
+        mUiBot.assertDatasets("The Dude", "THE DUDE");
         if (fillsAll) {
-            sUiBot.selectDataset("The Dude");
+            mUiBot.selectDataset("The Dude");
         } else {
-            sUiBot.selectDataset("THE DUDE");
+            mUiBot.selectDataset("THE DUDE");
         }
 
         // Check the results.
@@ -392,14 +392,14 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Make sure all datasets are available...
-        sUiBot.assertDatasets("The Dude");
+        mUiBot.assertDatasets("The Dude");
 
         // ... on all fields.
         mActivity.onPassword(View::requestFocus);
-        sUiBot.assertDatasets("The Dude");
+        mUiBot.assertDatasets("The Dude");
 
         // Auto-fill it.
-        sUiBot.selectDataset("The Dude");
+        mUiBot.selectDataset("The Dude");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -451,7 +451,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.assertNumberUnhandledFillRequests(0);
 
         // Auto-fill it.
-        sUiBot.selectDataset("The Dude");
+        mUiBot.selectDataset("The Dude");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -477,17 +477,17 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Trigger auto-fill.
         mActivity.onUsername(View::requestFocus);
         sReplier.getNextFillRequest();
-        sUiBot.selectDataset("The Dude");
+        mUiBot.selectDataset("The Dude");
 
         // Check the results.
         mActivity.assertAutoFilled();
 
         // Make sure tapping on autofilled field does not trigger it again
         mActivity.onPassword(View::requestFocus);
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         mActivity.onUsername(View::requestFocus);
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
     }
 
     @Test
@@ -521,7 +521,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         callback.assertNumberUnhandledEvents(0);
 
         // Auto-fill it.
-        sUiBot.selectDataset("The Dude");
+        mUiBot.selectDataset("The Dude");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -567,7 +567,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Auto-fill it.
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // Assert callback was called
         final View username = mActivity.getUsername();
@@ -604,7 +604,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Auto-fill it.
-        sUiBot.selectDataset("The Dude");
+        mUiBot.selectDataset("The Dude");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -623,7 +623,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
 
         // Assert the snack bar is shown and tap "Save".
-        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
 
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
 
@@ -679,7 +679,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             runShellCommand("appops set %s SYSTEM_ALERT_WINDOW allow", mPackageName);
 
             // Make sure the fill UI is shown.
-            sUiBot.assertDatasets("The Dude");
+            mUiBot.assertDatasets("The Dude");
 
             final CountDownLatch latch = new CountDownLatch(1);
 
@@ -709,7 +709,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
 
             // Auto-fill it.
-            sUiBot.selectDataset("The Dude");
+            mUiBot.selectDataset("The Dude");
 
             // Check the results.
             mActivity.assertAutoFilled();
@@ -729,7 +729,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
 
             // Assert the snack bar is shown and tap "Save".
-            sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+            mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
 
             final SaveRequest saveRequest = sReplier.getNextSaveRequest();
 
@@ -818,10 +818,10 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Make sure all datasets are shown.
-        final UiObject2 picker = sUiBot.assertDatasets("Mr Plow", "El Barto", "Mr Sparkle");
+        final UiObject2 picker = mUiBot.assertDatasets("Mr Plow", "El Barto", "Mr Sparkle");
 
         // Auto-fill it.
-        sUiBot.selectDataset(picker, name);
+        mUiBot.selectDataset(picker, name);
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -850,17 +850,17 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Check initial field.
-        sUiBot.assertDatasets("The Dude");
+        mUiBot.assertDatasets("The Dude");
 
         // Then move around...
         mActivity.onPassword(View::requestFocus);
-        sUiBot.assertDatasets("Dude's password");
+        mUiBot.assertDatasets("Dude's password");
         mActivity.onUsername(View::requestFocus);
-        sUiBot.assertDatasets("The Dude");
+        mUiBot.assertDatasets("The Dude");
 
         // Auto-fill it.
         mActivity.onPassword(View::requestFocus);
-        sUiBot.selectDataset("Dude's password");
+        mUiBot.selectDataset("Dude's password");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -894,17 +894,17 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Check initial field.
-        sUiBot.assertDatasets("Dataset1", "User2");
+        mUiBot.assertDatasets("Dataset1", "User2");
 
         // Then move around...
         mActivity.onPassword(View::requestFocus);
-        sUiBot.assertDatasets("Pass1", "Dataset2");
+        mUiBot.assertDatasets("Pass1", "Dataset2");
         mActivity.onUsername(View::requestFocus);
-        sUiBot.assertDatasets("Dataset1", "User2");
+        mUiBot.assertDatasets("Dataset1", "User2");
 
         // Auto-fill it.
         mActivity.onPassword(View::requestFocus);
-        sUiBot.selectDataset("Pass1");
+        mUiBot.selectDataset("Pass1");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -937,17 +937,17 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Check initial field.
-        sUiBot.assertDatasets("User1", "User2");
+        mUiBot.assertDatasets("User1", "User2");
 
         // Then move around...
         mActivity.onPassword(View::requestFocus);
-        sUiBot.assertDatasets("Pass1", "Pass2");
+        mUiBot.assertDatasets("Pass1", "Pass2");
         mActivity.onUsername(View::requestFocus);
-        sUiBot.assertDatasets("User1", "User2");
+        mUiBot.assertDatasets("User1", "User2");
 
         // Auto-fill it.
         mActivity.onPassword(View::requestFocus);
-        sUiBot.selectDataset("Pass1");
+        mUiBot.selectDataset("Pass1");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -980,16 +980,16 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Check initial field.
-        sUiBot.assertDatasets("User1", "User2");
+        mUiBot.assertDatasets("User1", "User2");
 
         // Then move around...
         mActivity.onPassword(View::requestFocus);
-        sUiBot.assertDatasets("Pass2");
+        mUiBot.assertDatasets("Pass2");
         mActivity.onUsername(View::requestFocus);
-        sUiBot.assertDatasets("User1", "User2");
+        mUiBot.assertDatasets("User1", "User2");
 
         // Auto-fill it.
-        sUiBot.selectDataset("User2");
+        mUiBot.selectDataset("User2");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -1022,16 +1022,16 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Check initial field.
-        sUiBot.assertDatasets("User1");
+        mUiBot.assertDatasets("User1");
 
         // Then move around...
         mActivity.onPassword(View::requestFocus);
-        sUiBot.assertDatasets("Pass1", "Pass2");
+        mUiBot.assertDatasets("Pass1", "Pass2");
         mActivity.onUsername(View::requestFocus);
-        sUiBot.assertDatasets("User1");
+        mUiBot.assertDatasets("User1");
 
         // Auto-fill it.
-        sUiBot.selectDataset("User1");
+        mUiBot.selectDataset("User1");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -1066,29 +1066,29 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // With no filter text all datasets should be shown
-        sUiBot.assertDatasets(AA, AB, B);
+        mUiBot.assertDatasets(AA, AB, B);
 
         // Only two datasets start with 'a'
         runShellCommand("input keyevent KEYCODE_A");
-        sUiBot.assertDatasets(AA, AB);
+        mUiBot.assertDatasets(AA, AB);
 
         // Only one dataset start with 'aa'
         runShellCommand("input keyevent KEYCODE_A");
-        sUiBot.assertDatasets(AA);
+        mUiBot.assertDatasets(AA);
 
         // Only two datasets start with 'a'
         runShellCommand("input keyevent KEYCODE_DEL");
-        sUiBot.assertDatasets(AA, AB);
+        mUiBot.assertDatasets(AA, AB);
 
         // With no filter text all datasets should be shown
         runShellCommand("input keyevent KEYCODE_DEL");
-        sUiBot.assertDatasets(AA, AB, B);
+        mUiBot.assertDatasets(AA, AB, B);
 
         // No dataset start with 'aaa'
         runShellCommand("input keyevent KEYCODE_A");
         runShellCommand("input keyevent KEYCODE_A");
         runShellCommand("input keyevent KEYCODE_A");
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
     }
 
     @Test
@@ -1120,29 +1120,29 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // With no filter text all datasets should be shown
-        sUiBot.assertDatasets(AA, AB, B);
+        mUiBot.assertDatasets(AA, AB, B);
 
         // Two datasets start with 'a' and one with null value always shown
         runShellCommand("input keyevent KEYCODE_A");
-        sUiBot.assertDatasets(AA, AB, B);
+        mUiBot.assertDatasets(AA, AB, B);
 
         // One dataset start with 'aa' and one with null value always shown
         runShellCommand("input keyevent KEYCODE_A");
-        sUiBot.assertDatasets(AA, B);
+        mUiBot.assertDatasets(AA, B);
 
         // Two datasets start with 'a' and one with null value always shown
         runShellCommand("input keyevent KEYCODE_DEL");
-        sUiBot.assertDatasets(AA, AB, B);
+        mUiBot.assertDatasets(AA, AB, B);
 
         // With no filter text all datasets should be shown
         runShellCommand("input keyevent KEYCODE_DEL");
-        sUiBot.assertDatasets(AA, AB, B);
+        mUiBot.assertDatasets(AA, AB, B);
 
         // No dataset start with 'aaa' and one with null value always shown
         runShellCommand("input keyevent KEYCODE_A");
         runShellCommand("input keyevent KEYCODE_A");
         runShellCommand("input keyevent KEYCODE_A");
-        sUiBot.assertDatasets(B);
+        mUiBot.assertDatasets(B);
     }
 
     @Test
@@ -1174,16 +1174,16 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // With no filter text all datasets should be shown
-        sUiBot.assertDatasets(A, B, C);
+        mUiBot.assertDatasets(A, B, C);
 
         mActivity.onUsername((v) -> v.setText("a"));
-        sUiBot.assertDatasets(A);
+        mUiBot.assertDatasets(A);
 
         mActivity.onUsername((v) -> v.setText("b"));
-        sUiBot.assertDatasets(B);
+        mUiBot.assertDatasets(B);
 
         mActivity.onUsername((v) -> v.setText("c"));
-        sUiBot.assertDatasets(C);
+        mUiBot.assertDatasets(C);
     }
 
     @Test
@@ -1216,29 +1216,29 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // With no filter text all datasets should be shown
-        sUiBot.assertDatasets(aa, ab, b);
+        mUiBot.assertDatasets(aa, ab, b);
 
         // Only two datasets start with 'a'
         runShellCommand("input keyevent KEYCODE_A");
-        sUiBot.assertDatasets(aa, ab);
+        mUiBot.assertDatasets(aa, ab);
 
         // Only one dataset start with 'aa'
         runShellCommand("input keyevent KEYCODE_A");
-        sUiBot.assertDatasets(aa);
+        mUiBot.assertDatasets(aa);
 
         // Only two datasets start with 'a'
         runShellCommand("input keyevent KEYCODE_DEL");
-        sUiBot.assertDatasets(aa, ab);
+        mUiBot.assertDatasets(aa, ab);
 
         // With no filter text all datasets should be shown
         runShellCommand("input keyevent KEYCODE_DEL");
-        sUiBot.assertDatasets(aa, ab, b);
+        mUiBot.assertDatasets(aa, ab, b);
 
         // No dataset start with 'aaa'
         runShellCommand("input keyevent KEYCODE_A");
         runShellCommand("input keyevent KEYCODE_A");
         runShellCommand("input keyevent KEYCODE_A");
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
     }
 
     @Test
@@ -1267,7 +1267,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         }
 
         // Sanity check.
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // Wait for onFill() before proceeding, otherwise the fields might be changed before
         // the session started
@@ -1283,7 +1283,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
 
         // Assert the snack bar is shown and tap "Save".
-        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
 
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
         sReplier.assertNumberUnhandledSaveRequests(0);
@@ -1320,12 +1320,12 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         startCheckoutActivityAsNewTask();
         try {
             // .. then the real activity being tested.
-            sUiBot.switchAppsUsingRecents();
-            sUiBot.assertShownByRelativeId(ID_USERNAME_CONTAINER);
+            mUiBot.switchAppsUsingRecents();
+            mUiBot.assertShownByRelativeId(ID_USERNAME_CONTAINER);
 
             saveGoesAway(DismissType.RECENTS_BUTTON);
         } finally {
-            CheckoutActivity.finishIt(sUiBot);
+            CheckoutActivity.finishIt(mUiBot);
         }
     }
 
@@ -1339,7 +1339,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         intent.setFlags(
                 Intent.FLAG_ACTIVITY_NEW_DOCUMENT | Intent.FLAG_ACTIVITY_RETAIN_IN_RECENTS);
         mContext.startActivity(intent);
-        sUiBot.assertShownByRelativeId(CheckoutActivity.ID_ADDRESS);
+        mUiBot.assertShownByRelativeId(CheckoutActivity.ID_ADDRESS);
     }
 
     private void saveGoesAway(DismissType dismissType) throws Exception {
@@ -1354,7 +1354,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.onUsername(View::requestFocus);
 
         // Sanity check.
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // Wait for onFill() before proceeding, otherwise the fields might be changed before
         // the session started
@@ -1370,27 +1370,27 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
 
         // Assert the snack bar is shown and tap "Save".
-        sUiBot.assertSaveShowing(SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.assertSaveShowing(SAVE_DATA_TYPE_PASSWORD);
 
         // Then make sure it goes away when user doesn't want it..
         switch (dismissType) {
             case BACK_BUTTON:
-                sUiBot.pressBack();
+                mUiBot.pressBack();
                 break;
             case HOME_BUTTON:
-                sUiBot.pressHome();
+                mUiBot.pressHome();
                 break;
             case TOUCH_OUTSIDE:
-                sUiBot.assertShownByText(expectedMessage).click();
+                mUiBot.assertShownByText(expectedMessage).click();
                 break;
             case RECENTS_BUTTON:
-                sUiBot.switchAppsUsingRecents();
-                sUiBot.assertShownByRelativeId(CheckoutActivity.ID_ADDRESS);
+                mUiBot.switchAppsUsingRecents();
+                mUiBot.assertShownByRelativeId(CheckoutActivity.ID_ADDRESS);
                 break;
             default:
                 throw new IllegalArgumentException("invalid dismiss type: " + dismissType);
         }
-        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
     }
 
     @Test
@@ -1423,7 +1423,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         }
 
         // Sanity check.
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // Wait for onFill() before proceeding, otherwise the fields might be changed before
         // the session started
@@ -1439,7 +1439,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
 
         // Assert the snack bar is shown and tap "Save".
-        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
 
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
         sReplier.assertNumberUnhandledSaveRequests(0);
@@ -1477,7 +1477,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Wait for onFill() before changing value, otherwise the fields might be changed before
         // the session started
         sReplier.getNextFillRequest();
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // Set credentials...
         mActivity.onPassword((v) -> v.setText("thou should pass")); // contains pass
@@ -1488,7 +1488,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
 
         // Assert the snack bar is shown and tap "Save".
-        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
 
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
         sReplier.assertNumberUnhandledSaveRequests(0);
@@ -1522,7 +1522,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.onUsername(View::requestFocus);
 
         // Sanity check.
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // Wait for onFill() before proceeding, otherwise the fields might be changed before
         // the session started
@@ -1539,7 +1539,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
 
         // Assert the snack bar is shown and tap "Save".
-        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
 
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
 
@@ -1587,7 +1587,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.onUsername(View::requestFocus);
 
         // Sanity check.
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // Wait for onFill() before proceeding, otherwise the fields might be changed before
         // the session started
@@ -1612,13 +1612,13 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
 
         if (filledFields == FilledFields.NONE) {
-            sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+            mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
             assertNoDanglingSessions();
             return;
         }
 
         // Assert the snack bar is shown and tap "Save".
-        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
 
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
 
@@ -1680,7 +1680,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.onUsername(View::requestFocus);
 
         // Sanity check.
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // Wait for onFill() before proceeding, otherwise the fields might be changed before
         // the session started.
@@ -1696,8 +1696,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
 
         // Assert the snack bar is shown and tap "Save".
-        final UiObject2 saveSnackBar = sUiBot.assertSaveShowing(saveDescription, type);
-        sUiBot.saveForAutofill(saveSnackBar, true);
+        final UiObject2 saveSnackBar = mUiBot.assertSaveShowing(saveDescription, type);
+        mUiBot.saveForAutofill(saveSnackBar, true);
 
         // Assert save was called.
         sReplier.getNextSaveRequest();
@@ -1717,7 +1717,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.onUsername(View::requestFocus);
 
         // Sanity check.
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // Wait for onFill() before proceeding, otherwise the fields might be changed before
         // the session started
@@ -1733,7 +1733,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
 
         // Make sure it didn't trigger save.
-        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
 
         // Sanity check: session should have been canceled
         assertNoDanglingSessions();
@@ -1796,14 +1796,14 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
         final View username = mActivity.getUsername();
         callback.assertUiShownEvent(username);
-        sUiBot.assertDatasets("Tap to auth response");
+        mUiBot.assertDatasets("Tap to auth response");
 
         // Make sure UI is show on 2nd field as well
         final View password = mActivity.getPassword();
         mActivity.onPassword(View::requestFocus);
         callback.assertUiHiddenEvent(username);
         callback.assertUiShownEvent(password);
-        sUiBot.assertDatasets("Tap to auth response");
+        mUiBot.assertDatasets("Tap to auth response");
 
         // Now tap on 1st field to show it again...
         mActivity.onUsername(View::requestFocus);
@@ -1813,16 +1813,16 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         if (cancelFirstAttempt) {
             // Trigger the auth dialog, but emulate cancel.
             AuthenticationActivity.setResultCode(RESULT_CANCELED);
-            sUiBot.selectDataset("Tap to auth response");
+            mUiBot.selectDataset("Tap to auth response");
             callback.assertUiHiddenEvent(username);
             callback.assertUiShownEvent(username);
-            sUiBot.assertDatasets("Tap to auth response");
+            mUiBot.assertDatasets("Tap to auth response");
 
             // Make sure it's still shown on other fields...
             mActivity.onPassword(View::requestFocus);
             callback.assertUiHiddenEvent(username);
             callback.assertUiShownEvent(password);
-            sUiBot.assertDatasets("Tap to auth response");
+            mUiBot.assertDatasets("Tap to auth response");
 
             // Tap on 1st field to show it again...
             mActivity.onUsername(View::requestFocus);
@@ -1832,13 +1832,13 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // ...and select it this time
         AuthenticationActivity.setResultCode(RESULT_OK);
-        sUiBot.selectDataset("Tap to auth response");
+        mUiBot.selectDataset("Tap to auth response");
         callback.assertUiHiddenEvent(username);
         callback.assertUiShownEvent(username);
-        final UiObject2 picker = sUiBot.assertDatasets("Dataset");
-        sUiBot.selectDataset(picker, "Dataset");
+        final UiObject2 picker = mUiBot.assertDatasets("Dataset");
+        mUiBot.selectDataset(picker, "Dataset");
         callback.assertUiHiddenEvent(username);
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -1885,25 +1885,25 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
         final View username = mActivity.getUsername();
         callback.assertUiShownEvent(username);
-        sUiBot.assertDatasets("Tap to auth response");
+        mUiBot.assertDatasets("Tap to auth response");
 
         // Make sure UI is not show on 2nd field
         mActivity.onPassword(View::requestFocus);
         callback.assertUiHiddenEvent(username);
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
         // Now tap on 1st field to show it again...
         mActivity.onUsername(View::requestFocus);
         callback.assertUiShownEvent(username);
 
         // ...and select it this time
-        sUiBot.selectDataset("Tap to auth response");
+        mUiBot.selectDataset("Tap to auth response");
         callback.assertUiHiddenEvent(username);
-        final UiObject2 picker = sUiBot.assertDatasets("Dataset");
+        final UiObject2 picker = mUiBot.assertDatasets("Dataset");
 
         callback.assertUiShownEvent(username);
-        sUiBot.selectDataset(picker, "Dataset");
+        mUiBot.selectDataset(picker, "Dataset");
         callback.assertUiHiddenEvent(username);
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -1943,7 +1943,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
         final View username = mActivity.getUsername();
         callback.assertUiShownEvent(username);
-        sUiBot.assertDatasets("Tap to auth response");
+        mUiBot.assertDatasets("Tap to auth response");
 
         // Disables autofill so it's not triggered again after the auth activity is finished
         // (and current session is canceled) and the login activity is resumed.
@@ -1953,7 +1953,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         final CountDownLatch latch = new CountDownLatch(1);
         AuthenticationActivity.setResultCode(latch, RESULT_OK);
 
-        sUiBot.selectDataset("Tap to auth response");
+        mUiBot.selectDataset("Tap to auth response");
         callback.assertUiHiddenEvent(username);
 
         // Cancel session...
@@ -1962,7 +1962,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // ...before finishing the Auth UI.
         latch.countDown();
 
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
     }
 
     @Test
@@ -2005,9 +2005,9 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         callback.assertUiShownEvent(username);
 
         // Select the authentication dialog.
-        sUiBot.selectDataset("Tap to auth response");
+        mUiBot.selectDataset("Tap to auth response");
         callback.assertUiHiddenEvent(username);
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
     }
 
     @Test
@@ -2071,10 +2071,10 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Tap authentication request.
-        sUiBot.selectDataset("Tap to auth response");
+        mUiBot.selectDataset("Tap to auth response");
 
         // Tap dataset.
-        sUiBot.selectDataset("Dataset");
+        mUiBot.selectDataset("Dataset");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -2085,7 +2085,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         final String expectedMessage = getWelcomeMessage("malkovich");
         final String actualMessage = mActivity.tapLogin();
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
-        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
 
         // Assert client state on authentication activity.
         assertClientState("auth activity", AuthenticationActivity.getData(), "CSI", "FromResponse");
@@ -2151,27 +2151,27 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Make sure it's showing initially...
         callback.assertUiShownEvent(username);
-        sUiBot.assertDatasets("Tap to auth response");
+        mUiBot.assertDatasets("Tap to auth response");
 
         // ..then type something to hide it.
         runShellCommand("input keyevent KEYCODE_A");
         callback.assertUiHiddenEvent(username);
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // Now delete the char and assert it's shown again...
         runShellCommand("input keyevent KEYCODE_DEL");
         callback.assertUiShownEvent(username);
-        sUiBot.assertDatasets("Tap to auth response");
+        mUiBot.assertDatasets("Tap to auth response");
 
         // ...and select it this time
         AuthenticationActivity.setResultCode(RESULT_OK);
-        sUiBot.selectDataset("Tap to auth response");
+        mUiBot.selectDataset("Tap to auth response");
         callback.assertUiHiddenEvent(username);
         callback.assertUiShownEvent(username);
-        final UiObject2 picker = sUiBot.assertDatasets("Dataset");
-        sUiBot.selectDataset(picker, "Dataset");
+        final UiObject2 picker = mUiBot.assertDatasets("Dataset");
+        mUiBot.selectDataset(picker, "Dataset");
         callback.assertUiHiddenEvent(username);
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -2224,34 +2224,34 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
         final View username = mActivity.getUsername();
         callback.assertUiShownEvent(username);
-        sUiBot.assertDatasets("Tap to auth dataset");
+        mUiBot.assertDatasets("Tap to auth dataset");
 
         // Make sure UI is show on 2nd field as well
         final View password = mActivity.getPassword();
         mActivity.onPassword(View::requestFocus);
         callback.assertUiHiddenEvent(username);
         callback.assertUiShownEvent(password);
-        sUiBot.assertDatasets("Tap to auth dataset");
+        mUiBot.assertDatasets("Tap to auth dataset");
 
         // Now tap on 1st field to show it again...
         mActivity.onUsername(View::requestFocus);
         callback.assertUiHiddenEvent(password);
         callback.assertUiShownEvent(username);
-        sUiBot.assertDatasets("Tap to auth dataset");
+        mUiBot.assertDatasets("Tap to auth dataset");
 
         if (cancelFirstAttempt) {
             // Trigger the auth dialog, but emulate cancel.
             AuthenticationActivity.setResultCode(RESULT_CANCELED);
-            sUiBot.selectDataset("Tap to auth dataset");
+            mUiBot.selectDataset("Tap to auth dataset");
             callback.assertUiHiddenEvent(username);
             callback.assertUiShownEvent(username);
-            sUiBot.assertDatasets("Tap to auth dataset");
+            mUiBot.assertDatasets("Tap to auth dataset");
 
             // Make sure it's still shown on other fields...
             mActivity.onPassword(View::requestFocus);
             callback.assertUiHiddenEvent(username);
             callback.assertUiShownEvent(password);
-            sUiBot.assertDatasets("Tap to auth dataset");
+            mUiBot.assertDatasets("Tap to auth dataset");
 
             // Tap on 1st field to show it again...
             mActivity.onUsername(View::requestFocus);
@@ -2261,9 +2261,9 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // ...and select it this time
         AuthenticationActivity.setResultCode(RESULT_OK);
-        sUiBot.selectDataset("Tap to auth dataset");
+        mUiBot.selectDataset("Tap to auth dataset");
         callback.assertUiHiddenEvent(username);
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -2312,14 +2312,14 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Authenticate
         callback.assertUiShownEvent(username);
-        sUiBot.selectDataset("Tap to auth dataset");
+        mUiBot.selectDataset("Tap to auth dataset");
         callback.assertUiHiddenEvent(username);
 
         // Select a dataset from the new response
         callback.assertUiShownEvent(username);
-        sUiBot.selectDataset("Dataset");
+        mUiBot.selectDataset("Dataset");
         callback.assertUiHiddenEvent(username);
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -2365,9 +2365,9 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Authenticate
         callback.assertUiShownEvent(username);
-        sUiBot.selectDataset("Tap to auth dataset");
+        mUiBot.selectDataset("Tap to auth dataset");
         callback.assertUiHiddenEvent(username);
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -2417,11 +2417,11 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Authenticate
         callback.assertUiShownEvent(username);
-        sUiBot.assertDatasets("Tap to auth dataset 1", "Tap to auth dataset 2");
+        mUiBot.assertDatasets("Tap to auth dataset 1", "Tap to auth dataset 2");
 
-        sUiBot.selectDataset("Tap to auth dataset 1");
+        mUiBot.selectDataset("Tap to auth dataset 1");
         callback.assertUiHiddenEvent(username);
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -2480,12 +2480,12 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Authenticate
         callback.assertUiShownEvent(username);
-        sUiBot.assertDatasets("Tap to auth dataset", "What, me auth?");
+        mUiBot.assertDatasets("Tap to auth dataset", "What, me auth?");
 
         final String chosenOne = selectAuth ? "Tap to auth dataset" : "What, me auth?";
-        sUiBot.selectDataset(chosenOne);
+        mUiBot.selectDataset(chosenOne);
         callback.assertUiHiddenEvent(username);
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -2527,22 +2527,22 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Make sure it's showing initially...
         callback.assertUiShownEvent(username);
-        sUiBot.assertDatasets("Tap to auth dataset");
+        mUiBot.assertDatasets("Tap to auth dataset");
 
         // ..then type something to hide it.
         runShellCommand("input keyevent KEYCODE_A");
         callback.assertUiHiddenEvent(username);
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // Now delete the char and assert it's shown again...
         runShellCommand("input keyevent KEYCODE_DEL");
         callback.assertUiShownEvent(username);
-        sUiBot.assertDatasets("Tap to auth dataset");
+        mUiBot.assertDatasets("Tap to auth dataset");
 
         // ...and select it this time
-        sUiBot.selectDataset("Tap to auth dataset");
+        mUiBot.selectDataset("Tap to auth dataset");
         callback.assertUiHiddenEvent(username);
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -2596,40 +2596,40 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Make sure it's showing initially...
         callback.assertUiShownEvent(username);
-        sUiBot.assertDatasets("DS1", "DS2", "DS3");
+        mUiBot.assertDatasets("DS1", "DS2", "DS3");
 
         // ...then type something to hide them.
         runShellCommand("input keyevent KEYCODE_A");
         callback.assertUiHiddenEvent(username);
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // Now delete the char and assert they're shown again...
         runShellCommand("input keyevent KEYCODE_DEL");
         callback.assertUiShownEvent(username);
-        sUiBot.assertDatasets("DS1", "DS2", "DS3");
+        mUiBot.assertDatasets("DS1", "DS2", "DS3");
 
         // ...then filter for 2
         runShellCommand("input keyevent KEYCODE_D");
-        sUiBot.assertDatasets("DS1", "DS2");
+        mUiBot.assertDatasets("DS1", "DS2");
 
         // ...up to 1
         runShellCommand("input keyevent KEYCODE_U");
-        sUiBot.assertDatasets("DS1", "DS2");
+        mUiBot.assertDatasets("DS1", "DS2");
         runShellCommand("input keyevent KEYCODE_D");
-        sUiBot.assertDatasets("DS1", "DS2");
+        mUiBot.assertDatasets("DS1", "DS2");
         runShellCommand("input keyevent KEYCODE_E");
-        sUiBot.assertDatasets("DS1", "DS2");
+        mUiBot.assertDatasets("DS1", "DS2");
         runShellCommand("input keyevent KEYCODE_COMMA");
-        sUiBot.assertDatasets("DS2");
+        mUiBot.assertDatasets("DS2");
 
         // Now delete the char and assert 2 are shown again...
         runShellCommand("input keyevent KEYCODE_DEL");
-        final UiObject2 picker = sUiBot.assertDatasets("DS1", "DS2");
+        final UiObject2 picker = mUiBot.assertDatasets("DS1", "DS2");
 
         // ...and select it this time
-        sUiBot.selectDataset(picker, "DS1");
+        mUiBot.selectDataset(picker, "DS1");
         callback.assertUiHiddenEvent(username);
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -2673,31 +2673,31 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Make sure it's showing initially...
         callback.assertUiShownEvent(username);
-        sUiBot.assertDatasets("Tap to auth dataset");
+        mUiBot.assertDatasets("Tap to auth dataset");
 
         // ...then type something to hide it.
         runShellCommand("input keyevent KEYCODE_A");
         callback.assertUiHiddenEvent(username);
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // ...now type something again to show it, as the input will have 2 chars.
         runShellCommand("input keyevent KEYCODE_A");
         callback.assertUiShownEvent(username);
-        sUiBot.assertDatasets("Tap to auth dataset");
+        mUiBot.assertDatasets("Tap to auth dataset");
 
         // Delete the char and assert it's not shown again...
         runShellCommand("input keyevent KEYCODE_DEL");
         callback.assertUiHiddenEvent(username);
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // ...then type something again to show it, as the input will have 2 chars.
         runShellCommand("input keyevent KEYCODE_A");
         callback.assertUiShownEvent(username);
 
         // ...and select it this time
-        sUiBot.selectDataset("Tap to auth dataset");
+        mUiBot.selectDataset("Tap to auth dataset");
         callback.assertUiHiddenEvent(username);
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -2757,31 +2757,31 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Make sure it's showing initially...
         callback.assertUiShownEvent(username);
-        sUiBot.assertDatasets("Tap to auth dataset", "What, me auth?");
+        mUiBot.assertDatasets("Tap to auth dataset", "What, me auth?");
 
         // Filter the auth dataset.
         runShellCommand("input keyevent KEYCODE_D");
-        sUiBot.assertDatasets("What, me auth?");
+        mUiBot.assertDatasets("What, me auth?");
 
         // Filter all.
         runShellCommand("input keyevent KEYCODE_W");
         callback.assertUiHiddenEvent(username);
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // Now delete the char and assert the non-auth is shown again.
         runShellCommand("input keyevent KEYCODE_DEL");
         callback.assertUiShownEvent(username);
-        sUiBot.assertDatasets("What, me auth?");
+        mUiBot.assertDatasets("What, me auth?");
 
         // Delete again and assert all dataset are shown.
         runShellCommand("input keyevent KEYCODE_DEL");
-        sUiBot.assertDatasets("Tap to auth dataset", "What, me auth?");
+        mUiBot.assertDatasets("Tap to auth dataset", "What, me auth?");
 
         // ...and select it this time
         final String chosenOne = selectAuth ? "Tap to auth dataset" : "What, me auth?";
-        sUiBot.selectDataset(chosenOne);
+        mUiBot.selectDataset(chosenOne);
         callback.assertUiHiddenEvent(username);
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -2837,7 +2837,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Tap authentication request.
-        sUiBot.selectDataset("Tap to auth dataset");
+        mUiBot.selectDataset("Tap to auth dataset");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -2848,7 +2848,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         final String expectedMessage = getWelcomeMessage("malkovich");
         final String actualMessage = mActivity.tapLogin();
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
-        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
 
         // Assert client state on authentication activity.
         assertClientState("auth activity", AuthenticationActivity.getData(), "CSI", "FromResponse");
@@ -2912,7 +2912,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         }, intentFilter);
 
         // Trigger the negative button.
-        sUiBot.saveForAutofill(SaveInfo.NEGATIVE_BUTTON_STYLE_REJECT,
+        mUiBot.saveForAutofill(SaveInfo.NEGATIVE_BUTTON_STYLE_REJECT,
                 false, SAVE_DATA_TYPE_PASSWORD);
 
         // Wait for the custom action.
@@ -2961,7 +2961,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         }, intentFilter);
 
         // Trigger the negative button.
-        sUiBot.saveForAutofill(SaveInfo.NEGATIVE_BUTTON_STYLE_CANCEL,
+        mUiBot.saveForAutofill(SaveInfo.NEGATIVE_BUTTON_STYLE_CANCEL,
                 false, SAVE_DATA_TYPE_PASSWORD);
 
         // Wait for the custom action.
@@ -3003,7 +3003,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Trigger auto-fill.
         mActivity.onUsername(View::requestFocus);
 
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         final FillRequest fillRequest = sReplier.getNextFillRequest();
 
@@ -3048,13 +3048,13 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("dude", "sweet");
 
         // Explicitly uses the contextual menu to test that functionality.
-        sUiBot.getAutofillMenuOption(ID_USERNAME).click();
+        mUiBot.getAutofillMenuOption(ID_USERNAME).click();
 
         final FillRequest fillRequest = sReplier.getNextFillRequest();
         assertThat(fillRequest.flags).isEqualTo(FLAG_MANUAL_REQUEST);
 
         // Should have been automatically filled.
-        sUiBot.selectDataset("The Dude");
+        mUiBot.selectDataset("The Dude");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -3101,8 +3101,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertThat(fillRequest.flags).isEqualTo(FLAG_MANUAL_REQUEST);
 
         // Auto-fill it.
-        final UiObject2 picker = sUiBot.assertDatasets("The Dude", "Jenny");
-        sUiBot.selectDataset(picker, pickFirst ? "The Dude" : "Jenny");
+        final UiObject2 picker = mUiBot.assertDatasets("The Dude", "Jenny");
+        mUiBot.selectDataset(picker, pickFirst ? "The Dude" : "Jenny");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -3136,7 +3136,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertTextIsSanitized(fillRequest.structure, ID_PASSWORD);
 
         // Selects the dataset.
-        sUiBot.selectDataset("The Dude");
+        mUiBot.selectDataset("The Dude");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -3168,7 +3168,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertTextIsSanitized(fillRequest1.structure, ID_PASSWORD);
 
         // Select it.
-        sUiBot.selectDataset("The Dude");
+        mUiBot.selectDataset("The Dude");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -3196,7 +3196,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertTextIsSanitized(fillRequest2.structure, ID_PASSWORD);
 
         // Select it.
-        sUiBot.selectDataset("THE DUDE");
+        mUiBot.selectDataset("THE DUDE");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -3228,7 +3228,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertTextIsSanitized(fillRequest1.structure, ID_PASSWORD);
 
         // Select it.
-        sUiBot.selectDataset("The Dude");
+        mUiBot.selectDataset("The Dude");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -3256,7 +3256,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertTextIsSanitized(fillRequest2.structure, ID_PASSWORD);
 
         // Select it.
-        sUiBot.selectDataset("THE DUDE");
+        mUiBot.selectDataset("THE DUDE");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -3283,7 +3283,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 mActivity.onUsername(View::requestFocus);
 
                 // Sanity check.
-                sUiBot.assertNoDatasets();
+                mUiBot.assertNoDatasets();
 
                 // Wait for onFill() before proceeding, otherwise the fields might be changed before
                 // the session started
@@ -3301,7 +3301,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 mActivity.tapSave();
 
                 // Assert the snack bar is shown and tap "Save".
-                sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+                mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
 
                 final SaveRequest saveRequest = sReplier.getNextSaveRequest();
 
@@ -3346,7 +3346,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 sReplier.getNextFillRequest();
 
                 // Auto-fill it.
-                sUiBot.selectDataset("The Dude");
+                mUiBot.selectDataset("The Dude");
 
                 // Check the results.
                 mActivity.assertAutoFilled();
@@ -3397,13 +3397,13 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Click on the custom button
-        sUiBot.selectByText("Poke");
+        mUiBot.selectByText("Poke");
 
         // Make sure the click worked
-        sUiBot.selectByText("foo");
+        mUiBot.selectByText("foo");
 
         // Go back to the filled app.
-        sUiBot.pressBack();
+        mUiBot.pressBack();
 
         // The session should be gone
         assertNoDanglingSessions();
@@ -3455,13 +3455,13 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Trigger auto-fill.
         mActivity.onUsername(View::requestFocus);
         sReplier.getNextFillRequest();
-        sUiBot.assertDatasets("The Dude");
+        mUiBot.assertDatasets("The Dude");
 
         // Now disable service by setting another service
         Helper.enableAutofillService(mContext, NoOpAutofillService.SERVICE_NAME);
 
         // ...and make sure popup's gone
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
     }
 
     @Test
@@ -3489,18 +3489,18 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Trigger autofill.
         mActivity.onUsername(View::requestFocus);
         sReplier.getNextFillRequest();
-        sUiBot.assertDatasets("The Dude");
+        mUiBot.assertDatasets("The Dude");
 
         // Now disable service by setting another service...
         Helper.enableAutofillService(mContext, serviceName);
 
         // ...and make sure popup's gone
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // Then try to trigger autofill again...
         mActivity.onPassword(View::requestFocus);
         //...it should not work!
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
     }
 
     @Test
@@ -3521,7 +3521,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Auto-fill it.
-        sUiBot.selectDataset("The Dude");
+        mUiBot.selectDataset("The Dude");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -3574,7 +3574,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Make sure all datasets are shown.
         // TODO: improve assertDatasets() so it supports scrolling, and assert all of them are
         // shown
-        sUiBot.assertDatasets("DS-1", "DS-2", "DS-3");
+        mUiBot.assertDatasets("DS-1", "DS-2", "DS-3");
 
         // TODO: once it supports scrolling, selects the last dataset and asserts it's filled.
     }

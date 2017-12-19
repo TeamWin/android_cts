@@ -139,7 +139,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         assertWithMessage("Password node is focused").that(password.isFocused()).isFalse();
 
         // Auto-fill it.
-        sUiBot.selectDataset("The Dude");
+        mUiBot.selectDataset("The Dude");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -181,7 +181,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         assertDatasetShown(mActivity.mUsername, "The Dude", "THE DUDE");
 
         // Auto-fill it.
-        sUiBot.selectDataset("THE DUDE");
+        mUiBot.selectDataset("THE DUDE");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -211,7 +211,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Select datatest.
-        sUiBot.selectDataset("The Dude");
+        mUiBot.selectDataset("The Dude");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -261,8 +261,8 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Auto-fill it.
-        final UiObject2 picker = sUiBot.assertDatasets("The Dude", "Jenny");
-        sUiBot.selectDataset(picker, pickFirst? "The Dude" : "Jenny");
+        final UiObject2 picker = mUiBot.assertDatasets("The Dude", "Jenny");
+        mUiBot.selectDataset(picker, pickFirst ? "The Dude" : "Jenny");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -336,7 +336,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Auto-fill it.
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // Assert callback was called
         callback.assertUiUnavailableEvent(mActivity.mCustomView, mActivity.mUsername.text.id);
@@ -363,9 +363,9 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
         assertDatasetShown(mActivity.mUsername, "The Dude");
 
-        sUiBot.pressBack();
+        mUiBot.pressBack();
 
-        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
     }
 
     @Test
@@ -403,7 +403,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         });
 
         // Make sure save is shown
-        sUiBot.assertSaveShowing(SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.assertSaveShowing(SAVE_DATA_TYPE_PASSWORD);
     }
 
     @Test
@@ -434,7 +434,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
      * Asserts the dataset picker is properly displayed in a give line.
      */
     private void assertDatasetShown(Line line, String... expectedDatasets) {
-        final Rect pickerBounds = sUiBot.assertDatasets(expectedDatasets).getVisibleBounds();
+        final Rect pickerBounds = mUiBot.assertDatasets(expectedDatasets).getVisibleBounds();
         final Rect fieldBounds = line.getAbsCoordinates();
         assertWithMessage("vertical coordinates don't match; picker=%s, field=%s", pickerBounds,
                 fieldBounds).that(pickerBounds.top).isEqualTo(fieldBounds.bottom);
