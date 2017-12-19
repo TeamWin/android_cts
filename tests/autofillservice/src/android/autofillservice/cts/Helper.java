@@ -32,6 +32,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.app.assist.AssistStructure;
 import android.app.assist.AssistStructure.ViewNode;
 import android.app.assist.AssistStructure.WindowNode;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.icu.util.Calendar;
@@ -1208,6 +1209,21 @@ final class Helper {
 
     public static void assertFillEventForContextCommitted(@NonNull FillEventHistory.Event event) {
         assertFillEvent(event, TYPE_CONTEXT_COMMITTED, null, null, null, null, null, null);
+    }
+
+    @NonNull
+    public static String getActivityName(List<FillContext> contexts) {
+        if (contexts == null) return "N/A (null contexts)";
+
+        if (contexts.isEmpty()) return "N/A (empty contexts)";
+
+        final AssistStructure structure = contexts.get(contexts.size() - 1).getStructure();
+        if (structure == null) return "N/A (no AssistStructure)";
+
+        final ComponentName componentName = structure.getActivityComponent();
+        if (componentName == null) return "N/A (no component name)";
+
+        return componentName.flattenToShortString();
     }
 
     private Helper() {

@@ -142,16 +142,6 @@ final class CannedFillResponse {
      * structure.
      */
     FillResponse asFillResponse(Function<String, ViewNode> nodeResolver) {
-        return asFillResponse(null, nodeResolver);
-
-    }
-
-    /**
-     * Creates a new response, replacing the dataset field ids by the real ids from the assist
-     * structure.
-     */
-    FillResponse asFillResponse(InstrumentedAutoFillService service,
-            Function<String, ViewNode> nodeResolver) {
         final FillResponse.Builder builder = new FillResponse.Builder()
                 .setFlags(mFillResponseFlags);
         if (mDatasets != null) {
