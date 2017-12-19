@@ -97,6 +97,7 @@ public class PreSimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase
         switch (type) {
             case ROTATE_THEN_TAP_BACK_BUTTON:
                 sUiBot.setScreenOrientation(UiBot.LANDSCAPE);
+                WelcomeActivity.assertShowingDefaultMessage(sUiBot);
                 // not breaking on purpose
             case TAP_BACK_BUTTON:
                 sUiBot.pressBack();
