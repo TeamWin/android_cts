@@ -135,6 +135,9 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
         // cannot deal with such situations
         sUiBot.setScreenOrientation(LANDSCAPE);
 
+        // Wait context and Views being recreated in rotation
+        sUiBot.assertShownById(USERNAME_FULL_ID);
+
         // Delete stopped marker
         getStoppedMarker(getContext()).delete();
 
