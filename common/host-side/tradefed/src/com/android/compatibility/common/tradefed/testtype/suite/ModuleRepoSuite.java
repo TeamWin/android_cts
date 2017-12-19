@@ -37,6 +37,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -51,7 +52,7 @@ import java.util.Set;
  */
 public class ModuleRepoSuite {
 
-    public  static final String CONFIG_EXT = ".config";
+    private static final String CONFIG_EXT = ".config";
     private Map<String, Map<String, List<String>>> mTestArgs = new HashMap<>();
     private Map<String, Map<String, List<String>>> mModuleArgs = new HashMap<>();
     private boolean mIncludeAll;
@@ -80,21 +81,13 @@ public class ModuleRepoSuite {
         // Exclude all the exclusions
         addFilters(excludeFilters, mExcludeFilters, abis);
 
-        Set<String> configFiles = null;
-        try {
-            configFiles = FileUtil.findFiles(testsDir, ".*" + CONFIG_EXT);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        if (configFiles.size() == 0) {
+        File[] configFiles = testsDir.listFiles(new ConfigFilter());
+        if (configFiles.length == 0) {
             throw new IllegalArgumentException(
                     String.format("No config files found in %s", testsDir.getAbsolutePath()));
         }
         // Ensure stable initial order of configurations.
-        List<File> listConfigFiles = new ArrayList<>();
-        configFiles.forEach(item->{
-            listConfigFiles.add(new File(item));
-            });
+        List<File> listConfigFiles = Arrays.asList(configFiles);
         Collections.sort(listConfigFiles);
         for (File configFile : listConfigFiles) {
             final String name = configFile.getName().replace(CONFIG_EXT, "");
@@ -177,16 +170,14 @@ public class ModuleRepoSuite {
      * @return the {@link List} of modules whose name contains the given pattern.
      */
     public static List<String> getModuleNamesMatching(File directory, String pattern) {
-        Set<String> fullPath = null;
-        try {
-            // Search all subdir of the test dir.
-            fullPath = FileUtil.findFiles(directory, pattern + ".*" + CONFIG_EXT);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        List<String> modules = new ArrayList<String>(fullPath.size());
-        for (String path : fullPath) {
-            String name = new File(path).getName();
+        String[] names = directory.list(new FilenameFilter(){
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.contains(pattern) && name.endsWith(CONFIG_EXT);
+            }
+        });
+        List<String> modules = new ArrayList<String>(names.length);
+        for (String name : names) {
             int index = name.indexOf(CONFIG_EXT);
             if (index > 0) {
                 String module = name.substring(0, index);

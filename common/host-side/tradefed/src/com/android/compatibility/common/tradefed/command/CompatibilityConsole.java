@@ -19,7 +19,6 @@ import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildProvider;
 import com.android.compatibility.common.tradefed.result.SubPlanHelper;
 import com.android.compatibility.common.tradefed.testtype.ModuleRepo;
-import com.android.compatibility.common.tradefed.testtype.suite.ModuleRepoSuite;
 import com.android.compatibility.common.util.IInvocationResult;
 import com.android.compatibility.common.util.ResultHandler;
 import com.android.compatibility.common.util.TestStatus;
@@ -42,7 +41,6 @@ import com.android.tradefed.util.TimeUtil;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -226,19 +224,17 @@ public class CompatibilityConsole extends Console {
     }
 
     private void listModules() {
-        Set<String> filePaths = null;
+        File[] files = null;
         try {
-            filePaths =
-                    FileUtil.findFiles(getBuildHelper().getTestsDir(),
-                            ".*" + ModuleRepoSuite.CONFIG_EXT);
-        } catch (IOException e) {
+            files = getBuildHelper().getTestsDir().listFiles(new ModuleRepo.ConfigFilter());
+        } catch (FileNotFoundException e) {
             printLine(e.getMessage());
             e.printStackTrace();
         }
-        if (filePaths != null && filePaths.size() > 0) {
+        if (files != null && files.length > 0) {
             List<String> modules = new ArrayList<>();
-            for (String moduleFile : filePaths) {
-                modules.add(FileUtil.getBaseName(new File(moduleFile).getName()));
+            for (File moduleFile : files) {
+                modules.add(FileUtil.getBaseName(moduleFile.getName()));
             }
             Collections.sort(modules);
             for (String module : modules) {
