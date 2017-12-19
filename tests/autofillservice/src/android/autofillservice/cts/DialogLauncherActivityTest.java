@@ -52,7 +52,7 @@ public class DialogLauncherActivityTest extends AutoFillServiceTestCase {
 
     private void autofillNoDatasetsTest(boolean resize) throws Exception {
         enableService();
-        mActivity.launchDialog(sUiBot);
+        mActivity.launchDialog(mUiBot);
 
         if (resize) {
             mActivity.maximizeDialog();
@@ -67,7 +67,7 @@ public class DialogLauncherActivityTest extends AutoFillServiceTestCase {
 
         // Asserts results.
         try {
-            sUiBot.assertNoDatasets();
+            mUiBot.assertNoDatasets();
             // Make sure nodes were properly generated.
             assertTextIsSanitized(fillRequest.structure, ID_USERNAME);
             assertTextIsSanitized(fillRequest.structure, ID_PASSWORD);
@@ -89,7 +89,7 @@ public class DialogLauncherActivityTest extends AutoFillServiceTestCase {
 
     private void autofillOneDatasetTest(boolean resize) throws Exception {
         enableService();
-        mActivity.launchDialog(sUiBot);
+        mActivity.launchDialog(mUiBot);
 
         if (resize) {
             mActivity.maximizeDialog();
@@ -108,7 +108,7 @@ public class DialogLauncherActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Asserts results.
-        sUiBot.selectDataset("The Dude");
+        mUiBot.selectDataset("The Dude");
         mActivity.assertAutofilled();
     }
 }

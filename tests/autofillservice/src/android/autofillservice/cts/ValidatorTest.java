@@ -89,10 +89,10 @@ public class ValidatorTest extends AutoFillServiceTestCase {
         mActivity.tapLogin();
 
         if (willSaveBeShown) {
-            sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_GENERIC);
+            mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_GENERIC);
             sReplier.getNextSaveRequest();
         } else {
-            sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
+            mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
         }
 
         assertNoDanglingSessions();

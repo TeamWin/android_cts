@@ -72,7 +72,7 @@ abstract class TimePickerTestCase<T extends AbstractTimePickerActivity>
         assertTextIsSanitized(fillRequest.structure, ID_TIME_PICKER);
         assertNumberOfChildren(fillRequest.structure, ID_TIME_PICKER, 0);
         // Auto-fill it.
-        sUiBot.selectDataset("Adventure Time");
+        mUiBot.selectDataset("Adventure Time");
 
         // Check the results.
         activity.assertAutoFilled();
@@ -81,7 +81,7 @@ abstract class TimePickerTestCase<T extends AbstractTimePickerActivity>
         activity.setTime(10, 40);
         activity.tapOk();
 
-        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_GENERIC);
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_GENERIC);
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
         assertWithMessage("onSave() not called").that(saveRequest).isNotNull();
 

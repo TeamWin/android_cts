@@ -66,7 +66,7 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
      */
     @Before
     public void disableAutoRotation() {
-        Helper.disableAutoRotation(sUiBot);
+        Helper.disableAutoRotation(mUiBot);
     }
 
     /**
@@ -123,65 +123,65 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
         sReplier.addResponse(response);
 
         // Trigger autofill on username
-        sUiBot.selectById(USERNAME_FULL_ID);
+        mUiBot.selectById(USERNAME_FULL_ID);
 
         // Wait for fill request to be processed
         sReplier.getNextFillRequest();
 
         // Wait until authentication is shown
-        sUiBot.assertDatasets("authenticate");
+        mUiBot.assertDatasets("authenticate");
 
         // Change orientation which triggers a destroy -> create in the app as the activity
         // cannot deal with such situations
-        sUiBot.setScreenOrientation(LANDSCAPE);
+        mUiBot.setScreenOrientation(LANDSCAPE);
 
         // Wait context and Views being recreated in rotation
-        sUiBot.assertShownById(USERNAME_FULL_ID);
+        mUiBot.assertShownById(USERNAME_FULL_ID);
 
         // Delete stopped marker
         getStoppedMarker(getContext()).delete();
 
         // Authenticate
-        sUiBot.selectDataset("authenticate");
+        mUiBot.selectDataset("authenticate");
 
         // Kill activity that is in the background
         killOfProcessLoginActivityProcess();
 
         // Change orientation which triggers a destroy -> create in the app as the activity
         // cannot deal with such situations
-        sUiBot.setScreenOrientation(PORTRAIT);
+        mUiBot.setScreenOrientation(PORTRAIT);
 
         // Approve authentication
-        sUiBot.selectById(BUTTON_FULL_ID);
+        mUiBot.selectById(BUTTON_FULL_ID);
 
         // Wait for dataset to be shown
-        sUiBot.assertDatasets("dataset");
+        mUiBot.assertDatasets("dataset");
 
         // Change orientation which triggers a destroy -> create in the app as the activity
         // cannot deal with such situations
-        sUiBot.setScreenOrientation(LANDSCAPE);
+        mUiBot.setScreenOrientation(LANDSCAPE);
 
         // Select dataset
-        sUiBot.selectDataset("dataset");
+        mUiBot.selectDataset("dataset");
 
         // Check the results.
-        eventually(() -> assertThat(sUiBot.getTextById(USERNAME_FULL_ID)).isEqualTo(
+        eventually(() -> assertThat(mUiBot.getTextById(USERNAME_FULL_ID)).isEqualTo(
                 "autofilled username"));
 
         // Set password
-        sUiBot.setTextById(PASSWORD_FULL_ID, "new password");
+        mUiBot.setTextById(PASSWORD_FULL_ID, "new password");
 
         // Login
-        sUiBot.selectById(LOGIN_FULL_ID);
+        mUiBot.selectById(LOGIN_FULL_ID);
 
         // Wait for save UI to be shown
-        sUiBot.assertShownById("android:id/autofill_save_yes");
+        mUiBot.assertShownById("android:id/autofill_save_yes");
 
         // Change orientation to make sure save UI can handle this
-        sUiBot.setScreenOrientation(PORTRAIT);
+        mUiBot.setScreenOrientation(PORTRAIT);
 
         // Tap "Save".
-        sUiBot.selectById("android:id/autofill_save_yes");
+        mUiBot.selectById("android:id/autofill_save_yes");
 
         // Get save request
         InstrumentedAutoFillService.SaveRequest saveRequest = sReplier.getNextSaveRequest();
@@ -225,28 +225,28 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
         sReplier.addResponse(response);
 
         // Trigger autofill on username
-        sUiBot.selectById(USERNAME_FULL_ID);
+        mUiBot.selectById(USERNAME_FULL_ID);
 
         // Wait for fill request to be processed
         sReplier.getNextFillRequest();
 
         // Wait until authentication is shown
-        sUiBot.assertDatasets("authenticate");
+        mUiBot.assertDatasets("authenticate");
 
         // Delete stopped marker
         getStoppedMarker(getContext()).delete();
 
         // Authenticate
-        sUiBot.selectDataset("authenticate");
+        mUiBot.selectDataset("authenticate");
 
         // Kill activity that is in the background
         killOfProcessLoginActivityProcess();
 
         // Cancel authentication activity
-        sUiBot.pressBack();
+        mUiBot.pressBack();
 
         // Authentication should still be shown
-        sUiBot.assertDatasets("authenticate");
+        mUiBot.assertDatasets("authenticate");
     }
 
     @Test
@@ -267,13 +267,13 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
         sReplier.addResponse(response);
 
         // Trigger autofill on username
-        sUiBot.selectById(USERNAME_FULL_ID);
+        mUiBot.selectById(USERNAME_FULL_ID);
 
         // Wait for fill request to be processed
         sReplier.getNextFillRequest();
 
         // Wait until dataset is shown
-        sUiBot.assertDatasets("dataset");
+        mUiBot.assertDatasets("dataset");
 
         // Delete stopped marker
         getStoppedMarker(getContext()).delete();
@@ -288,10 +288,10 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
         killOfProcessLoginActivityProcess();
 
         // Cancel activity on top
-        sUiBot.pressBack();
+        mUiBot.pressBack();
 
         // Dataset should still be shown
-        sUiBot.assertDatasets("dataset");
+        mUiBot.assertDatasets("dataset");
     }
 
     @Test
@@ -313,13 +313,13 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
         sReplier.addResponse(response);
 
         // Trigger autofill on username
-        sUiBot.selectById(USERNAME_FULL_ID);
+        mUiBot.selectById(USERNAME_FULL_ID);
 
         // Wait for fill request to be processed
         sReplier.getNextFillRequest();
 
         // Wait until dataset1 is shown
-        sUiBot.assertDatasets("dataset1");
+        mUiBot.assertDatasets("dataset1");
 
         // Delete stopped marker
         getStoppedMarker(getContext()).delete();
@@ -341,18 +341,18 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
         killOfProcessLoginActivityProcess();
 
         // Trigger autofill on username in nested activity
-        sUiBot.selectById(USERNAME_FULL_ID);
+        mUiBot.selectById(USERNAME_FULL_ID);
 
         // Wait for fill request to be processed
         sReplier.getNextFillRequest();
 
         // Wait until dataset in nested activity is shown
-        sUiBot.assertDatasets("dataset2");
+        mUiBot.assertDatasets("dataset2");
 
         // Tap "Cancel".
-        sUiBot.selectById(CANCEL_FULL_ID);
+        mUiBot.selectById(CANCEL_FULL_ID);
 
         // Dataset should still be shown
-        sUiBot.assertDatasets("dataset1");
+        mUiBot.assertDatasets("dataset1");
     }
 }

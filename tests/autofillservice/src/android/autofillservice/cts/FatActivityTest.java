@@ -70,7 +70,7 @@ public class FatActivityTest extends AutoFillServiceTestCase {
         // Trigger auto-fill.
         mFatActivity.onInput((v) -> v.requestFocus());
         final FillRequest fillRequest = sReplier.getNextFillRequest();
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // TODO: should only have 5 children, but there is an extra
         // TextView that's probably coming from the title. For now we're just ignoring it, but

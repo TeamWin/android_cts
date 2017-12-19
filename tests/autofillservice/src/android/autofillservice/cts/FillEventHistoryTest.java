@@ -106,7 +106,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         mActivity.onUsername(View::requestFocus);
 
         // Authenticate
-        sUiBot.selectDataset("authentication");
+        mUiBot.selectDataset("authentication");
         sReplier.getNextFillRequest();
         mActivity.assertAutoFilled();
 
@@ -147,9 +147,9 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         mActivity.onUsername(View::requestFocus);
 
         // Authenticate
-        sUiBot.selectDataset("authentication");
+        mUiBot.selectDataset("authentication");
         sReplier.getNextFillRequest();
-        sUiBot.assertDatasets("dataset");
+        mUiBot.assertDatasets("dataset");
 
         // Verify fill selection
         FillEventHistory selection =
@@ -181,7 +181,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         // Trigger autofill on username
         mActivity.onUsername(View::requestFocus);
         waitUntilConnected();
-        sUiBot.selectDataset("dataset1");
+        mUiBot.selectDataset("dataset1");
         sReplier.getNextFillRequest();
         mActivity.assertAutoFilled();
 
@@ -220,7 +220,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
 
         // Trigger autofill on password
         mActivity.onPassword(View::requestFocus);
-        sUiBot.selectDataset("dataset3");
+        mUiBot.selectDataset("dataset3");
         sReplier.getNextFillRequest();
         mActivity.assertAutoFilled();
 
@@ -272,7 +272,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         mActivity.onUsername(View::requestFocus);
         waitUntilConnected();
         sReplier.getNextFillRequest();
-        sUiBot.selectDataset("dataset1");
+        mUiBot.selectDataset("dataset1");
         mActivity.assertAutoFilled();
 
         {
@@ -290,7 +290,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         sReplier.addResponse(NO_RESPONSE);
         mActivity.onPassword(View::requestFocus);
         sReplier.getNextFillRequest();
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
         waitUntilDisconnected();
 
         {
@@ -317,7 +317,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         mActivity.onUsername(View::requestFocus);
         waitUntilConnected();
         sReplier.getNextFillRequest();
-        sUiBot.selectDataset("dataset1");
+        mUiBot.selectDataset("dataset1");
         mActivity.assertAutoFilled();
 
         {
@@ -335,7 +335,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         sReplier.addResponse(new CannedFillResponse.Builder().returnFailure("D'OH!").build());
         mActivity.onPassword(View::requestFocus);
         sReplier.getNextFillRequest();
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
         waitUntilDisconnected();
 
         {
@@ -362,7 +362,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         mActivity.onUsername(View::requestFocus);
         waitUntilConnected();
         sReplier.getNextFillRequest();
-        sUiBot.selectDataset("dataset1");
+        mUiBot.selectDataset("dataset1");
         mActivity.assertAutoFilled();
 
         {
@@ -441,7 +441,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
                         .setPresentation(createPresentation("datasetB"))
                         .build())
                 .build());
-        sUiBot.focusByRelativeId(ID_CC_NUMBER);
+        mUiBot.focusByRelativeId(ID_CC_NUMBER);
         sReplier.getNextFillRequest();
 
         // Verify fill selection for Activity B
@@ -451,9 +451,9 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         assertThat(selectionB.getEvents()).isNull();
 
         // Now switch back to A...
-        sUiBot.pressBack(); // dismiss keyboard
-        sUiBot.pressBack(); // dismiss task
-        sUiBot.assertShownByRelativeId(ID_USERNAME);
+        mUiBot.pressBack(); // dismiss keyboard
+        mUiBot.pressBack(); // dismiss task
+        mUiBot.assertShownByRelativeId(ID_USERNAME);
         // ...and trigger save
         // Set credentials...
         mActivity.onUsername((v) -> v.setText("malkovich"));
@@ -461,7 +461,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         final String expectedMessage = getWelcomeMessage("malkovich");
         final String actualMessage = mActivity.tapLogin();
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
-        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
         sReplier.getNextSaveRequest();
 
         // Finally, make sure history is right
@@ -480,7 +480,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         // Trigger autofill on username
         mActivity.onUsername(View::requestFocus);
         sReplier.getNextFillRequest();
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // Trigger save
         mActivity.onUsername((v) -> v.setText("malkovich"));
@@ -488,7 +488,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         final String expectedMessage = getWelcomeMessage("malkovich");
         final String actualMessage = mActivity.tapLogin();
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
-        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
 
         // Assert no events where generated
         final FillEventHistory selection =
@@ -508,7 +508,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         // Trigger autofill on username
         mActivity.onUsername(View::requestFocus);
         sReplier.getNextFillRequest();
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // Trigger save
         mActivity.onUsername((v) -> v.setText("malkovich"));
@@ -516,7 +516,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         final String expectedMessage = getWelcomeMessage("malkovich");
         final String actualMessage = mActivity.tapLogin();
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
-        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
         sReplier.getNextSaveRequest();
 
         // Assert it
@@ -542,7 +542,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill(BACKDOOR_USERNAME);
         mActivity.onUsername(View::requestFocus);
         sReplier.getNextFillRequest();
-        sUiBot.selectDataset("dataset1");
+        mUiBot.selectDataset("dataset1");
         mActivity.assertAutoFilled();
         // Verify fill history
         {
@@ -566,7 +566,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         mActivity.expectPasswordAutoFill("whatever");
         mActivity.onPassword(View::requestFocus);
         sReplier.getNextFillRequest();
-        sUiBot.selectDataset("dataset2");
+        mUiBot.selectDataset("dataset2");
         mActivity.assertAutoFilled();
         // Verify fill history
         {
@@ -582,7 +582,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         final String expectedMessage = getWelcomeMessage(BACKDOOR_USERNAME);
         final String actualMessage = mActivity.tapLogin();
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
-        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
 
         {
             // Verify fill history
@@ -619,8 +619,8 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         mActivity.onUsername(View::requestFocus);
         sReplier.getNextFillRequest();
 
-        final UiObject2 datasetPicker = sUiBot.assertDatasets("dataset1", "dataset2");
-        sUiBot.selectDataset(datasetPicker, "dataset1");
+        final UiObject2 datasetPicker = mUiBot.assertDatasets("dataset1", "dataset2");
+        mUiBot.selectDataset(datasetPicker, "dataset1");
         mActivity.assertAutoFilled();
 
         // Verify dataset selection
@@ -640,7 +640,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         final String expectedMessage = getWelcomeMessage("USERNAME");
         final String actualMessage = mActivity.tapLogin();
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
-        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
 
         // ...and check again
         {
@@ -678,8 +678,8 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         mActivity.onUsername(View::requestFocus);
         sReplier.getNextFillRequest();
 
-        final UiObject2 datasetPicker = sUiBot.assertDatasets("dataset1", "dataset2");
-        sUiBot.selectDataset(datasetPicker, "dataset1");
+        final UiObject2 datasetPicker = mUiBot.assertDatasets("dataset1", "dataset2");
+        mUiBot.selectDataset(datasetPicker, "dataset1");
         mActivity.assertAutoFilled();
 
         // Verify dataset selection
@@ -698,7 +698,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         final String expectedMessage = getWelcomeMessage("username1");
         final String actualMessage = mActivity.tapLogin();
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
-        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
 
         // ...and check again
         {
@@ -747,8 +747,8 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         mActivity.onUsername(View::requestFocus);
         sReplier.getNextFillRequest();
 
-        final UiObject2 datasetPicker = sUiBot.assertDatasets("dataset1", "dataset2");
-        sUiBot.selectDataset(datasetPicker, "dataset2");
+        final UiObject2 datasetPicker = mUiBot.assertDatasets("dataset1", "dataset2");
+        mUiBot.selectDataset(datasetPicker, "dataset2");
         mActivity.assertAutoFilled();
 
         // Verify dataset selection
@@ -767,7 +767,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         final String expectedMessage = getWelcomeMessage("username2");
         final String actualMessage = mActivity.tapLogin();
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
-        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
 
         // ...and check again
         {
@@ -817,7 +817,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         // Trigger autofill on username
         mActivity.onUsername(View::requestFocus);
         sReplier.getNextFillRequest();
-        sUiBot.assertDatasets("dataset1", "dataset2");
+        mUiBot.assertDatasets("dataset1", "dataset2");
 
         // Verify history
         {
@@ -834,7 +834,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         final String expectedMessage = getWelcomeMessage("USERNAME");
         final String actualMessage = mActivity.tapLogin();
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
-        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
 
         // Verify history again
         {
@@ -875,8 +875,8 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         mActivity.onUsername(View::requestFocus);
         sReplier.getNextFillRequest();
 
-        final UiObject2 datasetPicker = sUiBot.assertDatasets("dataset1", "dataset2");
-        sUiBot.selectDataset(datasetPicker, "dataset1");
+        final UiObject2 datasetPicker = mUiBot.assertDatasets("dataset1", "dataset2");
+        mUiBot.selectDataset(datasetPicker, "dataset1");
         mActivity.assertAutoFilled();
 
         // Verify dataset selection
@@ -896,7 +896,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         final String expectedMessage = getWelcomeMessage("USERNAME");
         final String actualMessage = mActivity.tapLogin();
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
-        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
 
         // ...and check again
         {
@@ -950,7 +950,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Autofill username
-        sUiBot.selectDataset("dataset1");
+        mUiBot.selectDataset("dataset1");
         mActivity.assertAutoFilled();
         {
             // Verify fill history
@@ -966,7 +966,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         mActivity.expectPasswordAutoFill("password");
 
         mActivity.onPassword(View::requestFocus);
-        sUiBot.selectDataset("dataset2");
+        mUiBot.selectDataset("dataset2");
         mActivity.assertAutoFilled();
 
         {
@@ -987,7 +987,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         final String expectedMessage = getWelcomeMessage("username");
         final String actualMessage = mActivity.tapLogin();
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
-        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
 
         {
             // Verify fill history
@@ -1041,7 +1041,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Autofill username
-        sUiBot.selectDataset("dataset1");
+        mUiBot.selectDataset("dataset1");
         mActivity.assertAutoFilled();
         {
             // Verify fill history
@@ -1057,7 +1057,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         mActivity.expectPasswordAutoFill("whatever");
 
         mActivity.onPassword(View::requestFocus);
-        sUiBot.selectDataset("dataset2");
+        mUiBot.selectDataset("dataset2");
         mActivity.assertAutoFilled();
 
         {
@@ -1076,7 +1076,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         final String expectedMessage = getWelcomeMessage(BACKDOOR_USERNAME);
         final String actualMessage = mActivity.tapLogin();
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
-        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
 
         {
             // Verify fill history
@@ -1125,7 +1125,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         mActivity.onUsername(View::requestFocus);
         sReplier.getNextFillRequest();
 
-        sUiBot.selectDataset("dataset1");
+        mUiBot.selectDataset("dataset1");
         mActivity.assertAutoFilled();
 
         // Verify dataset selection
@@ -1149,7 +1149,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         final String expectedMessage = getWelcomeMessage("username");
         final String actualMessage = mActivity.tapLogin();
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
-        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
 
         // ...and check again
         {
@@ -1198,7 +1198,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         // Trigger autofill on username
         mActivity.onUsername(View::requestFocus);
         sReplier.getNextFillRequest();
-        sUiBot.assertDatasets("dataset1", "dataset2");
+        mUiBot.assertDatasets("dataset1", "dataset2");
 
         // Verify history
         {
@@ -1215,7 +1215,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         final String expectedMessage = getWelcomeMessage(BACKDOOR_USERNAME);
         final String actualMessage = mActivity.tapLogin();
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
-        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
 
         // Verify history
         {
@@ -1277,7 +1277,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         // Trigger autofill on username
         mActivity.onUsername(View::requestFocus);
         sReplier.getNextFillRequest();
-        sUiBot.assertDatasets("dataset1", "dataset2", "dataset3");
+        mUiBot.assertDatasets("dataset1", "dataset2", "dataset3");
 
         // Verify history
         {
@@ -1294,7 +1294,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         final String expectedMessage = getWelcomeMessage(BACKDOOR_USERNAME);
         final String actualMessage = mActivity.tapLogin();
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
-        sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
 
         // Verify history
         {

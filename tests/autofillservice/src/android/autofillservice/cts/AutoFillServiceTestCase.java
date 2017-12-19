@@ -45,7 +45,7 @@ import org.junit.runner.RunWith;
 abstract class AutoFillServiceTestCase {
     private static final String TAG = "AutoFillServiceTestCase";
 
-    protected static UiBot sUiBot;
+    private static final UiBot sDefaultUiBot = new UiBot();
 
     protected static final Replier sReplier = InstrumentedAutoFillService.getReplier();
 
@@ -72,6 +72,7 @@ abstract class AutoFillServiceTestCase {
 
     protected final Context mContext;
     protected final String mPackageName;
+    protected final UiBot mUiBot;
 
     /**
      * Stores the previous logging level so it's restored after the test.
@@ -81,6 +82,7 @@ abstract class AutoFillServiceTestCase {
     protected AutoFillServiceTestCase() {
         mContext = InstrumentationRegistry.getTargetContext();
         mPackageName = mContext.getPackageName();
+        mUiBot = sDefaultUiBot;
     }
 
     @BeforeClass
@@ -92,13 +94,6 @@ abstract class AutoFillServiceTestCase {
 
         // Collapse notifications.
         runShellCommand("cmd statusbar collapse");
-    }
-
-    @BeforeClass
-    public static void setUiBot() throws Exception {
-        if (!hasAutofillFeature()) return;
-
-        sUiBot = new UiBot(InstrumentationRegistry.getInstrumentation());
     }
 
     @BeforeClass
@@ -146,7 +141,7 @@ abstract class AutoFillServiceTestCase {
     @Before
     @After
     public void finishActivities() {
-        WelcomeActivity.finishIt(sUiBot);
+        WelcomeActivity.finishIt(mUiBot);
     }
 
     @After

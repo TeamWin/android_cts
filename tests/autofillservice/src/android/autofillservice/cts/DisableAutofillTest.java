@@ -42,14 +42,14 @@ public class DisableAutofillTest extends AutoFillServiceTestCase {
     private SimpleSaveActivity startSimpleSaveActivity() {
         final Intent intent = new Intent(mContext, SimpleSaveActivity.class);
         mContext.startActivity(intent);
-        sUiBot.assertShownByRelativeId(SimpleSaveActivity.ID_LABEL);
+        mUiBot.assertShownByRelativeId(SimpleSaveActivity.ID_LABEL);
         return SimpleSaveActivity.getInstance();
     }
 
     private PreSimpleSaveActivity startPreSimpleSaveActivity() {
         final Intent intent = new Intent(mContext, PreSimpleSaveActivity.class);
         mContext.startActivity(intent);
-        sUiBot.assertShownByRelativeId(PreSimpleSaveActivity.ID_PRE_LABEL);
+        mUiBot.assertShownByRelativeId(PreSimpleSaveActivity.ID_PRE_LABEL);
         return PreSimpleSaveActivity.getInstance();
     }
 
@@ -124,7 +124,7 @@ public class DisableAutofillTest extends AutoFillServiceTestCase {
                 sReplier.getNextFillRequest();
                 final SimpleSaveActivity.FillExpectation autofillExpectation =
                         activity.expectAutoFill("id", "pass");
-                sUiBot.selectDataset("YO");
+                mUiBot.selectDataset("YO");
                 autofillExpectation.assertAutoFilled();
             }
 
@@ -172,7 +172,7 @@ public class DisableAutofillTest extends AutoFillServiceTestCase {
                 sReplier.getNextFillRequest();
                 final PreSimpleSaveActivity.FillExpectation autofillExpectation =
                         activity.expectAutoFill("yo");
-                sUiBot.selectDataset("YO");
+                mUiBot.selectDataset("YO");
                 autofillExpectation.assertAutoFilled();
             }
 
