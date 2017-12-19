@@ -346,7 +346,6 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
      * Resets the system voice interaction service.
      */
     private void disableAssistant() throws Exception {
-        executeShellCommand("settings delete secure voice_interaction_service " +
-                getActivityComponentName(VOICE_INTERACTION_SERVICE));
+        executeShellCommand("settings delete secure voice_interaction_service");
     }
 }
