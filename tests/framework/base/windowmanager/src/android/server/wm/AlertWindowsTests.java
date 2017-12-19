@@ -147,8 +147,10 @@ public class AlertWindowsTests extends ActivityManagerTestBase {
                 alertWindows.get(alertWindows.size() - 1);
 
         // Assert that the alert windows have higher z-order than the main app window
+        final WindowManagerState wmState = mAmWmState.getWmState();
         assertTrue("lowestAlertWindow=" + lowestAlertWindow + " less than mainAppWindow="
-                + mainAppWindow, lowestAlertWindow.getZOrder() > mainAppWindow.getZOrder());
+                + mainAppWindow,
+                wmState.getZOrder(lowestAlertWindow) > wmState.getZOrder(mainAppWindow));
 
         // Assert that legacy alert windows have a lower z-order than the new alert window layer.
         final WindowManagerState.WindowState appOverlayWindow =
@@ -156,7 +158,7 @@ public class AlertWindowsTests extends ActivityManagerTestBase {
         if (appOverlayWindow != null && highestAlertWindow != appOverlayWindow) {
             assertTrue("highestAlertWindow=" + highestAlertWindow
                             + " greater than appOverlayWindow=" + appOverlayWindow,
-                    highestAlertWindow.getZOrder() < appOverlayWindow.getZOrder());
+                    wmState.getZOrder(highestAlertWindow) < wmState.getZOrder(appOverlayWindow));
         }
 
         // Assert that alert windows are below key system windows.
@@ -166,7 +168,7 @@ public class AlertWindowsTests extends ActivityManagerTestBase {
             final WindowManagerState.WindowState lowestSystemWindow = alertWindows.get(0);
             assertTrue("highestAlertWindow=" + highestAlertWindow
                             + " greater than lowestSystemWindow=" + lowestSystemWindow,
-                    highestAlertWindow.getZOrder() < lowestSystemWindow.getZOrder());
+                    wmState.getZOrder(highestAlertWindow) < wmState.getZOrder(lowestSystemWindow));
         }
     }
 
