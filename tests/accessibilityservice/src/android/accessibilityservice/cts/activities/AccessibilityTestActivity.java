@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2014 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -12,18 +12,20 @@
  * limitations under the License.
  */
 
-package android.accessibilityservice.cts;
+package android.accessibilityservice.cts.activities;
 
+import android.app.Activity;
 import android.os.Bundle;
+import android.view.WindowManager;
 
-/**
- * Activity used by ActivityWindowReportingTest
- */
-public class AccessibilityWindowReportingActivity extends AccessibilityTestActivity {
+public abstract class AccessibilityTestActivity extends Activity {
+
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.accessibility_window_reporting_test);
-        setTitle("AccessibilityWindowReportingActivity");
+
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+                | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+                | WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
     }
 }

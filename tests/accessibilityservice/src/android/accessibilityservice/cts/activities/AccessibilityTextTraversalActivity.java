@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 The Android Open Source Project
+ * Copyright (C) 2012 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -12,20 +12,21 @@
  * limitations under the License.
  */
 
-package android.accessibilityservice.cts;
+package android.accessibilityservice.cts.activities;
 
-import android.app.Activity;
 import android.os.Bundle;
-import android.view.WindowManager;
 
-public abstract class AccessibilityTestActivity extends Activity {
+import android.accessibilityservice.cts.R;
+
+/**
+ * Activity for testing the accessibility APIs for traversing the
+ * text content of a View at several granularities.
+ */
+public class AccessibilityTextTraversalActivity extends AccessibilityTestActivity {
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
-                | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
-                | WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
+        setContentView(R.layout.accessibility_text_traversal_test);
     }
 }

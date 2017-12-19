@@ -17,6 +17,7 @@
 package android.accessibilityservice.cts;
 
 import android.accessibilityservice.AccessibilityServiceInfo;
+import android.accessibilityservice.cts.activities.AccessibilityWindowReportingActivity;
 import android.app.UiAutomation;
 import android.text.TextUtils;
 import android.view.accessibility.AccessibilityEvent;

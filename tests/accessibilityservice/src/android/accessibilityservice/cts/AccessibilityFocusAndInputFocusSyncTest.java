@@ -17,6 +17,7 @@ package android.accessibilityservice.cts;
 import static android.view.accessibility.AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS;
 import static android.view.accessibility.AccessibilityNodeInfo.ACTION_CLEAR_ACCESSIBILITY_FOCUS;
 
+import android.accessibilityservice.cts.activities.AccessibilityFocusAndInputFocusSyncActivity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.test.suitebuilder.annotation.MediumTest;

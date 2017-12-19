@@ -14,6 +14,7 @@
 
 package android.accessibilityservice.cts;
 
+import android.accessibilityservice.cts.activities.AccessibilityTextTraversalActivity;
 import android.app.UiAutomation;
 import android.content.pm.PackageManager;
 import android.os.Bundle;

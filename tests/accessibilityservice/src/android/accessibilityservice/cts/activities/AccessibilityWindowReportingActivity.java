@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2012 The Android Open Source Project
+ * Copyright (C) 2016 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -12,24 +12,19 @@
  * limitations under the License.
  */
 
-package android.accessibilityservice.cts;
+package android.accessibilityservice.cts.activities;
 
 import android.os.Bundle;
 
-import android.accessibilityservice.cts.R;
-
 /**
- * Activity for testing the accessibility focus APIs exposed to
- * accessibility services. These APIs allow moving accessibility
- * focus in the view tree from an AccessiiblityService. Specifically,
- * this activity is for verifying the hierarchical movement of the
- * accessibility focus.
+ * Activity used by ActivityWindowReportingTest
  */
-public class AccessibilityViewTreeReportingActivity extends AccessibilityTestActivity {
-
+public class AccessibilityWindowReportingActivity extends AccessibilityTestActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.accessibility_view_tree_reporting_test);
+        setContentView(
+                android.accessibilityservice.cts.R.layout.accessibility_window_reporting_test);
+        setTitle("AccessibilityWindowReportingActivity");
     }
 }

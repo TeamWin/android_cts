@@ -14,10 +14,10 @@
 
 package android.accessibilityservice.cts;
 
+import android.accessibilityservice.cts.activities.AccessibilityTextTraversalActivity;
 import android.app.UiAutomation;
 import android.graphics.RectF;
 import android.os.Bundle;
-import android.os.Debug;
 import android.os.Message;
 import android.os.Parcelable;
 import android.text.SpannableString;
@@ -52,7 +52,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 /**
  * Test cases for actions taken on text views.

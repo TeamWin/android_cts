@@ -28,27 +28,27 @@
 
         <activity
             android:label="@string/accessibility_end_to_end_test_activity"
-            android:name=".AccessibilityEndToEndActivity" />
+            android:name=".activities.AccessibilityEndToEndActivity" />
 
         <activity
             android:label="@string/accessibility_query_window_test_activity"
-            android:name=".AccessibilityWindowQueryActivity"
+            android:name=".activities.AccessibilityWindowQueryActivity"
             android:supportsPictureInPicture="true" />
 
         <activity
             android:label="@string/accessibility_view_tree_reporting_test_activity"
-            android:name=".AccessibilityViewTreeReportingActivity" />
+            android:name=".activities.AccessibilityViewTreeReportingActivity" />
 
         <activity
             android:label="@string/accessibility_focus_and_input_focus_sync_test_activity"
-            android:name=".AccessibilityFocusAndInputFocusSyncActivity" />
+            android:name=".activities.AccessibilityFocusAndInputFocusSyncActivity" />
 
         <activity
             android:label="@string/accessibility_text_traversal_test_activity"
-            android:name=".AccessibilityTextTraversalActivity"/>
+            android:name=".activities.AccessibilityTextTraversalActivity"/>
 
         <activity android:label="Activity for testing window accessibility reporting"
-             android:name=".AccessibilityWindowReportingActivity"/>
+             android:name=".activities.AccessibilityWindowReportingActivity"/>
 
         <activity
             android:label="Full screen activity for gesture dispatch testing"

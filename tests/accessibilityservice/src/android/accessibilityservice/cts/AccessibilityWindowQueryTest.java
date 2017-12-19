@@ -26,6 +26,7 @@ import static android.view.accessibility.AccessibilityNodeInfo.ACTION_SELECT;
 
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
+import android.accessibilityservice.cts.activities.AccessibilityWindowQueryActivity;
 import android.app.UiAutomation;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
