@@ -36,6 +36,8 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 
 /**
@@ -55,7 +57,20 @@ abstract class AutoFillServiceTestCase {
     private static String sRealService;
 
     @Rule
-    public final RetryRule mRetryRule = new RetryRule(2);
+    public final TestWatcher watcher = new TestWatcher() {
+        @Override
+        protected void starting(Description description) {
+            JUnitHelper.setCurrentTestName(description.getDisplayName());
+        }
+
+        @Override
+        protected void finished(Description description) {
+            JUnitHelper.setCurrentTestName(null);
+        }
+    };
+
+    @Rule
+    public final RetryRule mRetryRule = new RetryRule(5);
 
     @Rule
     public final AutofillLoggingTestRule mLoggingRule = new AutofillLoggingTestRule(TAG);
@@ -80,9 +95,13 @@ abstract class AutoFillServiceTestCase {
     private String mLoggingLevel;
 
     protected AutoFillServiceTestCase() {
+        this(sDefaultUiBot);
+    }
+
+    protected AutoFillServiceTestCase(UiBot uiBot) {
         mContext = InstrumentationRegistry.getTargetContext();
         mPackageName = mContext.getPackageName();
-        mUiBot = sDefaultUiBot;
+        mUiBot = uiBot;
     }
 
     @BeforeClass

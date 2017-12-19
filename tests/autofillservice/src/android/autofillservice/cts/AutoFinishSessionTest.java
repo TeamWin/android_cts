@@ -36,6 +36,8 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 /**
  * Tests that the session finishes when the views and fragments go away
  */
@@ -62,8 +64,7 @@ public class AutoFinishSessionTest extends AutoFillServiceTestCase {
 
     // firstRemove and secondRemove run in the UI Thread; firstCheck doesn't
     private void removeViewsBaseTest(@NonNull Runnable firstRemove, @Nullable Runnable firstCheck,
-            @Nullable Runnable secondRemove, String... viewsToSave)
-            throws Exception {
+            @Nullable Runnable secondRemove, String... viewsToSave) throws Exception {
         enableService();
 
         // Set expectations.
@@ -110,11 +111,24 @@ public class AutoFinishSessionTest extends AutoFillServiceTestCase {
 
     @Test
     public void removeBothViewsToFinishSession() throws Exception {
+        final AtomicReference<Exception> ref = new AtomicReference<>();
         removeViewsBaseTest(
                 () -> ((ViewGroup) mEditText1.getParent()).removeView(mEditText1),
-                () -> mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC),
+                () -> assertSaveNotShowing(ref),
                 () -> ((ViewGroup) mEditText2.getParent()).removeView(mEditText2),
                 "editText1", "editText2");
+        final Exception e = ref.get();
+        if (e != null) {
+            throw e;
+        }
+    }
+
+    private void assertSaveNotShowing(AtomicReference<Exception> ref) {
+        try {
+            mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
+        } catch (Exception e) {
+            ref.set(e);
+        }
     }
 
     @Test

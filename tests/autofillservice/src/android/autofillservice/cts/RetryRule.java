@@ -45,18 +45,24 @@ public class RetryRule implements TestRule {
 
             @Override
             public void evaluate() throws Throwable {
+                final String name = description.getDisplayName();
                 Throwable caught = null;
                 for (int i = 1; i <= mMaxAttempts; i++) {
                     try {
                         base.evaluate();
                         return;
-                    } catch (RetryableException | StaleObjectException e) {
+                    } catch (RetryableException e) {
+                        final Timeout timeout = e.getTimeout();
+                        if (timeout != null) {
+                            timeout.increase();
+                        }
                         caught = e;
-                        Log.w(TAG,
-                                description.getDisplayName() + ": attempt " + i + " failed: " + e);
+                    } catch (StaleObjectException e) {
+                        caught = e;
                     }
+                    Log.w(TAG, name + ": attempt " + i + " failed: " + caught);
                 }
-                Log.e(TAG, description.getDisplayName() + ": giving up after " + mMaxAttempts);
+                Log.e(TAG, name + ": giving up after " + mMaxAttempts + " attempts");
                 throw caught;
             }
         };

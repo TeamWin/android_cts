@@ -18,8 +18,6 @@ package android.autofillservice.cts;
 
 import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
 import static android.autofillservice.cts.FragmentContainerActivity.FRAGMENT_TAG;
-import static android.autofillservice.cts.Helper.FILL_TIMEOUT_MS;
-import static android.autofillservice.cts.Helper.eventually;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
 
@@ -70,18 +68,12 @@ public class MultipleFragmentLoginTest extends AutoFillServiceTestCase {
                 new InstrumentedAutoFillService.FillRequest[1];
 
         // Trigger autofill
-        eventually(() -> {
-            mActivity.syncRunOnUiThread(() -> {
-                mEditText2.requestFocus();
-                mEditText1.requestFocus();
-            });
+        mActivity.syncRunOnUiThread(() -> {
+            mEditText2.requestFocus();
+            mEditText1.requestFocus();
+        });
 
-            try {
-                fillRequest[0] = sReplier.getNextFillRequest();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }, (int) (FILL_TIMEOUT_MS * 2));
+        fillRequest[0] = sReplier.getNextFillRequest();
 
         assertThat(fillRequest[0].data).isNull();
 

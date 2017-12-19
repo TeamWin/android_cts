@@ -88,66 +88,6 @@ final class Helper {
 
     private static final String CMD_LIST_SESSIONS = "cmd autofill list sessions";
 
-    /**
-     * Timeout (in milliseconds) until framework binds / unbinds from service.
-     */
-    static final long CONNECTION_TIMEOUT_MS = 2000;
-
-    /**
-     * Timeout (in milliseconds) until framework unbinds from a service.
-     */
-    static final long IDLE_UNBIND_TIMEOUT_MS = 5000;
-
-    /**
-     * Timeout (in milliseconds) for expected auto-fill requests.
-     */
-    static final long FILL_TIMEOUT_MS = 2000;
-
-    /**
-     * Timeout (in milliseconds) for expected save requests.
-     */
-    static final long SAVE_TIMEOUT_MS = 5000;
-
-    /**
-     * Time to wait if a UI change is not expected
-     */
-    static final long NOT_SHOWING_TIMEOUT_MS = 500;
-
-    /**
-     * Timeout (in milliseconds) for UI operations. Typically used by {@link UiBot}.
-     */
-    static final int UI_TIMEOUT_MS = 2000;
-
-    /**
-     * Timeout (in milliseconds) for showing the autofill dataset picker UI.
-     *
-     * <p>The value is usually higher than {@link #UI_TIMEOUT_MS} because the performance of the
-     * dataset picker UI can be affect by external factors in some low-level devices.
-     *
-     * <p>Typically used by {@link UiBot}.
-     */
-    static final int UI_DATASET_PICKER_TIMEOUT_MS = 4000;
-
-    /**
-     * Timeout (in milliseconds) for an activity to be brought out to top.
-     */
-    static final int ACTIVITY_RESURRECTION_MS = 5000;
-
-    /**
-     * Timeout (in milliseconds) for changing the screen orientation.
-     */
-    static final int UI_SCREEN_ORIENTATION_TIMEOUT_MS = 5000;
-
-    /**
-     * Timeout (in milliseconds) for using Recents to swtich activities.
-     */
-    static final int UI_RECENTS_SWITCH_TIMEOUT_MS = 200;
-
-    /**
-     * Time to wait in between retries
-     */
-    static final int RETRY_MS = 100;
-
     private final static String ACCELLEROMETER_CHANGE =
             "content insert --uri content://settings/system --bind name:s:accelerometer_rotation "
                     + "--bind value:i:%d";
@@ -186,40 +126,6 @@ final class Helper {
         final String formName = getAttributeValue(htmlInfo, "name");
         return id.equals(formName);
     };
-
-    /**
-     * Runs a {@code r}, ignoring all {@link RuntimeException} and {@link Error} until the
-     * {@link #UI_TIMEOUT_MS} is reached.
-     */
-    static void eventually(Runnable r) throws Exception {
-        eventually(r, UI_TIMEOUT_MS);
-    }
-
-    /**
-     * Runs a {@code r}, ignoring all {@link RuntimeException} and {@link Error} until the
-     * {@code timeout} is reached.
-     */
-    static void eventually(Runnable r, int timeout) throws Exception {
-        long startTime = System.currentTimeMillis();
-
-        while (true) {
-            try {
-                r.run();
-                break;
-            } catch (RuntimeException | Error e) {
-                if (System.currentTimeMillis() - startTime < timeout) {
-                    if (VERBOSE) Log.v(TAG, "Ignoring", e);
-                    Thread.sleep(RETRY_MS);
-                } else {
-                    if (e instanceof RetryableException) {
-                        throw e;
-                    } else {
-                        throw new RetryableException(e, "Timedout out after %d ms", timeout);
-                    }
-                }
-            }
-        }
-    }
 
     /**
      * Runs a Shell command, returning a trimmed response.
@@ -746,7 +652,7 @@ final class Helper {
     /**
      * Prevents the screen to rotate by itself
      */
-    public static void disableAutoRotation(UiBot uiBot) {
+    public static void disableAutoRotation(UiBot uiBot) throws Exception {
         runShellCommand(ACCELLEROMETER_CHANGE, 0);
         uiBot.setScreenOrientation(PORTRAIT);
     }
@@ -763,28 +669,21 @@ final class Helper {
      *
      * @return The pid of the process
      */
-    public static int getOutOfProcessPid(@NonNull String processName) {
-        long startTime = System.currentTimeMillis();
+    public static int getOutOfProcessPid(@NonNull String processName, @NonNull Timeout timeout)
+            throws Exception {
 
-        while (System.currentTimeMillis() - startTime <= UI_TIMEOUT_MS) {
-            String[] allProcessDescs = runShellCommand("ps -eo PID,ARGS=CMD").split("\n");
+        return timeout.run("getOutOfProcessPid(" + processName + ")", () -> {
+            final String[] allProcessDescs = runShellCommand("ps -eo PID,ARGS=CMD").split("\n");
 
             for (String processDesc : allProcessDescs) {
-                String[] pidAndName = processDesc.trim().split(" ");
+                final String[] pidAndName = processDesc.trim().split(" ");
 
                 if (pidAndName[1].equals(processName)) {
                     return Integer.parseInt(pidAndName[0]);
                 }
             }
-
-            try {
-                Thread.sleep(RETRY_MS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
-
-        throw new IllegalStateException("process not found");
+            return null;
+        });
     }
 
     /**
@@ -885,9 +784,13 @@ final class Helper {
      * Asserts that there is no session left in the service.
      */
     public static void assertNoDanglingSessions() {
-        final String result = runShellCommand(CMD_LIST_SESSIONS);
+        final String result = listSessions();
         assertWithMessage("Dangling sessions ('%s'): %s'", CMD_LIST_SESSIONS, result).that(result)
                 .isEmpty();
+    }
+
+    public static String listSessions() {
+        return runShellCommand(CMD_LIST_SESSIONS);
     }
 
     /**
@@ -1237,7 +1140,12 @@ final class Helper {
         return componentName.flattenToShortString();
     }
 
+    public static void assertFloat(float actualValue, float expectedValue) {
+        assertThat(actualValue).isWithin(1.0e-10f).of(expectedValue);
+    }
+
     private Helper() {
+        throw new UnsupportedOperationException("contain static methods only");
     }
 
     static class FieldClassificationResult {

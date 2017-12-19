@@ -96,31 +96,31 @@ public class WebViewActivity extends AbstractAutoFillActivity {
         });
     }
 
-    public UiObject2 getUsernameLabel(UiBot uiBot) {
+    public UiObject2 getUsernameLabel(UiBot uiBot) throws Exception {
         return getLabel(uiBot, "Username: ");
     }
 
-    public UiObject2 getPasswordLabel(UiBot uiBot) {
+    public UiObject2 getPasswordLabel(UiBot uiBot) throws Exception {
         return getLabel(uiBot, "Password: ");
     }
 
-    public UiObject2 getUsernameInput(UiBot uiBot) {
+    public UiObject2 getUsernameInput(UiBot uiBot) throws Exception {
         return getInput(uiBot, "Username: ");
     }
 
-    public UiObject2 getPasswordInput(UiBot uiBot) {
+    public UiObject2 getPasswordInput(UiBot uiBot) throws Exception {
         return getInput(uiBot, "Password: ");
     }
 
-    public UiObject2 getLoginButton(UiBot uiBot) {
+    public UiObject2 getLoginButton(UiBot uiBot) throws Exception {
         return getLabel(uiBot, "Login");
     }
 
-    private UiObject2 getLabel(UiBot uiBot, String label) {
+    private UiObject2 getLabel(UiBot uiBot, String label) throws Exception {
         return uiBot.assertShownByText(label);
     }
 
-    private UiObject2 getInput(UiBot uiBot, String contentDescription) {
+    private UiObject2 getInput(UiBot uiBot, String contentDescription) throws Exception {
         // First get the label..
         final UiObject2 label = getLabel(uiBot, contentDescription);
 

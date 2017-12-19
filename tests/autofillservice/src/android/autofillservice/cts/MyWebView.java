@@ -15,7 +15,7 @@
  */
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.Helper.FILL_TIMEOUT_MS;
+import static android.autofillservice.cts.Timeouts.FILL_TIMEOUT;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -45,11 +45,11 @@ public class MyWebView extends WebView {
 
     public void assertAutofilled() throws Exception {
         assertWithMessage("expectAutofill() not called").that(mExpectation).isNotNull();
-        final boolean set = mExpectation.mLatch.await(FILL_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        final boolean set = mExpectation.mLatch.await(FILL_TIMEOUT.ms(), TimeUnit.MILLISECONDS);
         if (mExpectation.mException != null) {
             throw mExpectation.mException;
         }
-        assertWithMessage("Timeout (%s ms) expecting autofill()", FILL_TIMEOUT_MS)
+        assertWithMessage("Timeout (%s ms) expecting autofill()", FILL_TIMEOUT.ms())
                 .that(set).isTrue();
         assertWithMessage("Wrong value for username").that(mExpectation.mActualUsername)
                 .isEqualTo(mExpectation.mExpectedUsername);

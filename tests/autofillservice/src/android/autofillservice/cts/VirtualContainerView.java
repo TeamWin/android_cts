@@ -16,7 +16,7 @@
 
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.Helper.FILL_TIMEOUT_MS;
+import static android.autofillservice.cts.Timeouts.FILL_TIMEOUT;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -373,8 +373,8 @@ class VirtualContainerView extends View {
             }
 
             void assertAutoFilled() throws Exception {
-                final boolean set = latch.await(FILL_TIMEOUT_MS, TimeUnit.MILLISECONDS);
-                assertWithMessage("Timeout (%s ms) on Line %s", FILL_TIMEOUT_MS, label)
+                final boolean set = latch.await(FILL_TIMEOUT.ms(), TimeUnit.MILLISECONDS);
+                assertWithMessage("Timeout (%s ms) on Line %s", FILL_TIMEOUT.ms(), label)
                         .that(set).isTrue();
                 final String actual = text.text.toString();
                 assertWithMessage("Wrong auto-fill value on Line %s", label)

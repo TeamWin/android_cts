@@ -19,9 +19,7 @@ package android.autofillservice.cts;
 import static android.autofillservice.cts.Helper.ID_LOGIN;
 import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_USERNAME;
-import static android.autofillservice.cts.Helper.assertNoDanglingSessions;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
-import static android.autofillservice.cts.Helper.eventually;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.Helper.getContext;
 import static android.autofillservice.cts.Helper.getOutOfProcessPid;
@@ -46,6 +44,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.concurrent.Callable;
+
 /**
  * Test the lifecycle of a autofill session
  */
@@ -56,6 +56,21 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
     private static final String BUTTON_FULL_ID = "android.autofillservice.cts:id/button";
     private static final String CANCEL_FULL_ID = "android.autofillservice.cts:id/cancel";
 
+    private static final Timeout SESSION_LIFECYCLE_TIMEOUT = new Timeout(
+            "SESSION_LIFECYCLE_TIMEOUT", 500, 2F, 5000);
+
+    /**
+     * Runs an {@code assertion}, retrying until {@code timeout} is reached.
+     */
+    private static void eventually(String description, Callable<Boolean> assertion)
+            throws Exception {
+        SESSION_LIFECYCLE_TIMEOUT.run(description, assertion);
+    }
+
+    public SessionLifecycleTest() {
+        super(new UiBot(SESSION_LIFECYCLE_TIMEOUT));
+    }
+
     @Before
     public void cleanUpState() {
         Helper.preTestCleanup();
@@ -65,7 +80,7 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
      * Prevents the screen to rotate by itself
      */
     @Before
-    public void disableAutoRotation() {
+    public void disableAutoRotation() throws Exception {
         Helper.disableAutoRotation(mUiBot);
     }
 
@@ -79,14 +94,17 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
 
     private void killOfProcessLoginActivityProcess() throws Exception {
         // Waiting for activity to stop (stop marker appears)
-        eventually(() -> assertThat(getStoppedMarker(getContext()).exists()).isTrue());
+        eventually("getStoppedMarker()", () -> {
+            return getStoppedMarker(getContext()).exists();
+        });
 
         // onStop might not be finished, hence wait more
         SystemClock.sleep(1000);
 
         // Kill activity that is in the background
         runShellCommand("kill -9 %d",
-                getOutOfProcessPid("android.autofillservice.cts.outside"));
+                getOutOfProcessPid("android.autofillservice.cts.outside",
+                        SESSION_LIFECYCLE_TIMEOUT));
     }
 
     @Test
@@ -165,8 +183,9 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
         mUiBot.selectDataset("dataset");
 
         // Check the results.
-        eventually(() -> assertThat(mUiBot.getTextById(USERNAME_FULL_ID)).isEqualTo(
-                "autofilled username"));
+        eventually("getTextById(" + USERNAME_FULL_ID + ")", () -> {
+            return mUiBot.getTextById(USERNAME_FULL_ID).equals("autofilled username");
+        });
 
         // Set password
         mUiBot.setTextById(PASSWORD_FULL_ID, "new password");
@@ -200,7 +219,9 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
         final String extraValue = saveRequest.data.getString("numbers");
         assertWithMessage("extras not passed on save").that(extraValue).isEqualTo("4815162342");
 
-        eventually(() -> assertNoDanglingSessions());
+        eventually("assert dangling sessions", () -> {
+            return Helper.listSessions().isEmpty();
+        });
     }
 
     @Test
@@ -262,7 +283,7 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
         CannedFillResponse response = new CannedFillResponse.Builder()
                 .addDataset(new CannedFillResponse.CannedDataset.Builder(
                         createPresentation("dataset"))
-                        .setField(ID_USERNAME, "filled").build())
+                                .setField(ID_USERNAME, "filled").build())
                 .build();
         sReplier.addResponse(response);
 
@@ -308,7 +329,7 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
         CannedFillResponse response = new CannedFillResponse.Builder()
                 .addDataset(new CannedFillResponse.CannedDataset.Builder(
                         createPresentation("dataset1"))
-                        .setField(ID_USERNAME, "filled").build())
+                                .setField(ID_USERNAME, "filled").build())
                 .build();
         sReplier.addResponse(response);
 
@@ -328,7 +349,7 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
         response = new CannedFillResponse.Builder()
                 .addDataset(new CannedFillResponse.CannedDataset.Builder(
                         createPresentation("dataset2"))
-                        .setField(ID_USERNAME, "filled").build())
+                                .setField(ID_USERNAME, "filled").build())
                 .build();
         sReplier.addResponse(response);
 

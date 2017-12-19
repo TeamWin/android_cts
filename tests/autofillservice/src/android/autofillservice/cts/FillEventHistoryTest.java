@@ -432,6 +432,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
 
         // Launch activity B
         mContext.startActivity(new Intent(mContext, CheckoutActivity.class));
+        mUiBot.assertShownByRelativeId(ID_CC_NUMBER);
 
         // Trigger autofill on activity B
         sReplier.addResponse(new CannedFillResponse.Builder()

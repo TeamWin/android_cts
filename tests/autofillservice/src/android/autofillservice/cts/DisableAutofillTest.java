@@ -16,8 +16,6 @@
 
 package android.autofillservice.cts;
 
-import static com.google.common.truth.Truth.assertThat;
-
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.content.Intent;
 import android.os.SystemClock;
@@ -39,14 +37,14 @@ public class DisableAutofillTest extends AutoFillServiceTestCase {
         Helper.preTestCleanup();
     }
 
-    private SimpleSaveActivity startSimpleSaveActivity() {
+    private SimpleSaveActivity startSimpleSaveActivity() throws Exception {
         final Intent intent = new Intent(mContext, SimpleSaveActivity.class);
         mContext.startActivity(intent);
         mUiBot.assertShownByRelativeId(SimpleSaveActivity.ID_LABEL);
         return SimpleSaveActivity.getInstance();
     }
 
-    private PreSimpleSaveActivity startPreSimpleSaveActivity() {
+    private PreSimpleSaveActivity startPreSimpleSaveActivity() throws Exception {
         final Intent intent = new Intent(mContext, PreSimpleSaveActivity.class);
         mContext.startActivity(intent);
         mUiBot.assertShownByRelativeId(PreSimpleSaveActivity.ID_PRE_LABEL);
@@ -129,11 +127,7 @@ public class DisableAutofillTest extends AutoFillServiceTestCase {
             }
 
             // Asserts isEnabled() status.
-            if (action == PostLaunchAction.ASSERT_ENABLED_AND_AUTOFILL) {
-                assertThat(activity.getAutofillManager().isEnabled()).isTrue();
-            } else {
-                assertThat(activity.getAutofillManager().isEnabled()).isFalse();
-            }
+            assertAutofillEnabled(activity, action == PostLaunchAction.ASSERT_ENABLED_AND_AUTOFILL);
         } finally {
             activity.unregisterCallback();
             activity.finish();
@@ -177,11 +171,7 @@ public class DisableAutofillTest extends AutoFillServiceTestCase {
             }
 
             // Asserts isEnabled() status.
-            if (action == PostLaunchAction.ASSERT_ENABLED_AND_AUTOFILL) {
-                assertThat(activity.getAutofillManager().isEnabled()).isTrue();
-            } else {
-                assertThat(activity.getAutofillManager().isEnabled()).isFalse();
-            }
+            assertAutofillEnabled(activity, action == PostLaunchAction.ASSERT_ENABLED_AND_AUTOFILL);
         } finally {
             activity.unregisterCallback();
             activity.finish();
@@ -214,7 +204,7 @@ public class DisableAutofillTest extends AutoFillServiceTestCase {
         enableService();
 
         // Need to wait the equivalent of launching 2 activities, plus some extra legging room
-        final long duration = 2 * Helper.ACTIVITY_RESURRECTION_MS + 500;
+        final long duration = 2 * Timeouts.ACTIVITY_RESURRECTION.ms() + 500;
 
         // Set expectations.
         sReplier.addResponse(new CannedFillResponse.Builder().disableAutofill(duration).build());
@@ -282,7 +272,7 @@ public class DisableAutofillTest extends AutoFillServiceTestCase {
         enableService();
 
         // Need to wait the equivalent of launching 2 activities, plus some extra legging room
-        final long duration = 2 * Helper.ACTIVITY_RESURRECTION_MS + 500;
+        final long duration = 2 * Timeouts.ACTIVITY_RESURRECTION.ms() + 500;
 
         // Set expectations.
         sReplier.addResponse(new CannedFillResponse.Builder()
@@ -326,5 +316,15 @@ public class DisableAutofillTest extends AutoFillServiceTestCase {
 
         // Try again on activity that disabled it.
         launchSimpleSaveActivity(PostLaunchAction.ASSERT_ENABLED_AND_AUTOFILL);
+    }
+
+    private void assertAutofillEnabled(AbstractAutoFillActivity activity, boolean expected)
+            throws Exception {
+        Timeouts.ACTIVITY_RESURRECTION.run(
+                "assertAutofillEnabled(" + activity.getComponentName().flattenToShortString() + ")",
+                () -> {
+                    return activity.getAutofillManager().isEnabled() == expected
+                            ? Boolean.TRUE : null;
+                });
     }
 }
