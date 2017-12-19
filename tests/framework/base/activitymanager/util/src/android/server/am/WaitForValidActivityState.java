@@ -30,15 +30,20 @@ public class WaitForValidActivityState {
     public final String windowName;
     /** Use {@link #componentName} and  {@link #windowName}. */
     @Deprecated
+    @Nullable
     public final String activityName;
     public final int stackId;
     public final int windowingMode;
     public final int activityType;
 
+    public static WaitForValidActivityState forWindow(final String windowName) {
+        return new Builder().setWindowName(windowName).build();
+    }
+
     public WaitForValidActivityState(final ComponentName activityName) {
         this.componentName = activityName.flattenToShortString();
         this.windowName = activityName.flattenToString();
-        this.activityName = activityName.getShortClassName();
+        this.activityName = getSimpleClassName(activityName);
         this.stackId = INVALID_STACK_ID;
         this.windowingMode = WINDOWING_MODE_UNDEFINED;
         this.activityType = ACTIVITY_TYPE_UNDEFINED;
@@ -64,6 +69,23 @@ public class WaitForValidActivityState {
         this.activityType = builder.mActivityType;
     }
 
+    /**
+     * @return the class name of <code>componentName</code>, either fully qualified class name or in
+     *         a shortened form (WITHOUT a leading '.') if it is a suffix of the package.
+     * @see ComponentName#getShortClassName()
+     */
+    private static String getSimpleClassName(final ComponentName componentName) {
+        final String packageName = componentName.getPackageName();
+        final String className = componentName.getClassName();
+        if (className.startsWith(packageName)) {
+            final int packageNameLen = packageName.length();
+            if (className.length() > packageNameLen && className.charAt(packageNameLen) == '.') {
+                return className.substring(packageNameLen + 1);
+            }
+        }
+        return className;
+    }
+
     public static class Builder {
         @Nullable
         private String mComponentName = null;
@@ -75,12 +97,12 @@ public class WaitForValidActivityState {
         private int mWindowingMode = WINDOWING_MODE_UNDEFINED;
         private int mActivityType = ACTIVITY_TYPE_UNDEFINED;
 
-        public Builder() {}
+        private Builder() {}
 
         public Builder(final ComponentName activityName) {
             mComponentName = activityName.flattenToShortString();
             mWindowName = activityName.flattenToString();
-            mActivityName = activityName.getShortClassName();
+            mActivityName = getSimpleClassName(activityName);
         }
 
         /** Use {@link #Builder(ComponentName)}. */
@@ -89,21 +111,7 @@ public class WaitForValidActivityState {
             mActivityName = activityName;
         }
 
-        public Builder setActivityName(final ComponentName activityName) {
-            mComponentName = activityName.flattenToShortString();
-            mWindowName = activityName.flattenToString();
-            mActivityName = activityName.getShortClassName();
-            return this;
-        }
-
-        /** Use {@link #setActivityName(ComponentName)}. */
-        @Deprecated
-        public Builder setActivityName(String activityName) {
-            mActivityName = activityName;
-            return this;
-        }
-
-        public Builder setWindowName(String windowName) {
+        private Builder setWindowName(String windowName) {
             mWindowName = windowName;
             return this;
         }

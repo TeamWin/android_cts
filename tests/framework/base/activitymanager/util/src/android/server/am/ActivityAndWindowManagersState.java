@@ -154,9 +154,7 @@ public class ActivityAndWindowManagersState {
     void waitForValidState(String waitForActivityVisible)
             throws Exception {
         waitForValidState(false /* compareTaskAndStackBounds */,
-                new WaitForValidActivityState.Builder()
-                        .setActivityName(waitForActivityVisible)
-                        .build());
+                new WaitForValidActivityState(waitForActivityVisible));
     }
 
     /** Wait for the activity to appear and for valid state in AM and WM. */
@@ -174,8 +172,7 @@ public class ActivityAndWindowManagersState {
     void waitForValidState(String waitForActivityVisible, int stackId)
             throws Exception {
         waitForValidState(false /* compareTaskAndStackBounds */,
-                new WaitForValidActivityState.Builder()
-                        .setActivityName(waitForActivityVisible)
+                new WaitForValidActivityState.Builder(waitForActivityVisible)
                         .setStackId(stackId)
                         .build());
     }
@@ -183,8 +180,7 @@ public class ActivityAndWindowManagersState {
     void waitForValidStateWithActivityType(String waitForActivityVisible, int activityType)
             throws Exception {
         waitForValidState(false /* compareTaskAndStackBounds */,
-                new WaitForValidActivityState.Builder()
-                        .setActivityName(waitForActivityVisible)
+                new WaitForValidActivityState.Builder(waitForActivityVisible)
                         .setActivityType(activityType)
                         .build());
     }
@@ -202,8 +198,7 @@ public class ActivityAndWindowManagersState {
     void waitForValidState(String waitForActivityVisible, int windowingMode, int activityType)
             throws Exception {
         waitForValidState(false /* compareTaskAndStackBounds */,
-                new WaitForValidActivityState.Builder()
-                        .setActivityName(waitForActivityVisible)
+                new WaitForValidActivityState.Builder(waitForActivityVisible)
                         .setActivityType(activityType)
                         .setWindowingMode(windowingMode)
                         .build());

@@ -110,7 +110,7 @@ public class AlertWindowsTests extends ActivityManagerTestBase {
         setAlertWindowPermission(activityName, hasAlertWindowPermission);
 
         executeShellCommand(getAmStartCmd(activityName));
-        mAmWmState.computeState(new WaitForValidActivityState.Builder(activityName).build());
+        mAmWmState.computeState(new WaitForValidActivityState(activityName));
         mAmWmState.assertVisibility(activityName, true);
 
         assertAlertWindows(activityName, hasAlertWindowPermission, atLeastO);
