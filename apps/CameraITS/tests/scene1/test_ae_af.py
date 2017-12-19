@@ -16,7 +16,7 @@ import its.caps
 import its.device
 import its.target
 
-import numpy
+import numpy as np
 
 GAIN_LENGTH = 4
 TRANSFORM_LENGTH = 9
@@ -39,12 +39,12 @@ def main():
         for k, v in sorted(SINGLE_A.items()):
             print k
             try:
-                s, e, g, xform, fd = cam.do_3a(get_results=True,
-                                               do_ae=v[0],
-                                               do_af=v[1],
-                                               do_awb=v[2])
+                s, e, gains, xform, fd = cam.do_3a(get_results=True,
+                                                   do_ae=v[0],
+                                                   do_af=v[1],
+                                                   do_awb=v[2])
                 print ' sensitivity', s, 'exposure', e
-                print ' gains', g, 'transform', xform
+                print ' gains', gains, 'transform', xform
                 print ' fd', fd
                 print ''
             except its.error.Error:
@@ -52,10 +52,14 @@ def main():
             if k == 'full_3a':
                 assert s > 0
                 assert e > 0
-                assert len(g) == 4
+                assert len(gains) == 4
+                for g in gains:
+                    assert not np.isnan(g)
                 assert len(xform) == 9
+                for x in xform:
+                    assert not np.isnan(x)
                 assert fd >= 0
-                assert numpy.isclose(g[2], GREEN_GAIN, GREEN_GAIN_TOL)
+                assert np.isclose(gains[2], GREEN_GAIN, GREEN_GAIN_TOL)
 
 if __name__ == '__main__':
     main()

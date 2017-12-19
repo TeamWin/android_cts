@@ -41,14 +41,14 @@ def main():
         fds = []
         for _ in range(NUM_TEST_ITERATIONS):
             try:
-                s, e, g, xform, fd = cam.do_3a(get_results=True)
+                s, e, gains, xform, fd = cam.do_3a(get_results=True)
                 print ' sensitivity', s, 'exposure', e
-                print ' gains', g, 'transform', xform
+                print ' gains', gains, 'transform', xform
                 print ' fd', fd
                 print ''
                 exps.append(e)
                 senses.append(s)
-                g_gains.append(g[2])
+                g_gains.append(gains[2])
                 fds.append(fd)
             except its.error.Error:
                 print ' FAIL\n'
@@ -57,6 +57,10 @@ def main():
         assert np.isclose(np.amax(senses), np.amin(senses), SENS_TOL)
         assert np.isclose(np.amax(g_gains), np.amin(g_gains), GGAIN_TOL)
         assert np.isclose(np.amax(fds), np.amin(fds), FD_TOL)
+        for g in gains:
+            assert not np.isnan(g)
+        for x in xform:
+            assert not np.isnan(x)
 
 if __name__ == '__main__':
     main()
