@@ -16,7 +16,6 @@
 package com.android.compatibility.common.tradefed.build;
 
 import com.android.annotations.VisibleForTesting;
-import com.android.tradefed.build.BuildInfo;
 import com.android.tradefed.build.BuildRetrievalError;
 import com.android.tradefed.build.DeviceBuildInfo;
 import com.android.tradefed.build.IBuildInfo;
@@ -29,6 +28,8 @@ import com.android.tradefed.config.Option.Importance;
 import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.invoker.IInvocationContext;
+import com.android.tradefed.testtype.IInvocationContextReceiver;
 import com.android.tradefed.testtype.suite.TestSuiteInfo;
 import com.android.tradefed.util.FileUtil;
 
@@ -42,7 +43,7 @@ import java.util.regex.Pattern;
  * A simple {@link IBuildProvider} that uses a pre-existing Compatibility install.
  */
 @OptionClass(alias="compatibility-build-provider")
-public class CompatibilityBuildProvider implements IDeviceBuildProvider {
+public class CompatibilityBuildProvider implements IDeviceBuildProvider, IInvocationContextReceiver {
 
     private static final Pattern RELEASE_BUILD = Pattern.compile("^[A-Z]{3}\\d{2}[A-Z]{0,1}$");
     private static final String ROOT_DIR = "ROOT_DIR";
@@ -75,9 +76,6 @@ public class CompatibilityBuildProvider implements IDeviceBuildProvider {
     @Option(name="use-device-build-info", description="Bootstrap build info from device")
     private boolean mUseDeviceBuildInfo = false;
 
-    @Option(name="test-tag", description="test tag name to supply.")
-    private String mTestTag = "cts";
-
     @Option(name = "dynamic-config-url",
             description = "Specify the url for override config")
     private String mURL = "https://androidpartner.googleapis.com/v1/dynamicconfig/"
@@ -88,6 +86,8 @@ public class CompatibilityBuildProvider implements IDeviceBuildProvider {
             importance = Importance.ALWAYS)
     private String mSuitePlan;
 
+    private String mTestTag;
+
     /**
      * Util method to inject build attributes into supplied {@link IBuildInfo}
      * @param buildInfo
@@ -96,6 +96,14 @@ public class CompatibilityBuildProvider implements IDeviceBuildProvider {
         for (Map.Entry<String, String> entry : mBuildAttributes.entrySet()) {
             buildInfo.addBuildAttribute(entry.getKey(), entry.getValue());
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setInvocationContext(IInvocationContext invocationContext) {
+        mTestTag = invocationContext.getTestTag();
     }
 
     /**
@@ -113,7 +121,7 @@ public class CompatibilityBuildProvider implements IDeviceBuildProvider {
                 version = IBuildInfo.UNKNOWN_BUILD_ID;
             }
         }
-        IBuildInfo ctsBuild = new BuildInfo(version, mTestTag);
+        IBuildInfo ctsBuild = new DeviceBuildInfo(version, mTestTag);
         if (mBranch  != null) {
             ctsBuild.setBuildBranch(mBranch);
         }
@@ -208,7 +216,7 @@ public class CompatibilityBuildProvider implements IDeviceBuildProvider {
         info.addBuildAttribute(ROOT_DIR, rootDir.getAbsolutePath());
         // For DeviceBuildInfo we populate the testsDir folder of the build info.
         if (info instanceof IDeviceBuildInfo) {
-            File testDir =  new File(rootDir, String.format("android-%s/testcases/",
+            File testDir = new File(rootDir, String.format("android-%s/testcases/",
                     getSuiteInfoName().toLowerCase()));
             ((IDeviceBuildInfo) info).setTestsDir(testDir, "0");
         }
