@@ -56,6 +56,14 @@
             </intent-filter>
         </activity>
 
+        <service android:name="android.webkit.cts.TestProcessServiceA"
+                 android:process=":testprocessA"
+                 android:exported="false" />
+
+        <service android:name="android.webkit.cts.TestProcessServiceB"
+                 android:process=":testprocessB"
+                 android:exported="false" />
+
         <meta-data android:name="android.webkit.WebView.EnableSafeBrowsing" android:value="false" />
 
     </application>
