@@ -12,8 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import its.device
 import its.caps
+import its.device
+
+import numpy as np
+
 
 def main():
     """Basic test for bring-up of 3A.
@@ -26,14 +29,18 @@ def main():
         its.caps.skip_unless(its.caps.read_3a(props))
 
         sens, exp, gains, xform, focus = cam.do_3a(get_results=True)
-        print "AE: sensitivity %d, exposure %dms" % (sens, exp/1000000)
-        print "AWB: gains", gains, "transform", xform
-        print "AF: distance", focus
-        assert(sens > 0)
-        assert(exp > 0)
-        assert(len(gains) == 4)
-        assert(len(xform) == 9)
-        assert(focus >= 0)
+        print 'AE: sensitivity %d, exposure %dms' % (sens, exp/1000000)
+        print 'AWB: gains', gains, 'transform', xform
+        print 'AF: distance', focus
+        assert sens > 0
+        assert exp > 0
+        assert len(gains) == 4
+        for g in gains:
+            assert not np.isnan(g)
+        assert len(xform) == 9
+        for x in xform:
+            assert not np.isnan(x)
+        assert focus >= 0
 
 if __name__ == '__main__':
     main()
