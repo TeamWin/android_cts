@@ -55,8 +55,10 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     private static final String TEST_APP_PKG = "android.packageinstaller.emptytestapp.cts";
     private static final String TEST_APP_LOCATION = "/data/local/tmp/cts/packageinstaller/";
 
-    private static final String ARG_BATCH_NUMBER = "batchNumber";
-    private static final int BUFFER_ENTRIES_NOTIFICATION_LEVEL = 1024;
+    private static final String ARG_SECURITY_LOGGING_BATCH_NUMBER = "batchNumber";
+    private static final int BUFFER_SECURITY_ENTRIES_NOTIFICATION_LEVEL = 1024;
+
+    private static final String ARG_NETWORK_LOGGING_BATCH_COUNT = "batchCount";
 
     /** Forcing ephemeral users is implemented and supported on the device. */
     private boolean mHasForceEphemeralUserFeature;
@@ -264,42 +266,42 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     public void testCreateAndManageUser_SkipSetupWizard() throws Exception {
         if (mHasCreateAndManageUserFeature) {
             executeDeviceTestMethod(".CreateAndManageUserTest",
-                "testCreateAndManageUser_SkipSetupWizard");
+                    "testCreateAndManageUser_SkipSetupWizard");
         }
     }
 
     public void testCreateAndManageUser_DontSkipSetupWizard() throws Exception {
         if (mHasCreateAndManageUserFeature) {
             executeDeviceTestMethod(".CreateAndManageUserTest",
-                "testCreateAndManageUser_DontSkipSetupWizard");
+                    "testCreateAndManageUser_DontSkipSetupWizard");
         }
     }
 
     public void testCreateAndManageUser_AddRestrictionSet() throws Exception {
         if (mHasFeature && canCreateAdditionalUsers(1)) {
             executeDeviceTestMethod(".CreateAndManageUserTest",
-                "testCreateAndManageUser_AddRestrictionSet");
+                    "testCreateAndManageUser_AddRestrictionSet");
         }
     }
 
     public void testCreateAndManageUser_RemoveRestrictionSet() throws Exception {
         if (mHasFeature && canCreateAdditionalUsers(1)) {
             executeDeviceTestMethod(".CreateAndManageUserTest",
-                "testCreateAndManageUser_RemoveRestrictionSet");
+                    "testCreateAndManageUser_RemoveRestrictionSet");
         }
     }
 
     public void testCreateAndManageUser_StartUserInBackground() throws Exception {
         if (mHasFeature && canCreateAdditionalUsers(1)) {
             executeDeviceTestMethod(".CreateAndManageUserTest",
-                "testCreateAndManageUser_StartUserInBackground");
+                    "testCreateAndManageUser_StartUserInBackground");
         }
     }
 
     public void testUserAddedOrRemovedBroadcasts() throws Exception {
         if (mHasFeature && canCreateAdditionalUsers(1)) {
             executeDeviceTestMethod(".CreateAndManageUserTest",
-                "testUserAddedOrRemovedBroadcasts");
+                    "testUserAddedOrRemovedBroadcasts");
         }
     }
 
@@ -334,7 +336,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
             executeDeviceTestMethod(".SecurityLoggingTest", "testEnablingSecurityLogging");
 
             // Generate more than enough events for a batch of security events.
-            runBatch(0, BUFFER_ENTRIES_NOTIFICATION_LEVEL + 100 /* batch size */);
+            runBatch(0, BUFFER_SECURITY_ENTRIES_NOTIFICATION_LEVEL + 100 /* batch size */);
         } finally {
             // Always attempt to disable security logging to bring the device to initial state.
             executeDeviceTestMethod(".SecurityLoggingTest", "testDisablingSecurityLogging");
@@ -346,7 +348,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         // Generate more than enough events for a batch of security events.
-        int batchSize = BUFFER_ENTRIES_NOTIFICATION_LEVEL + 100;
+        int batchSize = BUFFER_SECURITY_ENTRIES_NOTIFICATION_LEVEL + 100;
         try {
             // Prepare the device.
             executeDeviceTestMethod(".SecurityLoggingTest", "testEnablingSecurityLogging");
@@ -367,7 +369,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         // Generate more than enough events for a batch of security events.
-        int batchSize = BUFFER_ENTRIES_NOTIFICATION_LEVEL + 100;
+        int batchSize = BUFFER_SECURITY_ENTRIES_NOTIFICATION_LEVEL + 100;
         try {
             // Prepare the device.
             executeDeviceTestMethod(".SecurityLoggingTest", "testEnablingSecurityLogging");
@@ -399,7 +401,8 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
 
         // Verify the contents of the batch.
         executeDeviceTestMethod(".SecurityLoggingTest", "testGetSecurityLogs",
-                Collections.singletonMap(ARG_BATCH_NUMBER, Integer.toString(batchNumber)));
+                Collections.singletonMap(ARG_SECURITY_LOGGING_BATCH_NUMBER,
+                        Integer.toString(batchNumber)));
     }
 
     public void testNetworkLoggingWithTwoUsers() throws Exception {
@@ -422,10 +425,33 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-
         executeDeviceTestMethod(".NetworkLoggingTest", "testProvidingWrongBatchTokenReturnsNull");
-        executeDeviceTestMethod(".NetworkLoggingTest", "testNetworkLoggingAndRetrieval");
+        executeDeviceTestMethod(".NetworkLoggingTest", "testNetworkLoggingAndRetrieval",
+                Collections.singletonMap(ARG_NETWORK_LOGGING_BATCH_COUNT, Integer.toString(1)));
     }
+
+    public void testNetworkLogging_multipleBatches() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        executeDeviceTestMethod(".NetworkLoggingTest", "testNetworkLoggingAndRetrieval",
+                Collections.singletonMap(ARG_NETWORK_LOGGING_BATCH_COUNT, Integer.toString(2)));
+    }
+
+    public void testNetworkLogging_rebootResetsId() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        // First batch: retrieve and verify the events.
+        executeDeviceTestMethod(".NetworkLoggingTest", "testNetworkLoggingAndRetrieval",
+                Collections.singletonMap(ARG_NETWORK_LOGGING_BATCH_COUNT, Integer.toString(1)));
+        // Reboot the device, so the security event IDs are re-set.
+        rebootAndWaitUntilReady();
+        // First batch after reboot: retrieve and verify the events.
+        executeDeviceTestMethod(".NetworkLoggingTest", "testNetworkLoggingAndRetrieval",
+                Collections.singletonMap(ARG_NETWORK_LOGGING_BATCH_COUNT, Integer.toString(1)));
+    }
+
 
     public void testSetAffiliationId_IllegalArgumentException() throws Exception {
         if (!mHasFeature) {
@@ -772,7 +798,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
                 /* deviceOwnerUserId */ mPrimaryUserId);
     }
 
-    private int createAffiliatedSecondaryUser() throws Exception  {
+    private int createAffiliatedSecondaryUser() throws Exception {
         final int userId = createUser();
         installAppAsUser(INTENT_RECEIVER_APK, userId);
         installAppAsUser(DEVICE_OWNER_APK, userId);
