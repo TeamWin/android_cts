@@ -774,11 +774,11 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
         if (!supportsMultiDisplay()) { return; }
 
         // Start an activity on default display to determine default stack.
-        launchActivity(BROADCAST_RECEIVER_ACTIVITY);
+        launchActivityOnDisplay(BROADCAST_RECEIVER_ACTIVITY, DEFAULT_DISPLAY_ID);
         final int focusedStackId = mAmWmState.getAmState().getFrontStackId(DEFAULT_DISPLAY_ID);
+
         // Finish probing activity.
         executeShellCommand(FINISH_ACTIVITY_BROADCAST);
-
 
         tryCreatingAndRemovingDisplayWithActivity(false /* splitScreen */, focusedStackId);
     }
