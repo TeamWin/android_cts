@@ -127,7 +127,8 @@ def main():
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
         its.caps.skip_unless(not its.caps.fixed_focus(props))
-        its.caps.skip_unless(its.caps.lens_calibrated(props))
+        its.caps.skip_unless(its.caps.read_3a(props) and
+                             its.caps.lens_calibrated(props))
         fmt = {'format': 'yuv', 'width': VGA_WIDTH, 'height': VGA_HEIGHT}
 
         # Get proper sensitivity and exposure time with 3A

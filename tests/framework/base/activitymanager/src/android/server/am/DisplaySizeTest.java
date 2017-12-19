@@ -141,9 +141,7 @@ public class DisplaySizeTest extends ActivityManagerTestBase {
     }
 
     private void assertWindowDisplayed(final String windowName) throws Exception {
-        mAmWmState.waitForValidState(new WaitForValidActivityState.Builder()
-                .setWindowName(windowName)
-                .build());
+        mAmWmState.waitForValidState(WaitForValidActivityState.forWindow(windowName));
         assertTrue(windowName + "is visible", mAmWmState.getWmState().isWindowVisible(windowName));
     }
 }

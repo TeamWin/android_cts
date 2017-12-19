@@ -15,36 +15,60 @@
  */
 package com.android.compatibility.common.util;
 
+import static org.junit.Assert.fail;
+
 import com.android.compatibility.common.util.HostInfoStore;
-import com.android.tradefed.testtype.DeviceTestCase;
+import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.result.FileInputStreamSource;
+import com.android.tradefed.result.LogDataType;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner.TestLogData;
+import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.FileUtil;
+import com.android.tradefed.util.StreamUtil;
+
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.File;
 
 /**
  * Collect device information from host and write to a JSON file.
  */
-public abstract class DeviceInfo extends DeviceTestCase {
+@RunWith(DeviceJUnit4ClassRunner.class)
+public abstract class DeviceInfo extends BaseHostJUnit4Test {
 
-    // Temporary folder must match the temp-dir value configured in DeviceInfoCollector target
-    // preparer in cts/tools/cts-tradefed/res/config/cts-preconditions.xml
-    private static final String TEMPORARY_REPORT_FOLDER = "temp-device-info-files/";
+    // Default name of the directory for storing device info files within the result directory
+    public static final String RESULT_DIR_NAME = "device-info-files";
+
+    public static final String FILE_SUFFIX = ".deviceinfo.json";
 
     private HostInfoStore mStore;
 
+    @Rule
+    public TestLogData mLogger = new TestLogData();
+
+    @Test
     public void testCollectDeviceInfo() throws Exception {
-        String collectionName = getClass().getSimpleName();
+        String deviceInfoName = getClass().getSimpleName() + FILE_SUFFIX;
+        File jsonFile = null;
+        FileInputStreamSource source = null;
         try {
-            final File dir = FileUtil.createNamedTempDir(TEMPORARY_REPORT_FOLDER);
-            File jsonFile = new File(dir, collectionName + ".deviceinfo.json");
+            jsonFile = FileUtil.createTempFile(getClass().getSimpleName(), FILE_SUFFIX);
             mStore = new HostInfoStore(jsonFile);
             mStore.open();
             collectDeviceInfo(mStore);
             mStore.close();
+            source = new FileInputStreamSource(jsonFile);
+            mLogger.addTestLog(deviceInfoName, LogDataType.TEXT, source);
         } catch (Exception e) {
-            e.printStackTrace();
+            CLog.e(e);
             fail(String.format("Failed to collect device info (%s): %s",
-                    collectionName, e.getMessage()));
+                    deviceInfoName, e.getMessage()));
+        } finally {
+            FileUtil.deleteFile(jsonFile);
+            StreamUtil.close(source);
         }
     }
 

@@ -58,8 +58,8 @@ public class DialogFrameTests extends ParentChildTestBase {
 
     @Override
     void doSingleTest(ParentChildTest t) throws Exception {
-        final WaitForValidActivityState waitForVisible = new WaitForValidActivityState.Builder()
-                .setWindowName(DIALOG_WINDOW_NAME).build();
+        final WaitForValidActivityState waitForVisible =
+                WaitForValidActivityState.forWindow(DIALOG_WINDOW_NAME);
 
         mAmWmState.computeState(waitForVisible);
         WindowState dialog = getSingleWindow(DIALOG_WINDOW_NAME);

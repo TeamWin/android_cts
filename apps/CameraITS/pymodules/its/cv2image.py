@@ -16,6 +16,7 @@ import os
 import unittest
 
 import cv2
+import its.caps
 import its.device
 import its.error
 import numpy
@@ -68,7 +69,21 @@ class Chart(object):
         self._scale_step = scale_step
         self.xnorm, self.ynorm, self.wnorm, self.hnorm, self.scale = its.image.chart_located_per_argv()
         if not self.xnorm:
-            self.locate()
+            with its.device.ItsSession() as cam:
+                props = cam.get_camera_properties()
+                if its.caps.read_3a(props):
+                    self.locate(cam, props)
+                else:
+                    print 'Chart locator skipped.'
+                    self._set_scale_factors_to_one()
+
+    def _set_scale_factors_to_one(self):
+        """Set scale factors to 1.0 for skipped tests."""
+        self.wnorm = 1.0
+        self.hnorm = 1.0
+        self.xnorm = 0.0
+        self.ynorm = 0.0
+        self.scale = 1.0
 
     def _calc_scale_factors(self, cam, props, fmt, s, e, fd):
         """Take an image with s, e, & fd to find the chart location.
@@ -107,7 +122,7 @@ class Chart(object):
         print 'Chart/image scale factor = %.2f' % scale_factor
         return template, img_3a, scale_factor
 
-    def locate(self, cam=None, props=None, fmt=None, s=0, e=0, fd=0):
+    def locate(self, cam, props):
         """Find the chart in the image, and append location to chart object.
 
         The values appended are:
@@ -119,28 +134,17 @@ class Chart(object):
 
         Args:
             cam:            An open device session
-            props:          Properties of cam
-            fmt:            Image format for the capture
-            s:              Sensitivity for the AF request as defined in
-                            android.sensor.sensitivity
-            e:              Exposure time for the AF request as defined in
-                            android.sensor.exposureTime
-            fd:             float; autofocus lens position
+            props:          Camera properties
         """
-        if cam:
+        if its.caps.read_3a(props):
+            s, e, _, _, fd = cam.do_3a(get_results=True)
+            fmt = {'format': 'yuv', 'width': VGA_WIDTH, 'height': VGA_HEIGHT}
             chart, scene, s_factor = self._calc_scale_factors(cam, props, fmt,
                                                               s, e, fd)
         else:
-            with its.device.ItsSession() as cam:
-                props = cam.get_camera_properties()
-                fmt = {'format': 'yuv', 'width': VGA_WIDTH,
-                       'height': VGA_HEIGHT}
-
-                # Get sensitivity, exposure time, and focus distance with 3A.
-                s, e, _, _, fd = cam.do_3a(get_results=True)
-
-                chart, scene, s_factor = self._calc_scale_factors(cam, props,
-                                                                  fmt, s, e, fd)
+            print 'Chart locator skipped.'
+            self._set_scale_factors_to_one()
+            return
         scale_start = self._scale_start * s_factor
         scale_stop = self._scale_stop * s_factor
         scale_step = self._scale_step * s_factor
@@ -166,10 +170,7 @@ class Chart(object):
                        'Check camera distance and self-reported '
                        'pixel pitch, focal length and hyperfocal distance.')
             print estring
-            self.wnorm = 1.0
-            self.hnorm = 1.0
-            self.xnorm = 0.0
-            self.ynorm = 0.0
+            self._set_scale_factors_to_one()
         else:
             if (max(opt_values) == opt_values[0] or
                         max(opt_values) == opt_values[len(opt_values)-1]):

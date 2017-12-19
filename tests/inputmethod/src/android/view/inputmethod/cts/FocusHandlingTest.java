@@ -25,11 +25,9 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
 
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assume.assumeTrue;
 
 import android.app.Instrumentation;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.Process;
@@ -40,6 +38,7 @@ import android.text.TextUtils;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
+import android.view.inputmethod.cts.util.EndToEndImeTestBase;
 import android.view.inputmethod.cts.util.TestActivity;
 import android.view.inputmethod.cts.util.TestUtils;
 import android.view.inputmethod.cts.util.WindowFocusStealer;
@@ -55,7 +54,6 @@ import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
 
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -64,18 +62,11 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
-public class FocusHandlingTest {
+public class FocusHandlingTest extends EndToEndImeTestBase {
     static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
     static final long NOT_EXPECT_TIMEOUT = TimeUnit.SECONDS.toMillis(1);
 
     private final static String TEST_MARKER = "android.view.inputmethod.cts.FocusHandlingTest";
-
-    @BeforeClass
-    public static void setUpClass() {
-        assumeTrue("MockIme cannot be used for devices that do not support installable IMEs",
-                InstrumentationRegistry.getContext().getPackageManager().hasSystemFeature(
-                        PackageManager.FEATURE_INPUT_METHODS));
-    }
 
     public EditText launchTestActivity() {
         final AtomicReference<EditText> editTextRef = new AtomicReference<>();

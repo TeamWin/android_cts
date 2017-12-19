@@ -977,6 +977,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             assertEquals(ActivityManager.RunningAppProcessInfo.IMPORTANCE_CANT_SAVE_STATE,
                     am.getPackageImportance(CANT_SAVE_STATE_1_PACKAGE_NAME));
 
+            uidWatcher.expect(WatchUidRunner.CMD_CACHED, null);
             uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_HEAVY_WEIGHT);
 
             // While in background, should go in to normal idle state.
@@ -997,6 +998,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
 
             // Also make sure the uid state reports are as expected.
             uidWatcher.waitFor(WatchUidRunner.CMD_ACTIVE, null);
+            uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null);
             uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP);
 
             waitForAppFocus(CANT_SAVE_STATE_1_PACKAGE_NAME, WAIT_TIME);
@@ -1086,6 +1088,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             mContext.startActivity(homeIntent);
 
             // Wait for process to go down to background heavy-weight.
+            uid1Watcher.expect(WatchUidRunner.CMD_CACHED, null);
             uid1Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_HEAVY_WEIGHT);
 
             // Start the second heavy-weight app, should ask us what to do with the two apps
@@ -1096,10 +1099,12 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             device.waitForIdle();
 
             // App should now be back in foreground.
+            uid1Watcher.expect(WatchUidRunner.CMD_UNCACHED, null);
             uid1Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP);
 
             // Return to home.
             mContext.startActivity(homeIntent);
+            uid1Watcher.expect(WatchUidRunner.CMD_CACHED, null);
             uid1Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_HEAVY_WEIGHT);
 
             // Again try starting second heavy-weight app to get prompt.
@@ -1110,7 +1115,6 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             device.waitForIdle();
 
             // The original app should now become cached.
-            uid1Watcher.expect(WatchUidRunner.CMD_CACHED, null);
             uid1Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_RECENT);
 
             // And the new app should start.
@@ -1125,16 +1129,19 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
 
             // Return to home.
             mContext.startActivity(homeIntent);
+            uid2Watcher.waitFor(WatchUidRunner.CMD_CACHED, null);
             uid2Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_HEAVY_WEIGHT);
 
             // Try starting the first heavy weight app, but return to the existing second.
             startActivityAndWaitForShow(activity1Intent);
             maybeClick(device, new UiSelector().resourceId("android:id/switch_old"));
             device.waitForIdle();
+            uid2Watcher.waitFor(WatchUidRunner.CMD_UNCACHED, null);
             uid2Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP);
 
             // Return to home.
             mContext.startActivity(homeIntent);
+            uid2Watcher.waitFor(WatchUidRunner.CMD_CACHED, null);
             uid2Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_HEAVY_WEIGHT);
 
             // Again start the first heavy weight app, this time actually switching to it
@@ -1143,7 +1150,6 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             device.waitForIdle();
 
             // The second app should now become cached.
-            uid2Watcher.expect(WatchUidRunner.CMD_CACHED, null);
             uid2Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_RECENT);
 
             // And the first app should start.

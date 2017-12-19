@@ -37,18 +37,20 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.IOException;
+
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class QwertyKeyListenerTest extends KeyListenerTestCase {
 
     @Before
-    public void setup() {
+    public void setup() throws IOException {
         super.setup();
         enableAutoCapSettings();
     }
 
     @After
-    public void tearDown() {
+    public void tearDown() throws IOException {
         resetAutoCapSettings();
     }
 

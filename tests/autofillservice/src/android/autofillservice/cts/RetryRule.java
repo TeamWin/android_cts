@@ -56,6 +56,7 @@ public class RetryRule implements TestRule {
                                 description.getDisplayName() + ": attempt " + i + " failed: " + e);
                     }
                 }
+                Log.e(TAG, description.getDisplayName() + ": giving up after " + mMaxAttempts);
                 throw caught;
             }
         };

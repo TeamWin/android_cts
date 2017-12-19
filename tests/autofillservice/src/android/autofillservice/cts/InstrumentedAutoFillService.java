@@ -24,6 +24,7 @@ import static android.autofillservice.cts.Helper.IDLE_UNBIND_TIMEOUT_MS;
 import static android.autofillservice.cts.Helper.SAVE_TIMEOUT_MS;
 import static android.autofillservice.cts.Helper.dumpAutofillService;
 import static android.autofillservice.cts.Helper.dumpStructure;
+import static android.autofillservice.cts.Helper.getActivityName;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -105,7 +106,7 @@ public class InstrumentedAutoFillService extends AutofillService {
                 return;
             }
         }
-        sReplier.onFillRequest(this, request.getFillContexts(), request.getClientState(),
+        sReplier.onFillRequest(request.getFillContexts(), request.getClientState(),
                 cancellationSignal, callback, request.getFlags());
     }
 
@@ -380,8 +381,7 @@ public class InstrumentedAutoFillService extends AutofillService {
             mAcceptedPackageName = null;
         }
 
-        private void onFillRequest(InstrumentedAutoFillService service,
-                List<FillContext> contexts, Bundle data,
+        private void onFillRequest(List<FillContext> contexts, Bundle data,
                 CancellationSignal cancellationSignal, FillCallback callback, int flags) {
             try {
                 CannedFillResponse response = null;
@@ -394,7 +394,8 @@ public class InstrumentedAutoFillService extends AutofillService {
                     return;
                 }
                 if (response == null) {
-                    final String msg = "onFillRequest() received when no CannedResponse was set";
+                    final String msg = "onFillRequest() for activity " + getActivityName(contexts)
+                            + " received when no canned response was set.";
                     dumpStructure(msg, contexts);
                     addException(new RetryableException(msg));
                     return;
@@ -421,11 +422,11 @@ public class InstrumentedAutoFillService extends AutofillService {
 
                 switch (mIdMode) {
                     case RESOURCE_ID:
-                        fillResponse = response.asFillResponse(service,
+                        fillResponse = response.asFillResponse(
                                 (id) -> Helper.findNodeByResourceId(contexts, id));
                         break;
                     case HTML_NAME:
-                        fillResponse = response.asFillResponse(service,
+                        fillResponse = response.asFillResponse(
                                 (name) -> Helper.findNodeByHtmlName(contexts, name));
                         break;
                     case HTML_NAME_OR_RESOURCE_ID:

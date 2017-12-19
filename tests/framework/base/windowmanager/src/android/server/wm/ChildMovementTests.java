@@ -57,8 +57,8 @@ public class ChildMovementTests extends ParentChildTestBase {
 
     @Override
     void doSingleTest(ParentChildTest t) throws Exception {
-        final WaitForValidActivityState waitForVisible = new WaitForValidActivityState.Builder()
-                .setWindowName(POPUP_WINDOW_NAME).build();
+        final WaitForValidActivityState waitForVisible =
+                WaitForValidActivityState.forWindow(POPUP_WINDOW_NAME);
 
         mAmWmState.computeState(waitForVisible);
         WindowState popup = getSingleWindow(POPUP_WINDOW_NAME);
