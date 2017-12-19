@@ -545,6 +545,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
                 sReplier.addResponse(CannedFillResponse.NO_RESPONSE);
 
                 sUiBot.setScreenOrientation(UiBot.LANDSCAPE);
+                WelcomeActivity.assertShowingDefaultMessage(sUiBot);
                 // not breaking on purpose
             case TAP_BACK_BUTTON:
                 // ..then go back and save it.
