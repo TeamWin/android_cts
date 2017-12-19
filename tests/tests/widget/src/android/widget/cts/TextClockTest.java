@@ -93,31 +93,32 @@ public class TextClockTest {
             int hour = mNow.get(Calendar.HOUR_OF_DAY);
             if (hour < 22 && hour > 12) {
                 mActivityRule.runOnUiThread(() -> {
-                    mTextClock.setTimeZone(timeZone.getID());
+                    mTextClock.setTimeZone(id);
                 });
                 break;
             }
         }
 
         final CountDownLatch change12 = registerForChanges(Settings.System.TIME_12_24);
-
         mActivityRule.runOnUiThread(() -> {
             Settings.System.putInt(resolver, Settings.System.TIME_12_24, 12);
         });
-
         assertTrue(change12.await(1, TimeUnit.SECONDS));
-
-        final CountDownLatch change24 = registerForChanges(Settings.System.TIME_12_24);
+        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
 
         mActivityRule.runOnUiThread(() -> {
             assertFalse(mTextClock.is24HourModeEnabled());
             int hour = Integer.parseInt(mTextClock.getText().toString());
             assertTrue("Expecting hour to be between 1 and 11, but was " + hour,
                     hour >= 1 && hour < 12);
-            Settings.System.putInt(resolver, Settings.System.TIME_12_24, 24);
         });
 
+        final CountDownLatch change24 = registerForChanges(Settings.System.TIME_12_24);
+        mActivityRule.runOnUiThread(() -> {
+            Settings.System.putInt(resolver, Settings.System.TIME_12_24, 24);
+        });
         assertTrue(change24.await(1, TimeUnit.SECONDS));
+        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
 
         mActivityRule.runOnUiThread(() -> {
             assertTrue(mTextClock.is24HourModeEnabled());
@@ -147,6 +148,7 @@ public class TextClockTest {
         });
 
         assertTrue(otherChange.await(1, TimeUnit.SECONDS));
+        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
 
         mActivityRule.runOnUiThread(() -> {
             assertEquals("Nothing", mTextClock.getText().toString());
