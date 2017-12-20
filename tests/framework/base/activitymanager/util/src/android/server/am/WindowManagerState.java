@@ -552,7 +552,7 @@ public class WindowManagerState {
     }
 
     public int getZOrder(WindowState w) {
-        return mWindowStates.indexOf(w);
+        return mWindowStates.size() - mWindowStates.indexOf(w);
     }
 
     private void reset() {
@@ -573,10 +573,10 @@ public class WindowManagerState {
         mDisplayFrozen = false;
     }
 
-    class WindowStack extends WindowContainer {
+    static class WindowStack extends WindowContainer {
 
         int mStackId;
-        ArrayList<WindowTask> mTasks = new ArrayList();
+        ArrayList<WindowTask> mTasks = new ArrayList<>();
         boolean mWindowAnimationBackgroundSurfaceShowing;
 
         WindowStack(StackProto proto) {
@@ -607,11 +607,11 @@ public class WindowManagerState {
         }
     }
 
-    class WindowTask extends WindowContainer {
+    static class WindowTask extends WindowContainer {
 
         int mTaskId;
         Rect mTempInsetBounds;
-        List<String> mAppTokens = new ArrayList();
+        List<String> mAppTokens = new ArrayList<>();
 
         WindowTask(TaskProto proto) {
             super(proto.windowContainer);
@@ -662,7 +662,7 @@ public class WindowManagerState {
         }
     }
 
-    abstract class WindowContainer extends ConfigurationContainer {
+    static abstract class WindowContainer extends ConfigurationContainer {
 
         protected boolean mFullscreen;
         protected Rect mBounds;
@@ -687,7 +687,7 @@ public class WindowManagerState {
         }
     }
 
-    class Display extends WindowContainer {
+    static class Display extends WindowContainer {
 
         private final int mDisplayId;
         private Rect mDisplayRect = new Rect();
@@ -751,7 +751,7 @@ public class WindowManagerState {
         }
     }
 
-    public class WindowState extends WindowContainer {
+    public static class WindowState extends WindowContainer {
 
         private static final int WINDOW_TYPE_NORMAL = 0;
         private static final int WINDOW_TYPE_STARTING = 1;
@@ -847,10 +847,6 @@ public class WindowManagerState {
 
         int getStackId() {
             return mStackId;
-        }
-
-        public int getZOrder() {
-            return mWindowStates.size() - mWindowStates.indexOf(this);
         }
 
         Rect getContainingFrame() {

@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
 public class ActivityAndWindowManagerOverrideConfigTests extends ActivityManagerTestBase {
     private static final String TEST_ACTIVITY_NAME = "LogConfigurationActivity";
 
-    private class ConfigurationChangeObserver {
+    private static class ConfigurationChangeObserver {
         private final Pattern mConfigurationChangedPattern =
             Pattern.compile("(.+)Configuration changed: (\\d+),(\\d+)");
 
