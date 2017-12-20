@@ -44,6 +44,7 @@ LOCAL_JNI_SHARED_LIBRARIES := \
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_SDK_VERSION := current
+LOCAL_NDK_STL_VARIANT := c++_shared
 
 include $(BUILD_CTS_PACKAGE)
 
