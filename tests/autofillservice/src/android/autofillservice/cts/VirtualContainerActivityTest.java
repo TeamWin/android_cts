@@ -386,7 +386,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
             mActivity.mUsername.changeFocus(true);
             latch.countDown();
         });
-        latch.await(Helper.UI_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        latch.await(Timeouts.UI_TIMEOUT.ms(), TimeUnit.MILLISECONDS);
         sReplier.getNextFillRequest();
 
         // TODO: 63602573 Should be removed once this bug is fixed
@@ -433,7 +433,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
     /**
      * Asserts the dataset picker is properly displayed in a give line.
      */
-    private void assertDatasetShown(Line line, String... expectedDatasets) {
+    private void assertDatasetShown(Line line, String... expectedDatasets) throws Exception {
         final Rect pickerBounds = mUiBot.assertDatasets(expectedDatasets).getVisibleBounds();
         final Rect fieldBounds = line.getAbsCoordinates();
         assertWithMessage("vertical coordinates don't match; picker=%s, field=%s", pickerBounds,

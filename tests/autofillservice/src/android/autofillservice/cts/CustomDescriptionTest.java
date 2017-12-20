@@ -488,9 +488,17 @@ public class CustomDescriptionTest extends AutoFillServiceTestCase {
         return new RemoteViews(getContext().getPackageName(), resourceId);
     }
 
+    private UiObject2 assertSaveUiShowing() {
+        try {
+            return mUiBot.assertSaveShowing(SAVE_DATA_TYPE_GENERIC);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private void assertSaveUiWithoutCustomDescriptionIsShown() {
         // First make sure the UI is shown...
-        final UiObject2 saveUi = mUiBot.assertSaveShowing(SAVE_DATA_TYPE_GENERIC);
+        final UiObject2 saveUi = assertSaveUiShowing();
 
         // Then make sure it does not have the custom view on it.
         assertWithMessage("found static_text on SaveUI (%s)", mUiBot.getChildrenAsText(saveUi))
@@ -499,7 +507,7 @@ public class CustomDescriptionTest extends AutoFillServiceTestCase {
 
     private UiObject2 assertSaveUiWithCustomDescriptionIsShown() {
         // First make sure the UI is shown...
-        final UiObject2 saveUi = mUiBot.assertSaveShowing(SAVE_DATA_TYPE_GENERIC);
+        final UiObject2 saveUi = assertSaveUiShowing();
 
         // Then make sure it does have the custom view on it...
         final UiObject2 staticText = saveUi.findObject(By.res(mPackageName, "static_text"));

@@ -46,7 +46,7 @@ public class DuplicateIdActivityTest extends AutoFillServiceTestCase {
     private DuplicateIdActivity mActivity;
 
     @Before
-    public void setup() {
+    public void setup() throws Exception {
         Helper.disableAutoRotation(mUiBot);
         mUiBot.setScreenOrientation(0);
 

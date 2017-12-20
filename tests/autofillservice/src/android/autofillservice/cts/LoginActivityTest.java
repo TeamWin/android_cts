@@ -1334,7 +1334,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         saveGoesAway(DismissType.TOUCH_OUTSIDE);
     }
 
-    private void startCheckoutActivityAsNewTask() {
+    private void startCheckoutActivityAsNewTask() throws Exception {
         final Intent intent = new Intent(mContext, CheckoutActivity.class);
         intent.setFlags(
                 Intent.FLAG_ACTIVITY_NEW_DOCUMENT | Intent.FLAG_ACTIVITY_RETAIN_IN_RECENTS);
@@ -3586,7 +3586,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Set expectations.
         final OneTimeCancellationSignalListener listener =
-                new OneTimeCancellationSignalListener(Helper.FILL_TIMEOUT_MS + 2000);
+                new OneTimeCancellationSignalListener(Timeouts.FILL_TIMEOUT.ms() + 2000);
         sReplier.addResponse(DO_NOT_REPLY_RESPONSE);
 
         // Trigger auto-fill.

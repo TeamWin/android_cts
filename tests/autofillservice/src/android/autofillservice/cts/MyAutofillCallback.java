@@ -16,7 +16,7 @@
 
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.Helper.CONNECTION_TIMEOUT_MS;
+import static android.autofillservice.cts.Timeouts.CONNECTION_TIMEOUT;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -52,9 +52,9 @@ final class MyAutofillCallback extends AutofillCallback {
      * Gets the next available event or fail if it times out.
      */
     MyEvent getEvent() throws InterruptedException {
-        final MyEvent event = mEvents.poll(CONNECTION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        final MyEvent event = mEvents.poll(CONNECTION_TIMEOUT.ms(), TimeUnit.MILLISECONDS);
         if (event == null) {
-            throw new RetryableException("no event in %d ms", CONNECTION_TIMEOUT_MS);
+            throw new RetryableException(CONNECTION_TIMEOUT, "no event");
         }
         return event;
     }
@@ -63,7 +63,7 @@ final class MyAutofillCallback extends AutofillCallback {
      * Assert no more events were received.
      */
     void assertNotCalled() throws InterruptedException {
-        final MyEvent event = mEvents.poll(CONNECTION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        final MyEvent event = mEvents.poll(CONNECTION_TIMEOUT.ms(), TimeUnit.MILLISECONDS);
         if (event != null) {
             // Not retryable.
             throw new IllegalStateException("should not have received " + event);

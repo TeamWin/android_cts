@@ -68,6 +68,17 @@ public class RetryRuleTest {
     }
 
     @Test
+    public void testPassOnRetryableExceptionWithTimeout() throws Throwable {
+        final Timeout timeout = new Timeout("YOUR TIME IS GONE", 1, 2, 10);
+        final RetryableException exception = new RetryableException(timeout, "Y U NO?");
+        final RetryRule rule = new RetryRule(2);
+        rule.apply(new RetryableStatement<RetryableException>(1, exception), mDescription)
+                .evaluate();
+        // Assert timeout was increased
+        assertThat(timeout.ms()).isEqualTo(2);
+    }
+
+    @Test
     public void testFailOnRetryableException() throws Throwable {
         final RetryRule rule = new RetryRule(2);
         try {

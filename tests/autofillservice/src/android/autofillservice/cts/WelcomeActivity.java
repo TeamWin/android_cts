@@ -79,7 +79,7 @@ public class WelcomeActivity extends AbstractAutoFillActivity {
         if (sInstance != null) {
             Log.d(TAG, "So long and thanks for all the fish!");
             sInstance.finish();
-            uiBot.assertGoneByRelativeId(ID_WELCOME, Helper.ACTIVITY_RESURRECTION_MS);
+            uiBot.assertGoneByRelativeId(ID_WELCOME, Timeouts.ACTIVITY_RESURRECTION);
         }
         if (sPendingIntent != null) {
             sPendingIntent.cancel();

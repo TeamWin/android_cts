@@ -18,13 +18,13 @@ package android.autofillservice.cts;
 
 import static android.autofillservice.cts.CannedFillResponse.ResponseType.NULL;
 import static android.autofillservice.cts.CannedFillResponse.ResponseType.TIMEOUT;
-import static android.autofillservice.cts.Helper.CONNECTION_TIMEOUT_MS;
-import static android.autofillservice.cts.Helper.FILL_TIMEOUT_MS;
-import static android.autofillservice.cts.Helper.IDLE_UNBIND_TIMEOUT_MS;
-import static android.autofillservice.cts.Helper.SAVE_TIMEOUT_MS;
 import static android.autofillservice.cts.Helper.dumpAutofillService;
 import static android.autofillservice.cts.Helper.dumpStructure;
 import static android.autofillservice.cts.Helper.getActivityName;
+import static android.autofillservice.cts.Timeouts.CONNECTION_TIMEOUT;
+import static android.autofillservice.cts.Timeouts.FILL_TIMEOUT;
+import static android.autofillservice.cts.Timeouts.IDLE_UNBIND_TIMEOUT;
+import static android.autofillservice.cts.Timeouts.SAVE_TIMEOUT;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -155,12 +155,15 @@ public class InstrumentedAutoFillService extends AutofillService {
      * block until the service receives a callback, it should use
      * {@link Replier#getNextFillRequest()} instead.
      */
-    static void waitUntilConnected() throws InterruptedException {
-        final String state = sConnectionStates.poll(CONNECTION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
-        if (state == null) {
-            dumpAutofillService();
-            throw new RetryableException("not connected in %d ms", CONNECTION_TIMEOUT_MS);
-        }
+    static void waitUntilConnected() throws Exception {
+        final String state = CONNECTION_TIMEOUT.run("waitUntilConnected()", () -> {
+            final String polled =
+                    sConnectionStates.poll(CONNECTION_TIMEOUT.ms(), TimeUnit.MILLISECONDS);
+            if (polled == null) {
+                dumpAutofillService();
+            }
+            return polled;
+        });
         assertWithMessage("Invalid connection state").that(state).isEqualTo(STATE_CONNECTED);
     }
 
@@ -170,12 +173,10 @@ public class InstrumentedAutoFillService extends AutofillService {
      * <p>This method is useful on tests that explicitly verifies the connection, but should be
      * avoided in other tests, as it adds extra time to the test execution.
      */
-    static void waitUntilDisconnected() throws InterruptedException {
-        final String state = sConnectionStates.poll(2 * IDLE_UNBIND_TIMEOUT_MS,
-                TimeUnit.MILLISECONDS);
-        if (state == null) {
-            throw new RetryableException("not disconnected in %d ms", IDLE_UNBIND_TIMEOUT_MS);
-        }
+    static void waitUntilDisconnected() throws Exception {
+        final String state = IDLE_UNBIND_TIMEOUT.run("waitUntilDisconnected()", () -> {
+            return sConnectionStates.poll(2 * IDLE_UNBIND_TIMEOUT.ms(), TimeUnit.MILLISECONDS);
+        });
         assertWithMessage("Invalid connection state").that(state).isEqualTo(STATE_DISCONNECTED);
     }
 
@@ -320,10 +321,10 @@ public class InstrumentedAutoFillService extends AutofillService {
          * <p>Typically called at the end of a test case, to assert the initial request.
          */
         FillRequest getNextFillRequest() throws InterruptedException {
-            final FillRequest request = mFillRequests.poll(FILL_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+            final FillRequest request =
+                    mFillRequests.poll(FILL_TIMEOUT.ms(), TimeUnit.MILLISECONDS);
             if (request == null) {
-                throw new RetryableException("onFillRequest() not called in %s ms",
-                        FILL_TIMEOUT_MS);
+                throw new RetryableException(FILL_TIMEOUT, "onFillRequest() not called");
             }
             return request;
         }
@@ -351,10 +352,10 @@ public class InstrumentedAutoFillService extends AutofillService {
          * <p>Typically called at the end of a test case, to assert the initial request.
          */
         SaveRequest getNextSaveRequest() throws InterruptedException {
-            final SaveRequest request = mSaveRequests.poll(SAVE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+            final SaveRequest request =
+                    mSaveRequests.poll(SAVE_TIMEOUT.ms(), TimeUnit.MILLISECONDS);
             if (request == null) {
-                throw new RetryableException(
-                        "onSaveRequest() not called in %d ms", SAVE_TIMEOUT_MS);
+                throw new RetryableException(SAVE_TIMEOUT, "onSaveRequest() not called");
             }
             return request;
         }
@@ -386,7 +387,7 @@ public class InstrumentedAutoFillService extends AutofillService {
             try {
                 CannedFillResponse response = null;
                 try {
-                    response = mResponses.poll(CONNECTION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+                    response = mResponses.poll(CONNECTION_TIMEOUT.ms(), TimeUnit.MILLISECONDS);
                 } catch (InterruptedException e) {
                     Log.w(TAG, "Interrupted getting CannedResponse: " + e);
                     Thread.currentThread().interrupt();

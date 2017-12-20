@@ -117,7 +117,7 @@ public class CheckoutActivity extends AbstractAutoFillActivity {
         if (sInstance != null) {
             Log.d(TAG, "So long and thanks for all the fish!");
             sInstance.finish();
-            uiBot.assertGoneByRelativeId(ID_CC_NUMBER, Helper.ACTIVITY_RESURRECTION_MS);
+            uiBot.assertGoneByRelativeId(ID_CC_NUMBER, Timeouts.ACTIVITY_RESURRECTION);
         }
     }
 

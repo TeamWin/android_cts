@@ -35,14 +35,14 @@ abstract class AbstractAutoFillActivity extends Activity {
      * Run an action in the UI thread, and blocks caller until the action is finished.
      */
     public final void syncRunOnUiThread(Runnable action) {
-        syncRunOnUiThread(action, Helper.UI_TIMEOUT_MS);
+        syncRunOnUiThread(action, Timeouts.UI_TIMEOUT.ms());
     }
 
     /**
      * Run an action in the UI thread, and blocks caller until the action is finished or it times
      * out.
      */
-    public final void syncRunOnUiThread(Runnable action, int timeoutMs) {
+    public final void syncRunOnUiThread(Runnable action, long timeoutMs) {
         final CountDownLatch latch = new CountDownLatch(1);
         runOnUiThread(() -> {
             action.run();
