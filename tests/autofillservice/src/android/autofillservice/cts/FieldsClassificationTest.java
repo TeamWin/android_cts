@@ -17,22 +17,29 @@ package android.autofillservice.cts;
 
 import static android.autofillservice.cts.Helper.assertFillEventForContextCommitted;
 import static android.autofillservice.cts.Helper.assertFillEventForFieldsClassification;
+import static android.provider.Settings.Secure.AUTOFILL_FEATURE_FIELD_CLASSIFICATION;
+import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MAX_FIELD_CLASSIFICATION_IDS_SIZE;
+import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MAX_USER_DATA_SIZE;
+import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MAX_VALUE_LENGTH;
+import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MIN_VALUE_LENGTH;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.autofillservice.cts.Helper.FieldClassificationResult;
 import android.autofillservice.cts.common.SettingsStateChangerRule;
-import android.provider.Settings;
+import android.content.Context;
 import android.service.autofill.EditDistanceScorer;
 import android.service.autofill.FillEventHistory;
 import android.service.autofill.FillEventHistory.Event;
 import android.service.autofill.Scorer;
 import android.service.autofill.UserData;
+import android.support.test.InstrumentationRegistry;
 import android.view.autofill.AutofillId;
 import android.widget.EditText;
 
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -40,14 +47,33 @@ import java.util.List;
 
 public class FieldsClassificationTest extends AutoFillServiceTestCase {
 
+    private static final Context sContext = InstrumentationRegistry.getContext();
+
+    @ClassRule
+    public static final SettingsStateChangerRule sFeatureEnabler =
+            new SettingsStateChangerRule(sContext, AUTOFILL_FEATURE_FIELD_CLASSIFICATION, "1");
+
+    @ClassRule
+    public static final SettingsStateChangerRule sUserDataMaxFcSizeChanger =
+            new SettingsStateChangerRule(sContext,
+                    AUTOFILL_USER_DATA_MAX_FIELD_CLASSIFICATION_IDS_SIZE, "10");
+
+    @ClassRule
+    public static final SettingsStateChangerRule sUserDataMaxUserSizeChanger =
+            new SettingsStateChangerRule(sContext, AUTOFILL_USER_DATA_MAX_USER_DATA_SIZE, "10");
+
+    @ClassRule
+    public static final SettingsStateChangerRule sUserDataMinValueChanger =
+            new SettingsStateChangerRule(sContext, AUTOFILL_USER_DATA_MIN_VALUE_LENGTH, "5");
+
+    @ClassRule
+    public static final SettingsStateChangerRule sUserDataMaxValueChanger =
+            new SettingsStateChangerRule(sContext, AUTOFILL_USER_DATA_MAX_VALUE_LENGTH, "50");
+
     @Rule
     public final AutofillActivityTestRule<GridActivity> mActivityRule =
             new AutofillActivityTestRule<GridActivity>(GridActivity.class);
 
-    @Rule
-    public final SettingsStateChangerRule mFeatureEnabler = new SettingsStateChangerRule(mContext,
-            Settings.Secure.AUTOFILL_FEATURE_FIELD_CLASSIFICATION, "1");
-    // TODO(b/70407264): set userdata constraints as well - need to mark then as TestApi first
 
     private final Scorer mScorer = EditDistanceScorer.getInstance();
 
