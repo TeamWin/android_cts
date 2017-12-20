@@ -19,22 +19,24 @@ package android.autofillservice.cts;
 import static android.autofillservice.cts.Helper.getContext;
 import static android.autofillservice.cts.Helper.getLoggingLevel;
 import static android.autofillservice.cts.Helper.hasAutofillFeature;
-import static android.autofillservice.cts.Helper.runShellCommand;
 import static android.autofillservice.cts.Helper.setLoggingLevel;
 import static android.autofillservice.cts.InstrumentedAutoFillService.SERVICE_NAME;
+import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
 
 import android.autofillservice.cts.InstrumentedAutoFillService.Replier;
+import android.autofillservice.cts.common.SettingsStateKeeperRule;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.provider.Settings;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 import android.widget.RemoteViews;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
@@ -44,17 +46,19 @@ import org.junit.runner.RunWith;
  * Base class for all other tests.
  */
 @RunWith(AndroidJUnit4.class)
-abstract class AutoFillServiceTestCase {
+// NOTE: @ClassRule requires it to be public
+public abstract class AutoFillServiceTestCase {
     private static final String TAG = "AutoFillServiceTestCase";
 
     private static final UiBot sDefaultUiBot = new UiBot();
 
     protected static final Replier sReplier = InstrumentedAutoFillService.getReplier();
 
-    /**
-     * Name of the Autofill service that was running before the test - it will be restored after.
-     */
-    private static String sRealService;
+    private static final Context sContext = InstrumentationRegistry.getTargetContext();
+
+    @ClassRule
+    public static final SettingsStateKeeperRule mServiceSettingsKeeper =
+            new SettingsStateKeeperRule(sContext, Settings.Secure.AUTOFILL_SERVICE);
 
     @Rule
     public final TestWatcher watcher = new TestWatcher() {
@@ -85,7 +89,7 @@ abstract class AutoFillServiceTestCase {
             .run(() -> sReplier.assertNumberUnhandledSaveRequests(0))
             .add(() -> { return sReplier.getExceptions(); });
 
-    protected final Context mContext;
+    protected final Context mContext = sContext;
     protected final String mPackageName;
     protected final UiBot mUiBot;
 
@@ -99,7 +103,6 @@ abstract class AutoFillServiceTestCase {
     }
 
     protected AutoFillServiceTestCase(UiBot uiBot) {
-        mContext = InstrumentationRegistry.getTargetContext();
         mPackageName = mContext.getPackageName();
         mUiBot = uiBot;
     }
@@ -113,25 +116,6 @@ abstract class AutoFillServiceTestCase {
 
         // Collapse notifications.
         runShellCommand("cmd statusbar collapse");
-    }
-
-    @BeforeClass
-    public static void setSettings() {
-        if (!hasAutofillFeature()) return;
-        sRealService = Helper.getAutofillServiceFromSettings();
-    }
-
-    @AfterClass
-    public static void resetSettings() {
-        if (!hasAutofillFeature()) return;
-
-        if (sRealService == null) {
-            // Clean up only - no need to call disableService() because it doesn't need to fail if
-            // it's not reset.
-            Helper.resetAutofillServiceOnSettings();
-        } else {
-            Helper.setAutofillServiceOnSettings(sRealService);
-        }
     }
 
     @Before
