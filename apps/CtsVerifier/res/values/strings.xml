@@ -3498,6 +3498,23 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="comp_provision_profile_dialog_title">Provision work profile</string>
     <string name="comp_provision_profile_dialog_text">Press the OK button to start the managed provisioning flow, and complete the flow to create a work profile</string>
 
+    <string name="managed_user_test">Managed User</string>
+    <string name="managed_user_positive_tests">Managed User positive tests</string>
+    <string name="managed_user_positive_tests_instructions">
+        The positive managed user tests verify policies on a managed user created by a device owner.
+        \n
+        Press Go button to create a managed user, and you will be switched to the managed user
+        automatically. Dismiss the keyguard and a \'Managed User Tests\' should launch.\n
+        Follow the test instructions and press \'pass\' or \'fail\' to return to this screen.\n
+    </string>
+    <string name="managed_user_positive_tests_info">
+        The positive managed user tests verify policies on a managed user created by a device owner.
+        Proceed to the test cases, then press \'pass\' or \'fail\' to finish this test.
+    </string>
+    <string name="managed_user_positive_category">Managed User Tests</string>
+    <string name="managed_user_check_managed_user_test">Check affiliated profile owner</string>
+    <string name="managed_user_incorrect_managed_user">Missing or incorrect affiliated profile owner: CTSVerifier is not affilaited PO!</string>
+
     <!-- Strings for JobScheduler Tests -->
     <string name="js_test_description">This test is mostly automated, but requires some user interaction. You can pass this test once the list items below are checked.</string>
 

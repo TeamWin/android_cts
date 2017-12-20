@@ -178,8 +178,13 @@
                        android:value="android.software.companion_device_setup" />
         </activity>
 
-        <!-- A generic activity for intent based tests -->
-        <activity android:name=".IntentDrivenTestActivity"/>
+        <!-- A generic activity for intent based tests.
+        stateNotNeeded is defined ot prevent IntentDrivenTestActivity from being killed when
+        switching users. IntentDrivenTestActivity does not implement onSaveInstanceState() so it is
+        fine to ignore onSaveInstanceState() not being called.
+        -->
+        <activity android:name=".IntentDrivenTestActivity"
+                android:stateNotNeeded="true"/>
 
         <activity android:name=".admin.DeviceAdminKeyguardDisabledFeaturesActivity"
                 android:label="@string/da_kg_disabled_features_test"
@@ -2319,6 +2324,16 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_managed_provisioning" />
             <meta-data android:name="test_required_features" android:value="android.software.device_admin" />
+        </activity>
+
+        <activity android:name=".managedprovisioning.ManagedUserPositiveTestActivity"
+                  android:label="@string/managed_user_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <action android:name="com.android.cts.verifier.managedprovisioning.action.CHECK_AFFILIATED_PROFILE_OWNER" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
         </activity>
 
         <activity android:name=".managedprovisioning.DeviceOwnerRequestingBugreportTestActivity"
