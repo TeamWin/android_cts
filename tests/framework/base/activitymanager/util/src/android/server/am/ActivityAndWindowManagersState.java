@@ -646,6 +646,11 @@ public class ActivityAndWindowManagersState {
         }
     }
 
+    void assertResumedActivity(final String msg, final ComponentName activityName) {
+        assertEquals(msg, activityName.flattenToShortString(), mAmState.getResumedActivity());
+    }
+
+    @Deprecated
     void assertResumedActivity(String msg, String activityName) throws Exception {
         final String componentName = ActivityManagerTestBase.getActivityComponentName(activityName);
         assertEquals(msg, componentName, mAmState.getResumedActivity());
