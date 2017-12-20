@@ -41,9 +41,6 @@ public class WebViewActivity extends AbstractAutoFillActivity {
     static final String ID_OUTSIDE1 = "outside1";
     static final String ID_OUTSIDE2 = "outside2";
 
-    // TODO(b/69557967): WebView currently does not report the nodes content description properties.
-    private static final boolean CONTENT_DESCRIPTION_SUPPORTED = false;
-
     private MyWebView mWebView;
 
     private LinearLayout mOutsideContainer1;
@@ -119,11 +116,8 @@ public class WebViewActivity extends AbstractAutoFillActivity {
         return getLabel(uiBot, "Login");
     }
 
-    private UiObject2 getLabel(UiBot uiBot, String contentDescription) {
-        if (!CONTENT_DESCRIPTION_SUPPORTED) {
-            return uiBot.assertShownByText(contentDescription);
-        }
-        return uiBot.assertShownByContentDescription(contentDescription);
+    private UiObject2 getLabel(UiBot uiBot, String label) {
+        return uiBot.assertShownByText(label);
     }
 
     private UiObject2 getInput(UiBot uiBot, String contentDescription) {
