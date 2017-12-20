@@ -18,15 +18,12 @@ package android.server.am;
 
 import static android.content.pm.PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS;
 import static android.server.am.ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID;
-import static android.server.am.SettingsUtils.deleteSettings;
-import static android.server.am.SettingsUtils.putSettings;
 import static android.server.am.StateLogger.log;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import android.content.res.Configuration;
-import android.provider.Settings;
 import android.server.am.ActivityManagerState.ActivityDisplay;
 
 import org.junit.After;
@@ -153,8 +150,7 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
         final List<ActivityDisplay> originalDs = getDisplaysStates();
 
         // Create virtual display with custom density dpi.
-        putSettings(Settings.Global::putString, Settings.Global.OVERLAY_DISPLAY_DEVICES,
-                "1024x768/" + densityDpi);
+        executeShellCommand(getSimulateDisplayCommand(densityDpi));
         mDisplaySimulated = true;
 
         return assertAndGetNewDisplays(1, originalDs);
@@ -203,7 +199,7 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
      */
     private void destroySimulatedDisplays() throws Exception {
         if (mDisplaySimulated) {
-            deleteSettings(Settings.Global::getUriFor, Settings.Global.OVERLAY_DISPLAY_DEVICES);
+            executeShellCommand(getDestroySimulatedDisplayCommand());
             mDisplaySimulated = false;
         }
     }
@@ -305,6 +301,14 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
     private static String getDestroyVirtualDisplayCommand() {
         return getAmStartCmd(VIRTUAL_DISPLAY_ACTIVITY) + " -f 0x20000000" +
                 " --es command destroy_display";
+    }
+
+    private static String getSimulateDisplayCommand(int densityDpi) {
+        return "settings put global overlay_display_devices 1024x768/" + densityDpi;
+    }
+
+    private static String getDestroySimulatedDisplayCommand() {
+        return "settings delete global overlay_display_devices";
     }
 
     /** Wait for provided number of displays and report their configurations. */

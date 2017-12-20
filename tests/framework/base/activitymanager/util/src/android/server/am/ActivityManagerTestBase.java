@@ -32,10 +32,6 @@ import static android.content.pm.PackageManager.FEATURE_SCREEN_PORTRAIT;
 import static android.content.pm.PackageManager.FEATURE_VR_MODE;
 import static android.content.pm.PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE;
 import static android.content.pm.PackageManager.FEATURE_WATCH;
-import static android.server.am.SettingsUtils.deleteSettings;
-import static android.server.am.SettingsUtils.getFloatSettings;
-import static android.server.am.SettingsUtils.getIntSettings;
-import static android.server.am.SettingsUtils.putSettings;
 import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logE;
 import static android.view.KeyEvent.KEYCODE_APP_SWITCH;
@@ -48,9 +44,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.ParcelFileDescriptor;
-import android.os.RemoteException;
-import android.provider.Settings;
-import android.provider.Settings.SettingNotFoundException;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.UiDevice;
 import android.view.Display;
@@ -301,7 +294,7 @@ public abstract class ActivityManagerTestBase {
         setAccelerometerRotation(mInitialAccelerometerRotation);
         setUserRotation(mUserRotation);
         setFontScale(mFontScale);
-        setTransitionAnimationScale(1);
+            setWindowTransitionAnimationDurationScale(1);
         removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
         wakeUpAndUnlockDevice();
         pressHomeButton();
@@ -805,7 +798,7 @@ public abstract class ActivityManagerTestBase {
                 "(mDisplayId=" + displayId + ")([\\s\\S]*)(mOverrideDisplayInfo)(.*)"
                         + "(rotation)(\\s+)(\\d+)");
         Matcher matcher = pattern.matcher(displays);
-        if (matcher.find()) {
+        while (matcher.find()) {
             final String match = matcher.group(7);
             return Integer.parseInt(match);
         }
@@ -813,52 +806,64 @@ public abstract class ActivityManagerTestBase {
         return INVALID_DEVICE_ROTATION;
     }
 
-    private static int getAccelerometerRotation() throws Settings.SettingNotFoundException {
-        return getIntSettings(Settings.System::getInt, Settings.System.ACCELEROMETER_ROTATION);
+    private int getAccelerometerRotation() {
+        final String rotation =
+                runCommandAndPrintOutput("settings get system accelerometer_rotation");
+        return Integer.parseInt(rotation.trim());
     }
 
-    private static void setAccelerometerRotation(int rotation) {
-        putSettings(Settings.System::putInt, Settings.System.ACCELEROMETER_ROTATION, rotation);
+    private void setAccelerometerRotation(int rotation) {
+        runCommandAndPrintOutput(
+                "settings put system accelerometer_rotation " + rotation);
     }
 
-    protected static int getUserRotation() {
-        try {
-            return getIntSettings(Settings.System::getInt, Settings.System.USER_ROTATION);
-        } catch (SettingNotFoundException e) {
+    protected int getUserRotation() {
+        final String rotation =
+                runCommandAndPrintOutput("settings get system user_rotation").trim();
+        if ("null".equals(rotation)) {
             return -1;
         }
+        return Integer.parseInt(rotation);
     }
 
-    private static void setUserRotation(int rotation) throws RemoteException {
+    private void setUserRotation(int rotation) {
         if (rotation == -1) {
-            deleteSettings(Settings.System::getUriFor, Settings.System.USER_ROTATION);
+            runCommandAndPrintOutput(
+                    "settings delete system user_rotation");
         } else {
-            putSettings(Settings.System::putInt, Settings.System.USER_ROTATION, rotation);
+            runCommandAndPrintOutput(
+                    "settings put system user_rotation " + rotation);
         }
     }
 
-    protected static void setFontScale(float fontScale) throws RemoteException {
+    protected void setFontScale(float fontScale) {
         if (fontScale == 0.0f) {
-            deleteSettings(Settings.System::getUriFor, Settings.System.FONT_SCALE);
+            runCommandAndPrintOutput(
+                    "settings delete system font_scale");
         } else {
-            putSettings(Settings.System::putFloat, Settings.System.FONT_SCALE, fontScale);
+            runCommandAndPrintOutput(
+                    "settings put system font_scale " + fontScale);
         }
     }
 
-    protected static void setTransitionAnimationScale(float transitionAnimationScale) {
-        putSettings(Settings.Global::putFloat, Settings.Global.TRANSITION_ANIMATION_SCALE,
-                transitionAnimationScale);
+    protected void setWindowTransitionAnimationDurationScale(float animDurationScale) {
+        runCommandAndPrintOutput(
+                "settings put global transition_animation_scale " + animDurationScale);
     }
 
-    protected static float getFontScale() {
+    protected float getFontScale() {
         try {
-            return getFloatSettings(Settings.System::getFloat, Settings.System.FONT_SCALE);
-        } catch (SettingNotFoundException e) {
+            final String fontScale =
+                    runCommandAndPrintOutput("settings get system font_scale").trim();
+            return Float.parseFloat(fontScale);
+        } catch (NumberFormatException e) {
+            // If we don't have a valid font scale key, return 0.0f now so
+            // that we delete the key in tearDown().
             return 0.0f;
         }
     }
 
-    protected static String runCommandAndPrintOutput(String command) {
+    protected String runCommandAndPrintOutput(String command) {
         final String output = executeShellCommand(command);
         log(output);
         return output;

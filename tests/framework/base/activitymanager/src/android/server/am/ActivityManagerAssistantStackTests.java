@@ -24,15 +24,12 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMAR
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
-import static android.server.am.SettingsUtils.deleteSettings;
-import static android.server.am.SettingsUtils.putSettings;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.Presubmit;
-import android.provider.Settings;
 import android.support.test.filters.FlakyTest;
 
 import org.junit.Test;
@@ -341,7 +338,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
      * Sets the system voice interaction service.
      */
     private void enableAssistant() throws Exception {
-        putSettings(Settings.Secure::putString, Settings.Secure.VOICE_INTERACTION_SERVICE,
+        executeShellCommand("settings put secure voice_interaction_service " +
                 getActivityComponentName(VOICE_INTERACTION_SERVICE));
     }
 
@@ -349,6 +346,6 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
      * Resets the system voice interaction service.
      */
     private void disableAssistant() throws Exception {
-        deleteSettings(Settings.Secure::getUriFor, Settings.Secure.VOICE_INTERACTION_SERVICE);
+        executeShellCommand("settings delete secure voice_interaction_service");
     }
 }
