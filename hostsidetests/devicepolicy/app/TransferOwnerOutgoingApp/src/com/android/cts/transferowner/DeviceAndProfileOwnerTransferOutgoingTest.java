@@ -15,14 +15,19 @@
  */
 package com.android.cts.transferowner;
 
+import static junit.framework.Assert.assertNotNull;
+
 import static org.testng.Assert.assertThrows;
 
 import android.app.admin.DeviceAdminReceiver;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.os.PersistableBundle;
 import android.support.test.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -38,20 +43,26 @@ public abstract class DeviceAndProfileOwnerTransferOutgoingTest {
             "com.android.cts.transferownerincoming";
     private static final String TRANSFER_OWNER_INCOMING_TEST_RECEIVER_CLASS =
             "com.android.cts.transferowner.DeviceAndProfileOwnerTransferIncomingTest$BasicAdminReceiver";
-    static final ComponentName mIncomingComponentName =
+    static final ComponentName INCOMING_COMPONENT_NAME =
             new ComponentName(
                     TRANSFER_OWNER_INCOMING_PKG, TRANSFER_OWNER_INCOMING_TEST_RECEIVER_CLASS);
-    private static final ComponentName mInvalidTargetComponent =
+    private static final ComponentName INVALID_TARGET_COMPONENT =
             new ComponentName("com.android.cts.intent.receiver", ".BroadcastIntentReceiver");
 
     protected DevicePolicyManager mDevicePolicyManager;
     protected ComponentName mOutgoingComponentName;
+    protected Context mContext;
+    private String mOwnerChangedBroadcastAction;
 
     @Before
     public void setUp() throws Exception {
-        Context context = InstrumentationRegistry.getTargetContext();
-        mDevicePolicyManager = context.getSystemService(DevicePolicyManager.class);
-        mOutgoingComponentName = new ComponentName(context, BasicAdminReceiver.class.getName());
+        mContext = InstrumentationRegistry.getTargetContext();
+        mDevicePolicyManager = mContext.getSystemService(DevicePolicyManager.class);
+        mOutgoingComponentName = new ComponentName(mContext, BasicAdminReceiver.class.getName());
+    }
+
+    protected final void setupTestParameters(String ownerChangedBroadcastAction) {
+        mOwnerChangedBroadcastAction = ownerChangedBroadcastAction;
     }
 
     @Test
@@ -60,7 +71,7 @@ public abstract class DeviceAndProfileOwnerTransferOutgoingTest {
         assertThrows(
                 IllegalArgumentException.class,
                 () -> {
-                    transferOwner(
+                    transferOwnership(
                             mOutgoingComponentName, mOutgoingComponentName, b);
                 });
     }
@@ -71,20 +82,40 @@ public abstract class DeviceAndProfileOwnerTransferOutgoingTest {
         assertThrows(
                 IllegalArgumentException.class,
                 () -> {
-                    transferOwner(
-                            mOutgoingComponentName, mInvalidTargetComponent, b);
+                    transferOwnership(mOutgoingComponentName, INVALID_TARGET_COMPONENT, b);
                 });
     }
 
-    protected void transferOwner(ComponentName outgoing, ComponentName incoming,
+    protected void transferOwnership(ComponentName outgoing, ComponentName incoming,
             PersistableBundle parameters)
             throws Throwable {
         try {
-            mDevicePolicyManager.getClass().getMethod("transferOwner",
+            mDevicePolicyManager.getClass().getMethod("transferOwnership",
                     ComponentName.class, ComponentName.class, PersistableBundle.class)
                     .invoke(mDevicePolicyManager, outgoing, incoming, parameters);
         } catch (InvocationTargetException e) {
             throw e.getTargetException();
         }
+    }
+
+    @Test
+    public void testTransferOwnerChangedBroadcast() throws Throwable {
+        BlockingBroadcastReceiver receiver = new BlockingBroadcastReceiver(mContext,
+                mOwnerChangedBroadcastAction);
+        try {
+            receiver.register();
+            PersistableBundle b = new PersistableBundle();
+            transferOwnership(mOutgoingComponentName, INCOMING_COMPONENT_NAME, b);
+            Intent intent = receiver.awaitForBroadcast();
+            assertNotNull(intent);
+        } finally {
+            receiver.unregisterQuietly();
+        }
+    }
+
+    @Test
+    public void testTransferOwner() throws Throwable {
+        PersistableBundle b = new PersistableBundle();
+        transferOwnership(mOutgoingComponentName, INCOMING_COMPONENT_NAME, b);
     }
 }

@@ -1,6 +1,6 @@
 package com.android.cts.devicepolicy;
 
-public class DeviceAndProfileOwnerTransferTest extends BaseDevicePolicyTest {
+public abstract class DeviceAndProfileOwnerHostSideTransferTest extends BaseDevicePolicyTest {
     protected static final String TRANSFER_OWNER_OUTGOING_PKG =
             "com.android.cts.transferowneroutgoing";
     protected static final String TRANSFER_OWNER_OUTGOING_APK = "CtsTransferOwnerOutgoingApp.apk";
@@ -21,7 +21,6 @@ public class DeviceAndProfileOwnerTransferTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        installAppAsUser(TRANSFER_OWNER_INCOMING_APK, mUserId);
         runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
                 mOutgoingTestClassName,
                 "testTransfer", mUserId);
@@ -31,7 +30,6 @@ public class DeviceAndProfileOwnerTransferTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        installAppAsUser(TRANSFER_OWNER_INCOMING_APK, mUserId);
         runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
                 mOutgoingTestClassName,
                 "testTransferSameAdmin", mUserId);
@@ -51,13 +49,36 @@ public class DeviceAndProfileOwnerTransferTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        installAppAsUser(TRANSFER_OWNER_INCOMING_APK, mUserId);
         runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
                 mOutgoingTestClassName,
                 "testTransferWithPoliciesOutgoing", mUserId);
         runDeviceTestsAsUser(TRANSFER_OWNER_INCOMING_PKG,
                 mIncomingTestClassName,
                 "testTransferPoliciesAreRetainedAfterTransfer", mUserId);
+    }
+
+    public void testTransferOwnerChangedBroadcast() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
+                mOutgoingTestClassName,
+                "testTransferOwnerChangedBroadcast", mUserId);
+    }
+
+    public void testTransferCompleteCallback() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
+                mOutgoingTestClassName,
+                "testTransferOwner", mUserId);
+
+        waitForBroadcastIdle();
+
+        runDeviceTestsAsUser(TRANSFER_OWNER_INCOMING_PKG,
+                mIncomingTestClassName,
+                "testTransferCompleteCallbackIsCalled", mUserId);
     }
 
     protected void setupTestParameters(int userId, String outgoingTestClassName,

@@ -22,7 +22,8 @@ package com.android.cts.devicepolicy;
  * process, first we setup some policies in the client side in CtsTransferOwnerOutgoingApp and then
  * we verify the policies are still there in CtsTransferOwnerIncomingApp.
  */
-public class MixedProfileOwnerTransferTest extends DeviceAndProfileOwnerTransferTest {
+public class MixedProfileOwnerHostSideTransferTest extends
+        DeviceAndProfileOwnerHostSideTransferTest {
     private static final String TRANSFER_PROFILE_OWNER_OUTGOING_TEST =
             "com.android.cts.transferowner.TransferProfileOwnerOutgoingTest";
     private static final String TRANSFER_PROFILE_OWNER_INCOMING_TEST =
@@ -36,16 +37,25 @@ public class MixedProfileOwnerTransferTest extends DeviceAndProfileOwnerTransfer
         if (mHasFeature) {
             int profileOwnerUserId = setupManagedProfile(TRANSFER_OWNER_OUTGOING_APK,
                     TRANSFER_OWNER_OUTGOING_TEST_RECEIVER);
-            setupTestParameters(profileOwnerUserId, TRANSFER_PROFILE_OWNER_OUTGOING_TEST,
-                    TRANSFER_PROFILE_OWNER_INCOMING_TEST);
+            if (profileOwnerUserId != -1) {
+                setupTestParameters(profileOwnerUserId, TRANSFER_PROFILE_OWNER_OUTGOING_TEST,
+                        TRANSFER_PROFILE_OWNER_INCOMING_TEST);
+                installAppAsUser(TRANSFER_OWNER_INCOMING_APK, mUserId);
+            }
         }
     }
 
     private int setupManagedProfile(String apkName, String adminReceiverClassName)
             throws Exception {
         final int userId = createManagedProfile(mPrimaryUserId);
+
         installAppAsUser(apkName, userId);
-        setProfileOwnerOrFail(adminReceiverClassName, userId);
+        if (!setProfileOwner(adminReceiverClassName, userId, false)) {
+            removeAdmin(TRANSFER_OWNER_OUTGOING_TEST_RECEIVER, userId);
+            getDevice().uninstallPackage(TRANSFER_OWNER_OUTGOING_PKG);
+            fail("Failed to set device owner");
+            return -1;
+        }
         startUser(userId);
         return userId;
     }
