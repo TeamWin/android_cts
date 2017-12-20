@@ -69,8 +69,19 @@ public class MyWebView extends WebView {
                         new IllegalArgumentException("Invalid values on autofill(): " + values);
             } else {
                 try {
-                    mExpectation.mActualUsername = values.valueAt(0).getTextValue().toString();
-                    mExpectation.mActualPassword = values.valueAt(1).getTextValue().toString();
+                    // We don't know the order of the values in the array. As we're just expecting
+                    // 2, it's easy to just check them individually; if we had more, than we would
+                    // need to override onProvideAutofillVirtualStructure() to keep track of the
+                    // nodes added by WebView so we could save their AutofillIds and reuse here.
+                    final String value1 = values.valueAt(0).getTextValue().toString();
+                    final String value2 = values.valueAt(1).getTextValue().toString();
+                    if (mExpectation.mExpectedUsername.equals(value1)) {
+                        mExpectation.mActualUsername = value1;
+                        mExpectation.mActualPassword = value2;
+                    } else {
+                        mExpectation.mActualUsername = value2;
+                        mExpectation.mActualPassword = value1;
+                    }
                 } catch (Exception e) {
                     mExpectation.mException = e;
                 }
