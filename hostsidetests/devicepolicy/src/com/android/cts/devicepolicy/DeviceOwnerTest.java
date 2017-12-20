@@ -16,6 +16,9 @@
 
 package com.android.cts.devicepolicy;
 
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+
+import java.io.File;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -45,6 +48,10 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
             DEVICE_OWNER_PKG + ".BasicAdminReceiver";
     private static final String DEVICE_OWNER_COMPONENT = DEVICE_OWNER_PKG + "/"
             + ADMIN_RECEIVER_TEST_CLASS;
+
+    private static final String TEST_APP_APK = "CtsEmptyTestApp.apk";
+    private static final String TEST_APP_PKG = "android.packageinstaller.emptytestapp.cts";
+    private static final String TEST_APP_LOCATION = "/data/local/tmp/cts/packageinstaller/";
 
     /** Forcing ephemeral users is implemented and supported on the device. */
     private boolean mHasForceEphemeralUserFeature;
@@ -586,6 +593,92 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         executeDeviceOwnerTest("BackupServiceEnabledTest");
+    }
+
+    public void testPackageInstallCache() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
+        final File apk = buildHelper.getTestFile(TEST_APP_APK);
+        try {
+            getDevice().uninstallPackage(TEST_APP_PKG);
+            assertTrue(getDevice().pushFile(apk, TEST_APP_LOCATION + apk.getName()));
+
+            // Install the package in primary user
+            runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".PackageInstallTest",
+                    "testPackageInstall", mPrimaryUserId);
+
+            runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".PackageInstallTest",
+                    "testKeepPackageCache", mPrimaryUserId);
+
+            // Remove the package in primary user
+            runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".PackageInstallTest",
+                    "testPackageUninstall", mPrimaryUserId);
+
+            // Should be able to enable the cached package in primary user
+            runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".PackageInstallTest",
+                    "testInstallExistingPackage", mPrimaryUserId);
+        } finally {
+            String command = "rm " + TEST_APP_LOCATION + apk.getName();
+            getDevice().executeShellCommand(command);
+            getDevice().uninstallPackage(TEST_APP_PKG);
+        }
+    }
+
+    public void testPackageInstallCache_multiUser() throws Exception {
+        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
+            return;
+        }
+        final int userId = createAffiliatedSecondaryUser();
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
+        final File apk = buildHelper.getTestFile(TEST_APP_APK);
+        try {
+            getDevice().uninstallPackage(TEST_APP_PKG);
+            assertTrue(getDevice().pushFile(apk, TEST_APP_LOCATION + apk.getName()));
+
+            // Install the package in primary user
+            runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".PackageInstallTest",
+                    "testPackageInstall", mPrimaryUserId);
+
+            // Should be able to enable the package in secondary user
+            runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".PackageInstallTest",
+                    "testInstallExistingPackage", userId);
+
+            // Remove the package in both user
+            runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".PackageInstallTest",
+                    "testPackageUninstall", mPrimaryUserId);
+            runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".PackageInstallTest",
+                    "testPackageUninstall", userId);
+
+            // Install the package in secondary user
+            runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".PackageInstallTest",
+                    "testPackageInstall", userId);
+
+            // Should be able to enable the package in primary user
+            runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".PackageInstallTest",
+                    "testInstallExistingPackage", mPrimaryUserId);
+
+            // Keep the package in cache
+            runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".PackageInstallTest",
+                    "testKeepPackageCache", mPrimaryUserId);
+
+            // Remove the package in both user
+            runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".PackageInstallTest",
+                    "testPackageUninstall", mPrimaryUserId);
+            runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".PackageInstallTest",
+                    "testPackageUninstall", userId);
+
+            // Should be able to enable the cached package in both users
+            runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".PackageInstallTest",
+                    "testInstallExistingPackage", userId);
+            runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".PackageInstallTest",
+                    "testInstallExistingPackage", mPrimaryUserId);
+        } finally {
+            String command = "rm " + TEST_APP_LOCATION + apk.getName();
+            getDevice().executeShellCommand(command);
+            getDevice().uninstallPackage(TEST_APP_PKG);
+        }
     }
 
     private void executeDeviceOwnerTest(String testClassName) throws Exception {

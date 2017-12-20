@@ -113,6 +113,8 @@ public class DuplicateIdActivityTest extends AutoFillServiceTestCase {
 
         // Force rotation to force onDestroy->onCreate cycle
         sUiBot.setScreenOrientation(1);
+        // Wait context and Views being recreated in rotation
+        sUiBot.assertShownByRelativeId(DUPLICATE_ID);
 
         // Select other field to trigger new partition
         runShellCommand("input keyevent KEYCODE_TAB");

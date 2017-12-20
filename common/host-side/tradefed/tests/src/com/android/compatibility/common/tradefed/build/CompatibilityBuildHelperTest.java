@@ -178,6 +178,7 @@ public class CompatibilityBuildHelperTest extends TestCase {
      * references and not absolute path. When sharding, path are invalidated but Files are copied.
      */
     public void testAddDynamicFiles() throws Exception {
+        createDirStructure();
         File tmpDynamicFile = FileUtil.createTempFile("cts-test-file", ".dynamic");
         FileUtil.writeToFile("test string", tmpDynamicFile);
         try {
