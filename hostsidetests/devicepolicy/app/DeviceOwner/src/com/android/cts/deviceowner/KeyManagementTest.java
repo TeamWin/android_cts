@@ -30,17 +30,25 @@ import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.test.ActivityInstrumentationTestCase2;
 
+import com.android.org.bouncycastle.cert.X509v3CertificateBuilder;
+import com.android.org.bouncycastle.asn1.x500.X500Name;
+import com.android.org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
+import com.android.org.bouncycastle.cert.X509CertificateHolder;
+import com.android.org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
 import java.net.URLEncoder;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.SecureRandom;
 import java.security.Signature;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
@@ -48,12 +56,15 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.List;
 import java.util.Set;
+import javax.security.auth.x500.X500Principal;
 
 public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManagementActivity> {
 
@@ -133,17 +144,23 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
         assertGranted(withhold, false);
     }
 
+    private List<Certificate> loadCertificateChain(String assetName) throws Exception {
+        final Collection<Certificate> certs = loadCertificatesFromAsset(assetName);
+        final ArrayList<Certificate> certChain = new ArrayList(certs);
+        // Some sanity check on the cert chain
+        assertTrue(certs.size() > 1);
+        for (int i = 1; i < certChain.size(); i++) {
+            certChain.get(i - 1).verify(certChain.get(i).getPublicKey());
+        }
+        return certChain;
+    }
+
     public void testCanInstallCertChain() throws Exception {
         // Use assets/generate-client-cert-chain.sh to regenerate the client cert chain.
         final PrivateKey privKey = loadPrivateKeyFromAsset("user-cert-chain.key");
-        final Collection<Certificate> certs = loadCertificatesFromAsset("user-cert-chain.crt");
-        final Certificate[] certChain = certs.toArray(new Certificate[certs.size()]);
+        final Certificate[] certChain = loadCertificateChain("user-cert-chain.crt")
+                .toArray(new Certificate[0]);
         final String alias = "com.android.test.clientkeychain";
-        // Some sanity check on the cert chain
-        assertTrue(certs.size() > 1);
-        for (int i = 1; i < certs.size(); i++) {
-            certChain[i - 1].verify(certChain[i].getPublicKey());
-        }
 
         // Install keypairs.
         assertTrue(mDevicePolicyManager.installKeyPair(getWho(), privKey, certChain, alias, true));
@@ -309,7 +326,6 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
                     .setDigests(KeyProperties.DIGEST_SHA256)
                     .setAttestationChallenge(attestationChallenge)
                     .build();
-
             AttestedKeyPair generated = mDevicePolicyManager.generateKeyPair(
                     getWho(), "EC", spec);
             final KeyPair keyPair = generated.getKeyPair();
@@ -340,6 +356,108 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
             // leaf is now the root, verify the root is self-signed.
             PublicKey rootKey = leaf.getPublicKey();
             leaf.verify(rootKey);
+        } finally {
+            assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
+        }
+    }
+
+    /**
+     * Creates a self-signed X.509 certificate, given a key pair, subject and issuer.
+     */
+    private static X509Certificate createCertificate(
+            KeyPair keyPair,
+            X500Principal subject,
+            X500Principal issuer) throws Exception {
+        // Make the certificate valid for two days.
+        long millisPerDay = 24 * 60 * 60 * 1000;
+        long now = System.currentTimeMillis();
+        Date start = new Date(now - millisPerDay);
+        Date end = new Date(now + millisPerDay);
+
+        // Assign a random serial number.
+        byte[] serialBytes = new byte[16];
+        new SecureRandom().nextBytes(serialBytes);
+        BigInteger serialNumber = new BigInteger(1, serialBytes);
+
+        // Create the certificate builder
+        X509v3CertificateBuilder x509cg = new X509v3CertificateBuilder(
+                X500Name.getInstance(issuer.getEncoded()), serialNumber, start, end,
+                X500Name.getInstance(subject.getEncoded()),
+                SubjectPublicKeyInfo.getInstance(keyPair.getPublic().getEncoded()));
+
+        // Choose a signature algorithm matching the key format.
+        String keyAlgorithm = keyPair.getPrivate().getAlgorithm();
+        String signatureAlgorithm;
+        if (keyAlgorithm.equals("RSA")) {
+            signatureAlgorithm = "SHA256withRSA";
+        } else if (keyAlgorithm.equals("EC")) {
+            signatureAlgorithm = "SHA256withECDSA";
+        } else {
+            throw new IllegalArgumentException("Unknown key algorithm " + keyAlgorithm);
+        }
+
+        // Sign the certificate and generate it.
+        X509CertificateHolder x509holder = x509cg.build(
+                new JcaContentSignerBuilder(signatureAlgorithm).build(keyPair.getPrivate()));
+        CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
+        X509Certificate x509c = (X509Certificate) certFactory.generateCertificate(
+                new ByteArrayInputStream(x509holder.getEncoded()));
+        return x509c;
+    }
+
+    public void testCanSetKeyPairCert() throws Exception {
+        final String alias = "com.android.test.set-ec-1";
+        try {
+            KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(
+                    alias,
+                    KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_VERIFY)
+                    .setDigests(KeyProperties.DIGEST_SHA256)
+                    .build();
+
+            AttestedKeyPair generated = mDevicePolicyManager.generateKeyPair(
+                    getWho(), "EC", spec);
+            assertNotNull(generated);
+            // Create a self-signed cert to go with it.
+            X500Principal issuer = new X500Principal("CN=SelfSigned, O=Android, C=US");
+            X500Principal subject = new X500Principal("CN=Subject, O=Android, C=US");
+            X509Certificate cert = createCertificate(generated.getKeyPair(), subject, issuer);
+            // Set the certificate chain
+            List<Certificate> certs = new ArrayList<Certificate>();
+            certs.add(cert);
+            mDevicePolicyManager.setKeyPairCertificate(getWho(), alias, certs, true);
+            // Make sure that the alias can now be obtained.
+            assertEquals(alias, new KeyChainAliasFuture(alias).get());
+            // And can be retrieved from KeyChain
+            X509Certificate[] fetchedCerts = KeyChain.getCertificateChain(getActivity(), alias);
+            assertEquals(fetchedCerts.length, certs.size());
+            assertTrue(Arrays.equals(fetchedCerts[0].getEncoded(), certs.get(0).getEncoded()));
+        } finally {
+            assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
+        }
+    }
+
+    public void testCanSetKeyPairCertChain() throws Exception {
+        final String alias = "com.android.test.set-ec-2";
+        try {
+            KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(
+                    alias,
+                    KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_VERIFY)
+                    .setDigests(KeyProperties.DIGEST_SHA256)
+                    .build();
+
+            AttestedKeyPair generated = mDevicePolicyManager.generateKeyPair(
+                    getWho(), "EC", spec);
+            assertNotNull(generated);
+            List<Certificate> chain = loadCertificateChain("user-cert-chain.crt");
+            mDevicePolicyManager.setKeyPairCertificate(getWho(), alias, chain, true);
+            // Make sure that the alias can now be obtained.
+            assertEquals(alias, new KeyChainAliasFuture(alias).get());
+            // And can be retrieved from KeyChain
+            X509Certificate[] fetchedCerts = KeyChain.getCertificateChain(getActivity(), alias);
+            assertEquals(fetchedCerts.length, chain.size());
+            for (int i = 0; i < chain.size(); i++) {
+                assertTrue(Arrays.equals(fetchedCerts[i].getEncoded(), chain.get(i).getEncoded()));
+            }
         } finally {
             assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
         }
