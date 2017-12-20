@@ -252,6 +252,20 @@ public class NotificationTest extends AndroidTestCase {
                 mNotification.extras.getParcelableArray(Notification.EXTRA_HISTORIC_MESSAGES));
     }
 
+    public void testMessagingStyle_isGroupConversation() {
+        Notification.MessagingStyle messagingStyle =
+                new Notification.MessagingStyle("self name")
+                        .setGroupConversation(true);
+        mNotification = new Notification.Builder(mContext, "test id")
+                .setSmallIcon(1)
+                .setContentTitle("test title")
+                .setStyle(messagingStyle)
+                .build();
+
+        assertTrue(messagingStyle.isGroupConversation());
+        assertTrue(mNotification.extras.getBoolean(Notification.EXTRA_IS_GROUP_CONVERSATION));
+    }
+
     public void testToString() {
         mNotification = new Notification();
         assertNotNull(mNotification.toString());
