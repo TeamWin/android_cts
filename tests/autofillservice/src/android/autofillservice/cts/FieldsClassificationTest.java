@@ -111,7 +111,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         mActivity.focusCell(1, 1);
         sReplier.getNextFillRequest();
 
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
         callback.assertUiUnavailableEvent(field);
 
         // Simulate user input
@@ -156,7 +156,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         mActivity.focusCell(1, 1);
         sReplier.getNextFillRequest();
 
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
         callback.assertUiUnavailableEvent(field);
 
         // Simulate user input
@@ -203,7 +203,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         mActivity.focusCell(1, 1);
         sReplier.getNextFillRequest();
 
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
         callback.assertUiUnavailableEvent(field1);
 
         // Simulate user input
@@ -253,7 +253,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         mActivity.focusCell(1, 1);
         sReplier.getNextFillRequest();
 
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
         callback.assertUiUnavailableEvent(field1);
 
         // Simulate user input
@@ -305,7 +305,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         mActivity.focusCell(1, 1);
         sReplier.getNextFillRequest();
 
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
         callback.assertUiUnavailableEvent(field);
 
         // Simulate user input
@@ -341,7 +341,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         mActivity.focusCell(1, 1);
         sReplier.getNextFillRequest();
 
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
         callback.assertUiUnavailableEvent(field);
 
         // Finish context.

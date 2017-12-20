@@ -93,7 +93,7 @@ public class CustomDescriptionTest extends AutoFillServiceTestCase {
             uiVerifier.run();
         }
 
-        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_GENERIC);
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_GENERIC);
         sReplier.getNextSaveRequest();
 
         assertNoDanglingSessions();
@@ -490,16 +490,16 @@ public class CustomDescriptionTest extends AutoFillServiceTestCase {
 
     private void assertSaveUiWithoutCustomDescriptionIsShown() {
         // First make sure the UI is shown...
-        final UiObject2 saveUi = sUiBot.assertSaveShowing(SAVE_DATA_TYPE_GENERIC);
+        final UiObject2 saveUi = mUiBot.assertSaveShowing(SAVE_DATA_TYPE_GENERIC);
 
         // Then make sure it does not have the custom view on it.
-        assertWithMessage("found static_text on SaveUI (%s)", sUiBot.getChildrenAsText(saveUi))
+        assertWithMessage("found static_text on SaveUI (%s)", mUiBot.getChildrenAsText(saveUi))
             .that(saveUi.findObject(By.res(mPackageName, "static_text"))).isNull();
     }
 
     private UiObject2 assertSaveUiWithCustomDescriptionIsShown() {
         // First make sure the UI is shown...
-        final UiObject2 saveUi = sUiBot.assertSaveShowing(SAVE_DATA_TYPE_GENERIC);
+        final UiObject2 saveUi = mUiBot.assertSaveShowing(SAVE_DATA_TYPE_GENERIC);
 
         // Then make sure it does have the custom view on it...
         final UiObject2 staticText = saveUi.findObject(By.res(mPackageName, "static_text"));

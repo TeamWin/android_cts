@@ -188,7 +188,7 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
         startAutoFill(mEditText);
 
         // Autofill it.
-        sUiBot.selectDataset("dataset");
+        mUiBot.selectDataset("dataset");
 
         if (expectAutoFill) {
             // Check the results.
@@ -241,7 +241,7 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
         startAutoFill(mCompoundButton);
 
         // Autofill it.
-        sUiBot.selectDataset("dataset");
+        mUiBot.selectDataset("dataset");
 
         if (expectAutoFill) {
             // Check the results.
@@ -294,7 +294,7 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
         startAutoFill(mSpinner);
 
         // Autofill it.
-        sUiBot.selectDataset("dataset");
+        mUiBot.selectDataset("dataset");
 
         if (expectAutoFill) {
             // Check the results.
@@ -361,7 +361,7 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
         startAutoFill(mEditText);
 
         // Autofill it.
-        sUiBot.selectDataset("dataset");
+        mUiBot.selectDataset("dataset");
 
         if (expectAutoFill) {
             // Check the results.
@@ -430,7 +430,7 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
         startAutoFill(mEditText);
 
         // Autofill it.
-        sUiBot.selectDataset("dataset");
+        mUiBot.selectDataset("dataset");
 
         if (expectAutoFill) {
             // Check the results.
@@ -486,7 +486,7 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
         startAutoFill(mEditText);
 
         // Autofill it.
-        sUiBot.selectDataset("dataset");
+        mUiBot.selectDataset("dataset");
 
         if (expectAutoFill) {
             // Check the results.

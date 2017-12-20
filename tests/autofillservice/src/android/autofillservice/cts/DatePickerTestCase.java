@@ -73,7 +73,7 @@ abstract class DatePickerTestCase<T extends AbstractDatePickerActivity>
         assertNumberOfChildren(fillRequest.structure, ID_DATE_PICKER, 0);
 
         // Auto-fill it.
-        sUiBot.selectDataset("The end of the world");
+        mUiBot.selectDataset("The end of the world");
 
         // Check the results.
         activity.assertAutoFilled();
@@ -82,7 +82,7 @@ abstract class DatePickerTestCase<T extends AbstractDatePickerActivity>
         activity.setDate(2010, 11, 12);
         activity.tapOk();
 
-        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_GENERIC);
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_GENERIC);
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
         assertWithMessage("onSave() not called").that(saveRequest).isNotNull();
 

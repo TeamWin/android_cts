@@ -65,6 +65,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
     private static final boolean DEBUG_DUMP = Log.isLoggable(TAG, Log.DEBUG);
     private static final int RECORDING_DURATION_MS = 3000;
+    private static final int PREVIEW_DURATION_MS = 3000;
     private static final float DURATION_MARGIN = 0.2f;
     private static final double FRAME_DURATION_ERROR_TOLERANCE_MS = 3.0;
     private static final float FRAMEDURATION_MARGIN = 0.2f;
@@ -550,16 +551,24 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
                             continue;
                         }
 
+                        SimpleCaptureCallback previewResultListener = new SimpleCaptureCallback();
+
+                        // prepare preview surface by using video size.
+                        updatePreviewSurfaceWithVideo(size, captureRate);
+
+                        startConstrainedPreview(fpsRange, previewResultListener);
+
                         mOutMediaFileName = VIDEO_FILE_PATH + "/test_cslowMo_video_" + captureRate +
                                 "fps_" + id + "_" + size.toString() + ".mp4";
 
                         prepareRecording(size, VIDEO_FRAME_RATE, captureRate);
 
-                        // prepare preview surface by using video size.
-                        updatePreviewSurfaceWithVideo(size, captureRate);
+                        SystemClock.sleep(PREVIEW_DURATION_MS);
 
-                        // Start recording
+                        stopCameraStreaming();
+
                         SimpleCaptureCallback resultListener = new SimpleCaptureCallback();
+                        // Start recording
                         startSlowMotionRecording(/*useMediaRecorder*/true, VIDEO_FRAME_RATE,
                                 captureRate, fpsRange, resultListener,
                                 /*useHighSpeedSession*/true);
@@ -569,12 +578,19 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
 
                         // Stop recording and preview
                         stopRecording(/*useMediaRecorder*/true);
+
+                        startConstrainedPreview(fpsRange, previewResultListener);
+
                         // Convert number of frames camera produced into the duration in unit of ms.
                         float frameDurationMs = 1000.0f / VIDEO_FRAME_RATE;
                         float durationMs = resultListener.getTotalNumFrames() * frameDurationMs;
 
                         // Validation.
                         validateRecording(size, durationMs, frameDurationMs, FRMDRP_RATE_TOLERANCE);
+
+                        SystemClock.sleep(PREVIEW_DURATION_MS);
+
+                        stopCameraStreaming();
                     }
                 }
 
@@ -633,6 +649,26 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
             }
         }
         return fixedRanges;
+    }
+
+    private void startConstrainedPreview(Range<Integer> fpsRange,
+            CameraCaptureSession.CaptureCallback listener) throws Exception {
+        List<Surface> outputSurfaces = new ArrayList<Surface>(1);
+        assertTrue("Preview surface should be valid", mPreviewSurface.isValid());
+        outputSurfaces.add(mPreviewSurface);
+        mSessionListener = new BlockingSessionCallback();
+        mSession = configureCameraSession(mCamera, outputSurfaces, /*isHighSpeed*/ true,
+                mSessionListener, mHandler);
+
+        List<CaptureRequest> slowMoRequests = null;
+        CaptureRequest.Builder requestBuilder =
+            mCamera.createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
+        requestBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRange);
+        requestBuilder.addTarget(mPreviewSurface);
+        slowMoRequests = ((CameraConstrainedHighSpeedCaptureSession) mSession).
+            createHighSpeedRequestList(requestBuilder.build());
+
+        mSession.setRepeatingBurst(slowMoRequests, listener, mHandler);
     }
 
     private void startSlowMotionRecording(boolean useMediaRecorder, int videoFrameRate,

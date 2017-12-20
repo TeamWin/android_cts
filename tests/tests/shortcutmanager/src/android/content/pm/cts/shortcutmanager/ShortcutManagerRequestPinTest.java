@@ -40,6 +40,8 @@ import java.util.List;
 public class ShortcutManagerRequestPinTest extends ShortcutManagerCtsTestsBase {
     private static final String TAG = "ShortcutMRPT";
 
+    private static final String SHORTCUT_ID = "s12345";
+
     public void testIsRequestPinShortcutSupported() {
 
         // Launcher 1 supports it.
@@ -61,9 +63,9 @@ public class ShortcutManagerRequestPinTest extends ShortcutManagerCtsTestsBase {
      * A test for {@link ShortcutManager#requestPinShortcut}, a very simple case.
      */
     public void testRequestPinShortcut() {
-        setDefaultLauncher(getInstrumentation(), mLauncherContext1);
+        Log.i(TAG, "Testing with launcher1.");
 
-        final String SHORTCUT_ID = "s12345";
+        setDefaultLauncher(getInstrumentation(), mLauncherContext1);
 
         runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertTrue(getManager().isRequestPinShortcutSupported());
@@ -78,6 +80,13 @@ public class ShortcutManagerRequestPinTest extends ShortcutManagerCtsTestsBase {
                         .setIntent(new Intent(Intent.ACTION_MAIN))
                         .setExtras(extras)
                         .build();
+
+                // Note: Because requestPinShortcut() won't update the shortcut, but we need to
+                // update the extras that contains the broadcast ID, we need to update the shortcut
+                // manually here before requestPinShortcut().
+
+                // This is only needed when a shortcut is already published with the same ID.
+                assertTrue(getManager().updateShortcuts(list(shortcut)));
 
                 Log.i(TAG, "Calling requestPinShortcut...");
                 assertTrue(getManager().requestPinShortcut(shortcut, /* intent sender */ null));
@@ -116,6 +125,183 @@ public class ShortcutManagerRequestPinTest extends ShortcutManagerCtsTestsBase {
                     .areAllNotManifest()
                     .areAllMutable()
                     ;
+        });
+
+        Log.i(TAG, "Done testing with launcher1.");
+    }
+
+    public void testRequestPinShortcut_multiLaunchers() {
+        testRequestPinShortcut();
+
+        Log.i(TAG, "Testing with launcher2.");
+
+        setDefaultLauncher(getInstrumentation(), mLauncherContext2);
+
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
+            ReplyUtil.invokeAndWaitForReply(getTestContext(), (replyAction) -> {
+                final PersistableBundle extras = new PersistableBundle();
+                extras.putString(Constants.EXTRA_REPLY_ACTION, replyAction);
+                extras.putString(Constants.LABEL, "label1");
+
+                final ShortcutInfo shortcut = makeShortcutBuilder(SHORTCUT_ID)
+                        .setExtras(extras)
+                        .build();
+
+                // Note: Because requestPinShortcut() won't update the shortcut, but we need to
+                // update the extras that contains the broadcast ID, we need to update the shortcut
+                // manually here before requestPinShortcut().
+                assertTrue(getManager().updateShortcuts(list(shortcut)));
+
+                Log.i(TAG, "Calling requestPinShortcut...");
+                assertTrue(getManager().requestPinShortcut(shortcut, /* intent sender */ null));
+                Log.i(TAG, "Done.");
+            });
+        });
+        runWithCallerWithStrictMode(mLauncherContext2, () -> {
+            final ShortcutQuery query = new ShortcutQuery()
+                    .setPackage(mPackageContext1.getPackageName())
+                    .setShortcutIds(list(SHORTCUT_ID))
+                    .setQueryFlags(ShortcutQuery.FLAG_MATCH_DYNAMIC
+                            | ShortcutQuery.FLAG_MATCH_PINNED | ShortcutQuery.FLAG_MATCH_MANIFEST);
+            Log.i(TAG, "Waiting for shortcut to be visible to launcher...");
+            retryUntil(() -> {
+                final List<ShortcutInfo> shortcuts = getLauncherApps().getShortcuts(query,
+                        android.os.Process.myUserHandle());
+                if (shortcuts == null) {
+                    // Launcher not responded yet.
+                    return false;
+                }
+                assertWith(shortcuts)
+                        .haveIds(SHORTCUT_ID)
+                        .areAllPinned()
+                        .areAllNotDynamic()
+                        .areAllNotManifest();
+                return true;
+            }, "Shortcut still not pinned");
+        });
+        Log.i(TAG, "Done testing with launcher2.");
+    }
+
+    public void testRequestPinShortcut_multiLaunchers_withDynamic() {
+        setDefaultLauncher(getInstrumentation(), mLauncherContext1);
+
+        // Publish as a dynamic shortcut first, then call requestPin.
+        ShortcutInfo shortcut = makeShortcutBuilder(SHORTCUT_ID)
+                .setShortLabel("label1")
+                .setIntent(new Intent(Intent.ACTION_MAIN))
+                .build();
+        assertTrue(getManager().setDynamicShortcuts(list(shortcut)));
+
+        // ==============================================================
+        Log.i(TAG, "Testing with launcher1.");
+
+        assertTrue(getManager().isRequestPinShortcutSupported());
+
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
+            ReplyUtil.invokeAndWaitForReply(getTestContext(), (replyAction) -> {
+                final PersistableBundle extras = new PersistableBundle();
+                extras.putString(Constants.EXTRA_REPLY_ACTION, replyAction);
+                extras.putString(Constants.LABEL, "label1");
+
+                final ShortcutInfo shortcut2 = makeShortcutBuilder(SHORTCUT_ID)
+                        .setExtras(extras)
+                        .build();
+
+                // Note: Because requestPinShortcut() won't update the shortcut, but we need to
+                // update the extras that contains the broadcast ID, we need to update the shortcut
+                // manually here before requestPinShortcut().
+
+                // This is only needed when a shortcut is already published with the same ID.
+                assertTrue(getManager().updateShortcuts(list(shortcut2)));
+
+                Log.i(TAG, "Calling requestPinShortcut...");
+                assertTrue(getManager().requestPinShortcut(shortcut2, /* intent sender */ null));
+                Log.i(TAG, "Done.");
+            });
+        });
+        runWithCallerWithStrictMode(mLauncherContext1, () -> {
+            final ShortcutQuery query = new ShortcutQuery()
+                    .setPackage(mPackageContext1.getPackageName())
+                    .setShortcutIds(list(SHORTCUT_ID))
+                    .setQueryFlags(ShortcutQuery.FLAG_MATCH_DYNAMIC
+                            | ShortcutQuery.FLAG_MATCH_PINNED | ShortcutQuery.FLAG_MATCH_MANIFEST);
+            Log.i(TAG, "Waiting for shortcut to be visible to launcher...");
+            retryUntil(() -> {
+                final List<ShortcutInfo> shortcuts = getLauncherApps().getShortcuts(query,
+                        android.os.Process.myUserHandle());
+                if (shortcuts == null) {
+                    // Launcher not responded yet.
+                    return false;
+                }
+                assertWith(shortcuts)
+                        .haveIds(SHORTCUT_ID)
+                        .areAllPinned()
+                        .areAllDynamic()
+                        .areAllNotManifest();
+                return true;
+            }, "Shortcut still not pinned");
+        });
+        // ==============================================================
+        Log.i(TAG, "Testing with launcher2.");
+        setDefaultLauncher(getInstrumentation(), mLauncherContext2);
+
+        assertTrue(getManager().isRequestPinShortcutSupported());
+
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
+            ReplyUtil.invokeAndWaitForReply(getTestContext(), (replyAction) -> {
+                final PersistableBundle extras = new PersistableBundle();
+                extras.putString(Constants.EXTRA_REPLY_ACTION, replyAction);
+                extras.putString(Constants.LABEL, "label1");
+
+                final ShortcutInfo shortcut2 = makeShortcutBuilder(SHORTCUT_ID)
+                        .setExtras(extras)
+                        .build();
+
+                // Note: Because requestPinShortcut() won't update the shortcut, but we need to
+                // update the extras that contains the broadcast ID, we need to update the shortcut
+                // manually here before requestPinShortcut().
+
+                // This is only needed when a shortcut is already published with the same ID.
+                assertTrue(getManager().updateShortcuts(list(shortcut2)));
+
+                Log.i(TAG, "Calling requestPinShortcut...");
+                assertTrue(getManager().requestPinShortcut(shortcut2, /* intent sender */ null));
+                Log.i(TAG, "Done.");
+            });
+        });
+        runWithCallerWithStrictMode(mLauncherContext2, () -> {
+            final ShortcutQuery query = new ShortcutQuery()
+                    .setPackage(mPackageContext1.getPackageName())
+                    .setShortcutIds(list(SHORTCUT_ID))
+                    .setQueryFlags(ShortcutQuery.FLAG_MATCH_DYNAMIC
+                            | ShortcutQuery.FLAG_MATCH_PINNED | ShortcutQuery.FLAG_MATCH_MANIFEST);
+            Log.i(TAG, "Waiting for shortcut to be visible to launcher...");
+            retryUntil(() -> {
+                final List<ShortcutInfo> shortcuts = getLauncherApps().getShortcuts(query,
+                        android.os.Process.myUserHandle());
+                if (shortcuts == null) {
+                    // Launcher not responded yet.
+                    return false;
+                }
+                assertWith(shortcuts)
+                        .haveIds(SHORTCUT_ID)
+                        .areAllPinned()
+                        .areAllDynamic()
+                        .areAllNotManifest();
+                return true;
+            }, "Shortcut still not pinned");
+        });
+
+        runWithCaller(mPackageContext1, () -> {
+            assertWith(getManager().getPinnedShortcuts())
+                    .forShortcutWithId(SHORTCUT_ID, si -> {
+                        assertEquals("label1", si.getShortLabel());
+                    })
+                    .areAllPinned()
+                    .areAllDynamic()
+                    .areAllNotManifest()
+                    .areAllMutable()
+            ;
         });
     }
 

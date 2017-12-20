@@ -37,6 +37,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.GestureDescription;
 import android.accessibilityservice.GestureDescription.StrokeDescription;
+import android.accessibilityservice.cts.activities.AccessibilityTestActivity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Matrix;

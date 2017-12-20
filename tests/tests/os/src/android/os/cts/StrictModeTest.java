@@ -161,7 +161,8 @@ public class StrictModeTest {
                         ((HttpURLConnection) new URL("http://example.com/").openConnection())
                                 .getResponseCode(),
                 info -> {
-                    assertThat(info.getViolationDetails()).contains("example.com");
+                    assertThat(info.getViolationDetails())
+                            .contains("Detected cleartext network traffic from UID");
                     assertThat(info.getViolationDetails())
                             .startsWith(StrictMode.CLEARTEXT_DETECTED_MSG);
                     assertPolicy(info, StrictMode.DETECT_VM_CLEARTEXT_NETWORK);

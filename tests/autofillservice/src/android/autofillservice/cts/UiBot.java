@@ -37,6 +37,7 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.os.SystemClock;
 import android.service.autofill.SaveInfo;
+import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
@@ -103,7 +104,8 @@ final class UiBot {
     private final String mPackageName;
     private final UiAutomation mAutoman;
 
-    UiBot(Instrumentation instrumentation) {
+    UiBot() {
+        final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         mDevice = UiDevice.getInstance(instrumentation);
         mContext = instrumentation.getContext();
         mPackageName = mContext.getPackageName();

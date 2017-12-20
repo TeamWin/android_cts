@@ -107,7 +107,7 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
                 .inOrder();
 
         // Auto-fill it.
-        sUiBot.selectDataset("ACME CC");
+        mUiBot.selectDataset("ACME CC");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -147,7 +147,7 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
         assertWithMessage("ccExpirationNode.getAutoFillOptions()").that(options).isNull();
 
         // Auto-fill it.
-        sUiBot.selectDataset("ACME CC");
+        mUiBot.selectDataset("ACME CC");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -190,7 +190,7 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
                 .containsExactly("never", "today", "tomorrow", "yesterday").inOrder();
 
         // Auto-fill it.
-        sUiBot.selectDataset("ACME CC");
+        mUiBot.selectDataset("ACME CC");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -230,7 +230,7 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
         mActivity.onAddress((v) -> v.check(R.id.work_address));
         mActivity.onSaveCc((v) -> v.setChecked(false));
         mActivity.tapBuy();
-        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_CREDIT_CARD);
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_CREDIT_CARD);
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
 
         // Assert sanitization on save: everything should be available!
@@ -304,7 +304,7 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
         mActivity.tapBuy();
 
         // First make sure the UI is shown...
-        final UiObject2 saveUi = sUiBot.assertSaveShowing(SAVE_DATA_TYPE_CREDIT_CARD);
+        final UiObject2 saveUi = mUiBot.assertSaveShowing(SAVE_DATA_TYPE_CREDIT_CARD);
 
         // Then make sure it does have the custom views on it...
         final UiObject2 staticText = saveUi.findObject(By.res(packageName, Helper.ID_STATIC_TEXT));
@@ -375,7 +375,7 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
         mActivity.tapBuy();
 
         // First make sure the UI is shown...
-        final UiObject2 saveUi = sUiBot.assertSaveShowing(SAVE_DATA_TYPE_CREDIT_CARD);
+        final UiObject2 saveUi = mUiBot.assertSaveShowing(SAVE_DATA_TYPE_CREDIT_CARD);
 
         // Then make sure it does not have the custom views on it...
         assertThat(saveUi.findObject(By.res(packageName, Helper.ID_STATIC_TEXT))).isNull();

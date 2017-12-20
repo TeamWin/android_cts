@@ -76,11 +76,11 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
         sReplier.addResponse(CannedFillResponse.NO_RESPONSE);
 
         // Trigger autofill.
-        mActivity.getUsernameInput(sUiBot).click();
+        mActivity.getUsernameInput(mUiBot).click();
         sReplier.getNextFillRequest();
 
         // Assert not shown.
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
     }
 
     @Test
@@ -101,30 +101,30 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
                 .build());
 
         // Trigger autofill.
-        mActivity.getUsernameInput(sUiBot).click();
+        mActivity.getUsernameInput(mUiBot).click();
         final FillRequest fillRequest = sReplier.getNextFillRequest();
-        sUiBot.assertDatasets("The Dude");
+        mUiBot.assertDatasets("The Dude");
 
         // Change focus around.
         final int usernameChildId = callback.assertUiShownEventForVirtualChild(myWebView);
-        mActivity.getUsernameLabel(sUiBot).click();
+        mActivity.getUsernameLabel(mUiBot).click();
         callback.assertUiHiddenEvent(myWebView, usernameChildId);
-        sUiBot.assertNoDatasets();
-        mActivity.getPasswordInput(sUiBot).click();
+        mUiBot.assertNoDatasets();
+        mActivity.getPasswordInput(mUiBot).click();
         final int passwordChildId = callback.assertUiShownEventForVirtualChild(myWebView);
-        final UiObject2 datasetPicker = sUiBot.assertDatasets("The Dude");
+        final UiObject2 datasetPicker = mUiBot.assertDatasets("The Dude");
 
         // Now Autofill it.
-        sUiBot.selectDataset(datasetPicker, "The Dude");
+        mUiBot.selectDataset(datasetPicker, "The Dude");
         myWebView.assertAutofilled();
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
         callback.assertUiHiddenEvent(myWebView, passwordChildId);
 
         // Make sure screen was autofilled.
-        assertThat(mActivity.getUsernameInput(sUiBot).getText()).isEqualTo("dude");
+        assertThat(mActivity.getUsernameInput(mUiBot).getText()).isEqualTo("dude");
         // TODO: proper way to verify text (which is ..... because it's a password) - ideally it
         // should call passwordInput.isPassword(), but that's not exposed
-        final String password = mActivity.getPasswordInput(sUiBot).getText();
+        final String password = mActivity.getPasswordInput(mUiBot).getText();
         assertThat(password).isNotEqualTo("sweet");
         assertThat(password).hasLength(5);
 
@@ -177,26 +177,26 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
                 .build());
 
         // Trigger autofill.
-        mActivity.getUsernameInput(sUiBot).click();
+        mActivity.getUsernameInput(mUiBot).click();
         sReplier.getNextFillRequest();
 
         // Assert not shown.
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
 
         // Trigger save.
         if (INJECT_EVENTS) {
-            mActivity.getUsernameInput(sUiBot).click();
+            mActivity.getUsernameInput(mUiBot).click();
             runShellCommand("input keyevent KEYCODE_U");
-            mActivity.getPasswordInput(sUiBot).click();
+            mActivity.getPasswordInput(mUiBot).click();
             runShellCommand("input keyevent KEYCODE_P");
         } else {
-            mActivity.getUsernameInput(sUiBot).setText("DUDE");
-            mActivity.getPasswordInput(sUiBot).setText("SWEET");
+            mActivity.getUsernameInput(mUiBot).setText("DUDE");
+            mActivity.getPasswordInput(mUiBot).setText("SWEET");
         }
-        mActivity.getLoginButton(sUiBot).click();
+        mActivity.getLoginButton(mUiBot).click();
 
         // Assert save UI shown.
-        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
 
         // Assert results
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
@@ -235,9 +235,9 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
                 .build());
 
         // Trigger autofill.
-        mActivity.getUsernameInput(sUiBot).click();
+        mActivity.getUsernameInput(mUiBot).click();
         final FillRequest fillRequest = sReplier.getNextFillRequest();
-        sUiBot.assertDatasets("The Dude");
+        mUiBot.assertDatasets("The Dude");
         final int usernameChildId = callback.assertUiShownEventForVirtualChild(myWebView);
 
         // Assert structure passed to service.
@@ -253,32 +253,32 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
         assertThat(passwordNode.isFocused()).isFalse();
 
         // Autofill it.
-        sUiBot.selectDataset("The Dude");
+        mUiBot.selectDataset("The Dude");
         myWebView.assertAutofilled();
         callback.assertUiHiddenEvent(myWebView, usernameChildId);
 
         // Make sure screen was autofilled.
-        assertThat(mActivity.getUsernameInput(sUiBot).getText()).isEqualTo("dude");
+        assertThat(mActivity.getUsernameInput(mUiBot).getText()).isEqualTo("dude");
         // TODO: proper way to verify text (which is ..... because it's a password) - ideally it
         // should call passwordInput.isPassword(), but that's not exposed
-        final String password = mActivity.getPasswordInput(sUiBot).getText();
+        final String password = mActivity.getPasswordInput(mUiBot).getText();
         assertThat(password).isNotEqualTo("sweet");
         assertThat(password).hasLength(5);
 
         // Now trigger save.
         if (INJECT_EVENTS) {
-            mActivity.getUsernameInput(sUiBot).click();
+            mActivity.getUsernameInput(mUiBot).click();
             runShellCommand("input keyevent KEYCODE_U");
-            mActivity.getPasswordInput(sUiBot).click();
+            mActivity.getPasswordInput(mUiBot).click();
             runShellCommand("input keyevent KEYCODE_P");
         } else {
-            mActivity.getUsernameInput(sUiBot).setText("DUDE");
-            mActivity.getPasswordInput(sUiBot).setText("SWEET");
+            mActivity.getUsernameInput(mUiBot).setText("DUDE");
+            mActivity.getPasswordInput(mUiBot).setText("SWEET");
         }
-        mActivity.getLoginButton(sUiBot).click();
+        mActivity.getLoginButton(mUiBot).click();
 
         // Assert save UI shown.
-        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
 
         // Assert results
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
@@ -327,9 +327,9 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
                 .build());
 
         // Trigger autofill.
-        mActivity.getUsernameInput(sUiBot).click();
+        mActivity.getUsernameInput(mUiBot).click();
         final FillRequest fillRequest = sReplier.getNextFillRequest();
-        sUiBot.assertDatasets("USER");
+        mUiBot.assertDatasets("USER");
         final int usernameChildId = callback.assertUiShownEventForVirtualChild(myWebView);
 
         // Assert structure passed to service.
@@ -355,21 +355,21 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
         // Move focus around to make sure UI is shown accordingly
         mActivity.runOnUiThread(() -> mActivity.mOutside1.requestFocus());
         callback.assertUiHiddenEvent(myWebView, usernameChildId);
-        sUiBot.assertDatasets("OUT1");
+        mUiBot.assertDatasets("OUT1");
         callback.assertUiShownEvent(mActivity.mOutside1);
 
-        mActivity.getPasswordInput(sUiBot).click();
+        mActivity.getPasswordInput(mUiBot).click();
         callback.assertUiHiddenEvent(mActivity.mOutside1);
-        sUiBot.assertDatasets("PASS");
+        mUiBot.assertDatasets("PASS");
         final int passwordChildId = callback.assertUiShownEventForVirtualChild(myWebView);
 
         mActivity.runOnUiThread(() -> mActivity.mOutside2.requestFocus());
         callback.assertUiHiddenEvent(myWebView, passwordChildId);
-        final UiObject2 datasetPicker = sUiBot.assertDatasets("OUT2");
+        final UiObject2 datasetPicker = mUiBot.assertDatasets("OUT2");
         callback.assertUiShownEvent(mActivity.mOutside2);
 
         // Autofill it.
-        sUiBot.selectDataset(datasetPicker, "OUT2");
+        mUiBot.selectDataset(datasetPicker, "OUT2");
         callback.assertUiHiddenEvent(mActivity.mOutside2);
 
         myWebView.assertAutofilled();
@@ -378,23 +378,23 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
 
         // Now trigger save.
         if (INJECT_EVENTS) {
-            mActivity.getUsernameInput(sUiBot).click();
+            mActivity.getUsernameInput(mUiBot).click();
             runShellCommand("input keyevent KEYCODE_U");
-            mActivity.getPasswordInput(sUiBot).click();
+            mActivity.getPasswordInput(mUiBot).click();
             runShellCommand("input keyevent KEYCODE_P");
         } else {
-            mActivity.getUsernameInput(sUiBot).setText("DUDE");
-            mActivity.getPasswordInput(sUiBot).setText("SWEET");
+            mActivity.getUsernameInput(mUiBot).setText("DUDE");
+            mActivity.getPasswordInput(mUiBot).setText("SWEET");
         }
         mActivity.runOnUiThread(() -> {
             mActivity.mOutside1.setText("DUDER");
             mActivity.mOutside2.setText("SWEETER");
         });
 
-        mActivity.getLoginButton(sUiBot).click();
+        mActivity.getLoginButton(mUiBot).click();
 
         // Assert save UI shown.
-        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
 
         // Assert results
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
@@ -449,13 +449,13 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
         // Trigger autofill.
         mActivity.runOnUiThread(() -> mActivity.mOutside1.requestFocus());
         final FillRequest fillRequest1 = sReplier.getNextFillRequest();
-        sUiBot.assertDatasets("OUT1");
+        mUiBot.assertDatasets("OUT1");
         callback.assertUiShownEvent(mActivity.mOutside1);
 
         // Move focus around to make sure UI is shown accordingly
         mActivity.runOnUiThread(() -> mActivity.mOutside2.requestFocus());
         callback.assertUiHiddenEvent(mActivity.mOutside1);
-        sUiBot.assertDatasets("OUT2");
+        mUiBot.assertDatasets("OUT2");
         callback.assertUiShownEvent(mActivity.mOutside2);
 
         // Assert structure passed to service.
@@ -482,31 +482,31 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
                 .build());
 
         // Trigger autofill.
-        mActivity.getUsernameInput(sUiBot).click();
+        mActivity.getUsernameInput(mUiBot).click();
         final FillRequest fillRequest2 = sReplier.getNextFillRequest();
         callback.assertUiHiddenEvent(mActivity.mOutside2);
-        sUiBot.assertDatasets("USER");
+        mUiBot.assertDatasets("USER");
         final int usernameChildId = callback.assertUiShownEventForVirtualChild(myWebView);
 
         // Move focus around to make sure UI is shown accordingly
         mActivity.runOnUiThread(() -> mActivity.mOutside1.requestFocus());
         callback.assertUiHiddenEvent(myWebView, usernameChildId);
-        sUiBot.assertDatasets("OUT1");
+        mUiBot.assertDatasets("OUT1");
         callback.assertUiShownEvent(mActivity.mOutside1);
 
         mActivity.runOnUiThread(() -> mActivity.mOutside2.requestFocus());
         callback.assertUiHiddenEvent(mActivity.mOutside1);
-        sUiBot.assertDatasets("OUT2");
+        mUiBot.assertDatasets("OUT2");
         callback.assertUiShownEvent(mActivity.mOutside2);
 
-        mActivity.getPasswordInput(sUiBot).click();
+        mActivity.getPasswordInput(mUiBot).click();
         callback.assertUiHiddenEvent(mActivity.mOutside2);
-        sUiBot.assertDatasets("PASS");
+        mUiBot.assertDatasets("PASS");
         final int passwordChildId = callback.assertUiShownEventForVirtualChild(myWebView);
 
         mActivity.runOnUiThread(() -> mActivity.mOutside2.requestFocus());
         callback.assertUiHiddenEvent(myWebView, passwordChildId);
-        final UiObject2 datasetPicker = sUiBot.assertDatasets("OUT2");
+        final UiObject2 datasetPicker = mUiBot.assertDatasets("OUT2");
         callback.assertUiShownEvent(mActivity.mOutside2);
 
         // Assert structure passed to service.
@@ -523,36 +523,36 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
         assertThat(passwordFillNode.isFocused()).isFalse();
 
         // Autofill external views (2nd partition)
-        sUiBot.selectDataset(datasetPicker, "OUT2");
+        mUiBot.selectDataset(datasetPicker, "OUT2");
         callback.assertUiHiddenEvent(mActivity.mOutside2);
         outside1Watcher.assertAutoFilled();
         outside2Watcher.assertAutoFilled();
 
         // Autofill Webview (1st partition)
-        mActivity.getUsernameInput(sUiBot).click();
+        mActivity.getUsernameInput(mUiBot).click();
         callback.assertUiShownEventForVirtualChild(myWebView);
-        sUiBot.selectDataset("USER");
+        mUiBot.selectDataset("USER");
         myWebView.assertAutofilled();
 
         // Now trigger save.
         if (INJECT_EVENTS) {
-            mActivity.getUsernameInput(sUiBot).click();
+            mActivity.getUsernameInput(mUiBot).click();
             runShellCommand("input keyevent KEYCODE_U");
-            mActivity.getPasswordInput(sUiBot).click();
+            mActivity.getPasswordInput(mUiBot).click();
             runShellCommand("input keyevent KEYCODE_P");
         } else {
-            mActivity.getUsernameInput(sUiBot).setText("DUDE");
-            mActivity.getPasswordInput(sUiBot).setText("SWEET");
+            mActivity.getUsernameInput(mUiBot).setText("DUDE");
+            mActivity.getPasswordInput(mUiBot).setText("SWEET");
         }
         mActivity.runOnUiThread(() -> {
             mActivity.mOutside1.setText("DUDER");
             mActivity.mOutside2.setText("SWEETER");
         });
 
-        mActivity.getLoginButton(sUiBot).click();
+        mActivity.getLoginButton(mUiBot).click();
 
         // Assert save UI shown.
-        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
 
         // Assert results
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();

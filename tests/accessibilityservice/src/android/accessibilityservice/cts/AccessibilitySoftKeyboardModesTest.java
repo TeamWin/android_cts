@@ -16,6 +16,7 @@ package android.accessibilityservice.cts;
 
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.AccessibilityService.SoftKeyboardController;
+import android.accessibilityservice.cts.activities.AccessibilityTestActivity;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
