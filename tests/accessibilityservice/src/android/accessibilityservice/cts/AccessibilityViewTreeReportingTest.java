@@ -15,6 +15,7 @@
 package android.accessibilityservice.cts;
 
 import android.accessibilityservice.AccessibilityServiceInfo;
+import android.accessibilityservice.cts.activities.AccessibilityViewTreeReportingActivity;
 import android.app.UiAutomation;
 import android.content.Context;
 import android.test.suitebuilder.annotation.MediumTest;

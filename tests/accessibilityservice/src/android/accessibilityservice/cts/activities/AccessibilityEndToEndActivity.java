@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.accessibilityservice.cts;
+package android.accessibilityservice.cts.activities;
 
 import android.accessibilityservice.cts.R;
 
@@ -70,7 +70,7 @@ public class AccessibilityEndToEndActivity extends AccessibilityTestActivity {
         listView.setAdapter(listAdapter);
     }
 
-    void setReportedPackageName(String packageName) {
+    public void setReportedPackageName(String packageName) {
         if (packageName != null) {
             mPackageNameInjector = new PackageNameInjector(packageName);
         } else {

@@ -12,7 +12,7 @@
  * limitations under the License.
  */
 
-package android.accessibilityservice.cts;
+package android.accessibilityservice.cts.activities;
 
 import android.os.Bundle;
 
