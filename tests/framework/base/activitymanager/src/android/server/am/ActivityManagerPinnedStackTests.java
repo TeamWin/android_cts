@@ -841,7 +841,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         assumeTrue(supportsPip());
 
         // Slow down the transition animations for this test
-        setTransitionAnimationScale(20);
+        setWindowTransitionAnimationDurationScale(20);
 
         // Launch a PiP activity
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
@@ -867,7 +867,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         assertTrue(lifecycleCounts.mMultiWindowModeChangedCount == 1);
 
         // Reset the animation scale
-        setTransitionAnimationScale(1);
+        setWindowTransitionAnimationDurationScale(1);
     }
 
     @Presubmit
