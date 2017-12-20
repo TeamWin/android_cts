@@ -369,7 +369,6 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         final RunningAppProcessInfo ra = new RunningAppProcessInfo();
         ActivityManager.getMyMemoryState(ra);
 
-        assertEquals(mContext.getApplicationInfo().processName, ra.processName);
         assertEquals(android.os.Process.myUid(), ra.uid);
 
         // When an instrumentation test is running, the importance is high.
