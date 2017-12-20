@@ -48,9 +48,9 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
 
     private static final int STATE_TIME_TOP_INDEX = 4;
     private static final int STATE_TIME_FOREGROUND_SERVICE_INDEX = 5;
-    private static final int STATE_TIME_FOREGROUND_INDEX = 7;
-    private static final int STATE_TIME_BACKGROUND_INDEX = 8;
-    private static final int STATE_TIME_CACHED_INDEX = 9;
+    private static final int STATE_TIME_FOREGROUND_INDEX = 6;
+    private static final int STATE_TIME_BACKGROUND_INDEX = 7;
+    private static final int STATE_TIME_CACHED_INDEX = 10;
 
     private static final long TIME_SPENT_IN_TOP = 2000;
     private static final long TIME_SPENT_IN_FOREGROUND = 2000;
@@ -267,7 +267,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
                 } else if (keyguardStateLines && line.contains("showing=")) {
                     screenAwake &= line.trim().endsWith("false");
                 } else if (keyguardStateLines && line.contains("screenState=")) {
-                    screenAwake &= line.trim().endsWith("2");
+                    screenAwake &= line.trim().endsWith("SCREEN_STATE_ON");
                 }
             }
             Thread.sleep(SCREEN_STATE_POLLING_INTERVAL);
