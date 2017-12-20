@@ -265,6 +265,34 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(uri, restoredPerson.getUri());
     }
 
+    public void testNotification_MessagingStyle_people() {
+        String name = "name";
+        String key = "key";
+        String uri = "name:name";
+        Notification.Person user = new Notification.Person()
+                .setName(name)
+                .setIcon(Icon.createWithResource(mContext, 1))
+                .setKey(key)
+                .setUri(uri);
+        Notification.Person participant = new Notification.Person().setName("sender");
+        Notification.MessagingStyle messagingStyle = new Notification.MessagingStyle(user)
+                .addMessage("text", 0, participant)
+                .addMessage(new Message("text 2", 0, participant));
+        mNotification = new Notification.Builder(mContext, CHANNEL.getId())
+                .setSmallIcon(1)
+                .setStyle(messagingStyle)
+                .build();
+
+        Notification.Person restoredPerson = mNotification.extras.getParcelable(
+                Notification.EXTRA_MESSAGING_PERSON);
+        assertNotNull(restoredPerson);
+        assertNotNull(restoredPerson.getIcon());
+        assertEquals(name, restoredPerson.getName());
+        assertEquals(key, restoredPerson.getKey());
+        assertEquals(uri, restoredPerson.getUri());
+        assertNotNull(mNotification.extras.getParcelableArray(Notification.EXTRA_MESSAGES));
+    }
+
 
     public void testMessagingStyle_historicMessages() {
         mNotification = new Notification.Builder(mContext, CHANNEL.getId())
