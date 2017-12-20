@@ -21,7 +21,11 @@
 
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.DynamicConfigPusher">
         <option name="target" value="host" />
-        <option name="config-filename" value="cts"/>
+        <!-- the name under which to find the configuration -->
+        <option name="config-filename" value="cts" />
+        <option name="extract-from-resource" value="true" />
+        <!-- the name of the resource inside the jar -->
+        <option name="dynamic-resource-name" value="cts-tradefed" />
     </target_preparer>
 
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.StayAwakePreparer" />
