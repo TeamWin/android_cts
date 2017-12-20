@@ -24,11 +24,15 @@ import android.app.PendingIntent;
 import android.app.RemoteInput;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
+import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Parcel;
 import android.test.AndroidTestCase;
 import android.widget.RemoteViews;
+
+import java.util.ArrayList;
 
 public class NotificationTest extends AndroidTestCase {
     private static final String TEXT_RESULT_KEY = "text";
@@ -234,6 +238,33 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(actionIntent, mAction.actionIntent);
         assertEquals(true, mAction.getAllowGeneratedReplies());
     }
+
+    public void testNotification_addPerson() {
+        String name = "name";
+        String key = "key";
+        String uri = "name:name";
+        Notification.Person person = new Notification.Person()
+                .setName(name)
+                .setIcon(Icon.createWithResource(mContext, 1))
+                .setKey(key)
+                .setUri(uri);
+        mNotification = new Notification.Builder(mContext, CHANNEL.getId())
+                .setSmallIcon(1)
+                .setContentTitle(CONTENT_TITLE)
+                .addPerson(person)
+                .build();
+
+        ArrayList<Notification.Person> restoredPeople = mNotification.extras.getParcelableArrayList(
+                Notification.EXTRA_PEOPLE_LIST);
+        assertNotNull(restoredPeople);
+        Notification.Person restoredPerson = restoredPeople.get(0);
+        assertNotNull(restoredPerson);
+        assertNotNull(restoredPerson.getIcon());
+        assertEquals(name, restoredPerson.getName());
+        assertEquals(key, restoredPerson.getKey());
+        assertEquals(uri, restoredPerson.getUri());
+    }
+
 
     public void testMessagingStyle_historicMessages() {
         mNotification = new Notification.Builder(mContext, CHANNEL.getId())
