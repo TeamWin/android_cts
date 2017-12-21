@@ -18,7 +18,9 @@ package android.server.am;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
+import static android.view.Surface.ROTATION_90;
 import static android.view.WindowManager.LayoutParams.TYPE_WALLPAPER;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -284,16 +286,18 @@ public class KeyguardTests extends KeyguardTestBase {
         mAmWmState.waitForKeyguardShowingAndNotOccluded();
         mAmWmState.assertKeyguardShowingAndNotOccluded();
         executeShellCommand(getAmStartCmd("ShowWhenLockedActivity"));
-        mAmWmState.computeState(new WaitForValidActivityState.Builder("ShowWhenLockedActivity").build());
+        mAmWmState.computeState(new WaitForValidActivityState("ShowWhenLockedActivity"));
         mAmWmState.assertVisibility("ShowWhenLockedActivity", true);
-        setDeviceRotation(1);
-        pressHomeButton();
-        mAmWmState.waitForKeyguardShowingAndNotOccluded();
-        mAmWmState.waitForDisplayUnfrozen();
-        mAmWmState.assertSanity();
-        mAmWmState.assertHomeActivityVisible(false);
-        mAmWmState.assertKeyguardShowingAndNotOccluded();
-        mAmWmState.assertVisibility("ShowWhenLockedActivity", false);
+        try (final RotationSession rotationSession = new RotationSession()) {
+            rotationSession.set(ROTATION_90);
+            pressHomeButton();
+            mAmWmState.waitForKeyguardShowingAndNotOccluded();
+            mAmWmState.waitForDisplayUnfrozen();
+            mAmWmState.assertSanity();
+            mAmWmState.assertHomeActivityVisible(false);
+            mAmWmState.assertKeyguardShowingAndNotOccluded();
+            mAmWmState.assertVisibility("ShowWhenLockedActivity", false);
+        }
     }
 
     private void assertWallpaperShowing() {

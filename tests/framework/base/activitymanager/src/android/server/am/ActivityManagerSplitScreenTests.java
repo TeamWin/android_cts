@@ -27,6 +27,10 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMAR
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.server.am.WindowManagerState.TRANSIT_WALLPAPER_OPEN;
+import static android.view.Surface.ROTATION_0;
+import static android.view.Surface.ROTATION_180;
+import static android.view.Surface.ROTATION_270;
+import static android.view.Surface.ROTATION_90;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -348,22 +352,24 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
         // Each time we compute the state we implicitly assert valid bounds.
         String[] waitForActivitiesVisible =
             new String[] {LAUNCHING_ACTIVITY, TEST_ACTIVITY_NAME};
-        for (int i = 0; i < 4; i++) {
-            setDeviceRotation(i);
+        try (final RotationSession rotationSession = new RotationSession()) {
+            for (int i = 0; i < 4; i++) {
+                rotationSession.set(i);
+                mAmWmState.computeState(waitForActivitiesVisible);
+            }
+            // Double steps (180°) We ended the single step at 3. So, we jump directly to 1 for
+            // double step. So, we are testing 3-1-3 for one side and 0-2-0 for the other side.
+            rotationSession.set(ROTATION_90);
+            mAmWmState.computeState(waitForActivitiesVisible);
+            rotationSession.set(ROTATION_270);
+            mAmWmState.computeState(waitForActivitiesVisible);
+            rotationSession.set(ROTATION_0);
+            mAmWmState.computeState(waitForActivitiesVisible);
+            rotationSession.set(ROTATION_180);
+            mAmWmState.computeState(waitForActivitiesVisible);
+            rotationSession.set(ROTATION_0);
             mAmWmState.computeState(waitForActivitiesVisible);
         }
-        // Double steps (180°) We ended the single step at 3. So, we jump directly to 1 for double
-        // step. So, we are testing 3-1-3 for one side and 0-2-0 for the other side.
-        setDeviceRotation(1);
-        mAmWmState.computeState(waitForActivitiesVisible);
-        setDeviceRotation(3);
-        mAmWmState.computeState(waitForActivitiesVisible);
-        setDeviceRotation(0);
-        mAmWmState.computeState(waitForActivitiesVisible);
-        setDeviceRotation(2);
-        mAmWmState.computeState(waitForActivitiesVisible);
-        setDeviceRotation(0);
-        mAmWmState.computeState(waitForActivitiesVisible);
     }
 
     @Test
@@ -377,27 +383,31 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
                 WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
 
         String[] waitForActivitiesVisible =
-            new String[] {LAUNCHING_ACTIVITY, TEST_ACTIVITY_NAME};
-        for (int i = 0; i < 4; i++) {
-            sleepDevice();
-            setDeviceRotation(i);
-            wakeUpAndUnlockDevice();
-            mAmWmState.computeState(waitForActivitiesVisible);
+                new String[] {LAUNCHING_ACTIVITY, TEST_ACTIVITY_NAME};
+        try (final RotationSession rotationSession = new RotationSession()) {
+            for (int i = 0; i < 4; i++) {
+                sleepDevice();
+                rotationSession.set(i);
+                wakeUpAndUnlockDevice();
+                mAmWmState.computeState(waitForActivitiesVisible);
+            }
         }
     }
 
     @Test
     public void testMinimizedFromEachDockedSide() throws Exception {
-        for (int i = 0; i < 2; i++) {
-            setDeviceRotation(i);
-            launchActivityInDockStackAndMinimize(TEST_ACTIVITY_NAME);
-            if (!mAmWmState.isScreenPortrait() && isTablet()) {
-                // Test minimize to the right only on tablets in landscape
+        try (final RotationSession rotationSession = new RotationSession()) {
+            for (int i = 0; i < 2; i++) {
+                rotationSession.set(i);
+                launchActivityInDockStackAndMinimize(TEST_ACTIVITY_NAME);
+                if (!mAmWmState.isScreenPortrait() && isTablet()) {
+                    // Test minimize to the right only on tablets in landscape
+                    removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
+                    launchActivityInDockStackAndMinimize(TEST_ACTIVITY_NAME,
+                            SPLIT_SCREEN_CREATE_MODE_BOTTOM_OR_RIGHT);
+                }
                 removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
-                launchActivityInDockStackAndMinimize(TEST_ACTIVITY_NAME,
-                        SPLIT_SCREEN_CREATE_MODE_BOTTOM_OR_RIGHT);
             }
-            removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
         }
     }
 
@@ -409,50 +419,55 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
         // Rotate device single steps (90°) 0-1-2-3.
         // Each time we compute the state we implicitly assert valid bounds in minimized mode.
         String[] waitForActivitiesVisible = new String[] {TEST_ACTIVITY_NAME};
-        for (int i = 0; i < 4; i++) {
-            setDeviceRotation(i);
+        try (final RotationSession rotationSession = new RotationSession()) {
+            for (int i = 0; i < 4; i++) {
+                rotationSession.set(i);
+                mAmWmState.computeState(waitForActivitiesVisible);
+            }
+
+            // Double steps (180°) We ended the single step at 3. So, we jump directly to 1 for
+            // double step. So, we are testing 3-1-3 for one side and 0-2-0 for the other side in
+            // minimized mode.
+            rotationSession.set(ROTATION_90);
+            mAmWmState.computeState(waitForActivitiesVisible);
+            rotationSession.set(ROTATION_270);
+            mAmWmState.computeState(waitForActivitiesVisible);
+            rotationSession.set(ROTATION_0);
+            mAmWmState.computeState(waitForActivitiesVisible);
+            rotationSession.set(ROTATION_180);
+            mAmWmState.computeState(waitForActivitiesVisible);
+            rotationSession.set(ROTATION_0);
             mAmWmState.computeState(waitForActivitiesVisible);
         }
-
-        // Double steps (180°) We ended the single step at 3. So, we jump directly to 1 for double
-        // step. So, we are testing 3-1-3 for one side and 0-2-0 for the other side in minimized
-        // mode.
-        setDeviceRotation(1);
-        mAmWmState.computeState(waitForActivitiesVisible);
-        setDeviceRotation(3);
-        mAmWmState.computeState(waitForActivitiesVisible);
-        setDeviceRotation(0);
-        mAmWmState.computeState(waitForActivitiesVisible);
-        setDeviceRotation(2);
-        mAmWmState.computeState(waitForActivitiesVisible);
-        setDeviceRotation(0);
-        mAmWmState.computeState(waitForActivitiesVisible);
     }
 
     @Test
     public void testMinimizeAndUnminimizeThenGoingHome() throws Exception {
         // Rotate the screen to check that minimize, unminimize, dismiss the docked stack and then
         // going home has the correct app transition
-        for (int i = 0; i < 4; i++) {
-            setDeviceRotation(i);
-            launchActivityInDockStackAndMinimize(DOCKED_ACTIVITY_NAME);
+        try (final RotationSession rotationSession = new RotationSession()) {
+            for (int i = 0; i < 4; i++) {
+                rotationSession.set(i);
+                launchActivityInDockStackAndMinimize(DOCKED_ACTIVITY_NAME);
 
-            // Unminimize the docked stack
-            pressAppSwitchButton();
-            waitForDockNotMinimized();
-            assertDockNotMinimized();
+                // Unminimize the docked stack
+                pressAppSwitchButton();
+                waitForDockNotMinimized();
+                assertDockNotMinimized();
 
-            // Dismiss the dock stack
-            launchActivity(TEST_ACTIVITY_NAME, WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
-            setActivityTaskWindowingMode(DOCKED_ACTIVITY_NAME,
-                    WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
-            mAmWmState.computeState(new String[]{DOCKED_ACTIVITY_NAME});
+                // Dismiss the dock stack
+                launchActivity(TEST_ACTIVITY_NAME,
+                        WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
+                setActivityTaskWindowingMode(DOCKED_ACTIVITY_NAME,
+                        WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
+                mAmWmState.computeState(new String[]{DOCKED_ACTIVITY_NAME});
 
-            // Go home and check the app transition
-            assertNotSame(TRANSIT_WALLPAPER_OPEN, mAmWmState.getWmState().getLastTransition());
-            pressHomeButton();
-            mAmWmState.computeState();
-            assertEquals(TRANSIT_WALLPAPER_OPEN, mAmWmState.getWmState().getLastTransition());
+                // Go home and check the app transition
+                assertNotSame(TRANSIT_WALLPAPER_OPEN, mAmWmState.getWmState().getLastTransition());
+                pressHomeButton();
+                mAmWmState.computeState();
+                assertEquals(TRANSIT_WALLPAPER_OPEN, mAmWmState.getWmState().getLastTransition());
+            }
         }
     }
 
