@@ -19,7 +19,9 @@ package com.android.cts.devicepolicy;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -52,6 +54,9 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     private static final String TEST_APP_APK = "CtsEmptyTestApp.apk";
     private static final String TEST_APP_PKG = "android.packageinstaller.emptytestapp.cts";
     private static final String TEST_APP_LOCATION = "/data/local/tmp/cts/packageinstaller/";
+
+    private static final String ARG_BATCH_NUMBER = "batchNumber";
+    private static final int BUFFER_ENTRIES_NOTIFICATION_LEVEL = 1024;
 
     /** Forcing ephemeral users is implemented and supported on the device. */
     private boolean mHasForceEphemeralUserFeature;
@@ -287,7 +292,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     public void testCreateAndManageUser_StartUserInBackground() throws Exception {
         if (mHasFeature && canCreateAdditionalUsers(1)) {
             executeDeviceTestMethod(".CreateAndManageUserTest",
-                    "testCreateAndManageUser_StartUserInBackground");
+                "testCreateAndManageUser_StartUserInBackground");
         }
     }
 
@@ -324,18 +329,77 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         }
         executeDeviceTestMethod(".SecurityLoggingTest",
                 "testRetrievingSecurityLogsNotPossibleImmediatelyAfterPreviousSuccessfulRetrieval");
+        executeDeviceTestMethod(".SecurityLoggingTest", "testDisablingSecurityLogging");
         try {
             executeDeviceTestMethod(".SecurityLoggingTest", "testEnablingSecurityLogging");
-            rebootAndWaitUntilReady();
-            // Sleep for ~1 minute so that SecurityLogMonitor fetches the security events. This is
-            // an implementation detail we shouldn't rely on but there is no other way to do it
-            // currently.
-            Thread.sleep(TimeUnit.SECONDS.toMillis(70));
-            executeDeviceTestMethod(".SecurityLoggingTest", "testGetSecurityLogs");
+
+            // Generate more than enough events for a batch of security events.
+            runBatch(0, BUFFER_ENTRIES_NOTIFICATION_LEVEL + 100 /* batch size */);
         } finally {
             // Always attempt to disable security logging to bring the device to initial state.
             executeDeviceTestMethod(".SecurityLoggingTest", "testDisablingSecurityLogging");
         }
+    }
+
+    public void testSecurityLogging_multipleBatches() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        // Generate more than enough events for a batch of security events.
+        int batchSize = BUFFER_ENTRIES_NOTIFICATION_LEVEL + 100;
+        try {
+            // Prepare the device.
+            executeDeviceTestMethod(".SecurityLoggingTest", "testEnablingSecurityLogging");
+
+            // First batch: retrieve and verify the events.
+            runBatch(0, batchSize);
+
+            // Second batch: retrieve and verify the events.
+            runBatch(1, batchSize);
+        } finally {
+            // Always attempt to disable security logging to bring the device to initial state.
+            executeDeviceTestMethod(".SecurityLoggingTest", "testDisablingSecurityLogging");
+        }
+    }
+
+    public void testSecurityLogging_rebootResetsId() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        // Generate more than enough events for a batch of security events.
+        int batchSize = BUFFER_ENTRIES_NOTIFICATION_LEVEL + 100;
+        try {
+            // Prepare the device.
+            executeDeviceTestMethod(".SecurityLoggingTest", "testEnablingSecurityLogging");
+
+            // First batch: retrieve and verify the events.
+            runBatch(0 /* batch number */, batchSize);
+
+            // Reboot the device, so the security event IDs are re-set.
+            rebootAndWaitUntilReady();
+
+            // First batch after reboot: retrieve and verify the events.
+            runBatch(0 /* batch number */, batchSize);
+        } finally {
+            // Always attempt to disable security logging to bring the device to initial state.
+            executeDeviceTestMethod(".SecurityLoggingTest", "testDisablingSecurityLogging");
+        }
+    }
+
+    private void runBatch(int batchNumber, int batchSize) throws Exception {
+        // Trigger security events of type TAG_ADB_SHELL_CMD.
+        for (int i = 0; i < batchSize; i++) {
+            getDevice().executeShellCommand("adb shell echo just_testing_" + i);
+        }
+
+        // Sleep for ~1 minute so that SecurityLogMonitor fetches the security events. This is
+        // an implementation detail we shouldn't rely on but there is no other way to do it
+        // currently.
+        Thread.sleep(TimeUnit.SECONDS.toMillis(70));
+
+        // Verify the contents of the batch.
+        executeDeviceTestMethod(".SecurityLoggingTest", "testGetSecurityLogs",
+                Collections.singletonMap(ARG_BATCH_NUMBER, Integer.toString(batchNumber)));
     }
 
     public void testNetworkLoggingWithTwoUsers() throws Exception {
@@ -505,16 +569,18 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
 
     // Execute HardwarePropertiesManagerTest as a device owner.
     public void testHardwarePropertiesManagerAsDeviceOwner() throws Exception {
-        if (!mHasFeature)
+        if (!mHasFeature) {
             return;
+        }
 
         executeDeviceTestMethod(".HardwarePropertiesManagerTest", "testHardwarePropertiesManager");
     }
 
     // Execute VrTemperatureTest as a device owner.
     public void testVrTemperaturesAsDeviceOwner() throws Exception {
-        if (!mHasFeature)
+        if (!mHasFeature) {
             return;
+        }
 
         executeDeviceTestMethod(".VrTemperatureTest", "testVrTemperatures");
     }
@@ -721,5 +787,14 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         runDeviceTestsAsUser(
                 DEVICE_OWNER_PKG, ".AffiliationTest", "testSetAffiliationId1", userId);
         return userId;
+    }
+
+    private void executeDeviceTestMethod(String className, String testName,
+            Map<String, String> params) throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(DEVICE_OWNER_PKG, className, testName,
+                /* deviceOwnerUserId */ mPrimaryUserId, params);
     }
 }
