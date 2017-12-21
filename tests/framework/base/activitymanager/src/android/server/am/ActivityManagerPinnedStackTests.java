@@ -672,6 +672,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME);
     }
 
+    // TODO(b/70906499): Flaky, add back to presubmit.
+    @FlakyTest
     @Presubmit
     @Test
     public void testMovePipToBackWithVisibleFullscreenStack() throws Exception {
