@@ -18,6 +18,7 @@ package android.autofillservice.cts;
 
 import static android.autofillservice.cts.InstrumentedAutoFillService.SERVICE_NAME;
 import static android.autofillservice.cts.UiBot.PORTRAIT;
+import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
 import static android.provider.Settings.Secure.AUTOFILL_SERVICE;
 import static android.provider.Settings.Secure.USER_SETUP_COMPLETE;
 import static android.service.autofill.FillEventHistory.Event.TYPE_AUTHENTICATION_SELECTED;
@@ -32,6 +33,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.app.assist.AssistStructure;
 import android.app.assist.AssistStructure.ViewNode;
 import android.app.assist.AssistStructure.WindowNode;
+import android.autofillservice.cts.common.SettingsHelper;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -53,8 +55,6 @@ import android.view.autofill.AutofillId;
 import android.view.autofill.AutofillValue;
 import android.webkit.WebView;
 
-import com.android.compatibility.common.util.SystemUtil;
-
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
@@ -66,7 +66,7 @@ import java.util.function.Function;
  */
 final class Helper {
 
-    private static final String TAG = "AutoFillCtsHelper";
+    static final String TAG = "AutoFillCtsHelper";
 
     static final boolean VERBOSE = false;
 
@@ -128,21 +128,6 @@ final class Helper {
     };
 
     /**
-     * Runs a Shell command, returning a trimmed response.
-     */
-    static String runShellCommand(String template, Object...args) {
-        final String command = String.format(template, args);
-        Log.d(TAG, "runShellCommand(): " + command);
-        try {
-            final String result = SystemUtil
-                    .runShellCommand(InstrumentationRegistry.getInstrumentation(), command);
-            return TextUtils.isEmpty(result) ? "" : result.trim();
-        } catch (Exception e) {
-            throw new RuntimeException("Command '" + command + "' failed: ", e);
-        }
-    }
-
-    /**
      * Dump the assist structure on logcat.
      */
     static void dumpStructure(String message, AssistStructure structure) {
@@ -177,32 +162,7 @@ final class Helper {
      * Sets whether the user completed the initial setup.
      */
     static void setUserComplete(Context context, boolean complete) {
-        if (isUserComplete() == complete) return;
-
-        final OneTimeSettingsListener observer = new OneTimeSettingsListener(context,
-                USER_SETUP_COMPLETE);
-        final String newValue = complete ? "1" : null;
-        runShellCommand("settings put secure %s %s default", USER_SETUP_COMPLETE, newValue);
-        observer.assertCalled();
-
-        assertIsUserComplete(complete);
-    }
-
-    /**
-     * Gets whether the user completed the initial setup.
-     */
-    static boolean isUserComplete() {
-        final String isIt = runShellCommand("settings get secure %s", USER_SETUP_COMPLETE);
-        return "1".equals(isIt);
-    }
-
-    /**
-     * Assets that user completed (or not) the initial setup.
-     */
-    static void assertIsUserComplete(boolean expected) {
-        final boolean actual = isUserComplete();
-        assertWithMessage("Invalid value for secure setting %s", USER_SETUP_COMPLETE)
-                .that(actual).isEqualTo(expected);
+        SettingsHelper.syncSet(context, USER_SETUP_COMPLETE, complete ? "1" : null);
     }
 
     private static void dump(StringBuffer buffer, ViewNode node, String prefix, int childId) {
@@ -726,58 +686,40 @@ final class Helper {
      * Uses Settings to enable the given autofill service for the default user, and checks the
      * value was properly check, throwing an exception if it was not.
      */
-    public static void enableAutofillService(Context context, String serviceName) {
+    public static void enableAutofillService(@NonNull Context context,
+            @NonNull String serviceName) {
         if (isAutofillServiceEnabled(serviceName)) return;
 
-        final OneTimeSettingsListener observer = new OneTimeSettingsListener(context,
-                AUTOFILL_SERVICE);
-        setAutofillServiceOnSettings(serviceName);
-        observer.assertCalled();
-        assertAutofillServiceStatus(serviceName, true);
+        SettingsHelper.syncSet(context, AUTOFILL_SERVICE, serviceName);
     }
 
     /**
      * Uses Settings to disable the given autofill service for the default user, and checks the
      * value was properly check, throwing an exception if it was not.
      */
-    public static void disableAutofillService(Context context, String serviceName) {
+    public static void disableAutofillService(@NonNull Context context,
+            @NonNull String serviceName) {
         if (!isAutofillServiceEnabled(serviceName)) return;
 
-        final OneTimeSettingsListener observer = new OneTimeSettingsListener(context,
-                AUTOFILL_SERVICE);
-        resetAutofillServiceOnSettings();
-        observer.assertCalled();
-        assertAutofillServiceStatus(serviceName, false);
+        SettingsHelper.syncDelete(context, AUTOFILL_SERVICE);
     }
 
     /**
      * Checks whether the given service is set as the autofill service for the default user.
      */
-    public static boolean isAutofillServiceEnabled(String serviceName) {
-        final String actualName = getAutofillServiceFromSettings();
+    private static boolean isAutofillServiceEnabled(@NonNull String serviceName) {
+        final String actualName = SettingsHelper.get(AUTOFILL_SERVICE);
         return serviceName.equals(actualName);
     }
 
     /**
      * Asserts whether the given service is enabled as the autofill service for the default user.
      */
-    public static void assertAutofillServiceStatus(String serviceName, boolean enabled) {
-        final String actual = getAutofillServiceFromSettings();
+    public static void assertAutofillServiceStatus(@NonNull String serviceName, boolean enabled) {
+        final String actual = SettingsHelper.get(AUTOFILL_SERVICE);
         final String expected = enabled ? serviceName : "null";
         assertWithMessage("Invalid value for secure setting %s", AUTOFILL_SERVICE)
                 .that(actual).isEqualTo(expected);
-    }
-
-    public static String getAutofillServiceFromSettings() {
-        return runShellCommand("settings get secure %s", AUTOFILL_SERVICE);
-    }
-
-    public static void setAutofillServiceOnSettings(String serviceName) {
-        runShellCommand("settings put secure %s %s default", AUTOFILL_SERVICE, serviceName);
-    }
-
-    public static void resetAutofillServiceOnSettings() {
-        runShellCommand("settings delete secure %s", AUTOFILL_SERVICE);
     }
 
     /**

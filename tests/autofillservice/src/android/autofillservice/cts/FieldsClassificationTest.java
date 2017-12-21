@@ -17,12 +17,12 @@ package android.autofillservice.cts;
 
 import static android.autofillservice.cts.Helper.assertFillEventForContextCommitted;
 import static android.autofillservice.cts.Helper.assertFillEventForFieldsClassification;
-import static android.autofillservice.cts.Helper.runShellCommand;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.autofillservice.cts.Helper.FieldClassificationResult;
+import android.autofillservice.cts.common.SettingsStateChangerRule;
 import android.provider.Settings;
 import android.service.autofill.EditDistanceScorer;
 import android.service.autofill.FillEventHistory;
@@ -32,7 +32,6 @@ import android.service.autofill.UserData;
 import android.view.autofill.AutofillId;
 import android.widget.EditText;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -45,46 +44,18 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
     public final AutofillActivityTestRule<GridActivity> mActivityRule =
             new AutofillActivityTestRule<GridActivity>(GridActivity.class);
 
+    @Rule
+    public final SettingsStateChangerRule mFeatureEnabler = new SettingsStateChangerRule(mContext,
+            Settings.Secure.AUTOFILL_FEATURE_FIELD_CLASSIFICATION, "1");
+    // TODO(b/70407264): set userdata constraints as well - need to mark then as TestApi first
+
     private final Scorer mScorer = EditDistanceScorer.getInstance();
 
     private GridActivity mActivity;
 
-    // TODO(b/70407264): set userdata constraints as well to avoid failures if setchanged
-    // externally
-    private int mEnabledBefore;
-
     @Before
     public void setActivity() {
         mActivity = mActivityRule.getActivity();
-    }
-
-    @Before
-    public void enableFeature() {
-        mEnabledBefore = Settings.Secure.getInt(
-                mContext.getContentResolver(),
-                Settings.Secure.AUTOFILL_FEATURE_FIELD_CLASSIFICATION, 0);
-        if (mEnabledBefore == 1) {
-            // Already enabled, ignore.
-            return;
-        }
-        final OneTimeSettingsListener observer = new OneTimeSettingsListener(mContext,
-                Settings.Secure.AUTOFILL_FEATURE_FIELD_CLASSIFICATION);
-        runShellCommand("settings put secure %s %s default",
-                Settings.Secure.AUTOFILL_FEATURE_FIELD_CLASSIFICATION, 1);
-        observer.assertCalled();
-    }
-
-    @After
-    public void restoreFeatureStatus() {
-        if (mEnabledBefore == 1) {
-            // Already enabled, ignore.
-            return;
-        }
-        final OneTimeSettingsListener observer = new OneTimeSettingsListener(mContext,
-                Settings.Secure.AUTOFILL_FEATURE_FIELD_CLASSIFICATION);
-        runShellCommand("settings put secure %s %s default",
-                Settings.Secure.AUTOFILL_FEATURE_FIELD_CLASSIFICATION, mEnabledBefore);
-        observer.assertCalled();
     }
 
     @Test

@@ -23,10 +23,10 @@ import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.Helper.getContext;
 import static android.autofillservice.cts.Helper.getOutOfProcessPid;
-import static android.autofillservice.cts.Helper.runShellCommand;
 import static android.autofillservice.cts.OutOfProcessLoginActivity.getStoppedMarker;
 import static android.autofillservice.cts.UiBot.LANDSCAPE;
 import static android.autofillservice.cts.UiBot.PORTRAIT;
+import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 
 import static com.google.common.truth.Truth.assertThat;
