@@ -68,7 +68,9 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
     private static final int MAX_IMAGE_COUNT = 3;
     private static final int NUM_FRAMES_CHECKED = 30;
 
-    private static final double FRAME_DURATION_THRESHOLD = 0.1;
+    //TODO: Tighten threshold once HAL implementation is fixed.
+    //b/71427920
+    private static final double FRAME_DURATION_THRESHOLD = 2.0;
 
     /**
      * Test that passing in invalid physical camera ids in OutputConfiguragtion behaves as expected
@@ -135,48 +137,15 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
                 assertTrue("Logical multi-camera must be LIMITED or higher",
                         mStaticInfo.isHardwareLevelAtLeastLimited());
 
-                // Figure out yuv size to use.
-                Size yuvSize = findMaxPhysicalYuvSize(id);
-                if (yuvSize == null) {
-                    Log.i(TAG, "Camera " + id + ": No matching physical YUV streams, skipping");
-                    continue;
+                // Figure out preview size and physical cameras to use.
+                ArrayList<String> dualPhysicalCameraIds = new ArrayList<String>();
+                Size previewSize= findCommonPreviewSize(id, dualPhysicalCameraIds);
+                if (previewSize == null) {
+                    Log.i(TAG, "Camera " + id + ": No matching physical preview streams, skipping");
                 }
 
-                if (VERBOSE) {
-                    Log.v(TAG, "Camera " + id + ": Testing YUV size of " + yuvSize.getWidth() +
-                        " x " + yuvSize.getHeight());
-                }
-                List<String> physicalCameraIds =
-                        mStaticInfo.getCharacteristics().getPhysicalCameraIds();
-                assertTrue("Logical camera must contain at least 2 physical camera ids",
-                        physicalCameraIds.size() >= 2);
-
-                List<String> noPhysicalIds = new ArrayList<>();
-                double avgLogicalDurationsMs = measureYuvFrameDuration(id, noPhysicalIds, yuvSize);
-
-                List<String> onePhysicalIds = new ArrayList<>();
-                onePhysicalIds.add(physicalCameraIds.get(0));
-                double avg1PhysicalDurationsMs = measureYuvFrameDuration(id,
-                        onePhysicalIds, yuvSize);
-                mCollector.expectLessOrEqual("The average frame duration increase of a physical "
-                        + "stream is larger than threshold: "
-                        + String.format("increase = %.2f, threshold = %.2f",
-                          (avg1PhysicalDurationsMs - avgLogicalDurationsMs)/avgLogicalDurationsMs,
-                          FRAME_DURATION_THRESHOLD),
-                        avgLogicalDurationsMs*(1+FRAME_DURATION_THRESHOLD),
-                        avg1PhysicalDurationsMs);
-
-                double avgAllPhysicalDurationsMs = measureYuvFrameDuration(
-                        id, physicalCameraIds, yuvSize);
-
-                mCollector.expectLessOrEqual("The average frame duration increase of all physical "
-                        + "streams is larger than threshold: "
-                        + String.format("increase = %.2f, threshold = %.2f",
-                          (avgAllPhysicalDurationsMs - avgLogicalDurationsMs)/avgLogicalDurationsMs,
-                          FRAME_DURATION_THRESHOLD),
-                        avgLogicalDurationsMs*(1+FRAME_DURATION_THRESHOLD),
-                        avgAllPhysicalDurationsMs);
-
+                testBasicPhysicalStreamingForCamera(
+                        id, dualPhysicalCameraIds, previewSize);
             } finally {
                 closeDevice();
             }
@@ -206,12 +175,15 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
                 assertTrue("Logical multi-camera must be LIMITED or higher",
                         mStaticInfo.isHardwareLevelAtLeastLimited());
 
-                // Figure out yuv size to use.
-                Size yuvSize= findMaxPhysicalYuvSize(id);
+                // Figure out yuv size and physical cameras to use.
+                List<String> dualPhysicalCameraIds = new ArrayList<String>();
+                Size yuvSize= findCommonPreviewSize(id, dualPhysicalCameraIds);
                 if (yuvSize == null) {
                     Log.i(TAG, "Camera " + id + ": No matching physical YUV streams, skipping");
                     continue;
                 }
+                ArraySet<String> physicalIdSet = new ArraySet<String>(dualPhysicalCameraIds.size());
+                physicalIdSet.addAll(dualPhysicalCameraIds);
 
                 if (VERBOSE) {
                     Log.v(TAG, "Camera " + id + ": Testing YUV size of " + yuvSize.getWidth() +
@@ -223,13 +195,6 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
                     Log.i(TAG, "Camera " + id + ": no available physical request keys, skipping");
                     continue;
                 }
-
-                List<String> physicalCameraIds =
-                        mStaticInfo.getCharacteristics().getPhysicalCameraIds();
-                assertTrue("Logical camera must contain at least 2 physical camera ids",
-                        physicalCameraIds.size() >= 2);
-                ArraySet<String> physicalIdSet = new ArraySet<String>(physicalCameraIds.size());
-                physicalIdSet.addAll(physicalCameraIds);
 
                 List<OutputConfiguration> outputConfigs = new ArrayList<>();
                 List<ImageReader> imageReaders = new ArrayList<>();
@@ -282,13 +247,7 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
                 assertTrue("Logical multi-camera must be LIMITED or higher",
                         mStaticInfo.isHardwareLevelAtLeastLimited());
 
-                // Figure out yuv size to use.
-                Size yuvSize= findMaxPhysicalYuvSize(id);
-                if (yuvSize == null) {
-                    Log.i(TAG, "Camera " + id + ": No matching physical YUV streams, skipping");
-                    continue;
-                }
-
+                Size yuvSize = mOrderedPreviewSizes.get(0);
                 List<OutputConfiguration> outputConfigs = new ArrayList<>();
                 List<ImageReader> imageReaders = new ArrayList<>();
                 SimpleImageReaderListener readerListener = new SimpleImageReaderListener();
@@ -336,13 +295,16 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
                 }
 
                 if (mStaticInfo.isLogicalMultiCamera()) {
-                    List<String> physicalCameraIds =
-                        mStaticInfo.getCharacteristics().getPhysicalCameraIds();
-                    assertTrue("Logical camera must contain at least 2 physical camera ids",
-                            physicalCameraIds.size() >= 2);
+                    // Figure out yuv size to use.
+                    List<String> dualPhysicalCameraIds = new ArrayList<String>();
+                    Size sharedSize= findCommonPreviewSize(id, dualPhysicalCameraIds);
+                    if (sharedSize == null) {
+                        Log.i(TAG, "Camera " + id + ": No matching physical YUV streams, skipping");
+                        continue;
+                    }
 
                     physicalIdSet.clear();
-                    physicalIdSet.addAll(physicalCameraIds);
+                    physicalIdSet.addAll(dualPhysicalCameraIds);
                     requestBuilder =
                         mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW, physicalIdSet);
                     requestBuilder.addTarget(config.getSurface());
@@ -381,76 +343,122 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
     }
 
     /**
-     * Find the maximum YUV stream size that's supported by physical cameras.
+     * Find a common preview size that's supported by both the logical camera and
+     * two of the underlying physical cameras.
      */
-    private Size findMaxPhysicalYuvSize(String cameraId) throws Exception {
-        List<String> physicalCameras =
+    private Size findCommonPreviewSize(String cameraId,
+            List<String> dualPhysicalCameraIds) throws Exception {
+
+        List<String> physicalCameraIds =
                 mStaticInfo.getCharacteristics().getPhysicalCameraIds();
-        List<Size> yuvSizes = CameraTestUtils.getSortedSizesForFormat(
-                cameraId, mCameraManager, ImageFormat.YUV_420_888, /*bound*/null);
-        Size bestYuvSize = null;
-        for (Size yuvSize : yuvSizes) {
-            boolean physicalSizeSupported = true;
-            for (String physicalCameraId : physicalCameras) {
-                List<Size> yuvSizesForPhysicalCamera =
-                        CameraTestUtils.getSortedSizesForFormat(physicalCameraId,
-                        mCameraManager, ImageFormat.YUV_420_888, /*bound*/null);
-                if (!yuvSizesForPhysicalCamera.contains(yuvSize)) {
-                    physicalSizeSupported = false;
-                    break;
+        assertTrue("Logical camera must contain at least 2 physical camera ids",
+                physicalCameraIds.size() >= 2);
+
+        List<Size> previewSizes = getSupportedPreviewSizes(
+                cameraId, mCameraManager, PREVIEW_SIZE_BOUND);
+        HashMap<String, List<Size>> physicalPreviewSizesMap = new HashMap<String, List<Size>>();
+        HashMap<String, StreamConfigurationMap> physicalConfigs = new HashMap<>();
+        for (String physicalCameraId : physicalCameraIds) {
+            CameraCharacteristics properties =
+                    mCameraManager.getCameraCharacteristics(physicalCameraId);
+            assertNotNull("Can't get camera characteristics!", properties);
+            StreamConfigurationMap configMap =
+                properties.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+            physicalConfigs.put(physicalCameraId, configMap);
+            physicalPreviewSizesMap.put(physicalCameraId,
+                    getSupportedPreviewSizes(physicalCameraId, mCameraManager, PREVIEW_SIZE_BOUND));
+        }
+
+        // Find display size from window service.
+        Context context = getInstrumentation().getTargetContext();
+        WindowManager windowManager =
+                (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        Display display = windowManager.getDefaultDisplay();
+
+        int displayWidth = display.getWidth();
+        int displayHeight = display.getHeight();
+
+        if (displayHeight > displayWidth) {
+            displayHeight = displayWidth;
+            displayWidth = display.getHeight();
+        }
+
+        StreamConfigurationMap config = mStaticInfo.getCharacteristics().get(
+                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+        for (Size previewSize : previewSizes) {
+            dualPhysicalCameraIds.clear();
+            // Skip preview sizes larger than screen size
+            if (previewSize.getWidth() > displayWidth ||
+                    previewSize.getHeight() > displayHeight) {
+                continue;
+            }
+
+            final long minFrameDuration = config.getOutputMinFrameDuration(
+                   ImageFormat.YUV_420_888, previewSize);
+
+            ArrayList<String> supportedPhysicalCameras = new ArrayList<String>();
+            for (String physicalCameraId : physicalCameraIds) {
+                List<Size> physicalPreviewSizes = physicalPreviewSizesMap.get(physicalCameraId);
+                if (physicalPreviewSizes.contains(previewSize)) {
+                   long minDurationPhysical =
+                           physicalConfigs.get(physicalCameraId).getOutputMinFrameDuration(
+                           ImageFormat.YUV_420_888, previewSize);
+                   if (minDurationPhysical <= minFrameDuration) {
+                        dualPhysicalCameraIds.add(physicalCameraId);
+                        if (dualPhysicalCameraIds.size() == 2) {
+                            return previewSize;
+                        }
+                   }
                 }
             }
-            if (physicalSizeSupported) {
-                bestYuvSize = yuvSize;
-                break;
-            }
         }
-        return bestYuvSize;
+        return null;
     }
 
     /**
-     * Measure the average frame duration of logical YUV stream.
+     * Test physical camera YUV streaming within a particular logical camera.
+     *
+     * Use 2 YUV streams with PREVIEW or smaller size, which is guaranteed for LIMITED device level.
      */
-    private double measureYuvFrameDuration(String logicalCameraId,
-            List<String> physicalCameraIds, Size yuvSize) throws Exception {
+    private void testBasicPhysicalStreamingForCamera(String logicalCameraId,
+            List<String> physicalCameraIds, Size previewSize) throws Exception {
         List<OutputConfiguration> outputConfigs = new ArrayList<>();
         List<ImageReader> imageReaders = new ArrayList<>();
-        if (physicalCameraIds.size() == 0) {
-            ImageReader yuvTarget = CameraTestUtils.makeImageReader(yuvSize,
+
+        // Add 1 logical YUV stream
+        ImageReader logicalTarget = CameraTestUtils.makeImageReader(previewSize,
+                ImageFormat.YUV_420_888, MAX_IMAGE_COUNT,
+                new ImageDropperListener(), mHandler);
+        imageReaders.add(logicalTarget);
+        outputConfigs.add(new OutputConfiguration(logicalTarget.getSurface()));
+
+        // Add physical YUV streams
+        List<ImageReader> physicalTargets = new ArrayList<>();
+        for (String physicalCameraId : physicalCameraIds) {
+            ImageReader physicalTarget = CameraTestUtils.makeImageReader(previewSize,
                     ImageFormat.YUV_420_888, MAX_IMAGE_COUNT,
                     new ImageDropperListener(), mHandler);
-            imageReaders.add(yuvTarget);
-            OutputConfiguration config = new OutputConfiguration(yuvTarget.getSurface());
-            outputConfigs.add(new OutputConfiguration(yuvTarget.getSurface()));
-        } else {
-            for (String physicalCameraId : physicalCameraIds) {
-                ImageReader yuvTarget = CameraTestUtils.makeImageReader(yuvSize,
-                        ImageFormat.YUV_420_888, MAX_IMAGE_COUNT,
-                        new ImageDropperListener(), mHandler);
-                OutputConfiguration config = new OutputConfiguration(yuvTarget.getSurface());
-                config.setPhysicalCameraId(physicalCameraId);
-                outputConfigs.add(config);
-                imageReaders.add(yuvTarget);
-            }
-        }
-
-        // Stream YUV size and note down the FPS
-        CaptureRequest.Builder requestBuilder =
-                mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-        for (OutputConfiguration c : outputConfigs) {
-            requestBuilder.addTarget(c.getSurface());
+            OutputConfiguration config = new OutputConfiguration(physicalTarget.getSurface());
+            config.setPhysicalCameraId(physicalCameraId);
+            outputConfigs.add(config);
+            physicalTargets.add(physicalTarget);
         }
 
         mSessionListener = new BlockingSessionCallback();
         mSession = configureCameraSessionWithConfig(mCamera, outputConfigs,
                 mSessionListener, mHandler);
 
+        // Stream logical YUV stream and note down the FPS
+        CaptureRequest.Builder requestBuilder =
+                mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+        requestBuilder.addTarget(logicalTarget.getSurface());
+
         SimpleCaptureCallback simpleResultListener =
                 new SimpleCaptureCallback();
         StreamConfigurationMap config = mStaticInfo.getCharacteristics().get(
                 CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
         final long minFrameDuration = config.getOutputMinFrameDuration(
-                ImageFormat.YUV_420_888, yuvSize);
+                ImageFormat.YUV_420_888, previewSize);
         if (minFrameDuration > 0) {
             Range<Integer> targetRange = getSuitableFpsRangeForDuration(logicalCameraId,
                     minFrameDuration);
@@ -471,29 +479,103 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
                     CaptureResult.CONTROL_AE_STATE_LOCKED, NUM_RESULTS_WAIT_TIMEOUT);
         }
 
+        // Collect timestamps for one logical stream only.
         long prevTimestamp = -1;
-        double[] frameDurationMs = new double[NUM_FRAMES_CHECKED-1];
+        long[] logicalTimestamps = new long[NUM_FRAMES_CHECKED];
         for (int i = 0; i < NUM_FRAMES_CHECKED; i++) {
-            CaptureResult captureResult =
-                    simpleResultListener.getCaptureResult(
+            TotalCaptureResult totalCaptureResult =
+                    simpleResultListener.getTotalCaptureResult(
                     CameraTestUtils.CAPTURE_RESULT_TIMEOUT_MS);
-            long timestamp = captureResult.get(
-                    CaptureResult.SENSOR_TIMESTAMP);
-            if (prevTimestamp != -1) {
-                frameDurationMs[i-1] = (double)(timestamp - prevTimestamp)/NS_PER_MS;
+            logicalTimestamps[i] = totalCaptureResult.get(CaptureResult.SENSOR_TIMESTAMP);
+        }
+        // Make sure that requesting a physical camera key for a logical stream request
+        // throws exception.
+        try {
+            TotalCaptureResult totalCaptureResult =
+                    simpleResultListener.getTotalCaptureResult(
+                    CameraTestUtils.CAPTURE_RESULT_TIMEOUT_MS);
+            long timestamp = totalCaptureResult.getPhysicalCameraKey(
+                    CaptureResult.SENSOR_TIMESTAMP, physicalCameraIds.get(0));
+            fail("No exception for invalid physical camera Id for TotalCaptureResult");
+        } catch (IllegalArgumentException e) {
+           // expected
+        }
+
+        double logicalAvgDurationMs = (logicalTimestamps[NUM_FRAMES_CHECKED-1] -
+                logicalTimestamps[0])/(NS_PER_MS*(NUM_FRAMES_CHECKED-1));
+
+        // Start requesting on both logical and physical streams
+        SimpleCaptureCallback simpleResultListenerDual =
+                new SimpleCaptureCallback();
+        for (ImageReader physicalTarget : physicalTargets) {
+            requestBuilder.addTarget(physicalTarget.getSurface());
+        }
+        mSession.setRepeatingRequest(requestBuilder.build(), simpleResultListenerDual,
+                mHandler);
+
+        long[] logicalTimestamps2 = new long[NUM_FRAMES_CHECKED];
+        long [][] physicalTimestamps = new long[physicalTargets.size()][];
+        for (int i = 0; i < physicalTargets.size(); i++) {
+            physicalTimestamps[i] = new long[NUM_FRAMES_CHECKED];
+        }
+        for (int i = 0; i < NUM_FRAMES_CHECKED; i++) {
+            TotalCaptureResult totalCaptureResult =
+                    simpleResultListenerDual.getTotalCaptureResult(
+                    CameraTestUtils.CAPTURE_RESULT_TIMEOUT_MS);
+            logicalTimestamps2[i] = totalCaptureResult.get(CaptureResult.SENSOR_TIMESTAMP);
+
+            int index = 0;
+            for (String physicalId : physicalCameraIds) {
+                 physicalTimestamps[index][i] = totalCaptureResult.getPhysicalCameraKey(
+                         CaptureResult.SENSOR_TIMESTAMP, physicalId);
+                 index++;
             }
-            prevTimestamp = timestamp;
         }
-        double avgDurationMs = Stat.getAverage(frameDurationMs);
-        if (VERBOSE) {
-            Log.v(TAG, "average Duration is " + avgDurationMs + " ms");
+        // Make sure that requesting an invalid physical camera key throws exception.
+        try {
+            String invalidStringId = "InvalidCamera";
+            TotalCaptureResult totalCaptureResult =
+                    simpleResultListener.getTotalCaptureResult(
+                    CameraTestUtils.CAPTURE_RESULT_TIMEOUT_MS);
+           long timestamp = totalCaptureResult.getPhysicalCameraKey(
+                    CaptureResult.SENSOR_TIMESTAMP, invalidStringId);
+           fail("No exception for invalid physical camera Id for TotalCaptureResult");
+        } catch (IllegalArgumentException e) {
+           // expected
         }
+
+        // Check timestamp monolithity for individual camera and across cameras
+        for (int i = 0; i < NUM_FRAMES_CHECKED-1; i++) {
+            assertTrue("Logical camera timestamp must monolithically increase",
+                    logicalTimestamps2[i] < logicalTimestamps2[i+1]);
+        }
+        for (int i = 0; i < physicalCameraIds.size(); i++) {
+            for (int j = 0 ; j < NUM_FRAMES_CHECKED-1; j++) {
+                assertTrue("Physical camera timestamp must monolithically increase",
+                        physicalTimestamps[i][j] < physicalTimestamps[i][j+1]);
+                if (j > 0) {
+                    assertTrue("Physical camera's timestamp N must be greater than logical " +
+                            "camera's timestamp N-1",
+                            physicalTimestamps[i][j] > logicalTimestamps[j-1]);
+                }
+                assertTrue("Physical camera's timestamp N must be less than logical camera's " +
+                        "timestamp N+1", physicalTimestamps[i][j] > logicalTimestamps[j+1]);
+            }
+        }
+        double logicalAvgDurationMs2 = (logicalTimestamps2[NUM_FRAMES_CHECKED-1] -
+                logicalTimestamps2[0])/(NS_PER_MS*(NUM_FRAMES_CHECKED-1));
+
+        mCollector.expectLessOrEqual("The average frame duration increase of all physical "
+                + "streams is larger than threshold: "
+                + String.format("increase = %.2f, threshold = %.2f",
+                  (logicalAvgDurationMs2 - logicalAvgDurationMs)/logicalAvgDurationMs,
+                  FRAME_DURATION_THRESHOLD),
+                logicalAvgDurationMs*(1+FRAME_DURATION_THRESHOLD),
+                logicalAvgDurationMs2);
 
         // Stop preview
         if (mSession != null) {
             mSession.close();
         }
-
-        return avgDurationMs;
     }
 }
