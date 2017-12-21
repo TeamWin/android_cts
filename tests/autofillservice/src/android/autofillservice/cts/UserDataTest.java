@@ -16,17 +16,26 @@
 
 package android.autofillservice.cts;
 
+import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MAX_FIELD_CLASSIFICATION_IDS_SIZE;
+import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MAX_USER_DATA_SIZE;
+import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MAX_VALUE_LENGTH;
+import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MIN_VALUE_LENGTH;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
+import android.autofillservice.cts.common.SettingsStateChangerRule;
+import android.content.Context;
 import android.service.autofill.InternalScorer;
 import android.service.autofill.Scorer;
 import android.service.autofill.UserData;
+import android.support.test.InstrumentationRegistry;
 
 import com.google.common.base.Strings;
 
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -34,6 +43,26 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class UserDataTest {
+
+    private static final Context sContext = InstrumentationRegistry.getContext();
+
+    @ClassRule
+    public static final SettingsStateChangerRule sUserDataMaxFcSizeChanger =
+            new SettingsStateChangerRule(sContext,
+                    AUTOFILL_USER_DATA_MAX_FIELD_CLASSIFICATION_IDS_SIZE, "10");
+
+    @ClassRule
+    public static final SettingsStateChangerRule sUserDataMaxUserSizeChanger =
+            new SettingsStateChangerRule(sContext, AUTOFILL_USER_DATA_MAX_USER_DATA_SIZE, "10");
+
+    @ClassRule
+    public static final SettingsStateChangerRule sUserDataMinValueChanger =
+            new SettingsStateChangerRule(sContext, AUTOFILL_USER_DATA_MIN_VALUE_LENGTH, "5");
+
+    @ClassRule
+    public static final SettingsStateChangerRule sUserDataMaxValueChanger =
+            new SettingsStateChangerRule(sContext, AUTOFILL_USER_DATA_MAX_VALUE_LENGTH, "50");
+
 
     private final String mShortValue = Strings.repeat("k", UserData.getMinValueLength() - 1);
     private final String mLongValue = "LONG VALUE, Y U NO SHORTER"
