@@ -17,7 +17,6 @@
 package android.widget.cts;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
@@ -32,8 +31,10 @@ import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.text.format.DateFormat;
+import android.util.MutableBoolean;
 import android.widget.TextClock;
 
+import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Before;
@@ -80,6 +81,7 @@ public class TextClockTest {
         mActivityRule.runOnUiThread(() -> {
             mTextClock.setFormat12Hour("h");
             mTextClock.setFormat24Hour("H");
+            mTextClock.disableClockTick();
         });
 
         final ContentResolver resolver = mActivity.getContentResolver();
@@ -104,13 +106,19 @@ public class TextClockTest {
             Settings.System.putInt(resolver, Settings.System.TIME_12_24, 12);
         });
         assertTrue(change12.await(1, TimeUnit.SECONDS));
-        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
 
-        mActivityRule.runOnUiThread(() -> {
-            assertFalse(mTextClock.is24HourModeEnabled());
-            int hour = Integer.parseInt(mTextClock.getText().toString());
-            assertTrue("Expecting hour to be between 1 and 11, but was " + hour,
-                    hour >= 1 && hour < 12);
+        // Must poll here because there are no timing guarantees for ContentObserver notification
+        PollingCheck.waitFor(() -> {
+            final MutableBoolean ok = new MutableBoolean(false);
+            try {
+                mActivityRule.runOnUiThread(() -> {
+                    int hour = Integer.parseInt(mTextClock.getText().toString());
+                    ok.value = hour >= 1 && hour < 12;
+                });
+            } catch (Throwable t) {
+                throw new RuntimeException(t.getMessage());
+            }
+            return ok.value;
         });
 
         final CountDownLatch change24 = registerForChanges(Settings.System.TIME_12_24);
@@ -118,14 +126,29 @@ public class TextClockTest {
             Settings.System.putInt(resolver, Settings.System.TIME_12_24, 24);
         });
         assertTrue(change24.await(1, TimeUnit.SECONDS));
-        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
 
-        mActivityRule.runOnUiThread(() -> {
-            assertTrue(mTextClock.is24HourModeEnabled());
-            int hour = Integer.parseInt(mTextClock.getText().toString());
-            assertTrue("Expecting hour to be between 13 and 23, but was " + hour,
-                    hour > 12 && hour < 24);
+        // Must poll here because there are no timing guarantees for ContentObserver notification
+        PollingCheck.waitFor(() -> {
+            final MutableBoolean ok = new MutableBoolean(false);
+            try {
+                mActivityRule.runOnUiThread(() -> {
+                    int hour = Integer.parseInt(mTextClock.getText().toString());
+                    ok.value = hour > 12 && hour < 24;
+                });
+                return ok.value;
+            } catch (Throwable t) {
+                throw new RuntimeException(t.getMessage());
+            }
         });
+    }
+
+    @Test
+    public void testNoChange() throws Throwable {
+        grantWriteSettingsPermission();
+        mActivityRule.runOnUiThread(() -> {
+            mTextClock.disableClockTick();
+        });
+        final ContentResolver resolver = mActivity.getContentResolver();
 
         // Now test that it isn't updated when a non-12/24 hour setting is set
         mActivityRule.runOnUiThread(() -> {
@@ -138,7 +161,8 @@ public class TextClockTest {
 
         final CountDownLatch otherChange = registerForChanges(Settings.System.TEXT_AUTO_CAPS);
         mActivityRule.runOnUiThread(() -> {
-            int oldAutoCaps = Settings.System.getInt(resolver, Settings.System.TEXT_AUTO_CAPS, 1);
+            int oldAutoCaps = Settings.System.getInt(resolver, Settings.System.TEXT_AUTO_CAPS,
+                    1);
             try {
                 int newAutoCaps = oldAutoCaps == 0 ? 1 : 0;
                 Settings.System.putInt(resolver, Settings.System.TEXT_AUTO_CAPS, newAutoCaps);
