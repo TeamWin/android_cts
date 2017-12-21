@@ -61,6 +61,11 @@ public class LightBarThemeTest extends LightBarTestBase {
     @Test
     public void testNavigationBarDivider() throws Exception {
 
+        if (!hasVirtualNavigationBar()) {
+            // No virtual navigation bar, so no effect.
+            return;
+        }
+
         // Wait until the activity is fully visible
         mDevice.waitForIdle();
 
