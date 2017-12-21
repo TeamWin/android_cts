@@ -3186,7 +3186,7 @@ You should be prompted to select credentials; choose the ones you just installed
         Check that \'Dummy Input method\' is not enabled in Settings and disallow \'Dummy Input method\' from permitted input methods by turning on the switch below.
     </string>
     <string name="set_permitted_input_methods_action">
-        Enabling \'Dummy Input method\' in the list of accessibility services
+        Enabling \'Dummy Input method\' in the list of input methods
     </string>
     <string name="set_permitted_input_methods_widget_label">
         Allow only system input methods:
