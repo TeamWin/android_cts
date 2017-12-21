@@ -34,6 +34,6 @@ LOCAL_C_INCLUDES := $(JNI_H_INCLUDE)
 LOCAL_SHARED_LIBRARIES := libdl liblog libnativehelper_compat_libc++
 
 LOCAL_SDK_VERSION := 23
-LOCAL_NDK_STL_VARIANT := c++_static
+LOCAL_NDK_STL_VARIANT := c++_shared
 
 include $(BUILD_SHARED_LIBRARY)
