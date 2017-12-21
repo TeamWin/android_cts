@@ -24,6 +24,7 @@ import static android.autofillservice.cts.GridActivity.ID_L3C2;
 import static android.autofillservice.cts.GridActivity.ID_L4C1;
 import static android.autofillservice.cts.GridActivity.ID_L4C2;
 import static android.autofillservice.cts.Helper.UNUSED_AUTOFILL_VALUE;
+import static android.autofillservice.cts.Helper.assertHasFlags;
 import static android.autofillservice.cts.Helper.assertTextIsSanitized;
 import static android.autofillservice.cts.Helper.assertValue;
 import static android.autofillservice.cts.Helper.getContext;
@@ -420,7 +421,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         // Trigger auto-fill.
         mActivity.forceAutofill(2, 1);
         final FillRequest fillRequest2 = sReplier.getNextFillRequest();
-        assertThat(fillRequest2.flags).isEqualTo(FLAG_MANUAL_REQUEST);
+        assertHasFlags(fillRequest2.flags, FLAG_MANUAL_REQUEST);
 
         assertValue(fillRequest2.structure, ID_L1C1, "l1c1");
         assertValue(fillRequest2.structure, ID_L1C2, "l1c2");
@@ -484,7 +485,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         // Trigger auto-fill.
         mActivity.forceAutofill(4, 1);
         final FillRequest fillRequest4 = sReplier.getNextFillRequest();
-        assertThat(fillRequest4.flags).isEqualTo(FLAG_MANUAL_REQUEST);
+        assertHasFlags(fillRequest4.flags, FLAG_MANUAL_REQUEST);
 
         assertValue(fillRequest4.structure, ID_L1C1, "l1c1");
         assertValue(fillRequest4.structure, ID_L1C2, "l1c2");
