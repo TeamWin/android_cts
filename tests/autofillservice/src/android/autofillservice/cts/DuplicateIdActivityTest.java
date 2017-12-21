@@ -116,10 +116,16 @@ public class DuplicateIdActivityTest extends AutoFillServiceTestCase {
         // Wait context and Views being recreated in rotation
         mUiBot.assertShownByRelativeId(DUPLICATE_ID);
 
+        // Because service returned a null response, rotation will trigger another request.
+        sReplier.addResponse(NO_RESPONSE);
+
         // Select other field to trigger new partition
         runShellCommand("input keyevent KEYCODE_TAB");
 
         request = sReplier.getNextFillRequest();
+
+        // Ignore 2nd request.
+        sReplier.getNextFillRequest();
 
         views = findViews(request);
         AutofillId recreatedId1 = views[0].getAutofillId();
