@@ -148,6 +148,8 @@
         <activity android:name=".WebViewActivity"
             android:process=":testProcess"/>
 
+        <activity android:name=".TimeoutActivity" android:exported="true"/>
+
         <service
             android:name=".CrossProfileNotificationListenerService"
             android:label="CrossProfileNotificationListenerService"
