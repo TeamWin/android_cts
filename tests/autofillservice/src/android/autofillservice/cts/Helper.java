@@ -1086,6 +1086,11 @@ final class Helper {
         assertThat(actualValue).isWithin(1.0e-10f).of(expectedValue);
     }
 
+    public static void assertHasFlags(int actualFlags, int expectedFlags) {
+        assertWithMessage("Flags %s not in %s", expectedFlags, actualFlags)
+                .that(actualFlags & expectedFlags).isEqualTo(expectedFlags);
+    }
+
     private Helper() {
         throw new UnsupportedOperationException("contain static methods only");
     }
