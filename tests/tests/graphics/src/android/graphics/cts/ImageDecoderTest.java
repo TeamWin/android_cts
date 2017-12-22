@@ -76,6 +76,11 @@ public class ImageDecoderTest {
     private static final int WIDTHS[] = new int[] { 1280, 640, 320, 320, 640, 256, 128 };
     private static final int HEIGHTS[] = new int[] { 960, 480, 240, 240, 480, 256, 128 };
 
+    // mimeTypes of the above images.
+    private static final String[] MIME_TYPES = new String[] { "image/jpeg", "image/png",
+            "image/gif", "image/bmp", "image/webp", "image/x-ico",
+            "image/x-ico" };
+
     // offset is how many bytes to offset the beginning of the image.
     // extra is how many bytes to append at the end.
     private byte[] getAsByteArray(int resId, int offset, int extra) {
@@ -223,17 +228,19 @@ public class ImageDecoderTest {
 
     @Test
     public void testInfo() {
-        class SizeListener implements ImageDecoder.OnHeaderDecodedListener {
+        class Listener implements ImageDecoder.OnHeaderDecodedListener {
             public int mWidth;
             public int mHeight;
+            public String mMimeType;
 
             @Override
             public void onHeaderDecoded(ImageDecoder.ImageInfo info, ImageDecoder decoder) {
                 mWidth  = info.width;
                 mHeight = info.height;
+                mMimeType = info.getMimeType();
             }
         };
-        SizeListener l = new SizeListener();
+        Listener l = new Listener();
 
         for (int i = 0; i < RES_IDS.length; ++i) {
             for (SourceCreator f : mCreators) {
@@ -243,6 +250,7 @@ public class ImageDecoderTest {
                     ImageDecoder.decodeDrawable(src, l);
                     assertEquals(WIDTHS[i],  l.mWidth);
                     assertEquals(HEIGHTS[i], l.mHeight);
+                    assertEquals(MIME_TYPES[i], l.mMimeType);
                 } catch (IOException e) {
                     fail("Failed with exception " + e);
                 }
