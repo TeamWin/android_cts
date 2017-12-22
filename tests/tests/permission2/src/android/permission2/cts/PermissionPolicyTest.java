@@ -16,8 +16,12 @@
 
 package android.permission2.cts;
 
+import static android.os.Build.VERSION.SECURITY_PATCH;
+
+import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.PermissionGroupInfo;
 import android.content.pm.PermissionInfo;
 import android.test.AndroidTestCase;
@@ -26,10 +30,10 @@ import android.util.ArrayMap;
 import android.util.ArraySet;
 import android.util.Log;
 import android.util.Xml;
+
 import org.xmlpull.v1.XmlPullParser;
 
 import java.io.InputStream;
-import java.lang.String;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -37,8 +41,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static android.os.Build.VERSION.SECURITY_PATCH;
 
 /**
  * Tests for permission policy on the platform.
@@ -54,6 +56,9 @@ public class PermissionPolicyTest extends AndroidTestCase {
 
     private static final String PLATFORM_ROOT_NAMESPACE = "android.";
 
+    private static final String AUTOMOTIVE_SERVICE_PACKAGE_NAME = "com.android.car";
+    private static final String AUTOMOTIVE_PERMISSION_NAMESPACE = "android.car.";
+
     private static final String TAG_PERMISSION = "permission";
 
     private static final String ATTR_NAME = "name";
@@ -61,14 +66,18 @@ public class PermissionPolicyTest extends AndroidTestCase {
     private static final String ATTR_PROTECTION_LEVEL = "protectionLevel";
 
     public void testPlatformPermissionPolicyUnaltered() throws Exception {
-        PackageInfo platformPackage = getContext().getPackageManager()
-                .getPackageInfo(PLATFORM_PACKAGE_NAME, PackageManager.GET_PERMISSIONS);
-        Map<String, PermissionInfo> declaredPermissionsMap = new ArrayMap<>();
-        List<String> offendingList = new ArrayList<String>();
+        final boolean hasAutomotiveFeature = getContext().getPackageManager()
+                .hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
 
-        for (PermissionInfo declaredPermission : platformPackage.permissions) {
-            declaredPermissionsMap.put(declaredPermission.name, declaredPermission);
+        Map<String, PermissionInfo> declaredPermissionsMap =
+                getPermissionsForPackage(getContext(), PLATFORM_PACKAGE_NAME);
+
+        if (hasAutomotiveFeature) {
+            declaredPermissionsMap.putAll(
+                    getPermissionsForPackage(getContext(), AUTOMOTIVE_SERVICE_PACKAGE_NAME));
         }
+
+        List<String> offendingList = new ArrayList<>();
 
         List<PermissionGroupInfo> declaredGroups = getContext().getPackageManager()
                 .getAllPermissionGroups(0);
@@ -77,11 +86,15 @@ public class PermissionPolicyTest extends AndroidTestCase {
             declaredGroupsSet.add(declaredGroup.name);
         }
 
-        Set<String> expectedPermissionGroups = new ArraySet<String>();
+        Set<String> expectedPermissionGroups = new ArraySet<>();
 
         for (PermissionInfo expectedPermission : loadExpectedPermissions()) {
             String expectedPermissionName = expectedPermission.name;
             if (shouldSkipPermission(expectedPermissionName)) {
+                continue;
+            }
+
+            if (!hasAutomotiveFeature && isAutomotivePermission(expectedPermissionName)) {
                 continue;
             }
 
@@ -132,7 +145,7 @@ public class PermissionPolicyTest extends AndroidTestCase {
 
                 if (!declaredGroupsSet.contains(declaredPermission.group)) {
                     offendingList.add(
-                            "Permission group " + expectedPermission.group + "must be defined");
+                            "Permission group " + expectedPermission.group + " must be defined");
                 }
             }
         }
@@ -264,6 +277,18 @@ public class PermissionPolicyTest extends AndroidTestCase {
         return protectionLevel;
     }
 
+    private static Map<String, PermissionInfo> getPermissionsForPackage(Context context, String pkg)
+            throws NameNotFoundException {
+        PackageInfo packageInfo = context.getPackageManager()
+                .getPackageInfo(pkg, PackageManager.GET_PERMISSIONS);
+        Map<String, PermissionInfo> declaredPermissionsMap = new ArrayMap<>();
+
+        for (PermissionInfo declaredPermission : packageInfo.permissions) {
+            declaredPermissionsMap.put(declaredPermission.name, declaredPermission);
+        }
+        return declaredPermissionsMap;
+    }
+
     private static Date parseDate(String date) {
         Date patchDate = new Date();
         try {
@@ -273,6 +298,10 @@ public class PermissionPolicyTest extends AndroidTestCase {
         }
 
         return patchDate;
+    }
+
+    private static boolean isAutomotivePermission(String permissionName) {
+        return permissionName.startsWith(AUTOMOTIVE_PERMISSION_NAMESPACE);
     }
 
     private boolean shouldSkipPermission(String permissionName) {
