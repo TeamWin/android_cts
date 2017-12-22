@@ -284,7 +284,6 @@ public abstract class ActivityManagerTestBase {
         executeShellCommand(AM_FORCE_STOP_TEST_PACKAGE);
         executeShellCommand(AM_FORCE_STOP_SECOND_TEST_PACKAGE);
         executeShellCommand(AM_FORCE_STOP_THIRD_TEST_PACKAGE);
-        setWindowTransitionAnimationDurationScale(1);
         removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
         wakeUpAndUnlockDevice();
         pressHomeButton();
@@ -814,11 +813,6 @@ public abstract class ActivityManagerTestBase {
         }
 
         return INVALID_DEVICE_ROTATION;
-    }
-
-    protected void setWindowTransitionAnimationDurationScale(float animDurationScale) {
-        runCommandAndPrintOutput(
-                "settings put global transition_animation_scale " + animDurationScale);
     }
 
     protected String runCommandAndPrintOutput(String command) {

@@ -36,8 +36,10 @@ import static org.junit.Assume.assumeTrue;
 
 import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
+import android.provider.Settings;
 import android.server.am.ActivityManagerState.ActivityStack;
 import android.server.am.ActivityManagerState.ActivityTask;
+import android.server.am.settings.SettingsSession;
 import android.support.test.filters.FlakyTest;
 
 import org.junit.Test;
@@ -842,38 +844,48 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         assertValidPictureInPictureCallbackOrder(PIP_ACTIVITY, logSeparator);
     }
 
+    /** Helper class to save, set, and restore transition_animation_scale preferences. */
+    private static class TransitionAnimationScaleSession extends SettingsSession<Float> {
+        TransitionAnimationScaleSession() {
+            super(Settings.Global.getUriFor(Settings.Global.TRANSITION_ANIMATION_SCALE),
+                    Settings.Global::getFloat,
+                    Settings.Global::putFloat);
+        }
+    }
+
     @Test
     public void testEnterPipInterruptedCallbacks() throws Exception {
         assumeTrue(supportsPip());
 
-        // Slow down the transition animations for this test
-        setWindowTransitionAnimationDurationScale(20);
+        try (final TransitionAnimationScaleSession transitionAnimationScaleSession =
+                new TransitionAnimationScaleSession()) {
+            // Slow down the transition animations for this test
+            transitionAnimationScaleSession.set(20f);
 
-        // Launch a PiP activity
-        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
-        // Wait until the PiP activity has moved into the pinned stack (happens before the
-        // transition has started)
-        mAmWmState.waitForValidState(PIP_ACTIVITY, WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
-        assertPinnedStackExists();
+            // Launch a PiP activity
+            launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
+            // Wait until the PiP activity has moved into the pinned stack (happens before the
+            // transition has started)
+            mAmWmState.waitForValidState(PIP_ACTIVITY, WINDOWING_MODE_PINNED,
+                    ACTIVITY_TYPE_STANDARD);
+            assertPinnedStackExists();
 
-        // Relaunch the PiP activity back into fullscreen
-        String logSeparator = clearLogcat();
-        launchActivity(PIP_ACTIVITY);
-        // Wait until the PiP activity is reparented into the fullscreen stack (happens after the
-        // transition has finished)
-        mAmWmState.waitForValidState(
-                PIP_ACTIVITY, WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD);
+            // Relaunch the PiP activity back into fullscreen
+            String logSeparator = clearLogcat();
+            launchActivity(PIP_ACTIVITY);
+            // Wait until the PiP activity is reparented into the fullscreen stack (happens after
+            // the transition has finished)
+            mAmWmState.waitForValidState(
+                    PIP_ACTIVITY, WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD);
 
-        // Ensure that we get the callbacks indicating that PiP/MW mode was cancelled, but no
-        // configuration change (since none was sent)
-        final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(
-                PIP_ACTIVITY, logSeparator);
-        assertTrue(lifecycleCounts.mConfigurationChangedCount == 0);
-        assertTrue(lifecycleCounts.mPictureInPictureModeChangedCount == 1);
-        assertTrue(lifecycleCounts.mMultiWindowModeChangedCount == 1);
-
-        // Reset the animation scale
-        setWindowTransitionAnimationDurationScale(1);
+            // Ensure that we get the callbacks indicating that PiP/MW mode was cancelled, but no
+            // configuration change (since none was sent)
+            final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(
+                    PIP_ACTIVITY, logSeparator);
+            assertTrue(lifecycleCounts.mConfigurationChangedCount == 0);
+            assertTrue(lifecycleCounts.mPictureInPictureModeChangedCount == 1);
+            assertTrue(lifecycleCounts.mMultiWindowModeChangedCount == 1);
+        }
     }
 
     @FlakyTest(bugId = 71564769)
