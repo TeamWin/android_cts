@@ -16,12 +16,22 @@
 
 package android.accessibilityservice.cts;
 
-import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterForEventType;
+import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterWindowsChangedWithChangeTypes;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.findWindowByTitle;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.getActivityTitle;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
+import static android.accessibilityservice.cts.utils.DisplayUtils.getStatusBarHeight;
 import static android.content.pm.PackageManager.FEATURE_PICTURE_IN_PICTURE;
 import static android.view.accessibility.AccessibilityEvent.TYPE_WINDOWS_CHANGED;
+import static android.view.accessibility.AccessibilityEvent.WINDOWS_CHANGE_ACCESSIBILITY_FOCUSED;
+import static android.view.accessibility.AccessibilityEvent.WINDOWS_CHANGE_ACTIVE;
+import static android.view.accessibility.AccessibilityEvent.WINDOWS_CHANGE_ADDED;
+import static android.view.accessibility.AccessibilityEvent.WINDOWS_CHANGE_BOUNDS;
+import static android.view.accessibility.AccessibilityEvent.WINDOWS_CHANGE_CHILDREN;
+import static android.view.accessibility.AccessibilityEvent.WINDOWS_CHANGE_FOCUSED;
+import static android.view.accessibility.AccessibilityEvent.WINDOWS_CHANGE_PIP;
+import static android.view.accessibility.AccessibilityEvent.WINDOWS_CHANGE_REMOVED;
+import static android.view.accessibility.AccessibilityEvent.WINDOWS_CHANGE_TITLE;
 
 import static junit.framework.TestCase.assertTrue;
 
@@ -34,13 +44,20 @@ import android.accessibilityservice.cts.activities.AccessibilityWindowReportingA
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
+import android.os.Debug;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.InstrumentationRegistry;
+import android.util.Log;
+import android.view.Gravity;
+import android.view.View;
+import android.view.WindowManager;
+import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.Button;
 
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -98,7 +115,7 @@ public class AccessibilityWindowReportingTest {
         try {
             sUiAutomation.executeAndWaitForEvent(() -> sInstrumentation.runOnMainSync(
                     () -> mActivity.setTitle(updatedTitle)),
-                    filterForEventType(TYPE_WINDOWS_CHANGED),
+                    filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_TITLE),
                     TIMEOUT_ASYNC_PROCESSING);
         } catch (TimeoutException exception) {
             throw new RuntimeException(
@@ -107,6 +124,138 @@ public class AccessibilityWindowReportingTest {
         final AccessibilityWindowInfo window = findWindowByTitle(sUiAutomation, updatedTitle);
         assertNotNull("Updated window title not reported to accessibility", window);
         window.recycle();
+    }
+
+    @Test
+    public void testWindowAddedMovedAndRemoved_generatesEventsForAllThree() throws Exception {
+        final WindowManager.LayoutParams paramsForTop = layoutParmsForWindowOnTop();
+        final WindowManager.LayoutParams paramsForBottom = layoutParmsForWindowOnBottom();
+        final Button button = new Button(mActivity);
+        button.setText(R.string.button1);
+        sUiAutomation.executeAndWaitForEvent(() -> sInstrumentation.runOnMainSync(
+                () -> mActivity.getWindowManager().addView(button, paramsForTop)),
+                filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_ADDED),
+                TIMEOUT_ASYNC_PROCESSING);
+
+        // Move window from top to bottom
+        sUiAutomation.executeAndWaitForEvent(() -> sInstrumentation.runOnMainSync(
+                () -> mActivity.getWindowManager().updateViewLayout(button, paramsForBottom)),
+                filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_BOUNDS),
+                TIMEOUT_ASYNC_PROCESSING);
+        // Remove the view
+        sUiAutomation.executeAndWaitForEvent(() -> sInstrumentation.runOnMainSync(
+                () -> mActivity.getWindowManager().removeView(button)),
+                filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_REMOVED),
+                TIMEOUT_ASYNC_PROCESSING);
+    }
+
+    @Test
+    public void putWindowInPictureInPicture_generatesEventAndReportsProperty() throws Exception {
+        if (!sInstrumentation.getContext().getPackageManager()
+                .hasSystemFeature(FEATURE_PICTURE_IN_PICTURE)) {
+            return;
+        }
+        sUiAutomation.executeAndWaitForEvent(
+                () -> sInstrumentation.runOnMainSync(() -> mActivity.enterPictureInPictureMode()),
+                (event) -> {
+                    if (event.getEventType() != TYPE_WINDOWS_CHANGED) return false;
+                    // Look for a picture-in-picture window
+                    final List<AccessibilityWindowInfo> windows = sUiAutomation.getWindows();
+                    final int windowCount = windows.size();
+                    for (int i = 0; i < windowCount; i++) {
+                        if (windows.get(i).isInPictureInPictureMode()) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }, TIMEOUT_ASYNC_PROCESSING);
+
+        // There should be exactly one picture-in-picture window now
+        int numPictureInPictureWindows = 0;
+        final List<AccessibilityWindowInfo> windows = sUiAutomation.getWindows();
+        final int windowCount = windows.size();
+        for (int i = 0; i < windowCount; i++) {
+            final AccessibilityWindowInfo window = windows.get(i);
+            if (window.isInPictureInPictureMode()) {
+                numPictureInPictureWindows++;
+            }
+        }
+        assertTrue(numPictureInPictureWindows >= 1);
+    }
+
+    @Test
+    public void moveFocusToAnotherWindow_generatesEventsAndMovesActiveAndFocus() throws Exception {
+        final View topWindowView = showTopWindowAndWaitForItToShowUp();
+        final AccessibilityWindowInfo topWindow =
+                findWindowByTitle(sUiAutomation, TOP_WINDOW_TITLE);
+
+        AccessibilityWindowInfo activityWindow = findWindowByTitle(sUiAutomation, mActivityTitle);
+        final AccessibilityNodeInfo buttonNode =
+                topWindow.getRoot().findAccessibilityNodeInfosByText(
+                        sInstrumentation.getContext().getString(R.string.button1)).get(0);
+
+        // Make sure activityWindow is not focused
+        if (activityWindow.isFocused()) {
+            sUiAutomation.executeAndWaitForEvent(
+                    () -> buttonNode.performAction(AccessibilityNodeInfo.ACTION_FOCUS),
+                    filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_FOCUSED),
+                    TIMEOUT_ASYNC_PROCESSING);
+        }
+
+        // Windows may have changed - refresh
+        activityWindow = findWindowByTitle(sUiAutomation, mActivityTitle);
+        assertFalse(activityWindow.isActive());
+        assertFalse(activityWindow.isFocused());
+
+        // Find a focusable view in the main activity menu
+        final AccessibilityNodeInfo autoCompleteTextInfo = activityWindow.getRoot()
+                .findAccessibilityNodeInfosByViewId(
+                        "android.accessibilityservice.cts:id/autoCompleteLayout")
+                .get(0);
+
+        // Remove the top window and focus on the main activity
+        sUiAutomation.executeAndWaitForEvent(
+                () -> {
+                    sInstrumentation.runOnMainSync(
+                            () -> mActivity.getWindowManager().removeView(topWindowView));
+                    buttonNode.performAction(AccessibilityNodeInfo.ACTION_FOCUS);
+                },
+                filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_FOCUSED | WINDOWS_CHANGE_ACTIVE),
+                TIMEOUT_ASYNC_PROCESSING);
+    }
+
+    @Test
+    public void testChangeAccessibilityFocusWindow_getEvent() throws Exception {
+        final AccessibilityServiceInfo info = sUiAutomation.getServiceInfo();
+        info.flags |= AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE;
+        sUiAutomation.setServiceInfo(info);
+
+        try {
+            showTopWindowAndWaitForItToShowUp();
+
+            final AccessibilityWindowInfo activityWindow =
+                    findWindowByTitle(sUiAutomation, mActivityTitle);
+            final AccessibilityWindowInfo topWindow =
+                    findWindowByTitle(sUiAutomation, TOP_WINDOW_TITLE);
+            final AccessibilityNodeInfo win2Node =
+                    topWindow.getRoot().findAccessibilityNodeInfosByText(
+                            sInstrumentation.getContext().getString(R.string.button1)).get(0);
+            final AccessibilityNodeInfo win1Node = activityWindow.getRoot()
+                    .findAccessibilityNodeInfosByViewId(
+                            "android.accessibilityservice.cts:id/autoCompleteLayout")
+                    .get(0);
+
+            sUiAutomation.executeAndWaitForEvent(
+                    () -> {
+                        win2Node.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS);
+                        win1Node.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS);
+                    },
+                    filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_ACCESSIBILITY_FOCUSED),
+                    TIMEOUT_ASYNC_PROCESSING);
+        } finally {
+            info.flags &= ~AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE;
+            sUiAutomation.setServiceInfo(info);
+        }
     }
 
     @Test
@@ -129,7 +278,7 @@ public class AccessibilityWindowReportingTest {
                         autoCompleteTextView.setAdapter(adapter);
                         autoCompleteTextView.showDropDown();
                     }),
-                    filterForEventType(TYPE_WINDOWS_CHANGED),
+                    filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_CHILDREN),
                     TIMEOUT_ASYNC_PROCESSING);
         } catch (TimeoutException exception) {
             throw new RuntimeException(
@@ -149,5 +298,50 @@ public class AccessibilityWindowReportingTest {
             foundPopup = true;
         }
         assertTrue("Failed to find accessibility window for auto-complete pop-up", foundPopup);
+    }
+
+    private View showTopWindowAndWaitForItToShowUp() throws TimeoutException {
+        final WindowManager.LayoutParams paramsForTop = layoutParmsForWindowOnTop();
+        final Button button = new Button(mActivity);
+        button.setText(R.string.button1);
+        sUiAutomation.executeAndWaitForEvent(() -> sInstrumentation.runOnMainSync(
+                () -> mActivity.getWindowManager().addView(button, paramsForTop)),
+                (event) -> {
+                    return (event.getEventType() == TYPE_WINDOWS_CHANGED)
+                            && (findWindowByTitle(sUiAutomation, mActivityTitle) != null)
+                            && (findWindowByTitle(sUiAutomation, TOP_WINDOW_TITLE) != null);
+                },
+                TIMEOUT_ASYNC_PROCESSING);
+        return button;
+    }
+
+    private WindowManager.LayoutParams layoutParmsForWindowOnTop() {
+        final WindowManager.LayoutParams params = layoutParmsForTestWindow();
+        params.gravity = Gravity.TOP;
+        params.setTitle(TOP_WINDOW_TITLE);
+        sInstrumentation.runOnMainSync(() -> {
+            params.y = getStatusBarHeight(mActivity);
+        });
+        return params;
+    }
+
+    private WindowManager.LayoutParams layoutParmsForWindowOnBottom() {
+        final WindowManager.LayoutParams params = layoutParmsForTestWindow();
+        params.gravity = Gravity.BOTTOM;
+        return params;
+    }
+
+    private WindowManager.LayoutParams layoutParmsForTestWindow() {
+        final WindowManager.LayoutParams params = new WindowManager.LayoutParams();
+        params.width = WindowManager.LayoutParams.MATCH_PARENT;
+        params.height = WindowManager.LayoutParams.WRAP_CONTENT;
+        params.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+                | WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR;
+        params.type = WindowManager.LayoutParams.TYPE_APPLICATION_PANEL;
+        sInstrumentation.runOnMainSync(() -> {
+            params.token = mActivity.getWindow().getDecorView().getWindowToken();
+        });
+        return params;
     }
 }
