@@ -37,6 +37,7 @@ import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.cts.helpers.CameraUtils;
 import android.hardware.camera2.params.MeteringRectangle;
 import android.hardware.camera2.params.OutputConfiguration;
+import android.hardware.camera2.params.SessionConfiguration;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.location.Location;
 import android.location.LocationManager;
@@ -775,6 +776,44 @@ public class CameraTestUtils extends Assert {
         assertTrue("Capture session type must be " + sessionType,
                 isHighSpeed ==
                 CameraConstrainedHighSpeedCaptureSession.class.isAssignableFrom(session.getClass()));
+
+        return session;
+    }
+
+    /**
+     * Build a new constrained camera session with output surfaces, type and recording session
+     * parameters.
+     *
+     * @param camera The CameraDevice to be configured.
+     * @param outputSurfaces The surface list that used for camera output.
+     * @param listener The callback CameraDevice will notify when capture results are available.
+     */
+    public static CameraCaptureSession buildConstrainedCameraSession(CameraDevice camera,
+            List<Surface> outputSurfaces, boolean isHighSpeed,
+            CameraCaptureSession.StateCallback listener, Handler handler)
+            throws CameraAccessException {
+        BlockingSessionCallback sessionListener = new BlockingSessionCallback(listener);
+
+        CaptureRequest.Builder builder = camera.createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
+        CaptureRequest recordSessionParams = builder.build();
+
+        List<OutputConfiguration> outConfigurations = new ArrayList<>(outputSurfaces.size());
+        for (Surface surface : outputSurfaces) {
+            outConfigurations.add(new OutputConfiguration(surface));
+        }
+        SessionConfiguration sessionConfig = new SessionConfiguration(
+                SessionConfiguration.SESSION_HIGH_SPEED, outConfigurations, sessionListener,
+                handler);
+        sessionConfig.setSessionParameters(recordSessionParams);
+        camera.createCaptureSession(sessionConfig);
+
+        CameraCaptureSession session =
+                sessionListener.waitAndGetSession(SESSION_CONFIGURE_TIMEOUT_MS);
+        assertFalse("Camera session should not be a reprocessable session",
+                session.isReprocessable());
+        assertTrue("Capture session type must be High Speed",
+                CameraConstrainedHighSpeedCaptureSession.class.isAssignableFrom(
+                        session.getClass()));
 
         return session;
     }

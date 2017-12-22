@@ -497,6 +497,25 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
     }
 
     /**
+     * Test values for the available session keys.
+     */
+    public void testStaticSessionKeys() throws Exception {
+        for (CameraCharacteristics c : mCharacteristics) {
+            List<CaptureRequest.Key<?>> availableSessionKeys = c.getAvailableSessionKeys();
+            if (availableSessionKeys == null) {
+                continue;
+            }
+            List<CaptureRequest.Key<?>> availableRequestKeys = c.getAvailableCaptureRequestKeys();
+
+            //Every session key should be part of the available request keys
+            for (CaptureRequest.Key<?> key : availableSessionKeys) {
+                assertTrue("Session key:" + key.getName() + " not present in the available capture "
+                        + "request keys!", availableRequestKeys.contains(key));
+            }
+        }
+    }
+
+    /**
      * Test values for static metadata used by the BURST capability.
      */
     public void testStaticBurstCharacteristics() throws Exception {

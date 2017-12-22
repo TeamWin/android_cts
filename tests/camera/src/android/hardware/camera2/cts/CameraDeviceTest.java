@@ -35,9 +35,13 @@ import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
+import android.hardware.camera2.cts.helpers.StaticMetadata.CheckLevel;
 import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
 import android.hardware.camera2.params.MeteringRectangle;
+import android.hardware.camera2.params.InputConfiguration;
 import android.hardware.camera2.params.OutputConfiguration;
+import android.hardware.camera2.params.SessionConfiguration;
+import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.ImageReader;
 import android.os.Handler;
 import android.os.SystemClock;
@@ -783,6 +787,213 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
         }
     }
 
+    /**
+     * Test session configuration.
+     */
+    public void testSessionConfiguration() throws Exception {
+        ArrayList<OutputConfiguration> outConfigs = new ArrayList<OutputConfiguration> ();
+        outConfigs.add(new OutputConfiguration(new Size(1, 1), SurfaceTexture.class));
+        outConfigs.add(new OutputConfiguration(new Size(2, 2), SurfaceTexture.class));
+        mSessionMockListener = spy(new BlockingSessionCallback());
+        InputConfiguration inputConfig = new InputConfiguration(1, 1, ImageFormat.PRIVATE);
+
+        SessionConfiguration regularSessionConfig = new SessionConfiguration(
+                SessionConfiguration.SESSION_REGULAR, outConfigs, mSessionMockListener, null);
+
+        SessionConfiguration highspeedSessionConfig = new SessionConfiguration(
+                SessionConfiguration.SESSION_HIGH_SPEED, outConfigs, mSessionMockListener, null);
+
+        assertEquals("Session configuration output doesn't match",
+                regularSessionConfig.getOutputConfigurations(), outConfigs);
+
+        assertEquals("Session configuration output doesn't match",
+                regularSessionConfig.getOutputConfigurations(),
+                highspeedSessionConfig.getOutputConfigurations());
+
+        assertEquals("Session configuration callback doesn't match",
+                regularSessionConfig.getStateCallback(), mSessionMockListener);
+
+        assertEquals("Session configuration callback doesn't match",
+                regularSessionConfig.getStateCallback(),
+                highspeedSessionConfig.getStateCallback());
+
+        assertEquals("Session configuration handler doesn't match",
+                regularSessionConfig.getHandler(), null);
+
+        assertEquals("Session configuration handler doesn't match",
+                regularSessionConfig.getHandler(), highspeedSessionConfig.getHandler());
+
+        regularSessionConfig.setInputConfiguration(inputConfig);
+        assertEquals("Session configuration input doesn't match",
+                regularSessionConfig.getInputConfiguration(), inputConfig);
+
+        try {
+            highspeedSessionConfig.setInputConfiguration(inputConfig);
+            fail("No exception for valid input configuration in hight speed session configuration");
+        } catch (UnsupportedOperationException e) {
+            //expected
+        }
+
+        assertEquals("Session configuration input doesn't match",
+                highspeedSessionConfig.getInputConfiguration(), null);
+
+        for (int i = 0; i < mCameraIds.length; i++) {
+            try {
+                openDevice(mCameraIds[i], mCameraMockListener);
+                waitForDeviceState(STATE_OPENED, CAMERA_OPEN_TIMEOUT_MS);
+
+                CaptureRequest.Builder builder =
+                    mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
+                CaptureRequest request = builder.build();
+
+                regularSessionConfig.setSessionParameters(request);
+                highspeedSessionConfig.setSessionParameters(request);
+
+                assertEquals("Session configuration parameters doesn't match",
+                        regularSessionConfig.getSessionParameters(), request);
+
+                assertEquals("Session configuration parameters doesn't match",
+                        regularSessionConfig.getSessionParameters(),
+                        highspeedSessionConfig.getSessionParameters());
+            }
+            finally {
+                closeDevice(mCameraIds[i], mCameraMockListener);
+            }
+        }
+    }
+
+    /**
+     * Verify creating a session with additional parameters.
+     */
+    public void testCreateSessionWithParameters() throws Exception {
+        for (int i = 0; i < mCameraIds.length; i++) {
+            try {
+                openDevice(mCameraIds[i], mCameraMockListener);
+                waitForDeviceState(STATE_OPENED, CAMERA_OPEN_TIMEOUT_MS);
+                if (!mStaticInfo.isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + mCameraIds[i] +
+                            " does not support color outputs, skipping");
+                    continue;
+                }
+
+                testCreateSessionWithParametersByCamera(mCameraIds[i], /*reprocessable*/false);
+                testCreateSessionWithParametersByCamera(mCameraIds[i], /*reprocessable*/true);
+            }
+            finally {
+                closeDevice(mCameraIds[i], mCameraMockListener);
+            }
+        }
+    }
+
+    /**
+     * Verify creating a session with additional parameters works
+     */
+    private void testCreateSessionWithParametersByCamera(String cameraId, boolean reprocessable)
+            throws Exception {
+        final int SESSION_TIMEOUT_MS = 1000;
+        final int CAPTURE_TIMEOUT_MS = 3000;
+        int inputFormat = ImageFormat.YUV_420_888;
+        int outputFormat = inputFormat;
+        Size outputSize = mOrderedPreviewSizes.get(0);
+        Size inputSize = outputSize;
+        InputConfiguration inputConfig = null;
+
+        if (VERBOSE) {
+            Log.v(TAG, "Testing creating session with parameters for camera " + cameraId);
+        }
+
+        CameraCharacteristics characteristics = mCameraManager.getCameraCharacteristics(cameraId);
+        StreamConfigurationMap config = characteristics.get(
+                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+
+        if (reprocessable) {
+            //Pick a supported i/o format and size combination.
+            //Ideally the input format should match the output.
+            boolean found = false;
+            int inputFormats [] = config.getInputFormats();
+            if (inputFormats.length == 0) {
+                return;
+            }
+
+            for (int inFormat : inputFormats) {
+                int outputFormats [] = config.getValidOutputFormatsForInput(inputFormat);
+                for (int outFormat : outputFormats) {
+                    if (inFormat == outFormat) {
+                        inputFormat = inFormat;
+                        outputFormat = outFormat;
+                        found = true;
+                        break;
+                    }
+                }
+                if (found) {
+                    break;
+                }
+            }
+
+            //In case the above combination doesn't exist, pick the first first supported
+            //pair.
+            if (!found) {
+                inputFormat = inputFormats[0];
+                int outputFormats [] = config.getValidOutputFormatsForInput(inputFormat);
+                assertTrue("No output formats supported for input format: " + inputFormat,
+                        (outputFormats.length > 0));
+                outputFormat = outputFormats[0];
+            }
+
+            Size inputSizes[] = config.getInputSizes(inputFormat);
+            Size outputSizes[] = config.getOutputSizes(outputFormat);
+            assertTrue("No valid sizes supported for input format: " + inputFormat,
+                    (inputSizes.length > 0));
+            assertTrue("No valid sizes supported for output format: " + outputFormat,
+                    (outputSizes.length > 0));
+
+            inputSize = inputSizes[0];
+            outputSize = outputSizes[0];
+            inputConfig = new InputConfiguration(inputSize.getWidth(),
+                    inputSize.getHeight(), inputFormat);
+        } else {
+            if (config.isOutputSupportedFor(outputFormat)) {
+                outputSize = config.getOutputSizes(outputFormat)[0];
+            } else {
+                return;
+            }
+        }
+
+        ImageReader imageReader = ImageReader.newInstance(outputSize.getWidth(),
+                outputSize.getHeight(), outputFormat, /*maxImages*/1);
+
+        try {
+            mSessionMockListener = spy(new BlockingSessionCallback());
+            mSessionWaiter = mSessionMockListener.getStateWaiter();
+            List<OutputConfiguration> outputs = new ArrayList<>();
+            outputs.add(new OutputConfiguration(imageReader.getSurface()));
+            SessionConfiguration sessionConfig = new SessionConfiguration(
+                    SessionConfiguration.SESSION_REGULAR, outputs, mSessionMockListener, mHandler);
+
+            CaptureRequest.Builder builder =
+                    mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
+            builder.addTarget(imageReader.getSurface());
+            CaptureRequest request = builder.build();
+
+            sessionConfig.setInputConfiguration(inputConfig);
+            sessionConfig.setSessionParameters(request);
+            mCamera.createCaptureSession(sessionConfig);
+
+            mSession = mSessionMockListener.waitAndGetSession(SESSION_CONFIGURE_TIMEOUT_MS);
+
+            // Verify we can capture a frame with the session.
+            SimpleCaptureCallback captureListener = new SimpleCaptureCallback();
+            SimpleImageReaderListener imageListener = new SimpleImageReaderListener();
+            imageReader.setOnImageAvailableListener(imageListener, mHandler);
+
+            mSession.capture(request, captureListener, mHandler);
+            captureListener.getCaptureResultForRequest(request, CAPTURE_TIMEOUT_MS);
+            imageListener.getImage(CAPTURE_TIMEOUT_MS).close();
+        } finally {
+            imageReader.close();
+            mSession.close();
+        }
+    }
 
     /**
      * Verify creating sessions back to back and only the last one is valid for
