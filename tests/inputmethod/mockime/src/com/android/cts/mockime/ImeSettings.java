@@ -31,6 +31,7 @@ public class ImeSettings {
     private final String mEventCallbackActionName;
 
     private static final String BACKGROUND_COLOR_KEY = "BackgroundColor";
+    private static final String NAVIGATION_BAR_COLOR_KEY = "NavigationBarColor";
     private static final String INPUT_VIEW_HEIGHT_WITHOUT_SYSTEM_WINDOW_INSET =
             "InputViewHeightWithoutSystemWindowInset";
     private static final String WINDOW_FLAGS = "WindowFlags";
@@ -57,6 +58,15 @@ public class ImeSettings {
     @ColorInt
     public int getBackgroundColor(@ColorInt int defaultColor) {
         return mBundle.getInt(BACKGROUND_COLOR_KEY, defaultColor);
+    }
+
+    public boolean hasNavigationBarColor() {
+        return mBundle.keySet().contains(NAVIGATION_BAR_COLOR_KEY);
+    }
+
+    @ColorInt
+    public int getNavigationBarColor() {
+        return mBundle.getInt(NAVIGATION_BAR_COLOR_KEY);
     }
 
     public int getInputViewHeightWithoutSystemWindowInset(int defaultHeight) {
@@ -106,6 +116,17 @@ public class ImeSettings {
          */
         public Builder setBackgroundColor(@ColorInt int color) {
             mBundle.putInt(BACKGROUND_COLOR_KEY, color);
+            return this;
+        }
+
+        /**
+         * Sets the color to be passed to {@link android.view.Window#setNavigationBarColor(int)}.
+         *
+         * @param color color to be passed to {@link android.view.Window#setNavigationBarColor(int)}
+         * @see android.view.View
+         */
+        public Builder setNavigationBarColor(@ColorInt int color) {
+            mBundle.putInt(NAVIGATION_BAR_COLOR_KEY, color);
             return this;
         }
 

@@ -25,6 +25,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Color;
 import android.inputmethodservice.InputMethodService;
 import android.os.Bundle;
 import android.os.Handler;
@@ -223,6 +224,10 @@ public final class MockIme extends InputMethodService {
             final int windowFlags = mSettings.getWindowFlags(0);
             if (windowFlags != 0) {
                 getWindow().getWindow().setFlags(windowFlags, windowFlags);
+            }
+
+            if (mSettings.hasNavigationBarColor()) {
+                getWindow().getWindow().setNavigationBarColor(mSettings.getNavigationBarColor());
             }
         });
     }
