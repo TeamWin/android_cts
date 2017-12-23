@@ -57,7 +57,6 @@ public class PermissionPolicyTest extends AndroidTestCase {
     private static final String PLATFORM_ROOT_NAMESPACE = "android.";
 
     private static final String AUTOMOTIVE_SERVICE_PACKAGE_NAME = "com.android.car";
-    private static final String AUTOMOTIVE_PERMISSION_NAMESPACE = "android.car.";
 
     private static final String TAG_PERMISSION = "permission";
 
@@ -66,16 +65,8 @@ public class PermissionPolicyTest extends AndroidTestCase {
     private static final String ATTR_PROTECTION_LEVEL = "protectionLevel";
 
     public void testPlatformPermissionPolicyUnaltered() throws Exception {
-        final boolean hasAutomotiveFeature = getContext().getPackageManager()
-                .hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
-
         Map<String, PermissionInfo> declaredPermissionsMap =
                 getPermissionsForPackage(getContext(), PLATFORM_PACKAGE_NAME);
-
-        if (hasAutomotiveFeature) {
-            declaredPermissionsMap.putAll(
-                    getPermissionsForPackage(getContext(), AUTOMOTIVE_SERVICE_PACKAGE_NAME));
-        }
 
         List<String> offendingList = new ArrayList<>();
 
@@ -87,14 +78,17 @@ public class PermissionPolicyTest extends AndroidTestCase {
         }
 
         Set<String> expectedPermissionGroups = new ArraySet<>();
+        List<PermissionInfo> expectedPermissions = loadExpectedPermissions(R.raw.android_manifest);
 
-        for (PermissionInfo expectedPermission : loadExpectedPermissions()) {
+        if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            expectedPermissions.addAll(loadExpectedPermissions(R.raw.automotive_android_manifest));
+            declaredPermissionsMap.putAll(
+                    getPermissionsForPackage(getContext(), AUTOMOTIVE_SERVICE_PACKAGE_NAME));
+        }
+
+        for (PermissionInfo expectedPermission : expectedPermissions) {
             String expectedPermissionName = expectedPermission.name;
             if (shouldSkipPermission(expectedPermissionName)) {
-                continue;
-            }
-
-            if (!hasAutomotiveFeature && isAutomotivePermission(expectedPermissionName)) {
                 continue;
             }
 
@@ -192,12 +186,9 @@ public class PermissionPolicyTest extends AndroidTestCase {
         assertTrue(errMsg, offendingList.isEmpty());
     }
 
-    private List<PermissionInfo> loadExpectedPermissions() throws Exception {
+    private List<PermissionInfo> loadExpectedPermissions(int resourceId) throws Exception {
         List<PermissionInfo> permissions = new ArrayList<>();
-        try (
-                InputStream in = getContext().getResources()
-                        .openRawResource(android.permission2.cts.R.raw.android_manifest)
-        ) {
+        try (InputStream in = getContext().getResources().openRawResource(resourceId)) {
             XmlPullParser parser = Xml.newPullParser();
             parser.setInput(in, null);
 
@@ -303,10 +294,6 @@ public class PermissionPolicyTest extends AndroidTestCase {
         }
 
         return patchDate;
-    }
-
-    private static boolean isAutomotivePermission(String permissionName) {
-        return permissionName.startsWith(AUTOMOTIVE_PERMISSION_NAMESPACE);
     }
 
     private boolean shouldSkipPermission(String permissionName) {
