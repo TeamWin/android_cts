@@ -25,11 +25,10 @@ import android.app.RemoteInput;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Parcel;
 import android.test.AndroidTestCase;
 import android.widget.RemoteViews;
-
-import org.mockito.internal.matchers.Not;
 
 public class NotificationTest extends AndroidTestCase {
     private static final String TEXT_RESULT_KEY = "text";
@@ -253,17 +252,65 @@ public class NotificationTest extends AndroidTestCase {
     }
 
     public void testMessagingStyle_isGroupConversation() {
-        Notification.MessagingStyle messagingStyle =
-                new Notification.MessagingStyle("self name")
-                        .setGroupConversation(true);
-        mNotification = new Notification.Builder(mContext, "test id")
+        mContext.getApplicationInfo().targetSdkVersion = Build.VERSION_CODES.P;
+        Notification.MessagingStyle messagingStyle = new Notification.MessagingStyle("self name")
+                .setGroupConversation(true)
+                .setConversationTitle("test conversation title");
+        Notification notification = new Notification.Builder(mContext, "test id")
                 .setSmallIcon(1)
                 .setContentTitle("test title")
                 .setStyle(messagingStyle)
                 .build();
 
         assertTrue(messagingStyle.isGroupConversation());
-        assertTrue(mNotification.extras.getBoolean(Notification.EXTRA_IS_GROUP_CONVERSATION));
+        assertTrue(notification.extras.getBoolean(Notification.EXTRA_IS_GROUP_CONVERSATION));
+    }
+
+    public void testMessagingStyle_isGroupConversation_noConversationTitle() {
+        mContext.getApplicationInfo().targetSdkVersion = Build.VERSION_CODES.P;
+        Notification.MessagingStyle messagingStyle = new Notification.MessagingStyle("self name")
+                .setGroupConversation(true)
+                .setConversationTitle(null);
+        Notification notification = new Notification.Builder(mContext, "test id")
+                .setSmallIcon(1)
+                .setContentTitle("test title")
+                .setStyle(messagingStyle)
+                .build();
+
+        assertTrue(messagingStyle.isGroupConversation());
+        assertTrue(notification.extras.getBoolean(Notification.EXTRA_IS_GROUP_CONVERSATION));
+    }
+
+    public void testMessagingStyle_isGroupConversation_withConversationTitle_legacy() {
+        // In legacy (version < P), isGroupConversation is controlled by conversationTitle.
+        mContext.getApplicationInfo().targetSdkVersion = Build.VERSION_CODES.O;
+        Notification.MessagingStyle messagingStyle = new Notification.MessagingStyle("self name")
+                .setGroupConversation(false)
+                .setConversationTitle("test conversation title");
+        Notification notification = new Notification.Builder(mContext, "test id")
+                .setSmallIcon(1)
+                .setContentTitle("test title")
+                .setStyle(messagingStyle)
+                .build();
+
+        assertTrue(messagingStyle.isGroupConversation());
+        assertFalse(notification.extras.getBoolean(Notification.EXTRA_IS_GROUP_CONVERSATION));
+    }
+
+    public void testMessagingStyle_isGroupConversation_withoutConversationTitle_legacy() {
+        // In legacy (version < P), isGroupConversation is controlled by conversationTitle.
+        mContext.getApplicationInfo().targetSdkVersion = Build.VERSION_CODES.O;
+        Notification.MessagingStyle messagingStyle = new Notification.MessagingStyle("self name")
+                .setGroupConversation(true)
+                .setConversationTitle(null);
+        Notification notification = new Notification.Builder(mContext, "test id")
+                .setSmallIcon(1)
+                .setContentTitle("test title")
+                .setStyle(messagingStyle)
+                .build();
+
+        assertFalse(messagingStyle.isGroupConversation());
+        assertTrue(notification.extras.getBoolean(Notification.EXTRA_IS_GROUP_CONVERSATION));
     }
 
     public void testToString() {
