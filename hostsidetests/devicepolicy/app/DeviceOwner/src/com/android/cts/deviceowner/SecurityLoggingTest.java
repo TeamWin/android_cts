@@ -130,7 +130,7 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
      * Test: retrieving security logs should be rate limited - subsequent attempts should return
      * null.
      */
-    public void testRetrievingSecurityLogsNotPossibleImmediatelyAfterPreviousSuccessfulRetrieval() {
+    public void testSecurityLoggingRetrievalRateLimited() {
         List<SecurityEvent> logs = mDevicePolicyManager.retrieveSecurityLogs(getWho());
         // if logs is null it means that that attempt was rate limited => test PASS
         if (logs != null) {

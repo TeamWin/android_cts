@@ -329,59 +329,30 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        executeDeviceTestMethod(".SecurityLoggingTest",
-                "testRetrievingSecurityLogsNotPossibleImmediatelyAfterPreviousSuccessfulRetrieval");
         executeDeviceTestMethod(".SecurityLoggingTest", "testDisablingSecurityLogging");
-        try {
-            executeDeviceTestMethod(".SecurityLoggingTest", "testEnablingSecurityLogging");
 
-            // Generate more than enough events for a batch of security events.
-            runBatch(0, BUFFER_SECURITY_ENTRIES_NOTIFICATION_LEVEL + 100 /* batch size */);
-        } finally {
-            // Always attempt to disable security logging to bring the device to initial state.
-            executeDeviceTestMethod(".SecurityLoggingTest", "testDisablingSecurityLogging");
-        }
-    }
-
-    public void testSecurityLogging_multipleBatches() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         // Generate more than enough events for a batch of security events.
         int batchSize = BUFFER_SECURITY_ENTRIES_NOTIFICATION_LEVEL + 100;
         try {
-            // Prepare the device.
             executeDeviceTestMethod(".SecurityLoggingTest", "testEnablingSecurityLogging");
+            // Reboot to ensure ro.device_owner is set to true in logd.
+            rebootAndWaitUntilReady();
 
             // First batch: retrieve and verify the events.
             runBatch(0, batchSize);
 
-            // Second batch: retrieve and verify the events.
+            // Verify event ids are consistent across a consecutive batch.
             runBatch(1, batchSize);
-        } finally {
-            // Always attempt to disable security logging to bring the device to initial state.
-            executeDeviceTestMethod(".SecurityLoggingTest", "testDisablingSecurityLogging");
-        }
-    }
 
-    public void testSecurityLogging_rebootResetsId() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-        // Generate more than enough events for a batch of security events.
-        int batchSize = BUFFER_SECURITY_ENTRIES_NOTIFICATION_LEVEL + 100;
-        try {
-            // Prepare the device.
-            executeDeviceTestMethod(".SecurityLoggingTest", "testEnablingSecurityLogging");
-
-            // First batch: retrieve and verify the events.
-            runBatch(0 /* batch number */, batchSize);
-
-            // Reboot the device, so the security event IDs are re-set.
+            // Reboot the device, so the security event ids are reset.
             rebootAndWaitUntilReady();
 
             // First batch after reboot: retrieve and verify the events.
             runBatch(0 /* batch number */, batchSize);
+
+            // Immediately attempting to fetch events again should fail.
+            executeDeviceTestMethod(".SecurityLoggingTest",
+                    "testSecurityLoggingRetrievalRateLimited");
         } finally {
             // Always attempt to disable security logging to bring the device to initial state.
             executeDeviceTestMethod(".SecurityLoggingTest", "testDisablingSecurityLogging");
