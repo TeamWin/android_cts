@@ -49,18 +49,37 @@ public final class TestActivity extends Activity {
      * runner automatically calls {@link Activity#finish()} for the {@link Activity} launched when
      * the test finished.  You do not need to explicitly call {@link Activity#finish()}.</p>
      *
-     * @param activityInitializer An initializer to supply {@link View} to be passed to
+     * @param activityInitializer initializer to supply {@link View} to be passed to
      *                           {@link Activity#setContentView(View)}
      * @return {@link TestActivity} launched
      */
     public static TestActivity startSync(
             @NonNull Function<TestActivity, View> activityInitializer) {
+        return startSync(activityInitializer, 0 /* noAnimation */);
+    }
+
+    /**
+     * Launches {@link TestActivity} with the given initialization logic for content view.
+     *
+     * <p>As long as you are using {@link android.support.test.runner.AndroidJUnitRunner}, the test
+     * runner automatically calls {@link Activity#finish()} for the {@link Activity} launched when
+     * the test finished.  You do not need to explicitly call {@link Activity#finish()}.</p>
+     *
+     * @param activityInitializer initializer to supply {@link View} to be passed to
+     *                           {@link Activity#setContentView(View)}
+     * @param additionalFlags flags to be set to {@link Intent#setFlags(int)}
+     * @return {@link TestActivity} launched
+     */
+    public static TestActivity startSync(
+            @NonNull Function<TestActivity, View> activityInitializer,
+            int additionalFlags) {
         sInitializer.set(activityInitializer);
         final Intent intent = new Intent()
                 .setAction(Intent.ACTION_MAIN)
                 .setClass(InstrumentationRegistry.getContext(), TestActivity.class)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                .addFlags(additionalFlags);
         return (TestActivity) InstrumentationRegistry
                 .getInstrumentation().startActivitySync(intent);
     }
