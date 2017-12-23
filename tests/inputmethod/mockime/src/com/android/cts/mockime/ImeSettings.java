@@ -35,6 +35,7 @@ public class ImeSettings {
     private static final String INPUT_VIEW_HEIGHT_WITHOUT_SYSTEM_WINDOW_INSET =
             "InputViewHeightWithoutSystemWindowInset";
     private static final String WINDOW_FLAGS = "WindowFlags";
+    private static final String WINDOW_FLAGS_MASK = "WindowFlagsMask";
     private static final String FULLSCREEN_MODE_ALLOWED = "FullscreenModeAllowed";
     private static final String INPUT_VIEW_SYSTEM_UI_VISIBILITY = "InputViewSystemUiVisibility";
 
@@ -75,6 +76,10 @@ public class ImeSettings {
 
     public int getWindowFlags(int defaultFlags) {
         return mBundle.getInt(WINDOW_FLAGS, defaultFlags);
+    }
+
+    public int getWindowFlagsMask(int defaultFlags) {
+        return mBundle.getInt(WINDOW_FLAGS_MASK, defaultFlags);
     }
 
     public int getInputViewSystemUiVisibility(int defaultFlags) {
@@ -148,10 +153,13 @@ public class ImeSettings {
          * {@link MockIme} tries to render the navigation bar by itself.</p>
          *
          * @param flags flags to be specified
+         * @param flagsMask mask bits that specify what bits need to be cleared before setting
+         *                  {@code flags}
          * @see android.view.WindowManager
          */
-        public Builder setWindowFlags(int flags) {
+        public Builder setWindowFlags(int flags, int flagsMask) {
             mBundle.putInt(WINDOW_FLAGS, flags);
+            mBundle.putInt(WINDOW_FLAGS_MASK, flagsMask);
             return this;
         }
 
