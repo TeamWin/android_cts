@@ -16,6 +16,7 @@
 
 package com.android.cts.mockime;
 
+import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
 import android.view.inputmethod.InputBinding;
@@ -152,4 +153,41 @@ public final class ImeEventStreamTestUtils {
         }, timeout);
     }
 
+    /**
+     * Waits until {@code MockIme} does not send {@code "onInputViewLayoutChanged"} event
+     * for a certain period of time ({@code stableThresholdTime} msec).
+     *
+     * <p>When this returns non-null {@link ImeLayoutInfo}, the stream position will be set to
+     * the next event of the returned layout event.  Otherwise this method does not change stream
+     * position.</p>
+     * @param stream {@link ImeEventStream} to be checked.
+     * @param stableThresholdTime threshold time to consider that {@link MockIme}'s layout is
+     *                            stable, in millisecond
+     * @return last {@link ImeLayoutInfo} if {@link MockIme} sent one or more
+     *         {@code "onInputViewLayoutChanged"} event.  Otherwise {@code null}
+     */
+    public static ImeLayoutInfo waitForInputViewLayoutStable(@NonNull ImeEventStream stream,
+            long stableThresholdTime) {
+        ImeLayoutInfo lastLayout = null;
+        final Predicate<ImeEvent> layoutFilter =
+                event -> "onInputViewLayoutChanged".equals(event.getEventName());
+        try {
+            long deadline = SystemClock.elapsedRealtime() + stableThresholdTime;
+            while (true) {
+                if (deadline < SystemClock.elapsedRealtime()) {
+                    return lastLayout;
+                }
+                final Optional<ImeEvent> event = stream.seekToFirst(layoutFilter);
+                if (event.isPresent()) {
+                    // Remember the last event and extend the deadline again.
+                    lastLayout = ImeLayoutInfo.readFromBundle(event.get().getArguments());
+                    deadline = SystemClock.elapsedRealtime() + stableThresholdTime;
+                    stream.skip(1);
+                }
+                Thread.sleep(TIME_SLICE);
+            }
+        } catch (InterruptedException e) {
+            throw new RuntimeException("notExpectEvent failed: " + stream.dump(), e);
+        }
+    }
 }

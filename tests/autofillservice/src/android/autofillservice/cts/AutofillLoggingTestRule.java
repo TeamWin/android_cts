@@ -16,13 +16,14 @@
 
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.Helper.runShellCommand;
+import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
 
 import android.util.Log;
 
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
+
 /**
  * Custom JUnit4 rule that improves autofill-related logging by:
  *

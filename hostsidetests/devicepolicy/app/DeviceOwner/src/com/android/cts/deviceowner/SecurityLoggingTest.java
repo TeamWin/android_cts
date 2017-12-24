@@ -17,13 +17,14 @@ package com.android.cts.deviceowner;
 
 import android.app.admin.SecurityLog.SecurityEvent;
 import android.os.Parcel;
-import android.os.SystemClock;
+import android.support.test.InstrumentationRegistry;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class SecurityLoggingTest extends BaseDeviceOwnerTest {
+    private static final String ARG_BATCH_NUMBER = "batchNumber";
+    private static final int BUFFER_ENTRIES_NOTIFICATION_LEVEL = 1024;
 
     /**
      * Test: retrieving security logs can only be done if there's one user on the device or all
@@ -56,13 +57,26 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
      */
     public void testGetSecurityLogs() {
         List<SecurityEvent> events = mDevicePolicyManager.retrieveSecurityLogs(getWho());
+        String param = InstrumentationRegistry.getArguments().getString(ARG_BATCH_NUMBER);
+        int batchNumber = param == null ? 0 : Integer.parseInt(param);
+        verifySecurityLogs(batchNumber, events);
+    }
 
-        // There must be at least some events, e.g. PackageManager logs all process launches.
+    private static void verifySecurityLogs(int batchNumber, List<SecurityEvent> events) {
         assertTrue("Unable to get events", events != null && events.size() > 0);
-
+        assertTrue(
+                "First id in batch " + events.get(0).getId() + " is too small for the batch number "
+                        + batchNumber,
+                events.get(0).getId() >= (BUFFER_ENTRIES_NOTIFICATION_LEVEL * batchNumber));
         // We don't know much about the events, so just call public API methods.
         for (int i = 0; i < events.size(); i++) {
             SecurityEvent event = events.get(i);
+
+            // Test id for monotonically increasing.
+            if (i > 0) {
+                assertEquals("Event IDs are not monotonically increasing within the batch",
+                        events.get(i - 1).getId() + 1, event.getId());
+            }
 
             // Test parcelling: flatten to a parcel.
             Parcel p = Parcel.obtain();
@@ -81,6 +95,8 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
                 assertEquals("Parcelling changed the result of getData",
                         event.getData(), restored.getData());
             }
+            assertEquals("Parcelling changed the result of getId",
+                    event.getId(), restored.getId());
             assertEquals("Parcelling changed the result of getTag",
                     event.getTag(), restored.getTag());
             assertEquals("Parcelling changed the result of getTimeNanos",
@@ -114,7 +130,7 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
      * Test: retrieving security logs should be rate limited - subsequent attempts should return
      * null.
      */
-    public void testRetrievingSecurityLogsNotPossibleImmediatelyAfterPreviousSuccessfulRetrieval() {
+    public void testSecurityLoggingRetrievalRateLimited() {
         List<SecurityEvent> logs = mDevicePolicyManager.retrieveSecurityLogs(getWho());
         // if logs is null it means that that attempt was rate limited => test PASS
         if (logs != null) {

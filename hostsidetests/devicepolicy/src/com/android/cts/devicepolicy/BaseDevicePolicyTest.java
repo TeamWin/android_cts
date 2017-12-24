@@ -249,7 +249,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
                 + getDevice().executeShellCommand(stopUserCommand));
     }
 
-    private void waitForBroadcastIdle() throws DeviceNotAvailableException, IOException {
+    protected void waitForBroadcastIdle() throws DeviceNotAvailableException, IOException {
         CollectingOutputReceiver receiver = new CollectingOutputReceiver();
         try {
             // we allow 8min for the command to complete and 4min for the command to start to
@@ -851,5 +851,22 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         wakeupAndDismissKeyguard();
         String command = "am start -W --user " + userId + " " + packageName + "/" + activityName;
         getDevice().executeShellCommand(command);
+    }
+
+    protected String getDefaultLauncher() throws Exception {
+        final String PREFIX = "Launcher: ComponentInfo{";
+        final String POSTFIX = "}";
+        final String commandOutput =
+                getDevice().executeShellCommand("cmd shortcut get-default-launcher");
+        if (commandOutput == null) {
+            return null;
+        }
+        String[] lines = commandOutput.split("\\r?\\n");
+        for (String line : lines) {
+            if (line.startsWith(PREFIX) && line.endsWith(POSTFIX)) {
+                return line.substring(PREFIX.length(), line.length() - POSTFIX.length());
+            }
+        }
+        throw new Exception("Default launcher not found");
     }
 }

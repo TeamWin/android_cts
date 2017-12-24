@@ -70,7 +70,8 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
     private static final String POLICY_TRANSPARENCY_TEST_ID = "POLICY_TRANSPARENCY";
     private static final String ENTERPRISE_PRIVACY_TEST_ID = "ENTERPRISE_PRIVACY";
     private static final String NETWORK_LOGGING_UI_TEST_ID = "NETWORK_LOGGING_UI";
-    public static final String COMP_TEST_ID = "COMP_UI";
+    private static final String COMP_TEST_ID = "COMP_UI";
+    private static final String MANAGED_USER_TEST_ID = "MANAGED_USER_UI";
     private static final String REMOVE_DEVICE_OWNER_TEST_ID = "REMOVE_DEVICE_OWNER";
 
     @Override
@@ -323,12 +324,25 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                 R.string.enterprise_privacy_test,
                 enterprisePolicyTestIntent));
 
+        // COMP
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS)) {
             Intent compIntent = new Intent(this, CompTestActivity.class)
                     .putExtra(PolicyTransparencyTestActivity.EXTRA_TEST_ID, COMP_TEST_ID);
             adapter.add(createTestItem(this, COMP_TEST_ID,
                     R.string.comp_test,
                     compIntent));
+        }
+
+        // Managed user
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS)
+                && UserManager.supportsMultipleUsers()) {
+            adapter.add(createInteractiveTestItem(this, MANAGED_USER_TEST_ID,
+                    R.string.managed_user_test,
+                    R.string.managed_user_positive_tests_instructions,
+                    new ButtonInfo[]{
+                            new ButtonInfo(
+                                    R.string.device_owner_settings_go,
+                                    createCreateManagedUserIntent())}));
         }
 
         // Network logging UI
@@ -387,6 +401,12 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         return new Intent(this, CommandReceiverActivity.class)
                 .putExtra(CommandReceiverActivity.EXTRA_COMMAND,
                         CommandReceiverActivity.COMMAND_DISABLE_NETWORK_LOGGING);
+    }
+
+    private Intent createCreateManagedUserIntent() {
+        return new Intent(this, CommandReceiverActivity.class)
+                .putExtra(CommandReceiverActivity.EXTRA_COMMAND,
+                        CommandReceiverActivity.COMMAND_CREATE_MANAGED_USER);
     }
 
     private boolean isStatusBarEnabled() {

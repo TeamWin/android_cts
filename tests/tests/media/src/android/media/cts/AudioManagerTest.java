@@ -39,6 +39,7 @@ import static android.provider.Settings.System.SOUND_EFFECTS_ENABLED;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.res.Resources;
+import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
 import android.content.pm.PackageManager;
 import android.media.AudioSystem;
@@ -979,6 +980,93 @@ public class AudioManagerTest extends InstrumentationTestCase {
     public void testAdjustVolumeWithIllegalDirection() throws Exception {
         // Call the method with illegal direction. System should not reboot.
         mAudioManager.adjustVolume(37, 0);
+    }
+
+    private final int[] PUBLIC_STREAM_TYPES = { AudioManager.STREAM_VOICE_CALL,
+            AudioManager.STREAM_SYSTEM, AudioManager.STREAM_RING, AudioManager.STREAM_MUSIC,
+            AudioManager.STREAM_ALARM, AudioManager.STREAM_NOTIFICATION,
+            AudioManager.STREAM_DTMF,  AudioManager.STREAM_ACCESSIBILITY };
+
+    public void testGetStreamVolumeDbWithIllegalArguments() throws Exception {
+        Exception ex = null;
+        // invalid stream type
+        try {
+            float gain = mAudioManager.getStreamVolumeDb(-100 /*streamType*/, 0,
+                    AudioDeviceInfo.TYPE_BUILTIN_SPEAKER);
+        } catch (Exception e) {
+            ex = e; // expected
+        }
+        assertNotNull("No exception was thrown for an invalid stream type", ex);
+        assertEquals("Wrong exception thrown for invalid stream type",
+                ex.getClass(), IllegalArgumentException.class);
+
+        // invalid volume index
+        ex = null;
+        try {
+            float gain = mAudioManager.getStreamVolumeDb(AudioManager.STREAM_MUSIC, -101 /*volume*/,
+                    AudioDeviceInfo.TYPE_BUILTIN_SPEAKER);
+        } catch (Exception e) {
+            ex = e; // expected
+        }
+        assertNotNull("No exception was thrown for an invalid volume index", ex);
+        assertEquals("Wrong exception thrown for invalid volume index",
+                ex.getClass(), IllegalArgumentException.class);
+
+        // invalid out of range volume index
+        ex = null;
+        try {
+            final int maxVol = mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+            float gain = mAudioManager.getStreamVolumeDb(AudioManager.STREAM_MUSIC, maxVol + 1,
+                    AudioDeviceInfo.TYPE_BUILTIN_SPEAKER);
+        } catch (Exception e) {
+            ex = e; // expected
+        }
+        assertNotNull("No exception was thrown for an invalid out of range volume index", ex);
+        assertEquals("Wrong exception thrown for invalid out of range volume index",
+                ex.getClass(), IllegalArgumentException.class);
+
+        // invalid device type
+        ex = null;
+        try {
+            float gain = mAudioManager.getStreamVolumeDb(AudioManager.STREAM_MUSIC, 0,
+                    -102 /*deviceType*/);
+        } catch (Exception e) {
+            ex = e; // expected
+        }
+        assertNotNull("No exception was thrown for an invalid device type", ex);
+        assertEquals("Wrong exception thrown for invalid device type",
+                ex.getClass(), IllegalArgumentException.class);
+
+        // invalid input device type
+        ex = null;
+        try {
+            float gain = mAudioManager.getStreamVolumeDb(AudioManager.STREAM_MUSIC, 0,
+                    AudioDeviceInfo.TYPE_BUILTIN_MIC);
+        } catch (Exception e) {
+            ex = e; // expected
+        }
+        assertNotNull("No exception was thrown for an invalid input device type", ex);
+        assertEquals("Wrong exception thrown for invalid input device type",
+                ex.getClass(), IllegalArgumentException.class);
+    }
+
+    public void testGetStreamVolumeDb() throws Exception {
+        for (int streamType : PUBLIC_STREAM_TYPES) {
+            // verify mininum index is strictly inferior to maximum index
+            final int minIndex = mAudioManager.getStreamMinVolume(streamType);
+            final int maxIndex = mAudioManager.getStreamMaxVolume(streamType);
+            assertTrue("Min vol index (" + minIndex + ") for stream " + streamType + " not inferior"
+                    + " to max vol index (" + maxIndex + ")", minIndex <= maxIndex);
+            float prevGain = Float.NEGATIVE_INFINITY;
+            // verify gain increases with the volume indices
+            for (int idx = minIndex ; idx <= maxIndex ; idx++) {
+                float gain = mAudioManager.getStreamVolumeDb(streamType, idx,
+                        AudioDeviceInfo.TYPE_BUILTIN_SPEAKER);
+                assertTrue("Non-monotonically increasing gain at index " + idx + " for stream"
+                        + streamType, prevGain <= gain);
+                prevGain = gain;
+            }
+        }
     }
 
     public void testAdjustSuggestedStreamVolumeWithIllegalArguments() throws Exception {

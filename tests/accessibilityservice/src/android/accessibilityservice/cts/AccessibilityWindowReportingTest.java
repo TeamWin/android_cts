@@ -16,81 +16,104 @@
 
 package android.accessibilityservice.cts;
 
+import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterForEventType;
+import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.findWindowByTitle;
+import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.getActivityTitle;
+import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
+import static android.content.pm.PackageManager.FEATURE_PICTURE_IN_PICTURE;
+import static android.view.accessibility.AccessibilityEvent.TYPE_WINDOWS_CHANGED;
+
+import static junit.framework.TestCase.assertTrue;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.cts.activities.AccessibilityWindowReportingActivity;
+import android.app.Activity;
+import android.app.Instrumentation;
 import android.app.UiAutomation;
-import android.text.TextUtils;
-import android.view.accessibility.AccessibilityEvent;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
+import android.support.test.InstrumentationRegistry;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 /**
- * Tests that AccessibilityWindowInfos are properly populated
+ * Tests that window changes produce the correct events and that AccessibilityWindowInfos are
+ * properly populated
  */
-public class AccessibilityWindowReportingTest
-        extends AccessibilityActivityTestCase<AccessibilityWindowReportingActivity> {
-    UiAutomation mUiAutomation;
+@RunWith(AndroidJUnit4.class)
+public class AccessibilityWindowReportingTest {
+    private static final int TIMEOUT_ASYNC_PROCESSING = 5000;
+    private static final CharSequence TOP_WINDOW_TITLE =
+            "android.accessibilityservice.cts.AccessibilityWindowReportingTest.TOP_WINDOW_TITLE";
 
-    public AccessibilityWindowReportingTest() {
-        super(AccessibilityWindowReportingActivity.class);
-    }
+    private static Instrumentation sInstrumentation;
+    private static UiAutomation sUiAutomation;
+    private Activity mActivity;
+    private CharSequence mActivityTitle;
 
-    public void setUp() throws Exception {
-        super.setUp();
-        mUiAutomation = getInstrumentation().getUiAutomation();
-        AccessibilityServiceInfo info = mUiAutomation.getServiceInfo();
+    @Rule
+    public ActivityTestRule<AccessibilityWindowReportingActivity> mActivityRule =
+            new ActivityTestRule<>(AccessibilityWindowReportingActivity.class, false, false);
+
+    @BeforeClass
+    public static void oneTimeSetup() throws Exception {
+        sInstrumentation = InstrumentationRegistry.getInstrumentation();
+        sUiAutomation = sInstrumentation.getUiAutomation();
+        AccessibilityServiceInfo info = sUiAutomation.getServiceInfo();
         info.flags |= AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
-        mUiAutomation.setServiceInfo(info);
+        sUiAutomation.setServiceInfo(info);
     }
 
-    public void tearDown() throws Exception {
-        mUiAutomation.destroy();
-        super.tearDown();
+    @AfterClass
+    public static void finalTearDown() throws Exception {
+        sUiAutomation.destroy();
     }
 
-    public void testWindowTitle_getTitleReturnsTitle() {
-        AccessibilityWindowInfo window = findWindowByTitle(getActivity().getTitle());
-        assertNotNull("Window title not reported to accessibility", window);
-        window.recycle();
+    @Before
+    public void setUp() throws Exception {
+        mActivity = launchActivityAndWaitForItToBeOnscreen(
+                sInstrumentation, sUiAutomation, mActivityRule);
+        mActivityTitle = getActivityTitle(sInstrumentation, mActivity);
     }
 
+    @Test
     public void testUpdatedWindowTitle_generatesEventAndIsReturnedByGetTitle() {
         final String updatedTitle = "Updated Title";
         try {
-            mUiAutomation.executeAndWaitForEvent(new Runnable() {
-                @Override
-                public void run() {
-                    getInstrumentation().runOnMainSync(new Runnable() {
-                        @Override
-                        public void run() {
-                            getActivity().setTitle(updatedTitle);
-                        }
-                    });
-                }
-            }, new UiAutomation.AccessibilityEventFilter() {
-                @Override
-                public boolean accept(AccessibilityEvent event) {
-                    return (event.getEventType() == AccessibilityEvent.TYPE_WINDOWS_CHANGED);
-                }
-            }, TIMEOUT_ASYNC_PROCESSING);
+            sUiAutomation.executeAndWaitForEvent(() -> sInstrumentation.runOnMainSync(
+                    () -> mActivity.setTitle(updatedTitle)),
+                    filterForEventType(TYPE_WINDOWS_CHANGED),
+                    TIMEOUT_ASYNC_PROCESSING);
         } catch (TimeoutException exception) {
             throw new RuntimeException(
                     "Failed to get windows changed event for title update", exception);
         }
-        AccessibilityWindowInfo window = findWindowByTitle(updatedTitle);
+        final AccessibilityWindowInfo window = findWindowByTitle(sUiAutomation, updatedTitle);
         assertNotNull("Updated window title not reported to accessibility", window);
         window.recycle();
     }
 
+    @Test
     public void testGetAnchorForDropDownForAutoCompleteTextView_returnsTextViewNode() {
         final AutoCompleteTextView autoCompleteTextView =
-                (AutoCompleteTextView) getActivity().findViewById(R.id.autoCompleteLayout);
-        AccessibilityNodeInfo autoCompleteTextInfo = mUiAutomation.getRootInActiveWindow()
+                (AutoCompleteTextView) mActivity.findViewById(R.id.autoCompleteLayout);
+        final AccessibilityNodeInfo autoCompleteTextInfo = sUiAutomation.getRootInActiveWindow()
                 .findAccessibilityNodeInfosByViewId(
                         "android.accessibilityservice.cts:id/autoCompleteLayout")
                 .get(0);
@@ -99,25 +122,15 @@ public class AccessibilityWindowReportingTest
         final String[] COUNTRIES = new String[] {"Belgium", "France", "Italy", "Germany", "Spain"};
 
         try {
-            mUiAutomation.executeAndWaitForEvent(new Runnable() {
-                @Override
-                public void run() {
-                    getInstrumentation().runOnMainSync(new Runnable() {
-                        @Override
-                        public void run() {
-                            ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(),
-                                    android.R.layout.simple_dropdown_item_1line, COUNTRIES);
-                            autoCompleteTextView.setAdapter(adapter);
-                            autoCompleteTextView.showDropDown();
-                        }
-                    });
-                }
-            }, new UiAutomation.AccessibilityEventFilter() {
-                @Override
-                public boolean accept(AccessibilityEvent event) {
-                    return event.getEventType() == AccessibilityEvent.TYPE_WINDOWS_CHANGED;
-                }
-            }, TIMEOUT_ASYNC_PROCESSING);
+            sUiAutomation.executeAndWaitForEvent(() -> sInstrumentation.runOnMainSync(
+                    () -> {
+                        final ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                                mActivity, android.R.layout.simple_dropdown_item_1line, COUNTRIES);
+                        autoCompleteTextView.setAdapter(adapter);
+                        autoCompleteTextView.showDropDown();
+                    }),
+                    filterForEventType(TYPE_WINDOWS_CHANGED),
+                    TIMEOUT_ASYNC_PROCESSING);
         } catch (TimeoutException exception) {
             throw new RuntimeException(
                     "Failed to get window changed event when showing dropdown", exception);
@@ -125,9 +138,9 @@ public class AccessibilityWindowReportingTest
 
         // Find the pop-up window
         boolean foundPopup = false;
-        List<AccessibilityWindowInfo> windows = mUiAutomation.getWindows();
+        final List<AccessibilityWindowInfo> windows = sUiAutomation.getWindows();
         for (int i = 0; i < windows.size(); i++) {
-            AccessibilityWindowInfo window = windows.get(i);
+            final AccessibilityWindowInfo window = windows.get(i);
             if (window.getAnchor() == null) {
                 continue;
             }
@@ -136,19 +149,5 @@ public class AccessibilityWindowReportingTest
             foundPopup = true;
         }
         assertTrue("Failed to find accessibility window for auto-complete pop-up", foundPopup);
-    }
-
-    private AccessibilityWindowInfo findWindowByTitle(CharSequence title) {
-        List<AccessibilityWindowInfo> windows = mUiAutomation.getWindows();
-        AccessibilityWindowInfo returnValue = null;
-        for (int i = 0; i < windows.size(); i++) {
-            AccessibilityWindowInfo window = windows.get(i);
-            if (TextUtils.equals(title, window.getTitle())) {
-                returnValue = window;
-            } else {
-                window.recycle();
-            }
-        }
-        return returnValue;
     }
 }

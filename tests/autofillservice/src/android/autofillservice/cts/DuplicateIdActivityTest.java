@@ -18,9 +18,9 @@ package android.autofillservice.cts;
 
 import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
 import static android.autofillservice.cts.DuplicateIdActivity.DUPLICATE_ID;
-import static android.autofillservice.cts.Helper.runShellCommand;
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilConnected;
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilDisconnected;
+import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -46,7 +46,7 @@ public class DuplicateIdActivityTest extends AutoFillServiceTestCase {
     private DuplicateIdActivity mActivity;
 
     @Before
-    public void setup() {
+    public void setup() throws Exception {
         Helper.disableAutoRotation(mUiBot);
         mUiBot.setScreenOrientation(0);
 
@@ -116,10 +116,16 @@ public class DuplicateIdActivityTest extends AutoFillServiceTestCase {
         // Wait context and Views being recreated in rotation
         mUiBot.assertShownByRelativeId(DUPLICATE_ID);
 
+        // Because service returned a null response, rotation will trigger another request.
+        sReplier.addResponse(NO_RESPONSE);
+
         // Select other field to trigger new partition
         runShellCommand("input keyevent KEYCODE_TAB");
 
         request = sReplier.getNextFillRequest();
+
+        // Ignore 2nd request.
+        sReplier.getNextFillRequest();
 
         views = findViews(request);
         AutofillId recreatedId1 = views[0].getAutofillId();

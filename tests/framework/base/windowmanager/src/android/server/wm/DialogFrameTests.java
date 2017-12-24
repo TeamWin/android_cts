@@ -24,6 +24,7 @@ import static org.junit.Assert.assertTrue;
 import android.content.ComponentName;
 import android.graphics.Rect;
 import android.server.am.WaitForValidActivityState;
+import android.server.am.WindowManagerState;
 import android.server.am.WindowManagerState.WindowState;
 
 import org.junit.Test;
@@ -231,12 +232,13 @@ public class DialogFrameTests extends ParentChildTestBase {
 
     @Test
     public void testDialogPlacedAboveParent() throws Exception {
+        final WindowManagerState wmState = mAmWmState.getWmState();
         doParentChildTest("MatchParent",
                 (WindowState parent, WindowState dialog) -> {
                     // Not only should the dialog be higher, but it should be
                     // leave multiple layers of space inbetween for DimLayers,
                     // etc...
-                    assertTrue(dialog.getZOrder() > parent.getZOrder());
+                    assertTrue(wmState.getZOrder(dialog) > wmState.getZOrder(parent));
                 });
     }
 }

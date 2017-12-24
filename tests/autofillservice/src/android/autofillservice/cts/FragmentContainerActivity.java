@@ -71,10 +71,10 @@ public class FragmentContainerActivity extends AbstractAutoFillActivity {
     }
 
     public boolean waitUntilResumed() throws InterruptedException {
-        return mResumed.await(Helper.UI_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        return mResumed.await(Timeouts.UI_TIMEOUT.ms(), TimeUnit.MILLISECONDS);
     }
 
     public boolean waitUntilStopped() throws InterruptedException {
-        return mStopped.await(Helper.UI_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        return mStopped.await(Timeouts.UI_TIMEOUT.ms(), TimeUnit.MILLISECONDS);
     }
 }

@@ -434,7 +434,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
 
         // Switch back to the activity.
         restartActivity();
-        mUiBot.assertShownByText(TEXT_LABEL, Helper.ACTIVITY_RESURRECTION_MS);
+        mUiBot.assertShownByText(TEXT_LABEL, Timeouts.ACTIVITY_RESURRECTION);
         final UiObject2 datasetPicker = mUiBot.assertDatasets("YO");
         callback.assertUiShownEvent(mActivity.mInput);
 
@@ -484,7 +484,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
 
         // Switch back to the activity.
         restartActivity();
-        mUiBot.assertShownByText(TEXT_LABEL, Helper.ACTIVITY_RESURRECTION_MS);
+        mUiBot.assertShownByText(TEXT_LABEL, Timeouts.ACTIVITY_RESURRECTION);
         mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
         sReplier.getNextFillRequest();
         mUiBot.assertNoDatasets();
@@ -715,7 +715,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
                 throw new IllegalArgumentException("invalid type: " + type);
         }
         // Make sure right activity is showing
-        mUiBot.assertShownByRelativeId(ID_INPUT, Helper.ACTIVITY_RESURRECTION_MS);
+        mUiBot.assertShownByRelativeId(ID_INPUT, Timeouts.ACTIVITY_RESURRECTION);
 
         mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
     }

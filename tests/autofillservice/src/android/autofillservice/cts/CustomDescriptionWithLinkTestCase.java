@@ -265,11 +265,12 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
         return newCustomDescriptionBuilder(intent).build();
     }
 
-    protected final UiObject2 assertSaveUiWithLinkIsShown(int saveType) {
+    protected final UiObject2 assertSaveUiWithLinkIsShown(int saveType) throws Exception {
         return assertSaveUiWithLinkIsShown(saveType, "DON'T TAP ME!");
     }
 
-    protected final UiObject2 assertSaveUiWithLinkIsShown(int saveType, String expectedText) {
+    protected final UiObject2 assertSaveUiWithLinkIsShown(int saveType, String expectedText)
+            throws Exception {
         // First make sure the UI is shown...
         final UiObject2 saveUi = mUiBot.assertSaveShowing(saveType);
         // Then make sure it does have the custom view with link on it...

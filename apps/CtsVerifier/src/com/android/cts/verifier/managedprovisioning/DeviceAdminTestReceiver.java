@@ -31,6 +31,8 @@ import android.util.Log;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.location.LocationListenerActivity;
 
+import java.util.Collections;
+
 /**
  * Profile owner receiver for BYOD flow test.
  * Setup cross-profile intent filter after successful provisioning.
@@ -44,6 +46,9 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
             DEVICE_OWNER_PKG + ".managedprovisioning.DeviceAdminTestReceiver";
     private static final ComponentName RECEIVER_COMPONENT_NAME = new ComponentName(
             DEVICE_OWNER_PKG, ADMIN_RECEIVER_TEST_CLASS);
+    public static final String EXTRA_MANAGED_USER_TEST =
+            "com.android.cts.verifier.managedprovisioning.extra.MANAGED_USER_TEST";
+    public static final String AFFILIATION_ID = "affiliationId";
 
     public static ComponentName getReceiverComponentName() {
         return RECEIVER_COMPONENT_NAME;
@@ -89,6 +94,18 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
         Log.i(TAG, "Exiting LockTask mode");
         LocalBroadcastManager.getInstance(context)
                 .sendBroadcast(new Intent(LockTaskUiTestActivity.ACTION_LOCK_TASK_STOPPED));
+    }
+
+    @Override
+    public void onEnabled(Context context, Intent intent) {
+        Log.i(TAG, "Device admin enabled");
+        if (intent.getBooleanExtra(EXTRA_MANAGED_USER_TEST, false)) {
+            DevicePolicyManager dpm = context.getSystemService(DevicePolicyManager.class);
+            ComponentName admin = DeviceAdminTestReceiver.getReceiverComponentName();
+            dpm.setAffiliationIds(admin,
+                    Collections.singleton(DeviceAdminTestReceiver.AFFILIATION_ID));
+            context.startActivity(new Intent(context, ManagedUserPositiveTestActivity.class));
+        }
     }
 
     private void setupProfile(Context context) {

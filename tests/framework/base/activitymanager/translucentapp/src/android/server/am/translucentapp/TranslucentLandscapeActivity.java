@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package android.server.translucentapp;
+package android.server.am.translucentapp;
 
 import android.app.Activity;
 

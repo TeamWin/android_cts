@@ -98,7 +98,7 @@ public class CrossProfileAppsTargetUserTest {
     @Test
     public void testCanStartMainActivity() throws Exception {
         mCrossProfileApps.startMainActivity(
-                MainActivity.getComponentName(mContext), mTargetUser, null, null);
+                MainActivity.getComponentName(mContext), mTargetUser);
 
         // Look for the text view to verify that MainActivity is started.
         UiObject2 textView = mDevice.wait(
@@ -114,13 +114,13 @@ public class CrossProfileAppsTargetUserTest {
     @Test(expected = SecurityException.class)
     public void testCannotStartNotExportedActivity() throws Exception {
         mCrossProfileApps.startMainActivity(
-                NonExportedActivity.getComponentName(mContext), mTargetUser, null, null);
+                NonExportedActivity.getComponentName(mContext), mTargetUser);
     }
 
     @Test(expected = SecurityException.class)
     public void testCannotStartNonMainActivity() throws Exception {
         mCrossProfileApps.startMainActivity(
-                NonExportedActivity.getComponentName(mContext), mTargetUser, null, null);
+                NonExportedActivity.getComponentName(mContext), mTargetUser);
     }
 }
 

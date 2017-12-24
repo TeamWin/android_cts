@@ -361,6 +361,11 @@ public abstract class ActivityManagerTestBase {
         mAmWmState.waitForValidState(targetActivityName);
     }
 
+    protected void launchActivityNoWait(final ComponentName targetActivityName,
+            final String... keyValuePairs) throws Exception {
+        executeShellCommand(getAmStartCmd(targetActivityName, keyValuePairs));
+    }
+
     @Deprecated
     protected void launchActivityNoWait(final String targetActivityName,
             final String... keyValuePairs) throws Exception {
@@ -392,7 +397,7 @@ public abstract class ActivityManagerTestBase {
         }
     }
 
-    private void waitForIdle() {
+    private static void waitForIdle() {
         InstrumentationRegistry.getInstrumentation().waitForIdleSync();
     }
 
@@ -1008,11 +1013,11 @@ public abstract class ActivityManagerTestBase {
         return null;
     }
 
-    protected String[] getDeviceLogsForComponent(String componentName, String logSeparator) {
+    protected static String[] getDeviceLogsForComponent(String componentName, String logSeparator) {
         return getDeviceLogsForComponents(new String[]{componentName}, logSeparator);
     }
 
-    protected String[] getDeviceLogsForComponents(final String[] componentNames,
+    protected static String[] getDeviceLogsForComponents(final String[] componentNames,
             String logSeparator) {
         String filters = LOG_SEPARATOR + ":I ";
         for (String component : componentNames) {
@@ -1183,7 +1188,7 @@ public abstract class ActivityManagerTestBase {
     private static final Pattern sUiModeLockedPattern =
             Pattern.compile("mUiModeLocked=(true|false)");
 
-    class ReportedSizes {
+    static class ReportedSizes {
         int widthDp;
         int heightDp;
         int displayWidth;
@@ -1287,7 +1292,7 @@ public abstract class ActivityManagerTestBase {
 
     // TODO: Now that our test are device side, we can convert these to a more direct communication
     // channel vs. depending on logs.
-    class ActivityLifecycleCounts {
+    static class ActivityLifecycleCounts {
         int mCreateCount;
         int mStartCount;
         int mResumeCount;

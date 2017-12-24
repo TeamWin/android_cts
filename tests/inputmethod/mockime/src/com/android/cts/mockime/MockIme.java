@@ -25,6 +25,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Color;
 import android.inputmethodservice.InputMethodService;
 import android.os.Bundle;
 import android.os.Handler;
@@ -221,8 +222,13 @@ public final class MockIme extends InputMethodService {
 
             mImeEventActionName.set(mSettings.getEventCallbackActionName());
             final int windowFlags = mSettings.getWindowFlags(0);
-            if (windowFlags != 0) {
-                getWindow().getWindow().setFlags(windowFlags, windowFlags);
+            final int windowFlagsMask = mSettings.getWindowFlagsMask(0);
+            if (windowFlags != 0 || windowFlagsMask != 0) {
+                getWindow().getWindow().setFlags(windowFlags, windowFlagsMask);
+            }
+
+            if (mSettings.hasNavigationBarColor()) {
+                getWindow().getWindow().setNavigationBarColor(mSettings.getNavigationBarColor());
             }
         });
     }
@@ -240,11 +246,13 @@ public final class MockIme extends InputMethodService {
     }
 
     private static final class KeyboardLayoutView extends LinearLayout {
-
         @NonNull
-        final ImeSettings mSettings;
+        private final ImeSettings mSettings;
+        @NonNull
+        private final View.OnLayoutChangeListener mLayoutListener;
 
-        public KeyboardLayoutView(Context context, @NonNull ImeSettings imeSettings) {
+        public KeyboardLayoutView(Context context, @NonNull ImeSettings imeSettings,
+                @Nullable Consumer<ImeLayoutInfo> onInputViewLayoutChangedCallback) {
             super(context);
 
             mSettings = imeSettings;
@@ -276,6 +284,12 @@ public final class MockIme extends InputMethodService {
             if (systemUiVisibility != 0) {
                 setSystemUiVisibility(systemUiVisibility);
             }
+
+            mLayoutListener = (View v, int left, int top, int right, int bottom, int oldLeft,
+                    int oldTop, int oldRight, int oldBottom) ->
+                    onInputViewLayoutChangedCallback.accept(ImeLayoutInfo.fromLayoutListenerCallback(
+                            v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom));
+            this.addOnLayoutChangeListener(mLayoutListener);
         }
 
         @Override
@@ -297,11 +311,22 @@ public final class MockIme extends InputMethodService {
                     insets.getSystemWindowInsetRight(),
                     0 /* bottom */);
         }
+
+        @Override
+        protected void onDetachedFromWindow() {
+            super.onDetachedFromWindow();
+            removeOnLayoutChangeListener(mLayoutListener);
+        }
+    }
+
+    private void onInputViewLayoutChanged(@NonNull ImeLayoutInfo layoutInfo) {
+        getTracer().onInputViewLayoutChanged(layoutInfo, () -> {});
     }
 
     @Override
     public View onCreateInputView() {
-        return getTracer().onCreateInputView(() -> new KeyboardLayoutView(this, mSettings));
+        return getTracer().onCreateInputView(() ->
+                new KeyboardLayoutView(this, mSettings, this::onInputViewLayoutChanged));
     }
 
     @Override
@@ -496,7 +521,6 @@ public final class MockIme extends InputMethodService {
             final Bundle arguments = new Bundle();
             arguments.putBinder("token", token);
             recordEventInternal("attachToken", runnable, arguments);
-
         }
 
         public void bindInput(InputBinding binding, @NonNull Runnable runnable) {
@@ -542,6 +566,13 @@ public final class MockIme extends InputMethodService {
             final Bundle arguments = new Bundle();
             arguments.putBundle("command", command.toBundle());
             recordEventInternal("onHandleCommand", runnable, arguments);
+        }
+
+        public void onInputViewLayoutChanged(@NonNull ImeLayoutInfo imeLayoutInfo,
+                @NonNull Runnable runnable) {
+            final Bundle arguments = new Bundle();
+            imeLayoutInfo.writeToBundle(arguments);
+            recordEventInternal("onInputViewLayoutChanged", runnable, arguments);
         }
     }
 }

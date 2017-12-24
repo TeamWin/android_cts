@@ -15,11 +15,11 @@
  */
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.Helper.runShellCommand;
 import static android.autofillservice.cts.WebViewActivity.HTML_NAME_PASSWORD;
 import static android.autofillservice.cts.WebViewActivity.HTML_NAME_USERNAME;
 import static android.autofillservice.cts.WebViewActivity.ID_OUTSIDE1;
 import static android.autofillservice.cts.WebViewActivity.ID_OUTSIDE2;
+import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 
 import static com.google.common.truth.Truth.assertThat;

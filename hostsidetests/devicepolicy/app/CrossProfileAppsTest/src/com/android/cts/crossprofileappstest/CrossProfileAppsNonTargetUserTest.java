@@ -68,7 +68,7 @@ public class CrossProfileAppsNonTargetUserTest {
     @Test(expected = SecurityException.class)
     public void testCannotStartActivity() {
         mCrossProfileApps.startMainActivity(
-                MainActivity.getComponentName(mContext), mTargetUser, null, null);
+                MainActivity.getComponentName(mContext), mTargetUser);
     }
 }
 

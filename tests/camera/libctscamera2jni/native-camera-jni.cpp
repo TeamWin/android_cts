@@ -754,7 +754,8 @@ class PreviewTestCase {
         return mPreviewAnw;
     }
 
-    camera_status_t createCaptureSessionWithLog(bool isPreviewShared = false) {
+    camera_status_t createCaptureSessionWithLog(bool isPreviewShared = false,
+            ACaptureRequest *sessionParameters = nullptr) {
         if (mSession) {
             LOG_ERROR(errorString, "Cannot create session before closing existing one");
             return ACAMERA_ERROR_UNKNOWN;
@@ -814,8 +815,8 @@ class PreviewTestCase {
             }
         }
 
-        ret = ACameraDevice_createCaptureSession(
-                mDevice, mOutputs, &mSessionCb, &mSession);
+        ret = ACameraDevice_createCaptureSessionWithSessionParameters(
+                mDevice, mOutputs, sessionParameters, &mSessionCb, &mSession);
         if (ret != ACAMERA_OK || mSession == nullptr) {
             LOG_ERROR(errorString, "Create session for camera %s failed. ret %d session %p",
                     mCameraId, ret, mSession);
@@ -935,6 +936,15 @@ class PreviewTestCase {
             return ACAMERA_ERROR_INVALID_PARAMETER;
         }
         *out = mStillRequest;
+        return ACAMERA_OK;
+    }
+
+    camera_status_t getPreviewRequest(ACaptureRequest** out) {
+        if (mPreviewRequest == nullptr) {
+            ALOGE("Camera %s Preview capture request hasn't been created", mCameraId);
+            return ACAMERA_ERROR_INVALID_PARAMETER;
+        }
+        *out = mPreviewRequest;
         return ACAMERA_OK;
     }
 
@@ -2118,6 +2128,134 @@ testCameraDeviceSimplePreviewNative(
 
     pass = true;
 cleanup:
+    ALOGI("%s %s", __FUNCTION__, pass ? "pass" : "failed");
+    if (!pass) {
+        throwAssertionError(env, errorString);
+    }
+    return pass;
+}
+
+extern "C" jboolean
+Java_android_hardware_camera2_cts_NativeCameraDeviceTest_\
+testCameraDevicePreviewWithSessionParametersNative(
+        JNIEnv* env, jclass /*clazz*/, jobject jPreviewSurface) {
+    ALOGV("%s", __FUNCTION__);
+    int numCameras = 0;
+    bool pass = false;
+    ACameraManager* mgr = ACameraManager_create();
+    ACameraMetadata* chars = nullptr;
+    PreviewTestCase testCase;
+
+    camera_status_t ret = testCase.initWithErrorLog();
+    if (ret != ACAMERA_OK) {
+        // Don't log error here. testcase did it
+        goto cleanup;
+    }
+
+    numCameras = testCase.getNumCameras();
+    if (numCameras < 0) {
+        LOG_ERROR(errorString, "Testcase returned negavtive number of cameras: %d", numCameras);
+        goto cleanup;
+    }
+
+    for (int i = 0; i < numCameras; i++) {
+        const char* cameraId = testCase.getCameraId(i);
+        if (cameraId == nullptr) {
+            LOG_ERROR(errorString, "Testcase returned null camera id for camera %d", i);
+            goto cleanup;
+        }
+
+        ret = ACameraManager_getCameraCharacteristics(
+                mgr, cameraId, &chars);
+        if (ret != ACAMERA_OK) {
+            LOG_ERROR(errorString, "Get camera characteristics failed: ret %d", ret);
+            goto cleanup;
+        }
+
+        ACameraMetadata_const_entry sessionParamKeys{};
+        ret = ACameraMetadata_getConstEntry(chars, ACAMERA_REQUEST_AVAILABLE_SESSION_KEYS,
+                &sessionParamKeys);
+        if ((ret != ACAMERA_OK) || (sessionParamKeys.count == 0)) {
+            ACameraMetadata_free(chars);
+            chars = nullptr;
+            continue;
+        }
+
+        ret = testCase.openCamera(cameraId);
+        if (ret != ACAMERA_OK) {
+            LOG_ERROR(errorString, "Open camera device %s failure. ret %d", cameraId, ret);
+            goto cleanup;
+        }
+
+        usleep(100000); // sleep to give some time for callbacks to happen
+
+        if (testCase.isCameraAvailable(cameraId)) {
+            LOG_ERROR(errorString, "Camera %s should be unavailable now", cameraId);
+            goto cleanup;
+        }
+
+        ANativeWindow* previewAnw = testCase.initPreviewAnw(env, jPreviewSurface);
+        if (previewAnw == nullptr) {
+            LOG_ERROR(errorString, "Null ANW from preview surface!");
+            goto cleanup;
+        }
+
+        ret = testCase.createRequestsWithErrorLog();
+        if (ret != ACAMERA_OK) {
+            // Don't log error here. testcase did it
+            goto cleanup;
+        }
+
+        ACaptureRequest *previewRequest = nullptr;
+        ret = testCase.getPreviewRequest(&previewRequest);
+        if ((ret != ACAMERA_OK) || (previewRequest == nullptr)) {
+            LOG_ERROR(errorString, "Preview request query failed!");
+            goto cleanup;
+        }
+
+        ret = testCase.createCaptureSessionWithLog(/*isPreviewShared*/ false, previewRequest);
+        if (ret != ACAMERA_OK) {
+            // Don't log error here. testcase did it
+            goto cleanup;
+        }
+
+        ret = testCase.startPreview();
+        if (ret != ACAMERA_OK) {
+            LOG_ERROR(errorString, "Start preview failed!");
+            goto cleanup;
+        }
+
+        sleep(3);
+
+        ret = testCase.resetWithErrorLog();
+        if (ret != ACAMERA_OK) {
+            // Don't log error here. testcase did it
+            goto cleanup;
+        }
+
+        usleep(100000); // sleep to give some time for callbacks to happen
+
+        if (!testCase.isCameraAvailable(cameraId)) {
+            LOG_ERROR(errorString, "Camera %s should be available now", cameraId);
+            goto cleanup;
+        }
+
+        ACameraMetadata_free(chars);
+        chars = nullptr;
+    }
+
+    ret = testCase.deInit();
+    if (ret != ACAMERA_OK) {
+        LOG_ERROR(errorString, "Testcase deInit failed: ret %d", ret);
+        goto cleanup;
+    }
+
+    pass = true;
+cleanup:
+    if (chars) {
+        ACameraMetadata_free(chars);
+    }
+    ACameraManager_delete(mgr);
     ALOGI("%s %s", __FUNCTION__, pass ? "pass" : "failed");
     if (!pass) {
         throwAssertionError(env, errorString);

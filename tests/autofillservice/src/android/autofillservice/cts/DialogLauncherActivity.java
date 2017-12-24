@@ -55,7 +55,7 @@ public class DialogLauncherActivity extends AbstractAutoFillActivity {
         syncRunOnUiThread(() -> v.visit(mDialog.mUsernameEditText));
     }
 
-    void launchDialog(UiBot uiBot) {
+    void launchDialog(UiBot uiBot) throws Exception {
         syncRunOnUiThread(() -> mLaunchButton.performClick());
         // TODO: should assert by id, but it's not working
         uiBot.assertShownByText("Username");

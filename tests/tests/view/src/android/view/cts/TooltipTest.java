@@ -259,14 +259,16 @@ public class TooltipTest {
     }
 
     @Test
-    public void testNoTooltipOnDisabledView() throws Throwable {
+    public void testTooltipOnDisabledView() throws Throwable {
         mActivityRule.runOnUiThread(() -> mTooltipView.setEnabled(false));
 
+        // Long click has no effect on a disabled view.
         injectLongClick(mTooltipView);
         assertFalse(hasTooltip(mTooltipView));
 
+        // Hover does show the tooltip on a disabled view.
         injectLongHoverMove(mTooltipView);
-        assertFalse(hasTooltip(mTooltipView));
+        assertTrue(hasTooltip(mTooltipView));
     }
 
     @Test
@@ -662,7 +664,8 @@ public class TooltipTest {
         injectHoverMove(mTooltipView);
         mActivityRule.runOnUiThread(() -> mTooltipView.setEnabled(false));
         waitOut(ViewConfiguration.getHoverTooltipShowTimeout());
-        assertFalse(hasTooltip(mTooltipView));
+        // Disabled view still displays a hover tooltip.
+        assertTrue(hasTooltip(mTooltipView));
     }
 
     @Test

@@ -18,6 +18,7 @@ package android.autofillservice.cts;
 
 import static android.autofillservice.cts.InstrumentedAutoFillService.SERVICE_NAME;
 import static android.autofillservice.cts.UiBot.PORTRAIT;
+import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
 import static android.provider.Settings.Secure.AUTOFILL_SERVICE;
 import static android.provider.Settings.Secure.USER_SETUP_COMPLETE;
 import static android.service.autofill.FillEventHistory.Event.TYPE_AUTHENTICATION_SELECTED;
@@ -32,6 +33,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.app.assist.AssistStructure;
 import android.app.assist.AssistStructure.ViewNode;
 import android.app.assist.AssistStructure.WindowNode;
+import android.autofillservice.cts.common.SettingsHelper;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -53,8 +55,6 @@ import android.view.autofill.AutofillId;
 import android.view.autofill.AutofillValue;
 import android.webkit.WebView;
 
-import com.android.compatibility.common.util.SystemUtil;
-
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
@@ -66,7 +66,7 @@ import java.util.function.Function;
  */
 final class Helper {
 
-    private static final String TAG = "AutoFillCtsHelper";
+    static final String TAG = "AutoFillCtsHelper";
 
     static final boolean VERBOSE = false;
 
@@ -87,66 +87,6 @@ final class Helper {
     public static final String UNUSED_AUTOFILL_VALUE = null;
 
     private static final String CMD_LIST_SESSIONS = "cmd autofill list sessions";
-
-    /**
-     * Timeout (in milliseconds) until framework binds / unbinds from service.
-     */
-    static final long CONNECTION_TIMEOUT_MS = 2000;
-
-    /**
-     * Timeout (in milliseconds) until framework unbinds from a service.
-     */
-    static final long IDLE_UNBIND_TIMEOUT_MS = 5000;
-
-    /**
-     * Timeout (in milliseconds) for expected auto-fill requests.
-     */
-    static final long FILL_TIMEOUT_MS = 2000;
-
-    /**
-     * Timeout (in milliseconds) for expected save requests.
-     */
-    static final long SAVE_TIMEOUT_MS = 5000;
-
-    /**
-     * Time to wait if a UI change is not expected
-     */
-    static final long NOT_SHOWING_TIMEOUT_MS = 500;
-
-    /**
-     * Timeout (in milliseconds) for UI operations. Typically used by {@link UiBot}.
-     */
-    static final int UI_TIMEOUT_MS = 2000;
-
-    /**
-     * Timeout (in milliseconds) for showing the autofill dataset picker UI.
-     *
-     * <p>The value is usually higher than {@link #UI_TIMEOUT_MS} because the performance of the
-     * dataset picker UI can be affect by external factors in some low-level devices.
-     *
-     * <p>Typically used by {@link UiBot}.
-     */
-    static final int UI_DATASET_PICKER_TIMEOUT_MS = 4000;
-
-    /**
-     * Timeout (in milliseconds) for an activity to be brought out to top.
-     */
-    static final int ACTIVITY_RESURRECTION_MS = 5000;
-
-    /**
-     * Timeout (in milliseconds) for changing the screen orientation.
-     */
-    static final int UI_SCREEN_ORIENTATION_TIMEOUT_MS = 5000;
-
-    /**
-     * Timeout (in milliseconds) for using Recents to swtich activities.
-     */
-    static final int UI_RECENTS_SWITCH_TIMEOUT_MS = 200;
-
-    /**
-     * Time to wait in between retries
-     */
-    static final int RETRY_MS = 100;
 
     private final static String ACCELLEROMETER_CHANGE =
             "content insert --uri content://settings/system --bind name:s:accelerometer_rotation "
@@ -188,55 +128,6 @@ final class Helper {
     };
 
     /**
-     * Runs a {@code r}, ignoring all {@link RuntimeException} and {@link Error} until the
-     * {@link #UI_TIMEOUT_MS} is reached.
-     */
-    static void eventually(Runnable r) throws Exception {
-        eventually(r, UI_TIMEOUT_MS);
-    }
-
-    /**
-     * Runs a {@code r}, ignoring all {@link RuntimeException} and {@link Error} until the
-     * {@code timeout} is reached.
-     */
-    static void eventually(Runnable r, int timeout) throws Exception {
-        long startTime = System.currentTimeMillis();
-
-        while (true) {
-            try {
-                r.run();
-                break;
-            } catch (RuntimeException | Error e) {
-                if (System.currentTimeMillis() - startTime < timeout) {
-                    if (VERBOSE) Log.v(TAG, "Ignoring", e);
-                    Thread.sleep(RETRY_MS);
-                } else {
-                    if (e instanceof RetryableException) {
-                        throw e;
-                    } else {
-                        throw new RetryableException(e, "Timedout out after %d ms", timeout);
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Runs a Shell command, returning a trimmed response.
-     */
-    static String runShellCommand(String template, Object...args) {
-        final String command = String.format(template, args);
-        Log.d(TAG, "runShellCommand(): " + command);
-        try {
-            final String result = SystemUtil
-                    .runShellCommand(InstrumentationRegistry.getInstrumentation(), command);
-            return TextUtils.isEmpty(result) ? "" : result.trim();
-        } catch (Exception e) {
-            throw new RuntimeException("Command '" + command + "' failed: ", e);
-        }
-    }
-
-    /**
      * Dump the assist structure on logcat.
      */
     static void dumpStructure(String message, AssistStructure structure) {
@@ -271,32 +162,7 @@ final class Helper {
      * Sets whether the user completed the initial setup.
      */
     static void setUserComplete(Context context, boolean complete) {
-        if (isUserComplete() == complete) return;
-
-        final OneTimeSettingsListener observer = new OneTimeSettingsListener(context,
-                USER_SETUP_COMPLETE);
-        final String newValue = complete ? "1" : null;
-        runShellCommand("settings put secure %s %s default", USER_SETUP_COMPLETE, newValue);
-        observer.assertCalled();
-
-        assertIsUserComplete(complete);
-    }
-
-    /**
-     * Gets whether the user completed the initial setup.
-     */
-    static boolean isUserComplete() {
-        final String isIt = runShellCommand("settings get secure %s", USER_SETUP_COMPLETE);
-        return "1".equals(isIt);
-    }
-
-    /**
-     * Assets that user completed (or not) the initial setup.
-     */
-    static void assertIsUserComplete(boolean expected) {
-        final boolean actual = isUserComplete();
-        assertWithMessage("Invalid value for secure setting %s", USER_SETUP_COMPLETE)
-                .that(actual).isEqualTo(expected);
+        SettingsHelper.syncSet(context, USER_SETUP_COMPLETE, complete ? "1" : null);
     }
 
     private static void dump(StringBuffer buffer, ViewNode node, String prefix, int childId) {
@@ -746,7 +612,7 @@ final class Helper {
     /**
      * Prevents the screen to rotate by itself
      */
-    public static void disableAutoRotation(UiBot uiBot) {
+    public static void disableAutoRotation(UiBot uiBot) throws Exception {
         runShellCommand(ACCELLEROMETER_CHANGE, 0);
         uiBot.setScreenOrientation(PORTRAIT);
     }
@@ -763,28 +629,21 @@ final class Helper {
      *
      * @return The pid of the process
      */
-    public static int getOutOfProcessPid(@NonNull String processName) {
-        long startTime = System.currentTimeMillis();
+    public static int getOutOfProcessPid(@NonNull String processName, @NonNull Timeout timeout)
+            throws Exception {
 
-        while (System.currentTimeMillis() - startTime <= UI_TIMEOUT_MS) {
-            String[] allProcessDescs = runShellCommand("ps -eo PID,ARGS=CMD").split("\n");
+        return timeout.run("getOutOfProcessPid(" + processName + ")", () -> {
+            final String[] allProcessDescs = runShellCommand("ps -eo PID,ARGS=CMD").split("\n");
 
             for (String processDesc : allProcessDescs) {
-                String[] pidAndName = processDesc.trim().split(" ");
+                final String[] pidAndName = processDesc.trim().split(" ");
 
                 if (pidAndName[1].equals(processName)) {
                     return Integer.parseInt(pidAndName[0]);
                 }
             }
-
-            try {
-                Thread.sleep(RETRY_MS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
-
-        throw new IllegalStateException("process not found");
+            return null;
+        });
     }
 
     /**
@@ -827,67 +686,53 @@ final class Helper {
      * Uses Settings to enable the given autofill service for the default user, and checks the
      * value was properly check, throwing an exception if it was not.
      */
-    public static void enableAutofillService(Context context, String serviceName) {
+    public static void enableAutofillService(@NonNull Context context,
+            @NonNull String serviceName) {
         if (isAutofillServiceEnabled(serviceName)) return;
 
-        final OneTimeSettingsListener observer = new OneTimeSettingsListener(context,
-                AUTOFILL_SERVICE);
-        setAutofillServiceOnSettings(serviceName);
-        observer.assertCalled();
-        assertAutofillServiceStatus(serviceName, true);
+        SettingsHelper.syncSet(context, AUTOFILL_SERVICE, serviceName);
     }
 
     /**
      * Uses Settings to disable the given autofill service for the default user, and checks the
      * value was properly check, throwing an exception if it was not.
      */
-    public static void disableAutofillService(Context context, String serviceName) {
+    public static void disableAutofillService(@NonNull Context context,
+            @NonNull String serviceName) {
         if (!isAutofillServiceEnabled(serviceName)) return;
 
-        final OneTimeSettingsListener observer = new OneTimeSettingsListener(context,
-                AUTOFILL_SERVICE);
-        resetAutofillServiceOnSettings();
-        observer.assertCalled();
-        assertAutofillServiceStatus(serviceName, false);
+        SettingsHelper.syncDelete(context, AUTOFILL_SERVICE);
     }
 
     /**
      * Checks whether the given service is set as the autofill service for the default user.
      */
-    public static boolean isAutofillServiceEnabled(String serviceName) {
-        final String actualName = getAutofillServiceFromSettings();
+    private static boolean isAutofillServiceEnabled(@NonNull String serviceName) {
+        final String actualName = SettingsHelper.get(AUTOFILL_SERVICE);
         return serviceName.equals(actualName);
     }
 
     /**
      * Asserts whether the given service is enabled as the autofill service for the default user.
      */
-    public static void assertAutofillServiceStatus(String serviceName, boolean enabled) {
-        final String actual = getAutofillServiceFromSettings();
+    public static void assertAutofillServiceStatus(@NonNull String serviceName, boolean enabled) {
+        final String actual = SettingsHelper.get(AUTOFILL_SERVICE);
         final String expected = enabled ? serviceName : "null";
         assertWithMessage("Invalid value for secure setting %s", AUTOFILL_SERVICE)
                 .that(actual).isEqualTo(expected);
-    }
-
-    public static String getAutofillServiceFromSettings() {
-        return runShellCommand("settings get secure %s", AUTOFILL_SERVICE);
-    }
-
-    public static void setAutofillServiceOnSettings(String serviceName) {
-        runShellCommand("settings put secure %s %s default", AUTOFILL_SERVICE, serviceName);
-    }
-
-    public static void resetAutofillServiceOnSettings() {
-        runShellCommand("settings delete secure %s", AUTOFILL_SERVICE);
     }
 
     /**
      * Asserts that there is no session left in the service.
      */
     public static void assertNoDanglingSessions() {
-        final String result = runShellCommand(CMD_LIST_SESSIONS);
+        final String result = listSessions();
         assertWithMessage("Dangling sessions ('%s'): %s'", CMD_LIST_SESSIONS, result).that(result)
                 .isEmpty();
+    }
+
+    public static String listSessions() {
+        return runShellCommand(CMD_LIST_SESSIONS);
     }
 
     /**
@@ -1237,7 +1082,17 @@ final class Helper {
         return componentName.flattenToShortString();
     }
 
+    public static void assertFloat(float actualValue, float expectedValue) {
+        assertThat(actualValue).isWithin(1.0e-10f).of(expectedValue);
+    }
+
+    public static void assertHasFlags(int actualFlags, int expectedFlags) {
+        assertWithMessage("Flags %s not in %s", expectedFlags, actualFlags)
+                .that(actualFlags & expectedFlags).isEqualTo(expectedFlags);
+    }
+
     private Helper() {
+        throw new UnsupportedOperationException("contain static methods only");
     }
 
     static class FieldClassificationResult {

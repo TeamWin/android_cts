@@ -16,6 +16,10 @@
 
 package com.android.cts.verifier.managedprovisioning;
 
+import static android.app.admin.DevicePolicyManager.MAKE_USER_EPHEMERAL;
+import static android.app.admin.DevicePolicyManager.SKIP_SETUP_WIZARD;
+import static android.app.admin.DevicePolicyManager.START_USER_IN_BACKGROUND;
+
 import android.Manifest;
 import android.app.Activity;
 import android.app.KeyguardManager;
@@ -30,12 +34,15 @@ import android.content.pm.PackageManager;
 import android.graphics.BitmapFactory;
 import android.net.ProxyInfo;
 import android.os.Bundle;
+import android.os.PersistableBundle;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.util.Log;
+import android.view.inputmethod.InputMethodInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 
 import com.android.cts.verifier.R;
@@ -45,7 +52,10 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class CommandReceiverActivity extends Activity {
     private static final String TAG = "CommandReceiverActivity";
@@ -101,6 +111,7 @@ public class CommandReceiverActivity extends Activity {
             "clear-maximum-password-attempts";
     public static final String COMMAND_SET_DEFAULT_IME = "set-default-ime";
     public static final String COMMAND_CLEAR_DEFAULT_IME = "clear-default-ime";
+    public static final String COMMAND_CREATE_MANAGED_USER = "create-managed-user";
 
     public static final String EXTRA_USER_RESTRICTION =
             "com.android.cts.verifier.managedprovisioning.extra.USER_RESTRICTION";
@@ -170,9 +181,8 @@ public class CommandReceiverActivity extends Activity {
                     Context.DEVICE_POLICY_SERVICE);
             mUm = (UserManager) getSystemService(Context.USER_SERVICE);
             mAdmin = DeviceAdminTestReceiver.getReceiverComponentName();
-            Log.i(TAG, "Command: " + intent);
-
             final String command = getIntent().getStringExtra(EXTRA_COMMAND);
+            Log.i(TAG, "Command: " + command);
             switch (command) {
                 case COMMAND_SET_USER_RESTRICTION: {
                     String restrictionKey = intent.getStringExtra(EXTRA_USER_RESTRICTION);
@@ -226,7 +236,8 @@ public class CommandReceiverActivity extends Activity {
                 } break;
                 case COMMAND_ALLOW_ONLY_SYSTEM_INPUT_METHODS: {
                     boolean enforced = intent.getBooleanExtra(EXTRA_ENFORCED, false);
-                    mDpm.setPermittedInputMethods(mAdmin, enforced ? new ArrayList() : null);
+                    mDpm.setPermittedInputMethods(mAdmin,
+                            enforced ? getEnabledNonSystemImes() : null);
                 } break;
                 case COMMAND_ALLOW_ONLY_SYSTEM_ACCESSIBILITY_SERVICES: {
                     boolean enforced = intent.getBooleanExtra(EXTRA_ENFORCED, false);
@@ -462,7 +473,20 @@ public class CommandReceiverActivity extends Activity {
                         return;
                     }
                     mDpm.setSecureSetting(mAdmin, Settings.Secure.DEFAULT_INPUT_METHOD, null);
-                }
+                } break;
+                case COMMAND_CREATE_MANAGED_USER:{
+                    if (!mDpm.isDeviceOwnerApp(getPackageName())) {
+                        return;
+                    }
+                    PersistableBundle extras = new PersistableBundle();
+                    extras.putBoolean(DeviceAdminTestReceiver.EXTRA_MANAGED_USER_TEST, true);
+                    UserHandle userHandle = mDpm.createAndManageUser(mAdmin, "managed user", mAdmin,
+                            extras,
+                            SKIP_SETUP_WIZARD | MAKE_USER_EPHEMERAL | START_USER_IN_BACKGROUND);
+                    mDpm.setAffiliationIds(mAdmin,
+                            Collections.singleton(DeviceAdminTestReceiver.AFFILIATION_ID));
+                    mDpm.switchUser(mAdmin, userHandle);
+                } break;
             }
         } catch (Exception e) {
             Log.e(TAG, "Failed to execute command: " + intent, e);
@@ -572,5 +596,20 @@ public class CommandReceiverActivity extends Activity {
                 .putExtra(EXTRA_COMMAND,COMMAND_SET_USER_RESTRICTION)
                 .putExtra(EXTRA_USER_RESTRICTION, restriction)
                 .putExtra(EXTRA_ENFORCED, enforced);
+    }
+
+    private List<String> getEnabledNonSystemImes() {
+        InputMethodManager inputMethodManager = getSystemService(InputMethodManager.class);
+        final List<InputMethodInfo> inputMethods = inputMethodManager.getEnabledInputMethodList();
+        return inputMethods.stream()
+                .filter(inputMethodInfo -> !isSystemInputMethodInfo(inputMethodInfo))
+                .map(inputMethodInfo -> inputMethodInfo.getPackageName())
+                .filter(packageName -> !packageName.equals(getPackageName()))
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
+    private boolean isSystemInputMethodInfo(InputMethodInfo inputMethodInfo) {
+        return inputMethodInfo.getServiceInfo().applicationInfo.isSystemApp();
     }
 }

@@ -16,11 +16,12 @@
 
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.Helper.NOT_SHOWING_TIMEOUT_MS;
-import static android.autofillservice.cts.Helper.SAVE_TIMEOUT_MS;
-import static android.autofillservice.cts.Helper.UI_DATASET_PICKER_TIMEOUT_MS;
-import static android.autofillservice.cts.Helper.UI_RECENTS_SWITCH_TIMEOUT_MS;
-import static android.autofillservice.cts.Helper.UI_TIMEOUT_MS;
+import static android.autofillservice.cts.Timeouts.NOT_SHOWING_TIMEOUT;
+import static android.autofillservice.cts.Timeouts.SAVE_TIMEOUT;
+import static android.autofillservice.cts.Timeouts.UI_DATASET_PICKER_TIMEOUT;
+import static android.autofillservice.cts.Timeouts.UI_RECENTS_SWITCH_TIMEOUT;
+import static android.autofillservice.cts.Timeouts.UI_SCREEN_ORIENTATION_TIMEOUT;
+import static android.autofillservice.cts.Timeouts.UI_TIMEOUT;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_ADDRESS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_CREDIT_CARD;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_EMAIL_ADDRESS;
@@ -103,8 +104,14 @@ final class UiBot {
     private final Context mContext;
     private final String mPackageName;
     private final UiAutomation mAutoman;
+    private final Timeout mDefaultTimeout;
 
     UiBot() {
+        this(UI_TIMEOUT);
+    }
+
+    UiBot(Timeout defaultTimeout) {
+        mDefaultTimeout = defaultTimeout;
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         mDevice = UiDevice.getInstance(instrumentation);
         mContext = instrumentation.getContext();
@@ -115,8 +122,8 @@ final class UiBot {
     /**
      * Asserts the dataset chooser is not shown.
      */
-    void assertNoDatasets() {
-        assertNotShowing("datasets", DATASET_PICKER_SELECTOR, NOT_SHOWING_TIMEOUT_MS);
+    void assertNoDatasets() throws Exception {
+        assertNotShowing("datasets", DATASET_PICKER_SELECTOR, NOT_SHOWING_TIMEOUT);
     }
 
     /**
@@ -124,8 +131,8 @@ final class UiBot {
      *
      * @return the dataset picker object.
      */
-    UiObject2 assertDatasets(String...names) {
-        final UiObject2 picker = findDatasetPicker(UI_DATASET_PICKER_TIMEOUT_MS);
+    UiObject2 assertDatasets(String...names) throws Exception {
+        final UiObject2 picker = findDatasetPicker(UI_DATASET_PICKER_TIMEOUT);
         assertWithMessage("wrong dataset names").that(getChildrenAsText(picker))
                 .containsExactlyElementsIn(Arrays.asList(names)).inOrder();
         return picker;
@@ -136,8 +143,9 @@ final class UiBot {
      *
      * @return the dataset picker object.
      */
-    UiObject2 assertDatasetsWithBorders(String header, String footer, String...names) {
-        final UiObject2 picker = findDatasetPicker(UI_DATASET_PICKER_TIMEOUT_MS);
+    UiObject2 assertDatasetsWithBorders(String header, String footer, String...names)
+            throws Exception {
+        final UiObject2 picker = findDatasetPicker(UI_DATASET_PICKER_TIMEOUT);
         final List<String> expectedChild = new ArrayList<>();
         if (header != null) {
             expectedChild.add(header);
@@ -173,8 +181,8 @@ final class UiBot {
     /**
      * Selects a dataset that should be visible in the floating UI.
      */
-    void selectDataset(String name) {
-        final UiObject2 picker = findDatasetPicker(UI_DATASET_PICKER_TIMEOUT_MS);
+    void selectDataset(String name) throws Exception {
+        final UiObject2 picker = findDatasetPicker(UI_DATASET_PICKER_TIMEOUT);
         selectDataset(picker, name);
     }
 
@@ -195,7 +203,7 @@ final class UiBot {
      * <p><b>NOTE:</b> when selecting an option in dataset picker is shown, prefer
      * {@link #selectDataset(String)}.
      */
-    void selectByText(String name) {
+    void selectByText(String name) throws Exception {
         Log.v(TAG, "selectByText(): " + name);
 
         final UiObject2 object = waitForObject(By.text(name));
@@ -208,12 +216,12 @@ final class UiBot {
      * <p><b>NOTE:</b> when asserting the dataset picker is shown, prefer
      * {@link #assertDatasets(String...)}.
      */
-    public UiObject2 assertShownByText(String text) {
-        return assertShownByText(text, UI_TIMEOUT_MS);
+    public UiObject2 assertShownByText(String text) throws Exception {
+        return assertShownByText(text, mDefaultTimeout);
     }
 
-    public UiObject2 assertShownByText(String text, int timeoutMs) {
-        final UiObject2 object = waitForObject(By.text(text), timeoutMs);
+    public UiObject2 assertShownByText(String text, Timeout timeout) throws Exception {
+        final UiObject2 object = waitForObject(By.text(text), timeout);
         assertWithMessage("No node with text '%s'", text).that(object).isNotNull();
         return object;
     }
@@ -222,7 +230,7 @@ final class UiBot {
      * Asserts a node with the given content description is shown.
      *
      */
-    public UiObject2 assertShownByContentDescription(String contentDescription) {
+    public UiObject2 assertShownByContentDescription(String contentDescription) throws Exception {
         final UiObject2 object = waitForObject(By.desc(contentDescription));
         assertWithMessage("No node with content description '%s'", contentDescription).that(object)
                 .isNotNull();
@@ -241,28 +249,28 @@ final class UiBot {
     /**
      * Selects a view by id.
      */
-    void selectById(String id) {
+    void selectById(String id) throws Exception {
         Log.v(TAG, "selectById(): " + id);
 
-        final UiObject2 view = waitForObject(By.res(id));
+        final UiObject2 view = waitForObject(By.res(id), mDefaultTimeout);
         view.click();
     }
 
     /**
      * Asserts the id is shown on the screen.
      */
-    void assertShownById(String id) {
+    void assertShownById(String id) throws Exception {
         assertThat(waitForObject(By.res(id))).isNotNull();
     }
 
     /**
      * Asserts the id is shown on the screen, using a resource id from the test package.
      */
-    UiObject2 assertShownByRelativeId(String id) {
-        return assertShownByRelativeId(id, UI_TIMEOUT_MS);
+    UiObject2 assertShownByRelativeId(String id) throws Exception {
+        return assertShownByRelativeId(id, mDefaultTimeout);
     }
 
-    UiObject2 assertShownByRelativeId(String id, long timeout) {
+    UiObject2 assertShownByRelativeId(String id, Timeout timeout) throws Exception {
         final UiObject2 obj = waitForObject(By.res(mPackageName, id), timeout);
         assertThat(obj).isNotNull();
         return obj;
@@ -273,8 +281,8 @@ final class UiBot {
      * <p><b>Note:</b> this method should only called AFTER the id was previously shown, otherwise
      * it might pass without really asserting anything.
      */
-    void assertGoneByRelativeId(String id, long timeout) {
-        boolean gone = mDevice.wait(Until.gone(By.res(mPackageName, id)), timeout);
+    void assertGoneByRelativeId(String id, Timeout timeout) {
+        boolean gone = mDevice.wait(Until.gone(By.res(mPackageName, id)), timeout.ms());
         if (!gone) {
             final String message = "Object with id '" + id + "' should be gone after "
                     + timeout + " ms";
@@ -286,7 +294,8 @@ final class UiBot {
     /**
      * Asserts that a {@code selector} is not showing after {@code timeout} milliseconds.
      */
-    private void assertNotShowing(String description, BySelector selector, long timeout) {
+    private void assertNotShowing(String description, BySelector selector, Timeout timeout)
+            throws Exception {
         final UiObject2 object;
         try {
             object = waitForObject(null, selector, timeout, DONT_DUMP_ON_ERROR);
@@ -294,14 +303,14 @@ final class UiBot {
             // Not found as expected.
             return;
         }
-        throw new RetryableException(
-                "Should not be showing " + description + ", but got " + getChildrenAsText(object));
+        throw new RetryableException(timeout, "Should not be showing %s, but got %s",
+                description, getChildrenAsText(object));
     }
 
     /**
      * Gets the text set on a view.
      */
-    String getTextById(String id) {
+    String getTextById(String id) throws Exception {
         final UiObject2 obj = waitForObject(By.res(id));
         return obj.getText();
     }
@@ -309,14 +318,14 @@ final class UiBot {
     /**
      * Focus in the view with the given resource id.
      */
-    void focusByRelativeId(String id) {
+    void focusByRelativeId(String id) throws Exception {
         waitForObject(By.res(mPackageName, id)).click();
     }
 
     /**
      * Sets a new text on a view.
      */
-    void setTextById(String id, String newText) {
+    void setTextById(String id, String newText) throws Exception {
         UiObject2 view = waitForObject(By.res(id));
         view.setText(newText);
     }
@@ -324,14 +333,14 @@ final class UiBot {
     /**
      * Asserts the save snackbar is showing and returns it.
      */
-    UiObject2 assertSaveShowing(int type) {
-        return assertSaveShowing(SAVE_TIMEOUT_MS, type);
+    UiObject2 assertSaveShowing(int type) throws Exception {
+        return assertSaveShowing(SAVE_TIMEOUT, type);
     }
 
     /**
      * Asserts the save snackbar is showing and returns it.
      */
-    UiObject2 assertSaveShowing(long timeout, int type) {
+    UiObject2 assertSaveShowing(Timeout timeout, int type) throws Exception {
         return assertSaveShowing(null, timeout, type);
     }
 
@@ -362,7 +371,7 @@ final class UiBot {
 
         // ...wait until apps are shown...
         // TODO(b/37566627): figure out a way to wait for a specific UI instead.
-        SystemClock.sleep(UI_RECENTS_SWITCH_TIMEOUT_MS);
+        SystemClock.sleep(UI_RECENTS_SWITCH_TIMEOUT.ms());
 
         // ...press again to go back to the activity.
         mDevice.pressRecentApps();
@@ -371,8 +380,8 @@ final class UiBot {
     /**
      * Asserts the save snackbar is not showing and returns it.
      */
-    void assertSaveNotShowing(int type) {
-        assertNotShowing("save UI for type " + type, SAVE_UI_SELECTOR, NOT_SHOWING_TIMEOUT_MS);
+    void assertSaveNotShowing(int type) throws Exception {
+        assertNotShowing("save UI for type " + type, SAVE_UI_SELECTOR, NOT_SHOWING_TIMEOUT);
     }
 
     private String getSaveTypeString(int type) {
@@ -399,32 +408,33 @@ final class UiBot {
         return getString(typeResourceName);
     }
 
-    UiObject2 assertSaveShowing(String description, int... types) {
+    UiObject2 assertSaveShowing(String description, int... types) throws Exception {
         return assertSaveShowing(SaveInfo.NEGATIVE_BUTTON_STYLE_CANCEL, description,
-                SAVE_TIMEOUT_MS, types);
+                SAVE_TIMEOUT, types);
     }
 
-    UiObject2 assertSaveShowing(String description, long timeout, int... types) {
+    UiObject2 assertSaveShowing(String description, Timeout timeout, int... types)
+            throws Exception {
         return assertSaveShowing(SaveInfo.NEGATIVE_BUTTON_STYLE_CANCEL, description, timeout,
                 types);
     }
 
     UiObject2 assertSaveShowing(int negativeButtonStyle, String description,
-            int... types) {
-        return assertSaveShowing(negativeButtonStyle, description, SAVE_TIMEOUT_MS, types);
+            int... types) throws Exception {
+        return assertSaveShowing(negativeButtonStyle, description, SAVE_TIMEOUT, types);
     }
 
-    UiObject2 assertSaveShowing(int negativeButtonStyle, String description, long timeout,
-            int... types) {
+    UiObject2 assertSaveShowing(int negativeButtonStyle, String description, Timeout timeout,
+            int... types) throws Exception {
         final UiObject2 snackbar = waitForObject(SAVE_UI_SELECTOR, timeout);
 
         final UiObject2 titleView =
-                waitForObject(snackbar, By.res("android", RESOURCE_ID_SAVE_TITLE), UI_TIMEOUT_MS);
+                waitForObject(snackbar, By.res("android", RESOURCE_ID_SAVE_TITLE), timeout);
         assertWithMessage("save title (%s) is not shown", RESOURCE_ID_SAVE_TITLE).that(titleView)
                 .isNotNull();
 
         final UiObject2 iconView =
-                waitForObject(snackbar, By.res("android", RESOURCE_ID_SAVE_ICON), UI_TIMEOUT_MS);
+                waitForObject(snackbar, By.res("android", RESOURCE_ID_SAVE_ICON), timeout);
         assertWithMessage("save icon (%s) is not shown", RESOURCE_ID_SAVE_ICON).that(iconView)
                 .isNotNull();
 
@@ -467,7 +477,7 @@ final class UiBot {
                 : RESOURCE_STRING_SAVE_BUTTON_NO_THANKS;
         final String expectedNegativeButtonText = getString(negativeButtonStringId).toUpperCase();
         final UiObject2 negativeButton = waitForObject(snackbar,
-                By.res("android", RESOURCE_ID_SAVE_BUTTON_NO), UI_TIMEOUT_MS);
+                By.res("android", RESOURCE_ID_SAVE_BUTTON_NO), timeout);
         assertWithMessage("wrong text on negative button")
                 .that(negativeButton.getText().toUpperCase()).isEqualTo(expectedNegativeButtonText);
 
@@ -484,7 +494,7 @@ final class UiBot {
      * @param yesDoIt {@code true} for 'YES', {@code false} for 'NO THANKS'.
      * @param types expected types of save info.
      */
-    void saveForAutofill(boolean yesDoIt, int... types) {
+    void saveForAutofill(boolean yesDoIt, int... types) throws Exception {
         final UiObject2 saveSnackBar = assertSaveShowing(
                 SaveInfo.NEGATIVE_BUTTON_STYLE_CANCEL, null, types);
         saveForAutofill(saveSnackBar, yesDoIt);
@@ -496,7 +506,7 @@ final class UiBot {
      * @param yesDoIt {@code true} for 'YES', {@code false} for 'NO THANKS'.
      * @param types expected types of save info.
      */
-    void saveForAutofill(int negativeButtonStyle, boolean yesDoIt, int... types) {
+    void saveForAutofill(int negativeButtonStyle, boolean yesDoIt, int... types) throws Exception {
         final UiObject2 saveSnackBar = assertSaveShowing(negativeButtonStyle,null, types);
         saveForAutofill(saveSnackBar, yesDoIt);
     }
@@ -526,13 +536,13 @@ final class UiBot {
      *
      * @param id resource id of the field.
      */
-    UiObject2 getAutofillMenuOption(String id) {
+    UiObject2 getAutofillMenuOption(String id) throws Exception {
         final UiObject2 field = waitForObject(By.res(mPackageName, id));
         // TODO: figure out why obj.longClick() doesn't always work
         field.click(3000);
 
         final List<UiObject2> menuItems = waitForObjects(
-                By.res("android", RESOURCE_ID_CONTEXT_MENUITEM), UI_TIMEOUT_MS);
+                By.res("android", RESOURCE_ID_CONTEXT_MENUITEM), mDefaultTimeout);
         final String expectedText = getString(RESOURCE_STRING_AUTOFILL);
         final StringBuffer menuNames = new StringBuffer();
         for (UiObject2 menuItem : menuItems) {
@@ -568,8 +578,8 @@ final class UiBot {
      *
      * @param selector {@link BySelector} that identifies the object.
      */
-    private UiObject2 waitForObject(BySelector selector) {
-        return waitForObject(selector, UI_TIMEOUT_MS);
+    private UiObject2 waitForObject(BySelector selector) throws Exception {
+        return waitForObject(selector, mDefaultTimeout);
     }
 
     /**
@@ -580,28 +590,26 @@ final class UiBot {
      * @param timeout timeout in ms.
      * @param dumpOnError whether the window hierarchy should be dumped if the object is not found.
      */
-    private UiObject2 waitForObject(UiObject2 parent, BySelector selector, long timeout,
-            boolean dumpOnError) {
+    private UiObject2 waitForObject(UiObject2 parent, BySelector selector, Timeout timeout,
+            boolean dumpOnError) throws Exception {
         // NOTE: mDevice.wait does not work for the save snackbar, so we need a polling approach.
-        final int maxTries = 5;
-        final long napTime = timeout / maxTries;
-        for (int i = 1; i <= maxTries; i++) {
-            final UiObject2 uiObject = parent != null
-                    ? parent.findObject(selector)
-                    : mDevice.findObject(selector);
-            if (uiObject != null) {
-                return uiObject;
+        try {
+            return timeout.run("waitForObject(" + selector + ")", () -> {
+                return parent != null
+                        ? parent.findObject(selector)
+                        : mDevice.findObject(selector);
+
+            });
+        } catch (RetryableException e) {
+            if (dumpOnError) {
+                dumpScreen("waitForObject() for " + selector + "failed");
             }
-            SystemClock.sleep(napTime);
+            throw e;
         }
-        if (dumpOnError) {
-            dumpScreen("waitForObject() for " + selector + "failed");
-        }
-        throw new RetryableException("Object with selector '%s' not found in %d ms",
-                selector, UI_TIMEOUT_MS);
     }
 
-    private UiObject2 waitForObject(UiObject2 parent, BySelector selector, long timeout) {
+    private UiObject2 waitForObject(UiObject2 parent, BySelector selector, Timeout timeout)
+            throws Exception {
         return waitForObject(parent, selector, timeout, DUMP_ON_ERROR);
     }
 
@@ -611,7 +619,7 @@ final class UiBot {
      * @param selector {@link BySelector} that identifies the object.
      * @param timeout timeout in ms
      */
-    private UiObject2 waitForObject(BySelector selector, long timeout) {
+    private UiObject2 waitForObject(BySelector selector, Timeout timeout) throws Exception {
         return waitForObject(null, selector, timeout);
     }
 
@@ -621,23 +629,25 @@ final class UiBot {
      * @param selector {@link BySelector} that identifies the object.
      * @param timeout timeout in ms
      */
-    private List<UiObject2> waitForObjects(BySelector selector, long timeout) {
+    private List<UiObject2> waitForObjects(BySelector selector, Timeout timeout) throws Exception {
         // NOTE: mDevice.wait does not work for the save snackbar, so we need a polling approach.
-        final int maxTries = 5;
-        final long napTime = timeout / maxTries;
-        for (int i = 1; i <= maxTries; i++) {
-            final List<UiObject2> uiObjects = mDevice.findObjects(selector);
-            if (uiObjects != null && !uiObjects.isEmpty()) {
-                return uiObjects;
-            }
-            SystemClock.sleep(napTime);
+        try {
+            return timeout.run("waitForObject(" + selector + ")", () -> {
+                final List<UiObject2> uiObjects = mDevice.findObjects(selector);
+                if (uiObjects != null && !uiObjects.isEmpty()) {
+                    return uiObjects;
+                }
+                return null;
+
+            });
+
+        } catch (RetryableException e) {
+            dumpScreen("waitForObjects() for " + selector + "failed");
+            throw e;
         }
-        dumpScreen("waitForObjects() for " + selector + "failed");
-        throw new RetryableException("Objects with selector '%s' not found in %d ms",
-                selector, UI_TIMEOUT_MS);
     }
 
-    private UiObject2 findDatasetPicker(long timeout) {
+    private UiObject2 findDatasetPicker(Timeout timeout) throws Exception {
         final UiObject2 picker = waitForObject(DATASET_PICKER_SELECTOR, timeout);
 
         final String expectedTitle = getString(RESOURCE_STRING_DATASET_PICKER_ACCESSIBILITY_TITLE);
@@ -668,27 +678,12 @@ final class UiBot {
      *
      * @throws RetryableException if value didn't change.
      */
-    public void setScreenOrientation(int orientation) {
+    public void setScreenOrientation(int orientation) throws Exception {
         mAutoman.setRotation(orientation);
 
-        long startTime = System.currentTimeMillis();
-
-        while (System.currentTimeMillis() - startTime <= Helper.UI_SCREEN_ORIENTATION_TIMEOUT_MS) {
-            final int actualValue = getScreenOrientation();
-            if (actualValue == orientation) {
-                return;
-            }
-            Log.w(TAG, "setScreenOrientation(): sleeping " + Helper.RETRY_MS
-                    + "ms until orientation is " + orientation
-                    + " (instead of " + actualValue + ")");
-            try {
-                Thread.sleep(Helper.RETRY_MS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
-        throw new RetryableException("Screen orientation didn't change to %d in %d ms", orientation,
-                Helper.UI_SCREEN_ORIENTATION_TIMEOUT_MS);
+        UI_SCREEN_ORIENTATION_TIMEOUT.run("setScreenOrientation(" + orientation + ")", () -> {
+            return getScreenOrientation() == orientation ? Boolean.TRUE : null;
+        });
     }
 
     /**

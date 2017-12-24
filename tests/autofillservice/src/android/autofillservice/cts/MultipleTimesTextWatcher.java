@@ -16,7 +16,7 @@
 
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.Helper.FILL_TIMEOUT_MS;
+import static android.autofillservice.cts.Timeouts.FILL_TIMEOUT;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -62,8 +62,8 @@ class MultipleTimesTextWatcher implements TextWatcher {
     }
 
     void assertAutoFilled() throws Exception {
-        final boolean set = mLatch.await(FILL_TIMEOUT_MS, TimeUnit.MILLISECONDS);
-        assertWithMessage("Timeout (%s ms) on EditText %s", FILL_TIMEOUT_MS, mName)
+        final boolean set = mLatch.await(FILL_TIMEOUT.ms(), TimeUnit.MILLISECONDS);
+        assertWithMessage("Timeout (%s ms) on EditText %s", FILL_TIMEOUT.ms(), mName)
                 .that(set).isTrue();
         final String actual = mEditText.getText().toString();
         assertWithMessage("Wrong auto-fill value on EditText %s", mName)

@@ -16,18 +16,18 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          xmlns:androidprv="http://schemas.android.com/apk/prv/res/android"
-          package="android.server.translucentapp">
+    package="android.server.am.translucentapp">
+
     <application android:label="CtsTranslucentApp">
-        <activity android:name=".TranslucentLandscapeActivity"
-                android:theme="@android:style/Theme.Translucent.NoTitleBar"
-                android:exported="true"
-                android:screenOrientation="landscape">
+        <activity
+            android:name=".TranslucentLandscapeActivity"
+            android:exported="true"
+            android:screenOrientation="landscape"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
     </application>
 </manifest>
-

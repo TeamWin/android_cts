@@ -24,6 +24,7 @@ import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_PASSWORD_LABEL;
 import static android.autofillservice.cts.Helper.ID_USERNAME;
 import static android.autofillservice.cts.Helper.UNUSED_AUTOFILL_VALUE;
+import static android.autofillservice.cts.Helper.assertHasFlags;
 import static android.autofillservice.cts.Helper.assertNoDanglingSessions;
 import static android.autofillservice.cts.Helper.assertNumberOfChildren;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
@@ -31,14 +32,16 @@ import static android.autofillservice.cts.Helper.assertTextIsSanitized;
 import static android.autofillservice.cts.Helper.assertValue;
 import static android.autofillservice.cts.Helper.dumpStructure;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
-import static android.autofillservice.cts.Helper.runShellCommand;
 import static android.autofillservice.cts.Helper.setUserComplete;
+import static android.autofillservice.cts.InstrumentedAutoFillService.SERVICE_CLASS;
+import static android.autofillservice.cts.InstrumentedAutoFillService.SERVICE_PACKAGE;
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilConnected;
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilDisconnected;
 import static android.autofillservice.cts.LoginActivity.AUTHENTICATION_MESSAGE;
 import static android.autofillservice.cts.LoginActivity.BACKDOOR_USERNAME;
 import static android.autofillservice.cts.LoginActivity.ID_USERNAME_CONTAINER;
 import static android.autofillservice.cts.LoginActivity.getWelcomeMessage;
+import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
 import static android.service.autofill.FillRequest.FLAG_MANUAL_REQUEST;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_ADDRESS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_CREDIT_CARD;
@@ -60,6 +63,7 @@ import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -125,24 +129,27 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Make sure UI is not shown.
         mUiBot.assertNoDatasets();
 
-        // Try to trigger it again...
-
-        mActivity.onPassword(View::requestFocus);
-        // ...and make sure it didn't
-        mUiBot.assertNoDatasets();
-        sReplier.assertNumberUnhandledFillRequests(0);
-
         // Test connection lifecycle.
         waitUntilDisconnected();
     }
 
     @Test
     public void testAutofillManuallyAfterServiceReturnedNoDatasets() throws Exception {
+        autofillAfterServiceReturnedNoDatasets(true);
+    }
+
+    @Test
+    public void testAutofillAutomaticallyAfterServiceReturnedNoDatasets() throws Exception {
+        autofillAfterServiceReturnedNoDatasets(false);
+    }
+
+    private void autofillAfterServiceReturnedNoDatasets(boolean manually) throws Exception {
         // Set service.
         enableService();
 
         // Set expectations.
         sReplier.addResponse(NO_RESPONSE);
+        mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger autofill.
         mActivity.onUsername(View::requestFocus);
@@ -157,14 +164,20 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 .setField(ID_PASSWORD, "sweet")
                 .setPresentation(createPresentation("The Dude"))
                 .build());
-        mActivity.expectAutoFill("dude", "sweet");
 
-        mActivity.forceAutofillOnUsername();
+        final int expectedFlags;
+        if (manually) {
+            expectedFlags = FLAG_MANUAL_REQUEST;
+            mActivity.forceAutofillOnUsername();
+        } else {
+            expectedFlags = 0;
+            mActivity.onPassword(View::requestFocus);
+        }
 
         final FillRequest fillRequest = sReplier.getNextFillRequest();
-        assertThat(fillRequest.flags).isEqualTo(FLAG_MANUAL_REQUEST);
+        assertHasFlags(fillRequest.flags, expectedFlags);
 
-        // Selects the dataset.
+        // Select the dataset.
         mUiBot.selectDataset("The Dude");
 
         // Check the results.
@@ -173,6 +186,15 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
     @Test
     public void testAutofillManuallyAndSaveAfterServiceReturnedNoDatasets() throws Exception {
+        autofillAndSaveAfterServiceReturnedNoDatasets(true);
+    }
+
+    @Test
+    public void testAutofillAutomaticallyAndSaveAfterServiceReturnedNoDatasets() throws Exception {
+        autofillAndSaveAfterServiceReturnedNoDatasets(false);
+    }
+
+    private void autofillAndSaveAfterServiceReturnedNoDatasets(boolean manually) throws Exception {
         // Set service.
         enableService();
 
@@ -180,7 +202,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.addResponse(NO_RESPONSE);
 
         // Trigger autofill.
-        mActivity.onUsername(View::requestFocus);
+        // NOTE: must be on password, as saveOnlyTest() will trigger on username
+        mActivity.onPassword(View::requestFocus);
         sReplier.getNextFillRequest();
 
         // Make sure UI is not shown.
@@ -191,7 +214,35 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.assertNumberUnhandledFillRequests(0);
 
         // Try again, forcing it
-        saveOnlyTest(true);
+        saveOnlyTest(manually);
+    }
+
+    @Test
+    public void testAutofillManuallyAlwaysCallServiceAgain() throws Exception {
+        // Set service.
+        enableService();
+
+        // First request
+        sReplier.addResponse(new CannedDataset.Builder()
+                .setField(ID_USERNAME, "dude")
+                .setField(ID_PASSWORD, "sweet")
+                .setPresentation(createPresentation("The Dude"))
+                .build());
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+        mUiBot.assertDatasets("The Dude");
+
+        // Second request
+        sReplier.addResponse(new CannedDataset.Builder()
+                .setField(ID_USERNAME, "DUDE")
+                .setField(ID_PASSWORD, "SWEET")
+                .setPresentation(createPresentation("THE DUDE"))
+                .build());
+
+        mActivity.forceAutofillOnUsername();
+        final FillRequest secondRequest = sReplier.getNextFillRequest();
+        assertHasFlags(secondRequest.flags, FLAG_MANUAL_REQUEST);
+        mUiBot.assertDatasets("THE DUDE");
     }
 
     @Test
@@ -1334,7 +1385,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         saveGoesAway(DismissType.TOUCH_OUTSIDE);
     }
 
-    private void startCheckoutActivityAsNewTask() {
+    private void startCheckoutActivityAsNewTask() throws Exception {
         final Intent intent = new Intent(mContext, CheckoutActivity.class);
         intent.setFlags(
                 Intent.FLAG_ACTIVITY_NEW_DOCUMENT | Intent.FLAG_ACTIVITY_RETAIN_IN_RECENTS);
@@ -3051,7 +3102,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mUiBot.getAutofillMenuOption(ID_USERNAME).click();
 
         final FillRequest fillRequest = sReplier.getNextFillRequest();
-        assertThat(fillRequest.flags).isEqualTo(FLAG_MANUAL_REQUEST);
+        assertHasFlags(fillRequest.flags, FLAG_MANUAL_REQUEST);
 
         // Should have been automatically filled.
         mUiBot.selectDataset("The Dude");
@@ -3098,7 +3149,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.forceAutofillOnUsername();
 
         final FillRequest fillRequest = sReplier.getNextFillRequest();
-        assertThat(fillRequest.flags).isEqualTo(FLAG_MANUAL_REQUEST);
+        assertHasFlags(fillRequest.flags, FLAG_MANUAL_REQUEST);
 
         // Auto-fill it.
         final UiObject2 picker = mUiBot.assertDatasets("The Dude", "Jenny");
@@ -3129,7 +3180,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.forceAutofillOnUsername();
 
         final FillRequest fillRequest = sReplier.getNextFillRequest();
-        assertThat(fillRequest.flags).isEqualTo(FLAG_MANUAL_REQUEST);
+        assertHasFlags(fillRequest.flags, FLAG_MANUAL_REQUEST);
         // Username value should be available because it triggered the manual request...
         assertValue(fillRequest.structure, ID_USERNAME, "dud");
         // ... but password didn't
@@ -3191,7 +3242,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Assert request.
         final FillRequest fillRequest2 = sReplier.getNextFillRequest();
-        assertThat(fillRequest2.flags).isEqualTo(FLAG_MANUAL_REQUEST);
+        assertHasFlags(fillRequest2.flags, FLAG_MANUAL_REQUEST);
         assertValue(fillRequest2.structure, ID_USERNAME, "dude");
         assertTextIsSanitized(fillRequest2.structure, ID_PASSWORD);
 
@@ -3223,7 +3274,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Assert request.
         final FillRequest fillRequest1 = sReplier.getNextFillRequest();
-        assertThat(fillRequest1.flags).isEqualTo(FLAG_MANUAL_REQUEST);
+        assertHasFlags(fillRequest1.flags, FLAG_MANUAL_REQUEST);
         assertValue(fillRequest1.structure, ID_USERNAME, "");
         assertTextIsSanitized(fillRequest1.structure, ID_PASSWORD);
 
@@ -3251,7 +3302,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Assert request.
         final FillRequest fillRequest2 = sReplier.getNextFillRequest();
-        assertThat(fillRequest2.flags).isEqualTo(FLAG_MANUAL_REQUEST);
+        assertHasFlags(fillRequest2.flags, FLAG_MANUAL_REQUEST);
         assertValue(fillRequest2.structure, ID_USERNAME, "dude");
         assertTextIsSanitized(fillRequest2.structure, ID_PASSWORD);
 
@@ -3423,6 +3474,19 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
+    public void testGetAutofillServiceComponentName() throws Exception {
+        final AutofillManager afm = mActivity.getAutofillManager();
+
+        enableService();
+        final ComponentName componentName = afm.getAutofillServiceComponentName();
+        assertThat(componentName.getPackageName()).isEqualTo(SERVICE_PACKAGE);
+        assertThat(componentName.getClassName()).endsWith(SERVICE_CLASS);
+
+        disableService();
+        assertThat(afm.getAutofillServiceComponentName()).isNull();
+    }
+
+    @Test
     public void testSetupComplete() throws Exception {
         enableService();
 
@@ -3586,7 +3650,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Set expectations.
         final OneTimeCancellationSignalListener listener =
-                new OneTimeCancellationSignalListener(Helper.FILL_TIMEOUT_MS + 2000);
+                new OneTimeCancellationSignalListener(Timeouts.FILL_TIMEOUT.ms() + 2000);
         sReplier.addResponse(DO_NOT_REPLY_RESPONSE);
 
         // Trigger auto-fill.

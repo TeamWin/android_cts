@@ -31,9 +31,11 @@ public class ImeSettings {
     private final String mEventCallbackActionName;
 
     private static final String BACKGROUND_COLOR_KEY = "BackgroundColor";
+    private static final String NAVIGATION_BAR_COLOR_KEY = "NavigationBarColor";
     private static final String INPUT_VIEW_HEIGHT_WITHOUT_SYSTEM_WINDOW_INSET =
             "InputViewHeightWithoutSystemWindowInset";
     private static final String WINDOW_FLAGS = "WindowFlags";
+    private static final String WINDOW_FLAGS_MASK = "WindowFlagsMask";
     private static final String FULLSCREEN_MODE_ALLOWED = "FullscreenModeAllowed";
     private static final String INPUT_VIEW_SYSTEM_UI_VISIBILITY = "InputViewSystemUiVisibility";
 
@@ -59,12 +61,25 @@ public class ImeSettings {
         return mBundle.getInt(BACKGROUND_COLOR_KEY, defaultColor);
     }
 
+    public boolean hasNavigationBarColor() {
+        return mBundle.keySet().contains(NAVIGATION_BAR_COLOR_KEY);
+    }
+
+    @ColorInt
+    public int getNavigationBarColor() {
+        return mBundle.getInt(NAVIGATION_BAR_COLOR_KEY);
+    }
+
     public int getInputViewHeightWithoutSystemWindowInset(int defaultHeight) {
         return mBundle.getInt(INPUT_VIEW_HEIGHT_WITHOUT_SYSTEM_WINDOW_INSET, defaultHeight);
     }
 
     public int getWindowFlags(int defaultFlags) {
         return mBundle.getInt(WINDOW_FLAGS, defaultFlags);
+    }
+
+    public int getWindowFlagsMask(int defaultFlags) {
+        return mBundle.getInt(WINDOW_FLAGS_MASK, defaultFlags);
     }
 
     public int getInputViewSystemUiVisibility(int defaultFlags) {
@@ -110,6 +125,17 @@ public class ImeSettings {
         }
 
         /**
+         * Sets the color to be passed to {@link android.view.Window#setNavigationBarColor(int)}.
+         *
+         * @param color color to be passed to {@link android.view.Window#setNavigationBarColor(int)}
+         * @see android.view.View
+         */
+        public Builder setNavigationBarColor(@ColorInt int color) {
+            mBundle.putInt(NAVIGATION_BAR_COLOR_KEY, color);
+            return this;
+        }
+
+        /**
          * Sets the input view height measured from the bottom system window inset.
          * @param height height of the soft input view. This does not include the system window
          *               inset such as navigation bar
@@ -127,10 +153,13 @@ public class ImeSettings {
          * {@link MockIme} tries to render the navigation bar by itself.</p>
          *
          * @param flags flags to be specified
+         * @param flagsMask mask bits that specify what bits need to be cleared before setting
+         *                  {@code flags}
          * @see android.view.WindowManager
          */
-        public Builder setWindowFlags(int flags) {
+        public Builder setWindowFlags(int flags, int flagsMask) {
             mBundle.putInt(WINDOW_FLAGS, flags);
+            mBundle.putInt(WINDOW_FLAGS_MASK, flagsMask);
             return this;
         }
 
