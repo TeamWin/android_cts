@@ -691,6 +691,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD);
     }
 
+    // TODO(b/70906499): Flaky, add back to presubmit.
+    @FlakyTest
     @Presubmit
     @Test
     public void testMovePipToBackWithHiddenFullscreenStack() throws Exception {
