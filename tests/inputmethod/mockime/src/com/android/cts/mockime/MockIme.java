@@ -25,7 +25,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Color;
+import android.content.res.Configuration;
 import android.inputmethodservice.InputMethodService;
 import android.os.Bundle;
 import android.os.Handler;
@@ -37,6 +37,7 @@ import android.os.Process;
 import android.os.ResultReceiver;
 import android.os.SystemClock;
 import android.support.annotation.AnyThread;
+import android.support.annotation.CallSuper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
@@ -49,6 +50,7 @@ import android.view.Window;
 import android.view.WindowInsets;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputBinding;
+import android.view.inputmethod.InputMethod;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -352,6 +354,41 @@ public final class MockIme extends InputMethodService {
         getTracer().onFinishInput(() -> super.onFinishInput());
     }
 
+    @CallSuper
+    public boolean onEvaluateInputViewShown() {
+        return getTracer().onEvaluateInputViewShown(() -> {
+            // onShowInputRequested() is indeed @CallSuper so we always call this, even when the
+            // result is ignored.
+            final boolean originalResult = super.onEvaluateInputViewShown();
+            if (!mSettings.getHardKeyboardConfigurationBehaviorAllowed(false)) {
+                final Configuration config = getResources().getConfiguration();
+                if (config.keyboard != Configuration.KEYBOARD_NOKEYS
+                        && config.hardKeyboardHidden != Configuration.HARDKEYBOARDHIDDEN_YES) {
+                    // Override the behavior of InputMethodService#onEvaluateInputViewShown()
+                    return true;
+                }
+            }
+            return originalResult;
+        });
+    }
+
+    @Override
+    public boolean onShowInputRequested(int flags, boolean configChange) {
+        return getTracer().onShowInputRequested(flags, configChange, () -> {
+            // onShowInputRequested() is not marked with @CallSuper, but just in case.
+            final boolean originalResult = super.onShowInputRequested(flags, configChange);
+            if (!mSettings.getHardKeyboardConfigurationBehaviorAllowed(false)) {
+                if ((flags & InputMethod.SHOW_EXPLICIT) == 0
+                        && getResources().getConfiguration().keyboard
+                        != Configuration.KEYBOARD_NOKEYS) {
+                    // Override the behavior of InputMethodService#onShowInputRequested()
+                    return true;
+                }
+            }
+            return originalResult;
+        });
+    }
+
     @Override
     public void onDestroy() {
         getTracer().onDestroy(() -> {
@@ -435,11 +472,6 @@ public final class MockIme extends InputMethodService {
             recordEventInternal(eventName, () -> { runnable.run(); return null; }, arguments);
         }
 
-        private boolean recordEventInternal(@NonNull String eventName,
-                @NonNull BooleanSupplier supplier) {
-            return recordEventInternal(eventName, () -> supplier.getAsBoolean(), new Bundle());
-        }
-
         private <T> T recordEventInternal(@NonNull String eventName,
                 @NonNull Supplier<T> supplier) {
             return recordEventInternal(eventName, supplier, new Bundle());
@@ -479,8 +511,12 @@ public final class MockIme extends InputMethodService {
             recordEventInternal("onConfigureWindow", runnable, arguments);
         }
 
-        public boolean onEvaluateFullscreenMode(@NonNull BooleanSupplier runnable) {
-            return recordEventInternal("onEvaluateFullscreenMode", runnable);
+        public boolean onEvaluateFullscreenMode(@NonNull BooleanSupplier supplier) {
+            return recordEventInternal("onEvaluateFullscreenMode", supplier::getAsBoolean);
+        }
+
+        public boolean onEvaluateInputViewShown(@NonNull BooleanSupplier supplier) {
+            return recordEventInternal("onEvaluateInputViewShown", supplier::getAsBoolean);
         }
 
         public View onCreateInputView(@NonNull Supplier<View> supplier) {
@@ -511,6 +547,14 @@ public final class MockIme extends InputMethodService {
 
         public void onFinishInput(@NonNull Runnable runnable) {
             recordEventInternal("onFinishInput", runnable);
+        }
+
+        public boolean onShowInputRequested(int flags, boolean configChange,
+                @NonNull BooleanSupplier supplier) {
+            final Bundle arguments = new Bundle();
+            arguments.putInt("flags", flags);
+            arguments.putBoolean("configChange", configChange);
+            return recordEventInternal("onShowInputRequested", supplier::getAsBoolean, arguments);
         }
 
         public void onDestroy(@NonNull Runnable runnable) {

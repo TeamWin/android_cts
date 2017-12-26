@@ -38,6 +38,8 @@ public class ImeSettings {
     private static final String WINDOW_FLAGS_MASK = "WindowFlagsMask";
     private static final String FULLSCREEN_MODE_ALLOWED = "FullscreenModeAllowed";
     private static final String INPUT_VIEW_SYSTEM_UI_VISIBILITY = "InputViewSystemUiVisibility";
+    private static final String HARD_KEYBOARD_CONFIGURATION_BEHAVIOR_ALLOWED =
+            "HardKeyboardConfigurationBehaviorAllowed";
 
     @NonNull
     private final PersistableBundle mBundle;
@@ -84,6 +86,10 @@ public class ImeSettings {
 
     public int getInputViewSystemUiVisibility(int defaultFlags) {
         return mBundle.getInt(INPUT_VIEW_SYSTEM_UI_VISIBILITY, defaultFlags);
+    }
+
+    public boolean getHardKeyboardConfigurationBehaviorAllowed(boolean defaultValue) {
+        return mBundle.getBoolean(HARD_KEYBOARD_CONFIGURATION_BEHAVIOR_ALLOWED, defaultValue);
     }
 
     static void writeToParcel(@NonNull Parcel parcel, @NonNull String eventCallbackActionName,
@@ -172,6 +178,29 @@ public class ImeSettings {
          */
         public Builder setInputViewSystemUiVisibility(int visibilityFlags) {
             mBundle.putInt(INPUT_VIEW_SYSTEM_UI_VISIBILITY, visibilityFlags);
+            return this;
+        }
+
+        /**
+         * Controls whether {@link MockIme} is allowed to change the behavior based on
+         * {@link android.content.res.Configuration#keyboard} and
+         * {@link android.content.res.Configuration#hardKeyboardHidden}.
+         *
+         * <p>Methods in {@link android.inputmethodservice.InputMethodService} such as
+         * {@link android.inputmethodservice.InputMethodService#onEvaluateInputViewShown()} and
+         * {@link android.inputmethodservice.InputMethodService#onShowInputRequested(int, boolean)}
+         * change their behaviors when a hardware keyboard is attached.  This is confusing when
+         * writing tests so by default {@link MockIme} tries to cancel those behaviors.  This
+         * settings re-enables such a behavior.</p>
+         *
+         * @param allowed {@code true} when {@link MockIme} is allowed to change the behavior when
+         *                a hardware keyboard is attached
+         *
+         * @see android.inputmethodservice.InputMethodService#onEvaluateInputViewShown()
+         * @see android.inputmethodservice.InputMethodService#onShowInputRequested(int, boolean)
+         */
+        public Builder setHardKeyboardConfigurationBehaviorAllowed(boolean allowed) {
+            mBundle.putBoolean(HARD_KEYBOARD_CONFIGURATION_BEHAVIOR_ALLOWED, allowed);
             return this;
         }
     }
