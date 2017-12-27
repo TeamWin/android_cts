@@ -21,6 +21,7 @@ import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.res.AssetManager;
+import android.keystore.cts.Attestation;
 import android.net.Uri;
 import android.security.AttestedKeyPair;
 import android.security.KeyChain;
@@ -328,23 +329,21 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
                     .build();
             AttestedKeyPair generated = mDevicePolicyManager.generateKeyPair(
                     getWho(), "EC", spec);
+            assertNotNull(generated);
             final KeyPair keyPair = generated.getKeyPair();
             final String algorithmIdentifier = "SHA256withECDSA";
-            assertNotNull(generated);
             verifySignatureOverData(algorithmIdentifier, keyPair);
             List<Certificate> attestation = generated.getAttestationRecord();
             assertNotNull(attestation);
             assertTrue(attestation.size() >= 2);
+
             X509Certificate leaf = (X509Certificate) attestation.get(0);
-            final String attestationExtensionOID = "1.3.6.1.4.1.11129.2.1.17";
-            Set<String> extensions = leaf.getNonCriticalExtensionOIDs();
-            assertTrue(extensions.contains(attestationExtensionOID));
+            Attestation attestationRecord = new Attestation(leaf);
+            assertTrue(Arrays.equals(attestationChallenge,
+                        attestationRecord.getAttestationChallenge()));
+
             PublicKey keyFromCert = leaf.getPublicKey();
-            // The public key from the certificate doesn't have to be equal to the public key
-            // from the pair, but must be usable for verifying signatures produced with
-            // corresponding private key.
-            verifySignature(algorithmIdentifier, keyFromCert,
-                    signDataWithKey(algorithmIdentifier, keyPair.getPrivate()));
+            assertTrue(Arrays.equals(keyFromCert.getEncoded(), keyPair.getPublic().getEncoded()));
             // Check that the certificate chain is valid.
             for (int i = 1; i < attestation.size(); i++) {
                 X509Certificate intermediate = (X509Certificate) attestation.get(i);
