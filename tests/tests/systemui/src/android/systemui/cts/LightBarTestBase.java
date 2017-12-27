@@ -20,6 +20,8 @@ import static android.support.test.InstrumentationRegistry.getInstrumentation;
 
 import android.graphics.Bitmap;
 import android.util.Log;
+import android.view.KeyCharacterMap;
+import android.view.KeyEvent;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -59,5 +61,11 @@ public class LightBarTestBase {
                 }
             }
         }
+    }
+
+    protected boolean hasVirtualNavigationBar() {
+        boolean hasBackKey = KeyCharacterMap.deviceHasKey(KeyEvent.KEYCODE_BACK);
+        boolean hasHomeKey = KeyCharacterMap.deviceHasKey(KeyEvent.KEYCODE_HOME);
+        return !hasBackKey || !hasHomeKey;
     }
 }
