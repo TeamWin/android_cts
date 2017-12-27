@@ -16,6 +16,8 @@
 
 package android.view.inputmethod.cts;
 
+import static android.view.View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+import static android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS;
 import static android.view.inputmethod.cts.util.LightNavigationBarVerifier.expectLightNavigationBarNotSupported;
 import static android.view.inputmethod.cts.util.NavigationBarColorVerifier.expectNavigationBarColorNotSupported;
 import static android.view.inputmethod.cts.util.NavigationBarColorVerifier.expectNavigationBarColorSupported;
@@ -94,8 +96,8 @@ public class NavigationBarColorTest extends EndToEndImeTestBase {
 
             activity.getWindow().setNavigationBarColor(navigationBarColor);
             updateSystemUiVisibility(layout,
-                    lightNavigationBar ? View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR : 0,
-                    View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
+                    lightNavigationBar ? SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR : 0,
+                    SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
 
             layout.setOrientation(LinearLayout.VERTICAL);
 
@@ -116,7 +118,27 @@ public class NavigationBarColorTest extends EndToEndImeTestBase {
         final ImeSettings.Builder builder = new ImeSettings.Builder();
         builder.setNavigationBarColor(navigationBarColor);
         if (lightNavigationBar) {
-            builder.setInputViewSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
+            builder.setInputViewSystemUiVisibility(SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
+        }
+        return builder;
+    }
+
+    @NonNull
+    private ImeSettings.Builder imeSettingForFloatingIme(@ColorInt int navigationBarColor,
+            boolean lightNavigationBar) {
+        final ImeSettings.Builder builder = new ImeSettings.Builder();
+        // Currently un-setting FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS does nothing for IME windows.
+        // TODO: Fix this anomaly
+        builder.setWindowFlags(0, FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        // Although the document says that Window#setNavigationBarColor() requires
+        // FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS to work, currently it's not true for IME windows.
+        // TODO: Fix this anomaly
+        builder.setNavigationBarColor(navigationBarColor);
+        if (lightNavigationBar) {
+            // Although the document says that Window#setNavigationBarColor() requires
+            // SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR to work, currently it's not true for IME windows.
+            // TODO: Fix this anomaly
+            builder.setInputViewSystemUiVisibility(SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
         }
         return builder;
     }
@@ -175,6 +197,12 @@ public class NavigationBarColorTest extends EndToEndImeTestBase {
         expectNavigationBarColorSupported(color ->
                 getNavigationBarBitmap(imeSettingForSolidNavigationBar(Color.TRANSPARENT, false),
                         color, false, info.getBottomNavigationBerHeight()));
+
+        // Make sure that Window#setNavigationBarColor() is ignored when
+        // FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS is unset
+        expectNavigationBarColorNotSupported(color ->
+                getNavigationBarBitmap(imeSettingForFloatingIme(color, false),
+                        Color.BLACK, false, info.getBottomNavigationBerHeight()));
     }
 
     @Test
@@ -190,10 +218,10 @@ public class NavigationBarColorTest extends EndToEndImeTestBase {
                 getNavigationBarBitmap(imeSettingForSolidNavigationBar(color, lightMode),
                         Color.BLACK, false, info.getBottomNavigationBerHeight()));
 
-        // Test when IME's navigation bar can be transparent
-        // TODO: Support SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR for IME windows (Bug 69002467)
+        // Currently there is no way for IMEs to opt-out dark/light navigation bar mode.
+        // TODO: Allows IMEs to opt out dark/light navigation bar mode (Bug 69111208).
         expectLightNavigationBarNotSupported((color, lightMode) ->
-                getNavigationBarBitmap(imeSettingForSolidNavigationBar(Color.TRANSPARENT, false),
+                getNavigationBarBitmap(imeSettingForFloatingIme(Color.BLACK, false),
                         color, lightMode, info.getBottomNavigationBerHeight()));
     }
 }
