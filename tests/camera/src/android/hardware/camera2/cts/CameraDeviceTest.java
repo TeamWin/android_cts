@@ -1080,9 +1080,15 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
         SurfaceTexture output2 = new SurfaceTexture(2);
         Surface output2Surface = new Surface(output2);
 
-        List<Surface> outputSurfaces = new ArrayList<>(
-            Arrays.asList(output1Surface, output2Surface));
-        mCamera.createCaptureSession(outputSurfaces, mSessionMockListener, mHandler);
+        ArrayList<OutputConfiguration> outConfigs = new ArrayList<OutputConfiguration> ();
+        outConfigs.add(new OutputConfiguration(output1Surface));
+        outConfigs.add(new OutputConfiguration(output2Surface));
+        SessionConfiguration sessionConfig = new SessionConfiguration(
+                SessionConfiguration.SESSION_REGULAR, outConfigs, mSessionMockListener,
+                mHandler);
+        CaptureRequest.Builder r = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+        sessionConfig.setSessionParameters(r.build());
+        mCamera.createCaptureSession(sessionConfig);
 
         mSession = mSessionMockListener.waitAndGetSession(SESSION_CONFIGURE_TIMEOUT_MS);
 
@@ -1123,7 +1129,7 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
 
         // Use output1
 
-        CaptureRequest.Builder r = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+        r = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
         r.addTarget(output1Surface);
 
         mSession.capture(r.build(), null, null);
@@ -1143,7 +1149,7 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
 
         mSessionMockListener = spy(new BlockingSessionCallback());
 
-        outputSurfaces = new ArrayList<>(
+        ArrayList<Surface> outputSurfaces = new ArrayList<Surface>(
             Arrays.asList(output1Surface, output3Surface));
         mCamera.createCaptureSession(outputSurfaces, mSessionMockListener, mHandler);
 

@@ -1097,6 +1097,14 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
                 updatePreviewSurfaceWithVideo(videoSz, profile.videoFrameRate);
 
                 prepareVideoSnapshot(videoSnapshotRequestBuilder, imageListener);
+                Range<Integer> fpsRange = Range.create(profile.videoFrameRate,
+                        profile.videoFrameRate);
+                videoSnapshotRequestBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,
+                        fpsRange);
+                if (mStaticInfo.isVideoStabilizationSupported()) {
+                    videoSnapshotRequestBuilder.set(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                            CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON);
+                }
                 CaptureRequest request = videoSnapshotRequestBuilder.build();
 
                 // Start recording
