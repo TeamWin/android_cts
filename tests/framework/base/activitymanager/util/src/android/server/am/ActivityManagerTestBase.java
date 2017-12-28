@@ -29,7 +29,6 @@ import static android.content.pm.PackageManager.FEATURE_LEANBACK;
 import static android.content.pm.PackageManager.FEATURE_PICTURE_IN_PICTURE;
 import static android.content.pm.PackageManager.FEATURE_SCREEN_LANDSCAPE;
 import static android.content.pm.PackageManager.FEATURE_SCREEN_PORTRAIT;
-import static android.content.pm.PackageManager.FEATURE_VR_MODE;
 import static android.content.pm.PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE;
 import static android.content.pm.PackageManager.FEATURE_WATCH;
 import static android.server.am.StateLogger.log;
@@ -595,8 +594,7 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected boolean supportsVrMode() {
-        return hasDeviceFeature(FEATURE_VR_MODE)
-                && hasDeviceFeature(FEATURE_VR_MODE_HIGH_PERFORMANCE);
+        return hasDeviceFeature(FEATURE_VR_MODE_HIGH_PERFORMANCE);
     }
 
     protected boolean supportsPip() {
