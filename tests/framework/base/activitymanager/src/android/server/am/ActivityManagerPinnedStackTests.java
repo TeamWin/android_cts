@@ -634,7 +634,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD);
     }
 
-    @FlakyTest // TODO(b/70746098): Add back to presubmit once flakiness is addressed.
+    @FlakyTest(bugId = 70746098)
     @Presubmit
     @Test
     public void testRemovePipWithHiddenFullscreenStack() throws Exception {
@@ -672,8 +672,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME);
     }
 
-    // TODO(b/70906499): Flaky, add back to presubmit.
-    @FlakyTest
+    @FlakyTest(bugId = 70906499)
     @Presubmit
     @Test
     public void testMovePipToBackWithVisibleFullscreenStack() throws Exception {
@@ -691,8 +690,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD);
     }
 
-    // TODO(b/70906499): Flaky, add back to presubmit.
-    @FlakyTest
+    @FlakyTest(bugId = 70906499)
     @Presubmit
     @Test
     public void testMovePipToBackWithHiddenFullscreenStack() throws Exception {
@@ -815,8 +813,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         executeShellCommand("am task lock stop");
     }
 
-    // TODO(b/70328524): Flaky, add back to presubmit.
-    @FlakyTest
+    @FlakyTest(bugId = 70328524)
     @Presubmit
     @Test
     public void testConfigurationChangeOrderDuringTransition() throws Exception {
@@ -1132,8 +1129,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     /** Test that reported display size corresponds to fullscreen after exiting PiP. */
-    @Presubmit
     @FlakyTest
+    @Presubmit
     @Test
     public void testDisplayMetricsPinUnpin() throws Exception {
         assumeTrue(supportsPip());
