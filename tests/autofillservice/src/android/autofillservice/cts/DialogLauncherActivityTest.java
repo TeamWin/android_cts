@@ -77,8 +77,7 @@ public class DialogLauncherActivityTest extends AutoFillServiceTestCase {
         }
     }
 
-    // TODO(b/70813757): re-enable once fixed.
-    // @Test
+    @Test
     public void testAutofill_oneDataset() throws Exception {
         autofillOneDatasetTest(false);
     }
