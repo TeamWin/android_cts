@@ -312,6 +312,9 @@ public class PreSimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase
         mUiBot.assertSaveShowing(SAVE_DATA_TYPE_PASSWORD);
 
         // Go back and make sure it's showing the right activity.
+        // first BACK cancels save dialog
+        mUiBot.pressBack();
+        // second BACK cancel WelcomeActivity
         mUiBot.pressBack();
         mUiBot.assertShownByRelativeId(ID_INPUT);
 

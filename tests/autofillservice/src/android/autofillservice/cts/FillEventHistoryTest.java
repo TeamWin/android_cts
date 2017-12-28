@@ -409,9 +409,12 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         assertDeprecatedClientState(selectionB, "activity", "B");
 
         // Now switch back to A...
+        mUiBot.pressBack(); // dismiss autofill
         mUiBot.pressBack(); // dismiss keyboard
         mUiBot.pressBack(); // dismiss task
+        assertThat(mActivity.getWindow().getDecorView().hasWindowFocus());
         mUiBot.assertShownByRelativeId(ID_USERNAME);
+
         // ...and trigger save
         // Set credentials...
         mActivity.onUsername((v) -> v.setText("malkovich"));
