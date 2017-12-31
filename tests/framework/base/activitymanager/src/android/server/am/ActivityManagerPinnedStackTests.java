@@ -142,6 +142,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 false /* isFocusable */);
     }
 
+    @FlakyTest(bugId = 71444628)
     @Presubmit
     @Test
     public void testMoveTopActivityToPinnedStack() throws Exception {
