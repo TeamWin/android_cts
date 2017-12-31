@@ -31,7 +31,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
         compatibility-device-util \
         ctstestrunner \
         guava \
-        junit
+        junit \
+        cts-security-test-support-library
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
