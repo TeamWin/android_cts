@@ -108,8 +108,8 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         mDevice = device;
     }
 
-    private File copyResourceToTempFile(String resName) throws IOException {
-        InputStream is = this.getClass().getResourceAsStream(resName);
+    public static File copyResourceToTempFile(String resName) throws IOException {
+        InputStream is = SELinuxHostTest.class.getResourceAsStream(resName);
         File tempFile = File.createTempFile("SELinuxHostTest", ".tmp");
         FileOutputStream os = new FileOutputStream(tempFile);
         byte[] buf = new byte[1024];
@@ -655,7 +655,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
                    + errorString, errorString.length() == 0);
     }
 
-    private boolean isMac() {
+    public static boolean isMac() {
         String os = System.getProperty("os.name").toLowerCase();
         return (os.startsWith("mac") || os.startsWith("darwin"));
     }
