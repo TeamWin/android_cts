@@ -344,6 +344,42 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         // TODO: Test with startActivity
     }
 
+    public void testDisallowSharingIntoProfileFromProfile() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        // Set up activities: PrimaryUserActivity will only be enabled in the personal user
+        // This activity is used to find out the ground truth about the system's cross profile
+        // intent forwarding activity.
+        disableActivityForUser("PrimaryUserActivity", mProfileUserId);
+
+        // Tests from the profile side
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG,
+                ".DisallowSharingIntoProfileTest", "testSharingFromProfile", mProfileUserId);
+    }
+
+    public void testDisallowSharingIntoProfileFromPersonal() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        // Set up activities: ManagedProfileActivity will only be enabled in the managed profile
+        // This activity is used to find out the ground truth about the system's cross profile
+        // intent forwarding activity.
+        disableActivityForUser("ManagedProfileActivity", mParentUserId);
+
+        // Tests from the personal side, which is mostly driven from host side.
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".DisallowSharingIntoProfileTest",
+                "testSetUp", mProfileUserId);
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".DisallowSharingIntoProfileTest",
+                "testDisableSharingIntoProfile", mProfileUserId);
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".DisallowSharingIntoProfileTest",
+                "testSharingFromPersonalFails", mParentUserId);
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".DisallowSharingIntoProfileTest",
+                "testEnableSharingIntoProfile", mProfileUserId);
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".DisallowSharingIntoProfileTest",
+                "testSharingFromPersonalSucceeds", mParentUserId);
+    }
+
     public void testAppLinks_verificationStatus() throws Exception {
         if (!mHasFeature) {
             return;
