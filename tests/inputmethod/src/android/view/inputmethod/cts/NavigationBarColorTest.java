@@ -17,10 +17,14 @@
 package android.view.inputmethod.cts;
 
 import static android.view.View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+import static android.view.WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM;
+import static android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND;
 import static android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS;
+import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 import static android.view.inputmethod.cts.util.LightNavigationBarVerifier.expectLightNavigationBarNotSupported;
 import static android.view.inputmethod.cts.util.NavigationBarColorVerifier.expectNavigationBarColorNotSupported;
 import static android.view.inputmethod.cts.util.NavigationBarColorVerifier.expectNavigationBarColorSupported;
+import static android.view.inputmethod.cts.util.TestUtils.getOnMainSync;
 
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectBindInput;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
@@ -29,6 +33,8 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.waitForInputViewLa
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assume.assumeTrue;
 
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.UiAutomation;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -40,14 +46,15 @@ import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.text.TextUtils;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
+import android.view.inputmethod.cts.util.ImeAwareEditText;
 import android.view.inputmethod.cts.util.NavigationBarInfo;
 import android.view.inputmethod.cts.util.TestActivity;
-import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
-import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeLayoutInfo;
 import com.android.cts.mockime.ImeSettings;
@@ -58,7 +65,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
@@ -84,32 +90,112 @@ public class NavigationBarColorTest extends EndToEndImeTestBase {
         assumeTrue("This test does not make sense if custom navigation bar color is not supported"
                         + " even for typical Activity",
                 NavigationBarInfo.getInstance().supportsNavigationBarColor());
+    }
 
+    /**
+     * Represents test scenarios regarding how a {@link android.view.Window} that has
+     * {@link android.view.WindowManager.LayoutParams#FLAG_DIM_BEHIND} interacts with a different
+     * {@link android.view.Window} that has
+     * {@link android.view.View#SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR}.
+     */
+    private enum DimmingTestMode {
+        /**
+         * No {@link AlertDialog} is shown when testing.
+         */
+        NO_DIMMING_DIALOG,
+        /**
+         * An {@link AlertDialog} that has dimming effect is shown above the IME window.
+         */
+        DIMMING_DIALOG_ABOVE_IME,
+        /**
+         * An {@link AlertDialog} that has dimming effect is shown behind the IME window.
+         */
+        DIMMING_DIALOG_BEHIND_IME,
     }
 
     @NonNull
-    public EditText launchTestActivity(@ColorInt int navigationBarColor,
-            boolean lightNavigationBar) {
-        final AtomicReference<EditText> editTextRef = new AtomicReference<>();
-        TestActivity.startSync(activity -> {
-            final LinearLayout layout = new LinearLayout(activity);
-
+    public TestActivity launchTestActivity(@ColorInt int navigationBarColor,
+            boolean lightNavigationBar, @NonNull DimmingTestMode dimmingTestMode) {
+        return TestActivity.startSync(activity -> {
+            final View contentView;
+            switch (dimmingTestMode) {
+                case NO_DIMMING_DIALOG:
+                case DIMMING_DIALOG_ABOVE_IME: {
+                    final LinearLayout layout = new LinearLayout(activity);
+                    layout.setOrientation(LinearLayout.VERTICAL);
+                    final ImeAwareEditText editText = new ImeAwareEditText(activity);
+                    editText.setPrivateImeOptions(TEST_MARKER);
+                    editText.setHint("editText");
+                    editText.requestFocus();
+                    editText.scheduleShowSoftInput();
+                    layout.addView(editText);
+                    contentView = layout;
+                    break;
+                }
+                case DIMMING_DIALOG_BEHIND_IME: {
+                    final View view = new View(activity);
+                    view.setLayoutParams(new ViewGroup.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT));
+                    contentView = view;
+                    break;
+                }
+                default:
+                    throw new IllegalStateException("unknown mode=" + dimmingTestMode);
+            }
             activity.getWindow().setNavigationBarColor(navigationBarColor);
-            updateSystemUiVisibility(layout,
+            updateSystemUiVisibility(contentView,
                     lightNavigationBar ? SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR : 0,
                     SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
-
-            layout.setOrientation(LinearLayout.VERTICAL);
-
-            final EditText editText = new EditText(activity);
-            editText.setPrivateImeOptions(TEST_MARKER);
-            editText.setHint("editText");
-            editTextRef.set(editText);
-
-            layout.addView(editText);
-            return layout;
+            return contentView;
         });
-        return editTextRef.get();
+    }
+
+    private AutoCloseable showDialogIfNecessary(
+            @NonNull Activity activity, @NonNull DimmingTestMode dimmingTestMode) {
+        switch (dimmingTestMode) {
+            case NO_DIMMING_DIALOG:
+                // Dialog is not necessary.
+                return () -> {};
+            case DIMMING_DIALOG_ABOVE_IME: {
+                final AlertDialog alertDialog = getOnMainSync(() -> {
+                    final TextView textView = new TextView(activity);
+                    textView.setText("Dummy");
+                    textView.requestFocus();
+                    final AlertDialog dialog = new AlertDialog.Builder(activity)
+                            .setView(textView)
+                            .create();
+                    dialog.getWindow().setFlags(FLAG_DIM_BEHIND | FLAG_ALT_FOCUSABLE_IM,
+                            FLAG_DIM_BEHIND | FLAG_NOT_FOCUSABLE | FLAG_ALT_FOCUSABLE_IM);
+                    dialog.show();
+                    return dialog;
+                });
+                // Note: Dialog#dismiss() is a thread safe method so we don't need to call this from
+                // the UI thread.
+                return () -> alertDialog.dismiss();
+            }
+            case DIMMING_DIALOG_BEHIND_IME: {
+                final AlertDialog alertDialog = getOnMainSync(() -> {
+                    final ImeAwareEditText editText = new ImeAwareEditText(activity);
+                    editText.setPrivateImeOptions(TEST_MARKER);
+                    editText.setHint("editText");
+                    editText.requestFocus();
+                    editText.scheduleShowSoftInput();
+                    final AlertDialog dialog = new AlertDialog.Builder(activity)
+                            .setView(editText)
+                            .create();
+                    dialog.getWindow().setFlags(FLAG_DIM_BEHIND,
+                            FLAG_DIM_BEHIND | FLAG_NOT_FOCUSABLE | FLAG_ALT_FOCUSABLE_IM);
+                    dialog.show();
+                    return dialog;
+                });
+                // Note: Dialog#dismiss() is a thread safe method so we don't need to call this from
+                // the UI thread.
+                return () -> alertDialog.dismiss();
+            }
+            default:
+                throw new IllegalStateException("unknown mode=" + dimmingTestMode);
+        }
     }
 
     @NonNull
@@ -146,40 +232,41 @@ public class NavigationBarColorTest extends EndToEndImeTestBase {
     @NonNull
     private Bitmap getNavigationBarBitmap(@NonNull ImeSettings.Builder builder,
             @ColorInt int appNavigationBarColor, boolean appLightNavigationBar,
-            int navigationBarHeight) throws Exception {
+            int navigationBarHeight, @NonNull DimmingTestMode dimmingTestMode)
+            throws Exception {
         final UiAutomation uiAutomation =
                 InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try(MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getContext(), uiAutomation, builder)) {
             final ImeEventStream stream = imeSession.openEventStream();
 
-            final EditText editText = launchTestActivity(
-                    appNavigationBarColor, appLightNavigationBar);
+            final TestActivity activity = launchTestActivity(
+                    appNavigationBarColor, appLightNavigationBar, dimmingTestMode);
 
-            // Wait until the MockIme gets bound to the TestActivity.
-            expectBindInput(stream, Process.myPid(), TIMEOUT);
+            // Show AlertDialog if necessary, based on the dimming test mode.
+            try (AutoCloseable dialogCloser = showDialogIfNecessary(
+                    activity, dimmingTestMode)) {
+                // Wait until the MockIme gets bound to the TestActivity.
+                expectBindInput(stream, Process.myPid(), TIMEOUT);
 
-            // Emulate tap event
-            CtsTouchUtils.emulateTapOnViewCenter(
-                    InstrumentationRegistry.getInstrumentation(), editText);
+                // Wait until "onStartInput" gets called for the EditText.
+                expectEvent(stream, event -> {
+                    if (!TextUtils.equals("onStartInputView", event.getEventName())) {
+                        return false;
+                    }
+                    final EditorInfo editorInfo = event.getArguments().getParcelable("editorInfo");
+                    return TextUtils.equals(TEST_MARKER, editorInfo.privateImeOptions);
+                }, TIMEOUT);
 
-            // Wait until "onStartInput" gets called for the EditText.
-            expectEvent(stream, event -> {
-                if (!TextUtils.equals("onStartInputView", event.getEventName())) {
-                    return false;
-                }
-                final EditorInfo editorInfo = event.getArguments().getParcelable("editorInfo");
-                return TextUtils.equals(TEST_MARKER, editorInfo.privateImeOptions);
-            }, TIMEOUT);
+                // Wait until MockIme's layout becomes stable.
+                final ImeLayoutInfo lastLayout =
+                        waitForInputViewLayoutStable(stream, LAYOUT_STABLE_THRESHOLD);
+                assertNotNull(lastLayout);
 
-            // Wait until MockIme's layout becomes stable.
-            final ImeLayoutInfo lastLayout =
-                    waitForInputViewLayoutStable(stream, LAYOUT_STABLE_THRESHOLD);
-            assertNotNull(lastLayout);
-
-            final Bitmap bitmap = uiAutomation.takeScreenshot();
-            return Bitmap.createBitmap(bitmap, 0, bitmap.getHeight() - navigationBarHeight,
-                    bitmap.getWidth(), navigationBarHeight);
+                final Bitmap bitmap = uiAutomation.takeScreenshot();
+                return Bitmap.createBitmap(bitmap, 0, bitmap.getHeight() - navigationBarHeight,
+                        bitmap.getWidth(), navigationBarHeight);
+            }
         }
     }
 
@@ -191,18 +278,21 @@ public class NavigationBarColorTest extends EndToEndImeTestBase {
         // TODO: Support Window#setNavigationBarColor() for IME windows (Bug 25706186)
         expectNavigationBarColorNotSupported(color ->
                 getNavigationBarBitmap(imeSettingForSolidNavigationBar(color, false),
-                        Color.BLACK, false, info.getBottomNavigationBerHeight()));
+                        Color.BLACK, false, info.getBottomNavigationBerHeight(),
+                        DimmingTestMode.NO_DIMMING_DIALOG));
 
         // Make sure that IME's navigation bar can be transparent
         expectNavigationBarColorSupported(color ->
                 getNavigationBarBitmap(imeSettingForSolidNavigationBar(Color.TRANSPARENT, false),
-                        color, false, info.getBottomNavigationBerHeight()));
+                        color, false, info.getBottomNavigationBerHeight(),
+                        DimmingTestMode.NO_DIMMING_DIALOG));
 
         // Make sure that Window#setNavigationBarColor() is ignored when
         // FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS is unset
         expectNavigationBarColorNotSupported(color ->
                 getNavigationBarBitmap(imeSettingForFloatingIme(color, false),
-                        Color.BLACK, false, info.getBottomNavigationBerHeight()));
+                        Color.BLACK, false, info.getBottomNavigationBerHeight(),
+                        DimmingTestMode.NO_DIMMING_DIALOG));
     }
 
     @Test
@@ -216,12 +306,37 @@ public class NavigationBarColorTest extends EndToEndImeTestBase {
         // TODO: Support SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR for IME windows (Bug 69002467)
         expectLightNavigationBarNotSupported((color, lightMode) ->
                 getNavigationBarBitmap(imeSettingForSolidNavigationBar(color, lightMode),
-                        Color.BLACK, false, info.getBottomNavigationBerHeight()));
+                        Color.BLACK, false, info.getBottomNavigationBerHeight(),
+                        DimmingTestMode.NO_DIMMING_DIALOG));
 
         // Currently there is no way for IMEs to opt-out dark/light navigation bar mode.
         // TODO: Allows IMEs to opt out dark/light navigation bar mode (Bug 69111208).
         expectLightNavigationBarNotSupported((color, lightMode) ->
                 getNavigationBarBitmap(imeSettingForFloatingIme(Color.BLACK, false),
-                        color, lightMode, info.getBottomNavigationBerHeight()));
+                        color, lightMode, info.getBottomNavigationBerHeight(),
+                        DimmingTestMode.NO_DIMMING_DIALOG));
+    }
+
+    @Test
+    public void testDimmingWindow() throws Exception {
+        final NavigationBarInfo info = NavigationBarInfo.getInstance();
+
+        assumeTrue("This test does not make sense if dimming windows do not affect light "
+                + " light navigation bar for typical Activities",
+                info.supportsDimmingWindowLightNavigationBarOverride());
+
+        // Currently SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR is ignored for IME windows.
+        // TODO: Support SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR for IME windows (Bug 69002467)
+        expectLightNavigationBarNotSupported((color, lightMode) ->
+                getNavigationBarBitmap(imeSettingForSolidNavigationBar(color, lightMode),
+                        Color.BLACK, false, info.getBottomNavigationBerHeight(),
+                        DimmingTestMode.DIMMING_DIALOG_BEHIND_IME));
+
+        // If a dimming window is shown above the IME window, IME window's
+        // SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR should be canceled.
+        expectLightNavigationBarNotSupported((color, lightMode) ->
+                getNavigationBarBitmap(imeSettingForSolidNavigationBar(color, lightMode),
+                        Color.BLACK, false, info.getBottomNavigationBerHeight(),
+                        DimmingTestMode.DIMMING_DIALOG_ABOVE_IME));
     }
 }
