@@ -16,6 +16,9 @@
 
 package com.android.cts.verifier.camera.its;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -59,6 +62,7 @@ import com.android.ex.camera2.blocking.BlockingStateCallback;
 import com.android.ex.camera2.blocking.BlockingSessionCallback;
 
 import com.android.cts.verifier.camera.its.StatsImage;
+import com.android.cts.verifier.R;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -92,6 +96,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class ItsService extends Service implements SensorEventListener {
     public static final String TAG = ItsService.class.getSimpleName();
+
+    private final int SERVICE_NOTIFICATION_ID = 37; // random int that is unique within app
+    private NotificationChannel mChannel;
 
     // Timeouts, in seconds.
     private static final int TIMEOUT_CALLBACK = 20;
@@ -270,6 +277,15 @@ public class ItsService extends Service implements SensorEventListener {
         } catch (ItsException e) {
             Logt.e(TAG, "Service failed to start: ", e);
         }
+
+        NotificationManager notificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        mChannel = new NotificationChannel(
+                "ItsServiceChannel", "ItsService", NotificationManager.IMPORTANCE_LOW);
+        // Configure the notification channel.
+        mChannel.setDescription("ItsServiceChannel");
+        mChannel.enableVibration(false);
+        notificationManager.createNotificationChannel(mChannel);
     }
 
     @Override
@@ -285,6 +301,13 @@ public class ItsService extends Service implements SensorEventListener {
             } else {
                 Logt.e(TAG, "Starting ItsService in bad state");
             }
+
+            Notification notification = new Notification.Builder(this, mChannel.getId())
+                    .setContentTitle("CameraITS Service")
+                    .setContentText("CameraITS Service is running")
+                    .setSmallIcon(R.drawable.icon)
+                    .setOngoing(true).build();
+            startForeground(SERVICE_NOTIFICATION_ID, notification);
         } catch (java.lang.InterruptedException e) {
             Logt.e(TAG, "Error starting ItsService (interrupted)", e);
         }
