@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package android.signature.cts.api;
 
 import java.io.IOException;
@@ -55,5 +56,4 @@ public class BootClassPathClassesProvider extends ClassProvider {
     private String[] getBootJarPaths() {
         return System.getProperty("java.boot.class.path").split(":");
     }
-
 }

@@ -15,6 +15,7 @@
  */
 package android.signature.cts;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -73,9 +74,78 @@ public class ApiComplianceChecker {
     private final ResultObserver resultObserver;
     private final ClassProvider classProvider;
 
+    private Class<? extends Annotation> annotationClass = null;
+
+    private Map<String, Class<?>> annotatedClassesMap = new HashMap<>();
+    private Map<String, Set<Constructor<?>>> annotatedConstructorsMap = new HashMap<>();
+    private Map<String, Set<Method>> annotatedMethodsMap = new HashMap<>();
+    private Map<String, Set<Field>> annotatedFieldsMap = new HashMap<>();
+
     public ApiComplianceChecker(ResultObserver resultObserver, ClassProvider classProvider) {
         this.resultObserver = resultObserver;
         this.classProvider = classProvider;
+    }
+
+    /**
+     * Optionally let ApiComplianceCheker to ensure runtime classes do not have more API members
+     * than the documented API ones.
+     *
+     * @param annotationName name of the annotation class for the API type (e.g.
+     *            android.annotation.SystemApi)
+     */
+    public void setAnnotationForExactMatch(String annotationName) {
+        annotationClass = ReflectionHelper.getAnnotationClass(annotationName);
+        classProvider.getAllClasses().forEach(clazz -> {
+            if (clazz.isAnnotationPresent(annotationClass)) {
+                annotatedClassesMap.put(clazz.getName(), clazz);
+            }
+            Set<Constructor<?>> constructors = ReflectionHelper.getAnnotatedConstructors(clazz,
+                    annotationClass);
+            if (!constructors.isEmpty()) {
+                annotatedConstructorsMap.put(clazz.getName(), constructors);
+            }
+            Set<Method> methods = ReflectionHelper.getAnnotatedMethods(clazz, annotationClass);
+            if (!methods.isEmpty()) {
+                annotatedMethodsMap.put(clazz.getName(), methods);
+            }
+            Set<Field> fields = ReflectionHelper.getAnnotatedFields(clazz, annotationClass);
+            if (!fields.isEmpty()) {
+                annotatedFieldsMap.put(clazz.getName(), fields);
+            }
+        });
+    }
+
+    /**
+     * If an annotated API (class, method, constructor, fields) found in the device is not in the
+     * documented API then trigger an error.
+     */
+    public void checkExactMatch() {
+        for (Class<?> clazz : annotatedClassesMap.values()) {
+            resultObserver.notifyFailure(FailureType.EXTRA_CLASS, clazz.getName(),
+                    "Class annotated with " + annotationClass.getName()
+                            + " does not exist in the documented API");
+        }
+        for (Set<Constructor<?>> set : annotatedConstructorsMap.values()) {
+            for (Constructor<?> c : set) {
+                resultObserver.notifyFailure(FailureType.EXTRA_METHOD, c.toString(),
+                        "Constructor annotated with " + annotationClass.getName()
+                                + " does not exist in the API");
+            }
+        }
+        for (Set<Method> set : annotatedMethodsMap.values()) {
+            for (Method m : set) {
+                resultObserver.notifyFailure(FailureType.EXTRA_METHOD, m.toString(),
+                        "Method annotated with " + annotationClass.getName()
+                                + " does not exist in the API");
+            }
+        }
+        for (Set<Field> set : annotatedFieldsMap.values()) {
+            for (Field f : set) {
+                resultObserver.notifyFailure(FailureType.EXTRA_FIELD, f.toString(),
+                        "Field annotated with " + annotationClass.getName()
+                                + " does not exist in the API");
+            }
+        }
     }
 
     private static void loge(String message, Exception exception) {
@@ -102,6 +172,9 @@ public class ApiComplianceChecker {
     public void checkSignatureCompliance(JDiffClassDescription classDescription) {
         Class<?> runtimeClass = checkClassCompliance(classDescription);
         if (runtimeClass != null) {
+            // remove the class from the set if found
+            annotatedClassesMap.remove(runtimeClass.getName());
+
             checkFieldsCompliance(classDescription, runtimeClass);
             checkConstructorCompliance(classDescription, runtimeClass);
             checkMethodCompliance(classDescription, runtimeClass);
@@ -359,9 +432,11 @@ public class ApiComplianceChecker {
             Class<?> runtimeClass) {
         // A map of field name to field of the fields contained in runtimeClass.
         Map<String, Field> classFieldMap = buildFieldMap(runtimeClass);
+        Set<Field> annotatedFields = annotatedFieldsMap.get(runtimeClass.getName());
         for (JDiffClassDescription.JDiffField field : classDescription.getFields()) {
             try {
                 Field f = classFieldMap.get(field.mName);
+                boolean found = false;
                 if (f == null) {
                     resultObserver.notifyFailure(FailureType.MISSING_FIELD,
                             field.toReadableString(classDescription.getAbsoluteClassName()),
@@ -392,8 +467,25 @@ public class ApiComplianceChecker {
                                 "Non-compatible field type found when looking for " +
                                         field.toSignatureString());
                     }
+                    found = true;
+                } else {
+                    found = true;
                 }
+                if (found) {
+                    // make sure that the field (or its declaring class) is annotated
+                    if (annotationClass != null) {
+                        if (!ReflectionHelper.isAnnotatedOrInAnnotatedClass(f, annotationClass)) {
+                            resultObserver.notifyFailure(FailureType.MISSING_ANNOTATION,
+                                    f.toString(),
+                                    "Annotation " + annotationClass.getName() + " is missing");
+                        }
+                    }
 
+                    // remove it from the set if found in the API doc
+                    if (annotatedFields != null) {
+                        annotatedFields.remove(f);
+                    }
+                }
             } catch (Exception e) {
                 loge("Got exception when checking field compliance", e);
                 resultObserver.notifyFailure(
@@ -625,6 +717,8 @@ public class ApiComplianceChecker {
     @SuppressWarnings("unchecked")
     private void checkConstructorCompliance(JDiffClassDescription classDescription,
             Class<?> runtimeClass) {
+        Set<Constructor<?>> annotatedConstructors = annotatedConstructorsMap
+                .get(runtimeClass.getName());
         for (JDiffClassDescription.JDiffConstructor con : classDescription.getConstructors()) {
             try {
                 Constructor<?> c = ReflectionHelper.findMatchingConstructor(runtimeClass, con);
@@ -643,6 +737,19 @@ public class ApiComplianceChecker {
                                 con.toReadableString(classDescription.getAbsoluteClassName()),
                                 "Non-compatible method found when looking for " +
                                         con.toSignatureString());
+                    }
+                    // make sure that the constructor (or its declaring class) is annotated
+                    if (annotationClass != null) {
+                        if (!ReflectionHelper.isAnnotatedOrInAnnotatedClass(c, annotationClass)) {
+                            resultObserver.notifyFailure(FailureType.MISSING_ANNOTATION,
+                                    c.toString(),
+                                    "Annotation " + annotationClass.getName() + " is missing");
+                        }
+                    }
+
+                    // remove it from the set if found in the API doc
+                    if (annotatedConstructors != null) {
+                        annotatedConstructors.remove(c);
                     }
                 }
             } catch (Exception e) {
@@ -663,6 +770,7 @@ public class ApiComplianceChecker {
      */
     private void checkMethodCompliance(JDiffClassDescription classDescription,
             Class<?> runtimeClass) {
+        Set<Method> annotatedMethods = annotatedMethodsMap.get(runtimeClass.getName());
         for (JDiffClassDescription.JDiffMethod method : classDescription.getMethods()) {
             try {
 
@@ -693,6 +801,22 @@ public class ApiComplianceChecker {
                                 method.toReadableString(classDescription.getAbsoluteClassName()),
                                 "Non-compatible method found when looking for " +
                                         method.toSignatureString());
+                    }
+                    // make sure that the method (or its declaring class) is annotated or overriding
+                    // annotated method.
+                    if (annotationClass != null) {
+                        if (!ReflectionHelper.isAnnotatedOrInAnnotatedClass(m, annotationClass)
+                                && !ReflectionHelper.isOverridingAnnotatedMethod(m,
+                                        annotationClass)) {
+                            resultObserver.notifyFailure(FailureType.MISSING_ANNOTATION,
+                                    m.toString(),
+                                    "Annotation " + annotationClass.getName() + " is missing");
+                        }
+                    }
+
+                    // remove it from the set if found in the API doc
+                    if (annotatedMethods != null) {
+                        annotatedMethods.remove(m);
                     }
                 }
             } catch (Exception e) {

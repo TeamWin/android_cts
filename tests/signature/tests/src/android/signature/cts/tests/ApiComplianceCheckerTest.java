@@ -16,18 +16,23 @@
 
 package android.signature.cts.tests;
 
+import java.lang.reflect.Modifier;
+import java.util.Arrays;
+
 import android.signature.cts.ApiComplianceChecker;
+import android.signature.cts.ClassProvider;
+import android.signature.cts.ExcludingClassProvider;
 import android.signature.cts.FailureType;
 import android.signature.cts.JDiffClassDescription;
 import android.signature.cts.ResultObserver;
+import android.signature.cts.tests.data.ApiAnnotation;
 import junit.framework.Assert;
 import junit.framework.TestCase;
-
-import java.lang.reflect.Modifier;
 
 /**
  * Test class for JDiffClassDescription.
  */
+@SuppressWarnings("deprecation")
 public class ApiComplianceCheckerTest extends TestCase {
 
     private static final String VALUE = "VALUE";
@@ -35,7 +40,8 @@ public class ApiComplianceCheckerTest extends TestCase {
     private class NoFailures implements ResultObserver {
         @Override
         public void notifyFailure(FailureType type, String name, String errmsg) {
-            Assert.fail("Saw unexpected test failure: " + name + " failure type: " + type);
+            Assert.fail("Saw unexpected test failure: " + name + " failure type: " + type
+                    + " error message: " + errmsg);
         }
     }
 
@@ -67,15 +73,38 @@ public class ApiComplianceCheckerTest extends TestCase {
     }
 
     private void checkSignatureCompliance(JDiffClassDescription classDescription) {
+        checkSignatureCompliance(classDescription, false);
+    }
+
+    private void checkSignatureCompliance(JDiffClassDescription classDescription,
+            boolean doExactMatch, String... excludedRuntimeClassNames) {
         ResultObserver resultObserver = new NoFailures();
-        checkSignatureCompliance(classDescription, resultObserver);
+        checkSignatureCompliance(classDescription, resultObserver, doExactMatch,
+                excludedRuntimeClassNames);
     }
 
     private void checkSignatureCompliance(JDiffClassDescription classDescription,
             ResultObserver resultObserver) {
+        checkSignatureCompliance(classDescription, resultObserver, false);
+    }
+
+    private void checkSignatureCompliance(JDiffClassDescription classDescription,
+            ResultObserver resultObserver, boolean doExactMatch, String... excludedRuntimeClasses) {
+        ClassProvider provider = new TestClassesProvider();
+        if (excludedRuntimeClasses.length != 0) {
+            provider = new ExcludingClassProvider(provider,
+                    name -> Arrays.stream(excludedRuntimeClasses)
+                            .anyMatch(myname -> myname.equals(name)));
+        }
         ApiComplianceChecker complianceChecker = new ApiComplianceChecker(resultObserver,
-                new TestClassesProvider());
+                provider);
+        if (doExactMatch) {
+            complianceChecker.setAnnotationForExactMatch(ApiAnnotation.class.getName());
+        }
         complianceChecker.checkSignatureCompliance(classDescription);
+        if (doExactMatch) {
+            complianceChecker.checkExactMatch();
+        }
     }
 
     /**
@@ -500,5 +529,275 @@ public class ApiComplianceCheckerTest extends TestCase {
         clz.addMethod(method);
         checkSignatureCompliance(clz, observer);
         observer.validate();
+    }
+
+    private static JDiffClassDescription createClass(String name) {
+        JDiffClassDescription clz = new JDiffClassDescription(
+                "android.signature.cts.tests.data", name);
+        clz.setType(JDiffClassDescription.JDiffType.CLASS);
+        clz.setModifier(Modifier.PUBLIC);
+        return clz;
+    }
+
+    private static void addConstructor(JDiffClassDescription clz, String... paramTypes) {
+        JDiffClassDescription.JDiffConstructor constructor = new JDiffClassDescription.JDiffConstructor(
+                clz.getShortClassName(), Modifier.PUBLIC);
+        if (paramTypes != null) {
+            for (String type : paramTypes) {
+                constructor.addParam(type);
+            }
+        }
+        clz.addConstructor(constructor);
+    }
+
+    private static void addPublicVoidMethod(JDiffClassDescription clz, String name) {
+        JDiffClassDescription.JDiffMethod method = new JDiffClassDescription.JDiffMethod(
+                name, Modifier.PUBLIC, "void");
+        clz.addMethod(method);
+    }
+
+    private static void addPublicBooleanField(JDiffClassDescription clz, String name) {
+        JDiffClassDescription.JDiffField field = new JDiffClassDescription.JDiffField(
+                name, "boolean", Modifier.PUBLIC, VALUE);
+        clz.addField(field);
+    }
+
+    /**
+     * Documented API and runtime classes are exactly matched.
+     */
+    public void testExactApiMatch() {
+        JDiffClassDescription clz = createClass("SystemApiClass");
+        addConstructor(clz);
+        addPublicVoidMethod(clz, "apiMethod");
+        addPublicBooleanField(clz, "apiField");
+
+        checkSignatureCompliance(clz, true,
+                "android.signature.cts.tests.data.PublicApiClass",
+                "android.signature.cts.tests.data.ForciblyPublicizedPrivateClass");
+
+        clz = createClass("PublicApiClass");
+        addConstructor(clz);
+        addPublicVoidMethod(clz, "apiMethod");
+        addPublicBooleanField(clz, "apiField");
+
+        checkSignatureCompliance(clz, true,
+                "android.signature.cts.tests.data.SystemApiClass",
+                "android.signature.cts.tests.data.ForciblyPublicizedPrivateClass");
+    }
+
+    /**
+     * A constructor is found in the runtime class, but not in the documented API
+     */
+    public void testDetectUnauthorizedConstructorApi() {
+        ExpectFailure observer = new ExpectFailure(FailureType.EXTRA_METHOD);
+
+        JDiffClassDescription clz = createClass("SystemApiClass");
+        // (omitted) addConstructor(clz);
+        addPublicVoidMethod(clz, "apiMethod");
+        addPublicBooleanField(clz, "apiField");
+
+        checkSignatureCompliance(clz, observer, true,
+                "android.signature.cts.tests.data.PublicApiClass",
+                "android.signature.cts.tests.data.ForciblyPublicizedPrivateClass");
+        observer.validate();
+
+        observer = new ExpectFailure(FailureType.EXTRA_METHOD);
+
+        clz = createClass("PublicApiClass");
+        // (omitted) addConstructor(clz);
+        addPublicVoidMethod(clz, "apiMethod");
+        addPublicBooleanField(clz, "apiField");
+
+        checkSignatureCompliance(clz, observer, true,
+                "android.signature.cts.tests.data.SystemApiClass",
+                "android.signature.cts.tests.data.ForciblyPublicizedPrivateClass");
+        observer.validate();
+    }
+
+    /**
+     * A method is found in the runtime class, but not in the documented API
+     */
+    public void testDetectUnauthorizedMethodApi() {
+        ExpectFailure observer = new ExpectFailure(FailureType.EXTRA_METHOD);
+
+        JDiffClassDescription clz = createClass("SystemApiClass");
+        addConstructor(clz);
+        // (omitted) addPublicVoidMethod(clz, "apiMethod");
+        addPublicBooleanField(clz, "apiField");
+
+        checkSignatureCompliance(clz, observer, true,
+                "android.signature.cts.tests.data.PublicApiClass",
+                "android.signature.cts.tests.data.ForciblyPublicizedPrivateClass");
+        observer.validate();
+
+        observer = new ExpectFailure(FailureType.EXTRA_METHOD);
+
+        clz = createClass("PublicApiClass");
+        addConstructor(clz);
+        // (omitted) addPublicVoidMethod(clz, "apiMethod");
+        addPublicBooleanField(clz, "apiField");
+
+        checkSignatureCompliance(clz, observer, true,
+                "android.signature.cts.tests.data.SystemApiClass",
+                "android.signature.cts.tests.data.ForciblyPublicizedPrivateClass");
+        observer.validate();
+    }
+
+    /**
+     * A field is found in the runtime class, but not in the documented API
+     */
+    public void testDetectUnauthorizedFieldApi() {
+        ExpectFailure observer = new ExpectFailure(FailureType.EXTRA_FIELD);
+
+        JDiffClassDescription clz = createClass("SystemApiClass");
+        addConstructor(clz);
+        addPublicVoidMethod(clz, "apiMethod");
+        // (omitted) addPublicBooleanField(clz, "apiField");
+
+        checkSignatureCompliance(clz, observer, true,
+                "android.signature.cts.tests.data.PublicApiClass",
+                "android.signature.cts.tests.data.ForciblyPublicizedPrivateClass");
+        observer.validate();
+
+        observer = new ExpectFailure(FailureType.EXTRA_FIELD);
+
+        clz = createClass("PublicApiClass");
+        addConstructor(clz);
+        addPublicVoidMethod(clz, "apiMethod");
+        // (omitted) addPublicBooleanField(clz, "apiField");
+
+        checkSignatureCompliance(clz, observer, true,
+                "android.signature.cts.tests.data.SystemApiClass",
+                "android.signature.cts.tests.data.ForciblyPublicizedPrivateClass");
+        observer.validate();
+    }
+
+    /**
+     * A class is found in the runtime classes, but not in the documented API
+     */
+    public void testDetectUnauthorizedClassApi() {
+        ExpectFailure observer = new ExpectFailure(FailureType.EXTRA_CLASS);
+        JDiffClassDescription clz = createClass("SystemApiClass");
+        addConstructor(clz);
+        addPublicVoidMethod(clz, "apiMethod");
+        addPublicBooleanField(clz, "apiField");
+
+        checkSignatureCompliance(clz, observer, true,
+                "android.signature.cts.tests.data.PublicApiClass");
+        // Note that ForciblyPublicizedPrivateClass is now included in the runtime classes
+        observer.validate();
+
+        observer = new ExpectFailure(FailureType.EXTRA_CLASS);
+
+        clz = createClass("PublicApiClass");
+        addConstructor(clz);
+        addPublicVoidMethod(clz, "apiMethod");
+        addPublicBooleanField(clz, "apiField");
+
+        checkSignatureCompliance(clz, observer, true,
+                "android.signature.cts.tests.data.SystemApiClass");
+        // Note that ForciblyPublicizedPrivateClass is now included in the runtime classes
+        observer.validate();
+    }
+
+    /**
+     * A member which is declared in an annotated class is currently recognized as an API.
+     */
+    public void testB71630695() {
+        // TODO(b/71630695): currently, some API members are not annotated, because
+        // a member is automatically added to the API set if it is in a class with
+        // annotation and it is not @hide. This should be fixed, but until then,
+        // CTS should respect the existing behavior.
+        JDiffClassDescription clz = createClass("SystemApiClass");
+        addConstructor(clz);
+        addPublicVoidMethod(clz, "apiMethod");
+        addPublicBooleanField(clz, "apiField");
+        addConstructor(clz, "float"); // this is not annotated
+
+        checkSignatureCompliance(clz, true,
+                "android.signature.cts.tests.data.PublicApiClass",
+                "android.signature.cts.tests.data.ForciblyPublicizedPrivateClass");
+
+        clz = createClass("SystemApiClass");
+        addConstructor(clz);
+        addPublicVoidMethod(clz, "apiMethod");
+        addPublicBooleanField(clz, "apiField");
+        addPublicVoidMethod(clz, "unannotatedApiMethod"); // this is not annotated
+
+        checkSignatureCompliance(clz, true,
+                "android.signature.cts.tests.data.PublicApiClass",
+                "android.signature.cts.tests.data.ForciblyPublicizedPrivateClass");
+
+        clz = createClass("SystemApiClass");
+        addConstructor(clz);
+        addPublicVoidMethod(clz, "apiMethod");
+        addPublicBooleanField(clz, "apiField");
+        addPublicBooleanField(clz, "unannotatedApiField"); // this is not annotated
+
+        checkSignatureCompliance(clz, true,
+                "android.signature.cts.tests.data.PublicApiClass",
+                "android.signature.cts.tests.data.ForciblyPublicizedPrivateClass");
+    }
+
+    /**
+     * An API is documented, but isn't annotated in the runtime class. But, due to b/71630695, this
+     * test can only be done for public API classes.
+     */
+    public void testDetectMissingAnnotation() {
+        ExpectFailure observer = new ExpectFailure(FailureType.MISSING_ANNOTATION);
+
+        JDiffClassDescription clz = createClass("PublicApiClass");
+        addConstructor(clz);
+        addPublicVoidMethod(clz, "apiMethod");
+        addPublicBooleanField(clz, "apiField");
+        addConstructor(clz, "int"); // this is not annotated
+
+        checkSignatureCompliance(clz, observer, true,
+                "android.signature.cts.tests.data.SystemApiClass",
+                "android.signature.cts.tests.data.ForciblyPublicizedPrivateClass");
+        observer.validate();
+
+        observer = new ExpectFailure(FailureType.MISSING_ANNOTATION);
+
+        clz = createClass("PublicApiClass");
+        addConstructor(clz);
+        addPublicVoidMethod(clz, "apiMethod");
+        addPublicBooleanField(clz, "apiField");
+        addPublicVoidMethod(clz, "privateMethod"); // this is not annotated
+
+        checkSignatureCompliance(clz, observer, true,
+                "android.signature.cts.tests.data.SystemApiClass",
+                "android.signature.cts.tests.data.ForciblyPublicizedPrivateClass");
+        observer.validate();
+
+        observer = new ExpectFailure(FailureType.MISSING_ANNOTATION);
+
+        clz = createClass("PublicApiClass");
+        addConstructor(clz);
+        addPublicVoidMethod(clz, "apiMethod");
+        addPublicBooleanField(clz, "apiField");
+        addPublicBooleanField(clz, "privateField"); // this is not annotated
+
+        checkSignatureCompliance(clz, observer, true,
+                "android.signature.cts.tests.data.SystemApiClass",
+                "android.signature.cts.tests.data.ForciblyPublicizedPrivateClass");
+        observer.validate();
+    }
+
+    /**
+     * A <code>@hide</code> method should be recognized as API though it is not annotated, if it is
+     * overriding a method which is already an API.
+     */
+    public void testOverriddenHidenMethodIsApi() {
+        JDiffClassDescription clz = createClass("PublicApiClass");
+        addConstructor(clz);
+        addPublicVoidMethod(clz, "apiMethod");
+        addPublicBooleanField(clz, "apiField");
+        addPublicVoidMethod(clz, "anOverriddenMethod"); // not annotated and @hide, but is API
+
+        checkSignatureCompliance(clz, true,
+                "android.signature.cts.tests.data.SystemApiClass",
+                "android.signature.cts.tests.data.ForciblyPublicizedPrivateClass");
+
     }
 }

@@ -15,8 +15,14 @@
  */
 package android.signature.cts;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.AnnotatedElement;
+import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
@@ -24,7 +30,10 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Uses reflection to obtain runtime representations of elements in the API.
@@ -328,5 +337,139 @@ public class ReflectionHelper {
         } else {
             throw new RuntimeException("Got an unknown java.lang.Type");
         }
+    }
+
+    /**
+     * Returns a Class representing an annotation type of the given name.
+     */
+    @SuppressWarnings("unchecked")
+    public static Class<? extends Annotation> getAnnotationClass(String name) {
+        try {
+            Class<?> clazz = Class.forName(
+                    name, false, ReflectionHelper.class.getClassLoader());
+            if (clazz.isAnnotation()) {
+                return (Class<? extends Annotation>) clazz;
+            } else {
+                return null;
+            }
+        } catch (ClassNotFoundException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Returns a list of constructors which are annotated with the given annotation class.
+     */
+    public static Set<Constructor<?>> getAnnotatedConstructors(Class<?> clazz,
+            Class<? extends Annotation> annotation) {
+        Set<Constructor<?>> result = new HashSet<>();
+        if (annotation != null) {
+            for (Constructor<?> c : clazz.getDeclaredConstructors()) {
+                if (c.isAnnotationPresent(annotation)) {
+                    // TODO(b/71630695): currently, some API members are not annotated, because
+                    // a member is automatically added to the API set if it is in a class with
+                    // annotation and it is not @hide. <member>.getDeclaringClass().
+                    // isAnnotationPresent(annotationClass) won't help because it will then
+                    // incorrectly include non-API members which are marked as @hide;
+                    // @hide isn't visible at runtime. Until the issue is fixed, we should
+                    // omit those automatically added API members from the test.
+                    result.add(c);
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Returns a list of methods which are annotated with the given annotation class.
+     */
+    public static Set<Method> getAnnotatedMethods(Class<?> clazz,
+            Class<? extends Annotation> annotation) {
+        Set<Method> result = new HashSet<>();
+        if (annotation != null) {
+            for (Method m : clazz.getDeclaredMethods()) {
+                if (m.isAnnotationPresent(annotation)) {
+                    // TODO(b/71630695): see getAnnotatedConstructors for details
+                    result.add(m);
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Returns a list of fields which are annotated with the given annotation class.
+     */
+    public static Set<Field> getAnnotatedFields(Class<?> clazz,
+            Class<? extends Annotation> annotation) {
+        Set<Field> result = new HashSet<>();
+        if (annotation != null) {
+            for (Field f : clazz.getDeclaredFields()) {
+                if (f.isAnnotationPresent(annotation)) {
+                    // TODO(b/71630695): see getAnnotatedConstructors for details
+                    result.add(f);
+                }
+            }
+        }
+        return result;
+    }
+
+    private static boolean isInAnnotatedClass(Member m,
+            Class<? extends Annotation> annotationClass) {
+        Class<?> clazz = m.getDeclaringClass();
+        do {
+            if (clazz.isAnnotationPresent(annotationClass)) {
+                return true;
+            }
+        } while ((clazz = clazz.getDeclaringClass()) != null);
+        return false;
+    }
+
+    public static boolean isAnnotatedOrInAnnotatedClass(Field field,
+            Class<? extends Annotation> annotationClass) {
+        if (annotationClass == null) {
+            return true;
+        }
+        return field.isAnnotationPresent(annotationClass)
+                || isInAnnotatedClass(field, annotationClass);
+    }
+
+    public static boolean isAnnotatedOrInAnnotatedClass(Constructor<?> constructor,
+            Class<? extends Annotation> annotationClass) {
+        if (annotationClass == null) {
+            return true;
+        }
+        return constructor.isAnnotationPresent(annotationClass)
+                || isInAnnotatedClass(constructor, annotationClass);
+    }
+
+    public static boolean isAnnotatedOrInAnnotatedClass(Method method,
+            Class<? extends Annotation> annotationClass) {
+        if (annotationClass == null) {
+            return true;
+        }
+        return method.isAnnotationPresent(annotationClass)
+                || isInAnnotatedClass(method, annotationClass);
+    }
+
+    public static boolean isOverridingAnnotatedMethod(Method method,
+            Class<? extends Annotation> annotationClass) {
+        Class<?> clazz = method.getDeclaringClass();
+        while (!(clazz = clazz.getSuperclass()).equals(Object.class)) {
+            try {
+                Method overriddenMethod;
+                overriddenMethod = clazz.getDeclaredMethod(method.getName(),
+                        method.getParameterTypes());
+                if (overriddenMethod != null) {
+                    return isAnnotatedOrInAnnotatedClass(overriddenMethod, annotationClass);
+                }
+            } catch (NoSuchMethodException e) {
+                continue;
+            } catch (SecurityException e) {
+                throw new RuntimeException(
+                        "Error while searching for overridden method. " + method.toString(), e);
+            }
+        }
+        return false;
     }
 }
