@@ -17,8 +17,10 @@
 package android.view.inputmethod.cts.util;
 
 import static android.support.test.InstrumentationRegistry.getInstrumentation;
+import static android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND;
 import static android.view.inputmethod.cts.util.TestUtils.getOnMainSync;
 
+import android.app.AlertDialog;
 import android.app.Instrumentation;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -32,6 +34,7 @@ import android.util.Size;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowInsets;
+import android.widget.TextView;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -46,13 +49,17 @@ public class NavigationBarInfo {
     private final int mBottomNavigationBerHeight;
     private final boolean mSupportsNavigationBarColor;
     private final boolean mSupportsLightNavigationBar;
+    private final boolean mSupportsDimmingWindowLightNavigationBarOverride;
 
     private NavigationBarInfo(boolean hasBottomNavigationBar, int bottomNavigationBerHeight,
-            boolean supportsNavigationBarColor, boolean supportsLightNavigationBar) {
+            boolean supportsNavigationBarColor, boolean supportsLightNavigationBar,
+            boolean supportsDimmingWindowLightNavigationBarOverride) {
         mHasBottomNavigationBar = hasBottomNavigationBar;
         mBottomNavigationBerHeight = bottomNavigationBerHeight;
         mSupportsNavigationBarColor = supportsNavigationBarColor;
         mSupportsLightNavigationBar = supportsLightNavigationBar;
+        mSupportsDimmingWindowLightNavigationBarOverride =
+                supportsDimmingWindowLightNavigationBarOverride;
     }
 
     @Nullable
@@ -90,7 +97,7 @@ public class NavigationBarInfo {
 
             final WindowInsets windowInsets = getOnMainSync(() -> view.getRootWindowInsets());
             if (!windowInsets.hasStableInsets() || windowInsets.getStableInsetBottom() <= 0) {
-                return new NavigationBarInfo(false, 0, false, false);
+                return new NavigationBarInfo(false, 0, false, false, false);
             }
             final Size displaySize = getOnMainSync(() -> {
                 final Point size = new Point();
@@ -107,33 +114,42 @@ public class NavigationBarInfo {
             });
             actualBottomInset = displaySize.getHeight() - viewBoundsOnScreen.bottom;
             if (actualBottomInset != windowInsets.getStableInsetBottom()) {
-                sInstance = new NavigationBarInfo(false, 0, false, false);
+                sInstance = new NavigationBarInfo(false, 0, false, false, false);
                 return sInstance;
             }
         }
 
         final boolean colorSupported = NavigationBarColorVerifier.verify(
                 color -> getBottomNavigationBarBitmapForActivity(
-                        color, false, actualBottomInset)).getResult()
+                        color, false /* lightNavigationBar */, actualBottomInset,
+                        false /* showDimmingDialog */)).getResult()
                 == NavigationBarColorVerifier.ResultType.SUPPORTED;
 
         final boolean lightModeSupported = LightNavigationBarVerifier.verify(
                 (color, lightNavigationBar) -> getBottomNavigationBarBitmapForActivity(
-                        color, lightNavigationBar, actualBottomInset)).getResult()
+                        color, lightNavigationBar, actualBottomInset,
+                        false /* showDimmingDialog */)).getResult()
                 == LightNavigationBarVerifier.ResultType.SUPPORTED;
 
+        final boolean dimmingSupported = lightModeSupported && LightNavigationBarVerifier.verify(
+                (color, lightNavigationBar) -> getBottomNavigationBarBitmapForActivity(
+                        color, lightNavigationBar, actualBottomInset,
+                        true /* showDimmingDialog */)).getResult()
+                == LightNavigationBarVerifier.ResultType.NOT_SUPPORTED;
+
         sInstance = new NavigationBarInfo(
-                true, actualBottomInset, colorSupported, lightModeSupported);
+                true, actualBottomInset, colorSupported, lightModeSupported, dimmingSupported);
         return sInstance;
     }
 
     @NonNull
     private static Bitmap getBottomNavigationBarBitmapForActivity(
             @ColorInt int navigationBarColor, boolean lightNavigationBar,
-            int bottomNavigationBarHeight) throws Exception {
+            int bottomNavigationBarHeight, boolean showDimmingDialog) throws Exception {
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
 
-        TestActivity.startSync(activity -> {
+
+        final TestActivity testActivity = TestActivity.startSync(activity -> {
             final View view = new View(activity);
             activity.getWindow().setNavigationBarColor(navigationBarColor);
 
@@ -151,12 +167,34 @@ public class NavigationBarInfo {
         });
         instrumentation.waitForIdleSync();
 
+        final AlertDialog dialog;
+        if (showDimmingDialog) {
+            dialog = getOnMainSync(() -> {
+                final TextView textView = new TextView(testActivity);
+                textView.setText("Dimming Window");
+                final AlertDialog alertDialog = new AlertDialog.Builder(testActivity)
+                        .setView(textView)
+                        .create();
+                alertDialog.getWindow().setFlags(FLAG_DIM_BEHIND, FLAG_DIM_BEHIND);
+                alertDialog.show();
+                return alertDialog;
+            });
+        } else {
+            dialog = null;
+        }
+
         Thread.sleep(BEFORE_SCREENSHOT_WAIT);
 
         final Bitmap fullBitmap = getInstrumentation().getUiAutomation().takeScreenshot();
-        return Bitmap.createBitmap(fullBitmap, 0,
+        final Bitmap bottomNavBarBitmap = Bitmap.createBitmap(fullBitmap, 0,
                 fullBitmap.getHeight() - bottomNavigationBarHeight, fullBitmap.getWidth(),
                 bottomNavigationBarHeight);
+        if (dialog != null) {
+            // Dialog#dismiss() is a thread safe method so we don't need to call this from the UI
+            // thread.
+            dialog.dismiss();
+        }
+        return bottomNavBarBitmap;
     }
 
     /**
@@ -190,5 +228,14 @@ public class NavigationBarInfo {
      */
     public boolean supportsLightNavigationBar() {
         return mSupportsLightNavigationBar;
+    }
+
+    /**
+     * @return {@code true} if {@link android.view.View#SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR} will be
+     *         canceled when a {@link android.view.Window} with
+     *         {@link android.view.WindowManager.LayoutParams#FLAG_DIM_BEHIND} is shown.
+     */
+    public boolean supportsDimmingWindowLightNavigationBarOverride() {
+        return mSupportsDimmingWindowLightNavigationBarOverride;
     }
 }
