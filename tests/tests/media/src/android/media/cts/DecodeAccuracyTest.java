@@ -136,10 +136,14 @@ public class DecodeAccuracyTest extends DecodeAccuracyTestBase {
     private View videoView;
     private VideoViewFactory videoViewFactory;
     private String fileName;
+    private SimplePlayer player;
 
     @After
     @Override
     public void tearDown() throws Exception {
+        if (player != null) {
+            player.release();
+        }
         if (videoView != null) {
             getHelper().cleanUpView(videoView);
         }
@@ -227,13 +231,12 @@ public class DecodeAccuracyTest extends DecodeAccuracyTestBase {
         }
         final int golden = getGoldenId(vf.getDescription(), vf.getOriginalSize());
         assertTrue("No golden found.", golden != 0);
-        final VideoViewSnapshot videoViewSnapshot = videoViewFactory.getVideoViewSnapshot();
         decodeVideo(vf, videoViewFactory);
-        validateResult(vf, videoViewSnapshot, golden);
+        validateResult(vf, videoViewFactory.getVideoViewSnapshot(), golden);
     }
 
     private void decodeVideo(VideoFormat videoFormat, VideoViewFactory videoViewFactory) {
-        final SimplePlayer player = new SimplePlayer(getHelper().getContext());
+        this.player = new SimplePlayer(getHelper().getContext());
         final SimplePlayer.PlayerResult playerResult = player.decodeVideoFrames(
                 videoViewFactory.getSurface(), videoFormat, 10);
         assertTrue(playerResult.getFailureMessage(), playerResult.isSuccess());
