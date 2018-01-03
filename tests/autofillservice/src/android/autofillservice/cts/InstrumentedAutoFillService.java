@@ -22,10 +22,12 @@ import static android.autofillservice.cts.Helper.dumpAutofillService;
 import static android.autofillservice.cts.Helper.dumpStructure;
 import static android.autofillservice.cts.Helper.getActivityName;
 import static android.autofillservice.cts.Timeouts.CONNECTION_TIMEOUT;
+import static android.autofillservice.cts.Timeouts.FILL_EVENTS_TIMEOUT;
 import static android.autofillservice.cts.Timeouts.FILL_TIMEOUT;
 import static android.autofillservice.cts.Timeouts.IDLE_UNBIND_TIMEOUT;
 import static android.autofillservice.cts.Timeouts.SAVE_TIMEOUT;
 
+import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.assist.AssistStructure;
@@ -34,10 +36,13 @@ import android.content.ComponentName;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.os.CancellationSignal;
+import android.os.SystemClock;
 import android.service.autofill.AutofillService;
 import android.service.autofill.Dataset;
 import android.service.autofill.FillCallback;
 import android.service.autofill.FillContext;
+import android.service.autofill.FillEventHistory;
+import android.service.autofill.FillEventHistory.Event;
 import android.service.autofill.FillResponse;
 import android.service.autofill.SaveCallback;
 import android.support.annotation.Nullable;
@@ -84,6 +89,56 @@ public class InstrumentedAutoFillService extends AutofillService {
 
     public static InstrumentedAutoFillService peekInstance() {
         return sInstance.get();
+    }
+
+    /**
+     * Gets the list of fill events in the {@link FillEventHistory}, waiting until it has the
+     * expected size.
+     */
+    public static List<Event> getFillEvents(int expectedSize) throws Exception {
+        return getFillEventHistory(expectedSize).getEvents();
+    }
+
+    /**
+     * Gets the {@link FillEventHistory}, waiting until it has the expected size.
+     */
+    public static FillEventHistory getFillEventHistory(int expectedSize) throws Exception {
+        final InstrumentedAutoFillService service = peekInstance();
+
+        if (expectedSize == 0) {
+            // Need to always sleep as there is no condition / callback to be used to wait until
+            // expected number of events is set.
+            SystemClock.sleep(FILL_EVENTS_TIMEOUT.ms());
+            final FillEventHistory history = service.getFillEventHistory();
+            assertThat(history.getEvents()).isNull();
+            return history;
+        }
+
+        return FILL_EVENTS_TIMEOUT.run("getFillEvents(" + expectedSize + ")", () -> {
+            final FillEventHistory history = service.getFillEventHistory();
+            if (history == null) {
+                return null;
+            }
+            final List<Event> events = history.getEvents();
+            if (events != null) {
+                if (events.size() != expectedSize) {
+                    Log.v(TAG, "Didn't get " + expectedSize + " events yet: " + events);
+                    return null;
+                }
+            }
+            return history;
+        });
+    }
+
+    /**
+     * Asserts there is no {@link FillEventHistory}.
+     */
+    public static void assertNoFillEventHistory() {
+        // Need to always sleep as there is no condition / callback to be used to wait until
+        // expected number of events is set.
+        SystemClock.sleep(FILL_EVENTS_TIMEOUT.ms());
+        assertThat(peekInstance().getFillEventHistory()).isNull();
+
     }
 
     @Override
