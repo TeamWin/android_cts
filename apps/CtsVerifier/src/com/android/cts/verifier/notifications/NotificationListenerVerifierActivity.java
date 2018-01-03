@@ -511,7 +511,8 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
                                 logFail();
                                 status = FAIL;
                             } else {
-                                if (mNm.getEffectsSuppressor() == null) {
+                                // Ignoring other effect suppressors besides the service under test.
+                                if (mNm.getEffectsSuppressor() == null || !mNm.getEffectsSuppressor().equals(MockListener.COMPONENT_NAME)) {
                                     status = PASS;
                                 } else {
                                     status = FAIL;
@@ -600,7 +601,8 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
                                     logFail();
                                     status = FAIL;
                                 } else {
-                                    if (mNm.getEffectsSuppressor() == null) {
+                                    // Ignoring other effect suppressors besides the service under test.
+                                    if (mNm.getEffectsSuppressor() == null || !mNm.getEffectsSuppressor().equals(MockListener.COMPONENT_NAME)) {
                                         status = PASS;
                                     } else {
                                         logFail();
