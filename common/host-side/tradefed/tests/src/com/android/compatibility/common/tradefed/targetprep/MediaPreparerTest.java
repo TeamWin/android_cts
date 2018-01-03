@@ -55,6 +55,7 @@ public class MediaPreparerTest extends TestCase {
         mMediaPreparer.mMaxRes = MediaPreparer.DEFAULT_MAX_RESOLUTION;
         mMediaPreparer.mBaseDeviceShortDir = "/sdcard/test/bbb_short/";
         mMediaPreparer.mBaseDeviceFullDir = "/sdcard/test/bbb_full/";
+        mMediaPreparer.mBaseDeviceImagesDir = "/sdcard/test/images";
         for (MediaPreparer.Resolution resolution : MediaPreparer.RESOLUTIONS) {
             String shortFile = String.format("%s%s", mMediaPreparer.mBaseDeviceShortDir,
                     resolution.toString());
@@ -63,6 +64,8 @@ public class MediaPreparerTest extends TestCase {
             EasyMock.expect(mMockDevice.doesFileExist(shortFile)).andReturn(true).once();
             EasyMock.expect(mMockDevice.doesFileExist(fullFile)).andReturn(true).once();
         }
+        EasyMock.expect(mMockDevice.doesFileExist(mMediaPreparer.mBaseDeviceImagesDir))
+                .andReturn(true).anyTimes();
         EasyMock.replay(mMockDevice);
         mMediaPreparer.copyMediaFiles(mMockDevice);
     }
@@ -71,6 +74,7 @@ public class MediaPreparerTest extends TestCase {
         mMediaPreparer.mMaxRes = MediaPreparer.DEFAULT_MAX_RESOLUTION;
         mMediaPreparer.mBaseDeviceShortDir = "/sdcard/test/bbb_short/";
         mMediaPreparer.mBaseDeviceFullDir = "/sdcard/test/bbb_full/";
+        mMediaPreparer.mBaseDeviceImagesDir = "/sdcard/test/images";
         for (MediaPreparer.Resolution resolution : MediaPreparer.RESOLUTIONS) {
             String shortFile = String.format("%s%s", mMediaPreparer.mBaseDeviceShortDir,
                     resolution.toString());
@@ -79,6 +83,8 @@ public class MediaPreparerTest extends TestCase {
             EasyMock.expect(mMockDevice.doesFileExist(shortFile)).andReturn(true).anyTimes();
             EasyMock.expect(mMockDevice.doesFileExist(fullFile)).andReturn(true).anyTimes();
         }
+        EasyMock.expect(mMockDevice.doesFileExist(mMediaPreparer.mBaseDeviceImagesDir))
+                .andReturn(true).anyTimes();
         EasyMock.replay(mMockDevice);
         assertTrue(mMediaPreparer.mediaFilesExistOnDevice(mMockDevice));
     }
