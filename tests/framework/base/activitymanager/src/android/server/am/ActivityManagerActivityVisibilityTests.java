@@ -30,6 +30,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
+import android.support.test.filters.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 
 import org.junit.After;
@@ -157,6 +158,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         mAmWmState.assertVisibility(TURN_SCREEN_ON_ACTIVITY_NAME, true);
     }
 
+    @FlakyTest(bugId = 69229402)
     @Presubmit
     @Test
     public void testFinishActivityInNonFocusedStack() throws Exception {
