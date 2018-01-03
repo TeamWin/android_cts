@@ -23,6 +23,7 @@ import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.Helper.getContext;
 import static android.autofillservice.cts.Helper.getOutOfProcessPid;
+import static android.autofillservice.cts.OutOfProcessLoginActivity.getStartedMarker;
 import static android.autofillservice.cts.OutOfProcessLoginActivity.getStoppedMarker;
 import static android.autofillservice.cts.UiBot.LANDSCAPE;
 import static android.autofillservice.cts.UiBot.PORTRAIT;
@@ -55,6 +56,12 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
     private static final String LOGIN_FULL_ID = "android.autofillservice.cts:id/" + ID_LOGIN;
     private static final String BUTTON_FULL_ID = "android.autofillservice.cts:id/button";
     private static final String CANCEL_FULL_ID = "android.autofillservice.cts:id/cancel";
+
+    /**
+     * Delay for activity start/stop.
+     * TODO figure out a better way to wait without using sleep().
+     */
+    private static final long WAIT_ACTIVITY_MS = 1000;
 
     private static final Timeout SESSION_LIFECYCLE_TIMEOUT = new Timeout(
             "SESSION_LIFECYCLE_TIMEOUT", 500, 2F, 5000);
@@ -99,12 +106,25 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
         });
 
         // onStop might not be finished, hence wait more
-        SystemClock.sleep(1000);
+        SystemClock.sleep(WAIT_ACTIVITY_MS);
 
         // Kill activity that is in the background
         runShellCommand("kill -9 %d",
                 getOutOfProcessPid("android.autofillservice.cts.outside",
                         SESSION_LIFECYCLE_TIMEOUT));
+    }
+
+    private void startAndWaitExternalActivity() throws Exception {
+        Intent outOfProcessAcvitityStartIntent = new Intent(getContext(),
+                OutOfProcessLoginActivity.class);
+        getStartedMarker(getContext()).delete();
+        getContext().startActivity(outOfProcessAcvitityStartIntent);
+        eventually("getStartedMarker()", () -> {
+            return getStartedMarker(getContext()).exists();
+        });
+        getStartedMarker(getContext()).delete();
+        // Even if we wait the activity started, UiObject still fails. Have to wait a little bit.
+        SystemClock.sleep(WAIT_ACTIVITY_MS);
     }
 
     @Test
@@ -113,9 +133,7 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
         enableService();
 
         // Start activity that is autofilled in a separate process so it can be killed
-        Intent outOfProcessAcvitityStartIntent = new Intent(getContext(),
-                OutOfProcessLoginActivity.class);
-        getContext().startActivity(outOfProcessAcvitityStartIntent);
+        startAndWaitExternalActivity();
 
         // Set expectations.
         final Bundle extras = new Bundle();
@@ -230,9 +248,7 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
         enableService();
 
         // Start activity that is autofilled in a separate process so it can be killed
-        Intent outOfProcessAcvitityStartIntent = new Intent(getContext(),
-                OutOfProcessLoginActivity.class);
-        getContext().startActivity(outOfProcessAcvitityStartIntent);
+        startAndWaitExternalActivity();
 
         // Create the authentication intent (launching a full screen activity)
         IntentSender authentication = PendingIntent.getActivity(getContext(), 0,
@@ -276,9 +292,7 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
         enableService();
 
         // Start activity that is autofilled in a separate process so it can be killed
-        Intent outOfProcessAcvitityStartIntent = new Intent(getContext(),
-                OutOfProcessLoginActivity.class);
-        getContext().startActivity(outOfProcessAcvitityStartIntent);
+        startAndWaitExternalActivity();
 
         CannedFillResponse response = new CannedFillResponse.Builder()
                 .addDataset(new CannedFillResponse.CannedDataset.Builder(
@@ -321,9 +335,7 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
         enableService();
 
         // Start activity that is autofilled in a separate process so it can be killed
-        Intent outOfProcessAcvitityStartIntent = new Intent(getContext(),
-                OutOfProcessLoginActivity.class);
-        getContext().startActivity(outOfProcessAcvitityStartIntent);
+        startAndWaitExternalActivity();
 
         // Prepare response for first activity
         CannedFillResponse response = new CannedFillResponse.Builder()

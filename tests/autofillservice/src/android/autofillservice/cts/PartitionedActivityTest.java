@@ -53,6 +53,8 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+import java.util.concurrent.TimeoutException;
+
 /**
  * Test case for an activity containing multiple partitions.
  */
@@ -67,6 +69,30 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
     @Before
     public void setActivity() {
         mActivity = mActivityRule.getActivity();
+    }
+
+    /**
+     * Focus to a cell and expect window event
+     */
+    void focusCell(int row, int column) throws TimeoutException {
+        mUiBot.waitForWindowChange(() -> mActivity.focusCell(row, column),
+                Timeouts.UI_TIMEOUT.getMaxValue());
+    }
+
+    /**
+     * Focus to a cell and expect no window event.
+     */
+    void focusCellNoWindowChange(int row, int column) {
+        try {
+            // TODO: define a small value in Timeout
+            mUiBot.waitForWindowChange(() -> mActivity.focusCell(row, column),
+                    Timeouts.UI_TIMEOUT.ms());
+        } catch (TimeoutException ex) {
+            // no window events! looking good
+            return;
+        }
+        throw new IllegalStateException(String.format("Expect no window event when focusing to"
+                + " column %d row %d, but event happened", row, column));
     }
 
     @Test
@@ -84,7 +110,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         sReplier.addResponse(response1);
 
         // Trigger auto-fill on 1st partition.
-        mActivity.focusCell(1, 1);
+        focusCell(1, 1);
         final FillRequest fillRequest1 = sReplier.getNextFillRequest();
         assertThat(fillRequest1.flags).isEqualTo(0);
         final ViewNode p1l1c1 = assertTextIsSanitized(fillRequest1.structure, ID_L1C1);
@@ -94,7 +120,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
 
         // Make sure UI is shown, but don't tap it.
         mUiBot.assertDatasets("l1c1");
-        mActivity.focusCell(1, 2);
+        focusCell(1, 2);
         mUiBot.assertDatasets("l1c2");
 
         // Now tap a field in a different partition
@@ -107,7 +133,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         sReplier.addResponse(response2);
 
         // Trigger auto-fill on 2nd partition.
-        mActivity.focusCell(2, 1);
+        focusCell(2, 1);
         final FillRequest fillRequest2 = sReplier.getNextFillRequest();
         assertThat(fillRequest2.flags).isEqualTo(0);
         final ViewNode p2l1c1 = assertTextIsSanitized(fillRequest2.structure, ID_L1C1);
@@ -120,14 +146,14 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         assertWithMessage("Focus on p2l2c2").that(p2l2c2.isFocused()).isFalse();
         // Make sure UI is shown, but don't tap it.
         mUiBot.assertDatasets("l2c1");
-        mActivity.focusCell(2, 2);
+        focusCell(2, 2);
         mUiBot.assertDatasets("l2c2");
 
         // Now fill them
         final FillExpectation expectation1 = mActivity.expectAutofill()
               .onCell(1, 1, "l1c1")
               .onCell(1, 2, "l1c2");
-        mActivity.focusCell(1, 1);
+        focusCell(1, 1);
         mUiBot.selectDataset("l1c1");
         expectation1.assertAutoFilled();
 
@@ -138,7 +164,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         final FillExpectation expectation2 = mActivity.expectAutofill()
                 .onCell(2, 1, "l2c1")
                 .onCell(2, 2, "l2c2");
-        mActivity.focusCell(2, 2);
+        focusCell(2, 2);
         mUiBot.selectDataset("l2c2");
         expectation2.assertAutoFilled();
 
@@ -167,7 +193,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 .onCell(1, 2, "l1c2");
 
         // Trigger auto-fill.
-        mActivity.focusCell(1, 1);
+        focusCell(1, 1);
         final FillRequest fillRequest1 = sReplier.getNextFillRequest();
         assertThat(fillRequest1.flags).isEqualTo(0);
 
@@ -195,7 +221,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 .onCell(2, 2, "l2c2");
 
         // Trigger auto-fill.
-        mActivity.focusCell(2, 1);
+        focusCell(2, 1);
         final FillRequest fillRequest2 = sReplier.getNextFillRequest();
         assertThat(fillRequest2.flags).isEqualTo(0);
 
@@ -388,7 +414,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 .onCell(1, 2, "l1c2");
 
         // Trigger auto-fill.
-        mActivity.focusCell(1, 1);
+        focusCell(1, 1);
         final FillRequest fillRequest1 = sReplier.getNextFillRequest();
         assertThat(fillRequest1.flags).isEqualTo(0);
 
@@ -449,7 +475,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 .onCell(3, 2, "l3c2");
 
         // Trigger auto-fill.
-        mActivity.focusCell(3, 1);
+        focusCell(3, 1);
         final FillRequest fillRequest3 = sReplier.getNextFillRequest();
         assertThat(fillRequest3.flags).isEqualTo(0);
 
@@ -522,7 +548,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         sReplier.addResponse(response1);
 
         // Trigger auto-fill on 1st partition.
-        mActivity.focusCell(1, 1);
+        focusCell(1, 1);
         final FillRequest fillRequest1 = sReplier.getNextFillRequest();
         assertThat(fillRequest1.flags).isEqualTo(0);
         assertThat(fillRequest1.data).isNull();
@@ -543,7 +569,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         sReplier.addResponse(response2);
 
         // Trigger auto-fill on 2nd partition
-        mActivity.focusCell(2, 1);
+        focusCell(2, 1);
         final FillRequest fillRequest2 = sReplier.getNextFillRequest();
         assertThat(fillRequest2.flags).isEqualTo(0);
         assertWithMessage("null bundle on request 2").that(fillRequest2.data).isNotNull();
@@ -562,7 +588,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         sReplier.addResponse(response3);
 
         // Trigger auto-fill on 3rd partition
-        mActivity.focusCell(3, 1);
+        focusCell(3, 1);
         final FillRequest fillRequest3 = sReplier.getNextFillRequest();
         assertThat(fillRequest3.flags).isEqualTo(0);
         assertWithMessage("null bundle on request 3").that(fillRequest2.data).isNotNull();
@@ -587,7 +613,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         sReplier.addResponse(response4);
 
         // Trigger auto-fill on 4th partition
-        mActivity.focusCell(4, 1);
+        focusCell(4, 1);
         final FillRequest fillRequest4 = sReplier.getNextFillRequest();
         assertThat(fillRequest4.flags).isEqualTo(0);
         assertWithMessage("non-null bundle on request 4").that(fillRequest4.data).isNull();
@@ -617,7 +643,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                         .build())
                 .build();
         sReplier.addResponse(response1);
-        mActivity.focusCell(1, 1);
+        focusCell(1, 1);
         sReplier.getNextFillRequest();
 
         // Trigger 2nd partition.
@@ -629,7 +655,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_L2C1)
                 .build();
         sReplier.addResponse(response2);
-        mActivity.focusCell(2, 1);
+        focusCell(2, 1);
         sReplier.getNextFillRequest();
 
         // Trigger save
@@ -654,7 +680,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                         .build())
                 .build();
         sReplier.addResponse(response1);
-        mActivity.focusCell(1, 1);
+        focusCell(1, 1);
         sReplier.getNextFillRequest();
 
         // Trigger 2nd partition.
@@ -666,7 +692,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_L1C1)
                 .build();
         sReplier.addResponse(response2);
-        mActivity.focusCell(2, 1);
+        focusCell(2, 1);
         sReplier.getNextFillRequest();
 
         // Trigger save
@@ -692,7 +718,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_L1C1)
                 .build();
         sReplier.addResponse(response1);
-        mActivity.focusCell(1, 1);
+        focusCell(1, 1);
         sReplier.getNextFillRequest();
 
         // Trigger 2nd partition.
@@ -705,7 +731,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                         ID_L2C1)
                 .build();
         sReplier.addResponse(response2);
-        mActivity.focusCell(2, 1);
+        focusCell(2, 1);
         sReplier.getNextFillRequest();
 
         // Trigger save
@@ -733,7 +759,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_L1C1)
                 .build();
         sReplier.addResponse(response1);
-        mActivity.focusCell(1, 1);
+        focusCell(1, 1);
         sReplier.getNextFillRequest();
 
         // Trigger 2nd partition.
@@ -746,7 +772,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                         ID_L2C1)
                 .build();
         sReplier.addResponse(response2);
-        mActivity.focusCell(2, 1);
+        focusCell(2, 1);
         sReplier.getNextFillRequest();
 
         // Trigger 3rd partition.
@@ -759,7 +785,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                         | SAVE_DATA_TYPE_USERNAME, ID_L3C1)
                 .build();
         sReplier.addResponse(response3);
-        mActivity.focusCell(3, 1);
+        focusCell(3, 1);
         sReplier.getNextFillRequest();
 
         // Trigger save
@@ -790,7 +816,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_L1C1)
                 .build();
         sReplier.addResponse(response1);
-        mActivity.focusCell(1, 1);
+        focusCell(1, 1);
         sReplier.getNextFillRequest();
 
         // Trigger 2nd partition.
@@ -802,7 +828,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD | SAVE_DATA_TYPE_GENERIC, ID_L2C1)
                 .build();
         sReplier.addResponse(response2);
-        mActivity.focusCell(2, 1);
+        focusCell(2, 1);
         sReplier.getNextFillRequest();
 
         // Trigger 3rd partition.
@@ -816,7 +842,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                         ID_L3C1)
                 .build();
         sReplier.addResponse(response3);
-        mActivity.focusCell(3, 1);
+        focusCell(3, 1);
         sReplier.getNextFillRequest();
 
 
@@ -848,7 +874,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_L1C1)
                 .build();
         sReplier.addResponse(response1);
-        mActivity.focusCell(1, 1);
+        focusCell(1, 1);
         sReplier.getNextFillRequest();
 
         // Trigger 2nd partition.
@@ -861,7 +887,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                         ID_L2C1)
                 .build();
         sReplier.addResponse(response2);
-        mActivity.focusCell(2, 1);
+        focusCell(2, 1);
         sReplier.getNextFillRequest();
 
         // Trigger 3rd partition.
@@ -874,7 +900,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                         | SAVE_DATA_TYPE_USERNAME, ID_L3C1)
                 .build();
         sReplier.addResponse(response3);
-        mActivity.focusCell(3, 1);
+        focusCell(3, 1);
         sReplier.getNextFillRequest();
 
         // Trigger 4th partition.
@@ -887,7 +913,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                         | SAVE_DATA_TYPE_USERNAME | SAVE_DATA_TYPE_ADDRESS, ID_L4C1)
                 .build();
         sReplier.addResponse(response4);
-        mActivity.focusCell(4, 1);
+        focusCell(4, 1);
         sReplier.getNextFillRequest();
 
 
@@ -922,7 +948,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         sReplier.addResponse(response1);
 
         // Trigger auto-fill on 1st partition.
-        mActivity.focusCell(1, 1);
+        focusCell(1, 1);
         final FillRequest fillRequest1 = sReplier.getNextFillRequest();
         assertThat(fillRequest1.flags).isEqualTo(0);
         final ViewNode p1l1c1 = assertTextIsSanitized(fillRequest1.structure, ID_L1C1);
@@ -932,13 +958,13 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
 
         // Make sure UI is shown on 1st partition
         mUiBot.assertDatasets("l1c1");
-        mActivity.focusCell(1, 2);
+        focusCell(1, 2);
         mUiBot.assertDatasets("l1c2");
 
         // Make sure UI is not shown on ignored partition
-        mActivity.focusCell(2, 1);
+        focusCell(2, 1);
         mUiBot.assertNoDatasets();
-        mActivity.focusCell(2, 2);
+        focusCellNoWindowChange(2, 2);
         mUiBot.assertNoDatasets();
     }
 
@@ -972,7 +998,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 .onCell(1, 2, "l1c2");
 
         // Trigger partition.
-        mActivity.focusCell(1, 1);
+        focusCell(1, 1);
         sReplier.getNextFillRequest();
 
 
@@ -996,7 +1022,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 .onCell(2, 2, "L2C2");
 
         // Trigger partition.
-        mActivity.focusCell(2, 1);
+        focusCell(2, 1);
         sReplier.getNextFillRequest();
 
         /**
@@ -1021,7 +1047,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 .onCell(3, 2, "L3C2");
 
         // Trigger partition.
-        mActivity.focusCell(3, 1);
+        focusCell(3, 1);
         sReplier.getNextFillRequest();
 
         /**
@@ -1044,48 +1070,48 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 .onCell(4, 1, "l4c1");
 
         // Trigger partition.
-        mActivity.focusCell(4, 1);
+        focusCell(4, 1);
         sReplier.getNextFillRequest();
 
         /*
          *  Now move focus around to make sure the proper values are displayed each time.
          */
-        mActivity.focusCell(1, 1);
+        focusCell(1, 1);
         mUiBot.assertDatasets("P1D1", "P1D2");
-        mActivity.focusCell(1, 2);
+        focusCell(1, 2);
         mUiBot.assertDatasets("P1D1");
 
-        mActivity.focusCell(2, 1);
+        focusCell(2, 1);
         mUiBot.assertDatasets("P2D1");
-        mActivity.focusCell(2, 2);
+        focusCell(2, 2);
         mUiBot.assertDatasets("P2D1", "P2D2");
 
-        mActivity.focusCell(4, 1);
+        focusCell(4, 1);
         mUiBot.assertDatasets("P4D1", "P4D2");
-        mActivity.focusCell(4, 2);
+        focusCell(4, 2);
         mUiBot.assertDatasets("P4D2");
 
-        mActivity.focusCell(3, 2);
+        focusCell(3, 2);
         mUiBot.assertDatasets("P3D1", "P3D2");
-        mActivity.focusCell(3, 1);
+        focusCell(3, 1);
         mUiBot.assertDatasets("P3D1", "P3D2");
 
         /*
          *  Finally, autofill and check results.
          */
-        mActivity.focusCell(4, 1);
+        focusCell(4, 1);
         mUiBot.selectDataset("P4D1");
         expectation4.assertAutoFilled();
 
-        mActivity.focusCell(1, 1);
+        focusCell(1, 1);
         mUiBot.selectDataset("P1D1");
         expectation1.assertAutoFilled();
 
-        mActivity.focusCell(3, 1);
+        focusCell(3, 1);
         mUiBot.selectDataset("P3D2");
         expectation3.assertAutoFilled();
 
-        mActivity.focusCell(2, 2);
+        focusCell(2, 2);
         mUiBot.selectDataset("P2D2");
         expectation2.assertAutoFilled();
     }
@@ -1142,13 +1168,13 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         sReplier.addResponse(response1);
 
         // Trigger partition.
-        mActivity.focusCell(1, 1);
+        focusCell(1, 1);
         sReplier.getNextFillRequest();
 
         // Asserts proper datasets are shown on each field defined so far.
-        mActivity.focusCell(1, 1);
+        focusCell(1, 1);
         mUiBot.assertDatasets("P1D1", "P1D2");
-        mActivity.focusCell(1, 2);
+        focusCell(1, 2);
         mUiBot.assertDatasets("P1D1");
 
         /**
@@ -1170,17 +1196,17 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         sReplier.addResponse(response2);
 
         // Trigger partition.
-        mActivity.focusCell(2, 1);
+        focusCell(2, 1);
         sReplier.getNextFillRequest();
 
         // Asserts proper datasets are shown on each field defined so far.
-        mActivity.focusCell(1, 1);
+        focusCell(1, 1);
         mUiBot.assertDatasets("P2D1"); // changed
-        mActivity.focusCell(1, 2);
+        focusCell(1, 2);
         mUiBot.assertDatasets("P1D1");
-        mActivity.focusCell(2, 1);
+        focusCell(2, 1);
         mUiBot.assertDatasets("P2D1");
-        mActivity.focusCell(2, 2);
+        focusCell(2, 2);
         mUiBot.assertDatasets("P2D1", "P2D2");
 
         /**
@@ -1204,21 +1230,21 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         sReplier.addResponse(response3);
 
         // Trigger partition.
-        mActivity.focusCell(3, 1);
+        focusCell(3, 1);
         sReplier.getNextFillRequest();
 
         // Asserts proper datasets are shown on each field defined so far.
-        mActivity.focusCell(1, 1);
+        focusCell(1, 1);
         mUiBot.assertDatasets("P2D1");
-        mActivity.focusCell(1, 2);
+        focusCell(1, 2);
         mUiBot.assertDatasets("P3D1"); // changed
-        mActivity.focusCell(2, 1);
+        focusCell(2, 1);
         mUiBot.assertDatasets("P2D1");
-        mActivity.focusCell(2, 2);
+        focusCell(2, 2);
         mUiBot.assertDatasets("P3D2"); // changed
-        mActivity.focusCell(3, 2);
+        focusCell(3, 2);
         mUiBot.assertDatasets("P3D1", "P3D2");
-        mActivity.focusCell(3, 1);
+        focusCell(3, 1);
         mUiBot.assertDatasets("P3D1", "P3D2");
 
         /**
@@ -1252,25 +1278,25 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         sReplier.addResponse(response4);
 
         // Trigger partition.
-        mActivity.focusCell(4, 1);
+        focusCell(4, 1);
         sReplier.getNextFillRequest();
 
         // Asserts proper datasets are shown on each field defined so far.
-        mActivity.focusCell(1, 1);
+        focusCell(1, 1);
         mUiBot.assertDatasets("P4D1", "P4D2");
-        mActivity.focusCell(1, 2);
+        focusCell(1, 2);
         mUiBot.assertDatasets("P4D1", "P4D2");
-        mActivity.focusCell(2, 1);
+        focusCell(2, 1);
         mUiBot.assertDatasets("P4D1", "P4D2");
-        mActivity.focusCell(2, 2);
+        focusCell(2, 2);
         mUiBot.assertDatasets("P4D1", "P4D2");
-        mActivity.focusCell(3, 2);
+        focusCell(3, 2);
         mUiBot.assertDatasets("P4D1", "P4D2");
-        mActivity.focusCell(3, 1);
+        focusCell(3, 1);
         mUiBot.assertDatasets("P4D1", "P4D2");
-        mActivity.focusCell(4, 1);
+        focusCell(4, 1);
         mUiBot.assertDatasets("P4D1", "P4D2");
-        mActivity.focusCell(4, 2);
+        focusCell(4, 2);
         mUiBot.assertDatasets("P4D2");
 
         /*
@@ -1301,7 +1327,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
             chosenOne = "P4D2";
         }
 
-        mActivity.focusCell(4, 1);
+        focusCell(4, 1);
         mUiBot.selectDataset(chosenOne);
         expectation.assertAutoFilled();
     }
@@ -1340,12 +1366,12 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 .onCell(1, 2, "l1c2");
 
         // Trigger partition.
-        mActivity.focusCell(1, 1);
+        focusCell(1, 1);
         sReplier.getNextFillRequest();
 
         // Focus around different fields in the partition.
         mUiBot.assertDatasets("P1D1", "P1D2");
-        mActivity.focusCell(1, 2);
+        focusCell(1, 2);
         mUiBot.assertDatasets("P1D1");
 
         // Autofill it...
@@ -1380,12 +1406,12 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 .onCell(2, 2, "L2C2");
 
         // Trigger partition.
-        mActivity.focusCell(2, 1);
+        focusCell(2, 1);
         sReplier.getNextFillRequest();
 
         // Focus around different fields in the partition.
         mUiBot.assertDatasets("P2D1");
-        mActivity.focusCell(2, 2);
+        focusCell(2, 2);
         mUiBot.assertDatasets("P2D1", "P2D2");
 
         // Autofill it...
@@ -1423,12 +1449,12 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 .onCell(3, 2, "l3c2");
 
         // Trigger partition.
-        mActivity.focusCell(3, 2);
+        focusCell(3, 2);
         sReplier.getNextFillRequest();
 
         // Focus around different fields in the partition.
         mUiBot.assertDatasets("P3D1", "P3D2");
-        mActivity.focusCell(3, 1);
+        focusCell(3, 1);
         mUiBot.assertDatasets("P3D1", "P3D2");
 
         // Autofill it...
@@ -1465,12 +1491,12 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 .onCell(4, 2, "L4C2");
 
         // Trigger partition.
-        mActivity.focusCell(4, 1);
+        focusCell(4, 1);
         sReplier.getNextFillRequest();
 
         // Focus around different fields in the partition.
         mUiBot.assertDatasets("P4D1", "P4D2");
-        mActivity.focusCell(4, 2);
+        focusCell(4, 2);
         mUiBot.assertDatasets("P4D2");
 
         // Autofill it...
@@ -1518,7 +1544,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 .onCell(1, 2, "l1c2");
 
         // Trigger partition.
-        mActivity.focusCell(1, 1);
+        focusCell(1, 1);
         sReplier.getNextFillRequest();
 
         /**
@@ -1548,7 +1574,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 .onCell(2, 2, "L2C2");
 
         // Trigger partition.
-        mActivity.focusCell(2, 1);
+        focusCell(2, 1);
         sReplier.getNextFillRequest();
 
         /**
@@ -1581,7 +1607,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 .onCell(3, 2, "l3c2");
 
         // Trigger partition.
-        mActivity.focusCell(3, 2);
+        focusCell(3, 2);
         sReplier.getNextFillRequest();
 
         /**
@@ -1612,48 +1638,48 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 .onCell(4, 1, "L4C1")
                 .onCell(4, 2, "L4C2");
 
-        mActivity.focusCell(4, 1);
+        focusCell(4, 1);
         sReplier.getNextFillRequest();
 
         /*
          *  Now move focus around to make sure the proper values are displayed each time.
          */
-        mActivity.focusCell(1, 1);
+        focusCell(1, 1);
         mUiBot.assertDatasets("P1D1", "P1D2");
-        mActivity.focusCell(1, 2);
+        focusCell(1, 2);
         mUiBot.assertDatasets("P1D1");
 
-        mActivity.focusCell(2, 1);
+        focusCell(2, 1);
         mUiBot.assertDatasets("P2D1");
-        mActivity.focusCell(2, 2);
+        focusCell(2, 2);
         mUiBot.assertDatasets("P2D1", "P2D2");
 
-        mActivity.focusCell(4, 1);
+        focusCell(4, 1);
         mUiBot.assertDatasets("P4D1", "P4D2");
-        mActivity.focusCell(4, 2);
+        focusCell(4, 2);
         mUiBot.assertDatasets("P4D2");
 
-        mActivity.focusCell(3, 2);
+        focusCell(3, 2);
         mUiBot.assertDatasets("P3D1", "P3D2");
-        mActivity.focusCell(3, 1);
+        focusCell(3, 1);
         mUiBot.assertDatasets("P3D1", "P3D2");
 
         /*
          *  Finally, autofill and check results.
          */
-        mActivity.focusCell(4, 1);
+        focusCell(4, 1);
         mUiBot.selectDataset("P4D2");
         expectation4.assertAutoFilled();
 
-        mActivity.focusCell(1, 1);
+        focusCell(1, 1);
         mUiBot.selectDataset("P1D1");
         expectation1.assertAutoFilled();
 
-        mActivity.focusCell(3, 1);
+        focusCell(3, 1);
         mUiBot.selectDataset("P3D1");
         expectation3.assertAutoFilled();
 
-        mActivity.focusCell(2, 2);
+        focusCell(2, 2);
         mUiBot.selectDataset("P2D2");
         expectation2.assertAutoFilled();
     }
@@ -1691,7 +1717,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 .onCell(1, 2, "l1c2");
 
         // Trigger partition.
-        mActivity.focusCell(1, 1);
+        focusCell(1, 1);
         sReplier.getNextFillRequest();
 
         /**
@@ -1719,7 +1745,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 .onCell(2, 2, "L2C2");
 
         // Trigger partition.
-        mActivity.focusCell(2, 1);
+        focusCell(2, 1);
         sReplier.getNextFillRequest();
 
         /**
@@ -1750,7 +1776,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 .onCell(3, 2, "l3c2");
 
         // Trigger partition.
-        mActivity.focusCell(3, 2);
+        focusCell(3, 2);
         sReplier.getNextFillRequest();
 
         /**
@@ -1775,48 +1801,48 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 .onCell(4, 1, "L4C1")
                 .onCell(4, 2, "L4C2");
 
-        mActivity.focusCell(4, 1);
+        focusCell(4, 1);
         sReplier.getNextFillRequest();
 
         /*
          *  Now move focus around to make sure the proper values are displayed each time.
          */
-        mActivity.focusCell(1, 1);
+        focusCell(1, 1);
         mUiBot.assertDatasets("P1D1", "P1D2");
-        mActivity.focusCell(1, 2);
+        focusCell(1, 2);
         mUiBot.assertDatasets("P1D1");
 
-        mActivity.focusCell(2, 1);
+        focusCell(2, 1);
         mUiBot.assertDatasets("P2D1");
-        mActivity.focusCell(2, 2);
+        focusCell(2, 2);
         mUiBot.assertDatasets("P2D1", "P2D2");
 
-        mActivity.focusCell(4, 1);
+        focusCell(4, 1);
         mUiBot.assertDatasets("P4D1", "P4D2");
-        mActivity.focusCell(4, 2);
+        focusCell(4, 2);
         mUiBot.assertDatasets("P4D2");
 
-        mActivity.focusCell(3, 2);
+        focusCell(3, 2);
         mUiBot.assertDatasets("P3D1", "P3D2");
-        mActivity.focusCell(3, 1);
+        focusCell(3, 1);
         mUiBot.assertDatasets("P3D1", "P3D2");
 
         /*
          *  Finally, autofill and check results.
          */
-        mActivity.focusCell(4, 1);
+        focusCell(4, 1);
         mUiBot.selectDataset("P4D2");
         expectation4.assertAutoFilled();
 
-        mActivity.focusCell(1, 1);
+        focusCell(1, 1);
         mUiBot.selectDataset("P1D1");
         expectation1.assertAutoFilled();
 
-        mActivity.focusCell(3, 1);
+        focusCell(3, 1);
         mUiBot.selectDataset("P3D1");
         expectation3.assertAutoFilled();
 
-        mActivity.focusCell(2, 2);
+        focusCell(2, 2);
         mUiBot.selectDataset("P2D2");
         expectation2.assertAutoFilled();
     }
@@ -1874,13 +1900,13 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 .build();
         sReplier.addResponse(response1);
         // Trigger partition.
-        mActivity.focusCell(1, 1);
+        focusCell(1, 1);
         sReplier.getNextFillRequest();
 
         // Asserts proper datasets are shown on each field defined so far.
-        mActivity.focusCell(1, 1);
+        focusCell(1, 1);
         mUiBot.assertDatasets("P1D1", "P1D2");
-        mActivity.focusCell(1, 2);
+        focusCell(1, 2);
         mUiBot.assertDatasets("P1D1");
 
         /**
@@ -1909,17 +1935,17 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         sReplier.addResponse(response2);
 
         // Trigger partition.
-        mActivity.focusCell(2, 1);
+        focusCell(2, 1);
         sReplier.getNextFillRequest();
 
         // Asserts proper datasets are shown on each field defined so far.
-        mActivity.focusCell(1, 1);
+        focusCell(1, 1);
         mUiBot.assertDatasets("P2D1"); // changed
-        mActivity.focusCell(1, 2);
+        focusCell(1, 2);
         mUiBot.assertDatasets("P1D1");
-        mActivity.focusCell(2, 1);
+        focusCell(2, 1);
         mUiBot.assertDatasets("P2D1");
-        mActivity.focusCell(2, 2);
+        focusCell(2, 2);
         mUiBot.assertDatasets("P2D1", "P2D2");
 
         /**
@@ -1952,21 +1978,21 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         sReplier.addResponse(response3);
 
         // Trigger partition.
-        mActivity.focusCell(3, 1);
+        focusCell(3, 1);
         sReplier.getNextFillRequest();
 
         // Asserts proper datasets are shown on each field defined so far.
-        mActivity.focusCell(1, 1);
+        focusCell(1, 1);
         mUiBot.assertDatasets("P2D1");
-        mActivity.focusCell(1, 2);
+        focusCell(1, 2);
         mUiBot.assertDatasets("P3D1"); // changed
-        mActivity.focusCell(2, 1);
+        focusCell(2, 1);
         mUiBot.assertDatasets("P2D1");
-        mActivity.focusCell(2, 2);
+        focusCell(2, 2);
         mUiBot.assertDatasets("P3D2"); // changed
-        mActivity.focusCell(3, 2);
+        focusCell(3, 2);
         mUiBot.assertDatasets("P3D1", "P3D2");
-        mActivity.focusCell(3, 1);
+        focusCell(3, 1);
         mUiBot.assertDatasets("P3D1", "P3D2");
 
         /**
@@ -2024,25 +2050,25 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         sReplier.addResponse(response4);
 
         // Trigger partition.
-        mActivity.focusCell(4, 1);
+        focusCell(4, 1);
         sReplier.getNextFillRequest();
 
         // Asserts proper datasets are shown on each field defined so far.
-        mActivity.focusCell(1, 1);
+        focusCell(1, 1);
         mUiBot.assertDatasets("P4D1", "P4D2");
-        mActivity.focusCell(1, 2);
+        focusCell(1, 2);
         mUiBot.assertDatasets("P4D1", "P4D2");
-        mActivity.focusCell(2, 1);
+        focusCell(2, 1);
         mUiBot.assertDatasets("P4D1", "P4D2");
-        mActivity.focusCell(2, 2);
+        focusCell(2, 2);
         mUiBot.assertDatasets("P4D1", "P4D2");
-        mActivity.focusCell(3, 2);
+        focusCell(3, 2);
         mUiBot.assertDatasets("P4D1", "P4D2");
-        mActivity.focusCell(3, 1);
+        focusCell(3, 1);
         mUiBot.assertDatasets("P4D1", "P4D2");
-        mActivity.focusCell(4, 1);
+        focusCell(4, 1);
         mUiBot.assertDatasets("P4D1", "P4D2");
-        mActivity.focusCell(4, 2);
+        focusCell(4, 2);
         mUiBot.assertDatasets("P4D2");
 
         /*
@@ -2073,7 +2099,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
             chosenOne = "P4D2";
         }
 
-        mActivity.focusCell(4, 1);
+        focusCell(4, 1);
         mUiBot.selectDataset(chosenOne);
         expectation.assertAutoFilled();
     }
@@ -2100,7 +2126,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         final FillExpectation expectation1 = mActivity.expectAutofill()
                 .onCell(1, 1, "l1c1")
                 .onCell(1, 2, "l1c2");
-        mActivity.focusCell(1, 1);
+        focusCell(1, 1);
         sReplier.getNextFillRequest();
 
         mUiBot.assertDatasets("Auth 1");
@@ -2122,7 +2148,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         final FillExpectation expectation2 = mActivity.expectAutofill()
                 .onCell(2, 1, "l2c1")
                 .onCell(2, 2, "l2c2");
-        mActivity.focusCell(2, 1);
+        focusCell(2, 1);
         sReplier.getNextFillRequest();
 
         mUiBot.assertDatasets("Auth 2");
@@ -2144,7 +2170,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         final FillExpectation expectation3 = mActivity.expectAutofill()
                 .onCell(3, 1, "l3c1")
                 .onCell(3, 2, "l3c2");
-        mActivity.focusCell(3, 1);
+        focusCell(3, 1);
         sReplier.getNextFillRequest();
 
         mUiBot.assertDatasets("Auth 3");
@@ -2166,50 +2192,50 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         final FillExpectation expectation4 = mActivity.expectAutofill()
                 .onCell(4, 1, "l4c1")
                 .onCell(4, 2, "l4c2");
-        mActivity.focusCell(4, 1);
+        focusCell(4, 1);
         sReplier.getNextFillRequest();
 
         mUiBot.assertDatasets("Auth 4");
 
         // Now play around the focus to make sure they still display the right values.
 
-        mActivity.focusCell(1, 2);
+        focusCell(1, 2);
         mUiBot.assertDatasets("Auth 1");
-        mActivity.focusCell(1, 1);
+        focusCell(1, 1);
         mUiBot.assertDatasets("Auth 1");
 
-        mActivity.focusCell(3, 1);
+        focusCell(3, 1);
         mUiBot.assertDatasets("Auth 3");
-        mActivity.focusCell(3, 2);
+        focusCell(3, 2);
         mUiBot.assertDatasets("Auth 3");
 
-        mActivity.focusCell(2, 1);
+        focusCell(2, 1);
         mUiBot.assertDatasets("Auth 2");
-        mActivity.focusCell(4, 2);
+        focusCell(4, 2);
         mUiBot.assertDatasets("Auth 4");
 
-        mActivity.focusCell(2, 2);
+        focusCell(2, 2);
         mUiBot.assertDatasets("Auth 2");
-        mActivity.focusCell(4, 1);
+        focusCell(4, 1);
         mUiBot.assertDatasets("Auth 4");
 
         // Finally, autofill and check them.
-        mActivity.focusCell(2, 1);
+        focusCell(2, 1);
         mUiBot.selectDataset("Auth 2");
         mUiBot.selectDataset("Partition 2");
         expectation2.assertAutoFilled();
 
-        mActivity.focusCell(4, 1);
+        focusCell(4, 1);
         mUiBot.selectDataset("Auth 4");
         mUiBot.selectDataset("Partition 4");
         expectation4.assertAutoFilled();
 
-        mActivity.focusCell(3, 1);
+        focusCell(3, 1);
         mUiBot.selectDataset("Auth 3");
         mUiBot.selectDataset("Partition 3");
         expectation3.assertAutoFilled();
 
-        mActivity.focusCell(1, 1);
+        focusCell(1, 1);
         mUiBot.selectDataset("Auth 1");
         mUiBot.selectDataset("Partition 1");
         expectation1.assertAutoFilled();
@@ -2233,12 +2259,12 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
             sReplier.addResponse(response1);
 
             // Trigger autofill.
-            mActivity.focusCell(1, 1);
+            focusCell(1, 1);
             sReplier.getNextFillRequest();
 
             // Make sure UI is shown, but don't tap it.
             mUiBot.assertDatasets("l1c1");
-            mActivity.focusCell(1, 2);
+            focusCell(1, 2);
             mUiBot.assertDatasets("l1c2");
 
             // Prepare 2nd partition.
@@ -2250,15 +2276,15 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
             sReplier.addResponse(response2);
 
             // Trigger autofill on 2nd partition.
-            mActivity.focusCell(2, 1);
+            focusCell(2, 1);
 
             // Make sure it was ignored.
             mUiBot.assertNoDatasets();
 
             // Make sure 1st partition is still working.
-            mActivity.focusCell(1, 2);
+            focusCell(1, 2);
             mUiBot.assertDatasets("l1c2");
-            mActivity.focusCell(1, 1);
+            focusCell(1, 1);
             mUiBot.assertDatasets("l1c1");
 
             // Prepare 3rd partition.
@@ -2269,15 +2295,15 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                     .build();
             sReplier.addResponse(response3);
             // Trigger autofill on 3rd partition.
-            mActivity.focusCell(3, 2);
+            focusCell(3, 2);
 
             // Make sure it was ignored.
             mUiBot.assertNoDatasets();
 
             // Make sure 1st partition is still working...
-            mActivity.focusCell(1, 2);
+            focusCell(1, 2);
             mUiBot.assertDatasets("l1c2");
-            mActivity.focusCell(1, 1);
+            focusCell(1, 1);
             mUiBot.assertDatasets("l1c1");
 
             //...and can be autofilled.
