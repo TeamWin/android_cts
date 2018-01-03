@@ -18,6 +18,7 @@ package com.android.compatibility.common.tradefed.result;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildProvider;
+import com.android.compatibility.common.util.DeviceInfo;
 import com.android.compatibility.common.util.ICaseResult;
 import com.android.compatibility.common.util.IInvocationResult;
 import com.android.compatibility.common.util.IModuleResult;
@@ -474,5 +475,27 @@ public class ResultReporterTest extends TestCase {
         assertEquals(1, mBuildHelper.getLogsDir().listFiles()[0].list().length);
         // actual logs
         assertEquals(2, mBuildHelper.getLogsDir().listFiles()[0].listFiles()[0].list().length);
+    }
+
+    /**
+     * Ensure that when {@link ResultReporter#testLog(String, LogDataType, InputStreamSource)} is
+     * called for host-side device info, a device info file is created in the result
+     */
+    public void testTestLogWithDeviceInfo() throws Exception {
+        InputStreamSource fakeData = new ByteArrayInputStreamSource("test".getBytes());
+        String deviceInfoName = String.format("Test%s", DeviceInfo.FILE_SUFFIX);
+        mReporter.invocationStarted(mContext);
+        mReporter.testLog(deviceInfoName, LogDataType.TEXT, fakeData);
+        File deviceInfoFolder = new File(mBuildHelper.getResultDir(), DeviceInfo.RESULT_DIR_NAME);
+        // assert device info folder was created
+        assertTrue(deviceInfoFolder.exists());
+        File[] deviceInfoFiles = deviceInfoFolder.listFiles();
+        // assert that one file was written to the folder
+        assertEquals(1, deviceInfoFiles.length);
+        File deviceInfoFile = deviceInfoFiles[0];
+        // assert device info file has been named correctly
+        assertEquals(deviceInfoName, deviceInfoFile.getName());
+        // assert contents of the file
+        assertEquals("test", FileUtil.readStringFromFile(deviceInfoFile));
     }
 }
