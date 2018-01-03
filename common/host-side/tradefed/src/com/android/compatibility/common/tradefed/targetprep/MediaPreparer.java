@@ -64,6 +64,10 @@ public class MediaPreparer extends PreconditionPreparer {
             description = "Only download media files; do not run instrumentation or copy files")
     protected boolean mMediaDownloadOnly = false;
 
+    @Option(name = "images-only",
+            description = "Only push images files to the device")
+    protected boolean mImagesOnly = false;
+
     /*
      * The pathnames of the device's directories that hold media files for the tests.
      * These depend on the device's mount point, which is retrieved in the MediaPreparer's run
@@ -73,6 +77,7 @@ public class MediaPreparer extends PreconditionPreparer {
      */
     protected String mBaseDeviceShortDir;
     protected String mBaseDeviceFullDir;
+    protected String mBaseDeviceImagesDir;
 
     /*
      * Variables set by the MediaPreparerListener during retrieval of maximum media file
@@ -162,18 +167,20 @@ public class MediaPreparer extends PreconditionPreparer {
      */
     protected boolean mediaFilesExistOnDevice(ITestDevice device)
             throws DeviceNotAvailableException {
-        for (Resolution resolution : RESOLUTIONS) {
-            if (resolution.width > mMaxRes.width) {
-                break; // no need to check for resolutions greater than this
-            }
-            String deviceShortFilePath = mBaseDeviceShortDir + resolution.toString();
-            String deviceFullFilePath = mBaseDeviceFullDir + resolution.toString();
-            if (!device.doesFileExist(deviceShortFilePath)
-                    || !device.doesFileExist(deviceFullFilePath)) {
-                return false;
+        if (!mImagesOnly) {
+            for (Resolution resolution : RESOLUTIONS) {
+                if (resolution.width > mMaxRes.width) {
+                    break; // no need to check for resolutions greater than this
+                }
+                String deviceShortFilePath = mBaseDeviceShortDir + resolution.toString();
+                String deviceFullFilePath = mBaseDeviceFullDir + resolution.toString();
+                if (!device.doesFileExist(deviceShortFilePath)
+                        || !device.doesFileExist(deviceFullFilePath)) {
+                    return false;
+                }
             }
         }
-        return true;
+        return device.doesFileExist(mBaseDeviceImagesDir);
     }
 
     /*
@@ -237,11 +244,19 @@ public class MediaPreparer extends PreconditionPreparer {
      * - are not already present on the device
      * - contain video files of a resolution less than or equal to the device's
      *       max video playback resolution
+     * - contain image files
      *
      * This method is exposed for unit testing.
      */
-    protected void copyMediaFiles(ITestDevice device)
-            throws DeviceNotAvailableException {
+    protected void copyMediaFiles(ITestDevice device) throws DeviceNotAvailableException {
+        if (!mImagesOnly) {
+            copyVideoFiles(device);
+        }
+        copyImagesFiles(device);
+    }
+
+    // copy video files of a resolution <= the device's maximum video playback resolution
+    protected void copyVideoFiles(ITestDevice device) throws DeviceNotAvailableException {
         for (Resolution resolution : RESOLUTIONS) {
             if (resolution.width > mMaxRes.width) {
                 logInfo("Media file copying complete");
@@ -268,11 +283,20 @@ public class MediaPreparer extends PreconditionPreparer {
         }
     }
 
+    // copy image files to the device
+    protected void copyImagesFiles(ITestDevice device) throws DeviceNotAvailableException {
+        if (!device.doesFileExist(mBaseDeviceImagesDir)) {
+            logInfo("Copying images files to device");
+            device.pushDir(new File(mLocalMediaPath, "images"), mBaseDeviceImagesDir);
+        }
+    }
+
     // Initialize directory strings where media files live on device
     protected void setMountPoint(ITestDevice device) {
         String mountPoint = device.getMountPoint(IDevice.MNT_EXTERNAL_STORAGE);
         mBaseDeviceShortDir = String.format("%s/test/bbb_short/", mountPoint);
         mBaseDeviceFullDir = String.format("%s/test/bbb_full/", mountPoint);
+        mBaseDeviceImagesDir = String.format("%s/test/images/", mountPoint);
     }
 
     @Override
@@ -285,7 +309,9 @@ public class MediaPreparer extends PreconditionPreparer {
         }
         if (!mMediaDownloadOnly) {
             setMountPoint(device);
-            setMaxRes(device, buildInfo);
+            if (!mImagesOnly) {
+                setMaxRes(device, buildInfo); // max resolution only applies to video files
+            }
             if (mediaFilesExistOnDevice(device)) {
                 // if files already on device, do nothing
                 logInfo("Media files found on the device");
