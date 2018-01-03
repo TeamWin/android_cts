@@ -2391,6 +2391,14 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".managedprovisioning.KeyChainTestActivity"
+                android:label="@string/provisioning_byod_keychain">
+            <intent-filter>
+                <action android:name="com.android.cts.verifier.managedprovisioning.KEYCHAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
         <activity android:name=".managedprovisioning.PermissionLockdownTestActivity"
                 android:label="@string/device_profile_owner_permission_lockdown_test">
             <intent-filter>
