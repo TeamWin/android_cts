@@ -24,6 +24,7 @@ import android.os.PowerManagerInternalProto;
 import android.os.PowerManagerProto;
 import com.android.server.power.PowerManagerServiceDumpProto;
 import com.android.server.power.PowerServiceSettingsAndConfigurationDumpProto;
+import com.android.server.power.WakeLockProto;
 
 /** Test to check that the power manager properly outputs its dump state. */
 public class PowerIncidentTest extends ProtoDumpTestCase {
@@ -32,6 +33,9 @@ public class PowerIncidentTest extends ProtoDumpTestCase {
     public void testPowerServiceDump() throws Exception {
         final PowerManagerServiceDumpProto dump =
                 getDump(PowerManagerServiceDumpProto.parser(), "dumpsys power --proto");
+
+        assertTrue(dump.getBatteryLevel() >= 0);
+        assertTrue(dump.getBatteryLevel() <= 100);
 
         assertTrue(
                 PowerManagerInternalProto.Wakefulness.getDescriptor()
@@ -59,7 +63,11 @@ public class PowerIncidentTest extends ProtoDumpTestCase {
         assertTrue(settingsAndConfiguration.getUserActivityTimeoutOverrideFromWindowManagerMs() >= -1);
         final PowerServiceSettingsAndConfigurationDumpProto.ScreenBrightnessSettingLimitsProto
                 brightnessLimits = settingsAndConfiguration.getScreenBrightnessSettingLimits();
-        assertTrue(brightnessLimits.getSettingMaximum() > 0);
+        int settingMax = brightnessLimits.getSettingMaximum();
+        int settingMin = brightnessLimits.getSettingMinimum();
+        assertTrue(settingMin >= 0);
+        assertTrue(settingMax > 0);
+        assertTrue(settingMax >= settingMin);
         assertTrue(brightnessLimits.getSettingDefault() > 0);
         assertTrue(brightnessLimits.getSettingForVrDefault() > 0);
 
@@ -93,5 +101,11 @@ public class PowerIncidentTest extends ProtoDumpTestCase {
         assertTrue(dump.getSleepTimeoutMs() >= -1);
         assertTrue(dump.getScreenOffTimeoutMs() >= 0);
         assertTrue(dump.getScreenDimDurationMs() >= 0);
+
+        for (WakeLockProto wl : dump.getWakeLocksList()) {
+            assertTrue(0 <= wl.getAcqMs());
+            assertTrue(0 <= wl.getUid());
+            assertTrue(0 <= wl.getPid());
+        }
     }
 }

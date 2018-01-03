@@ -30,6 +30,7 @@ import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
+import android.text.Editable;
 import android.text.TextUtils;
 import android.text.method.ArrowKeyMovementMethod;
 import android.text.method.MovementMethod;
@@ -358,6 +359,26 @@ public class EditTextTest {
         @Override
         protected MovementMethod getDefaultMovementMethod() {
             return super.getDefaultMovementMethod();
+        }
+    }
+
+    @Test
+    public void testGetTextNonEditable() {
+        // This subclass calls getText before the object is fully constructed. This should not cause
+        // a null pointer exception.
+        GetTextEditText editText = new GetTextEditText(mActivity);
+    }
+
+    private class GetTextEditText extends EditText {
+
+        GetTextEditText(Context context) {
+            super(context);
+        }
+
+        @Override
+        public void setText(CharSequence text, BufferType type) {
+            Editable currentText = getText();
+            super.setText(text, type);
         }
     }
 }
