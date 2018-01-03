@@ -236,8 +236,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         setDeviceRotation(ROTATION_0);
     }
 
-    @Presubmit
     @Test
+    @FlakyTest // TODO: Reintroduce to presubmit once b/71508234 is resolved.
     public void testPinnedStackOutOfBoundsInsetsNonNegative() throws Exception {
         assumeTrue(supportsPip());
 
