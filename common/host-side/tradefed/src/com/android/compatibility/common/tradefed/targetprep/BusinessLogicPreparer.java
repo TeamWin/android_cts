@@ -60,6 +60,9 @@ public class BusinessLogicPreparer implements ITargetCleaner {
     /* Extension of business logic files */
     private static final String FILE_EXT = ".bl";
 
+    /* Default amount of time to attempt connection to the business logic service, in seconds */
+    private static final int DEFAULT_CONNECTION_TIME = 10;
+
     /* Dynamic config constants */
     private static final String DYNAMIC_CONFIG_FEATURES_KEY = "business_logic_device_features";
     private static final String DYNAMIC_CONFIG_PROPERTIES_KEY = "business_logic_device_properties";
@@ -80,6 +83,10 @@ public class BusinessLogicPreparer implements ITargetCleaner {
             "suite invocation if retrieval of business logic fails.")
     private boolean mIgnoreFailure = false;
 
+    @Option(name = "business-logic-connection-time", description = "Amount of time to attempt " +
+            "connection to the business logic service, in seconds.")
+    private int mMaxConnectionTime = DEFAULT_CONNECTION_TIME;
+
     private String mDeviceFilePushed;
     private String mHostFilePushed;
 
@@ -92,21 +99,27 @@ public class BusinessLogicPreparer implements ITargetCleaner {
         String requestString = buildRequestString(device, buildInfo);
         // Retrieve business logic string from service
         String businessLogicString = null;
-        try {
-            URL request = new URL(requestString);
-            businessLogicString = StreamUtil.getStringFromStream(request.openStream());
-        } catch (IOException e) {
+        long start = System.currentTimeMillis();
+        boolean success = false;
+        CLog.i("Attempting to connect to business logic service...");
+        while (System.currentTimeMillis() < (start + (mMaxConnectionTime * 1000))) {
+            try {
+                URL request = new URL(requestString);
+                businessLogicString = StreamUtil.getStringFromStream(request.openStream());
+                success = true;
+                break;
+            } catch (IOException e) {} // ignore, re-attempt connection with remaining time
+        }
+        if (!success || businessLogicString == null) {
             if (mIgnoreFailure) {
-                CLog.e("Failed to connect to business logic service.\nProceeding with test"
+                CLog.e("Failed to connect to business logic service.\nProceeding with test "
                         + "invocation, tests depending on the remote configuration will fail.\n");
-                return;
             } else {
-                throw new TargetSetupError(String.format(
-                    "Cannot connect to business logic service for suite %s.\nIf this problem "
-                    + "persists, re-invoking with option '--ignore-business-logic-failure' will "
-                    + "cause tests to execute anyways (though tests depending on the remote "
-                    + "configuration will fail).", TestSuiteInfo.getInstance().getName()), e,
-                    device.getDeviceDescriptor());
+                throw new TargetSetupError(String.format("Cannot connect to business logic "
+                        + "service for suite %s.\nIf this problem persists, re-invoking with "
+                        + "option '--ignore-business-logic-failure' will cause tests to execute "
+                        + "anyways (though tests depending on the remote configuration will fail).",
+                        TestSuiteInfo.getInstance().getName()), device.getDeviceDescriptor());
             }
         }
         // Push business logic string to host file
