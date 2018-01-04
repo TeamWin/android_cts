@@ -18,8 +18,10 @@ package android.signature.cts.api;
 
 import android.os.Bundle;
 import android.signature.cts.ApiDocumentParser;
+import android.signature.cts.ClassProvider;
 import android.signature.cts.ApiComplianceChecker;
 import android.signature.cts.FailureType;
+import android.signature.cts.ExcludingClassProvider;
 import android.signature.cts.JDiffClassDescription;
 import android.signature.cts.ReflectionHelper;
 import android.signature.cts.ResultObserver;
@@ -30,6 +32,8 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.Predicate;
+
 import org.xmlpull.v1.XmlPullParserException;
 import repackaged.android.test.InstrumentationTestCase;
 import repackaged.android.test.InstrumentationTestRunner;
@@ -114,9 +118,16 @@ public class SignatureTest extends InstrumentationTestCase {
      */
     public void testSignature() {
         try {
+
+            // Prepare for a class provider that loads classes from bootclasspath but filters
+            // out known inaccessible classes
+            ClassProvider classProvider = new ExcludingClassProvider(
+                    new BootClassPathClassesProvider(),
+                    KNOWN_INACCESSIBLE_CLASSES::contains);
+
             Set<JDiffClassDescription> unexpectedClasses = loadUnexpectedClasses();
             for (JDiffClassDescription classDescription : unexpectedClasses) {
-                Class<?> unexpectedClass = findUnexpectedClass(classDescription);
+                Class<?> unexpectedClass = findUnexpectedClass(classDescription, classProvider);
                 if (unexpectedClass != null) {
                     mResultObserver.notifyFailure(
                             FailureType.UNEXPECTED_CLASS,
@@ -125,7 +136,8 @@ public class SignatureTest extends InstrumentationTestCase {
                 }
             }
 
-            ApiComplianceChecker complianceChecker = new ApiComplianceChecker(mResultObserver);
+            ApiComplianceChecker complianceChecker = new ApiComplianceChecker(mResultObserver,
+                    classProvider);
             ApiDocumentParser apiDocumentParser = new ApiDocumentParser(
                     TAG, new ApiDocumentParser.Listener() {
                 @Override
@@ -162,9 +174,10 @@ public class SignatureTest extends InstrumentationTestCase {
         }
     }
 
-    private Class<?> findUnexpectedClass(JDiffClassDescription classDescription) {
+    private Class<?> findUnexpectedClass(JDiffClassDescription classDescription,
+            ClassProvider classProvider) {
         try {
-            return ReflectionHelper.findMatchingClass(classDescription);
+            return ReflectionHelper.findMatchingClass(classDescription, classProvider);
         } catch (ClassNotFoundException e) {
             return null;
         }

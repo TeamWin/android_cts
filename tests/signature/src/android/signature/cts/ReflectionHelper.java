@@ -42,7 +42,7 @@ public class ReflectionHelper {
      * @return the reflected class, or null if not found.
      */
     @SuppressWarnings("unchecked")
-    public static Class<?> findMatchingClass(JDiffClassDescription classDescription)
+    public static Class<?> findMatchingClass(JDiffClassDescription classDescription, ClassProvider classProvider)
             throws ClassNotFoundException {
         // even if there are no . in the string, split will return an
         // array of length 1
@@ -51,8 +51,7 @@ public class ReflectionHelper {
         String packageName = classDescription.getPackageName();
         String currentName = packageName + "." + classNameParts[0];
 
-        Class<?> clz = Class.forName(
-                currentName, false, ReflectionHelper.class.getClassLoader());
+        Class<?> clz = classProvider.getClass(currentName);
         String absoluteClassName = classDescription.getAbsoluteClassName();
         if (clz.getCanonicalName().equals(absoluteClassName)) {
             return clz;
