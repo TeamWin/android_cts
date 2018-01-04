@@ -875,6 +875,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         setWindowTransitionAnimationDurationScale(1);
     }
 
+    @FlakyTest(bugId = 71564769)
     @Presubmit
     @Test
     public void testStopBeforeMultiWindowCallbacksOnDismiss() throws Exception {
