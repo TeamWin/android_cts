@@ -39,7 +39,8 @@ public class CreateUsersNoAppCrashesTest extends BaseMultiUserTest {
         mInitialUserId = getDevice().getCurrentUser();
     }
 
-    @Presubmit
+    // TODO (b/71573557): Re-add to presubmit
+    //@Presubmit
     public void testCanCreateGuestUser() throws Exception {
         if (!mSupportsMultiUser) {
             return;
