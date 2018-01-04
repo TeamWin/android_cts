@@ -79,8 +79,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         disableAssistant();
     }
 
-    // TODO(b/69573940): Add back to presubmit
-    @FlakyTest
+    @FlakyTest(bugId = 69573940)
     @Presubmit
     @Test
     public void testAssistantStackZOrder() throws Exception {
@@ -201,8 +200,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
                 WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
     }
 
-    // TODO(b/69573940): Add back to presubmit
-    @FlakyTest
+    @FlakyTest(bugId = 69573940)
     @Presubmit
     @Test
     public void testTranslucentAssistantActivityStackVisibility() throws Exception {

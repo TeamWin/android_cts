@@ -910,8 +910,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      * is moved correctly.
      * This version launches virtual display creator to fullscreen stack in split-screen.
      */
-    // TODO(b/69573940): Flaky, add back to presubmit.
-    @FlakyTest
+    @FlakyTest(bugId = 69573940)
     @Presubmit
     @Test
     public void testStackFocusSwitchOnDisplayRemoved() throws Exception {
@@ -1318,8 +1317,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
     /**
      * Test that all activities that were on the private display are destroyed on display removal.
      */
-    // TODO(b/63404575): Flaky, add back to presubmit.
-    @FlakyTest
+    @FlakyTest(bugId = 63404575)
     @Presubmit
     @Test
     public void testContentDestroyOnDisplayRemoved() throws Exception {
