@@ -670,6 +670,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      * Tests launching an activity on simulated display and then launching another activity from the
      * first one - it must appear on the secondary display, because it was launched from there.
      */
+    @FlakyTest(bugId = 71564456)
     @Presubmit
     @Test
     public void testConsequentLaunchActivityFromSecondaryDisplay() throws Exception {
