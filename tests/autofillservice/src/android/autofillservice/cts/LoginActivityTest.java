@@ -23,12 +23,14 @@ import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
 import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_PASSWORD_LABEL;
 import static android.autofillservice.cts.Helper.ID_USERNAME;
+import static android.autofillservice.cts.Helper.ID_USERNAME_LABEL;
 import static android.autofillservice.cts.Helper.UNUSED_AUTOFILL_VALUE;
 import static android.autofillservice.cts.Helper.assertHasFlags;
 import static android.autofillservice.cts.Helper.assertNoDanglingSessions;
 import static android.autofillservice.cts.Helper.assertNumberOfChildren;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.assertTextIsSanitized;
+import static android.autofillservice.cts.Helper.assertTextOnly;
 import static android.autofillservice.cts.Helper.assertValue;
 import static android.autofillservice.cts.Helper.dumpStructure;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
@@ -652,7 +654,15 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Since this is a Presubmit test, wait for connection to avoid flakiness.
         waitUntilConnected();
 
-        sReplier.getNextFillRequest();
+        final FillRequest fillRequest = sReplier.getNextFillRequest();
+
+        // Make sure input was sanitized...
+        assertTextIsSanitized(fillRequest.structure, ID_USERNAME);
+        assertTextIsSanitized(fillRequest.structure, ID_PASSWORD);
+
+        // ...but labels weren't
+        assertTextOnly(fillRequest.structure, ID_USERNAME_LABEL, "Username");
+        assertTextOnly(fillRequest.structure, ID_PASSWORD_LABEL, "Password");
 
         // Auto-fill it.
         mUiBot.selectDataset("The Dude");
@@ -681,10 +691,10 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertThat(saveRequest.datasetIds).containsExactly("I'm the alpha and the omega");
 
         // Assert value of expected fields - should not be sanitized.
-        final ViewNode username = findNodeByResourceId(saveRequest.structure, ID_USERNAME);
-        assertTextAndValue(username, "dude");
-        final ViewNode password = findNodeByResourceId(saveRequest.structure, ID_USERNAME);
-        assertTextAndValue(password, "dude");
+        assertTextAndValue(saveRequest.structure, ID_USERNAME, "dude");
+        assertTextAndValue(saveRequest.structure, ID_PASSWORD, "dude");
+        assertTextOnly(saveRequest.structure, ID_USERNAME_LABEL, "Username");
+        assertTextOnly(saveRequest.structure, ID_PASSWORD_LABEL, "Password");
 
         // Make sure extras were passed back on onSave()
         assertThat(saveRequest.data).isNotNull();
@@ -787,7 +797,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             // Assert value of expected fields - should not be sanitized.
             final ViewNode username = findNodeByResourceId(saveRequest.structure, ID_USERNAME);
             assertTextAndValue(username, "dude");
-            final ViewNode password = findNodeByResourceId(saveRequest.structure, ID_USERNAME);
+            final ViewNode password = findNodeByResourceId(saveRequest.structure, ID_PASSWORD);
             assertTextAndValue(password, "dude");
 
             // Make sure extras were passed back on onSave()

@@ -32,6 +32,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".PreFilledLoginActivity" />
+        <activity android:name=".LoginWithStringsActivity" />
         <activity android:name=".WelcomeActivity"/>
         <activity android:name=".ViewAttributesTestActivity" />
         <activity android:name=".AuthenticationActivity" />
