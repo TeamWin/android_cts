@@ -268,6 +268,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         disableAssistant();
     }
 
+    @FlakyTest(bugId = 69229402)
     @Test
     @Presubmit
     public void testLaunchIntoSameTask() throws Exception {

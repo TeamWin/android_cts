@@ -24,13 +24,11 @@ import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MAX_VALUE_LENG
 import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MIN_VALUE_LENGTH;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.autofillservice.cts.Helper.FieldClassificationResult;
 import android.autofillservice.cts.common.SettingsStateChangerRule;
 import android.content.Context;
 import android.service.autofill.EditDistanceScorer;
-import android.service.autofill.FillEventHistory;
 import android.service.autofill.FillEventHistory.Event;
 import android.service.autofill.Scorer;
 import android.service.autofill.UserData;
@@ -122,10 +120,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         mActivity.getAutofillManager().commit();
 
         // Assert results
-        final FillEventHistory history =
-                InstrumentedAutoFillService.peekInstance().getFillEventHistory();
-        final List<Event> events = history.getEvents();
-        assertWithMessage("Wrong number of events: %s", events).that(events.size()).isEqualTo(1);
+        final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
         assertFillEventForFieldsClassification(events.get(0), fieldId, "myId", 1);
     }
 
@@ -167,10 +162,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         mActivity.getAutofillManager().commit();
 
         // Assert results
-        final FillEventHistory history =
-                InstrumentedAutoFillService.peekInstance().getFillEventHistory();
-        final List<Event> events = history.getEvents();
-        assertWithMessage("Wrong number of events: %s", events).that(events.size()).isEqualTo(1);
+        final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
         // Best match is 0.66 (4 of 6), worst is 0.5 (3 of 6)
         if (firstMatch) {
             assertFillEventForFieldsClassification(events.get(0), new FieldClassificationResult[] {
@@ -215,10 +207,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         mActivity.getAutofillManager().commit();
 
         // Assert results
-        final FillEventHistory history =
-                InstrumentedAutoFillService.peekInstance().getFillEventHistory();
-        final List<Event> events = history.getEvents();
-        assertWithMessage("Wrong number of events: %s", events).that(events.size()).isEqualTo(1);
+        final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
         assertFillEventForFieldsClassification(events.get(0),
                 new FieldClassificationResult[] {
                         new FieldClassificationResult(fieldId1, "myId", 1.0F),
@@ -267,10 +256,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         mActivity.getAutofillManager().commit();
 
         // Assert results
-        final FillEventHistory history =
-                InstrumentedAutoFillService.peekInstance().getFillEventHistory();
-        final List<Event> events = history.getEvents();
-        assertWithMessage("Wrong number of events: %s", events).that(events.size()).isEqualTo(1);
+        final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
         assertFillEventForFieldsClassification(events.get(0),
                 new FieldClassificationResult[] {
                         new FieldClassificationResult(fieldId1,
@@ -316,10 +302,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         mActivity.getAutofillManager().commit();
 
         // Assert results
-        final FillEventHistory history =
-                InstrumentedAutoFillService.peekInstance().getFillEventHistory();
-        final List<Event> events = history.getEvents();
-        assertWithMessage("Wrong number of events: %s", events).that(events.size()).isEqualTo(1);
+        final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
         assertFillEventForContextCommitted(events.get(0));
     }
 
@@ -349,10 +332,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         mActivity.getAutofillManager().commit();
 
         // Assert results
-        final FillEventHistory history =
-                InstrumentedAutoFillService.peekInstance().getFillEventHistory();
-        final List<Event> events = history.getEvents();
-        assertWithMessage("Wrong number of events: %s", events).that(events.size()).isEqualTo(1);
+        final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
         assertFillEventForContextCommitted(events.get(0));
     }
 

@@ -32,6 +32,11 @@ final class Timeouts {
     static final Timeout IDLE_UNBIND_TIMEOUT = new Timeout("IDLE_UNBIND_TIMEOUT", 5000, 2F, 10000);
 
     /**
+     * Timeout to get the expected number of fill events.
+     */
+    static final Timeout FILL_EVENTS_TIMEOUT = new Timeout("FILL_EVENTS_TIMEOUT", 1000, 2F, 10000);
+
+    /**
      * Timeout for expected autofill requests.
      */
     static final Timeout FILL_TIMEOUT = new Timeout("FILL_TIMEOUT", 1000, 2F, 2000);
