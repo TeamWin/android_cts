@@ -28,12 +28,11 @@ import static com.google.common.truth.Truth.assertThat;
 import android.autofillservice.cts.Helper.FieldClassificationResult;
 import android.autofillservice.cts.common.SettingsStateChangerRule;
 import android.content.Context;
-import android.service.autofill.EditDistanceScorer;
 import android.service.autofill.FillEventHistory.Event;
-import android.service.autofill.Scorer;
 import android.service.autofill.UserData;
 import android.support.test.InstrumentationRegistry;
 import android.view.autofill.AutofillId;
+import android.view.autofill.AutofillManager;
 import android.widget.EditText;
 
 import org.junit.Before;
@@ -73,32 +72,68 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
             new AutofillActivityTestRule<GridActivity>(GridActivity.class);
 
 
-    private final Scorer mScorer = EditDistanceScorer.getInstance();
-
     private GridActivity mActivity;
+    private AutofillManager mAfm;
 
     @Before
-    public void setActivity() {
+    public void setFixtures() {
         mActivity = mActivityRule.getActivity();
+        mAfm = mActivity.getAutofillManager();
     }
 
     @Test
     public void testFeatureIsEnabled() throws Exception {
         enableService();
-        assertThat(mActivity.getAutofillManager().isFieldClassificationEnabled()).isTrue();
+        assertThat(mAfm.isFieldClassificationEnabled()).isTrue();
 
         disableService();
-        assertThat(mActivity.getAutofillManager().isFieldClassificationEnabled()).isFalse();
+        assertThat(mAfm.isFieldClassificationEnabled()).isFalse();
+    }
+
+    @Test
+    public void testGetAlgorithm() throws Exception {
+        enableService();
+
+        // Check algorithms
+        final List<String> names = mAfm.getAvailableFieldClassificationAlgorithms();
+        assertThat(names.size()).isAtLeast(1);
+        final String defaultAlgorithm = getDefaultAlgorithm();
+        assertThat(defaultAlgorithm).isNotEmpty();
+        assertThat(names).contains(defaultAlgorithm);
+
+        // Checks invalid service
+        disableService();
+        assertThat(mAfm.getAvailableFieldClassificationAlgorithms()).isEmpty();
     }
 
     @Test
     public void testHit_oneUserData_oneDetectableField() throws Exception {
+        simpleHitTest(false, null);
+    }
+
+    @Test
+    public void testHit_invalidAlgorithmIsIgnored() throws Exception {
+        // For simplicity's sake, let's assume that name will never be valid..
+        String invalidName = " ALGORITHM, Y NO INVALID? ";
+
+        simpleHitTest(true, invalidName);
+    }
+
+    @Test
+    public void testHit_userDataAlgorithmIsReset() throws Exception {
+        simpleHitTest(true, null);
+    }
+
+    private void simpleHitTest(boolean setAlgorithm, String algorithm) throws Exception {
         // Set service.
         enableService();
 
         // Set expectations.
-        mActivity.getAutofillManager()
-                .setUserData(new UserData.Builder(mScorer, "myId", "FULLY").build());
+        final UserData.Builder userData = new UserData.Builder("myId", "FULLY");
+        if (setAlgorithm) {
+            userData.setFieldClassificationAlgorithm(algorithm, null);
+        }
+        mAfm.setUserData(userData.build());
         final MyAutofillCallback callback = mActivity.registerCallback();
         final EditText field = mActivity.getCell(1, 1);
         final AutofillId fieldId = field.getAutofillId();
@@ -117,11 +152,12 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         mActivity.setText(1, 1, "fully");
 
         // Finish context.
-        mActivity.getAutofillManager().commit();
+        mAfm.commit();
 
         // Assert results
         final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
-        assertFillEventForFieldsClassification(events.get(0), fieldId, "myId", 1);
+        assertFillEventForFieldsClassification(events.get(0), fieldId, "myId", 1,
+                getDefaultAlgorithm());
     }
 
     @Test
@@ -139,8 +175,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         enableService();
 
         // Set expectations.
-        mActivity.getAutofillManager().setUserData(new UserData.Builder(mScorer, "1stId", "Iam1ST")
-                .add("2ndId", "Iam2ND").build());
+        mAfm.setUserData(new UserData.Builder("1stId", "Iam1ST").add("2ndId", "Iam2ND").build());
         final MyAutofillCallback callback = mActivity.registerCallback();
         final EditText field = mActivity.getCell(1, 1);
         final AutofillId fieldId = field.getAutofillId();
@@ -159,19 +194,21 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         mActivity.setText(1, 1, firstMatch ? "IAM111" : "IAM222");
 
         // Finish context.
-        mActivity.getAutofillManager().commit();
+        mAfm.commit();
 
         // Assert results
         final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
+        final String algorithm = getDefaultAlgorithm();
+        final String[] algorithms = { algorithm, algorithm };
         // Best match is 0.66 (4 of 6), worst is 0.5 (3 of 6)
         if (firstMatch) {
             assertFillEventForFieldsClassification(events.get(0), new FieldClassificationResult[] {
-                    new FieldClassificationResult(fieldId,
-                            new String[] { "1stId", "2ndId" }, new float[] { 0.66F, 0.5F }) });
+                    new FieldClassificationResult(fieldId, new String[] { "1stId", "2ndId" },
+                            new float[] { 0.66F, 0.5F }, algorithms)});
         } else {
             assertFillEventForFieldsClassification(events.get(0), new FieldClassificationResult[] {
-                    new FieldClassificationResult(fieldId,
-                            new String[] { "2ndId", "1stId" }, new float[] { 0.66F, 0.5F }) });
+                    new FieldClassificationResult(fieldId, new String[] { "2ndId", "1stId" },
+                            new float[] { 0.66F, 0.5F }, algorithms) });
         }
     }
 
@@ -181,8 +218,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         enableService();
 
         // Set expectations.
-        mActivity.getAutofillManager()
-                .setUserData(new UserData.Builder(mScorer, "myId", "FULLY").build());
+        mAfm.setUserData(new UserData.Builder("myId", "FULLY").build());
         final MyAutofillCallback callback = mActivity.registerCallback();
         final EditText field1 = mActivity.getCell(1, 1);
         final AutofillId fieldId1 = field1.getAutofillId();
@@ -204,14 +240,15 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         mActivity.setText(1, 2, "fooly"); // 60%
 
         // Finish context.
-        mActivity.getAutofillManager().commit();
+        mAfm.commit();
 
         // Assert results
         final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
+        final String algorithm = getDefaultAlgorithm();
         assertFillEventForFieldsClassification(events.get(0),
                 new FieldClassificationResult[] {
-                        new FieldClassificationResult(fieldId1, "myId", 1.0F),
-                        new FieldClassificationResult(fieldId2, "myId", 1.0F),
+                        new FieldClassificationResult(fieldId1, "myId", 1.0F, algorithm),
+                        new FieldClassificationResult(fieldId2, "myId", 1.0F, algorithm),
                 });
     }
 
@@ -221,11 +258,10 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         enableService();
 
         // Set expectations.
-        mActivity.getAutofillManager()
-                .setUserData(new UserData.Builder(mScorer, "myId", "FULLY")
-                        .add("totalMiss", "ZZZZZZZZZZ") // should not have matched any
-                        .add("otherId", "EMPTY")
-                        .build());
+        mAfm.setUserData(new UserData.Builder("myId", "FULLY")
+                .add("totalMiss", "ZZZZZZZZZZ") // should not have matched any
+                .add("otherId", "EMPTY")
+                .build());
         final MyAutofillCallback callback = mActivity.registerCallback();
         final EditText field1 = mActivity.getCell(1, 1);
         final AutofillId fieldId1 = field1.getAutofillId();
@@ -253,24 +289,22 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         mActivity.setText(2, 2, "emppy"); // u1:  20% u2:  80%
 
         // Finish context.
-        mActivity.getAutofillManager().commit();
+        mAfm.commit();
 
         // Assert results
+        final String algorithm = getDefaultAlgorithm();
+        final String[] algorithms = { algorithm, algorithm };
         final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
         assertFillEventForFieldsClassification(events.get(0),
                 new FieldClassificationResult[] {
-                        new FieldClassificationResult(fieldId1,
-                                new String[] { "myId", "otherId" },
-                                new float[] { 1.0F, 0.2F }),
-                        new FieldClassificationResult(fieldId2,
-                                new String[] { "otherId", "myId" },
-                                new float[] { 1.0F, 0.2F }),
-                        new FieldClassificationResult(fieldId3,
-                                new String[] { "myId", "otherId" },
-                                new float[] { 0.6F, 0.2F }),
-                        new FieldClassificationResult(fieldId4,
-                                new String[] { "otherId", "myId"},
-                                new float[] { 0.80F, 0.2F })});
+                        new FieldClassificationResult(fieldId1, new String[] { "myId", "otherId" },
+                                new float[] { 1.0F, 0.2F }, algorithms),
+                        new FieldClassificationResult(fieldId2, new String[] { "otherId", "myId" },
+                                new float[] { 1.0F, 0.2F }, algorithms),
+                        new FieldClassificationResult(fieldId3, new String[] { "myId", "otherId" },
+                                new float[] { 0.6F, 0.2F }, algorithms),
+                        new FieldClassificationResult(fieldId4, new String[] { "otherId", "myId"},
+                                new float[] { 0.80F, 0.2F }, algorithms)});
     }
 
     @Test
@@ -279,8 +313,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         enableService();
 
         // Set expectations.
-        mActivity.getAutofillManager()
-                .setUserData(new UserData.Builder(mScorer, "myId", "ABCDEF").build());
+        mAfm.setUserData(new UserData.Builder("myId", "ABCDEF").build());
         final MyAutofillCallback callback = mActivity.registerCallback();
         final EditText field = mActivity.getCell(1, 1);
         final AutofillId fieldId = field.getAutofillId();
@@ -299,7 +332,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         mActivity.setText(1, 1, "xyz");
 
         // Finish context.
-        mActivity.getAutofillManager().commit();
+        mAfm.commit();
 
         // Assert results
         final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
@@ -312,8 +345,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         enableService();
 
         // Set expectations.
-        mActivity.getAutofillManager()
-                .setUserData(new UserData.Builder(mScorer, "myId", "FULLY").build());
+        mAfm.setUserData(new UserData.Builder("myId", "FULLY").build());
         final MyAutofillCallback callback = mActivity.registerCallback();
         final EditText field = mActivity.getCell(1, 1);
         final AutofillId fieldId = field.getAutofillId();
@@ -329,11 +361,15 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         callback.assertUiUnavailableEvent(field);
 
         // Finish context.
-        mActivity.getAutofillManager().commit();
+        mAfm.commit();
 
         // Assert results
         final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
         assertFillEventForContextCommitted(events.get(0));
+    }
+
+    private String getDefaultAlgorithm() {
+        return mAfm.getDefaultFieldClassificationAlgorithm();
     }
 
     /*

@@ -96,7 +96,13 @@ public class InstrumentedAutoFillService extends AutofillService {
      * expected size.
      */
     public static List<Event> getFillEvents(int expectedSize) throws Exception {
-        return getFillEventHistory(expectedSize).getEvents();
+        final List<Event> events = getFillEventHistory(expectedSize).getEvents();
+        // Sanity check
+        if (expectedSize > 0 && events == null || events.size() != expectedSize) {
+            throw new IllegalStateException("INTERNAL ERROR: events should have " + expectedSize
+                    + ", but it is: " + events);
+        }
+        return events;
     }
 
     /**
@@ -125,6 +131,9 @@ public class InstrumentedAutoFillService extends AutofillService {
                     Log.v(TAG, "Didn't get " + expectedSize + " events yet: " + events);
                     return null;
                 }
+            } else {
+                Log.v(TAG, "Events is still null (expecting " + expectedSize + ")");
+                return null;
             }
             return history;
         });
