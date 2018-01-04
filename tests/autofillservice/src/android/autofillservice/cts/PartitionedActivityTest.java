@@ -1171,7 +1171,6 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Asserts proper datasets are shown on each field defined so far.
-        focusCell(1, 1);
         sUiBot.assertDatasets("P1D1", "P1D2");
         focusCell(1, 2);
         sUiBot.assertDatasets("P1D1");
@@ -1929,7 +1928,6 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Asserts proper datasets are shown on each field defined so far.
-        focusCell(1, 1);
         sUiBot.assertDatasets("P1D1", "P1D2");
         focusCell(1, 2);
         sUiBot.assertDatasets("P1D1");
