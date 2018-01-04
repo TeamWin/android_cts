@@ -20,25 +20,25 @@ import static junit.framework.Assert.assertTrue;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertThrows;
 
-import android.app.admin.DevicePolicyManager;
+import android.app.admin.SystemUpdatePolicy;
 import android.os.PersistableBundle;
 import android.support.test.filters.SmallTest;
 
 import org.junit.Test;
 
+import java.util.Collections;
+
 @SmallTest
-public class TransferProfileOwnerOutgoingTest extends DeviceAndProfileOwnerTransferOutgoingTest {
+public class TransferDeviceOwnerOutgoingTest extends DeviceAndProfileOwnerTransferOutgoingTest {
     @Test
     public void testTransferWithPoliciesOutgoing() throws Throwable {
         int passwordLength = 123;
-        int passwordExpirationTimeout = 456;
-        DevicePolicyManager parentDevicePolicyManager =
-                mDevicePolicyManager.getParentProfileInstance(mOutgoingComponentName);
         mDevicePolicyManager.setCameraDisabled(mOutgoingComponentName, true);
         mDevicePolicyManager.setPasswordMinimumLength(mOutgoingComponentName, passwordLength);
-        mDevicePolicyManager.setCrossProfileCallerIdDisabled(mOutgoingComponentName, true);
-        parentDevicePolicyManager.setPasswordExpirationTimeout(
-                mOutgoingComponentName, passwordExpirationTimeout);
+        mDevicePolicyManager.setKeepUninstalledPackages(mOutgoingComponentName,
+                Collections.singletonList("test.package"));
+        mDevicePolicyManager.setSystemUpdatePolicy(mOutgoingComponentName,
+                SystemUpdatePolicy.createWindowedInstallPolicy(123, 456));
 
         PersistableBundle b = new PersistableBundle();
         transferOwner(mOutgoingComponentName, mIncomingComponentName, b);
@@ -49,13 +49,12 @@ public class TransferProfileOwnerOutgoingTest extends DeviceAndProfileOwnerTrans
         PersistableBundle b = new PersistableBundle();
         transferOwner(mOutgoingComponentName, mIncomingComponentName, b);
         assertTrue(mDevicePolicyManager.isAdminActive(mIncomingComponentName));
-        assertTrue(mDevicePolicyManager.isProfileOwnerApp(mIncomingComponentName.getPackageName()));
+        assertTrue(mDevicePolicyManager.isDeviceOwnerApp(mIncomingComponentName.getPackageName()));
         assertFalse(
-                mDevicePolicyManager.isProfileOwnerApp(mOutgoingComponentName.getPackageName()));
+                mDevicePolicyManager.isDeviceOwnerApp(mOutgoingComponentName.getPackageName()));
         assertFalse(mDevicePolicyManager.isAdminActive(mOutgoingComponentName));
         assertThrows(SecurityException.class, () -> {
-            mDevicePolicyManager.setCrossProfileCallerIdDisabled(mOutgoingComponentName,
-                    false);
+            mDevicePolicyManager.getSecondaryUsers(mOutgoingComponentName);
         });
     }
 }
