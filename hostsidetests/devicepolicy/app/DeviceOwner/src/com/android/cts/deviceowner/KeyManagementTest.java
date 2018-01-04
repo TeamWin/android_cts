@@ -16,6 +16,7 @@
 package com.android.cts.deviceowner;
 
 import static com.android.compatibility.common.util.FakeKeys.FAKE_RSA_1;
+import static android.app.admin.DevicePolicyManager.ID_TYPE_SERIAL;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
@@ -44,6 +45,7 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.net.URLEncoder;
+import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
@@ -54,6 +56,7 @@ import java.security.Signature;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
+import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -291,7 +294,7 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
                     .build();
 
             AttestedKeyPair generated = mDevicePolicyManager.generateKeyPair(
-                    getWho(), "RSA", spec);
+                    getWho(), "RSA", spec, 0);
             assertNotNull(generated);
             verifySignatureOverData("SHA256withRSA", generated.getKeyPair());
         } finally {
@@ -309,12 +312,40 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
                     .build();
 
             AttestedKeyPair generated = mDevicePolicyManager.generateKeyPair(
-                    getWho(), "EC", spec);
+                    getWho(), "EC", spec, 0);
             assertNotNull(generated);
             verifySignatureOverData("SHA256withECDSA", generated.getKeyPair());
         } finally {
             assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
         }
+    }
+
+    private void validateAttestationRecord(List<Certificate> attestation,
+            byte[] providedChallenge) throws CertificateParsingException {
+        assertNotNull(attestation);
+        assertTrue(attestation.size() >= 2);
+        X509Certificate leaf = (X509Certificate) attestation.get(0);
+        Attestation attestationRecord = new Attestation(leaf);
+        assertTrue(Arrays.equals(providedChallenge,
+                    attestationRecord.getAttestationChallenge()));
+    }
+
+    private void validateSignatureChain(List<Certificate> chain, PublicKey leafKey)
+            throws GeneralSecurityException {
+        X509Certificate leaf = (X509Certificate) chain.get(0);
+        PublicKey keyFromCert = leaf.getPublicKey();
+        assertTrue(Arrays.equals(keyFromCert.getEncoded(), leafKey.getEncoded()));
+        // Check that the certificate chain is valid.
+        for (int i = 1; i < chain.size(); i++) {
+            X509Certificate intermediate = (X509Certificate) chain.get(i);
+            PublicKey intermediateKey = intermediate.getPublicKey();
+            leaf.verify(intermediateKey);
+            leaf = intermediate;
+        }
+
+        // leaf is now the root, verify the root is self-signed.
+        PublicKey rootKey = leaf.getPublicKey();
+        leaf.verify(rootKey);
     }
 
     public void testCanGenerateECKeyPairWithKeyAttestation() throws Exception {
@@ -328,33 +359,41 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
                     .setAttestationChallenge(attestationChallenge)
                     .build();
             AttestedKeyPair generated = mDevicePolicyManager.generateKeyPair(
-                    getWho(), "EC", spec);
+                    getWho(), "EC", spec, 0);
             assertNotNull(generated);
             final KeyPair keyPair = generated.getKeyPair();
             final String algorithmIdentifier = "SHA256withECDSA";
             verifySignatureOverData(algorithmIdentifier, keyPair);
             List<Certificate> attestation = generated.getAttestationRecord();
-            assertNotNull(attestation);
-            assertTrue(attestation.size() >= 2);
+            validateAttestationRecord(attestation, attestationChallenge);
+            validateSignatureChain(attestation, keyPair.getPublic());
+        } finally {
+            assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
+        }
+    }
 
-            X509Certificate leaf = (X509Certificate) attestation.get(0);
-            Attestation attestationRecord = new Attestation(leaf);
-            assertTrue(Arrays.equals(attestationChallenge,
-                        attestationRecord.getAttestationChallenge()));
-
-            PublicKey keyFromCert = leaf.getPublicKey();
-            assertTrue(Arrays.equals(keyFromCert.getEncoded(), keyPair.getPublic().getEncoded()));
-            // Check that the certificate chain is valid.
-            for (int i = 1; i < attestation.size(); i++) {
-                X509Certificate intermediate = (X509Certificate) attestation.get(i);
-                PublicKey intermediateKey = intermediate.getPublicKey();
-                leaf.verify(intermediateKey);
-                leaf = intermediate;
+    public void testCanGenerateECKeyPairWithDeviceIdAttestation() throws Exception {
+        final String alias = "com.android.test.devid-attested-ec-1";
+        byte[] attestationChallenge = new byte[] {0x01, 0x02, 0x03};
+        try {
+            KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(
+                    alias,
+                    KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_VERIFY)
+                    .setDigests(KeyProperties.DIGEST_SHA256)
+                    .setAttestationChallenge(attestationChallenge)
+                    .build();
+            AttestedKeyPair generated = mDevicePolicyManager.generateKeyPair(
+                    getWho(), "EC", spec, ID_TYPE_SERIAL);
+            if (generated == null) {
+                // Since supporting Device ID attestation is optional, do not fail the test if no
+                // attestation record was generated.
+                return;
             }
-
-            // leaf is now the root, verify the root is self-signed.
-            PublicKey rootKey = leaf.getPublicKey();
-            leaf.verify(rootKey);
+            final KeyPair keyPair = generated.getKeyPair();
+            verifySignatureOverData("SHA256withECDSA", keyPair);
+            List<Certificate> attestation = generated.getAttestationRecord();
+            validateAttestationRecord(attestation, attestationChallenge);
+            validateSignatureChain(attestation, keyPair.getPublic());
         } finally {
             assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
         }
@@ -414,7 +453,7 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
                     .build();
 
             AttestedKeyPair generated = mDevicePolicyManager.generateKeyPair(
-                    getWho(), "EC", spec);
+                    getWho(), "EC", spec, 0);
             assertNotNull(generated);
             // Create a self-signed cert to go with it.
             X500Principal issuer = new X500Principal("CN=SelfSigned, O=Android, C=US");
@@ -445,7 +484,7 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
                     .build();
 
             AttestedKeyPair generated = mDevicePolicyManager.generateKeyPair(
-                    getWho(), "EC", spec);
+                    getWho(), "EC", spec, 0);
             assertNotNull(generated);
             List<Certificate> chain = loadCertificateChain("user-cert-chain.crt");
             mDevicePolicyManager.setKeyPairCertificate(getWho(), alias, chain, true);
