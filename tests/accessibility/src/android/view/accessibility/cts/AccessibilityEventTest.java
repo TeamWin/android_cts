@@ -32,7 +32,7 @@ import junit.framework.TestCase;
 public class AccessibilityEventTest extends TestCase {
 
     /** The number of properties of the {@link AccessibilityEvent} class. */
-    private static final int NON_STATIC_FIELD_COUNT = 31;
+    private static final int NON_STATIC_FIELD_COUNT = 32;
 
     /**
      * Test that no new fields have been added without updating the
@@ -275,6 +275,8 @@ public class AccessibilityEventTest extends TestCase {
                 receivedEvent.getMovementGranularity());
         assertSame("action has incorect value", expectedEvent.getAction(),
                 receivedEvent.getAction());
+        assertSame("windowChangeTypes has incorect value", expectedEvent.getWindowChanges(),
+                receivedEvent.getWindowChanges());
 
         assertSame("parcelableData has incorect value",
                 ((Message) expectedEvent.getParcelableData()).what,

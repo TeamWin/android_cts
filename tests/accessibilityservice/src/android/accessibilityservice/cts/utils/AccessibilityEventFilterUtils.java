@@ -32,6 +32,10 @@ public class AccessibilityEventFilterUtils {
         return (new AccessibilityEventTypeMatcher(eventType))::matches;
     }
 
+    public static AccessibilityEventFilter filterWindowsChangedWithChangeTypes(int changes) {
+        return (both(new AccessibilityEventTypeMatcher(AccessibilityEvent.TYPE_WINDOWS_CHANGED))
+                        .and(new WindowChangesMatcher(changes)))::matches;
+    }
     public static class AccessibilityEventTypeMatcher extends TypeSafeMatcher<AccessibilityEvent> {
         private int mType;
 
@@ -48,6 +52,25 @@ public class AccessibilityEventFilterUtils {
         @Override
         public void describeTo(Description description) {
             description.appendText("Matching to type " + mType);
+        }
+    }
+
+    public static class WindowChangesMatcher extends TypeSafeMatcher<AccessibilityEvent> {
+        private int mWindowChanges;
+
+        public WindowChangesMatcher(int windowChanges) {
+            super();
+            mWindowChanges = windowChanges;
+        }
+
+        @Override
+        protected boolean matchesSafely(AccessibilityEvent event) {
+            return (event.getWindowChanges() & mWindowChanges) == mWindowChanges;
+        }
+
+        @Override
+        public void describeTo(Description description) {
+            description.appendText("With window change type " + mWindowChanges);
         }
     }
 

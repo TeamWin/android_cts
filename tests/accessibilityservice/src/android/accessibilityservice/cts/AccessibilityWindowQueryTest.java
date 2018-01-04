@@ -17,6 +17,7 @@
 package android.accessibilityservice.cts;
 
 import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterForEventType;
+import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterWindowsChangedWithChangeTypes;
 import static android.accessibilityservice.cts.utils.DisplayUtils.getStatusBarHeight;
 import static android.content.pm.PackageManager.FEATURE_PICTURE_IN_PICTURE;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED;
@@ -24,6 +25,8 @@ import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_CLICKED;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_FOCUSED;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_LONG_CLICKED;
 import static android.view.accessibility.AccessibilityEvent.TYPE_WINDOWS_CHANGED;
+import static android.view.accessibility.AccessibilityEvent.WINDOWS_CHANGE_ACCESSIBILITY_FOCUSED;
+import static android.view.accessibility.AccessibilityEvent.WINDOWS_CHANGE_ADDED;
 import static android.view.accessibility.AccessibilityNodeInfo.ACTION_CLEAR_FOCUS;
 import static android.view.accessibility.AccessibilityNodeInfo.ACTION_CLEAR_SELECTION;
 import static android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK;
@@ -255,22 +258,34 @@ public class AccessibilityWindowQueryTest
         setAccessInteractiveWindowsFlag();
         try {
             // Add two more windows.
-            addTwoAppPanelWindows();
+            final View views[];
+            views = addTwoAppPanelWindows();
 
-            // Put accessibility focus in the first app window.
-            ensureAppWindowFocusedOrFail(0);
-            // Make sure there only one accessibility focus.
-            assertSingleAccessibilityFocus();
+            try {
+                // Put accessibility focus in the first app window.
+                ensureAppWindowFocusedOrFail(0);
+                // Make sure there only one accessibility focus.
+                assertSingleAccessibilityFocus();
 
-            // Put accessibility focus in the second app window.
-            ensureAppWindowFocusedOrFail(1);
-            // Make sure there only one accessibility focus.
-            assertSingleAccessibilityFocus();
+                // Put accessibility focus in the second app window.
+                ensureAppWindowFocusedOrFail(1);
+                // Make sure there only one accessibility focus.
+                assertSingleAccessibilityFocus();
 
-            // Put accessibility focus in the third app window.
-            ensureAppWindowFocusedOrFail(2);
-            // Make sure there only one accessibility focus.
-            assertSingleAccessibilityFocus();
+                // Put accessibility focus in the third app window.
+                ensureAppWindowFocusedOrFail(2);
+                // Make sure there only one accessibility focus.
+                assertSingleAccessibilityFocus();
+            } finally {
+                // Clean up panel windows
+                getInstrumentation().runOnMainSync(() -> {
+                    WindowManager wm =
+                            getInstrumentation().getContext().getSystemService(WindowManager.class);
+                    for (View view : views) {
+                        wm.removeView(view);
+                    }
+                });
+            }
         } finally {
             ensureAccessibilityFocusCleared();
             clearAccessInteractiveWindowsFlag();
@@ -550,8 +565,6 @@ public class AccessibilityWindowQueryTest
         final int windowCount = windows.size();
         for (int i = 0; i < windowCount; i++) {
             AccessibilityWindowInfo window = windows.get(i);
-            Rect bounds = new Rect();
-            window.getBoundsInScreen(bounds);
             if (window.getType() == AccessibilityWindowInfo.TYPE_SPLIT_SCREEN_DIVIDER) {
                 return true;
             }
@@ -581,8 +594,11 @@ public class AccessibilityWindowQueryTest
                     throw new AssertionError("Duplicate accessibility focus");
                 }
             } else {
-                assertNull(window.getRoot().findFocus(
-                        AccessibilityNodeInfo.FOCUS_ACCESSIBILITY));
+                AccessibilityNodeInfo root = window.getRoot();
+                if (root != null) {
+                    assertNull(root.findFocus(
+                            AccessibilityNodeInfo.FOCUS_ACCESSIBILITY));
+                }
             }
         }
     }
@@ -616,7 +632,8 @@ public class AccessibilityWindowQueryTest
         final AccessibilityWindowInfo finalFocusTarget = focusTarget;
         uiAutomation.executeAndWaitForEvent(() -> assertTrue(finalFocusTarget.getRoot()
                 .performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)),
-                filterForEventType(TYPE_WINDOWS_CHANGED), TIMEOUT_ASYNC_PROCESSING);
+                filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_ACCESSIBILITY_FOCUSED),
+                TIMEOUT_ASYNC_PROCESSING);
 
         windows = uiAutomation.getWindows();
         for (int i = 0; i < windowCount; i++) {
@@ -628,14 +645,15 @@ public class AccessibilityWindowQueryTest
         }
     }
 
-    private void addTwoAppPanelWindows() throws TimeoutException {
+    private View[] addTwoAppPanelWindows() throws TimeoutException {
         final UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
 
         uiAutomation.waitForIdle(TIMEOUT_WINDOW_STATE_IDLE, TIMEOUT_ASYNC_PROCESSING);
 
+        final View views[] = new View[2];
         // Add the first window.
         uiAutomation.executeAndWaitForEvent(() -> getInstrumentation().runOnMainSync(() -> {
-            WindowManager.LayoutParams params = new WindowManager.LayoutParams();
+            final WindowManager.LayoutParams params = new WindowManager.LayoutParams();
             params.gravity = Gravity.TOP;
             params.y = getStatusBarHeight(getActivity());
             params.width = WindowManager.LayoutParams.MATCH_PARENT;
@@ -647,14 +665,15 @@ public class AccessibilityWindowQueryTest
             params.type = WindowManager.LayoutParams.TYPE_APPLICATION_PANEL;
             params.token = getActivity().getWindow().getDecorView().getWindowToken();
 
-            Button button = new Button(getActivity());
+            final Button button = new Button(getActivity());
             button.setText(R.string.button1);
+            views[0] = button;
             getActivity().getWindowManager().addView(button, params);
-        }), filterForEventType(TYPE_WINDOWS_CHANGED), TIMEOUT_ASYNC_PROCESSING);
+        }), filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_ADDED), TIMEOUT_ASYNC_PROCESSING);
 
         // Add the second window.
         uiAutomation.executeAndWaitForEvent(() -> getInstrumentation().runOnMainSync(() -> {
-            WindowManager.LayoutParams params = new WindowManager.LayoutParams();
+            final WindowManager.LayoutParams params = new WindowManager.LayoutParams();
             params.gravity = Gravity.BOTTOM;
             params.width = WindowManager.LayoutParams.MATCH_PARENT;
             params.height = WindowManager.LayoutParams.WRAP_CONTENT;
@@ -665,10 +684,12 @@ public class AccessibilityWindowQueryTest
             params.type = WindowManager.LayoutParams.TYPE_APPLICATION_PANEL;
             params.token = getActivity().getWindow().getDecorView().getWindowToken();
 
-            Button button = new Button(getActivity());
+            final Button button = new Button(getActivity());
             button.setText(R.string.button2);
+            views[1] = button;
             getActivity().getWindowManager().addView(button, params);
-        }), filterForEventType(TYPE_WINDOWS_CHANGED), TIMEOUT_ASYNC_PROCESSING);
+        }), filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_ADDED), TIMEOUT_ASYNC_PROCESSING);
+        return views;
     }
 
     private void setAccessInteractiveWindowsFlag () {
@@ -694,8 +715,11 @@ public class AccessibilityWindowQueryTest
                 for (int i = 0; i < windowCount; i++) {
                     AccessibilityWindowInfo window = windows.get(i);
                     if (window.isAccessibilityFocused()) {
-                        window.getRoot().performAction(
-                                AccessibilityNodeInfo.ACTION_CLEAR_ACCESSIBILITY_FOCUS);
+                        AccessibilityNodeInfo root = window.getRoot();
+                        if (root != null) {
+                            root.performAction(
+                                    AccessibilityNodeInfo.ACTION_CLEAR_ACCESSIBILITY_FOCUS);
+                        }
                     }
                 }
             }, filterForEventType(TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED), TIMEOUT_ASYNC_PROCESSING);
