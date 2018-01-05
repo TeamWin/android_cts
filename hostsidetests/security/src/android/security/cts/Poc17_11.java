@@ -32,4 +32,22 @@ public class Poc17_11 extends SecurityTestCase {
             AdbUtils.runPocNoOutput("CVE-2017-6264", getDevice(), 60);
         }
     }
+
+    /**
+     * b/36075131
+     */
+    @SecurityTest
+    public void testPocCVE_2017_0859() throws Exception {
+        AdbUtils.runCommandLine("logcat -c", getDevice());
+        AdbUtils.pushResource("/cve_2017_0859.mp4", "/sdcard/cve_2017_0859.mp4", getDevice());
+        AdbUtils.runCommandLine("am start -a android.intent.action.VIEW " +
+                                    "-d file:///sdcard/cve_2017_0859.mp4" +
+                                    " -t audio/amr", getDevice());
+        // Wait for intent to be processed before checking logcat
+        Thread.sleep(5000);
+        String logcat =  AdbUtils.runCommandLine("logcat -d", getDevice());
+        assertNotMatches("[\\s\\n\\S]*Fatal signal 11 \\(SIGSEGV\\)" +
+                         "[\\s\\n\\S]*>>> /system/bin/" +
+                         "mediaserver <<<[\\s\\n\\S]*", logcat);
+    }
 }
