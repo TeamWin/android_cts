@@ -20,7 +20,6 @@ import android.signature.cts.ApiComplianceChecker;
 import android.signature.cts.FailureType;
 import android.signature.cts.JDiffClassDescription;
 import android.signature.cts.ResultObserver;
-
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
@@ -74,7 +73,8 @@ public class ApiComplianceCheckerTest extends TestCase {
 
     private void checkSignatureCompliance(JDiffClassDescription classDescription,
             ResultObserver resultObserver) {
-        ApiComplianceChecker complianceChecker = new ApiComplianceChecker(resultObserver);
+        ApiComplianceChecker complianceChecker = new ApiComplianceChecker(resultObserver,
+                new TestClassesProvider());
         complianceChecker.checkSignatureCompliance(classDescription);
     }
 

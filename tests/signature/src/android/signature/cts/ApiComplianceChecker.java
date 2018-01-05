@@ -71,9 +71,11 @@ public class ApiComplianceChecker {
 
 
     private final ResultObserver resultObserver;
+    private final ClassProvider classProvider;
 
-    public ApiComplianceChecker(ResultObserver resultObserver) {
+    public ApiComplianceChecker(ResultObserver resultObserver, ClassProvider classProvider) {
         this.resultObserver = resultObserver;
+        this.classProvider = classProvider;
     }
 
     private static void loge(String message, Exception exception) {
@@ -188,7 +190,7 @@ public class ApiComplianceChecker {
 
     private Class<?> findRequiredClass(JDiffClassDescription classDescription) {
         try {
-            return ReflectionHelper.findMatchingClass(classDescription);
+            return ReflectionHelper.findMatchingClass(classDescription, classProvider);
         } catch (ClassNotFoundException e) {
             loge("ClassNotFoundException for " + classDescription.getAbsoluteClassName(), e);
             return null;
