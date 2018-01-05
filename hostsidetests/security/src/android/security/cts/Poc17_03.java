@@ -32,4 +32,18 @@ public class Poc17_03 extends SecurityTestCase {
             Thread.sleep(30000);
         }
     }
+
+    /**
+     *  b/33940449
+     */
+    @SecurityTest
+    public void testPocCVE_2017_0508() throws Exception {
+        if (containsDriver(getDevice(), "/dev/ion") &&
+            containsDriver(getDevice(), "/dev/dri/renderD129")) {
+            AdbUtils.runPocNoOutput("CVE-2017-0508", getDevice(), 30);
+            // CTS begins the next test before device finishes rebooting,
+            // sleep to allow time for device to reboot.
+            Thread.sleep(60000);
+        }
+    }
 }
