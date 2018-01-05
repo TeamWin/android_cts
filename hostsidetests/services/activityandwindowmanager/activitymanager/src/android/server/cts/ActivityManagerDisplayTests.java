@@ -1692,8 +1692,6 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      * on an external secondary display.
      */
     public void testExternalDisplayActivityTurnPrimaryOff() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
-
         // Launch something on the primary display so we know there is a resumed activity there
         launchActivity(RESIZEABLE_ACTIVITY_NAME);
         waitAndAssertActivityResumed(RESIZEABLE_ACTIVITY_NAME, DEFAULT_DISPLAY_ID,
@@ -1725,8 +1723,6 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      * display is off.
      */
     public void testLaunchExternalDisplayActivityWhilePrimaryOff() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
-
         // Launch something on the primary display so we know there is a resumed activity there
         launchActivity(RESIZEABLE_ACTIVITY_NAME);
         waitAndAssertActivityResumed(RESIZEABLE_ACTIVITY_NAME, DEFAULT_DISPLAY_ID,
@@ -1754,8 +1750,6 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      * Tests that turning the secondary display off stops activities running on that display.
      */
     public void testExternalDisplayToggleState() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
-
         final DisplayState newDisplay = createExternalVirtualDisplay(
                 false /* showContentWhenLocked */);
 
@@ -1783,8 +1777,6 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      * activity on the primary display.
      */
     public void testStackFocusSwitchOnTouchEventAfterKeyguard() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
-
         // Launch something on the primary display so we know there is a resumed activity there
         launchActivity(RESIZEABLE_ACTIVITY_NAME);
         waitAndAssertActivityResumed(RESIZEABLE_ACTIVITY_NAME, DEFAULT_DISPLAY_ID,
@@ -1868,8 +1860,6 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      * Tests that showWhenLocked works on a secondary display.
      */
     public void testSecondaryDisplayShowWhenLocked() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
-
         try {
             setLockCredential();
 
