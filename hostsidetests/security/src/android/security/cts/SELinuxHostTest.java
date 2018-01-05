@@ -293,7 +293,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      */
     public static boolean isFullTrebleDevice(ITestDevice device)
             throws DeviceNotAvailableException {
-        return PropertyUtil.getFirstApiLevel(device) > 25;
+        return PropertyUtil.getFirstApiLevel(device) > 26;
     }
 
     private boolean isFullTrebleDevice() throws DeviceNotAvailableException {
