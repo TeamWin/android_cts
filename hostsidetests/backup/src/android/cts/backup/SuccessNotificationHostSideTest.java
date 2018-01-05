@@ -168,11 +168,13 @@ public class SuccessNotificationHostSideTest extends BaseBackupHostSideTest {
     private void addBackupFinishedNotificationReceiver()
             throws DeviceNotAvailableException {
         mOriginalBackupManagerConstants = getDevice().executeShellCommand(String.format(
-                "settings get secure %s", BACKUP_MANAGER_CONSTANTS_PREF));
+                "settings get secure %s", BACKUP_MANAGER_CONSTANTS_PREF)).trim();
+        if ("null".equals(mOriginalBackupManagerConstants)) {
+            mOriginalBackupManagerConstants = null;
+        }
         String backupManagerConstants = null;
 
-        if (mOriginalBackupManagerConstants == null ||
-                mOriginalBackupManagerConstants.trim().isEmpty()) {
+        if (mOriginalBackupManagerConstants == null || mOriginalBackupManagerConstants.isEmpty()) {
             backupManagerConstants =
                     BACKUP_FINISHED_NOTIFICATION_RECEIVERS + "=" + SUCCESS_NOTIFICATION_APP_PACKAGE;
         } else {
