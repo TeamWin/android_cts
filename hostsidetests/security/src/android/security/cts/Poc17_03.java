@@ -70,4 +70,15 @@ public class Poc17_03 extends SecurityTestCase {
         // sleep to allow time for device to reboot.
         Thread.sleep(30000);
     }
+
+    /**
+     *  b/32372915
+     */
+    @SecurityTest
+    public void testPocCVE_2017_0519() throws Exception {
+        enableAdbRoot(getDevice());
+        if (containsDriver(getDevice(), "/dev/qbt1000")) {
+            AdbUtils.runPocNoOutput("CVE-2017-0519", getDevice(), 30);
+        }
+    }
 }
