@@ -33,6 +33,9 @@ public class GlVboPerfTest extends
 
     private float mFps;
     private int mNumTriangles;
+    private boolean mIsSoftwareRenderer = false;
+
+    private static final String SWIFTSHADER_NAME = "Google SwiftShader";
 
     public GlVboPerfTest() {
         super(GlPlanetsActivity.class);
@@ -70,12 +73,14 @@ public class GlVboPerfTest extends
         float delta = minMaxVbo[1] - (1f - FPS_COMPARISON_MARGIN)
                 * minMaxNonVbo[1];
         assertTrue("VBO performance worse than non-VBO " + msgVbo + msgNonVbo, delta > 0f);
-        assertTrue(
-                "Too much FPS drop for VBO case " + msgVbo,
-                minMaxVbo[0] > (FPS_MIN_MAX_COMPARISON_PERCENTILE * minMaxVbo[1]));
-        assertTrue(
-                "Too much FPS drop for No VBO case " + msgNonVbo,
-                minMaxNonVbo[0] > (FPS_MIN_MAX_COMPARISON_PERCENTILE * minMaxNonVbo[1]));
+        if (!mIsSoftwareRenderer) {
+            assertTrue(
+                    "Too much FPS drop for VBO case " + msgVbo,
+                    minMaxVbo[0] > (FPS_MIN_MAX_COMPARISON_PERCENTILE * minMaxVbo[1]));
+            assertTrue(
+                    "Too much FPS drop for No VBO case " + msgNonVbo,
+                    minMaxNonVbo[0] > (FPS_MIN_MAX_COMPARISON_PERCENTILE * minMaxNonVbo[1]));
+        }
     }
 
     public void testVboVsNonVboPerfGeometry0() throws Exception {
@@ -104,6 +109,9 @@ public class GlVboPerfTest extends
 
         mFps = activity.getAverageFps();
         mNumTriangles = activity.getNumTriangles();
+        if (SWIFTSHADER_NAME.equals(activity.getRendererName())) {
+            mIsSoftwareRenderer = true;
+        }
 
         cleanUpActivity();
     }
