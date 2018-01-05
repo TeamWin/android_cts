@@ -28,13 +28,9 @@ import android.content.Context;
 import android.os.Process;
 import android.test.InstrumentationTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
-import android.util.AttributeSet;
 
 import com.android.compatibility.common.util.SystemUtil;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -204,30 +200,11 @@ public class AppOpsTest extends InstrumentationTestCase {
      */
     @SmallTest
     public void testCantSetModeForSelf() {
-        boolean gotToTest = false;
         try {
-            Method setMode = mAppOps.getClass().getMethod("setMode", int.class, int.class,
-                    String.class, int.class);
-            int writeSmsOp = mAppOps.getClass().getField("OP_WRITE_SMS").getInt(mAppOps);
-            gotToTest = true;
-            setMode.invoke(mAppOps, writeSmsOp, mMyUid, mOpPackageName, AppOpsManager.MODE_ALLOWED);
+            int writeSmsOp = AppOpsManager.permissionToOpCode("android.permission.WRITE_SMS");
+            mAppOps.setMode(writeSmsOp, mMyUid, mOpPackageName, AppOpsManager.MODE_ALLOWED);
             fail("Was able to set mode for self");
-        } catch (NoSuchFieldException e) {
-            throw new AssertionError("Unable to find OP_WRITE_SMS", e);
-        } catch (NoSuchMethodException e) {
-            throw new AssertionError("Unable to find setMode method", e);
-        } catch (InvocationTargetException e) {
-            if (!gotToTest) {
-                throw new AssertionError("Whoops", e);
-            }
-            // If we got to the test, we want it to have thrown a security exception.
-            // We need to look inside of the wrapper exception to see.
-            Throwable t = e.getCause();
-            if (!(t instanceof SecurityException)) {
-                throw new AssertionError("Did not throw SecurityException", e);
-            }
-        } catch (IllegalAccessException e) {
-            throw new AssertionError("Whoops", e);
+        } catch (SecurityException expected) {
         }
     }
 
