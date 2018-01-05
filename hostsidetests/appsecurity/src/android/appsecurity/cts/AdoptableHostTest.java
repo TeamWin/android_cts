@@ -44,23 +44,49 @@ import java.util.concurrent.TimeUnit;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class AdoptableHostTest extends BaseHostJUnit4Test {
 
+    public static final String FEATURE_ADOPTABLE_STORAGE = "feature:android.software.adoptable_storage";
+
     @Before
     public void setUp() throws Exception {
-
         // Start all possible users to make sure their storage is unlocked
         Utils.prepareMultipleUsers(getDevice(), Integer.MAX_VALUE);
 
         getDevice().uninstallPackage(PKG);
+
+        // Enable a virtual disk to give us the best shot at being able to pass
+        // the various tests below. This helps verify devices that may not
+        // currently have an SD card inserted.
+        if (isSupportedDevice()) {
+            getDevice().executeShellCommand("sm set-virtual-disk true");
+        }
     }
 
     @After
     public void tearDown() throws Exception {
         getDevice().uninstallPackage(PKG);
+
+        if (isSupportedDevice()) {
+            getDevice().executeShellCommand("sm set-virtual-disk false");
+        }
+    }
+
+    /**
+     * Ensure that we have consistency between the feature flag and what we
+     * sniffed from the underlying fstab.
+     */
+    @Test
+    public void testFeatureConsistent() throws Exception {
+        final boolean hasFeature = hasFeature();
+        final boolean hasFstab = hasFstab();
+        if (hasFeature != hasFstab) {
+            fail("Inconsistent adoptable storage status; feature claims " + hasFeature
+                    + " but fstab claims " + hasFstab);
+        }
     }
 
     @Test
     public void testApps() throws Exception {
-        if (!hasAdoptable()) return;
+        if (!isSupportedDevice()) return;
         final String diskId = getAdoptionDisk();
         try {
             final String abi = getAbi().getName();
@@ -111,7 +137,7 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
 
     @Test
     public void testPrimaryStorage() throws Exception {
-        if (!hasAdoptable()) return;
+        if (!isSupportedDevice()) return;
         final String diskId = getAdoptionDisk();
         try {
             final String originalVol = getDevice()
@@ -211,7 +237,7 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testPackageInstaller() throws Exception {
-        if (!hasAdoptable()) return;
+        if (!isSupportedDevice()) return;
         final String diskId = getAdoptionDisk();
         try {
             assertEmpty(getDevice().executeShellCommand("sm partition " + diskId + " private"));
@@ -240,7 +266,7 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testEjected() throws Exception {
-        if (!hasAdoptable()) return;
+        if (!isSupportedDevice()) return;
         final String diskId = getAdoptionDisk();
         try {
             assertEmpty(getDevice().executeShellCommand("sm partition " + diskId + " private"));
@@ -284,7 +310,15 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
         }
     }
 
-    private boolean hasAdoptable() throws Exception {
+    private boolean isSupportedDevice() throws Exception {
+        return hasFeature() || hasFstab();
+    }
+
+    private boolean hasFeature() throws Exception {
+        return getDevice().hasFeature(FEATURE_ADOPTABLE_STORAGE);
+    }
+
+    private boolean hasFstab() throws Exception {
         return Boolean.parseBoolean(getDevice().executeShellCommand("sm has-adoptable").trim());
     }
 
