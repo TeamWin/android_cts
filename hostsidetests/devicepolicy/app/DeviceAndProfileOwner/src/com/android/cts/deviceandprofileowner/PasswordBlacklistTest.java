@@ -17,12 +17,14 @@
 package com.android.cts.deviceandprofileowner;
 
 import android.app.admin.DevicePolicyManager;
+import android.util.Log;
 
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
 
 public final class PasswordBlacklistTest extends BaseDeviceAdminTest {
+    private static final String TAG = "PasswordBlacklistTest";
     private static final byte[] TOKEN = "abcdefghijklmnopqrstuvwxyz0123456789".getBytes();
 
     private boolean mShouldRun = true;
@@ -40,6 +42,7 @@ public final class PasswordBlacklistTest extends BaseDeviceAdminTest {
                     TOKEN));
         } catch (SecurityException e) {
             if (e.getMessage().equals("Escrow token is disabled on the current user")) {
+                Log.i(TAG, "Skip some password blacklist test because escrow token is disabled");
                 mShouldRun = false;
             } else {
                 throw e;
@@ -132,17 +135,11 @@ public final class PasswordBlacklistTest extends BaseDeviceAdminTest {
     }
 
     public void testMaxBlacklistSize() {
-        if (!mShouldRun) {
-            return;
-        }
         assertTrue(mDevicePolicyManager.setPasswordBlacklist(
                 ADMIN_RECEIVER_COMPONENT, "max size", generateMaxBlacklist()));
     }
 
     public void testBlacklistTooBig() {
-        if (!mShouldRun) {
-            return;
-        }
         try {
             mDevicePolicyManager.setPasswordBlacklist(
                     ADMIN_RECEIVER_COMPONENT, "too big", generateJustTooBigBlacklist());
@@ -202,9 +199,6 @@ public final class PasswordBlacklistTest extends BaseDeviceAdminTest {
     }
 
     public void testPasswordBlacklistWithEmptyName() {
-        if (!mShouldRun) {
-            return;
-        }
         final String emptyName = "";
         assertTrue(mDevicePolicyManager.setPasswordBlacklist(
                 ADMIN_RECEIVER_COMPONENT, emptyName, Arrays.asList("test", "empty", "name")));
@@ -213,9 +207,6 @@ public final class PasswordBlacklistTest extends BaseDeviceAdminTest {
     }
 
     public void testBlacklistNameCanBeChanged() {
-        if (!mShouldRun) {
-            return;
-        }
         final String firstName = "original";
         assertTrue(mDevicePolicyManager.setPasswordBlacklist(
                 ADMIN_RECEIVER_COMPONENT, firstName, Arrays.asList("a")));
@@ -230,9 +221,6 @@ public final class PasswordBlacklistTest extends BaseDeviceAdminTest {
     }
 
     public void testCannotNameClearedBlacklist() {
-        if (!mShouldRun) {
-            return;
-        }
         final String name = "empty!";
         assertTrue(mDevicePolicyManager.setPasswordBlacklist(
                 ADMIN_RECEIVER_COMPONENT, name, null));
@@ -240,9 +228,6 @@ public final class PasswordBlacklistTest extends BaseDeviceAdminTest {
     }
 
     public void testClearingBlacklistClearsName() {
-        if (!mShouldRun) {
-            return;
-        }
         final String firstName = "gotone";
         assertTrue(mDevicePolicyManager.setPasswordBlacklist(
                 ADMIN_RECEIVER_COMPONENT, firstName, Arrays.asList("something")));
@@ -256,9 +241,6 @@ public final class PasswordBlacklistTest extends BaseDeviceAdminTest {
     }
 
     public void testNullAdminWhenGettingBlacklistName() {
-        if (!mShouldRun) {
-            return;
-        }
         try {
             mDevicePolicyManager.getPasswordBlacklistName(null);
             fail("Did not throw NullPointerException");
@@ -268,6 +250,9 @@ public final class PasswordBlacklistTest extends BaseDeviceAdminTest {
     }
 
     public void testBlacklistNotConsideredByIsActivePasswordSufficient() {
+        if (!mShouldRun) {
+            return;
+        }
         mDevicePolicyManager.setPasswordQuality(ADMIN_RECEIVER_COMPONENT,
                 DevicePolicyManager.PASSWORD_QUALITY_COMPLEX);
         final String complexPassword = ".password123";
