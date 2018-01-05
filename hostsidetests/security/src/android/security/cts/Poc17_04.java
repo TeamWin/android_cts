@@ -113,4 +113,18 @@ public class Poc17_04 extends SecurityTestCase {
                              "[\\s\\n\\S]*", pocOut);
         }
     }
+
+    /**
+     * b/32591350
+     */
+    @SecurityTest
+    public void testPocCve_2017_0545() throws Exception {
+        enableAdbRoot(getDevice());
+        AdbUtils.enableLibcMallocDebug("audioserver", getDevice());
+        AdbUtils.runCommandLine("logcat -c" , getDevice());
+        AdbUtils.runPocNoOutput("CVE-2017-0545", getDevice(), 60);
+        String logcatOut = AdbUtils.runCommandLine("logcat -d", getDevice());
+        assertNotMatches("[\\s\\n\\S]*HAS A CORRUPTED REAR GUARD" +
+                         "[\\s\\n\\S]*", logcatOut);
+     }
 }
