@@ -18,6 +18,8 @@ package com.android.cts.content;
 
 import static junit.framework.Assert.assertTrue;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.Activity;
@@ -71,9 +73,8 @@ public class CtsSyncAccountAccessSameCertTestCases {
 
     @Test
     public void testAccountAccess_sameCertAsAuthenticatorCanSeeAccount() throws Exception {
-        if (!hasDataConnection() || !hasNotificationSupport()) {
-            return;
-        }
+        assumeTrue(hasDataConnection());
+        assumeTrue(hasNotificationSupport());
 
         Intent intent = new Intent(getContext(), StubActivity.class);
         Activity activity = InstrumentationRegistry.getInstrumentation().startActivitySync(intent);

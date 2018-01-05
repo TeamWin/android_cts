@@ -53,6 +53,8 @@ import java.util.concurrent.TimeUnit;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 
+import static org.junit.Assume.assumeTrue;
+
 import com.android.compatibility.common.util.SystemUtil;
 
 /**
@@ -81,9 +83,8 @@ public class CtsSyncAccountAccessOtherCertTestCases {
 
     @Test
     public void testAccountAccess_otherCertAsAuthenticatorCanNotSeeAccount() throws Exception {
-        if (!hasDataConnection() || !hasNotificationSupport()) {
-            return;
-        }
+        assumeTrue(hasDataConnection());
+        assumeTrue(hasNotificationSupport());
 
         Intent intent = new Intent(getContext(), StubActivity.class);
         Activity activity = InstrumentationRegistry.getInstrumentation().startActivitySync(intent);
