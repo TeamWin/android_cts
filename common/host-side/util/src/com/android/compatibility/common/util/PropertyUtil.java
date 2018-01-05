@@ -30,7 +30,13 @@ public class PropertyUtil {
      */
     public static final String FIRST_API_LEVEL = "ro.product.first_api_level";
     private static final String BUILD_TAGS_PROPERTY = "ro.build.tags";
+    private static final String BUILD_TYPE_PROPERTY = "ro.build.type";
     private static final String TAG_DEV_KEYS = "dev-keys";
+
+    /** Returns whether the device build is a user build */
+    public static boolean isUserBuild(ITestDevice device) throws DeviceNotAvailableException {
+        return propertyEquals(device, BUILD_TYPE_PROPERTY, "user");
+    }
 
     /** Returns whether the device build is the factory ROM */
     public static boolean isFactoryROM(ITestDevice device) throws DeviceNotAvailableException {
