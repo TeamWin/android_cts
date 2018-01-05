@@ -30,6 +30,7 @@ import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.media.Image;
+import android.platform.test.annotations.Presubmit;
 import android.util.Log;
 import android.util.Size;
 
@@ -176,6 +177,7 @@ public class FastBasicsTest extends Camera2SurfaceViewTestCase {
         }
     }
 
+    @Presubmit
     public void testCamera1() throws Exception {
         for (int i = 0; i < Camera.getNumberOfCameras(); i++) {
             Camera camera = null;
