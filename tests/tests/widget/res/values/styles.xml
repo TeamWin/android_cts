@@ -141,6 +141,15 @@
         <item name="android:elegantTextHeight">false</item>
     </style>
 
+
+    <style name="TextAppearance.FallbackLineSpacingFalse">
+        <item name="android:fallbackLineSpacing">false</item>
+    </style>
+
+    <style name="TextAppearance.FallbackLineSpacingTrue">
+        <item name="android:fallbackLineSpacing">true</item>
+    </style>
+
     <style name="AllCapsPassword">
         <item name="android:textAllCaps">true</item>
         <item name="android:password">true</item>

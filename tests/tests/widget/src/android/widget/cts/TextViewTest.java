@@ -7817,6 +7817,70 @@ public class TextViewTest {
         assertEquals(Typeface.DEFAULT, mTextView.getTypeface());
     }
 
+    @UiThreadTest
+    @Test
+    public void testFallbackLineSpacing_readsFromLayoutXml() {
+        mActivity.setContentView(R.layout.textview_fallbacklinespacing_layout);
+        mTextView = findTextView(R.id.textview_true);
+        assertTrue(mTextView.isFallbackLineSpacing());
+
+        mTextView = findTextView(R.id.textview_default);
+        assertTrue(mTextView.isFallbackLineSpacing());
+
+        mTextView = findTextView(R.id.textview_false);
+        assertFalse(mTextView.isFallbackLineSpacing());
+    }
+
+    @UiThreadTest
+    @Test
+    public void testFallbackLineSpacing_set_get() {
+        mActivity.setContentView(R.layout.textview_fallbacklinespacing_layout);
+        mTextView = findTextView(R.id.textview_true);
+        assertTrue(mTextView.isFallbackLineSpacing());
+
+        mTextView.setFallbackLineSpacing(false);
+        assertFalse(mTextView.isFallbackLineSpacing());
+
+        mTextView.setFallbackLineSpacing(true);
+        assertTrue(mTextView.isFallbackLineSpacing());
+    }
+
+    @UiThreadTest
+    @Test
+    public void testFallbackLineSpacing_readsFromStyleXml() {
+        mActivity.setContentView(R.layout.textview_fallbacklinespacing_layout);
+        mTextView = findTextView(R.id.textview_style_true);
+        assertTrue(mTextView.isFallbackLineSpacing());
+
+        mTextView = findTextView(R.id.textview_style_default);
+        assertTrue(mTextView.isFallbackLineSpacing());
+
+        mTextView = findTextView(R.id.textview_style_false);
+        assertFalse(mTextView.isFallbackLineSpacing());
+    }
+
+    @UiThreadTest
+    @Test
+    public void testFallbackLineSpacing_textAppearance_set_get() {
+        mActivity.setContentView(R.layout.textview_fallbacklinespacing_layout);
+        mTextView = findTextView(R.id.textview_default);
+        assertTrue(mTextView.isFallbackLineSpacing());
+
+        mTextView.setTextAppearance(R.style.TextAppearance_FallbackLineSpacingFalse);
+        assertFalse(mTextView.isFallbackLineSpacing());
+
+        mTextView.setTextAppearance(R.style.TextAppearance_FallbackLineSpacingTrue);
+        assertTrue(mTextView.isFallbackLineSpacing());
+
+        mTextView.setFallbackLineSpacing(false);
+        mTextView.setTextAppearance(R.style.TextAppearance);
+        assertFalse(mTextView.isFallbackLineSpacing());
+
+        mTextView.setFallbackLineSpacing(true);
+        mTextView.setTextAppearance(R.style.TextAppearance);
+        assertTrue(mTextView.isFallbackLineSpacing());
+    }
+
     private void initializeTextForSmartSelection(CharSequence text) throws Throwable {
         assertTrue(text.length() >= SMARTSELECT_END);
         mActivityRule.runOnUiThread(() -> {
