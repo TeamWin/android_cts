@@ -19,6 +19,7 @@ import static android.accessibilityservice.cts.AccessibilityActivityTestCase
 
 import static org.junit.Assert.assertNotNull;
 
+import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
@@ -44,6 +45,10 @@ public class ActivityLaunchUtils {
         final StringBuilder activityPackage = new StringBuilder();
         final Rect bounds = new Rect();
         final StringBuilder activityTitle = new StringBuilder();
+        // Make sure we get window events, so we'll know when the window appears
+        AccessibilityServiceInfo info = uiAutomation.getServiceInfo();
+        info.flags |= AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
+        uiAutomation.setServiceInfo(info);
         final AccessibilityEvent awaitedEvent = uiAutomation.executeAndWaitForEvent(
                 () -> {
                     mTempActivity = rule.launchActivity(null);

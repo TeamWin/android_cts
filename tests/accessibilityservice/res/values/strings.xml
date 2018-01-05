@@ -122,6 +122,8 @@
     <!-- String second Button text -->
     <string name="secondButton">sB</string>
 
+    <string name="paneTitle">Pane Title</string>
+
     <!-- String title of the accessibility focus and input focus sync test activity -->
     <string name="accessibility_focus_and_input_focus_sync_test_activity">Accessibility focus and input focus sync test</string>
 
