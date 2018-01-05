@@ -22,6 +22,7 @@ import static android.app.AppOpsManager.MODE_ERRORED;
 import static android.app.AppOpsManager.MODE_IGNORED;
 import static android.app.AppOpsManager.OPSTR_READ_SMS;
 
+import android.Manifest.permission;
 import android.app.AppOpsManager;
 import android.content.Context;
 import android.os.Process;
@@ -33,15 +34,58 @@ import com.android.compatibility.common.util.SystemUtil;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class AppOpsTest extends InstrumentationTestCase {
-    static final Class<?>[] sSetModeSignature = new Class[] {
-            Context.class, AttributeSet.class};
-
     private AppOpsManager mAppOps;
     private Context mContext;
     private String mOpPackageName;
     private int mMyUid;
+
+    // These permissions and opStrs must map to the same op codes.
+    private static Map<String, String> permissionToOpStr = new HashMap<>();
+
+    static {
+        permissionToOpStr.put(permission.ACCESS_COARSE_LOCATION,
+                AppOpsManager.OPSTR_COARSE_LOCATION);
+        permissionToOpStr.put(permission.ACCESS_FINE_LOCATION, AppOpsManager.OPSTR_FINE_LOCATION);
+        permissionToOpStr.put(permission.READ_CONTACTS, AppOpsManager.OPSTR_READ_CONTACTS);
+        permissionToOpStr.put(permission.WRITE_CONTACTS, AppOpsManager.OPSTR_WRITE_CONTACTS);
+        permissionToOpStr.put(permission.READ_CALL_LOG, AppOpsManager.OPSTR_READ_CALL_LOG);
+        permissionToOpStr.put(permission.WRITE_CALL_LOG, AppOpsManager.OPSTR_WRITE_CALL_LOG);
+        permissionToOpStr.put(permission.READ_CALENDAR, AppOpsManager.OPSTR_READ_CALENDAR);
+        permissionToOpStr.put(permission.WRITE_CALENDAR, AppOpsManager.OPSTR_WRITE_CALENDAR);
+        permissionToOpStr.put(permission.CALL_PHONE, AppOpsManager.OPSTR_CALL_PHONE);
+        permissionToOpStr.put(permission.READ_SMS, AppOpsManager.OPSTR_READ_SMS);
+        permissionToOpStr.put(permission.RECEIVE_SMS, AppOpsManager.OPSTR_RECEIVE_SMS);
+        permissionToOpStr.put(permission.RECEIVE_MMS, AppOpsManager.OPSTR_RECEIVE_MMS);
+        permissionToOpStr.put(permission.RECEIVE_WAP_PUSH, AppOpsManager.OPSTR_RECEIVE_WAP_PUSH);
+        permissionToOpStr.put(permission.SEND_SMS, AppOpsManager.OPSTR_SEND_SMS);
+        permissionToOpStr.put(permission.READ_SMS, AppOpsManager.OPSTR_READ_SMS);
+        permissionToOpStr.put(permission.WRITE_SETTINGS, AppOpsManager.OPSTR_WRITE_SETTINGS);
+        permissionToOpStr.put(permission.SYSTEM_ALERT_WINDOW,
+                AppOpsManager.OPSTR_SYSTEM_ALERT_WINDOW);
+        permissionToOpStr.put(permission.ACCESS_NOTIFICATIONS,
+                AppOpsManager.OPSTR_ACCESS_NOTIFICATIONS);
+        permissionToOpStr.put(permission.CAMERA, AppOpsManager.OPSTR_CAMERA);
+        permissionToOpStr.put(permission.RECORD_AUDIO, AppOpsManager.OPSTR_RECORD_AUDIO);
+        permissionToOpStr.put(permission.READ_PHONE_STATE, AppOpsManager.OPSTR_READ_PHONE_STATE);
+        permissionToOpStr.put(permission.ADD_VOICEMAIL, AppOpsManager.OPSTR_ADD_VOICEMAIL);
+        permissionToOpStr.put(permission.USE_SIP, AppOpsManager.OPSTR_USE_SIP);
+        permissionToOpStr.put(permission.PROCESS_OUTGOING_CALLS,
+                AppOpsManager.OPSTR_PROCESS_OUTGOING_CALLS);
+        permissionToOpStr.put(permission.BODY_SENSORS, AppOpsManager.OPSTR_BODY_SENSORS);
+        permissionToOpStr.put(permission.READ_CELL_BROADCASTS,
+                AppOpsManager.OPSTR_READ_CELL_BROADCASTS);
+        permissionToOpStr.put(permission.READ_EXTERNAL_STORAGE,
+                AppOpsManager.OPSTR_READ_EXTERNAL_STORAGE);
+        permissionToOpStr.put(permission.WRITE_EXTERNAL_STORAGE,
+                AppOpsManager.OPSTR_WRITE_EXTERNAL_STORAGE);
+    }
 
     @Override
     protected void setUp() throws Exception {
@@ -113,6 +157,46 @@ public class AppOpsTest extends InstrumentationTestCase {
             fail("SecurityException expected");
         } catch (SecurityException expected) {
         }
+    }
+
+    @SmallTest
+    public void testAllOpsHaveOpString() {
+        Set<String> opStrs = new HashSet<>();
+        for (String opStr : AppOpsManager.getOpStrs()) {
+            assertNotNull("Each app op must have an operation string defined", opStr);
+            opStrs.add(opStr);
+        }
+        assertEquals("Not all op strings are unique", AppOpsManager._NUM_OP, opStrs.size());
+    }
+
+    @SmallTest
+    public void testOpCodesUnique() {
+        String[] opStrs = AppOpsManager.getOpStrs();
+        Set<Integer> opCodes = new HashSet<>();
+        for (String opStr : opStrs) {
+            opCodes.add(AppOpsManager.strOpToOp(opStr));
+        }
+        assertEquals("Not all app op codes are unique", opStrs.length, opCodes.size());
+    }
+
+    @SmallTest
+    public void testPermissionMapping() {
+        for (String permission : permissionToOpStr.keySet()) {
+            testPermissionMapping(permission, permissionToOpStr.get(permission));
+        }
+    }
+
+    private void testPermissionMapping(String permission, String opStr) {
+        // Do the public value => internal op code lookups.
+        String mappedOpStr = AppOpsManager.permissionToOp(permission);
+        assertEquals(mappedOpStr, opStr);
+        int mappedOpCode = AppOpsManager.permissionToOpCode(permission);
+        int mappedOpCode2 = AppOpsManager.strOpToOp(opStr);
+        assertEquals(mappedOpCode, mappedOpCode2);
+
+        // Do the internal op code => public value lookup (reverse lookup).
+        String permissionMappedBack = AppOpsManager.opToPermission(mappedOpCode);
+        assertEquals(permission, permissionMappedBack);
     }
 
     /**
