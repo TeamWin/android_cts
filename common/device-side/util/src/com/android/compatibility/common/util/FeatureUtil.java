@@ -16,9 +16,13 @@
 
 package com.android.compatibility.common.util;
 
+import android.content.pm.FeatureInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.support.test.InstrumentationRegistry;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Device-side utility class for detecting system features
@@ -56,6 +60,15 @@ public class FeatureUtil {
             }
         }
         return true;
+    }
+
+    /** Returns all system features of the device */
+    public static Set<String> getAllFeatures() {
+        Set<String> allFeatures = new HashSet<String>();
+        for (FeatureInfo fi : getPackageManager().getSystemAvailableFeatures()) {
+            allFeatures.add(fi.name);
+        }
+        return allFeatures;
     }
 
     /** Returns true if the device has feature TV_FEATURE or feature LEANBACK_FEATURE */

@@ -16,7 +16,10 @@
 package com.android.compatibility.common.tradefed.targetprep;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.compatibility.common.tradefed.util.DynamicConfigFileReader;
 import com.android.compatibility.common.util.BusinessLogic;
+import com.android.compatibility.common.util.FeatureUtil;
+import com.android.compatibility.common.util.PropertyUtil;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.OptionClass;
@@ -28,11 +31,20 @@ import com.android.tradefed.targetprep.ITargetCleaner;
 import com.android.tradefed.targetprep.TargetSetupError;
 import com.android.tradefed.testtype.suite.TestSuiteInfo;
 import com.android.tradefed.util.FileUtil;
+import com.android.tradefed.util.MultiMap;
 import com.android.tradefed.util.StreamUtil;
+import com.android.tradefed.util.net.HttpHelper;
+import com.android.tradefed.util.net.IHttpHelper;
+
+import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Pushes business Logic to the host and the test device, for use by test cases in the test suite.
@@ -47,6 +59,10 @@ public class BusinessLogicPreparer implements ITargetCleaner {
     private static final String FILE_LOCATION = "business-logic";
     /* Extension of business logic files */
     private static final String FILE_EXT = ".bl";
+
+    /* Dynamic config constants */
+    private static final String DYNAMIC_CONFIG_FEATURES_KEY = "business_logic_device_features";
+    private static final String DYNAMIC_CONFIG_PROPERTIES_KEY = "business_logic_device_properties";
 
     @Option(name = "business-logic-url", description = "The URL to use when accessing the " +
             "business logic service, parameters not included", mandatory = true)
@@ -73,9 +89,7 @@ public class BusinessLogicPreparer implements ITargetCleaner {
     @Override
     public void setUp(ITestDevice device, IBuildInfo buildInfo) throws TargetSetupError, BuildError,
             DeviceNotAvailableException {
-        // Piece together request URL
-        String requestString = String.format("%s?key=%s", mUrl.replace(SUITE_PLACEHOLDER,
-                TestSuiteInfo.getInstance().getName()), mApiKey);
+        String requestString = buildRequestString(device, buildInfo);
         // Retrieve business logic string from service
         String businessLogicString = null;
         try {
@@ -114,8 +128,71 @@ public class BusinessLogicPreparer implements ITargetCleaner {
         } else {
             throw new TargetSetupError(String.format(
                     "Retrieved business logic for suite %s could not be written to device %s",
-                    TestSuiteInfo.getInstance().getName(), device.getSerialNumber()), device.getDeviceDescriptor());
+                    TestSuiteInfo.getInstance().getName(), device.getSerialNumber()),
+                    device.getDeviceDescriptor());
         }
+    }
+
+    /** Helper to populate the business logic service request with info about the device. */
+    private String buildRequestString(ITestDevice device, IBuildInfo buildInfo)
+            throws DeviceNotAvailableException {
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(buildInfo);
+        String baseUrl = mUrl.replace(SUITE_PLACEHOLDER, getSuiteName());
+        MultiMap<String, String> paramMap = new MultiMap<>();
+        paramMap.put("key", mApiKey);
+        paramMap.put("suite_version", buildHelper.getSuiteVersion());
+        paramMap.put("oem", PropertyUtil.getManufacturer(device));
+        for (String feature : getBusinessLogicFeatures(device, buildInfo)) {
+            paramMap.put("features", feature);
+        }
+        for (String property : getBusinessLogicProperties(device, buildInfo)) {
+            paramMap.put("properties", property);
+        }
+        IHttpHelper helper = new HttpHelper();
+        return helper.buildUrl(baseUrl, paramMap);
+    }
+
+    /* Get device properties list, with element format "<property_name>:<property_value>" */
+    private List<String> getBusinessLogicProperties(ITestDevice device, IBuildInfo buildInfo)
+            throws DeviceNotAvailableException {
+        List<String> properties = new ArrayList<>();
+        Map<String, String> clientIds = PropertyUtil.getClientIds(device);
+        for (Map.Entry<String, String> id : clientIds.entrySet()) {
+            // add client IDs to the list of properties
+            properties.add(String.format("%s:%s", id.getKey(), id.getValue()));
+        }
+
+        try {
+            List<String> propertyNames = DynamicConfigFileReader.getValuesFromConfig(buildInfo,
+                    getSuiteName(), DYNAMIC_CONFIG_PROPERTIES_KEY);
+            for (String name : propertyNames) {
+                // Use String.valueOf in case property is undefined for the device ("null")
+                String value = String.valueOf(device.getProperty(name));
+                properties.add(String.format("%s:%s", name, value));
+            }
+        } catch (XmlPullParserException | IOException e) {
+            CLog.e("Failed to pull business logic properties from dynamic config");
+        }
+        return properties;
+    }
+
+    /* Get device features list */
+    private List<String> getBusinessLogicFeatures(ITestDevice device, IBuildInfo buildInfo)
+            throws DeviceNotAvailableException {
+        try {
+            List<String> dynamicConfigFeatures = DynamicConfigFileReader.getValuesFromConfig(
+                    buildInfo, getSuiteName(), DYNAMIC_CONFIG_FEATURES_KEY);
+            Set<String> deviceFeatures = FeatureUtil.getAllFeatures(device);
+            dynamicConfigFeatures.retainAll(deviceFeatures);
+            return dynamicConfigFeatures;
+        } catch (XmlPullParserException | IOException e) {
+            CLog.e("Failed to pull business logic features from dynamic config");
+            return new ArrayList<>();
+        }
+    }
+
+    private String getSuiteName() {
+        return TestSuiteInfo.getInstance().getName().toLowerCase();
     }
 
     /**
