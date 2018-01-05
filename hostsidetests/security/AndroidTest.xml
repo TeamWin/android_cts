@@ -75,6 +75,7 @@
         <!-- Bulletin 2017-04 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
 
+        <option name="push" value="CVE-2017-0545->/data/local/tmp/CVE-2017-0545" />
         <option name="push" value="Bug-32551280->/data/local/tmp/Bug-32551280" />
 
         <!--__________________-->
