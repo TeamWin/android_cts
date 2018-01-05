@@ -592,17 +592,19 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     public void testValidPropertyContexts() throws Exception {
 
         /* retrieve the checkfc executable from jar */
-        checkFc = copyResourceToTempFile("/checkfc");
-        checkFc.setExecutable(true);
+        File propertyInfoChecker = copyResourceToTempFile("/property_info_checker");
+        propertyInfoChecker.setExecutable(true);
 
         /* obtain property_contexts file from running device */
         devicePcFile = File.createTempFile("property_contexts", ".tmp");
         devicePcFile.deleteOnExit();
-        mDevice.pullFile("/property_contexts", devicePcFile);
+        // plat_property_contexts may be either in /system/etc/sepolicy or in /
+        if (!mDevice.pullFile("/system/etc/selinux/plat_property_contexts", devicePcFile)) {
+            mDevice.pullFile("/plat_property_contexts", devicePcFile);
+        }
 
-        /* run checkfc -p on property_contexts */
-        ProcessBuilder pb = new ProcessBuilder(checkFc.getAbsolutePath(),
-                "-p", devicePolicyFile.getAbsolutePath(),
+        /* run property_info_checker on property_contexts */
+        ProcessBuilder pb = new ProcessBuilder(propertyInfoChecker.getAbsolutePath(),
                 devicePcFile.getAbsolutePath());
         pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
         pb.redirectErrorStream(true);
