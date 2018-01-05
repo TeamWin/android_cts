@@ -53,12 +53,10 @@ public class DirectBootHostTest extends BaseHostJUnit4Test {
     private static final String MODE_EMULATED = "emulated";
     private static final String MODE_NONE = "none";
 
-    private static final String FEATURE_DEVICE_ADMIN = "feature:android.software.device_admin\n";
-    private static final String FEATURE_AUTOMOTIVE = "feature:android.hardware.type.automotive\n";
+    private static final String FEATURE_DEVICE_ADMIN = "feature:android.software.device_admin";
+    private static final String FEATURE_AUTOMOTIVE = "feature:android.hardware.type.automotive";
 
     private static final long SHUTDOWN_TIME_MS = 30 * 1000;
-
-    private String mFeatureList = null;
 
     private int[] mUsers;
 
@@ -230,20 +228,12 @@ public class DirectBootHostTest extends BaseHostJUnit4Test {
         return "1".equals(output);
     }
 
-    private boolean hasSystemFeature(final String feature) throws Exception {
-        if (mFeatureList == null) {
-            mFeatureList = getDevice().executeShellCommand("pm list features");
-        }
-
-        return mFeatureList.contains(feature);
-    }
-
     private boolean isSupportedDevice() throws Exception {
-        return hasSystemFeature(FEATURE_DEVICE_ADMIN);
+        return getDevice().hasFeature(FEATURE_DEVICE_ADMIN);
     }
 
     private boolean isAutomotiveDevice() throws Exception {
-        return hasSystemFeature(FEATURE_AUTOMOTIVE);
+        return getDevice().hasFeature(FEATURE_AUTOMOTIVE);
     }
 
     private void waitForBootCompleted() throws Exception {
