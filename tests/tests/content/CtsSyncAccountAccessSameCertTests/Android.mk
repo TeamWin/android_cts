@@ -26,15 +26,9 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ub-uiautomator \
     compatibility-device-util
 
-LOCAL_SRC_FILES := $(call all-java-files-under, src) \
-  ../CtsSyncAccountAccessSameCertTests/src/com/android/cts/content/StubActivity.java \
-  ../CtsSyncAccountAccessSameCertTests/src/com/android/cts/content/SyncAdapter.java \
-  ../CtsSyncAccountAccessSameCertTests/src/com/android/cts/content/SyncService.java \
-  ../CtsSyncAccountAccessSameCertTests/src/com/android/cts/content/FlakyTestRule.java
+LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_PACKAGE_NAME := CtsSyncAccountAccessOtherCertTestCases
-
-LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/cts-testkey2
+LOCAL_PACKAGE_NAME := CtsSyncAccountAccessSameCertTestCases
 
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
@@ -42,4 +36,4 @@ LOCAL_PROGUARD_ENABLED := disabled
 
 LOCAL_DEX_PREOPT := false
 
-include $(BUILD_CTS_SUPPORT_PACKAGE)
+include $(BUILD_CTS_PACKAGE)
