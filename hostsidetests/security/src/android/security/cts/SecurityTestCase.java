@@ -46,8 +46,9 @@ public class SecurityTestCase extends DeviceTestCase {
      * Allows a CTS test to pass if called after a planned reboot.
      */
     public void updateKernelStartTime() throws Exception {
+        String uptime = getDevice().executeShellCommand("cat /proc/uptime");
         kernelStartTime = System.currentTimeMillis()/1000 -
-            Integer.parseInt(getDevice().executeShellCommand("cut -f1 -d. /proc/uptime").trim());
+            Integer.parseInt(uptime.substring(0, uptime.indexOf('.')));
     }
 
     /**
