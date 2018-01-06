@@ -22,6 +22,7 @@ import com.android.tradefed.config.Option;
 import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.targetprep.BuildError;
 import com.android.tradefed.targetprep.ITargetCleaner;
 import com.android.tradefed.targetprep.TargetSetupError;
@@ -59,6 +60,10 @@ public class BusinessLogicPreparer implements ITargetCleaner {
             "target after test completion.")
     private boolean mCleanup = true;
 
+    @Option(name = "ignore-business-logic-failure", description = "Whether to proceed with the " +
+            "suite invocation if retrieval of business logic fails.")
+    private boolean mIgnoreFailure = false;
+
     private String mDeviceFilePushed;
     private String mHostFilePushed;
 
@@ -77,9 +82,18 @@ public class BusinessLogicPreparer implements ITargetCleaner {
             URL request = new URL(requestString);
             businessLogicString = StreamUtil.getStringFromStream(request.openStream());
         } catch (IOException e) {
-            throw new TargetSetupError(String.format(
-                    "Cannot connect to business logic service for suite %s",
-                    TestSuiteInfo.getInstance().getName()), e, device.getDeviceDescriptor());
+            if (mIgnoreFailure) {
+                CLog.e("Failed to connect to business logic service.\nProceeding with test"
+                        + "invocation, tests depending on the remote configuration will fail.\n");
+                return;
+            } else {
+                throw new TargetSetupError(String.format(
+                    "Cannot connect to business logic service for suite %s.\nIf this problem "
+                    + "persists, re-invoking with option '--ignore-business-logic-failure' will "
+                    + "cause tests to execute anyways (though tests depending on the remote "
+                    + "configuration will fail).", TestSuiteInfo.getInstance().getName()), e,
+                    device.getDeviceDescriptor());
+            }
         }
         // Push business logic string to host file
         try {
