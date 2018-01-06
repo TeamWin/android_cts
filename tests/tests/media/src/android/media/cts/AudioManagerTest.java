@@ -36,6 +36,7 @@ import static android.media.AudioManager.VIBRATE_TYPE_NOTIFICATION;
 import static android.media.AudioManager.VIBRATE_TYPE_RINGER;
 import static android.provider.Settings.System.SOUND_EFFECTS_ENABLED;
 
+import android.app.ActivityManager;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.res.Resources;
@@ -65,9 +66,15 @@ public class AudioManagerTest extends InstrumentationTestCase {
     private boolean mIsTelevision;
     private boolean mIsSingleVolume;
     private boolean mSkipRingerTests;
+    // From N onwards, ringer mode adjustments that toggle DND are not allowed unless
+    // package has DND access. Many tests in this package toggle DND access in order
+    // to get device out of the DND state for the test to proceed correctly.
+    // But DND access is disabled completely on low ram devices,
+    // so completely skip those tests here.
+    // These tests are migrated to CTS verifier tests to ensure test coverage.
+    private boolean mSupportNotificationPolicyAccess;
     private Context mContext;
     private final static int ASYNC_TIMING_TOLERANCE_MS = 50;
-
     private int mOriginalRingerMode;
     private Map<Integer, Integer> mOriginalStreamVolumes = new HashMap<>();
 
@@ -89,6 +96,8 @@ public class AudioManagerTest extends InstrumentationTestCase {
         mIsSingleVolume = mContext.getResources().getBoolean(
                 Resources.getSystem().getIdentifier("config_single_volume", "bool", "android"));
         mSkipRingerTests = mUseFixedVolume || mIsTelevision || mIsSingleVolume;
+        ActivityManager am = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+        mSupportNotificationPolicyAccess = !am.isLowRamDevice();
 
         // Store the original volumes that that they can be recovered in tearDown().
         final int[] streamTypes = {
@@ -109,6 +118,9 @@ public class AudioManagerTest extends InstrumentationTestCase {
 
     @Override
     protected void tearDown() throws Exception {
+        if (!mSupportNotificationPolicyAccess) {
+            return;
+        }
         try {
             Utils.toggleNotificationPolicyAccess(
                     mContext.getPackageName(), getInstrumentation(), true);
@@ -133,15 +145,6 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     public void testSoundEffects() throws Exception {
-        try {
-            Utils.toggleNotificationPolicyAccess(
-                    mContext.getPackageName(), getInstrumentation(), true);
-            // set relative setting
-            mAudioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
-        } finally {
-            Utils.toggleNotificationPolicyAccess(
-                    mContext.getPackageName(), getInstrumentation(), false);
-        }
         Settings.System.putInt(mContext.getContentResolver(), SOUND_EFFECTS_ENABLED, 1);
 
         // should hear sound after loadSoundEffects() called.
@@ -239,7 +242,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     public void testVibrateNotification() throws Exception {
-        if (mUseFixedVolume || !mHasVibrator) {
+        if (mUseFixedVolume || !mHasVibrator || !mSupportNotificationPolicyAccess) {
             return;
         }
         Utils.toggleNotificationPolicyAccess(
@@ -302,7 +305,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     public void testVibrateRinger() throws Exception {
-        if (mUseFixedVolume || !mHasVibrator) {
+        if (mUseFixedVolume || !mHasVibrator || !mSupportNotificationPolicyAccess) {
             return;
         }
         Utils.toggleNotificationPolicyAccess(
@@ -366,6 +369,9 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     public void testAccessRingMode() throws Exception {
+        if (!mSupportNotificationPolicyAccess) {
+            return;
+        }
         Utils.toggleNotificationPolicyAccess(
                 mContext.getPackageName(), getInstrumentation(), true);
         mAudioManager.setRingerMode(RINGER_MODE_NORMAL);
@@ -390,7 +396,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     public void testSetRingerModePolicyAccess() throws Exception {
-        if (mSkipRingerTests) {
+        if (mSkipRingerTests || !mSupportNotificationPolicyAccess) {
             return;
         }
         // Apps without policy access cannot change silent -> normal or silent -> vibrate.
@@ -453,7 +459,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     public void testVolumeDndAffectedStream() throws Exception {
-        if (mHasVibrator || mSkipRingerTests) {
+        if (mHasVibrator || mSkipRingerTests || !mSupportNotificationPolicyAccess) {
             return;
         }
         Utils.toggleNotificationPolicyAccess(
@@ -493,6 +499,9 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     public void testVolume() throws Exception {
+        if (!mSupportNotificationPolicyAccess) {
+            return;
+        }
         Utils.toggleNotificationPolicyAccess(
                 mContext.getPackageName(), getInstrumentation(), true);
         int volume, volumeDelta;
@@ -708,7 +717,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     public void testMuteDndAffectedStreams() throws Exception {
-        if (mSkipRingerTests) {
+        if (mSkipRingerTests || !mSupportNotificationPolicyAccess) {
             return;
         }
         int[] streams = { AudioManager.STREAM_RING };
@@ -782,7 +791,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     public void testMuteDndUnaffectedStreams() throws Exception {
-        if (mSkipRingerTests) {
+        if (mSkipRingerTests || !mSupportNotificationPolicyAccess) {
             return;
         }
         int[] streams = {
@@ -868,7 +877,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     public void testAdjustVolumeInTotalSilenceMode() throws Exception {
-        if (mSkipRingerTests) {
+        if (mSkipRingerTests || !mSupportNotificationPolicyAccess) {
             return;
         }
         try {
@@ -888,7 +897,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     public void testAdjustVolumeInAlarmsOnlyMode() throws Exception {
-        if (mSkipRingerTests) {
+        if (mSkipRingerTests || !mSupportNotificationPolicyAccess) {
             return;
         }
         try {
@@ -911,7 +920,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     public void testSetStreamVolumeInTotalSilenceMode() throws Exception {
-        if (mSkipRingerTests) {
+        if (mSkipRingerTests || !mSupportNotificationPolicyAccess) {
             return;
         }
         try {
@@ -933,7 +942,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     public void testSetStreamVolumeInAlarmsOnlyMode() throws Exception {
-        if (mSkipRingerTests) {
+        if (mSkipRingerTests || !mSupportNotificationPolicyAccess) {
             return;
         }
         try {
