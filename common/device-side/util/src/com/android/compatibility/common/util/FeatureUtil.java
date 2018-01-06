@@ -17,6 +17,7 @@
 package com.android.compatibility.common.util;
 
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.support.test.InstrumentationRegistry;
 
 /**
@@ -25,6 +26,7 @@ import android.support.test.InstrumentationRegistry;
 public class FeatureUtil {
 
     public static final String LEANBACK_FEATURE = "android.software.leanback";
+    public static final String LOW_RAM_FEATURE = "android.hardware.ram.low";
     public static final String TV_FEATURE = "android.hardware.type.television";
     public static final String WATCH_FEATURE = "android.hardware.type.watch";
 
@@ -64,6 +66,15 @@ public class FeatureUtil {
     /** Returns true if the device has feature WATCH_FEATURE */
     public static boolean isWatch() {
         return hasSystemFeature(WATCH_FEATURE);
+    }
+
+    /** Returns true if the device is a low ram device:
+     *  1. API level &gt;= O
+     *  2. device has feature LOW_RAM_FEATURE
+     */
+    public static boolean isLowRam() {
+        return ApiLevelUtil.isAtLeast(Build.VERSION_CODES.O) &&
+                hasSystemFeature(LOW_RAM_FEATURE);
     }
 
     private static PackageManager getPackageManager() {
