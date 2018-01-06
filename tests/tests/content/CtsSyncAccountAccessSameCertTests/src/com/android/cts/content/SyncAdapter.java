@@ -16,6 +16,9 @@
 
 package com.android.cts.content;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import android.accounts.Account;
 import android.content.AbstractThreadedSyncAdapter;
 import android.content.ContentProviderClient;
@@ -25,31 +28,33 @@ import android.os.Bundle;
 
 public class SyncAdapter extends AbstractThreadedSyncAdapter {
     private static final Object sLock = new Object();
+    private static AbstractThreadedSyncAdapter sDelegate;
 
-    private static OnPerformSyncDelegate sOnPerformSyncDelegate;
+    static AbstractThreadedSyncAdapter setNewDelegate() {
+        AbstractThreadedSyncAdapter delegate = mock(AbstractThreadedSyncAdapter.class);
 
-    public interface OnPerformSyncDelegate {
-        void onPerformSync(Account account, Bundle extras, String authority,
-                ContentProviderClient provider, SyncResult syncResult);
-    }
-
-    public static void setOnPerformSyncDelegate(OnPerformSyncDelegate delegate) {
         synchronized (sLock) {
-            sOnPerformSyncDelegate = delegate;
+            sDelegate = delegate;
         }
+
+        return delegate;
     }
 
     public SyncAdapter(Context context, boolean autoInitialize) {
         super(context, autoInitialize);
     }
 
+    private AbstractThreadedSyncAdapter getCopyOfDelegate() {
+        synchronized (sLock) {
+            return sDelegate;
+        }
+    }
+
     @Override
     public void onPerformSync(Account account, Bundle extras, String authority,
             ContentProviderClient provider, SyncResult syncResult) {
-        OnPerformSyncDelegate delegate;
-        synchronized (sLock) {
-            delegate = sOnPerformSyncDelegate;
-        }
+        AbstractThreadedSyncAdapter delegate = getCopyOfDelegate();
+
         if (delegate != null) {
             delegate.onPerformSync(account, extras, authority, provider, syncResult);
         }
