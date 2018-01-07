@@ -82,35 +82,37 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
         testChangeFontScale(FONT_SCALE_NO_RELAUNCH_ACTIVITY_NAME, false /* relaunch */);
     }
 
-    private void testRotation(
-            String activityName, int rotationStep, int numRelaunch, int numConfigChange)
-                    throws Exception {
+    private void testRotation(String activityName, int rotationStep, int numRelaunch,
+            int numConfigChange) throws Exception {
         launchActivity(activityName);
 
         final String[] waitForActivitiesVisible = new String[] {activityName};
         mAmWmState.computeState(waitForActivitiesVisible);
 
         final int initialRotation = 4 - rotationStep;
-        setDeviceRotation(initialRotation);
-        mAmWmState.computeState(waitForActivitiesVisible);
-        final int actualStackId = mAmWmState.getAmState().getTaskByActivityName(
-                activityName).mStackId;
-        final int displayId = mAmWmState.getAmState().getStackById(actualStackId).mDisplayId;
-        final int newDeviceRotation = getDeviceRotation(displayId);
-        if (newDeviceRotation == INVALID_DEVICE_ROTATION) {
-            logE("Got an invalid device rotation value. "
-                    + "Continuing the test despite of that, but it is likely to fail.");
-        } else if (newDeviceRotation != initialRotation) {
-            log("This device doesn't support user rotation "
-                    + "mode. Not continuing the rotation checks.");
-            return;
-        }
-
-        for (int rotation = 0; rotation < 4; rotation += rotationStep) {
-            final String logSeparator = clearLogcat();
-            setDeviceRotation(rotation);
+        try (final RotationSession rotationSession = new RotationSession()) {
+            rotationSession.set(initialRotation);
             mAmWmState.computeState(waitForActivitiesVisible);
-            assertRelaunchOrConfigChanged(activityName, numRelaunch, numConfigChange, logSeparator);
+            final int actualStackId = mAmWmState.getAmState().getTaskByActivityName(
+                    activityName).mStackId;
+            final int displayId = mAmWmState.getAmState().getStackById(actualStackId).mDisplayId;
+            final int newDeviceRotation = getDeviceRotation(displayId);
+            if (newDeviceRotation == INVALID_DEVICE_ROTATION) {
+                logE("Got an invalid device rotation value. "
+                        + "Continuing the test despite of that, but it is likely to fail.");
+            } else if (newDeviceRotation != initialRotation) {
+                log("This device doesn't support user rotation "
+                        + "mode. Not continuing the rotation checks.");
+                return;
+            }
+
+            for (int rotation = 0; rotation < 4; rotation += rotationStep) {
+                final String logSeparator = clearLogcat();
+                rotationSession.set(rotation);
+                mAmWmState.computeState(waitForActivitiesVisible);
+                assertRelaunchOrConfigChanged(activityName, numRelaunch, numConfigChange,
+                        logSeparator);
+            }
         }
     }
 

@@ -18,6 +18,8 @@ package android.server.am;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
 import static android.server.am.StateLogger.log;
+import static android.view.Surface.ROTATION_0;
+import static android.view.Surface.ROTATION_180;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -71,21 +73,23 @@ public class ActivityAndWindowManagerOverrideConfigTests extends ActivityManager
 
         launchActivity(TEST_ACTIVITY_NAME, WINDOWING_MODE_FREEFORM);
 
-        setDeviceRotation(0);
-        String logSeparator = clearLogcat();
-        resizeActivityTask(TEST_ACTIVITY_NAME, 0, 0, 100, 100);
-        ConfigurationChangeObserver c = new ConfigurationChangeObserver();
-        final boolean reportedSizeAfterResize = c.findConfigurationChange(TEST_ACTIVITY_NAME,
-                logSeparator);
-        assertTrue("Expected to observe configuration change when resizing",
-                reportedSizeAfterResize);
+        try (final RotationSession rotationSession = new RotationSession()) {
+            rotationSession.set(ROTATION_0);
+            String logSeparator = clearLogcat();
+            resizeActivityTask(TEST_ACTIVITY_NAME, 0, 0, 100, 100);
+            ConfigurationChangeObserver c = new ConfigurationChangeObserver();
+            final boolean reportedSizeAfterResize = c.findConfigurationChange(TEST_ACTIVITY_NAME,
+                    logSeparator);
+            assertTrue("Expected to observe configuration change when resizing",
+                    reportedSizeAfterResize);
 
-        logSeparator = clearLogcat();
-        setDeviceRotation(2);
-        final boolean reportedSizeAfterRotation = c.findConfigurationChange(TEST_ACTIVITY_NAME,
-                logSeparator);
-        assertFalse("Not expected to observe configuration change after flip rotation",
-                reportedSizeAfterRotation);
+            logSeparator = clearLogcat();
+            rotationSession.set(ROTATION_180);
+            final boolean reportedSizeAfterRotation = c.findConfigurationChange(TEST_ACTIVITY_NAME,
+                    logSeparator);
+            assertFalse("Not expected to observe configuration change after flip rotation",
+                    reportedSizeAfterRotation);
+        }
     }
 }
 

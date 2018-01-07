@@ -24,6 +24,10 @@ import static android.server.am.ActivityAndWindowManagersState.dpToPx;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logE;
+import static android.view.Surface.ROTATION_0;
+import static android.view.Surface.ROTATION_180;
+import static android.view.Surface.ROTATION_270;
+import static android.view.Surface.ROTATION_90;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -119,14 +123,17 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     public void testConfigurationUpdatesWhenRotatingWhileFullscreen() throws Exception {
         assumeTrue("Skipping test: no rotation support", supportsRotation());
 
-        setDeviceRotation(0);
-        final String logSeparator = clearLogcat();
-        launchActivity(RESIZEABLE_ACTIVITY_NAME,
-                WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
-        final ReportedSizes initialSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
-                logSeparator);
+        try (final RotationSession rotationSession = new RotationSession()) {
+            rotationSession.set(ROTATION_0);
 
-        rotateAndCheckSizes(initialSizes);
+            final String logSeparator = clearLogcat();
+            launchActivity(RESIZEABLE_ACTIVITY_NAME,
+                    WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
+            final ReportedSizes initialSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
+                    logSeparator);
+
+            rotateAndCheckSizes(rotationSession, initialSizes);
+        }
     }
 
     /**
@@ -138,17 +145,20 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     public void testConfigurationUpdatesWhenRotatingWhileDocked() throws Exception {
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
-        setDeviceRotation(0);
-        final String logSeparator = clearLogcat();
-        // Launch our own activity to side in case Recents (or other activity to side) doesn't
-        // support rotation.
-        launchActivitiesInSplitScreen(LAUNCHING_ACTIVITY, TEST_ACTIVITY_NAME);
-        // Launch target activity in docked stack.
-        getLaunchActivityBuilder().setTargetActivityName(RESIZEABLE_ACTIVITY_NAME).execute();
-        final ReportedSizes initialSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
-                logSeparator);
+        try (final RotationSession rotationSession = new RotationSession()) {
+            rotationSession.set(ROTATION_0);
 
-        rotateAndCheckSizes(initialSizes);
+            final String logSeparator = clearLogcat();
+            // Launch our own activity to side in case Recents (or other activity to side) doesn't
+            // support rotation.
+            launchActivitiesInSplitScreen(LAUNCHING_ACTIVITY, TEST_ACTIVITY_NAME);
+            // Launch target activity in docked stack.
+            getLaunchActivityBuilder().setTargetActivityName(RESIZEABLE_ACTIVITY_NAME).execute();
+            final ReportedSizes initialSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
+                    logSeparator);
+
+            rotateAndCheckSizes(rotationSession, initialSizes);
+        }
     }
 
     /**
@@ -160,23 +170,27 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     public void testConfigurationUpdatesWhenRotatingToSideFromDocked() throws Exception {
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
-        setDeviceRotation(0);
+        try (final RotationSession rotationSession = new RotationSession()) {
+            rotationSession.set(ROTATION_0);
 
-        final String logSeparator = clearLogcat();
-        launchActivitiesInSplitScreen(LAUNCHING_ACTIVITY, RESIZEABLE_ACTIVITY_NAME);
-        final ReportedSizes initialSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
-                logSeparator);
+            final String logSeparator = clearLogcat();
+            launchActivitiesInSplitScreen(LAUNCHING_ACTIVITY, RESIZEABLE_ACTIVITY_NAME);
+            final ReportedSizes initialSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
+                    logSeparator);
 
-        rotateAndCheckSizes(initialSizes);
+            rotateAndCheckSizes(rotationSession, initialSizes);
+        }
     }
 
-    private void rotateAndCheckSizes(ReportedSizes prevSizes) throws Exception {
-        for (int rotation = 3; rotation >= 0; --rotation) {
+    private void rotateAndCheckSizes(RotationSession rotationSession, ReportedSizes prevSizes)
+            throws Exception {
+        final int[] rotations = { ROTATION_270, ROTATION_180, ROTATION_90, ROTATION_0 };
+        for (final int rotation : rotations) {
             final String logSeparator = clearLogcat();
             final int actualStackId = mAmWmState.getAmState().getTaskByActivityName(
                     RESIZEABLE_ACTIVITY_NAME).mStackId;
             final int displayId = mAmWmState.getAmState().getStackById(actualStackId).mDisplayId;
-            setDeviceRotation(rotation);
+            rotationSession.set(rotation);
             final int newDeviceRotation = getDeviceRotation(displayId);
             if (newDeviceRotation == INVALID_DEVICE_ROTATION) {
                 logE("Got an invalid device rotation value. "
@@ -356,14 +370,16 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
 
     @Test
     public void testNonFullscreenActivityPermitted() throws Exception {
-        setDeviceRotation(0);
+        try (final RotationSession rotationSession = new RotationSession()) {
+            rotationSession.set(ROTATION_0);
 
-        launchActivity(SDK26_TRANSLUCENT_LANDSCAPE_ACTIVITY);
-        mAmWmState.assertResumedActivity(
-                "target SDK <= 26 non-fullscreen activity should be allowed to launch",
-                SDK26_TRANSLUCENT_LANDSCAPE_ACTIVITY);
-        assertEquals("non-fullscreen activity requested landscape orientation",
-                0 /* landscape */, mAmWmState.getWmState().getLastOrientation());
+            launchActivity(SDK26_TRANSLUCENT_LANDSCAPE_ACTIVITY);
+            mAmWmState.assertResumedActivity(
+                    "target SDK <= 26 non-fullscreen activity should be allowed to launch",
+                    SDK26_TRANSLUCENT_LANDSCAPE_ACTIVITY);
+            assertEquals("non-fullscreen activity requested landscape orientation",
+                    0 /* landscape */, mAmWmState.getWmState().getLastOrientation());
+        }
     }
 
     /**
@@ -428,11 +444,12 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     @Presubmit
     @Test
     public void testSplitscreenPortraitAppOrientationRequests() throws Exception {
-        if (!supportsSplitScreenMultiWindow()) {
-          log("Skipping test: no multi-window support");
-          return;
+        assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
+
+        try (final RotationSession rotationSession = new RotationSession()) {
+            requestOrientationInSplitScreen(rotationSession,
+                    ROTATION_90 /* portrait */, LANDSCAPE_ACTIVITY_NAME);
         }
-        requestOrientationInSplitScreen(1 /* portrait */, LANDSCAPE_ACTIVITY_NAME);
     }
 
     /**
@@ -441,23 +458,24 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     @Presubmit
     @Test
     public void testSplitscreenLandscapeAppOrientationRequests() throws Exception {
-        if (!supportsSplitScreenMultiWindow()) {
-          log("Skipping test: no multi-window support");
-          return;
+        assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
+
+        try (final RotationSession rotationSession = new RotationSession()) {
+            requestOrientationInSplitScreen(rotationSession,
+                    ROTATION_0 /* landscape */, PORTRAIT_ACTIVITY_NAME);
         }
-        requestOrientationInSplitScreen(0 /* landscape */, PORTRAIT_ACTIVITY_NAME);
     }
 
     /**
      * Rotate the device and launch specified activity in split-screen, checking if orientation
      * didn't change.
      */
-    private void requestOrientationInSplitScreen(int orientation, String activity)
-            throws Exception {
+    private void requestOrientationInSplitScreen(RotationSession rotationSession, int orientation,
+            String activity) throws Exception {
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
         // Set initial orientation.
-        setDeviceRotation(orientation);
+        rotationSession.set(orientation);
 
         // Launch activities that request orientations and check that device doesn't rotate.
         launchActivitiesInSplitScreen(

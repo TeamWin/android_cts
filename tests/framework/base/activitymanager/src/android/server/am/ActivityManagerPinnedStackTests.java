@@ -196,22 +196,24 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // Launch a PIP activity
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
 
-        setDeviceRotation(ROTATION_0);
-        WindowManagerState wmState = mAmWmState.getWmState();
-        wmState.computeState();
-        Rect defaultPipBounds = wmState.getDefaultPinnedStackBounds();
-        Rect stableBounds = wmState.getStableBounds();
-        assertTrue(defaultPipBounds.width() > 0 && defaultPipBounds.height() > 0);
-        assertTrue(stableBounds.contains(defaultPipBounds));
+        try (final RotationSession rotationSession = new RotationSession()) {
+            rotationSession.set(ROTATION_0);
 
-        setDeviceRotation(ROTATION_90);
-        wmState = mAmWmState.getWmState();
-        wmState.computeState();
-        defaultPipBounds = wmState.getDefaultPinnedStackBounds();
-        stableBounds = wmState.getStableBounds();
-        assertTrue(defaultPipBounds.width() > 0 && defaultPipBounds.height() > 0);
-        assertTrue(stableBounds.contains(defaultPipBounds));
-        setDeviceRotation(ROTATION_0);
+            WindowManagerState wmState = mAmWmState.getWmState();
+            wmState.computeState();
+            Rect defaultPipBounds = wmState.getDefaultPinnedStackBounds();
+            Rect stableBounds = wmState.getStableBounds();
+            assertTrue(defaultPipBounds.width() > 0 && defaultPipBounds.height() > 0);
+            assertTrue(stableBounds.contains(defaultPipBounds));
+
+            rotationSession.set(ROTATION_90);
+            wmState = mAmWmState.getWmState();
+            wmState.computeState();
+            defaultPipBounds = wmState.getDefaultPinnedStackBounds();
+            stableBounds = wmState.getStableBounds();
+            assertTrue(defaultPipBounds.width() > 0 && defaultPipBounds.height() > 0);
+            assertTrue(stableBounds.contains(defaultPipBounds));
+        }
     }
 
     @Test
@@ -221,22 +223,23 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // Launch a PIP activity
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
 
-        setDeviceRotation(ROTATION_0);
-        WindowManagerState wmState = mAmWmState.getWmState();
-        wmState.computeState();
-        Rect pipMovementBounds = wmState.getPinnedStackMomentBounds();
-        Rect stableBounds = wmState.getStableBounds();
-        assertTrue(pipMovementBounds.width() > 0 && pipMovementBounds.height() > 0);
-        assertTrue(stableBounds.contains(pipMovementBounds));
+        try (final RotationSession rotationSession = new RotationSession()) {
+            rotationSession.set(ROTATION_0);
+            WindowManagerState wmState = mAmWmState.getWmState();
+            wmState.computeState();
+            Rect pipMovementBounds = wmState.getPinnedStackMomentBounds();
+            Rect stableBounds = wmState.getStableBounds();
+            assertTrue(pipMovementBounds.width() > 0 && pipMovementBounds.height() > 0);
+            assertTrue(stableBounds.contains(pipMovementBounds));
 
-        setDeviceRotation(ROTATION_90);
-        wmState = mAmWmState.getWmState();
-        wmState.computeState();
-        pipMovementBounds = wmState.getPinnedStackMomentBounds();
-        stableBounds = wmState.getStableBounds();
-        assertTrue(pipMovementBounds.width() > 0 && pipMovementBounds.height() > 0);
-        assertTrue(stableBounds.contains(pipMovementBounds));
-        setDeviceRotation(ROTATION_0);
+            rotationSession.set(ROTATION_90);
+            wmState = mAmWmState.getWmState();
+            wmState.computeState();
+            pipMovementBounds = wmState.getPinnedStackMomentBounds();
+            stableBounds = wmState.getStableBounds();
+            assertTrue(pipMovementBounds.width() > 0 && pipMovementBounds.height() > 0);
+            assertTrue(stableBounds.contains(pipMovementBounds));
+        }
     }
 
     @Test
@@ -282,15 +285,16 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         mAmWmState.waitForValidState(PIP_ACTIVITY, WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
 
         // Ensure that the PIP stack is fully visible in each orientation
-        setDeviceRotation(ROTATION_0);
-        assertPinnedStackActivityIsInDisplayBounds(PIP_ACTIVITY);
-        setDeviceRotation(ROTATION_90);
-        assertPinnedStackActivityIsInDisplayBounds(PIP_ACTIVITY);
-        setDeviceRotation(ROTATION_180);
-        assertPinnedStackActivityIsInDisplayBounds(PIP_ACTIVITY);
-        setDeviceRotation(ROTATION_270);
-        assertPinnedStackActivityIsInDisplayBounds(PIP_ACTIVITY);
-        setDeviceRotation(ROTATION_0);
+        try (final RotationSession rotationSession = new RotationSession()) {
+            rotationSession.set(ROTATION_0);
+            assertPinnedStackActivityIsInDisplayBounds(PIP_ACTIVITY);
+            rotationSession.set(ROTATION_90);
+            assertPinnedStackActivityIsInDisplayBounds(PIP_ACTIVITY);
+            rotationSession.set(ROTATION_180);
+            assertPinnedStackActivityIsInDisplayBounds(PIP_ACTIVITY);
+            rotationSession.set(ROTATION_270);
+            assertPinnedStackActivityIsInDisplayBounds(PIP_ACTIVITY);
+        }
     }
 
     @Test
