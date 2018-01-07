@@ -334,6 +334,7 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                 expectKeyAvailable(c, CameraCharacteristics.FLASH_INFO_AVAILABLE                            , OPT      ,   BC                   );
                 expectKeyAvailable(c, CameraCharacteristics.HOT_PIXEL_AVAILABLE_HOT_PIXEL_MODES             , OPT      ,   RAW                  );
                 expectKeyAvailable(c, CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL                   , OPT      ,   BC                   );
+                expectKeyAvailable(c, CameraCharacteristics.INFO_VERSION                                    , OPT      ,   NONE                 );
                 expectKeyAvailable(c, CameraCharacteristics.JPEG_AVAILABLE_THUMBNAIL_SIZES                  , OPT      ,   BC                   );
                 expectKeyAvailable(c, CameraCharacteristics.LENS_FACING                                     , OPT      ,   BC                   );
                 expectKeyAvailable(c, CameraCharacteristics.LENS_INFO_AVAILABLE_APERTURES                   , FULL     ,   MANUAL_SENSOR        );
@@ -406,6 +407,19 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                 expectKeyAvailable(c,
                         CameraCharacteristics.CONTROL_POST_RAW_SENSITIVITY_BOOST_RANGE, OPT, BC);
             }
+
+            // Verify version is a short text string.
+            if (allKeys.contains(CameraCharacteristics.INFO_VERSION)) {
+                final String TEXT_REGEX = "[\\p{Alnum}\\p{Punct}\\p{Space}]*";
+                final int MAX_VERSION_LENGTH = 256;
+
+                String version = c.get(CameraCharacteristics.INFO_VERSION);
+                mCollector.expectTrue("Version contains non-text characters: " + version,
+                        version.matches(TEXT_REGEX));
+                mCollector.expectLessOrEqual("Version too long: " + version, MAX_VERSION_LENGTH,
+                        version.length());
+            }
+
             counter++;
         }
     }

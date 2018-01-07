@@ -16,6 +16,8 @@
 
 package com.android.server.cts.device.statsd;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
@@ -25,6 +27,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CameraCharacteristics;
 import android.location.Location;
@@ -37,6 +40,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.util.Log;
 
 import org.junit.Test;
@@ -124,6 +128,69 @@ public class AtomTests {
     }
 
     @Test
+    public void testCameraState() throws Exception {
+        Context context = InstrumentationRegistry.getContext();
+        CameraManager cam = context.getSystemService(CameraManager.class);
+        String[] cameraIds = cam.getCameraIdList();
+        if (cameraIds.length == 0) {
+            Log.e(TAG, "No camera found on device");
+            return;
+        }
+
+        CountDownLatch latch = new CountDownLatch(1);
+        final CameraDevice.StateCallback cb = new CameraDevice.StateCallback() {
+            @Override
+            public void onOpened(CameraDevice cd) {
+                Log.i(TAG, "CameraDevice " + cd.getId() + " opened");
+                sleep(2_000);
+                cd.close();
+            }
+            @Override
+            public void onClosed(CameraDevice cd) {
+                latch.countDown();
+                Log.i(TAG, "CameraDevice " + cd.getId() + " closed");
+            }
+            @Override
+            public void onDisconnected(CameraDevice cd) {
+                Log.w(TAG, "CameraDevice  " + cd.getId() + " disconnected");
+            }
+            @Override
+            public void onError(CameraDevice cd, int error) {
+                Log.e(TAG, "CameraDevice " + cd.getId() + "had error " + error);
+            }
+        };
+
+        HandlerThread handlerThread = new HandlerThread("br_handler_thread");
+        handlerThread.start();
+        Looper looper = handlerThread.getLooper();
+        Handler handler = new Handler(looper);
+
+        cam.openCamera(cameraIds[0], cb, handler);
+        waitForReceiver(context, 10_000, latch, null);
+    }
+
+    @Test
+    public void testFlashlight() throws Exception {
+        Context context = InstrumentationRegistry.getContext();
+        CameraManager cam = context.getSystemService(CameraManager.class);
+        String[] cameraIds = cam.getCameraIdList();
+        boolean foundFlash = false;
+        for (int i = 0; i < cameraIds.length; i++) {
+            String id = cameraIds[i];
+            if(cam.getCameraCharacteristics(id).get(CameraCharacteristics.FLASH_INFO_AVAILABLE)) {
+                cam.setTorchMode(id, true);
+                sleep(500);
+                cam.setTorchMode(id, false);
+                foundFlash = true;
+                break;
+            }
+        }
+        if(!foundFlash) {
+            Log.e(TAG, "No flashlight found on device");
+        }
+    }
+
+    @Test
     public void testGpsScan() {
         Context context = InstrumentationRegistry.getContext();
         final LocationManager locManager = context.getSystemService(LocationManager.class);
@@ -165,6 +232,20 @@ public class AtomTests {
     }
 
     @Test
+    public void testWakeupAlarm() {
+        Context context = InstrumentationRegistry.getContext();
+        String name = "android.cts.statsd.testWakeupAlarm";
+        CountDownLatch onReceiveLatch = new CountDownLatch(1);
+        BroadcastReceiver receiver =
+                registerReceiver(context, onReceiveLatch, new IntentFilter(name));
+        AlarmManager manager = (AlarmManager) (context.getSystemService(AlarmManager.class));
+        PendingIntent pintent = PendingIntent.getBroadcast(context, 0, new Intent(name), 0);
+        manager.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+            SystemClock.elapsedRealtime() + 2_000, pintent);
+        waitForReceiver(context, 10_000, onReceiveLatch, receiver);
+    }
+
+    @Test
     /** Does two wifi scans. */
     // TODO: Copied this from BatterystatsValidation but we probably don't need to wait for results.
     public void testWifiScan() {
@@ -182,26 +263,6 @@ public class AtomTests {
         }
     }
 
-    @Test
-    public void testFlashlight() throws Exception {
-        Context context = InstrumentationRegistry.getContext();
-        CameraManager cam = context.getSystemService(CameraManager.class);
-        String[] cameraIds = cam.getCameraIdList();
-        boolean foundFlash = false;
-        for (int i = 0; i < cameraIds.length; i++) {
-            String id = cameraIds[i];
-            if(cam.getCameraCharacteristics(id).get(CameraCharacteristics.FLASH_INFO_AVAILABLE)) {
-                cam.setTorchMode(id, true);
-                sleep(2_000);
-                cam.setTorchMode(id, false);
-                foundFlash = true;
-                break;
-            }
-        }
-        if(!foundFlash) {
-            Log.e(TAG, "No flashlight found on device");
-        }
-    }
     // ------- Helper methods
 
     /** Puts the current thread to sleep. */

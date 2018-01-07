@@ -207,7 +207,7 @@ class ItsSession(object):
               'com.android.cts.verifier/.camera.its.ItsTestActivity '
               '--activity-brought-to-front') % self.adb)
         time.sleep(CMD_DELAY)
-        _run(('%s shell am startservice --user 0 -t text/plain '
+        _run(('%s shell am start-foreground-service --user 0 -t text/plain '
               '-a %s') % (self.adb, self.INTENT_START))
 
         # Wait until the socket is ready to accept a connection.

@@ -76,9 +76,14 @@ public class PowerIncidentTest extends ProtoDumpTestCase {
         assertEquals(uid.getUidString(), Integer.toString(SYSTEM_UID));
         assertTrue(uid.getIsActive());
         assertFalse(uid.getIsProcessStateUnknown());
-        assertTrue(ProcessState.getDescriptor()
-                        .getValues()
-                        .contains(uid.getProcessState().getValueDescriptor()));
+
+        for (PowerManagerServiceDumpProto.UidStateProto us : dump.getUidStatesList()) {
+            assertTrue(0 <= us.getUid());
+            assertTrue(0 <= us.getNumWakeLocks());
+            assertTrue(ProcessState.getDescriptor()
+                    .getValues()
+                    .contains(us.getProcessState().getValueDescriptor()));
+        }
 
         final LooperProto looper = dump.getLooper();
         assertNotNull(looper.getThreadName());

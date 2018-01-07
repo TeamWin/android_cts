@@ -504,6 +504,31 @@ public class ViewTest {
 
         Bitmap bitmap = BitmapFactory.decodeResource(mResources, R.drawable.icon_blue);
         assertNotNull(PointerIcon.create(bitmap, 0, 0));
+        assertNotNull(PointerIcon.create(bitmap, bitmap.getWidth() / 2, bitmap.getHeight() / 2));
+
+        try {
+            PointerIcon.create(bitmap, -1, 0);
+            fail("Hotspot x can not be < 0");
+        } catch (IllegalArgumentException ignore) {
+        }
+
+        try {
+            PointerIcon.create(bitmap, 0, -1);
+            fail("Hotspot y can not be < 0");
+        } catch (IllegalArgumentException ignore) {
+        }
+
+        try {
+            PointerIcon.create(bitmap, bitmap.getWidth(), 0);
+            fail("Hotspot x cannot be >= width");
+        } catch (IllegalArgumentException ignore) {
+        }
+
+        try {
+            PointerIcon.create(bitmap, 0, bitmap.getHeight());
+            fail("Hotspot x cannot be >= height");
+        } catch (IllegalArgumentException e) {
+        }
     }
 
     private void assertSystemPointerIcon(int style) {
@@ -3991,7 +4016,9 @@ public class ViewTest {
         final MockEditText editText = new MockEditText(mActivity);
 
         mActivityRule.runOnUiThread(() -> {
-            viewGroup.addView(editText);
+            // Give a fixed size since, on most devices, the edittext is off-screen
+            // and therefore doesn't get laid-out properly.
+            viewGroup.addView(editText, 100, 30);
             editText.requestFocus();
         });
         mInstrumentation.waitForIdleSync();

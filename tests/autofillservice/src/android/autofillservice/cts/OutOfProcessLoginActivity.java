@@ -45,6 +45,19 @@ public class OutOfProcessLoginActivity extends Activity {
     }
 
     @Override
+    protected void onStart() {
+        Log.i(LOG_TAG, "onStart()");
+        super.onStart();
+        try {
+            if (!getStartedMarker(this).createNewFile()) {
+                Log.e(LOG_TAG, "cannot write started file");
+            }
+        } catch (IOException e) {
+            Log.e(LOG_TAG, "cannot write started file");
+        }
+    }
+
+    @Override
     protected void onStop() {
         Log.i(LOG_TAG, "onStop()");
         super.onStop();
@@ -70,5 +83,15 @@ public class OutOfProcessLoginActivity extends Activity {
      */
     @NonNull public static File getStoppedMarker(@NonNull Context context) {
         return new File(context.getFilesDir(), "stopped");
+    }
+
+    /**
+     * Get the file that signals that the activity has entered {@link Activity#onStart()}.
+     *
+     * @param context Context of the app
+     * @return The marker file that is written onStart()
+     */
+    @NonNull public static File getStartedMarker(@NonNull Context context) {
+        return new File(context.getFilesDir(), "started");
     }
 }

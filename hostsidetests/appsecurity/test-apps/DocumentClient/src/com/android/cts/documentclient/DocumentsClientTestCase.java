@@ -144,6 +144,14 @@ abstract class DocumentsClientTestCase extends InstrumentationTestCase {
         return true;
     }
 
+    protected boolean supportedHardwareForScopedDirectoryAccess() {
+        final PackageManager pm = getInstrumentation().getContext().getPackageManager();
+        if (pm.hasSystemFeature("android.hardware.type.watch")) {
+            return false;
+        }
+        return true;
+    }
+
     protected void assertActivityFailed() {
         final Result result = mActivity.getResult();
         assertEquals(REQUEST_CODE, result.requestCode);

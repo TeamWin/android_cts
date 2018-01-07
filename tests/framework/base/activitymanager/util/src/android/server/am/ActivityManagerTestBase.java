@@ -1447,6 +1447,12 @@ public abstract class ActivityManagerTestBase {
             return this;
         }
 
+        public LaunchActivityBuilder setTargetActivity(ComponentName activity) {
+            mTargetActivityName = activity.getShortClassName();
+            mTargetPackage = activity.getPackageName();
+            return this;
+        }
+
         public LaunchActivityBuilder setTargetActivityName(String name) {
             mTargetActivityName = name;
             return this;
@@ -1473,6 +1479,15 @@ public abstract class ActivityManagerTestBase {
         }
 
         /** Use broadcast receiver instead of launching activity. */
+        public LaunchActivityBuilder setUseBroadcastReceiver(final ComponentName broadcastReceiver,
+                final String broadcastAction) {
+            mBroadcastReceiverComponent = broadcastReceiver.flattenToShortString();
+            mBroadcastReceiverAction = broadcastAction;
+            return this;
+        }
+
+        /** Use {@link #setUseBroadcastReceiver(ComponentName, String)} instead. */
+        @Deprecated
         public LaunchActivityBuilder setUseBroadcastReceiver(String componentName,
                 String broadcastAction) {
             mBroadcastReceiverComponent = componentName;

@@ -20,72 +20,16 @@ import static junit.framework.Assert.assertTrue;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertThrows;
 
-import android.app.admin.DeviceAdminReceiver;
 import android.app.admin.DevicePolicyManager;
-import android.content.ComponentName;
-import android.content.Context;
 import android.os.PersistableBundle;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 
-import org.junit.Before;
 import org.junit.Test;
 
-import java.lang.reflect.InvocationTargetException;
-
 @SmallTest
-public class TransferProfileOwnerOutgoingTest {
-
-    public class BasicAdminReceiver extends DeviceAdminReceiver {
-    }
-
-    private static final String TRANSFER_OWNER_OUTGOING_PKG =
-            "com.android.cts.transferowneroutgoing";
-    private static final String TRANSFER_OWNER_OUTGOING_TEST_RECEIVER_CLASS =
-            "com.android.cts.transferowner.TransferProfileOwnerOutgoingTest$BasicAdminReceiver";
-    private static final ComponentName mOutgoingComponentName =
-            new ComponentName(
-                    TRANSFER_OWNER_OUTGOING_PKG, TRANSFER_OWNER_OUTGOING_TEST_RECEIVER_CLASS);
-
-    private static final String TRANSFER_OWNER_INCOMING_PKG =
-            "com.android.cts.transferownerincoming";
-    private static final String TRANSFER_OWNER_INCOMING_TEST_RECEIVER_CLASS =
-            "com.android.cts.transferowner.TransferProfileOwnerIncomingTest$BasicAdminReceiver";
-    private static final ComponentName mIncomingComponentName =
-            new ComponentName(
-                    TRANSFER_OWNER_INCOMING_PKG, TRANSFER_OWNER_INCOMING_TEST_RECEIVER_CLASS);
-
-    private static final ComponentName mInvalidTargetComponent =
-            new ComponentName("com.android.cts.intent.receiver", ".BroadcastIntentReceiver");
-
-    private DevicePolicyManager mDevicePolicyManager;
-    private Context mContext;
-
-    @Before
-    public void setUp() throws Exception {
-        mContext = InstrumentationRegistry.getTargetContext();
-        mDevicePolicyManager = mContext.getSystemService(DevicePolicyManager.class);
-    }
-
+public class TransferProfileOwnerOutgoingTest extends DeviceAndProfileOwnerTransferOutgoingTest {
     @Test
-    public void testTransfer()
-            throws Throwable {
-        PersistableBundle b = new PersistableBundle();
-        transferOwner(mOutgoingComponentName, mIncomingComponentName, b);
-        assertTrue(mDevicePolicyManager.isAdminActive(mIncomingComponentName));
-        assertTrue(mDevicePolicyManager.isProfileOwnerApp(mIncomingComponentName.getPackageName()));
-        assertFalse(
-                mDevicePolicyManager.isProfileOwnerApp(mOutgoingComponentName.getPackageName()));
-        assertFalse(mDevicePolicyManager.isAdminActive(mOutgoingComponentName));
-        assertThrows(SecurityException.class, () -> {
-            mDevicePolicyManager.setCrossProfileCallerIdDisabled(mOutgoingComponentName,
-                    false);
-        });
-    }
-
-    @Test
-    public void testTransferWithPoliciesOutgoing()
-            throws Throwable {
+    public void testTransferWithPoliciesOutgoing() throws Throwable {
         int passwordLength = 123;
         int passwordExpirationTimeout = 456;
         DevicePolicyManager parentDevicePolicyManager =
@@ -101,36 +45,17 @@ public class TransferProfileOwnerOutgoingTest {
     }
 
     @Test
-    public void testTransferSameAdmin() {
+    public void testTransfer() throws Throwable {
         PersistableBundle b = new PersistableBundle();
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> {
-                    transferOwner(
-                            mOutgoingComponentName, mOutgoingComponentName, b);
-                });
-    }
-
-    @Test
-    public void testTransferInvalidTarget() {
-        PersistableBundle b = new PersistableBundle();
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> {
-                    transferOwner(
-                            mOutgoingComponentName, mInvalidTargetComponent, b);
-                });
-    }
-
-    private void transferOwner(ComponentName outgoing, ComponentName incoming,
-        PersistableBundle parameters)
-            throws Throwable {
-        try {
-            mDevicePolicyManager.getClass().getMethod("transferOwner",
-                    ComponentName.class, ComponentName.class, PersistableBundle.class)
-            .invoke(mDevicePolicyManager, outgoing, incoming, parameters);
-        } catch (InvocationTargetException e) {
-            throw e.getTargetException();
-        }
+        transferOwner(mOutgoingComponentName, mIncomingComponentName, b);
+        assertTrue(mDevicePolicyManager.isAdminActive(mIncomingComponentName));
+        assertTrue(mDevicePolicyManager.isProfileOwnerApp(mIncomingComponentName.getPackageName()));
+        assertFalse(
+                mDevicePolicyManager.isProfileOwnerApp(mOutgoingComponentName.getPackageName()));
+        assertFalse(mDevicePolicyManager.isAdminActive(mOutgoingComponentName));
+        assertThrows(SecurityException.class, () -> {
+            mDevicePolicyManager.setCrossProfileCallerIdDisabled(mOutgoingComponentName,
+                    false);
+        });
     }
 }

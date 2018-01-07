@@ -48,7 +48,6 @@ import android.hardware.camera2.cts.testcases.Camera2SurfaceViewTestCase;
  * May not take more than a few seconds to run, to be suitable for quick
  * testing.
  */
-@Presubmit
 public class FastBasicsTest extends Camera2SurfaceViewTestCase {
     private static final String TAG = "FastBasicsTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
@@ -178,6 +177,7 @@ public class FastBasicsTest extends Camera2SurfaceViewTestCase {
         }
     }
 
+    @Presubmit
     public void testCamera1() throws Exception {
         for (int i = 0; i < Camera.getNumberOfCameras(); i++) {
             Camera camera = null;

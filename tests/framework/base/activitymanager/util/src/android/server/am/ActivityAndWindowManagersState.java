@@ -624,16 +624,18 @@ public class ActivityAndWindowManagersState {
         }
     }
 
-    void assertFocusedActivity(String msg, String activityName) throws Exception {
-        assertFocusedActivity(msg, componentName, activityName);
+    void assertFocusedActivity(final String msg, final ComponentName activityName) {
+        final String activityComponentName = activityName.flattenToShortString();
+        assertEquals(msg, activityComponentName, mAmState.getFocusedActivity());
+        assertEquals(msg, activityComponentName, mWmState.getFocusedApp());
     }
 
-    void assertFocusedActivity(String msg, String packageName, String activityName)
-            throws Exception {
-        final String componentName = ActivityManagerTestBase.getActivityComponentName(packageName,
-                activityName);
-        assertEquals(msg, componentName, mAmState.getFocusedActivity());
-        assertEquals(msg, componentName, mWmState.getFocusedApp());
+    @Deprecated
+    void assertFocusedActivity(final String msg, final String activityName) {
+        final String activityComponentName =
+                ActivityManagerTestBase.getActivityComponentName(activityName);
+        assertEquals(msg, activityComponentName, mAmState.getFocusedActivity());
+        assertEquals(msg, activityComponentName, mWmState.getFocusedApp());
     }
 
     void assertNotFocusedActivity(String msg, String activityName) throws Exception {

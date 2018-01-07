@@ -20,10 +20,13 @@ import com.android.os.AtomsProto.Atom;
 import com.android.os.AtomsProto.BleScanResultReceived;
 import com.android.os.AtomsProto.BleScanStateChanged;
 import com.android.os.AtomsProto.BleUnoptimizedScanStateChanged;
+import com.android.os.AtomsProto.CameraStateChanged;
 import com.android.os.AtomsProto.FlashlightStateChanged;
 import com.android.os.AtomsProto.GpsScanStateChanged;
+import com.android.os.AtomsProto.WakeupAlarmOccurred;
 import com.android.os.AtomsProto.WifiScanStateChanged;
 import com.android.os.StatsLog.EventMetricData;
+import com.android.tradefed.log.LogUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -45,6 +48,8 @@ public class UidAtomTests extends DeviceAtomTestCase {
     private static final String FEATURE_LOCATION_GPS = "android.hardware.location.gps";
     private static final String FEATURE_WIFI = "android.hardware.wifi";
     private static final String FEATURE_CAMERA_FLASH = "android.hardware.camera.flash";
+    private static final String FEATURE_CAMERA = "android.hardware.camera";
+    private static final String FEATURE_CAMERA_FRONT = "android.hardware.camera.front";
 
     public void testBleScan() throws Exception {
         if (!TESTS_ENABLED) return;
@@ -112,6 +117,58 @@ public class UidAtomTests extends DeviceAtomTestCase {
         turnScreenOff();
     }
 
+    public void testCameraState() throws Exception {
+        if (!TESTS_ENABLED) return;
+        if (!hasFeature(FEATURE_CAMERA, true) && !hasFeature(FEATURE_CAMERA_FRONT, true)) return;
+
+        final int atomTag = Atom.CAMERA_STATE_CHANGED_FIELD_NUMBER;
+        Set<Integer> cameraOn = new HashSet<>(Arrays.asList(CameraStateChanged.State.ON_VALUE));
+        Set<Integer> cameraOff = new HashSet<>(Arrays.asList(CameraStateChanged.State.OFF_VALUE));
+
+        // Add state sets to the list in order.
+        List<Set<Integer>> stateSet = Arrays.asList(cameraOn, cameraOff);
+
+        createAndUploadConfig(atomTag);
+        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", "testCameraState");
+
+        // Sorted list of events in order in which they occurred.
+        List<EventMetricData> data = getEventMetricDataList();
+
+        // Assert that the events happened in the expected order.
+        assertStatesOccurred(stateSet, data, WAIT_TIME_LONG,
+                atom -> atom.getCameraStateChanged().getState().getNumber());
+    }
+
+    public void testFlashlightState() throws Exception {
+        if (!TESTS_ENABLED)
+            return;
+        if (!hasFeature(FEATURE_CAMERA_FLASH, true))
+            return;
+
+        final int atomTag = Atom.FLASHLIGHT_STATE_CHANGED_FIELD_NUMBER;
+        final String name = "testFlashlight";
+
+        Set<Integer> flashlightOn = new HashSet<>(
+            Arrays.asList(FlashlightStateChanged.State.ON_VALUE));
+        Set<Integer> flashlightOff = new HashSet<>(
+            Arrays.asList(FlashlightStateChanged.State.OFF_VALUE));
+
+        // Add state sets to the list in order.
+        List<Set<Integer>> stateSet = Arrays.asList(flashlightOn, flashlightOff);
+
+        createAndUploadConfig(atomTag);
+        Thread.sleep(WAIT_TIME_SHORT);
+
+        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", name);
+
+        // Sorted list of events in order in which they occurred.
+        List<EventMetricData> data = getEventMetricDataList();
+
+        // Assert that the events happened in the expected order.
+        assertStatesOccurred(stateSet, data, WAIT_TIME_SHORT,
+                atom -> atom.getFlashlightStateChanged().getState().getNumber());
+    }
+
     public void testGpsScan() throws Exception {
         if (!TESTS_ENABLED) return;
         if (!hasFeature(FEATURE_LOCATION_GPS, true)) return;
@@ -136,6 +193,22 @@ public class UidAtomTests extends DeviceAtomTestCase {
         assertTrue(a1.getState().getNumber() == stateOff);
     }
 
+    public void testWakeupAlarm() throws Exception {
+        if (!TESTS_ENABLED) return;
+
+        final int atomTag = Atom.WAKEUP_ALARM_OCCURRED_FIELD_NUMBER;
+
+        StatsdConfig.Builder config = createConfigBuilder();
+        addAtomEvent(config, atomTag);
+
+        List<EventMetricData> data = doDeviceMethod("testWakeupAlarm", config);
+        assertTrue(data.size() >= 1);
+        for (int i = 0; i < data.size(); i++) {
+            String tag = data.get(i).getAtom().getWakeupAlarmOccurred().getTag();
+            assertTrue(tag.equals("*walarm*:android.cts.statsd.testWakeupAlarm"));
+        }
+    }
+
     public void testWifiScan() throws Exception {
         if (!TESTS_ENABLED) return;
         if (!hasFeature(FEATURE_WIFI, true)) return;
@@ -157,35 +230,5 @@ public class UidAtomTests extends DeviceAtomTestCase {
         WifiScanStateChanged a1 = data.get(1).getAtom().getWifiScanStateChanged();
         assertTrue(a0.getState().getNumber() == stateOn);
         assertTrue(a1.getState().getNumber() == stateOff);
-    }
-
-    public void testFlashlightState() throws Exception {
-        if (!TESTS_ENABLED) return;
-        if (!hasFeature(FEATURE_CAMERA_FLASH, true)) return;
-
-        final int atomTag = Atom.FLASHLIGHT_STATE_CHANGED_FIELD_NUMBER;
-        final int key = FlashlightStateChanged.STATE_FIELD_NUMBER;
-        final String name = "testFlashlight";
-        int appUid = getUid();
-
-        Set<Integer> flashlightOn = new HashSet<>(
-            Arrays.asList(FlashlightStateChanged.State.ON_VALUE));
-        Set<Integer> flashlightOff = new HashSet<>(
-            Arrays.asList(FlashlightStateChanged.State.OFF_VALUE));
-
-        // Add state sets to the list in order.
-        List<Set<Integer>> stateSet = Arrays.asList(flashlightOn, flashlightOff);
-
-        createAndUploadConfig(atomTag);
-        Thread.sleep(2000);
-
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", name);
-
-        // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();;
-
-        // Assert that the events happened in the expected order.
-        assertStatesOccurred(stateSet, data,
-            atom -> atom.getFlashlightStateChanged().getState().getNumber());
     }
 }

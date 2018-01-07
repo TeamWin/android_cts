@@ -24,6 +24,9 @@
         <option name="push" value="system-current.api->/data/local/tmp/signature-test/system-current.api" />
     </target_preparer>
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
+        <option name="push" value="system-removed.api->/data/local/tmp/signature-test/system-removed.api" />
+    </target_preparer>
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
         <option name="push" value="android-test-mock-current.api->/data/local/tmp/signature-test/android-test-mock-current.api" />
     </target_preparer>
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
@@ -36,7 +39,7 @@
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.signature.cts.api.system_current" />
         <option name="runner" value="repackaged.android.test.InstrumentationTestRunner" />
-        <option name="instrumentation-arg" key="expected-api-files" value="system-current.api" />
+        <option name="instrumentation-arg" key="expected-api-files" value="system-current.api,system-removed.api" />
         <option name="instrumentation-arg" key="unexpected-api-files" value="android-test-mock-current.api,android-test-runner-current.api" />
         <option name="runtime-hint" value="30s" />
     </test>

@@ -34,7 +34,7 @@ public class SplitTests extends DeviceTestCase implements IAbiReceiver, IBuildRe
     static final String APK_NO_RESTART_FEATURE = "CtsNoRestartFeature.apk";
 
     static final String PKG = "com.android.cts.splitapp";
-    static final String CLASS = ".SplitAppTest";
+    static final String CLASS = PKG + ".SplitAppTest";
 
     static final String APK = "CtsSplitApp.apk";
 

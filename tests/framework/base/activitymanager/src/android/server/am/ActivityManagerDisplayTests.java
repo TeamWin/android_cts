@@ -34,6 +34,7 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
+import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
 import android.server.am.ActivityManagerState.ActivityDisplay;
 import android.server.am.displayservice.DisplayHelper;
@@ -61,13 +62,21 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
     private static final String VIRTUAL_DISPLAY_ACTIVITY = "VirtualDisplayActivity";
     private static final String RESIZEABLE_ACTIVITY_NAME = "ResizeableActivity";
     private static final String NON_RESIZEABLE_ACTIVITY_NAME = "NonResizeableActivity";
-    private static final String SECOND_ACTIVITY_NAME = "SecondActivity";
-    private static final String SECOND_ACTIVITY_NO_EMBEDDING_NAME = "SecondActivityNoEmbedding";
-    private static final String THIRD_ACTIVITY_NAME = "ThirdActivity";
     private static final String VR_TEST_ACTIVITY_NAME = "VrTestActivity";
     private static final String SHOW_WHEN_LOCKED_ATTR_ACTIVITY_NAME = "ShowWhenLockedAttrActivity";
-    private static final String SECOND_PACKAGE_NAME = "android.server.am.second";
-    private static final String THIRD_PACKAGE_NAME = "android.server.am.third";
+    private static final String SECOND_PACKAGE = "android.server.am.second";
+    private static final String THIRD_PACKAGE = "android.server.am.third";
+    private static final ComponentName SECOND_ACTIVITY = ComponentName.createRelative(
+            SECOND_PACKAGE, ".SecondActivity");
+    private static final ComponentName SECOND_NO_EMBEDDING_ACTIVITY = ComponentName.createRelative(
+            SECOND_PACKAGE, ".SecondActivityNoEmbedding");
+    private static final ComponentName LAUNCH_BROADCAST_RECEIVER = ComponentName.createRelative(
+            SECOND_PACKAGE, ".LaunchBroadcastReceiver");
+    /** See AndroidManifest.xml of appSecondUid. */
+    private static final String LAUNCH_BROADCAST_ACTION =
+            SECOND_PACKAGE + ".LAUNCH_BROADCAST_ACTION";
+    private static final ComponentName THIRD_ACTIVITY = ComponentName.createRelative(
+            THIRD_PACKAGE, ".ThirdActivity");
     private static final int VR_VIRTUAL_DISPLAY_WIDTH = 700;
     private static final int VR_VIRTUAL_DISPLAY_HEIGHT = 900;
     private static final int VR_VIRTUAL_DISPLAY_DPI = 320;
@@ -583,8 +592,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
         final String logSeparator = clearLogcat();
 
         // Try to launch an activity and check it security exception was triggered.
-        final String broadcastTarget = "-a " + SECOND_PACKAGE_NAME + ".LAUNCH_BROADCAST_ACTION"
-                + " -p " + SECOND_PACKAGE_NAME;
+        final String broadcastTarget = "-a " + LAUNCH_BROADCAST_ACTION
+                + " -p " + LAUNCH_BROADCAST_RECEIVER.getPackageName();
         final String includeStoppedPackagesFlag = " -f 0x00000020";
         executeShellCommand("am broadcast " + broadcastTarget
                 + " --ez launch_activity true --es target_activity " + TEST_ACTIVITY_NAME
@@ -670,6 +679,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      * Tests launching an activity on simulated display and then launching another activity from the
      * first one - it must appear on the secondary display, because it was launched from there.
      */
+    @FlakyTest(bugId = 71564456)
     @Presubmit
     @Test
     public void testConsequentLaunchActivityFromSecondaryDisplay() throws Exception {
@@ -743,44 +753,38 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
 
         // Launch activity on new secondary display.
         launchActivityOnDisplay(LAUNCHING_ACTIVITY, newDisplay.mId);
-        mAmWmState.computeState(new String[] {LAUNCHING_ACTIVITY});
+        mAmWmState.computeState(LAUNCHING_ACTIVITY);
 
         mAmWmState.assertFocusedActivity("Activity launched on secondary display must be resumed",
             LAUNCHING_ACTIVITY);
 
         // Launch second activity from app on secondary display specifying same display id.
-        getLaunchActivityBuilder().setTargetActivityName(SECOND_ACTIVITY_NAME)
-            .setTargetPackage(SECOND_PACKAGE_NAME)
+        getLaunchActivityBuilder().setTargetActivity(SECOND_ACTIVITY)
             .setDisplayId(newDisplay.mId).execute();
-        mAmWmState.computeState(new String[] {TEST_ACTIVITY_NAME});
+        mAmWmState.computeState(TEST_ACTIVITY_NAME);
 
         // Check that activity is launched in focused stack on external display.
-        mAmWmState.assertFocusedActivity("Launched activity must be focused", SECOND_PACKAGE_NAME,
-            SECOND_ACTIVITY_NAME);
+        mAmWmState.assertFocusedActivity("Launched activity must be focused", SECOND_ACTIVITY);
         int frontStackId = mAmWmState.getAmState().getFrontStackId(newDisplay.mId);
         ActivityManagerState.ActivityStack frontStack
             = mAmWmState.getAmState().getStackById(frontStackId);
         assertEquals("Launched activity must be resumed in front stack",
-            getActivityComponentName(SECOND_PACKAGE_NAME, SECOND_ACTIVITY_NAME),
-            frontStack.mResumedActivity);
+            SECOND_ACTIVITY.flattenToShortString(), frontStack.mResumedActivity);
 
         // Launch other activity with different uid and check if it has launched successfully.
-        final String broadcastAction = SECOND_PACKAGE_NAME + ".LAUNCH_BROADCAST_ACTION";
-        getLaunchActivityBuilder().setUseBroadcastReceiver(SECOND_PACKAGE_NAME, broadcastAction)
+        getLaunchActivityBuilder()
+                .setUseBroadcastReceiver(LAUNCH_BROADCAST_RECEIVER, LAUNCH_BROADCAST_ACTION)
                 .setDisplayId(newDisplay.mId)
-                .setTargetActivityName(THIRD_ACTIVITY_NAME)
-                .setTargetPackage(THIRD_PACKAGE_NAME).execute();
-        mAmWmState.waitForValidState(false /* compareTaskAndStackBounds */, THIRD_PACKAGE_NAME,
-            new WaitForValidActivityState.Builder(THIRD_ACTIVITY_NAME).build());
+                .setTargetActivity(THIRD_ACTIVITY)
+                .execute();
+        mAmWmState.waitForValidState(new WaitForValidActivityState(THIRD_ACTIVITY));
 
         // Check that activity is launched in focused stack on external display.
-        mAmWmState.assertFocusedActivity("Launched activity must be focused", THIRD_PACKAGE_NAME,
-            THIRD_ACTIVITY_NAME);
+        mAmWmState.assertFocusedActivity("Launched activity must be focused", THIRD_ACTIVITY);
         frontStackId = mAmWmState.getAmState().getFrontStackId(newDisplay.mId);
         frontStack = mAmWmState.getAmState().getStackById(frontStackId);
         assertEquals("Launched activity must be resumed in front stack",
-            getActivityComponentName(THIRD_PACKAGE_NAME, THIRD_ACTIVITY_NAME),
-            frontStack.mResumedActivity);
+            THIRD_ACTIVITY.flattenToShortString(), frontStack.mResumedActivity);
     }
 
     /**
@@ -804,9 +808,9 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
         final String logSeparator = clearLogcat();
 
         // Launch second activity from app on secondary display specifying same display id.
-        getLaunchActivityBuilder().setTargetActivityName(SECOND_ACTIVITY_NO_EMBEDDING_NAME)
-            .setTargetPackage(SECOND_PACKAGE_NAME)
-            .setDisplayId(newDisplay.mId).execute();
+        getLaunchActivityBuilder().setTargetActivity(SECOND_NO_EMBEDDING_ACTIVITY)
+                .setDisplayId(newDisplay.mId)
+                .execute();
 
         assertSecurityException("ActivityLauncher", logSeparator);
     }
@@ -909,8 +913,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      * is moved correctly.
      * This version launches virtual display creator to fullscreen stack in split-screen.
      */
-    // TODO(b/69573940): Flaky, add back to presubmit.
-    @FlakyTest
+    @FlakyTest(bugId = 69573940)
     @Presubmit
     @Test
     public void testStackFocusSwitchOnDisplayRemoved() throws Exception {
@@ -1096,14 +1099,12 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
 
         // Launch other activity with different uid and check it is launched on dynamic stack on
         // secondary display.
-        final String startCmd =  "am start -n " + SECOND_PACKAGE_NAME + "/." + SECOND_ACTIVITY_NAME
+        final String startCmd =  "am start -n " + SECOND_ACTIVITY.flattenToShortString()
                 + " --display " + newDisplay.mId;
         executeShellCommand(startCmd);
 
-        mAmWmState.waitForValidState(false /* compareTaskAndStackBounds */, SECOND_PACKAGE_NAME,
-                new WaitForValidActivityState.Builder(SECOND_ACTIVITY_NAME).build());
-        mAmWmState.assertFocusedActivity("Focus must be on newly launched app", SECOND_PACKAGE_NAME,
-                SECOND_ACTIVITY_NAME);
+        mAmWmState.waitForValidState(new WaitForValidActivityState(SECOND_ACTIVITY));
+        mAmWmState.assertFocusedActivity("Focus must be on newly launched app", SECOND_ACTIVITY);
         assertEquals("Activity launched by system must be on external display",
                 externalFocusedStackId, mAmWmState.getAmState().getFocusedStackId());
     }
@@ -1118,14 +1119,12 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
                 .build();
 
         // Launch activity with different uid on secondary display.
-        final String startCmd =  "am start -n " + SECOND_PACKAGE_NAME + "/." + SECOND_ACTIVITY_NAME;
-        final String displayTarget = " --display " + newDisplay.mId;
-        executeShellCommand(startCmd + displayTarget);
+        final String startCmd =  "am start -n " + SECOND_ACTIVITY.flattenToShortString()
+                + " --display " + newDisplay.mId;
+        executeShellCommand(startCmd);
 
-        mAmWmState.waitForValidState(false /* compareTaskAndStackBounds */, SECOND_PACKAGE_NAME,
-                new WaitForValidActivityState.Builder(SECOND_ACTIVITY_NAME).build());
-        mAmWmState.assertFocusedActivity("Focus must be on newly launched app",
-                SECOND_PACKAGE_NAME, SECOND_ACTIVITY_NAME);
+        mAmWmState.waitForValidState(new WaitForValidActivityState(SECOND_ACTIVITY));
+        mAmWmState.assertFocusedActivity("Focus must be on newly launched app", SECOND_ACTIVITY);
         final int externalFocusedStackId = mAmWmState.getAmState().getFocusedStackId();
         ActivityManagerState.ActivityStack focusedStack
                 = mAmWmState.getAmState().getStackById(externalFocusedStackId);
@@ -1134,18 +1133,16 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
 
         // Launch another activity with third different uid from app on secondary display and check
         // it is launched on secondary display.
-        final String broadcastAction = SECOND_PACKAGE_NAME + ".LAUNCH_BROADCAST_ACTION";
-        final String targetActivity = " --es target_activity " + THIRD_ACTIVITY_NAME
-                + " --es package_name " + THIRD_PACKAGE_NAME
+        final String targetActivity = " --es target_activity " + THIRD_ACTIVITY.getShortClassName()
+                + " --es package_name " + THIRD_ACTIVITY.getPackageName()
                 + " --ei display_id " + newDisplay.mId;
         final String includeStoppedPackagesFlag = " -f 0x00000020";
-        executeShellCommand("am broadcast -a " + broadcastAction + " -p " + SECOND_PACKAGE_NAME
+        executeShellCommand("am broadcast -a " + LAUNCH_BROADCAST_ACTION
+                + " -p " + LAUNCH_BROADCAST_RECEIVER.getPackageName()
                 + targetActivity + includeStoppedPackagesFlag);
 
-        mAmWmState.waitForValidState(false /* compareTaskAndStackBounds */, THIRD_PACKAGE_NAME,
-                new WaitForValidActivityState.Builder(THIRD_ACTIVITY_NAME).build());
-        mAmWmState.assertFocusedActivity("Focus must be on newly launched app",
-                THIRD_PACKAGE_NAME, THIRD_ACTIVITY_NAME);
+        mAmWmState.waitForValidState(new WaitForValidActivityState(THIRD_ACTIVITY));
+        mAmWmState.assertFocusedActivity("Focus must be on newly launched app", THIRD_ACTIVITY);
         assertEquals("Activity launched by app on secondary display must be on that display",
                 externalFocusedStackId, mAmWmState.getAmState().getFocusedStackId());
     }
@@ -1171,14 +1168,12 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
         mAmWmState.assertFocusedStack("Focus must be on secondary display", frontStackId);
 
         // Launch an activity from a different UID into the first activity's task
-        getLaunchActivityBuilder()
-                .setTargetPackage(SECOND_PACKAGE_NAME)
-                .setTargetActivityName(SECOND_ACTIVITY_NAME).execute();
+        getLaunchActivityBuilder().setTargetActivity(SECOND_ACTIVITY)
+                .execute();
 
         mAmWmState.assertFocusedStack("Focus must be on secondary display", frontStackId);
         frontStack = mAmWmState.getAmState().getStackById(frontStackId);
-        mAmWmState.assertFocusedActivity("Focus must be on newly launched app",
-                SECOND_PACKAGE_NAME, SECOND_ACTIVITY_NAME);
+        mAmWmState.assertFocusedActivity("Focus must be on newly launched app", SECOND_ACTIVITY);
         assertEquals("Secondary display must contain 1 task", 1, frontStack.getTasks().size());
     }
 
@@ -1202,14 +1197,12 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
                 focusedStack.mDisplayId);
 
         // Launch other activity with different uid on secondary display.
-        final String startCmd =  "am start -n " + SECOND_PACKAGE_NAME + "/." + SECOND_ACTIVITY_NAME;
-        final String displayTarget = " --display " + newDisplay.mId;
-        executeShellCommand(startCmd + displayTarget);
+        final String startCmd =  "am start -n " + SECOND_ACTIVITY.flattenToShortString()
+                + " --display " + newDisplay.mId;
+        executeShellCommand(startCmd);
 
-        mAmWmState.waitForValidState(false /* compareTaskAndStackBounds */, SECOND_PACKAGE_NAME,
-                new WaitForValidActivityState.Builder(SECOND_ACTIVITY_NAME).build());
-        mAmWmState.assertFocusedActivity("Focus must be on newly launched app",
-                SECOND_PACKAGE_NAME, SECOND_ACTIVITY_NAME);
+        mAmWmState.waitForValidState(new WaitForValidActivityState(SECOND_ACTIVITY));
+        mAmWmState.assertFocusedActivity("Focus must be on newly launched app", SECOND_ACTIVITY);
         final int externalFocusedStackId = mAmWmState.getAmState().getFocusedStackId();
         focusedStack = mAmWmState.getAmState().getStackById(externalFocusedStackId);
         assertEquals("Focused stack must be on secondary display", newDisplay.mId,
@@ -1258,17 +1251,17 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
         final String logSeparator = clearLogcat();
 
         // Launch other activity with different uid and check security exception is triggered.
-        final String broadcastAction = SECOND_PACKAGE_NAME + ".LAUNCH_BROADCAST_ACTION";
         final String includeStoppedPackagesFlag = " -f 0x00000020";
-        executeShellCommand("am broadcast -a " + broadcastAction + " -p " + SECOND_PACKAGE_NAME
-                + " --ei display_id " + newDisplay.mId + includeStoppedPackagesFlag);
+        executeShellCommand("am broadcast -a " + LAUNCH_BROADCAST_ACTION
+                + " -p " + LAUNCH_BROADCAST_RECEIVER.getPackageName()
+                + " --ei display_id " + newDisplay.mId
+                + includeStoppedPackagesFlag);
 
         assertSecurityException("LaunchBroadcastReceiver", logSeparator);
 
         mAmWmState.waitForValidState(false /* compareTaskAndStackBounds */, componentName,
                 new WaitForValidActivityState.Builder(TEST_ACTIVITY_NAME).build());
-        mAmWmState.assertFocusedActivity(
-                "Focus must be on first activity", componentName, TEST_ACTIVITY_NAME);
+        mAmWmState.assertFocusedActivity("Focus must be on first activity", TEST_ACTIVITY_NAME);
         assertEquals("Focused stack must be on secondary display's stack",
                 externalFocusedStackId, mAmWmState.getAmState().getFocusedStackId());
     }
@@ -1317,8 +1310,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
     /**
      * Test that all activities that were on the private display are destroyed on display removal.
      */
-    // TODO(b/63404575): Flaky, add back to presubmit.
-    @FlakyTest
+    @FlakyTest(bugId = 63404575)
     @Presubmit
     @Test
     public void testContentDestroyOnDisplayRemoved() throws Exception {

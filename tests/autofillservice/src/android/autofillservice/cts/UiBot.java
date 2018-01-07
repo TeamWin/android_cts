@@ -46,6 +46,7 @@ import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.Until;
 import android.text.Html;
 import android.util.Log;
+import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityWindowInfo;
 
 import java.io.ByteArrayOutputStream;
@@ -53,6 +54,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Helper for UI-related needs.
@@ -621,6 +623,23 @@ final class UiBot {
      */
     private UiObject2 waitForObject(BySelector selector, Timeout timeout) throws Exception {
         return waitForObject(null, selector, timeout);
+    }
+
+    /**
+     * Execute a Runnable and wait for TYPE_WINDOWS_CHANGED or TYPE_WINDOW_STATE_CHANGED.
+     * TODO: No longer need Retry, Refactoring the Timeout (e.g. we probably need two values:
+     * one large timeout value that expects window event, one small value that expect no window
+     * event)
+     */
+    public void waitForWindowChange(Runnable runnable, long timeoutMillis) throws TimeoutException {
+        mAutoman.executeAndWaitForEvent(runnable, (AccessibilityEvent event) -> {
+            switch (event.getEventType()) {
+                case AccessibilityEvent.TYPE_WINDOWS_CHANGED:
+                case AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED:
+                    return true;
+            }
+            return false;
+        }, timeoutMillis);
     }
 
     /**

@@ -46,9 +46,8 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
                 getLifecycleLog());
     }
 
+    @FlakyTest(bugId = 70649184)
     @Test
-    @FlakyTest
-    // TODO: b/70649184
     public void testLaunchAndDestroy() throws Exception {
         final Activity activity = mFirstActivityTestRule.launchActivity(new Intent());
 

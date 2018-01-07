@@ -337,7 +337,7 @@ final class Helper {
     }
 
     /**
-     * Asserts a text-base node is sanitized.
+     * Asserts a text-based node is sanitized.
      */
     static void assertTextIsSanitized(ViewNode node) {
         final CharSequence text = node.getText();
@@ -345,7 +345,13 @@ final class Helper {
         if (!TextUtils.isEmpty(text)) {
             throw new AssertionError("text on sanitized field " + resourceId + ": " + text);
         }
+
+        assertNotFromResources(node);
         assertNodeHasNoAutofillValue(node);
+    }
+
+    private static void assertNotFromResources(ViewNode node) {
+        assertThat(node.getTextIdEntry()).isNull();
     }
 
     static void assertNodeHasNoAutofillValue(ViewNode node) {
@@ -361,6 +367,16 @@ final class Helper {
      */
     static void assertTextOnly(ViewNode node, String expectedValue) {
         assertText(node, expectedValue, false);
+        assertNotFromResources(node);
+    }
+
+    /**
+     * Asserts the contents of a text-based node that is also auto-fillable.
+     */
+    static void assertTextOnly(AssistStructure structure, String resourceId, String expectedValue) {
+        final ViewNode node = findNodeByResourceId(structure, resourceId);
+        assertText(node, expectedValue, false);
+        assertNotFromResources(node);
     }
 
     /**
@@ -368,10 +384,11 @@ final class Helper {
      */
     static void assertTextAndValue(ViewNode node, String expectedValue) {
         assertText(node, expectedValue, true);
+        assertNotFromResources(node);
     }
 
     /**
-     * Asserts a text-base node exists and verify its values.
+     * Asserts a text-based node exists and verify its values.
      */
     static ViewNode assertTextAndValue(AssistStructure structure, String resourceId,
             String expectedValue) {
@@ -381,12 +398,23 @@ final class Helper {
     }
 
     /**
-     * Asserts a text-base node exists and is sanitized.
+     * Asserts a text-based node exists and is sanitized.
      */
     static ViewNode assertValue(AssistStructure structure, String resourceId,
             String expectedValue) {
         final ViewNode node = findNodeByResourceId(structure, resourceId);
         assertTextValue(node, expectedValue);
+        return node;
+    }
+
+    /**
+     * Asserts the values of a text-based node whose string come from resoruces.
+     */
+    static ViewNode assertTextFromResouces(AssistStructure structure, String resourceId,
+            String expectedValue, boolean isAutofillable, String expectedTextIdEntry) {
+        final ViewNode node = findNodeByResourceId(structure, resourceId);
+        assertText(node, expectedValue, isAutofillable);
+        assertThat(node.getTextIdEntry()).isEqualTo(expectedTextIdEntry);
         return node;
     }
 
@@ -505,7 +533,7 @@ final class Helper {
     }
 
     /**
-     * Asserts a text-base node exists and is sanitized.
+     * Asserts a text-based node exists and is sanitized.
      */
     static ViewNode assertTextIsSanitized(AssistStructure structure, String resourceId) {
         final ViewNode node = findNodeByResourceId(structure, resourceId);
@@ -964,6 +992,8 @@ final class Helper {
                 .that(match.getRemoteId()).isEqualTo(expectedResult.remoteIds[j]);
             assertWithMessage("Wrong score at (%s, %s): %s", i, j, match)
                 .that(match.getScore()).isWithin(expectedResult.scores[j]);
+            assertWithMessage("Wrong algorithm at (%s, %s): %s", i, j, match)
+                .that(match.getAlgorithm()).isEqualTo(expectedResult.algorithms[j]);
         }
     }
 
@@ -1051,10 +1081,11 @@ final class Helper {
     }
 
     public static void assertFillEventForFieldsClassification(@NonNull FillEventHistory.Event event,
-            @NonNull AutofillId fieldId, @NonNull String remoteId, float score) {
+            @NonNull AutofillId fieldId, @NonNull String remoteId, float score,
+            @NonNull String algorithm) {
         assertFillEvent(event, TYPE_CONTEXT_COMMITTED, null, null, null,
                 new FieldClassificationResult[] {
-                        new FieldClassificationResult(fieldId, remoteId, score)
+                        new FieldClassificationResult(fieldId, remoteId, score, algorithm)
                 });
     }
 
@@ -1099,16 +1130,19 @@ final class Helper {
         public final AutofillId id;
         public final String[] remoteIds;
         public final float[] scores;
+        public final String[] algorithms;
 
-        FieldClassificationResult(@NonNull AutofillId id, @NonNull String remoteId, float score) {
-            this(id, new String[] { remoteId }, new float[] { score });
+        FieldClassificationResult(@NonNull AutofillId id, @NonNull String remoteId, float score,
+                String algorithm) {
+            this(id, new String[] { remoteId }, new float[] { score }, new String[] { algorithm });
         }
 
         FieldClassificationResult(@NonNull AutofillId id, @NonNull String[] remoteIds,
-                float[] scores) {
+                float[] scores, String[] algorithms) {
             this.id = id;
             this.remoteIds = remoteIds;
             this.scores = scores;
+            this.algorithms = algorithms;
         }
     }
 }

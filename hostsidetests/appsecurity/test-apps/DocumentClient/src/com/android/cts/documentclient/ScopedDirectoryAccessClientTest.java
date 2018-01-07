@@ -77,7 +77,7 @@ public class ScopedDirectoryAccessClientTest extends DocumentsClientTestCase {
     }
 
     public void testInvalidPath() throws Exception {
-        if (!supportedHardware()) return;
+        if (!supportedHardwareForScopedDirectoryAccess()) return;
 
         for (StorageVolume volume : getVolumes()) {
             openExternalDirectoryInvalidPath(volume, "");
@@ -89,7 +89,7 @@ public class ScopedDirectoryAccessClientTest extends DocumentsClientTestCase {
     }
 
     public void testUserRejects() throws Exception {
-        if (!supportedHardware()) return;
+        if (!supportedHardwareForScopedDirectoryAccess()) return;
 
         for (StorageVolume volume : getVolumes()) {
             // Tests user clicking DENY button, for all valid directories.
@@ -114,7 +114,7 @@ public class ScopedDirectoryAccessClientTest extends DocumentsClientTestCase {
     }
 
     public void testUserAccepts() throws Exception {
-        if (!supportedHardware()) return;
+        if (!supportedHardwareForScopedDirectoryAccess()) return;
 
         for (StorageVolume volume : getVolumes()) {
             userAcceptsTest(volume, DIRECTORY_PICTURES);
@@ -125,7 +125,7 @@ public class ScopedDirectoryAccessClientTest extends DocumentsClientTestCase {
     }
 
     public void testUserAcceptsNewDirectory() throws Exception {
-        if (!supportedHardware()) return;
+        if (!supportedHardwareForScopedDirectoryAccess()) return;
 
         // TODO: figure out a better way to remove the directory.
         final String command = "rm -rf /sdcard/" + DIRECTORY_PICTURES;
@@ -137,7 +137,7 @@ public class ScopedDirectoryAccessClientTest extends DocumentsClientTestCase {
     }
 
     public void testNotAskedAgain() throws Exception {
-        if (!supportedHardware()) return;
+        if (!supportedHardwareForScopedDirectoryAccess()) return;
 
         for (StorageVolume volume : getVolumes()) {
             final String volumeDesc = volume.getDescription(getInstrumentation().getContext());
@@ -157,7 +157,7 @@ public class ScopedDirectoryAccessClientTest extends DocumentsClientTestCase {
     }
 
     public void testNotAskedAgainOnRoot() throws Exception {
-        if (!supportedHardware()) return;
+        if (!supportedHardwareForScopedDirectoryAccess()) return;
 
         for (StorageVolume volume : getVolumes()) {
             if (volume.isPrimary()) continue;
@@ -185,7 +185,7 @@ public class ScopedDirectoryAccessClientTest extends DocumentsClientTestCase {
     }
 
     public void testDeniesOnceButAllowsAskingAgain() throws Exception {
-        if (!supportedHardware())return;
+        if (!supportedHardwareForScopedDirectoryAccess())return;
 
         final String[] dirs = { DIRECTORY_DCIM, DIRECTORY_ROOT };
         for (StorageVolume volume : getVolumes()) {
@@ -210,7 +210,7 @@ public class ScopedDirectoryAccessClientTest extends DocumentsClientTestCase {
     }
 
     public void testDeniesOnceForAll() throws Exception {
-        if (!supportedHardware()) return;
+        if (!supportedHardwareForScopedDirectoryAccess()) return;
 
         final String[] dirs = {DIRECTORY_PICTURES, DIRECTORY_ROOT};
         for (StorageVolume volume : getVolumes()) {
@@ -246,13 +246,13 @@ public class ScopedDirectoryAccessClientTest extends DocumentsClientTestCase {
     }
 
     public void testRemovePackageStep1UserDenies() throws Exception {
-        if (!supportedHardware()) return;
+        if (!supportedHardwareForScopedDirectoryAccess()) return;
 
         deniesOnceForAllTest(getPrimaryVolume(), DIRECTORY_NOTIFICATIONS);
     }
 
     public void testRemovePackageStep2UserAcceptsDoNotClear() throws Exception {
-        if (!supportedHardware()) return;
+        if (!supportedHardwareForScopedDirectoryAccess()) return;
 
         userAcceptsTest(getPrimaryVolume(), DIRECTORY_NOTIFICATIONS);
     }

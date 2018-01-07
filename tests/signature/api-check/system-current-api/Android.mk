@@ -20,6 +20,7 @@ LOCAL_PACKAGE_NAME := CtsSystemCurrentApiSignatureTestCases
 
 LOCAL_SIGNATURE_API_FILES := \
     system-current.api \
+    system-removed.api \
     android-test-mock-current.api \
     android-test-runner-current.api \
 

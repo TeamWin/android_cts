@@ -48,7 +48,8 @@
             android:name=".activities.AccessibilityTextTraversalActivity"/>
 
         <activity android:label="Activity for testing window accessibility reporting"
-             android:name=".activities.AccessibilityWindowReportingActivity"/>
+             android:name=".activities.AccessibilityWindowReportingActivity"
+             android:supportsPictureInPicture="true"/>
 
         <activity
             android:label="Full screen activity for gesture dispatch testing"

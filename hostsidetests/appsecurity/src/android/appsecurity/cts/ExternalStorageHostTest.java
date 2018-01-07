@@ -16,8 +16,10 @@
 
 package android.appsecurity.cts;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.ddmlib.Log;
@@ -32,6 +34,8 @@ import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Set of tests that verify behavior of external storage devices.
@@ -291,6 +295,45 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
             getDevice().uninstallPackage(NONE_PKG);
             getDevice().uninstallPackage(WRITE_PKG);
         }
+    }
+
+    /**
+     * For security reasons, the shell user cannot access the shared storage of
+     * secondary users. Instead, developers should use the {@code content} shell
+     * tool to read/write files in those locations.
+     */
+    @Test
+    public void testSecondaryUsersInaccessible() throws Exception {
+        List<String> mounts = new ArrayList<>();
+        for (String line : getDevice().executeShellCommand("cat /proc/mount").split("\n")) {
+            String[] split = line.split(" ");
+            if (split[1].startsWith("/storage/") || split[1].startsWith("/mnt/")) {
+                mounts.add(split[1]);
+            }
+        }
+
+        for (int user : mUsers) {
+            String probe = "/sdcard/../" + user;
+            if (user == Utils.USER_SYSTEM) {
+                // Primary user should always be visible. Skip checking raw
+                // mount points, since we'd get false-positives for physical
+                // devices that aren't multi-user aware.
+                assertTrue(probe, access(probe));
+            } else {
+                // Secondary user should never be visible.
+                assertFalse(probe, access(probe));
+                for (String mount : mounts) {
+                    probe = mount + "/" + user;
+                    assertFalse(probe, access(probe));
+                }
+            }
+        }
+    }
+
+    private boolean access(String path) throws DeviceNotAvailableException {
+        final long nonce = System.nanoTime();
+        return getDevice().executeShellCommand("ls -la " + path + " && echo " + nonce)
+                .contains(Long.toString(nonce));
     }
 
     private void enableWriteSettings(String packageName, int userId)

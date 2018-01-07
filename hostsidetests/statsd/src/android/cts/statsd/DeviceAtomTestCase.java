@@ -89,7 +89,7 @@ public class DeviceAtomTestCase extends AtomTestCase {
      */
     protected List<EventMetricData> doDeviceMethod(String methodName, StatsdConfig.Builder cfg)
             throws Exception {
-        removeConfig(CONFIG_NAME);
+        removeConfig(CONFIG_ID);
         uploadConfig(cfg);
         int appUid = getUid();
         LogUtil.CLog.d("\nPerforming device-side test of " + methodName + " for uid " + appUid);
@@ -111,6 +111,18 @@ public class DeviceAtomTestCase extends AtomTestCase {
         final int UID_KEY = 1;
         FieldValueMatcher.Builder kvmUid = createKvm(UID_KEY).setEqInt(getUid());
         addAtomEvent(conf, atomTag, Arrays.asList(kvm, kvmUid));
+    }
+
+    /**
+     * Adds an event to the config for an atom that matches the app's uid.
+     * @param conf configuration
+     * @param atomTag atom tag (from atoms.proto)
+     */
+    @Override
+    protected void addAtomEvent(StatsdConfig.Builder conf, int atomTag) throws Exception {
+        final int UID_KEY = 1;
+        FieldValueMatcher.Builder kvmUid = createKvm(UID_KEY).setEqInt(getUid());
+        addAtomEvent(conf, atomTag, Arrays.asList(kvmUid));
     }
 
     /**
