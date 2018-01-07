@@ -238,8 +238,6 @@ public abstract class ActivityManagerTestBase {
 
     protected ActivityAndWindowManagersState mAmWmState = new ActivityAndWindowManagersState();
 
-    private float mFontScale;
-
     private SurfaceTraceReceiver mSurfaceTraceReceiver;
     private Thread mSurfaceTraceThread;
 
@@ -276,7 +274,6 @@ public abstract class ActivityManagerTestBase {
         wakeUpAndUnlockDevice();
         pressHomeButton();
         removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
-        mFontScale = getFontScale();
         mLockCredentialsSet = false;
         mLockDisabled = isLockDisabled();
     }
@@ -287,7 +284,6 @@ public abstract class ActivityManagerTestBase {
         executeShellCommand(AM_FORCE_STOP_TEST_PACKAGE);
         executeShellCommand(AM_FORCE_STOP_SECOND_TEST_PACKAGE);
         executeShellCommand(AM_FORCE_STOP_THIRD_TEST_PACKAGE);
-        setFontScale(mFontScale);
         setWindowTransitionAnimationDurationScale(1);
         removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
         wakeUpAndUnlockDevice();
@@ -820,31 +816,9 @@ public abstract class ActivityManagerTestBase {
         return INVALID_DEVICE_ROTATION;
     }
 
-    protected void setFontScale(float fontScale) {
-        if (fontScale == 0.0f) {
-            runCommandAndPrintOutput(
-                    "settings delete system font_scale");
-        } else {
-            runCommandAndPrintOutput(
-                    "settings put system font_scale " + fontScale);
-        }
-    }
-
     protected void setWindowTransitionAnimationDurationScale(float animDurationScale) {
         runCommandAndPrintOutput(
                 "settings put global transition_animation_scale " + animDurationScale);
-    }
-
-    protected float getFontScale() {
-        try {
-            final String fontScale =
-                    runCommandAndPrintOutput("settings get system font_scale").trim();
-            return Float.parseFloat(fontScale);
-        } catch (NumberFormatException e) {
-            // If we don't have a valid font scale key, return 0.0f now so
-            // that we delete the key in tearDown().
-            return 0.0f;
-        }
     }
 
     protected String runCommandAndPrintOutput(String command) {
