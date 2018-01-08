@@ -360,7 +360,6 @@ public class ContextWrapperTest extends AndroidTestCase {
 
         // Test databaseList()
         List<String> list = Arrays.asList(mContextWrapper.databaseList());
-        assertEquals(4, list.size()); // Each database has a journal
         assertTrue("1) database list: " + list, list.contains(DATABASE_NAME1));
         assertTrue("2) database list: " + list, list.contains(DATABASE_NAME2));
 
