@@ -30,7 +30,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
     private static final Object sLock = new Object();
     private static AbstractThreadedSyncAdapter sDelegate;
 
-    static AbstractThreadedSyncAdapter setNewDelegate() {
+    public static AbstractThreadedSyncAdapter setNewDelegate() {
         AbstractThreadedSyncAdapter delegate = mock(AbstractThreadedSyncAdapter.class);
 
         synchronized (sLock) {

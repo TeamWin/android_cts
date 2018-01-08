@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.cts.content;
+package android.content.cts;
 
 import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -37,6 +37,12 @@ import android.os.Process;
 import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.SystemUtil;
+import com.android.cts.content.FlakyTestRule;
+import com.android.cts.content.StubActivity;
+import com.android.cts.content.SyncAdapter;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -46,13 +52,11 @@ import org.junit.runner.RunWith;
 
 import java.io.IOException;
 
-import com.android.compatibility.common.util.SystemUtil;
-
 /**
  * Tests whether a sync adapter can access accounts.
  */
 @RunWith(AndroidJUnit4.class)
-public class CtsSyncAccountAccessSameCertTestCases {
+public class AccountAccessSameCertTest {
     private static final long SYNC_TIMEOUT_MILLIS = 20000; // 20 sec
 
     @Rule
