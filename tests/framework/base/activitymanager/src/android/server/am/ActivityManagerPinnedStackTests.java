@@ -38,8 +38,10 @@ import static org.junit.Assume.assumeTrue;
 
 import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
+import android.provider.Settings;
 import android.server.am.ActivityManagerState.ActivityStack;
 import android.server.am.ActivityManagerState.ActivityTask;
+import android.server.am.settings.SettingsSession;
 import android.support.test.filters.FlakyTest;
 
 import org.junit.Test;
@@ -196,22 +198,24 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // Launch a PIP activity
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
 
-        setDeviceRotation(ROTATION_0);
-        WindowManagerState wmState = mAmWmState.getWmState();
-        wmState.computeState();
-        Rect defaultPipBounds = wmState.getDefaultPinnedStackBounds();
-        Rect stableBounds = wmState.getStableBounds();
-        assertTrue(defaultPipBounds.width() > 0 && defaultPipBounds.height() > 0);
-        assertTrue(stableBounds.contains(defaultPipBounds));
+        try (final RotationSession rotationSession = new RotationSession()) {
+            rotationSession.set(ROTATION_0);
 
-        setDeviceRotation(ROTATION_90);
-        wmState = mAmWmState.getWmState();
-        wmState.computeState();
-        defaultPipBounds = wmState.getDefaultPinnedStackBounds();
-        stableBounds = wmState.getStableBounds();
-        assertTrue(defaultPipBounds.width() > 0 && defaultPipBounds.height() > 0);
-        assertTrue(stableBounds.contains(defaultPipBounds));
-        setDeviceRotation(ROTATION_0);
+            WindowManagerState wmState = mAmWmState.getWmState();
+            wmState.computeState();
+            Rect defaultPipBounds = wmState.getDefaultPinnedStackBounds();
+            Rect stableBounds = wmState.getStableBounds();
+            assertTrue(defaultPipBounds.width() > 0 && defaultPipBounds.height() > 0);
+            assertTrue(stableBounds.contains(defaultPipBounds));
+
+            rotationSession.set(ROTATION_90);
+            wmState = mAmWmState.getWmState();
+            wmState.computeState();
+            defaultPipBounds = wmState.getDefaultPinnedStackBounds();
+            stableBounds = wmState.getStableBounds();
+            assertTrue(defaultPipBounds.width() > 0 && defaultPipBounds.height() > 0);
+            assertTrue(stableBounds.contains(defaultPipBounds));
+        }
     }
 
     @Test
@@ -221,22 +225,23 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // Launch a PIP activity
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
 
-        setDeviceRotation(ROTATION_0);
-        WindowManagerState wmState = mAmWmState.getWmState();
-        wmState.computeState();
-        Rect pipMovementBounds = wmState.getPinnedStackMomentBounds();
-        Rect stableBounds = wmState.getStableBounds();
-        assertTrue(pipMovementBounds.width() > 0 && pipMovementBounds.height() > 0);
-        assertTrue(stableBounds.contains(pipMovementBounds));
+        try (final RotationSession rotationSession = new RotationSession()) {
+            rotationSession.set(ROTATION_0);
+            WindowManagerState wmState = mAmWmState.getWmState();
+            wmState.computeState();
+            Rect pipMovementBounds = wmState.getPinnedStackMomentBounds();
+            Rect stableBounds = wmState.getStableBounds();
+            assertTrue(pipMovementBounds.width() > 0 && pipMovementBounds.height() > 0);
+            assertTrue(stableBounds.contains(pipMovementBounds));
 
-        setDeviceRotation(ROTATION_90);
-        wmState = mAmWmState.getWmState();
-        wmState.computeState();
-        pipMovementBounds = wmState.getPinnedStackMomentBounds();
-        stableBounds = wmState.getStableBounds();
-        assertTrue(pipMovementBounds.width() > 0 && pipMovementBounds.height() > 0);
-        assertTrue(stableBounds.contains(pipMovementBounds));
-        setDeviceRotation(ROTATION_0);
+            rotationSession.set(ROTATION_90);
+            wmState = mAmWmState.getWmState();
+            wmState.computeState();
+            pipMovementBounds = wmState.getPinnedStackMomentBounds();
+            stableBounds = wmState.getStableBounds();
+            assertTrue(pipMovementBounds.width() > 0 && pipMovementBounds.height() > 0);
+            assertTrue(stableBounds.contains(pipMovementBounds));
+        }
     }
 
     @Test
@@ -282,15 +287,16 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         mAmWmState.waitForValidState(PIP_ACTIVITY, WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
 
         // Ensure that the PIP stack is fully visible in each orientation
-        setDeviceRotation(ROTATION_0);
-        assertPinnedStackActivityIsInDisplayBounds(PIP_ACTIVITY);
-        setDeviceRotation(ROTATION_90);
-        assertPinnedStackActivityIsInDisplayBounds(PIP_ACTIVITY);
-        setDeviceRotation(ROTATION_180);
-        assertPinnedStackActivityIsInDisplayBounds(PIP_ACTIVITY);
-        setDeviceRotation(ROTATION_270);
-        assertPinnedStackActivityIsInDisplayBounds(PIP_ACTIVITY);
-        setDeviceRotation(ROTATION_0);
+        try (final RotationSession rotationSession = new RotationSession()) {
+            rotationSession.set(ROTATION_0);
+            assertPinnedStackActivityIsInDisplayBounds(PIP_ACTIVITY);
+            rotationSession.set(ROTATION_90);
+            assertPinnedStackActivityIsInDisplayBounds(PIP_ACTIVITY);
+            rotationSession.set(ROTATION_180);
+            assertPinnedStackActivityIsInDisplayBounds(PIP_ACTIVITY);
+            rotationSession.set(ROTATION_270);
+            assertPinnedStackActivityIsInDisplayBounds(PIP_ACTIVITY);
+        }
     }
 
     @Test
@@ -836,38 +842,48 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         assertValidPictureInPictureCallbackOrder(PIP_ACTIVITY, logSeparator);
     }
 
+    /** Helper class to save, set, and restore transition_animation_scale preferences. */
+    private static class TransitionAnimationScaleSession extends SettingsSession<Float> {
+        TransitionAnimationScaleSession() {
+            super(Settings.Global.getUriFor(Settings.Global.TRANSITION_ANIMATION_SCALE),
+                    Settings.Global::getFloat,
+                    Settings.Global::putFloat);
+        }
+    }
+
     @Test
     public void testEnterPipInterruptedCallbacks() throws Exception {
         assumeTrue(supportsPip());
 
-        // Slow down the transition animations for this test
-        setWindowTransitionAnimationDurationScale(20);
+        try (final TransitionAnimationScaleSession transitionAnimationScaleSession =
+                new TransitionAnimationScaleSession()) {
+            // Slow down the transition animations for this test
+            transitionAnimationScaleSession.set(20f);
 
-        // Launch a PiP activity
-        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
-        // Wait until the PiP activity has moved into the pinned stack (happens before the
-        // transition has started)
-        mAmWmState.waitForValidState(PIP_ACTIVITY, WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
-        assertPinnedStackExists();
+            // Launch a PiP activity
+            launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
+            // Wait until the PiP activity has moved into the pinned stack (happens before the
+            // transition has started)
+            mAmWmState.waitForValidState(PIP_ACTIVITY, WINDOWING_MODE_PINNED,
+                    ACTIVITY_TYPE_STANDARD);
+            assertPinnedStackExists();
 
-        // Relaunch the PiP activity back into fullscreen
-        String logSeparator = clearLogcat();
-        launchActivity(PIP_ACTIVITY);
-        // Wait until the PiP activity is reparented into the fullscreen stack (happens after the
-        // transition has finished)
-        mAmWmState.waitForValidState(
-                PIP_ACTIVITY, WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD);
+            // Relaunch the PiP activity back into fullscreen
+            String logSeparator = clearLogcat();
+            launchActivity(PIP_ACTIVITY);
+            // Wait until the PiP activity is reparented into the fullscreen stack (happens after
+            // the transition has finished)
+            mAmWmState.waitForValidState(
+                    PIP_ACTIVITY, WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD);
 
-        // Ensure that we get the callbacks indicating that PiP/MW mode was cancelled, but no
-        // configuration change (since none was sent)
-        final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(
-                PIP_ACTIVITY, logSeparator);
-        assertTrue(lifecycleCounts.mConfigurationChangedCount == 0);
-        assertTrue(lifecycleCounts.mPictureInPictureModeChangedCount == 1);
-        assertTrue(lifecycleCounts.mMultiWindowModeChangedCount == 1);
-
-        // Reset the animation scale
-        setWindowTransitionAnimationDurationScale(1);
+            // Ensure that we get the callbacks indicating that PiP/MW mode was cancelled, but no
+            // configuration change (since none was sent)
+            final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(
+                    PIP_ACTIVITY, logSeparator);
+            assertTrue(lifecycleCounts.mConfigurationChangedCount == 0);
+            assertTrue(lifecycleCounts.mPictureInPictureModeChangedCount == 1);
+            assertTrue(lifecycleCounts.mMultiWindowModeChangedCount == 1);
+        }
     }
 
     @FlakyTest(bugId = 71564769)

@@ -24,6 +24,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import android.platform.test.annotations.Presubmit;
+import android.provider.Settings;
+import android.server.am.settings.SettingsSession;
 
 import org.junit.Test;
 
@@ -82,60 +84,73 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
         testChangeFontScale(FONT_SCALE_NO_RELAUNCH_ACTIVITY_NAME, false /* relaunch */);
     }
 
-    private void testRotation(
-            String activityName, int rotationStep, int numRelaunch, int numConfigChange)
-                    throws Exception {
+    private void testRotation(String activityName, int rotationStep, int numRelaunch,
+            int numConfigChange) throws Exception {
         launchActivity(activityName);
 
         final String[] waitForActivitiesVisible = new String[] {activityName};
         mAmWmState.computeState(waitForActivitiesVisible);
 
         final int initialRotation = 4 - rotationStep;
-        setDeviceRotation(initialRotation);
-        mAmWmState.computeState(waitForActivitiesVisible);
-        final int actualStackId = mAmWmState.getAmState().getTaskByActivityName(
-                activityName).mStackId;
-        final int displayId = mAmWmState.getAmState().getStackById(actualStackId).mDisplayId;
-        final int newDeviceRotation = getDeviceRotation(displayId);
-        if (newDeviceRotation == INVALID_DEVICE_ROTATION) {
-            logE("Got an invalid device rotation value. "
-                    + "Continuing the test despite of that, but it is likely to fail.");
-        } else if (newDeviceRotation != initialRotation) {
-            log("This device doesn't support user rotation "
-                    + "mode. Not continuing the rotation checks.");
-            return;
-        }
-
-        for (int rotation = 0; rotation < 4; rotation += rotationStep) {
-            final String logSeparator = clearLogcat();
-            setDeviceRotation(rotation);
+        try (final RotationSession rotationSession = new RotationSession()) {
+            rotationSession.set(initialRotation);
             mAmWmState.computeState(waitForActivitiesVisible);
-            assertRelaunchOrConfigChanged(activityName, numRelaunch, numConfigChange, logSeparator);
+            final int actualStackId = mAmWmState.getAmState().getTaskByActivityName(
+                    activityName).mStackId;
+            final int displayId = mAmWmState.getAmState().getStackById(actualStackId).mDisplayId;
+            final int newDeviceRotation = getDeviceRotation(displayId);
+            if (newDeviceRotation == INVALID_DEVICE_ROTATION) {
+                logE("Got an invalid device rotation value. "
+                        + "Continuing the test despite of that, but it is likely to fail.");
+            } else if (newDeviceRotation != initialRotation) {
+                log("This device doesn't support user rotation "
+                        + "mode. Not continuing the rotation checks.");
+                return;
+            }
+
+            for (int rotation = 0; rotation < 4; rotation += rotationStep) {
+                final String logSeparator = clearLogcat();
+                rotationSession.set(rotation);
+                mAmWmState.computeState(waitForActivitiesVisible);
+                assertRelaunchOrConfigChanged(activityName, numRelaunch, numConfigChange,
+                        logSeparator);
+            }
+        }
+    }
+
+    /** Helper class to save, set, and restore font_scale preferences. */
+    private static class FontScaleSession extends SettingsSession<Float> {
+        FontScaleSession() {
+            super(Settings.System.getUriFor(Settings.System.FONT_SCALE),
+                    Settings.System::getFloat,
+                    Settings.System::putFloat);
         }
     }
 
     private void testChangeFontScale(
             String activityName, boolean relaunch) throws Exception {
-        setFontScale(1.0f);
-        String logSeparator = clearLogcat();
-        launchActivity(activityName);
-        final String[] waitForActivitiesVisible = new String[] {activityName};
-        mAmWmState.computeState(waitForActivitiesVisible);
-
-        final int densityDpi = getActivityDensityDpi(activityName, logSeparator);
-
-        for (float fontScale = 0.85f; fontScale <= 1.3f; fontScale += 0.15f) {
-            logSeparator = clearLogcat();
-            setFontScale(fontScale);
+        try (final FontScaleSession fontScaleSession = new FontScaleSession()) {
+            fontScaleSession.set(1.0f);
+            String logSeparator = clearLogcat();
+            launchActivity(activityName);
+            final String[] waitForActivitiesVisible = new String[]{activityName};
             mAmWmState.computeState(waitForActivitiesVisible);
-            assertRelaunchOrConfigChanged(activityName, relaunch ? 1 : 0, relaunch ? 0 : 1,
-                    logSeparator);
 
-            // Verify that the display metrics are updated, and therefore the text size is also
-            // updated accordingly.
-            assertExpectedFontPixelSize(activityName,
-                    scaledPixelsToPixels(EXPECTED_FONT_SIZE_SP, fontScale, densityDpi),
-                    logSeparator);
+            final int densityDpi = getActivityDensityDpi(activityName, logSeparator);
+
+            for (float fontScale = 0.85f; fontScale <= 1.3f; fontScale += 0.15f) {
+                logSeparator = clearLogcat();
+                fontScaleSession.set(fontScale);
+                mAmWmState.computeState(waitForActivitiesVisible);
+                assertRelaunchOrConfigChanged(activityName, relaunch ? 1 : 0, relaunch ? 0 : 1,
+                        logSeparator);
+
+                // Verify that the display metrics are updated, and therefore the text size is also
+                // updated accordingly.
+                assertExpectedFontPixelSize(activityName,
+                        scaledPixelsToPixels(EXPECTED_FONT_SIZE_SP, fontScale, densityDpi),
+                        logSeparator);
+            }
         }
     }
 

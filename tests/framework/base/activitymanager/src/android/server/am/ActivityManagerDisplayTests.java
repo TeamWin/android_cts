@@ -1487,7 +1487,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      */
     @Test
     public void testMoveToEmptyDisplayOnLaunch() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        assumeTrue(supportsMultiDisplay());
 
         // Launch activity with unique affinity, so it will the only one in its task.
         launchActivity(LAUNCHING_ACTIVITY);
@@ -1550,28 +1550,32 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
                 RESIZEABLE_ACTIVITY_NAME, logSeparator);
         assertNotNull("Test activity must have reported initial sizes on launch", initialSizes);
 
-        // Rotate primary display and check that activity on secondary display is not affected.
-        rotateAndCheckSameSizes(RESIZEABLE_ACTIVITY_NAME);
+        try (final RotationSession rotationSession = new RotationSession()) {
+            // Rotate primary display and check that activity on secondary display is not affected.
+            rotateAndCheckSameSizes(rotationSession, RESIZEABLE_ACTIVITY_NAME);
 
-        // Launch activity to secondary display when primary one is rotated.
-        final int initialRotation = mAmWmState.getWmState().getRotation();
-        setDeviceRotation((initialRotation + 1) % 4);
+            // Launch activity to secondary display when primary one is rotated.
+            final int initialRotation = mAmWmState.getWmState().getRotation();
+            rotationSession.set((initialRotation + 1) % 4);
 
-        logSeparator = clearLogcat();
-        launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mId);
-        mAmWmState.waitForActivityState(TEST_ACTIVITY_NAME, STATE_RESUMED);
-        mAmWmState.assertFocusedActivity("Focus must be on secondary display",
-                TEST_ACTIVITY_NAME);
-        final ReportedSizes testActivitySizes = getLastReportedSizesForActivity(
-                TEST_ACTIVITY_NAME, logSeparator);
-        assertEquals("Sizes of secondary display must not change after rotation of primary display",
-                initialSizes, testActivitySizes);
+            logSeparator = clearLogcat();
+            launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mId);
+            mAmWmState.waitForActivityState(TEST_ACTIVITY_NAME, STATE_RESUMED);
+            mAmWmState.assertFocusedActivity("Focus must be on secondary display",
+                    TEST_ACTIVITY_NAME);
+            final ReportedSizes testActivitySizes = getLastReportedSizesForActivity(
+                    TEST_ACTIVITY_NAME, logSeparator);
+            assertEquals(
+                    "Sizes of secondary display must not change after rotation of primary display",
+                    initialSizes, testActivitySizes);
+        }
     }
 
-    private void rotateAndCheckSameSizes(String activityName) throws Exception {
+    private void rotateAndCheckSameSizes(RotationSession rotationSession, String activityName)
+            throws Exception {
         for (int rotation = 3; rotation >= 0; --rotation) {
             final String logSeparator = clearLogcat();
-            setDeviceRotation(rotation);
+            rotationSession.set(rotation);
             final ReportedSizes rotatedSizes = getLastReportedSizesForActivity(activityName,
                     logSeparator);
             assertNull("Sizes must not change after rotation", rotatedSizes);

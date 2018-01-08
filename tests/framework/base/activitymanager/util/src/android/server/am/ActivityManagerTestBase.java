@@ -44,10 +44,12 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.ParcelFileDescriptor;
+import android.provider.Settings;
+import android.server.am.settings.SettingsSession;
+import android.support.annotation.NonNull;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.UiDevice;
 import android.view.Display;
-import android.view.Surface;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -236,10 +238,6 @@ public abstract class ActivityManagerTestBase {
 
     protected ActivityAndWindowManagersState mAmWmState = new ActivityAndWindowManagersState();
 
-    private int mInitialAccelerometerRotation;
-    private int mUserRotation;
-    private float mFontScale;
-
     private SurfaceTraceReceiver mSurfaceTraceReceiver;
     private Thread mSurfaceTraceThread;
 
@@ -276,10 +274,6 @@ public abstract class ActivityManagerTestBase {
         wakeUpAndUnlockDevice();
         pressHomeButton();
         removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
-        // Store rotation settings.
-        mInitialAccelerometerRotation = getAccelerometerRotation();
-        mUserRotation = getUserRotation();
-        mFontScale = getFontScale();
         mLockCredentialsSet = false;
         mLockDisabled = isLockDisabled();
     }
@@ -290,11 +284,6 @@ public abstract class ActivityManagerTestBase {
         executeShellCommand(AM_FORCE_STOP_TEST_PACKAGE);
         executeShellCommand(AM_FORCE_STOP_SECOND_TEST_PACKAGE);
         executeShellCommand(AM_FORCE_STOP_THIRD_TEST_PACKAGE);
-        // Restore rotation settings to the state they were before test.
-        setAccelerometerRotation(mInitialAccelerometerRotation);
-        setUserRotation(mUserRotation);
-        setFontScale(mFontScale);
-            setWindowTransitionAnimationDurationScale(1);
         removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
         wakeUpAndUnlockDevice();
         pressHomeButton();
@@ -782,14 +771,34 @@ public abstract class ActivityManagerTestBase {
         runCommandAndPrintOutput("locksettings set-disabled " + lockDisabled);
     }
 
-    /**
-     * Sets the device rotation, value corresponds to one of {@link Surface#ROTATION_0},
-     * {@link Surface#ROTATION_90}, {@link Surface#ROTATION_180}, {@link Surface#ROTATION_270}.
-     */
-    protected void setDeviceRotation(int rotation) throws Exception {
-        setAccelerometerRotation(0);
-        setUserRotation(rotation);
-        mAmWmState.waitForRotation(rotation);
+    /** Helper class to save, set & wait, and restore rotation related preferences. */
+    protected class RotationSession extends SettingsSession<Integer> {
+        private final SettingsSession<Integer> mUserRotation;
+
+        RotationSession() throws Exception {
+            // Save accelerometer_rotation preference.
+            super(Settings.System.getUriFor(Settings.System.ACCELEROMETER_ROTATION),
+                    Settings.System::getInt, Settings.System::putInt);
+            mUserRotation = new SettingsSession<>(
+                    Settings.System.getUriFor(Settings.System.USER_ROTATION),
+                    Settings.System::getInt, Settings.System::putInt);
+            // Disable accelerometer_rotation.
+            super.set(0);
+        }
+
+        @Override
+        public void set(@NonNull Integer value) throws Exception {
+            mUserRotation.set(value);
+            // Wait for settling rotation.
+            mAmWmState.waitForRotation(value);
+        }
+
+        @Override
+        public void close() throws Exception {
+            mUserRotation.close();
+            // Restore accelerometer_rotation preference.
+            super.close();
+        }
     }
 
     protected int getDeviceRotation(int displayId) {
@@ -798,69 +807,12 @@ public abstract class ActivityManagerTestBase {
                 "(mDisplayId=" + displayId + ")([\\s\\S]*)(mOverrideDisplayInfo)(.*)"
                         + "(rotation)(\\s+)(\\d+)");
         Matcher matcher = pattern.matcher(displays);
-        while (matcher.find()) {
+        if (matcher.find()) {
             final String match = matcher.group(7);
             return Integer.parseInt(match);
         }
 
         return INVALID_DEVICE_ROTATION;
-    }
-
-    private int getAccelerometerRotation() {
-        final String rotation =
-                runCommandAndPrintOutput("settings get system accelerometer_rotation");
-        return Integer.parseInt(rotation.trim());
-    }
-
-    private void setAccelerometerRotation(int rotation) {
-        runCommandAndPrintOutput(
-                "settings put system accelerometer_rotation " + rotation);
-    }
-
-    protected int getUserRotation() {
-        final String rotation =
-                runCommandAndPrintOutput("settings get system user_rotation").trim();
-        if ("null".equals(rotation)) {
-            return -1;
-        }
-        return Integer.parseInt(rotation);
-    }
-
-    private void setUserRotation(int rotation) {
-        if (rotation == -1) {
-            runCommandAndPrintOutput(
-                    "settings delete system user_rotation");
-        } else {
-            runCommandAndPrintOutput(
-                    "settings put system user_rotation " + rotation);
-        }
-    }
-
-    protected void setFontScale(float fontScale) {
-        if (fontScale == 0.0f) {
-            runCommandAndPrintOutput(
-                    "settings delete system font_scale");
-        } else {
-            runCommandAndPrintOutput(
-                    "settings put system font_scale " + fontScale);
-        }
-    }
-
-    protected void setWindowTransitionAnimationDurationScale(float animDurationScale) {
-        runCommandAndPrintOutput(
-                "settings put global transition_animation_scale " + animDurationScale);
-    }
-
-    protected float getFontScale() {
-        try {
-            final String fontScale =
-                    runCommandAndPrintOutput("settings get system font_scale").trim();
-            return Float.parseFloat(fontScale);
-        } catch (NumberFormatException e) {
-            // If we don't have a valid font scale key, return 0.0f now so
-            // that we delete the key in tearDown().
-            return 0.0f;
-        }
     }
 
     protected String runCommandAndPrintOutput(String command) {
