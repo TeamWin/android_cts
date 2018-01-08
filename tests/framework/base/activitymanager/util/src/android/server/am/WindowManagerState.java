@@ -711,7 +711,7 @@ public class WindowManagerState {
             DisplayInfoProto infoProto = proto.displayInfo;
             if (infoProto != null) {
                 mDisplayRect.set(0, 0, infoProto.logicalWidth, infoProto.logicalHeight);
-                mAppRect.set(0, 0, infoProto.logicalWidth, infoProto.logicalHeight);
+                mAppRect.set(0, 0, infoProto.appWidth, infoProto.appHeight);
             }
             final DisplayFramesProto displayFramesProto = proto.displayFrames;
             if (displayFramesProto != null) {
