@@ -77,6 +77,7 @@ import android.view.Display;
 import android.view.HapticFeedbackConstants;
 import android.view.InputDevice;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MotionEvent;
@@ -4539,6 +4540,31 @@ public class ViewTest {
     public void testScaleYNegativeInfinity() {
         View view = new View(mContext);
         view.setScaleY(Float.NEGATIVE_INFINITY);
+    }
+
+    @Test
+    public void testSetGetOutlineShadowColor() {
+        ViewGroup group = (ViewGroup) LayoutInflater.from(mContext).inflate(
+                R.layout.view_outlineshadowcolor, null);
+        View defaultShadow = group.findViewById(R.id.default_shadow);
+        assertEquals(Color.BLACK, defaultShadow.getOutlineSpotShadowColor());
+        assertEquals(Color.BLACK, defaultShadow.getOutlineAmbientShadowColor());
+        defaultShadow.setOutlineSpotShadowColor(Color.YELLOW);
+        defaultShadow.setOutlineAmbientShadowColor(Color.GREEN);
+        assertEquals(Color.YELLOW, defaultShadow.getOutlineSpotShadowColor());
+        assertEquals(Color.GREEN, defaultShadow.getOutlineAmbientShadowColor());
+
+        View redAmbientShadow = group.findViewById(R.id.red_shadow);
+        assertEquals(Color.RED, redAmbientShadow.getOutlineAmbientShadowColor());
+        assertEquals(Color.BLACK, redAmbientShadow.getOutlineSpotShadowColor());
+
+        View blueSpotShadow = group.findViewById(R.id.blue_shadow);
+        assertEquals(Color.BLUE, blueSpotShadow.getOutlineSpotShadowColor());
+        assertEquals(Color.BLACK, blueSpotShadow.getOutlineAmbientShadowColor());
+
+        View greenShadow = group.findViewById(R.id.green_shadow);
+        assertEquals(Color.GREEN, greenShadow.getOutlineSpotShadowColor());
+        assertEquals(Color.GREEN, greenShadow.getOutlineAmbientShadowColor());
     }
 
     private static class MockDrawable extends Drawable {
