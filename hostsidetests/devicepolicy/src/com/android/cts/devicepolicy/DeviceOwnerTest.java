@@ -122,14 +122,6 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         executeDeviceOwnerTest("LockScreenInfoTest");
     }
 
-    public void testLockScreenInfo_affiliatedSecondaryUser() throws Exception {
-        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
-            return;
-        }
-        final int userId = createAffiliatedSecondaryUser();
-        executeAffiliatedProfileOwnerTest("LockScreenInfoTest", userId);
-    }
-
     public void testWifi() throws Exception {
         if (!hasDeviceFeature("android.hardware.wifi")) {
             return;
