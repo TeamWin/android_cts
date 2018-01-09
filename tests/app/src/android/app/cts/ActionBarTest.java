@@ -23,6 +23,7 @@ import android.app.stubs.ActionBarActivity;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
 import android.view.KeyEvent;
+import android.view.ViewConfiguration;
 import android.view.Window;
 
 import java.util.concurrent.TimeUnit;
@@ -86,7 +87,9 @@ public class ActionBarTest extends ActivityInstrumentationTestCase2<ActionBarAct
     }
 
     public void testOptionsMenuKey() throws Exception {
-        if (!mActivity.getWindow().hasFeature(Window.FEATURE_OPTIONS_PANEL)) {
+        boolean hasPermanentMenuKey = ViewConfiguration.get(getActivity()).hasPermanentMenuKey();
+        if (!mActivity.getWindow().hasFeature(Window.FEATURE_OPTIONS_PANEL)
+                || hasPermanentMenuKey) {
             return;
         }
         final boolean menuIsVisible[] = {false};
@@ -94,17 +97,20 @@ public class ActionBarTest extends ActivityInstrumentationTestCase2<ActionBarAct
                 isVisible -> menuIsVisible[0] = isVisible);
         // Wait here for test activity to gain focus before sending keyevent.
         // Visibility listener needs the action bar to be visible.
-        assertTrue(mActivity.windowFocusSignal.await(1000, TimeUnit.MILLISECONDS));
         getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_MENU);
         getInstrumentation().waitForIdleSync();
         assertTrue(menuIsVisible[0]);
+        assertTrue(mActivity.windowFocusSignal.await(1000, TimeUnit.MILLISECONDS));
         getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_MENU);
         getInstrumentation().waitForIdleSync();
+        assertTrue(mActivity.windowFocusSignal.await(1000, TimeUnit.MILLISECONDS));
         assertFalse(menuIsVisible[0]);
     }
 
     public void testOpenOptionsMenu() {
-        if (!mActivity.getWindow().hasFeature(Window.FEATURE_OPTIONS_PANEL)) {
+        boolean hasPermanentMenuKey = ViewConfiguration.get(getActivity()).hasPermanentMenuKey();
+        if (!mActivity.getWindow().hasFeature(Window.FEATURE_OPTIONS_PANEL)
+                || hasPermanentMenuKey) {
             return;
         }
         final boolean menuIsVisible[] = {false};
