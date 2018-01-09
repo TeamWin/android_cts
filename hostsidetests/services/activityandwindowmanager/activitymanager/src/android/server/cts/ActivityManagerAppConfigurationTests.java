@@ -42,7 +42,9 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     private static final String NIGHT_MODE_ACTIVITY = "NightModeActivity";
     private static final String DIALOG_WHEN_LARGE_ACTIVITY = "DialogWhenLargeActivity";
 
-    private static final String TRANSLUCENT_ACTIVITY = "TranslucentLandscapeActivity";
+    private static final String TRANSLUCENT_ACTIVITY =
+            "android.server.translucentapp.TranslucentLandscapeActivity";
+    private static final String TRANSLUCENT_SDK_26_PACKAGE = "android.server.translucentapp26";
     private static final String TRANSLUCENT_CURRENT_PACKAGE = "android.server.translucentapp";
 
     private static final String EXTRA_LAUNCH_NEW_TASK = "launch_new_task";
@@ -323,9 +325,9 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
                 1 /* portrait */, initialReportedSizes.orientation);
         logSeparator = clearLogcat();
 
-        launchActivityInComponent(TRANSLUCENT_CURRENT_PACKAGE, TRANSLUCENT_ACTIVITY);
+        launchActivityInComponent(TRANSLUCENT_SDK_26_PACKAGE, TRANSLUCENT_ACTIVITY);
 
-        assertEquals("non-fullscreen activity requested landscape orientation",
+        assertEquals("Legacy non-fullscreen activity requested landscape orientation",
                 0 /* landscape */, mAmWmState.getWmState().getLastOrientation());
 
         // TODO(b/36897968): uncomment once we can suppress unsupported configurations
