@@ -25,7 +25,6 @@ import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction;
-import android.view.accessibility.cts.R;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -221,6 +220,7 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
         info.setPassword(true);
         info.setScrollable(true);
         info.setSelected(true);
+        info.setHeading(true);
         info.addAction(AccessibilityNodeInfo.ACTION_FOCUS);
         info.addAction(AccessibilityNodeInfo.ACTION_CLEAR_FOCUS);
         info.addAction(new AccessibilityAction(AccessibilityNodeInfo.ACTION_FOCUS, "Foo"));
@@ -285,6 +285,8 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
                 receivedInfo.isScrollable());
         assertSame("selected has incorrect value", expectedInfo.isSelected(),
                 receivedInfo.isSelected());
+        assertSame("isHeading has incorrect value",
+                expectedInfo.isHeading(), receivedInfo.isHeading());
         assertSame("actions has incorrect value", expectedInfo.getActions(),
                 receivedInfo.getActions());
         assertEquals("actionsSet has incorrect value", expectedInfo.getActionList(),
@@ -339,6 +341,7 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
         assertFalse("password not properly recycled", info.isPassword());
         assertFalse("scrollable not properly recycled", info.isScrollable());
         assertFalse("selected not properly recycled", info.isSelected());
+        assertFalse("isHeading depth not properly reset", info.isHeading());
         assertSame("actions not properly recycled", 0, info.getActions());
         assertFalse("accessibilityFocused not properly recycled", info.isAccessibilityFocused());
         assertSame("movementGranularities not properly recycled", 0,
