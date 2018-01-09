@@ -17,12 +17,14 @@
 package android.text.cts;
 
 import static android.text.Layout.Alignment.ALIGN_NORMAL;
+import static android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
 
 import android.graphics.Paint.FontMetricsInt;
 import android.support.test.filters.SmallTest;
@@ -33,6 +35,7 @@ import android.text.SpannableStringBuilder;
 import android.text.StaticLayout;
 import android.text.TextPaint;
 import android.text.TextUtils;
+import android.text.style.TypefaceSpan;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -418,4 +421,21 @@ public class DynamicLayoutTest {
         final DynamicLayout layout = builder.build();
         assertNotNull(layout);
     }
+
+    @Test
+    public void testReflow_afterSpanChangedShouldNotThrowException() {
+        final SpannableStringBuilder builder = new SpannableStringBuilder("crash crash crash!!");
+
+        final TypefaceSpan span = mock(TypefaceSpan.class);
+        builder.setSpan(span, 1, 4, SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        final DynamicLayout layout = DynamicLayout.Builder.obtain(builder,
+                new TextPaint(), Integer.MAX_VALUE).build();
+        try {
+            builder.insert(1, "Hello there\n\n");
+        } catch (Throwable e) {
+            throw new RuntimeException("Inserting text into DynamicLayout should not crash", e);
+        }
+    }
+
 }
