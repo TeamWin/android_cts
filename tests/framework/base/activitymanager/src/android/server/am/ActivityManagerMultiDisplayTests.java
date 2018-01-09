@@ -20,6 +20,7 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.server.am.ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID;
+import static android.server.am.ActivityManagerDisplayTestBase.ReportedDisplayMetrics.getDisplayMetrics;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.ActivityManagerState.STATE_STOPPED;
 import static android.server.am.StateLogger.logE;
@@ -812,8 +813,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                     TEST_ACTIVITY_NAME);
 
             final ReportedDisplayMetrics displayMetrics = getDisplayMetrics();
-            final int width = displayMetrics.getWidth();
-            final int height = displayMetrics.getHeight();
+            final int width = displayMetrics.getSize().getWidth();
+            final int height = displayMetrics.getSize().getHeight();
             executeShellCommand("input tap " + (width / 2) + " " + (height / 2));
 
             mAmWmState.computeState(new WaitForValidActivityState(VIRTUAL_DISPLAY_ACTIVITY));
@@ -1645,8 +1646,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
         mAmWmState.waitForKeyguardGone();
         mAmWmState.waitForValidState(new WaitForValidActivityState(TEST_ACTIVITY_NAME));
         final ReportedDisplayMetrics displayMetrics = getDisplayMetrics();
-        final int width = displayMetrics.getWidth();
-        final int height = displayMetrics.getHeight();
+        final int width = displayMetrics.getSize().getWidth();
+        final int height = displayMetrics.getSize().getHeight();
         executeShellCommand("input tap " + (width / 2) + " " + (height / 2));
 
         // Check that the activity on the primary display is resumed
