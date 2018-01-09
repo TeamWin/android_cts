@@ -66,7 +66,7 @@ public class JDiffClassDescription {
         return mPackageName;
     }
 
-    String getShortClassName() {
+    public String getShortClassName() {
         return mShortClassName;
     }
 

@@ -4,6 +4,7 @@ package android.signature.cts;
  * Define the type of the signature check failures.
  */
 public enum FailureType {
+    MISSING_ANNOTATION,
     MISSING_CLASS,
     MISSING_INTERFACE,
     MISSING_METHOD,
@@ -14,5 +15,9 @@ public enum FailureType {
     MISMATCH_METHOD,
     MISMATCH_FIELD,
     UNEXPECTED_CLASS,
+    EXTRA_CLASS,
+    EXTRA_INTERFACE,
+    EXTRA_METHOD,
+    EXTRA_FIELD,
     CAUGHT_EXCEPTION,
 }

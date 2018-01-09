@@ -19,10 +19,15 @@ import java.util.stream.Stream;
 
 import android.signature.cts.ClassProvider;
 import android.signature.cts.tests.data.AbstractClass;
+import android.signature.cts.tests.data.SystemApiClass;
 import android.signature.cts.tests.data.FinalClass;
+import android.signature.cts.tests.data.PrivateClass;
+import android.signature.cts.tests.data.PublicApiClass;
+import android.signature.cts.tests.data.ForciblyPublicizedPrivateClass;
 import android.signature.cts.tests.data.NormalClass;
 import android.signature.cts.tests.data.NormalException;
 import android.signature.cts.tests.data.NormalInterface;
+import android.signature.cts.tests.data.ApiAnnotation;
 
 public class TestClassesProvider extends ClassProvider {
     @Override
@@ -33,6 +38,11 @@ public class TestClassesProvider extends ClassProvider {
         builder.add(NormalClass.class);
         builder.add(NormalException.class);
         builder.add(NormalInterface.class);
+        builder.add(ApiAnnotation.class);
+        builder.add(PublicApiClass.class);
+        builder.add(SystemApiClass.class);
+        builder.add(PrivateClass.class);
+        builder.add(ForciblyPublicizedPrivateClass.class);
         return builder.build();
     }
 

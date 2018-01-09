@@ -41,6 +41,7 @@
         <option name="runner" value="repackaged.android.test.InstrumentationTestRunner" />
         <option name="instrumentation-arg" key="expected-api-files" value="system-current.api,system-removed.api" />
         <option name="instrumentation-arg" key="unexpected-api-files" value="android-test-mock-current.api,android-test-runner-current.api" />
+        <option name="instrumentation-arg" key="annotation-for-exact-match" value="android.annotation.SystemApi" />
         <option name="runtime-hint" value="30s" />
     </test>
 </configuration>
