@@ -50,7 +50,7 @@ import org.junit.runner.RunWith;
 public abstract class AutoFillServiceTestCase {
     private static final String TAG = "AutoFillServiceTestCase";
 
-    private static final UiBot sDefaultUiBot = new UiBot();
+    static final UiBot sDefaultUiBot = new UiBot();
 
     protected static final Replier sReplier = InstrumentedAutoFillService.getReplier();
 
