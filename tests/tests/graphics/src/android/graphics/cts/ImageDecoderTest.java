@@ -54,6 +54,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ArrayIndexOutOfBoundsException;
 import java.lang.NullPointerException;
+import java.lang.RuntimeException;
 import java.nio.ByteBuffer;
 import java.util.function.IntFunction;
 
@@ -207,7 +208,7 @@ public class ImageDecoderTest {
                 assertNotNull("failed to create Source for " + fullName, src);
                 try {
                     Drawable d = ImageDecoder.decodeDrawable(src, (info, decoder) -> {
-                        decoder.setOnExceptionListener(e -> {
+                        decoder.setOnPartialImageListener(e -> {
                             fail("exception for image " + fullName + ":\n" + e);
                             return false;
                         });
@@ -700,12 +701,12 @@ public class ImageDecoderTest {
     }
 
     @Test
-    public void testOnException() {
-        class ExceptionCallback implements ImageDecoder.OnExceptionListener {
+    public void testOnPartialImage() {
+        class ExceptionCallback implements ImageDecoder.OnPartialImageListener {
             public boolean caughtException;
             public boolean returnDrawable;
             @Override
-            public boolean onException(IOException e) {
+            public boolean onPartialImage(IOException e) {
                 caughtException = true;
                 assertTrue(e instanceof ImageDecoder.IncompleteException);
                 return returnDrawable;
@@ -726,22 +727,19 @@ public class ImageDecoderTest {
                 exceptionListener.returnDrawable = !abort;
                 try {
                     Drawable drawable = ImageDecoder.decodeDrawable(src, (info, decoder) -> {
-                        decoder.setOnExceptionListener(exceptionListener);
+                        decoder.setOnPartialImageListener(exceptionListener);
                     });
-                    assertTrue(exceptionListener.caughtException);
-                    if (abort) {
-                        assertNull(drawable);
-                    } else {
-                        assertNotNull(drawable);
-                        assertEquals(WIDTHS[i],  drawable.getIntrinsicWidth());
-                        assertEquals(HEIGHTS[i], drawable.getIntrinsicHeight());
-                    }
+                    assertFalse(abort);
+                    assertNotNull(drawable);
+                    assertEquals(WIDTHS[i],  drawable.getIntrinsicWidth());
+                    assertEquals(HEIGHTS[i], drawable.getIntrinsicHeight());
                 } catch (IOException e) {
-                    fail("Failed with exception " + e);
+                    assertTrue(abort);
                 }
+                assertTrue(exceptionListener.caughtException);
             }
 
-            // null listener behaves as if OnException returned true.
+            // null listener behaves as if OnPartialImage returned true.
             ImageDecoder.Source src = ImageDecoder.createSource(bytes, 0, truncatedLength);
             try {
                 Drawable drawable = ImageDecoder.decodeDrawable(src);
@@ -756,10 +754,10 @@ public class ImageDecoderTest {
 
     @Test
     public void testCorruptException() {
-        class ExceptionCallback implements ImageDecoder.OnExceptionListener {
+        class ExceptionCallback implements ImageDecoder.OnPartialImageListener {
             public boolean caughtException = false;
             @Override
-            public boolean onException(IOException e) {
+            public boolean onPartialImage(IOException e) {
                 caughtException = true;
                 assertTrue(e instanceof ImageDecoder.CorruptException);
                 return true;
@@ -772,16 +770,36 @@ public class ImageDecoderTest {
         for (int i = 0; i < 4; ++i) {
             bytes[40000 + i] = 'X';
         }
-        ImageDecoder.Source src = ImageDecoder.createSource(bytes, 0, bytes.length);
+        ImageDecoder.Source src = ImageDecoder.createSource(bytes);
         exceptionListener.caughtException = false;
         try {
             ImageDecoder.decodeDrawable(src, (info, decoder) -> {
-                decoder.setOnExceptionListener(exceptionListener);
+                decoder.setOnPartialImageListener(exceptionListener);
             });
         } catch (IOException e) {
             fail("Failed with exception " + e);
         }
         assertTrue(exceptionListener.caughtException);
+    }
+
+    private static class DummyException extends RuntimeException {};
+
+    @Test
+    public void  testPartialImageThrowException() {
+        byte[] bytes = getAsByteArray(R.drawable.png_test);
+        ImageDecoder.Source src = ImageDecoder.createSource(bytes, 0, bytes.length / 2);
+        try {
+            ImageDecoder.decodeDrawable(src, (info, decoder) -> {
+                decoder.setOnPartialImageListener(e -> {
+                    throw new DummyException();
+                });
+            });
+            fail("Should have thrown an exception");
+        } catch (DummyException dummy) {
+            // This is correct.
+        } catch (Throwable t) {
+            fail("Should have thrown DummyException - threw " + t + " instead");
+        }
     }
 
     @Test
@@ -1539,7 +1557,7 @@ public class ImageDecoderTest {
                 ImageDecoder.Source src = f.apply(0);
                 try {
                     Drawable drawable = ImageDecoder.decodeDrawable(src, (info, decoder) -> {
-                        decoder.setOnExceptionListener(exception -> false);
+                        decoder.setOnPartialImageListener(exception -> false);
                     });
                     assertNotNull(drawable);
                 } catch (IOException e) {
