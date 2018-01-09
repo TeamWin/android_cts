@@ -203,7 +203,18 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
         }
     }
 
+    public void testDataSource() throws Exception {
+        int testsRun = testDecoder(R.raw.video_176x144_3gp_h263_300kbps_12fps_aac_mono_24kbps_11025hz, true);
+        if (testsRun == 0) {
+            MediaUtils.skipTest("no decoders found");
+        }
+    }
+
     private int testDecoder(int res) throws Exception {
+        return testDecoder(res, /* wrapFd */ false);
+    }
+
+    private int testDecoder(int res, boolean wrapFd) throws Exception {
         if (!MediaUtils.hasCodecsForResource(mContext, res)) {
             return 0; // skip
         }
@@ -213,7 +224,7 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
         int[] jdata = getDecodedData(
                 fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
         int[] ndata = getDecodedDataNative(
-                fd.getParcelFileDescriptor().getFd(), fd.getStartOffset(), fd.getLength());
+                fd.getParcelFileDescriptor().getFd(), fd.getStartOffset(), fd.getLength(), wrapFd);
 
         fd.close();
         Log.i("@@@", Arrays.toString(jdata));
@@ -384,7 +395,7 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
         return ret;
     }
 
-    private static native int[] getDecodedDataNative(int fd, long offset, long size)
+    private static native int[] getDecodedDataNative(int fd, long offset, long size, boolean wrapFd)
             throws IOException;
 
     public void testVideoPlayback() throws Exception {
