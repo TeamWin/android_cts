@@ -26,6 +26,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
+import android.platform.test.annotations.Presubmit;
 import android.server.am.WindowManagerState.WindowState;
 
 import org.junit.After;
@@ -177,6 +178,7 @@ public class KeyguardTests extends KeyguardTestBase {
      * Test that showWhenLocked activity is fullscreen when shown over keyguard
      */
     @Test
+    @Presubmit
     public void testShowWhenLockedActivityWhileSplit() throws Exception {
         assumeTrue(supportsSplitScreenMultiWindow());
 
