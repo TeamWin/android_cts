@@ -642,14 +642,6 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
 
             setStringProperty(drm, LISTENER_TEST_SUPPORT_PROPERTY_KEY, listenerTestSupport);
 
-            // Test setting new string property
-            setStringProperty(drm, "NewStringPropertyKeyTest", "test value");
-
-            value = getStringProperty(drm, "NewStringPropertyKeyTest");
-            if (!value.equals("test value")) {
-                throw new Error("Failed to set property: NewStringPropertyKeyTest");
-            }
-
             // Test setting immutable properties
             HashMap<String, String> defaultImmutableProperties = new HashMap<String, String>();
             defaultImmutableProperties.put(ALGORITHMS_PROPERTY_KEY,
@@ -679,19 +671,11 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
                 }
             }
 
-            // Test setPropertyByteArray
+            // Test setPropertyByteArray for immutable property
             final byte[] bytes = new byte[] {
                     0xf, 0xe, 0xd, 0xc, 0xb, 0xa, 0x9, 0x8,
                     0x7, 0x6, 0x5, 0x4, 0x3, 0x2, 0x1, 0x0};
 
-            setByteArrayProperty(drm, "someBytes", bytes);
-
-            // Verify new property value
-            if (!Arrays.equals(bytes, getByteArrayProperty(drm, "someBytes"))) {
-                throw new Error("Failed to set byte array for key=" + "someBytes");
-            }
-
-            // Test setPropertyByteArray for immutable property
             final byte[] deviceId = getByteArrayProperty(drm, DEVICEID_PROPERTY_KEY);
 
             setByteArrayProperty(drm, DEVICEID_PROPERTY_KEY, bytes);

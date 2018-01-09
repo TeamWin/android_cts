@@ -1,4 +1,4 @@
-# Copyright (C) 2010 The Android Open Source Project
+# Copyright (C) 2017 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,26 +14,19 @@
 
 LOCAL_PATH := $(call my-dir)
 
-
-# cts-api-coverage java library
-# ============================================================
 include $(CLEAR_VARS)
 
-LOCAL_SRC_FILES := $(call all-subdir-java-files)
-LOCAL_PROTOC_OPTIMIZE_TYPE := full
-LOCAL_JAVA_RESOURCE_DIRS := res 
-LOCAL_JAR_MANIFEST := MANIFEST.mf
+LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_STATIC_JAVA_LIBRARIES := \
-  compatibility-host-util \
-  dexlib2
+LOCAL_MODULE_TAGS := tests
 
-LOCAL_MODULE := cts-api-coverage
+# tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
-# This tool is not checking any dependencies or metadata, so all of the
-# dependencies of all of the tests must be on its classpath. This is
-# super fragile.
-LOCAL_STATIC_JAVA_LIBRARIES += \
-        platformprotos
+LOCAL_MODULE := CtsSeccompHostTestCases
+
+LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed compatibility-host-util
 
 include $(BUILD_HOST_JAVA_LIBRARY)
+
+include $(call all-makefiles-under,$(LOCAL_PATH))
