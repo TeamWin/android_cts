@@ -71,7 +71,7 @@ final class Timeouts {
      * Timeout (in milliseconds) for an activity to be brought out to top.
      */
     static final Timeout ACTIVITY_RESURRECTION =
-            new Timeout("ACTIVITY_RESURRECTION", 1000, 2F, 10000);
+            new Timeout("ACTIVITY_RESURRECTION", 6000, 1.5F, 20000);
 
     /**
      * Timeout for changing the screen orientation.
