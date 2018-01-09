@@ -332,6 +332,16 @@ public class WindowManagerState {
         }
     }
 
+    public boolean containsExitingWindow() {
+        for (WindowState ws : mWindowStates) {
+            if (ws.isExitingWindow()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public WindowState getWindowByPackageName(String packageName, int windowType) {
         for (WindowState ws : mWindowStates) {
             final String name = ws.getName();

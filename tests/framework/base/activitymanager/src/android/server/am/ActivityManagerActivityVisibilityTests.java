@@ -23,6 +23,7 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT
 import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
+import static android.server.am.ActivityManagerState.STATE_PAUSED;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
 
 import static org.junit.Assert.assertFalse;
@@ -158,7 +159,6 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         mAmWmState.assertVisibility(TURN_SCREEN_ON_ACTIVITY_NAME, true);
     }
 
-    @FlakyTest(bugId = 69229402)
     @Presubmit
     @Test
     public void testFinishActivityInNonFocusedStack() throws Exception {
@@ -175,6 +175,10 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, true);
         // Finish activity in non-focused (docked) stack.
         executeShellCommand(FINISH_ACTIVITY_BROADCAST);
+
+        mAmWmState.waitForActivityState(LAUNCHING_ACTIVITY, STATE_PAUSED);
+        mAmWmState.waitForAllExitingWindows();
+
         mAmWmState.computeState(new String[] { LAUNCHING_ACTIVITY });
         mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true);
         mAmWmState.assertVisibility(BROADCAST_RECEIVER_ACTIVITY, false);
