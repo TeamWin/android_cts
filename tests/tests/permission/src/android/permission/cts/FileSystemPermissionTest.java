@@ -924,6 +924,21 @@ public class FileSystemPermissionTest extends AndroidTestCase {
         assertTrue("rootfs is not mounted read-only", (vfs.f_flag & OsConstants.ST_RDONLY) != 0);
     }
 
+    public void testVendorMountedRO() throws Exception {
+        StructStatVfs vfs = Os.statvfs("/vendor");
+        assertTrue("/vendor is not mounted read-only", (vfs.f_flag & OsConstants.ST_RDONLY) != 0);
+    }
+
+    public void testOdmMountedRO() throws Exception {
+        StructStatVfs vfs = Os.statvfs("/odm");
+        assertTrue("/odm is not mounted read-only", (vfs.f_flag & OsConstants.ST_RDONLY) != 0);
+    }
+
+    public void testOemMountedRO() throws Exception {
+        StructStatVfs vfs = Os.statvfs("/oem");
+        assertTrue("/oem is not mounted read-only", (vfs.f_flag & OsConstants.ST_RDONLY) != 0);
+    }
+
     public void testDataMountedNoSuidNoDev() throws Exception {
         StructStatVfs vfs = Os.statvfs(getContext().getFilesDir().getAbsolutePath());
         assertTrue("/data is not mounted NOSUID", (vfs.f_flag & OsConstants.ST_NOSUID) != 0);
