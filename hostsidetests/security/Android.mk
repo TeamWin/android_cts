@@ -53,6 +53,7 @@ selinux_plat_service_contexts := $(call intermediates-dir-for,ETC,plat_service_c
 LOCAL_JAVA_RESOURCE_FILES := \
     $(HOST_OUT_EXECUTABLES)/checkseapp \
     $(HOST_OUT_EXECUTABLES)/checkfc \
+    $(HOST_OUT_EXECUTABLES)/property_info_checker \
     $(HOST_OUT_EXECUTABLES)/sepolicy_tests \
     $(HOST_OUT_EXECUTABLES)/treble_sepolicy_tests \
     $(HOST_OUT)/lib64/libsepolwrap.$(SHAREDLIB_EXT) \
