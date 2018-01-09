@@ -33,7 +33,7 @@ public class WebViewActivity extends AbstractAutoFillActivity {
     private static final String FAKE_URL = "https://" + FAKE_DOMAIN + ":666/login.html";
     static final String ID_WEBVIEW = "webview";
 
-    MyWebView mWebView;
+    WebView mWebView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,6 +75,7 @@ public class WebViewActivity extends AbstractAutoFillActivity {
         return getLabel(uiBot, "Password: ");
     }
 
+
     public UiObject2 getUsernameInput(UiBot uiBot) {
         return getInput(uiBot, "Username: ");
     }
@@ -84,15 +85,12 @@ public class WebViewActivity extends AbstractAutoFillActivity {
     }
 
     public UiObject2 getLoginButton(UiBot uiBot) {
-        return getLabel(uiBot, "Login");
+        return uiBot.assertShownByContentDescription("Login");
     }
 
-    private UiObject2 getLabel(UiBot uiBot, String label) {
-        try {
-            return uiBot.assertShownByContentDescription(label);
-        } catch (Throwable t) {
-            return uiBot.assertShownByText(label);
-        }
+    private UiObject2 getLabel(UiBot uiBot, String contentDescription) {
+        final UiObject2 label = uiBot.assertShownByContentDescription(contentDescription);
+        return label;
     }
 
     private UiObject2 getInput(UiBot uiBot, String contentDescription) {
