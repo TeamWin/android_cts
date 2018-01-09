@@ -32,8 +32,7 @@ LOCAL_JAVA_LIBRARIES := \
     conscrypt \
     cts-junit \
     android.test.base.stubs \
-    bouncycastle \
-    bouncycastle-bcpkix
+    bouncycastle
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestrunner \
@@ -41,7 +40,6 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-v4 \
     android-support-test \
     bouncycastle \
-    bouncycastle-bcpkix \
     cts-security-test-support-library
 
 LOCAL_SDK_VERSION := test_current
