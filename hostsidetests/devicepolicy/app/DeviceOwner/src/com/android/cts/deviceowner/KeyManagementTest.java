@@ -15,6 +15,7 @@
  */
 package com.android.cts.deviceowner;
 
+import static android.keystore.cts.CertificateUtils.createCertificate;
 import static com.android.compatibility.common.util.FakeKeys.FAKE_RSA_1;
 import static android.app.admin.DevicePolicyManager.ID_TYPE_SERIAL;
 
@@ -32,18 +33,11 @@ import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.test.ActivityInstrumentationTestCase2;
 
-import com.android.org.bouncycastle.cert.X509v3CertificateBuilder;
-import com.android.org.bouncycastle.asn1.x500.X500Name;
-import com.android.org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
-import com.android.org.bouncycastle.cert.X509CertificateHolder;
-import com.android.org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.math.BigInteger;
 import java.net.URLEncoder;
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
@@ -51,7 +45,6 @@ import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.SecureRandom;
 import java.security.Signature;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
@@ -63,7 +56,6 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Date;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.List;
@@ -397,50 +389,6 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
         } finally {
             assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
         }
-    }
-
-    /**
-     * Creates a self-signed X.509 certificate, given a key pair, subject and issuer.
-     */
-    private static X509Certificate createCertificate(
-            KeyPair keyPair,
-            X500Principal subject,
-            X500Principal issuer) throws Exception {
-        // Make the certificate valid for two days.
-        long millisPerDay = 24 * 60 * 60 * 1000;
-        long now = System.currentTimeMillis();
-        Date start = new Date(now - millisPerDay);
-        Date end = new Date(now + millisPerDay);
-
-        // Assign a random serial number.
-        byte[] serialBytes = new byte[16];
-        new SecureRandom().nextBytes(serialBytes);
-        BigInteger serialNumber = new BigInteger(1, serialBytes);
-
-        // Create the certificate builder
-        X509v3CertificateBuilder x509cg = new X509v3CertificateBuilder(
-                X500Name.getInstance(issuer.getEncoded()), serialNumber, start, end,
-                X500Name.getInstance(subject.getEncoded()),
-                SubjectPublicKeyInfo.getInstance(keyPair.getPublic().getEncoded()));
-
-        // Choose a signature algorithm matching the key format.
-        String keyAlgorithm = keyPair.getPrivate().getAlgorithm();
-        String signatureAlgorithm;
-        if (keyAlgorithm.equals("RSA")) {
-            signatureAlgorithm = "SHA256withRSA";
-        } else if (keyAlgorithm.equals("EC")) {
-            signatureAlgorithm = "SHA256withECDSA";
-        } else {
-            throw new IllegalArgumentException("Unknown key algorithm " + keyAlgorithm);
-        }
-
-        // Sign the certificate and generate it.
-        X509CertificateHolder x509holder = x509cg.build(
-                new JcaContentSignerBuilder(signatureAlgorithm).build(keyPair.getPrivate()));
-        CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
-        X509Certificate x509c = (X509Certificate) certFactory.generateCertificate(
-                new ByteArrayInputStream(x509holder.getEncoded()));
-        return x509c;
     }
 
     public void testCanSetKeyPairCert() throws Exception {
