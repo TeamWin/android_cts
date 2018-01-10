@@ -32,6 +32,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 
     public static AbstractThreadedSyncAdapter setNewDelegate() {
         AbstractThreadedSyncAdapter delegate = mock(AbstractThreadedSyncAdapter.class);
+        when(delegate.isReady()).thenCallRealMethod();
 
         synchronized (sLock) {
             sDelegate = delegate;
@@ -57,6 +58,17 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 
         if (delegate != null) {
             delegate.onPerformSync(account, extras, authority, provider, syncResult);
+        }
+    }
+
+    @Override
+    public boolean isReady() {
+        AbstractThreadedSyncAdapter delegate = getCopyOfDelegate();
+
+        if (delegate == null) {
+            return true;
+        } else {
+            return delegate.isReady();
         }
     }
 }

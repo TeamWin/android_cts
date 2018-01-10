@@ -22,6 +22,8 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_MODULE := accountaccesslib
 
-LOCAL_STATIC_JAVA_LIBRARIES := mockito-target
+LOCAL_STATIC_JAVA_LIBRARIES := mockito-target \
+                               ub-uiautomator \
+                               compatibility-device-util
 
 include $(BUILD_STATIC_JAVA_LIBRARY)
