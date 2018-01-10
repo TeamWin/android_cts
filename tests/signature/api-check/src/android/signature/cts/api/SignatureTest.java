@@ -16,15 +16,8 @@
 
 package android.signature.cts.api;
 
-import android.os.Bundle;
-import android.signature.cts.ApiDocumentParser;
-import android.signature.cts.ClassProvider;
-import android.signature.cts.ApiComplianceChecker;
-import android.signature.cts.FailureType;
-import android.signature.cts.ExcludingClassProvider;
-import android.signature.cts.JDiffClassDescription;
-import android.signature.cts.ReflectionHelper;
-import android.signature.cts.ResultObserver;
+import static android.signature.cts.CurrentApi.API_FILE_DIRECTORY;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -32,13 +25,20 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.function.Predicate;
 
 import org.xmlpull.v1.XmlPullParserException;
+
+import android.os.Bundle;
+import android.signature.cts.ApiComplianceChecker;
+import android.signature.cts.ApiDocumentParser;
+import android.signature.cts.ClassProvider;
+import android.signature.cts.ExcludingClassProvider;
+import android.signature.cts.FailureType;
+import android.signature.cts.JDiffClassDescription;
+import android.signature.cts.ReflectionHelper;
+import android.signature.cts.ResultObserver;
 import repackaged.android.test.InstrumentationTestCase;
 import repackaged.android.test.InstrumentationTestRunner;
-
-import static android.signature.cts.CurrentApi.API_FILE_DIRECTORY;
 
 /**
  * Performs the signature check via a JUnit test.
@@ -71,6 +71,7 @@ public class SignatureTest extends InstrumentationTestCase {
 
     private String[] expectedApiFiles;
     private String[] unexpectedApiFiles;
+    private String annotationForExactMatch;
 
     private class TestResultObserver implements ResultObserver {
 
@@ -101,6 +102,7 @@ public class SignatureTest extends InstrumentationTestCase {
 
         expectedApiFiles = getCommaSeparatedList(instrumentationArgs, "expected-api-files");
         unexpectedApiFiles = getCommaSeparatedList(instrumentationArgs, "unexpected-api-files");
+        annotationForExactMatch = instrumentationArgs.getString("annotation-for-exact-match");
     }
 
     private String[] getCommaSeparatedList(Bundle instrumentationArgs, String key) {
@@ -120,10 +122,13 @@ public class SignatureTest extends InstrumentationTestCase {
         try {
 
             // Prepare for a class provider that loads classes from bootclasspath but filters
-            // out known inaccessible classes
+            // out known inaccessible classes.
+            // Note that com.android.internal.R.* inner classes are also excluded as they are
+            // not part of API though exist in the runtime.
             ClassProvider classProvider = new ExcludingClassProvider(
                     new BootClassPathClassesProvider(),
-                    KNOWN_INACCESSIBLE_CLASSES::contains);
+                    name -> KNOWN_INACCESSIBLE_CLASSES.contains(name)
+                            || (name != null && name.startsWith("com.android.internal.R.")));
 
             Set<JDiffClassDescription> unexpectedClasses = loadUnexpectedClasses();
             for (JDiffClassDescription classDescription : unexpectedClasses) {
@@ -138,6 +143,7 @@ public class SignatureTest extends InstrumentationTestCase {
 
             ApiComplianceChecker complianceChecker = new ApiComplianceChecker(mResultObserver,
                     classProvider);
+            complianceChecker.setAnnotationForExactMatch(annotationForExactMatch);
             ApiDocumentParser apiDocumentParser = new ApiDocumentParser(
                     TAG, new ApiDocumentParser.Listener() {
                 @Override
@@ -158,6 +164,9 @@ public class SignatureTest extends InstrumentationTestCase {
                 File file = new File(API_FILE_DIRECTORY + "/" + expectedApiFile);
                 apiDocumentParser.parse(new FileInputStream(file));
             }
+
+            // After done parsing all expected API files, check for the exact match.
+            complianceChecker.checkExactMatch();
         } catch (Exception e) {
             mResultObserver.notifyFailure(FailureType.CAUGHT_EXCEPTION, e.getMessage(),
                     e.getMessage());

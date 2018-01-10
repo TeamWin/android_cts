@@ -101,6 +101,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
     private DialogTestListItem mConfirmWorkCredentials;
     private DialogTestListItem mParentProfilePassword;
     private TestListItem mVpnTest;
+    private TestListItem mKeyChainTest;
     private TestListItem mAlwaysOnVpnSettingsTest;
     private TestListItem mRecentsTest;
     private TestListItem mDisallowAppsControlTest;
@@ -415,6 +416,12 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 new Intent(this, OrganizationInfoTestActivity.class),
                 null);
 
+        mKeyChainTest = TestListItem.newTest(this,
+                R.string.provisioning_byod_keychain,
+                KeyChainTestActivity.class.getName(),
+                new Intent(KeyChainTestActivity.ACTION_KEYCHAIN),
+                null);
+
         mParentProfilePassword = new DialogTestListItem(this,
                 R.string.provisioning_byod_parent_profile_password,
                 "BYOD_ParentProfilePasswordTest",
@@ -563,6 +570,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 }
             };
             adapter.add(mDisableNfcBeamTest);
+            adapter.add(mKeyChainTest);
         }
 
         /* If there is an application that handles RECORD_SOUND_ACTION, test that it handles it

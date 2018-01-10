@@ -545,7 +545,7 @@ final class UiBot {
 
         final List<UiObject2> menuItems = waitForObjects(
                 By.res("android", RESOURCE_ID_CONTEXT_MENUITEM), mDefaultTimeout);
-        final String expectedText = getString(RESOURCE_STRING_AUTOFILL);
+        final String expectedText = getAutofillContextualMenuTitle();
         final StringBuffer menuNames = new StringBuffer();
         for (UiObject2 menuItem : menuItems) {
             final String menuName = menuItem.getText();
@@ -555,6 +555,10 @@ final class UiBot {
             menuNames.append("'").append(menuName).append("' ");
         }
         throw new RetryableException("no '%s' on '%s'", expectedText, menuNames);
+    }
+
+    String getAutofillContextualMenuTitle() {
+        return getString(RESOURCE_STRING_AUTOFILL);
     }
 
     /**
