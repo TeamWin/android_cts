@@ -124,6 +124,9 @@ public class TrustedVoiceHostTest extends DeviceTestCase implements IBuildReceiv
         mDevice.executeShellCommand(LOCKSCREEN_COMMAND);
         // Start the APK and wait for it to complete.
         mDevice.executeShellCommand(START_COMMAND);
+        // Adding delay for OEM specific features which could delay the time of printing the
+        // test log.
+        Thread.sleep(1000);
         // Dump logcat.
         String logs = mDevice.executeAdbCommand("logcat", "-v", "brief", "-d", CLASS + ":I", "*S");
         // Search for string.
