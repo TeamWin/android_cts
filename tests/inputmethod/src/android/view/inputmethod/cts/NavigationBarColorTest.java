@@ -22,6 +22,7 @@ import static android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND;
 import static android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 import static android.view.inputmethod.cts.util.LightNavigationBarVerifier.expectLightNavigationBarNotSupported;
+import static android.view.inputmethod.cts.util.LightNavigationBarVerifier.expectLightNavigationBarSupported;
 import static android.view.inputmethod.cts.util.NavigationBarColorVerifier.expectNavigationBarColorNotSupported;
 import static android.view.inputmethod.cts.util.NavigationBarColorVerifier.expectNavigationBarColorSupported;
 import static android.view.inputmethod.cts.util.TestUtils.getOnMainSync;
@@ -219,9 +220,9 @@ public class NavigationBarColorTest extends EndToEndImeTestBase {
         // to ensure it.
         builder.setNavigationBarColor(navigationBarColor);
         if (lightNavigationBar) {
-            // Although the document says that Window#setNavigationBarColor() requires
-            // SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR to work, currently it's not true for IME windows.
-            // TODO: Fix this anomaly
+            // As documented, SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR is actually ignored when the IME
+            // window does not have FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS.  We set this flag just to
+            // ensure it.
             builder.setInputViewSystemUiVisibility(SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
         }
         return builder;
@@ -299,16 +300,16 @@ public class NavigationBarColorTest extends EndToEndImeTestBase {
         assumeTrue("This test does not make sense if light navigation bar is not supported"
                 + " even for typical Activity", info.supportsLightNavigationBar());
 
-        // Currently SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR is ignored for IME windows.
-        // TODO: Support SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR for IME windows (Bug 69002467)
-        expectLightNavigationBarNotSupported((color, lightMode) ->
+        // Make sure that SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR works for IMEs (Bug 69002467).
+        expectLightNavigationBarSupported((color, lightMode) ->
                 getNavigationBarBitmap(imeSettingForSolidNavigationBar(color, lightMode),
                         Color.BLACK, false, info.getBottomNavigationBerHeight(),
                         DimmingTestMode.NO_DIMMING_DIALOG));
 
-        // Currently there is no way for IMEs to opt-out dark/light navigation bar mode.
-        // TODO: Allows IMEs to opt out dark/light navigation bar mode (Bug 69111208).
-        expectLightNavigationBarNotSupported((color, lightMode) ->
+        // Make sure that IMEs can opt-out navigation bar custom rendering, including
+        // SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR, by un-setting FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS flag
+        // so that it can be controlled by the target application instead (Bug 69111208).
+        expectLightNavigationBarSupported((color, lightMode) ->
                 getNavigationBarBitmap(imeSettingForFloatingIme(Color.BLACK, false),
                         color, lightMode, info.getBottomNavigationBerHeight(),
                         DimmingTestMode.NO_DIMMING_DIALOG));
@@ -322,9 +323,9 @@ public class NavigationBarColorTest extends EndToEndImeTestBase {
                 + " light navigation bar for typical Activities",
                 info.supportsDimmingWindowLightNavigationBarOverride());
 
-        // Currently SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR is ignored for IME windows.
-        // TODO: Support SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR for IME windows (Bug 69002467)
-        expectLightNavigationBarNotSupported((color, lightMode) ->
+        // Make sure that SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR works for IMEs, even if a dimming
+        // window is shown behind the IME window.
+        expectLightNavigationBarSupported((color, lightMode) ->
                 getNavigationBarBitmap(imeSettingForSolidNavigationBar(color, lightMode),
                         Color.BLACK, false, info.getBottomNavigationBerHeight(),
                         DimmingTestMode.DIMMING_DIALOG_BEHIND_IME));
