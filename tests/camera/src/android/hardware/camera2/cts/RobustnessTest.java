@@ -30,10 +30,11 @@ import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.CaptureFailure;
-import android.hardware.camera2.params.InputConfiguration;
-import android.hardware.camera2.params.StreamConfigurationMap;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
+import android.hardware.camera2.params.InputConfiguration;
+import android.hardware.camera2.params.OutputConfiguration;
+import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.CamcorderProfile;
 import android.media.Image;
 import android.media.ImageReader;
@@ -1680,36 +1681,69 @@ public class RobustnessTest extends Camera2AndroidTestCase {
     private void testOutputCombination(String cameraId, int[] config, MaxStreamSizes maxSizes)
             throws Exception {
 
-        Log.i(TAG, String.format("Testing Camera %s, config %s",
+        //TODO: Remove below test workaround once HAL is fixed.
+        if (mStaticInfo.isLogicalMultiCamera()) {
+            int yuvStreams = 0;
+            int rawStreams = 0;
+            for (int i = 0; i < config.length; i+= 2) {
+                int format = config[i];
+                if (format == JPEG) {
+                    return;
+                } else if (format == YUV || format == PRIV) {
+                    yuvStreams++;
+                } else if (format == RAW) {
+                    rawStreams++;
+                }
+            }
+            if ((yuvStreams > 2) || (yuvStreams == 2 && rawStreams == 1)) {
+                return;
+            }
+        }
+
+        Log.i(TAG, String.format("Testing single Camera %s, config %s",
                         cameraId, MaxStreamSizes.configToString(config)));
+
+        testSingleCameraOutputCombination(cameraId, config, maxSizes);
+
+        if (mStaticInfo.isLogicalMultiCamera()) {
+            Log.i(TAG, String.format("Testing logical Camera %s, config %s",
+                    cameraId, MaxStreamSizes.configToString(config)));
+
+            testMultiCameraOutputCombination(cameraId, config, maxSizes);
+        }
+    }
+
+    private void testSingleCameraOutputCombination(String cameraId, int[] config,
+        MaxStreamSizes maxSizes) throws Exception {
 
         // Timeout is relaxed by 1 second for LEGACY devices to reduce false positive rate in CTS
         final int TIMEOUT_FOR_RESULT_MS = (mStaticInfo.isHardwareLevelLegacy()) ? 2000 : 1000;
         final int MIN_RESULT_COUNT = 3;
 
         // Set up outputs
-        List<Surface> outputSurfaces = new ArrayList<Surface>();
+        List<OutputConfiguration> outputConfigs = new ArrayList<OutputConfiguration>();
         List<SurfaceTexture> privTargets = new ArrayList<SurfaceTexture>();
         List<ImageReader> jpegTargets = new ArrayList<ImageReader>();
         List<ImageReader> yuvTargets = new ArrayList<ImageReader>();
         List<ImageReader> rawTargets = new ArrayList<ImageReader>();
 
         setupConfigurationTargets(config, maxSizes, privTargets, jpegTargets, yuvTargets,
-                rawTargets, outputSurfaces, MIN_RESULT_COUNT);
+                rawTargets, outputConfigs, MIN_RESULT_COUNT, -1 /*overrideStreamIndex*/,
+                null /*overridePhysicalCameraIds*/);
 
         boolean haveSession = false;
         try {
             CaptureRequest.Builder requestBuilder =
                     mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
 
-            for (Surface s : outputSurfaces) {
-                requestBuilder.addTarget(s);
+            for (OutputConfiguration c : outputConfigs) {
+                requestBuilder.addTarget(c.getSurface());
             }
 
             CameraCaptureSession.CaptureCallback mockCaptureCallback =
                     mock(CameraCaptureSession.CaptureCallback.class);
 
-            createSession(outputSurfaces);
+            createSessionByConfigs(outputConfigs);
             haveSession = true;
             CaptureRequest request = requestBuilder.build();
             mCameraSession.setRepeatingRequest(request, mockCaptureCallback, mHandler);
@@ -1756,55 +1790,209 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         }
     }
 
-    private void setupConfigurationTargets(int[] outputConfigs, MaxStreamSizes maxSizes,
+    private void testMultiCameraOutputCombination(String cameraId, int[] config,
+        MaxStreamSizes maxSizes) throws Exception {
+
+        // Timeout is relaxed by 1 second for LEGACY devices to reduce false positive rate in CTS
+        final int TIMEOUT_FOR_RESULT_MS = (mStaticInfo.isHardwareLevelLegacy()) ? 2000 : 1000;
+        final int MIN_RESULT_COUNT = 3;
+        List<String> physicalCameraIds = mStaticInfo.getCharacteristics().getPhysicalCameraIds();
+
+        for (int i = 0; i < config.length; i += 2) {
+            int format = config[i];
+            if (format != YUV && format != RAW) {
+                continue;
+            }
+
+            // Set up outputs
+            List<OutputConfiguration> outputConfigs = new ArrayList<OutputConfiguration>();
+            List<SurfaceTexture> privTargets = new ArrayList<SurfaceTexture>();
+            List<ImageReader> jpegTargets = new ArrayList<ImageReader>();
+            List<ImageReader> yuvTargets = new ArrayList<ImageReader>();
+            List<ImageReader> rawTargets = new ArrayList<ImageReader>();
+
+            setupConfigurationTargets(config, maxSizes, privTargets, jpegTargets, yuvTargets,
+                    rawTargets, outputConfigs, MIN_RESULT_COUNT, i, physicalCameraIds);
+
+            boolean haveSession = false;
+            try {
+                CaptureRequest.Builder requestBuilder =
+                        mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+
+                for (OutputConfiguration c : outputConfigs) {
+                    requestBuilder.addTarget(c.getSurface());
+                }
+
+                CameraCaptureSession.CaptureCallback mockCaptureCallback =
+                        mock(CameraCaptureSession.CaptureCallback.class);
+
+                createSessionByConfigs(outputConfigs);
+                haveSession = true;
+                CaptureRequest request = requestBuilder.build();
+                mCameraSession.setRepeatingRequest(request, mockCaptureCallback, mHandler);
+
+                verify(mockCaptureCallback,
+                        timeout(TIMEOUT_FOR_RESULT_MS * MIN_RESULT_COUNT).atLeast(MIN_RESULT_COUNT))
+                        .onCaptureCompleted(
+                            eq(mCameraSession),
+                            eq(request),
+                            isA(TotalCaptureResult.class));
+                verify(mockCaptureCallback, never()).
+                        onCaptureFailed(
+                            eq(mCameraSession),
+                            eq(request),
+                            isA(CaptureFailure.class));
+
+            } catch (Throwable e) {
+                mCollector.addMessage(String.format("Output combination %s failed due to: %s",
+                        MaxStreamSizes.configToString(config), e.getMessage()));
+            }
+            if (haveSession) {
+                try {
+                    Log.i(TAG, String.format("Done with camera %s, config %s, closing session",
+                                    cameraId, MaxStreamSizes.configToString(config)));
+                    stopCapture(/*fast*/false);
+                } catch (Throwable e) {
+                    mCollector.addMessage(
+                        String.format("Closing down for output combination %s failed due to: %s",
+                                MaxStreamSizes.configToString(config), e.getMessage()));
+                }
+            }
+
+            for (SurfaceTexture target : privTargets) {
+                target.release();
+            }
+            for (ImageReader target : jpegTargets) {
+                target.close();
+            }
+            for (ImageReader target : yuvTargets) {
+                target.close();
+            }
+            for (ImageReader target : rawTargets) {
+                target.close();
+            }
+        }
+    }
+
+    private void setupConfigurationTargets(int[] configs, MaxStreamSizes maxSizes,
             List<SurfaceTexture> privTargets, List<ImageReader> jpegTargets,
             List<ImageReader> yuvTargets, List<ImageReader> rawTargets,
             List<Surface> outputSurfaces, int numBuffers) {
+        List<OutputConfiguration> outputConfigs = new ArrayList<OutputConfiguration> ();
+
+        setupConfigurationTargets(configs, maxSizes, privTargets, jpegTargets, yuvTargets,
+                rawTargets, outputConfigs, numBuffers, -1 /*overrideStreamIndex*/,
+                null /*overridePhysicalCameraIds*/);
+
+        for (OutputConfiguration outputConfig : outputConfigs) {
+            outputSurfaces.add(outputConfig.getSurface());
+        }
+    }
+
+    private void setupConfigurationTargets(int[] configs, MaxStreamSizes maxSizes,
+            List<SurfaceTexture> privTargets, List<ImageReader> jpegTargets,
+            List<ImageReader> yuvTargets, List<ImageReader> rawTargets,
+            List<OutputConfiguration> outputConfigs, int numBuffers,
+            int overrideStreamIndex, List<String> overridePhysicalCameraIds) {
 
         ImageDropperListener imageDropperListener = new ImageDropperListener();
 
-        for (int i = 0; i < outputConfigs.length; i += 2) {
-            int format = outputConfigs[i];
-            int sizeLimit = outputConfigs[i + 1];
+        for (int i = 0; i < configs.length; i += 2) {
+            int format = configs[i];
+            int sizeLimit = configs[i + 1];
+            Surface newSurface;
 
-            switch (format) {
-                case PRIV: {
-                    Size targetSize = maxSizes.maxPrivSizes[sizeLimit];
-                    SurfaceTexture target = new SurfaceTexture(/*random int*/1);
-                    target.setDefaultBufferSize(targetSize.getWidth(), targetSize.getHeight());
-                    outputSurfaces.add(new Surface(target));
-                    privTargets.add(target);
-                    break;
+            int numConfigs = 1;
+            StaticMetadata physicalStaticMetadata;
+
+            if (overridePhysicalCameraIds != null &&
+                    overridePhysicalCameraIds.size() > 1) {
+                numConfigs = overridePhysicalCameraIds.size();
+            }
+            for (int j = 0; j < numConfigs; j++) {
+                switch (format) {
+                    case PRIV: {
+                        Size targetSize = maxSizes.maxPrivSizes[sizeLimit];
+                        SurfaceTexture target = new SurfaceTexture(/*random int*/1);
+                        target.setDefaultBufferSize(targetSize.getWidth(), targetSize.getHeight());
+                        OutputConfiguration config = new OutputConfiguration(new Surface(target));
+                        if (numConfigs > 1) {
+                            physicalStaticMetadata =
+                                mAllStaticInfo.get(overridePhysicalCameraIds.get(j));
+                            Size[] privSizes = physicalStaticMetadata.getAvailableSizesForFormatChecked(PRIV,
+                                    StaticMetadata.StreamDirection.Output);
+                            if (!Arrays.asList(privSizes).contains(targetSize)) {
+                                continue;
+                            }
+                            config.setPhysicalCameraId(overridePhysicalCameraIds.get(j));
+                        }
+                        outputConfigs.add(config);
+                        privTargets.add(target);
+                        break;
+                    }
+                    case JPEG: {
+                        Size targetSize = maxSizes.maxJpegSizes[sizeLimit];
+                        ImageReader target = ImageReader.newInstance(
+                            targetSize.getWidth(), targetSize.getHeight(), JPEG, numBuffers);
+                        target.setOnImageAvailableListener(imageDropperListener, mHandler);
+                        OutputConfiguration config = new OutputConfiguration(target.getSurface());
+                        if (numConfigs > 1) {
+                            physicalStaticMetadata =
+                                    mAllStaticInfo.get(overridePhysicalCameraIds.get(j));
+                            Size[] jpegSizes = physicalStaticMetadata.getAvailableSizesForFormatChecked(JPEG,
+                                    StaticMetadata.StreamDirection.Output);
+                            if (!Arrays.asList(jpegSizes).contains(targetSize)) {
+                                continue;
+                            }
+                            config.setPhysicalCameraId(overridePhysicalCameraIds.get(j));
+                        }
+                        outputConfigs.add(config);
+                        jpegTargets.add(target);
+                        break;
+                    }
+                    case YUV: {
+                        Size targetSize = maxSizes.maxYuvSizes[sizeLimit];
+                        ImageReader target = ImageReader.newInstance(
+                            targetSize.getWidth(), targetSize.getHeight(), YUV, numBuffers);
+                        target.setOnImageAvailableListener(imageDropperListener, mHandler);
+                        OutputConfiguration config = new OutputConfiguration(target.getSurface());
+                        if (numConfigs > 1) {
+                            physicalStaticMetadata =
+                                    mAllStaticInfo.get(overridePhysicalCameraIds.get(j));
+                            Size[] yuvSizes = physicalStaticMetadata.getAvailableSizesForFormatChecked(YUV,
+                                    StaticMetadata.StreamDirection.Output);
+                            if (!Arrays.asList(yuvSizes).contains(targetSize)) {
+                                continue;
+                            }
+                            config.setPhysicalCameraId(overridePhysicalCameraIds.get(j));
+                        }
+                        outputConfigs.add(config);
+                        yuvTargets.add(target);
+                        break;
+                    }
+                    case RAW: {
+                        Size targetSize = maxSizes.maxRawSize;
+                        ImageReader target = ImageReader.newInstance(
+                            targetSize.getWidth(), targetSize.getHeight(), RAW, numBuffers);
+                        target.setOnImageAvailableListener(imageDropperListener, mHandler);
+                        OutputConfiguration config = new OutputConfiguration(target.getSurface());
+                        if (numConfigs > 1) {
+                            physicalStaticMetadata =
+                                    mAllStaticInfo.get(overridePhysicalCameraIds.get(j));
+                            Size[] rawSizes = physicalStaticMetadata.getAvailableSizesForFormatChecked(RAW,
+                                    StaticMetadata.StreamDirection.Output);
+                            if (!Arrays.asList(rawSizes).contains(targetSize)) {
+                                continue;
+                            }
+                            config.setPhysicalCameraId(overridePhysicalCameraIds.get(j));
+                        }
+                        outputConfigs.add(config);
+                        rawTargets.add(target);
+                        break;
+                    }
+                    default:
+                        fail("Unknown output format " + format);
                 }
-                case JPEG: {
-                    Size targetSize = maxSizes.maxJpegSizes[sizeLimit];
-                    ImageReader target = ImageReader.newInstance(
-                        targetSize.getWidth(), targetSize.getHeight(), JPEG, numBuffers);
-                    target.setOnImageAvailableListener(imageDropperListener, mHandler);
-                    outputSurfaces.add(target.getSurface());
-                    jpegTargets.add(target);
-                    break;
-                }
-                case YUV: {
-                    Size targetSize = maxSizes.maxYuvSizes[sizeLimit];
-                    ImageReader target = ImageReader.newInstance(
-                        targetSize.getWidth(), targetSize.getHeight(), YUV, numBuffers);
-                    target.setOnImageAvailableListener(imageDropperListener, mHandler);
-                    outputSurfaces.add(target.getSurface());
-                    yuvTargets.add(target);
-                    break;
-                }
-                case RAW: {
-                    Size targetSize = maxSizes.maxRawSize;
-                    ImageReader target = ImageReader.newInstance(
-                        targetSize.getWidth(), targetSize.getHeight(), RAW, numBuffers);
-                    target.setOnImageAvailableListener(imageDropperListener, mHandler);
-                    outputSurfaces.add(target.getSurface());
-                    rawTargets.add(target);
-                    break;
-                }
-                default:
-                    fail("Unknown output format " + format);
             }
         }
     }
