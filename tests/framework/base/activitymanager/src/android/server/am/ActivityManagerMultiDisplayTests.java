@@ -20,7 +20,8 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.server.am.ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID;
-import static android.server.am.ActivityManagerDisplayTestBase.ReportedDisplayMetrics.getDisplayMetrics;
+import static android.server.am.ActivityManagerDisplayTestBase.ReportedDisplayMetrics
+        .getDisplayMetrics;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.ActivityManagerState.STATE_STOPPED;
 import static android.server.am.StateLogger.logE;
@@ -37,9 +38,9 @@ import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
 import android.server.am.ActivityManagerState.ActivityDisplay;
 import android.server.am.displayservice.DisplayHelper;
+import android.support.annotation.Nullable;
 import android.support.test.filters.FlakyTest;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -71,26 +72,12 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
     private static final ComponentName THIRD_ACTIVITY = ComponentName.createRelative(
             THIRD_PACKAGE, ".ThirdActivity");
 
-    private DisplayHelper mExternalDisplayHelper;
-
     @Before
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
         assumeTrue(supportsMultiDisplay());
-    }
-
-    @After
-    @Override
-    public void tearDown() throws Exception {
-        assumeTrue(supportsMultiDisplay());
-
-        if (mExternalDisplayHelper != null) {
-            mExternalDisplayHelper.releaseDisplay();
-            mExternalDisplayHelper = null;
-        }
-        super.tearDown();
     }
 
     /**
@@ -1531,17 +1518,18 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
         waitAndAssertActivityResumed(RESIZEABLE_ACTIVITY_NAME, DEFAULT_DISPLAY_ID,
                 "Activity launched on primary display must be resumed");
 
-        final ActivityDisplay newDisplay = createExternalVirtualDisplay(
-                true /* showContentWhenLocked */);
-
-        launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mId);
-
-        // Check that the activity is launched onto the external display
-        waitAndAssertActivityResumed(TEST_ACTIVITY_NAME, newDisplay.mId,
-                "Activity launched on external display must be resumed");
-
-        try (final PrimaryDisplayStateSession displayStateSession =
+        try (final ExternalDisplaySession externalDisplaySession = new ExternalDisplaySession();
+             final PrimaryDisplayStateSession displayStateSession =
                      new PrimaryDisplayStateSession()) {
+            final ActivityDisplay newDisplay =
+                    externalDisplaySession.createVirtualDisplay(true /* showContentWhenLocked */);
+
+            launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mId);
+
+            // Check that the activity is launched onto the external display
+            waitAndAssertActivityResumed(TEST_ACTIVITY_NAME, newDisplay.mId,
+                    "Activity launched on external display must be resumed");
+
             displayStateSession.turnScreenOff();
 
             // Wait for the fullscreen stack to start sleeping, and then make sure the
@@ -1565,7 +1553,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                 "Activity launched on primary display must be resumed");
 
         try (final PrimaryDisplayStateSession displayStateSession =
-                     new PrimaryDisplayStateSession()) {
+                     new PrimaryDisplayStateSession();
+             final ExternalDisplaySession externalDisplaySession = new ExternalDisplaySession()) {
             displayStateSession.turnScreenOff();
 
             // Make sure there is no resumed activity when the primary display is off
@@ -1574,8 +1563,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             assertEquals("Unexpected resumed activity",
                     0, mAmWmState.getAmState().getResumedActivitiesCount());
 
-            final ActivityDisplay newDisplay = createExternalVirtualDisplay(
-                    true /* showContentWhenLocked */);
+            final ActivityDisplay newDisplay =
+                    externalDisplaySession.createVirtualDisplay(true /* showContentWhenLocked */);
 
             launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mId);
 
@@ -1590,26 +1579,28 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      */
     @Test
     public void testExternalDisplayToggleState() throws Exception {
-        final ActivityDisplay newDisplay = createExternalVirtualDisplay(
-                false /* showContentWhenLocked */);
+        try (final ExternalDisplaySession externalDisplaySession = new ExternalDisplaySession()) {
+            final ActivityDisplay newDisplay =
+                    externalDisplaySession.createVirtualDisplay(false /* showContentWhenLocked */);
 
-        launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mId);
+            launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mId);
 
-        // Check that the test activity is resumed on the external display
-        waitAndAssertActivityResumed(TEST_ACTIVITY_NAME, newDisplay.mId,
-                "Activity launched on external display must be resumed");
+            // Check that the test activity is resumed on the external display
+            waitAndAssertActivityResumed(TEST_ACTIVITY_NAME, newDisplay.mId,
+                    "Activity launched on external display must be resumed");
 
-        mExternalDisplayHelper.turnDisplayOff();
+            externalDisplaySession.turnDisplayOff();
 
-        // Check that turning off the external display stops the activity
-        waitAndAssertActivityStopped(TEST_ACTIVITY_NAME,
-                "Activity launched on external display must be stopped after turning off");
+            // Check that turning off the external display stops the activity
+            waitAndAssertActivityStopped(TEST_ACTIVITY_NAME,
+                    "Activity launched on external display must be stopped after turning off");
 
-        mExternalDisplayHelper.turnDisplayOn();
+            externalDisplaySession.turnDisplayOn();
 
-        // Check that turning on the external display resumes the activity
-        waitAndAssertActivityResumed(TEST_ACTIVITY_NAME, newDisplay.mId,
-                "Activity launched on external display must be resumed");
+            // Check that turning on the external display resumes the activity
+            waitAndAssertActivityResumed(TEST_ACTIVITY_NAME, newDisplay.mId,
+                    "Activity launched on external display must be resumed");
+        }
     }
 
     /**
@@ -1631,30 +1622,32 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
         assertEquals("Unexpected resumed activity",
                 0, mAmWmState.getAmState().getResumedActivitiesCount());
 
-        final ActivityDisplay newDisplay = createExternalVirtualDisplay(
-                true /* showContentWhenLocked */);
+        try (final ExternalDisplaySession externalDisplaySession = new ExternalDisplaySession()) {
+            final ActivityDisplay newDisplay =
+                    externalDisplaySession.createVirtualDisplay(true /* showContentWhenLocked */);
 
-        launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mId);
+            launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mId);
 
-        // Check that the test activity is resumed on the external display
-        waitAndAssertActivityResumed(TEST_ACTIVITY_NAME, newDisplay.mId,
-                "Activity launched on external display must be resumed");
+            // Check that the test activity is resumed on the external display
+            waitAndAssertActivityResumed(TEST_ACTIVITY_NAME, newDisplay.mId,
+                    "Activity launched on external display must be resumed");
 
-        // Unlock the device and tap on the middle of the primary display
-        wakeUpDevice();
-        executeShellCommand("wm dismiss-keyguard");
-        mAmWmState.waitForKeyguardGone();
-        mAmWmState.waitForValidState(new WaitForValidActivityState(TEST_ACTIVITY_NAME));
-        final ReportedDisplayMetrics displayMetrics = getDisplayMetrics();
-        final int width = displayMetrics.getSize().getWidth();
-        final int height = displayMetrics.getSize().getHeight();
-        executeShellCommand("input tap " + (width / 2) + " " + (height / 2));
+            // Unlock the device and tap on the middle of the primary display
+            wakeUpDevice();
+            executeShellCommand("wm dismiss-keyguard");
+            mAmWmState.waitForKeyguardGone();
+            mAmWmState.waitForValidState(new WaitForValidActivityState(TEST_ACTIVITY_NAME));
+            final ReportedDisplayMetrics displayMetrics = getDisplayMetrics();
+            final int width = displayMetrics.getSize().getWidth();
+            final int height = displayMetrics.getSize().getHeight();
+            executeShellCommand("input tap " + (width / 2) + " " + (height / 2));
 
-        // Check that the activity on the primary display is resumed
-        waitAndAssertActivityResumed(RESIZEABLE_ACTIVITY_NAME, DEFAULT_DISPLAY_ID,
-                "Activity launched on primary display must be resumed");
-        assertEquals("Unexpected resumed activity",
-                1, mAmWmState.getAmState().getResumedActivitiesCount());
+            // Check that the activity on the primary display is resumed
+            waitAndAssertActivityResumed(RESIZEABLE_ACTIVITY_NAME, DEFAULT_DISPLAY_ID,
+                    "Activity launched on primary display must be resumed");
+            assertEquals("Unexpected resumed activity",
+                    1, mAmWmState.getAmState().getResumedActivitiesCount());
+        }
     }
 
     private void waitAndAssertActivityResumed(String activityName, int displayId, String message)
@@ -1685,13 +1678,13 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * Tests that showWhenLocked works on a secondary display.
      */
     public void testSecondaryDisplayShowWhenLocked() throws Exception {
-        try {
+        try (final ExternalDisplaySession externalDisplaySession = new ExternalDisplaySession()) {
             setLockCredential();
 
             launchActivity(TEST_ACTIVITY_NAME);
 
-            final ActivityDisplay newDisplay = createExternalVirtualDisplay(
-                    false /* showContentWhenLocked */);
+            final ActivityDisplay newDisplay =
+                    externalDisplaySession.createVirtualDisplay(false /* showContentWhenLocked */);
             launchActivityOnDisplay(SHOW_WHEN_LOCKED_ATTR_ACTIVITY_NAME, newDisplay.mId);
 
             gotoKeyguard();
@@ -1734,25 +1727,55 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                 " --es command resize_display";
     }
 
-    /**
-     * Creates a private virtual display with the external and show with insecure
-     * keyguard flags set.
-     */
-    private ActivityDisplay createExternalVirtualDisplay(boolean showContentWhenLocked)
-            throws Exception {
-        final List<ActivityDisplay> originalDS = getDisplaysStates();
-        final int originalDisplayCount = originalDS.size();
+    private class ExternalDisplaySession implements AutoCloseable {
 
-        mExternalDisplayHelper = new DisplayHelper();
-        mExternalDisplayHelper.createAndWaitForDisplay(true /* external */, showContentWhenLocked);
+        @Nullable
+        private DisplayHelper mExternalDisplayHelper;
 
-        // Wait for the virtual display to be created and get configurations.
-        final List<ActivityDisplay> ds = getDisplayStateAfterChange(originalDisplayCount + 1);
-        assertEquals("New virtual display must be created", originalDisplayCount + 1, ds.size());
+        /**
+         * Creates a private virtual display with the external and show with insecure
+         * keyguard flags set.
+         */
+        ActivityDisplay createVirtualDisplay(boolean showContentWhenLocked)
+                throws Exception {
+            final List<ActivityDisplay> originalDS = getDisplaysStates();
+            final int originalDisplayCount = originalDS.size();
 
-        // Find the newly added display.
-        final List<ActivityDisplay> newDisplays = findNewDisplayStates(originalDS, ds);
-        return newDisplays.get(0);
+            mExternalDisplayHelper = new DisplayHelper();
+            mExternalDisplayHelper.createAndWaitForDisplay(true /* external */,
+                    showContentWhenLocked);
+
+            // Wait for the virtual display to be created and get configurations.
+            final List<ActivityDisplay> ds = getDisplayStateAfterChange(originalDisplayCount + 1);
+            assertEquals("New virtual display must be created", originalDisplayCount + 1,
+                    ds.size());
+
+            // Find the newly added display.
+            final List<ActivityDisplay> newDisplays = findNewDisplayStates(originalDS, ds);
+            return newDisplays.get(0);
+        }
+
+        void turnDisplayOff() {
+            if (mExternalDisplayHelper == null) {
+                new RuntimeException("No external display created");
+            }
+            mExternalDisplayHelper.turnDisplayOff();
+        }
+
+        void turnDisplayOn() {
+            if (mExternalDisplayHelper == null) {
+                new RuntimeException("No external display created");
+            }
+            mExternalDisplayHelper.turnDisplayOn();
+        }
+
+        @Override
+        public void close() throws Exception {
+            if (mExternalDisplayHelper != null) {
+                mExternalDisplayHelper.releaseDisplay();
+                mExternalDisplayHelper = null;
+            }
+        }
     }
 
     private static class PrimaryDisplayStateSession implements AutoCloseable {
