@@ -28,6 +28,7 @@ import static android.server.am.WindowManagerState.TRANSIT_WALLPAPER_OPEN;
 import static org.junit.Assert.assertEquals;
 
 import android.platform.test.annotations.Presubmit;
+import android.support.test.filters.FlakyTest;
 
 import org.junit.Test;
 
@@ -60,6 +61,7 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
     }
 
     @Test
+    @FlakyTest(bugId = 71792333)
     public void testCloseActivity_NeitherWallpaper() throws Exception {
         testCloseActivity(false /*bottomWallpaper*/, false /*topWallpaper*/,
                 false /*slowStop*/, TRANSIT_ACTIVITY_CLOSE);
@@ -134,6 +136,7 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
     // These simulate the case where the bottom activity is resumed
     // before AM receives its activitiyStopped
     @Test
+    @FlakyTest(bugId = 71792333)
     public void testCloseActivity_NeitherWallpaper_SlowStop() throws Exception {
         testCloseActivity(false /*bottomWallpaper*/, false /*topWallpaper*/,
                 true /*slowStop*/, TRANSIT_ACTIVITY_CLOSE);
@@ -184,6 +187,7 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
     }
 
     @Test
+    @FlakyTest(bugId = 71792333)
     public void testCloseActivity_BottomWallpaper_Translucent() throws Exception {
         testCloseActivityTranslucent(true /*bottomWallpaper*/, false /*topWallpaper*/,
                 TRANSIT_WALLPAPER_OPEN);
