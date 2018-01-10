@@ -19,7 +19,7 @@ package util.build;
 import com.android.tools.r8.CompilationMode;
 import com.android.tools.r8.D8;
 import com.android.tools.r8.D8Command;
-import com.android.tools.r8.utils.OutputMode;
+import com.android.tools.r8.OutputMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -37,8 +37,7 @@ public class D8BuildStep extends BuildStep {
         D8Command.builder()
             .setMode(CompilationMode.DEBUG)
             .setMinApiLevel(1000)
-            .setEnableDesugaring(false)
-            .setOutputMode(OutputMode.Indexed);
+            .setEnableDesugaring(false);
   }
 
   @Override
@@ -46,7 +45,7 @@ public class D8BuildStep extends BuildStep {
 
     if (super.build()) {
       try {
-        builder.setOutputPath(Paths.get(outputFile.fileName.getAbsolutePath()));
+        builder.setOutput(Paths.get(outputFile.fileName.getAbsolutePath()), OutputMode.DexIndexed);
         Files.find(
                 Paths.get(inputFile.fileName.getAbsolutePath()),
                 1000,
