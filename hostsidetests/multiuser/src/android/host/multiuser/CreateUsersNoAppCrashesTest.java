@@ -53,7 +53,8 @@ public class CreateUsersNoAppCrashesTest extends BaseMultiUserTest {
         assertSwitchToUser(userId, mInitialUserId);
     }
 
-    @Presubmit
+    // TODO (b/71573557): Re-add to presubmit
+    //@Presubmit
     public void testCanCreateSecondaryUser() throws Exception {
         if (!mSupportsMultiUser) {
             return;
