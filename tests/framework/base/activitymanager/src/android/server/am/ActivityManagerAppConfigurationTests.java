@@ -38,6 +38,7 @@ import static org.junit.Assume.assumeTrue;
 import android.content.ComponentName;
 import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
+import android.support.test.filters.FlakyTest;
 
 import org.junit.Test;
 
@@ -100,6 +101,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      */
     @Presubmit
     @Test
+    @FlakyTest(bugId = 71792393)
     public void testConfigurationUpdatesWhenResizedFromDockedStack() throws Exception {
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
@@ -415,6 +417,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      */
     @Presubmit
     @Test
+    @FlakyTest(bugId = 71792393)
     public void testTaskMoveToBackOrientation() throws Exception {
         // Start landscape activity.
         launchActivity(LANDSCAPE_ACTIVITY_NAME);
