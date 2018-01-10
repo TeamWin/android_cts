@@ -67,20 +67,29 @@ public class ImageDecoderTest {
     private Resources mRes;
     private ContentResolver mContentResolver;
 
-    private static final int[] RES_IDS = new int[] {
-        R.drawable.baseline_jpeg, R.drawable.png_test, R.drawable.gif_test,
-        R.drawable.bmp_test, R.drawable.webp_test, R.drawable.google_chrome,
-        R.drawable.color_wheel
+    private static final class Record {
+        public final int resId;
+        public final int width;
+        public final int height;
+        public final String mimeType;
+
+        public Record(int resId, int width, int height, String mimeType) {
+            this.resId    = resId;
+            this.width    = width;
+            this.height   = height;
+            this.mimeType = mimeType;
+        }
+    }
+
+    private static final Record[] RECORDS = new Record[] {
+        new Record(R.drawable.baseline_jpeg, 1280, 960, "image/jpeg"),
+        new Record(R.drawable.png_test, 640, 480, "image/png"),
+        new Record(R.drawable.gif_test, 320, 240, "image/gif"),
+        new Record(R.drawable.bmp_test, 320, 240, "image/bmp"),
+        new Record(R.drawable.webp_test, 640, 480, "image/webp"),
+        new Record(R.drawable.google_chrome, 256, 256, "image/x-ico"),
+        new Record(R.drawable.color_wheel, 128, 128, "image/x-ico"),
     };
-
-    // The width and height of the above images.
-    private static final int WIDTHS[] = new int[] { 1280, 640, 320, 320, 640, 256, 128 };
-    private static final int HEIGHTS[] = new int[] { 960, 480, 240, 240, 480, 256, 128 };
-
-    // mimeTypes of the above images.
-    private static final String[] MIME_TYPES = new String[] { "image/jpeg", "image/png",
-            "image/gif", "image/bmp", "image/webp", "image/x-ico",
-            "image/x-ico" };
 
     // offset is how many bytes to offset the beginning of the image.
     // extra is how many bytes to append at the end.
@@ -197,7 +206,8 @@ public class ImageDecoderTest {
             resId -> getAsFileUri(resId),
             resId -> getAsContentUri(resId),
         };
-        for (int resId : RES_IDS) {
+        for (Record record : RECORDS) {
+            int resId = record.resId;
             String name = mRes.getResourceEntryName(resId);
             for (UriCreator f : creators) {
                 ImageDecoder.Source src = null;
@@ -243,15 +253,15 @@ public class ImageDecoderTest {
         };
         Listener l = new Listener();
 
-        for (int i = 0; i < RES_IDS.length; ++i) {
+        for (Record record : RECORDS) {
             for (SourceCreator f : mCreators) {
-                ImageDecoder.Source src = f.apply(RES_IDS[i]);
+                ImageDecoder.Source src = f.apply(record.resId);
                 assertNotNull(src);
                 try {
                     ImageDecoder.decodeDrawable(src, l);
-                    assertEquals(WIDTHS[i],  l.mWidth);
-                    assertEquals(HEIGHTS[i], l.mHeight);
-                    assertEquals(MIME_TYPES[i], l.mMimeType);
+                    assertEquals(record.width,  l.mWidth);
+                    assertEquals(record.height, l.mHeight);
+                    assertEquals(record.mimeType, l.mMimeType);
                 } catch (IOException e) {
                     fail("Failed with exception " + e);
                 }
@@ -261,16 +271,16 @@ public class ImageDecoderTest {
 
     @Test
     public void testDecodeDrawable() {
-        for (int i = 0; i < RES_IDS.length; ++i) {
+        for (Record record : RECORDS) {
             for (SourceCreator f : mCreators) {
-                ImageDecoder.Source src = f.apply(RES_IDS[i]);
+                ImageDecoder.Source src = f.apply(record.resId);
                 assertNotNull(src);
 
                 try {
                     Drawable drawable = ImageDecoder.decodeDrawable(src);
                     assertNotNull(drawable);
-                    assertEquals(WIDTHS[i],  drawable.getIntrinsicWidth());
-                    assertEquals(HEIGHTS[i], drawable.getIntrinsicHeight());
+                    assertEquals(record.width,  drawable.getIntrinsicWidth());
+                    assertEquals(record.height, drawable.getIntrinsicHeight());
                 } catch (IOException e) {
                     fail("Failed with exception " + e);
                 }
@@ -280,16 +290,16 @@ public class ImageDecoderTest {
 
     @Test
     public void testDecodeBitmap() {
-        for (int i = 0; i < RES_IDS.length; ++i) {
+        for (Record record : RECORDS) {
             for (SourceCreator f : mCreators) {
-                ImageDecoder.Source src = f.apply(RES_IDS[i]);
+                ImageDecoder.Source src = f.apply(record.resId);
                 assertNotNull(src);
 
                 try {
                     Bitmap bm = ImageDecoder.decodeBitmap(src);
                     assertNotNull(bm);
-                    assertEquals(WIDTHS[i], bm.getWidth());
-                    assertEquals(HEIGHTS[i], bm.getHeight());
+                    assertEquals(record.width, bm.getWidth());
+                    assertEquals(record.height, bm.getHeight());
                     assertFalse(bm.isMutable());
                     // FIXME: This may change for small resources, etc.
                     assertEquals(Bitmap.Config.HARDWARE, bm.getConfig());
@@ -302,7 +312,7 @@ public class ImageDecoderTest {
 
     @Test(expected=IllegalArgumentException.class)
     public void testSetBogusAllocator() {
-        ImageDecoder.Source src = mCreators[0].apply(RES_IDS[0]);
+        ImageDecoder.Source src = mCreators[0].apply(RECORDS[0].resId);
         try {
             ImageDecoder.decodeBitmap(src, (info, decoder) -> decoder.setAllocator(15));
         } catch (IOException e) {
@@ -336,7 +346,7 @@ public class ImageDecoderTest {
             ImageDecoder.HARDWARE_ALLOCATOR,
         };
         boolean trueFalse[] = new boolean[] { true, false };
-        for (int i = 0; i < RES_IDS.length; ++i) {
+        for (Record record : RECORDS) {
             for (SourceCreator f : mCreators) {
                 for (int allocator : allocators) {
                     for (boolean doCrop : trueFalse) {
@@ -344,7 +354,7 @@ public class ImageDecoderTest {
                             l.doCrop = doCrop;
                             l.doScale = doScale;
                             l.allocator = allocator;
-                            ImageDecoder.Source src = f.apply(RES_IDS[i]);
+                            ImageDecoder.Source src = f.apply(record.resId);
                             assertNotNull(src);
 
                             Bitmap bm = null;
@@ -365,13 +375,14 @@ public class ImageDecoderTest {
 
                                     if (!doScale && !doCrop) {
                                         Bitmap reference = BitmapFactory.decodeResource(mRes,
-                                                RES_IDS[i], null);
+                                                record.resId, null);
                                         assertNotNull(reference);
                                         BitmapUtils.compareBitmaps(bm, reference);
                                     }
                                     break;
                                 default:
-                                    assertEquals("image " + i + "; allocator: " + allocator,
+                                    String name = getAsResourceUri(record.resId).toString();
+                                    assertEquals("image " + name + "; allocator: " + allocator,
                                                  Bitmap.Config.HARDWARE, bm.getConfig());
                                     break;
                             }
@@ -431,11 +442,11 @@ public class ImageDecoderTest {
         };
         Listener l = new Listener();
         boolean trueFalse[] = new boolean[] { true, false };
-        for (int i = 0; i < RES_IDS.length; i++) {
+        for (Record record : RECORDS) {
             for (SourceCreator f : mCreators) {
                 for (boolean requireSoftware : trueFalse) {
                     l.requireSoftware = requireSoftware;
-                    ImageDecoder.Source src = f.apply(RES_IDS[i]);
+                    ImageDecoder.Source src = f.apply(record.resId);
                     assertNotNull(src);
 
                     Bitmap bitmap = null;
@@ -545,11 +556,11 @@ public class ImageDecoderTest {
         };
         Listener l = new Listener();
         boolean trueFalse[] = new boolean[] { true, false };
-        for (int i = 0; i < RES_IDS.length; ++i) {
+        for (Record record : RECORDS) {
             for (SourceCreator f : mCreators) {
                 for (boolean requireSoftware : trueFalse) {
                     l.requireSoftware = requireSoftware;
-                    ImageDecoder.Source src = f.apply(RES_IDS[i]);
+                    ImageDecoder.Source src = f.apply(record.resId);
                     try {
                         Bitmap bm = ImageDecoder.decodeBitmap(src, l);
                         assertTrue(bm.hasAlpha());
@@ -576,7 +587,7 @@ public class ImageDecoderTest {
 
     @Test(expected=IllegalArgumentException.class)
     public void testPostProcessInvalidReturn() {
-        ImageDecoder.Source src = mCreators[0].apply(RES_IDS[0]);
+        ImageDecoder.Source src = mCreators[0].apply(RECORDS[0].resId);
         try {
             ImageDecoder.decodeDrawable(src, (info, decoder) -> {
                 decoder.setPostProcess((c, w, h) -> 42);
@@ -588,7 +599,7 @@ public class ImageDecoderTest {
 
     @Test(expected=IllegalStateException.class)
     public void testPostProcessAndUnpremul() {
-        ImageDecoder.Source src = mCreators[0].apply(RES_IDS[0]);
+        ImageDecoder.Source src = mCreators[0].apply(RECORDS[0].resId);
         try {
             ImageDecoder.decodeDrawable(src, (info, decoder) -> {
                 decoder.requireUnpremultiplied();
@@ -612,11 +623,11 @@ public class ImageDecoderTest {
             };
         };
         final PostProcessWithSize pp = new PostProcessWithSize();
-        for (int i = 0; i < RES_IDS.length; ++i) {
-            pp.width =  WIDTHS[i]  / 2;
-            pp.height = HEIGHTS[i] / 2;
+        for (Record record : RECORDS) {
+            pp.width =  record.width  / 2;
+            pp.height = record.height / 2;
             for (SourceCreator f : mCreators) {
-                ImageDecoder.Source src = f.apply(RES_IDS[i]);
+                ImageDecoder.Source src = f.apply(record.resId);
                 try {
                     Drawable drawable = ImageDecoder.decodeDrawable(src, (info, decoder) -> {
                         decoder.resize(pp.width, pp.height);
@@ -652,12 +663,12 @@ public class ImageDecoderTest {
         SampleListener l = new SampleListener();
 
         int[] sampleSizes = new int[] { 1, 2, 3, 4, 6, 8, 16, 32, 64 };
-        for (int i = 0; i < RES_IDS.length; ++i) {
+        for (Record record : RECORDS) {
             for (SourceCreator f : mCreators) {
                 for (int j = 0; j < sampleSizes.length; j++) {
                     l.sampleSize = sampleSizes[j];
                     l.useSampleSizeDirectly = false;
-                    ImageDecoder.Source src = f.apply(RES_IDS[i]);
+                    ImageDecoder.Source src = f.apply(record.resId);
 
                     try {
                         Drawable drawable = ImageDecoder.decodeDrawable(src, l);
@@ -665,7 +676,7 @@ public class ImageDecoderTest {
                         assertEquals(l.dimensions.y, drawable.getIntrinsicHeight());
 
                         l.useSampleSizeDirectly = true;
-                        src = f.apply(RES_IDS[i]);
+                        src = f.apply(record.resId);
                         drawable = ImageDecoder.decodeDrawable(src, l);
                         assertEquals(l.dimensions.x, drawable.getIntrinsicWidth());
                         assertEquals(l.dimensions.y, drawable.getIntrinsicHeight());
@@ -679,9 +690,9 @@ public class ImageDecoderTest {
 
     @Test
     public void testLargeSampleSize() {
-        for (int i = 0; i < RES_IDS.length; ++i) {
+        for (Record record : RECORDS) {
             for (SourceCreator f : mCreators) {
-                ImageDecoder.Source src = f.apply(RES_IDS[i]);
+                ImageDecoder.Source src = f.apply(record.resId);
                 try {
                     ImageDecoder.decodeDrawable(src, (info, decoder) -> {
                         Point dimensions = decoder.getSampledSize(info.width);
@@ -714,10 +725,10 @@ public class ImageDecoderTest {
         };
         final ExceptionCallback exceptionListener = new ExceptionCallback();
         boolean abortDecode[] = new boolean[] { true, false };
-        for (int i = 0; i < RES_IDS.length; ++i) {
-            byte[] bytes = getAsByteArray(RES_IDS[i]);
+        for (Record record : RECORDS) {
+            byte[] bytes = getAsByteArray(record.resId);
             int truncatedLength = bytes.length / 2;
-            if (i == 5 || i == 6) {
+            if (record.mimeType == "image/x-ico") {
                 // FIXME (scroggo): SkIcoCodec currently does not support incomplete images.
                 continue;
             }
@@ -731,8 +742,8 @@ public class ImageDecoderTest {
                     });
                     assertFalse(abort);
                     assertNotNull(drawable);
-                    assertEquals(WIDTHS[i],  drawable.getIntrinsicWidth());
-                    assertEquals(HEIGHTS[i], drawable.getIntrinsicHeight());
+                    assertEquals(record.width,  drawable.getIntrinsicWidth());
+                    assertEquals(record.height, drawable.getIntrinsicHeight());
                 } catch (IOException e) {
                     assertTrue(abort);
                 }
@@ -744,8 +755,8 @@ public class ImageDecoderTest {
             try {
                 Drawable drawable = ImageDecoder.decodeDrawable(src);
                 assertNotNull(drawable);
-                assertEquals(WIDTHS[i],  drawable.getIntrinsicWidth());
-                assertEquals(HEIGHTS[i], drawable.getIntrinsicHeight());
+                assertEquals(record.width,  drawable.getIntrinsicWidth());
+                assertEquals(record.height, drawable.getIntrinsicHeight());
             } catch (IOException e) {
                 fail("Failed with exception " + e);
             }
@@ -822,14 +833,14 @@ public class ImageDecoderTest {
         };
         HeaderListener l = new HeaderListener();
         boolean trueFalse[] = new boolean[] { true, false };
-        for (int resId : RES_IDS) {
+        for (Record record : RECORDS) {
             for (SourceCreator f : mCreators) {
                 for (boolean postProcess : trueFalse) {
                     for (int allocator : allocators) {
                         l.allocator = allocator;
                         l.postProcess = postProcess;
 
-                        ImageDecoder.Source src = f.apply(resId);
+                        ImageDecoder.Source src = f.apply(record.resId);
                         try {
                             Bitmap bm = ImageDecoder.decodeBitmap(src, l);
                             assertTrue(bm.isMutable());
@@ -845,7 +856,7 @@ public class ImageDecoderTest {
 
     @Test(expected=IllegalStateException.class)
     public void testMutableHardware() {
-        ImageDecoder.Source src = mCreators[0].apply(RES_IDS[0]);
+        ImageDecoder.Source src = mCreators[0].apply(RECORDS[0].resId);
         try {
             ImageDecoder.decodeBitmap(src, (info, decoder) -> {
                 decoder.setMutable();
@@ -858,7 +869,7 @@ public class ImageDecoderTest {
 
     @Test(expected=IllegalStateException.class)
     public void testMutableDrawable() {
-        ImageDecoder.Source src = mCreators[0].apply(RES_IDS[0]);
+        ImageDecoder.Source src = mCreators[0].apply(RECORDS[0].resId);
         try {
             ImageDecoder.decodeDrawable(src, (info, decoder) -> {
                 decoder.setMutable();
@@ -940,20 +951,20 @@ public class ImageDecoderTest {
         ResizeListener l = new ResizeListener();
 
         float[] scales = new float[] { .0625f, .125f, .25f, .5f, .75f, 1.1f, 2.0f };
-        for (int i = 0; i < RES_IDS.length; ++i) {
+        for (Record record : RECORDS) {
             for (SourceCreator f : mCreators) {
                 for (int j = 0; j < scales.length; ++j) {
-                    l.width  = (int) (scales[j] * WIDTHS[i]);
-                    l.height = (int) (scales[j] * HEIGHTS[i]);
+                    l.width  = (int) (scales[j] * record.width);
+                    l.height = (int) (scales[j] * record.height);
 
-                    ImageDecoder.Source src = f.apply(RES_IDS[i]);
+                    ImageDecoder.Source src = f.apply(record.resId);
 
                     try {
                         Drawable drawable = ImageDecoder.decodeDrawable(src, l);
                         assertEquals(l.width,  drawable.getIntrinsicWidth());
                         assertEquals(l.height, drawable.getIntrinsicHeight());
 
-                        src = f.apply(RES_IDS[i]);
+                        src = f.apply(record.resId);
                         Bitmap bm = ImageDecoder.decodeBitmap(src, l);
                         assertEquals(l.width,  bm.getWidth());
                         assertEquals(l.height, bm.getHeight());
@@ -966,18 +977,18 @@ public class ImageDecoderTest {
                     // Arbitrary square.
                     l.width  = 50;
                     l.height = 50;
-                    ImageDecoder.Source src = f.apply(RES_IDS[i]);
+                    ImageDecoder.Source src = f.apply(record.resId);
                     Drawable drawable = ImageDecoder.decodeDrawable(src, l);
                     assertEquals(50,  drawable.getIntrinsicWidth());
                     assertEquals(50, drawable.getIntrinsicHeight());
 
                     // Swap width and height, for different scales.
-                    l.height = WIDTHS[i];
-                    l.width  = HEIGHTS[i];
-                    src = f.apply(RES_IDS[i]);
+                    l.height = record.width;
+                    l.width  = record.height;
+                    src = f.apply(record.resId);
                     drawable = ImageDecoder.decodeDrawable(src, l);
-                    assertEquals(HEIGHTS[i], drawable.getIntrinsicWidth());
-                    assertEquals(WIDTHS[i],  drawable.getIntrinsicHeight());
+                    assertEquals(record.height, drawable.getIntrinsicWidth());
+                    assertEquals(record.width,  drawable.getIntrinsicHeight());
                 } catch (IOException e) {
                     fail("Failed with exception " + e);
                 }
@@ -1077,13 +1088,13 @@ public class ImageDecoderTest {
         };
         Listener l = new Listener();
         boolean trueFalse[] = new boolean[] { true, false };
-        for (int i = 0; i < RES_IDS.length; ++i) {
+        for (Record record : RECORDS) {
             for (SourceCreator f : mCreators) {
                 for (boolean doScale : trueFalse) {
                     l.doScale = doScale;
                     for (boolean requireSoftware : trueFalse) {
                         l.requireSoftware = requireSoftware;
-                        ImageDecoder.Source src = f.apply(RES_IDS[i]);
+                        ImageDecoder.Source src = f.apply(record.resId);
 
                         try {
                             Drawable drawable = ImageDecoder.decodeDrawable(src, l);
@@ -1480,10 +1491,10 @@ public class ImageDecoderTest {
 
     @Test
     public void testOffsetByteArray() {
-        for (int resId : RES_IDS) {
+        for (Record record : RECORDS) {
             int offset = 10;
             int extra = 15;
-            byte[] array = getAsByteArray(resId, offset, extra);
+            byte[] array = getAsByteArray(record.resId, offset, extra);
             int length = array.length - extra - offset;
             // Used for SourceCreators that set both a position and an offset.
             int myOffset = 3;
