@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2015 The Android Open Source Project
+<!-- Copyright (C) 2018 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -13,29 +13,18 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="Config for CTS Content test cases">
+<configuration description="Config for CTS tests of sync adapters with different certs as the authenticator">
     <option name="test-suite-tag" value="cts" />
     <option name="config-descriptor:metadata" key="component" value="framework" />
 
-    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
-        <option name="run-command" value="mkdir -p /data/local/tmp/cts/content" />
-        <option name="teardown-command" value="rm -rf /data/local/tmp/cts"/>
-    </target_preparer>
-
-    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
-        <option name="cleanup" value="true" />
-        <option name="push" value="CtsContentTestCases.apk->/data/local/tmp/cts/content/CtsContentTestCases.apk" />
-        <option name="push" value="CtsContentEmptyTestApp.apk->/data/local/tmp/cts/content/CtsContentEmptyTestApp.apk" />
-    </target_preparer>
-
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
-        <option name="test-file-name" value="CtsContentTestCases.apk" />
+        <option name="test-file-name" value="CtsSyncAccountAccessOtherCertTestCases.apk" />
         <option name="test-file-name" value="CtsSyncAccountAccessStubs.apk" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
-        <option name="package" value="android.content.cts" />
-        <option name="runtime-hint" value="21m30s" />
+        <option name="package" value="com.android.cts.content" />
+        <option name="runtime-hint" value="30s" />
     </test>
 </configuration>

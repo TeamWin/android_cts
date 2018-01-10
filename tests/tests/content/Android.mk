@@ -31,7 +31,8 @@ LOCAL_STATIC_JAVA_LIBRARIES :=  \
     ctstestrunner \
     services.core \
     junit \
-    truth-prebuilt
+    truth-prebuilt \
+    accountaccesslib
 
 LOCAL_STATIC_ANDROID_LIBRARIES := android-support-v4
 
