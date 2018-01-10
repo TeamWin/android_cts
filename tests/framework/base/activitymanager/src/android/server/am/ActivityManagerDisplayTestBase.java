@@ -34,6 +34,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Base class for ActivityManager display tests.
@@ -42,14 +44,13 @@ import java.util.List;
  * @see ActivityManagerDisplayLockedKeyguardTests
  */
 public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
+    private static final String WM_SIZE = "wm size";
+    private static final String WM_DENSITY = "wm density";
 
     static final int CUSTOM_DENSITY_DPI = 222;
 
     private static final String VIRTUAL_DISPLAY_ACTIVITY = "VirtualDisplayActivity";
     private static final int INVALID_DENSITY_DPI = -1;
-
-    /** Temp storage used for parsing. */
-    final LinkedList<String> mDumpLines = new LinkedList<>();
 
     ActivityDisplay getDisplayState(List<ActivityDisplay> displays, int displayId) {
         for (ActivityDisplay display : displays) {
@@ -93,6 +94,101 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
         }
 
         return result;
+    }
+
+    /** Get physical and override display metrics from WM. */
+    static ReportedDisplayMetrics getDisplayMetrics() throws Exception {
+        final String dump = executeShellCommand(WM_SIZE)
+                + executeShellCommand(WM_DENSITY);
+        final LinkedList<String> dumpLines = new LinkedList<>();
+        Collections.addAll(dumpLines, dump.split("\\n"));
+        return ReportedDisplayMetrics.create(dumpLines);
+    }
+
+    static class ReportedDisplayMetrics {
+        private static final Pattern sPhysicalSizePattern =
+                Pattern.compile("Physical size: (\\d+)x(\\d+)");
+        private static final Pattern sOverrideSizePattern =
+                Pattern.compile("Override size: (\\d+)x(\\d+)");
+        private static final Pattern sPhysicalDensityPattern =
+                Pattern.compile("Physical density: (\\d+)");
+        private static final Pattern sOverrideDensityPattern =
+                Pattern.compile("Override density: (\\d+)");
+
+        int physicalWidth;
+        int physicalHeight;
+        int physicalDensity;
+
+        boolean sizeOverrideSet;
+        int overrideWidth;
+        int overrideHeight;
+        boolean densityOverrideSet;
+        int overrideDensity;
+
+        /** Get width that WM operates with. */
+        int getWidth() {
+            return sizeOverrideSet ? overrideWidth : physicalWidth;
+        }
+
+        /** Get height that WM operates with. */
+        int getHeight() {
+            return sizeOverrideSet ? overrideHeight : physicalHeight;
+        }
+
+        /** Get density that WM operates with. */
+        int getDensity() {
+            return densityOverrideSet ? overrideDensity : physicalDensity;
+        }
+
+        static ReportedDisplayMetrics create(LinkedList<String> dump) {
+            final ReportedDisplayMetrics result = new ReportedDisplayMetrics();
+
+            boolean physicalSizeFound = false;
+            boolean physicalDensityFound = false;
+
+            while (!dump.isEmpty()) {
+                final String line = dump.pop().trim();
+
+                Matcher matcher = sPhysicalSizePattern.matcher(line);
+                if (matcher.matches()) {
+                    physicalSizeFound = true;
+                    log(line);
+                    result.physicalWidth = Integer.parseInt(matcher.group(1));
+                    result.physicalHeight = Integer.parseInt(matcher.group(2));
+                    continue;
+                }
+
+                matcher = sOverrideSizePattern.matcher(line);
+                if (matcher.matches()) {
+                    log(line);
+                    result.overrideWidth = Integer.parseInt(matcher.group(1));
+                    result.overrideHeight = Integer.parseInt(matcher.group(2));
+                    result.sizeOverrideSet = true;
+                    continue;
+                }
+
+                matcher = sPhysicalDensityPattern.matcher(line);
+                if (matcher.matches()) {
+                    physicalDensityFound = true;
+                    log(line);
+                    result.physicalDensity = Integer.parseInt(matcher.group(1));
+                    continue;
+                }
+
+                matcher = sOverrideDensityPattern.matcher(line);
+                if (matcher.matches()) {
+                    log(line);
+                    result.overrideDensity = Integer.parseInt(matcher.group(1));
+                    result.densityOverrideSet = true;
+                    continue;
+                }
+            }
+
+            assertTrue("Physical display size must be reported", physicalSizeFound);
+            assertTrue("Physical display density must be reported", physicalDensityFound);
+
+            return result;
+        }
     }
 
     protected class VirtualDisplaySession implements AutoCloseable {
