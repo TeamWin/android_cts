@@ -18,6 +18,12 @@ package android.accessibilityservice.cts;
 
 import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterForEventType;
 import static android.accessibilityservice.cts.utils.RunOnMainUtils.getOnMain;
+import static android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction.ACTION_HIDE_TOOLTIP;
+import static android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction.ACTION_SHOW_TOOLTIP;
+
+import static org.hamcrest.Matchers.in;
+import static org.hamcrest.core.IsNot.not;
+import static org.junit.Assert.assertThat;
 
 import android.accessibilityservice.cts.activities.AccessibilityEndToEndActivity;
 import android.app.Activity;
@@ -41,6 +47,7 @@ import android.os.Process;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityNodeInfo;
@@ -51,6 +58,7 @@ import android.widget.ListView;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This class performs end-to-end testing of the accessibility feature by
@@ -581,6 +589,42 @@ public class AccessibilityEndToEndTest extends
                 editTextNode.isHeading());
     }
 
+    @MediumTest
+    public void testTooltipTextReportedToAccessibility() {
+        final Instrumentation instrumentation = getInstrumentation();
+        final UiAutomation uiAutomation = instrumentation.getUiAutomation();
+        final AccessibilityNodeInfo buttonNode = uiAutomation.getRootInActiveWindow()
+                .findAccessibilityNodeInfosByViewId(
+                        "android.accessibilityservice.cts:id/button")
+                .get(0);
+        assertEquals("Tooltip text not reported to accessibility",
+                instrumentation.getContext().getString(R.string.button_tooltip),
+                buttonNode.getTooltipText());
+    }
+
+    @MediumTest
+    public void testTooltipTextActionsReportedToAccessibility() throws Exception {
+        final Instrumentation instrumentation = getInstrumentation();
+        final UiAutomation uiAutomation = instrumentation.getUiAutomation();
+        final AccessibilityNodeInfo buttonNode = uiAutomation.getRootInActiveWindow()
+                .findAccessibilityNodeInfosByViewId(
+                        "android.accessibilityservice.cts:id/button")
+                .get(0);
+        assertFalse(hasTooltip(R.id.button));
+        assertThat(ACTION_SHOW_TOOLTIP, in(buttonNode.getActionList()));
+        assertThat(ACTION_HIDE_TOOLTIP, not(in(buttonNode.getActionList())));
+        uiAutomation.executeAndWaitForEvent(() -> buttonNode.performAction(
+                ACTION_SHOW_TOOLTIP.getId()),
+                filterForEventType(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED),
+                TIMEOUT_ASYNC_PROCESSING);
+
+        // The button should now be showing the tooltip, so it should have the option to hide it.
+        buttonNode.refresh();
+        assertThat(ACTION_HIDE_TOOLTIP, in(buttonNode.getActionList()));
+        assertThat(ACTION_SHOW_TOOLTIP, not(in(buttonNode.getActionList())));
+        assertTrue(hasTooltip(R.id.button));
+    }
+
     private static void assertPackageName(AccessibilityNodeInfo node, String packageName) {
         if (node == null) {
             return;
@@ -689,5 +733,16 @@ public class AccessibilityEndToEndTest extends
             }
         }
         return true;
+    }
+
+    private boolean hasTooltip(int id) {
+        return getOnMain(getInstrumentation(), () -> {
+            final View viewWithTooltip = getActivity().findViewById(id);
+            if (viewWithTooltip == null) {
+                return false;
+            }
+            final View tooltipView = viewWithTooltip.getTooltipView();
+            return (tooltipView != null) && (tooltipView.getParent() != null);
+        });
     }
 }
