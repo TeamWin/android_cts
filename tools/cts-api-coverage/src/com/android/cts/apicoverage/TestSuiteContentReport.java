@@ -17,12 +17,15 @@
 package com.android.cts.apicoverage;
 
 
-import com.android.cts.apicoverage.TestSuiteProto.Entry;
-import com.android.cts.apicoverage.TestSuiteProto.Entry.EntryType;
-import com.android.cts.apicoverage.TestSuiteProto.TestSuiteContent;
+import com.android.cts.apicoverage.TestSuiteProto.*;
+
+import org.xml.sax.InputSource;
+import org.xml.sax.XMLReader;
+import org.xml.sax.helpers.XMLReaderFactory;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -38,6 +41,31 @@ import java.util.ArrayList;
 import java.util.List;
 
 class TestSuiteContentReport {
+    // configuration option
+    private static final String NOT_SHARDABLE_TAG = "not-shardable";
+    // test class option
+    private static final String RUNTIME_HIT_TAG = "runtime-hint";
+    // com.android.tradefed.testtype.AndroidJUnitTest option
+    private static final String PACKAGE_TAG = "package";
+    // com.android.compatibility.common.tradefed.testtype.JarHostTest option
+    private static final String JAR_NAME_TAG = "jar";
+    // com.android.tradefed.testtype.GTest option
+    private static final String NATIVE_TEST_DEVICE_PATH_TAG = "native-test-device-path";
+    private static final String MODULE_TAG = "module-name";
+
+    private static final String SUITE_API_INSTALLER_TAG = "com.android.tradefed.targetprep.suite.SuiteApkInstaller";
+    private static final String JAR_HOST_TEST_TAG = "com.android.compatibility.common.tradefed.testtype.JarHostTest";
+    // com.android.tradefed.targetprep.suite.SuiteApkInstaller option
+    private static final String TEST_FILE_NAME_TAG = "test-file-name";
+    // com.android.compatibility.common.tradefed.targetprep.FilePusher option
+    private static final String PUSH_TAG = "push";
+
+    // Target File Extensions
+    private static final String CONFIG_EXT_TAG = ".config";
+    private static final String JAR_EXT_TAG = ".jar";
+    private static final String APK_EXT_TAG = ".apk";
+    private static final String SO_EXT_TAG = ".so";
+
     private static void printUsage() {
         System.out.println("Usage: test-suite-content-report [OPTION]...");
         System.out.println();
@@ -73,6 +101,42 @@ class TestSuiteContentReport {
         return testSuiteContent.build();
     }
 
+    // Parse a file
+    private static FileMetadata parseFileMetadata(Entry.Builder fEntry, File file)
+            throws Exception {
+        if (file.getName().endsWith(CONFIG_EXT_TAG)) {
+            fEntry.setType(Entry.EntryType.CONFIG);
+            return parseConfigFile(file);
+        } else if (file.getName().endsWith(APK_EXT_TAG)) {
+            fEntry.setType(Entry.EntryType.APK);
+        } else if (file.getName().endsWith(JAR_EXT_TAG)) {
+            fEntry.setType(Entry.EntryType.JAR);
+        } else if (file.getName().endsWith(SO_EXT_TAG)) {
+            fEntry.setType(Entry.EntryType.SO);
+        } else {
+            // Just file in general
+            fEntry.setType(Entry.EntryType.FILE);
+        }
+        return null;
+    }
+
+    private static FileMetadata parseConfigFile(File file)
+            throws Exception {
+        XMLReader xmlReader = XMLReaderFactory.createXMLReader();
+        TestModuleConfigHandler testModuleXmlHandler = new TestModuleConfigHandler(file.getName());
+        xmlReader.setContentHandler(testModuleXmlHandler);
+        FileReader fileReader = null;
+        try {
+            fileReader = new FileReader(file);
+            xmlReader.parse(new InputSource(fileReader));
+            return testModuleXmlHandler.getFileMetadata();
+        } finally {
+            if (null != fileReader) {
+                fileReader.close();
+            }
+        }
+    }
+
     // Parse a folder to add all entries
     private static Entry.Builder parseFolder(TestSuiteContent.Builder testSuiteContent, String fPath, String rPath)
             throws IOException, NoSuchAlgorithmException {
@@ -94,10 +158,20 @@ class TestSuiteContentReport {
                 fileEntry.setId(getId(fileRelativePath));
                 fileEntry.setName(file.getName());
                 fileEntry.setSize(file.length());
-                fileEntry.setType(EntryType.FILE);
                 fileEntry.setContentId(getFileContentId(file));
                 fileEntry.setRelativePath(fileRelativePath);
                 fileEntry.setParentId(folderId);
+                try {
+                    FileMetadata fMetadata = parseFileMetadata(fileEntry, file);
+                    if (null != fMetadata) {
+                        fileEntry.setFileMetadata(fMetadata);
+                    }
+                } catch (Exception ex) {
+                    System.err.println(
+                            String.format("Cannot parse %s",
+                                    file.getAbsolutePath()));
+                    ex.printStackTrace();
+                }
                 testSuiteContent.addFileEntries(fileEntry);
                 entryList.add(fileEntry.build());
                 folderSize += file.length();
@@ -113,7 +187,7 @@ class TestSuiteContentReport {
         folderEntry.setId(folderId);
         folderEntry.setName(folderRelativePath);
         folderEntry.setSize(folderSize);
-        folderEntry.setType(EntryType.FOLDER);
+        folderEntry.setType(Entry.EntryType.FOLDER);
         folderEntry.setContentId(getFolderContentId(folderEntry, entryList));
         folderEntry.setRelativePath(folderRelativePath);
         return folderEntry;
@@ -173,13 +247,68 @@ class TestSuiteContentReport {
 
     // Iterates though all test suite content and prints them.
     static void Print(TestSuiteContent tsContent) {
-        System.out.printf("no,name,size,relativePath,id,cid,pid\n");
+        //Header
+        System.out.printf("no,type,name,size,relative path,id,content id,parent id,description,test class");
+        // test class header
+        System.out.printf(",%s,%s,%s,%s,%s",
+                RUNTIME_HIT_TAG, PACKAGE_TAG, JAR_NAME_TAG, NATIVE_TEST_DEVICE_PATH_TAG, MODULE_TAG);
+        // target preparer header
+        System.out.printf(",%s,%s\n",
+                TEST_FILE_NAME_TAG, PUSH_TAG);
+
         int i = 1;
-        for(Entry entry: tsContent.getFileEntriesList()) {
-            System.out.printf("%d,%s,%d,%s,%s,%s,%s\n", i++,
-                entry.getName(), entry.getSize(),
-                entry.getRelativePath(),
-                entry.getId(), entry.getContentId(),entry.getParentId());
+        for (Entry entry: tsContent.getFileEntriesList()) {
+            System.out.printf("%d,%s,%s,%d,%s,%s,%s,%s",
+                i++, entry.getType(), entry.getName(), entry.getSize(),
+                entry.getRelativePath(), entry.getId(), entry.getContentId(),
+                entry.getParentId());
+            if (Entry.EntryType.CONFIG == entry.getType()) {
+                ConfigMetadata config = entry.getFileMetadata().getConfigMetadata();
+                System.out.printf(",%s", entry.getFileMetadata().getDescription());
+                List<Option> optList;
+                List<ConfigMetadata.TestClass> testClassesList = config.getTestClassesList();
+                String rtHit = "";
+                String pkg = "";
+                String jar = "";
+                String ntdPath = "";
+                String module = "";
+
+                for (ConfigMetadata.TestClass tClass : testClassesList) {
+                    System.out.printf(",%s", tClass.getTestClass());
+                    optList = tClass.getOptionsList();
+                    for (Option opt : optList) {
+                        if (RUNTIME_HIT_TAG.equalsIgnoreCase(opt.getName())) {
+                            rtHit = rtHit + opt.getValue() + " ";
+                        } else if (PACKAGE_TAG.equalsIgnoreCase(opt.getName())) {
+                            pkg = pkg + opt.getValue() + " ";
+                        } else if (JAR_NAME_TAG.equalsIgnoreCase(opt.getName())) {
+                            jar = jar + opt.getValue() + " ";
+                        } else if (NATIVE_TEST_DEVICE_PATH_TAG.equalsIgnoreCase(opt.getName())) {
+                            ntdPath = ntdPath + opt.getValue() + " ";
+                        } else if (MODULE_TAG.equalsIgnoreCase(opt.getName())) {
+                            module = module + opt.getValue() + " ";
+                        }
+                    }
+                }
+                System.out.printf(",%s,%s,%s,%s,%s", rtHit.trim(), pkg.trim(),
+                        jar.trim(), module.trim(), ntdPath.trim());
+
+                List<ConfigMetadata.TargetPreparer> tPrepList = config.getTargetPreparersList();
+                String testFile = "";
+                String pushList = "";
+                for (ConfigMetadata.TargetPreparer tPrep : tPrepList) {
+                    optList = tPrep.getOptionsList();
+                    for (Option opt : optList) {
+                        if (TEST_FILE_NAME_TAG.equalsIgnoreCase(opt.getName())) {
+                            testFile = testFile + opt.getValue() + " ";
+                        } else if (PUSH_TAG.equalsIgnoreCase(opt.getName())) {
+                            pushList = pushList + opt.getValue() + " ";
+                        }
+                    }
+                }
+                System.out.printf(",%s,%s", testFile.trim(), pushList.trim());
+            }
+            System.out.printf("\n");
         }
     }
 

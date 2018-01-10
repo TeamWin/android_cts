@@ -23,6 +23,37 @@ option java_outer_classname = "TestSuiteProto";
 // [END java_declaration]
 
 // [START messages]
+message Option {
+    string name = 1;
+    string key = 2;
+    string value =3;
+}
+
+message ConfigMetadata {
+    string module_name = 1;
+    string component = 2;
+    repeated Option options = 3;
+
+    message TargetPreparer {
+        string test_class = 1;
+        repeated Option options = 2;
+    }
+    repeated TargetPreparer target_preparers = 4;
+
+    message TestClass {
+        string test_class = 1;
+        string package = 2;
+        repeated Option options = 3;
+    }
+    repeated TestClass test_classes = 5;
+}
+
+// target File Metadata for e.g. config, apk, jar, exe, so
+message FileMetadata {
+    string description = 1;
+    ConfigMetadata config_metadata = 2;
+}
+
 // An entry in a Test Suire Release messages: cts, etc.
 message Entry {
     // Entry ID
@@ -50,9 +81,11 @@ message Entry {
     string parent_id = 6;
     // Relative path
     string relative_path = 7;
+
+    FileMetadata file_metadata = 8;
 }
 
-// A Test Suite Release: cts, etc.
+// Test Suite Release: cts, etc.
 message TestSuiteContent {
     // Entry ID
     string id = 1;
