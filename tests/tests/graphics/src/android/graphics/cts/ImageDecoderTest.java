@@ -32,8 +32,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ImageDecoder;
 import android.graphics.PixelFormat;
-import android.graphics.Point;
-import android.graphics.PostProcess;
+import android.graphics.PostProcessor;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.BitmapDrawable;
@@ -42,11 +41,13 @@ import android.net.Uri;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.v4.content.FileProvider;
+import android.util.Size;
 
 import com.android.compatibility.common.util.BitmapUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -190,11 +191,10 @@ public class ImageDecoderTest {
     private interface SourceCreator extends IntFunction<ImageDecoder.Source> {};
 
     private SourceCreator mCreators[] = new SourceCreator[] {
-        resId -> ImageDecoder.createSource(getAsByteArray(resId)),
-        resId -> ImageDecoder.createSource(mRes, resId),
         resId -> ImageDecoder.createSource(getAsByteBufferWrap(resId)),
         resId -> ImageDecoder.createSource(getAsDirectByteBuffer(resId)),
         resId -> ImageDecoder.createSource(getAsReadOnlyByteBuffer(resId)),
+        resId -> ImageDecoder.createSource(getAsFile(resId)),
     };
 
     private interface UriCreator extends IntFunction<Uri> {};
@@ -217,9 +217,9 @@ public class ImageDecoderTest {
 
                 assertNotNull("failed to create Source for " + fullName, src);
                 try {
-                    Drawable d = ImageDecoder.decodeDrawable(src, (info, decoder) -> {
-                        decoder.setOnPartialImageListener(e -> {
-                            fail("exception for image " + fullName + ":\n" + e);
+                    Drawable d = ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                        decoder.setOnPartialImageListener((e, source) -> {
+                            fail("error for image " + fullName + ":\n" + e);
                             return false;
                         });
                     });
@@ -245,9 +245,10 @@ public class ImageDecoderTest {
             public String mMimeType;
 
             @Override
-            public void onHeaderDecoded(ImageDecoder.ImageInfo info, ImageDecoder decoder) {
-                mWidth  = info.width;
-                mHeight = info.height;
+            public void onHeaderDecoded(ImageDecoder decoder, ImageDecoder.ImageInfo info,
+                                        ImageDecoder.Source src) {
+                mWidth  = info.getSize().getWidth();
+                mHeight = info.getSize().getHeight();
                 mMimeType = info.getMimeType();
             }
         };
@@ -314,7 +315,7 @@ public class ImageDecoderTest {
     public void testSetBogusAllocator() {
         ImageDecoder.Source src = mCreators[0].apply(RECORDS[0].resId);
         try {
-            ImageDecoder.decodeBitmap(src, (info, decoder) -> decoder.setAllocator(15));
+            ImageDecoder.decodeBitmap(src, (decoder, info, s) -> decoder.setAllocator(15));
         } catch (IOException e) {
             fail("Failed with exception " + e);
         }
@@ -327,23 +328,25 @@ public class ImageDecoderTest {
             public boolean doCrop;
             public boolean doScale;
             @Override
-            public void onHeaderDecoded(ImageDecoder.ImageInfo info, ImageDecoder decoder) {
+            public void onHeaderDecoded(ImageDecoder decoder, ImageDecoder.ImageInfo info,
+                                        ImageDecoder.Source src) {
                 decoder.setAllocator(allocator);
                 if (doScale) {
-                    decoder.resize(2);
+                    decoder.setResize(2);
                 }
                 if (doCrop) {
-                    decoder.crop(new Rect(1, 1, info.width / 2 - 1, info.height / 2 - 1));
+                    decoder.setCrop(new Rect(1, 1, info.getSize().getWidth()  / 2 - 1,
+                                                   info.getSize().getHeight() / 2 - 1));
                 }
             }
         };
         Listener l = new Listener();
 
         int allocators[] = new int[] {
-            ImageDecoder.DEFAULT_ALLOCATOR,
-            ImageDecoder.SOFTWARE_ALLOCATOR,
-            ImageDecoder.SHARED_MEMORY_ALLOCATOR,
-            ImageDecoder.HARDWARE_ALLOCATOR,
+            ImageDecoder.ALLOCATOR_DEFAULT,
+            ImageDecoder.ALLOCATOR_SOFTWARE,
+            ImageDecoder.ALLOCATOR_SHARED_MEMORY,
+            ImageDecoder.ALLOCATOR_HARDWARE,
         };
         boolean trueFalse[] = new boolean[] { true, false };
         for (Record record : RECORDS) {
@@ -361,16 +364,17 @@ public class ImageDecoderTest {
                             try {
                                bm = ImageDecoder.decodeBitmap(src, l);
                             } catch (IOException e) {
-                                fail("Failed with exception " + e);
+                                fail("Failed " + getAsResourceUri(record.resId) +
+                                        " with exception " + e);
                             }
                             assertNotNull(bm);
 
                             switch (allocator) {
-                                case ImageDecoder.SOFTWARE_ALLOCATOR:
+                                case ImageDecoder.ALLOCATOR_SOFTWARE:
                                 // TODO: Once Bitmap provides access to its
-                                // SharedMemory, confirm that SHARED_MEMORY_ALLOCATOR
+                                // SharedMemory, confirm that ALLOCATOR_SHARED_MEMORY
                                 // worked.
-                                case ImageDecoder.SHARED_MEMORY_ALLOCATOR:
+                                case ImageDecoder.ALLOCATOR_SHARED_MEMORY:
                                     assertNotEquals(Bitmap.Config.HARDWARE, bm.getConfig());
 
                                     if (!doScale && !doCrop) {
@@ -414,7 +418,7 @@ public class ImageDecoderTest {
                     assertNotNull(src);
 
                     Bitmap unpremul = ImageDecoder.decodeBitmap(src,
-                            (info, decoder) -> decoder.requireUnpremultiplied());
+                            (decoder, info, s) -> decoder.setRequireUnpremultiplied(true));
                     assertNotNull(unpremul);
                     assertEquals(unpremul.hasAlpha(), hasAlpha[i]);
                     assertFalse(unpremul.isPremultiplied());
@@ -426,15 +430,16 @@ public class ImageDecoderTest {
     }
 
     @Test
-    public void testPostProcess() {
+    public void testPostProcessor() {
         class Listener implements ImageDecoder.OnHeaderDecodedListener {
             public boolean requireSoftware;
             @Override
-            public void onHeaderDecoded(ImageDecoder.ImageInfo info, ImageDecoder decoder) {
+            public void onHeaderDecoded(ImageDecoder decoder, ImageDecoder.ImageInfo info,
+                                        ImageDecoder.Source src) {
                 if (requireSoftware) {
-                    decoder.setAllocator(ImageDecoder.SOFTWARE_ALLOCATOR);
+                    decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
                 }
-                decoder.setPostProcess((canvas, width, height) -> {
+                decoder.setPostProcessor((canvas) -> {
                     canvas.drawColor(Color.BLACK);
                     return PixelFormat.OPAQUE;
                 });
@@ -475,15 +480,16 @@ public class ImageDecoderTest {
     }
 
     @Test
-    public void testPostProcessOverridesNinepatch() {
+    public void testPostProcessorOverridesNinepatch() {
         class Listener implements ImageDecoder.OnHeaderDecodedListener {
             public boolean requireSoftware;
             @Override
-            public void onHeaderDecoded(ImageDecoder.ImageInfo info, ImageDecoder decoder) {
+            public void onHeaderDecoded(ImageDecoder decoder, ImageDecoder.ImageInfo info,
+                                        ImageDecoder.Source src) {
                 if (requireSoftware) {
-                    decoder.setAllocator(ImageDecoder.SOFTWARE_ALLOCATOR);
+                    decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
                 }
-                decoder.setPostProcess((c, w, h) -> PixelFormat.UNKNOWN);
+                decoder.setPostProcessor((c) -> PixelFormat.UNKNOWN);
             }
         };
         Listener l = new Listener();
@@ -511,15 +517,16 @@ public class ImageDecoderTest {
     }
 
     @Test
-    public void testPostProcessAndMadeOpaque() {
+    public void testPostProcessorAndMadeOpaque() {
         class Listener implements ImageDecoder.OnHeaderDecodedListener {
             public boolean requireSoftware;
             @Override
-            public void onHeaderDecoded(ImageDecoder.ImageInfo info, ImageDecoder decoder) {
+            public void onHeaderDecoded(ImageDecoder decoder, ImageDecoder.ImageInfo info,
+                                        ImageDecoder.Source src) {
                 if (requireSoftware) {
-                    decoder.setAllocator(ImageDecoder.SOFTWARE_ALLOCATOR);
+                    decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
                 }
-                decoder.setPostProcess((c, w, h) -> PixelFormat.OPAQUE);
+                decoder.setPostProcessor((c) -> PixelFormat.OPAQUE);
             }
         };
         Listener l = new Listener();
@@ -543,15 +550,16 @@ public class ImageDecoderTest {
     }
 
     @Test
-    public void testPostProcessAndAddedTransparency() {
+    public void testPostProcessorAndAddedTransparency() {
         class Listener implements ImageDecoder.OnHeaderDecodedListener {
             public boolean requireSoftware;
             @Override
-            public void onHeaderDecoded(ImageDecoder.ImageInfo info, ImageDecoder decoder) {
+            public void onHeaderDecoded(ImageDecoder decoder, ImageDecoder.ImageInfo info,
+                                        ImageDecoder.Source src) {
                 if (requireSoftware) {
-                    decoder.setAllocator(ImageDecoder.SOFTWARE_ALLOCATOR);
+                    decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
                 }
-                decoder.setPostProcess((c, w, h) -> PixelFormat.TRANSLUCENT);
+                decoder.setPostProcessor((c) -> PixelFormat.TRANSLUCENT);
             }
         };
         Listener l = new Listener();
@@ -574,11 +582,11 @@ public class ImageDecoderTest {
     }
 
     @Test(expected=IllegalArgumentException.class)
-    public void testPostProcessTRANSPARENT() {
-        ImageDecoder.Source src = ImageDecoder.createSource(mRes, R.drawable.png_test);
+    public void testPostProcessorTRANSPARENT() {
+        ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
         try {
-            ImageDecoder.decodeDrawable(src, (info, decoder) -> {
-                decoder.setPostProcess((c, w, h) -> PixelFormat.TRANSPARENT);
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                decoder.setPostProcessor((c) -> PixelFormat.TRANSPARENT);
             });
         } catch (IOException e) {
             fail("Failed with exception " + e);
@@ -586,11 +594,11 @@ public class ImageDecoderTest {
     }
 
     @Test(expected=IllegalArgumentException.class)
-    public void testPostProcessInvalidReturn() {
+    public void testPostProcessorInvalidReturn() {
         ImageDecoder.Source src = mCreators[0].apply(RECORDS[0].resId);
         try {
-            ImageDecoder.decodeDrawable(src, (info, decoder) -> {
-                decoder.setPostProcess((c, w, h) -> 42);
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                decoder.setPostProcessor((c) -> 42);
             });
         } catch (IOException e) {
             fail("Failed with exception " + e);
@@ -598,12 +606,12 @@ public class ImageDecoderTest {
     }
 
     @Test(expected=IllegalStateException.class)
-    public void testPostProcessAndUnpremul() {
+    public void testPostProcessorAndUnpremul() {
         ImageDecoder.Source src = mCreators[0].apply(RECORDS[0].resId);
         try {
-            ImageDecoder.decodeDrawable(src, (info, decoder) -> {
-                decoder.requireUnpremultiplied();
-                decoder.setPostProcess((c, w, h) -> PixelFormat.UNKNOWN);
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                decoder.setRequireUnpremultiplied(true);
+                decoder.setPostProcessor((c) -> PixelFormat.UNKNOWN);
             });
         } catch (IOException e) {
             fail("Failed with exception " + e);
@@ -611,32 +619,32 @@ public class ImageDecoderTest {
     }
 
     @Test
-    public void testPostProcessAndScale() {
-        class PostProcessWithSize implements PostProcess {
+    public void testPostProcessorAndScale() {
+        class PostProcessorWithSize implements PostProcessor {
             public int width;
             public int height;
             @Override
-            public int postProcess(Canvas canvas, int width, int height) {
+            public int onPostProcess(Canvas canvas) {
                 assertEquals(this.width,  width);
                 assertEquals(this.height, height);
                 return PixelFormat.UNKNOWN;
             };
         };
-        final PostProcessWithSize pp = new PostProcessWithSize();
+        final PostProcessorWithSize pp = new PostProcessorWithSize();
         for (Record record : RECORDS) {
             pp.width =  record.width  / 2;
             pp.height = record.height / 2;
             for (SourceCreator f : mCreators) {
                 ImageDecoder.Source src = f.apply(record.resId);
                 try {
-                    Drawable drawable = ImageDecoder.decodeDrawable(src, (info, decoder) -> {
-                        decoder.resize(pp.width, pp.height);
-                        decoder.setPostProcess(pp);
+                    Drawable drawable = ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                        decoder.setResize(pp.width, pp.height);
+                        decoder.setPostProcessor(pp);
                     });
                     assertEquals(pp.width,  drawable.getIntrinsicWidth());
                     assertEquals(pp.height, drawable.getIntrinsicHeight());
                 } catch (IOException e) {
-                    fail("Failed with exception " + e);
+                    fail("Failed " + getAsResourceUri(record.resId) + " with exception " + e);
                 }
             }
         }
@@ -645,17 +653,18 @@ public class ImageDecoderTest {
     @Test
     public void testGetSampledSize() {
         class SampleListener implements ImageDecoder.OnHeaderDecodedListener {
-            public Point dimensions;
+            public Size dimensions;
             public int sampleSize;
             public boolean useSampleSizeDirectly;
 
             @Override
-            public void onHeaderDecoded(ImageDecoder.ImageInfo info, ImageDecoder decoder) {
+            public void onHeaderDecoded(ImageDecoder decoder, ImageDecoder.ImageInfo info,
+                                        ImageDecoder.Source src) {
                 if (useSampleSizeDirectly) {
-                    decoder.resize(sampleSize);
+                    decoder.setResize(sampleSize);
                 } else {
                     dimensions = decoder.getSampledSize(sampleSize);
-                    decoder.resize(dimensions.x, dimensions.y);
+                    decoder.setResize(dimensions.getWidth(), dimensions.getHeight());
                 }
             }
         };
@@ -672,16 +681,16 @@ public class ImageDecoderTest {
 
                     try {
                         Drawable drawable = ImageDecoder.decodeDrawable(src, l);
-                        assertEquals(l.dimensions.x, drawable.getIntrinsicWidth());
-                        assertEquals(l.dimensions.y, drawable.getIntrinsicHeight());
+                        assertEquals(l.dimensions.getWidth(),  drawable.getIntrinsicWidth());
+                        assertEquals(l.dimensions.getHeight(), drawable.getIntrinsicHeight());
 
                         l.useSampleSizeDirectly = true;
                         src = f.apply(record.resId);
                         drawable = ImageDecoder.decodeDrawable(src, l);
-                        assertEquals(l.dimensions.x, drawable.getIntrinsicWidth());
-                        assertEquals(l.dimensions.y, drawable.getIntrinsicHeight());
+                        assertEquals(l.dimensions.getWidth(),  drawable.getIntrinsicWidth());
+                        assertEquals(l.dimensions.getHeight(), drawable.getIntrinsicHeight());
                     } catch (IOException e) {
-                        fail("Failed with exception " + e);
+                        fail("Failed " + getAsResourceUri(record.resId) + " with exception " + e);
                     }
                 }
             }
@@ -694,15 +703,15 @@ public class ImageDecoderTest {
             for (SourceCreator f : mCreators) {
                 ImageDecoder.Source src = f.apply(record.resId);
                 try {
-                    ImageDecoder.decodeDrawable(src, (info, decoder) -> {
-                        Point dimensions = decoder.getSampledSize(info.width);
-                        assertEquals(dimensions.x, 1);
+                    ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                        Size dimensions = decoder.getSampledSize(info.getSize().getWidth());
+                        assertEquals(dimensions.getWidth(), 1);
 
-                        dimensions = decoder.getSampledSize(info.width + 5);
-                        assertEquals(dimensions.x, 1);
+                        dimensions = decoder.getSampledSize(info.getSize().getWidth() + 5);
+                        assertEquals(dimensions.getWidth(), 1);
 
-                        dimensions = decoder.getSampledSize(info.width * 2);
-                        assertEquals(dimensions.x, 1);
+                        dimensions = decoder.getSampledSize(info.getSize().getWidth() * 2);
+                        assertEquals(dimensions.getWidth(), 1);
                     });
                 } catch (IOException e) {
                     fail("Failed with exception " + e);
@@ -713,17 +722,17 @@ public class ImageDecoderTest {
 
     @Test
     public void testOnPartialImage() {
-        class ExceptionCallback implements ImageDecoder.OnPartialImageListener {
-            public boolean caughtException;
+        class PartialImageCallback implements ImageDecoder.OnPartialImageListener {
+            public boolean wasCalled;
             public boolean returnDrawable;
             @Override
-            public boolean onPartialImage(IOException e) {
-                caughtException = true;
-                assertTrue(e instanceof ImageDecoder.IncompleteException);
+            public boolean onPartialImage(int error, ImageDecoder.Source src) {
+                wasCalled = true;
+                assertEquals(ImageDecoder.ERROR_SOURCE_INCOMPLETE, error);
                 return returnDrawable;
             }
         };
-        final ExceptionCallback exceptionListener = new ExceptionCallback();
+        final PartialImageCallback callback = new PartialImageCallback();
         boolean abortDecode[] = new boolean[] { true, false };
         for (Record record : RECORDS) {
             byte[] bytes = getAsByteArray(record.resId);
@@ -733,12 +742,13 @@ public class ImageDecoderTest {
                 continue;
             }
             for (boolean abort : abortDecode) {
-                ImageDecoder.Source src = ImageDecoder.createSource(bytes, 0, truncatedLength);
-                exceptionListener.caughtException = false;
-                exceptionListener.returnDrawable = !abort;
+                ImageDecoder.Source src = ImageDecoder.createSource(
+                        ByteBuffer.wrap(bytes, 0, truncatedLength));
+                callback.wasCalled = false;
+                callback.returnDrawable = !abort;
                 try {
-                    Drawable drawable = ImageDecoder.decodeDrawable(src, (info, decoder) -> {
-                        decoder.setOnPartialImageListener(exceptionListener);
+                    Drawable drawable = ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                        decoder.setOnPartialImageListener(callback);
                     });
                     assertFalse(abort);
                     assertNotNull(drawable);
@@ -747,16 +757,17 @@ public class ImageDecoderTest {
                 } catch (IOException e) {
                     assertTrue(abort);
                 }
-                assertTrue(exceptionListener.caughtException);
+                assertTrue(callback.wasCalled);
             }
 
-            // null listener behaves as if OnPartialImage returned true.
-            ImageDecoder.Source src = ImageDecoder.createSource(bytes, 0, truncatedLength);
+            // null listener behaves as if onPartialImage returned false.
+            ImageDecoder.Source src = ImageDecoder.createSource(
+                    ByteBuffer.wrap(bytes, 0, truncatedLength));
             try {
-                Drawable drawable = ImageDecoder.decodeDrawable(src);
-                assertNotNull(drawable);
-                assertEquals(record.width,  drawable.getIntrinsicWidth());
-                assertEquals(record.height, drawable.getIntrinsicHeight());
+                ImageDecoder.decodeDrawable(src);
+                fail("Should have thrown an exception!");
+            } catch (ImageDecoder.IncompleteException incomplete) {
+                // This is the correct behavior.
             } catch (IOException e) {
                 fail("Failed with exception " + e);
             }
@@ -765,32 +776,32 @@ public class ImageDecoderTest {
 
     @Test
     public void testCorruptException() {
-        class ExceptionCallback implements ImageDecoder.OnPartialImageListener {
-            public boolean caughtException = false;
+        class PartialImageCallback implements ImageDecoder.OnPartialImageListener {
+            public boolean wasCalled = false;
             @Override
-            public boolean onPartialImage(IOException e) {
-                caughtException = true;
-                assertTrue(e instanceof ImageDecoder.CorruptException);
+            public boolean onPartialImage(int error, ImageDecoder.Source src) {
+                wasCalled = true;
+                assertEquals(ImageDecoder.ERROR_SOURCE_ERROR, error);
                 return true;
             }
         };
-        final ExceptionCallback exceptionListener = new ExceptionCallback();
+        final PartialImageCallback callback = new PartialImageCallback();
         byte[] bytes = getAsByteArray(R.drawable.png_test);
         // The four bytes starting with byte 40,000 represent the CRC. Changing
         // them will cause the decode to fail.
         for (int i = 0; i < 4; ++i) {
             bytes[40000 + i] = 'X';
         }
-        ImageDecoder.Source src = ImageDecoder.createSource(bytes);
-        exceptionListener.caughtException = false;
+        ImageDecoder.Source src = ImageDecoder.createSource(ByteBuffer.wrap(bytes));
+        callback.wasCalled = false;
         try {
-            ImageDecoder.decodeDrawable(src, (info, decoder) -> {
-                decoder.setOnPartialImageListener(exceptionListener);
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                decoder.setOnPartialImageListener(callback);
             });
         } catch (IOException e) {
             fail("Failed with exception " + e);
         }
-        assertTrue(exceptionListener.caughtException);
+        assertTrue(callback.wasCalled);
     }
 
     private static class DummyException extends RuntimeException {};
@@ -798,10 +809,11 @@ public class ImageDecoderTest {
     @Test
     public void  testPartialImageThrowException() {
         byte[] bytes = getAsByteArray(R.drawable.png_test);
-        ImageDecoder.Source src = ImageDecoder.createSource(bytes, 0, bytes.length / 2);
+        ImageDecoder.Source src = ImageDecoder.createSource(
+                ByteBuffer.wrap(bytes, 0, bytes.length / 2));
         try {
-            ImageDecoder.decodeDrawable(src, (info, decoder) -> {
-                decoder.setOnPartialImageListener(e -> {
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                decoder.setOnPartialImageListener((e, source) -> {
                     throw new DummyException();
                 });
             });
@@ -815,19 +827,20 @@ public class ImageDecoderTest {
 
     @Test
     public void testMutable() {
-        int allocators[] = new int[] { ImageDecoder.DEFAULT_ALLOCATOR,
-                                       ImageDecoder.SOFTWARE_ALLOCATOR,
-                                       ImageDecoder.SHARED_MEMORY_ALLOCATOR };
+        int allocators[] = new int[] { ImageDecoder.ALLOCATOR_DEFAULT,
+                                       ImageDecoder.ALLOCATOR_SOFTWARE,
+                                       ImageDecoder.ALLOCATOR_SHARED_MEMORY };
         class HeaderListener implements ImageDecoder.OnHeaderDecodedListener {
             int allocator;
             boolean postProcess;
             @Override
-            public void onHeaderDecoded(ImageDecoder.ImageInfo info,
-                                        ImageDecoder decoder) {
-                decoder.setMutable();
+            public void onHeaderDecoded(ImageDecoder decoder,
+                                        ImageDecoder.ImageInfo info,
+                                        ImageDecoder.Source src) {
+                decoder.setMutable(true);
                 decoder.setAllocator(allocator);
                 if (postProcess) {
-                    decoder.setPostProcess((c, w, h) -> PixelFormat.UNKNOWN);
+                    decoder.setPostProcessor((c) -> PixelFormat.UNKNOWN);
                 }
             }
         };
@@ -858,9 +871,9 @@ public class ImageDecoderTest {
     public void testMutableHardware() {
         ImageDecoder.Source src = mCreators[0].apply(RECORDS[0].resId);
         try {
-            ImageDecoder.decodeBitmap(src, (info, decoder) -> {
-                decoder.setMutable();
-                decoder.setAllocator(ImageDecoder.HARDWARE_ALLOCATOR);
+            ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
+                decoder.setMutable(true);
+                decoder.setAllocator(ImageDecoder.ALLOCATOR_HARDWARE);
             });
         } catch (IOException e) {
             fail("Failed with exception " + e);
@@ -871,8 +884,8 @@ public class ImageDecoderTest {
     public void testMutableDrawable() {
         ImageDecoder.Source src = mCreators[0].apply(RECORDS[0].resId);
         try {
-            ImageDecoder.decodeDrawable(src, (info, decoder) -> {
-                decoder.setMutable();
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                decoder.setMutable(true);
             });
         } catch (IOException e) {
             fail("Failed with exception " + e);
@@ -920,9 +933,9 @@ public class ImageDecoderTest {
 
     @Test(expected=IllegalArgumentException.class)
     public void testZeroSampleSize() {
-        ImageDecoder.Source src = ImageDecoder.createSource(mRes, R.drawable.png_test);
+        ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
         try {
-            ImageDecoder.decodeDrawable(src, (info, decoder) -> decoder.getSampledSize(0));
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> decoder.getSampledSize(0));
         } catch (IOException e) {
             fail("Failed with exception " + e);
         }
@@ -930,9 +943,9 @@ public class ImageDecoderTest {
 
     @Test(expected=IllegalArgumentException.class)
     public void testNegativeSampleSize() {
-        ImageDecoder.Source src = ImageDecoder.createSource(mRes, R.drawable.png_test);
+        ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
         try {
-            ImageDecoder.decodeDrawable(src, (info, decoder) -> decoder.getSampledSize(-2));
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> decoder.getSampledSize(-2));
         } catch (IOException e) {
             fail("Failed with exception " + e);
         }
@@ -944,8 +957,9 @@ public class ImageDecoderTest {
             public int width;
             public int height;
             @Override
-            public void onHeaderDecoded(ImageDecoder.ImageInfo info, ImageDecoder decoder) {
-                decoder.resize(width, height);
+            public void onHeaderDecoded(ImageDecoder decoder, ImageDecoder.ImageInfo info,
+                                        ImageDecoder.Source src) {
+                decoder.setResize(width, height);
             }
         };
         ResizeListener l = new ResizeListener();
@@ -969,7 +983,7 @@ public class ImageDecoderTest {
                         assertEquals(l.width,  bm.getWidth());
                         assertEquals(l.height, bm.getHeight());
                     } catch (IOException e) {
-                        fail("Failed with exception " + e);
+                        fail("Failed " + getAsResourceUri(record.resId) + " with exception " + e);
                     }
                 }
 
@@ -1003,9 +1017,10 @@ public class ImageDecoderTest {
             public int width;
             public int height;
             @Override
-            public void onHeaderDecoded(ImageDecoder.ImageInfo info, ImageDecoder decoder) {
-                decoder.resize(width, height);
-                decoder.requireUnpremultiplied();
+            public void onHeaderDecoded(ImageDecoder decoder, ImageDecoder.ImageInfo info,
+                                        ImageDecoder.Source src) {
+                decoder.setResize(width, height);
+                decoder.setRequireUnpremultiplied(true);
             }
         };
         ResizeListener l = new ResizeListener();
@@ -1035,9 +1050,9 @@ public class ImageDecoderTest {
         // libwebp does not upscale, so there is no way to get unpremul.
         ImageDecoder.Source src = mCreators[0].apply(R.drawable.google_logo_2);
         try {
-            ImageDecoder.decodeBitmap(src, (info, decoder) -> {
-                decoder.resize(info.width * 2, info.height * 2);
-                decoder.requireUnpremultiplied();
+            ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
+                decoder.setResize(info.getSize().getWidth() * 2, info.getSize().getHeight() * 2);
+                decoder.setRequireUnpremultiplied(true);
             });
         } catch (IOException e) {
             fail("Failed with exception " + e);
@@ -1048,11 +1063,11 @@ public class ImageDecoderTest {
     public void testResizeUnpremul() {
         ImageDecoder.Source src = mCreators[0].apply(R.drawable.alpha);
         try {
-            ImageDecoder.decodeBitmap(src, (info, decoder) -> {
+            ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
                 // Choose a width and height that cannot be achieved with sampling.
-                Point dims = decoder.getSampledSize(2);
-                decoder.resize(dims.x + 3, dims.y + 3);
-                decoder.requireUnpremultiplied();
+                Size dims = decoder.getSampledSize(2);
+                decoder.setResize(dims.getWidth() + 3, dims.getHeight() + 3);
+                decoder.setRequireUnpremultiplied(true);
             });
         } catch (IOException e) {
             fail("Failed with exception " + e);
@@ -1066,23 +1081,24 @@ public class ImageDecoderTest {
             public boolean requireSoftware;
             public Rect cropRect;
             @Override
-            public void onHeaderDecoded(ImageDecoder.ImageInfo info, ImageDecoder decoder) {
-                int width  = info.width;
-                int height = info.height;
+            public void onHeaderDecoded(ImageDecoder decoder, ImageDecoder.ImageInfo info,
+                                        ImageDecoder.Source src) {
+                int width  = info.getSize().getWidth();
+                int height = info.getSize().getHeight();
                 if (doScale) {
                     width  /= 2;
                     height /= 2;
-                    decoder.resize(width, height);
+                    decoder.setResize(width, height);
                 }
                 // Crop to the middle:
                 int quarterWidth  = width  / 4;
                 int quarterHeight = height / 4;
                 cropRect = new Rect(quarterWidth, quarterHeight,
                         quarterWidth * 3, quarterHeight * 3);
-                decoder.crop(cropRect);
+                decoder.setCrop(cropRect);
 
                 if (requireSoftware) {
-                    decoder.setAllocator(ImageDecoder.SOFTWARE_ALLOCATOR);
+                    decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
                 }
             }
         };
@@ -1101,7 +1117,8 @@ public class ImageDecoderTest {
                             assertEquals(l.cropRect.width(),  drawable.getIntrinsicWidth());
                             assertEquals(l.cropRect.height(), drawable.getIntrinsicHeight());
                         } catch (IOException e) {
-                            fail("Failed with exception " + e);
+                            fail("Failed " + getAsResourceUri(record.resId) +
+                                    " with exception " + e);
                         }
                     }
                 }
@@ -1111,9 +1128,10 @@ public class ImageDecoderTest {
 
     @Test(expected=IllegalArgumentException.class)
     public void testResizeZeroX() {
-        ImageDecoder.Source src = ImageDecoder.createSource(mRes, R.drawable.png_test);
+        ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
         try {
-            ImageDecoder.decodeDrawable(src, (info, decoder) -> decoder.resize(0, info.height));
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) ->
+                    decoder.setResize(0, info.getSize().getHeight()));
         } catch (IOException e) {
             fail("Failed with exception " + e);
         }
@@ -1121,9 +1139,10 @@ public class ImageDecoderTest {
 
     @Test(expected=IllegalArgumentException.class)
     public void testResizeZeroY() {
-        ImageDecoder.Source src = ImageDecoder.createSource(mRes, R.drawable.png_test);
+        ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
         try {
-            ImageDecoder.decodeDrawable(src, (info, decoder) -> decoder.resize(info.width, 0));
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) ->
+                    decoder.setResize(info.getSize().getWidth(), 0));
         } catch (IOException e) {
             fail("Failed with exception " + e);
         }
@@ -1131,9 +1150,10 @@ public class ImageDecoderTest {
 
     @Test(expected=IllegalArgumentException.class)
     public void testResizeNegativeX() {
-        ImageDecoder.Source src = ImageDecoder.createSource(mRes, R.drawable.png_test);
+        ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
         try {
-            ImageDecoder.decodeDrawable(src, (info, decoder) -> decoder.resize(-10, info.height));
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) ->
+                    decoder.setResize(-10, info.getSize().getHeight()));
         } catch (IOException e) {
             fail("Failed with exception " + e);
         }
@@ -1141,9 +1161,10 @@ public class ImageDecoderTest {
 
     @Test(expected=IllegalArgumentException.class)
     public void testResizeNegativeY() {
-        ImageDecoder.Source src = ImageDecoder.createSource(mRes, R.drawable.png_test);
+        ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
         try {
-            ImageDecoder.decodeDrawable(src, (info, decoder) -> decoder.resize(info.width, -10));
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) ->
+                    decoder.setResize(info.getSize().getWidth(), -10));
         } catch (IOException e) {
             fail("Failed with exception " + e);
         }
@@ -1154,12 +1175,13 @@ public class ImageDecoderTest {
         class CachingCallback implements ImageDecoder.OnHeaderDecodedListener {
             ImageDecoder cachedDecoder;
             @Override
-            public void onHeaderDecoded(ImageDecoder.ImageInfo info, ImageDecoder decoder) {
+            public void onHeaderDecoded(ImageDecoder decoder, ImageDecoder.ImageInfo info,
+                                        ImageDecoder.Source src) {
                 cachedDecoder = decoder;
             }
         };
         CachingCallback l = new CachingCallback();
-        ImageDecoder.Source src = ImageDecoder.createSource(mRes, R.drawable.png_test);
+        ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
         try {
             ImageDecoder.decodeDrawable(src, l);
         } catch (IOException e) {
@@ -1170,9 +1192,10 @@ public class ImageDecoderTest {
 
     @Test(expected=IllegalStateException.class)
     public void testDecodeUnpremulDrawable() {
-        ImageDecoder.Source src = ImageDecoder.createSource(mRes, R.drawable.png_test);
+        ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
         try {
-            ImageDecoder.decodeDrawable(src, (info, decoder) -> decoder.requireUnpremultiplied());
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) ->
+                    decoder.setRequireUnpremultiplied(true));
         } catch (IOException e) {
             fail("Failed with exception " + e);
         }
@@ -1180,10 +1203,11 @@ public class ImageDecoderTest {
 
     @Test(expected=IllegalStateException.class)
     public void testCropNegativeLeft() {
-        ImageDecoder.Source src = ImageDecoder.createSource(mRes, R.drawable.png_test);
+        ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
         try {
-            ImageDecoder.decodeDrawable(src, (info, decoder) -> {
-                decoder.crop(new Rect(-1, 0, info.width, info.height));
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                decoder.setCrop(new Rect(-1, 0, info.getSize().getWidth(),
+                                                info.getSize().getHeight()));
             });
         } catch (IOException e) {
             fail("Failed with exception " + e);
@@ -1192,10 +1216,11 @@ public class ImageDecoderTest {
 
     @Test(expected=IllegalStateException.class)
     public void testCropNegativeTop() {
-        ImageDecoder.Source src = ImageDecoder.createSource(mRes, R.drawable.png_test);
+        ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
         try {
-            ImageDecoder.decodeDrawable(src, (info, decoder) -> {
-                decoder.crop(new Rect(0, -1, info.width, info.height));
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                decoder.setCrop(new Rect(0, -1, info.getSize().getWidth(),
+                                                info.getSize().getHeight()));
             });
         } catch (IOException e) {
             fail("Failed with exception " + e);
@@ -1204,10 +1229,11 @@ public class ImageDecoderTest {
 
     @Test(expected=IllegalStateException.class)
     public void testCropTooWide() {
-        ImageDecoder.Source src = ImageDecoder.createSource(mRes, R.drawable.png_test);
+        ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
         try {
-            ImageDecoder.decodeDrawable(src, (info, decoder) -> {
-                decoder.crop(new Rect(1, 0, info.width + 1, info.height));
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                decoder.setCrop(new Rect(1, 0, info.getSize().getWidth() + 1,
+                                               info.getSize().getHeight()));
             });
         } catch (IOException e) {
             fail("Failed with exception " + e);
@@ -1216,10 +1242,11 @@ public class ImageDecoderTest {
 
     @Test(expected=IllegalStateException.class)
     public void testCropTooTall() {
-        ImageDecoder.Source src = ImageDecoder.createSource(mRes, R.drawable.png_test);
+        ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
         try {
-            ImageDecoder.decodeDrawable(src, (info, decoder) -> {
-                decoder.crop(new Rect(0, 1, info.width, info.height + 1));
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                decoder.setCrop(new Rect(0, 1, info.getSize().getWidth(),
+                                               info.getSize().getHeight() + 1));
             });
         } catch (IOException e) {
             fail("Failed with exception " + e);
@@ -1228,11 +1255,12 @@ public class ImageDecoderTest {
 
     @Test(expected=IllegalStateException.class)
     public void testCropResize() {
-        ImageDecoder.Source src = ImageDecoder.createSource(mRes, R.drawable.png_test);
+        ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
         try {
-            ImageDecoder.decodeDrawable(src, (info, decoder) -> {
-                decoder.resize(info.width / 2, info.height / 2);
-                decoder.crop(new Rect(0, 0, info.width, info.height));
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                decoder.setResize(info.getSize().getWidth() / 2, info.getSize().getHeight() / 2);
+                decoder.setCrop(new Rect(0, 0, info.getSize().getWidth(),
+                                               info.getSize().getHeight()));
             });
         } catch (IOException e) {
             fail("Failed with exception " + e);
@@ -1246,9 +1274,9 @@ public class ImageDecoderTest {
         ImageDecoder.Source src = f.apply(R.drawable.png_test);
         assertNotNull(src);
         try {
-            Bitmap bm = ImageDecoder.decodeBitmap(src, (info, decoder) -> {
-                decoder.setAsAlphaMask();
-                decoder.setAllocator(ImageDecoder.SOFTWARE_ALLOCATOR);
+            Bitmap bm = ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
+                decoder.setAsAlphaMask(true);
+                decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
             });
             assertNotNull(bm);
             assertNotEquals(Bitmap.Config.ALPHA_8, bm.getConfig());
@@ -1264,9 +1292,9 @@ public class ImageDecoderTest {
         ImageDecoder.Source src = f.apply(R.drawable.png_test);
         assertNotNull(src);
         try {
-            ImageDecoder.decodeDrawable(src, (info, decoder) -> {
-                decoder.setAsAlphaMask();
-                decoder.setAllocator(ImageDecoder.HARDWARE_ALLOCATOR);
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                decoder.setAsAlphaMask(true);
+                decoder.setAllocator(ImageDecoder.ALLOCATOR_HARDWARE);
             });
         } catch (IOException e) {
             fail("Failed with exception " + e);
@@ -1280,16 +1308,19 @@ public class ImageDecoderTest {
             boolean doScale;
             boolean doPostProcess;
             @Override
-            public void onHeaderDecoded(ImageDecoder.ImageInfo info, ImageDecoder decoder) {
-                decoder.setAsAlphaMask();
+            public void onHeaderDecoded(ImageDecoder decoder, ImageDecoder.ImageInfo info,
+                                        ImageDecoder.Source src) {
+                decoder.setAsAlphaMask(true);
                 if (doScale) {
-                    decoder.resize(info.width / 2, info.height / 2);
+                    decoder.setResize(info.getSize().getWidth() / 2,
+                                      info.getSize().getHeight() / 2);
                 }
                 if (doCrop) {
-                    decoder.crop(new Rect(0, 0, info.width / 4, info.height / 4));
+                    decoder.setCrop(new Rect(0, 0, info.getSize().getWidth() / 4,
+                                                   info.getSize().getHeight() / 4));
                 }
                 if (doPostProcess) {
-                    decoder.setPostProcess((c, w, h) -> {
+                    decoder.setPostProcessor((c) -> {
                         c.drawColor(Color.BLACK);
                         return PixelFormat.UNKNOWN;
                     });
@@ -1336,8 +1367,9 @@ public class ImageDecoderTest {
         class Listener implements ImageDecoder.OnHeaderDecodedListener {
             int allocator;
             @Override
-            public void onHeaderDecoded(ImageDecoder.ImageInfo info, ImageDecoder decoder) {
-                decoder.setPreferRamOverQuality();
+            public void onHeaderDecoded(ImageDecoder decoder, ImageDecoder.ImageInfo info,
+                                        ImageDecoder.Source src) {
+                decoder.setPreferRamOverQuality(true);
                 decoder.setAllocator(allocator);
             }
         };
@@ -1347,10 +1379,10 @@ public class ImageDecoderTest {
         // do not decode to 565. basi6a16 will still downconvert from F16 to
         // 8888.
         boolean hardwareOverrides[] = new boolean[] { true, false };
-        int[] allocators = new int[] { ImageDecoder.HARDWARE_ALLOCATOR,
-                                       ImageDecoder.SOFTWARE_ALLOCATOR,
-                                       ImageDecoder.DEFAULT_ALLOCATOR,
-                                       ImageDecoder.SHARED_MEMORY_ALLOCATOR };
+        int[] allocators = new int[] { ImageDecoder.ALLOCATOR_HARDWARE,
+                                       ImageDecoder.ALLOCATOR_SOFTWARE,
+                                       ImageDecoder.ALLOCATOR_DEFAULT,
+                                       ImageDecoder.ALLOCATOR_SHARED_MEMORY };
         SourceCreator f = mCreators[0];
         for (int i = 0; i < resIds.length; ++i) {
             Bitmap normal = null;
@@ -1371,8 +1403,8 @@ public class ImageDecoderTest {
                 }
                 assertNotNull(test);
                 int byteCount = test.getAllocationByteCount();
-                if ((allocator == ImageDecoder.HARDWARE_ALLOCATOR ||
-                     allocator == ImageDecoder.DEFAULT_ALLOCATOR)
+                if ((allocator == ImageDecoder.ALLOCATOR_HARDWARE ||
+                     allocator == ImageDecoder.ALLOCATOR_DEFAULT)
                     && hardwareOverrides[i]) {
                     assertEquals(normalByteCount, byteCount);
                 } else {
@@ -1388,17 +1420,18 @@ public class ImageDecoderTest {
             boolean doPostProcess;
             boolean preferRamOverQuality;
             @Override
-            public void onHeaderDecoded(ImageDecoder.ImageInfo info, ImageDecoder decoder) {
+            public void onHeaderDecoded(ImageDecoder decoder, ImageDecoder.ImageInfo info,
+                                        ImageDecoder.Source src) {
                 if (preferRamOverQuality) {
-                    decoder.setPreferRamOverQuality();
+                    decoder.setPreferRamOverQuality(true);
                 }
                 if (doPostProcess) {
-                    decoder.setPostProcess((c, w, h) -> {
+                    decoder.setPostProcessor((c) -> {
                         c.drawColor(Color.BLACK);
                         return PixelFormat.TRANSLUCENT;
                     });
                 }
-                decoder.setAllocator(ImageDecoder.SOFTWARE_ALLOCATOR);
+                decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
             }
         };
         Listener l = new Listener();
@@ -1447,45 +1480,10 @@ public class ImageDecoderTest {
         }
     }
 
-    @Test(expected=ArrayIndexOutOfBoundsException.class)
-    public void testArrayOutOfBounds() {
-        byte[] array = new byte[10];
-        ImageDecoder.createSource(array, 1, 10);
-    }
-
-    @Test(expected=ArrayIndexOutOfBoundsException.class)
-    public void testOffsetOutOfBounds() {
-        byte[] array = new byte[10];
-        ImageDecoder.createSource(array, 10, 0);
-    }
-
-    @Test(expected=ArrayIndexOutOfBoundsException.class)
-    public void testLengthOutOfBounds() {
-        byte[] array = new byte[10];
-        ImageDecoder.createSource(array, 0, 11);
-    }
-
-    @Test(expected=ArrayIndexOutOfBoundsException.class)
-    public void testNegativeLength() {
-        byte[] array = new byte[10];
-        ImageDecoder.createSource(array, 0, -1);
-    }
-
-    @Test(expected=ArrayIndexOutOfBoundsException.class)
-    public void testNegativeOffset() {
-        byte[] array = new byte[10];
-        ImageDecoder.createSource(array, -1, 10);
-    }
-
-    @Test(expected=NullPointerException.class)
-    public void testNullByteArray() {
-        ImageDecoder.createSource(null, 0, 0);
-    }
-
     @Test(expected=IOException.class)
-    public void testZeroLengthByteArray() throws IOException {
+    public void testZeroLengthByteBuffer() throws IOException {
         Drawable drawable = ImageDecoder.decodeDrawable(
-            ImageDecoder.createSource(new byte[10], 0, 0));
+            ImageDecoder.createSource(ByteBuffer.wrap(new byte[10], 0, 0)));
         fail("should not have reached here!");
     }
 
@@ -1502,7 +1500,6 @@ public class ImageDecoderTest {
             assertEquals(offset, myOffset + myPosition);
 
             SourceCreator[] creators = new SourceCreator[] {
-                unused -> ImageDecoder.createSource(array, offset, length),
                 // Internally, this gives the buffer a position, but not an offset.
                 unused -> ImageDecoder.createSource(ByteBuffer.wrap(array, offset, length)),
                 unused -> {
@@ -1567,8 +1564,8 @@ public class ImageDecoderTest {
             for (SourceCreator f : creators) {
                 ImageDecoder.Source src = f.apply(0);
                 try {
-                    Drawable drawable = ImageDecoder.decodeDrawable(src, (info, decoder) -> {
-                        decoder.setOnPartialImageListener(exception -> false);
+                    Drawable drawable = ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                        decoder.setOnPartialImageListener((error, source) -> false);
                     });
                     assertNotNull(drawable);
                 } catch (IOException e) {
