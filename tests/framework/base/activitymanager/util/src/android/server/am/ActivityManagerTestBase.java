@@ -129,8 +129,6 @@ public abstract class ActivityManagerTestBase {
     protected ActivityManager mAm;
     protected UiDevice mDevice;
 
-    private boolean mLockCredentialsSet;
-
     private boolean mLockDisabled;
 
     @Deprecated
@@ -274,7 +272,6 @@ public abstract class ActivityManagerTestBase {
         wakeUpAndUnlockDevice();
         pressHomeButton();
         removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
-        mLockCredentialsSet = false;
         mLockDisabled = isLockDisabled();
     }
 
@@ -718,36 +715,52 @@ public abstract class ActivityManagerTestBase {
         mDevice.pressMenu();
     }
 
-    protected void unlockDeviceWithCredential() throws Exception {
-        mDevice.pressMenu();
-        try {
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            //ignored
-        }
-        enterAndConfirmLockCredential();
-    }
-
-    protected void enterAndConfirmLockCredential() throws Exception {
-        mDevice.waitForIdle(3000);
-
-        runCommandAndPrintOutput("input text " + LOCK_CREDENTIAL);
-        mDevice.pressEnter();
-    }
-
     protected void gotoKeyguard() throws Exception {
         sleepDevice();
         wakeUpDevice();
         mAmWmState.waitForKeyguardShowingAndNotOccluded();
     }
 
-    protected void setLockCredential() {
-        mLockCredentialsSet = true;
-        runCommandAndPrintOutput("locksettings set-pin " + LOCK_CREDENTIAL);
-    }
+    protected class LockCredentialSession implements AutoCloseable {
+        private boolean mLockCredentialSet;
 
-    protected void removeLockCredential() {
-        runCommandAndPrintOutput("locksettings clear --old " + LOCK_CREDENTIAL);
+        public LockCredentialSession() {
+            mLockCredentialSet = false;
+        }
+
+        public void setLockCredential() {
+            mLockCredentialSet = true;
+            runCommandAndPrintOutput("locksettings set-pin " + LOCK_CREDENTIAL);
+        }
+
+        public void unlockDeviceWithCredential() throws Exception {
+            mDevice.pressMenu();
+            enterAndConfirmLockCredential();
+        }
+
+        public void enterAndConfirmLockCredential() throws Exception {
+            mDevice.waitForIdle(3000);
+
+            runCommandAndPrintOutput("input text " + LOCK_CREDENTIAL);
+            mDevice.pressEnter();
+        }
+
+        private void removeLockCredential() {
+            runCommandAndPrintOutput("locksettings clear --old " + LOCK_CREDENTIAL);
+            mLockCredentialSet = false;
+        }
+
+        @Override
+        public void close() throws Exception {
+            if (mLockCredentialSet) {
+                removeLockCredential();
+                // Dismiss active keyguard after credential is cleared, so keyguard doesn't ask for
+                // the stale credential.
+                pressBackButton();
+                sleepDevice();
+                wakeUpAndUnlockDevice();
+            }
+        }
     }
 
     /**
@@ -815,7 +828,7 @@ public abstract class ActivityManagerTestBase {
         return INVALID_DEVICE_ROTATION;
     }
 
-    protected String runCommandAndPrintOutput(String command) {
+    protected static String runCommandAndPrintOutput(String command) {
         final String output = executeShellCommand(command);
         log(output);
         return output;
@@ -1491,18 +1504,5 @@ public abstract class ActivityManagerTestBase {
                         new WaitForValidActivityState.Builder(mTargetActivityName).build());
             }
         }
-    }
-
-    protected void tearDownLockCredentials() throws Exception {
-        if (!mLockCredentialsSet) {
-            return;
-        }
-
-        removeLockCredential();
-        // Dismiss active keyguard after credential is cleared, so
-        // keyguard doesn't ask for the stale credential.
-        pressBackButton();
-        sleepDevice();
-        wakeUpAndUnlockDevice();
     }
 }
