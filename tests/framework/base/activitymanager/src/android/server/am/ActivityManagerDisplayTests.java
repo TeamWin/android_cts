@@ -23,6 +23,7 @@ import static org.junit.Assume.assumeFalse;
 
 import android.platform.test.annotations.Presubmit;
 import android.server.am.ActivityManagerState.ActivityDisplay;
+import android.util.Size;
 
 import org.junit.After;
 import org.junit.Before;
@@ -35,42 +36,7 @@ import java.util.List;
  *     atest CtsActivityManagerDeviceTestCases:ActivityManagerDisplayTests
  */
 public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase {
-    private static final String WM_SIZE = "wm size";
-    private static final String WM_DENSITY = "wm density";
-
     private static final String TEST_ACTIVITY_NAME = "TestActivity";
-
-    /** Physical display metrics and overrides in the beginning of the test. */
-    private ReportedDisplayMetrics mInitialDisplayMetrics;
-
-    @Before
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
-
-        mInitialDisplayMetrics = getDisplayMetrics();
-    }
-
-    @After
-    @Override
-    public void tearDown() throws Exception {
-        restoreDisplayMetricsOverrides();
-        super.tearDown();
-    }
-
-    private void restoreDisplayMetricsOverrides() throws Exception {
-        if (mInitialDisplayMetrics.sizeOverrideSet) {
-            executeShellCommand(WM_SIZE + " " + mInitialDisplayMetrics.overrideWidth + "x"
-                    + mInitialDisplayMetrics.overrideHeight);
-        } else {
-            executeShellCommand("wm size reset");
-        }
-        if (mInitialDisplayMetrics.densityOverrideSet) {
-            executeShellCommand(WM_DENSITY + " " + mInitialDisplayMetrics.overrideDensity);
-        } else {
-            executeShellCommand("wm density reset");
-        }
-    }
 
     /**
      * Tests that the global configuration is equal to the default display's override configuration.
@@ -154,34 +120,60 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
     public void testForceDisplayMetrics() throws Exception {
         launchHomeActivity();
 
-        // Read initial sizes.
-        final ReportedDisplayMetrics originalDisplayMetrics = getDisplayMetrics();
+        try (final DisplayMetricsSession displayMetricsSession = new DisplayMetricsSession()) {
+            // Read initial sizes.
+            final ReportedDisplayMetrics originalDisplayMetrics =
+                    displayMetricsSession.getInitialDisplayMetrics();
 
-        // Apply new override values that don't match the physical metrics.
-        final int overrideWidth = (int) (originalDisplayMetrics.physicalWidth * 1.5);
-        final int overrideHeight = (int) (originalDisplayMetrics.physicalHeight * 1.5);
-        executeShellCommand(WM_SIZE + " " + overrideWidth + "x" + overrideHeight);
-        final int overrideDensity = (int) (originalDisplayMetrics.physicalDensity * 1.1);
-        executeShellCommand(WM_DENSITY + " " + overrideDensity);
+            // Apply new override values that don't match the physical metrics.
+            final Size overrideSize = new Size(
+                    (int) (originalDisplayMetrics.physicalSize.getWidth() * 1.5),
+                    (int) (originalDisplayMetrics.physicalSize.getHeight() * 1.5));
+            final Integer overrideDensity = (int) (originalDisplayMetrics.physicalDensity * 1.1);
+            displayMetricsSession.overrideDisplayMetrics(overrideSize, overrideDensity);
 
-        // Check if overrides applied correctly.
-        ReportedDisplayMetrics displayMetrics = getDisplayMetrics();
-        assertEquals(overrideWidth, displayMetrics.overrideWidth);
-        assertEquals(overrideHeight, displayMetrics.overrideHeight);
-        assertEquals(overrideDensity, displayMetrics.overrideDensity);
+            // Check if overrides applied correctly.
+            ReportedDisplayMetrics displayMetrics = displayMetricsSession.getDisplayMetrics();
+            assertEquals(overrideSize, displayMetrics.overrideSize);
+            assertEquals(overrideDensity, displayMetrics.overrideDensity);
 
-        // Lock and unlock device. This will cause a DISPLAY_CHANGED event to be triggered and
-        // might update the metrics.
-        sleepDevice();
-        wakeUpAndUnlockDevice();
-        mAmWmState.waitForHomeActivityVisible();
+            // Lock and unlock device. This will cause a DISPLAY_CHANGED event to be triggered and
+            // might update the metrics.
+            sleepDevice();
 
-        // Check if overrides are still applied.
-        displayMetrics = getDisplayMetrics();
-        assertEquals(overrideWidth, displayMetrics.overrideWidth);
-        assertEquals(overrideHeight, displayMetrics.overrideHeight);
-        assertEquals(overrideDensity, displayMetrics.overrideDensity);
+            wakeUpAndUnlockDevice();
+            mAmWmState.waitForHomeActivityVisible();
 
-        // All overrides will be cleared in tearDown.
+            // Check if overrides are still applied.
+            displayMetrics = displayMetricsSession.getDisplayMetrics();
+            assertEquals(overrideSize, displayMetrics.overrideSize);
+            assertEquals(overrideDensity, displayMetrics.overrideDensity);
+        }
+    }
+
+    private static class DisplayMetricsSession implements AutoCloseable {
+
+        private final ReportedDisplayMetrics mInitialDisplayMetrics;
+
+        DisplayMetricsSession() throws Exception {
+            mInitialDisplayMetrics = ReportedDisplayMetrics.getDisplayMetrics();
+        }
+
+        ReportedDisplayMetrics getInitialDisplayMetrics() {
+            return mInitialDisplayMetrics;
+        }
+
+        ReportedDisplayMetrics getDisplayMetrics() throws Exception {
+            return ReportedDisplayMetrics.getDisplayMetrics();
+        }
+
+        void overrideDisplayMetrics(final Size size, final int density) {
+            mInitialDisplayMetrics.setDisplayMetrics(size, density);
+        }
+
+        @Override
+        public void close() throws Exception {
+            mInitialDisplayMetrics.restoreDisplayMetrics();
+        }
     }
 }
