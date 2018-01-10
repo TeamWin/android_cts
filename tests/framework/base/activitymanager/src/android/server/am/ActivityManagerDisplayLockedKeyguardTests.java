@@ -20,6 +20,7 @@ import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.ActivityManagerState.STATE_STOPPED;
 
 import static org.junit.Assume.assumeTrue;
+
 import android.server.am.ActivityManagerState.ActivityDisplay;
 
 import org.junit.After;
@@ -63,25 +64,27 @@ public class ActivityManagerDisplayLockedKeyguardTests extends ActivityManagerDi
      */
     @Test
     public void testVirtualDisplayHidesContentWhenLocked() throws Exception {
-        // Create new usual virtual display.
-        final ActivityDisplay newDisplay = new VirtualDisplayBuilder(this).build();
-        mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            // Create new usual virtual display.
+            final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
+            mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
 
-        // Launch activity on new secondary display.
-        launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mId);
-        mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, true /* visible */);
+            // Launch activity on new secondary display.
+            launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mId);
+            mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, true /* visible */);
 
-        // Lock the device.
-        gotoKeyguard();
-        mAmWmState.waitForKeyguardShowingAndNotOccluded();
-        mAmWmState.waitForActivityState(TEST_ACTIVITY_NAME, STATE_STOPPED);
-        mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, false /* visible */);
+            // Lock the device.
+            gotoKeyguard();
+            mAmWmState.waitForKeyguardShowingAndNotOccluded();
+            mAmWmState.waitForActivityState(TEST_ACTIVITY_NAME, STATE_STOPPED);
+            mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, false /* visible */);
 
-        // Unlock and check if visibility is back.
-        unlockDeviceWithCredential();
-        mAmWmState.waitForKeyguardGone();
-        mAmWmState.waitForActivityState(TEST_ACTIVITY_NAME, STATE_RESUMED);
-        mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, true /* visible */);
+            // Unlock and check if visibility is back.
+            unlockDeviceWithCredential();
+            mAmWmState.waitForKeyguardGone();
+            mAmWmState.waitForActivityState(TEST_ACTIVITY_NAME, STATE_RESUMED);
+            mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, true /* visible */);
+        }
     }
 
     /**
@@ -89,34 +92,37 @@ public class ActivityManagerDisplayLockedKeyguardTests extends ActivityManagerDi
      */
     @Test
     public void testDismissKeyguard_secondaryDisplay() throws Exception {
-        final ActivityDisplay newDisplay = new VirtualDisplayBuilder(this).build();
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
 
-        gotoKeyguard();
-        mAmWmState.waitForKeyguardShowingAndNotOccluded();
-        mAmWmState.assertKeyguardShowingAndNotOccluded();
-        launchActivityOnDisplay(DISMISS_KEYGUARD_ACTIVITY, newDisplay.mId);
-        enterAndConfirmLockCredential();
-        mAmWmState.waitForKeyguardGone();
-        mAmWmState.assertKeyguardGone();
-        mAmWmState.assertVisibility(DISMISS_KEYGUARD_ACTIVITY, true);
+            gotoKeyguard();
+            mAmWmState.waitForKeyguardShowingAndNotOccluded();
+            mAmWmState.assertKeyguardShowingAndNotOccluded();
+            launchActivityOnDisplay(DISMISS_KEYGUARD_ACTIVITY, newDisplay.mId);
+            enterAndConfirmLockCredential();
+            mAmWmState.waitForKeyguardGone();
+            mAmWmState.assertKeyguardGone();
+            mAmWmState.assertVisibility(DISMISS_KEYGUARD_ACTIVITY, true);
+        }
     }
 
     @Test
     public void testDismissKeyguard_whileOccluded_secondaryDisplay() throws Exception {
-        final ActivityDisplay newDisplay = new VirtualDisplayBuilder(this).build();
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
 
-        gotoKeyguard();
-        mAmWmState.waitForKeyguardShowingAndNotOccluded();
-        mAmWmState.assertKeyguardShowingAndNotOccluded();
-        launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
-        mAmWmState.computeState(
-                new WaitForValidActivityState.Builder(SHOW_WHEN_LOCKED_ACTIVITY).build());
-        mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
-        launchActivityOnDisplay(DISMISS_KEYGUARD_ACTIVITY, newDisplay.mId);
-        enterAndConfirmLockCredential();
-        mAmWmState.waitForKeyguardGone();
-        mAmWmState.assertKeyguardGone();
-        mAmWmState.assertVisibility(DISMISS_KEYGUARD_ACTIVITY, true);
-        mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
+            gotoKeyguard();
+            mAmWmState.waitForKeyguardShowingAndNotOccluded();
+            mAmWmState.assertKeyguardShowingAndNotOccluded();
+            launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
+            mAmWmState.computeState(new WaitForValidActivityState(SHOW_WHEN_LOCKED_ACTIVITY));
+            mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
+            launchActivityOnDisplay(DISMISS_KEYGUARD_ACTIVITY, newDisplay.mId);
+            enterAndConfirmLockCredential();
+            mAmWmState.waitForKeyguardGone();
+            mAmWmState.assertKeyguardGone();
+            mAmWmState.assertVisibility(DISMISS_KEYGUARD_ACTIVITY, true);
+            mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
+        }
     }
 }
