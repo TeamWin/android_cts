@@ -213,12 +213,10 @@ public class NavigationBarColorTest extends EndToEndImeTestBase {
     private ImeSettings.Builder imeSettingForFloatingIme(@ColorInt int navigationBarColor,
             boolean lightNavigationBar) {
         final ImeSettings.Builder builder = new ImeSettings.Builder();
-        // Currently un-setting FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS does nothing for IME windows.
-        // TODO: Fix this anomaly
         builder.setWindowFlags(0, FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        // Although the document says that Window#setNavigationBarColor() requires
-        // FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS to work, currently it's not true for IME windows.
-        // TODO: Fix this anomaly
+        // As documented, Window#setNavigationBarColor() is actually ignored when the IME window
+        // does not have FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS.  We are calling setNavigationBarColor()
+        // to ensure it.
         builder.setNavigationBarColor(navigationBarColor);
         if (lightNavigationBar) {
             // Although the document says that Window#setNavigationBarColor() requires
@@ -274,9 +272,8 @@ public class NavigationBarColorTest extends EndToEndImeTestBase {
     public void testSetNavigationBarColor() throws Exception {
         final NavigationBarInfo info = NavigationBarInfo.getInstance();
 
-        // Currently Window#setNavigationBarColor() is ignored for IME windows.
-        // TODO: Support Window#setNavigationBarColor() for IME windows (Bug 25706186)
-        expectNavigationBarColorNotSupported(color ->
+        // Make sure that Window#setNavigationBarColor() works for IMEs.
+        expectNavigationBarColorSupported(color ->
                 getNavigationBarBitmap(imeSettingForSolidNavigationBar(color, false),
                         Color.BLACK, false, info.getBottomNavigationBerHeight(),
                         DimmingTestMode.NO_DIMMING_DIALOG));
