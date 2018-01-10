@@ -89,7 +89,6 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             mExternalDisplayHelper.releaseDisplay();
             mExternalDisplayHelper = null;
         }
-        setPrimaryDisplayState(true);
         super.tearDown();
     }
 
@@ -1540,14 +1539,17 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
         waitAndAssertActivityResumed(TEST_ACTIVITY_NAME, newDisplay.mId,
                 "Activity launched on external display must be resumed");
 
-        setPrimaryDisplayState(false);
+        try (final PrimaryDisplayStateSession displayStateSession =
+                     new PrimaryDisplayStateSession()) {
+            displayStateSession.turnScreenOff();
 
-        // Wait for the fullscreen stack to start sleeping, and then make sure the
-        // test activity is still resumed.
-        waitAndAssertActivityStopped(RESIZEABLE_ACTIVITY_NAME,
-                "Activity launched on primary display must be stopped after turning off");
-        waitAndAssertActivityResumed(TEST_ACTIVITY_NAME, newDisplay.mId,
-                "Activity launched on external display must be resumed");
+            // Wait for the fullscreen stack to start sleeping, and then make sure the
+            // test activity is still resumed.
+            waitAndAssertActivityStopped(RESIZEABLE_ACTIVITY_NAME,
+                    "Activity launched on primary display must be stopped after turning off");
+            waitAndAssertActivityResumed(TEST_ACTIVITY_NAME, newDisplay.mId,
+                    "Activity launched on external display must be resumed");
+        }
     }
 
     /**
@@ -1561,22 +1563,25 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
         waitAndAssertActivityResumed(RESIZEABLE_ACTIVITY_NAME, DEFAULT_DISPLAY_ID,
                 "Activity launched on primary display must be resumed");
 
-        setPrimaryDisplayState(false);
+        try (final PrimaryDisplayStateSession displayStateSession =
+                     new PrimaryDisplayStateSession()) {
+            displayStateSession.turnScreenOff();
 
-        // Make sure there is no resumed activity when the primary display is off
-        waitAndAssertActivityStopped(RESIZEABLE_ACTIVITY_NAME,
-                "Activity launched on primary display must be stopped after turning off");
-        assertEquals("Unexpected resumed activity",
-                0, mAmWmState.getAmState().getResumedActivitiesCount());
+            // Make sure there is no resumed activity when the primary display is off
+            waitAndAssertActivityStopped(RESIZEABLE_ACTIVITY_NAME,
+                    "Activity launched on primary display must be stopped after turning off");
+            assertEquals("Unexpected resumed activity",
+                    0, mAmWmState.getAmState().getResumedActivitiesCount());
 
-        final ActivityDisplay newDisplay = createExternalVirtualDisplay(
-                true /* showContentWhenLocked */);
+            final ActivityDisplay newDisplay = createExternalVirtualDisplay(
+                    true /* showContentWhenLocked */);
 
-        launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mId);
+            launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mId);
 
-        // Check that the test activity is resumed on the external display
-        waitAndAssertActivityResumed(TEST_ACTIVITY_NAME, newDisplay.mId,
-                "Activity launched on external display must be resumed");
+            // Check that the test activity is resumed on the external display
+            waitAndAssertActivityResumed(TEST_ACTIVITY_NAME, newDisplay.mId,
+                    "Activity launched on external display must be resumed");
+        }
     }
 
     /**
@@ -1749,11 +1754,23 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
         return newDisplays.get(0);
     }
 
-    /** Turns the primary display on/off by pressing the power key */
-    private void setPrimaryDisplayState(boolean wantOn) {
-        // Either KeyEvent.KEYCODE_WAKEUP or KeyEvent.KEYCODE_SLEEP
-        int keycode = wantOn ? 224 : 223;
-        executeShellCommand("input keyevent " + keycode);
-        DisplayHelper.waitForDefaultDisplayState(wantOn);
+    private static class PrimaryDisplayStateSession implements AutoCloseable {
+
+        void turnScreenOff() {
+            setPrimaryDisplayState(false);
+        }
+
+        @Override
+        public void close() throws Exception {
+            setPrimaryDisplayState(true);
+        }
+
+        /** Turns the primary display on/off by pressing the power key */
+        private void setPrimaryDisplayState(boolean wantOn) {
+            // Either KeyEvent.KEYCODE_WAKEUP or KeyEvent.KEYCODE_SLEEP
+            int keycode = wantOn ? 224 : 223;
+            executeShellCommand("input keyevent " + keycode);
+            DisplayHelper.waitForDefaultDisplayState(wantOn);
+        }
     }
 }
