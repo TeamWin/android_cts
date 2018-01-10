@@ -117,6 +117,10 @@ class CameraHelper {
             ALOGE("Failed to get cameraIdList: ret=%d", ret);
             return ret;
         }
+        if (mCameraIdList->numCameras < 1) {
+            ALOGW("Device has no NDK compatible camera.");
+            return 0;
+        }
         ALOGI("Found %d camera(s).", mCameraIdList->numCameras);
 
         // We always use the first camera.
@@ -137,6 +141,11 @@ class CameraHelper {
             ALOGE("Get camera %s characteristics failure. ret %d, metadata %p", mCameraId, ret,
                   mCameraMetadata);
             return -1;
+        }
+
+        if (!isCapabilitySupported(ACAMERA_REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE)) {
+            ALOGW("Camera does not support BACKWARD_COMPATIBLE.");
+            return 0;
         }
 
         // Create capture session
@@ -420,6 +429,8 @@ class CameraFrameRenderer {
         }
     }
 
+    bool isCameraReady() { return mCamera.isCameraReady(); }
+
     // Retrun Zero on success, or negative error code.
     int initRenderer() {
         int ret = mImageReader.initImageReader();
@@ -436,11 +447,11 @@ class CameraFrameRenderer {
 
         // This test should only test devices with at least one camera.
         if (!mCamera.isCameraReady()) {
-            ALOGE(
+            ALOGW(
                 "Camera is not ready after successful initialization. It's either due to camera on "
                 "board lacks BACKWARDS_COMPATIBLE capability or the device does not have camera on "
                 "board.");
-            return -EIO;
+            return 0;
         }
 
         // Load shader and program.
@@ -490,6 +501,13 @@ class CameraFrameRenderer {
 
     // Return Zero on success, or negative error code.
     int drawFrame() {
+        if (!mCamera.isCameraReady()) {
+            // We should never reach here. This test should just report success and quit early if
+            // no camera can be found during initialization.
+            ALOGE("No camera is ready for frame capture.");
+            return -EINVAL;
+        }
+
         // Indicate the camera to take recording.
         int ret = mCamera.takePicture();
         if (ret < 0) {
@@ -613,6 +631,15 @@ jlong createRenderer(JNIEnv*, jclass) {
     return jptr(renderer.release());
 }
 
+bool isCameraReady(JNIEnv*, jclass, jlong renderer) {
+    if (renderer == 0) {
+        ALOGE("Invalid renderer.");
+        return -EINVAL;
+    }
+
+    return native(renderer)->isCameraReady();
+}
+
 void destroyRenderer(JNIEnv*, jclass, jlong renderer) { delete native(renderer); }
 
 jint drawFrame(JNIEnv*, jclass, jlong renderer) {
@@ -626,6 +653,7 @@ jint drawFrame(JNIEnv*, jclass, jlong renderer) {
 
 const std::vector<JNINativeMethod> gMethods = {{
     {"nCreateRenderer", "()J", (void*)createRenderer},
+    {"nIsCameraReady", "(J)Z", (void*)isCameraReady},
     {"nDestroyRenderer", "(J)V", (void*)destroyRenderer},
     {"nDrawFrame", "(J)I", (void*)drawFrame},
 }};
