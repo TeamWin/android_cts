@@ -63,5 +63,9 @@
 
     <result_reporter class="com.android.compatibility.common.tradefed.result.ConsoleReporter" />
     <result_reporter class="com.android.compatibility.common.tradefed.result.ResultReporter" />
-    <result_reporter class="com.android.tradefed.result.suite.SuiteResultReporter" />
+    <result_reporter class="com.android.compatibility.common.tradefed.result.suite.CertificationSuiteResultReporter">
+        <!-- Avoid double posting from this reporter until ResultReporter is removed -->
+        <option name="disable-result-posting" value="true" />
+    </result_reporter>
+
 </configuration>
