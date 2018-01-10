@@ -248,6 +248,28 @@ public class ActivityAndWindowManagersState {
         } while (retriesLeft-- > 0);
     }
 
+    /**
+     * Ensures all exiting windows have been removed.
+     */
+    void waitForAllExitingWindows() {
+        int retriesLeft = 5;
+        do {
+            mWmState.computeState();
+            if (mWmState.containsExitingWindow()) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    log(e.toString());
+                    // Well I guess we are not waiting...
+                }
+            } else {
+                break;
+            }
+        } while (retriesLeft-- > 0);
+
+        assertFalse(mWmState.containsExitingWindow());
+    }
+
     void waitForAllStoppedActivities() throws Exception {
         int retriesLeft = 5;
         do {
