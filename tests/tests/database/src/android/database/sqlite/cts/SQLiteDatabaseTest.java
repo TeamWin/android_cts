@@ -1584,4 +1584,10 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
         } catch (IllegalArgumentException expected) {
         }
     }
+
+    public void testDefaultJournalModeNotWAL() {
+        assertFalse("Default journal mode should not be WAL", "WAL".equalsIgnoreCase(
+                DatabaseUtils.stringForQuery(mDatabase, "PRAGMA journal_mode", null)));
+    }
+
 }
