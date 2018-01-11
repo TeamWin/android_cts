@@ -16,12 +16,9 @@
 package android.signature.cts;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.AnnotatedElement;
-import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -30,7 +27,6 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -39,10 +35,6 @@ import java.util.Set;
  * Uses reflection to obtain runtime representations of elements in the API.
  */
 public class ReflectionHelper {
-
-    private static void loge(String message, Exception exception) {
-        System.err.println(String.format("%s: %s", message, exception));
-    }
 
     /**
      * Finds the reflected class for the class under test.
@@ -58,16 +50,27 @@ public class ReflectionHelper {
         String shortClassName = classDescription.getShortClassName();
         String[] classNameParts = shortClassName.split("\\.");
         String packageName = classDescription.getPackageName();
-        String currentName = packageName + "." + classNameParts[0];
+        String outermostClassName = packageName + "." + classNameParts[0];
+        int firstInnerClassNameIndex = 0;
 
-        Class<?> clz = classProvider.getClass(currentName);
-        String absoluteClassName = classDescription.getAbsoluteClassName();
+        return searchForClass(classProvider, classDescription.getAbsoluteClassName(),
+                outermostClassName, classNameParts,
+                firstInnerClassNameIndex);
+    }
+
+    private static Class<?> searchForClass(
+            ClassProvider classProvider,
+            String absoluteClassName,
+            String outermostClassName, String[] classNameParts,
+            int outerClassNameIndex) throws ClassNotFoundException {
+
+        Class<?> clz = classProvider.getClass(outermostClassName);
         if (clz.getCanonicalName().equals(absoluteClassName)) {
             return clz;
         }
 
         // Then it must be an inner class.
-        for (int x = 1; x < classNameParts.length; x++) {
+        for (int x = outerClassNameIndex + 1; x < classNameParts.length; x++) {
             clz = findInnerClassByName(clz, classNameParts[x]);
             if (clz == null) {
                 return null;
@@ -77,6 +80,27 @@ public class ReflectionHelper {
             }
         }
         return null;
+    }
+
+    static Class<?> findMatchingClass(String absoluteClassName, ClassProvider classProvider)
+            throws ClassNotFoundException {
+
+        String[] classNameParts = absoluteClassName.split("\\.");
+        StringBuilder builder = new StringBuilder();
+        String separator = "";
+        int start;
+        for (start = 0; start < classNameParts.length; start++) {
+            String classNamePart = classNameParts[start];
+            builder.append(separator).append(classNamePart);
+            separator = ".";
+            if (Character.isUpperCase(classNamePart.charAt(0))) {
+                break;
+            }
+        }
+        String outermostClassName = builder.toString();
+
+        return searchForClass(classProvider, absoluteClassName, outermostClassName, classNameParts,
+                start);
     }
 
     /**
@@ -471,5 +495,15 @@ public class ReflectionHelper {
             }
         }
         return false;
+    }
+
+    static Class<?> findRequiredClass(JDiffClassDescription classDescription,
+            ClassProvider classProvider) {
+        try {
+            return findMatchingClass(classDescription, classProvider);
+        } catch (ClassNotFoundException e) {
+            LogHelper.loge("ClassNotFoundException for " + classDescription.getAbsoluteClassName(), e);
+            return null;
+        }
     }
 }

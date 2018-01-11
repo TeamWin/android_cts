@@ -16,41 +16,35 @@
 
 package android.signature.cts.api;
 
+import android.signature.cts.ClassProvider;
+import dalvik.system.DexFile;
 import java.io.IOException;
 import java.util.Enumeration;
 import java.util.stream.Stream;
 
-import android.signature.cts.ClassProvider;
-import dalvik.system.DexFile;
-
 @SuppressWarnings("deprecation")
 public class BootClassPathClassesProvider extends ClassProvider {
-    private Stream<Class<?>> allClasses = null;
-
     @Override
     public Stream<Class<?>> getAllClasses() {
         Stream.Builder<Class<?>> builder = Stream.builder();
-        if (allClasses == null) {
-            for (String file : getBootJarPaths()) {
-                try {
-                    DexFile dexFile = new DexFile(file);
-                    Enumeration<String> entries = dexFile.entries();
-                    while (entries.hasMoreElements()) {
-                        String className = entries.nextElement();
-                        Class<?> clazz = getClass(className);
-                        if (clazz != null) {
-                            builder.add(clazz);
-                        }
+        for (String file : getBootJarPaths()) {
+            try {
+                DexFile dexFile = new DexFile(file);
+                Enumeration<String> entries = dexFile.entries();
+                while (entries.hasMoreElements()) {
+                    String className = entries.nextElement();
+                    Class<?> clazz = getClass(className);
+                    if (clazz != null) {
+                        builder.add(clazz);
                     }
-                } catch (IOException e) {
-                    throw new RuntimeException("Failed to parse dex in " + file, e);
-                } catch (ClassNotFoundException e) {
-                    throw new RuntimeException("Error while loading class in " + file, e);
                 }
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to parse dex in " + file, e);
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException("Error while loading class in " + file, e);
             }
-            allClasses = builder.build();
         }
-        return allClasses;
+        return builder.build();
     }
 
     private String[] getBootJarPaths() {
