@@ -40,6 +40,7 @@ import android.server.am.ActivityManagerState.ActivityDisplay;
 import android.server.am.displayservice.DisplayHelper;
 import android.support.annotation.Nullable;
 
+import android.support.test.filters.FlakyTest;
 import org.junit.Before;
 import org.junit.Test;
 
