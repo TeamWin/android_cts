@@ -45,6 +45,7 @@ import org.junit.Test;
  *     atest CtsActivityManagerDeviceTestCases:ActivityManagerTransitionSelectionTests
  */
 @Presubmit
+@FlakyTest(bugId = 71792333)
 public class ActivityManagerTransitionSelectionTests extends ActivityManagerTestBase {
 
     private static final String BOTTOM_ACTIVITY_NAME = "BottomActivity";

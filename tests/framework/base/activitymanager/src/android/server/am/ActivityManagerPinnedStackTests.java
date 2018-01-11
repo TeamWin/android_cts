@@ -55,6 +55,7 @@ import java.util.regex.Pattern;
  * Build/Install/Run:
  *     atest CtsActivityManagerDeviceTestCases:ActivityManagerPinnedStackTests
  */
+@FlakyTest(bugId = 71792368)
 public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     private static final String TEST_ACTIVITY = "TestActivity";
     private static final String TEST_ACTIVITY_WITH_SAME_AFFINITY = "TestActivityWithSameAffinity";

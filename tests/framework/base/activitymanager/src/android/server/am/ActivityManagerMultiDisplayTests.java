@@ -39,7 +39,6 @@ import android.platform.test.annotations.Presubmit;
 import android.server.am.ActivityManagerState.ActivityDisplay;
 import android.server.am.displayservice.DisplayHelper;
 import android.support.annotation.Nullable;
-import android.support.test.filters.FlakyTest;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -52,7 +51,6 @@ import java.util.regex.Pattern;
  * Build/Install/Run:
  *     atest CtsActivityManagerDeviceTestCases:ActivityManagerMultiDisplayTests
  */
-@FlakyTest(bugId = 71792368, detail = "Might be affecting tests that run after. See bug for details")
 public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTestBase {
     private static final String TEST_ACTIVITY_NAME = "TestActivity";
     private static final String VIRTUAL_DISPLAY_ACTIVITY = "VirtualDisplayActivity";

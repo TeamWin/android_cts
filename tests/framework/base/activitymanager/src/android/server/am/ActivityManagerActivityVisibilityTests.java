@@ -380,6 +380,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
 
     @Test
     @Presubmit
+    @FlakyTest(bugId = 71868306)
     public void testTurnScreenOnSingleTask() throws Exception {
         sleepDevice();
         String logSeparator = clearLogcat();
