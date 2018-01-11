@@ -154,7 +154,7 @@ public class BusinessLogicPreparer implements ITargetCleaner {
         MultiMap<String, String> paramMap = new MultiMap<>();
         paramMap.put("key", mApiKey);
         paramMap.put("suite_version", buildHelper.getSuiteVersion());
-        paramMap.put("oem", PropertyUtil.getManufacturer(device));
+        paramMap.put("oem", String.valueOf(PropertyUtil.getManufacturer(device)));
         for (String feature : getBusinessLogicFeatures(device, buildInfo)) {
             paramMap.put("features", feature);
         }
