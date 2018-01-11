@@ -22,7 +22,8 @@ package com.android.cts.devicepolicy;
  * process, first we setup some policies in the client side in CtsTransferOwnerOutgoingApp and then
  * we verify the policies are still there in CtsTransferOwnerIncomingApp.
  */
-public class MixedDeviceOwnerTransferTest extends DeviceAndProfileOwnerTransferTest {
+public class MixedDeviceOwnerHostSideTransferTest extends
+        DeviceAndProfileOwnerHostSideTransferTest {
     private static final String TRANSFER_DEVICE_OWNER_OUTGOING_TEST =
             "com.android.cts.transferowner.TransferDeviceOwnerOutgoingTest";
     private static final String TRANSFER_DEVICE_OWNER_INCOMING_TEST =
@@ -32,15 +33,17 @@ public class MixedDeviceOwnerTransferTest extends DeviceAndProfileOwnerTransferT
     protected void setUp() throws Exception {
         super.setUp();
         if (mHasFeature) {
-            setupDeviceOwner(TRANSFER_OWNER_OUTGOING_APK,
-                    TRANSFER_OWNER_OUTGOING_TEST_RECEIVER);
-            setupTestParameters(mPrimaryUserId, TRANSFER_DEVICE_OWNER_OUTGOING_TEST,
-                    TRANSFER_DEVICE_OWNER_INCOMING_TEST);
+            installAppAsUser(TRANSFER_OWNER_OUTGOING_APK, mPrimaryUserId);
+            if (setDeviceOwner(TRANSFER_OWNER_OUTGOING_TEST_RECEIVER, mPrimaryUserId,
+                    false)) {
+                setupTestParameters(mPrimaryUserId, TRANSFER_DEVICE_OWNER_OUTGOING_TEST,
+                        TRANSFER_DEVICE_OWNER_INCOMING_TEST);
+                installAppAsUser(TRANSFER_OWNER_INCOMING_APK, mUserId);
+            } else {
+                removeAdmin(TRANSFER_OWNER_OUTGOING_TEST_RECEIVER, mUserId);
+                getDevice().uninstallPackage(TRANSFER_OWNER_OUTGOING_PKG);
+                fail("Failed to set device owner");
+            }
         }
-    }
-
-    private void setupDeviceOwner(String apkName, String adminReceiverClassName) throws Exception {
-        installAppAsUser(apkName, mPrimaryUserId);
-        setDeviceOwnerOrFail(adminReceiverClassName, mPrimaryUserId);
     }
 }

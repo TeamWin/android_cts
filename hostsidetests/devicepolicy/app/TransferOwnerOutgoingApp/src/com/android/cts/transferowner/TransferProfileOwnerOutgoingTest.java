@@ -28,6 +28,13 @@ import org.junit.Test;
 
 @SmallTest
 public class TransferProfileOwnerOutgoingTest extends DeviceAndProfileOwnerTransferOutgoingTest {
+
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
+        setupTestParameters(DevicePolicyManager.ACTION_PROFILE_OWNER_CHANGED);
+    }
+
     @Test
     public void testTransferWithPoliciesOutgoing() throws Throwable {
         int passwordLength = 123;
@@ -41,15 +48,15 @@ public class TransferProfileOwnerOutgoingTest extends DeviceAndProfileOwnerTrans
                 mOutgoingComponentName, passwordExpirationTimeout);
 
         PersistableBundle b = new PersistableBundle();
-        transferOwner(mOutgoingComponentName, mIncomingComponentName, b);
+        transferOwnership(mOutgoingComponentName, INCOMING_COMPONENT_NAME, b);
     }
 
     @Test
     public void testTransfer() throws Throwable {
         PersistableBundle b = new PersistableBundle();
-        transferOwner(mOutgoingComponentName, mIncomingComponentName, b);
-        assertTrue(mDevicePolicyManager.isAdminActive(mIncomingComponentName));
-        assertTrue(mDevicePolicyManager.isProfileOwnerApp(mIncomingComponentName.getPackageName()));
+        transferOwnership(mOutgoingComponentName, INCOMING_COMPONENT_NAME, b);
+        assertTrue(mDevicePolicyManager.isAdminActive(INCOMING_COMPONENT_NAME));
+        assertTrue(mDevicePolicyManager.isProfileOwnerApp(INCOMING_COMPONENT_NAME.getPackageName()));
         assertFalse(
                 mDevicePolicyManager.isProfileOwnerApp(mOutgoingComponentName.getPackageName()));
         assertFalse(mDevicePolicyManager.isAdminActive(mOutgoingComponentName));
