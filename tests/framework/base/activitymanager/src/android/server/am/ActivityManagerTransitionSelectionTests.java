@@ -61,7 +61,6 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
     }
 
     @Test
-    @FlakyTest(bugId = 71792333)
     public void testCloseActivity_NeitherWallpaper() throws Exception {
         testCloseActivity(false /*bottomWallpaper*/, false /*topWallpaper*/,
                 false /*slowStop*/, TRANSIT_ACTIVITY_CLOSE);
@@ -100,6 +99,7 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
                 false /*slowStop*/, TRANSIT_TASK_OPEN);
     }
 
+    @FlakyTest(bugId = 71792333)
     @Test
     public void testCloseTask_NeitherWallpaper() throws Exception {
         testCloseTask(false /*bottomWallpaper*/, false /*topWallpaper*/,
@@ -136,7 +136,6 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
     // These simulate the case where the bottom activity is resumed
     // before AM receives its activitiyStopped
     @Test
-    @FlakyTest(bugId = 71792333)
     public void testCloseActivity_NeitherWallpaper_SlowStop() throws Exception {
         testCloseActivity(false /*bottomWallpaper*/, false /*topWallpaper*/,
                 true /*slowStop*/, TRANSIT_ACTIVITY_CLOSE);
@@ -159,6 +158,7 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
     // Test task close -- bottom task top activity slow in stopping
     // These simulate the case where the bottom activity is resumed
     // before AM receives its activitiyStopped
+    @FlakyTest(bugId = 71792333)
     @Test
     public void testCloseTask_NeitherWallpaper_SlowStop() throws Exception {
         testCloseTask(false /*bottomWallpaper*/, false /*topWallpaper*/,
@@ -187,7 +187,6 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
     }
 
     @Test
-    @FlakyTest(bugId = 71792333)
     public void testCloseActivity_BottomWallpaper_Translucent() throws Exception {
         testCloseActivityTranslucent(true /*bottomWallpaper*/, false /*topWallpaper*/,
                 TRANSIT_WALLPAPER_OPEN);
@@ -205,6 +204,7 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
                 TRANSIT_TASK_CLOSE);
     }
 
+    @FlakyTest(bugId = 71792333)
     @Test
     public void testCloseTask_BottomWallpaper_Translucent() throws Exception {
         testCloseTaskTranslucent(true /*bottomWallpaper*/, false /*topWallpaper*/,
@@ -266,7 +266,7 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
         }
         executeShellCommand(bottomStartCmd);
 
-        mAmWmState.computeState(new WaitForValidActivityState.Builder(BOTTOM_ACTIVITY_NAME).build());
+        mAmWmState.computeState(new WaitForValidActivityState(BOTTOM_ACTIVITY_NAME));
 
         final String topActivityName = topTranslucent ?
                 TRANSLUCENT_TOP_ACTIVITY_NAME : TOP_ACTIVITY_NAME;
@@ -284,9 +284,9 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
 
         Thread.sleep(5000);
         if (testOpen) {
-            mAmWmState.computeState(new WaitForValidActivityState.Builder(topActivityName).build());
+            mAmWmState.computeState(new WaitForValidActivityState(topActivityName));
         } else {
-            mAmWmState.computeState(new WaitForValidActivityState.Builder(BOTTOM_ACTIVITY_NAME).build());
+            mAmWmState.computeState(new WaitForValidActivityState(BOTTOM_ACTIVITY_NAME));
         }
 
         assertEquals("Picked wrong transition", expectedTransit,
