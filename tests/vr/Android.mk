@@ -27,7 +27,7 @@ LOCAL_MULTILIB := both
 # When built, explicitly put it in the data partition.
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
-LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner legacy-android-test
+LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util ctstestrunner legacy-android-test
 
 LOCAL_JNI_SHARED_LIBRARIES := libctsvrextensions_jni libnativehelper_compat_libc++
 
