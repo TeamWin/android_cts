@@ -166,10 +166,6 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
 
         // Check the results.
         mActivity.assertAutoFilled();
-
-        // Sanity checks.
-        sReplier.assertNumberUnhandledFillRequests(0);
-        sReplier.assertNumberUnhandledSaveRequests(0);
     }
 
     @Test
@@ -238,10 +234,6 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
 
         // Check the results.
         mActivity.assertAutoFilled();
-
-        // Sanity checks.
-        sReplier.assertNumberUnhandledFillRequests(0);
-        sReplier.assertNumberUnhandledSaveRequests(0);
     }
 
     @Test
@@ -289,10 +281,6 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
 
         // Check the results.
         mActivity.assertAutoFilled();
-
-        // Sanity checks.
-        sReplier.assertNumberUnhandledFillRequests(0);
-        sReplier.assertNumberUnhandledSaveRequests(0);
     }
 
     @Test

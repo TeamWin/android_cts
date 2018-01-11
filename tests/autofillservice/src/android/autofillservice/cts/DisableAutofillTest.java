@@ -86,7 +86,7 @@ public class DisableAutofillTest extends AutoFillServiceTestCase {
 
     private void launchSimpleSaveActivity(PostLaunchAction action) throws Exception {
         Log.v(TAG, "launchPreSimpleSaveActivity(): " + action);
-        sReplier.assertNumberUnhandledFillRequests(0);
+        sReplier.assertNoUnhandledFillRequests();
 
         if (action == PostLaunchAction.ASSERT_ENABLED_AND_AUTOFILL) {
             sReplier.addResponse(new CannedFillResponse.Builder()
@@ -132,12 +132,11 @@ public class DisableAutofillTest extends AutoFillServiceTestCase {
             activity.unregisterCallback();
             activity.finish();
         }
-        sReplier.assertNumberUnhandledFillRequests(0);
     }
 
     private void launchPreSimpleSaveActivity(PostLaunchAction action) throws Exception {
         Log.v(TAG, "launchPreSimpleSaveActivity(): " + action);
-        sReplier.assertNumberUnhandledFillRequests(0);
+        sReplier.assertNoUnhandledFillRequests();
 
         if (action == PostLaunchAction.ASSERT_ENABLED_AND_AUTOFILL) {
             sReplier.addResponse(new CannedFillResponse.Builder()
@@ -176,7 +175,6 @@ public class DisableAutofillTest extends AutoFillServiceTestCase {
             activity.unregisterCallback();
             activity.finish();
         }
-        sReplier.assertNumberUnhandledFillRequests(0);
     }
 
     @Test
