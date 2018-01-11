@@ -16,16 +16,18 @@
 
 package com.android.cts.content;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.Activity;
-import android.content.ContentProviderClient;
+import android.content.AbstractThreadedSyncAdapter;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SyncRequest;
-import android.content.SyncResult;
-import android.content.cts.FlakyTestRule;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.net.ConnectivityManager;
@@ -47,11 +49,9 @@ import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -63,7 +63,9 @@ public class CtsSyncAccountAccessOtherCertTestCases {
     private static final long SYNC_TIMEOUT_MILLIS = 20000; // 20 sec
     private static final long UI_TIMEOUT_MILLIS = 5000; // 5 sec
 
-    private static final String PERMISSION_REQUESTED = "Permission Requested";
+    private static final Pattern PERMISSION_REQUESTED = Pattern.compile(
+            "Permission Requested|Permission requested");
+    private static final Pattern ALLOW_SYNC = Pattern.compile("ALLOW|Allow");
     public static final String TOKEN_TYPE_REMOVE_ACCOUNTS = "TOKEN_TYPE_REMOVE_ACCOUNTS";
 
     @Rule
@@ -81,9 +83,8 @@ public class CtsSyncAccountAccessOtherCertTestCases {
 
     @Test
     public void testAccountAccess_otherCertAsAuthenticatorCanNotSeeAccount() throws Exception {
-        if (!hasDataConnection() || !hasNotificationSupport()) {
-            return;
-        }
+        assumeTrue(hasDataConnection());
+        assumeTrue(hasNotificationSupport());
 
         Intent intent = new Intent(getContext(), StubActivity.class);
         Activity activity = InstrumentationRegistry.getInstrumentation().startActivitySync(intent);
@@ -99,11 +100,7 @@ public class CtsSyncAccountAccessOtherCertTestCases {
         waitForSyncManagerAccountChangeUpdate();
 
         try {
-            CountDownLatch latch = new CountDownLatch(1);
-
-            SyncAdapter.setOnPerformSyncDelegate((Account account, Bundle extras,
-                    String authority, ContentProviderClient provider, SyncResult syncResult)
-                    -> latch.countDown());
+            AbstractThreadedSyncAdapter adapter = SyncAdapter.setNewDelegate();
 
             Bundle extras = new Bundle();
             extras.putBoolean(ContentResolver.SYNC_EXTRAS_DO_NOT_RETRY, true);
@@ -118,7 +115,8 @@ public class CtsSyncAccountAccessOtherCertTestCases {
                     .build();
             ContentResolver.requestSync(request);
 
-            assertFalse(latch.await(SYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS));
+            verify(adapter, timeout(SYNC_TIMEOUT_MILLIS).times(0)).onPerformSync(any(), any(),
+                    any(), any(), any());
 
             UiDevice uiDevice = getUiDevice();
             if (isWatch()) {
@@ -132,14 +130,15 @@ public class CtsSyncAccountAccessOtherCertTestCases {
                 uiDevice.findObject(By.text(PERMISSION_REQUESTED)).click();
             }
 
-            uiDevice.wait(Until.hasObject(By.text("ALLOW")),
+            uiDevice.wait(Until.hasObject(By.text(ALLOW_SYNC)),
                     UI_TIMEOUT_MILLIS);
 
-            uiDevice.findObject(By.text("ALLOW")).click();
+            uiDevice.findObject(By.text(ALLOW_SYNC)).click();
 
             ContentResolver.requestSync(request);
 
-            assertTrue(latch.await(SYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS));
+            verify(adapter, timeout(SYNC_TIMEOUT_MILLIS)).onPerformSync(any(), any(), any(), any(),
+                    any());
         } finally {
             // Ask the differently signed authenticator to drop all accounts
             accountManager.getAuthToken(addedAccount, TOKEN_TYPE_REMOVE_ACCOUNTS,

@@ -52,9 +52,6 @@ public class RequestPinAppWidgetTest extends AppWidgetTestCase {
     }
 
     private void runPinWidgetTest(final String launcherPkg) throws Exception {
-        if (!hasAppWidgets()) {
-            return;
-        }
         setLauncher(launcherPkg + "/" + LAUNCHER_CLASS);
 
         Context context = getInstrumentation().getContext();
@@ -109,9 +106,6 @@ public class RequestPinAppWidgetTest extends AppWidgetTestCase {
 
     public void verifyIsRequestPinAppWidgetSupported(String launcherPkg, boolean expectedSupport)
         throws Exception {
-        if (!hasAppWidgets()) {
-            return;
-        }
         setLauncher(launcherPkg + "/" + LAUNCHER_CLASS);
 
         Context context = getInstrumentation().getContext();

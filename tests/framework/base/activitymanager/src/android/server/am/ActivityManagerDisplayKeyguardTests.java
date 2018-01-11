@@ -56,14 +56,16 @@ public class ActivityManagerDisplayKeyguardTests extends ActivityManagerDisplayT
      */
     @Test
     public void testDismissKeyguardActivity_secondaryDisplay() throws Exception {
-        final ActivityDisplay newDisplay = new VirtualDisplayBuilder(this).build();
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
 
-        gotoKeyguard();
-        mAmWmState.waitForKeyguardShowingAndNotOccluded();
-        mAmWmState.assertKeyguardShowingAndNotOccluded();
-        launchActivityOnDisplay(DISMISS_KEYGUARD_ACTIVITY, newDisplay.mId);
-        mAmWmState.waitForKeyguardShowingAndNotOccluded();
-        mAmWmState.assertKeyguardShowingAndNotOccluded();
-        mAmWmState.assertVisibility(DISMISS_KEYGUARD_ACTIVITY, true);
+            gotoKeyguard();
+            mAmWmState.waitForKeyguardShowingAndNotOccluded();
+            mAmWmState.assertKeyguardShowingAndNotOccluded();
+            launchActivityOnDisplay(DISMISS_KEYGUARD_ACTIVITY, newDisplay.mId);
+            mAmWmState.waitForKeyguardShowingAndNotOccluded();
+            mAmWmState.assertKeyguardShowingAndNotOccluded();
+            mAmWmState.assertVisibility(DISMISS_KEYGUARD_ACTIVITY, true);
+        }
     }
 }

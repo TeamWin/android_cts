@@ -28,6 +28,7 @@ import static android.server.am.WindowManagerState.TRANSIT_WALLPAPER_OPEN;
 import static org.junit.Assert.assertEquals;
 
 import android.platform.test.annotations.Presubmit;
+import android.support.test.filters.FlakyTest;
 
 import org.junit.Test;
 
@@ -98,6 +99,7 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
                 false /*slowStop*/, TRANSIT_TASK_OPEN);
     }
 
+    @FlakyTest(bugId = 71792333)
     @Test
     public void testCloseTask_NeitherWallpaper() throws Exception {
         testCloseTask(false /*bottomWallpaper*/, false /*topWallpaper*/,
@@ -156,6 +158,7 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
     // Test task close -- bottom task top activity slow in stopping
     // These simulate the case where the bottom activity is resumed
     // before AM receives its activitiyStopped
+    @FlakyTest(bugId = 71792333)
     @Test
     public void testCloseTask_NeitherWallpaper_SlowStop() throws Exception {
         testCloseTask(false /*bottomWallpaper*/, false /*topWallpaper*/,
@@ -201,6 +204,7 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
                 TRANSIT_TASK_CLOSE);
     }
 
+    @FlakyTest(bugId = 71792333)
     @Test
     public void testCloseTask_BottomWallpaper_Translucent() throws Exception {
         testCloseTaskTranslucent(true /*bottomWallpaper*/, false /*topWallpaper*/,
@@ -262,7 +266,7 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
         }
         executeShellCommand(bottomStartCmd);
 
-        mAmWmState.computeState(new WaitForValidActivityState.Builder(BOTTOM_ACTIVITY_NAME).build());
+        mAmWmState.computeState(new WaitForValidActivityState(BOTTOM_ACTIVITY_NAME));
 
         final String topActivityName = topTranslucent ?
                 TRANSLUCENT_TOP_ACTIVITY_NAME : TOP_ACTIVITY_NAME;
@@ -280,9 +284,9 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
 
         Thread.sleep(5000);
         if (testOpen) {
-            mAmWmState.computeState(new WaitForValidActivityState.Builder(topActivityName).build());
+            mAmWmState.computeState(new WaitForValidActivityState(topActivityName));
         } else {
-            mAmWmState.computeState(new WaitForValidActivityState.Builder(BOTTOM_ACTIVITY_NAME).build());
+            mAmWmState.computeState(new WaitForValidActivityState(BOTTOM_ACTIVITY_NAME));
         }
 
         assertEquals("Picked wrong transition", expectedTransit,

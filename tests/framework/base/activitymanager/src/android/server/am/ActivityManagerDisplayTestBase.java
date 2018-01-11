@@ -24,13 +24,18 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import android.content.res.Configuration;
+import android.provider.Settings;
 import android.server.am.ActivityManagerState.ActivityDisplay;
-
-import org.junit.After;
+import android.server.am.settings.SettingsSession;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.util.Size;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.Collections;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Base class for ActivityManager display tests.
@@ -39,25 +44,13 @@ import java.util.List;
  * @see ActivityManagerDisplayLockedKeyguardTests
  */
 public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
+    private static final String WM_SIZE = "wm size";
+    private static final String WM_DENSITY = "wm density";
 
     static final int CUSTOM_DENSITY_DPI = 222;
 
     private static final String VIRTUAL_DISPLAY_ACTIVITY = "VirtualDisplayActivity";
     private static final int INVALID_DENSITY_DPI = -1;
-
-    private boolean mVirtualDisplayCreated;
-    private boolean mDisplaySimulated;
-
-    /** Temp storage used for parsing. */
-    final LinkedList<String> mDumpLines = new LinkedList<>();
-
-    @After
-    @Override
-    public void tearDown() throws Exception {
-        destroyVirtualDisplays();
-        destroySimulatedDisplays();
-        super.tearDown();
-    }
 
     ActivityDisplay getDisplayState(List<ActivityDisplay> displays, int displayId) {
         for (ActivityDisplay display : displays) {
@@ -103,110 +96,101 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
         return result;
     }
 
-    /**
-     * Create new virtual display.
-     * @param densityDpi provide custom density for the display.
-     * @param launchInSplitScreen start {@link VirtualDisplayActivity} to side from
-     *                            {@link LaunchingActivity} on primary display.
-     * @param canShowWithInsecureKeyguard allow showing content when device is showing an insecure
-     *                                    keyguard.
-     * @param mustBeCreated should assert if the display was or wasn't created.
-     * @param publicDisplay make display public.
-     * @param resizeDisplay should resize display when surface size changes.
-     * @param launchActivity should launch test activity immediately after display creation.
-     * @return A list of {@link ActivityDisplay} that represent newly created displays.
-     * @throws Exception
-     */
-    private List<ActivityDisplay> createVirtualDisplays(int densityDpi,
-            boolean launchInSplitScreen, boolean canShowWithInsecureKeyguard, boolean mustBeCreated,
-            boolean publicDisplay, boolean resizeDisplay, String launchActivity, int displayCount)
-            throws Exception {
-        // Start an activity that is able to create virtual displays.
-        if (launchInSplitScreen) {
-            getLaunchActivityBuilder().setToSide(true)
-                    .setTargetActivityName(VIRTUAL_DISPLAY_ACTIVITY).execute();
-        } else {
-            launchActivity(VIRTUAL_DISPLAY_ACTIVITY);
-        }
-        mAmWmState.computeState(false /* compareTaskAndStackBounds */,
-                new WaitForValidActivityState.Builder(VIRTUAL_DISPLAY_ACTIVITY).build());
-        final List<ActivityDisplay> originalDS = getDisplaysStates();
+    static class ReportedDisplayMetrics {
+        private static final String WM_SIZE = "wm size";
+        private static final String WM_DENSITY = "wm density";
+        private static final Pattern PHYSICAL_SIZE =
+                Pattern.compile("Physical size: (\\d+)x(\\d+)");
+        private static final Pattern OVERRIDE_SIZE =
+                Pattern.compile("Override size: (\\d+)x(\\d+)");
+        private static final Pattern PHYSICAL_DENSITY =
+                Pattern.compile("Physical density: (\\d+)");
+        private static final Pattern OVERRIDE_DENSITY =
+                Pattern.compile("Override density: (\\d+)");
 
-        // Create virtual display with custom density dpi.
-        executeShellCommand(getCreateVirtualDisplayCommand(densityDpi, canShowWithInsecureKeyguard,
-                publicDisplay, resizeDisplay, launchActivity, displayCount));
-        mVirtualDisplayCreated = true;
+        @NonNull
+        final Size physicalSize;
+        final int physicalDensity;
 
-        return assertAndGetNewDisplays(mustBeCreated ? displayCount : -1, originalDS);
-    }
+        @Nullable
+        final Size overrideSize;
+        @Nullable
+        final Integer overrideDensity;
 
-    /**
-     * Simulate new display.
-     * @param densityDpi provide custom density for the display.
-     * @return {@link ActivityDisplay} of newly created display.
-     */
-    private List<ActivityDisplay> simulateDisplay(int densityDpi)
-            throws Exception {
-        final List<ActivityDisplay> originalDs = getDisplaysStates();
-
-        // Create virtual display with custom density dpi.
-        executeShellCommand(getSimulateDisplayCommand(densityDpi));
-        mDisplaySimulated = true;
-
-        return assertAndGetNewDisplays(1, originalDs);
-    }
-
-    /**
-     * Wait for desired number of displays to be created and get their properties.
-     * @param newDisplayCount expected display count, -1 if display should not be created.
-     * @param originalDS display states before creation of new display(s).
-     */
-    private List<ActivityDisplay> assertAndGetNewDisplays(int newDisplayCount,
-            List<ActivityDisplay> originalDS) throws Exception {
-        final int originalDisplayCount = originalDS.size();
-
-        // Wait for the display(s) to be created and get configurations.
-        final List<ActivityDisplay> ds = getDisplayStateAfterChange(
-                originalDisplayCount + newDisplayCount);
-        if (newDisplayCount != -1) {
-            assertEquals("New virtual display(s) must be created",
-                    originalDisplayCount + newDisplayCount, ds.size());
-        } else {
-            assertEquals("New virtual display must not be created",
-                    originalDisplayCount, ds.size());
-            return null;
+        /** Get physical and override display metrics from WM. */
+        static ReportedDisplayMetrics getDisplayMetrics() throws Exception {
+            return new ReportedDisplayMetrics(
+                    executeShellCommand(WM_SIZE) + executeShellCommand(WM_DENSITY));
         }
 
-        // Find the newly added display(s).
-        final List<ActivityDisplay> newDisplays = findNewDisplayStates(originalDS, ds);
-        assertTrue("New virtual display must be created", newDisplayCount == newDisplays.size());
-
-        return newDisplays;
-    }
-
-    /**
-     * Destroy existing virtual display.
-     */
-    void destroyVirtualDisplays() throws Exception {
-        if (mVirtualDisplayCreated) {
-            executeShellCommand(getDestroyVirtualDisplayCommand());
-            mVirtualDisplayCreated = false;
+        void setDisplayMetrics(final Size size, final int density) {
+            setSize(size);
+            setDensity(density);
         }
-    }
 
-    /**
-     * Destroy existing simulated display.
-     */
-    private void destroySimulatedDisplays() throws Exception {
-        if (mDisplaySimulated) {
-            executeShellCommand(getDestroySimulatedDisplayCommand());
-            mDisplaySimulated = false;
+        void restoreDisplayMetrics() {
+            if (overrideSize != null) {
+                setSize(overrideSize);
+            } else {
+                executeShellCommand(WM_SIZE + " reset");
+            }
+            if (overrideDensity != null) {
+                setDensity(overrideDensity);
+            } else {
+                executeShellCommand(WM_DENSITY + " reset");
+            }
+        }
+
+        private void setSize(final Size size) {
+            executeShellCommand(WM_SIZE + " " + size.getWidth() + "x" + size.getHeight());
+        }
+
+        private void setDensity(final int density) {
+            executeShellCommand(WM_DENSITY + " " + density);
+        }
+
+        /** Get display size that WM operates with. */
+        Size getSize() {
+            return overrideSize != null ? overrideSize : physicalSize;
+        }
+
+        /** Get density that WM operates with. */
+        int getDensity() {
+            return overrideDensity != null ? overrideDensity : physicalDensity;
+        }
+
+        private ReportedDisplayMetrics(final String lines) throws Exception {
+            Matcher matcher = PHYSICAL_SIZE.matcher(lines);
+            assertTrue("Physical display size must be reported", matcher.find());
+            log(matcher.group());
+            physicalSize = new Size(
+                    Integer.parseInt(matcher.group(1)), Integer.parseInt(matcher.group(2)));
+
+            matcher = PHYSICAL_DENSITY.matcher(lines);
+            assertTrue("Physical display density must be reported", matcher.find());
+            log(matcher.group());
+            physicalDensity = Integer.parseInt(matcher.group(1));
+
+            matcher = OVERRIDE_SIZE.matcher(lines);
+            if (matcher.find()) {
+                log(matcher.group());
+                overrideSize = new Size(
+                        Integer.parseInt(matcher.group(1)), Integer.parseInt(matcher.group(2)));
+            } else {
+                overrideSize = null;
+            }
+
+            matcher = OVERRIDE_DENSITY.matcher(lines);
+            if (matcher.find()) {
+                log(matcher.group());
+                overrideDensity = Integer.parseInt(matcher.group(1));
+            } else {
+                overrideDensity = null;
+            }
         }
     }
 
-    static class VirtualDisplayBuilder {
-        private final ActivityManagerDisplayTestBase mTests;
-
+    protected class VirtualDisplaySession implements AutoCloseable {
         private int mDensityDpi = CUSTOM_DENSITY_DPI;
         private boolean mLaunchInSplitScreen = false;
         private boolean mCanShowWithInsecureKeyguard = false;
@@ -216,99 +200,196 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
         private boolean mSimulateDisplay = false;
         private boolean mMustBeCreated = true;
 
-        public VirtualDisplayBuilder(ActivityManagerDisplayTestBase tests) {
-            mTests = tests;
-        }
+        private boolean mVirtualDisplayCreated = false;
+        private final OverlayDisplayDevicesSession mOverlayDisplayDeviceSession =
+                new OverlayDisplayDevicesSession();
 
-        public VirtualDisplayBuilder setDensityDpi(int densityDpi) {
+        public VirtualDisplaySession setDensityDpi(int densityDpi) {
             mDensityDpi = densityDpi;
             return this;
         }
 
-        public VirtualDisplayBuilder setLaunchInSplitScreen(boolean launchInSplitScreen) {
+        public VirtualDisplaySession setLaunchInSplitScreen(boolean launchInSplitScreen) {
             mLaunchInSplitScreen = launchInSplitScreen;
             return this;
         }
 
-        public VirtualDisplayBuilder setCanShowWithInsecureKeyguard(
+        public VirtualDisplaySession setCanShowWithInsecureKeyguard(
                 boolean canShowWithInsecureKeyguard) {
             mCanShowWithInsecureKeyguard = canShowWithInsecureKeyguard;
             return this;
         }
 
-        public VirtualDisplayBuilder setPublicDisplay(boolean publicDisplay) {
+        public VirtualDisplaySession setPublicDisplay(boolean publicDisplay) {
             mPublicDisplay = publicDisplay;
             return this;
         }
 
-        public VirtualDisplayBuilder setResizeDisplay(boolean resizeDisplay) {
+        public VirtualDisplaySession setResizeDisplay(boolean resizeDisplay) {
             mResizeDisplay = resizeDisplay;
             return this;
         }
 
-        public VirtualDisplayBuilder setLaunchActivity(String launchActivity) {
+        public VirtualDisplaySession setLaunchActivity(String launchActivity) {
             mLaunchActivity = launchActivity;
             return this;
         }
 
-        public VirtualDisplayBuilder setSimulateDisplay(boolean simulateDisplay) {
+        public VirtualDisplaySession setSimulateDisplay(boolean simulateDisplay) {
             mSimulateDisplay = simulateDisplay;
             return this;
         }
 
-        public VirtualDisplayBuilder setMustBeCreated(boolean mustBeCreated) {
+        public VirtualDisplaySession setMustBeCreated(boolean mustBeCreated) {
             mMustBeCreated = mustBeCreated;
             return this;
         }
 
-        public ActivityDisplay build() throws Exception {
-            final List<ActivityDisplay> displays = build(1);
-            return displays != null && !displays.isEmpty() ? displays.get(0) : null;
+        @Nullable
+        public ActivityDisplay createDisplay() throws Exception {
+            return createDisplays(1).stream().findFirst().orElse(null);
         }
 
-        public List<ActivityDisplay> build(int count) throws Exception {
+        @NonNull
+        public List<ActivityDisplay> createDisplays(int count) throws Exception {
             if (mSimulateDisplay) {
-                return mTests.simulateDisplay(mDensityDpi);
+                return simulateDisplay();
+            } else {
+                return createVirtualDisplays(count);
+            }
+        }
+
+        @Override
+        public void close() throws Exception {
+            mOverlayDisplayDeviceSession.close();
+            if (mVirtualDisplayCreated) {
+                destroyVirtualDisplays();
+                mVirtualDisplayCreated = false;
+            }
+        }
+
+        /**
+         * Simulate new display.
+         * <pre>
+         * <code>mDensityDpi</code> provide custom density for the display.
+         * </pre>
+         * @return {@link ActivityDisplay} of newly created display.
+         */
+        private List<ActivityDisplay> simulateDisplay() throws Exception {
+            final List<ActivityDisplay> originalDs = getDisplaysStates();
+
+            // Create virtual display with custom density dpi.
+            mOverlayDisplayDeviceSession.set("1024x768/" + mDensityDpi);
+
+            return assertAndGetNewDisplays(1, originalDs);
+        }
+
+        /**
+         * Create new virtual display.
+         * <pre>
+         * <code>mDensityDpi</code> provide custom density for the display.
+         * <code>mLaunchInSplitScreen</code> start {@link VirtualDisplayActivity} to side from
+         *     {@link LaunchingActivity} on primary display.
+         * <code>mCanShowWithInsecureKeyguard</code>  allow showing content when device is
+         *     showing an insecure keyguard.
+         * <code>mMustBeCreated</code> should assert if the display was or wasn't created.
+         * <code>mPublicDisplay</code> make display public.
+         * <code>mResizeDisplay</code> should resize display when surface size changes.
+         * <code>LaunchActivity</code> should launch test activity immediately after display
+         *     creation.
+         * </pre>
+         * @param displayCount number of displays to be created.
+         * @return A list of {@link ActivityDisplay} that represent newly created displays.
+         * @throws Exception
+         */
+        private List<ActivityDisplay> createVirtualDisplays(int displayCount) throws Exception {
+            // Start an activity that is able to create virtual displays.
+            if (mLaunchInSplitScreen) {
+                getLaunchActivityBuilder()
+                        .setToSide(true)
+                        .setTargetActivityName(VIRTUAL_DISPLAY_ACTIVITY)
+                        .execute();
+            } else {
+                launchActivity(VIRTUAL_DISPLAY_ACTIVITY);
+            }
+            mAmWmState.computeState(false /* compareTaskAndStackBounds */,
+                    new WaitForValidActivityState(VIRTUAL_DISPLAY_ACTIVITY));
+            final List<ActivityDisplay> originalDS = getDisplaysStates();
+
+            // Create virtual display with custom density dpi.
+            final StringBuilder createVirtualDisplayCommand = new StringBuilder(
+                    getAmStartCmd(VIRTUAL_DISPLAY_ACTIVITY))
+                    .append(" -f 0x20000000")
+                    .append(" --es command create_display");
+            if (mDensityDpi != INVALID_DENSITY_DPI) {
+                createVirtualDisplayCommand
+                        .append(" --ei density_dpi ")
+                        .append(mDensityDpi);
+            }
+            createVirtualDisplayCommand.append(" --ei count ").append(displayCount)
+                    .append(" --ez can_show_with_insecure_keyguard ")
+                    .append(mCanShowWithInsecureKeyguard)
+                    .append(" --ez public_display ").append(mPublicDisplay)
+                    .append(" --ez resize_display ").append(mResizeDisplay);
+            if (mLaunchActivity != null) {
+                createVirtualDisplayCommand
+                        .append(" --es launch_target_activity ")
+                        .append(mLaunchActivity);
+            }
+            executeShellCommand(createVirtualDisplayCommand.toString());
+            mVirtualDisplayCreated = true;
+
+            return assertAndGetNewDisplays(mMustBeCreated ? displayCount : -1, originalDS);
+        }
+
+        /**
+         * Destroy existing virtual display.
+         */
+        void destroyVirtualDisplays() throws Exception {
+            final String destroyVirtualDisplayCommand = getAmStartCmd(VIRTUAL_DISPLAY_ACTIVITY)
+                    + " -f 0x20000000"
+                    + " --es command destroy_display";
+            executeShellCommand(destroyVirtualDisplayCommand);
+        }
+
+        /**
+         * Wait for desired number of displays to be created and get their properties.
+         * @param newDisplayCount expected display count, -1 if display should not be created.
+         * @param originalDS display states before creation of new display(s).
+         * @return list of new displays, empty list if no new display is created.
+         */
+        private List<ActivityDisplay> assertAndGetNewDisplays(int newDisplayCount,
+                List<ActivityDisplay> originalDS) throws Exception {
+            final int originalDisplayCount = originalDS.size();
+
+            // Wait for the display(s) to be created and get configurations.
+            final List<ActivityDisplay> ds = getDisplayStateAfterChange(
+                    originalDisplayCount + newDisplayCount);
+            if (newDisplayCount != -1) {
+                assertEquals("New virtual display(s) must be created",
+                        originalDisplayCount + newDisplayCount, ds.size());
+            } else {
+                assertEquals("New virtual display must not be created",
+                        originalDisplayCount, ds.size());
+                return Collections.emptyList();
             }
 
-            return mTests.createVirtualDisplays(mDensityDpi, mLaunchInSplitScreen,
-                    mCanShowWithInsecureKeyguard, mMustBeCreated, mPublicDisplay, mResizeDisplay,
-                    mLaunchActivity, count);
+            // Find the newly added display(s).
+            final List<ActivityDisplay> newDisplays = findNewDisplayStates(originalDS, ds);
+            assertTrue("New virtual display must be created",
+                    newDisplayCount == newDisplays.size());
+
+            return newDisplays;
         }
     }
 
-    private static String getCreateVirtualDisplayCommand(int densityDpi,
-            boolean canShowWithInsecureKeyguard, boolean publicDisplay, boolean resizeDisplay,
-            String launchActivity, int displayCount) {
-        final StringBuilder commandBuilder
-                = new StringBuilder(getAmStartCmd(VIRTUAL_DISPLAY_ACTIVITY));
-        commandBuilder.append(" -f 0x20000000");
-        commandBuilder.append(" --es command create_display");
-        if (densityDpi != INVALID_DENSITY_DPI) {
-            commandBuilder.append(" --ei density_dpi ").append(densityDpi);
+    /** Helper class to save, set, and restore overlay_display_devices preference. */
+    private static class OverlayDisplayDevicesSession extends SettingsSession<String> {
+        OverlayDisplayDevicesSession() {
+            super(Settings.Global.getUriFor(Settings.Global.OVERLAY_DISPLAY_DEVICES),
+                    Settings.Global::getString,
+                    Settings.Global::putString);
         }
-        commandBuilder.append(" --ei count ").append(displayCount);
-        commandBuilder.append(" --ez can_show_with_insecure_keyguard ")
-                .append(canShowWithInsecureKeyguard);
-        commandBuilder.append(" --ez public_display ").append(publicDisplay);
-        commandBuilder.append(" --ez resize_display ").append(resizeDisplay);
-        if (launchActivity != null) {
-            commandBuilder.append(" --es launch_target_activity ").append(launchActivity);
-        }
-        return commandBuilder.toString();
-    }
-
-    private static String getDestroyVirtualDisplayCommand() {
-        return getAmStartCmd(VIRTUAL_DISPLAY_ACTIVITY) + " -f 0x20000000" +
-                " --es command destroy_display";
-    }
-
-    private static String getSimulateDisplayCommand(int densityDpi) {
-        return "settings put global overlay_display_devices 1024x768/" + densityDpi;
-    }
-
-    private static String getDestroySimulatedDisplayCommand() {
-        return "settings delete global overlay_display_devices";
     }
 
     /** Wait for provided number of displays and report their configurations. */

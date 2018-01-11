@@ -1237,6 +1237,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     @Presubmit
     @Test
+    @FlakyTest(bugId = 71792368)
     public void testEnterPictureInPictureDiscardSavedPositionOnFinish() throws Exception {
         if (!supportsPip()) return;
 

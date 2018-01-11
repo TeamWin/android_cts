@@ -39,7 +39,6 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util \
     android-support-v4 \
     android-support-test \
-    bouncycastle \
     cts-security-test-support-library
 
 LOCAL_SDK_VERSION := test_current

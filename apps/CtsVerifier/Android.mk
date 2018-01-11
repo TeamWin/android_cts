@@ -39,7 +39,6 @@ LOCAL_STATIC_JAVA_LIBRARIES := android-ex-camera2 \
                                mockwebserver \
                                compatibility-device-util \
                                platform-test-annotations \
-                               bouncycastle \
                                cts-security-test-support-library
 
 LOCAL_JAVA_LIBRARIES += telephony-common
@@ -47,7 +46,6 @@ LOCAL_JAVA_LIBRARIES += android.test.runner.stubs
 LOCAL_JAVA_LIBRARIES += android.test.base.stubs
 LOCAL_JAVA_LIBRARIES += android.test.mock.stubs
 LOCAL_JAVA_LIBRARIES += bouncycastle
-LOCAL_JAVA_LIBRARIES += cts-security-test-support-library
 
 LOCAL_PACKAGE_NAME := CtsVerifier
 

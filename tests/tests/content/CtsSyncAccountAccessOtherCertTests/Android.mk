@@ -24,11 +24,14 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-test \
     ctstestrunner \
     ub-uiautomator \
-    compatibility-device-util
+    compatibility-device-util \
+    accountaccesslib
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_PACKAGE_NAME := CtsSyncAccountAccessSameCertTestCases
+LOCAL_PACKAGE_NAME := CtsSyncAccountAccessOtherCertTestCases
+
+LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/cts-testkey2
 
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
@@ -36,4 +39,4 @@ LOCAL_PROGUARD_ENABLED := disabled
 
 LOCAL_DEX_PREOPT := false
 
-include $(BUILD_CTS_SUPPORT_PACKAGE)
+include $(BUILD_CTS_PACKAGE)

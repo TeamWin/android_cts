@@ -29,6 +29,7 @@
     <uses-permission android:name="android.permission.SET_WALLPAPER" />
     <uses-permission android:name="android.permission.BROADCAST_STICKY" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.content.cts.permission.TEST_GRANTED" />
 
     <!-- Used for PackageManager test, don't delete this INTERNET permission -->
@@ -287,6 +288,16 @@
                 android:exported="true"
                 android:process=":providerProcess">
         </provider>
+
+        <activity android:name="com.android.cts.content.StubActivity"/>
+
+        <service android:name="com.android.cts.content.SyncService">
+            <intent-filter>
+                <action android:name="android.content.SyncAdapter"/>
+            </intent-filter>
+            <meta-data android:name="android.content.SyncAdapter"
+                android:resource="@xml/accountaccesssyncadapter" />
+        </service>
 
     </application>
 

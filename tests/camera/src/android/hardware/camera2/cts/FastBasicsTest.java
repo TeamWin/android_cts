@@ -57,6 +57,7 @@ public class FastBasicsTest extends Camera2SurfaceViewTestCase {
     private static final int WAIT_FOR_PICTURE_TIMEOUT_MS = 5000;
     private static final int FRAMES_TO_WAIT_FOR_CAPTURE = 100;
 
+    @Presubmit
     public void testCamera2() throws Exception {
         for (int i = 0; i < mCameraIds.length; i++) {
             try {

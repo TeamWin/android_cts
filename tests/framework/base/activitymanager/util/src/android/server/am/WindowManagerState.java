@@ -332,6 +332,16 @@ public class WindowManagerState {
         }
     }
 
+    public boolean containsExitingWindow() {
+        for (WindowState ws : mWindowStates) {
+            if (ws.isExitingWindow()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public WindowState getWindowByPackageName(String packageName, int windowType) {
         for (WindowState ws : mWindowStates) {
             final String name = ws.getName();
@@ -711,7 +721,7 @@ public class WindowManagerState {
             DisplayInfoProto infoProto = proto.displayInfo;
             if (infoProto != null) {
                 mDisplayRect.set(0, 0, infoProto.logicalWidth, infoProto.logicalHeight);
-                mAppRect.set(0, 0, infoProto.logicalWidth, infoProto.logicalHeight);
+                mAppRect.set(0, 0, infoProto.appWidth, infoProto.appHeight);
             }
             final DisplayFramesProto displayFramesProto = proto.displayFrames;
             if (displayFramesProto != null) {

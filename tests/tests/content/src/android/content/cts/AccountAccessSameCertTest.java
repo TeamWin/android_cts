@@ -14,20 +14,21 @@
  * limitations under the License.
  */
 
-package com.android.cts.content;
+package android.content.cts;
 
-import static junit.framework.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.Activity;
-import android.content.ContentProviderClient;
+import android.content.AbstractThreadedSyncAdapter;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SyncRequest;
-import android.content.SyncResult;
-import android.content.cts.FlakyTestRule;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -36,6 +37,12 @@ import android.os.Process;
 import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.SystemUtil;
+import com.android.cts.content.FlakyTestRule;
+import com.android.cts.content.StubActivity;
+import com.android.cts.content.SyncAdapter;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -44,16 +51,12 @@ import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import com.android.compatibility.common.util.SystemUtil;
 
 /**
  * Tests whether a sync adapter can access accounts.
  */
 @RunWith(AndroidJUnit4.class)
-public class CtsSyncAccountAccessSameCertTestCases {
+public class AccountAccessSameCertTest {
     private static final long SYNC_TIMEOUT_MILLIS = 20000; // 20 sec
 
     @Rule
@@ -71,9 +74,8 @@ public class CtsSyncAccountAccessSameCertTestCases {
 
     @Test
     public void testAccountAccess_sameCertAsAuthenticatorCanSeeAccount() throws Exception {
-        if (!hasDataConnection() || !hasNotificationSupport()) {
-            return;
-        }
+        assumeTrue(hasDataConnection());
+        assumeTrue(hasNotificationSupport());
 
         Intent intent = new Intent(getContext(), StubActivity.class);
         Activity activity = InstrumentationRegistry.getInstrumentation().startActivitySync(intent);
@@ -89,11 +91,7 @@ public class CtsSyncAccountAccessSameCertTestCases {
         waitForSyncManagerAccountChangeUpdate();
 
         try {
-            CountDownLatch latch = new CountDownLatch(1);
-
-            SyncAdapter.setOnPerformSyncDelegate((Account account, Bundle extras,
-                    String authority, ContentProviderClient provider, SyncResult syncResult)
-                    -> latch.countDown());
+            AbstractThreadedSyncAdapter adapter = SyncAdapter.setNewDelegate();
 
             Bundle extras = new Bundle();
             extras.putBoolean(ContentResolver.SYNC_EXTRAS_DO_NOT_RETRY, true);
@@ -108,7 +106,8 @@ public class CtsSyncAccountAccessSameCertTestCases {
                     .build();
             ContentResolver.requestSync(request);
 
-            assertTrue(latch.await(SYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS));
+            verify(adapter, timeout(SYNC_TIMEOUT_MILLIS)).onPerformSync(any(), any(), any(), any(),
+                    any());
         } finally {
             accountManager.removeAccount(addedAccount, activity, null, null);
             activity.finish();

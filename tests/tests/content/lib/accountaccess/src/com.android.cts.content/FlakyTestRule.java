@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  */
 
-package android.content.cts;
+package com.android.cts.content;
 
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;

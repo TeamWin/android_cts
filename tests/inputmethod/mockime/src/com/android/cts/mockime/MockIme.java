@@ -16,7 +16,7 @@
 
 package com.android.cts.mockime;
 
-import static android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_OVERSCAN;
+import static android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS;
 
 import static com.android.cts.mockime.MockImeSession.MOCK_IME_SETTINGS_FILE;
 
@@ -226,7 +226,19 @@ public final class MockIme extends InputMethodService {
             final int windowFlags = mSettings.getWindowFlags(0);
             final int windowFlagsMask = mSettings.getWindowFlagsMask(0);
             if (windowFlags != 0 || windowFlagsMask != 0) {
+                final int prevFlags = getWindow().getWindow().getAttributes().flags;
                 getWindow().getWindow().setFlags(windowFlags, windowFlagsMask);
+                // For some reasons, seems that we need to post another requestLayout() when
+                // FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS bit is changed.
+                // TODO: Investigate the reason.
+                if ((windowFlagsMask & FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS) != 0) {
+                    final boolean hadFlag = (prevFlags & FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS) != 0;
+                    final boolean hasFlag = (windowFlags & FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS) != 0;
+                    if (hadFlag != hasFlag) {
+                        final View decorView = getWindow().getWindow().getDecorView();
+                        decorView.post(() -> decorView.requestLayout());
+                    }
+                }
             }
 
             if (mSettings.hasNavigationBarColor()) {
@@ -294,24 +306,42 @@ public final class MockIme extends InputMethodService {
             this.addOnLayoutChangeListener(mLayoutListener);
         }
 
+        private void updateBottomPaddingIfNecessary(int newPaddingBottom) {
+            if (getPaddingBottom() != newPaddingBottom) {
+                setPadding(getPaddingLeft(), getPaddingTop(), getPaddingRight(), newPaddingBottom);
+            }
+        }
+
         @Override
         public WindowInsets onApplyWindowInsets(WindowInsets insets) {
-            final int windowFlags = mSettings.getWindowFlags(0);
-            if ((windowFlags & FLAG_LAYOUT_IN_OVERSCAN) == 0) {
+            if (insets.isConsumed()
+                    || (getSystemUiVisibility() & SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION) == 0) {
+                // In this case we are not interested in consuming NavBar region.
+                // Make sure that the bottom padding is empty.
+                updateBottomPaddingIfNecessary(0);
                 return insets;
             }
 
-            final int insetBottom = insets.getSystemWindowInsetBottom();
+            // In some cases the bottom system window inset is not a navigation bar. Wear devices
+            // that have bottom chin are examples.  For now, assume that it's a navigation bar if it
+            // has the same height as the root window's stable bottom inset.
+            final WindowInsets rootWindowInsets = getRootWindowInsets();
+            if (rootWindowInsets != null && (rootWindowInsets.getStableInsetBottom() !=
+                    insets.getSystemWindowInsetBottom())) {
+                // This is probably not a NavBar.
+                updateBottomPaddingIfNecessary(0);
+                return insets;
+            }
 
-            // Somehow immediately calling setPadding doesn't properly update the layout.
-            // TODO: Figure out why we have to delay this task.
-            post(() -> setPadding(0, 0, 0, insetBottom));
-
-            return insets.replaceSystemWindowInsets(
-                    insets.getSystemWindowInsetLeft(),
-                    insets.getSystemWindowInsetTop(),
-                    insets.getSystemWindowInsetRight(),
-                    0 /* bottom */);
+            final int possibleNavBarHeight = insets.getSystemWindowInsetBottom();
+            updateBottomPaddingIfNecessary(possibleNavBarHeight);
+            return possibleNavBarHeight <= 0
+                    ? insets
+                    : insets.replaceSystemWindowInsets(
+                            insets.getSystemWindowInsetLeft(),
+                            insets.getSystemWindowInsetTop(),
+                            insets.getSystemWindowInsetRight(),
+                            0 /* bottom */);
         }
 
         @Override
