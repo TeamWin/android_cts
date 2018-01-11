@@ -52,12 +52,12 @@ public class PrereleaseSdkTest extends ActivityManagerTestBase {
         verifyWindowDisplayed("UnsupportedCompileSdkDialog", WINDOW_TIMEOUT_MILLIS);
 
         // Go back to dismiss the warning dialog.
-        executeShellCommand("input keyevent 4");
+        pressBackButton();
 
         // Go back again to formally stop the app. If we just kill the process, it'll attempt to
         // resume rather than starting from scratch (as far as ActivityStack is concerned) and it
         // won't invoke the warning dialog.
-        executeShellCommand("input keyevent 4");
+        pressBackButton();
     }
 
     private void forceStopPackage(String packageName) {

@@ -753,7 +753,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      */
     @Test
     public void testStackFocusSwitchOnStackEmptied() throws Exception {
-        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession();
+             final LockScreenSession lockScreenSession = new LockScreenSession()) {
             // Create new virtual display.
             final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
             mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
@@ -765,13 +766,14 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                     BROADCAST_RECEIVER_ACTIVITY);
 
             // Lock the device, so that activity containers will be detached.
-            sleepDevice();
+            lockScreenSession.sleepDevice();
 
             // Finish activity on secondary display.
             executeShellCommand(FINISH_ACTIVITY_BROADCAST);
 
             // Unlock and check if the focus is switched back to primary display.
-            wakeUpAndUnlockDevice();
+            lockScreenSession.wakeUpDevice()
+                    .unlockDevice();
             mAmWmState.waitForFocusedStack(focusedStackId);
             mAmWmState.waitForValidState(VIRTUAL_DISPLAY_ACTIVITY);
             mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
@@ -1615,15 +1617,16 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
         waitAndAssertActivityResumed(RESIZEABLE_ACTIVITY_NAME, DEFAULT_DISPLAY_ID,
                 "Activity launched on primary display must be resumed");
 
-        sleepDevice();
+        try (final LockScreenSession lockScreenSession = new LockScreenSession();
+             final ExternalDisplaySession externalDisplaySession = new ExternalDisplaySession()) {
+            lockScreenSession.sleepDevice();
 
-        // Make sure there is no resumed activity when the primary display is off
-        waitAndAssertActivityStopped(RESIZEABLE_ACTIVITY_NAME,
-                "Activity launched on primary display must be stopped after turning off");
-        assertEquals("Unexpected resumed activity",
-                0, mAmWmState.getAmState().getResumedActivitiesCount());
+            // Make sure there is no resumed activity when the primary display is off
+            waitAndAssertActivityStopped(RESIZEABLE_ACTIVITY_NAME,
+                    "Activity launched on primary display must be stopped after turning off");
+            assertEquals("Unexpected resumed activity",
+                    0, mAmWmState.getAmState().getResumedActivitiesCount());
 
-        try (final ExternalDisplaySession externalDisplaySession = new ExternalDisplaySession()) {
             final ActivityDisplay newDisplay =
                     externalDisplaySession.createVirtualDisplay(true /* showContentWhenLocked */);
 
@@ -1634,7 +1637,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                     "Activity launched on external display must be resumed");
 
             // Unlock the device and tap on the middle of the primary display
-            wakeUpDevice();
+            lockScreenSession.wakeUpDevice();
             executeShellCommand("wm dismiss-keyguard");
             mAmWmState.waitForKeyguardGone();
             mAmWmState.waitForValidState(new WaitForValidActivityState(TEST_ACTIVITY_NAME));
@@ -1678,10 +1681,11 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
     /**
      * Tests that showWhenLocked works on a secondary display.
      */
+    @Test
     public void testSecondaryDisplayShowWhenLocked() throws Exception {
         try (final ExternalDisplaySession externalDisplaySession = new ExternalDisplaySession();
-             final LockCredentialSession lockCredentialSession = new LockCredentialSession()) {
-            lockCredentialSession.setLockCredential();
+             final LockScreenSession lockScreenSession = new LockScreenSession()) {
+            lockScreenSession.setLockCredential();
 
             launchActivity(TEST_ACTIVITY_NAME);
 
@@ -1689,7 +1693,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                     externalDisplaySession.createVirtualDisplay(false /* showContentWhenLocked */);
             launchActivityOnDisplay(SHOW_WHEN_LOCKED_ATTR_ACTIVITY_NAME, newDisplay.mId);
 
-            gotoKeyguard();
+            lockScreenSession.gotoKeyguard();
             mAmWmState.waitForKeyguardShowingAndNotOccluded();
 
             mAmWmState.waitForActivityState(TEST_ACTIVITY_NAME, STATE_STOPPED);
@@ -1778,7 +1782,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
         }
     }
 
-    private static class PrimaryDisplayStateSession implements AutoCloseable {
+    private class PrimaryDisplayStateSession implements AutoCloseable {
 
         void turnScreenOff() {
             setPrimaryDisplayState(false);
@@ -1791,9 +1795,11 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
 
         /** Turns the primary display on/off by pressing the power key */
         private void setPrimaryDisplayState(boolean wantOn) {
-            // Either KeyEvent.KEYCODE_WAKEUP or KeyEvent.KEYCODE_SLEEP
-            int keycode = wantOn ? 224 : 223;
-            executeShellCommand("input keyevent " + keycode);
+            if (wantOn) {
+                pressWakeupButton();
+            } else {
+                pressSleepButton();
+            }
             DisplayHelper.waitForDefaultDisplayState(wantOn);
         }
     }

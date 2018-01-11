@@ -42,96 +42,117 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
 
         assumeTrue(isHandheld());
         assumeFalse(isUiModeLockedToVrHeadset());
-
-        // Set screen lock (swipe)
-        setLockDisabled(false);
     }
 
     @Test
     public void testUnlock() throws Exception {
-        launchActivity("TestActivity");
-        gotoKeyguard();
-        unlockDevice();
-        mAmWmState.computeState(new WaitForValidActivityState("TestActivity"));
-        assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_GOING_AWAY,
-                mAmWmState.getWmState().getLastTransition());
+        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+            launchActivity("TestActivity");
+            lockScreenSession.gotoKeyguard()
+                    .unlockDevice();
+            mAmWmState.computeState(new WaitForValidActivityState("TestActivity"));
+            assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_GOING_AWAY,
+                    mAmWmState.getWmState().getLastTransition());
+        }
     }
+
     @Test
     public void testUnlockWallpaper() throws Exception {
-        launchActivity("WallpaperActivity");
-        gotoKeyguard();
-        unlockDevice();
-        mAmWmState.computeState(new WaitForValidActivityState("WallpaperActivity"));
-        assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_GOING_AWAY_ON_WALLPAPER,
-                mAmWmState.getWmState().getLastTransition());
+        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+            launchActivity("WallpaperActivity");
+            lockScreenSession.gotoKeyguard()
+                    .unlockDevice();
+            mAmWmState.computeState(new WaitForValidActivityState("WallpaperActivity"));
+            assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_GOING_AWAY_ON_WALLPAPER,
+                    mAmWmState.getWmState().getLastTransition());
+        }
     }
+
     @Test
     public void testOcclude() throws Exception {
-        gotoKeyguard();
-        launchActivity("ShowWhenLockedActivity");
-        mAmWmState.computeState(new WaitForValidActivityState("ShowWhenLockedActivity"));
-        assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_OCCLUDE,
-                mAmWmState.getWmState().getLastTransition());
+        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+            lockScreenSession.gotoKeyguard();
+            launchActivity("ShowWhenLockedActivity");
+            mAmWmState.computeState(new WaitForValidActivityState("ShowWhenLockedActivity"));
+            assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_OCCLUDE,
+                    mAmWmState.getWmState().getLastTransition());
+        }
     }
+
     @Test
     public void testUnocclude() throws Exception {
-        gotoKeyguard();
-        launchActivity("ShowWhenLockedActivity");
-        launchActivity("TestActivity");
-        mAmWmState.waitForKeyguardShowingAndNotOccluded();
-        mAmWmState.computeState();
-        assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_UNOCCLUDE,
-                mAmWmState.getWmState().getLastTransition());
+        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+            lockScreenSession.gotoKeyguard();
+            launchActivity("ShowWhenLockedActivity");
+            launchActivity("TestActivity");
+            mAmWmState.waitForKeyguardShowingAndNotOccluded();
+            mAmWmState.computeState();
+            assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_UNOCCLUDE,
+                    mAmWmState.getWmState().getLastTransition());
+        }
     }
+
     @Test
     public void testNewActivityDuringOccluded() throws Exception {
-        launchActivity("ShowWhenLockedActivity");
-        gotoKeyguard();
-        launchActivity("ShowWhenLockedWithDialogActivity");
-        mAmWmState.computeState(new WaitForValidActivityState.Builder("ShowWhenLockedWithDialogActivity").build());
-        assertEquals("Picked wrong transition", TRANSIT_ACTIVITY_OPEN,
-                mAmWmState.getWmState().getLastTransition());
+        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+            launchActivity("ShowWhenLockedActivity");
+            lockScreenSession.gotoKeyguard();
+            launchActivity("ShowWhenLockedWithDialogActivity");
+            mAmWmState.computeState(
+                    new WaitForValidActivityState("ShowWhenLockedWithDialogActivity"));
+            assertEquals("Picked wrong transition", TRANSIT_ACTIVITY_OPEN,
+                    mAmWmState.getWmState().getLastTransition());
+        }
     }
+
     @Test
     public void testOccludeManifestAttr() throws Exception {
-         String activityName = "ShowWhenLockedAttrActivity";
+        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+            final String activityName = "ShowWhenLockedAttrActivity";
 
-         gotoKeyguard();
-         final String logSeparator = clearLogcat();
-         launchActivity(activityName);
-         mAmWmState.computeState(new WaitForValidActivityState.Builder(activityName).build());
-         assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_OCCLUDE,
-                 mAmWmState.getWmState().getLastTransition());
-         assertSingleLaunch(activityName, logSeparator);
+            lockScreenSession.gotoKeyguard();
+            final String logSeparator = clearLogcat();
+            launchActivity(activityName);
+            mAmWmState.computeState(new WaitForValidActivityState(activityName));
+            assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_OCCLUDE,
+                    mAmWmState.getWmState().getLastTransition());
+            assertSingleLaunch(activityName, logSeparator);
+        }
     }
+
     @Test
     public void testOccludeAttrRemove() throws Exception {
-        String activityName = "ShowWhenLockedAttrRemoveAttrActivity";
+        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+            final String activityName = "ShowWhenLockedAttrRemoveAttrActivity";
 
-        gotoKeyguard();
-        String logSeparator = clearLogcat();
-        launchActivity(activityName);
-        mAmWmState.computeState(new WaitForValidActivityState.Builder(activityName).build());
-        assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_OCCLUDE,
-                mAmWmState.getWmState().getLastTransition());
-        assertSingleLaunch(activityName, logSeparator);
+            lockScreenSession.gotoKeyguard();
+            String logSeparator = clearLogcat();
+            launchActivity(activityName);
+            mAmWmState.computeState(new WaitForValidActivityState(activityName));
+            assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_OCCLUDE,
+                    mAmWmState.getWmState().getLastTransition());
+            assertSingleLaunch(activityName, logSeparator);
 
-        gotoKeyguard();
-        logSeparator = clearLogcat();
-        launchActivity(activityName);
-        mAmWmState.computeState(new WaitForValidActivityState.Builder(activityName).build());
-        assertSingleStartAndStop(activityName, logSeparator);
+            lockScreenSession.gotoKeyguard();
+            logSeparator = clearLogcat();
+            launchActivity(activityName);
+            mAmWmState.computeState(new WaitForValidActivityState(activityName));
+            assertSingleStartAndStop(activityName, logSeparator);
+        }
     }
+
     @Test
     public void testNewActivityDuringOccludedWithAttr() throws Exception {
-        String activityName1 = "ShowWhenLockedAttrActivity";
-        String activityName2 = "ShowWhenLockedAttrWithDialogActivity";
+        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+            final String activityName1 = "ShowWhenLockedAttrActivity";
+            final String activityName2 = "ShowWhenLockedAttrWithDialogActivity";
 
-        launchActivity(activityName1);
-        gotoKeyguard();
-        launchActivity(activityName2);
-        mAmWmState.computeState(new WaitForValidActivityState.Builder(activityName2).build());
-        assertEquals("Picked wrong transition", TRANSIT_ACTIVITY_OPEN,
-                mAmWmState.getWmState().getLastTransition());
+            launchActivity(activityName1);
+            lockScreenSession.gotoKeyguard();
+            launchActivity(activityName2);
+            mAmWmState.computeState(new WaitForValidActivityState(activityName2));
+            assertEquals("Picked wrong transition", TRANSIT_ACTIVITY_OPEN,
+                    mAmWmState.getWmState().getLastTransition());
+        }
     }
 }
