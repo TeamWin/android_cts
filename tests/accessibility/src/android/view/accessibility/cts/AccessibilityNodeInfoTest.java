@@ -37,7 +37,7 @@ import java.util.List;
 public class AccessibilityNodeInfoTest extends AndroidTestCase {
 
     /** The number of properties of the {@link AccessibilityNodeInfo} class that are marshalled. */
-    private static final int NUM_MARSHALLED_PROPERTIES = 33;
+    private static final int NUM_MARSHALLED_PROPERTIES = 34;
 
     /**
      * The number of properties that are purposely not marshalled
@@ -233,6 +233,7 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
         info.setDrawingOrder(5);
         info.setAvailableExtraData(
                 Arrays.asList(AccessibilityNodeInfo.EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY));
+        info.setPaneTitle("Pane title");
     }
 
     /**
@@ -304,6 +305,8 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
                 receivedInfo.getDrawingOrder());
         assertEquals("Extra data flags have incorrect value", expectedInfo.getAvailableExtraData(),
                 receivedInfo.getAvailableExtraData());
+        assertEquals("Pane title has incorrect value", expectedInfo.getPaneTitle(),
+                receivedInfo.getPaneTitle());
     }
 
     /**
@@ -322,6 +325,7 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
         assertNull("packageName not properly recycled", info.getPackageName());
         assertNull("text not properly recycled", info.getText());
         assertNull("Hint text not properly recycled", info.getHintText());
+        assertNull("Pane title not properly recycled", info.getPaneTitle());
         assertFalse("checkable not properly recycled", info.isCheckable());
         assertFalse("checked not properly recycled", info.isChecked());
         assertFalse("clickable not properly recycled", info.isClickable());
