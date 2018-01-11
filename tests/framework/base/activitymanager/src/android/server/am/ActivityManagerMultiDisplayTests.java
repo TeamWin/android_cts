@@ -52,6 +52,7 @@ import java.util.regex.Pattern;
  * Build/Install/Run:
  *     atest CtsActivityManagerDeviceTestCases:ActivityManagerMultiDisplayTests
  */
+@FlakyTest(bugId = 71792368, detail = "Might be affecting tests that run after. See bug for details")
 public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTestBase {
     private static final String TEST_ACTIVITY_NAME = "TestActivity";
     private static final String VIRTUAL_DISPLAY_ACTIVITY = "VirtualDisplayActivity";
