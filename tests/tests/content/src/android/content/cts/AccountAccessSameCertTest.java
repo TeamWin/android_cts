@@ -16,6 +16,7 @@
 
 package android.content.cts;
 
+import static com.android.cts.content.Utils.ALWAYS_SYNCABLE_AUTHORITY;
 import static com.android.cts.content.Utils.SYNC_TIMEOUT_MILLIS;
 import static com.android.cts.content.Utils.allowSyncAdapterRunInBackgroundAndDataInBackground;
 import static com.android.cts.content.Utils.disallowSyncAdapterRunInBackgroundAndDataInBackground;
@@ -32,9 +33,9 @@ import android.content.AbstractThreadedSyncAdapter;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 
+import com.android.cts.content.AlwaysSyncableSyncService;
 import com.android.cts.content.FlakyTestRule;
 import com.android.cts.content.StubActivity;
-import com.android.cts.content.SyncAdapter;
 
 import org.junit.After;
 import org.junit.Before;
@@ -69,9 +70,10 @@ public class AccountAccessSameCertTest {
         assumeTrue(hasDataConnection());
 
         try (AutoCloseable ignored = withAccount(activity.getActivity())) {
-            AbstractThreadedSyncAdapter adapter = SyncAdapter.setNewDelegate();
+            AbstractThreadedSyncAdapter adapter = AlwaysSyncableSyncService.getInstance(
+                    activity.getActivity()).setNewDelegate();
 
-            requestSync();
+            requestSync(ALWAYS_SYNCABLE_AUTHORITY);
 
             verify(adapter, timeout(SYNC_TIMEOUT_MILLIS)).onPerformSync(any(), any(), any(), any(),
                     any());

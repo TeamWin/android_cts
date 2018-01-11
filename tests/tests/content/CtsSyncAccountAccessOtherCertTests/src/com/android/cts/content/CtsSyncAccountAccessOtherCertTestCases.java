@@ -16,6 +16,7 @@
 
 package com.android.cts.content;
 
+import static com.android.cts.content.Utils.ALWAYS_SYNCABLE_AUTHORITY;
 import static com.android.cts.content.Utils.SYNC_TIMEOUT_MILLIS;
 import static com.android.cts.content.Utils.allowSyncAdapterRunInBackgroundAndDataInBackground;
 import static com.android.cts.content.Utils.disallowSyncAdapterRunInBackgroundAndDataInBackground;
@@ -29,6 +30,7 @@ import static com.android.cts.content.Utils.withAccount;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
@@ -93,13 +95,15 @@ public class CtsSyncAccountAccessOtherCertTestCases {
         assumeFalse(ActivityManager.isRunningInTestHarness());
 
         try (AutoCloseable ignored = withAccount(activity.getActivity())) {
-            AbstractThreadedSyncAdapter adapter = SyncAdapter.setNewDelegate();
+            AbstractThreadedSyncAdapter adapter = AlwaysSyncableSyncService.getInstance(
+                    activity.getActivity()).setNewDelegate();
 
-            SyncRequest request = requestSync();
+            SyncRequest request = requestSync(ALWAYS_SYNCABLE_AUTHORITY);
             Log.i(LOG_TAG, "Sync requested " + request);
 
-            verify(adapter, timeout(SYNC_TIMEOUT_MILLIS).times(0)).onPerformSync(any(), any(),
-                    any(), any(), any());
+            Thread.sleep(SYNC_TIMEOUT_MILLIS);
+            verify(adapter, never()).onPerformSync(any(), any(), any(), any(), any());
+            Log.i(LOG_TAG, "Did not get onPerformSync");
 
             UiDevice uiDevice = getUiDevice();
             if (isWatch()) {
