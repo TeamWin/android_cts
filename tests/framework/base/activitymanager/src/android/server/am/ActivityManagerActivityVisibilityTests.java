@@ -157,6 +157,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         launchActivity(TURN_SCREEN_ON_ACTIVITY_NAME);
         mAmWmState.computeState(new String[] { TURN_SCREEN_ON_ACTIVITY_NAME });
         mAmWmState.assertVisibility(TURN_SCREEN_ON_ACTIVITY_NAME, true);
+        assertTrue(isDisplayOn());
     }
 
     @Presubmit
