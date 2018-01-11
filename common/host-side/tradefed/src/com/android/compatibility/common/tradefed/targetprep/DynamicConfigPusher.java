@@ -15,6 +15,7 @@
  */
 package com.android.compatibility.common.tradefed.targetprep;
 
+import com.android.annotations.VisibleForTesting;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.util.DynamicConfig;
 import com.android.compatibility.common.util.DynamicConfigHandler;
@@ -25,9 +26,11 @@ import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil;
+import com.android.tradefed.targetprep.BaseTargetPreparer;
 import com.android.tradefed.targetprep.BuildError;
 import com.android.tradefed.targetprep.ITargetCleaner;
 import com.android.tradefed.targetprep.TargetSetupError;
+import com.android.tradefed.util.FileUtil;
 import com.android.tradefed.util.StreamUtil;
 
 import org.json.JSONException;
@@ -36,13 +39,14 @@ import org.xmlpull.v1.XmlPullParserException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 
 /**
  * Pushes dynamic config files from config repository
  */
 @OptionClass(alias="dynamic-config-pusher")
-public class DynamicConfigPusher implements ITargetCleaner {
+public class DynamicConfigPusher extends BaseTargetPreparer implements ITargetCleaner {
     public enum TestTarget {
         DEVICE,
         HOST
@@ -66,6 +70,18 @@ public class DynamicConfigPusher implements ITargetCleaner {
             "from the server, e.g. \"1.0\". Defaults to suite version string.")
     private String mVersion;
 
+    // Options for getting the dynamic file from resources.
+    @Option(name = "extract-from-resource",
+            description = "Whether to look for the local dynamic config inside the jar resources "
+                + "or on the local disk.")
+    private boolean mExtractFromResource = false;
+
+    @Option(name = "dynamic-resource-name",
+            description = "When using --extract-from-resource, this option allow to specify the "
+                + "resource name, instead of the module name for the lookup. File will still be "
+                + "logged under the module name.")
+    private String mResourceFileName = null;
+
     private String mDeviceFilePushed;
 
     void setModuleName(String moduleName) {
@@ -81,13 +97,7 @@ public class DynamicConfigPusher implements ITargetCleaner {
 
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(buildInfo);
 
-        File localConfigFile = null;
-        try {
-            localConfigFile = buildHelper.getTestFile(mModuleName + ".dynamic");
-        } catch (FileNotFoundException e) {
-            throw new TargetSetupError("Cannot get local dynamic config file from test directory",
-                    e, device.getDeviceDescriptor());
-        }
+        File localConfigFile = getLocalConfigFile(buildHelper, device);
 
         if (mVersion == null) {
             mVersion = buildHelper.getSuiteVersion();
@@ -147,5 +157,35 @@ public class DynamicConfigPusher implements ITargetCleaner {
         if (mDeviceFilePushed != null && !(e instanceof DeviceNotAvailableException) && mCleanup) {
             device.executeShellCommand("rm -r " + mDeviceFilePushed);
         }
+    }
+
+    @VisibleForTesting
+    final File getLocalConfigFile(CompatibilityBuildHelper buildHelper, ITestDevice device)
+            throws TargetSetupError {
+        File localConfigFile = null;
+        if (mExtractFromResource) {
+            String lookupName = (mResourceFileName != null) ? mResourceFileName : mModuleName;
+            InputStream dynamicFileRes = getClass().getResourceAsStream(
+                    String.format("/%s.dynamic", lookupName));
+            try {
+                localConfigFile = FileUtil.createTempFile(lookupName, ".dynamic");
+                FileUtil.writeToFile(dynamicFileRes, localConfigFile);
+            } catch (IOException e) {
+                FileUtil.deleteFile(localConfigFile);
+                throw new TargetSetupError(
+                        String.format("Fail to unpack '%s.dynamic' from resources", lookupName),
+                        e, device.getDeviceDescriptor());
+            }
+            return localConfigFile;
+        }
+
+        // If not from resources look at local path.
+        try {
+            localConfigFile = buildHelper.getTestFile(String.format("%s.dynamic", mModuleName));
+        } catch (FileNotFoundException e) {
+            throw new TargetSetupError("Cannot get local dynamic config file from test directory",
+                    e, device.getDeviceDescriptor());
+        }
+        return localConfigFile;
     }
 }
