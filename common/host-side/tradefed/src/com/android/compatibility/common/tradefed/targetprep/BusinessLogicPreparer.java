@@ -157,7 +157,7 @@ public class BusinessLogicPreparer implements ITargetCleaner {
         String baseUrl = mUrl.replace(SUITE_PLACEHOLDER, getSuiteName());
         MultiMap<String, String> paramMap = new MultiMap<>();
         paramMap.put("suite_version", buildHelper.getSuiteVersion());
-        paramMap.put("oem", PropertyUtil.getManufacturer(device));
+        paramMap.put("oem", String.valueOf(PropertyUtil.getManufacturer(device)));
         String accessToken = getToken();
         // Add api key (not authenticated) or Oath token, but not both.
         if (Strings.isNullOrEmpty(accessToken)) {
