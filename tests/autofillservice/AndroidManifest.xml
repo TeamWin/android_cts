@@ -18,6 +18,9 @@
     package="android.autofillservice.cts" >
 
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+    <uses-permission android:name="android.permission.MANAGE_ACTIVITY_STACKS"/>
+    <uses-permission android:name="android.permission.ACTIVITY_EMBEDDING"/>
+    <uses-permission android:name="android.permission.INJECT_EVENTS" />
 
     <application>
 
@@ -75,6 +78,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".MultiWindowLoginActivity" />
+        <activity android:name=".MultiWindowEmptyActivity"
+            android:taskAffinity="nobody.but.EmptyActivity"
+            android:exported="true" />
 
         <service
             android:name=".InstrumentedAutoFillService"
