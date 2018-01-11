@@ -43,13 +43,6 @@ public class ActivityManagerDisplayKeyguardTests extends ActivityManagerDisplayT
         setLockDisabled(false);
     }
 
-    @After
-    @Override
-    public void tearDown() throws Exception {
-        super.tearDown();
-        tearDownLockCredentials();
-    }
-
     /**
      * Tests whether a FLAG_DISMISS_KEYGUARD activity on a secondary display is visible (for an
      * insecure keyguard).

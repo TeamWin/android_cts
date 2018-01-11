@@ -44,164 +44,182 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         super.setUp();
 
         assumeTrue(isHandheld());
-
-        setLockCredential();
-    }
-
-    @After
-    @Override
-    public void tearDown() throws Exception {
-        super.tearDown();
-        tearDownLockCredentials();
     }
 
     @Test
     public void testLockAndUnlock() throws Exception {
-        gotoKeyguard();
-        mAmWmState.waitForKeyguardShowingAndNotOccluded();
-        mAmWmState.assertKeyguardShowingAndNotOccluded();
-        unlockDeviceWithCredential();
-        mAmWmState.waitForKeyguardGone();
-        mAmWmState.assertKeyguardGone();
+        try (final LockCredentialSession lockCredentialSession = new LockCredentialSession()) {
+            lockCredentialSession.setLockCredential();
+            gotoKeyguard();
+            mAmWmState.waitForKeyguardShowingAndNotOccluded();
+            mAmWmState.assertKeyguardShowingAndNotOccluded();
+            lockCredentialSession.unlockDeviceWithCredential();
+            mAmWmState.waitForKeyguardGone();
+            mAmWmState.assertKeyguardGone();
+        }
     }
 
     @Test
     public void testDismissKeyguard() throws Exception {
-        gotoKeyguard();
-        mAmWmState.waitForKeyguardShowingAndNotOccluded();
-        mAmWmState.assertKeyguardShowingAndNotOccluded();
-        launchActivity("DismissKeyguardActivity");
-        enterAndConfirmLockCredential();
-        mAmWmState.waitForKeyguardGone();
-        mAmWmState.assertKeyguardGone();
-        mAmWmState.assertVisibility("DismissKeyguardActivity", true);
+        try (final LockCredentialSession lockCredentialSession = new LockCredentialSession()) {
+            lockCredentialSession.setLockCredential();
+            gotoKeyguard();
+            mAmWmState.waitForKeyguardShowingAndNotOccluded();
+            mAmWmState.assertKeyguardShowingAndNotOccluded();
+            launchActivity("DismissKeyguardActivity");
+            lockCredentialSession.enterAndConfirmLockCredential();
+            mAmWmState.waitForKeyguardGone();
+            mAmWmState.assertKeyguardGone();
+            mAmWmState.assertVisibility("DismissKeyguardActivity", true);
+        }
     }
 
     @Test
     public void testDismissKeyguard_whileOccluded() throws Exception {
-        gotoKeyguard();
-        mAmWmState.waitForKeyguardShowingAndNotOccluded();
-        mAmWmState.assertKeyguardShowingAndNotOccluded();
-        launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
-        mAmWmState.computeState(new WaitForValidActivityState.Builder( SHOW_WHEN_LOCKED_ACTIVITY ).build());
-        mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
-        launchActivity("DismissKeyguardActivity");
-        enterAndConfirmLockCredential();
-        mAmWmState.waitForKeyguardGone();
-        mAmWmState.assertKeyguardGone();
-        mAmWmState.assertVisibility("DismissKeyguardActivity", true);
-        mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, false);
+        try (final LockCredentialSession lockCredentialSession = new LockCredentialSession()) {
+            lockCredentialSession.setLockCredential();
+            gotoKeyguard();
+            mAmWmState.waitForKeyguardShowingAndNotOccluded();
+            mAmWmState.assertKeyguardShowingAndNotOccluded();
+            launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
+            mAmWmState.computeState(new WaitForValidActivityState(SHOW_WHEN_LOCKED_ACTIVITY));
+            mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
+            launchActivity("DismissKeyguardActivity");
+            lockCredentialSession.enterAndConfirmLockCredential();
+            mAmWmState.waitForKeyguardGone();
+            mAmWmState.assertKeyguardGone();
+            mAmWmState.assertVisibility("DismissKeyguardActivity", true);
+            mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, false);
+        }
     }
 
     @Test
     public void testDismissKeyguard_fromShowWhenLocked_notAllowed() throws Exception {
-        gotoKeyguard();
-        mAmWmState.waitForKeyguardShowingAndNotOccluded();
-        mAmWmState.assertKeyguardShowingAndNotOccluded();
-        launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
-        mAmWmState.computeState(new WaitForValidActivityState.Builder( SHOW_WHEN_LOCKED_ACTIVITY ).build());
-        mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
-        executeShellCommand("am broadcast -a trigger_broadcast --ez dismissKeyguard true");
-        enterAndConfirmLockCredential();
+        try (final LockCredentialSession lockCredentialSession = new LockCredentialSession()) {
+            lockCredentialSession.setLockCredential();
+            gotoKeyguard();
+            mAmWmState.waitForKeyguardShowingAndNotOccluded();
+            mAmWmState.assertKeyguardShowingAndNotOccluded();
+            launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
+            mAmWmState.computeState(new WaitForValidActivityState(SHOW_WHEN_LOCKED_ACTIVITY));
+            mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
+            executeShellCommand("am broadcast -a trigger_broadcast --ez dismissKeyguard true");
+            lockCredentialSession.enterAndConfirmLockCredential();
 
-        // Make sure we stay on Keyguard.
-        mAmWmState.assertKeyguardShowingAndOccluded();
-        mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
+            // Make sure we stay on Keyguard.
+            mAmWmState.assertKeyguardShowingAndOccluded();
+            mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
+        }
     }
 
     @Test
     public void testDismissKeyguardActivity_method() throws Exception {
-        final String logSeparator = clearLogcat();
-        gotoKeyguard();
-        mAmWmState.computeState();
-        assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
-        launchActivity("DismissKeyguardMethodActivity");
-        enterAndConfirmLockCredential();
-        mAmWmState.waitForKeyguardGone();
-        mAmWmState.computeState(new WaitForValidActivityState.Builder( "DismissKeyguardMethodActivity").build());
-        mAmWmState.assertVisibility("DismissKeyguardMethodActivity", true);
-        assertFalse(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
-        assertOnDismissSucceededInLogcat(logSeparator);
+        try (final LockCredentialSession lockCredentialSession = new LockCredentialSession()) {
+            lockCredentialSession.setLockCredential();
+            final String logSeparator = clearLogcat();
+            gotoKeyguard();
+            mAmWmState.computeState();
+            assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
+            launchActivity("DismissKeyguardMethodActivity");
+            lockCredentialSession.enterAndConfirmLockCredential();
+            mAmWmState.waitForKeyguardGone();
+            mAmWmState.computeState(new WaitForValidActivityState("DismissKeyguardMethodActivity"));
+            mAmWmState.assertVisibility("DismissKeyguardMethodActivity", true);
+            assertFalse(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
+            assertOnDismissSucceededInLogcat(logSeparator);
+        }
     }
 
     @Test
     public void testDismissKeyguardActivity_method_cancelled() throws Exception {
-        final String logSeparator = clearLogcat();
-        gotoKeyguard();
-        mAmWmState.computeState();
-        assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
-        launchActivity("DismissKeyguardMethodActivity");
-        pressBackButton();
-        assertOnDismissCancelledInLogcat(logSeparator);
-        mAmWmState.computeState();
-        mAmWmState.assertVisibility("DismissKeyguardMethodActivity", false);
-        assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
-        unlockDeviceWithCredential();
+        try (final LockCredentialSession lockCredentialSession = new LockCredentialSession()) {
+            lockCredentialSession.setLockCredential();
+            final String logSeparator = clearLogcat();
+            gotoKeyguard();
+            mAmWmState.computeState();
+            assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
+            launchActivity("DismissKeyguardMethodActivity");
+            pressBackButton();
+            assertOnDismissCancelledInLogcat(logSeparator);
+            mAmWmState.computeState();
+            mAmWmState.assertVisibility("DismissKeyguardMethodActivity", false);
+            assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
+            lockCredentialSession.unlockDeviceWithCredential();
+        }
     }
 
     @Test
     public void testEnterPipOverKeyguard() throws Exception {
         assumeTrue(supportsPip());
 
-        // Go to the keyguard
-        gotoKeyguard();
-        mAmWmState.waitForKeyguardShowingAndNotOccluded();
-        assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
+        try (final LockCredentialSession lockCredentialSession = new LockCredentialSession()) {
+            lockCredentialSession.setLockCredential();
+            // Go to the keyguard
+            gotoKeyguard();
+            mAmWmState.waitForKeyguardShowingAndNotOccluded();
+            assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
 
-        // Enter PiP on an activity on top of the keyguard, and ensure that it prompts the user for
-        // their credentials and does not enter picture-in-picture yet
-        launchActivity(PIP_ACTIVITY, EXTRA_SHOW_OVER_KEYGUARD, "true");
-        executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_ENTER_PIP);
-        mAmWmState.waitForKeyguardShowingAndOccluded();
-        mAmWmState.assertKeyguardShowingAndOccluded();
-        mAmWmState.assertDoesNotContainStack("Must not contain pinned stack.",
-                WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
+            // Enter PiP on an activity on top of the keyguard, and ensure that it prompts the user
+            // for their credentials and does not enter picture-in-picture yet
+            launchActivity(PIP_ACTIVITY, EXTRA_SHOW_OVER_KEYGUARD, "true");
+            executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_ENTER_PIP);
+            mAmWmState.waitForKeyguardShowingAndOccluded();
+            mAmWmState.assertKeyguardShowingAndOccluded();
+            mAmWmState.assertDoesNotContainStack("Must not contain pinned stack.",
+                    WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
 
-        // Enter the credentials and ensure that the activity actually entered picture-in-picture
-        enterAndConfirmLockCredential();
-        mAmWmState.waitForKeyguardGone();
-        mAmWmState.assertKeyguardGone();
-        mAmWmState.assertContainsStack("Must contain pinned stack.", WINDOWING_MODE_PINNED,
-                ACTIVITY_TYPE_STANDARD);
+            // Enter the credentials and ensure that the activity actually entered picture-in
+            // -picture
+            lockCredentialSession.enterAndConfirmLockCredential();
+            mAmWmState.waitForKeyguardGone();
+            mAmWmState.assertKeyguardGone();
+            mAmWmState.assertContainsStack("Must contain pinned stack.", WINDOWING_MODE_PINNED,
+                    ACTIVITY_TYPE_STANDARD);
+        }
     }
 
     @Test
     public void testShowWhenLockedActivityAndPipActivity() throws Exception {
         assumeTrue(supportsPip());
 
-        launchActivity(PIP_ACTIVITY);
-        executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_ENTER_PIP);
-        mAmWmState.computeState(new WaitForValidActivityState.Builder(PIP_ACTIVITY).build());
-        mAmWmState.assertContainsStack("Must contain pinned stack.", WINDOWING_MODE_PINNED,
-                ACTIVITY_TYPE_STANDARD);
-        mAmWmState.assertVisibility(PIP_ACTIVITY, true);
+        try (final LockCredentialSession lockCredentialSession = new LockCredentialSession()) {
+            lockCredentialSession.setLockCredential();
+            launchActivity(PIP_ACTIVITY);
+            executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_ENTER_PIP);
+            mAmWmState.computeState(new WaitForValidActivityState(PIP_ACTIVITY));
+            mAmWmState.assertContainsStack("Must contain pinned stack.", WINDOWING_MODE_PINNED,
+                    ACTIVITY_TYPE_STANDARD);
+            mAmWmState.assertVisibility(PIP_ACTIVITY, true);
 
-        launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
-        mAmWmState.computeState(
-                new WaitForValidActivityState.Builder(SHOW_WHEN_LOCKED_ACTIVITY).build());
-        mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
+            launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
+            mAmWmState.computeState(new WaitForValidActivityState(SHOW_WHEN_LOCKED_ACTIVITY));
+            mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
 
-        gotoKeyguard();
-        mAmWmState.waitForKeyguardShowingAndOccluded();
-        mAmWmState.assertKeyguardShowingAndOccluded();
-        mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
-        mAmWmState.assertVisibility(PIP_ACTIVITY, false);
+            gotoKeyguard();
+            mAmWmState.waitForKeyguardShowingAndOccluded();
+            mAmWmState.assertKeyguardShowingAndOccluded();
+            mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
+            mAmWmState.assertVisibility(PIP_ACTIVITY, false);
+        }
     }
 
     @Test
     public void testShowWhenLockedPipActivity() throws Exception {
         assumeTrue(supportsPip());
 
-        launchActivity(PIP_ACTIVITY, EXTRA_SHOW_OVER_KEYGUARD, "true");
-        executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_ENTER_PIP);
-        mAmWmState.computeState(new WaitForValidActivityState.Builder(PIP_ACTIVITY).build());
-        mAmWmState.assertContainsStack("Must contain pinned stack.", WINDOWING_MODE_PINNED,
-                ACTIVITY_TYPE_STANDARD);
-        mAmWmState.assertVisibility(PIP_ACTIVITY, true);
+        try (final LockCredentialSession lockCredentialSession = new LockCredentialSession()) {
+            lockCredentialSession.setLockCredential();
+            launchActivity(PIP_ACTIVITY, EXTRA_SHOW_OVER_KEYGUARD, "true");
+            executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_ENTER_PIP);
+            mAmWmState.computeState(new WaitForValidActivityState(PIP_ACTIVITY));
+            mAmWmState.assertContainsStack("Must contain pinned stack.", WINDOWING_MODE_PINNED,
+                    ACTIVITY_TYPE_STANDARD);
+            mAmWmState.assertVisibility(PIP_ACTIVITY, true);
 
-        gotoKeyguard();
-        mAmWmState.waitForKeyguardShowingAndNotOccluded();
-        mAmWmState.assertKeyguardShowingAndNotOccluded();
-        mAmWmState.assertVisibility(PIP_ACTIVITY, false);
+            gotoKeyguard();
+            mAmWmState.waitForKeyguardShowingAndNotOccluded();
+            mAmWmState.assertKeyguardShowingAndNotOccluded();
+            mAmWmState.assertVisibility(PIP_ACTIVITY, false);
+        }
     }
 }
