@@ -1506,6 +1506,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
             case CONTROL_AE_MODE_ON_AUTO_FLASH:
             case CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE:
             case CONTROL_AE_MODE_ON_ALWAYS_FLASH:
+            case CONTROL_AE_MODE_ON_EXTERNAL_FLASH:
                 // Test AE lock for above AUTO modes.
                 aeAutoModeTestLock(mode);
                 break;
