@@ -40,6 +40,10 @@ public class DeviceAndProfileOwnerTransferIncomingTest {
         }
     }
 
+    public static class BasicAdminReceiverNoMetadata extends DeviceAdminReceiver {
+        public BasicAdminReceiverNoMetadata() {}
+    }
+
     private final static String SHARED_PREFERENCE_NAME = "shared-preference-name";
     private final static String KEY_TRANSFER_COMPLETED_CALLED = "key-transfer-completed-called";
 

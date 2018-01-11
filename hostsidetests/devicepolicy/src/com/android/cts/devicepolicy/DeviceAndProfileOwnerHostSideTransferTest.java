@@ -88,6 +88,15 @@ public abstract class DeviceAndProfileOwnerHostSideTransferTest extends BaseDevi
         mIncomingTestClassName = incomingTestClassName;
     }
 
+    public void testTransferNoMetadata() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
+                mOutgoingTestClassName,
+                "testTransferNoMetadata", mUserId);
+    }
+
     /* TODO: Add tests for:
     * 1. startServiceForOwner
     * 2. passwordOwner

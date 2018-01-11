@@ -43,9 +43,14 @@ public abstract class DeviceAndProfileOwnerTransferOutgoingTest {
             "com.android.cts.transferownerincoming";
     private static final String TRANSFER_OWNER_INCOMING_TEST_RECEIVER_CLASS =
             "com.android.cts.transferowner.DeviceAndProfileOwnerTransferIncomingTest$BasicAdminReceiver";
+    private static final String TRANSFER_OWNER_INCOMING_TEST_RECEIVER_NO_METADATA_CLASS =
+            "com.android.cts.transferowner.DeviceAndProfileOwnerTransferIncomingTest$BasicAdminReceiverNoMetadata";
     static final ComponentName INCOMING_COMPONENT_NAME =
             new ComponentName(
                     TRANSFER_OWNER_INCOMING_PKG, TRANSFER_OWNER_INCOMING_TEST_RECEIVER_CLASS);
+    static final ComponentName INCOMING_NO_METADATA_COMPONENT_NAME =
+            new ComponentName(TRANSFER_OWNER_INCOMING_PKG,
+                    TRANSFER_OWNER_INCOMING_TEST_RECEIVER_NO_METADATA_CLASS);
     private static final ComponentName INVALID_TARGET_COMPONENT =
             new ComponentName("com.android.cts.intent.receiver", ".BroadcastIntentReceiver");
 
@@ -117,5 +122,16 @@ public abstract class DeviceAndProfileOwnerTransferOutgoingTest {
     public void testTransferOwner() throws Throwable {
         PersistableBundle b = new PersistableBundle();
         transferOwnership(mOutgoingComponentName, INCOMING_COMPONENT_NAME, b);
+    }
+
+    @Test
+    public void testTransferNoMetadata() throws Throwable {
+        PersistableBundle b = new PersistableBundle();
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> {
+                    transferOwnership(mOutgoingComponentName,
+                            INCOMING_NO_METADATA_COMPONENT_NAME, b);
+                });
     }
 }
