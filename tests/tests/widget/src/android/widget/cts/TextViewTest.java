@@ -85,7 +85,7 @@ import android.text.Editable;
 import android.text.InputFilter;
 import android.text.InputType;
 import android.text.Layout;
-import android.text.PremeasuredText;
+import android.text.MeasuredText;
 import android.text.Selection;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -1637,12 +1637,12 @@ public class TextViewTest {
 
     @UiThreadTest
     @Test
-    public void testSetText_PremeasuredText() {
+    public void testSetText_MeasuredText() {
         final TextView tv = findTextView(R.id.textview_text);
-        final PremeasuredText premeasured = PremeasuredText.build(
+        final MeasuredText measured = MeasuredText.build(
                 "This is an example text.", new TextPaint(), TextDirectionHeuristics.LTR);
-        tv.setText(premeasured);
-        assertEquals(premeasured.toString(), tv.getText().toString());
+        tv.setText(measured);
+        assertEquals(measured.toString(), tv.getText().toString());
     }
 
     @Test
