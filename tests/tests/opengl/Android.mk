@@ -29,7 +29,7 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
 LOCAL_JNI_SHARED_LIBRARIES := libopengltest_jni
 
-LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner
+LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util ctstestrunner
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
