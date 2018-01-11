@@ -210,10 +210,10 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Make sure UI is not shown.
         mUiBot.assertNoDatasets();
-        sReplier.assertNumberUnhandledFillRequests(0);
+        sReplier.assertNoUnhandledFillRequests();
         mActivity.onPassword(View::requestFocus);
         mUiBot.assertNoDatasets();
-        sReplier.assertNumberUnhandledFillRequests(0);
+        sReplier.assertNoUnhandledFillRequests();
 
         // Try again, forcing it
         saveOnlyTest(manually);
@@ -498,10 +498,10 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Make sure tapping on other fields from the dataset does not trigger it again
         mActivity.onPassword(View::requestFocus);
-        sReplier.assertNumberUnhandledFillRequests(0);
+        sReplier.assertNoUnhandledFillRequests();
 
         mActivity.onUsername(View::requestFocus);
-        sReplier.assertNumberUnhandledFillRequests(0);
+        sReplier.assertNoUnhandledFillRequests();
 
         // Auto-fill it.
         mUiBot.selectDataset("The Dude");
@@ -1347,7 +1347,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
 
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
-        sReplier.assertNumberUnhandledSaveRequests(0);
+        sReplier.assertNoUnhandledSaveRequests();
         assertThat(saveRequest.datasetIds).isNull();
 
         // Assert value of expected fields - should not be sanitized.
@@ -1503,7 +1503,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
 
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
-        sReplier.assertNumberUnhandledSaveRequests(0);
+        sReplier.assertNoUnhandledSaveRequests();
 
         // Assert value of expected fields - should not be sanitized.
         try {
@@ -1552,7 +1552,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
 
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
-        sReplier.assertNumberUnhandledSaveRequests(0);
+        sReplier.assertNoUnhandledSaveRequests();
 
         // Assert value of expected fields - should not be sanitized.
         try {
