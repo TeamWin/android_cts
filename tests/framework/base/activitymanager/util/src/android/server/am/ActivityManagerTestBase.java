@@ -171,6 +171,19 @@ public abstract class ActivityManagerTestBase {
                 + " --display " + displayId;
     }
 
+    protected static String getAmStartCmd(final String activityName, final int displayId,
+                                          final String... keyValuePairs) {
+        String base = "am start -n " + getActivityComponentName(activityName) + " -f 0x18000000"
+                + " --display " + displayId;
+        if (keyValuePairs.length % 2 != 0) {
+            throw new RuntimeException("keyValuePairs must be pairs of key/value arguments");
+        }
+        for (int i = 0; i < keyValuePairs.length; i += 2) {
+            base += " --es " + keyValuePairs[i] + " " + keyValuePairs[i + 1];
+        }
+        return base;
+    }
+
     protected static String getAmStartCmdInNewTask(final String activityName) {
         return "am start -n " + getActivityComponentName(activityName) + " -f 0x18000000";
     }
@@ -404,13 +417,6 @@ public abstract class ActivityManagerTestBase {
         mAmWmState.waitForHomeActivityVisible();
     }
 
-    protected void launchActivityOnDisplay(String targetActivityName, int displayId)
-            throws Exception {
-        executeShellCommand(getAmStartCmd(targetActivityName, displayId));
-
-        mAmWmState.waitForValidState(targetActivityName);
-    }
-
     protected void launchActivity(String activityName, int windowingMode,
             final String... keyValuePairs) throws Exception {
         executeShellCommand(getAmStartCmd(activityName, keyValuePairs)
@@ -418,6 +424,13 @@ public abstract class ActivityManagerTestBase {
         mAmWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
                 .setWindowingMode(windowingMode)
                 .build());
+    }
+
+    protected void launchActivityOnDisplay(String targetActivityName, int displayId,
+            String... keyValuePairs) throws Exception {
+        executeShellCommand(getAmStartCmd(targetActivityName, displayId, keyValuePairs));
+
+        mAmWmState.waitForValidState(targetActivityName);
     }
 
     /**
