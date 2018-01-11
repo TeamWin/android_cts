@@ -34,6 +34,7 @@ import android.provider.Settings;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject;
 import android.support.test.uiautomator.UiSelector;
+import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.test.InstrumentationTestCase;
 import android.text.format.DateUtils;
 import android.util.Log;
@@ -183,11 +184,15 @@ public class EncryptionAppTest extends InstrumentationTestCase {
         mDevice.waitForIdle();
 
         // Yes, we really want "none" if prompted again
-        view = new UiObject(new UiSelector()
-                .resourceId(mEncryptionSettingPackage + ":id/lock_none"));
-        if (view.waitForExists(TIMEOUT)) {
-            view.click();
-            mDevice.waitForIdle();
+        try {
+          view = new UiObject(new UiSelector()
+                  .resourceId(mEncryptionSettingPackage + ":id/lock_none"));
+          if (view.waitForExists(TIMEOUT)) {
+              view.click();
+              mDevice.waitForIdle();
+          }
+        } catch(UiObjectNotFoundException e) {
+          Log.d(TAG, "Not prompted again");
         }
 
         // Yes, we really want to
