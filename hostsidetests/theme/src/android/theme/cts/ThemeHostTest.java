@@ -66,6 +66,12 @@ public class ThemeHostTest extends DeviceTestCase {
     private static final String HARDWARE_TYPE_CMD = "dumpsys | grep android.hardware.type";
     private static final String DENSITY_PROP_DEVICE = "ro.sf.lcd_density";
     private static final String DENSITY_PROP_EMULATOR = "qemu.sf.lcd_density";
+    private static final Pattern sCurrentUiModePattern = Pattern.compile("mCurUiMode=0x(\\d+)");
+    private static final Pattern sUiModeLockedPattern =
+            Pattern.compile("mUiModeLocked=(true|false)");
+
+    private static final int UI_MODE_TYPE_MASK = 0x0f;
+    private static final int UI_MODE_TYPE_VR_HEADSET = 0x07;
 
     /** Shell command used to obtain current device density. */
     private static final String WM_DENSITY = "wm density";
@@ -86,6 +92,8 @@ public class ThemeHostTest extends DeviceTestCase {
     /** the string identifying the hardware type. */
     private String mHardwareType;
 
+    private static boolean mVrHeadset;
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -100,7 +108,42 @@ public class ThemeHostTest extends DeviceTestCase {
         final int numCores = Runtime.getRuntime().availableProcessors();
         mExecutionService = Executors.newFixedThreadPool(numCores * 2);
         mCompletionService = new ExecutorCompletionService<>(mExecutionService);
+        mVrHeadset = isUiModeLockedToVrHeadset();
     }
+
+    protected String runCommandAndPrintOutput(String command) throws DeviceNotAvailableException {
+        final String output = mDevice.executeShellCommand(command);
+        return output;
+    }
+
+    // TODO: Switch to using a feature flag, when available.
+    protected boolean isUiModeLockedToVrHeadset() throws DeviceNotAvailableException {
+        final String output = runCommandAndPrintOutput("dumpsys uimode");
+
+        Integer curUiMode = null;
+        Boolean uiModeLocked = null;
+        for (String line : output.split("\\n")) {
+            line = line.trim();
+            Matcher matcher = sCurrentUiModePattern.matcher(line);
+            if (matcher.find()) {
+                curUiMode = Integer.parseInt(matcher.group(1), 16);
+            }
+            matcher = sUiModeLockedPattern.matcher(line);
+            if (matcher.find()) {
+                uiModeLocked = matcher.group(1).equals("true");
+            }
+        }
+
+        boolean uiModeLockedToVrHeadset = (curUiMode != null) && (uiModeLocked != null)
+                && ((curUiMode & UI_MODE_TYPE_MASK) == UI_MODE_TYPE_VR_HEADSET) && uiModeLocked;
+
+        if (uiModeLockedToVrHeadset) {
+            Log.logAndDisplay(LogLevel.INFO, LOG_TAG, "UI mode is locked to VR headset");
+        }
+
+        return uiModeLockedToVrHeadset;
+    }
+
 
     private Map<String, File> extractReferenceImages(String zipFile) throws Exception {
         final Map<String, File> references = new HashMap<>();
@@ -147,7 +190,8 @@ public class ThemeHostTest extends DeviceTestCase {
 
     public void testThemes() throws Exception {
         if (checkHardwareTypeSkipTest(mHardwareType)) {
-            Log.logAndDisplay(LogLevel.INFO, LOG_TAG, "Skipped themes test for watch / TV");
+            Log.logAndDisplay(LogLevel.INFO, LOG_TAG,
+                "Skipped themes test for watch / TV / VR headset");
             return;
         }
 
@@ -289,8 +333,10 @@ public class ThemeHostTest extends DeviceTestCase {
         return Integer.parseInt(device.getProperty(densityProp));
     }
 
+    /** Check the hardware type and skip if it is - TV/Watch/VrHeadset. */
     private static boolean checkHardwareTypeSkipTest(String hardwareTypeString) {
         return hardwareTypeString.contains("android.hardware.type.watch")
-                || hardwareTypeString.contains("android.hardware.type.television");
+                || hardwareTypeString.contains("android.hardware.type.television")
+                || mVrHeadset;
     }
 }
