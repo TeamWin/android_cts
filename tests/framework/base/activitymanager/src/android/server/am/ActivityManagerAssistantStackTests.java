@@ -194,6 +194,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
 
     @Test
     @Presubmit
+    @FlakyTest(bugId = 71875631)
     public void testAssistantStackFinishToPreviousApp() throws Exception {
         // Launch an assistant activity on top of an existing fullscreen activity, and ensure that
         // the fullscreen activity is still visible and on top after the assistant activity finishes
