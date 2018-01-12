@@ -26,7 +26,12 @@ import android.content.Context;
 import android.os.RemoteException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import android.provider.Settings;
+import com.android.compatibility.common.util.SystemUtil;
 import com.android.cts.verifier.vr.MockVrListenerService;
 
 public class VrSetFIFOThreadTest extends ActivityInstrumentationTestCase2<OpenGLESActivity> {
@@ -34,11 +39,18 @@ public class VrSetFIFOThreadTest extends ActivityInstrumentationTestCase2<OpenGL
     private ActivityManager mActivityManager;
     private Context mContext;
     private String mOldVrListener;
+    private boolean mPersistentVrModeEnabled;
     private static final int SCHED_OTHER = 0;
     private static final int SCHED_FIFO = 1;
     private static final int SCHED_RESET_ON_FORK = 0x40000000;
     public static final String ENABLED_VR_LISTENERS = "enabled_vr_listeners";
     private static final String TAG = "VrSetFIFOThreadTest";
+    private static final String DUMP_VRMANAGER = "dumpsys vrmanager";
+    private static final Pattern sVrManagerModePattern =
+            Pattern.compile("Persistent VR mode is currently: (\\w+).*");
+
+    /** Temp storage used for parsing. */
+    final LinkedList<String> mDumpLines = new LinkedList<>();
 
     public VrSetFIFOThreadTest() {
         super(OpenGLESActivity.class);
@@ -48,7 +60,14 @@ public class VrSetFIFOThreadTest extends ActivityInstrumentationTestCase2<OpenGL
     public void setUp() throws Exception {
         super.setUp();
         mContext = getInstrumentation().getTargetContext();
-        mOldVrListener = Settings.Secure.getString(mContext.getContentResolver(), ENABLED_VR_LISTENERS);
+        mOldVrListener = Settings.Secure.getString(mContext.getContentResolver(),
+                ENABLED_VR_LISTENERS);
+        String result = SystemUtil.runShellCommand(getInstrumentation(), DUMP_VRMANAGER);
+        mDumpLines.clear();
+        Collections.addAll(mDumpLines, result.split("\\n"));
+        if ("enabled".equals(parseVrManagerDumpsys(mDumpLines))) {
+            mPersistentVrModeEnabled = true;
+        }
     }
 
     @Override
@@ -56,6 +75,17 @@ public class VrSetFIFOThreadTest extends ActivityInstrumentationTestCase2<OpenGL
         Settings.Secure.putString(mContext.getContentResolver(),
             ENABLED_VR_LISTENERS, mOldVrListener);
         super.tearDown();
+    }
+
+    private String parseVrManagerDumpsys(LinkedList<String> dump) {
+        while (!dump.isEmpty()) {
+            final String line = dump.pop().trim();
+            Matcher matcher = sVrManagerModePattern.matcher(line);
+            if (matcher.matches()) {
+                return matcher.group(1);
+            }
+        }
+        return null;
     }
 
     private void setIntent(int viewIndex, int createProtected,
@@ -69,6 +99,10 @@ public class VrSetFIFOThreadTest extends ActivityInstrumentationTestCase2<OpenGL
     }
 
     public void testSetVrThreadAPISuccess() throws Throwable {
+        // This API is not meant for persistent vr mode.
+        if (mPersistentVrModeEnabled) {
+          return;
+        }
         setIntent(1, 1, 0, 0);
         ComponentName requestedComponent = new ComponentName(mContext, MockVrListenerService.class);
         Settings.Secure.putString(mContext.getContentResolver(),
@@ -92,6 +126,10 @@ public class VrSetFIFOThreadTest extends ActivityInstrumentationTestCase2<OpenGL
     }
 
     public void testSetVrThreadAPIFailure() throws Throwable {
+        // This API is not meant for persistent vr mode.
+        if (mPersistentVrModeEnabled) {
+          return;
+        }
         setIntent(1, 1, 0, 0);
         ComponentName requestedComponent = new ComponentName(mContext, MockVrListenerService.class);
         Settings.Secure.putString(mContext.getContentResolver(),
