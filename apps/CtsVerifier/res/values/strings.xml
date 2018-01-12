@@ -1778,7 +1778,7 @@ You should be prompted to select credentials; choose the ones you just installed
 
         1. Open a work app.\n
         2. Verify that a screen asking you for your work credentials is shown.\n
-        3. Verify that the background image contains an orange suitcase.\n
+        3. Verify that the background image contains a suitcase.\n
         4. Verify that the background color of the remaining image is blue.\n
         5. Verify that the header text says \"CtsVerifier\".\n
         6. Confirm your credentials and verify that the credentials you entered previously work.
@@ -2203,7 +2203,7 @@ You should be prompted to select credentials; choose the ones you just installed
         Navigate to Accounts and confirm that:\n
         \n
         - Both Personal and Work categories exist.\n
-        - \"Remove work profile\" exists under the Work category.\n
+        - \"Remove work profile\" or \"Uninstall\" exists under the Work category.\n
         \n
         Furthermore, verify that:\n
         - There are two auto-sync options present, one for personal and one for work data (either on the screen or in the overflow menu).\n
@@ -2227,7 +2227,7 @@ You should be prompted to select credentials; choose the ones you just installed
         Go to All Apps screen and scroll through it to confirm that:\n
         \n
         - A new set of work apps including CTS Verifier appear in the list.\n
-        - Work badge overlay appears on work app\'s icon (see example icon below).\n
+        - Work badge overlay appears on work app\'s icon (see example icon below, color and style may vary).\n
         \n
         Then navigate back to this screen using Recents button.
     </string>
@@ -2246,7 +2246,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="provisioning_byod_location_settings">Profile-aware location settings</string>
     <string name="provisioning_byod_location_settings_instruction">
         Please press the Go button to open Location page in settings.
-        (If this device has a separate app for work settings, ignore the Go button and navigate to that app manually).\n
+        (If this device has a separate app for work settings, ignore the Go button and navigate to that app manually, if necessary).\n
         \n
         Verify that work profile entry exists in the page and it has a toggleable switch.\n
         Switch the main location switch at the top of the screen off. You should see the work profile location switch go disabled and into \'off\' state.\n
@@ -2436,6 +2436,7 @@ You should be prompted to select credentials; choose the ones you just installed
         2. Enter a valid color code.\n
         3. Press the Set button to set organization Info.\n
         4. Press the Go button to open a dialog to confirm work credentials.\n
+        (If this device has a separate app for work settings, ignore the Go button and open the work lock screen manually to confirm, if necessary.)\n
         5. Verify that the background color of the resulting dialog is as set by you.\n
         6. Verify that the header text has organization name as set by you.\n
     </string>
@@ -2840,7 +2841,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="dummy_accessibility_service_label">Dummy accessibility service</string>
     <string name="policy_transparency_test_instructions">
         1. <xliff:g id="set_step" example="Set policy by turning the switch on">%1$s</xliff:g>\n
-        2. Open Settings app by clicking the "Open settings" button below. (If this device has a separate app for work settings, ignore the button and open that app manually from the launcher)\n
+        2. Open Settings app by clicking the "Open settings" button below. (If this device has a separate app for work settings, ignore the button and open that app manually from the launcher, if necessary)\n
         3. Verify that performing the following action will trigger a support dialog:\n
            <xliff:g id="user_action" example="Adding an account">%2$s</xliff:g>.\n
         4. Verify that the support dialog displays the short support message set earlier.\n
