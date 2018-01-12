@@ -190,7 +190,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         private String mActivityToFilter;
         private int result = RESULT_TIMEOUT;
         public long mTimeUsed = 0;
-        private static final int TIMEOUT_IN_MS = 1000;
+        private static final int TIMEOUT_IN_MS = 2000;
 
         // Create the filter with the intent to look for.
         public ActivityReceiverFilter(String activityToFilter) {
