@@ -72,8 +72,9 @@ public class LightBarTests extends LightBarTestBase {
         PackageManager pm = getInstrumentation().getContext().getPackageManager();
         if (pm.hasSystemFeature(PackageManager.FEATURE_WATCH)
                 || pm.hasSystemFeature(PackageManager.FEATURE_TELEVISION)
-                || pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
-            // No status bar on TVs and watches.
+                || pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+                || isRunningInVR()) {
+            // No status bar on TVs, watches and when running in VR.
             return;
         }
 
@@ -179,6 +180,14 @@ public class LightBarTests extends LightBarTestBase {
                 dumpBitmap(bitmap);
             }
         }
+    }
+
+    private boolean isRunningInVR() {
+        final android.content.Context context =
+            android.support.test.InstrumentationRegistry.getContext();
+        android.content.res.Configuration config = context.getResources().getConfiguration();
+        return (config.uiMode & android.content.res.Configuration.UI_MODE_TYPE_MASK)
+        == android.content.res.Configuration.UI_MODE_TYPE_VR_HEADSET;
     }
 
     private void assertMoreThan(String what, float expected, float actual, String hint) {
