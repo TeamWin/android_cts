@@ -18,7 +18,7 @@ package com.android.server.cts;
 
 import android.app.ProcessState;
 import android.content.IntentProto;
-import android.os.BatteryManagerProto;
+import android.os.BatteryPluggedStateEnum;
 import android.os.LooperProto;
 import android.os.PowerManagerInternalProto;
 import android.os.PowerManagerProto;
@@ -42,7 +42,7 @@ public class PowerIncidentTest extends ProtoDumpTestCase {
                         .getValues()
                         .contains(dump.getWakefulness().getValueDescriptor()));
         assertTrue(
-                BatteryManagerProto.PlugType.getDescriptor()
+                BatteryPluggedStateEnum.getDescriptor()
                         .getValues()
                         .contains(dump.getPlugType().getValueDescriptor()));
         assertTrue(
