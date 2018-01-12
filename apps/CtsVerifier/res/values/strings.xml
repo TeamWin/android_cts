@@ -3151,6 +3151,8 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="disallow_adjust_volume_action">Adjusting the volume</string>
     <string name="disallow_config_date_time">Disallow config date and time settings</string>
     <string name="disallow_config_date_time_action">Configuring auto time, time, auto date or date</string>
+    <string name="disallow_config_location_mode">Disallow config location mode</string>
+    <string name="disallow_config_location_mode_action">Configuring location mode or toggling location switch bar</string>
     <string name="disallow_apps_control">Disallow controlling apps</string>
     <string name="disallow_apps_control_action">DISABLE/UNINSTALL/FORCE STOP-ing any app in the managed device/profile other than CtsVerifier</string>
     <string name="disallow_config_cell_broadcasts">Disallow config cell broadcasts</string>
