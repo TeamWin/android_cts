@@ -42,6 +42,7 @@ import org.junit.Test;
  *     atest CtsActivityManagerDeviceTestCases:ActivityManagerAssistantStackTests
  */
 //@Presubmit b/67706642
+@FlakyTest(bugId = 71875631)
 public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase {
 
     private static final String VOICE_INTERACTION_SERVICE = "AssistantVoiceInteractionService";
