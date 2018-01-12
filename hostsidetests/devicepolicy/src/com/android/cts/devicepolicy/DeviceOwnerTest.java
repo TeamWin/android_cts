@@ -736,6 +736,13 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
+    public void testAirplaneModeRestriction() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        executeDeviceOwnerTest("AirplaneModeRestrictionTest");
+    }
+
     private void executeDeviceOwnerTest(String testClassName) throws Exception {
         if (!mHasFeature) {
             return;
