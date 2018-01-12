@@ -21,5 +21,6 @@
         <item>com.android.cts.verifier.deskclock.DeskClockTestsActivity</item>
         <item>com.android.cts.verifier.screenpinning.ScreenPinningTestActivity</item>
         <item>com.android.cts.verifier.notifications.ShortcutThrottlingResetActivity</item>
+        <item>com.android.cts.verifier.vr.VrListenerVerifierActivity</item>
     </string-array>
 </resources>
