@@ -546,9 +546,10 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
                 || PRETEND_DEVICE_SUPPORTS_FREEFORM;
     }
 
-    protected boolean isHandheld() throws DeviceNotAvailableException {
+    protected boolean supportsKeyguard() throws DeviceNotAvailableException {
         return !hasDeviceFeature("android.software.leanback")
-                && !hasDeviceFeature("android.hardware.type.watch");
+                && !hasDeviceFeature("android.hardware.type.watch")
+                && !isUiModeLockedToVrHeadset();
     }
 
     // TODO: Switch to using a feature flag, when available.

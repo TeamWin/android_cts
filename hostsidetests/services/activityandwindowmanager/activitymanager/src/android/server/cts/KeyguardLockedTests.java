@@ -46,7 +46,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
     }
 
     public void testLockAndUnlock() throws Exception {
-        if (!isHandheld()) {
+        if (!supportsKeyguard()) {
             return;
         }
         gotoKeyguard();
@@ -58,7 +58,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
     }
 
     public void testDismissKeyguard() throws Exception {
-        if (!isHandheld()) {
+        if (!supportsKeyguard()) {
             return;
         }
         gotoKeyguard();
@@ -72,7 +72,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
     }
 
     public void testDismissKeyguard_whileOccluded() throws Exception {
-        if (!isHandheld()) {
+        if (!supportsKeyguard()) {
             return;
         }
         gotoKeyguard();
@@ -90,7 +90,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
     }
 
     public void testDismissKeyguard_fromShowWhenLocked_notAllowed() throws Exception {
-        if (!isHandheld()) {
+        if (!supportsKeyguard()) {
             return;
         }
         gotoKeyguard();
@@ -108,7 +108,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
     }
 
     public void testDismissKeyguardActivity_method() throws Exception {
-        if (!isHandheld()) {
+        if (!supportsKeyguard()) {
             return;
         }
         final String logSeparator = clearLogcat();
@@ -125,7 +125,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
     }
 
     public void testDismissKeyguardActivity_method_cancelled() throws Exception {
-        if (!isHandheld()) {
+        if (!supportsKeyguard()) {
             return;
         }
         final String logSeparator = clearLogcat();
@@ -142,7 +142,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
     }
 
     public void testEnterPipOverKeyguard() throws Exception {
-        if (!isHandheld() || !supportsPip()) {
+        if (!supportsKeyguard() || !supportsPip()) {
             return;
         }
 
@@ -167,7 +167,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
     }
 
     public void testShowWhenLockedActivityAndPipActivity() throws Exception {
-        if (!isHandheld() || !supportsPip()) {
+        if (!supportsKeyguard() || !supportsPip()) {
             return;
         }
 
@@ -189,7 +189,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
     }
 
     public void testShowWhenLockedPipActivity() throws Exception {
-        if (!isHandheld() || !supportsPip()) {
+        if (!supportsKeyguard() || !supportsPip()) {
             return;
         }
 
