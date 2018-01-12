@@ -298,20 +298,30 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      */
     @Presubmit
     public void testFullscreenAppOrientationRequests() throws Exception {
+        String logSeparator = clearLogcat();
         launchActivity(PORTRAIT_ACTIVITY_NAME);
         mAmWmState.assertVisibility(PORTRAIT_ACTIVITY_NAME, true /* visible */);
-        assertEquals("Fullscreen app requested portrait orientation",
-                1 /* portrait */, mAmWmState.getWmState().getLastOrientation());
+        ReportedSizes reportedSizes =
+                getLastReportedSizesForActivity(PORTRAIT_ACTIVITY_NAME, logSeparator);
+        assertEquals("portrait activity should be in portrait",
+                1 /* portrait */, reportedSizes.orientation);
+        logSeparator = clearLogcat();
 
         launchActivity(LANDSCAPE_ACTIVITY_NAME);
         mAmWmState.assertVisibility(LANDSCAPE_ACTIVITY_NAME, true /* visible */);
-        assertEquals("Fullscreen app requested landscape orientation",
-                0 /* landscape */, mAmWmState.getWmState().getLastOrientation());
+        reportedSizes =
+                getLastReportedSizesForActivity(LANDSCAPE_ACTIVITY_NAME, logSeparator);
+        assertEquals("landscape activity should be in landscape",
+                2 /* landscape */, reportedSizes.orientation);
+        logSeparator = clearLogcat();
 
         launchActivity(PORTRAIT_ACTIVITY_NAME);
         mAmWmState.assertVisibility(PORTRAIT_ACTIVITY_NAME, true /* visible */);
-        assertEquals("Fullscreen app requested portrait orientation",
-                1 /* portrait */, mAmWmState.getWmState().getLastOrientation());
+        reportedSizes =
+                getLastReportedSizesForActivity(PORTRAIT_ACTIVITY_NAME, logSeparator);
+        assertEquals("portrait activity should be in portrait",
+                1 /* portrait */, reportedSizes.orientation);
+        logSeparator = clearLogcat();
     }
 
     public void testNonfullscreenAppOrientationRequests() throws Exception {
