@@ -20,6 +20,7 @@ import com.android.compatibility.common.util.SystemUtil;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.media.AudioManager;
 import android.media.session.MediaController;
 import android.media.session.MediaSession;
@@ -105,8 +106,8 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
     public void testSetOnVolumeKeyLongPressListener() throws Exception {
         Context context = getInstrumentation().getTargetContext();
         if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK) ||
-            context.getResources().getBoolean(
-                       com.android.internal.R.bool.config_handleVolumeKeysInWindowManager)) {
+            context.getResources().getBoolean(Resources.getSystem().getIdentifier(
+               "config_handleVolumeKeysInWindowManager", "bool", "android"))) {
             // Skip this test, because the PhoneWindowManager dispatches volume key
             // events directly to the audio service to change the system volume.
             return;
