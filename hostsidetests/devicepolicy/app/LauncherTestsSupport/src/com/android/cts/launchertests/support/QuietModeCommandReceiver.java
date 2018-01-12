@@ -23,7 +23,7 @@ import android.os.UserManager;
 import android.util.Log;
 
 /**
- * Runs {@link UserManager#trySetQuietModeEnabled(boolean, UserHandle)} APIs by receiving
+ * Runs {@link UserManager#requestQuietModeEnabled(boolean, UserHandle)} APIs by receiving
  * broadcast and returns the result back to the broadcast sender.
  */
 public class QuietModeCommandReceiver extends BroadcastReceiver {
@@ -43,7 +43,7 @@ public class QuietModeCommandReceiver extends BroadcastReceiver {
         String result;
         try {
             final boolean setQuietModeResult =
-                    userManager.trySetQuietModeEnabled(enableQuietMode, targetUser);
+                    userManager.requestQuietModeEnabled(enableQuietMode, targetUser);
             result = Boolean.toString(setQuietModeResult);
             Log.i(TAG, "trySetQuietModeEnabled returns " + setQuietModeResult);
         } catch (SecurityException ex) {

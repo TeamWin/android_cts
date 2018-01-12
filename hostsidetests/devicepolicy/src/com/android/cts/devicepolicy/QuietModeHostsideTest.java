@@ -5,7 +5,7 @@ import java.util.Map;
 
 /**
  * CTS to verify toggling quiet mode in work profile by using
- * {@link android.os.UserManager#trySetQuietModeEnabled(boolean, android.os.UserHandle)}.
+ * {@link android.os.UserManager#requestQuietModeEnabled(boolean, android.os.UserHandle)}.
  */
 public class QuietModeHostsideTest extends BaseDevicePolicyTest {
     private static final String TEST_PACKAGE = "com.android.cts.launchertests";
