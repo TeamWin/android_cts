@@ -17,6 +17,7 @@
 package android.app.cts;
 
 import android.app.Notification;
+import android.app.Notification.Action.Builder;
 import android.app.Notification.MessagingStyle.Message;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -29,8 +30,11 @@ import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Parcel;
+import android.os.Parcelable;
+import android.support.annotation.Nullable;
 import android.test.AndroidTestCase;
 import android.widget.RemoteViews;
+import java.util.function.Consumer;
 
 import java.util.ArrayList;
 
@@ -414,6 +418,36 @@ public class NotificationTest extends AndroidTestCase {
         assertTrue(a.getDataOnlyRemoteInputs()[0].isDataOnly());
     }
 
+    public void testAction_builder_hasDefault() {
+        Notification.Action action = makeNotificationAction(null);
+        assertEquals(Notification.Action.SEMANTIC_ACTION_NONE, action.getSemanticAction());
+    }
+
+    public void testAction_builder_setSemanticAction() {
+        Notification.Action action = makeNotificationAction(
+                builder -> builder.setSemanticAction(Notification.Action.SEMANTIC_ACTION_REPLY));
+        assertEquals(Notification.Action.SEMANTIC_ACTION_REPLY, action.getSemanticAction());
+    }
+
+    public void testAction_parcel() {
+        Notification.Action action = writeAndReadParcelable(
+                makeNotificationAction(builder -> {
+                    builder.setSemanticAction(Notification.Action.SEMANTIC_ACTION_ARCHIVE);
+                    builder.setAllowGeneratedReplies(true);
+                }));
+
+        assertEquals(Notification.Action.SEMANTIC_ACTION_ARCHIVE, action.getSemanticAction());
+        assertTrue(action.getAllowGeneratedReplies());
+    }
+
+    public void testAction_clone() {
+        Notification.Action action = makeNotificationAction(
+                builder -> builder.setSemanticAction(Notification.Action.SEMANTIC_ACTION_DELETE));
+        assertEquals(
+                Notification.Action.SEMANTIC_ACTION_DELETE,
+                action.clone().getSemanticAction());
+    }
+
     private static RemoteInput newDataOnlyRemoteInput() {
         return new RemoteInput.Builder(DATA_RESULT_KEY)
             .setAllowFreeFormInput(false)
@@ -439,5 +473,30 @@ public class NotificationTest extends AndroidTestCase {
 
     private static Notification.Action.Builder newActionBuilder() {
         return new Notification.Action.Builder(0, "title", null);
+    }
+
+    /**
+     * Writes an arbitrary {@link Parcelable} into a {@link Parcel} using its writeToParcel
+     * method before reading it out again to check that it was sent properly.
+     */
+    private static <T extends Parcelable> T writeAndReadParcelable(T original) {
+        Parcel p = Parcel.obtain();
+        p.writeParcelable(original, /* flags */ 0);
+        p.setDataPosition(0);
+        return p.readParcelable(/* classLoader */ null);
+    }
+
+    /**
+     * Creates a Notification.Action by mocking initial dependencies and then applying
+     * transformations if they're defined.
+     */
+    private Notification.Action makeNotificationAction(
+            @Nullable Consumer<Builder> transformation) {
+        Notification.Action.Builder actionBuilder =
+            new Notification.Action.Builder(null, "Test Title", null);
+        if (transformation != null) {
+            transformation.accept(actionBuilder);
+        }
+        return actionBuilder.build();
     }
 }
