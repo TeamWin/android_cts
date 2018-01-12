@@ -318,6 +318,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      */
     @Presubmit
     @Test
+    @FlakyTest(bugId = 71875755)
     public void testFullscreenAppOrientationRequests() throws Exception {
         launchActivity(PORTRAIT_ACTIVITY_NAME);
         mAmWmState.assertVisibility(PORTRAIT_ACTIVITY_NAME, true /* visible */);
