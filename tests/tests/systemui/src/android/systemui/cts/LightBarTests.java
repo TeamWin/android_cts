@@ -33,8 +33,6 @@ import android.os.SystemClock;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.view.InputDevice;
-import android.view.KeyCharacterMap;
-import android.view.KeyEvent;
 import android.view.MotionEvent;
 
 import org.junit.Rule;
@@ -154,12 +152,6 @@ public class LightBarTests extends LightBarTestBase {
         event.setSource(InputDevice.SOURCE_TOUCHSCREEN);
         assertTrue(automation.injectInputEvent(event, true));
         event.recycle();
-    }
-
-    private boolean hasVirtualNavigationBar() {
-        boolean hasBackKey = KeyCharacterMap.deviceHasKey(KeyEvent.KEYCODE_BACK);
-        boolean hasHomeKey = KeyCharacterMap.deviceHasKey(KeyEvent.KEYCODE_HOME);
-        return !hasBackKey || !hasHomeKey;
     }
 
     private void assertLightStats(Bitmap bitmap, Stats s) {
