@@ -39,7 +39,6 @@ import java.lang.System;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Vector;
@@ -787,19 +786,6 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
     /* ====================================================================== */
     /*                              UTILITY FUNCTIONS                         */
     /* ====================================================================== */
-    public static String collectionString(Collection<?> c) {
-        StringBuilder res = new StringBuilder("[");
-        boolean subsequent = false;
-        for (Object o: c) {
-            if (subsequent) {
-                res.append(", ");
-            }
-            res.append(o);
-            subsequent = true;
-        }
-        return res.append("]").toString();
-    }
-
     static String byteBufferToString(ByteBuffer buf, int start, int len) {
         int oldPosition = buf.position();
         buf.position(start);
@@ -882,7 +868,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
             final long NSECS_IN_1SEC = 1000000000;
             if (!mRenderedTimeStamps.remove(presentationTimeUs)) {
                 warn("invalid timestamp " + presentationTimeUs + ", queued " +
-                        collectionString(mRenderedTimeStamps));
+                        mRenderedTimeStamps);
             }
             assert nanoTime > mLastRenderNanoTime;
             mLastRenderNanoTime = nanoTime;
@@ -1002,7 +988,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                 mRenderedTimeStamps.add(info.presentationTimeUs);
                 if (!mTimeStamps.remove(info.presentationTimeUs)) {
                     warn("invalid timestamp " + info.presentationTimeUs + ", queued " +
-                            collectionString(mTimeStamps));
+                            mTimeStamps);
                 }
             }
 
