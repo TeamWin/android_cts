@@ -80,6 +80,7 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
     }
 
     @Presubmit
+    @FlakyTest(bugId = 71877849)
     @Test
     public void testChangeFontScaleNoRelaunch() throws Exception {
         // Should receive onConfigurationChanged() and no relaunch

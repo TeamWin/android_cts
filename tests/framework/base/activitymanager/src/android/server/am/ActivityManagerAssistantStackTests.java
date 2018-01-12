@@ -217,6 +217,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
 
     @Test
     @Presubmit
+    @FlakyTest(bugId = 71875631)
     public void testDisallowEnterPiPFromAssistantStack() throws Exception {
         try (final AssistantSession assistantSession = new AssistantSession()) {
             assistantSession.set(getActivityComponentName(VOICE_INTERACTION_SERVICE));
