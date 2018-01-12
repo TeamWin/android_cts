@@ -178,19 +178,18 @@ public class TextClassifierValueObjectsTest {
         final Intent intent1 = new Intent();
         final String label1 = "label1";
         final Drawable icon1 = new ColorDrawable(Color.GREEN);
-        final View.OnClickListener onClick1 = v -> { };
         final Intent intent2 = new Intent();
         final String label2 = "label2";
         final Drawable icon2 = new ColorDrawable(Color.BLUE);
-        final View.OnClickListener onClick2 = v -> { };
 
         final TextClassification classification = new TextClassification.Builder()
                 .setText(TEXT)
                 .setEntityType(TextClassifier.TYPE_ADDRESS, addressScore)
                 .setEntityType(TextClassifier.TYPE_EMAIL, emailScore)
-                .setPrimaryAction(intent, label, icon, onClick)
-                .addSecondaryAction(intent1, label1, icon1, onClick1)
-                .addSecondaryAction(intent2, label2, icon2, onClick2)
+                .setPrimaryAction(intent, label, icon)
+                .setOnClickListener(onClick)
+                .addSecondaryAction(intent1, label1, icon1)
+                .addSecondaryAction(intent2, label2, icon2)
                 .setSignature(SIGNATURE)
                 .build();
 
@@ -213,11 +212,9 @@ public class TextClassifierValueObjectsTest {
         assertEquals(intent1, classification.getSecondaryIntent(0));
         assertEquals(label1, classification.getSecondaryLabel(0));
         assertEquals(icon1, classification.getSecondaryIcon(0));
-        assertEquals(onClick1, classification.getSecondaryOnClickListener(0));
         assertEquals(intent2, classification.getSecondaryIntent(1));
         assertEquals(label2, classification.getSecondaryLabel(1));
         assertEquals(icon2, classification.getSecondaryIcon(1));
-        assertEquals(onClick2, classification.getSecondaryOnClickListener(1));
 
         assertEquals(SIGNATURE, classification.getSignature());
     }
