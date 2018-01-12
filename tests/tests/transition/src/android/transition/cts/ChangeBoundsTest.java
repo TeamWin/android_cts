@@ -25,6 +25,7 @@ import android.animation.Animator;
 import android.content.res.Resources;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.os.SystemClock;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.transition.ChangeBounds;
@@ -39,6 +40,9 @@ import android.view.animation.LinearInterpolator;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
@@ -125,8 +129,7 @@ public class ChangeBoundsTest extends BaseTransitionTest {
 
         startTransition(R.layout.scene6);
 
-        // now delay for at least a few frames before interrupting the transition
-        Thread.sleep(150);
+        waitForMiddleOfTransition();
         resetChangeBoundsTransition();
         startTransition(R.layout.scene6);
 
@@ -144,8 +147,7 @@ public class ChangeBoundsTest extends BaseTransitionTest {
 
         startTransition(R.layout.scene6);
 
-        // now delay for at least a few frames before interrupting the transition
-        Thread.sleep(150);
+        waitForMiddleOfTransition();
 
         resetChangeBoundsTransition();
         mChangeBounds.setResizeClip(true);
@@ -165,8 +167,7 @@ public class ChangeBoundsTest extends BaseTransitionTest {
 
         startTransition(R.layout.scene6);
 
-        // now delay for at least a few frames before reversing
-        Thread.sleep(150);
+        waitForMiddleOfTransition();
         // reverse the transition back to scene1
         resetChangeBoundsTransition();
         startTransition(R.layout.scene1);
@@ -184,9 +185,7 @@ public class ChangeBoundsTest extends BaseTransitionTest {
         validateInScene1();
 
         startTransition(R.layout.scene6);
-
-        // now delay for at least a few frames before reversing
-        Thread.sleep(150);
+        waitForMiddleOfTransition();
 
         // reverse the transition back to scene1
         resetChangeBoundsTransition();
@@ -197,6 +196,36 @@ public class ChangeBoundsTest extends BaseTransitionTest {
         assertFalse(isRestartingClip());
         waitForEnd(1000);
         validateInScene1();
+    }
+
+    private void waitForMiddleOfTransition() throws Throwable {
+        Resources resources = mActivity.getResources();
+        float closestDistance = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                2 * SMALL_OFFSET_DP, resources.getDisplayMetrics());
+
+        final View red = mActivity.findViewById(R.id.redSquare);
+        final View green = mActivity.findViewById(R.id.greenSquare);
+        final long endTime = SystemClock.elapsedRealtime() + 500;
+        final CountDownLatch latch = new CountDownLatch(1);
+        mActivityRule.runOnUiThread(() -> {
+            red.getViewTreeObserver().addOnPreDrawListener(
+                    new ViewTreeObserver.OnPreDrawListener() {
+                        @Override
+                        public boolean onPreDraw() {
+                            if (SystemClock.elapsedRealtime() >= endTime
+                                    || (red.getTop() > closestDistance
+                                    && green.getTop() > closestDistance)) {
+                                red.getViewTreeObserver().removeOnPreDrawListener(this);
+                                latch.countDown();
+                            }
+                            return true;
+                        }
+                    });
+        });
+
+        assertTrue(latch.await(500, TimeUnit.MILLISECONDS));
+        assertTrue(red.getTop() > closestDistance);
+        assertTrue(green.getTop() > closestDistance);
     }
 
     private boolean isRestartingAnimation() {
