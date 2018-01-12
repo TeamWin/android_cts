@@ -34,6 +34,7 @@ public class FontScaleActivity extends AbstractLifecycleLogActivity {
     @Override
     protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
+        dumpActivityDpi();
         dumpFontSize();
     }
 
@@ -60,6 +61,11 @@ public class FontScaleActivity extends AbstractLifecycleLogActivity {
         } catch (XmlPullParserException | IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    protected void dumpActivityDpi() {
+        final int fontActivityDpi = getResources().getDisplayMetrics().densityDpi;
+        Log.i(getTag(), "fontActivityDpi=" + fontActivityDpi);
     }
 
     @Override

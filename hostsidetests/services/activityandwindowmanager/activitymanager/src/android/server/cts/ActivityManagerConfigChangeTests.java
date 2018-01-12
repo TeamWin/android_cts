@@ -107,17 +107,16 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
 
     private void testChangeFontScale(
             String activityName, boolean relaunch) throws Exception {
+        setFontScale(1.0f);
+        String logSeparator = clearLogcat();
         launchActivity(activityName);
         final String[] waitForActivitiesVisible = new String[] {activityName};
         mAmWmState.computeState(mDevice, waitForActivitiesVisible);
 
-        setFontScale(1.0f);
-        mAmWmState.computeState(mDevice, waitForActivitiesVisible);
-
-        final int densityDpi = getGlobalDensityDpi();
+        final int densityDpi = getActivityDensityDpi(activityName, logSeparator);
 
         for (float fontScale = 0.85f; fontScale <= 1.3f; fontScale += 0.15f) {
-            final String logSeparator = clearLogcat();
+            logSeparator = clearLogcat();
             setFontScale(fontScale);
             mAmWmState.computeState(mDevice, waitForActivitiesVisible);
             assertRelaunchOrConfigChanged(activityName, relaunch ? 1 : 0, relaunch ? 0 : 1,
@@ -191,30 +190,19 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
         return (int) ((f >= 0) ? (f + 0.5f) : (f - 0.5f));
     }
 
-    private static Pattern sDeviceDensityPattern =
-            Pattern.compile(".*?-(l|m|tv|h|xh|xxh|xxxh|\\d+)dpi-.*?");
+    private static Pattern sDeviceDensityPattern = Pattern.compile("^(.+): fontActivityDpi=(.+)$");
 
-    private int getGlobalDensityDpi() throws Exception {
-        final String result = getDevice().executeShellCommand("am get-config");
-        final String[] lines = result.split("\n");
-        if (lines.length < 1) {
-            throw new IllegalStateException("Invalid config returned from device: " + result);
+    private int getActivityDensityDpi(String activityName, String logSeparator) throws Exception {
+        final String[] lines = getDeviceLogsForComponent(activityName, logSeparator);
+        for (int i = lines.length - 1; i >= 0; i--) {
+            final String line = lines[i].trim();
+            final Matcher matcher = sDeviceDensityPattern.matcher(line);
+            if (matcher.matches()) {
+                return Integer.parseInt(matcher.group(2));
+            }
         }
-
-        final Matcher matcher = sDeviceDensityPattern.matcher(lines[0]);
-        if (!matcher.matches()) {
-            throw new IllegalStateException("Invalid config returned from device: " + lines[0]);
-        }
-        switch (matcher.group(1)) {
-            case "l": return 120;
-            case "m": return 160;
-            case "tv": return 213;
-            case "h": return 240;
-            case "xh": return 320;
-            case "xxh": return 480;
-            case "xxxh": return 640;
-        }
-        return Integer.parseInt(matcher.group(1));
+        fail("No fontActivityDpi reported from activity " + activityName);
+        return -1;
     }
 
     private static final Pattern sFontSizePattern = Pattern.compile("^(.+): fontPixelSize=(.+)$");
