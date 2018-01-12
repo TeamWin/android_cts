@@ -862,6 +862,12 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
     public void testStackFocusSwitchOnTouchEvent() throws Exception {
         if (!supportsMultiDisplay()) { return; }
 
+        // VR Virtual display has a back button to dismiss. Clicking with a touchpad on any
+        // location does not dismiss the virtual display as assumed in this test.
+        if (mVrHeadset) {
+            return;
+        }
+
         // Create new virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
 
