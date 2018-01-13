@@ -249,6 +249,13 @@ public class LoginActivity extends AbstractAutoFillActivity {
     }
 
     /**
+     * Gets the {@code username_label} view.
+     */
+    TextView getUsernameLabel() {
+        return mUsernameLabel;
+    }
+
+    /**
      * Gets the {@code username} view.
      */
     EditText getUsername() {
