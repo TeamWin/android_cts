@@ -101,7 +101,6 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     private static final String TAG_SUBSEC_TIME_ORIG = "SubSecTimeOriginal";
     private static final String TAG_SUBSEC_TIME_DIG = "SubSecTimeDigitized";
 
-
     private PreviewCallback mPreviewCallback = new PreviewCallback();
     private TestShutterCallback mShutterCallback = new TestShutterCallback();
     private RawPictureCallback mRawPictureCallback = new RawPictureCallback();
@@ -3212,5 +3211,4 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
             }
         }
     }
-
 }
