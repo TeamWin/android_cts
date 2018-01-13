@@ -23,11 +23,9 @@ import android.telephony.ServiceState;
 import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
 import android.net.ConnectivityManager;
-import android.test.InstrumentationTestCase;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
-import com.android.compatibility.common.util.ReadElf;
 import com.android.compatibility.common.util.TestThread;
 
 public class PhoneStateListenerTest extends  AndroidTestCase{
@@ -37,6 +35,7 @@ public class PhoneStateListenerTest extends  AndroidTestCase{
     private boolean mOnCallForwardingIndicatorChangedCalled;
     private boolean mOnCallStateChangedCalled;
     private boolean mOnCellLocationChangedCalled;
+    private boolean mOnUserMobileDataStateChanged;
     private boolean mOnDataActivityCalled;
     private boolean mOnDataConnectionStateChangedCalled;
     private boolean mOnMessageWaitingIndicatorChangedCalled;
@@ -427,5 +426,43 @@ public class PhoneStateListenerTest extends  AndroidTestCase{
         }
         t.checkException();
         assertTrue(mOnDataActivityCalled);
+    }
+
+    public void testOnUserMobileDataStateChanged() throws Throwable {
+        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
+            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
+            return;
+        }
+
+        TestThread t = new TestThread(new Runnable() {
+            public void run() {
+                Looper.prepare();
+
+                mListener = new PhoneStateListener() {
+                    @Override
+                    public void onUserMobileDataStateChanged(boolean state) {
+                        synchronized(mLock) {
+                            mOnUserMobileDataStateChanged = true;
+                            mLock.notify();
+                        }
+                    }
+                };
+                mTelephonyManager.listen(
+                        mListener, PhoneStateListener.LISTEN_USER_MOBILE_DATA_STATE);
+
+                Looper.loop();
+            }
+        });
+
+        assertFalse(mOnUserMobileDataStateChanged);
+        t.start();
+
+        synchronized (mLock) {
+            while(!mOnUserMobileDataStateChanged){
+                mLock.wait();
+            }
+        }
+        t.checkException();
+        assertTrue(mOnUserMobileDataStateChanged);
     }
 }
