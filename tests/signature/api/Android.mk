@@ -48,12 +48,12 @@ LOCAL_SRC_FILES := frameworks/base/api/system-removed.txt
 
 include $(LOCAL_PATH)/build_xml_api_file.mk
 
-# current legacy-test api, in XML format.
+# current android-test-base api, in XML format.
 # ============================================================
 include $(CLEAR_VARS)
-LOCAL_MODULE := cts-legacy-test-current-api
-LOCAL_MODULE_STEM := legacy-test-current.api
-LOCAL_SRC_FILES := frameworks/base/legacy-test/api/legacy-test-current.txt
+LOCAL_MODULE := cts-android-test-base-current-api
+LOCAL_MODULE_STEM := android-test-base-current.api
+LOCAL_SRC_FILES := frameworks/base/test-base/api/android-test-base-current.txt
 
 include $(LOCAL_PATH)/build_xml_api_file.mk
 
