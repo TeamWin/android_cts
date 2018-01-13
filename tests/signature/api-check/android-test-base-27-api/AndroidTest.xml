@@ -13,23 +13,23 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="Config for CTS Legacy Test 26 API Signature test cases">
+<configuration description="Config for CTS Android Test Base 27 API Signature test cases">
     <option name="config-descriptor:metadata" key="component" value="systems" />
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="mkdir -p /data/local/tmp/signature-test" />
         <option name="teardown-command" value="rm -rf /data/local/tmp/signature-test" />
     </target_preparer>
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
-        <option name="push" value="legacy-test-current.api->/data/local/tmp/signature-test/legacy-test-current.api" />
+        <option name="push" value="android-test-base-current.api->/data/local/tmp/signature-test/android-test-base-current.api" />
     </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
-        <option name="test-file-name" value="CtsLegacyTest26ApiSignatureTestCases.apk" />
+        <option name="test-file-name" value="CtsAndroidTestBase27ApiSignatureTestCases.apk" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
-        <option name="package" value="android.signature.cts.api.legacy_test_26" />
+        <option name="package" value="android.signature.cts.api.android_test_base_27" />
         <option name="runner" value="repackaged.android.test.InstrumentationTestRunner" />
-        <option name="instrumentation-arg" key="expected-api-files" value="legacy-test-current.api" />
+        <option name="instrumentation-arg" key="expected-api-files" value="android-test-base-current.api" />
         <option name="runtime-hint" value="5s" />
     </test>
 </configuration>
