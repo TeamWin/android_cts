@@ -77,6 +77,12 @@
                 <category android:name="android.intent.category.DEFAULT"/>
                 <action android:name="com.android.cts.managedprofile.ACTION_TEST_MANAGED_ACTIVITY" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <data android:mimeType="*/*" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
         </activity>
         <activity android:name=".PrimaryUserActivity">
             <intent-filter>

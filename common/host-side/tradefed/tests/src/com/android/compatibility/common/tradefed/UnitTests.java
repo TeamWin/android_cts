@@ -30,6 +30,7 @@ import com.android.compatibility.common.tradefed.result.MetadataReporterTest;
 import com.android.compatibility.common.tradefed.result.ResultReporterBuildInfoTest;
 import com.android.compatibility.common.tradefed.result.ResultReporterTest;
 import com.android.compatibility.common.tradefed.result.SubPlanHelperTest;
+import com.android.compatibility.common.tradefed.targetprep.DynamicConfigPusherTest;
 import com.android.compatibility.common.tradefed.targetprep.MediaPreparerTest;
 import com.android.compatibility.common.tradefed.targetprep.PropertyCheckTest;
 import com.android.compatibility.common.tradefed.targetprep.SettingsPreparerTest;
@@ -83,6 +84,7 @@ import org.junit.runners.Suite.SuiteClasses;
     SubPlanHelperTest.class,
 
     // targetprep
+    DynamicConfigPusherTest.class,
     MediaPreparerTest.class,
     PropertyCheckTest.class,
     SettingsPreparerTest.class,

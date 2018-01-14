@@ -22,6 +22,7 @@ LOCAL_JAVA_RESOURCE_DIRS := res
 LOCAL_JAVA_RESOURCE_DIRS += ../../common/host-side/tradefed/res
 LOCAL_MODULE := cts-tradefed-harness
 LOCAL_JAVA_LIBRARIES += tradefed compatibility-host-util
+LOCAL_STATIC_JAVA_LIBRARIES := google-api-java-client-min-repackaged
 include $(BUILD_HOST_JAVA_LIBRARY)
 
 include $(CLEAR_VARS)

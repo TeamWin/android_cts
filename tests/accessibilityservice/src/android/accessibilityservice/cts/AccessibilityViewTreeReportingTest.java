@@ -69,9 +69,6 @@ public class AccessibilityViewTreeReportingTest {
     public static void oneTimeSetup() throws Exception {
         sInstrumentation = InstrumentationRegistry.getInstrumentation();
         sUiAutomation = sInstrumentation.getUiAutomation();
-        AccessibilityServiceInfo info = sUiAutomation.getServiceInfo();
-        info.flags |= AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
-        sUiAutomation.setServiceInfo(info);
     }
 
     @AfterClass

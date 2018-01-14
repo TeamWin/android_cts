@@ -20,6 +20,7 @@ import static junit.framework.Assert.assertTrue;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertThrows;
 
+import android.app.admin.DevicePolicyManager;
 import android.app.admin.SystemUpdatePolicy;
 import android.os.PersistableBundle;
 import android.support.test.filters.SmallTest;
@@ -30,6 +31,13 @@ import java.util.Collections;
 
 @SmallTest
 public class TransferDeviceOwnerOutgoingTest extends DeviceAndProfileOwnerTransferOutgoingTest {
+
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
+        setupTestParameters(DevicePolicyManager.ACTION_DEVICE_OWNER_CHANGED);
+    }
+
     @Test
     public void testTransferWithPoliciesOutgoing() throws Throwable {
         int passwordLength = 123;
@@ -41,15 +49,15 @@ public class TransferDeviceOwnerOutgoingTest extends DeviceAndProfileOwnerTransf
                 SystemUpdatePolicy.createWindowedInstallPolicy(123, 456));
 
         PersistableBundle b = new PersistableBundle();
-        transferOwner(mOutgoingComponentName, mIncomingComponentName, b);
+        transferOwnership(mOutgoingComponentName, INCOMING_COMPONENT_NAME, b);
     }
 
     @Test
     public void testTransfer() throws Throwable {
         PersistableBundle b = new PersistableBundle();
-        transferOwner(mOutgoingComponentName, mIncomingComponentName, b);
-        assertTrue(mDevicePolicyManager.isAdminActive(mIncomingComponentName));
-        assertTrue(mDevicePolicyManager.isDeviceOwnerApp(mIncomingComponentName.getPackageName()));
+        transferOwnership(mOutgoingComponentName, INCOMING_COMPONENT_NAME, b);
+        assertTrue(mDevicePolicyManager.isAdminActive(INCOMING_COMPONENT_NAME));
+        assertTrue(mDevicePolicyManager.isDeviceOwnerApp(INCOMING_COMPONENT_NAME.getPackageName()));
         assertFalse(
                 mDevicePolicyManager.isDeviceOwnerApp(mOutgoingComponentName.getPackageName()));
         assertFalse(mDevicePolicyManager.isAdminActive(mOutgoingComponentName));

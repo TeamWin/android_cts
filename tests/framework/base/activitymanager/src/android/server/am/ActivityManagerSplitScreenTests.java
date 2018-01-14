@@ -83,6 +83,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
 
     @Test
     @Presubmit
+    @FlakyTest(bugId = 71918731)
     public void testStackList() throws Exception {
         launchActivity(TEST_ACTIVITY_NAME);
         mAmWmState.computeState(new String[] {TEST_ACTIVITY_NAME});
@@ -234,6 +235,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
 
     @Test
     @Presubmit
+    @FlakyTest(bugId = 71918731)
     public void testLaunchToSideSingleInstance() throws Exception {
         launchTargetToSide(SINGLE_INSTANCE_ACTIVITY_NAME, false);
     }

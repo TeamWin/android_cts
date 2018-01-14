@@ -279,6 +279,11 @@ public class InstrumentedAutoFillService extends AutofillService {
             this.flags = flags;
             structure = contexts.get(contexts.size() - 1).getStructure();
         }
+
+        @Override
+        public String toString() {
+            return "FillRequest:" + getActivityName(contexts);
+        }
     }
 
     /**
@@ -305,6 +310,11 @@ public class InstrumentedAutoFillService extends AutofillService {
             this.callback = callback;
             this.datasetIds = datasetIds;
         }
+
+        @Override
+        public String toString() {
+            return "SaveRequest:" + getActivityName(contexts);
+        }
     }
 
     /**
@@ -322,6 +332,9 @@ public class InstrumentedAutoFillService extends AutofillService {
         private List<Throwable> mExceptions;
         private IntentSender mOnSaveIntentSender;
         private String mAcceptedPackageName;
+
+        private boolean mReportUnhandledFillRequest = true;
+        private boolean mReportUnhandledSaveRequest = true;
 
         private Replier() {
         }
@@ -396,13 +409,24 @@ public class InstrumentedAutoFillService extends AutofillService {
         }
 
         /**
-         * Asserts the total number of {@link AutofillService#onFillRequest(
-         * android.service.autofill.FillRequest,  CancellationSignal, FillCallback)}, minus those
-         * returned by {@link #getNextFillRequest()}.
+         * Asserts all {@link AutofillService#onFillRequest(
+         * android.service.autofill.FillRequest,  CancellationSignal, FillCallback) fill requests}
+         * received by the service were properly {@link #getNextFillRequest() handled} by the test
+         * case.
          */
-        void assertNumberUnhandledFillRequests(int expected) {
-            assertWithMessage("Invalid number of fill requests").that(mFillRequests.size())
-                    .isEqualTo(expected);
+        void assertNoUnhandledFillRequests() {
+            if (mFillRequests.isEmpty()) return; // Good job, test case!
+
+            if (!mReportUnhandledFillRequest) {
+                // Just log, so it's not thrown again on @After if already thrown on main body
+                Log.d(TAG, "assertNoUnhandledFillRequests(): already reported, "
+                        + "but logging just in case: " + mFillRequests);
+                return;
+            }
+
+            mReportUnhandledFillRequest = false;
+            throw new AssertionError(mFillRequests.size() + " unhandled fill requests: "
+                    + mFillRequests);
         }
 
         /**
@@ -427,13 +451,24 @@ public class InstrumentedAutoFillService extends AutofillService {
         }
 
         /**
-         * Asserts the total number of
-         * {@link AutofillService#onSaveRequest(android.service.autofill.SaveRequest, SaveCallback)}
-         * minus those returned by {@link #getNextSaveRequest()}.
+         * Asserts all
+         * {@link AutofillService#onSaveRequest(android.service.autofill.SaveRequest, SaveCallback)
+         * save requests} received by the service were properly
+         * {@link #getNextFillRequest() handled} by the test case.
          */
-        void assertNumberUnhandledSaveRequests(int expected) {
-            assertWithMessage("Invalid number of save requests").that(mSaveRequests.size())
-                    .isEqualTo(expected);
+        void assertNoUnhandledSaveRequests() {
+            if (mSaveRequests.isEmpty()) return; // Good job, test case!
+
+            if (!mReportUnhandledSaveRequest) {
+                // Just log, so it's not thrown again on @After if already thrown on main body
+                Log.d(TAG, "assertNoUnhandledSaveRequests(): already reported, "
+                        + "but logging just in case: " + mSaveRequests);
+                return;
+            }
+
+            mReportUnhandledSaveRequest = false;
+            throw new AssertionError(mSaveRequests.size() + " unhandled save requests: "
+                    + mSaveRequests);
         }
 
         /**
@@ -446,6 +481,8 @@ public class InstrumentedAutoFillService extends AutofillService {
             mExceptions = null;
             mOnSaveIntentSender = null;
             mAcceptedPackageName = null;
+            mReportUnhandledFillRequest = true;
+            mReportUnhandledSaveRequest = true;
         }
 
         private void onFillRequest(List<FillContext> contexts, Bundle data,
@@ -461,10 +498,10 @@ public class InstrumentedAutoFillService extends AutofillService {
                     return;
                 }
                 if (response == null) {
-                    final String msg = "onFillRequest() for activity " + getActivityName(contexts)
+                    final String activityName = getActivityName(contexts);
+                    final String msg = "onFillRequest() for activity " + activityName
                             + " received when no canned response was set.";
                     dumpStructure(msg, contexts);
-                    addException(new RetryableException(msg));
                     return;
                 }
                 if (response.getResponseType() == NULL) {

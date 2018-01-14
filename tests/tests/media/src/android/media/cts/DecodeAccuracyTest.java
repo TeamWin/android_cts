@@ -153,7 +153,7 @@ public class DecodeAccuracyTest extends DecodeAccuracyTestBase {
         super.tearDown();
     }
 
-    @Parameters(name = "{0}")
+    @Parameters
     public static Collection<Object[]> data() {
         final List<Object[]> testParams = new ArrayList<>();
         for (int i = 0; i < VIDEO_FILES.length; i++) {
@@ -173,37 +173,38 @@ public class DecodeAccuracyTest extends DecodeAccuracyTestBase {
         this.fileName = fileName;
     }
 
-    @Test(timeout=PER_TEST_TIMEOUT_MS)
+    @Test(timeout = PER_TEST_TIMEOUT_MS)
     public void testGLViewDecodeAccuracy() throws Exception {
         runTest(new GLSurfaceViewFactory(), new VideoFormat(fileName));
     }
 
-    @Test(timeout=PER_TEST_TIMEOUT_MS)
+    @Test(timeout = PER_TEST_TIMEOUT_MS)
     public void testGLViewLargerHeightDecodeAccuracy() throws Exception {
         runTest(new GLSurfaceViewFactory(), getLargerHeightVideoFormat(new VideoFormat(fileName)));
     }
 
-    @Test(timeout=PER_TEST_TIMEOUT_MS)
+    @Test(timeout = PER_TEST_TIMEOUT_MS)
     public void testGLViewLargerWidthDecodeAccuracy() throws Exception {
         runTest(new GLSurfaceViewFactory(), getLargerWidthVideoFormat(new VideoFormat(fileName)));
     }
 
-    @Test(timeout=PER_TEST_TIMEOUT_MS)
+    @Test(timeout = PER_TEST_TIMEOUT_MS)
     public void testSurfaceViewVideoDecodeAccuracy() throws Exception {
         runTest(new SurfaceViewFactory(), new VideoFormat(fileName));
     }
 
-    @Test(timeout=PER_TEST_TIMEOUT_MS)
+    @Test(timeout = PER_TEST_TIMEOUT_MS)
     public void testSurfaceViewLargerHeightDecodeAccuracy() throws Exception {
         runTest(new SurfaceViewFactory(), getLargerHeightVideoFormat(new VideoFormat(fileName)));
     }
 
-    @Test(timeout=PER_TEST_TIMEOUT_MS)
+    @Test(timeout = PER_TEST_TIMEOUT_MS)
     public void testSurfaceViewLargerWidthDecodeAccuracy() throws Exception {
         runTest(new SurfaceViewFactory(), getLargerWidthVideoFormat(new VideoFormat(fileName)));
     }
 
     private void runTest(VideoViewFactory videoViewFactory, VideoFormat vf) {
+        Log.i(TAG, "Running test for " + vf.toPrettyString());
         if (!MediaUtils.canDecodeVideo(vf.getMimeType(), vf.getWidth(), vf.getHeight(), 30)) {
             MediaUtils.skipTest(TAG, "No supported codec is found.");
             return;

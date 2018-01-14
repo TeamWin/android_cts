@@ -2850,6 +2850,17 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".audio.RingerModeActivity"
+                  android:label="@string/ringer_mode_tests">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_audio" />
+            <meta-data android:name="test_excluded_features"
+                       android:value="android.software.leanback" />
+        </activity>
+
         <activity android:name=".audio.HifiUltrasoundTestActivity"
                 android:label="@string/hifi_ultrasound_test"
                 android:screenOrientation="locked">

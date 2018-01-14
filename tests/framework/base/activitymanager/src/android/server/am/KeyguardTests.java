@@ -51,14 +51,6 @@ public class KeyguardTests extends KeyguardTestBase {
         setLockDisabled(false);
     }
 
-    @After
-    @Override
-    public void tearDown() throws Exception {
-        super.tearDown();
-
-        tearDownLockCredentials();
-    }
-
     @Test
     public void testKeyguardHidesActivity() throws Exception {
         launchActivity("TestActivity");
@@ -330,16 +322,18 @@ public class KeyguardTests extends KeyguardTestBase {
     public void testDismissKeyguardAttrActivity_method_turnScreenOn_withSecureKeyguard() throws Exception {
         final String activityName = "TurnScreenOnAttrDismissKeyguardActivity";
 
-        setLockCredential();
-        sleepDevice();
+        try (final LockCredentialSession lockCredentialSession = new LockCredentialSession()) {
+            lockCredentialSession.setLockCredential();
+            sleepDevice();
 
-        mAmWmState.computeState();
-        assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
-        launchActivity(activityName);
-        mAmWmState.waitForKeyguardShowingAndNotOccluded();
-        mAmWmState.assertVisibility(activityName, false);
-        assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
-        assertTrue(isDisplayOn());
+            mAmWmState.computeState();
+            assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
+            launchActivity(activityName);
+            mAmWmState.waitForKeyguardShowingAndNotOccluded();
+            mAmWmState.assertVisibility(activityName, false);
+            assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
+            assertTrue(isDisplayOn());
+        }
     }
 
     @Test

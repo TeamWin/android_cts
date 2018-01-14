@@ -26,8 +26,7 @@ LOCAL_JAVA_LIBRARIES := \
     telephony-common \
     voip-common \
     org.apache.http.legacy \
-    android.test.base.stubs \
-
+    android.test.base.stubs
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util \
@@ -36,7 +35,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     mockito-target-minus-junit4 \
     android-support-test \
     platform-test-annotations \
-    cts-amwm-util
+    cts-amwm-util \
+    android-support-test
 
 LOCAL_SRC_FILES := \
     $(call all-java-files-under, src)

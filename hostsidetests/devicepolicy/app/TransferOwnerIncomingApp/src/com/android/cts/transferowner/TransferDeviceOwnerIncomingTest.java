@@ -37,16 +37,16 @@ public class TransferDeviceOwnerIncomingTest extends DeviceAndProfileOwnerTransf
         assertEquals(Collections.singletonList("test.package"),
                 mDevicePolicyManager.getKeepUninstalledPackages(mIncomingComponentName));
         assertEquals(123, mDevicePolicyManager.getPasswordMinimumLength(mIncomingComponentName));
-        assertTrue(areSystemPoliciesEqual(SystemUpdatePolicy.createWindowedInstallPolicy(123, 456),
-                mDevicePolicyManager.getSystemUpdatePolicy()));
+        assertSystemPoliciesEqual(SystemUpdatePolicy.createWindowedInstallPolicy(123, 456),
+                mDevicePolicyManager.getSystemUpdatePolicy());
         assertThrows(SecurityException.class, () -> {
             mDevicePolicyManager.getParentProfileInstance(mIncomingComponentName);
         });
     }
 
-    private boolean areSystemPoliciesEqual(SystemUpdatePolicy policy1, SystemUpdatePolicy policy2) {
-        return policy1.getPolicyType() == policy2.getPolicyType()
+    private void assertSystemPoliciesEqual(SystemUpdatePolicy policy1, SystemUpdatePolicy policy2) {
+        assertTrue(policy1.getPolicyType() == policy2.getPolicyType()
                 && policy1.getInstallWindowStart() == policy2.getInstallWindowStart()
-                && policy1.getInstallWindowEnd() == policy2.getInstallWindowEnd();
+                && policy1.getInstallWindowEnd() == policy2.getInstallWindowEnd());
     }
 }

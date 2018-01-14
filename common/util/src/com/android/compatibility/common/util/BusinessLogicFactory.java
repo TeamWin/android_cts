@@ -51,6 +51,9 @@ public class BusinessLogicFactory {
     private static final String METHOD_NAME = "methodName";
     // Name of method args array of strings
     private static final String METHOD_ARGS = "methodArgs";
+    // Name of the field in the response object that stores that the auth status of the request.
+    private static final String AUTHENTICATION_STATUS = "authenticationStatus";
+    public static final String CONDITIONAL_TESTS_ENABLED = "conditionalTestsEnabled";
 
     /**
      * Create a BusinessLogic instance from a file of business logic data, formatted in JSON.
@@ -65,6 +68,14 @@ public class BusinessLogicFactory {
             String businessLogicString = readFile(f);
             JSONObject root = new JSONObject(businessLogicString);
             JSONArray rulesLists = null;
+            if (root.has(AUTHENTICATION_STATUS)){
+                String authStatus = root.getString(AUTHENTICATION_STATUS);
+                bl.setAuthenticationStatus(authStatus);
+            }
+            if (root.has(CONDITIONAL_TESTS_ENABLED)){
+                boolean enabled = root.getBoolean(CONDITIONAL_TESTS_ENABLED);
+                bl.mConditionalTestsEnabled = enabled;
+            }
             try {
                 rulesLists = root.getJSONArray(BUSINESS_LOGIC_RULES_LISTS);
             } catch (JSONException e) {

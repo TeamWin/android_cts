@@ -59,13 +59,6 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     private static final String TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY =
             "TurnScreenOnWithRelayoutActivity";
 
-    @After
-    @Override
-    public void tearDown() throws Exception {
-        super.tearDown();
-        tearDownLockCredentials();
-    }
-
     @Presubmit
     @Test
     public void testTranslucentActivityOnTopOfPinnedStack() throws Exception {
@@ -343,13 +336,15 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     public void testTurnScreenOnAttrWithLockScreen() throws Exception {
         assumeTrue(isHandheld());
 
-        setLockCredential();
-        sleepDevice();
-        final String logSeparator = clearLogcat();
-        launchActivity(TURN_SCREEN_ON_ATTR_ACTIVITY_NAME);
-        mAmWmState.computeState(new String[] { TURN_SCREEN_ON_ATTR_ACTIVITY_NAME });
-        assertFalse(isDisplayOn());
-        assertSingleLaunchAndStop(TURN_SCREEN_ON_ATTR_ACTIVITY_NAME, logSeparator);
+        try (final LockCredentialSession lockCredentialSession = new LockCredentialSession()) {
+            lockCredentialSession.setLockCredential();
+            sleepDevice();
+            final String logSeparator = clearLogcat();
+            launchActivity(TURN_SCREEN_ON_ATTR_ACTIVITY_NAME);
+            mAmWmState.computeState(new String[]{TURN_SCREEN_ON_ATTR_ACTIVITY_NAME});
+            assertFalse(isDisplayOn());
+            assertSingleLaunchAndStop(TURN_SCREEN_ON_ATTR_ACTIVITY_NAME, logSeparator);
+        }
     }
 
     @Test
@@ -385,6 +380,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
 
     @Test
     @Presubmit
+    @FlakyTest(bugId = 71868306)
     public void testTurnScreenOnSingleTask() throws Exception {
         sleepDevice();
         String logSeparator = clearLogcat();

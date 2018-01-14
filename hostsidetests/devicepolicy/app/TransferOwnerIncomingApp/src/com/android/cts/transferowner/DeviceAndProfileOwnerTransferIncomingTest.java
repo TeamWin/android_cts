@@ -15,28 +15,59 @@
  */
 package com.android.cts.transferowner;
 
+import static junit.framework.Assert.assertTrue;
+
 import android.app.admin.DeviceAdminReceiver;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.os.PersistableBundle;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 
 import org.junit.Before;
+import org.junit.Test;
 
 @SmallTest
 public class DeviceAndProfileOwnerTransferIncomingTest {
     public static class BasicAdminReceiver extends DeviceAdminReceiver {
         public BasicAdminReceiver() {}
+
+        @Override
+        public void onTransferOwnershipComplete(Context context, PersistableBundle bundle) {
+            putBooleanPref(context, KEY_TRANSFER_COMPLETED_CALLED, true);
+        }
     }
 
+    private final static String SHARED_PREFERENCE_NAME = "shared-preference-name";
+    private final static String KEY_TRANSFER_COMPLETED_CALLED = "key-transfer-completed-called";
+
+    protected Context mContext;
     protected ComponentName mIncomingComponentName;
     protected DevicePolicyManager mDevicePolicyManager;
 
     @Before
     public void setUp() throws Exception {
-        Context context = InstrumentationRegistry.getTargetContext();
-        mDevicePolicyManager = context.getSystemService(DevicePolicyManager.class);
-        mIncomingComponentName = new ComponentName(context, BasicAdminReceiver.class.getName());
+        mContext = InstrumentationRegistry.getTargetContext();
+        mDevicePolicyManager = mContext.getSystemService(DevicePolicyManager.class);
+        mIncomingComponentName = new ComponentName(mContext, BasicAdminReceiver.class.getName());
+    }
+
+    @Test
+    public void testTransferCompleteCallbackIsCalled() {
+        assertTrue(getBooleanPref(mContext, KEY_TRANSFER_COMPLETED_CALLED));
+    }
+
+    private static SharedPreferences getPrefs(Context context) {
+        return context.getSharedPreferences(SHARED_PREFERENCE_NAME, Context.MODE_PRIVATE);
+    }
+
+    private static void putBooleanPref(Context context, String key, boolean value) {
+        getPrefs(context).edit().putBoolean(key, value).apply();
+    }
+
+    private static boolean getBooleanPref(Context context, String key) {
+        return getPrefs(context).getBoolean(key, false);
     }
 }

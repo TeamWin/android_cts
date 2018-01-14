@@ -92,6 +92,11 @@ public class CameraGpuCtsActivity extends Activity {
     }
 
     public void waitToFinishRendering() throws InterruptedException {
+        // Skip the test if there is no camera on board.
+        if (!nIsCameraReady(mNativeRenderer)) {
+            return;
+        }
+
         // Wait long enough so that all frames are captured.
         if (!mFinishedRendering.await(30, TimeUnit.SECONDS)) {
             throw new IllegalStateException("Coudn't finish drawing frames!");
@@ -99,6 +104,7 @@ public class CameraGpuCtsActivity extends Activity {
     }
 
     private static native long nCreateRenderer();
+    private static native boolean nIsCameraReady(long renderer);
     private static native void nDestroyRenderer(long renderer);
     private static native int nDrawFrame(long renderer);
 }

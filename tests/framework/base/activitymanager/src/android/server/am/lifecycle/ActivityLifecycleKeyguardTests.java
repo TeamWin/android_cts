@@ -25,22 +25,18 @@ public class ActivityLifecycleKeyguardTests extends ActivityLifecycleClientTestB
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        setLockCredential();
         gotoKeyguard();
-    }
-
-    @After
-    @Override
-    public void tearDown() throws Exception {
-        tearDownLockCredentials();
-        super.tearDown();
     }
 
     @Test
     public void testSingleLaunch() throws Exception {
-        final Activity activity = mFirstActivityTestRule.launchActivity(new Intent());
-        waitAndAssertActivityStates(state(activity, STOPPED));
+        try (final LockCredentialSession lockCredentialSession = new LockCredentialSession()) {
+            lockCredentialSession.setLockCredential();
 
-        LifecycleVerifier.assertLaunchAndStopSequence(FirstActivity.class, getLifecycleLog());
+            final Activity activity = mFirstActivityTestRule.launchActivity(new Intent());
+            waitAndAssertActivityStates(state(activity, STOPPED));
+
+            LifecycleVerifier.assertLaunchAndStopSequence(FirstActivity.class, getLifecycleLog());
+        }
     }
 }

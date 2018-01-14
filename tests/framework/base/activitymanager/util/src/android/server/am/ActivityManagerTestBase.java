@@ -129,8 +129,6 @@ public abstract class ActivityManagerTestBase {
     protected ActivityManager mAm;
     protected UiDevice mDevice;
 
-    private boolean mLockCredentialsSet;
-
     private boolean mLockDisabled;
 
     @Deprecated
@@ -171,6 +169,19 @@ public abstract class ActivityManagerTestBase {
     protected static String getAmStartCmd(final String activityName, final int displayId) {
         return "am start -n " + getActivityComponentName(activityName) + " -f 0x18000000"
                 + " --display " + displayId;
+    }
+
+    protected static String getAmStartCmd(final String activityName, final int displayId,
+                                          final String... keyValuePairs) {
+        String base = "am start -n " + getActivityComponentName(activityName) + " -f 0x18000000"
+                + " --display " + displayId;
+        if (keyValuePairs.length % 2 != 0) {
+            throw new RuntimeException("keyValuePairs must be pairs of key/value arguments");
+        }
+        for (int i = 0; i < keyValuePairs.length; i += 2) {
+            base += " --es " + keyValuePairs[i] + " " + keyValuePairs[i + 1];
+        }
+        return base;
     }
 
     protected static String getAmStartCmdInNewTask(final String activityName) {
@@ -274,7 +285,6 @@ public abstract class ActivityManagerTestBase {
         wakeUpAndUnlockDevice();
         pressHomeButton();
         removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
-        mLockCredentialsSet = false;
         mLockDisabled = isLockDisabled();
     }
 
@@ -407,13 +417,6 @@ public abstract class ActivityManagerTestBase {
         mAmWmState.waitForHomeActivityVisible();
     }
 
-    protected void launchActivityOnDisplay(String targetActivityName, int displayId)
-            throws Exception {
-        executeShellCommand(getAmStartCmd(targetActivityName, displayId));
-
-        mAmWmState.waitForValidState(targetActivityName);
-    }
-
     protected void launchActivity(String activityName, int windowingMode,
             final String... keyValuePairs) throws Exception {
         executeShellCommand(getAmStartCmd(activityName, keyValuePairs)
@@ -421,6 +424,13 @@ public abstract class ActivityManagerTestBase {
         mAmWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
                 .setWindowingMode(windowingMode)
                 .build());
+    }
+
+    protected void launchActivityOnDisplay(String targetActivityName, int displayId,
+            String... keyValuePairs) throws Exception {
+        executeShellCommand(getAmStartCmd(targetActivityName, displayId, keyValuePairs));
+
+        mAmWmState.waitForValidState(targetActivityName);
     }
 
     /**
@@ -718,36 +728,52 @@ public abstract class ActivityManagerTestBase {
         mDevice.pressMenu();
     }
 
-    protected void unlockDeviceWithCredential() throws Exception {
-        mDevice.pressMenu();
-        try {
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            //ignored
-        }
-        enterAndConfirmLockCredential();
-    }
-
-    protected void enterAndConfirmLockCredential() throws Exception {
-        mDevice.waitForIdle(3000);
-
-        runCommandAndPrintOutput("input text " + LOCK_CREDENTIAL);
-        mDevice.pressEnter();
-    }
-
     protected void gotoKeyguard() throws Exception {
         sleepDevice();
         wakeUpDevice();
         mAmWmState.waitForKeyguardShowingAndNotOccluded();
     }
 
-    protected void setLockCredential() {
-        mLockCredentialsSet = true;
-        runCommandAndPrintOutput("locksettings set-pin " + LOCK_CREDENTIAL);
-    }
+    protected class LockCredentialSession implements AutoCloseable {
+        private boolean mLockCredentialSet;
 
-    protected void removeLockCredential() {
-        runCommandAndPrintOutput("locksettings clear --old " + LOCK_CREDENTIAL);
+        public LockCredentialSession() {
+            mLockCredentialSet = false;
+        }
+
+        public void setLockCredential() {
+            mLockCredentialSet = true;
+            runCommandAndPrintOutput("locksettings set-pin " + LOCK_CREDENTIAL);
+        }
+
+        public void unlockDeviceWithCredential() throws Exception {
+            mDevice.pressMenu();
+            enterAndConfirmLockCredential();
+        }
+
+        public void enterAndConfirmLockCredential() throws Exception {
+            mDevice.waitForIdle(3000);
+
+            runCommandAndPrintOutput("input text " + LOCK_CREDENTIAL);
+            mDevice.pressEnter();
+        }
+
+        private void removeLockCredential() {
+            runCommandAndPrintOutput("locksettings clear --old " + LOCK_CREDENTIAL);
+            mLockCredentialSet = false;
+        }
+
+        @Override
+        public void close() throws Exception {
+            if (mLockCredentialSet) {
+                removeLockCredential();
+                // Dismiss active keyguard after credential is cleared, so keyguard doesn't ask for
+                // the stale credential.
+                pressBackButton();
+                sleepDevice();
+                wakeUpAndUnlockDevice();
+            }
+        }
     }
 
     /**
@@ -815,7 +841,7 @@ public abstract class ActivityManagerTestBase {
         return INVALID_DEVICE_ROTATION;
     }
 
-    protected String runCommandAndPrintOutput(String command) {
+    protected static String runCommandAndPrintOutput(String command) {
         final String output = executeShellCommand(command);
         log(output);
         return output;
@@ -1491,18 +1517,5 @@ public abstract class ActivityManagerTestBase {
                         new WaitForValidActivityState.Builder(mTargetActivityName).build());
             }
         }
-    }
-
-    protected void tearDownLockCredentials() throws Exception {
-        if (!mLockCredentialsSet) {
-            return;
-        }
-
-        removeLockCredential();
-        // Dismiss active keyguard after credential is cleared, so
-        // keyguard doesn't ask for the stale credential.
-        pressBackButton();
-        sleepDevice();
-        wakeUpAndUnlockDevice();
     }
 }

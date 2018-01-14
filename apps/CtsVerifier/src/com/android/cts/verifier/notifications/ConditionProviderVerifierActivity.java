@@ -27,9 +27,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Parcelable;
 import android.provider.Settings;
-import android.provider.Settings.Secure;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -45,12 +43,12 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
             "/com.android.cts.verifier.notifications.MockConditionProvider";
 
     @Override
-    int getTitleResource() {
+    protected int getTitleResource() {
         return R.string.cp_test;
     }
 
     @Override
-    int getInstructionsResource() {
+    protected int getInstructionsResource() {
         return R.string.cp_info;
     }
 
@@ -83,7 +81,7 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
 
     protected class IsEnabledTest extends InteractiveTestCase {
         @Override
-        View inflate(ViewGroup parent) {
+        protected View inflate(ViewGroup parent) {
             return createSettingsItem(parent, R.string.cp_enable_service);
         }
 
@@ -93,7 +91,7 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
         }
 
         @Override
-        void test() {
+        protected void test() {
             Intent settings = new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
             if (settings.resolveActivity(mPackageManager) == null) {
                 logFail("no settings activity");
@@ -108,20 +106,15 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
             }
         }
 
-        void tearDown() {
+        protected void tearDown() {
             // wait for the service to start
             delay();
-        }
-
-        @Override
-        protected Intent getIntent() {
-            return new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
         }
     }
 
     protected class CannotBeEnabledTest extends InteractiveTestCase {
         @Override
-        View inflate(ViewGroup parent) {
+        protected View inflate(ViewGroup parent) {
             return createNlsSettingsItem(parent, R.string.cp_cannot_enable_service);
         }
 
@@ -131,7 +124,7 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
         }
 
         @Override
-        void test() {
+        protected void test() {
             mNm.cancelAll();
             Intent settings = new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
             if (settings.resolveActivity(mPackageManager) == null) {
@@ -147,7 +140,7 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
             }
         }
 
-        void tearDown() {
+        protected void tearDown() {
             // wait for the service to start
             delay();
         }
@@ -160,12 +153,12 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
 
     protected class ServiceStartedTest extends InteractiveTestCase {
         @Override
-        View inflate(ViewGroup parent) {
+        protected View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.cp_service_started);
         }
 
         @Override
-        void test() {
+        protected void test() {
             MockConditionProvider.probeConnected(mContext,
                     new MockConditionProvider.BooleanResultCatcher() {
                         @Override
@@ -184,7 +177,7 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
         }
 
         @Override
-        void tearDown() {
+        protected void tearDown() {
             MockConditionProvider.resetData(mContext);
             delay();
         }
@@ -194,18 +187,18 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
         int mRetries = 5;
 
         @Override
-        View inflate(ViewGroup parent) {
+        protected View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.nls_snooze);
 
         }
 
         @Override
-        void setUp() {
+        protected void setUp() {
             status = READY;
         }
 
         @Override
-        void test() {
+        protected void test() {
             if (status == READY) {
                 MockConditionProvider.getInstance().requestUnbind();
                 status = RETEST;
@@ -230,13 +223,13 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
         int mRetries = 5;
 
         @Override
-        View inflate(ViewGroup parent) {
+        protected View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.nls_unsnooze);
 
         }
 
         @Override
-        void test() {
+        protected void test() {
             if (status == READY) {
                 MockConditionProvider.requestRebind(MockConditionProvider.COMPONENT_NAME);
                 status = RETEST;
@@ -263,12 +256,12 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
         private String id = null;
 
         @Override
-        View inflate(ViewGroup parent) {
+        protected View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.cp_create_rule);
         }
 
         @Override
-        void test() {
+        protected void test() {
             long now = System.currentTimeMillis();
             AutomaticZenRule ruleToCreate =
                     createRule("Rule", "value", NotificationManager.INTERRUPTION_FILTER_ALARMS);
@@ -284,7 +277,7 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
         }
 
         @Override
-        void tearDown() {
+        protected void tearDown() {
             if (id != null) {
                 mNm.removeAutomaticZenRule(id);
             }
@@ -297,12 +290,12 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
         private String id = null;
 
         @Override
-        View inflate(ViewGroup parent) {
+        protected View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.cp_update_rule);
         }
 
         @Override
-        void setUp() {
+        protected void setUp() {
             id = mNm.addAutomaticZenRule(createRule("BeforeUpdate", "beforeValue",
                     NotificationManager.INTERRUPTION_FILTER_ALARMS));
             status = READY;
@@ -310,7 +303,7 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
         }
 
         @Override
-        void test() {
+        protected void test() {
             AutomaticZenRule updated = mNm.getAutomaticZenRule(id);
             updated.setName("AfterUpdate");
             updated.setConditionId(MockConditionProvider.toConditionId("afterValue"));
@@ -332,7 +325,7 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
         }
 
         @Override
-        void tearDown() {
+        protected void tearDown() {
             if (id != null) {
                 mNm.removeAutomaticZenRule(id);
             }
@@ -346,12 +339,12 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
         private AutomaticZenRule ruleToCreate;
 
         @Override
-        View inflate(ViewGroup parent) {
+        protected View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.cp_subscribe_rule);
         }
 
         @Override
-        void setUp() {
+        protected void setUp() {
             ruleToCreate = createRule("RuleSubscribe", "Subscribevalue",
                     NotificationManager.INTERRUPTION_FILTER_ALARMS);
             id = mNm.addAutomaticZenRule(ruleToCreate);
@@ -360,7 +353,7 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
         }
 
         @Override
-        void test() {
+        protected void test() {
 
             MockConditionProvider.probeSubscribe(mContext,
                     new MockConditionProvider.ParcelableListResultCatcher() {
@@ -387,7 +380,7 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
         }
 
         @Override
-        void tearDown() {
+        protected void tearDown() {
             if (id != null) {
                 mNm.removeAutomaticZenRule(id);
             }
@@ -402,12 +395,12 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
         private AutomaticZenRule ruleToCreate;
 
         @Override
-        View inflate(ViewGroup parent) {
+        protected View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.cp_get_rule);
         }
 
         @Override
-        void setUp() {
+        protected void setUp() {
             ruleToCreate = createRule("RuleGet", "valueGet",
                     NotificationManager.INTERRUPTION_FILTER_ALARMS);
             id = mNm.addAutomaticZenRule(ruleToCreate);
@@ -416,7 +409,7 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
         }
 
         @Override
-        void test() {
+        protected void test() {
             AutomaticZenRule queriedRule = mNm.getAutomaticZenRule(id);
             if (queriedRule != null
                     && ruleToCreate.getName().equals(queriedRule.getName())
@@ -432,7 +425,7 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
         }
 
         @Override
-        void tearDown() {
+        protected void tearDown() {
             if (id != null) {
                 mNm.removeAutomaticZenRule(id);
             }
@@ -447,12 +440,12 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
         private AutomaticZenRule rule2;
 
         @Override
-        View inflate(ViewGroup parent) {
+        protected View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.cp_get_rules);
         }
 
         @Override
-        void setUp() {
+        protected void setUp() {
             rule1 = createRule("Rule1", "value1", NotificationManager.INTERRUPTION_FILTER_ALARMS);
             rule2 = createRule("Rule2", "value2", NotificationManager.INTERRUPTION_FILTER_NONE);
             ids.add(mNm.addAutomaticZenRule(rule1));
@@ -462,7 +455,7 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
         }
 
         @Override
-        void test() {
+        protected void test() {
             Map<String, AutomaticZenRule> rules = mNm.getAutomaticZenRules();
 
             if (rules == null || rules.size() != 2) {
@@ -484,7 +477,7 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
         }
 
         @Override
-        void tearDown() {
+        protected void tearDown() {
             for (String id : ids) {
                 mNm.removeAutomaticZenRule(id);
             }
@@ -497,12 +490,12 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
         private String id = null;
 
         @Override
-        View inflate(ViewGroup parent) {
+        protected View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.cp_delete_rule);
         }
 
         @Override
-        void test() {
+        protected void test() {
             AutomaticZenRule ruleToCreate = createRule("RuleDelete", "Deletevalue",
                     NotificationManager.INTERRUPTION_FILTER_ALARMS);
             id = mNm.addAutomaticZenRule(ruleToCreate);
@@ -527,7 +520,7 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
         }
 
         @Override
-        void tearDown() {
+        protected void tearDown() {
             MockConditionProvider.resetData(mContext);
             delay();
         }
@@ -538,12 +531,12 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
         private AutomaticZenRule ruleToCreate;
 
         @Override
-        View inflate(ViewGroup parent) {
+        protected View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.cp_unsubscribe_rule);
         }
 
         @Override
-        void setUp() {
+        protected void setUp() {
             ruleToCreate = createRule("RuleUnsubscribe", "valueUnsubscribe",
                     NotificationManager.INTERRUPTION_FILTER_PRIORITY);
             id = mNm.addAutomaticZenRule(ruleToCreate);
@@ -552,7 +545,7 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
         }
 
         @Override
-        void test() {
+        protected void test() {
             MockConditionProvider.probeSubscribe(mContext,
                     new MockConditionProvider.ParcelableListResultCatcher() {
                         @Override
@@ -606,7 +599,7 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
         }
 
         @Override
-        void tearDown() {
+        protected void tearDown() {
             mNm.removeAutomaticZenRule(id);
             MockConditionProvider.resetData(mContext);
             // wait for intent to move through the system
@@ -616,7 +609,7 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
 
     private class IsDisabledTest extends InteractiveTestCase {
         @Override
-        View inflate(ViewGroup parent) {
+        protected View inflate(ViewGroup parent) {
             return createSettingsItem(parent, R.string.cp_disable_service);
         }
 
@@ -626,7 +619,7 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
         }
 
         @Override
-        void test() {
+        protected void test() {
             if (!mNm.isNotificationPolicyAccessGranted()) {
                 status = PASS;
             } else {
@@ -636,7 +629,7 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
         }
 
         @Override
-        void tearDown() {
+        protected void tearDown() {
             MockConditionProvider.resetData(mContext);
             delay();
         }
@@ -649,12 +642,12 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
 
     private class ServiceStoppedTest extends InteractiveTestCase {
         @Override
-        View inflate(ViewGroup parent) {
+        protected View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.cp_service_stopped);
         }
 
         @Override
-        void test() {
+        protected void test() {
             MockConditionProvider.probeConnected(mContext,
                     new MockConditionProvider.BooleanResultCatcher() {
                         @Override
@@ -673,7 +666,7 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
         }
 
         @Override
-        void tearDown() {
+        protected void tearDown() {
             MockConditionProvider.resetData(mContext);
             // wait for intent to move through the system
             delay();

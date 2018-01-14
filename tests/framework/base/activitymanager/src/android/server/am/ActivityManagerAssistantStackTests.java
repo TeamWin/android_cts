@@ -23,6 +23,7 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
+import static android.server.am.ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
 
 import static org.junit.Assert.assertEquals;
@@ -41,6 +42,7 @@ import org.junit.Test;
  *     atest CtsActivityManagerDeviceTestCases:ActivityManagerAssistantStackTests
  */
 //@Presubmit b/67706642
+@FlakyTest(bugId = 71875631)
 public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase {
 
     private static final String VOICE_INTERACTION_SERVICE = "AssistantVoiceInteractionService";
@@ -58,11 +60,27 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
 
     private static final String EXTRA_ENTER_PIP = "enter_pip";
     private static final String EXTRA_LAUNCH_NEW_TASK = "launch_new_task";
+    private static final String EXTRA_ASSISTANT_DISPLAY_ID = "assistant_display_id";
     private static final String EXTRA_FINISH_SELF = "finish_self";
     private static final String EXTRA_IS_TRANSLUCENT = "is_translucent";
 
     private static final String TEST_ACTIVITY_ACTION_FINISH_SELF =
             "android.server.am.TestActivity.finish_self";
+
+    private static int mAssistantDisplayId = DEFAULT_DISPLAY_ID;
+
+    public void setUp() throws Exception {
+        super.setUp();
+        try (final AssistantSession assistantSession = new AssistantSession()) {
+            assistantSession.set(getActivityComponentName(VOICE_INTERACTION_SERVICE));
+            launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK);
+            mAmWmState.waitForValidStateWithActivityType(ASSISTANT_ACTIVITY,
+                    ACTIVITY_TYPE_ASSISTANT);
+            ActivityManagerState.ActivityStack assistantStack =
+                    mAmWmState.getAmState().getStackByActivityType(ACTIVITY_TYPE_ASSISTANT);
+            mAssistantDisplayId = assistantStack.mDisplayId;
+        }
+    }
 
     @Test
     @Presubmit
@@ -87,6 +105,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
     @Presubmit
     @Test
     public void testAssistantStackZOrder() throws Exception {
+        assumeTrue(assistantRunsOnPrimaryDisplay());
         assumeTrue(supportsPip());
         assumeTrue(supportsSplitScreenMultiWindow());
 
@@ -128,6 +147,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
     @Test
     @Presubmit
     public void testAssistantStackLaunchNewTaskWithDockedStack() throws Exception {
+        assumeTrue(assistantRunsOnPrimaryDisplay());
         assumeTrue(supportsSplitScreenMultiWindow());
 
         // Dock a task
@@ -148,8 +168,9 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         try (final AssistantSession assistantSession = new AssistantSession()) {
             assistantSession.set(getActivityComponentName(VOICE_INTERACTION_SERVICE));
 
-            launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
-                    EXTRA_LAUNCH_NEW_TASK, TEST_ACTIVITY);
+            launchActivityOnDisplay(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK, mAssistantDisplayId,
+                    EXTRA_LAUNCH_NEW_TASK, TEST_ACTIVITY,
+                    EXTRA_ASSISTANT_DISPLAY_ID, Integer.toString(mAssistantDisplayId));
         }
 
         final int expectedWindowingMode = inSplitScreenMode
@@ -174,10 +195,11 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
 
     @Test
     @Presubmit
+    @FlakyTest(bugId = 71875631)
     public void testAssistantStackFinishToPreviousApp() throws Exception {
         // Launch an assistant activity on top of an existing fullscreen activity, and ensure that
         // the fullscreen activity is still visible and on top after the assistant activity finishes
-        launchActivity(TEST_ACTIVITY);
+        launchActivityOnDisplay(TEST_ACTIVITY, mAssistantDisplayId);
         try (final AssistantSession assistantSession = new AssistantSession()) {
             assistantSession.set(getActivityComponentName(VOICE_INTERACTION_SERVICE));
 
@@ -196,6 +218,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
 
     @Test
     @Presubmit
+    @FlakyTest(bugId = 71875631)
     public void testDisallowEnterPiPFromAssistantStack() throws Exception {
         try (final AssistantSession assistantSession = new AssistantSession()) {
             assistantSession.set(getActivityComponentName(VOICE_INTERACTION_SERVICE));
@@ -232,7 +255,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
             // Launch a fullscreen app and then launch the assistant and check to see that it is
             // also visible
             removeStacksWithActivityTypes(ACTIVITY_TYPE_ASSISTANT);
-            launchActivity(TEST_ACTIVITY);
+            launchActivityOnDisplay(TEST_ACTIVITY, mAssistantDisplayId);
             launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
                     EXTRA_IS_TRANSLUCENT, String.valueOf(true));
             mAmWmState.waitForValidStateWithActivityType(
@@ -262,7 +285,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
             // Launch a fullscreen and docked app and then launch the assistant and check to see
             // that it
             // is also visible
-            if (supportsSplitScreenMultiWindow()) {
+            if (supportsSplitScreenMultiWindow() &&  assistantRunsOnPrimaryDisplay()) {
                 removeStacksWithActivityTypes(ACTIVITY_TYPE_ASSISTANT);
                 launchActivitiesInSplitScreen(DOCKED_ACTIVITY, TEST_ACTIVITY);
                 mAmWmState.assertContainsStack("Must contain docked stack.",
@@ -286,7 +309,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
             assistantSession.set(getActivityComponentName(VOICE_INTERACTION_SERVICE));
 
             // Launch the assistant
-            launchActivity(LAUNCH_ASSISTANT_ACTIVITY_FROM_SESSION);
+            launchActivityOnDisplay(LAUNCH_ASSISTANT_ACTIVITY_FROM_SESSION, mAssistantDisplayId);
             assertAssistantStackExists();
             mAmWmState.assertVisibility(ASSISTANT_ACTIVITY, true);
             mAmWmState.assertFocusedStack("Expected assistant stack focused",
@@ -298,11 +321,11 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
 
             // Launch a new fullscreen activity
             // Using Animation Test Activity because it is opaque on all devices.
-            launchActivity(ANIMATION_TEST_ACTIVITY);
+            launchActivityOnDisplay(ANIMATION_TEST_ACTIVITY, mAssistantDisplayId);
             mAmWmState.assertVisibility(ASSISTANT_ACTIVITY, false);
 
             // Launch the assistant again and ensure that it goes into the same task
-            launchActivity(LAUNCH_ASSISTANT_ACTIVITY_FROM_SESSION);
+            launchActivityOnDisplay(LAUNCH_ASSISTANT_ACTIVITY_FROM_SESSION, mAssistantDisplayId);
             assertAssistantStackExists();
             mAmWmState.assertVisibility(ASSISTANT_ACTIVITY, true);
             mAmWmState.assertFocusedStack("Expected assistant stack focused",
@@ -346,6 +369,12 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
     private void assertAssistantStackExists() throws Exception {
         mAmWmState.assertContainsStack("Must contain assistant stack.",
                 WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_ASSISTANT);
+    }
+
+    // Any 2D Activity in VR mode is run on a special VR virtual display, so check if the Assistant
+    // is going to run on the same display as other tasks.
+    protected boolean assistantRunsOnPrimaryDisplay() {
+        return mAssistantDisplayId == DEFAULT_DISPLAY_ID;
     }
 
     /** Helper class to save, set, and restore

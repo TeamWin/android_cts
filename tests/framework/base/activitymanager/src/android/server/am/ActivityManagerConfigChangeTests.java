@@ -27,6 +27,7 @@ import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.server.am.settings.SettingsSession;
 
+import android.support.test.filters.FlakyTest;
 import org.junit.Test;
 
 import java.util.regex.Matcher;
@@ -71,6 +72,7 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
     }
 
     @Presubmit
+    @FlakyTest(bugId = 71877849)
     @Test
     public void testChangeFontScaleRelaunch() throws Exception {
         // Should relaunch and receive no onConfigurationChanged()
@@ -78,6 +80,7 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
     }
 
     @Presubmit
+    @FlakyTest(bugId = 71877849)
     @Test
     public void testChangeFontScaleNoRelaunch() throws Exception {
         // Should receive onConfigurationChanged() and no relaunch

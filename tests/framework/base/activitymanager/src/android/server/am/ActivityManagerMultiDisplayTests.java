@@ -39,8 +39,8 @@ import android.platform.test.annotations.Presubmit;
 import android.server.am.ActivityManagerState.ActivityDisplay;
 import android.server.am.displayservice.DisplayHelper;
 import android.support.annotation.Nullable;
-import android.support.test.filters.FlakyTest;
 
+import android.support.test.filters.FlakyTest;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -1678,8 +1678,9 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * Tests that showWhenLocked works on a secondary display.
      */
     public void testSecondaryDisplayShowWhenLocked() throws Exception {
-        try (final ExternalDisplaySession externalDisplaySession = new ExternalDisplaySession()) {
-            setLockCredential();
+        try (final ExternalDisplaySession externalDisplaySession = new ExternalDisplaySession();
+             final LockCredentialSession lockCredentialSession = new LockCredentialSession()) {
+            lockCredentialSession.setLockCredential();
 
             launchActivity(TEST_ACTIVITY_NAME);
 
@@ -1696,8 +1697,6 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             mAmWmState.computeState(SHOW_WHEN_LOCKED_ATTR_ACTIVITY_NAME);
             assertTrue("Expected resumed activity on secondary display", mAmWmState.getAmState()
                     .hasActivityState(SHOW_WHEN_LOCKED_ATTR_ACTIVITY_NAME, STATE_RESUMED));
-        } finally {
-            tearDownLockCredentials();
         }
     }
 

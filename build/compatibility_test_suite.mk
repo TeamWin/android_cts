@@ -46,6 +46,14 @@ LOCAL_JAVA_LIBRARIES += tradefed hosttestlib compatibility-host-util
 
 LOCAL_MODULE_TAGS := optional
 
+# If DynamicConfig.xml exists copy it inside the jar
+ifneq (,$(wildcard $(LOCAL_PATH)/DynamicConfig.xml))
+  dynamic_config_local := $(call intermediates-dir-for,JAVA_LIBRARIES,$(LOCAL_MODULE),true,COMMON)/$(LOCAL_MODULE).dynamic
+  $(eval $(call copy-one-file,$(LOCAL_PATH)/DynamicConfig.xml,$(dynamic_config_local)))
+  LOCAL_JAVA_RESOURCE_FILES += $(dynamic_config_local)
+endif
+
 include $(BUILD_HOST_JAVA_LIBRARY)
 
+dynamic_config_local :=
 suite_info_prop :=
