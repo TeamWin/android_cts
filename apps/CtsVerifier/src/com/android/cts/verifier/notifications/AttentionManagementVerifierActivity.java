@@ -20,10 +20,12 @@ import static com.android.cts.verifier.notifications.MockListener.JSON_AMBIENT;
 import static com.android.cts.verifier.notifications.MockListener.JSON_MATCHES_ZEN_FILTER;
 import static com.android.cts.verifier.notifications.MockListener.JSON_TAG;
 
+import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.ContentProviderOperation;
+import android.content.Context;
 import android.content.OperationApplicationException;
 import android.database.Cursor;
 import android.net.Uri;
@@ -74,12 +76,12 @@ public class AttentionManagementVerifierActivity
     private Uri mCharlieUri;
 
     @Override
-    int getTitleResource() {
+    protected int getTitleResource() {
         return R.string.attention_test;
     }
 
     @Override
-    int getInstructionsResource() {
+    protected int getInstructionsResource() {
         return R.string.attention_info;
     }
 
@@ -88,20 +90,26 @@ public class AttentionManagementVerifierActivity
     @Override
     protected List<InteractiveTestCase> createTestItems() {
         List<InteractiveTestCase> tests = new ArrayList<>(17);
-        tests.add(new IsEnabledTest());
-        tests.add(new ServiceStartedTest());
-        tests.add(new InsertContactsTest());
-        tests.add(new NoneInterceptsAllTest());
-        tests.add(new PriorityInterceptsSomeTest());
-        tests.add(new AllInterceptsNothingTest());
-        tests.add(new DefaultOrderTest());
-        tests.add(new PriorityOrderTest());
-        tests.add(new InterruptionOrderTest());
-        tests.add(new AmbientBitsTest());
-        tests.add(new LookupUriOrderTest());
-        tests.add(new EmailOrderTest());
-        tests.add(new PhoneOrderTest());
-        tests.add(new DeleteContactsTest());
+        ActivityManager am = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        if (am.isLowRamDevice()) {
+            tests.add(new CannotBeEnabledTest());
+            tests.add(new ServiceStoppedTest());
+        } else {
+            tests.add(new IsEnabledTest());
+            tests.add(new ServiceStartedTest());
+            tests.add(new InsertContactsTest());
+            tests.add(new NoneInterceptsAllTest());
+            tests.add(new PriorityInterceptsSomeTest());
+            tests.add(new AllInterceptsNothingTest());
+            tests.add(new DefaultOrderTest());
+            tests.add(new PriorityOrderTest());
+            tests.add(new InterruptionOrderTest());
+            tests.add(new AmbientBitsTest());
+            tests.add(new LookupUriOrderTest());
+            tests.add(new EmailOrderTest());
+            tests.add(new PhoneOrderTest());
+            tests.add(new DeleteContactsTest());
+        }
         return tests;
     }
 
@@ -122,14 +130,37 @@ public class AttentionManagementVerifierActivity
 
     // Tests
 
+    private class ServiceStoppedTest extends InteractiveTestCase {
+        int mRetries = 3;
+        @Override
+        protected View inflate(ViewGroup parent) {
+            return createAutoItem(parent, R.string.nls_service_stopped);
+        }
+
+        @Override
+        protected void test() {
+            if (MockListener.getInstance() == null
+                    || !MockListener.getInstance().isConnected) {
+                status = PASS;
+            } else {
+                if (--mRetries > 0) {
+                    sleep(100);
+                    status = RETEST;
+                } else {
+                    status = FAIL;
+                }
+            }
+        }
+    }
+
     protected class InsertContactsTest extends InteractiveTestCase {
         @Override
-        View inflate(ViewGroup parent) {
+        protected View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.attention_create_contacts);
         }
 
         @Override
-        void setUp() {
+        protected void setUp() {
             insertSingleContact(ALICE, ALICE_PHONE, ALICE_EMAIL, true);
             insertSingleContact(BOB, BOB_PHONE, BOB_EMAIL, false);
             // charlie is not in contacts
@@ -137,7 +168,7 @@ public class AttentionManagementVerifierActivity
         }
 
         @Override
-        void test() {
+        protected void test() {
             mAliceUri = lookupContact(ALICE_PHONE);
             mBobUri = lookupContact(BOB_PHONE);
             mCharlieUri = lookupContact(CHARLIE_PHONE);
@@ -161,12 +192,12 @@ public class AttentionManagementVerifierActivity
 
     protected class DeleteContactsTest extends InteractiveTestCase {
         @Override
-        View inflate(ViewGroup parent) {
+        protected View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.attention_delete_contacts);
         }
 
         @Override
-        void test() {
+        protected void test() {
             final ArrayList<ContentProviderOperation> operationList = new ArrayList<>();
             operationList.add(ContentProviderOperation.newDelete(mAliceUri).build());
             operationList.add(ContentProviderOperation.newDelete(mBobUri).build());
@@ -187,12 +218,12 @@ public class AttentionManagementVerifierActivity
 
     protected class NoneInterceptsAllTest extends InteractiveTestCase {
         @Override
-        View inflate(ViewGroup parent) {
+        protected View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.attention_all_are_filtered);
         }
 
         @Override
-        void setUp() {
+        protected void setUp() {
             mNm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE);
             createChannels();
             sendNotifications(MODE_URI, false, false);
@@ -200,7 +231,7 @@ public class AttentionManagementVerifierActivity
         }
 
         @Override
-        void test() {
+        protected void test() {
             List<JSONObject> result = new ArrayList<>(MockListener.getInstance().getPosted());
 
             Set<String> found = new HashSet<String>();
@@ -237,7 +268,7 @@ public class AttentionManagementVerifierActivity
         }
 
         @Override
-        void tearDown() {
+        protected void tearDown() {
             mNm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
             mNm.cancelAll();
             deleteChannels();
@@ -248,19 +279,19 @@ public class AttentionManagementVerifierActivity
 
     protected class AllInterceptsNothingTest extends InteractiveTestCase {
         @Override
-        View inflate(ViewGroup parent) {
+        protected View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.attention_none_are_filtered);
         }
 
         @Override
-        void setUp() {
+        protected void setUp() {
             createChannels();
             sendNotifications(MODE_URI, false, false);
             status = READY;
         }
 
         @Override
-        void test() {
+        protected void test() {
             List<JSONObject> result = new ArrayList<>(MockListener.getInstance().getPosted());
 
             Set<String> found = new HashSet<String>();
@@ -297,7 +328,7 @@ public class AttentionManagementVerifierActivity
         }
 
         @Override
-        void tearDown() {
+        protected void tearDown() {
             mNm.cancelAll();
             deleteChannels();
             MockListener.getInstance().resetData();
@@ -306,12 +337,12 @@ public class AttentionManagementVerifierActivity
 
     protected class PriorityInterceptsSomeTest extends InteractiveTestCase {
         @Override
-        View inflate(ViewGroup parent) {
+        protected View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.attention_some_are_filtered);
         }
 
         @Override
-        void setUp() {
+        protected void setUp() {
             mNm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
             NotificationManager.Policy policy = mNm.getNotificationPolicy();
             policy = new NotificationManager.Policy(policy.priorityCategories
@@ -325,7 +356,7 @@ public class AttentionManagementVerifierActivity
         }
 
         @Override
-        void test() {
+        protected void test() {
             List<JSONObject> result = new ArrayList<>(MockListener.getInstance().getPosted());
 
             Set<String> found = new HashSet<String>();
@@ -362,7 +393,7 @@ public class AttentionManagementVerifierActivity
         }
 
         @Override
-        void tearDown() {
+        protected void tearDown() {
             mNm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
             mNm.cancelAll();
             deleteChannels();
@@ -373,19 +404,19 @@ public class AttentionManagementVerifierActivity
     // ordered by time: C, B, A
     protected class DefaultOrderTest extends InteractiveTestCase {
         @Override
-        View inflate(ViewGroup parent) {
+        protected View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.attention_default_order);
         }
 
         @Override
-        void setUp() {
+        protected void setUp() {
             createChannels();
             sendNotifications(MODE_NONE, false, false);
             status = READY;
         }
 
         @Override
-        void test() {
+        protected void test() {
             List<String> orderedKeys = new ArrayList<>(MockListener.getInstance().mOrder);
             int rankA = findTagInKeys(ALICE, orderedKeys);
             int rankB = findTagInKeys(BOB, orderedKeys);
@@ -399,7 +430,7 @@ public class AttentionManagementVerifierActivity
         }
 
         @Override
-        void tearDown() {
+        protected void tearDown() {
             mNm.cancelAll();
             deleteChannels();
             MockListener.getInstance().resetData();
@@ -409,19 +440,19 @@ public class AttentionManagementVerifierActivity
     // ordered by priority: B, C, A
     protected class PriorityOrderTest extends InteractiveTestCase {
         @Override
-        View inflate(ViewGroup parent) {
+        protected View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.attention_priority_order);
         }
 
         @Override
-        void setUp() {
+        protected void setUp() {
             createChannels();
             sendNotifications(MODE_NONE, true, false);
             status = READY;
         }
 
         @Override
-        void test() {
+        protected void test() {
             List<String> orderedKeys = new ArrayList<>(MockListener.getInstance().mOrder);
             int rankA = findTagInKeys(ALICE, orderedKeys);
             int rankB = findTagInKeys(BOB, orderedKeys);
@@ -435,7 +466,7 @@ public class AttentionManagementVerifierActivity
         }
 
         @Override
-        void tearDown() {
+        protected void tearDown() {
             mNm.cancelAll();
             deleteChannels();
             MockListener.getInstance().resetData();
@@ -447,12 +478,12 @@ public class AttentionManagementVerifierActivity
         boolean mSawElevation = false;
 
         @Override
-        View inflate(ViewGroup parent) {
+        protected View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.attention_interruption_order);
         }
 
         @Override
-        void setUp() {
+        protected void setUp() {
             delayTime = 15000;
             createChannels();
             // send B & C noisy with contact affinity
@@ -463,7 +494,7 @@ public class AttentionManagementVerifierActivity
         }
 
         @Override
-        void test() {
+        protected void test() {
             if (status == READY_AFTER_LONG_DELAY) {
                 // send A noisy but no contact affinity
                 sendNotifications(SEND_A, MODE_NONE, false, true);
@@ -493,7 +524,7 @@ public class AttentionManagementVerifierActivity
         }
 
         @Override
-        void tearDown() {
+        protected void tearDown() {
             mNm.cancelAll();
             deleteChannels();
             MockListener.getInstance().resetData();
@@ -503,12 +534,12 @@ public class AttentionManagementVerifierActivity
     // B & C above the fold, A below
     protected class AmbientBitsTest extends InteractiveTestCase {
         @Override
-        View inflate(ViewGroup parent) {
+        protected View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.attention_ambient_bit);
         }
 
         @Override
-        void setUp() {
+        protected void setUp() {
             createChannels();
             sendNotifications(SEND_B | SEND_C, MODE_NONE, true, true);
             sendNotifications(SEND_A, MODE_NONE, true, false);
@@ -516,7 +547,7 @@ public class AttentionManagementVerifierActivity
         }
 
         @Override
-        void test() {
+        protected void test() {
             List<JSONObject> result = new ArrayList<>(MockListener.getInstance().getPosted());
 
             Set<String> found = new HashSet<String>();
@@ -553,7 +584,7 @@ public class AttentionManagementVerifierActivity
         }
 
         @Override
-        void tearDown() {
+        protected void tearDown() {
             mNm.cancelAll();
             deleteChannels();
             MockListener.getInstance().resetData();
@@ -563,19 +594,19 @@ public class AttentionManagementVerifierActivity
     // ordered by contact affinity: A, B, C
     protected class LookupUriOrderTest extends InteractiveTestCase {
         @Override
-        View inflate(ViewGroup parent) {
+        protected View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.attention_lookup_order);
         }
 
         @Override
-        void setUp() {
+        protected void setUp() {
             createChannels();
             sendNotifications(MODE_URI, false, false);
             status = READY;
         }
 
         @Override
-        void test() {
+        protected void test() {
             List<String> orderedKeys = new ArrayList<>(MockListener.getInstance().mOrder);
             int rankA = findTagInKeys(ALICE, orderedKeys);
             int rankB = findTagInKeys(BOB, orderedKeys);
@@ -589,7 +620,7 @@ public class AttentionManagementVerifierActivity
         }
 
         @Override
-        void tearDown() {
+        protected void tearDown() {
             mNm.cancelAll();
             deleteChannels();
             MockListener.getInstance().resetData();
@@ -599,19 +630,19 @@ public class AttentionManagementVerifierActivity
     // ordered by contact affinity: A, B, C
     protected class EmailOrderTest extends InteractiveTestCase {
         @Override
-        View inflate(ViewGroup parent) {
+        protected View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.attention_email_order);
         }
 
         @Override
-        void setUp() {
+        protected void setUp() {
             createChannels();
             sendNotifications(MODE_EMAIL, false, false);
             status = READY;
         }
 
         @Override
-        void test() {
+        protected void test() {
             List<String> orderedKeys = new ArrayList<>(MockListener.getInstance().mOrder);
             int rankA = findTagInKeys(ALICE, orderedKeys);
             int rankB = findTagInKeys(BOB, orderedKeys);
@@ -625,7 +656,7 @@ public class AttentionManagementVerifierActivity
         }
 
         @Override
-        void tearDown() {
+        protected void tearDown() {
             mNm.cancelAll();
             deleteChannels();
             MockListener.getInstance().resetData();
@@ -635,19 +666,19 @@ public class AttentionManagementVerifierActivity
     // ordered by contact affinity: A, B, C
     protected class PhoneOrderTest extends InteractiveTestCase {
         @Override
-        View inflate(ViewGroup parent) {
+        protected View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.attention_phone_order);
         }
 
         @Override
-        void setUp() {
+        protected void setUp() {
             createChannels();
             sendNotifications(MODE_PHONE, false, false);
             status = READY;
         }
 
         @Override
-        void test() {
+        protected void test() {
             List<String> orderedKeys = new ArrayList<>(MockListener.getInstance().mOrder);
             int rankA = findTagInKeys(ALICE, orderedKeys);
             int rankB = findTagInKeys(BOB, orderedKeys);
@@ -661,7 +692,7 @@ public class AttentionManagementVerifierActivity
         }
 
         @Override
-        void tearDown() {
+        protected void tearDown() {
             mNm.cancelAll();
             deleteChannels();
             MockListener.getInstance().resetData();
