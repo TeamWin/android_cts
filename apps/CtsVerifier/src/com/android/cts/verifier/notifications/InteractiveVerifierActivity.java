@@ -94,11 +94,12 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
     }
 
     protected abstract class InteractiveTestCase {
-        int status;
+        protected boolean mUserVerified;
+        protected int status;
         private View view;
         protected long delayTime = 3000;
 
-        abstract View inflate(ViewGroup parent);
+        protected abstract View inflate(ViewGroup parent);
         View getView(ViewGroup parent) {
             if (view == null) {
                 view = inflate(parent);
@@ -112,13 +113,18 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
         }
 
         /** Set status to {@link #READY} to proceed, or {@link #SETUP} to try again. */
-        void setUp() { status = READY; next(); };
+        protected void setUp() { status = READY; next(); };
 
         /** Set status to {@link #PASS} or @{link #FAIL} to proceed, or {@link #READY} to retry. */
-        void test() { status = FAIL; next(); };
+        protected void test() { status = FAIL; next(); };
 
         /** Do not modify status. */
-        void tearDown() { next(); };
+        protected void tearDown() { next(); };
+
+        protected void setFailed() {
+            status = FAIL;
+            logFail();
+        }
 
         protected void logFail() {
             logFail(null);
@@ -135,8 +141,8 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
         }
     }
 
-    abstract int getTitleResource();
-    abstract int getInstructionsResource();
+    protected abstract int getTitleResource();
+    protected abstract int getInstructionsResource();
 
     protected void onCreate(Bundle savedState) {
         super.onCreate(savedState);
@@ -279,12 +285,22 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
             case READY:
             case RETEST:
                 Log.i(TAG, "running test for: " + mCurrentTest.getClass().getSimpleName());
-                mCurrentTest.test();
-                if (mCurrentTest.status == RETEST_AFTER_LONG_DELAY) {
-                    delay(mCurrentTest.delayTime);
-                } else {
+                try {
+                    mCurrentTest.test();
+                    if (mCurrentTest.status == RETEST_AFTER_LONG_DELAY) {
+                        delay(mCurrentTest.delayTime);
+                    } else {
+                        delay();
+                    }
+                } catch (Throwable t) {
+                    mCurrentTest.status = FAIL;
+                    markItem(mCurrentTest);
+                    Log.e(TAG, "FAIL: " + mCurrentTest.getClass().getSimpleName(), t);
+                    mCurrentTest.tearDown();
+                    mCurrentTest = null;
                     delay();
                 }
+
                 break;
 
             case FAIL:
@@ -360,6 +376,9 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
                     mCurrentTest.status = READY;
                     next();
                 }
+            }
+            if (mCurrentTest != null) {
+                mCurrentTest.mUserVerified = true;
             }
         }
     }
@@ -440,7 +459,7 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
 
     protected class IsEnabledTest extends InteractiveTestCase {
         @Override
-        View inflate(ViewGroup parent) {
+        protected View inflate(ViewGroup parent) {
             return createNlsSettingsItem(parent, R.string.nls_enable_service);
         }
 
@@ -450,7 +469,7 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
         }
 
         @Override
-        void test() {
+        protected void test() {
             mNm.cancelAll();
             Intent settings = new Intent(NOTIFICATION_LISTENER_SETTINGS);
             if (settings.resolveActivity(mPackageManager) == null) {
@@ -468,7 +487,7 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
             }
         }
 
-        void tearDown() {
+        protected void tearDown() {
             // wait for the service to start
             delay();
         }
@@ -476,13 +495,13 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
 
     protected class ServiceStartedTest extends InteractiveTestCase {
         @Override
-        View inflate(ViewGroup parent) {
+        protected View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.nls_service_started);
         }
 
         @Override
-        void test() {
-            if (MockListener.getInstance() != null) {
+        protected void test() {
+            if (MockListener.getInstance() != null && MockListener.getInstance().isConnected) {
                 status = PASS;
                 next();
             } else {
@@ -492,4 +511,41 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
             }
         }
     }
+
+    protected class CannotBeEnabledTest extends InteractiveTestCase {
+        @Override
+        protected View inflate(ViewGroup parent) {
+            return createNlsSettingsItem(parent, R.string.nls_cannot_enable_service);
+        }
+
+        @Override
+        boolean autoStart() {
+            return true;
+        }
+
+        @Override
+        protected void test() {
+            mNm.cancelAll();
+            Intent settings = new Intent(NOTIFICATION_LISTENER_SETTINGS);
+            if (settings.resolveActivity(mPackageManager) == null) {
+                logFail("no settings activity");
+                status = FAIL;
+            } else {
+                String listeners = Secure.getString(getContentResolver(),
+                        ENABLED_NOTIFICATION_LISTENERS);
+                if (listeners != null && listeners.contains(LISTENER_PATH)) {
+                    status = FAIL;
+                } else {
+                    status = PASS;
+                }
+                next();
+            }
+        }
+
+        protected void tearDown() {
+            // wait for the service to start
+            delay();
+        }
+    }
+
 }
