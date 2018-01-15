@@ -16,6 +16,7 @@
 
 package android.media.cts;
 
+import android.app.ActivityManager;
 import android.app.UiAutomation;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -52,17 +53,26 @@ public class RingtoneTest extends InstrumentationTestCase {
 
         int maxVolume = mAudioManager.getStreamMaxVolume(AudioManager.STREAM_RING);
 
-        try {
-            Utils.toggleNotificationPolicyAccess(
-                    mContext.getPackageName(), getInstrumentation(), true);
-            // set ringer to a reasonable volume
+        if (mAudioManager.getRingerMode() == AudioManager.RINGER_MODE_VIBRATE) {
+            mAudioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
             mAudioManager.setStreamVolume(AudioManager.STREAM_RING, maxVolume / 2,
                     AudioManager.FLAG_ALLOW_RINGER_MODES);
-            // make sure that we are not in silent mode
-            mAudioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
-        } finally {
-            Utils.toggleNotificationPolicyAccess(
-                    mContext.getPackageName(), getInstrumentation(), false);
+        } else if (mAudioManager.getRingerMode() == AudioManager.RINGER_MODE_NORMAL) {
+            mAudioManager.setStreamVolume(AudioManager.STREAM_RING, maxVolume / 2,
+                    AudioManager.FLAG_ALLOW_RINGER_MODES);
+        } else if (!ActivityManager.isLowRamDeviceStatic()) {
+            try {
+                Utils.toggleNotificationPolicyAccess(
+                        mContext.getPackageName(), getInstrumentation(), true);
+                // set ringer to a reasonable volume
+                mAudioManager.setStreamVolume(AudioManager.STREAM_RING, maxVolume / 2,
+                        AudioManager.FLAG_ALLOW_RINGER_MODES);
+                // make sure that we are not in silent mode
+                mAudioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+            } finally {
+                Utils.toggleNotificationPolicyAccess(
+                        mContext.getPackageName(), getInstrumentation(), false);
+            }
         }
 
         mDefaultRingUri = RingtoneManager.getActualDefaultRingtoneUri(mContext,
@@ -88,7 +98,7 @@ public class RingtoneTest extends InstrumentationTestCase {
             if (mRingtone.isPlaying()) mRingtone.stop();
             mRingtone.setStreamType(mOriginalStreamType);
         }
-        if (mAudioManager != null) {
+        if (mAudioManager != null && !ActivityManager.isLowRamDeviceStatic()) {
             try {
                 Utils.toggleNotificationPolicyAccess(
                         mContext.getPackageName(), getInstrumentation(), true);
