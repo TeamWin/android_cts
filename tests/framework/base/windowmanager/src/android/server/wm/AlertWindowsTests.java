@@ -16,6 +16,10 @@
 
 package android.server.wm;
 
+import static android.app.AppOpsManager.MODE_ALLOWED;
+import static android.app.AppOpsManager.MODE_ERRORED;
+import static android.app.AppOpsManager.OPSTR_SYSTEM_ALERT_WINDOW;
+
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -25,7 +29,10 @@ import android.server.am.ActivityManagerTestBase;
 import android.server.am.WaitForValidActivityState;
 import android.server.am.WindowManagerState;
 
+import com.android.compatibility.common.util.AppOpsUtils;
+
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -71,12 +78,20 @@ public class AlertWindowsTests extends ActivityManagerTestBase {
             TYPE_INPUT_METHOD,
             TYPE_NAVIGATION_BAR);
 
+    @Before
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
+        resetPermissionState(TEST_ACTIVITY);
+        resetPermissionState(SDK25_TEST_ACTIVITY);
+    }
+
     @After
     @Override
     public void tearDown() throws Exception {
         super.tearDown();
-        setAlertWindowPermission(TEST_ACTIVITY, false);
-        setAlertWindowPermission(SDK25_TEST_ACTIVITY, false);
+        resetPermissionState(TEST_ACTIVITY);
+        resetPermissionState(SDK25_TEST_ACTIVITY);
         stopTestPackage(TEST_ACTIVITY);
         stopTestPackage(SDK25_TEST_ACTIVITY);
     }
@@ -117,7 +132,7 @@ public class AlertWindowsTests extends ActivityManagerTestBase {
     }
 
     private void assertAlertWindows(final ComponentName activityName,
-            final boolean hasAlertWindowPermission, final boolean atLeastO) {
+            final boolean hasAlertWindowPermission, final boolean atLeastO) throws Exception {
         final String packageName = activityName.getPackageName();
         final WindowManagerState wMState = mAmWmState.getWmState();
 
@@ -126,6 +141,7 @@ public class AlertWindowsTests extends ActivityManagerTestBase {
 
         if (!hasAlertWindowPermission) {
             assertTrue("Should be empty alertWindows=" + alertWindows, alertWindows.isEmpty());
+            assertTrue(AppOpsUtils.rejectedOperationLogged(packageName, OPSTR_SYSTEM_ALERT_WINDOW));
             return;
         }
 
@@ -170,11 +186,19 @@ public class AlertWindowsTests extends ActivityManagerTestBase {
                             + " greater than lowestSystemWindow=" + lowestSystemWindow,
                     wmState.getZOrder(highestAlertWindow) < wmState.getZOrder(lowestSystemWindow));
         }
+        assertTrue(AppOpsUtils.allowedOperationLogged(packageName, OPSTR_SYSTEM_ALERT_WINDOW));
     }
 
-    private void setAlertWindowPermission(final ComponentName activityName, final boolean allow) {
-        final String packageName = activityName.getPackageName();
-        executeShellCommand("appops set " + packageName + " android:system_alert_window "
-                + (allow ? "allow" : "deny"));
+    // Resets the permission states for a package to the system defaults.
+    // Also clears the app operation logs for this package, required to test that displaying
+    // the alert window gets logged.
+    private void resetPermissionState(ComponentName activityName) throws Exception {
+        AppOpsUtils.reset(activityName.getPackageName());
+    }
+
+    private void setAlertWindowPermission(final ComponentName activityName, final boolean allow)
+            throws Exception {
+        int mode = allow ? MODE_ALLOWED : MODE_ERRORED;
+        AppOpsUtils.setOpMode(activityName.getPackageName(), OPSTR_SYSTEM_ALERT_WINDOW, mode);
     }
 }
