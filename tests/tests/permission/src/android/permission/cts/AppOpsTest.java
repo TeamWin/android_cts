@@ -20,7 +20,11 @@ import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.AppOpsManager.MODE_DEFAULT;
 import static android.app.AppOpsManager.MODE_ERRORED;
 import static android.app.AppOpsManager.MODE_IGNORED;
+import static android.app.AppOpsManager.OPSTR_READ_CALENDAR;
 import static android.app.AppOpsManager.OPSTR_READ_SMS;
+import static com.android.compatibility.common.util.AppOpsUtils.allowedOperationLogged;
+import static com.android.compatibility.common.util.AppOpsUtils.rejectedOperationLogged;
+import static com.android.compatibility.common.util.AppOpsUtils.setOpMode;
 
 import android.Manifest.permission;
 import android.app.AppOpsManager;
@@ -29,7 +33,7 @@ import android.os.Process;
 import android.test.InstrumentationTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
 
-import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.AppOpsUtils;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -91,28 +95,31 @@ public class AppOpsTest extends InstrumentationTestCase {
         mOpPackageName = mContext.getOpPackageName();
         mMyUid = Process.myUid();
         assertNotNull(mAppOps);
+
+        // Reset app ops state for this test package to the system default.
+        AppOpsUtils.reset(mOpPackageName);
     }
 
     public void testNoteOpAndCheckOp() throws Exception {
-        setAppOpMode(OPSTR_READ_SMS, MODE_ALLOWED);
+        setOpMode(mOpPackageName, OPSTR_READ_SMS, MODE_ALLOWED);
         assertEquals(MODE_ALLOWED, mAppOps.noteOp(OPSTR_READ_SMS, mMyUid, mOpPackageName));
         assertEquals(MODE_ALLOWED, mAppOps.noteOpNoThrow(OPSTR_READ_SMS, mMyUid, mOpPackageName));
         assertEquals(MODE_ALLOWED, mAppOps.checkOp(OPSTR_READ_SMS, mMyUid, mOpPackageName));
         assertEquals(MODE_ALLOWED, mAppOps.checkOpNoThrow(OPSTR_READ_SMS, mMyUid, mOpPackageName));
 
-        setAppOpMode(OPSTR_READ_SMS, MODE_IGNORED);
+        setOpMode(mOpPackageName, OPSTR_READ_SMS, MODE_IGNORED);
         assertEquals(MODE_IGNORED, mAppOps.noteOp(OPSTR_READ_SMS, mMyUid, mOpPackageName));
         assertEquals(MODE_IGNORED, mAppOps.noteOpNoThrow(OPSTR_READ_SMS, mMyUid, mOpPackageName));
         assertEquals(MODE_IGNORED, mAppOps.checkOp(OPSTR_READ_SMS, mMyUid, mOpPackageName));
         assertEquals(MODE_IGNORED, mAppOps.checkOpNoThrow(OPSTR_READ_SMS, mMyUid, mOpPackageName));
 
-        setAppOpMode(OPSTR_READ_SMS, MODE_DEFAULT);
+        setOpMode(mOpPackageName, OPSTR_READ_SMS, MODE_DEFAULT);
         assertEquals(MODE_DEFAULT, mAppOps.noteOp(OPSTR_READ_SMS, mMyUid, mOpPackageName));
         assertEquals(MODE_DEFAULT, mAppOps.noteOpNoThrow(OPSTR_READ_SMS, mMyUid, mOpPackageName));
         assertEquals(MODE_DEFAULT, mAppOps.checkOp(OPSTR_READ_SMS, mMyUid, mOpPackageName));
         assertEquals(MODE_DEFAULT, mAppOps.checkOpNoThrow(OPSTR_READ_SMS, mMyUid, mOpPackageName));
 
-        setAppOpMode(OPSTR_READ_SMS, MODE_ERRORED);
+        setOpMode(mOpPackageName, OPSTR_READ_SMS, MODE_ERRORED);
         assertEquals(MODE_ERRORED, mAppOps.noteOpNoThrow(OPSTR_READ_SMS, mMyUid, mOpPackageName));
         assertEquals(MODE_ERRORED, mAppOps.checkOpNoThrow(OPSTR_READ_SMS, mMyUid, mOpPackageName));
         try {
@@ -208,25 +215,21 @@ public class AppOpsTest extends InstrumentationTestCase {
         }
     }
 
-    private void setAppOpMode(String opStr, int mode) throws Exception {
-        String modeStr;
-        switch (mode) {
-            case MODE_ALLOWED:
-                modeStr = "allow";
-                break;
-            case MODE_ERRORED:
-                modeStr = "deny";
-                break;
-            case MODE_IGNORED:
-                modeStr = "ignore";
-                break;
-            case MODE_DEFAULT:
-                modeStr = "default";
-                break;
-            default:
-                throw new IllegalArgumentException("Unexpected app op type");
-        }
-        String command = "appops set " + mOpPackageName + " " + opStr + " " + modeStr;
-        SystemUtil.runShellCommand(getInstrumentation(), command);
+    @SmallTest
+    public void testGetOpsForPackage_opsAreLogged() throws Exception {
+        assertFalse(allowedOperationLogged(mOpPackageName, OPSTR_READ_SMS));
+        assertFalse(allowedOperationLogged(mOpPackageName, OPSTR_READ_CALENDAR));
+
+        setOpMode(mOpPackageName, OPSTR_READ_SMS, MODE_ALLOWED);
+        setOpMode(mOpPackageName, OPSTR_READ_CALENDAR, MODE_ERRORED);
+
+        // Note an op that's allowed.
+        mAppOps.noteOp(OPSTR_READ_SMS, mMyUid, mOpPackageName);
+        assertTrue(allowedOperationLogged(mOpPackageName, OPSTR_READ_SMS));
+
+        // Note another op that's not allowed.
+        mAppOps.noteOpNoThrow(OPSTR_READ_CALENDAR, mMyUid, mOpPackageName);
+        assertTrue(allowedOperationLogged(mOpPackageName, OPSTR_READ_SMS));
+        assertTrue(rejectedOperationLogged(mOpPackageName, OPSTR_READ_CALENDAR));
     }
 }
