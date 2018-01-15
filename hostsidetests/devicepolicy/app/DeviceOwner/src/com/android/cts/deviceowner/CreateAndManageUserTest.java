@@ -283,7 +283,7 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
         }
     }
 
-    public void testCreateAndManageUser_StartUserInBackground() throws Exception {
+    public void testStartUserInBackground() throws Exception {
         String testUserName = "TestUser_" + System.currentTimeMillis();
 
         // Set affiliation id to allow communication
@@ -299,9 +299,10 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
                 testUserName,
                 SecondaryUserAdminReceiver.getComponentName(mContext),
                 bundle,
-                DevicePolicyManager.START_USER_IN_BACKGROUND);
+                /* flags */ 0);
         Log.d(TAG, "User create: " + uh);
 
+        assertTrue(mDevicePolicyManager.startUserInBackground(getWho(), uh));
         PrimaryUserService.assertCrossUserCallArrived();
     }
 
