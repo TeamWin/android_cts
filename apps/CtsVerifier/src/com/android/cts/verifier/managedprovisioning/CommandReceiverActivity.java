@@ -18,7 +18,6 @@ package com.android.cts.verifier.managedprovisioning;
 
 import static android.app.admin.DevicePolicyManager.MAKE_USER_EPHEMERAL;
 import static android.app.admin.DevicePolicyManager.SKIP_SETUP_WIZARD;
-import static android.app.admin.DevicePolicyManager.START_USER_IN_BACKGROUND;
 
 import android.Manifest;
 import android.app.Activity;
@@ -482,7 +481,7 @@ public class CommandReceiverActivity extends Activity {
                     extras.putBoolean(DeviceAdminTestReceiver.EXTRA_MANAGED_USER_TEST, true);
                     UserHandle userHandle = mDpm.createAndManageUser(mAdmin, "managed user", mAdmin,
                             extras,
-                            SKIP_SETUP_WIZARD | MAKE_USER_EPHEMERAL | START_USER_IN_BACKGROUND);
+                            SKIP_SETUP_WIZARD | MAKE_USER_EPHEMERAL);
                     mDpm.setAffiliationIds(mAdmin,
                             Collections.singleton(DeviceAdminTestReceiver.AFFILIATION_ID));
                     mDpm.switchUser(mAdmin, userHandle);
