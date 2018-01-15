@@ -17,5 +17,5 @@
 package com.android.cts.deviceowner;
 
 interface ICrossUserService {
-    void onEnabledCalled();
+    void onEnabledCalled(String error);
 }

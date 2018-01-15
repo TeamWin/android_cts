@@ -37,11 +37,16 @@ import android.provider.Settings;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * Test {@link DevicePolicyManager#createAndManageUser}.
@@ -59,6 +64,7 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
 
     private static final String AFFILIATION_ID = "affiliation.id";
     private static final String EXTRA_AFFILIATION_ID = "affiliationIdExtra";
+    private static final String EXTRA_METHOD_NAME = "methodName";
     private static final long ON_ENABLED_TIMEOUT_SECONDS = 120;
 
 
@@ -203,25 +209,198 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
         mContext.unregisterReceiver(receiver);
     }
 
-    /**
-     * Test creating an ephemeral user using the {@link DevicePolicyManager#createAndManageUser}
-     * method.
-     *
-     * <p>The test creates a user by calling to {@link DevicePolicyManager#createAndManageUser}. It
-     * doesn't remove the user afterwards, so its properties can be queried and tested by host-side
-     * tests.
-     * <p>The user's flags will be checked from the corresponding host-side test.
-     */
-    public void testCreateAndManageEphemeralUser() throws Exception {
+    public void testCreateAndManageUser_GetSecondaryUsers() throws Exception {
         String testUserName = "TestUser_" + System.currentTimeMillis();
 
-        // Do not assign return value to mUserHandle, so it is not removed in tearDown.
-        mDevicePolicyManager.createAndManageUser(
+        mUserHandle = mDevicePolicyManager.createAndManageUser(
                 getWho(),
                 testUserName,
                 getWho(),
                 null,
-                DevicePolicyManager.MAKE_USER_EPHEMERAL);
+                /* flags */ 0);
+        Log.d(TAG, "User create: " + mUserHandle);
+
+        List<UserHandle> secondaryUsers = mDevicePolicyManager.getSecondaryUsers(getWho());
+        assertEquals(1, secondaryUsers.size());
+        assertEquals(mUserHandle, secondaryUsers.get(0));
+    }
+
+    public void testCreateAndManageUser_SwitchUser() throws Exception {
+        LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(
+                getContext());
+
+        String testUserName = "TestUser_" + System.currentTimeMillis();
+
+        mUserHandle = mDevicePolicyManager.createAndManageUser(
+                getWho(),
+                testUserName,
+                getWho(),
+                null,
+                /* flags */ 0);
+        Log.d(TAG, "User create: " + mUserHandle);
+
+        LocalBroadcastReceiver broadcastReceiver = new LocalBroadcastReceiver();
+        localBroadcastManager.registerReceiver(broadcastReceiver,
+                new IntentFilter(BasicAdminReceiver.ACTION_USER_SWITCHED));
+        try {
+            assertTrue(mDevicePolicyManager.switchUser(getWho(), mUserHandle));
+            assertEquals(mUserHandle, broadcastReceiver.waitForBroadcastReceived());
+        } finally {
+            localBroadcastManager.unregisterReceiver(broadcastReceiver);
+        }
+    }
+
+    public void testCreateAndManageUser_StartInBackground() throws Exception {
+        LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(
+                getContext());
+
+        String testUserName = "TestUser_" + System.currentTimeMillis();
+
+        mUserHandle = mDevicePolicyManager.createAndManageUser(
+                getWho(),
+                testUserName,
+                getWho(),
+                null,
+                /* flags */ 0);
+        Log.d(TAG, "User create: " + mUserHandle);
+
+        LocalBroadcastReceiver broadcastReceiver = new LocalBroadcastReceiver();
+        localBroadcastManager.registerReceiver(broadcastReceiver,
+                new IntentFilter(BasicAdminReceiver.ACTION_USER_STARTED));
+
+        try {
+            // Start user in background and wait for onUserStarted
+            assertTrue(mDevicePolicyManager.startUserInBackground(getWho(), mUserHandle));
+            assertEquals(mUserHandle, broadcastReceiver.waitForBroadcastReceived());
+        } finally {
+            localBroadcastManager.unregisterReceiver(broadcastReceiver);
+        }
+    }
+
+    public void testCreateAndManageUser_StopUser() throws Exception {
+        LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(
+                getContext());
+
+        String testUserName = "TestUser_" + System.currentTimeMillis();
+
+        // Do not assign return value to mUserHandle, so it is not removed in tearDown.
+        UserHandle userHandle = mDevicePolicyManager.createAndManageUser(
+                getWho(),
+                testUserName,
+                getWho(),
+                null,
+                /* flags */ 0);
+        Log.d(TAG, "User create: " + userHandle);
+        assertTrue(mDevicePolicyManager.startUserInBackground(getWho(), userHandle));
+
+        LocalBroadcastReceiver broadcastReceiver = new LocalBroadcastReceiver();
+        localBroadcastManager.registerReceiver(broadcastReceiver,
+                new IntentFilter(BasicAdminReceiver.ACTION_USER_STOPPED));
+
+        try {
+            assertTrue(mDevicePolicyManager.stopUser(getWho(), userHandle));
+            assertEquals(userHandle, broadcastReceiver.waitForBroadcastReceived());
+        } finally {
+            localBroadcastManager.unregisterReceiver(broadcastReceiver);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    private static void logoutUser(Context context, DevicePolicyManager devicePolicyManager,
+            ComponentName componentName) {
+        assertTrue("cannot logout user", devicePolicyManager.logoutUser(componentName));
+    }
+
+    public void testCreateAndManageUser_LogoutUser() throws Exception {
+        LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(
+                getContext());
+
+        LocalBroadcastReceiver broadcastReceiver = new LocalBroadcastReceiver();
+        localBroadcastManager.registerReceiver(broadcastReceiver,
+                new IntentFilter(BasicAdminReceiver.ACTION_USER_STOPPED));
+
+        try {
+            UserHandle userHandle = runCrossUserVerification(
+                    /* createAndManageUserFlags */ 0, "logoutUser");
+            assertEquals(userHandle, broadcastReceiver.waitForBroadcastReceived());
+        } finally {
+            localBroadcastManager.unregisterReceiver(broadcastReceiver);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    private static void assertAffiliatedUser(Context context,
+            DevicePolicyManager devicePolicyManager, ComponentName componentName) {
+        assertTrue("not affiliated user", devicePolicyManager.isAffiliatedUser());
+    }
+
+    public void testCreateAndManageUser_Affiliated() throws Exception {
+        runCrossUserVerification(/* createAndManageUserFlags */ 0, "assertAffiliatedUser");
+        PrimaryUserService.assertCrossUserCallArrived();
+    }
+
+    @SuppressWarnings("unused")
+    private static void assertEphemeralUser(Context context,
+            DevicePolicyManager devicePolicyManager, ComponentName componentName) {
+        assertTrue("not ephemeral user", devicePolicyManager.isEphemeralUser(componentName));
+    }
+
+    public void testCreateAndManageUser_Ephemeral() throws Exception {
+        runCrossUserVerification(DevicePolicyManager.MAKE_USER_EPHEMERAL, "assertEphemeralUser");
+        PrimaryUserService.assertCrossUserCallArrived();
+    }
+
+    @SuppressWarnings("unused")
+    private static void assertAllSystemAppsInstalled(Context context,
+            DevicePolicyManager devicePolicyManager, ComponentName componentName) {
+        PackageManager packageManager = context.getPackageManager();
+        // First get a set of installed package names
+        Set<String> installedPackageNames = packageManager
+                .getInstalledApplications(/* flags */ 0)
+                .stream()
+                .map(applicationInfo -> applicationInfo.packageName)
+                .collect(Collectors.toSet());
+        // Then filter all package names by those that are not installed
+        Set<String> uninstalledPackageNames = packageManager
+                .getInstalledApplications(PackageManager.MATCH_UNINSTALLED_PACKAGES)
+                .stream()
+                .map(applicationInfo -> applicationInfo.packageName)
+                .filter(((Predicate<String>) installedPackageNames::contains).negate())
+                .collect(Collectors.toSet());
+        // Assert that all apps are installed
+        assertTrue("system apps not installed: " + uninstalledPackageNames,
+                uninstalledPackageNames.isEmpty());
+    }
+
+    public void testCreateAndManageUser_LeaveAllSystemApps() throws Exception {
+        runCrossUserVerification(
+                DevicePolicyManager.LEAVE_ALL_SYSTEM_APPS_ENABLED, "assertAllSystemAppsInstalled");
+        PrimaryUserService.assertCrossUserCallArrived();
+    }
+
+    private UserHandle runCrossUserVerification(int createAndManageUserFlags, String methodName)
+            throws Exception {
+        String testUserName = "TestUser_" + System.currentTimeMillis();
+
+        // Set affiliation id to allow communication.
+        mDevicePolicyManager.setAffiliationIds(getWho(), Collections.singleton(AFFILIATION_ID));
+
+        // Pack the affiliation id in a bundle so the secondary user can get it.
+        PersistableBundle bundle = new PersistableBundle();
+        bundle.putString(EXTRA_AFFILIATION_ID, AFFILIATION_ID);
+        bundle.putString(EXTRA_METHOD_NAME, methodName);
+
+        // Do not assign return value to mUserHandle, so it is not removed in tearDown.
+        UserHandle userHandle = mDevicePolicyManager.createAndManageUser(
+                getWho(),
+                testUserName,
+                SecondaryUserAdminReceiver.getComponentName(getContext()),
+                bundle,
+                createAndManageUserFlags);
+        Log.d(TAG, "User create: " + userHandle);
+        assertTrue(mDevicePolicyManager.startUserInBackground(getWho(), userHandle));
+
+        return userHandle;
     }
 
     public void testCreateAndManageUser_SkipSetupWizard() {
@@ -283,29 +462,6 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
         }
     }
 
-    public void testStartUserInBackground() throws Exception {
-        String testUserName = "TestUser_" + System.currentTimeMillis();
-
-        // Set affiliation id to allow communication
-        mDevicePolicyManager.setAffiliationIds(getWho(), Collections.singleton(AFFILIATION_ID));
-
-        // Pack the affiliation id in a bundle so the secondary user can get it
-        PersistableBundle bundle = new PersistableBundle();
-        bundle.putString(EXTRA_AFFILIATION_ID, AFFILIATION_ID);
-
-        // Do not assign return value to mUserHandle, so it is not removed in tearDown.
-        UserHandle uh = mDevicePolicyManager.createAndManageUser(
-                getWho(),
-                testUserName,
-                SecondaryUserAdminReceiver.getComponentName(mContext),
-                bundle,
-                /* flags */ 0);
-        Log.d(TAG, "User create: " + uh);
-
-        assertTrue(mDevicePolicyManager.startUserInBackground(getWho(), uh));
-        PrimaryUserService.assertCrossUserCallArrived();
-    }
-
     static class LocalBroadcastReceiver extends BroadcastReceiver {
         private SynchronousQueue<UserHandle> mQueue = new SynchronousQueue<UserHandle>();
 
@@ -324,12 +480,14 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
     }
 
     public static final class PrimaryUserService extends Service {
-        private static final Semaphore mSemaphore = new Semaphore(0);
+        private static final Semaphore sSemaphore = new Semaphore(0);
+        private static String sError = null;
 
         private final ICrossUserService.Stub mBinder = new ICrossUserService.Stub() {
-            public void onEnabledCalled() {
+            public void onEnabledCalled(String error) {
                 Log.d(TAG, "onEnabledCalled on primary user");
-                mSemaphore.release();
+                sError = error;
+                sSemaphore.release();
             }
         };
 
@@ -339,7 +497,10 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
         }
 
         static void assertCrossUserCallArrived() throws Exception {
-            assertTrue(mSemaphore.tryAcquire(ON_ENABLED_TIMEOUT_SECONDS, TimeUnit.SECONDS));
+            assertTrue(sSemaphore.tryAcquire(ON_ENABLED_TIMEOUT_SECONDS, TimeUnit.SECONDS));
+            if (sError != null) {
+                throw new Exception(sError);
+            }
         }
     }
 
@@ -348,18 +509,33 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
         public void onEnabled(Context context, Intent intent) {
             Log.d(TAG, "onEnabled called");
             DevicePolicyManager dpm = context.getSystemService(DevicePolicyManager.class);
+            ComponentName who = getComponentName(context);
+
             // Set affiliation ids
-            String affiliationId = intent.getStringExtra(EXTRA_AFFILIATION_ID);
-            dpm.setAffiliationIds(getComponentName(context),
-                    Collections.singleton(affiliationId));
+            dpm.setAffiliationIds(
+                    who, Collections.singleton(intent.getStringExtra(EXTRA_AFFILIATION_ID)));
+
+            String error = null;
+            try {
+                Method method = CreateAndManageUserTest.class.getDeclaredMethod(
+                        intent.getStringExtra(EXTRA_METHOD_NAME), Context.class,
+                        DevicePolicyManager.class, ComponentName.class);
+                method.setAccessible(true);
+                method.invoke(null, context, dpm, who);
+            } catch (NoSuchMethodException | IllegalAccessException e) {
+                error = e.toString();
+            } catch (InvocationTargetException e) {
+                error = e.getCause().toString();
+            }
+
             // Call all affiliated users
-            final List<UserHandle> targetUsers = dpm.getBindDeviceAdminTargetUsers(
-                    getComponentName(context));
+            final List<UserHandle> targetUsers = dpm.getBindDeviceAdminTargetUsers(who);
             assertEquals(1, targetUsers.size());
-            pingTargetUser(context, dpm, targetUsers.get(0));
+            pingTargetUser(context, dpm, targetUsers.get(0), error);
         }
 
-        private void pingTargetUser(Context context, DevicePolicyManager dpm, UserHandle target) {
+        private void pingTargetUser(Context context, DevicePolicyManager dpm, UserHandle target,
+                String error) {
             Log.d(TAG, "Pinging target: " + target);
             final ServiceConnection serviceConnection = new ServiceConnection() {
                 @Override
@@ -368,7 +544,7 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
                     ICrossUserService crossUserService = ICrossUserService
                             .Stub.asInterface(service);
                     try {
-                        crossUserService.onEnabledCalled();
+                        crossUserService.onEnabledCalled(error);
                     } catch (RemoteException re) {
                         Log.e(TAG, "Error when calling primary user", re);
                         // Do nothing, primary user will time out
