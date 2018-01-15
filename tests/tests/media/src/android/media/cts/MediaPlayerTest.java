@@ -15,6 +15,7 @@
  */
 package android.media.cts;
 
+import android.app.ActivityManager;
 import android.media.cts.R;
 
 import android.content.Context;
@@ -800,12 +801,15 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         MediaPlayer mp2 = null;
         AudioEffect vc = null;
         Visualizer vis = null;
-        AudioManager am = null;
+        AudioManager am = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
         int oldRingerMode = Integer.MIN_VALUE;
         int oldVolume = Integer.MIN_VALUE;
         try {
-            Utils.toggleNotificationPolicyAccess(
-                    mContext.getPackageName(), getInstrumentation(), true /* on */);
+            if (am.getRingerMode() != AudioManager.RINGER_MODE_NORMAL
+                    && !ActivityManager.isLowRamDeviceStatic()) {
+                Utils.toggleNotificationPolicyAccess(
+                        mContext.getPackageName(), getInstrumentation(), true /* on */);
+            }
 
             mp1 = new MediaPlayer();
             mp1.setAudioStreamType(AudioManager.STREAM_MUSIC);
@@ -846,10 +850,12 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
             byte[] vizdata = new byte[size];
 
             vis = new Visualizer(session);
-            am = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
+
             oldRingerMode = am.getRingerMode();
             // make sure we aren't in silent mode
-            am.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+            if (am.getRingerMode() != AudioManager.RINGER_MODE_NORMAL) {
+                am.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+            }
             oldVolume = am.getStreamVolume(AudioManager.STREAM_MUSIC);
             am.setStreamVolume(AudioManager.STREAM_MUSIC, 1, 0);
 
@@ -904,8 +910,10 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
             if (oldVolume != Integer.MIN_VALUE) {
                 am.setStreamVolume(AudioManager.STREAM_MUSIC, oldVolume, 0);
             }
-            Utils.toggleNotificationPolicyAccess(
-                    mContext.getPackageName(), getInstrumentation(), false  /* on == false */);
+            if (!ActivityManager.isLowRamDeviceStatic()) {
+                Utils.toggleNotificationPolicyAccess(
+                        mContext.getPackageName(), getInstrumentation(), false  /* on == false */);
+            }
         }
     }
 
