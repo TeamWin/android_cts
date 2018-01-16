@@ -16,11 +16,13 @@
 
 package android.app.cts;
 
+import android.app.Instrumentation;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationChannelGroup;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.UiAutomation;
 import android.app.stubs.R;
 import android.content.Context;
 import android.content.Intent;
@@ -29,13 +31,20 @@ import android.graphics.drawable.Icon;
 import android.media.AudioAttributes;
 import android.media.session.MediaSession;
 import android.net.Uri;
-import android.os.Bundle;
+import android.os.Build;
+import android.os.ParcelFileDescriptor;
 import android.provider.Settings;
 import android.provider.Telephony.Threads;
 import android.service.notification.StatusBarNotification;
+import android.support.test.InstrumentationRegistry;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
+import junit.framework.Assert;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -86,6 +95,60 @@ public class NotificationManagerTest extends AndroidTestCase {
         for (NotificationChannelGroup ncg : groups) {
             mNotificationManager.deleteNotificationChannelGroup(ncg.getId());
         }
+    }
+
+    public void testPrePCannotDisallowAlarmsOrMediaTest() throws Exception {
+        toggleNotificationPolicyAccess(mContext.getPackageName(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        mContext.getApplicationInfo().targetSdkVersion = Build.VERSION_CODES.O;
+
+        // toggle on alarms and media
+        mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
+                NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS
+                        | NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA_SYSTEM_OTHER, 0, 0));
+
+        NotificationManager.Policy policy = mNotificationManager.getNotificationPolicy();
+        assert((policy.priorityCategories & NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS)
+                != 0);
+        assert((policy.priorityCategories &
+                NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA_SYSTEM_OTHER) != 0);
+
+        // attempt to toggle off alarms and media
+        // toggle on alarms and media
+        mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(0, 0, 0));
+
+        policy = mNotificationManager.getNotificationPolicy();
+        assert((policy.priorityCategories & NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS)
+                != 0);
+        assert((policy.priorityCategories &
+                NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA_SYSTEM_OTHER) != 0);
+    }
+
+    public void testPostPCanDisallowAlarmsOrMediaTest() throws Exception {
+        toggleNotificationPolicyAccess(mContext.getPackageName(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        mContext.getApplicationInfo().targetSdkVersion = Build.VERSION_CODES.P;
+
+        // toggle on alarms and media
+        mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
+                NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS
+                        | NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA_SYSTEM_OTHER, 0, 0));
+
+        NotificationManager.Policy policy = mNotificationManager.getNotificationPolicy();
+        assert((policy.priorityCategories & NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS)
+                != 0);
+        assert((policy.priorityCategories &
+                NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA_SYSTEM_OTHER) != 0);
+
+        // attempt to toggle off alarms and media
+        // toggle on alarms and media
+        mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(0, 0, 0));
+
+        policy = mNotificationManager.getNotificationPolicy();
+        assert((policy.priorityCategories & NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS)
+                == 0);
+        assert((policy.priorityCategories &
+                NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA_SYSTEM_OTHER) == 0);
     }
 
     public void testCreateChannelGroup() throws Exception {
@@ -860,5 +923,33 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
         assertTrue(Arrays.equals(expected.getVibrationPattern(), actual.getVibrationPattern()));
         assertEquals(expected.getGroup(), actual.getGroup());
+    }
+
+    private void toggleNotificationPolicyAccess(String packageName,
+            Instrumentation instrumentation, boolean on) throws IOException {
+
+        String command = " cmd notification " + (on ? "allow_dnd " : "disallow_dnd ") + packageName;
+
+        // Get permission to change dnd policy
+        UiAutomation uiAutomation = instrumentation.getUiAutomation();
+        // Execute command
+        try (ParcelFileDescriptor fd = uiAutomation.executeShellCommand(command)) {
+            Assert.assertNotNull("Failed to execute shell command: " + command, fd);
+            // Wait for the command to finish by reading until EOF
+            try (InputStream in = new FileInputStream(fd.getFileDescriptor())) {
+                byte[] buffer = new byte[4096];
+                while (in.read(buffer) > 0) {}
+            } catch (IOException e) {
+                throw new IOException("Could not read stdout of command: " + command, e);
+            }
+        } finally {
+            uiAutomation.destroy();
+        }
+
+        NotificationManager nm = (NotificationManager) mContext.getSystemService(
+                Context.NOTIFICATION_SERVICE);
+        Assert.assertEquals("Notification Policy Access Grant is " +
+                        nm.isNotificationPolicyAccessGranted() + " not " + on, on,
+                nm.isNotificationPolicyAccessGranted());
     }
 }
