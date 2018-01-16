@@ -18,19 +18,23 @@ package android.webkit.cts;
 
 
 import android.content.Context;
-import android.test.AndroidTestCase;
+import android.test.ActivityInstrumentationTestCase2;
 import android.webkit.CookieManager;
 import android.webkit.WebView;
 
 import com.android.compatibility.common.util.NullWebViewUtils;
 
-public class WebViewDataDirTest extends AndroidTestCase {
+public class WebViewDataDirTest extends ActivityInstrumentationTestCase2<WebViewCtsActivity> {
 
     private static final long REMOTE_TIMEOUT_MS = 5000;
     private static final String ALTERNATE_DIR_NAME = "test";
     private static final String COOKIE_URL = "https://www.example.com/";
     private static final String COOKIE_VALUE = "foo=main";
     private static final String SET_COOKIE_PARAMS = "; Max-Age=86400";
+
+    public WebViewDataDirTest() throws Exception {
+        super("android.webkit.cts", WebViewCtsActivity.class);
+    }
 
     static class TestDisableThenUseImpl extends TestProcessClient.TestRunnable {
         @Override
@@ -48,19 +52,8 @@ public class WebViewDataDirTest extends AndroidTestCase {
             return;
         }
 
-        try (TestProcessClient process = TestProcessClient.createProcessA(getContext())) {
+        try (TestProcessClient process = TestProcessClient.createProcessA(getActivity())) {
             process.run(TestDisableThenUseImpl.class, REMOTE_TIMEOUT_MS);
-        }
-    }
-
-    static class TestUseThenDisableImpl extends TestProcessClient.TestRunnable {
-        @Override
-        public void run(Context ctx) {
-            new WebView(ctx);
-            try {
-                WebView.disableWebView();
-                fail("didn't throw IllegalStateException");
-            } catch (IllegalStateException e) {}
         }
     }
 
@@ -69,20 +62,11 @@ public class WebViewDataDirTest extends AndroidTestCase {
             return;
         }
 
-        try (TestProcessClient process = TestProcessClient.createProcessA(getContext())) {
-            process.run(TestUseThenDisableImpl.class, REMOTE_TIMEOUT_MS);
-        }
-    }
-
-    static class TestUseThenChangeDirImpl extends TestProcessClient.TestRunnable {
-        @Override
-        public void run(Context ctx) {
-            new WebView(ctx);
-            try {
-                WebView.setDataDirectorySuffix("test");
-                fail("didn't throw IllegalStateException");
-            } catch (IllegalStateException e) {}
-        }
+        assertNotNull(getActivity().getWebView());
+        try {
+            WebView.disableWebView();
+            fail("didn't throw IllegalStateException");
+        } catch (IllegalStateException e) {}
     }
 
     public void testUseThenChangeDir() throws Throwable {
@@ -90,9 +74,11 @@ public class WebViewDataDirTest extends AndroidTestCase {
             return;
         }
 
-        try (TestProcessClient process = TestProcessClient.createProcessA(getContext())) {
-            process.run(TestUseThenChangeDirImpl.class, REMOTE_TIMEOUT_MS);
-        }
+        assertNotNull(getActivity().getWebView());
+        try {
+            WebView.setDataDirectorySuffix(ALTERNATE_DIR_NAME);
+            fail("didn't throw IllegalStateException");
+        } catch (IllegalStateException e) {}
     }
 
     static class TestInvalidDirImpl extends TestProcessClient.TestRunnable {
@@ -110,15 +96,8 @@ public class WebViewDataDirTest extends AndroidTestCase {
             return;
         }
 
-        try (TestProcessClient process = TestProcessClient.createProcessA(getContext())) {
+        try (TestProcessClient process = TestProcessClient.createProcessA(getActivity())) {
             process.run(TestInvalidDirImpl.class, REMOTE_TIMEOUT_MS);
-        }
-    }
-
-    static class WebViewInDefaultDir extends TestProcessClient.TestRunnable {
-        @Override
-        public void run(Context ctx) {
-            new WebView(ctx);
         }
     }
 
@@ -137,28 +116,10 @@ public class WebViewDataDirTest extends AndroidTestCase {
             return;
         }
 
-        try (TestProcessClient processA = TestProcessClient.createProcessA(getContext());
-             TestProcessClient processB = TestProcessClient.createProcessB(getContext())) {
-            processA.run(WebViewInDefaultDir.class, REMOTE_TIMEOUT_MS);
-            processB.run(TestDefaultDirDisallowed.class, REMOTE_TIMEOUT_MS);
-        }
-    }
+        assertNotNull(getActivity().getWebView());
 
-    static class SetCookieInDefaultDir extends TestProcessClient.TestRunnable {
-        @Override
-        public void run(Context ctx) {
-            CookieManager cm = CookieManager.getInstance();
-            cm.setCookie(COOKIE_URL, COOKIE_VALUE + SET_COOKIE_PARAMS);
-            cm.flush();
-        }
-    }
-
-    static class TestCookieInDefaultDir extends TestProcessClient.TestRunnable {
-        @Override
-        public void run(Context ctx) {
-            CookieManager cm = CookieManager.getInstance();
-            String cookie = cm.getCookie(COOKIE_URL);
-            assertEquals("wrong cookie in default cookie jar", COOKIE_VALUE, cookie);
+        try (TestProcessClient processA = TestProcessClient.createProcessA(getActivity())) {
+            processA.run(TestDefaultDirDisallowed.class, REMOTE_TIMEOUT_MS);
         }
     }
 
@@ -177,11 +138,14 @@ public class WebViewDataDirTest extends AndroidTestCase {
             return;
         }
 
-        try (TestProcessClient processA = TestProcessClient.createProcessA(getContext());
-             TestProcessClient processB = TestProcessClient.createProcessB(getContext())) {
-            processA.run(SetCookieInDefaultDir.class, REMOTE_TIMEOUT_MS);
-            processA.run(TestCookieInDefaultDir.class, REMOTE_TIMEOUT_MS);
-            processB.run(TestCookieInAlternateDir.class, REMOTE_TIMEOUT_MS);
+        CookieManager cm = CookieManager.getInstance();
+        cm.setCookie(COOKIE_URL, COOKIE_VALUE + SET_COOKIE_PARAMS);
+        cm.flush();
+        String cookie = cm.getCookie(COOKIE_URL);
+        assertEquals("wrong cookie in default cookie jar", COOKIE_VALUE, cookie);
+
+        try (TestProcessClient processA = TestProcessClient.createProcessA(getActivity())) {
+            processA.run(TestCookieInAlternateDir.class, REMOTE_TIMEOUT_MS);
         }
     }
 }
