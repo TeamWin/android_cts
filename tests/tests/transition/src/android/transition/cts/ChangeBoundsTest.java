@@ -223,7 +223,7 @@ public class ChangeBoundsTest extends BaseTransitionTest {
                     });
         });
 
-        assertTrue(latch.await(500, TimeUnit.MILLISECONDS));
+        assertTrue(latch.await(1000, TimeUnit.MILLISECONDS));
         assertTrue(red.getTop() > closestDistance);
         assertTrue(green.getTop() > closestDistance);
     }
