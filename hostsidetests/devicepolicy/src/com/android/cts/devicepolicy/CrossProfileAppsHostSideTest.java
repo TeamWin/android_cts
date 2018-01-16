@@ -1,5 +1,8 @@
 package com.android.cts.devicepolicy;
 
+import com.android.tradefed.device.DeviceNotAvailableException;
+
+import java.io.FileNotFoundException;
 import java.util.Collections;
 import java.util.Map;
 
@@ -14,6 +17,7 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
     private static final String TARGET_USER_TEST_CLASS = ".CrossProfileAppsTargetUserTest";
     private static final String PARAM_TARGET_USER = "TARGET_USER";
     private static final String EXTRA_TEST_APK = "CtsCrossProfileAppsTests.apk";
+    private static final String SIMPLE_APP_APK ="CtsSimpleApp.apk";
 
     private int mProfileId;
     private int mSecondaryUserId;
@@ -24,16 +28,22 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
         super.setUp();
         // We need managed users to be supported in order to create a profile of the user owner.
         mHasManagedUserFeature = hasDeviceFeature("android.software.managed_users");
-        installAppAsUser(EXTRA_TEST_APK, mPrimaryUserId);
+        installRequiredApps(mPrimaryUserId);
 
         if (mHasManagedUserFeature) {
             createAndStartManagedProfile();
-            installAppAsUser(EXTRA_TEST_APK, mProfileId);
+            installRequiredApps(mProfileId);
         }
         if (mSupportsMultiUser) {
             mSecondaryUserId = createUser();
-            installAppAsUser(EXTRA_TEST_APK, mSecondaryUserId);
+            installRequiredApps(mSecondaryUserId);
         }
+    }
+
+    private void installRequiredApps(int userId)
+            throws FileNotFoundException, DeviceNotAvailableException {
+        installAppAsUser(EXTRA_TEST_APK, userId);
+        installAppAsUser(SIMPLE_APP_APK, userId);
     }
 
     public void testPrimaryUserToPrimaryUser() throws Exception {
