@@ -134,6 +134,16 @@ public class AccessibilityGlobalActionsTest extends InstrumentationTestCase {
         waitForIdle();
     }
 
+    @MediumTest
+    public void testPerformActionScreenshot() throws Exception {
+        // Action should succeed
+        assertTrue(getInstrumentation().getUiAutomation().performGlobalAction(
+                AccessibilityService.GLOBAL_ACTION_TAKE_SCREENSHOT));
+        // Ideally should verify that we actually have a screenshot, but it's also possible
+        // for the screenshot to fail
+        waitForIdle();
+    }
+
     private void waitForIdle() throws TimeoutException {
         getInstrumentation().getUiAutomation().waitForIdle(
                 TIMEOUT_ACCESSIBILITY_STATE_IDLE,
