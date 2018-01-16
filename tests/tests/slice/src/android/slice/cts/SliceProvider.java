@@ -15,6 +15,7 @@
 package android.slice.cts;
 
 import android.app.PendingIntent;
+import android.app.slice.SliceSpec;
 import android.content.Intent;
 import android.graphics.drawable.Icon;
 import android.net.Uri;
@@ -24,6 +25,8 @@ import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import java.util.List;
+
 public class SliceProvider extends android.app.slice.SliceProvider {
 
     @Override
@@ -32,7 +35,7 @@ public class SliceProvider extends android.app.slice.SliceProvider {
     }
 
     @Override
-    public Slice onBindSlice(Uri sliceUri) {
+    public Slice onBindSlice(Uri sliceUri, List<SliceSpec> specs) {
         switch (sliceUri.getPath()) {
             case "/set_flag":
                 SliceTest.sFlag = true;

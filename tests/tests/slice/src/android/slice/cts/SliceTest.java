@@ -21,6 +21,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import android.app.PendingIntent.CanceledException;
+import android.app.slice.SliceManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -49,12 +50,12 @@ public class SliceTest {
 
     private static final Uri BASE_URI = Uri.parse("content://android.slice.cts/");
     private final Context mContext = InstrumentationRegistry.getContext();
+    private final SliceManager mSliceManager = mContext.getSystemService(SliceManager.class);
 
     @Test
     public void testProcess() {
         sFlag = false;
-        Slice.bindSlice(mContext.getContentResolver(),
-                BASE_URI.buildUpon().appendPath("set_flag").build(),
+        mSliceManager.bindSlice(BASE_URI.buildUpon().appendPath("set_flag").build(),
                 Collections.emptyList());
         assertFalse(sFlag);
     }
@@ -67,7 +68,7 @@ public class SliceTest {
 
     @Test
     public void testSliceUri() {
-        Slice s = Slice.bindSlice(mContext.getContentResolver(), BASE_URI,
+        Slice s = mSliceManager.bindSlice(BASE_URI,
                 Collections.emptyList());
         assertEquals(BASE_URI, s.getUri());
     }
@@ -75,8 +76,7 @@ public class SliceTest {
     @Test
     public void testSubSlice() {
         Uri uri = BASE_URI.buildUpon().appendPath("subslice").build();
-        Slice s = Slice.bindSlice(mContext.getContentResolver(), uri,
-                Collections.emptyList());
+        Slice s = mSliceManager.bindSlice(uri, Collections.emptyList());
         assertEquals(uri, s.getUri());
         assertEquals(1, s.getItems().size());
 
@@ -91,7 +91,7 @@ public class SliceTest {
     @Test
     public void testText() {
         Uri uri = BASE_URI.buildUpon().appendPath("text").build();
-        Slice s = Slice.bindSlice(mContext.getContentResolver(), uri,
+        Slice s = mSliceManager.bindSlice(uri,
                 Collections.emptyList());
         assertEquals(uri, s.getUri());
         assertEquals(1, s.getItems().size());
@@ -105,7 +105,7 @@ public class SliceTest {
     @Test
     public void testIcon() {
         Uri uri = BASE_URI.buildUpon().appendPath("icon").build();
-        Slice s = Slice.bindSlice(mContext.getContentResolver(), uri,
+        Slice s = mSliceManager.bindSlice(uri,
                 Collections.emptyList());
         assertEquals(uri, s.getUri());
         assertEquals(1, s.getItems().size());
@@ -130,8 +130,7 @@ public class SliceTest {
         mContext.registerReceiver(receiver,
                 new IntentFilter(mContext.getPackageName() + ".action"));
         Uri uri = BASE_URI.buildUpon().appendPath("action").build();
-        Slice s = Slice.bindSlice(mContext.getContentResolver(), uri,
-                Collections.emptyList());
+        Slice s = mSliceManager.bindSlice(uri, Collections.emptyList());
         assertEquals(uri, s.getUri());
         assertEquals(1, s.getItems().size());
 
@@ -154,8 +153,7 @@ public class SliceTest {
     @Test
     public void testInt() {
         Uri uri = BASE_URI.buildUpon().appendPath("int").build();
-        Slice s = Slice.bindSlice(mContext.getContentResolver(), uri,
-                Collections.emptyList());
+        Slice s = mSliceManager.bindSlice(uri, Collections.emptyList());
         assertEquals(uri, s.getUri());
         assertEquals(1, s.getItems().size());
 
@@ -167,7 +165,7 @@ public class SliceTest {
     @Test
     public void testTimestamp() {
         Uri uri = BASE_URI.buildUpon().appendPath("timestamp").build();
-        Slice s = Slice.bindSlice(mContext.getContentResolver(), uri,
+        Slice s = mSliceManager.bindSlice(uri,
                 Collections.emptyList());
         assertEquals(uri, s.getUri());
         assertEquals(1, s.getItems().size());
@@ -182,8 +180,7 @@ public class SliceTest {
         // Note this tests that hints are propagated through to the client but not that any specific
         // hints have any effects.
         Uri uri = BASE_URI.buildUpon().appendPath("hints").build();
-        Slice s = Slice.bindSlice(mContext.getContentResolver(), uri,
-                Collections.emptyList());
+        Slice s = mSliceManager.bindSlice(uri, Collections.emptyList());
         assertEquals(uri, s.getUri());
 
         assertEquals(Arrays.asList(Slice.HINT_LIST), s.getHints());
@@ -195,8 +192,7 @@ public class SliceTest {
     @Test
     public void testBundle() {
         Uri uri = BASE_URI.buildUpon().appendPath("bundle").build();
-        Slice s = Slice.bindSlice(mContext.getContentResolver(), uri,
-                Collections.emptyList());
+        Slice s = mSliceManager.bindSlice(uri, Collections.emptyList());
         assertEquals(uri, s.getUri());
         assertEquals(1, s.getItems().size());
 
