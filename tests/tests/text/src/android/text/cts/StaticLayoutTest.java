@@ -1384,8 +1384,7 @@ public class StaticLayoutTest {
         final Layout layout = StaticLayout.Builder.obtain(ssb, 0, ssb.length(), mDefaultPaint,
                 lineWidth).build();
 
-        final MeasuredText premeasuredText = MeasuredText.build(ssb, mDefaultPaint,
-                TextDirectionHeuristics.FIRSTSTRONG_LTR);
+        final MeasuredText premeasuredText = new MeasuredText.Builder(ssb, mDefaultPaint).build();
         final Layout premLayout = StaticLayout.Builder.obtain(premeasuredText, 0,
                 premeasuredText.length(), mDefaultPaint, lineWidth)
                 .setTextDirection(TextDirectionHeuristics.FIRSTSTRONG_LTR).build();
