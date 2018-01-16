@@ -39,7 +39,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -201,5 +203,18 @@ public class SliceTest {
         Bundle b = item.getBundle();
         b.setClassLoader(getClass().getClassLoader());
         assertEquals(new TestParcel(), b.getParcelable("a"));
+    }
+
+    @Test
+    public void testGetDescendants() {
+        Collection<Uri> allUris = mSliceManager.getSliceDescendants(BASE_URI);
+        assertEquals(SliceProvider.PATHS.length, allUris.size());
+        Iterator<Uri> it = allUris.iterator();
+        for (int i = 0; i < SliceProvider.PATHS.length; i++) {
+            assertEquals(SliceProvider.PATHS[i], it.next().getPath());
+        }
+
+        assertEquals(0, mSliceManager.getSliceDescendants(
+                BASE_URI.buildUpon().appendPath("/nothing").build()).size());
     }
 }
