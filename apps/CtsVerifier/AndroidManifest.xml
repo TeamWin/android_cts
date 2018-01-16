@@ -2211,6 +2211,28 @@
                        android:value="android.hardware.sensor.accelerometer" />
         </activity>
 
+        <activity
+            android:name="com.android.cts.verifier.sensors.EventSanitizationTestActivity"
+            android:label="@string/snsr_event_sanitization_test"
+            android:screenOrientation="nosensor" >
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+
+            <meta-data
+                android:name="test_category"
+                android:value="@string/test_category_sensors">
+            </meta-data>
+
+            <meta-data
+                android:name="test_required_features"
+                android:value="android.hardware.sensor.proximity:android.hardware.sensor.accelerometer">
+            </meta-data>
+
+        </activity>
+
         <receiver android:name=".widget.WidgetCtsProvider">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
