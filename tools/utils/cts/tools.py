@@ -190,6 +190,20 @@ class TestPlan(object):
       if exp.match(package):
         self.map[package] = True
 
+  def IncludeEqual(self, package_name):
+    """Include all packages equal to the string.
+
+    Args:
+      string: name of a package.
+    """
+    if not self.map:
+      self.map = {}
+      for package in self.all_packages:
+        self.map[package] = False
+    for package in self.all_packages:
+      if package_name == package:
+        self.map[package] = True
+
   def Write(self, file_name):
     """Write the test plan to the given file.
 
@@ -240,7 +254,7 @@ class AnnotationTestPlan(TestPlan):
         package_xml = XmlFile(description)
         security_test_list = package_xml.GetTestsWithAttr("security")
         if security_test_list:
-          self.Include(package_xml.GetPackage())
+          self.IncludeEqual(package_xml.GetPackage())
           self.IncludeTests(package_xml.GetPackage(), security_test_list)
       except IOError:
         continue
