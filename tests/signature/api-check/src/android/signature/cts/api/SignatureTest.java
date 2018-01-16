@@ -16,101 +16,37 @@
 
 package android.signature.cts.api;
 
-import static android.signature.cts.CurrentApi.API_FILE_DIRECTORY;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.TreeSet;
-
-import org.xmlpull.v1.XmlPullParserException;
-
 import android.os.Bundle;
 import android.signature.cts.ApiComplianceChecker;
 import android.signature.cts.ApiDocumentParser;
 import android.signature.cts.ClassProvider;
-import android.signature.cts.ExcludingClassProvider;
 import android.signature.cts.FailureType;
 import android.signature.cts.JDiffClassDescription;
 import android.signature.cts.ReflectionHelper;
-import android.signature.cts.ResultObserver;
-import repackaged.android.test.InstrumentationTestCase;
-import repackaged.android.test.InstrumentationTestRunner;
+import java.io.IOException;
+import java.util.Comparator;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import org.xmlpull.v1.XmlPullParserException;
 
 /**
  * Performs the signature check via a JUnit test.
  */
-public class SignatureTest extends InstrumentationTestCase {
+public class SignatureTest extends AbstractApiTest {
 
     private static final String TAG = SignatureTest.class.getSimpleName();
 
-    /**
-     * A set of class names that are inaccessible for some reason.
-     */
-    private static final Set<String> KNOWN_INACCESSIBLE_CLASSES = new HashSet<>();
-
-    static {
-        // TODO(b/63383787) - These classes, which are nested annotations with @Retention(SOURCE)
-        // are removed from framework.dex for an as yet unknown reason.
-        KNOWN_INACCESSIBLE_CLASSES.add("android.content.pm.PackageManager.PermissionFlags");
-        KNOWN_INACCESSIBLE_CLASSES.add("android.hardware.radio.ProgramSelector.IdentifierType");
-        KNOWN_INACCESSIBLE_CLASSES.add("android.hardware.radio.ProgramSelector.ProgramType");
-        KNOWN_INACCESSIBLE_CLASSES.add("android.hardware.radio.RadioManager.Band");
-        KNOWN_INACCESSIBLE_CLASSES.add("android.os.UserManager.UserRestrictionSource");
-        KNOWN_INACCESSIBLE_CLASSES.add(
-                "android.service.persistentdata.PersistentDataBlockManager.FlashLockState");
-        KNOWN_INACCESSIBLE_CLASSES.add("android.hardware.radio.ProgramSelector.IdentifierType");
-        KNOWN_INACCESSIBLE_CLASSES.add("android.hardware.radio.ProgramSelector.ProgramType");
-        KNOWN_INACCESSIBLE_CLASSES.add("android.hardware.radio.RadioManager.Band");
-    }
-
-    private TestResultObserver mResultObserver;
-
     private String[] expectedApiFiles;
+    private String[] baseApiFiles;
     private String[] unexpectedApiFiles;
-    private String annotationForExactMatch;
-
-    private class TestResultObserver implements ResultObserver {
-
-        boolean mDidFail = false;
-
-        StringBuilder mErrorString = new StringBuilder();
-
-        @Override
-        public void notifyFailure(FailureType type, String name, String errorMessage) {
-            mDidFail = true;
-            mErrorString.append("\n");
-            mErrorString.append(type.toString().toLowerCase());
-            mErrorString.append(":\t");
-            mErrorString.append(name);
-            mErrorString.append("\tError: ");
-            mErrorString.append(errorMessage);
-        }
-    }
 
     @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mResultObserver = new TestResultObserver();
-
-        // Get the arguments passed to the instrumentation.
-        Bundle instrumentationArgs =
-                ((InstrumentationTestRunner) getInstrumentation()).getArguments();
-
+    protected void initializeFromArgs(Bundle instrumentationArgs) throws Exception {
         expectedApiFiles = getCommaSeparatedList(instrumentationArgs, "expected-api-files");
+        baseApiFiles = getCommaSeparatedList(instrumentationArgs, "base-api-files");
         unexpectedApiFiles = getCommaSeparatedList(instrumentationArgs, "unexpected-api-files");
-        annotationForExactMatch = instrumentationArgs.getString("annotation-for-exact-match");
-    }
-
-    private String[] getCommaSeparatedList(Bundle instrumentationArgs, String key) {
-        String argument = instrumentationArgs.getString(key);
-        if (argument == null) {
-            return new String[0];
-        }
-        return argument.split(",");
     }
 
     /**
@@ -119,17 +55,7 @@ public class SignatureTest extends InstrumentationTestCase {
      * Will check the entire API, and then report the complete list of failures
      */
     public void testSignature() {
-        try {
-
-            // Prepare for a class provider that loads classes from bootclasspath but filters
-            // out known inaccessible classes.
-            // Note that com.android.internal.R.* inner classes are also excluded as they are
-            // not part of API though exist in the runtime.
-            ClassProvider classProvider = new ExcludingClassProvider(
-                    new BootClassPathClassesProvider(),
-                    name -> KNOWN_INACCESSIBLE_CLASSES.contains(name)
-                            || (name != null && name.startsWith("com.android.internal.R.")));
-
+        runWithTestResultObserver(mResultObserver -> {
             Set<JDiffClassDescription> unexpectedClasses = loadUnexpectedClasses();
             for (JDiffClassDescription classDescription : unexpectedClasses) {
                 Class<?> unexpectedClass = findUnexpectedClass(classDescription, classProvider);
@@ -141,46 +67,25 @@ public class SignatureTest extends InstrumentationTestCase {
                 }
             }
 
-            ApiComplianceChecker complianceChecker = new ApiComplianceChecker(mResultObserver,
-                    classProvider);
-            complianceChecker.setAnnotationForExactMatch(annotationForExactMatch);
-            ApiDocumentParser apiDocumentParser = new ApiDocumentParser(
-                    TAG, new ApiDocumentParser.Listener() {
-                @Override
-                public void completedClass(JDiffClassDescription classDescription) {
-                    // Ignore classes that are known to be inaccessible.
-                    if (KNOWN_INACCESSIBLE_CLASSES.contains(classDescription.getAbsoluteClassName())) {
-                        return;
-                    }
+            ApiComplianceChecker complianceChecker =
+                    new ApiComplianceChecker(mResultObserver, classProvider);
 
-                    // Ignore unexpected classes that are in the API definition.
-                    if (!unexpectedClasses.contains(classDescription)) {
-                        complianceChecker.checkSignatureCompliance(classDescription);
-                    }
-                }
-            });
+            // Load classes from any API files that form the base which the expected APIs extend.
+            loadBaseClasses(complianceChecker);
 
-            for (String expectedApiFile : expectedApiFiles) {
-                File file = new File(API_FILE_DIRECTORY + "/" + expectedApiFile);
-                apiDocumentParser.parse(new FileInputStream(file));
-            }
+            ApiDocumentParser apiDocumentParser = new ApiDocumentParser(TAG);
 
-            // After done parsing all expected API files, check for the exact match.
-            complianceChecker.checkExactMatch();
-        } catch (Exception e) {
-            mResultObserver.notifyFailure(FailureType.CAUGHT_EXCEPTION, e.getMessage(),
-                    e.getMessage());
-        }
-        if (mResultObserver.mDidFail) {
-            StringBuilder errorString = mResultObserver.mErrorString;
-            ClassLoader classLoader = getClass().getClassLoader();
-            errorString.append("\nClassLoader hierarchy\n");
-            while (classLoader != null) {
-                errorString.append("    ").append(classLoader).append("\n");
-                classLoader = classLoader.getParent();
-            }
-            fail(errorString.toString());
-        }
+            parseApiFilesAsStream(apiDocumentParser, expectedApiFiles)
+                    .filter(not(unexpectedClasses::contains))
+                    .forEach(complianceChecker::checkSignatureCompliance);
+
+            // After done parsing all expected API files, perform any deferred checks.
+            complianceChecker.checkDeferred();
+        });
+    }
+
+    private static <T> Predicate<T> not(Predicate<T> predicate) {
+        return predicate.negate();
     }
 
     private Class<?> findUnexpectedClass(JDiffClassDescription classDescription,
@@ -195,19 +100,21 @@ public class SignatureTest extends InstrumentationTestCase {
     private Set<JDiffClassDescription> loadUnexpectedClasses()
             throws IOException, XmlPullParserException {
 
-        Set<JDiffClassDescription> unexpectedClasses = new TreeSet<>(
-                Comparator.comparing(JDiffClassDescription::getAbsoluteClassName));
-        ApiDocumentParser apiDocumentParser = new ApiDocumentParser(TAG,
-                new ApiDocumentParser.Listener() {
-                    @Override
-                    public void completedClass(JDiffClassDescription classDescription) {
-                        unexpectedClasses.add(classDescription);
-                    }
-                });
-        for (String expectedApiFile : unexpectedApiFiles) {
-            File file = new File(API_FILE_DIRECTORY + "/" + expectedApiFile);
-            apiDocumentParser.parse(new FileInputStream(file));
-        }
-        return unexpectedClasses;
+        ApiDocumentParser apiDocumentParser = new ApiDocumentParser(TAG);
+        return parseApiFilesAsStream(apiDocumentParser, unexpectedApiFiles)
+                .collect(Collectors.toCollection(SignatureTest::newSetOfClassDescriptions));
+    }
+
+    private static TreeSet<JDiffClassDescription> newSetOfClassDescriptions() {
+        return new TreeSet<>(Comparator.comparing(JDiffClassDescription::getAbsoluteClassName));
+    }
+
+    private void loadBaseClasses(ApiComplianceChecker complianceChecker)
+            throws IOException, XmlPullParserException {
+
+        ApiDocumentParser apiDocumentParser =
+                new ApiDocumentParser(TAG);
+        parseApiFilesAsStream(apiDocumentParser, baseApiFiles)
+                .forEach(complianceChecker::addBaseClass);
     }
 }

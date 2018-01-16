@@ -20,13 +20,13 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
-import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.BuildInfo;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.OptionSetter;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.ITestInvocationListener;
+import com.android.tradefed.result.TestDescription;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner.TestMetrics;
 import com.android.tradefed.testtype.HostTest;
 import com.android.tradefed.testtype.IRemoteTest;
@@ -302,7 +302,7 @@ public class JarHostTestTest {
         setter.setOptionValue("class", "com.android.compatibility.common.tradefed.testtype."
                 + "JarHostTestTest$Junit4TestClass2");
         mListener.testRunStarted(EasyMock.anyObject(), EasyMock.eq(1));
-        TestIdentifier tid = new TestIdentifier("com.android.compatibility.common.tradefed."
+        TestDescription tid = new TestDescription("com.android.compatibility.common.tradefed."
                 + "testtype.JarHostTestTest$Junit4TestClass2", "testPass2");
         mListener.testStarted(EasyMock.eq(tid), EasyMock.anyLong());
         Map<String, String> metrics = new HashMap<>();

@@ -2844,6 +2844,16 @@
         android:name="android.permission.CLEAR_APP_GRANTED_URI_PERMISSIONS"
         android:protectionLevel="signature" />
 
+    <!-- @hide
+         Allows an application to change the status of Scoped Access Directory requests granted or
+         rejected by the user.
+         <p>This permission should <em>only</em> be requested by the platform
+         settings app.  This permission cannot be granted to third-party apps.
+         <p>Protection level: signature
+    -->
+    <permission android:name="android.permission.MANAGE_SCOPED_ACCESS_DIRECTORY_PERMISSIONS"
+        android:protectionLevel="signature" />
+
     <!-- @SystemApi Allows an application to delete cache files.
     <p>Not for use by third-party applications. -->
     <permission android:name="android.permission.DELETE_CACHE_FILES"
@@ -2933,13 +2943,14 @@
 
     <!-- Allows an application to collect usage infomation about brightness slider changes.
          <p>Not for use by third-party applications.</p>
-         TODO: make a System API
-         @hide -->
+         @hide
+         @SystemApi -->
     <permission android:name="android.permission.BRIGHTNESS_SLIDER_USAGE"
-        android:protectionLevel="signature|privileged" />
+        android:protectionLevel="signature|privileged|development" />
 
     <!-- Allows an application to modify the display brightness configuration
-         @hide -->
+         @hide
+         @SystemApi -->
     <permission android:name="android.permission.CONFIGURE_DISPLAY_BRIGHTNESS"
         android:protectionLevel="signature|privileged|development" />
 
@@ -3134,6 +3145,12 @@
     <permission android:name="android.permission.BACKUP"
         android:protectionLevel="signature|privileged" />
 
+    <!-- @SystemApi Allows application to manage RecoverableKeyStoreLoader.
+    <p>Not for use by third-party applications.
+         @hide -->
+    <permission android:name="android.permission.RECOVER_KEYSTORE"
+        android:protectionLevel="signature|privileged" />
+
     <!-- Allows a package to launch the secure full-backup confirmation UI.
          ONLY the system process may hold this permission.
          @hide -->
@@ -3283,6 +3300,10 @@
     <permission android:name="android.permission.BIND_PACKAGE_VERIFIER"
         android:protectionLevel="signature" />
 
+    <!-- @SystemApi @hide Allows an application to mark other applications as harmful -->
+    <permission android:name="android.permission.SET_HARMFUL_APP_WARNINGS"
+        android:protectionLevel="signature|verifier" />
+
     <!-- @SystemApi @hide Intent filter verifier needs to have this permission before the
          PackageManager will trust it to verify intent filters.
     -->
@@ -3367,6 +3388,12 @@
     <!-- @SystemApi Allows an application to provide a trust agent.
          @hide For security reasons, this is a platform-only permission. -->
     <permission android:name="android.permission.PROVIDE_TRUST_AGENT"
+        android:protectionLevel="signature|privileged" />
+
+    <!-- @SystemApi Allows an application to show a message
+         on the keyguard when asking to dismiss it.
+         @hide For security reasons, this is a platform-only permission. -->
+    <permission android:name="android.permission.SHOW_KEYGUARD_MESSAGE"
         android:protectionLevel="signature|privileged" />
 
     <!-- Allows an application to launch the trust agent settings activity.

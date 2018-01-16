@@ -16,10 +16,10 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_PACKAGE_NAME := CtsApacheHttpLegacyCurrentApiSignatureTestCases
+LOCAL_PACKAGE_NAME := CtsSystemApiAnnotationTestCases
 
 LOCAL_SIGNATURE_API_FILES := \
-    current.api \
-    apache-http-legacy-minus-current.api \
+    system-current.api \
+    system-removed.api \
 
 include $(LOCAL_PATH)/../build_signature_apk.mk
