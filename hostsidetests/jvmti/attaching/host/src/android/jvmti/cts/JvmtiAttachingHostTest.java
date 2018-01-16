@@ -93,7 +93,27 @@ public class JvmtiAttachingHostTest extends DeviceTestCase implements IBuildRece
         return AbiUtils.getBaseArchForAbi(abi);
     }
 
+    private void runAttachTestCmd(ITestDevice device, String pkg, String agentParams)
+            throws Exception {
+        String attachCmd = "cmd activity start -S -W " + agentParams + " -n " + pkg
+                + "/android.jvmti.JvmtiActivity";
+
+        String attachReply = device.executeShellCommand(attachCmd);
+        // Don't try to parse the output. The test will time out anyways if this didn't
+        // work.
+        if (attachReply != null && !attachReply.trim().isEmpty()) {
+            CLog.e(attachReply);
+        }
+    }
+
+    private final static String AGENT = "libctsjvmtiattachagent.so";
+
     private void runAttachTest(ITestDevice device, String pkg, String apk) {
+        try {
+            runAttachTestCmd(device, pkg, "--attach-agent-bind " + AGENT);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed bind-time attaching", e);
+        }
         try {
             String pwd = device.executeShellCommand("run-as " + pkg + " pwd");
             if (pwd == null) {
@@ -104,30 +124,24 @@ public class JvmtiAttachingHostTest extends DeviceTestCase implements IBuildRece
                 throw new RuntimeException("pwd failed");
             }
 
+            // Give it a different name, so we do not have "contamination" from
+            // the test APK.
+            String libInDataData = AGENT.substring(0, AGENT.length() - ".so".length()) + "2.so";
             String agentInDataData =
-                    installLibToDataData(device, pkg, apk, pwd, "libctsjvmtiattachagent.so");
-
-            String attachCmd = "cmd activity start -S -W --attach-agent " + agentInDataData + " -n "
-                    + pkg + "/android.jvmti.JvmtiActivity";
-
-            String attachReply = device.executeShellCommand(attachCmd);
-            // Don't try to parse the output. The test will time out anyways if this didn't
-            // work.
-            if (attachReply != null && !attachReply.trim().isEmpty()) {
-                CLog.e(attachReply);
-            }
+                    installLibToDataData(device, pkg, apk, pwd, AGENT, libInDataData);
+            runAttachTestCmd(device, pkg, "--attach-agent " + agentInDataData);
         } catch (Exception e) {
-            throw new RuntimeException("Failed attaching", e);
+            throw new RuntimeException("Failed pre-bind attaching", e);
         }
     }
 
     String installLibToDataData(ITestDevice device, String pkg, String apk, String dataData,
-            String library) throws Exception {
+            String library, String newLibName) throws Exception {
         ZipFile zf = null;
         File tmpFile = null;
         String libInTmp = null;
         try {
-            String libInDataData = dataData + "/" + library;
+            String libInDataData = dataData + "/" + newLibName;
 
             File apkFile = mBuildHelper.getTestFile(apk);
             zf = new ZipFile(apkFile);
