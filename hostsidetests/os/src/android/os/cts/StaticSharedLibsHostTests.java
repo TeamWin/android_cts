@@ -19,11 +19,12 @@ package android.os.cts;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
 import com.android.ddmlib.testrunner.TestIdentifier;
-import com.android.ddmlib.testrunner.TestResult;
-import com.android.ddmlib.testrunner.TestRunResult;
+import com.android.ddmlib.testrunner.TestResult.TestStatus;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.result.CollectingTestListener;
+import com.android.tradefed.result.TestResult;
+import com.android.tradefed.result.TestRunResult;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
 
@@ -496,7 +497,7 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
             StringBuilder errorBuilder = new StringBuilder("on-device tests failed:\n");
             for (Map.Entry<TestIdentifier, TestResult> resultEntry :
                     result.getTestResults().entrySet()) {
-                if (!resultEntry.getValue().getStatus().equals(TestResult.TestStatus.PASSED)) {
+                if (!resultEntry.getValue().getStatus().equals(TestStatus.PASSED)) {
                     errorBuilder.append(resultEntry.getKey().toString());
                     errorBuilder.append(":\n");
                     errorBuilder.append(resultEntry.getValue().getStackTrace());

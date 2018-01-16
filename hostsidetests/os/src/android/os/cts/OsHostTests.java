@@ -26,12 +26,8 @@ import com.android.tradefed.testtype.IAbiReceiver;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.util.AbiUtils;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Scanner;
