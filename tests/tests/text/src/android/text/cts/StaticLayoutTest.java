@@ -33,7 +33,7 @@ import android.support.test.runner.AndroidJUnit4;
 import android.text.Editable;
 import android.text.Layout;
 import android.text.Layout.Alignment;
-import android.text.PremeasuredText;
+import android.text.MeasuredText;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
@@ -1384,7 +1384,7 @@ public class StaticLayoutTest {
         final Layout layout = StaticLayout.Builder.obtain(ssb, 0, ssb.length(), mDefaultPaint,
                 lineWidth).build();
 
-        final PremeasuredText premeasuredText = PremeasuredText.build(ssb, mDefaultPaint,
+        final MeasuredText premeasuredText = MeasuredText.build(ssb, mDefaultPaint,
                 TextDirectionHeuristics.FIRSTSTRONG_LTR);
         final Layout premLayout = StaticLayout.Builder.obtain(premeasuredText, 0,
                 premeasuredText.length(), mDefaultPaint, lineWidth)

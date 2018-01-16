@@ -24,7 +24,7 @@ import static org.junit.Assert.fail;
 
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
-import android.text.PremeasuredText;
+import android.text.MeasuredText;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextDirectionHeuristic;
@@ -39,7 +39,7 @@ import java.util.Locale;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
-public class PremeasuredTextTest {
+public class MeasuredTextTest {
 
     private static final CharSequence NULL_CHAR_SEQUENCE = null;
     private static final String STRING = "Hello, World!";
@@ -61,51 +61,51 @@ public class PremeasuredTextTest {
 
     @Test
     public void testBuild() {
-        assertNotNull(PremeasuredText.build(STRING, PAINT, LTR));
-        assertNotNull(PremeasuredText.build(STRING, PAINT, LTR, 0, STRING.length()));
-        assertNotNull(PremeasuredText.build(STRING, PAINT, LTR, 1, STRING.length() - 1));
+        assertNotNull(MeasuredText.build(STRING, PAINT, LTR));
+        assertNotNull(MeasuredText.build(STRING, PAINT, LTR, 0, STRING.length()));
+        assertNotNull(MeasuredText.build(STRING, PAINT, LTR, 1, STRING.length() - 1));
 
-        assertNotNull(PremeasuredText.build(SPANNED, PAINT, LTR));
-        assertNotNull(PremeasuredText.build(SPANNED, PAINT, LTR, 0, STRING.length()));
-        assertNotNull(PremeasuredText.build(SPANNED, PAINT, LTR, 1, STRING.length() - 1));
+        assertNotNull(MeasuredText.build(SPANNED, PAINT, LTR));
+        assertNotNull(MeasuredText.build(SPANNED, PAINT, LTR, 0, STRING.length()));
+        assertNotNull(MeasuredText.build(SPANNED, PAINT, LTR, 1, STRING.length() - 1));
     }
 
     @Test
     public void testBuild_withNull() {
         try {
-            PremeasuredText.build(NULL_CHAR_SEQUENCE, PAINT, LTR);
+            MeasuredText.build(NULL_CHAR_SEQUENCE, PAINT, LTR);
             fail();
         } catch (NullPointerException e) {
             // pass
         }
         try {
-            PremeasuredText.build(NULL_CHAR_SEQUENCE, PAINT, LTR, 0, 0);
-            fail();
-        } catch (NullPointerException e) {
-            // pass
-        }
-
-        try {
-            PremeasuredText.build(STRING, null, LTR);
-            fail();
-        } catch (NullPointerException e) {
-            // pass
-        }
-        try {
-            PremeasuredText.build(STRING, null, LTR, 0, 1);
+            MeasuredText.build(NULL_CHAR_SEQUENCE, PAINT, LTR, 0, 0);
             fail();
         } catch (NullPointerException e) {
             // pass
         }
 
         try {
-            PremeasuredText.build(STRING, PAINT, null);
+            MeasuredText.build(STRING, null, LTR);
             fail();
         } catch (NullPointerException e) {
             // pass
         }
         try {
-            PremeasuredText.build(STRING, PAINT, null, 0, 1);
+            MeasuredText.build(STRING, null, LTR, 0, 1);
+            fail();
+        } catch (NullPointerException e) {
+            // pass
+        }
+
+        try {
+            MeasuredText.build(STRING, PAINT, null);
+            fail();
+        } catch (NullPointerException e) {
+            // pass
+        }
+        try {
+            MeasuredText.build(STRING, PAINT, null, 0, 1);
             fail();
         } catch (NullPointerException e) {
             // pass
@@ -115,13 +115,13 @@ public class PremeasuredTextTest {
     @Test
     public void testBuild_withInvalidRange() {
         try {
-            PremeasuredText.build(STRING, PAINT, LTR, -1, -1);
+            MeasuredText.build(STRING, PAINT, LTR, -1, -1);
             fail();
         } catch (IllegalArgumentException e) {
             // pass
         }
         try {
-            PremeasuredText.build(STRING, PAINT, LTR, 100000, 100000);
+            MeasuredText.build(STRING, PAINT, LTR, 100000, 100000);
             fail();
         } catch (IllegalArgumentException e) {
             // pass
@@ -130,7 +130,7 @@ public class PremeasuredTextTest {
 
     @Test
     public void testCharSequenceInteferface() {
-        final CharSequence s = PremeasuredText.build(STRING, PAINT, LTR);
+        final CharSequence s = MeasuredText.build(STRING, PAINT, LTR);
         assertEquals(STRING.length(), s.length());
         assertEquals('H', s.charAt(0));
         assertEquals('e', s.charAt(1));
@@ -143,7 +143,7 @@ public class PremeasuredTextTest {
         // Even measure the part of the text, the CharSequence interface still works for original
         // text.
         // TODO: Should this work like substring?
-        final CharSequence s2 = PremeasuredText.build(STRING, PAINT, LTR, 7, STRING.length());
+        final CharSequence s2 = MeasuredText.build(STRING, PAINT, LTR, 7, STRING.length());
         assertEquals(STRING.length(), s2.length());
         assertEquals('H', s2.charAt(0));
         assertEquals('e', s2.charAt(1));
@@ -163,7 +163,7 @@ public class PremeasuredTextTest {
 
     @Test
     public void testSpannedInterface_Spanned() {
-        final Spanned s = PremeasuredText.build(SPANNED, PAINT, LTR);
+        final Spanned s = MeasuredText.build(SPANNED, PAINT, LTR);
         final LocaleSpan[] spans = s.getSpans(0, s.length(), LocaleSpan.class);
         assertNotNull(spans);
         assertEquals(1, spans.length);
@@ -176,7 +176,7 @@ public class PremeasuredTextTest {
         assertEquals(SPAN_START, s.nextSpanTransition(0, s.length(), LocaleSpan.class));
         assertEquals(SPAN_END, s.nextSpanTransition(SPAN_START, s.length(), LocaleSpan.class));
 
-        final Spanned s2 = PremeasuredText.build(SPANNED, PAINT, LTR, 7, SPANNED.length());
+        final Spanned s2 = MeasuredText.build(SPANNED, PAINT, LTR, 7, SPANNED.length());
         final LocaleSpan[] spans2 = s2.getSpans(0, s2.length(), LocaleSpan.class);
         assertNotNull(spans2);
         assertEquals(1, spans2.length);
@@ -192,7 +192,7 @@ public class PremeasuredTextTest {
 
     @Test
     public void testSpannedInterface_String() {
-        final Spanned s = PremeasuredText.build(STRING, PAINT, LTR);
+        final Spanned s = MeasuredText.build(STRING, PAINT, LTR);
         LocaleSpan[] spans = s.getSpans(0, s.length(), LocaleSpan.class);
         assertNotNull(spans);
         assertEquals(0, spans.length);
@@ -206,66 +206,66 @@ public class PremeasuredTextTest {
 
     @Test
     public void testGetText() {
-        assertSame(STRING, PremeasuredText.build(STRING, PAINT, LTR).getText());
-        assertSame(SPANNED, PremeasuredText.build(SPANNED, PAINT, LTR).getText());
+        assertSame(STRING, MeasuredText.build(STRING, PAINT, LTR).getText());
+        assertSame(SPANNED, MeasuredText.build(SPANNED, PAINT, LTR).getText());
 
-        assertSame(STRING, PremeasuredText.build(STRING, PAINT, LTR, 1, 5).getText());
-        assertSame(SPANNED, PremeasuredText.build(SPANNED, PAINT, LTR, 1, 5).getText());
+        assertSame(STRING, MeasuredText.build(STRING, PAINT, LTR, 1, 5).getText());
+        assertSame(SPANNED, MeasuredText.build(SPANNED, PAINT, LTR, 1, 5).getText());
     }
 
     @Test
     public void testGetStartEnd() {
-        assertEquals(0, PremeasuredText.build(STRING, PAINT, LTR).getStart());
-        assertEquals(STRING.length(), PremeasuredText.build(STRING, PAINT, LTR).getEnd());
+        assertEquals(0, MeasuredText.build(STRING, PAINT, LTR).getStart());
+        assertEquals(STRING.length(), MeasuredText.build(STRING, PAINT, LTR).getEnd());
 
-        assertEquals(1, PremeasuredText.build(STRING, PAINT, LTR, 1, 5).getStart());
-        assertEquals(5, PremeasuredText.build(STRING, PAINT, LTR, 1, 5).getEnd());
+        assertEquals(1, MeasuredText.build(STRING, PAINT, LTR, 1, 5).getStart());
+        assertEquals(5, MeasuredText.build(STRING, PAINT, LTR, 1, 5).getEnd());
 
-        assertEquals(0, PremeasuredText.build(SPANNED, PAINT, LTR).getStart());
-        assertEquals(SPANNED.length(), PremeasuredText.build(SPANNED, PAINT, LTR).getEnd());
+        assertEquals(0, MeasuredText.build(SPANNED, PAINT, LTR).getStart());
+        assertEquals(SPANNED.length(), MeasuredText.build(SPANNED, PAINT, LTR).getEnd());
 
-        assertEquals(1, PremeasuredText.build(SPANNED, PAINT, LTR, 1, 5).getStart());
-        assertEquals(5, PremeasuredText.build(SPANNED, PAINT, LTR, 1, 5).getEnd());
+        assertEquals(1, MeasuredText.build(SPANNED, PAINT, LTR, 1, 5).getStart());
+        assertEquals(5, MeasuredText.build(SPANNED, PAINT, LTR, 1, 5).getEnd());
     }
 
     @Test
     public void testGetTextDir() {
-        assertSame(LTR, PremeasuredText.build(STRING, PAINT, LTR).getTextDir());
-        assertSame(LTR, PremeasuredText.build(SPANNED, PAINT, LTR).getTextDir());
+        assertSame(LTR, MeasuredText.build(STRING, PAINT, LTR).getTextDir());
+        assertSame(LTR, MeasuredText.build(SPANNED, PAINT, LTR).getTextDir());
     }
 
     @Test
     public void testGetPaint() {
         // No Paint equality functions. Check only not null.
-        assertNotNull(PremeasuredText.build(STRING, PAINT, LTR).getPaint());
-        assertNotNull(PremeasuredText.build(SPANNED, PAINT, LTR).getPaint());
+        assertNotNull(MeasuredText.build(STRING, PAINT, LTR).getPaint());
+        assertNotNull(MeasuredText.build(SPANNED, PAINT, LTR).getPaint());
     }
 
     @Test
     public void testGetParagraphCount() {
-        final PremeasuredText pm = PremeasuredText.build(STRING, PAINT, LTR);
+        final MeasuredText pm = MeasuredText.build(STRING, PAINT, LTR);
         assertEquals(1, pm.getParagraphCount());
         assertEquals(0, pm.getParagraphStart(0));
         assertEquals(STRING.length(), pm.getParagraphEnd(0));
 
-        final PremeasuredText pm2 = PremeasuredText.build(STRING, PAINT, LTR, 1, 9);
+        final MeasuredText pm2 = MeasuredText.build(STRING, PAINT, LTR, 1, 9);
         assertEquals(1, pm2.getParagraphCount());
         assertEquals(1, pm2.getParagraphStart(0));
         assertEquals(9, pm2.getParagraphEnd(0));
 
-        final PremeasuredText pm3 = PremeasuredText.build(MULTIPARA_STRING, PAINT, LTR);
+        final MeasuredText pm3 = MeasuredText.build(MULTIPARA_STRING, PAINT, LTR);
         assertEquals(2, pm3.getParagraphCount());
         assertEquals(0, pm3.getParagraphStart(0));
         assertEquals(7, pm3.getParagraphEnd(0));
         assertEquals(7, pm3.getParagraphStart(1));
         assertEquals(pm3.length(), pm3.getParagraphEnd(1));
 
-        final PremeasuredText pm4 = PremeasuredText.build(MULTIPARA_STRING, PAINT, LTR, 1, 5);
+        final MeasuredText pm4 = MeasuredText.build(MULTIPARA_STRING, PAINT, LTR, 1, 5);
         assertEquals(1, pm4.getParagraphCount());
         assertEquals(1, pm4.getParagraphStart(0));
         assertEquals(5, pm4.getParagraphEnd(0));
 
-        final PremeasuredText pm5 = PremeasuredText.build(MULTIPARA_STRING, PAINT, LTR, 1, 9);
+        final MeasuredText pm5 = MeasuredText.build(MULTIPARA_STRING, PAINT, LTR, 1, 9);
         assertEquals(2, pm5.getParagraphCount());
         assertEquals(1, pm5.getParagraphStart(0));
         assertEquals(7, pm5.getParagraphEnd(0));
