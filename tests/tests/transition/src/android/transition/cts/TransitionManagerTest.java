@@ -111,7 +111,7 @@ public class TransitionManagerTest extends BaseTransitionTest {
                 nextArr[0] = new Rect(view.getLeft(), view.getTop(), view.getRight(),
                         view.getBottom());
                 mFramesToChange--;
-                if (nextArr[0].equals(position) && mFramesToChange <= 0) {
+                if (nextArr[0].equals(position) && mFramesToChange > 0) {
                     view.postOnAnimation(this);
                 } else {
                     latch.countDown();
