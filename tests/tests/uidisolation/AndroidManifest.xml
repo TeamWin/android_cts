@@ -18,8 +18,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="android.uidisolation.cts">
 
-    <uses-library android:name="org.apache.http.legacy" android:required="false" />
-
     <application android:label="UidIsolationTest">
       <activity android:name="android.uidisolation.cts.ServiceRunnerActivity"
                 android:label="UidIsolationTest"/>
@@ -29,6 +27,7 @@
                android:process=":remote"
                android:isolatedProcess="true"/>
       <uses-library android:name="android.test.runner" />
+      <uses-library android:name="org.apache.http.legacy" android:required="false" />
     </application>
 
    <uses-permission android:name="android.permission.INTERNET"/>
