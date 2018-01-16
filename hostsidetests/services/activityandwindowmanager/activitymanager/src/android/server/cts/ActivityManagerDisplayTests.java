@@ -1609,7 +1609,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
                 + "--ez new_task true --es target_activity " + LAUNCHING_ACTIVITY);
 
         // Check that the third activity ends up in a new task in the same stack as the
-        // first activity
+        // first activity (the display should be newDisplay.mDisplayId).
+        displayId = mVrHeadset ? mVrVirtualDisplayId : newDisplay.mDisplayId;
         mAmWmState.waitForValidState(mDevice, new String[] {LAUNCHING_ACTIVITY},
                 null /* stackIds */, false /* compareTaskAndStackBounds */, componentName);
 
