@@ -29,6 +29,8 @@
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
+    <!-- Needed to read the serial number during Device ID attestation tests -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
 
     <application
         android:testOnly="true">
