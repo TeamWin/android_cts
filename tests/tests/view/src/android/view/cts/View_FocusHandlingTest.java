@@ -30,7 +30,6 @@ import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
-import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -51,6 +50,8 @@ public class View_FocusHandlingTest {
     @UiThreadTest
     @Test
     public void testFocusHandling() {
+        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        instrumentation.setInTouchMode(false);
         Activity activity = mActivityRule.getActivity();
 
         View v1 = activity.findViewById(R.id.view1);
@@ -151,7 +152,7 @@ public class View_FocusHandlingTest {
         v2.setVisibility(View.VISIBLE);
         v3.setVisibility(View.VISIBLE);
         v4.setVisibility(View.VISIBLE);
-        assertEquals(true, v1.isFocused());
+        assertTrue(v1.isFocused());
         assertFalse(v2.isFocused());
         assertFalse(v3.isFocused());
         assertFalse(v4.isFocused());
@@ -274,7 +275,8 @@ public class View_FocusHandlingTest {
         assertFalse(v4.isFocused());
         assertFalse(parent.hasFocusable());
 
-        // a view enabled while nothing has focus should get focus.
+        // a view enabled while nothing has focus should get focus if not in touch mode.
+        InstrumentationRegistry.getInstrumentation().setInTouchMode(false);
         for (View v : new View[]{v1, v2, v3, v4}) v.setEnabled(true);
         assertEquals(true, v1.isFocused());
     }
@@ -495,20 +497,6 @@ public class View_FocusHandlingTest {
         view.setFocusableInTouchMode(true);
         assertTrue("single view doesn't hasFocusable", view.hasFocusable());
         assertTrue("single view doesn't hasExplicitFocusable", view.hasExplicitFocusable());
-    }
-
-    private View[] getInitialAndFirstFocus(int res) throws Throwable {
-        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-        instrumentation.setInTouchMode(false);
-        final Activity activity = mActivityRule.getActivity();
-        mActivityRule.runOnUiThread(() -> activity.getLayoutInflater().inflate(res,
-                (ViewGroup) activity.findViewById(R.id.auto_test_area)));
-        instrumentation.waitForIdleSync();
-        View root = activity.findViewById(R.id.main_view);
-        View initial = root.findFocus();
-        instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_TAB);
-        View first = root.findFocus();
-        return new View[]{initial, first};
     }
 
     @UiThreadTest
