@@ -16,29 +16,24 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
+LOCAL_PACKAGE_NAME := CtsBatterySavingAppTargetApiCurrent
+
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
+
+LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     BatterySavingCtsCommon \
     android-support-test \
     android-support-v4 \
     mockito-target-minus-junit4 \
-    compatibility-device-util \
-    ctstestrunner \
     ub-uiautomator
-
-LOCAL_JAVA_LIBRARIES := android.test.runner android.test.base.stubs
-
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
-
-LOCAL_PACKAGE_NAME := CtsBatterySavingTestCases
-
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 LOCAL_SDK_VERSION := test_current
 
-include $(BUILD_CTS_PACKAGE)
+# tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
-include $(call all-makefiles-under,$(LOCAL_PATH))
+include $(BUILD_CTS_PACKAGE)

@@ -16,15 +16,16 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_PACKAGE_NAME := CtsBatterySavingApp1
+LOCAL_PACKAGE_NAME := CtsBatterySavingAppTargetApi25
 
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
+LOCAL_SRC_FILES := $(call all-java-files-under, ../app_target_api_current/src)
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
+    BatterySavingCtsCommon \
     android-support-test \
     android-support-v4 \
     mockito-target-minus-junit4 \
