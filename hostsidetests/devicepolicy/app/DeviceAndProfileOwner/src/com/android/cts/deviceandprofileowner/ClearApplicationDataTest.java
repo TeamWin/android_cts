@@ -31,11 +31,12 @@ public class ClearApplicationDataTest extends BaseDeviceAdminTest {
 
     public void testClearApplicationData() throws Exception {
         mDevicePolicyManager.clearApplicationUserData(ADMIN_RECEIVER_COMPONENT, TEST_PKG,
+                AsyncTask.THREAD_POOL_EXECUTOR,
                 (String pkg, boolean succeeded) -> {
                     assertEquals(TEST_PKG, pkg);
                     assertTrue(succeeded);
                     mSemaphore.release();
-                }, AsyncTask.THREAD_POOL_EXECUTOR);
+                });
 
         assertTrue("Clearing application data took too long",
                 mSemaphore.tryAcquire(CLEAR_APPLICATION_DATA_TIMEOUT_S, TimeUnit.SECONDS));
