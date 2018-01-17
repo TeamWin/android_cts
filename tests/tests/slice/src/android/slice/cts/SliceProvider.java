@@ -14,7 +14,12 @@
 
 package android.slice.cts;
 
+import static java.util.stream.Collectors.toList;
+
 import android.app.PendingIntent;
+import android.app.slice.SliceSpec;
+import android.content.ContentProvider;
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.graphics.drawable.Icon;
 import android.net.Uri;
@@ -24,7 +29,24 @@ import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+
 public class SliceProvider extends android.app.slice.SliceProvider {
+
+    static final String[] PATHS = new String[]{
+            "/set_flag",
+            "/subslice",
+            "/text",
+            "/icon",
+            "/action",
+            "/int",
+            "/timestamp",
+            "/hints",
+            "/bundle"
+    };
 
     @Override
     public boolean onCreate() {
@@ -32,7 +54,19 @@ public class SliceProvider extends android.app.slice.SliceProvider {
     }
 
     @Override
-    public Slice onBindSlice(Uri sliceUri) {
+    public Collection<Uri> onGetSliceDescendants(Uri uri) {
+        if (uri.getPath().equals("/")) {
+            Uri.Builder builder = new Uri.Builder()
+                    .scheme(ContentResolver.SCHEME_CONTENT)
+                    .authority("android.slice.cts");
+            return Arrays.asList(PATHS).stream().map(s ->
+                    builder.path(s).build()).collect(toList());
+        }
+        return Collections.emptyList();
+    }
+
+    @Override
+    public Slice onBindSlice(Uri sliceUri, List<SliceSpec> specs) {
         switch (sliceUri.getPath()) {
             case "/set_flag":
                 SliceTest.sFlag = true;
