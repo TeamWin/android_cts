@@ -15,8 +15,10 @@
  */
 package android.os.cts.batterysaving;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
+import android.os.PowerManager;
 import android.provider.Settings.Global;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -25,6 +27,11 @@ import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+/**
+ * Tests related to battery saver:
+ *
+ * atest $ANDROID_BUILD_TOP/cts/tests/tests/batterysaving/src/android/os/cts/batterysaving/BatterySaverTest.java
+ */
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class BatterySaverTest extends BatterySavingTestBase {
@@ -36,6 +43,8 @@ public class BatterySaverTest extends BatterySavingTestBase {
     @Test
     public void testActivateBatterySaver() throws Exception {
         assertFalse(getPowerManager().isPowerSaveMode());
+        assertEquals(PowerManager.LOCATION_MODE_NO_CHANGE,
+                getPowerManager().getLocationPowerSaveMode());
 
         // Unplug the charger.
         runDumpsysBatteryUnplug();
@@ -43,6 +52,9 @@ public class BatterySaverTest extends BatterySavingTestBase {
         // Activate battery saver.
         putGlobalSetting(Global.LOW_POWER_MODE, "1");
         waitUntil("Battery saver still off", () -> getPowerManager().isPowerSaveMode());
+        waitUntil("Location mode still " + getPowerManager().getLocationPowerSaveMode(),
+                () -> (PowerManager.LOCATION_MODE_NO_CHANGE
+                        != getPowerManager().getLocationPowerSaveMode()));
 
         // Make sure the job scheduler and the alarm manager are informed.
         waitUntil("Force all apps standby still off (alarm)", () ->
@@ -56,6 +68,9 @@ public class BatterySaverTest extends BatterySavingTestBase {
 
         putGlobalSetting(Global.LOW_POWER_MODE, "0");
         waitUntil("Battery saver still on", () -> !getPowerManager().isPowerSaveMode());
+        waitUntil("Location mode still " + getPowerManager().getLocationPowerSaveMode(),
+                () -> (PowerManager.LOCATION_MODE_NO_CHANGE
+                        == getPowerManager().getLocationPowerSaveMode()));
 
         // Make sure the job scheduler and the alarm manager are informed.
         waitUntil("Force all apps standby still off (alarm)", () ->
