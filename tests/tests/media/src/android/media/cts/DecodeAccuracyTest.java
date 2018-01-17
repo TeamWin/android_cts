@@ -129,8 +129,8 @@ public class DecodeAccuracyTest extends DecodeAccuracyTestBase {
         "video_decode_accuracy_and_capability-vp9_2880x2160_30fps.webm",
         "video_decode_accuracy_and_capability-vp9_1216x2160_30fps.webm",
         // cropped
-        "video_decode_with_cropping-h264_520x360_60fps.mp4",
-        "video_decode_with_cropping-vp9_520x360_60fps.webm"
+        "video_decode_with_cropping-h264_520x360_30fps.mp4",
+        "video_decode_with_cropping-vp9_520x360_30fps.webm"
     };
 
     private View videoView;
