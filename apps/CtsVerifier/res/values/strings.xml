@@ -1568,6 +1568,7 @@
     <string name="attention_some_are_filtered_alarms">Check that \"Priority\" mode doesn\'t filter priority notifications (alarms).</string>
     <string name="attention_some_are_filtered_media_system_other">Check that \"Priority\" mode doesn\'t filter priority notifications (media, system, other).</string>
     <string name="attention_all_are_filtered">Check that \"None\" mode filters all notifications.</string>
+    <string name="attention_cannot_disallow_alarms_or_media">Check that apps targeted with Pre-P SDK can\'t disallow alarms or media from bypassing DND.</string>
     <string name="nls_test">Notification Listener Test</string>
     <string name="nas_test">Notification Assistant Test</string>
     <string name="nls_service_name">Notification Listener for CTS Verifier</string>

@@ -114,6 +114,18 @@ public class JarHostTest extends HostTest {
                     } catch (ClassNotFoundException cnfe) {
                         throw new IllegalArgumentException(
                                 String.format("Cannot find test class %s", className));
+                    } catch (IllegalAccessError | NoClassDefFoundError err) {
+                        // IllegalAccessError can happen when the class or one of its super
+                        // class/interfaces are package-private. We can't load such class from
+                        // here (= outside of the pacakge). Since our intention is not to load
+                        // all classes in the jar, but to find our the main test classes, this
+                        // can be safely skipped.
+                        // NoClassDefFoundErrror is also okay because certain CTS test cases
+                        // might statically link to a jar library (e.g. tools.jar from JDK)
+                        // where certain internal classes in the library are referencing
+                        // classes that are not available in the jar. Again, since our goal here
+                        // is to find test classes, this can be safely skipped.
+                        continue;
                     }
                 }
             } catch (IOException e) {

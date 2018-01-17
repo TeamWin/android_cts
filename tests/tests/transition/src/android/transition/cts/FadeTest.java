@@ -81,12 +81,12 @@ public class FadeTest extends BaseTransitionTest {
         enterScene(R.layout.scene4);
         startTransition(R.layout.scene1);
         verify(mListener, never()).onTransitionEnd(any());
-        waitForEnd(400);
+        waitForEnd(1000);
 
         resetListener();
         startTransition(R.layout.scene4);
         verify(mListener, never()).onTransitionEnd(any());
-        waitForEnd(400);
+        waitForEnd(1000);
 
         // Now only animate in
         mFade = new Fade(Fade.IN);
@@ -94,7 +94,7 @@ public class FadeTest extends BaseTransitionTest {
         resetListener();
         startTransition(R.layout.scene1);
         verify(mListener, never()).onTransitionEnd(any());
-        waitForEnd(400);
+        waitForEnd(1000);
 
         // No animation since it should only animate in
         resetListener();
@@ -112,7 +112,7 @@ public class FadeTest extends BaseTransitionTest {
         resetListener();
         startTransition(R.layout.scene4);
         verify(mListener, never()).onTransitionEnd(any());
-        waitForEnd(400);
+        waitForEnd(1000);
     }
 
     @Test

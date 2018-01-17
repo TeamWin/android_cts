@@ -21,6 +21,7 @@ import static junit.framework.Assert.assertNotNull;
 
 import static org.junit.Assert.assertEquals;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.crossprofile.CrossProfileApps;
 import android.os.Bundle;
@@ -120,7 +121,16 @@ public class CrossProfileAppsTargetUserTest {
     @Test(expected = SecurityException.class)
     public void testCannotStartNonMainActivity() throws Exception {
         mCrossProfileApps.startMainActivity(
-                NonExportedActivity.getComponentName(mContext), mTargetUser);
+                NonMainActivity.getComponentName(mContext), mTargetUser);
+    }
+
+    @Test(expected = SecurityException.class)
+    public void testCannotStartActivityInOtherPackage() throws Exception {
+        mCrossProfileApps.startMainActivity(new ComponentName(
+                "com.android.cts.launcherapps.simpleapp",
+                "com.android.cts.launcherapps.simpleapp.SimpleActivity"),
+                mTargetUser
+        );
     }
 }
 

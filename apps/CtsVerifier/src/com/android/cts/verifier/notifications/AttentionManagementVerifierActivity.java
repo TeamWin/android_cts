@@ -30,6 +30,7 @@ import android.content.OperationApplicationException;
 import android.database.Cursor;
 import android.media.AudioAttributes;
 import android.net.Uri;
+import android.os.Build;
 import android.os.RemoteException;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Email;
@@ -75,7 +76,6 @@ public class AttentionManagementVerifierActivity
     private static final int SEND_C = 0x4;
     private static final int SEND_ALL = SEND_A | SEND_B | SEND_C;
 
-
     private Uri mAliceUri;
     private Uri mBobUri;
     private Uri mCharlieUri;
@@ -94,6 +94,7 @@ public class AttentionManagementVerifierActivity
 
     @Override
     protected List<InteractiveTestCase> createTestItems() {
+
         List<InteractiveTestCase> tests = new ArrayList<>(17);
         ActivityManager am = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
         if (am.isLowRamDevice()) {
@@ -106,8 +107,13 @@ public class AttentionManagementVerifierActivity
             tests.add(new NoneInterceptsAllMessagesTest());
             tests.add(new NoneInterceptsAlarmEventReminderCategoriesTest());
             tests.add(new PriorityInterceptsSomeMessagesTest());
-            tests.add(new PriorityInterceptsAlarmsTest());
-            tests.add(new PriorityInterceptsMediaSystemOtherTest());
+
+            if (getApplicationInfo().targetSdkVersion > Build.VERSION_CODES.O_MR1) {
+                // Tests targeting P and above:
+                tests.add(new PriorityInterceptsAlarmsTest());
+                tests.add(new PriorityInterceptsMediaSystemOtherTest());
+            }
+
             tests.add(new AllInterceptsNothingMessagesTest());
             tests.add(new AllInterceptsNothingDiffCategoriesTest());
             tests.add(new DefaultOrderTest());
