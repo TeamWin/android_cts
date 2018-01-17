@@ -81,6 +81,8 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
     TestUtils.InvokeCounter mOnRttStatusChangedCounter;
     TestUtils.InvokeCounter mOnRttInitiationFailedCounter;
     TestUtils.InvokeCounter mOnRttRequestCounter;
+    TestUtils.InvokeCounter mOnHandoverCompleteCounter;
+    TestUtils.InvokeCounter mOnHandoverFailedCounter;
     Bundle mPreviousExtras;
     int mPreviousProperties = -1;
 
@@ -315,6 +317,15 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
                 mOnRttInitiationFailedCounter.invoke(call, reason);
             }
 
+            @Override
+            public void onHandoverComplete(Call call) {
+                mOnHandoverCompleteCounter.invoke(call);
+            }
+
+            @Override
+            public void onHandoverFailed(Call call, int reason) {
+                mOnHandoverFailedCounter.invoke(call, reason);
+            }
         };
 
         MockInCallService.setCallbacks(mInCallCallbacks);
@@ -334,6 +345,8 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         mOnRttInitiationFailedCounter =
                 new TestUtils.InvokeCounter("mOnRttInitiationFailedCounter");
         mOnRttRequestCounter = new TestUtils.InvokeCounter("mOnRttRequestCounter");
+        mOnHandoverCompleteCounter = new TestUtils.InvokeCounter("mOnHandoverCompleteCounter");
+        mOnHandoverFailedCounter = new TestUtils.InvokeCounter("mOnHandoverFailedCounter");
     }
 
     /**
@@ -595,7 +608,10 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         if (extras == null) {
             extras = new Bundle();
         }
-        extras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, TestUtils.TEST_PHONE_ACCOUNT_HANDLE);
+        if (!extras.containsKey(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE)) {
+            extras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE,
+                    TestUtils.TEST_PHONE_ACCOUNT_HANDLE);
+        }
 
         if (!VideoProfile.isAudioOnly(videoState)) {
             extras.putInt(TelecomManager.EXTRA_START_CALL_WITH_VIDEO_STATE, videoState);

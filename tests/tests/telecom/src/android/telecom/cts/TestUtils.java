@@ -63,6 +63,11 @@ public class TestUtils {
     public static final String ACCOUNT_ID = "xtstest_CALL_PROVIDER_ID";
     public static final PhoneAccountHandle TEST_PHONE_ACCOUNT_HANDLE =
             new PhoneAccountHandle(new ComponentName(PACKAGE, COMPONENT), ACCOUNT_ID);
+    public static final PhoneAccountHandle TEST_HANDOVER_SRC_PHONE_ACCOUNT_HANDLE =
+            new PhoneAccountHandle(new ComponentName(PACKAGE, COMPONENT), "handoverFrom");
+    public static final PhoneAccountHandle TEST_HANDOVER_DEST_PHONE_ACCOUNT_HANDLE =
+            new PhoneAccountHandle(new ComponentName(PACKAGE, SELF_MANAGED_COMPONENT),
+                    "handoverTo");
     public static final String REMOTE_ACCOUNT_ID = "xtstest_REMOTE_CALL_PROVIDER_ID";
     public static final String SELF_MANAGED_ACCOUNT_ID_1 = "ctstest_SELF_MANAGED_ID_1";
     public static final PhoneAccountHandle TEST_SELF_MANAGED_HANDLE_1 =
@@ -83,6 +88,34 @@ public class TestUtils {
                     PhoneAccount.CAPABILITY_RTT |
                     PhoneAccount.CAPABILITY_CONNECTION_MANAGER)
             .setHighlightColor(Color.RED)
+            .setShortDescription(ACCOUNT_LABEL)
+            .addSupportedUriScheme(PhoneAccount.SCHEME_TEL)
+            .addSupportedUriScheme(PhoneAccount.SCHEME_VOICEMAIL)
+            .build();
+    private static final Bundle SUPPORTS_HANDOVER_FROM_EXTRAS = new Bundle();
+    private static final Bundle SUPPORTS_HANDOVER_TO_EXTRAS = new Bundle();
+    static {
+        SUPPORTS_HANDOVER_FROM_EXTRAS.putBoolean(PhoneAccount.EXTRA_SUPPORTS_HANDOVER_FROM, true);
+        SUPPORTS_HANDOVER_TO_EXTRAS.putBoolean(PhoneAccount.EXTRA_SUPPORTS_HANDOVER_TO, true);
+    }
+    public static final PhoneAccount TEST_PHONE_ACCOUNT_HANDOVER_SRC = PhoneAccount.builder(
+            TEST_HANDOVER_SRC_PHONE_ACCOUNT_HANDLE, ACCOUNT_LABEL)
+            .setAddress(Uri.parse("tel:555-TEST"))
+            .setExtras(SUPPORTS_HANDOVER_FROM_EXTRAS)
+            .setSubscriptionAddress(Uri.parse("tel:555-TEST"))
+            .setCapabilities(PhoneAccount.CAPABILITY_CALL_PROVIDER)
+            .setHighlightColor(Color.BLUE)
+            .setShortDescription(ACCOUNT_LABEL)
+            .addSupportedUriScheme(PhoneAccount.SCHEME_TEL)
+            .addSupportedUriScheme(PhoneAccount.SCHEME_VOICEMAIL)
+            .build();
+    public static final PhoneAccount TEST_PHONE_ACCOUNT_HANDOVER_DEST = PhoneAccount.builder(
+            TEST_HANDOVER_DEST_PHONE_ACCOUNT_HANDLE, ACCOUNT_LABEL)
+            .setAddress(Uri.parse("tel:555-TEST"))
+            .setExtras(SUPPORTS_HANDOVER_TO_EXTRAS)
+            .setSubscriptionAddress(Uri.parse("tel:555-TEST"))
+            .setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED)
+            .setHighlightColor(Color.MAGENTA)
             .setShortDescription(ACCOUNT_LABEL)
             .addSupportedUriScheme(PhoneAccount.SCHEME_TEL)
             .addSupportedUriScheme(PhoneAccount.SCHEME_VOICEMAIL)

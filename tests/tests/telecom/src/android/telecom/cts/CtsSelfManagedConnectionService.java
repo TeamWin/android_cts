@@ -24,6 +24,7 @@ import android.telecom.ConnectionService;
 import android.telecom.DisconnectCause;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,7 +42,8 @@ public class CtsSelfManagedConnectionService extends ConnectionService {
     public static int CONNECTION_CREATED_LOCK = 0;
     public static int CREATE_INCOMING_CONNECTION_FAILED_LOCK = 1;
     public static int CREATE_OUTGOING_CONNECTION_FAILED_LOCK = 2;
-    private static int NUM_LOCKS = CREATE_OUTGOING_CONNECTION_FAILED_LOCK + 1;
+    public static int HANDOVER_FAILED_LOCK = 3;
+    private static int NUM_LOCKS = HANDOVER_FAILED_LOCK + 1;
 
     private static CtsSelfManagedConnectionService sConnectionService;
 
@@ -60,6 +62,10 @@ public class CtsSelfManagedConnectionService extends ConnectionService {
 
     private Object mLock = new Object();
     private List<SelfManagedConnection> mConnections = new ArrayList<>();
+    private TestUtils.InvokeCounter mOnCreateIncomingHandoverConnectionCounter =
+            new TestUtils.InvokeCounter("incomingHandoverConnection");
+    private TestUtils.InvokeCounter mOnCreateOutgoingHandoverConnectionCounter =
+            new TestUtils.InvokeCounter("outgoingHandoverConnection");
 
     public static CtsSelfManagedConnectionService getConnectionService() {
         return sConnectionService;
@@ -105,6 +111,26 @@ public class CtsSelfManagedConnectionService extends ConnectionService {
                                                  ConnectionRequest request) {
         mLocks[CREATE_OUTGOING_CONNECTION_FAILED_LOCK].countDown();
     }
+
+    @Override
+    public Connection onCreateIncomingHandoverConnection(PhoneAccountHandle fromPhoneAccountHandle,
+            ConnectionRequest request) {
+        mOnCreateIncomingHandoverConnectionCounter.invoke(fromPhoneAccountHandle, request);
+        return createSelfManagedConnection(request, true /* incoming */);
+    }
+
+    @Override
+    public Connection onCreateOutgoingHandoverConnection(PhoneAccountHandle fromPhoneAccountHandle,
+            ConnectionRequest request) {
+        mOnCreateOutgoingHandoverConnectionCounter.invoke(fromPhoneAccountHandle, request);
+        return createSelfManagedConnection(request, false /* incoming */);
+    }
+
+    @Override
+    public void onHandoverFailed(ConnectionRequest request, int error) {
+        mLocks[HANDOVER_FAILED_LOCK].countDown();
+    }
+
 
     public void tearDown() {
         synchronized(mLock) {
@@ -191,5 +217,13 @@ public class CtsSelfManagedConnectionService extends ConnectionService {
         } else {
             return null;
         }
+    }
+
+    public TestUtils.InvokeCounter getOnCreateIncomingHandoverConnectionCounter() {
+        return mOnCreateIncomingHandoverConnectionCounter;
+    }
+
+    public TestUtils.InvokeCounter getOnCreateOutgoingHandoverConnectionCounter() {
+        return mOnCreateOutgoingHandoverConnectionCounter;
     }
 }
