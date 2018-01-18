@@ -15,12 +15,11 @@
  */
 package android.media.cts;
 
-import com.android.compatibility.common.util.ApiLevelUtil;
-
 import android.media.MediaDrm;
+import android.media.MediaDrm.MediaDrmStateException;
 import android.os.PersistableBundle;
 import android.test.AndroidTestCase;
-
+import android.util.Log;
 import java.util.UUID;
 
 
@@ -40,11 +39,51 @@ public class MediaDrmMetricsTest extends AndroidTestCase {
 
         PersistableBundle metrics = drm.getMetrics();
         assertNotNull(metrics);
+        assertTrue(metrics.isEmpty());
+    }
 
-        // TODO: Add tests for the proper set of metrics.
-        // This is a temporary placeholder for future metrics.
-        assertEquals(
-            "dummy",
-            metrics.getString(MediaDrm.MetricsConstants.TEMPORARY));
+    public void testGetMetricsSession() throws Exception {
+        MediaDrm drm = new MediaDrm(CLEARKEY_SCHEME_UUID);
+        assertNotNull(drm);
+        byte[] sid = drm.openSession();
+        assertNotNull(sid);
+        byte[] sid2 = drm.openSession();
+        assertNotNull(sid2);
+
+        PersistableBundle metrics = drm.getMetrics();
+        assertNotNull(metrics);
+        assertEquals(1, metrics.keySet().size());
+
+        assertEquals(2, metrics.getLong(
+            MediaDrm.MetricsConstants.OPEN_SESSION_OK_COUNT, -1));
+        assertEquals(0, metrics.getLong(
+            MediaDrm.MetricsConstants.OPEN_SESSION_ERROR_COUNT));
+    }
+
+    public void testGetMetricsGetKeyRequest() throws Exception {
+        MediaDrm drm = new MediaDrm(CLEARKEY_SCHEME_UUID);
+        assertNotNull(drm);
+        byte[] sid = drm.openSession();
+        assertNotNull(sid);
+
+        try {
+          drm.getKeyRequest(sid, null, "", 2, null);
+        } catch (MediaDrmStateException e) {
+          // Exception expected.
+        }
+
+        PersistableBundle metrics = drm.getMetrics();
+        assertNotNull(metrics);
+        Log.v(TAG, metrics.toString());
+        Log.v(TAG, metrics.keySet().toString());
+        for(String key : metrics.keySet()) {
+          Log.v(TAG, "key, value: " + key + "," + metrics.get(key));
+        }
+
+        assertEquals(2, metrics.keySet().size());
+        assertEquals(-1, metrics.getLong(
+            MediaDrm.MetricsConstants.GET_KEY_REQUEST_OK_COUNT, -1));
+        assertEquals(1, metrics.getLong(
+            MediaDrm.MetricsConstants.GET_KEY_REQUEST_ERROR_COUNT));
     }
 }
