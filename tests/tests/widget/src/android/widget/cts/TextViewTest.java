@@ -91,7 +91,6 @@ import android.text.Selection;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;
-import android.text.TextDirectionHeuristics;
 import android.text.TextPaint;
 import android.text.TextUtils;
 import android.text.TextUtils.TruncateAt;
@@ -1640,8 +1639,10 @@ public class TextViewTest {
     @Test
     public void testSetText_MeasuredText() {
         final TextView tv = findTextView(R.id.textview_text);
-        final MeasuredText measured = MeasuredText.build(
-                "This is an example text.", new TextPaint(), TextDirectionHeuristics.LTR);
+        final MeasuredText measured = new MeasuredText.Builder(
+                "This is an example text.", new TextPaint())
+                .setBreakStrategy(tv.getBreakStrategy())
+                .setHyphenationFrequency(tv.getHyphenationFrequency()).build();
         tv.setText(measured);
         assertEquals(measured.toString(), tv.getText().toString());
     }
