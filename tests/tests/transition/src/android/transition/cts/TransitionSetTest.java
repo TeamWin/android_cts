@@ -85,13 +85,18 @@ public class TransitionSetTest extends BaseTransitionTest {
 
         enterScene(R.layout.scene1);
         startTransition(R.layout.scene3);
-        mActivityRule.runOnUiThread(() -> {
-            verify(fadeListener, times(1)).onTransitionStart(any());
-            verify(changeBoundsListener, never()).onTransitionStart(any());
-        });
-        verify(fadeListener, within(400)).onTransitionEnd(any());
-        mActivityRule.runOnUiThread(
-                () -> verify(changeBoundsListener, times(1)).onTransitionStart(any()));
+        verify(fadeListener, within(500)).onTransitionStart(any());
+        verify(fadeListener, times(1)).onTransitionStart(any());
+
+        // change bounds shouldn't start until after fade finishes
+        verify(changeBoundsListener, never()).onTransitionStart(any());
+
+        // now wait for the fade transition to end
+        verify(fadeListener, within(500)).onTransitionEnd(any());
+
+        // The change bounds should start soon after
+        verify(changeBoundsListener, within(500)).onTransitionStart(any());
+        verify(changeBoundsListener, times(1)).onTransitionStart(any());
     }
 
     @Test
