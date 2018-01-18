@@ -83,11 +83,11 @@ public class OptionHelperTest extends TestCase {
         List<String> validSubset = Arrays.asList("--" + TEST_CLASS, "fooclass",
             "-" + TEST_SUITE_SHORTNAME, "foosuite");
         List<String> allValidNames = Arrays.asList("--" + TEST_CLASS, "fooclass",
-            "-" + TEST_SUITE_SHORTNAME, "foosuite:foo-key:fooval", "--" + TEST_NAME, "footest",
+            "-" + TEST_SUITE_SHORTNAME, "foosuite:foo-key=fooval", "--" + TEST_NAME, "footest",
             "--" + TEST_LOGPATH, "path/to/log-directory/");
 
         List<String> validQuoteSubset = Arrays.asList("-" + TEST_CLASS_SHORTNAME, fakeTestClass,
-            "--" + TEST_NAME + "=" + fakeTestMethod, "--" + TEST_FILTER, fakeTestClass + " "
+            "--" + TEST_NAME + " " + fakeTestMethod, "--" + TEST_FILTER, fakeTestClass + " "
             + fakeTestMethod);
         String[] inputArray = {"foocts ", "-", TEST_CLASS_SHORTNAME, " ", fakeTestClass, " \"--",
             TEST_NAME, "=", fakeTestMethod, "\" -z \"FAKE1 FAKE2\" --", TEST_FILTER, " \"",
@@ -101,7 +101,7 @@ public class OptionHelperTest extends TestCase {
                 + " -s foosuite", this));
         assertEquals("Expected two long names and one short name", allValidNames,
             OptionHelper.getValidCliArgs("test --" + TEST_CLASS + " fooclass -b fake"
-                + " -s foosuite:foo-key:fooval --" + TEST_NAME + " footest --" + TEST_LOGPATH
+                + " -s foosuite:foo-key=fooval --" + TEST_NAME + " footest --" + TEST_LOGPATH
                 + " path/to/log-directory/", this));
         assertEquals("Expected matching arrays", validQuoteSubset,
             OptionHelper.getValidCliArgs(inputString, this));
