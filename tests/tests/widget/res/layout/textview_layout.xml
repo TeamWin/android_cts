@@ -433,6 +433,20 @@
                 android:typeface="serif"
                 android:textAppearance="@style/TextAppearance.Xml2" />
 
+            <TextView
+                android:id="@+id/textview_baseline"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_text"
+                android:textSize="20dp"
+                android:paddingTop="10dp"
+                android:paddingBottom="10dp"
+                android:firstBaselineToTopHeight="@dimen/textview_firstBaselineToTopHeight"
+                android:lastBaselineToBottomHeight="@dimen/textview_lastBaselineToBottomHeight"
+                android:lineSpacingExtra="1dp"
+                android:lineSpacingMultiplier="0.5"
+                android:lineHeight="@dimen/textview_lineHeight" />
+
         </LinearLayout>
 
 </ScrollView>
