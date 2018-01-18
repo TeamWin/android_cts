@@ -17,10 +17,8 @@ package com.android.cts.crossprofileappstest;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static junit.framework.Assert.assertNotNull;
-
 import android.content.Context;
-import android.content.pm.crossprofile.CrossProfileApps;
+import android.content.pm.CrossProfileApps;
 import android.os.Bundle;
 import android.os.UserHandle;
 import android.os.UserManager;
@@ -69,6 +67,16 @@ public class CrossProfileAppsNonTargetUserTest {
     public void testCannotStartActivity() {
         mCrossProfileApps.startMainActivity(
                 MainActivity.getComponentName(mContext), mTargetUser);
+    }
+
+    @Test(expected = SecurityException.class)
+    public void testCannotGetProfileSwitchingLabel() throws Exception {
+        mCrossProfileApps.getProfileSwitchingLabel(mTargetUser);
+    }
+
+    @Test(expected = SecurityException.class)
+    public void testCannotGetProfileSwitchingIconDrawable() throws Exception {
+        mCrossProfileApps.getProfileSwitchingIconDrawable(mTargetUser);
     }
 }
 
