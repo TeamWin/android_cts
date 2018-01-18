@@ -67,6 +67,8 @@ public class BusinessLogicPreparer implements ITargetCleaner {
     private static final String FILE_LOCATION = "business-logic";
     /* Extension of business logic files */
     private static final String FILE_EXT = ".bl";
+    /* Default amount of time to attempt connection to the business logic service, in seconds */
+    private static final int DEFAULT_CONNECTION_TIME = 10;
     /* URI of api scope to use when retrieving business logic rules */
     private static final String APE_API_SCOPE = "https://www.googleapis.com/auth/androidPartner";
     /* Dynamic config constants */
@@ -97,6 +99,9 @@ public class BusinessLogicPreparer implements ITargetCleaner {
             description="Setting to true will ensure the device specific tests are executed.")
     private boolean mConditionalTestsEnabled = false;
 
+    @Option(name = "business-logic-connection-time", description = "Amount of time to attempt " +
+            "connection to the business logic service, in seconds.")
+    private int mMaxConnectionTime = DEFAULT_CONNECTION_TIME;
 
     private String mDeviceFilePushed;
     private String mHostFilePushed;
@@ -110,14 +115,21 @@ public class BusinessLogicPreparer implements ITargetCleaner {
         String requestString = buildRequestString(device, buildInfo);
         // Retrieve business logic string from service
         String businessLogicString = null;
-        try {
-            URL request = new URL(requestString);
-            businessLogicString = StreamUtil.getStringFromStream(request.openStream());
-            businessLogicString = addRuntimeConfig(businessLogicString, buildInfo);
-        } catch (IOException e) {
+        long start = System.currentTimeMillis();
+        CLog.i("Attempting to connect to business logic service...");
+        while (businessLogicString == null
+                && System.currentTimeMillis() < (start + (mMaxConnectionTime * 1000))) {
+            try {
+                URL request = new URL(requestString);
+                businessLogicString = StreamUtil.getStringFromStream(request.openStream());
+                businessLogicString = addRuntimeConfig(businessLogicString, buildInfo);
+            } catch (IOException e) {} // ignore, re-attempt connection with remaining time
+        }
+        if (businessLogicString == null) {
             if (mIgnoreFailure) {
                 CLog.e("Failed to connect to business logic service.\nProceeding with test "
                         + "invocation, tests depending on the remote configuration will fail.\n");
+                return;
             } else {
                 throw new TargetSetupError(String.format("Cannot connect to business logic "
                         + "service for suite %s.\nIf this problem persists, re-invoking with "
