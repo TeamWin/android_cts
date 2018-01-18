@@ -43,8 +43,6 @@ import static org.mockito.Mockito.when;
 
 import static java.lang.annotation.RetentionPolicy.SOURCE;
 
-import android.annotation.IntDef;
-import android.annotation.Nullable;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.Instrumentation.ActivityMonitor;
@@ -76,6 +74,8 @@ import android.os.Looper;
 import android.os.Parcelable;
 import android.os.ResultReceiver;
 import android.os.SystemClock;
+import android.support.annotation.IntDef;
+import android.support.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.MediumTest;
