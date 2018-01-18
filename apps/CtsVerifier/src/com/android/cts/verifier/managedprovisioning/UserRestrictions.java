@@ -54,6 +54,7 @@ public class UserRestrictions {
         UserManager.DISALLOW_CONFIG_DATE_TIME,
         UserManager.DISALLOW_CONFIG_LOCATION_MODE,
         UserManager.DISALLOW_AIRPLANE_MODE,
+        UserManager.DISALLOW_CONFIG_SCREEN_TIMEOUT
     };
 
     private static final ArrayMap<String, UserRestrictionItem> USER_RESTRICTION_ITEMS;
@@ -82,6 +83,7 @@ public class UserRestrictions {
             R.string.disallow_config_date_time,
             R.string.disallow_config_location_mode,
             R.string.disallow_airplane_mode,
+            R.string.disallow_config_screen_timeout
         };
 
         final int[] restrictionActions = new int[] {
@@ -108,6 +110,7 @@ public class UserRestrictions {
             R.string.disallow_config_date_time_action,
             R.string.disallow_config_location_mode_action,
             R.string.disallow_airplane_mode_action,
+            R.string.disallow_config_screen_timeout_action,
         };
 
         final String[] settingsIntentActions = new String[] {
@@ -134,6 +137,7 @@ public class UserRestrictions {
             Settings.ACTION_DATE_SETTINGS,
             Settings.ACTION_LOCATION_SOURCE_SETTINGS,
             Settings.ACTION_AIRPLANE_MODE_SETTINGS,
+            Settings.ACTION_DISPLAY_SETTINGS,
         };
 
         if (RESTRICTION_IDS_FOR_POLICY_TRANSPARENCY.length != restrictionLabels.length
