@@ -70,11 +70,13 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_PACKAGE_NAME := CtsMediaTestCases
 
-# uncomment when b/13249737 is fixed
+# This test uses private APIs
 #LOCAL_SDK_VERSION := current
 
-LOCAL_JAVA_LIBRARIES += android.test.runner org.apache.http.legacy
-LOCAL_JAVA_LIBRARIES += android.test.base
+LOCAL_JAVA_LIBRARIES += \
+    org.apache.http.legacy \
+    android.test.base.stubs \
+    android.test.runner.stubs
 
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
