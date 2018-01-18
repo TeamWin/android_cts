@@ -2265,6 +2265,26 @@ public class StaticMetadata {
     }
 
     /**
+     * Check if OIS data mode is supported.
+     */
+    public boolean isOisDataModeSupported() {
+        int[] availableOisDataModes = mCharacteristics.get(
+                CameraCharacteristics.STATISTICS_INFO_AVAILABLE_OIS_DATA_MODES);
+
+        if (availableOisDataModes == null) {
+            return false;
+        }
+
+        for (int mode : availableOisDataModes) {
+            if (mode == CameraMetadata.STATISTICS_OIS_DATA_MODE_ON) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Get the value in index for a fixed-size array from a given key.
      *
      * <p>If the camera device is incorrectly reporting values, log a warning and return
