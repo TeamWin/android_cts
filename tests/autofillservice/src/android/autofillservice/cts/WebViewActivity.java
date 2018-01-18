@@ -16,8 +16,10 @@
 package android.autofillservice.cts;
 
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.support.test.uiautomator.UiObject2;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -117,7 +119,7 @@ public class WebViewActivity extends AbstractAutoFillActivity {
     }
 
     private UiObject2 getLabel(UiBot uiBot, String label) throws Exception {
-        return uiBot.assertShownByText(label);
+        return uiBot.assertShownByText(label, Timeouts.WEBVIEW_TIMEOUT);
     }
 
     private UiObject2 getInput(UiBot uiBot, String contentDescription) throws Exception {
@@ -139,5 +141,16 @@ public class WebViewActivity extends AbstractAutoFillActivity {
         }
         uiBot.dumpScreen("getInput() for label " + label + "failed");
         throw new IllegalStateException("could not find username (label=" + label + ")");
+    }
+
+    public void dispatchKeyPress(int keyCode) {
+        runOnUiThread(() -> {
+            KeyEvent keyEvent = new KeyEvent(KeyEvent.ACTION_DOWN, keyCode);
+            mWebView.dispatchKeyEvent(keyEvent);
+            keyEvent = new KeyEvent(KeyEvent.ACTION_UP, keyCode);
+            mWebView.dispatchKeyEvent(keyEvent);
+        });
+        // wait webview to process the key event.
+        SystemClock.sleep(300);
     }
 }

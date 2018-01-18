@@ -19,7 +19,6 @@ import static android.autofillservice.cts.WebViewActivity.HTML_NAME_PASSWORD;
 import static android.autofillservice.cts.WebViewActivity.HTML_NAME_USERNAME;
 import static android.autofillservice.cts.WebViewActivity.ID_OUTSIDE1;
 import static android.autofillservice.cts.WebViewActivity.ID_OUTSIDE2;
-import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -29,6 +28,7 @@ import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.support.test.uiautomator.UiObject2;
+import android.view.KeyEvent;
 import android.view.ViewStructure.HtmlInfo;
 
 import org.junit.AfterClass;
@@ -186,9 +186,9 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
         // Trigger save.
         if (INJECT_EVENTS) {
             mActivity.getUsernameInput(mUiBot).click();
-            runShellCommand("input keyevent KEYCODE_U");
+            mActivity.dispatchKeyPress(KeyEvent.KEYCODE_U);
             mActivity.getPasswordInput(mUiBot).click();
-            runShellCommand("input keyevent KEYCODE_P");
+            mActivity.dispatchKeyPress(KeyEvent.KEYCODE_P);
         } else {
             mActivity.getUsernameInput(mUiBot).setText("DUDE");
             mActivity.getPasswordInput(mUiBot).setText("SWEET");
@@ -268,9 +268,9 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
         // Now trigger save.
         if (INJECT_EVENTS) {
             mActivity.getUsernameInput(mUiBot).click();
-            runShellCommand("input keyevent KEYCODE_U");
+            mActivity.dispatchKeyPress(KeyEvent.KEYCODE_U);
             mActivity.getPasswordInput(mUiBot).click();
-            runShellCommand("input keyevent KEYCODE_P");
+            mActivity.dispatchKeyPress(KeyEvent.KEYCODE_P);
         } else {
             mActivity.getUsernameInput(mUiBot).setText("DUDE");
             mActivity.getPasswordInput(mUiBot).setText("SWEET");
@@ -379,9 +379,9 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
         // Now trigger save.
         if (INJECT_EVENTS) {
             mActivity.getUsernameInput(mUiBot).click();
-            runShellCommand("input keyevent KEYCODE_U");
+            mActivity.dispatchKeyPress(KeyEvent.KEYCODE_U);
             mActivity.getPasswordInput(mUiBot).click();
-            runShellCommand("input keyevent KEYCODE_P");
+            mActivity.dispatchKeyPress(KeyEvent.KEYCODE_P);
         } else {
             mActivity.getUsernameInput(mUiBot).setText("DUDE");
             mActivity.getPasswordInput(mUiBot).setText("SWEET");
@@ -537,9 +537,9 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
         // Now trigger save.
         if (INJECT_EVENTS) {
             mActivity.getUsernameInput(mUiBot).click();
-            runShellCommand("input keyevent KEYCODE_U");
+            mActivity.dispatchKeyPress(KeyEvent.KEYCODE_U);
             mActivity.getPasswordInput(mUiBot).click();
-            runShellCommand("input keyevent KEYCODE_P");
+            mActivity.dispatchKeyPress(KeyEvent.KEYCODE_P);
         } else {
             mActivity.getUsernameInput(mUiBot).setText("DUDE");
             mActivity.getPasswordInput(mUiBot).setText("SWEET");

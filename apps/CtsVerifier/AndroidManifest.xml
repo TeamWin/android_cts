@@ -46,7 +46,6 @@
                   android:required="false" />
     <uses-feature android:name="android.hardware.camera.autofocus"
                   android:required="false" />
-    <uses-feature android:name="android.software.vr.mode" android:required="false" />
     <uses-feature android:name="android.hardware.vr.high_performance" android:required="false"/>
     <uses-feature android:name="android.software.companion_device_setup" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
@@ -1950,7 +1949,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_vr" />
             <meta-data android:name="test_required_features"
-                       android:value="android.software.vr.mode" />
+                       android:value="android.hardware.vr.high_performance" />
         </activity>
 
         <activity android:name=".vr.MockVrActivity"

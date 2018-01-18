@@ -363,8 +363,8 @@ public class OpenGlEsVersionTest {
     }
 
     /**
-     * Return whether the system supports FEATURE_VR_MODE and
-     * FEATURE_VR_MODE_HIGH_PERFORMANCE. This is used to skip some tests.
+     * Return whether the system supports FEATURE_VR_MODE_HIGH_PERFORMANCE.
+     * This is used to skip some tests.
      */
     private boolean supportsVrHighPerformance() {
         PackageManager pm = mActivity.getPackageManager();

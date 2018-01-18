@@ -816,6 +816,8 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         // Save UI should be showing as well, since Trampoline finished.
         mUiBot.assertSaveShowing(SAVE_DATA_TYPE_GENERIC);
 
+        // Dismiss Save Dialog
+        mUiBot.pressBack();
         // Go back and make sure it's showing the right activity.
         mUiBot.pressBack();
         mUiBot.assertShownByRelativeId(ID_LABEL);

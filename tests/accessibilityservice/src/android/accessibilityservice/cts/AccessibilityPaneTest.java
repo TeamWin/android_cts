@@ -16,17 +16,23 @@
 
 package android.accessibilityservice.cts;
 
+import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.AccessibilityEventTypeMatcher;
 import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.ContentChangesMatcher;
 import static android.accessibilityservice.cts.AccessibilityActivityTestCase.TIMEOUT_ASYNC_PROCESSING;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
+import static android.view.accessibility.AccessibilityEvent.CONTENT_CHANGE_TYPE_PANE_APPEARED;
+import static android.view.accessibility.AccessibilityEvent.CONTENT_CHANGE_TYPE_PANE_DISAPPEARED;
 import static android.view.accessibility.AccessibilityEvent.CONTENT_CHANGE_TYPE_PANE_TITLE;
+import static android.view.accessibility.AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED;
 
+import static org.hamcrest.Matchers.both;
 import static org.junit.Assert.assertEquals;
 
 import android.accessibilityservice.cts.activities.AccessibilityEndToEndActivity;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
+import android.app.UiAutomation.AccessibilityEventFilter;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -92,8 +98,39 @@ public class AccessibilityPaneTest {
         assertEquals(newTitle, windowLikeNode.getPaneTitle());
     }
 
+    @Test
+    public void windowLikeViewVisibility_reportAsWindowStateChanges() throws Exception {
+        final AccessibilityEventFilter paneAppearsFilter =
+                both(new AccessibilityEventTypeMatcher(TYPE_WINDOW_STATE_CHANGED)).and(
+                        new ContentChangesMatcher(CONTENT_CHANGE_TYPE_PANE_APPEARED))::matches;
+        final AccessibilityEventFilter paneDisappearsFilter =
+                both(new AccessibilityEventTypeMatcher(TYPE_WINDOW_STATE_CHANGED)).and(
+                        new ContentChangesMatcher(CONTENT_CHANGE_TYPE_PANE_DISAPPEARED))::matches;
+        sUiAutomation.executeAndWaitForEvent(setPaneViewVisibility(View.GONE),
+                paneDisappearsFilter, TIMEOUT_ASYNC_PROCESSING);
+
+        sUiAutomation.executeAndWaitForEvent(setPaneViewVisibility(View.VISIBLE),
+                paneAppearsFilter, TIMEOUT_ASYNC_PROCESSING);
+
+        sUiAutomation.executeAndWaitForEvent(setPaneViewParentVisibility(View.GONE),
+                paneDisappearsFilter, TIMEOUT_ASYNC_PROCESSING);
+
+        sUiAutomation.executeAndWaitForEvent(setPaneViewParentVisibility(View.VISIBLE),
+                paneAppearsFilter, TIMEOUT_ASYNC_PROCESSING);
+    }
+
     private AccessibilityNodeInfo getPaneNode() {
         return sUiAutomation.getRootInActiveWindow().findAccessibilityNodeInfosByText(
                 ((TextView) mPaneView).getText().toString()).get(0);
+    }
+
+    private Runnable setPaneViewVisibility(int visibility) {
+        return () -> sInstrumentation.runOnMainSync(
+                () -> mPaneView.setVisibility(visibility));
+    }
+
+    private Runnable setPaneViewParentVisibility(int visibility) {
+        return () -> sInstrumentation.runOnMainSync(
+                () -> ((View) mPaneView.getParent()).setVisibility(visibility));
     }
 }

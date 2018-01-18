@@ -91,6 +91,7 @@ import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
@@ -111,6 +112,38 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     @Before
     public void setActivity() {
         mActivity = mActivityRule.getActivity();
+    }
+
+    /**
+     * Request focus on username and expect Window event happens.
+     */
+    void requestFocusOnUsername() throws TimeoutException {
+        mUiBot.waitForWindowChange(() -> mActivity.onUsername(View::requestFocus),
+                Timeouts.UI_TIMEOUT.getMaxValue());
+    }
+
+    /**
+     * Request focus on username and expect no Window event happens.
+     */
+    void requestFocusOnUsernameNoWindowChange() {
+        try {
+            // TODO: define a small value in Timeout
+            mUiBot.waitForWindowChange(() -> mActivity.onUsername(View::requestFocus),
+                    Timeouts.UI_TIMEOUT.ms());
+        } catch (TimeoutException ex) {
+            // no window events! looking good
+            return;
+        }
+        throw new IllegalStateException("Expect no window event when focusing to"
+                + " username, but event happened");
+    }
+
+    /**
+     * Request focus on password and expect Window event happens.
+     */
+    void requestFocusOnPassword() throws TimeoutException {
+        mUiBot.waitForWindowChange(() -> mActivity.onPassword(View::requestFocus),
+                Timeouts.UI_TIMEOUT.getMaxValue());
     }
 
     @Test
@@ -173,7 +206,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             mActivity.forceAutofillOnUsername();
         } else {
             expectedFlags = 0;
-            mActivity.onPassword(View::requestFocus);
+            requestFocusOnPassword();
         }
 
         final FillRequest fillRequest = sReplier.getNextFillRequest();
@@ -302,7 +335,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.onPassword((v) -> v.setText("I AM GROOT"));
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
 
         // Auto-fill it.
         final UiObject2 picker = mUiBot.assertDatasetsWithBorders(expectedHeader, expectedFooter,
@@ -348,14 +381,14 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
         sReplier.getNextFillRequest();
 
         // Make sure all datasets are available...
         mUiBot.assertDatasets("The Dude", "THE DUDE");
 
         // ... on all fields.
-        mActivity.onPassword(View::requestFocus);
+        requestFocusOnPassword();
         mUiBot.assertDatasets("The Dude", "THE DUDE");
 
         // Auto-fill it.
@@ -398,18 +431,18 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         }
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
         sReplier.getNextFillRequest();
 
         // Make sure all datasets are available on username...
         mUiBot.assertDatasets("The Dude", "THE DUDE");
 
         // ... but just one for password
-        mActivity.onPassword(View::requestFocus);
+        requestFocusOnPassword();
         mUiBot.assertDatasets("The Dude");
 
         // Auto-fill it.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
         mUiBot.assertDatasets("The Dude", "THE DUDE");
         if (fillsAll) {
             mUiBot.selectDataset("The Dude");
@@ -441,14 +474,14 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
         sReplier.getNextFillRequest();
 
         // Make sure all datasets are available...
         mUiBot.assertDatasets("The Dude");
 
         // ... on all fields.
-        mActivity.onPassword(View::requestFocus);
+        requestFocusOnPassword();
         mUiBot.assertDatasets("The Dude");
 
         // Auto-fill it.
@@ -493,14 +526,14 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
         sReplier.getNextFillRequest();
 
         // Make sure tapping on other fields from the dataset does not trigger it again
-        mActivity.onPassword(View::requestFocus);
+        requestFocusOnPassword();
         sReplier.assertNoUnhandledFillRequests();
 
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
         sReplier.assertNoUnhandledFillRequests();
 
         // Auto-fill it.
@@ -510,8 +543,10 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.assertAutoFilled();
 
         // Make sure tapping on other fields from the dataset does not trigger it again
-        mActivity.onPassword(View::requestFocus);
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnPassword();
+        mUiBot.assertNoDatasets();
+        requestFocusOnUsernameNoWindowChange();
+        mUiBot.assertNoDatasets();
     }
 
     @Test
@@ -528,7 +563,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
         sReplier.getNextFillRequest();
         mUiBot.selectDataset("The Dude");
 
@@ -536,10 +571,10 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.assertAutoFilled();
 
         // Make sure tapping on autofilled field does not trigger it again
-        mActivity.onPassword(View::requestFocus);
+        requestFocusOnPassword();
         mUiBot.assertNoDatasets();
 
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsernameNoWindowChange();
         mUiBot.assertNoDatasets();
     }
 
@@ -558,18 +593,18 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
         sReplier.getNextFillRequest();
         final View username = mActivity.getUsername();
         final View password = mActivity.getPassword();
 
         callback.assertUiShownEvent(username);
 
-        mActivity.onPassword(View::requestFocus);
+        requestFocusOnPassword();
         callback.assertUiHiddenEvent(username);
         callback.assertUiShownEvent(password);
 
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
         mActivity.unregisterCallback();
         callback.assertNumberUnhandledEvents(0);
 
@@ -649,7 +684,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
 
         // Since this is a Presubmit test, wait for connection to avoid flakiness.
         waitUntilConnected();
@@ -726,7 +761,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
 
         // Since this is a Presubmit test, wait for connection to avoid flakiness.
         waitUntilConnected();
@@ -875,7 +910,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         }
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
         sReplier.getNextFillRequest();
 
         // Make sure all datasets are shown.
@@ -907,20 +942,20 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
         sReplier.getNextFillRequest();
 
         // Check initial field.
         mUiBot.assertDatasets("The Dude");
 
         // Then move around...
-        mActivity.onPassword(View::requestFocus);
+        requestFocusOnPassword();
         mUiBot.assertDatasets("Dude's password");
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
         mUiBot.assertDatasets("The Dude");
 
         // Auto-fill it.
-        mActivity.onPassword(View::requestFocus);
+        requestFocusOnPassword();
         mUiBot.selectDataset("Dude's password");
 
         // Check the results.
@@ -951,20 +986,20 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("user1", "pass1");
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
         sReplier.getNextFillRequest();
 
         // Check initial field.
         mUiBot.assertDatasets("Dataset1", "User2");
 
         // Then move around...
-        mActivity.onPassword(View::requestFocus);
+        requestFocusOnPassword();
         mUiBot.assertDatasets("Pass1", "Dataset2");
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
         mUiBot.assertDatasets("Dataset1", "User2");
 
         // Auto-fill it.
-        mActivity.onPassword(View::requestFocus);
+        requestFocusOnPassword();
         mUiBot.selectDataset("Pass1");
 
         // Check the results.
@@ -994,20 +1029,20 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("user1", "pass1");
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
         sReplier.getNextFillRequest();
 
         // Check initial field.
         mUiBot.assertDatasets("User1", "User2");
 
         // Then move around...
-        mActivity.onPassword(View::requestFocus);
+        requestFocusOnPassword();
         mUiBot.assertDatasets("Pass1", "Pass2");
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
         mUiBot.assertDatasets("User1", "User2");
 
         // Auto-fill it.
-        mActivity.onPassword(View::requestFocus);
+        requestFocusOnPassword();
         mUiBot.selectDataset("Pass1");
 
         // Check the results.
@@ -1037,16 +1072,16 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("user2", "pass2");
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
         sReplier.getNextFillRequest();
 
         // Check initial field.
         mUiBot.assertDatasets("User1", "User2");
 
         // Then move around...
-        mActivity.onPassword(View::requestFocus);
+        requestFocusOnPassword();
         mUiBot.assertDatasets("Pass2");
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
         mUiBot.assertDatasets("User1", "User2");
 
         // Auto-fill it.
@@ -1079,16 +1114,16 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("user1", "pass1");
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
         sReplier.getNextFillRequest();
 
         // Check initial field.
         mUiBot.assertDatasets("User1");
 
         // Then move around...
-        mActivity.onPassword(View::requestFocus);
+        requestFocusOnPassword();
         mUiBot.assertDatasets("Pass1", "Pass2");
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
         mUiBot.assertDatasets("User1");
 
         // Auto-fill it.
@@ -1123,32 +1158,32 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 .build());
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
         sReplier.getNextFillRequest();
 
         // With no filter text all datasets should be shown
         mUiBot.assertDatasets(AA, AB, B);
 
         // Only two datasets start with 'a'
-        runShellCommand("input keyevent KEYCODE_A");
+        mActivity.onUsername((v) -> v.setText("a"));
         mUiBot.assertDatasets(AA, AB);
 
         // Only one dataset start with 'aa'
-        runShellCommand("input keyevent KEYCODE_A");
+        mActivity.onUsername((v) -> v.setText("aa"));
         mUiBot.assertDatasets(AA);
 
         // Only two datasets start with 'a'
-        runShellCommand("input keyevent KEYCODE_DEL");
+        mActivity.onUsername((v) -> v.setText("a"));
         mUiBot.assertDatasets(AA, AB);
 
         // With no filter text all datasets should be shown
-        runShellCommand("input keyevent KEYCODE_DEL");
+        mActivity.onUsername((v) -> v.setText(""));
         mUiBot.assertDatasets(AA, AB, B);
 
         // No dataset start with 'aaa'
-        runShellCommand("input keyevent KEYCODE_A");
-        runShellCommand("input keyevent KEYCODE_A");
-        runShellCommand("input keyevent KEYCODE_A");
+        final MyAutofillCallback callback = mActivity.registerCallback();
+        mActivity.onUsername((v) -> v.setText("aaa"));
+        callback.assertUiHiddenEvent(mActivity.getUsername());
         mUiBot.assertNoDatasets();
     }
 
@@ -1177,32 +1212,30 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 .build());
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
         sReplier.getNextFillRequest();
 
         // With no filter text all datasets should be shown
         mUiBot.assertDatasets(AA, AB, B);
 
         // Two datasets start with 'a' and one with null value always shown
-        runShellCommand("input keyevent KEYCODE_A");
+        mActivity.onUsername((v) -> v.setText("a"));
         mUiBot.assertDatasets(AA, AB, B);
 
         // One dataset start with 'aa' and one with null value always shown
-        runShellCommand("input keyevent KEYCODE_A");
+        mActivity.onUsername((v) -> v.setText("aa"));
         mUiBot.assertDatasets(AA, B);
 
         // Two datasets start with 'a' and one with null value always shown
-        runShellCommand("input keyevent KEYCODE_DEL");
+        mActivity.onUsername((v) -> v.setText("a"));
         mUiBot.assertDatasets(AA, AB, B);
 
         // With no filter text all datasets should be shown
-        runShellCommand("input keyevent KEYCODE_DEL");
+        mActivity.onUsername((v) -> v.setText(""));
         mUiBot.assertDatasets(AA, AB, B);
 
         // No dataset start with 'aaa' and one with null value always shown
-        runShellCommand("input keyevent KEYCODE_A");
-        runShellCommand("input keyevent KEYCODE_A");
-        runShellCommand("input keyevent KEYCODE_A");
+        mActivity.onUsername((v) -> v.setText("aaa"));
         mUiBot.assertDatasets(B);
     }
 
@@ -1231,7 +1264,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 .build());
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
         sReplier.getNextFillRequest();
 
         // With no filter text all datasets should be shown
@@ -1273,32 +1306,32 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 .build());
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
         sReplier.getNextFillRequest();
 
         // With no filter text all datasets should be shown
         mUiBot.assertDatasets(aa, ab, b);
 
         // Only two datasets start with 'a'
-        runShellCommand("input keyevent KEYCODE_A");
+        mActivity.onUsername((v) -> v.setText("a"));
         mUiBot.assertDatasets(aa, ab);
 
         // Only one dataset start with 'aa'
-        runShellCommand("input keyevent KEYCODE_A");
+        mActivity.onUsername((v) -> v.setText("aa"));
         mUiBot.assertDatasets(aa);
 
         // Only two datasets start with 'a'
-        runShellCommand("input keyevent KEYCODE_DEL");
+        mActivity.onUsername((v) -> v.setText("a"));
         mUiBot.assertDatasets(aa, ab);
 
         // With no filter text all datasets should be shown
-        runShellCommand("input keyevent KEYCODE_DEL");
+        mActivity.onUsername((v) -> v.setText(""));
         mUiBot.assertDatasets(aa, ab, b);
 
         // No dataset start with 'aaa'
-        runShellCommand("input keyevent KEYCODE_A");
-        runShellCommand("input keyevent KEYCODE_A");
-        runShellCommand("input keyevent KEYCODE_A");
+        final MyAutofillCallback callback = mActivity.registerCallback();
+        mActivity.onUsername((v) -> v.setText("aaa"));
+        callback.assertUiHiddenEvent(mActivity.getUsername());
         mUiBot.assertNoDatasets();
     }
 
@@ -1851,7 +1884,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
 
         // Wait for onFill() before proceeding.
         sReplier.getNextFillRequest();
@@ -1861,13 +1894,13 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Make sure UI is show on 2nd field as well
         final View password = mActivity.getPassword();
-        mActivity.onPassword(View::requestFocus);
+        requestFocusOnPassword();
         callback.assertUiHiddenEvent(username);
         callback.assertUiShownEvent(password);
         mUiBot.assertDatasets("Tap to auth response");
 
         // Now tap on 1st field to show it again...
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
         callback.assertUiHiddenEvent(password);
         callback.assertUiShownEvent(username);
 
@@ -1880,13 +1913,13 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             mUiBot.assertDatasets("Tap to auth response");
 
             // Make sure it's still shown on other fields...
-            mActivity.onPassword(View::requestFocus);
+            requestFocusOnPassword();
             callback.assertUiHiddenEvent(username);
             callback.assertUiShownEvent(password);
             mUiBot.assertDatasets("Tap to auth response");
 
             // Tap on 1st field to show it again...
-            mActivity.onUsername(View::requestFocus);
+            requestFocusOnUsername();
             callback.assertUiHiddenEvent(password);
             callback.assertUiShownEvent(username);
         }
@@ -1940,7 +1973,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
 
         // Wait for onFill() before proceeding.
         sReplier.getNextFillRequest();
@@ -1949,11 +1982,11 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mUiBot.assertDatasets("Tap to auth response");
 
         // Make sure UI is not show on 2nd field
-        mActivity.onPassword(View::requestFocus);
+        requestFocusOnPassword();
         callback.assertUiHiddenEvent(username);
         mUiBot.assertNoDatasets();
         // Now tap on 1st field to show it again...
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
         callback.assertUiShownEvent(username);
 
         // ...and select it this time
@@ -1998,7 +2031,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 .build());
 
         // Trigger autofill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
 
         // Wait for onFill() before proceeding.
         sReplier.getNextFillRequest();
@@ -2058,7 +2091,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 .build());
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
 
         // Wait for onFill() before proceeding.
         sReplier.getNextFillRequest();
@@ -2128,7 +2161,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger autofill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
         sReplier.getNextFillRequest();
 
         // Tap authentication request.
@@ -2204,7 +2237,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
 
         // Wait for onFill() before proceeding.
         sReplier.getNextFillRequest();
@@ -2215,12 +2248,12 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mUiBot.assertDatasets("Tap to auth response");
 
         // ..then type something to hide it.
-        runShellCommand("input keyevent KEYCODE_A");
+        mActivity.onUsername((v) -> v.setText("a"));
         callback.assertUiHiddenEvent(username);
         mUiBot.assertNoDatasets();
 
         // Now delete the char and assert it's shown again...
-        runShellCommand("input keyevent KEYCODE_DEL");
+        mActivity.onUsername((v) -> v.setText(""));
         callback.assertUiShownEvent(username);
         mUiBot.assertDatasets("Tap to auth response");
 
@@ -2279,7 +2312,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
 
         // Wait for onFill() before proceeding.
         sReplier.getNextFillRequest();
@@ -2289,13 +2322,13 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Make sure UI is show on 2nd field as well
         final View password = mActivity.getPassword();
-        mActivity.onPassword(View::requestFocus);
+        requestFocusOnPassword();
         callback.assertUiHiddenEvent(username);
         callback.assertUiShownEvent(password);
         mUiBot.assertDatasets("Tap to auth dataset");
 
         // Now tap on 1st field to show it again...
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
         callback.assertUiHiddenEvent(password);
         callback.assertUiShownEvent(username);
         mUiBot.assertDatasets("Tap to auth dataset");
@@ -2309,13 +2342,13 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             mUiBot.assertDatasets("Tap to auth dataset");
 
             // Make sure it's still shown on other fields...
-            mActivity.onPassword(View::requestFocus);
+            requestFocusOnPassword();
             callback.assertUiHiddenEvent(username);
             callback.assertUiShownEvent(password);
             mUiBot.assertDatasets("Tap to auth dataset");
 
             // Tap on 1st field to show it again...
-            mActivity.onUsername(View::requestFocus);
+            requestFocusOnUsername();
             callback.assertUiHiddenEvent(password);
             callback.assertUiShownEvent(username);
         }
@@ -2365,7 +2398,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
 
         // Wait for onFill() before proceeding.
         sReplier.getNextFillRequest();
@@ -2418,7 +2451,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
 
         // Wait for onFill() before proceeding.
         sReplier.getNextFillRequest();
@@ -2470,7 +2503,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
 
         // Wait for onFill() before proceeding.
         sReplier.getNextFillRequest();
@@ -2533,7 +2566,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         }
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
 
         // Wait for onFill() before proceeding.
         sReplier.getNextFillRequest();
@@ -2580,7 +2613,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
 
         // Wait for onFill() before proceeding.
         sReplier.getNextFillRequest();
@@ -2591,12 +2624,12 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mUiBot.assertDatasets("Tap to auth dataset");
 
         // ..then type something to hide it.
-        runShellCommand("input keyevent KEYCODE_A");
+        mActivity.onUsername((v) -> v.setText("a"));
         callback.assertUiHiddenEvent(username);
         mUiBot.assertNoDatasets();
 
         // Now delete the char and assert it's shown again...
-        runShellCommand("input keyevent KEYCODE_DEL");
+        mActivity.onUsername((v) -> v.setText(""));
         callback.assertUiShownEvent(username);
         mUiBot.assertDatasets("Tap to auth dataset");
 
@@ -2649,7 +2682,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
 
         // Wait for onFill() before proceeding.
         sReplier.getNextFillRequest();
@@ -2660,31 +2693,31 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mUiBot.assertDatasets("DS1", "DS2", "DS3");
 
         // ...then type something to hide them.
-        runShellCommand("input keyevent KEYCODE_A");
+        mActivity.onUsername((v) -> v.setText("a"));
         callback.assertUiHiddenEvent(username);
         mUiBot.assertNoDatasets();
 
         // Now delete the char and assert they're shown again...
-        runShellCommand("input keyevent KEYCODE_DEL");
+        mActivity.onUsername((v) -> v.setText(""));
         callback.assertUiShownEvent(username);
         mUiBot.assertDatasets("DS1", "DS2", "DS3");
 
         // ...then filter for 2
-        runShellCommand("input keyevent KEYCODE_D");
+        mActivity.onUsername((v) -> v.setText("d"));
         mUiBot.assertDatasets("DS1", "DS2");
 
         // ...up to 1
-        runShellCommand("input keyevent KEYCODE_U");
+        mActivity.onUsername((v) -> v.setText("du"));
         mUiBot.assertDatasets("DS1", "DS2");
-        runShellCommand("input keyevent KEYCODE_D");
+        mActivity.onUsername((v) -> v.setText("dud"));
         mUiBot.assertDatasets("DS1", "DS2");
-        runShellCommand("input keyevent KEYCODE_E");
+        mActivity.onUsername((v) -> v.setText("dude"));
         mUiBot.assertDatasets("DS1", "DS2");
-        runShellCommand("input keyevent KEYCODE_COMMA");
+        mActivity.onUsername((v) -> v.setText("dude,"));
         mUiBot.assertDatasets("DS2");
 
         // Now delete the char and assert 2 are shown again...
-        runShellCommand("input keyevent KEYCODE_DEL");
+        mActivity.onUsername((v) -> v.setText("dude"));
         final UiObject2 picker = mUiBot.assertDatasets("DS1", "DS2");
 
         // ...and select it this time
@@ -2726,7 +2759,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
 
         // Wait for onFill() before proceeding.
         sReplier.getNextFillRequest();
@@ -2737,22 +2770,22 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mUiBot.assertDatasets("Tap to auth dataset");
 
         // ...then type something to hide it.
-        runShellCommand("input keyevent KEYCODE_A");
+        mActivity.onUsername((v) -> v.setText("a"));
         callback.assertUiHiddenEvent(username);
         mUiBot.assertNoDatasets();
 
         // ...now type something again to show it, as the input will have 2 chars.
-        runShellCommand("input keyevent KEYCODE_A");
+        mActivity.onUsername((v) -> v.setText("aa"));
         callback.assertUiShownEvent(username);
         mUiBot.assertDatasets("Tap to auth dataset");
 
         // Delete the char and assert it's not shown again...
-        runShellCommand("input keyevent KEYCODE_DEL");
+        mActivity.onUsername((v) -> v.setText("a"));
         callback.assertUiHiddenEvent(username);
         mUiBot.assertNoDatasets();
 
         // ...then type something again to show it, as the input will have 2 chars.
-        runShellCommand("input keyevent KEYCODE_A");
+        mActivity.onUsername((v) -> v.setText("aa"));
         callback.assertUiShownEvent(username);
 
         // ...and select it this time
@@ -2810,7 +2843,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         }
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
 
         // Wait for onFill() before proceeding.
         sReplier.getNextFillRequest();
@@ -2821,21 +2854,21 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mUiBot.assertDatasets("Tap to auth dataset", "What, me auth?");
 
         // Filter the auth dataset.
-        runShellCommand("input keyevent KEYCODE_D");
+        mActivity.onUsername((v) -> v.setText("d"));
         mUiBot.assertDatasets("What, me auth?");
 
         // Filter all.
-        runShellCommand("input keyevent KEYCODE_W");
+        mActivity.onUsername((v) -> v.setText("dw"));
         callback.assertUiHiddenEvent(username);
         mUiBot.assertNoDatasets();
 
         // Now delete the char and assert the non-auth is shown again.
-        runShellCommand("input keyevent KEYCODE_DEL");
+        mActivity.onUsername((v) -> v.setText("d"));
         callback.assertUiShownEvent(username);
         mUiBot.assertDatasets("What, me auth?");
 
         // Delete again and assert all dataset are shown.
-        runShellCommand("input keyevent KEYCODE_DEL");
+        mActivity.onUsername((v) -> v.setText(""));
         mUiBot.assertDatasets("Tap to auth dataset", "What, me auth?");
 
         // ...and select it this time
@@ -2894,7 +2927,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
         sReplier.getNextFillRequest();
 
         // Tap authentication request.
@@ -3220,7 +3253,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
 
         // Assert request.
         final FillRequest fillRequest1 = sReplier.getNextFillRequest();
@@ -3401,7 +3434,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             mActivity.expectAutoFill(username, password);
             try {
                 // Trigger auto-fill.
-                mActivity.onUsername(View::requestFocus);
+                requestFocusOnUsername();
 
                 waitUntilConnected();
                 sReplier.getNextFillRequest();
@@ -3413,7 +3446,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 mActivity.assertAutoFilled();
 
                 // Change focus to prepare for next step - must do it before session is gone
-                mActivity.onPassword(View::requestFocus);
+                requestFocusOnPassword();
 
                 // Rinse and repeat...
                 mActivity.tapClear();
@@ -3452,7 +3485,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 .build());
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
 
         // Wait for onFill() before proceeding.
         sReplier.getNextFillRequest();
@@ -3527,7 +3560,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
         sReplier.getNextFillRequest();
         mUiBot.assertDatasets("The Dude");
 
@@ -3561,7 +3594,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger autofill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
         sReplier.getNextFillRequest();
         mUiBot.assertDatasets("The Dude");
 
@@ -3591,7 +3624,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
         sReplier.getNextFillRequest();
 
         // Auto-fill it.
@@ -3642,7 +3675,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.addResponse(response.build());
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        requestFocusOnUsername();
         sReplier.getNextFillRequest();
 
         // Make sure all datasets are shown.
