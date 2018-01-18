@@ -35,6 +35,7 @@ import com.android.org.bouncycastle.asn1.ASN1TaggedObject;
 import com.android.org.bouncycastle.asn1.ASN1InputStream;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.security.cert.CertificateParsingException;
 import java.text.DateFormat;
 import java.util.Collection;
@@ -120,6 +121,14 @@ public class AuthorizationList {
     private static final int KM_TAG_OS_VERSION = KM_UINT | 705;
     private static final int KM_TAG_OS_PATCHLEVEL = KM_UINT | 706;
     private static final int KM_TAG_ATTESTATION_APPLICATION_ID = KM_BYTES | 709;
+    private static final int KM_TAG_ATTESTATION_ID_BRAND = KM_BYTES | 710;
+    private static final int KM_TAG_ATTESTATION_ID_DEVICE = KM_BYTES | 711;
+    private static final int KM_TAG_ATTESTATION_ID_PRODUCT = KM_BYTES | 712;
+    private static final int KM_TAG_ATTESTATION_ID_SERIAL = KM_BYTES | 713;
+    private static final int KM_TAG_ATTESTATION_ID_IMEI = KM_BYTES | 714;
+    private static final int KM_TAG_ATTESTATION_ID_MEID = KM_BYTES | 715;
+    private static final int KM_TAG_ATTESTATION_ID_MANUFACTURER = KM_BYTES | 716;
+    private static final int KM_TAG_ATTESTATION_ID_MODEL = KM_BYTES | 717;
 
     // Map for converting padding values to strings
     private static final ImmutableMap<Integer, String> paddingMap = ImmutableMap
@@ -175,6 +184,14 @@ public class AuthorizationList {
     private Integer osVersion;
     private Integer osPatchLevel;
     private AttestationApplicationId attestationApplicationId;
+    private String brand;
+    private String device;
+    private String serialNumber;
+    private String imei;
+    private String meid;
+    private String product;
+    private String manufacturer;
+    private String model;
 
     public AuthorizationList(ASN1Encodable sequence) throws CertificateParsingException {
         if (!(sequence instanceof ASN1Sequence)) {
@@ -259,6 +276,30 @@ public class AuthorizationList {
                 case KM_TAG_ATTESTATION_APPLICATION_ID & KEYMASTER_TAG_TYPE_MASK:
                     attestationApplicationId = new AttestationApplicationId(Asn1Utils
                             .getAsn1EncodableFromBytes(Asn1Utils.getByteArrayFromAsn1(value)));
+                    break;
+                case KM_TAG_ATTESTATION_ID_BRAND & KEYMASTER_TAG_TYPE_MASK:
+                    brand = getStringFromAsn1Value(value);
+                    break;
+                case KM_TAG_ATTESTATION_ID_DEVICE & KEYMASTER_TAG_TYPE_MASK:
+                    device = getStringFromAsn1Value(value);
+                    break;
+                case KM_TAG_ATTESTATION_ID_PRODUCT & KEYMASTER_TAG_TYPE_MASK:
+                    product = getStringFromAsn1Value(value);
+                    break;
+                case KM_TAG_ATTESTATION_ID_SERIAL & KEYMASTER_TAG_TYPE_MASK:
+                    serialNumber = getStringFromAsn1Value(value);
+                    break;
+                case KM_TAG_ATTESTATION_ID_IMEI & KEYMASTER_TAG_TYPE_MASK:
+                    imei = getStringFromAsn1Value(value);
+                    break;
+                case KM_TAG_ATTESTATION_ID_MEID & KEYMASTER_TAG_TYPE_MASK:
+                    meid = getStringFromAsn1Value(value);
+                    break;
+                case KM_TAG_ATTESTATION_ID_MANUFACTURER & KEYMASTER_TAG_TYPE_MASK:
+                    manufacturer = getStringFromAsn1Value(value);
+                    break;
+                case KM_TAG_ATTESTATION_ID_MODEL & KEYMASTER_TAG_TYPE_MASK:
+                    model = getStringFromAsn1Value(value);
                     break;
                 case KM_TAG_ALL_APPLICATIONS & KEYMASTER_TAG_TYPE_MASK:
                     allApplications = true;
@@ -492,6 +533,46 @@ public class AuthorizationList {
         return attestationApplicationId;
     }
 
+    public String getBrand() {
+        return brand;
+    }
+
+    public String getDevice() {
+        return device;
+    }
+
+    public String getSerialNumber() {
+        return serialNumber;
+    };
+
+    public String getImei() {
+        return imei;
+    };
+
+    public String getMeid() {
+        return meid;
+    };
+
+    public String getProduct() {
+        return product;
+    };
+
+    public String getManufacturer() {
+        return manufacturer;
+    };
+
+    public String getModel() {
+        return model;
+    };
+
+    private String getStringFromAsn1Value(ASN1Primitive value) throws CertificateParsingException {
+        try {
+            return Asn1Utils.getStringFromAsn1OctetStreamAssumingUTF8(value);
+        } catch (UnsupportedEncodingException e) {
+            throw new CertificateParsingException("Error parsing ASN.1 value", e);
+        }
+    }
+
     @Override
     public String toString() {
         StringBuilder s = new StringBuilder();
@@ -575,6 +656,13 @@ public class AuthorizationList {
 
         if (attestationApplicationId != null) {
             s.append("\nAttestation Application Id:").append(attestationApplicationId);
+        }
+
+        if (brand != null) {
+            s.append("\nBrand: ").append(brand);
+        }
+        if (device != null) {
+            s.append("\nDevice type: ").append(device);
         }
         return s.toString();
     }
