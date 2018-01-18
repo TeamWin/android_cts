@@ -1,4 +1,4 @@
-# Copyright (C) 2015 The Android Open Source Project
+# Copyright (C) 2017 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,14 +23,11 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-v4 \
     cts-am-app-base \
 
-LOCAL_SRC_FILES := $(call all-java-files-under, src) \
-                   ../../../../../apps/CtsVerifier/src/com/android/cts/verifier/vr/MockVrListenerService.java
-
-LOCAL_SDK_VERSION := test_current
+LOCAL_SDK_VERSION := 27
 
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
-LOCAL_PACKAGE_NAME := CtsDeviceServicesTestApp
+LOCAL_PACKAGE_NAME := CtsDeviceServicesTestApp27
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)

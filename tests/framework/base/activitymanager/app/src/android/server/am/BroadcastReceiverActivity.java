@@ -25,7 +25,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.server.am.tools.ActivityLauncher;
+import android.server.am.util.ActivityLauncher;
 import android.util.Log;
 
 /**
