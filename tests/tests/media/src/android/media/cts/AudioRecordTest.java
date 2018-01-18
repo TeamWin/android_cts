@@ -31,6 +31,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.os.SystemClock;
+import android.platform.test.annotations.Presubmit;
 import android.util.Log;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
@@ -251,6 +252,7 @@ public class AudioRecordTest extends CtsAndroidTestCase {
                 AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_8BIT);
     }
 
+    @Presubmit
     public void testAudioRecordLocalMono16BitShort() throws Exception {
         doTest("local_mono_16bit_short", true /*localRecord*/, false /*customHandler*/,
                 30 /*periodsPerSecond*/, 2 /*markerPeriodsPerSecond*/,

@@ -25,6 +25,7 @@ import android.media.AudioManager;
 import android.media.AudioTimestamp;
 import android.media.AudioTrack;
 import android.media.PlaybackParams;
+import android.platform.test.annotations.Presubmit;
 import android.util.Log;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
@@ -1461,6 +1462,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
         track.release();
     }
 
+    @Presubmit
     public void testPlayStaticDataShort() throws Exception {
         if (!hasAudioOutput()) {
             Log.w(TAG,"AUDIO_OUTPUT feature not found. This system might not have a valid "
@@ -1604,6 +1606,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
         track.release();
     }
 
+    @Presubmit
     public void testPlayStreamDataShort() throws Exception {
         // constants for test
         final String TEST_NAME = "testPlayStreamDataShort";
