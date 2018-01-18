@@ -502,7 +502,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         }
 
         installAppAsUser(ACCOUNT_MANAGEMENT_APK, mUserId);
-        executeDeviceTestClass(".DpcAllowedAccountManagementTest");
+        executeDeviceTestClass(".AllowedAccountManagementTest");
     }
 
     public void testAccountManagement_userRestrictionAddAccount() throws Exception {
