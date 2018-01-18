@@ -992,8 +992,6 @@ final class Helper {
                 .that(match.getRemoteId()).isEqualTo(expectedResult.remoteIds[j]);
             assertWithMessage("Wrong score at (%s, %s): %s", i, j, match)
                 .that(match.getScore()).isWithin(expectedResult.scores[j]);
-            assertWithMessage("Wrong algorithm at (%s, %s): %s", i, j, match)
-                .that(match.getAlgorithm()).isEqualTo(expectedResult.algorithms[j]);
         }
     }
 
@@ -1081,11 +1079,10 @@ final class Helper {
     }
 
     public static void assertFillEventForFieldsClassification(@NonNull FillEventHistory.Event event,
-            @NonNull AutofillId fieldId, @NonNull String remoteId, float score,
-            @NonNull String algorithm) {
+            @NonNull AutofillId fieldId, @NonNull String remoteId, float score) {
         assertFillEvent(event, TYPE_CONTEXT_COMMITTED, null, null, null,
                 new FieldClassificationResult[] {
-                        new FieldClassificationResult(fieldId, remoteId, score, algorithm)
+                        new FieldClassificationResult(fieldId, remoteId, score)
                 });
     }
 
@@ -1130,19 +1127,16 @@ final class Helper {
         public final AutofillId id;
         public final String[] remoteIds;
         public final float[] scores;
-        public final String[] algorithms;
 
-        FieldClassificationResult(@NonNull AutofillId id, @NonNull String remoteId, float score,
-                String algorithm) {
-            this(id, new String[] { remoteId }, new float[] { score }, new String[] { algorithm });
+        FieldClassificationResult(@NonNull AutofillId id, @NonNull String remoteId, float score) {
+            this(id, new String[] { remoteId }, new float[] { score });
         }
 
         FieldClassificationResult(@NonNull AutofillId id, @NonNull String[] remoteIds,
-                float[] scores, String[] algorithms) {
+                float[] scores) {
             this.id = id;
             this.remoteIds = remoteIds;
             this.scores = scores;
-            this.algorithms = algorithms;
         }
     }
 }
