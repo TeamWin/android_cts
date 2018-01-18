@@ -57,6 +57,11 @@ final class Timeouts {
     static final Timeout UI_TIMEOUT = new Timeout("UI_TIMEOUT", 500, 2F, 2000);
 
     /**
+     * Timeout for webview operations. Typically used by {@link UiBot}.
+     */
+    static final Timeout WEBVIEW_TIMEOUT = new Timeout("UI_TIMEOUT", 8000, 2F, 16000);
+
+    /**
      * Timeout for showing the autofill dataset picker UI.
      *
      * <p>The value is usually higher than {@link #UI_TIMEOUT} because the performance of the
