@@ -18,7 +18,6 @@ package com.android.cts.deviceandprofileowner;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
-import android.accounts.AccountManagerFuture;
 import android.accounts.AuthenticatorException;
 import android.accounts.OperationCanceledException;
 import android.app.admin.DevicePolicyManager;
@@ -36,18 +35,14 @@ import java.io.IOException;
  *
  * This test depends on {@link com.android.cts.devicepolicy.accountmanagement.MockAccountService},
  * which provides authenticator for a mock account type.
- *
- * Note that we cannot test account removal, because only the authenticator can remove an account
- * and the Dpc is not the authenticator for the mock account type.
  */
-public class DpcAllowedAccountManagementTest extends BaseDeviceAdminTest {
+public class AllowedAccountManagementTest extends BaseDeviceAdminTest {
 
     // Account type for MockAccountAuthenticator
-    private final static String ACCOUNT_TYPE_1
-            = "com.android.cts.devicepolicy.accountmanagement.account.type";
+    private final static String ACCOUNT_TYPE_1 =
+            "com.android.cts.devicepolicy.accountmanagement.account.type";
     private final static String ACCOUNT_TYPE_2 = "com.dummy.account";
-    private final static Account ACCOUNT_0 = new Account("user0", ACCOUNT_TYPE_1);
-    private final static Account ACCOUNT_1 = new Account("user1", ACCOUNT_TYPE_1);
+    private final static Account ACCOUNT = new Account("user0", ACCOUNT_TYPE_1);
 
     private AccountManager mAccountManager;
 
@@ -103,7 +98,7 @@ public class DpcAllowedAccountManagementTest extends BaseDeviceAdminTest {
         assertEquals(ACCOUNT_TYPE_1, result.getString(AccountManager.KEY_ACCOUNT_TYPE));
     }
 
-    public void testUserRestriction_profileAndDeviceOwnerCanAddAccount()
+    public void testUserRestriction_profileAndDeviceOwnerCanAddAndRemoveAccount()
             throws AuthenticatorException, IOException, OperationCanceledException {
         mDevicePolicyManager.addUserRestriction(ADMIN_RECEIVER_COMPONENT,
                 UserManager.DISALLOW_MODIFY_ACCOUNTS);
@@ -117,6 +112,17 @@ public class DpcAllowedAccountManagementTest extends BaseDeviceAdminTest {
         // an intent to start the authenticator activity for adding new accounts.
         // But MockAccountAuthenticator returns a new account straightway.
         assertEquals(ACCOUNT_TYPE_1, result.getString(AccountManager.KEY_ACCOUNT_TYPE));
+
+        result = mAccountManager.removeAccount(ACCOUNT, null, null, null).getResult();
+        assertTrue(result.getBoolean(AccountManager.KEY_BOOLEAN_RESULT));
+    }
+
+    public void testRemoveAccount_noUserRestriction()
+            throws AuthenticatorException, IOException, OperationCanceledException {
+        // We only want to verify removeAccount can through to AccountManagerService without
+        // throwing an Exception, so it's not necessary to add the account before removal.
+        Bundle result = mAccountManager.removeAccount(ACCOUNT, null, null, null).getResult();
+        assertTrue(result.getBoolean(AccountManager.KEY_BOOLEAN_RESULT));
     }
 
     private void clearAllAccountManagementDisabled() {
