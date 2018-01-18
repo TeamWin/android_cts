@@ -221,6 +221,29 @@ public class CharSequenceTransformationTest {
         verify(template, never()).setCharSequence(eq(0), any(), any());
     }
 
+    @Test
+    public void testFieldsAreAppliedInOrder() throws Exception {
+        AutofillId id1 = new AutofillId(1);
+        AutofillId id2 = new AutofillId(2);
+        AutofillId id3 = new AutofillId(3);
+        CharSequenceTransformation trans = new CharSequenceTransformation
+                .Builder(id1, Pattern.compile("a"), "A")
+                .addField(id3, Pattern.compile("c"), "C")
+                .addField(id2, Pattern.compile("b"), "B")
+                .build();
+
+        ValueFinder finder = mock(ValueFinder.class);
+        RemoteViews template = mock(RemoteViews.class);
+
+        when(finder.findByAutofillId(id1)).thenReturn("a");
+        when(finder.findByAutofillId(id2)).thenReturn("b");
+        when(finder.findByAutofillId(id3)).thenReturn("c");
+
+        trans.apply(finder, template, 0);
+
+        verify(template).setCharSequence(eq(0), any(), argThat(new CharSequenceMatcher("ACB")));
+    }
+
     static class CharSequenceMatcher implements ArgumentMatcher<CharSequence> {
         private final CharSequence mExpected;
 
@@ -231,6 +254,11 @@ public class CharSequenceTransformationTest {
         @Override
         public boolean matches(CharSequence actual) {
             return actual.toString().equals(mExpected.toString());
+        }
+
+        @Override
+        public String toString() {
+            return mExpected.toString();
         }
     }
 }
