@@ -26,6 +26,7 @@ import android.media.AudioTimestamp;
 import android.media.AudioTrack;
 import android.media.MediaRecorder;
 import android.media.MediaSyncEvent;
+import android.media.MicrophoneInfo;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -54,6 +55,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
 import java.util.ArrayList;
+import java.util.List;
 
 @RunWith(AndroidJUnit4.class)
 public class AudioRecordTest {
@@ -799,6 +801,43 @@ public class AudioRecordTest {
                 track.release();
                 track = null;
             }
+        }
+    }
+
+    private void printMicrophoneInfo(MicrophoneInfo microphone) {
+        Log.i(TAG, "deviceId:" + microphone.getDescription());
+        Log.i(TAG, "portId:" + microphone.getId());
+        Log.i(TAG, "type:" + microphone.getType());
+        Log.i(TAG, "deviceLocation:" + microphone.getLocation());
+        Log.i(TAG, "deviceGroup:" + microphone.getGroup()
+            + " index:" + microphone.getIndexInTheGroup());
+        MicrophoneInfo.Coordinate3F position = microphone.getPosition();
+        Log.i(TAG, "position:" + position.x + "," + position.y + "," + position.z);
+        MicrophoneInfo.Coordinate3F orientation = microphone.getOrientation();
+        Log.i(TAG, "orientation:" + orientation.x + "," + orientation.y + "," + orientation.z);
+        Log.i(TAG, "frequencyResponse:" + microphone.getFrequencyResponse());
+        Log.i(TAG, "channelMapping:" + microphone.getChannelMapping());
+        Log.i(TAG, "sensitivity:" + microphone.getSensitivity());
+        Log.i(TAG, "max spl:" + microphone.getMaxSpl());
+        Log.i(TAG, "min spl:" + microphone.getMinSpl());
+        Log.i(TAG, "directionality:" + microphone.getDirectionality());
+        Log.i(TAG, "******");
+    }
+
+    @Test
+    public void testGetActiveMicrophones() throws Exception {
+        if (!hasMicrophone()) {
+            return;
+        }
+        mAudioRecord.startRecording();
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+        }
+        List<MicrophoneInfo> activeMicrophones = mAudioRecord.getActiveMicrophones();
+        assertTrue(activeMicrophones.size() > 0);
+        for (MicrophoneInfo activeMicrophone : activeMicrophones) {
+            printMicrophoneInfo(activeMicrophone);
         }
     }
 
