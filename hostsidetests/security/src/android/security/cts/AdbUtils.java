@@ -126,4 +126,12 @@ public class AdbUtils {
         }
 
     }
+    /**
+     * Utility function to help check the exit code of a shell command
+     */
+    public static int runCommandGetExitCode(String cmd, ITestDevice device) throws Exception {
+      return Integer.parseInt(
+          AdbUtils.runCommandLine( "(" + cmd + ") > /dev/null 2>&1; echo $?",
+            device).replaceAll("[^0-9]", ""));
+    }
 }
