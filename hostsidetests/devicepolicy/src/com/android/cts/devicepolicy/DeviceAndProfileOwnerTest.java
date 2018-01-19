@@ -114,6 +114,14 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             ASSIST_APP_PKG + "/.MyInteractionService";
 
     private static final String ARG_ALLOW_FAILURE = "allowFailure";
+
+    private static final String RESTRICT_BACKGROUND_GET_CMD =
+        "cmd netpolicy get restrict-background";
+    private static final String RESTRICT_BACKGROUND_ON_CMD =
+        "cmd netpolicy set restrict-background true";
+    private static final String RESTRICT_BACKGROUND_OFF_CMD =
+        "cmd netpolicy set restrict-background false";
+
     // ID of the user all tests are run as. For device owner this will be the primary user, for
     // profile owner it is the user id of the created profile.
     protected int mUserId;
@@ -267,7 +275,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         installAppAsUser(VPN_APP_APK, mUserId);
-        executeDeviceTestClass(".AlwaysOnVpnTest");
+        executeDeviceTestClassNoRestrictBackground(".AlwaysOnVpnTest");
     }
 
     @RequiresDevice
@@ -818,6 +826,22 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, className, mUserId);
     }
 
+    /**
+     * Executes a test class on device. Prior to running, turn off background data usage
+     * restrictions, and restore the original restrictions after the test.
+     */
+    protected void executeDeviceTestClassNoRestrictBackground(String className) throws Exception {
+        boolean originalRestriction = ensureRestrictBackgroundPolicyOff();
+        try {
+            executeDeviceTestClass(className);
+        } catch (Exception e) {
+            throw e;
+        } finally {
+            // if the test throws exception, still restore the policy
+            restoreRestrictBackgroundPolicyTo(originalRestriction);
+        }
+    }
+
     protected void executeDeviceTestMethod(String className, String testName) throws Exception {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, className, testName, mUserId);
     }
@@ -994,5 +1018,23 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     protected void clearVoiceInteractionService() throws DeviceNotAvailableException {
         getDevice().executeShellCommand("settings delete secure voice_interaction_service");
+    }
+
+    /**
+     * Ensure that restrict background policy is off.
+     * Returns the original status of restrict background policy.
+     */
+    private boolean ensureRestrictBackgroundPolicyOff() throws Exception {
+        String restriction = getDevice().executeShellCommand(RESTRICT_BACKGROUND_GET_CMD);
+        if (restriction.contains("enabled")) {
+            getDevice().executeShellCommand(RESTRICT_BACKGROUND_OFF_CMD);
+            return true;
+        }
+        return false;
+    }
+
+    private void restoreRestrictBackgroundPolicyTo(boolean restricted) throws Exception {
+        getDevice().executeShellCommand(
+                restricted ? RESTRICT_BACKGROUND_ON_CMD : RESTRICT_BACKGROUND_OFF_CMD);
     }
 }
