@@ -21,7 +21,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -67,6 +66,7 @@ public class TransitionSetTest extends BaseTransitionTest {
     public void testTransitionSequentially() throws Throwable {
         TransitionSet transitionSet = new TransitionSet();
         Fade fade = new Fade();
+        fade.setDuration(500);
         final Transition.TransitionListener fadeListener =
                 mock(Transition.TransitionListener.class);
         fade.addListener(fadeListener);
@@ -89,10 +89,11 @@ public class TransitionSetTest extends BaseTransitionTest {
         verify(fadeListener, times(1)).onTransitionStart(any());
 
         // change bounds shouldn't start until after fade finishes
-        verify(changeBoundsListener, never()).onTransitionStart(any());
+        verify(fadeListener, times(0)).onTransitionEnd(any());
+        verify(changeBoundsListener, times(0)).onTransitionStart(any());
 
         // now wait for the fade transition to end
-        verify(fadeListener, within(500)).onTransitionEnd(any());
+        verify(fadeListener, within(1000)).onTransitionEnd(any());
 
         // The change bounds should start soon after
         verify(changeBoundsListener, within(500)).onTransitionStart(any());
