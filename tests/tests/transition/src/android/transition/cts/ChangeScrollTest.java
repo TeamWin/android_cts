@@ -49,10 +49,11 @@ public class ChangeScrollTest extends BaseTransitionTest {
     public void testChangeScroll() throws Throwable {
         enterScene(R.layout.scene5);
         final CountDownLatch scrollChanged = new CountDownLatch(1);
-        final View.OnScrollChangeListener listener =
-                (v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
-                    scrollChanged.countDown();
-                };
+        final View.OnScrollChangeListener listener = (v, newX, newY, oldX, oldY) -> {
+            if (newX != 0 && newY != 0) {
+                scrollChanged.countDown();
+            }
+        };
         mActivityRule.runOnUiThread(() -> {
             final View view = mActivity.findViewById(R.id.text);
             assertEquals(0, view.getScrollX());

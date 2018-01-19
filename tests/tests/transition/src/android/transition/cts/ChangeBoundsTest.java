@@ -199,7 +199,7 @@ public class ChangeBoundsTest extends BaseTransitionTest {
     private void waitForMiddleOfTransition() throws Throwable {
         Resources resources = mActivity.getResources();
         float closestDistance = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
-                2 * SMALL_OFFSET_DP, resources.getDisplayMetrics());
+                SMALL_SQUARE_SIZE_DP / 2, resources.getDisplayMetrics());
 
         final View red = mActivity.findViewById(R.id.redSquare);
         final View green = mActivity.findViewById(R.id.greenSquare);
