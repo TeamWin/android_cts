@@ -260,6 +260,9 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
                 .setRandomData(true)
                 .setMultipleTask(false);
 
+        // TODO(b/70618153): A workaround to allow activities to launch in split-screen leads to
+        // the target being launched directly. Options such as LaunchActivityBuilder#setRandomData
+        // are not respected.
         launchActivitiesInSplitScreen(
                 getLaunchActivityBuilder().setTargetActivityName(LAUNCHING_ACTIVITY),
                 targetActivityLauncher);
@@ -297,8 +300,10 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
                 mAmWmState.getAmState().getTaskByActivityName(
                         targetActivityName, WINDOWING_MODE_SPLIT_SCREEN_SECONDARY));
 
-        // Try to launch to side same activity again with no data.
-        targetActivityLauncher.setRandomData(false).execute();
+        // Try to launch to side same activity again with different random data. Note that null
+        // cannot be used here, since the first instance of TestActivity is launched with no data
+        // in order to launch into split screen.
+        targetActivityLauncher.execute();
         mAmWmState.computeState(waitForActivitiesVisible);
         int taskNumberFinal = mAmWmState.getAmState().getStandardTaskCountByWindowingMode(
                 WINDOWING_MODE_SPLIT_SCREEN_SECONDARY);
