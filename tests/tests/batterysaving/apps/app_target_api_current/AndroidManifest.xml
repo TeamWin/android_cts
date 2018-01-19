@@ -14,11 +14,21 @@
      limitations under the License.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.os.cts.batterysaving.app1">
+    package="android.os.cts.batterysaving.app_target_api_current">
 
+    <!-- Keep this section in sync with the other app manifest(s) -->
     <application>
-        <activity android:name="TestActivity" android:enabled="true" android:exported="true">
+        <activity android:name="android.os.cts.batterysaving.app.TestActivity"
+            android:enabled="true" android:exported="true">
         </activity>
+
+        <receiver android:name="android.os.cts.batterysaving.app.CommReceiver"
+            android:enabled="true" android:exported="true">
+        </receiver>
+
+        <service android:name="android.os.cts.batterysaving.app.TestService"
+            android:enabled="true" android:exported="true">
+        </service>
     </application>
 </manifest>
 

@@ -20,7 +20,8 @@
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsBatterySavingTestCases.apk" />
-        <option name="test-file-name" value="CtsBatterySavingApp1.apk" />
+        <option name="test-file-name" value="CtsBatterySavingAppTargetApiCurrent.apk" />
+        <option name="test-file-name" value="CtsBatterySavingAppTargetApi25.apk" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
