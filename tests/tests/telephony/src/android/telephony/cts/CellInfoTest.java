@@ -110,6 +110,8 @@ public class CellInfoTest extends AndroidTestCase{
     }
 
     private void verifyCdmaInfo(CellInfoCdma cdma) {
+        verifyCellConnectionStatus(cdma.getCellConnectionStatus());
+
         String alphaLong = (String) cdma.getCellIdentity().getOperatorAlphaLong();
         assertNotNull("getOperatorAlphaLong() returns NULL!", alphaLong);
         String alphaShort = (String) cdma.getCellIdentity().getOperatorAlphaShort();
@@ -128,10 +130,16 @@ public class CellInfoTest extends AndroidTestCase{
         // Physical cell id should be within [0, 503].
         assertTrue("getPci() out of range [0, 503], pci=" + pci, pci >= 0 && pci <= 503);
 
+        verifyCellConnectionStatus(lte.getCellConnectionStatus());
+
         String alphaLong = (String) lte.getCellIdentity().getOperatorAlphaLong();
         assertNotNull("getOperatorAlphaLong() returns NULL!", alphaLong);
         String alphaShort = (String) lte.getCellIdentity().getOperatorAlphaShort();
         assertNotNull("getOperatorAlphaShort() returns NULL!", alphaShort);
+
+        int bw = lte.getCellIdentity().getBandwidth();
+        assertTrue("getBandwidth out of range [1400, 20000] | Integer.Max_Value, bw=",
+            bw == Integer.MAX_VALUE || bw >= 1400 && bw <= 20000);
 
         String mccStr = lte.getCellIdentity().getMccStr();
         // mccStr is set as NULL if empty, unknown or invalid.
@@ -185,6 +193,8 @@ public class CellInfoTest extends AndroidTestCase{
         int psc = wcdma.getCellIdentity().getPsc();
         assertTrue("getPsc() out of range [0, 511], psc=" + psc, psc >= 0 && psc <= 511);
 
+        verifyCellConnectionStatus(wcdma.getCellConnectionStatus());
+
         int uarfcn = wcdma.getCellIdentity().getUarfcn();
         // Reference 3GPP 25.101 Table 5.2
         assertTrue("getUarfcn() out of range [400,11000], uarfcn=" + uarfcn,
@@ -228,6 +238,8 @@ public class CellInfoTest extends AndroidTestCase{
         int cid = gsm.getCellIdentity().getCid();
         assertTrue("getCid() out range [0, 65535], cid=" + cid, !gsm.isRegistered() ||
             cid >= 0 && cid <= 65535);
+
+        verifyCellConnectionStatus(gsm.getCellConnectionStatus());
 
         int arfcn = gsm.getCellIdentity().getArfcn();
         // Reference 3GPP 45.005 Table 2-2
@@ -273,5 +285,13 @@ public class CellInfoTest extends AndroidTestCase{
     private void verifyRssiDbm(int dbm) {
         assertTrue("getCellSignalStrength().getDbm() out of range, dbm=" + dbm,
                 dbm >= MIN_RSSI && dbm <= MAX_RSSI);
+    }
+
+    private void verifyCellConnectionStatus(int status) {
+        assertTrue("getCellConnectionStatus() invalid [0,2] | Integer.MAX_VALUE, status=",
+            status == CellInfo.CONNECTION_NONE
+                || status == CellInfo.CONNECTION_PRIMARY_SERVING
+                || status == CellInfo.CONNECTION_SECONDARY_SERVING
+                || status == CellInfo.CONNECTION_UNKNOWN);
     }
 }
