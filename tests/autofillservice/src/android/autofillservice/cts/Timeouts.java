@@ -44,7 +44,7 @@ final class Timeouts {
     /**
      * Timeout for expected save requests.
      */
-    static final Timeout SAVE_TIMEOUT = new Timeout("SAVE_TIMEOUT", 1000, 2F, 5000);
+    static final Timeout SAVE_TIMEOUT = new Timeout("SAVE_TIMEOUT", 2000, 3F, 5000);
 
     /**
      * Time to wait if a UI change is not expected
@@ -54,12 +54,12 @@ final class Timeouts {
     /**
      * Timeout for UI operations. Typically used by {@link UiBot}.
      */
-    static final Timeout UI_TIMEOUT = new Timeout("UI_TIMEOUT", 500, 2F, 2000);
+    static final Timeout UI_TIMEOUT = new Timeout("UI_TIMEOUT", 1000, 2F, 2000);
 
     /**
      * Timeout for webview operations. Typically used by {@link UiBot}.
      */
-    static final Timeout WEBVIEW_TIMEOUT = new Timeout("UI_TIMEOUT", 8000, 2F, 16000);
+    static final Timeout WEBVIEW_TIMEOUT = new Timeout("WEBVIEW_TIMEOUT", 8000, 2F, 16000);
 
     /**
      * Timeout for showing the autofill dataset picker UI.
@@ -70,7 +70,7 @@ final class Timeouts {
      * <p>Typically used by {@link UiBot}.
      */
     static final Timeout UI_DATASET_PICKER_TIMEOUT =
-            new Timeout("UI_DATASET_PICKER_TIMEOUT", 500, 2F, 4000);
+            new Timeout("UI_DATASET_PICKER_TIMEOUT", 2000, 2F, 4000);
 
     /**
      * Timeout (in milliseconds) for an activity to be brought out to top.

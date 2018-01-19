@@ -232,8 +232,10 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
         TAP_YES_ON_SAVE_UI
     }
 
-    protected final void startActivity(Class<?> clazz) {
-        mContext.startActivity(new Intent(mContext, clazz));
+    protected final void startActivityOnNewTask(Class<?> clazz) {
+        final Intent intent = new Intent(mContext, clazz);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(intent);
     }
 
     protected RemoteViews newTemplate() {

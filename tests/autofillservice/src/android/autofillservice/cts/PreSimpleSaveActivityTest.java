@@ -54,7 +54,7 @@ public class PreSimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase
         final Intent intent = new Intent(mContext, PreSimpleSaveActivity.class);
         if (remainOnRecents) {
             intent.setFlags(
-                    Intent.FLAG_ACTIVITY_RETAIN_IN_RECENTS | Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
+                    Intent.FLAG_ACTIVITY_RETAIN_IN_RECENTS | Intent.FLAG_ACTIVITY_NEW_TASK);
         }
         mActivity = mActivityRule.launchActivity(intent);
     }
@@ -255,12 +255,12 @@ public class PreSimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase
                 mUiBot.assertShownByRelativeId(ID_INPUT);
                 break;
             case LAUNCH_PREVIOUS_ACTIVITY:
-                startActivity(PreSimpleSaveActivity.class);
+                startActivityOnNewTask(PreSimpleSaveActivity.class);
                 mUiBot.assertShownByRelativeId(ID_INPUT);
                 break;
             case LAUNCH_NEW_ACTIVITY:
                 // Launch a 3rd activity...
-                startActivity(LoginActivity.class);
+                startActivityOnNewTask(LoginActivity.class);
                 mUiBot.assertShownByRelativeId(ID_USERNAME_CONTAINER);
                 // ...then go back
                 mUiBot.pressBack();

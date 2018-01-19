@@ -42,6 +42,9 @@ import java.util.concurrent.atomic.AtomicReference;
  * Tests that the session finishes when the views and fragments go away
  */
 public class AutoFinishSessionTest extends AutoFillServiceTestCase {
+
+    private static final String ID_BUTTON = "button";
+
     @Rule
     public final AutofillActivityTestRule<FragmentContainerActivity> mActivityRule =
             new AutofillActivityTestRule<>(FragmentContainerActivity.class);
@@ -229,7 +232,7 @@ public class AutoFinishSessionTest extends AutoFillServiceTestCase {
         mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
 
         // Remove previously started activity from top
-        mUiBot.selectById("android.autofillservice.cts:id/button");
+        mUiBot.selectByRelativeId(ID_BUTTON);
         mActivity.waitUntilResumed();
 
         if (removeInForeGroup != null) {
