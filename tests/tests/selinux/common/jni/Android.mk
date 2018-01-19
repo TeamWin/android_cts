@@ -14,4 +14,24 @@
 
 LOCAL_PATH:= $(call my-dir)
 
-include $(call all-makefiles-under,$(LOCAL_PATH))
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := libctsselinux_jni
+
+# Don't include this package in any configuration by default.
+LOCAL_MODULE_TAGS := optional
+
+LOCAL_SRC_FILES := \
+    CtsSecurityJniOnLoad.cpp \
+    android_security_SELinuxTargetSdkTest.cpp
+
+LOCAL_SHARED_LIBRARIES := \
+    libc++ \
+    libcrypto \
+    liblog \
+    libnativehelper \
+    libpackagelistparser \
+    libpcre2 \
+    libselinux \
+
+include $(BUILD_SHARED_LIBRARY)
