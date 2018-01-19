@@ -16,6 +16,8 @@
 
 package com.android.cts.content;
 
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -39,8 +41,11 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
+import android.support.test.uiautomator.UiObject;
 import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.Until;
+import android.util.Log;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -48,6 +53,7 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.regex.Pattern;
 
@@ -62,6 +68,8 @@ import com.android.compatibility.common.util.SystemUtil;
 public class CtsSyncAccountAccessOtherCertTestCases {
     private static final long SYNC_TIMEOUT_MILLIS = 20000; // 20 sec
     private static final long UI_TIMEOUT_MILLIS = 5000; // 5 sec
+    private static final String LOG_TAG =
+            CtsSyncAccountAccessOtherCertTestCases.class.getSimpleName();
 
     private static final Pattern PERMISSION_REQUESTED = Pattern.compile(
             "Permission Requested|Permission requested");
@@ -87,6 +95,7 @@ public class CtsSyncAccountAccessOtherCertTestCases {
         assumeTrue(hasNotificationSupport());
 
         Intent intent = new Intent(getContext(), StubActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         Activity activity = InstrumentationRegistry.getInstrumentation().startActivitySync(intent);
 
         AccountManager accountManager = getContext().getSystemService(AccountManager.class);
@@ -96,6 +105,7 @@ public class CtsSyncAccountAccessOtherCertTestCases {
         Account addedAccount = new Account(
                 result.getString(AccountManager.KEY_ACCOUNT_NAME),
                 result.getString(AccountManager.KEY_ACCOUNT_TYPE));
+        Log.i(LOG_TAG, "Added account " + addedAccount);
 
         waitForSyncManagerAccountChangeUpdate();
 
@@ -114,9 +124,11 @@ public class CtsSyncAccountAccessOtherCertTestCases {
                     .setManual(true)
                     .build();
             ContentResolver.requestSync(request);
+            Log.i(LOG_TAG, "Sync requested " + request);
 
             verify(adapter, timeout(SYNC_TIMEOUT_MILLIS).times(0)).onPerformSync(any(), any(),
                     any(), any(), any());
+            Log.i(LOG_TAG, "Did not get onPerformSync");
 
             UiDevice uiDevice = getUiDevice();
             if (isWatch()) {
@@ -124,21 +136,40 @@ public class CtsSyncAccountAccessOtherCertTestCases {
                 notification.click();
             } else {
                 uiDevice.openNotification();
-                uiDevice.wait(Until.hasObject(By.text(PERMISSION_REQUESTED)),
-                        UI_TIMEOUT_MILLIS);
+                Log.i(LOG_TAG, "openNotification done");
+                try {
+                    UiObject2 permissionRequest = uiDevice.wait(
+                            Until.findObject(By.text(PERMISSION_REQUESTED)), UI_TIMEOUT_MILLIS);
 
-                uiDevice.findObject(By.text(PERMISSION_REQUESTED)).click();
+                    Log.i(LOG_TAG, "permissionRequest=" + permissionRequest);
+
+                    permissionRequest.click();
+                } catch (Throwable t) {
+                    ByteArrayOutputStream os = new ByteArrayOutputStream();
+                    getUiDevice().dumpWindowHierarchy(os);
+
+                    Log.w(LOG_TAG, "Window hierarchy:");
+                    for (String line : os.toString("UTF-8").split("\n")) {
+                        Log.w(LOG_TAG, line);
+
+                        // Do not overwhelm logging
+                        Thread.sleep(10);
+                    }
+
+                    throw  t;
+                }
             }
 
-            uiDevice.wait(Until.hasObject(By.text(ALLOW_SYNC)),
-                    UI_TIMEOUT_MILLIS);
+            Log.i(LOG_TAG, "Permission opened");
 
-            uiDevice.findObject(By.text(ALLOW_SYNC)).click();
+            uiDevice.wait(Until.findObject(By.text(ALLOW_SYNC)), UI_TIMEOUT_MILLIS).click();
 
             ContentResolver.requestSync(request);
+            Log.i(LOG_TAG, "Sync requested " + request);
 
             verify(adapter, timeout(SYNC_TIMEOUT_MILLIS)).onPerformSync(any(), any(), any(), any(),
                     any());
+            Log.i(LOG_TAG, "Got onPerformSync");
         } finally {
             // Ask the differently signed authenticator to drop all accounts
             accountManager.getAuthToken(addedAccount, TOKEN_TYPE_REMOVE_ACCOUNTS,
