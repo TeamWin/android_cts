@@ -26,6 +26,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ResolveInfo;
 import android.os.Build;
+import android.os.Process;
 import android.os.UserManager;
 import android.provider.Settings;
 import android.test.AndroidTestCase;
@@ -218,7 +219,7 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
             return;
         }
         try {
-            mDevicePolicyManager.removeUser(mComponent, null);
+            mDevicePolicyManager.removeUser(mComponent, Process.myUserHandle());
             fail("did not throw expected SecurityException");
         } catch (SecurityException e) {
             assertDeviceOwnerMessage(e.getMessage());
