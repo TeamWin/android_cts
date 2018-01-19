@@ -100,20 +100,19 @@ public class BusinessLogicPreparer implements ITargetCleaner {
         // Retrieve business logic string from service
         String businessLogicString = null;
         long start = System.currentTimeMillis();
-        boolean success = false;
         CLog.i("Attempting to connect to business logic service...");
-        while (System.currentTimeMillis() < (start + (mMaxConnectionTime * 1000))) {
+        while (businessLogicString == null
+                && System.currentTimeMillis() < (start + (mMaxConnectionTime * 1000))) {
             try {
                 URL request = new URL(requestString);
                 businessLogicString = StreamUtil.getStringFromStream(request.openStream());
-                success = true;
-                break;
             } catch (IOException e) {} // ignore, re-attempt connection with remaining time
         }
-        if (!success || businessLogicString == null) {
+        if (businessLogicString == null) {
             if (mIgnoreFailure) {
                 CLog.e("Failed to connect to business logic service.\nProceeding with test "
                         + "invocation, tests depending on the remote configuration will fail.\n");
+                return;
             } else {
                 throw new TargetSetupError(String.format("Cannot connect to business logic "
                         + "service for suite %s.\nIf this problem persists, re-invoking with "
