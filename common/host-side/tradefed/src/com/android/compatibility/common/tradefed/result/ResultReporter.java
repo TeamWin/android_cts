@@ -19,6 +19,7 @@ import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
 import com.android.compatibility.common.tradefed.util.RetryType;
 import com.android.compatibility.common.util.ChecksumReporter;
+import com.android.compatibility.common.util.DeviceInfo;
 import com.android.compatibility.common.util.ICaseResult;
 import com.android.compatibility.common.util.IInvocationResult;
 import com.android.compatibility.common.util.IModuleResult;
@@ -567,20 +568,42 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             mMasterResultReporter.testLog(name, type, stream);
             return;
         }
-        try {
-            File logFile = null;
-            if (mCompressLogs) {
-                try (InputStream inputStream = stream.createInputStream()) {
-                    logFile = mTestLogSaver.saveAndGZipLogData(name, type, inputStream);
+        if (name.endsWith(DeviceInfo.FILE_SUFFIX)) {
+            // Handle device info file case
+            testLogDeviceInfo(name, stream);
+        } else {
+            // Handle default case
+            try {
+                File logFile = null;
+                if (mCompressLogs) {
+                    try (InputStream inputStream = stream.createInputStream()) {
+                        logFile = mTestLogSaver.saveAndGZipLogData(name, type, inputStream);
+                    }
+                } else {
+                    try (InputStream inputStream = stream.createInputStream()) {
+                        logFile = mTestLogSaver.saveLogData(name, type, inputStream);
+                    }
                 }
-            } else {
-                try (InputStream inputStream = stream.createInputStream()) {
-                    logFile = mTestLogSaver.saveLogData(name, type, inputStream);
-                }
+                debug("Saved logs for %s in %s", name, logFile.getAbsolutePath());
+            } catch (IOException e) {
+                warn("Failed to write log for %s", name);
+                CLog.e(e);
             }
-            debug("Saved logs for %s in %s", name, logFile.getAbsolutePath());
+        }
+    }
+
+    /* Write device-info files to the result, invoked only by the master result reporter */
+    private void testLogDeviceInfo(String name, InputStreamSource stream) {
+        try {
+            File ediDir = new File(mResultDir, DeviceInfo.RESULT_DIR_NAME);
+            ediDir.mkdirs();
+            File ediFile = new File(ediDir, name);
+            if (!ediFile.exists()) {
+                // only write this file to the results if not already present
+                FileUtil.writeToFile(stream.createInputStream(), ediFile);
+            }
         } catch (IOException e) {
-            warn("Failed to write log for %s", name);
+            warn("Failed to write device info %s to result", name);
             CLog.e(e);
         }
     }

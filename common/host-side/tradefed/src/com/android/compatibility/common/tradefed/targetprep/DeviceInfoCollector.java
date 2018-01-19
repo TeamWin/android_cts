@@ -16,27 +16,30 @@
 
 package com.android.compatibility.common.tradefed.targetprep;
 
-import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
-import com.android.compatibility.common.tradefed.util.CollectorUtil;
+import com.android.compatibility.common.util.DeviceInfo;
 import com.android.compatibility.common.util.DevicePropertyInfo;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.log.ITestLogger;
 import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.result.FileInputStreamSource;
+import com.android.tradefed.result.ITestLoggerReceiver;
+import com.android.tradefed.result.LogDataType;
 import com.android.tradefed.targetprep.BuildError;
 import com.android.tradefed.targetprep.TargetSetupError;
 import com.android.tradefed.util.FileUtil;
 
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Map.Entry;
 
 /**
  * An {@link ApkInstrumentationPreparer} that collects device info.
  */
-public class DeviceInfoCollector extends ApkInstrumentationPreparer {
+public class DeviceInfoCollector extends ApkInstrumentationPreparer implements ITestLoggerReceiver {
 
     private static final String ABI = "ro.product.cpu.abi";
     private static final String ABI2 = "ro.product.cpu.abi2";
@@ -72,19 +75,16 @@ public class DeviceInfoCollector extends ApkInstrumentationPreparer {
     private String mSrcDir;
 
     @Option(name = "dest-dir", description = "The directory under the result to store the files")
-    private String mDestDir;
+    private String mDestDir = DeviceInfo.RESULT_DIR_NAME;
 
+    @Deprecated
     @Option(name = "temp-dir", description = "The directory containing host-side device info files")
     private String mTempDir;
 
-    // Temp directory for host-side device info files.
-    private File mHostDir;
-
-    // Destination result directory for all device info files.
-    private File mResultDir;
+    private ITestLogger mLogger;
 
     public DeviceInfoCollector() {
-        mWhen = When.BOTH;
+        mWhen = When.BEFORE;
     }
 
     @Override
@@ -104,58 +104,30 @@ public class DeviceInfoCollector extends ApkInstrumentationPreparer {
         if (mSkipDeviceInfo) {
             return;
         }
-
-        createTempHostDir();
-        createResultDir(buildInfo);
         run(device, buildInfo);
-        getDeviceInfoFiles(device);
+        File deviceInfoDir = null;
+        try {
+            deviceInfoDir = FileUtil.createTempDir(DeviceInfo.RESULT_DIR_NAME);
+            if (device.pullDir(mSrcDir, deviceInfoDir)) {
+                for (File deviceInfoFile : deviceInfoDir.listFiles()) {
+                    FileInputStreamSource source = new FileInputStreamSource(deviceInfoFile);
+                    mLogger.testLog(deviceInfoFile.getName(), LogDataType.TEXT, source);
+                    source.close();
+                }
+            } else {
+                CLog.e("Failed to pull device-info files from device %s", device.getSerialNumber());
+            }
+        } catch (IOException e) {
+            CLog.e("Failed to pull device-info files from device %s", device.getSerialNumber());
+            CLog.e(e);
+        } finally {
+            FileUtil.recursiveDelete(deviceInfoDir);
+        }
     }
 
     @Override
-    public void tearDown(ITestDevice device, IBuildInfo buildInfo, Throwable e) {
-        if (mSkipDeviceInfo) {
-            return;
-        }
-        if (mHostDir != null && mHostDir.isDirectory() &&
-                mResultDir != null && mResultDir.isDirectory()) {
-            CollectorUtil.pullFromHost(mHostDir, mResultDir);
-        }
-    }
-
-    private void createTempHostDir() {
-        try {
-            mHostDir = FileUtil.createNamedTempDir(mTempDir);
-            if (!mHostDir.isDirectory()) {
-                CLog.e("%s is not a directory", mHostDir.getAbsolutePath());
-                return;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void createResultDir(IBuildInfo buildInfo) {
-        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(buildInfo);
-        try {
-            mResultDir = buildHelper.getResultDir();
-            if (mDestDir != null) {
-                mResultDir = new File(mResultDir, mDestDir);
-            }
-            mResultDir.mkdirs();
-            if (!mResultDir.isDirectory()) {
-                CLog.e("%s is not a directory", mResultDir.getAbsolutePath());
-                return;
-            }
-        } catch (FileNotFoundException fnfe) {
-            fnfe.printStackTrace();
-        }
-    }
-
-    private void getDeviceInfoFiles(ITestDevice device) {
-        if (mResultDir != null && mResultDir.isDirectory()) {
-            String mResultPath = mResultDir.getAbsolutePath();
-            CollectorUtil.pullFromDevice(device, mSrcDir, mResultPath);
-        }
+    public void setTestLogger(ITestLogger testLogger) {
+        mLogger = testLogger;
     }
 
     private static String nullToEmpty(String value) {
