@@ -613,6 +613,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
     /**
      * Test that move-task works when moving between displays.
      */
+    @FlakyTest(bugId = 72231060)
     @Presubmit
     @Test
     public void testMoveTaskBetweenDisplays() throws Exception {
