@@ -16,9 +16,13 @@
 
 package android.accessibilityservice.cts;
 
+import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterForEventType;
+import static android.accessibilityservice.cts.utils.RunOnMainUtils.getOnMain;
+
 import android.accessibilityservice.cts.activities.AccessibilityEndToEndActivity;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Instrumentation;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -546,6 +550,35 @@ public class AccessibilityEndToEndTest extends
             host.deleteHost();
             revokeBindAppWidgetPermission();
         }
+    }
+
+    @MediumTest
+    public void testViewHeadingReportedToAccessibility() throws Exception {
+        final Instrumentation instrumentation = getInstrumentation();
+        final EditText editText = (EditText) getOnMain(instrumentation, () -> {
+            return getActivity().findViewById(R.id.edittext);
+        });
+        // Make sure the edittext was populated properly from xml
+        final boolean editTextIsHeading = getOnMain(instrumentation, () -> {
+            return editText.isAccessibilityHeading();
+        });
+        assertTrue("isAccessibilityHeading not populated properly from xml", editTextIsHeading);
+
+        final UiAutomation uiAutomation = instrumentation.getUiAutomation();
+        final AccessibilityNodeInfo editTextNode = uiAutomation.getRootInActiveWindow()
+                .findAccessibilityNodeInfosByViewId(
+                        "android.accessibilityservice.cts:id/edittext")
+                .get(0);
+        assertTrue("isAccessibilityHeading not reported to accessibility",
+                editTextNode.isHeading());
+
+        uiAutomation.executeAndWaitForEvent(() -> instrumentation.runOnMainSync(() ->
+                        editText.setAccessibilityHeading(false)),
+                filterForEventType(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED),
+                TIMEOUT_ASYNC_PROCESSING);
+        editTextNode.refresh();
+        assertFalse("isAccessibilityHeading not reported to accessibility after update",
+                editTextNode.isHeading());
     }
 
     private static void assertPackageName(AccessibilityNodeInfo node, String packageName) {

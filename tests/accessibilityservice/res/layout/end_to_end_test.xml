@@ -29,6 +29,7 @@
     <EditText android:id="@+id/edittext"
               android:text="@string/text_input_blah"
               android:layout_height="wrap_content"
+              android:accessibilityHeading="true"
               android:layout_width="fill_parent">
     </EditText>
 
