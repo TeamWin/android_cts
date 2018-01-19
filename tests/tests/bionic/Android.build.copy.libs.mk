@@ -84,6 +84,7 @@ my_bionic_testlib_files := \
   libtest_relo_check_dt_needed_order_1.so \
   libtest_relo_check_dt_needed_order_2.so \
   libtest_simple.so \
+  libtest_thread_local_dtor.so \
   libtest_two_parents_child.so \
   libtest_two_parents_parent1.so \
   libtest_two_parents_parent2.so \
