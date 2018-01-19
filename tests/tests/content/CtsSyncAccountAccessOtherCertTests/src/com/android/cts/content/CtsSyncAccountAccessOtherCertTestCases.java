@@ -87,6 +87,7 @@ public class CtsSyncAccountAccessOtherCertTestCases {
         assumeTrue(hasNotificationSupport());
 
         Intent intent = new Intent(getContext(), StubActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         Activity activity = InstrumentationRegistry.getInstrumentation().startActivitySync(intent);
 
         AccountManager accountManager = getContext().getSystemService(AccountManager.class);
