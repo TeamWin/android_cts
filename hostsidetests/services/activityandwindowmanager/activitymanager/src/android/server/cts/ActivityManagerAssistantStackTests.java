@@ -189,6 +189,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         mAmWmState.waitForFocusedStack(mDevice, ASSISTANT_STACK_ID);
         assertAssistantStackExists();
         if (!noHomeScreen()) {
+            mAmWmState.waitForHomeActivityVisible(mDevice);
             mAmWmState.assertHomeActivityVisible(true);
         }
 
