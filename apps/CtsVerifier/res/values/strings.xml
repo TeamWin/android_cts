@@ -948,6 +948,17 @@
     You will need to walk to ensure that Significant Motion triggers. The screen will turn on and a sound will be played once the test completes.</string>
     <string name="snsr_device_did_not_wake_up_at_trigger">Device did not wakeup at trigger time. wakeTime=%1$d ms triggerTime=%2$d ms</string>
 
+    <!-- Event sanitization for idle UIDs -->
+    <string name="snsr_event_sanitization_test">Event sanitization for idle UID test</string>
+    <string name="snsr_event_sanitization_test_setup">Run the \'adb shell cmd sensorservice set-uid-state com.android.cts.verifier idle\' shell command
+        to emulate the CtsVerifier UID being idle.</string>
+    <string name="snsr_event_sanitization_test_cleanup">Run the \'adb shell cmd sensorservice reset-uid-state com.android.cts.verifier\' shell command
+        to stop emulating the CtsVerifier UID being idle. Failing to do that would lead to other tests failing!</string>
+    <string name="snsr_significant_motion_test_uid_idle">Move around with the device to try triggering significant motion</string>
+    <string name="snsr_significant_motion_test_uid_idle_expectation">No trigger events should be generated while idle</string>
+    <string name="snsr_proximity_test_uid_idle">Touch the proximity sensor to try triggering it</string>
+    <string name="snsr_proximity_test_uid_idle_expectation">No on-change events should be generated while idle</string>
+
     <!-- Low Latency Off-Body Detect -->
     <string name="snsr_offbody_sensor_test">Off Body Sensor Tests</string>
     <string name="snsr_offbody_sensor_registration">Registration failed for low latency offbody detect sensor.\n</string>
