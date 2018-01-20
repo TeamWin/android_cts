@@ -75,11 +75,6 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
         super(new UiBot(SESSION_LIFECYCLE_TIMEOUT));
     }
 
-    @Before
-    public void cleanUpState() {
-        Helper.preTestCleanup();
-    }
-
     /**
      * Prevents the screen to rotate by itself
      */
@@ -236,11 +231,6 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
         assertThat(saveRequest.data).isNotNull();
         final String extraValue = saveRequest.data.getString("numbers");
         assertWithMessage("extras not passed on save").that(extraValue).isEqualTo("4815162342");
-
-        // TODO: refactor or remove call below
-        eventually("assert dangling sessions", () -> {
-            return Helper.listSessions().isEmpty();
-        });
     }
 
     @Test

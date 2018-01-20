@@ -172,7 +172,6 @@ public class PreSimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase
                 final SaveRequest saveRequest = sReplier.getNextSaveRequest();
                 assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_PRE_INPUT),
                         "108");
-                Helper.assertNoDanglingSessions();
                 break;
             default:
                 throw new IllegalArgumentException("invalid action: " + action);
@@ -180,7 +179,6 @@ public class PreSimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase
         mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
 
         // Make sure previous session was finished.
-        Helper.assertNoDanglingSessions();
 
         // Now triggers a new session in the new activity (SaveActivity) and do business as usual...
         sReplier.addResponse(new CannedFillResponse.Builder()

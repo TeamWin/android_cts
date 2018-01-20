@@ -26,7 +26,6 @@ import static android.autofillservice.cts.Helper.ID_USERNAME;
 import static android.autofillservice.cts.Helper.ID_USERNAME_LABEL;
 import static android.autofillservice.cts.Helper.UNUSED_AUTOFILL_VALUE;
 import static android.autofillservice.cts.Helper.assertHasFlags;
-import static android.autofillservice.cts.Helper.assertNoDanglingSessions;
 import static android.autofillservice.cts.Helper.assertNumberOfChildren;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.assertTextIsSanitized;
@@ -72,6 +71,7 @@ import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.service.autofill.SaveInfo;
 import android.support.test.uiautomator.UiObject2;
 import android.util.Log;
@@ -161,8 +161,9 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Trigger autofill.
         mActivity.onUsername(View::requestFocus);
 
-        // Test connection lifecycle.
-        waitUntilConnected();
+        // Make sure a fill request is called but don't check for connected() - as we're returning
+        // a null response, the service might have been disconnected already by the time we assert
+        // it.
         sReplier.getNextFillRequest();
 
         // Make sure UI is not shown.
@@ -596,7 +597,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 .build());
         mActivity.expectAutoFill("dude", "sweet");
 
-        // Trigger auto-fill.
+        // Trigger autofill.
         requestFocusOnUsername();
         sReplier.getNextFillRequest();
         final View username = mActivity.getUsername();
@@ -608,11 +609,14 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         callback.assertUiHiddenEvent(username);
         callback.assertUiShownEvent(password);
 
-        requestFocusOnUsername();
+        // Unregister callback to make sure no more events are received
         mActivity.unregisterCallback();
+        requestFocusOnUsername();
+        // Blindly sleep - we cannot wait on any event as none should have been sent
+        SystemClock.sleep(MyAutofillCallback.MY_TIMEOUT.ms());
         callback.assertNumberUnhandledEvents(0);
 
-        // Auto-fill it.
+        // Autofill it.
         mUiBot.selectDataset("The Dude");
 
         // Check the results.
@@ -739,9 +743,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertThat(saveRequest.data).isNotNull();
         final String extraValue = saveRequest.data.getString("numbers");
         assertWithMessage("extras not passed on save").that(extraValue).isEqualTo("4815162342");
-
-        // Sanity check: once saved, the session should be finished.
-        assertNoDanglingSessions();
     }
 
     @Test
@@ -843,9 +844,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             assertThat(saveRequest.data).isNotNull();
             final String extraValue = saveRequest.data.getString("numbers");
             assertWithMessage("extras not passed on save").that(extraValue).isEqualTo("4815162342");
-
-            // Sanity check: once saved, the session should be finished.
-            assertNoDanglingSessions();
         } finally {
             // Make sure we can no longer add overlays
             runShellCommand("appops set %s SYSTEM_ALERT_WINDOW ignore", mPackageName);
@@ -1397,9 +1395,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             dumpStructure("saveOnlyTest() failed", saveRequest.structure);
             throw e;
         }
-
-        // Sanity check: once saved, the session should be finished.
-        assertNoDanglingSessions();
     }
 
     @Test
@@ -1551,9 +1546,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             dumpStructure("saveOnlyTest() failed", saveRequest.structure);
             throw e;
         }
-
-        // Sanity check: once saved, the session should be finsihed.
-        assertNoDanglingSessions();
     }
 
     @Test
@@ -1600,9 +1592,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             dumpStructure("saveOnlyTest() failed", saveRequest.structure);
             throw e;
         }
-
-        // Sanity check: once saved, the session should be finsihed.
-        assertNoDanglingSessions();
     }
 
     @Test
@@ -1645,9 +1634,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertTextAndValue(username, "malkovich");
         final ViewNode password = findNodeByResourceId(saveRequest.structure, ID_PASSWORD);
         assertTextAndValue(password, "malkovich");
-
-        // Sanity check: once saved, the session should be finsihed.
-        assertNoDanglingSessions();
     }
 
     @Test
@@ -1710,7 +1696,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         if (filledFields == FilledFields.NONE) {
             mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
-            assertNoDanglingSessions();
             return;
         }
 
@@ -1727,9 +1712,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             final ViewNode password = findNodeByResourceId(saveRequest.structure, ID_PASSWORD);
             assertTextAndValue(password, "whatever");
         }
-
-        // Sanity check: once saved, the session should be finished.
-        assertNoDanglingSessions();
     }
 
     @Test
@@ -1831,9 +1813,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Make sure it didn't trigger save.
         mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
-
-        // Sanity check: session should have been canceled
-        assertNoDanglingSessions();
     }
 
     @Test
@@ -3014,8 +2993,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Wait for the custom action.
         assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
-
-        assertNoDanglingSessions();
     }
 
     @Test
@@ -3063,8 +3040,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Wait for the custom action.
         assertThat(latch.await(500, TimeUnit.SECONDS)).isTrue();
-
-        assertNoDanglingSessions();
     }
 
     @Test
@@ -3411,7 +3386,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 assertTextAndValue(passwordNode, password);
 
                 waitUntilDisconnected();
-                assertNoDanglingSessions();
             } catch (RetryableException e) {
                 throw new RetryableException(e, "on step %d", i);
             } catch (Throwable t) {
@@ -3455,7 +3429,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 mActivity.tapClear();
 
                 waitUntilDisconnected();
-                assertNoDanglingSessions();
             } catch (RetryableException e) {
                 throw e;
             } catch (Throwable t) {
@@ -3501,9 +3474,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Go back to the filled app.
         mUiBot.pressBack();
-
-        // The session should be gone
-        assertNoDanglingSessions();
     }
 
     @Test

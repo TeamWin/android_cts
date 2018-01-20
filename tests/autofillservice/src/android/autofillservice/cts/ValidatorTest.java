@@ -18,7 +18,6 @@ package android.autofillservice.cts;
 
 import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_USERNAME;
-import static android.autofillservice.cts.Helper.assertNoDanglingSessions;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -94,8 +93,6 @@ public class ValidatorTest extends AutoFillServiceTestCase {
         } else {
             mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
         }
-
-        assertNoDanglingSessions();
     }
 
     private void assertValidator(InternalValidator validator, AutofillId id, String text,

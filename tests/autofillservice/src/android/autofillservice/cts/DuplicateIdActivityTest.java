@@ -18,8 +18,6 @@ package android.autofillservice.cts;
 
 import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
 import static android.autofillservice.cts.DuplicateIdActivity.DUPLICATE_ID;
-import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilConnected;
-import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilDisconnected;
 import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -91,7 +89,6 @@ public class DuplicateIdActivityTest extends AutoFillServiceTestCase {
         // Select field to start autofill
         runShellCommand("input keyevent KEYCODE_TAB");
 
-        waitUntilConnected();
         InstrumentedAutoFillService.FillRequest request = sReplier.getNextFillRequest();
 
         AssistStructure.ViewNode[] views = findViews(request);
@@ -147,7 +144,5 @@ public class DuplicateIdActivityTest extends AutoFillServiceTestCase {
 
         // The views still have different autofill ids
         assertThat(recreatedId1).isNotEqualTo(recreatedId2);
-
-        waitUntilDisconnected();
     }
 }

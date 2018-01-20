@@ -18,7 +18,6 @@ package android.autofillservice.cts;
 
 import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_USERNAME;
-import static android.autofillservice.cts.Helper.assertNoDanglingSessions;
 import static android.autofillservice.cts.Helper.getContext;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
 
@@ -95,8 +94,6 @@ public class CustomDescriptionTest extends AutoFillServiceTestCase {
 
         mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_GENERIC);
         sReplier.getNextSaveRequest();
-
-        assertNoDanglingSessions();
     }
 
     @Test

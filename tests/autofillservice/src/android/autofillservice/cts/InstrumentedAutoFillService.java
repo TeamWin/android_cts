@@ -18,7 +18,6 @@ package android.autofillservice.cts;
 
 import static android.autofillservice.cts.CannedFillResponse.ResponseType.NULL;
 import static android.autofillservice.cts.CannedFillResponse.ResponseType.TIMEOUT;
-import static android.autofillservice.cts.Helper.dumpAutofillService;
 import static android.autofillservice.cts.Helper.dumpStructure;
 import static android.autofillservice.cts.Helper.getActivityName;
 import static android.autofillservice.cts.Timeouts.CONNECTION_TIMEOUT;
@@ -28,7 +27,6 @@ import static android.autofillservice.cts.Timeouts.IDLE_UNBIND_TIMEOUT;
 import static android.autofillservice.cts.Timeouts.SAVE_TIMEOUT;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.assist.AssistStructure;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
@@ -70,24 +68,23 @@ public class InstrumentedAutoFillService extends AutofillService {
     private static final boolean DUMP_FILL_REQUESTS = false;
     private static final boolean DUMP_SAVE_REQUESTS = false;
 
-    private static final String STATE_CONNECTED = "CONNECTED";
-    private static final String STATE_DISCONNECTED = "DISCONNECTED";
-
     private static final AtomicReference<InstrumentedAutoFillService> sInstance =
             new AtomicReference<>();
     private static final Replier sReplier = new Replier();
-    private static final BlockingQueue<String> sConnectionStates = new LinkedBlockingQueue<>();
 
     private static final Object sLock = new Object();
 
-    // @GuardedBy("sLock")
+    // @GuardedBy("sLock") // NOTE: not using annotation because of dependencies
     private static boolean sIgnoreUnexpectedRequests = false;
+
+    // @GuardedBy("sLock") // NOTE: not using annotation because of dependencies
+    private static boolean sConnected;
 
     public InstrumentedAutoFillService() {
         sInstance.set(this);
     }
 
-    public static InstrumentedAutoFillService peekInstance() {
+    private static InstrumentedAutoFillService peekInstance() {
         return sInstance.get();
     }
 
@@ -152,14 +149,18 @@ public class InstrumentedAutoFillService extends AutofillService {
 
     @Override
     public void onConnected() {
-        Log.v(TAG, "onConnected(): " + sConnectionStates);
-        sConnectionStates.offer(STATE_CONNECTED);
+        synchronized (sLock) {
+            Log.v(TAG, "onConnected(): connected=" + sConnected);
+            sConnected = true;
+        }
     }
 
     @Override
     public void onDisconnected() {
-        Log.v(TAG, "onDisconnected(): " + sConnectionStates);
-        sConnectionStates.offer(STATE_DISCONNECTED);
+        synchronized (sLock) {
+            Log.v(TAG, "onDisconnected(): connected=" + sConnected);
+            sConnected = false;
+        }
     }
 
     @Override
@@ -190,6 +191,12 @@ public class InstrumentedAutoFillService extends AutofillService {
                 request.getDatasetIds());
     }
 
+    private static boolean isConnected() {
+        synchronized (sLock) {
+            return sConnected;
+        }
+    }
+
     private boolean fromSamePackage(List<FillContext> contexts) {
         final ComponentName component = contexts.get(contexts.size() - 1).getStructure()
                 .getActivityComponent();
@@ -217,20 +224,13 @@ public class InstrumentedAutoFillService extends AutofillService {
      * Waits until {@link #onConnected()} is called, or fails if it times out.
      *
      * <p>This method is useful on tests that explicitly verifies the connection, but should be
-     * avoided in other tests, as it adds extra time to the test execution - if a text needs to
-     * block until the service receives a callback, it should use
-     * {@link Replier#getNextFillRequest()} instead.
+     * avoided in other tests, as it adds extra time to the test execution (and flakiness in cases
+     * where the service might have being disconnected already; for example, if the fill request
+     * was replied with a {@code null} response) - if a text needs to block until the service
+     * receives a callback, it should use {@link Replier#getNextFillRequest()} instead.
      */
     static void waitUntilConnected() throws Exception {
-        final String state = CONNECTION_TIMEOUT.run("waitUntilConnected()", () -> {
-            final String polled =
-                    sConnectionStates.poll(CONNECTION_TIMEOUT.ms(), TimeUnit.MILLISECONDS);
-            if (polled == null) {
-                dumpAutofillService();
-            }
-            return polled;
-        });
-        assertWithMessage("Invalid connection state").that(state).isEqualTo(STATE_CONNECTED);
+        waitConnectionState(CONNECTION_TIMEOUT, true);
     }
 
     /**
@@ -240,10 +240,13 @@ public class InstrumentedAutoFillService extends AutofillService {
      * avoided in other tests, as it adds extra time to the test execution.
      */
     static void waitUntilDisconnected() throws Exception {
-        final String state = IDLE_UNBIND_TIMEOUT.run("waitUntilDisconnected()", () -> {
-            return sConnectionStates.poll(2 * IDLE_UNBIND_TIMEOUT.ms(), TimeUnit.MILLISECONDS);
+        waitConnectionState(IDLE_UNBIND_TIMEOUT, false);
+    }
+
+    private static void waitConnectionState(Timeout timeout, boolean expected) throws Exception {
+        timeout.run("wait for connected=" + expected,  () -> {
+            return isConnected() == expected ? Boolean.TRUE : null;
         });
-        assertWithMessage("Invalid connection state").that(state).isEqualTo(STATE_DISCONNECTED);
     }
 
     /**
@@ -254,7 +257,8 @@ public class InstrumentedAutoFillService extends AutofillService {
     }
 
     static void resetStaticState() {
-        sConnectionStates.clear();
+        sInstance.set(null);
+        sConnected = false;
     }
 
     /**

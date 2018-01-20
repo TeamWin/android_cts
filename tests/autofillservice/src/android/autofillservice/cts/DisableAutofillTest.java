@@ -22,7 +22,6 @@ import android.os.SystemClock;
 import android.service.autofill.FillResponse;
 import android.util.Log;
 
-import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -31,11 +30,6 @@ import org.junit.Test;
 public class DisableAutofillTest extends AutoFillServiceTestCase {
 
     private static final String TAG = "DisableAutofillTest";
-
-    @Before
-    public void preTestCleanup() {
-        Helper.preTestCleanup();
-    }
 
     private SimpleSaveActivity startSimpleSaveActivity() throws Exception {
         final Intent intent = new Intent(mContext, SimpleSaveActivity.class)
