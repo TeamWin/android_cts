@@ -19,6 +19,14 @@ package com.android.cts.apicoverage;
 
 import com.android.cts.apicoverage.TestSuiteProto.*;
 
+import org.jf.dexlib2.DexFileFactory;
+import org.jf.dexlib2.Opcodes;
+import org.jf.dexlib2.iface.Annotation;
+import org.jf.dexlib2.iface.AnnotationElement;
+import org.jf.dexlib2.iface.ClassDef;
+import org.jf.dexlib2.iface.DexFile;
+import org.jf.dexlib2.iface.Method;
+import org.jf.dexlib2.iface.value.StringEncodedValue;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
@@ -60,6 +68,9 @@ class TestSuiteContentReport {
     // com.android.compatibility.common.tradefed.targetprep.FilePusher option
     private static final String PUSH_TAG = "push";
 
+    // test class
+    private static final String ANDROID_JUNIT_TEST_TAG = "com.android.tradefed.testtype.AndroidJUnitTest";
+
     // Target File Extensions
     private static final String CONFIG_EXT_TAG = ".config";
     private static final String JAR_EXT_TAG = ".jar";
@@ -74,11 +85,13 @@ class TestSuiteContentReport {
         System.out.println(
                 "$ANDROID_HOST_OUT/bin/test-suite-content-report "
                         + "-i out/host/linux-x86/cts/android-cts "
-                        + "-o ./cts-content.pb");
+                        + "-o ./cts-content.pb"
+                        + "-t ./cts-list.pb");
         System.out.println();
         System.out.println("Options:");
-        System.out.println("  -o FILE                output file or standard out if not given");
         System.out.println("  -i PATH                path to the Test Suite Folder");
+        System.out.println("  -o FILE                output file of Test Content Protocal Buffer");
+        System.out.println("  -t FILE                output file of Test Case List Protocal Buffer");
         System.out.println();
         System.exit(1);
     }
@@ -246,7 +259,7 @@ class TestSuiteContentReport {
     }
 
     // Iterates though all test suite content and prints them.
-    static void Print(TestSuiteContent tsContent) {
+    static void printTestSuiteContent(TestSuiteContent tsContent) {
         //Header
         System.out.printf("no,type,name,size,relative path,id,content id,parent id,description,test class");
         // test class header
@@ -262,6 +275,7 @@ class TestSuiteContentReport {
                 i++, entry.getType(), entry.getName(), entry.getSize(),
                 entry.getRelativePath(), entry.getId(), entry.getContentId(),
                 entry.getParentId());
+
             if (Entry.EntryType.CONFIG == entry.getType()) {
                 ConfigMetadata config = entry.getFileMetadata().getConfigMetadata();
                 System.out.printf(",%s", entry.getFileMetadata().getDescription());
@@ -315,18 +329,20 @@ class TestSuiteContentReport {
     public static void main(String[] args)
             throws IOException, NoSuchAlgorithmException {
         String outputFilePath = "./tsContentMessage.pb";
+        String outputTestCaseListFilePath = "./tsTestCaseList.pb";
         String tsPath = "";
 
         for (int i = 0; i < args.length; i++) {
             if (args[i].startsWith("-")) {
                 if ("-o".equals(args[i])) {
                     outputFilePath = getExpectedArg(args, ++i);
+                } else if ("-t".equals(args[i])) {
+                    outputTestCaseListFilePath = getExpectedArg(args, ++i);
                 } else if ("-i".equals(args[i])) {
                     tsPath = getExpectedArg(args, ++i);
                     File file = new File(tsPath);
-                    if (file.isDirectory()) {
-                        //
-                    } else {
+                    // Only acception a folder
+                    if (!file.isDirectory()) {
                         printUsage();
                     }
                 } else {
@@ -348,6 +364,6 @@ class TestSuiteContentReport {
         // Read message from the file and print them out
         TestSuiteContent tsContent1 =
           TestSuiteContent.parseFrom(new FileInputStream(outputFilePath));
-        Print(tsContent1);
+        printTestSuiteContent(tsContent1);
     }
 }
