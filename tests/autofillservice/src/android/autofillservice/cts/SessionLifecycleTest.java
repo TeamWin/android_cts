@@ -51,20 +51,17 @@ import java.util.concurrent.Callable;
  * Test the lifecycle of a autofill session
  */
 public class SessionLifecycleTest extends AutoFillServiceTestCase {
-    private static final String USERNAME_FULL_ID = "android.autofillservice.cts:id/" + ID_USERNAME;
-    private static final String PASSWORD_FULL_ID = "android.autofillservice.cts:id/" + ID_PASSWORD;
-    private static final String LOGIN_FULL_ID = "android.autofillservice.cts:id/" + ID_LOGIN;
-    private static final String BUTTON_FULL_ID = "android.autofillservice.cts:id/button";
-    private static final String CANCEL_FULL_ID = "android.autofillservice.cts:id/cancel";
+    private static final String ID_BUTTON = "button";
+    private static final String ID_CANCEL = "cancel";
 
     /**
      * Delay for activity start/stop.
-     * TODO figure out a better way to wait without using sleep().
      */
+    // TODO: figure out a better way to wait without using sleep().
     private static final long WAIT_ACTIVITY_MS = 1000;
 
     private static final Timeout SESSION_LIFECYCLE_TIMEOUT = new Timeout(
-            "SESSION_LIFECYCLE_TIMEOUT", 500, 2F, 5000);
+            "SESSION_LIFECYCLE_TIMEOUT", 2000, 2F, 5000);
 
     /**
      * Runs an {@code assertion}, retrying until {@code timeout} is reached.
@@ -115,8 +112,8 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
     }
 
     private void startAndWaitExternalActivity() throws Exception {
-        Intent outOfProcessAcvitityStartIntent = new Intent(getContext(),
-                OutOfProcessLoginActivity.class);
+        final Intent outOfProcessAcvitityStartIntent = new Intent(getContext(),
+                OutOfProcessLoginActivity.class).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         getStartedMarker(getContext()).delete();
         getContext().startActivity(outOfProcessAcvitityStartIntent);
         eventually("getStartedMarker()", () -> {
@@ -125,6 +122,8 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
         getStartedMarker(getContext()).delete();
         // Even if we wait the activity started, UiObject still fails. Have to wait a little bit.
         SystemClock.sleep(WAIT_ACTIVITY_MS);
+
+        mUiBot.assertShownByRelativeId(ID_USERNAME);
     }
 
     @Test
@@ -159,7 +158,7 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
         sReplier.addResponse(response);
 
         // Trigger autofill on username
-        mUiBot.selectById(USERNAME_FULL_ID);
+        mUiBot.selectByRelativeId(ID_USERNAME);
 
         // Wait for fill request to be processed
         sReplier.getNextFillRequest();
@@ -170,9 +169,10 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
         // Change orientation which triggers a destroy -> create in the app as the activity
         // cannot deal with such situations
         mUiBot.setScreenOrientation(LANDSCAPE);
+        mUiBot.setScreenOrientation(PORTRAIT);
 
         // Wait context and Views being recreated in rotation
-        mUiBot.assertShownById(USERNAME_FULL_ID);
+        mUiBot.assertShownByRelativeId(ID_USERNAME);
 
         // Delete stopped marker
         getStoppedMarker(getContext()).delete();
@@ -188,7 +188,7 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
         mUiBot.setScreenOrientation(PORTRAIT);
 
         // Approve authentication
-        mUiBot.selectById(BUTTON_FULL_ID);
+        mUiBot.selectByRelativeId(ID_BUTTON);
 
         // Wait for dataset to be shown
         mUiBot.assertDatasets("dataset");
@@ -201,24 +201,24 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
         mUiBot.selectDataset("dataset");
 
         // Check the results.
-        eventually("getTextById(" + USERNAME_FULL_ID + ")", () -> {
-            return mUiBot.getTextById(USERNAME_FULL_ID).equals("autofilled username");
+        eventually("getTextById(" + ID_USERNAME + ")", () -> {
+            return mUiBot.getTextByRelativeId(ID_USERNAME).equals("autofilled username");
         });
 
         // Set password
-        mUiBot.setTextById(PASSWORD_FULL_ID, "new password");
+        mUiBot.setTextByRelativeId(ID_PASSWORD, "new password");
 
         // Login
-        mUiBot.selectById(LOGIN_FULL_ID);
+        mUiBot.selectByRelativeId(ID_LOGIN);
 
         // Wait for save UI to be shown
-        mUiBot.assertShownById("android:id/autofill_save_yes");
+        mUiBot.assertSaveShowing(SAVE_DATA_TYPE_PASSWORD);
 
         // Change orientation to make sure save UI can handle this
         mUiBot.setScreenOrientation(PORTRAIT);
 
         // Tap "Save".
-        mUiBot.selectById("android:id/autofill_save_yes");
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
 
         // Get save request
         InstrumentedAutoFillService.SaveRequest saveRequest = sReplier.getNextSaveRequest();
@@ -237,6 +237,7 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
         final String extraValue = saveRequest.data.getString("numbers");
         assertWithMessage("extras not passed on save").that(extraValue).isEqualTo("4815162342");
 
+        // TODO: refactor or remove call below
         eventually("assert dangling sessions", () -> {
             return Helper.listSessions().isEmpty();
         });
@@ -262,7 +263,7 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
         sReplier.addResponse(response);
 
         // Trigger autofill on username
-        mUiBot.selectById(USERNAME_FULL_ID);
+        mUiBot.selectByRelativeId(ID_USERNAME);
 
         // Wait for fill request to be processed
         sReplier.getNextFillRequest();
@@ -302,7 +303,7 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
         sReplier.addResponse(response);
 
         // Trigger autofill on username
-        mUiBot.selectById(USERNAME_FULL_ID);
+        mUiBot.selectByRelativeId(ID_USERNAME);
 
         // Wait for fill request to be processed
         sReplier.getNextFillRequest();
@@ -346,7 +347,7 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
         sReplier.addResponse(response);
 
         // Trigger autofill on username
-        mUiBot.selectById(USERNAME_FULL_ID);
+        mUiBot.selectByRelativeId(ID_USERNAME);
 
         // Wait for fill request to be processed
         sReplier.getNextFillRequest();
@@ -374,7 +375,7 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
         killOfProcessLoginActivityProcess();
 
         // Trigger autofill on username in nested activity
-        mUiBot.selectById(USERNAME_FULL_ID);
+        mUiBot.selectByRelativeId(ID_USERNAME);
 
         // Wait for fill request to be processed
         sReplier.getNextFillRequest();
@@ -383,7 +384,7 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
         mUiBot.assertDatasets("dataset2");
 
         // Tap "Cancel".
-        mUiBot.selectById(CANCEL_FULL_ID);
+        mUiBot.selectByRelativeId(ID_CANCEL);
 
         // Dataset should still be shown
         mUiBot.assertDatasets("dataset1");

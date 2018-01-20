@@ -251,11 +251,9 @@ final class UiBot {
     /**
      * Selects a view by id.
      */
-    void selectById(String id) throws Exception {
-        Log.v(TAG, "selectById(): " + id);
-
-        final UiObject2 view = waitForObject(By.res(id), mDefaultTimeout);
-        view.click();
+    void selectByRelativeId(String id) throws Exception {
+        Log.v(TAG, "selectByRelativeId(): " + id);
+        waitForObject(By.res(mPackageName, id)).click();
     }
 
     /**
@@ -312,9 +310,8 @@ final class UiBot {
     /**
      * Gets the text set on a view.
      */
-    String getTextById(String id) throws Exception {
-        final UiObject2 obj = waitForObject(By.res(id));
-        return obj.getText();
+    String getTextByRelativeId(String id) throws Exception {
+        return waitForObject(By.res(mPackageName, id)).getText();
     }
 
     /**
@@ -327,9 +324,8 @@ final class UiBot {
     /**
      * Sets a new text on a view.
      */
-    void setTextById(String id, String newText) throws Exception {
-        UiObject2 view = waitForObject(By.res(id));
-        view.setText(newText);
+    void setTextByRelativeId(String id, String newText) throws Exception {
+        waitForObject(By.res(mPackageName, id)).setText(newText);
     }
 
     /**

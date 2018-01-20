@@ -38,14 +38,16 @@ public class DisableAutofillTest extends AutoFillServiceTestCase {
     }
 
     private SimpleSaveActivity startSimpleSaveActivity() throws Exception {
-        final Intent intent = new Intent(mContext, SimpleSaveActivity.class);
+        final Intent intent = new Intent(mContext, SimpleSaveActivity.class)
+                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         mContext.startActivity(intent);
         mUiBot.assertShownByRelativeId(SimpleSaveActivity.ID_LABEL);
         return SimpleSaveActivity.getInstance();
     }
 
     private PreSimpleSaveActivity startPreSimpleSaveActivity() throws Exception {
-        final Intent intent = new Intent(mContext, PreSimpleSaveActivity.class);
+        final Intent intent = new Intent(mContext, PreSimpleSaveActivity.class)
+                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         mContext.startActivity(intent);
         mUiBot.assertShownByRelativeId(PreSimpleSaveActivity.ID_PRE_LABEL);
         return PreSimpleSaveActivity.getInstance();

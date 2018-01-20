@@ -107,6 +107,10 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     public final AutofillActivityTestRule<LoginActivity> mActivityRule =
         new AutofillActivityTestRule<LoginActivity>(LoginActivity.class);
 
+    @Rule
+    public final AutofillActivityTestRule<CheckoutActivity> mCheckoutActivityRule =
+            new AutofillActivityTestRule<CheckoutActivity>(CheckoutActivity.class, false);
+
     private LoginActivity mActivity;
 
     @Before
@@ -1429,10 +1433,9 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     }
 
     private void startCheckoutActivityAsNewTask() throws Exception {
-        final Intent intent = new Intent(mContext, CheckoutActivity.class);
-        intent.setFlags(
-                Intent.FLAG_ACTIVITY_NEW_DOCUMENT | Intent.FLAG_ACTIVITY_RETAIN_IN_RECENTS);
-        mContext.startActivity(intent);
+        final Intent intent = new Intent(mContext, CheckoutActivity.class)
+                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RETAIN_IN_RECENTS);
+        mCheckoutActivityRule.launchActivity(intent);
         mUiBot.assertShownByRelativeId(CheckoutActivity.ID_ADDRESS);
     }
 

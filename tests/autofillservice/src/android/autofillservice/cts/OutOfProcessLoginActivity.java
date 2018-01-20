@@ -39,9 +39,7 @@ public class OutOfProcessLoginActivity extends Activity {
 
         setContentView(R.layout.login_activity);
 
-        findViewById(R.id.login).setOnClickListener((v) -> {
-            finish();
-        });
+        findViewById(R.id.login).setOnClickListener((v) -> finish());
     }
 
     @Override

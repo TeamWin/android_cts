@@ -59,6 +59,10 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
     public final AutofillActivityTestRule<SimpleSaveActivity> mActivityRule =
             new AutofillActivityTestRule<SimpleSaveActivity>(SimpleSaveActivity.class, false);
 
+    @Rule
+    public final AutofillActivityTestRule<WelcomeActivity> mWelcomeActivityRule =
+            new AutofillActivityTestRule<WelcomeActivity>(WelcomeActivity.class, false);
+
     private SimpleSaveActivity mActivity;
 
     private void startActivity() {
@@ -69,7 +73,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         final Intent intent = new Intent(mContext, SimpleSaveActivity.class);
         if (remainOnRecents) {
             intent.setFlags(
-                    Intent.FLAG_ACTIVITY_RETAIN_IN_RECENTS | Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
+                    Intent.FLAG_ACTIVITY_RETAIN_IN_RECENTS | Intent.FLAG_ACTIVITY_NEW_TASK);
         }
         mActivity = mActivityRule.launchActivity(intent);
     }
@@ -78,7 +82,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         final Intent intent = new Intent(mContext.getApplicationContext(),
                 SimpleSaveActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-        mContext.startActivity(intent);
+        mActivity.startActivity(intent);
     }
 
     @Test
@@ -499,10 +503,9 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
     }
 
     private void startWelcomeActivityOnNewTask() throws Exception {
-        final Intent intent = new Intent(mContext, WelcomeActivity.class);
-        intent.setFlags(
-                Intent.FLAG_ACTIVITY_RETAIN_IN_RECENTS | Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
-        mContext.startActivity(intent);
+        final Intent intent = new Intent(mContext, WelcomeActivity.class)
+                .setFlags(Intent.FLAG_ACTIVITY_RETAIN_IN_RECENTS | Intent.FLAG_ACTIVITY_NEW_TASK);
+        mWelcomeActivityRule.launchActivity(intent);
         WelcomeActivity.assertShowingDefaultMessage(mUiBot);
     }
 
@@ -702,11 +705,11 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
                 mUiBot.switchAppsUsingRecents();
                 break;
             case LAUNCH_PREVIOUS_ACTIVITY:
-                startActivity(SimpleSaveActivity.class);
+                startActivityOnNewTask(SimpleSaveActivity.class);
                 break;
             case LAUNCH_NEW_ACTIVITY:
                 // Launch a 3rd activity...
-                startActivity(LoginActivity.class);
+                startActivityOnNewTask(LoginActivity.class);
                 mUiBot.assertShownByRelativeId(ID_USERNAME_CONTAINER);
                 // ...then go back
                 mUiBot.pressBack();
