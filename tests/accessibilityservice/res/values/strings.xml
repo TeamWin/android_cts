@@ -34,6 +34,8 @@
     <!-- String title of the button -->
     <string name="button_title">Click me</string>
 
+    <string name="button_tooltip">Never press this button</string>
+
     <!-- String value of the first list item -->
     <string name="first_list_item">First list item</string>
 
