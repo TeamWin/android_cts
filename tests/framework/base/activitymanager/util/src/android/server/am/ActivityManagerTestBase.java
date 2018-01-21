@@ -1376,9 +1376,13 @@ public abstract class ActivityManagerTestBase {
     protected static class LaunchActivityBuilder {
         private final ActivityAndWindowManagersState mAmWmState;
 
+        // The component to be launched
+        private ComponentName mComponent;
+
         // The activity to be launched
         private String mTargetActivityName = "TestActivity";
         private String mTargetPackage = componentName;
+        private boolean mUseApplicationContext;
         private boolean mToSide;
         private boolean mRandomData;
         private boolean mNewTask;
@@ -1386,8 +1390,10 @@ public abstract class ActivityManagerTestBase {
         private int mDisplayId = INVALID_DISPLAY_ID;
         // A proxy activity that launches other activities including mTargetActivityName
         private String mLaunchingActivityName = LAUNCHING_ACTIVITY;
+        private ComponentName mLaunchingActivity;
         private boolean mReorderToFront;
         private boolean mWaitForLaunched;
+        private boolean mSuppressExceptions;
         // Use of the following variables indicates that a broadcast receiver should be used instead
         // of a launching activity;
         private String mBroadcastReceiverComponent;
@@ -1423,7 +1429,14 @@ public abstract class ActivityManagerTestBase {
             return this;
         }
 
+        public LaunchActivityBuilder setUseApplicationContext(boolean useApplicationContext) {
+            mUseApplicationContext = useApplicationContext;
+            return this;
+        }
+
         public LaunchActivityBuilder setTargetActivity(ComponentName activity) {
+            mComponent = activity;
+
             mTargetActivityName = activity.getShortClassName();
             mTargetPackage = activity.getPackageName();
             return this;
@@ -1449,6 +1462,11 @@ public abstract class ActivityManagerTestBase {
             return this;
         }
 
+        public LaunchActivityBuilder setLaunchingActivity(ComponentName component) {
+            mLaunchingActivity = component;
+            return this;
+        }
+
         public LaunchActivityBuilder setWaitForLaunched(boolean shouldWait) {
             mWaitForLaunched = shouldWait;
             return this;
@@ -1471,6 +1489,11 @@ public abstract class ActivityManagerTestBase {
             return this;
         }
 
+        public LaunchActivityBuilder setSuppressExceptions(boolean suppress) {
+            mSuppressExceptions = suppress;
+            return this;
+        }
+
         public void execute() throws Exception {
             StringBuilder commandBuilder = new StringBuilder();
             if (mBroadcastReceiverComponent != null && mBroadcastReceiverAction != null) {
@@ -1479,7 +1502,11 @@ public abstract class ActivityManagerTestBase {
                 commandBuilder.append(" -p ").append(mBroadcastReceiverComponent);
             } else {
                 // Use launching activity to launch the target.
-                commandBuilder.append(getAmStartCmd(mLaunchingActivityName));
+                if (mLaunchingActivity != null) {
+                    commandBuilder.append(getAmStartCmd(mLaunchingActivity));
+                } else {
+                    commandBuilder.append(getAmStartCmd(mLaunchingActivityName));
+                }
                 commandBuilder.append(" -f 0x20000000");
             }
 
@@ -1507,6 +1534,19 @@ public abstract class ActivityManagerTestBase {
             }
             if (mDisplayId != INVALID_DISPLAY_ID) {
                 commandBuilder.append(" --ei display_id ").append(mDisplayId);
+            }
+
+            if (mUseApplicationContext) {
+                commandBuilder.append(" --ez use_application_context true");
+            }
+
+            if (mComponent != null) {
+                commandBuilder.append(" --es target_component ")
+                        .append(mComponent.flattenToString());
+            }
+
+            if (mSuppressExceptions) {
+                commandBuilder.append(" --ez suppress_exceptions true");
             }
             executeShellCommand(commandBuilder.toString());
 

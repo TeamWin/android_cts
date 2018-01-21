@@ -43,8 +43,6 @@ import static org.mockito.Mockito.when;
 
 import static java.lang.annotation.RetentionPolicy.SOURCE;
 
-import android.annotation.IntDef;
-import android.annotation.Nullable;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.Instrumentation.ActivityMonitor;
@@ -76,6 +74,8 @@ import android.os.Looper;
 import android.os.Parcelable;
 import android.os.ResultReceiver;
 import android.os.SystemClock;
+import android.support.annotation.IntDef;
+import android.support.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.MediumTest;
@@ -91,7 +91,6 @@ import android.text.Selection;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;
-import android.text.TextDirectionHeuristics;
 import android.text.TextPaint;
 import android.text.TextUtils;
 import android.text.TextUtils.TruncateAt;
@@ -1640,8 +1639,10 @@ public class TextViewTest {
     @Test
     public void testSetText_MeasuredText() {
         final TextView tv = findTextView(R.id.textview_text);
-        final MeasuredText measured = MeasuredText.build(
-                "This is an example text.", new TextPaint(), TextDirectionHeuristics.LTR);
+        final MeasuredText measured = new MeasuredText.Builder(
+                "This is an example text.", new TextPaint())
+                .setBreakStrategy(tv.getBreakStrategy())
+                .setHyphenationFrequency(tv.getHyphenationFrequency()).build();
         tv.setText(measured);
         assertEquals(measured.toString(), tv.getText().toString());
     }

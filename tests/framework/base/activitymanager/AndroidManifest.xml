@@ -57,6 +57,8 @@
 
         <activity android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$SecondActivity"/>
 
+        <activity android:name="android.server.am.StartActivityTests$TestActivity" android:exported="true"/>
+
     </application>
 
     <instrumentation

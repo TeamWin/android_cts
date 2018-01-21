@@ -145,17 +145,106 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
                 return layout;
             });
 
-            // Wait until the MockIme gets bound to the TestActivity.
-            expectBindInput(stream, Process.myPid(), TIMEOUT);
-
             if (testActivity.getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.P) {
+                // Input shouldn't start
+                notExpectEvent(stream, event -> "onStartInput".equals(event.getEventName()),
+                        TIMEOUT);
                 // There shouldn't be onStartInput because the focused view is not an editor.
                 notExpectEvent(stream, event -> "showSoftInput".equals(event.getEventName()),
                         TIMEOUT);
             } else {
+                // Wait until the MockIme gets bound to the TestActivity.
+                expectBindInput(stream, Process.myPid(), TIMEOUT);
                 // For apps that target pre-P devices, onStartInput() should be called.
                 expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
             }
+        }
+    }
+
+    @Test
+    public void testNoEditorNoStartInput() throws Exception {
+        try(MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            TestActivity.startSync((TestActivity activity) -> {
+                final LinearLayout layout = new LinearLayout(activity);
+                layout.setOrientation(LinearLayout.VERTICAL);
+
+                final TextView textView = new TextView(activity) {
+                    @Override
+                    public boolean onCheckIsTextEditor() {
+                        return false;
+                    }
+                };
+                textView.setText("textView");
+                textView.requestFocus();
+                layout.addView(textView);
+                return layout;
+            });
+
+            // Input shouldn't start
+            notExpectEvent(stream, event -> "onStartInput".equals(event.getEventName()), TIMEOUT);
+        }
+    }
+
+    @Test
+    public void testEditorStartsInput() throws Exception {
+        try(MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            TestActivity.startSync((TestActivity activity) -> {
+                final LinearLayout layout = new LinearLayout(activity);
+                layout.setOrientation(LinearLayout.VERTICAL);
+
+                final EditText editText = new EditText(activity);
+                editText.setText("Editable");
+                layout.addView(editText);
+                return layout;
+            });
+
+            // Input should start
+            expectEvent(stream, event -> "onStartInput".equals(event.getEventName()), TIMEOUT);
+        }
+    }
+
+    @Test
+    public void testDelayedAddEditorStartsInput() throws Exception {
+        try(MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final AtomicReference<LinearLayout> layoutRef = new AtomicReference<>();
+            final TestActivity testActivity = TestActivity.startSync((TestActivity activity) -> {
+                final LinearLayout layout = new LinearLayout(activity);
+                layout.setOrientation(LinearLayout.VERTICAL);
+                layoutRef.set(layout);
+
+                return layout;
+            });
+
+            // Activity adds EditText at a later point.
+            TestUtils.waitOnMainUntil(() -> layoutRef.get().hasWindowFocus(), TIMEOUT);
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+            testActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    final EditText editText = new EditText(testActivity);
+                    editText.setText("Editable");
+                    layoutRef.get().addView(editText);
+                    editText.requestFocus();
+                }
+            });
+
+            // Input should start
+            expectEvent(stream, event -> "onStartInput".equals(event.getEventName()), TIMEOUT);
         }
     }
 

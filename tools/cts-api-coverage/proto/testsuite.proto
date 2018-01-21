@@ -48,6 +48,68 @@ message ConfigMetadata {
     repeated TestClass test_classes = 5;
 }
 
+message Annotation {
+    int32 visibility = 1;
+    string type = 2;
+
+    message Element {
+        string name = 1;
+        string value = 2;
+    }
+    repeated Element elements = 3;
+}
+
+message TestSuite {
+    string name = 1;
+
+    message Package {
+        string name = 1;
+
+        message Class {
+            string name = 1;
+            string type = 2;
+            string super_class = 3;
+            string interface = 4;
+
+            enum Type {
+                UNKNOWN = 0;
+                JUNIT3 = 1;
+                JUNIT4 = 2;
+                PARAMETERIZED = 3;
+                JAVAHOST = 4;
+                GTEST = 5;
+                DEQP = 6;
+            }
+            Type test_type = 5;
+            repeated Annotation annotations = 6;
+
+            message Method {
+                string defining_class = 1;
+                string name = 2;
+                string parameters = 3;
+                string return_type = 4;
+                int32 access_flags = 5;
+                repeated Annotation annotations = 6;
+            }
+            repeated Method methods = 7;
+
+            message Field {
+                string defining_class = 1;
+                string name = 2;
+                string type = 3;
+                int32 access_flags = 4;
+                string initial_value = 5;
+                repeated Annotation annotations = 6;
+            }
+            repeated Field fields = 8;
+            string apk = 9;
+        }
+        repeated Class classes = 2;
+        string op_codes = 3;
+    }
+    repeated Package packages = 2;
+}
+
 // target File Metadata for e.g. config, apk, jar, exe, so
 message FileMetadata {
     string description = 1;

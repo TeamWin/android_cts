@@ -23,7 +23,7 @@ import static org.junit.Assert.assertEquals;
 
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.pm.crossprofile.CrossProfileApps;
+import android.content.pm.CrossProfileApps;
 import android.os.Bundle;
 import android.os.UserHandle;
 import android.os.UserManager;
@@ -131,6 +131,16 @@ public class CrossProfileAppsTargetUserTest {
                 "com.android.cts.launcherapps.simpleapp.SimpleActivity"),
                 mTargetUser
         );
+    }
+
+    @Test
+    public void testGetProfileSwitchingLabel() throws Exception {
+        assertNotNull(mCrossProfileApps.getProfileSwitchingLabel(mTargetUser));
+    }
+
+    @Test
+    public void testGetProfileSwitchingIconDrawable() throws Exception {
+        assertNotNull(mCrossProfileApps.getProfileSwitchingIconDrawable(mTargetUser));
     }
 }
 

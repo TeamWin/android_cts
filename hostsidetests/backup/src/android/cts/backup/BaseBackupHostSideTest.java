@@ -42,7 +42,7 @@ public abstract class BaseBackupHostSideTest extends BaseHostJUnit4Test {
     /** Value of PackageManager.FEATURE_BACKUP */
     private static final String FEATURE_BACKUP = "android.software.backup";
 
-    private static final String LOCAL_TRANSPORT =
+    protected static final String LOCAL_TRANSPORT =
             "android/com.android.internal.backup.LocalTransport";
 
     @Before
@@ -195,7 +195,7 @@ public abstract class BaseBackupHostSideTest extends BaseHostJUnit4Test {
         getDevice().executeShellCommand(String.format("pm clear %s", packageName));
     }
 
-    private boolean isBackupEnabled() throws DeviceNotAvailableException {
+    protected boolean isBackupEnabled() throws DeviceNotAvailableException {
         boolean isEnabled;
         String output = getDevice().executeShellCommand("bmgr enabled");
         Pattern pattern = Pattern.compile("^Backup Manager currently (enabled|disabled)$");
@@ -208,7 +208,7 @@ public abstract class BaseBackupHostSideTest extends BaseHostJUnit4Test {
         return isEnabled;
     }
 
-    private String getCurrentTransport() throws DeviceNotAvailableException {
+    protected String getCurrentTransport() throws DeviceNotAvailableException {
         String output = getDevice().executeShellCommand("bmgr list transports");
         Pattern pattern = Pattern.compile("\\* (.*)");
         Matcher matcher = pattern.matcher(output);
@@ -218,4 +218,5 @@ public abstract class BaseBackupHostSideTest extends BaseHostJUnit4Test {
             throw new RuntimeException("non-parsable output setting bmgr transport: " + output);
         }
     }
+
 }

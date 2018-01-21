@@ -36,11 +36,11 @@
         </activity>
         <activity android:name=".PreFilledLoginActivity" />
         <activity android:name=".LoginWithStringsActivity" />
-        <activity android:name=".WelcomeActivity"/>
+        <activity android:name=".WelcomeActivity" android:taskAffinity=".WelcomeActivity"/>
         <activity android:name=".ViewAttributesTestActivity" />
         <activity android:name=".AuthenticationActivity" />
         <activity android:name=".ManualAuthenticationActivity" />
-        <activity android:name=".CheckoutActivity"/>
+        <activity android:name=".CheckoutActivity" android:taskAffinity=".CheckoutActivity"/>
         <activity android:name=".InitializedCheckoutActivity" />
         <activity android:name=".DatePickerCalendarActivity" />
         <activity android:name=".DatePickerSpinnerActivity" />

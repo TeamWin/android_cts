@@ -948,6 +948,17 @@
     You will need to walk to ensure that Significant Motion triggers. The screen will turn on and a sound will be played once the test completes.</string>
     <string name="snsr_device_did_not_wake_up_at_trigger">Device did not wakeup at trigger time. wakeTime=%1$d ms triggerTime=%2$d ms</string>
 
+    <!-- Event sanitization for idle UIDs -->
+    <string name="snsr_event_sanitization_test">Event sanitization for idle UID test</string>
+    <string name="snsr_event_sanitization_test_setup">Run the \'adb shell cmd sensorservice set-uid-state com.android.cts.verifier idle\' shell command
+        to emulate the CtsVerifier UID being idle.</string>
+    <string name="snsr_event_sanitization_test_cleanup">Run the \'adb shell cmd sensorservice reset-uid-state com.android.cts.verifier\' shell command
+        to stop emulating the CtsVerifier UID being idle. Failing to do that would lead to other tests failing!</string>
+    <string name="snsr_significant_motion_test_uid_idle">Move around with the device to try triggering significant motion</string>
+    <string name="snsr_significant_motion_test_uid_idle_expectation">No trigger events should be generated while idle</string>
+    <string name="snsr_proximity_test_uid_idle">Touch the proximity sensor to try triggering it</string>
+    <string name="snsr_proximity_test_uid_idle_expectation">No on-change events should be generated while idle</string>
+
     <!-- Low Latency Off-Body Detect -->
     <string name="snsr_offbody_sensor_test">Off Body Sensor Tests</string>
     <string name="snsr_offbody_sensor_registration">Registration failed for low latency offbody detect sensor.\n</string>
@@ -2532,57 +2543,52 @@ You should be prompted to select credentials; choose the ones you just installed
         3. Go back to the cts-verifier tests using the back button, then mark the test accordingly.\n
     </string>
 
-    <string name="provisioning_byod_turn_off_work">Turn off work mode</string>
-    <string name="provisioning_byod_turn_off_work_info">This test verifies device behaviors when turning off work mode.</string>
+    <string name="provisioning_byod_turn_off_work">Turn off work profile</string>
+    <string name="provisioning_byod_turn_off_work_info">This test verifies device behaviors when turning off work profile.</string>
     <string name="provisioning_byod_turn_off_work_instructions">
         This test verifies the device behavior when work profile is turned off.\n
         Please exercise the following tests in sequence.\n
-        The button below can be used to open the Settings page where you can toggle work mode.\n
+        The button below can be used to open the Settings page where you can toggle work profile.\n
         (If this device has a separate app for work settings, ignore the button and open that app manually from the launcher).\n
     </string>
-    <string name="provisioning_byod_turn_off_work_prepare_button">Open Settings to toggle work mode</string>
+    <string name="provisioning_byod_turn_off_work_prepare_button">Open Settings to toggle work profile</string>
 
     <string name="provisioning_byod_turn_off_work_prepare_notifications">Prepare a work notification</string>
     <string name="provisioning_byod_turn_off_work_prepare_notifications_instruction">
         This is a test setup step.\n
         1. Press the go button to send a work notification.\n
         2. Verify that the notification is displayed and mark this test as passed.\n
-        (Note: in the following test, you will be asked to verify the notification disappears after work mode is turned off.)
+        (Note: in the following test, you will be asked to verify the notification disappears after work profile is turned off.)
     </string>
 
-    <string name="provisioning_byod_turn_off_work_turned_off">Please turn off work mode</string>
-    <string name="provisioning_byod_turn_off_work_turned_off_toast">Open settings to turn off work mode, using the button above.</string>
+    <string name="provisioning_byod_turn_off_work_turned_off">Please turn off work profile</string>
+    <string name="provisioning_byod_turn_off_work_turned_off_toast">Open settings to turn off work profile, using the button above.</string>
 
-    <string name="provisioning_byod_turn_off_work_notifications">Notifications when work mode is off</string>
+    <string name="provisioning_byod_turn_off_work_notifications">Notifications when work profile is off</string>
     <string name="provisioning_byod_turn_off_work_notifications_instruction">
         Verify that the previously-shown work notification has now disappeared.
     </string>
 
-    <string name="provisioning_byod_turn_off_work_icon">Status bar icon when work mode is off</string>
-    <string name="provisioning_byod_turn_off_work_icon_instruction">
-        Now that work mode is off, please verify that the status bar shows an icon indicating that work mode is off.\n
-    </string>
-
-    <string name="provisioning_byod_turn_off_work_launcher">Starting work apps when work mode is off</string>
+    <string name="provisioning_byod_turn_off_work_launcher">Starting work apps when work profile is off</string>
     <string name="provisioning_byod_turn_off_work_launcher_instruction">
-        This test verifies that work applications cannot be started if work mode is off.\n
+        This test verifies that work applications cannot be started if work profile is off.\n
         1. Press home to go to the launcher.\n
         2. Verify that work applications are greyed out.\n
         3. Tap on a work application.\n
         4. Verify that the application does not start.\n
     </string>
 
-    <string name="provisioning_byod_turn_off_work_turned_on">Please turn work mode back on</string>
-    <string name="provisioning_byod_turn_off_work_turned_on_toast">Open settings to turn work mode back on, either manually or using the button above.</string>
+    <string name="provisioning_byod_turn_off_work_turned_on">Please turn work profile back on</string>
+    <string name="provisioning_byod_turn_off_work_turned_on_toast">Open settings to turn work profile back on, either manually or using the button above.</string>
 
-    <string name="provisioning_byod_turn_on_work_icon">Status bar icon when work mode is on</string>
+    <string name="provisioning_byod_turn_on_work_icon">Status bar icon when work profile is on</string>
     <string name="provisioning_byod_turn_on_work_icon_instruction">
-        Now that work mode is back on, please verify that the status bar icon for work mode off is no longer visible.
+        Now that work profile is back on, please verify that the status bar icon for work profile off is no longer visible.
     </string>
 
-    <string name="provisioning_byod_turn_on_work_launcher">Starting work apps when work mode is on</string>
+    <string name="provisioning_byod_turn_on_work_launcher">Starting work apps when work profile is on</string>
     <string name="provisioning_byod_turn_on_work_launcher_instruction">
-        Now that work mode is back on, please go to the launcher and verify that you can start a work application.
+        Now that work profile is back on, please go to the launcher and verify that you can start a work application.
     </string>
 
     <string name="provisioning_byod_organization_info">Organization Info</string>
@@ -3157,6 +3163,8 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="disallow_config_location_mode_action">Configuring location mode or toggling location switch bar</string>
     <string name="disallow_airplane_mode">Disallow airplane mode</string>
     <string name="disallow_airplane_mode_action">Toggling airplane mode switch bar or changing airplane mode state in quick settings</string>
+    <string name="disallow_config_screen_timeout">Disallow config sleep options settings</string>
+    <string name="disallow_config_screen_timeout_action">Configuring sleep options</string>
     <string name="disallow_apps_control">Disallow controlling apps</string>
     <string name="disallow_apps_control_action">DISABLE/UNINSTALL/FORCE STOP-ing any app in the managed device/profile other than CtsVerifier</string>
     <string name="disallow_config_cell_broadcasts">Disallow config cell broadcasts</string>

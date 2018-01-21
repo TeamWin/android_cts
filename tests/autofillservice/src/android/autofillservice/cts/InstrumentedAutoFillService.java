@@ -399,9 +399,14 @@ public class InstrumentedAutoFillService extends AutofillService {
          *
          * <p>Typically called at the end of a test case, to assert the initial request.
          */
-        FillRequest getNextFillRequest() throws InterruptedException {
-            final FillRequest request =
-                    mFillRequests.poll(FILL_TIMEOUT.ms(), TimeUnit.MILLISECONDS);
+        FillRequest getNextFillRequest() {
+            FillRequest request;
+            try {
+                request = mFillRequests.poll(FILL_TIMEOUT.ms(), TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("Interrupted", e);
+            }
             if (request == null) {
                 throw new RetryableException(FILL_TIMEOUT, "onFillRequest() not called");
             }
@@ -441,9 +446,14 @@ public class InstrumentedAutoFillService extends AutofillService {
          *
          * <p>Typically called at the end of a test case, to assert the initial request.
          */
-        SaveRequest getNextSaveRequest() throws InterruptedException {
-            final SaveRequest request =
-                    mSaveRequests.poll(SAVE_TIMEOUT.ms(), TimeUnit.MILLISECONDS);
+        SaveRequest getNextSaveRequest() {
+            SaveRequest request;
+            try {
+                request = mSaveRequests.poll(SAVE_TIMEOUT.ms(), TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("Interrupted", e);
+            }
             if (request == null) {
                 throw new RetryableException(SAVE_TIMEOUT, "onSaveRequest() not called");
             }

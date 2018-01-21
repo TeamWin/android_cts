@@ -24,7 +24,9 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.keystore.cts.Attestation;
+import android.keystore.cts.AuthorizationList;
 import android.net.Uri;
+import android.os.Build;
 import android.security.AttestedKeyPair;
 import android.security.KeyChain;
 import android.security.KeyChainAliasCallback;
@@ -312,6 +314,22 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
         }
     }
 
+    private void validateDeviceIdAttestationData(Certificate leaf,
+            String expectedSerial, String expectedImei, String expectedMeid)
+            throws CertificateParsingException {
+        Attestation attestationRecord = new Attestation((X509Certificate) leaf);
+        AuthorizationList teeAttestation = attestationRecord.getTeeEnforced();
+        assertNotNull(teeAttestation);
+        assertEquals(Build.BRAND, teeAttestation.getBrand());
+        assertEquals(Build.DEVICE, teeAttestation.getDevice());
+        assertEquals(Build.PRODUCT, teeAttestation.getProduct());
+        assertEquals(Build.MANUFACTURER, teeAttestation.getManufacturer());
+        assertEquals(Build.MODEL, teeAttestation.getModel());
+        assertEquals(expectedSerial, teeAttestation.getSerialNumber());
+        assertEquals(expectedImei, teeAttestation.getImei());
+        assertEquals(expectedMeid, teeAttestation.getMeid());
+    }
+
     private void validateAttestationRecord(List<Certificate> attestation,
             byte[] providedChallenge) throws CertificateParsingException {
         assertNotNull(attestation);
@@ -385,6 +403,7 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
             verifySignatureOverData("SHA256withECDSA", keyPair);
             List<Certificate> attestation = generated.getAttestationRecord();
             validateAttestationRecord(attestation, attestationChallenge);
+            validateDeviceIdAttestationData(attestation.get(0), Build.getSerial(), null, null);
             validateSignatureChain(attestation, keyPair.getPublic());
         } finally {
             assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));

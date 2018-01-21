@@ -24,7 +24,7 @@ import android.content.Intent;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.os.Bundle;
-import android.server.am.tools.ActivityLauncher;
+import android.server.am.util.ActivityLauncher;
 import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;

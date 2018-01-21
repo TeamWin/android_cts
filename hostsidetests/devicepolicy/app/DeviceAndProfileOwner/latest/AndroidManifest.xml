@@ -68,6 +68,8 @@
         </activity>
 
         <activity android:name="com.android.cts.deviceandprofileowner.AutofillActivity"/>
+
+        <activity android:name=".PrintActivity"/>
     </application>
 
     <instrumentation

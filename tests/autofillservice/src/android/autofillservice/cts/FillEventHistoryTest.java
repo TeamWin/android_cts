@@ -390,7 +390,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         assertDeprecatedClientState(selectionA, "activity", "A");
 
         // Launch activity B
-        mContext.startActivity(new Intent(mContext, CheckoutActivity.class));
+        mActivity.startActivity(new Intent(mActivity, CheckoutActivity.class));
         mUiBot.assertShownByRelativeId(ID_CC_NUMBER);
 
         // Trigger autofill on activity B

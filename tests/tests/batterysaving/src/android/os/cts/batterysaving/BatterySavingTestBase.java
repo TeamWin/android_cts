@@ -22,13 +22,15 @@ import android.os.BatteryManager;
 import android.os.ParcelFileDescriptor;
 import android.os.PowerManager;
 import android.os.SystemClock;
+import android.provider.Settings.Global;
 import android.support.test.InstrumentationRegistry;
 import android.util.Log;
+
+import org.junit.After;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 
 public class BatterySavingTestBase {
@@ -37,6 +39,17 @@ public class BatterySavingTestBase {
     public static final boolean DEBUG = true;
 
     private static final int DEFAULT_TIMEOUT_SECONDS = 30;
+
+    @After
+    public final void resetDumpsysBatteryAfterTest() throws Exception {
+        runDumpsysBatteryReset();
+    }
+
+    @FunctionalInterface
+    public interface BooleanSupplierWithThrow {
+        boolean getAsBoolean() throws Exception;
+    }
+
 
     public String getLogTag() {
         return TAG;
@@ -121,24 +134,38 @@ public class BatterySavingTestBase {
     public void runDumpsysBatteryUnplug() throws Exception {
         runCommand("dumpsys battery unplug", (output) -> output.length() == 0);
         waitUntil("Device still charging", () -> !getBatteryManager().isCharging());
+
+        Log.d(TAG, "Battery UNPLUGGED");
     }
 
     /** Reset {@link #runDumpsysBatteryUnplug}.  */
     public void runDumpsysBatteryReset() throws Exception {
         runCommand("dumpsys battery reset", (output) -> output.length() == 0);
+
+        Log.d(TAG, "Battery RESET");
+    }
+
+    /** Run "adb shell am make-uid-idle PACKAGE" */
+    public void runMakeUidIdle(String packageName) {
+        runCommand("am make-uid-idle " + packageName, (output) -> output.length() == 0);
+    }
+
+    /** Run "adb shell am kill PACKAGE" */
+    public void runKill(String packageName) {
+        runCommand("am kill " + packageName, (output) -> output.length() == 0);
     }
 
     /**
      * Wait until {@code predicate} is satisfied, or fail, with the default timeout.
      */
-    public void waitUntil(String message, BooleanSupplier predicate) throws Exception {
+    public void waitUntil(String message, BooleanSupplierWithThrow predicate) throws Exception {
         waitUntil(message, 0, predicate);
     }
 
     /**
      * Wait until {@code predicate} is satisfied, or fail, with a given timeout.
      */
-    public void waitUntil(String message, int timeoutSecond, BooleanSupplier predicate)
+    public void waitUntil(String message, int timeoutSecond, BooleanSupplierWithThrow predicate)
             throws Exception {
         if (timeoutSecond <= 0) {
             timeoutSecond = DEFAULT_TIMEOUT_SECONDS;
@@ -148,9 +175,24 @@ public class BatterySavingTestBase {
             if (predicate.getAsBoolean()) {
                 return; // okay
             }
-            Thread.sleep(500);
+            Thread.sleep(1000);
         }
         failWithLog("Timeout: " + message);
+    }
+
+    public void waitUntilAlarmForceAppStandby(boolean expected) throws Exception {
+        waitUntil("Force all apps standby still " + !expected + " (alarm)", () ->
+                runCommand("dumpsys alarm").contains("Force all apps standby: " + expected));
+    }
+
+    public void waitUntilJobForceAppStandby(boolean expected) throws Exception {
+        waitUntil("Force all apps standby still " + !expected + " (job)", () ->
+                runCommand("dumpsys jobscheduler").contains("Force all apps standby: " + expected));
+    }
+
+    public void waitUntilForceBackgroundCheck(boolean expected) throws Exception {
+        waitUntil("Force background check still " + !expected + " (job)", () ->
+                runCommand("dumpsys activity").contains("mForceBackgroundCheck=" + expected));
     }
 
     public static Context getContext() {
@@ -163,5 +205,27 @@ public class BatterySavingTestBase {
 
     public BatteryManager getBatteryManager() {
         return getContext().getSystemService(BatteryManager.class);
+    }
+
+    /**
+     * Enable / disable battery saver. Note {@link #runDumpsysBatteryUnplug} must have been
+     * executed before enabling BS.
+     */
+    public void enableBatterySaver(boolean enabled) throws Exception {
+        if (enabled) {
+            putGlobalSetting(Global.LOW_POWER_MODE, "1");
+            waitUntil("Battery saver still off", () -> getPowerManager().isPowerSaveMode());
+            waitUntil("Location mode still " + getPowerManager().getLocationPowerSaveMode(),
+                    () -> (PowerManager.LOCATION_MODE_NO_CHANGE
+                            != getPowerManager().getLocationPowerSaveMode()));
+        } else {
+            putGlobalSetting(Global.LOW_POWER_MODE, "0");
+            waitUntil("Battery saver still on", () -> !getPowerManager().isPowerSaveMode());
+            waitUntil("Location mode still " + getPowerManager().getLocationPowerSaveMode(),
+                    () -> (PowerManager.LOCATION_MODE_NO_CHANGE
+                            == getPowerManager().getLocationPowerSaveMode()));
+        }
+
+        Log.d(TAG, "Battery saver turned " + (enabled ? "ON" : "OFF"));
     }
 }

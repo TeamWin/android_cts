@@ -29,6 +29,7 @@
     <EditText android:id="@+id/edittext"
               android:text="@string/text_input_blah"
               android:layout_height="wrap_content"
+              android:accessibilityHeading="true"
               android:layout_width="fill_parent">
     </EditText>
 
@@ -38,6 +39,7 @@
         <Button android:id="@+id/button"
                 android:text="@string/button_title"
                 android:accessibilityPaneTitle="@string/paneTitle"
+                android:tooltipText="@string/button_tooltip"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:bufferType="normal">

@@ -24,6 +24,7 @@ import static org.junit.Assert.fail;
 
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
+import android.text.Layout;
 import android.text.MeasuredText;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
@@ -60,52 +61,31 @@ public class MeasuredTextTest {
     private static final TextDirectionHeuristic LTR = TextDirectionHeuristics.LTR;
 
     @Test
-    public void testBuild() {
-        assertNotNull(MeasuredText.build(STRING, PAINT, LTR));
-        assertNotNull(MeasuredText.build(STRING, PAINT, LTR, 0, STRING.length()));
-        assertNotNull(MeasuredText.build(STRING, PAINT, LTR, 1, STRING.length() - 1));
-
-        assertNotNull(MeasuredText.build(SPANNED, PAINT, LTR));
-        assertNotNull(MeasuredText.build(SPANNED, PAINT, LTR, 0, STRING.length()));
-        assertNotNull(MeasuredText.build(SPANNED, PAINT, LTR, 1, STRING.length() - 1));
+    public void testBuilder() {
+        assertNotNull(new MeasuredText.Builder(STRING, PAINT)
+                .setBreakStrategy(Layout.BREAK_STRATEGY_SIMPLE)
+                .setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_NONE).build());
+        assertNotNull(new MeasuredText.Builder(SPANNED, PAINT)
+                .setBreakStrategy(Layout.BREAK_STRATEGY_SIMPLE)
+                .setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_NONE).build());
     }
 
     @Test
-    public void testBuild_withNull() {
+    public void testBuilder_withNull() {
         try {
-            MeasuredText.build(NULL_CHAR_SEQUENCE, PAINT, LTR);
+            new MeasuredText.Builder(NULL_CHAR_SEQUENCE, PAINT);
             fail();
         } catch (NullPointerException e) {
             // pass
         }
         try {
-            MeasuredText.build(NULL_CHAR_SEQUENCE, PAINT, LTR, 0, 0);
-            fail();
-        } catch (NullPointerException e) {
-            // pass
-        }
-
-        try {
-            MeasuredText.build(STRING, null, LTR);
+            new MeasuredText.Builder(STRING, null);
             fail();
         } catch (NullPointerException e) {
             // pass
         }
         try {
-            MeasuredText.build(STRING, null, LTR, 0, 1);
-            fail();
-        } catch (NullPointerException e) {
-            // pass
-        }
-
-        try {
-            MeasuredText.build(STRING, PAINT, null);
-            fail();
-        } catch (NullPointerException e) {
-            // pass
-        }
-        try {
-            MeasuredText.build(STRING, PAINT, null, 0, 1);
+            new MeasuredText.Builder(STRING, PAINT).setTextDirection(null);
             fail();
         } catch (NullPointerException e) {
             // pass
@@ -113,15 +93,28 @@ public class MeasuredTextTest {
     }
 
     @Test
-    public void testBuild_withInvalidRange() {
+    public void testBuilder_setRange() {
+        assertNotNull(new MeasuredText.Builder(STRING, PAINT).setRange(0, STRING.length()).build());
+        assertNotNull(new MeasuredText.Builder(STRING, PAINT)
+                .setRange(1, STRING.length() - 1).build());
+        assertNotNull(new MeasuredText.Builder(SPANNED, PAINT)
+                .setRange(0, SPANNED.length()).build());
+        assertNotNull(new MeasuredText.Builder(SPANNED, PAINT)
+                .setRange(1, SPANNED.length() - 1).build());
         try {
-            MeasuredText.build(STRING, PAINT, LTR, -1, -1);
+            new MeasuredText.Builder(STRING, PAINT).setRange(-1, -1);
             fail();
         } catch (IllegalArgumentException e) {
             // pass
         }
         try {
-            MeasuredText.build(STRING, PAINT, LTR, 100000, 100000);
+            new MeasuredText.Builder(STRING, PAINT).setRange(100000, 100000);
+            fail();
+        } catch (IllegalArgumentException e) {
+            // pass
+        }
+        try {
+            new MeasuredText.Builder(STRING, PAINT).setRange(STRING.length() - 1, 0);
             fail();
         } catch (IllegalArgumentException e) {
             // pass
@@ -130,7 +123,7 @@ public class MeasuredTextTest {
 
     @Test
     public void testCharSequenceInteferface() {
-        final CharSequence s = MeasuredText.build(STRING, PAINT, LTR);
+        final CharSequence s = new MeasuredText.Builder(STRING, PAINT).build();
         assertEquals(STRING.length(), s.length());
         assertEquals('H', s.charAt(0));
         assertEquals('e', s.charAt(1));
@@ -143,7 +136,8 @@ public class MeasuredTextTest {
         // Even measure the part of the text, the CharSequence interface still works for original
         // text.
         // TODO: Should this work like substring?
-        final CharSequence s2 = MeasuredText.build(STRING, PAINT, LTR, 7, STRING.length());
+        final CharSequence s2 = new MeasuredText.Builder(STRING, PAINT)
+                .setRange(7, STRING.length()).build();
         assertEquals(STRING.length(), s2.length());
         assertEquals('H', s2.charAt(0));
         assertEquals('e', s2.charAt(1));
@@ -163,7 +157,7 @@ public class MeasuredTextTest {
 
     @Test
     public void testSpannedInterface_Spanned() {
-        final Spanned s = MeasuredText.build(SPANNED, PAINT, LTR);
+        final Spanned s = new MeasuredText.Builder(SPANNED, PAINT).build();
         final LocaleSpan[] spans = s.getSpans(0, s.length(), LocaleSpan.class);
         assertNotNull(spans);
         assertEquals(1, spans.length);
@@ -176,7 +170,8 @@ public class MeasuredTextTest {
         assertEquals(SPAN_START, s.nextSpanTransition(0, s.length(), LocaleSpan.class));
         assertEquals(SPAN_END, s.nextSpanTransition(SPAN_START, s.length(), LocaleSpan.class));
 
-        final Spanned s2 = MeasuredText.build(SPANNED, PAINT, LTR, 7, SPANNED.length());
+        final Spanned s2 = new MeasuredText.Builder(SPANNED, PAINT)
+                .setRange(7, SPANNED.length()).build();
         final LocaleSpan[] spans2 = s2.getSpans(0, s2.length(), LocaleSpan.class);
         assertNotNull(spans2);
         assertEquals(1, spans2.length);
@@ -192,7 +187,7 @@ public class MeasuredTextTest {
 
     @Test
     public void testSpannedInterface_String() {
-        final Spanned s = MeasuredText.build(STRING, PAINT, LTR);
+        final Spanned s = new MeasuredText.Builder(STRING, PAINT).build();
         LocaleSpan[] spans = s.getSpans(0, s.length(), LocaleSpan.class);
         assertNotNull(spans);
         assertEquals(0, spans.length);
@@ -206,66 +201,92 @@ public class MeasuredTextTest {
 
     @Test
     public void testGetText() {
-        assertSame(STRING, MeasuredText.build(STRING, PAINT, LTR).getText());
-        assertSame(SPANNED, MeasuredText.build(SPANNED, PAINT, LTR).getText());
+        assertSame(STRING, new MeasuredText.Builder(STRING, PAINT).build().getText());
+        assertSame(SPANNED, new MeasuredText.Builder(SPANNED, PAINT).build().getText());
 
-        assertSame(STRING, MeasuredText.build(STRING, PAINT, LTR, 1, 5).getText());
-        assertSame(SPANNED, MeasuredText.build(SPANNED, PAINT, LTR, 1, 5).getText());
+        assertSame(STRING, new MeasuredText.Builder(STRING, PAINT)
+                .setRange(1, 5).build().getText());
+        assertSame(SPANNED, new MeasuredText.Builder(SPANNED, PAINT)
+                .setRange(1, 5).build().getText());
     }
 
     @Test
     public void testGetStartEnd() {
-        assertEquals(0, MeasuredText.build(STRING, PAINT, LTR).getStart());
-        assertEquals(STRING.length(), MeasuredText.build(STRING, PAINT, LTR).getEnd());
+        assertEquals(0, new MeasuredText.Builder(STRING, PAINT).build().getStart());
+        assertEquals(STRING.length(), new MeasuredText.Builder(STRING, PAINT).build().getEnd());
 
-        assertEquals(1, MeasuredText.build(STRING, PAINT, LTR, 1, 5).getStart());
-        assertEquals(5, MeasuredText.build(STRING, PAINT, LTR, 1, 5).getEnd());
+        assertEquals(1, new MeasuredText.Builder(STRING, PAINT).setRange(1, 5).build().getStart());
+        assertEquals(5, new MeasuredText.Builder(STRING, PAINT).setRange(1, 5).build().getEnd());
 
-        assertEquals(0, MeasuredText.build(SPANNED, PAINT, LTR).getStart());
-        assertEquals(SPANNED.length(), MeasuredText.build(SPANNED, PAINT, LTR).getEnd());
+        assertEquals(0, new MeasuredText.Builder(SPANNED, PAINT).build().getStart());
+        assertEquals(SPANNED.length(), new MeasuredText.Builder(SPANNED, PAINT).build().getEnd());
 
-        assertEquals(1, MeasuredText.build(SPANNED, PAINT, LTR, 1, 5).getStart());
-        assertEquals(5, MeasuredText.build(SPANNED, PAINT, LTR, 1, 5).getEnd());
+        assertEquals(1, new MeasuredText.Builder(SPANNED, PAINT).setRange(1, 5).build().getStart());
+        assertEquals(5, new MeasuredText.Builder(SPANNED, PAINT).setRange(1, 5).build().getEnd());
     }
 
     @Test
     public void testGetTextDir() {
-        assertSame(LTR, MeasuredText.build(STRING, PAINT, LTR).getTextDir());
-        assertSame(LTR, MeasuredText.build(SPANNED, PAINT, LTR).getTextDir());
+        assertSame(TextDirectionHeuristics.FIRSTSTRONG_LTR,
+                new MeasuredText.Builder(STRING, PAINT).build().getTextDir());
+        assertSame(TextDirectionHeuristics.LTR,
+                new MeasuredText.Builder(SPANNED, PAINT)
+                        .setTextDirection(TextDirectionHeuristics.LTR).build().getTextDir());
     }
 
     @Test
     public void testGetPaint() {
         // No Paint equality functions. Check only not null.
-        assertNotNull(MeasuredText.build(STRING, PAINT, LTR).getPaint());
-        assertNotNull(MeasuredText.build(SPANNED, PAINT, LTR).getPaint());
+        assertNotNull(new MeasuredText.Builder(STRING, PAINT).build().getPaint());
+        assertNotNull(new MeasuredText.Builder(SPANNED, PAINT).build().getPaint());
+    }
+
+    @Test
+    public void testGetBreakStrategy() {
+        assertEquals(Layout.BREAK_STRATEGY_HIGH_QUALITY,
+                new MeasuredText.Builder(STRING, PAINT).build().getBreakStrategy());
+        assertEquals(Layout.BREAK_STRATEGY_SIMPLE,
+                new MeasuredText.Builder(STRING, PAINT)
+                        .setBreakStrategy(Layout.BREAK_STRATEGY_SIMPLE).build().getBreakStrategy());
+    }
+
+    @Test
+    public void testGetHyphenationFrequency() {
+        assertEquals(Layout.HYPHENATION_FREQUENCY_NORMAL,
+                new MeasuredText.Builder(STRING, PAINT).build().getHyphenationFrequency());
+        assertEquals(Layout.HYPHENATION_FREQUENCY_NONE,
+                new MeasuredText.Builder(STRING, PAINT)
+                        .setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_NONE).build()
+                                .getHyphenationFrequency());
     }
 
     @Test
     public void testGetParagraphCount() {
-        final MeasuredText pm = MeasuredText.build(STRING, PAINT, LTR);
+        final MeasuredText pm = new MeasuredText.Builder(STRING, PAINT).build();
         assertEquals(1, pm.getParagraphCount());
         assertEquals(0, pm.getParagraphStart(0));
         assertEquals(STRING.length(), pm.getParagraphEnd(0));
 
-        final MeasuredText pm2 = MeasuredText.build(STRING, PAINT, LTR, 1, 9);
+        final MeasuredText pm2 = new MeasuredText.Builder(STRING, PAINT).setRange(1, 9).build();
         assertEquals(1, pm2.getParagraphCount());
         assertEquals(1, pm2.getParagraphStart(0));
         assertEquals(9, pm2.getParagraphEnd(0));
 
-        final MeasuredText pm3 = MeasuredText.build(MULTIPARA_STRING, PAINT, LTR);
+        final MeasuredText pm3 = new MeasuredText.Builder(MULTIPARA_STRING, PAINT).build();
         assertEquals(2, pm3.getParagraphCount());
         assertEquals(0, pm3.getParagraphStart(0));
         assertEquals(7, pm3.getParagraphEnd(0));
         assertEquals(7, pm3.getParagraphStart(1));
         assertEquals(pm3.length(), pm3.getParagraphEnd(1));
 
-        final MeasuredText pm4 = MeasuredText.build(MULTIPARA_STRING, PAINT, LTR, 1, 5);
+        final MeasuredText pm4 = new MeasuredText.Builder(MULTIPARA_STRING, PAINT)
+                .setRange(1, 5).build();
         assertEquals(1, pm4.getParagraphCount());
         assertEquals(1, pm4.getParagraphStart(0));
         assertEquals(5, pm4.getParagraphEnd(0));
 
-        final MeasuredText pm5 = MeasuredText.build(MULTIPARA_STRING, PAINT, LTR, 1, 9);
+        final MeasuredText pm5 = new MeasuredText.Builder(MULTIPARA_STRING, PAINT)
+                .setRange(1, 9).build();
         assertEquals(2, pm5.getParagraphCount());
         assertEquals(1, pm5.getParagraphStart(0));
         assertEquals(7, pm5.getParagraphEnd(0));

@@ -647,7 +647,18 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature || !hasBackupService) {
             return;
         }
-        executeDeviceOwnerTest("BackupServiceEnabledTest");
+        executeDeviceTestMethod(".BackupServicePoliciesTest",
+                "testEnablingAndDisablingBackupService");
+    }
+
+    public void testGetAndSetMandatoryBackupTransport() throws Exception {
+        final boolean hasBackupService = getDevice().hasFeature(FEATURE_BACKUP);
+        // Backups cannot be made mandatory if the backup feature is not supported.
+        if (!mHasFeature || !hasBackupService) {
+            return;
+        }
+        executeDeviceTestMethod(".BackupServicePoliciesTest",
+                "testGetAndSetMandatoryBackupTransport");
     }
 
     public void testPackageInstallCache() throws Exception {

@@ -156,8 +156,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
 
         // Assert results
         final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
-        assertFillEventForFieldsClassification(events.get(0), fieldId, "myId", 1,
-                getDefaultAlgorithm());
+        assertFillEventForFieldsClassification(events.get(0), fieldId, "myId", 1);
     }
 
     @Test
@@ -198,17 +197,15 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
 
         // Assert results
         final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
-        final String algorithm = getDefaultAlgorithm();
-        final String[] algorithms = { algorithm, algorithm };
         // Best match is 0.66 (4 of 6), worst is 0.5 (3 of 6)
         if (firstMatch) {
             assertFillEventForFieldsClassification(events.get(0), new FieldClassificationResult[] {
                     new FieldClassificationResult(fieldId, new String[] { "1stId", "2ndId" },
-                            new float[] { 0.66F, 0.5F }, algorithms)});
+                            new float[] { 0.66F, 0.5F })});
         } else {
             assertFillEventForFieldsClassification(events.get(0), new FieldClassificationResult[] {
                     new FieldClassificationResult(fieldId, new String[] { "2ndId", "1stId" },
-                            new float[] { 0.66F, 0.5F }, algorithms) });
+                            new float[] { 0.66F, 0.5F }) });
         }
     }
 
@@ -244,11 +241,10 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
 
         // Assert results
         final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
-        final String algorithm = getDefaultAlgorithm();
         assertFillEventForFieldsClassification(events.get(0),
                 new FieldClassificationResult[] {
-                        new FieldClassificationResult(fieldId1, "myId", 1.0F, algorithm),
-                        new FieldClassificationResult(fieldId2, "myId", 1.0F, algorithm),
+                        new FieldClassificationResult(fieldId1, "myId", 1.0F),
+                        new FieldClassificationResult(fieldId2, "myId", 1.0F),
                 });
     }
 
@@ -292,19 +288,17 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         mAfm.commit();
 
         // Assert results
-        final String algorithm = getDefaultAlgorithm();
-        final String[] algorithms = { algorithm, algorithm };
         final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
         assertFillEventForFieldsClassification(events.get(0),
                 new FieldClassificationResult[] {
                         new FieldClassificationResult(fieldId1, new String[] { "myId", "otherId" },
-                                new float[] { 1.0F, 0.2F }, algorithms),
+                                new float[] { 1.0F, 0.2F }),
                         new FieldClassificationResult(fieldId2, new String[] { "otherId", "myId" },
-                                new float[] { 1.0F, 0.2F }, algorithms),
+                                new float[] { 1.0F, 0.2F }),
                         new FieldClassificationResult(fieldId3, new String[] { "myId", "otherId" },
-                                new float[] { 0.6F, 0.2F }, algorithms),
+                                new float[] { 0.6F, 0.2F }),
                         new FieldClassificationResult(fieldId4, new String[] { "otherId", "myId"},
-                                new float[] { 0.80F, 0.2F }, algorithms)});
+                                new float[] { 0.80F, 0.2F })});
     }
 
     @Test

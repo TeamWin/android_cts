@@ -25,7 +25,6 @@ import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction;
-import android.view.accessibility.cts.R;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,7 +36,7 @@ import java.util.List;
 public class AccessibilityNodeInfoTest extends AndroidTestCase {
 
     /** The number of properties of the {@link AccessibilityNodeInfo} class that are marshalled. */
-    private static final int NUM_MARSHALLED_PROPERTIES = 34;
+    private static final int NUM_MARSHALLED_PROPERTIES = 35;
 
     /**
      * The number of properties that are purposely not marshalled
@@ -206,6 +205,7 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
         info.setBoundsInScreen(new Rect(2,2,2,2));
         info.setClassName("foo.bar.baz.Class");
         info.setContentDescription("content description");
+        info.setTooltipText("tooltip");
         info.setPackageName("foo.bar.baz");
         info.setText("text");
         info.setHintText("hint");
@@ -221,6 +221,7 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
         info.setPassword(true);
         info.setScrollable(true);
         info.setSelected(true);
+        info.setHeading(true);
         info.addAction(AccessibilityNodeInfo.ACTION_FOCUS);
         info.addAction(AccessibilityNodeInfo.ACTION_CLEAR_FOCUS);
         info.addAction(new AccessibilityAction(AccessibilityNodeInfo.ACTION_FOCUS, "Foo"));
@@ -255,6 +256,8 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
                 receivedInfo.getClassName());
         assertEquals("contentDescription has incorrect value", expectedInfo.getContentDescription(),
                 receivedInfo.getContentDescription());
+        assertEquals("tooltip text has incorrect value", expectedInfo.getTooltipText(),
+                receivedInfo.getTooltipText());
         assertEquals("packageName has incorrect value", expectedInfo.getPackageName(),
                 receivedInfo.getPackageName());
         assertEquals("text has incorrect value", expectedInfo.getText(), receivedInfo.getText());
@@ -285,6 +288,8 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
                 receivedInfo.isScrollable());
         assertSame("selected has incorrect value", expectedInfo.isSelected(),
                 receivedInfo.isSelected());
+        assertSame("isHeading has incorrect value",
+                expectedInfo.isHeading(), receivedInfo.isHeading());
         assertSame("actions has incorrect value", expectedInfo.getActions(),
                 receivedInfo.getActions());
         assertEquals("actionsSet has incorrect value", expectedInfo.getActionList(),
@@ -322,6 +327,7 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
         assertTrue("boundsInScreen not properly recycled", bounds.isEmpty());
         assertNull("className not properly recycled", info.getClassName());
         assertNull("contentDescription not properly recycled", info.getContentDescription());
+        assertNull("tooltiptext not properly recycled", info.getTooltipText());
         assertNull("packageName not properly recycled", info.getPackageName());
         assertNull("text not properly recycled", info.getText());
         assertNull("Hint text not properly recycled", info.getHintText());
@@ -339,6 +345,7 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
         assertFalse("password not properly recycled", info.isPassword());
         assertFalse("scrollable not properly recycled", info.isScrollable());
         assertFalse("selected not properly recycled", info.isSelected());
+        assertFalse("isHeading depth not properly reset", info.isHeading());
         assertSame("actions not properly recycled", 0, info.getActions());
         assertFalse("accessibilityFocused not properly recycled", info.isAccessibilityFocused());
         assertSame("movementGranularities not properly recycled", 0,
