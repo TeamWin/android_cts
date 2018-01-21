@@ -761,6 +761,14 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         executeDeviceOwnerTest("AirplaneModeRestrictionTest");
     }
 
+    public void testSetSystemSetting() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        executeDeviceOwnerTest("SetSystemSettingTest");
+    }
+
+
     private void executeDeviceOwnerTest(String testClassName) throws Exception {
         if (!mHasFeature) {
             return;
