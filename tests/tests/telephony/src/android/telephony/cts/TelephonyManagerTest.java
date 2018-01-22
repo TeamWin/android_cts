@@ -51,8 +51,14 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.List;
 import java.util.regex.Pattern;
 
+/**
+ * Build, install and run the tests by running the commands below:
+ *  make cts -j64
+ *  cts-tradefed run cts -m CtsTelephonyTestCases --test android.telephony.cts.TelephonyManagerTest
+ */
 @RunWith(AndroidJUnit4.class)
 public class TelephonyManagerTest {
     private TelephonyManager mTelephonyManager;
@@ -601,5 +607,33 @@ public class TelephonyManagerTest {
 
     private static Context getContext() {
         return InstrumentationRegistry.getContext();
+    }
+
+    /**
+     * Tests that the device properly sets the network selection mode to automatic.
+     * Expects a security exception since the caller does not have carrier privileges.
+     */
+    @Test
+    public void testSetNetworkSelectionModeAutomatic() {
+        try {
+            mTelephonyManager.setNetworkSelectionModeAutomatic();
+            fail("Expected SecurityException. App does not have carrier privileges.");
+        } catch (SecurityException expected) {
+        }
+    }
+
+    /**
+     * Tests that the device properly asks the radio to connect to the input network and change
+     * selection mode to manual.
+     * Expects a security exception since the caller does not have carrier privileges.
+     */
+    @Test
+    public void testSetNetworkSelectionModeManual() {
+        try {
+            mTelephonyManager.setNetworkSelectionModeManual(
+                    "" /* operatorNumeric */, false /* persistSelection */);
+            fail("Expected SecurityException. App does not have carrier privileges.");
+        } catch (SecurityException expected) {
+        }
     }
 }
