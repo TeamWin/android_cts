@@ -25,7 +25,10 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner android-support-test
 
 LOCAL_MULTILIB := both
-LOCAL_JNI_SHARED_LIBRARIES := libjvmtiattachingtestagent
+LOCAL_JNI_SHARED_LIBRARIES := libjvmtiattachingtestagent1 \
+                              libjvmtiattachingtestagent2 \
+                              libjvmtiattachingtestagent3 \
+                              libjvmtiattachingtestagent4 \
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
