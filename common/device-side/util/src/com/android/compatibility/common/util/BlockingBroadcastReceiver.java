@@ -79,6 +79,19 @@ public class BlockingBroadcastReceiver extends BroadcastReceiver {
         return null;
     }
 
+    /**
+     * Wait until the broadcast and return the received broadcast intent. {@code null} is returned
+     * if no broadcast with expected action is received within the given timeout.
+     */
+    public @Nullable Intent awaitForBroadcast(long timeoutMillis) {
+        try {
+            return mBlockingQueue.poll(timeoutMillis, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            Log.e(TAG, "waitForBroadcast get interrupted: ", e);
+        }
+        return null;
+    }
+
     public void unregisterQuietly() {
         try {
             mContext.unregisterReceiver(this);
