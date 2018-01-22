@@ -47,7 +47,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
-public class SliceTest {
+public class SliceBindingTest {
 
     public static boolean sFlag = false;
 

@@ -72,7 +72,7 @@ public class SliceProvider extends android.app.slice.SliceProvider {
     public Slice onBindSlice(Uri sliceUri, List<SliceSpec> specs) {
         switch (sliceUri.getPath()) {
             case "/set_flag":
-                SliceTest.sFlag = true;
+                SliceBindingTest.sFlag = true;
                 break;
             case "/subslice":
                 Builder b = new Builder(sliceUri);
