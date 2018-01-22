@@ -516,6 +516,7 @@ public final class CameraDeviceInfo extends DeviceInfo {
         charsKeyNames.add(CameraCharacteristics.STATISTICS_INFO_MAX_FACE_COUNT.getName());
         charsKeyNames.add(CameraCharacteristics.STATISTICS_INFO_AVAILABLE_HOT_PIXEL_MAP_MODES.getName());
         charsKeyNames.add(CameraCharacteristics.STATISTICS_INFO_AVAILABLE_LENS_SHADING_MAP_MODES.getName());
+        charsKeyNames.add(CameraCharacteristics.STATISTICS_INFO_AVAILABLE_OIS_DATA_MODES.getName());
         charsKeyNames.add(CameraCharacteristics.TONEMAP_MAX_CURVE_POINTS.getName());
         charsKeyNames.add(CameraCharacteristics.TONEMAP_AVAILABLE_TONE_MAP_MODES.getName());
         charsKeyNames.add(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL.getName());
