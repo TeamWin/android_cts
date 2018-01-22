@@ -22,9 +22,7 @@
 static bool sIsAttached = false;
 
 jint
-Agent_OnAttach(JavaVM* vm,
-               char* options,
-               void* reserved) {
+Agent_OnAttach(JavaVM* vm, char* options, void* reserved) {
     if (options != NULL && options[0] == 'a') {
         sIsAttached = true;
         return JNI_OK;
@@ -33,9 +31,15 @@ Agent_OnAttach(JavaVM* vm,
     }
 }
 
-JNIEXPORT jboolean JNICALL
-Java_android_jvmti_attaching_cts_AttachingTest_isAttached(JNIEnv *env,
-                                                          jclass klass) {
+#ifndef AGENT_NR
+#error "Missing AGENT_NR"
+#endif
+#define CONCAT(A,B) A ## B
+#define EVAL(A,B) CONCAT(A,B)
+#define NAME(BASE) EVAL(BASE,AGENT_NR)
+
+JNIEXPORT jboolean JNICALL NAME(Java_android_jvmti_attaching_cts_AttachingTest_isAttached) (
+        JNIEnv* env, jclass klass) {
     if (sIsAttached) {
         return JNI_TRUE;
     } else {
