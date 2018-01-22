@@ -32,7 +32,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
         ctstestrunner \
         guava \
         junit \
-        cts-security-test-support-library
+        cts-security-test-support-library \
+        platformprotosnano
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
