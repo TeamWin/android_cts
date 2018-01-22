@@ -16,6 +16,8 @@
 
 package android.content.cts;
 
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+
 import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.timeout;
@@ -78,6 +80,7 @@ public class AccountAccessSameCertTest {
         assumeTrue(hasNotificationSupport());
 
         Intent intent = new Intent(getContext(), StubActivity.class);
+        intent.addFlags(FLAG_ACTIVITY_NEW_TASK);
         Activity activity = InstrumentationRegistry.getInstrumentation().startActivitySync(intent);
 
         AccountManager accountManager = getContext().getSystemService(AccountManager.class);
