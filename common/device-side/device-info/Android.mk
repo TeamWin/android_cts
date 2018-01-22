@@ -25,7 +25,9 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-test \
     junit
 
-LOCAL_JAVA_LIBRARIES := android.test.base framework-stub-for-compatibility-device-info
+LOCAL_JAVA_LIBRARIES := \
+    android.test.base.stubs \
+    framework-stub-for-compatibility-device-info
 
 LOCAL_MODULE := compatibility-device-info
 

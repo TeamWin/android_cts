@@ -43,14 +43,14 @@ include $(BUILD_CTS_PACKAGE)
 # CTS tests, so drop it into a library that other tests can use.
 include $(CLEAR_VARS)
 
-LOCAL_STATIC_JAVA_LIBRARIES := junit
-
-LOCAL_JAVA_LIBRARIES := android.test.base
+LOCAL_JAVA_LIBRARIES := android.test.base.stubs
 
 LOCAL_SRC_FILES := src/android/dpi/cts/DefaultManifestAttributesTest.java
 
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_MODULE := android.cts.dpi
+
+LOCAK_SDK_VERSION := current
 
 include $(BUILD_STATIC_JAVA_LIBRARY)

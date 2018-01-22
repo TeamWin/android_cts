@@ -45,7 +45,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util \
 	ctstestrunner \
 	mockito-target-minus-junit4 \
 	android-ex-camera2 \
-	CtsCameraUtils
+	CtsCameraUtils \
+	truth-prebuilt
 
 LOCAL_JNI_SHARED_LIBRARIES := \
 	libctscamera2_jni \
