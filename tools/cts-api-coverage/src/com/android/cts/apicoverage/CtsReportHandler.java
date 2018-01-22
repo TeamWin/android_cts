@@ -40,12 +40,11 @@ class CtsReportHandler extends DefaultHandler {
 
     private CtsReport.Builder mCtsReportBld;
     private CtsReport.TestPackage.Builder mTestPackageBld;
-    private CtsReport.TestPackage.TestSuite.Builder mModuleBld;
+    private CtsReport.TestPackage.TestSuite.Builder mTestSuiteBld;
     private CtsReport.TestPackage.TestSuite.TestCase.Builder mTestCaseBld;
 
     CtsReportHandler(String configFileName) {
         mCtsReportBld = CtsReport.newBuilder();
-        mTestPackageBld = CtsReport.TestPackage.newBuilder();
     }
 
     @Override
@@ -54,19 +53,25 @@ class CtsReportHandler extends DefaultHandler {
         super.startElement(uri, localName, name, attributes);
 
         try {
-        if (MODULE_TAG.equalsIgnoreCase(localName)) {
-            mModuleBld = CtsReport.TestPackage.TestSuite.newBuilder();
-            mModuleBld.setName(attributes.getValue(ABI_TAG)+","+attributes.getValue(NAME_TAG));
-        } else if (TEST_CASE_TAG.equalsIgnoreCase(localName)) {
-            mTestCaseBld = CtsReport.TestPackage.TestSuite.TestCase.newBuilder();
-            mTestCaseBld.setName(attributes.getValue(NAME_TAG));
-        } else if (TEST_TAG.equalsIgnoreCase(localName)) {
-            CtsReport.TestPackage.TestSuite.TestCase.Test.Builder testBld;
-            testBld = CtsReport.TestPackage.TestSuite.TestCase.Test.newBuilder();
-            testBld.setName(attributes.getValue(NAME_TAG));
-            testBld.setResult(attributes.getValue(RESULT_TAG));
-            mTestCaseBld.addTest(testBld);
-        }
+            if (MODULE_TAG.equalsIgnoreCase(localName)) {
+                mTestPackageBld = CtsReport.TestPackage.newBuilder();
+                mTestSuiteBld = CtsReport.TestPackage.TestSuite.newBuilder();
+                mTestSuiteBld.setName(attributes.getValue(NAME_TAG));
+                mTestPackageBld.setName(attributes.getValue(NAME_TAG));
+                // ABI is option fro a Report
+                if (null != attributes.getValue(NAME_TAG)) {
+                    mTestPackageBld.setAbi(attributes.getValue(ABI_TAG));
+                }
+            } else if (TEST_CASE_TAG.equalsIgnoreCase(localName)) {
+                mTestCaseBld = CtsReport.TestPackage.TestSuite.TestCase.newBuilder();
+                mTestCaseBld.setName(attributes.getValue(NAME_TAG));
+            } else if (TEST_TAG.equalsIgnoreCase(localName)) {
+                CtsReport.TestPackage.TestSuite.TestCase.Test.Builder testBld;
+                testBld = CtsReport.TestPackage.TestSuite.TestCase.Test.newBuilder();
+                testBld.setName(attributes.getValue(NAME_TAG));
+                testBld.setResult(attributes.getValue(RESULT_TAG));
+                mTestCaseBld.addTest(testBld);
+            }
         } catch (Exception ex) {
             System.err.println(localName + " " + name);
         }
@@ -77,16 +82,17 @@ class CtsReportHandler extends DefaultHandler {
         super.endElement(uri, localName, name);
 
         if (MODULE_TAG.equalsIgnoreCase(localName)) {
-            mTestPackageBld.addTestSuite(mModuleBld);
-            mModuleBld = null;
+            mTestPackageBld.addTestSuite(mTestSuiteBld);
+            mCtsReportBld.addTestPackage(mTestPackageBld);
+            mTestPackageBld = null;
+            mTestSuiteBld = null;
         } else if (TEST_CASE_TAG.equalsIgnoreCase(localName)) {
-            mModuleBld.addTestCase(mTestCaseBld);
+            mTestSuiteBld.addTestCase(mTestCaseBld);
             mTestCaseBld = null;
         }
     }
 
     public CtsReport getCtsReport() {
-        mCtsReportBld.addTestPackage(mTestPackageBld);
         return mCtsReportBld.build();
     }
 }

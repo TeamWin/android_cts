@@ -65,22 +65,31 @@ message TestSuite {
     message Package {
         string name = 1;
 
+        enum Type {
+            ANDROIDJUNIT = 0;
+            JAVAHOST = 1;
+            GTEST = 2;
+            DEQP = 3;
+            LIBCORE = 4;
+            DALVIK = 5;
+        }
+        Type type = 2;
+
         message Class {
             string name = 1;
             string type = 2;
             string super_class = 3;
             string interface = 4;
 
-            enum Type {
+            enum ClassType {
                 UNKNOWN = 0;
                 JUNIT3 = 1;
                 JUNIT4 = 2;
                 PARAMETERIZED = 3;
                 JAVAHOST = 4;
-                GTEST = 5;
-                DEQP = 6;
             }
-            Type test_type = 5;
+
+            ClassType class_type = 5;
             repeated Annotation annotations = 6;
 
             message Method {
@@ -104,8 +113,8 @@ message TestSuite {
             repeated Field fields = 8;
             string apk = 9;
         }
-        repeated Class classes = 2;
-        string op_codes = 3;
+        repeated Class classes = 3;
+        string op_codes = 4;
     }
     repeated Package packages = 2;
 }
@@ -161,5 +170,6 @@ message TestSuiteContent {
     string content_id = 5;
     // File Entries
     repeated Entry file_entries = 6;
+    repeated string known_failures = 7;
 }
 // [END messages]
