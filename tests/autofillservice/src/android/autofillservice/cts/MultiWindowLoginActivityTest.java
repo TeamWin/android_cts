@@ -76,14 +76,15 @@ public class MultiWindowLoginActivityTest extends AutoFillServiceTestCase {
     }
 
     /**
-     * Put activity1 in TOP and start new activity2 in BOTTOM, Note that activity1 might be
-     * recreated.
+     * Put activity1 in TOP, will be followed by amStartActivity()
      */
-    protected void splitWindowAndStartActivity(Activity activity1,
-                                           Class<? extends Activity> activity2) {
+    protected void splitWindow(Activity activity1) {
         mAm.setTaskWindowingModeSplitScreenPrimary(activity1.getTaskId(),
                 SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT, true, false, null, true);
 
+    }
+
+    protected void amStartActivity(Class<? extends Activity> activity2) {
         // it doesn't work using startActivity(intent), have to go through shell command.
         runAmStartActivity(activity2,
                 Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT);
@@ -122,9 +123,10 @@ public class MultiWindowLoginActivityTest extends AutoFillServiceTestCase {
         MultiWindowLoginActivity.expectNewInstance(false);
         MultiWindowEmptyActivity.expectNewInstance(true);
 
-        splitWindowAndStartActivity(mActivity, MultiWindowEmptyActivity.class);
-
+        splitWindow(mActivity);
         MultiWindowLoginActivity loginActivity = MultiWindowLoginActivity.waitNewInstance();
+
+        amStartActivity(MultiWindowEmptyActivity.class);
         MultiWindowEmptyActivity emptyActivity = MultiWindowEmptyActivity.waitNewInstance();
 
         // No dataset as LoginActivity loses window focus
