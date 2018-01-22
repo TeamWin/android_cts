@@ -440,19 +440,21 @@ public class DexAnalyzer {
         return null;
     }
 
-    private static class SkipIfNeeded implements Predicate<MemberRef> {
+    private static class SkipIfNeeded implements Predicate<Ref> {
         @Override
-        public boolean test(MemberRef ref) {
-            if (ref.getDefiningClass().endsWith("[]")) {
+        public boolean test(Ref ref) {
+            String className = (ref instanceof TypeRef) ?
+                    ((TypeRef)ref).getName() : ((MemberRef)ref).getDefiningClass();
+            if (className.endsWith("[]")) {
                 // Reference to array type is skipped
                 return true;
             }
-            if (ref.getDefiningClass().startsWith("dalvik.annotation.")
-                    || ref.getDefiningClass().startsWith("javax.annotation.")) {
+            if (className.startsWith("dalvik.annotation.")
+                    || className.startsWith("javax.annotation.")) {
                 // These annotation classes are not part of API but they are not explicitly used.
                 return true;
             }
-            if (ref.getDefiningClass().startsWith("java.lang.")) {
+            if (className.startsWith("java.lang.")) {
                 // core java libraries are exempted.
                 return true;
             }
@@ -465,7 +467,8 @@ public class DexAnalyzer {
     public Stream<TypeRef> collectUndefinedTypeReferences() {
         return typeReferences.values().stream()
                 .filter(ref -> !definedClassesInDex.containsKey(ref.getName())
-                        && !approvedApis.getDefinedClasses().containsKey(ref.getName()));
+                        && !approvedApis.getDefinedClasses().containsKey(ref.getName()))
+                .filter((new SkipIfNeeded()).negate());
     }
 
     public Stream<MethodRef> collectUndefinedMethodReferences() {
