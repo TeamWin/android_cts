@@ -866,6 +866,13 @@ abstract class TestUtils extends Assert {
 
     static KeyProtection getMinimalWorkingImportParametersForCipheringWith(
             String transformation, int purposes, boolean ivProvidedWhenEncrypting) {
+        return getMinimalWorkingImportParametersForCipheringWith(transformation, purposes,
+            ivProvidedWhenEncrypting, false);
+    }
+
+    static KeyProtection getMinimalWorkingImportParametersForCipheringWith(
+            String transformation, int purposes, boolean ivProvidedWhenEncrypting,
+            boolean isUserAuthRequired) {
         String keyAlgorithm = TestUtils.getCipherKeyAlgorithm(transformation);
         if (KeyProperties.KEY_ALGORITHM_AES.equalsIgnoreCase(keyAlgorithm)) {
             String encryptionPadding = TestUtils.getCipherEncryptionPadding(transformation);
@@ -882,6 +889,8 @@ abstract class TestUtils extends Assert {
                     .setBlockModes(blockMode)
                     .setEncryptionPaddings(encryptionPadding)
                     .setRandomizedEncryptionRequired(randomizedEncryptionRequired)
+                    .setUserAuthenticationRequired(isUserAuthRequired)
+                    .setUserAuthenticationValidityDurationSeconds(3600)
                     .build();
         } else if (KeyProperties.KEY_ALGORITHM_RSA.equalsIgnoreCase(keyAlgorithm)) {
             String digest = TestUtils.getCipherDigest(transformation);
@@ -893,6 +902,7 @@ abstract class TestUtils extends Assert {
                     .setDigests((digest != null) ? new String[] {digest} : EmptyArray.STRING)
                     .setEncryptionPaddings(encryptionPadding)
                     .setRandomizedEncryptionRequired(randomizedEncryptionRequired)
+                    .setUserAuthenticationRequired(isUserAuthRequired)
                     .build();
         } else {
             throw new IllegalArgumentException("Unsupported key algorithm: " + keyAlgorithm);
