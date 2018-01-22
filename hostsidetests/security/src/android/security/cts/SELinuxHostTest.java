@@ -719,6 +719,15 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     }
 
     /**
+     * Tests that all types on /vendor have the vendor_file_type attribute.
+     *
+     * @throws Exception
+     */
+    public void testVendorTypeViolators() throws Exception {
+        assertSepolicyTests("TestVendorTypeViolations", "/sepolicy_tests");
+    }
+
+    /**
      * Tests that all domains with entrypoints on /system have the coredomain
      * attribute, and that all domains with entrypoints on /vendor do not have the
      * coredomain attribute.
