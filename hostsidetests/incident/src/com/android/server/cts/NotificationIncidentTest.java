@@ -63,12 +63,15 @@ public class NotificationIncidentTest extends ProtoDumpTestCase {
                 record.getFlags();
                 record.getChannelId();
                 record.getSound();
-                record.getSoundUsage();
+                record.getAudioAttributes();
                 record.getCanVibrate();
                 record.getCanShowLight();
                 record.getGroupKey();
             }
-            assertTrue(State.SNOOZED != record.getState());
+            assertTrue(
+                NotificationRecordProto.State.getDescriptor()
+                        .getValues()
+                        .contains(record.getState().getValueDescriptor()));
         }
 
         assertTrue(found);
