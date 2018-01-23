@@ -58,4 +58,8 @@ public class ScopedDirectoryAccessTest extends DocumentsTestCase {
     public void testDeniesOnceForAll() throws Exception {
         runDeviceTests(CLIENT_PKG, ".ScopedDirectoryAccessClientTest", "testDeniesOnceForAll");
     }
+
+    public void testResetDoNotAskAgain() throws Exception {
+        runDeviceTests(CLIENT_PKG, ".ScopedDirectoryAccessClientTest", "testResetDoNotAskAgain");
+    }
 }
