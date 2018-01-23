@@ -52,6 +52,7 @@ import android.util.Pair;
 import android.view.View;
 import android.view.ViewStructure.HtmlInfo;
 import android.view.autofill.AutofillId;
+import android.view.autofill.AutofillManager.AutofillCallback;
 import android.view.autofill.AutofillValue;
 import android.webkit.WebView;
 
@@ -751,32 +752,11 @@ final class Helper {
     }
 
     /**
-     * Asserts that there is no session left in the service.
-     */
-    public static void assertNoDanglingSessions() {
-        final String result = listSessions();
-        assertWithMessage("Dangling sessions ('%s'): %s'", CMD_LIST_SESSIONS, result).that(result)
-                .isEmpty();
-    }
-
-    public static String listSessions() {
-        return runShellCommand(CMD_LIST_SESSIONS);
-    }
-
-    /**
      * Asserts that there is a pending session for the given package.
      */
     public static void assertHasSessions(String packageName) {
         final String result = runShellCommand(CMD_LIST_SESSIONS);
         assertThat(result).contains(packageName);
-    }
-
-    /**
-     * Destroys all sessions.
-     */
-    public static void destroyAllSessions() {
-        runShellCommand("cmd autofill destroy sessions");
-        assertNoDanglingSessions();
     }
 
     /**
@@ -841,7 +821,6 @@ final class Helper {
         disableAutofillService(getContext(), SERVICE_NAME);
         InstrumentedAutoFillService.setIgnoreUnexpectedRequests(true);
 
-        destroyAllSessions();
         InstrumentedAutoFillService.resetStaticState();
         AuthenticationActivity.resetStaticState();
     }
@@ -1117,6 +1096,19 @@ final class Helper {
     public static void assertHasFlags(int actualFlags, int expectedFlags) {
         assertWithMessage("Flags %s not in %s", expectedFlags, actualFlags)
                 .that(actualFlags & expectedFlags).isEqualTo(expectedFlags);
+    }
+
+    public static String callbackEventAsString(int event) {
+        switch (event) {
+            case AutofillCallback.EVENT_INPUT_HIDDEN:
+                return "HIDDEN";
+            case AutofillCallback.EVENT_INPUT_SHOWN:
+                return "SHOWN";
+            case AutofillCallback.EVENT_INPUT_UNAVAILABLE:
+                return "UNAVAILABLE";
+            default:
+                return "UNKNOWN:" + event;
+        }
     }
 
     private Helper() {

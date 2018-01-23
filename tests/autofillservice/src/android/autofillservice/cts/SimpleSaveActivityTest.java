@@ -291,9 +291,6 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
 
         // Make sure Save UI for 1st session was canceled....
         mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
-
-        //... and 2nd session canceled as well.
-        Helper.assertNoDanglingSessions();
     }
 
     @Test
@@ -315,7 +312,6 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
 
         // Cancel session.
         mActivity.getAutofillManager().cancel();
-        Helper.assertNoDanglingSessions();
 
         // Trigger save.
         mActivity.syncRunOnUiThread(() -> {
@@ -473,7 +469,6 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         // Go home, you are drunk!
         mUiBot.pressHome();
         mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
-        Helper.assertNoDanglingSessions();
 
         // Prepare the response for the next session, which will be automatically triggered
         // when the activity is brought back.
@@ -630,15 +625,11 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
                 mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_GENERIC);
                 final SaveRequest saveRequest = sReplier.getNextSaveRequest();
                 assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_INPUT), "108");
-                Helper.assertNoDanglingSessions();
                 break;
             default:
                 throw new IllegalArgumentException("invalid action: " + action);
         }
         mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
-
-        // Make sure previous session was finished.
-        Helper.assertNoDanglingSessions();
 
         // Now triggers a new session and do business as usual...
         sReplier.addResponse(new CannedFillResponse.Builder()

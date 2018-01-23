@@ -16,6 +16,7 @@
 
 package android.autofillservice.cts;
 
+import static android.autofillservice.cts.Helper.callbackEventAsString;
 import static android.autofillservice.cts.Timeouts.CONNECTION_TIMEOUT;
 
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -36,15 +37,18 @@ final class MyAutofillCallback extends AutofillCallback {
     private static final String TAG = "MyAutofillCallback";
     private final BlockingQueue<MyEvent> mEvents = new LinkedBlockingQueue<>();
 
+    public static final Timeout MY_TIMEOUT = CONNECTION_TIMEOUT;
+
     @Override
     public void onAutofillEvent(View view, int event) {
-        Log.v(TAG, "onAutofillEvent: view=" + view + ", event=" + event);
+        Log.v(TAG, "onAutofillEvent: view=" + view + ", event=" + callbackEventAsString(event));
         mEvents.offer(new MyEvent(view, event));
     }
 
     @Override
     public void onAutofillEvent(View view, int childId, int event) {
-        Log.v(TAG, "onAutofillEvent: view=" + view + ", child=" + childId + ", event=" + event);
+        Log.v(TAG, "onAutofillEvent: view=" + view + ", child=" + childId
+                + ", event=" + callbackEventAsString(event));
         mEvents.offer(new MyEvent(view, childId, event));
     }
 
@@ -74,7 +78,8 @@ final class MyAutofillCallback extends AutofillCallback {
      * Used to assert there is no event left behind.
      */
     void assertNumberUnhandledEvents(int expected) {
-        assertWithMessage("Invalid number of events left").that(mEvents.size()).isEqualTo(expected);
+        assertWithMessage("Invalid number of events left: %s", mEvents).that(mEvents.size())
+                .isEqualTo(expected);
     }
 
     /**
@@ -168,7 +173,7 @@ final class MyAutofillCallback extends AutofillCallback {
 
         @Override
         public String toString() {
-            return event + ": " + view + " (childId: " + childId + ")";
+            return callbackEventAsString(event) + ": " + view + " (childId: " + childId + ")";
         }
     }
 }

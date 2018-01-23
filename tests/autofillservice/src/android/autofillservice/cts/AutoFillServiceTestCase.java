@@ -119,7 +119,8 @@ public abstract class AutoFillServiceTestCase {
     }
 
     @Before
-    public void reset() {
+    public void cleanupState() {
+        Helper.preTestCleanup();
         sReplier.reset();
     }
 
