@@ -110,6 +110,10 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     private static final String PRINTING_APP_PKG = "com.android.cts.devicepolicy.printingapp";
     private static final String PRINTING_APP_APK = "CtsDevicePolicyPrintingApp.apk";
 
+    private static final String METERED_DATA_APP_PKG
+            = "com.android.cts.devicepolicy.meteredtestapp";
+    private static final String METERED_DATA_APP_APK = "CtsMeteredDataTestApp.apk";
+
     private static final String ENABLED_NOTIFICATION_POLICY_ACCESS_PACKAGES
             = "enabled_notification_policy_access_packages";
 
@@ -148,6 +152,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             getDevice().uninstallPackage(CUSTOMIZATION_APP_PKG);
             getDevice().uninstallPackage(AUTOFILL_APP_PKG);
             getDevice().uninstallPackage(PRINTING_APP_PKG);
+            getDevice().uninstallPackage(METERED_DATA_APP_PKG);
             getDevice().uninstallPackage(TEST_APP_PKG);
 
             // Press the HOME key to close any alart dialog that may be shown.
@@ -653,6 +658,15 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
         executeDeviceTestMethod(".AutofillRestrictionsTest",
                 "testDisallowAutofill_allowed");
+    }
+
+    public void testSetMeteredDataDisabled() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        installAppAsUser(METERED_DATA_APP_APK, mUserId);
+
+        executeDeviceTestClass(".MeteredDataRestrictionTest");
     }
 
     public void testPackageInstallUserRestrictions() throws Exception {
