@@ -18,13 +18,19 @@ package com.android.cts.verifier.managedprovisioning;
 
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_ADMIN_EXTRAS_BUNDLE;
 
+import android.app.Service;
 import android.app.admin.DeviceAdminReceiver;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
+import android.os.IBinder;
 import android.os.PersistableBundle;
+import android.os.Process;
+import android.os.RemoteException;
+import android.os.UserHandle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
@@ -32,6 +38,7 @@ import com.android.cts.verifier.R;
 import com.android.cts.verifier.location.LocationListenerActivity;
 
 import java.util.Collections;
+import java.util.function.Consumer;
 
 /**
  * Profile owner receiver for BYOD flow test.
@@ -101,10 +108,18 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
         Log.i(TAG, "Device admin enabled");
         if (intent.getBooleanExtra(EXTRA_MANAGED_USER_TEST, false)) {
             DevicePolicyManager dpm = context.getSystemService(DevicePolicyManager.class);
-            ComponentName admin = DeviceAdminTestReceiver.getReceiverComponentName();
+            ComponentName admin = getReceiverComponentName();
             dpm.setAffiliationIds(admin,
                     Collections.singleton(DeviceAdminTestReceiver.AFFILIATION_ID));
             context.startActivity(new Intent(context, ManagedUserPositiveTestActivity.class));
+
+            bindPrimaryUserService(context, iCrossUserService -> {
+                try {
+                    iCrossUserService.switchUser(Process.myUserHandle());
+                } catch (RemoteException re) {
+                    Log.e(TAG, "Error when calling primary user", re);
+                }
+            });
         }
     }
 
@@ -174,6 +189,45 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
                 EXTRA_PROVISIONING_ADMIN_EXTRAS_BUNDLE);
         if (bundle != null && bundle.getBoolean(KEY_BUNDLE_WIPE_IMMEDIATELY, false)) {
             getManager(context).wipeData(0);
+        }
+    }
+
+    private void bindPrimaryUserService(Context context, Consumer<ICrossUserService> consumer) {
+        DevicePolicyManager devicePolicyManager = context.getSystemService(
+                DevicePolicyManager.class);
+        UserHandle primaryUser = devicePolicyManager.getBindDeviceAdminTargetUsers(
+                getReceiverComponentName()).get(0);
+
+        Log.d(TAG, "Calling primary user: " + primaryUser);
+        final ServiceConnection serviceConnection = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {
+                Log.d(TAG, "onServiceConnected is called");
+                consumer.accept(ICrossUserService.Stub.asInterface(service));
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+                Log.d(TAG, "onServiceDisconnected is called");
+            }
+        };
+        final Intent serviceIntent = new Intent(context, PrimaryUserService.class);
+        devicePolicyManager.bindDeviceAdminServiceAsUser(getReceiverComponentName(), serviceIntent,
+                serviceConnection, Context.BIND_AUTO_CREATE, primaryUser);
+    }
+
+    public static final class PrimaryUserService extends Service {
+        private final ICrossUserService.Stub mBinder = new ICrossUserService.Stub() {
+            public void switchUser(UserHandle userHandle) {
+                Log.d(TAG, "switchUser: " + userHandle);
+                getSystemService(DevicePolicyManager.class).switchUser(getReceiverComponentName(),
+                        userHandle);
+            }
+        };
+
+        @Override
+        public IBinder onBind(Intent intent) {
+            return mBinder;
         }
     }
 }

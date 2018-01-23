@@ -2353,7 +2353,6 @@
                 <action android:name="android.intent.action.MAIN" />
                 <action android:name="com.android.cts.verifier.managedprovisioning.action.CHECK_AFFILIATED_PROFILE_OWNER" />
                 <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
         </activity>
 
@@ -2748,6 +2747,10 @@
                 <action android:name="android.app.action.PROFILE_PROVISIONING_COMPLETE"/>
             </intent-filter>
         </receiver>
+        <service android:name=".managedprovisioning.DeviceAdminTestReceiver$PrimaryUserService"
+                 android:exported="true"
+                 android:permission="android.permission.BIND_DEVICE_ADMIN">
+        </service>
 
 <!-- Comment out until b/28406044 is addressed
         <activity android:name=".jobscheduler.IdleConstraintTestActivity" android:label="@string/js_idle_test">
