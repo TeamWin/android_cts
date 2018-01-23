@@ -139,6 +139,12 @@ public final class MockIme extends InputMethodService {
                         getCurrentInputConnection().reportLanguageHint(languageHint);
                         break;
                     }
+                    case "setBackDisposition": {
+                        final int backDisposition =
+                                command.getExtras().getInt("backDisposition");
+                        setBackDisposition(backDisposition);
+                        break;
+                    }
                 }
             }
         });
