@@ -988,22 +988,14 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                     int sequenceId = mCameraSession.setRepeatingRequest(previewRequest.build(),
                             previewListener, mHandler);
 
-                    // Verify that AF scene change is NOT_DETECTED or DETECTED in CONTINUOUS_VIDEO
-                    // and CONTINUOUS_PICTURE AF modes, and NOT_DETECTED in other AF modes.
+                    // Verify that AF scene change is NOT_DETECTED or DETECTED.
                     for (int i = 0; i < NUM_FRAMES_VERIFIED; i++) {
                         TotalCaptureResult result =
                             previewListener.getTotalCaptureResult(CAPTURE_TIMEOUT);
-                        if (afMode == CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO ||
-                                afMode == CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE) {
-                            mCollector.expectKeyValueIsIn(result,
-                                    CaptureResult.CONTROL_AF_SCENE_CHANGE,
-                                    CaptureResult.CONTROL_AF_SCENE_CHANGE_DETECTED,
-                                    CaptureResult.CONTROL_AF_SCENE_CHANGE_NOT_DETECTED);
-                        } else {
-                            mCollector.expectKeyValueEquals(result,
-                                    CaptureResult.CONTROL_AF_SCENE_CHANGE,
-                                    CaptureResult.CONTROL_AF_SCENE_CHANGE_NOT_DETECTED);
-                        }
+                        mCollector.expectKeyValueIsIn(result,
+                                CaptureResult.CONTROL_AF_SCENE_CHANGE,
+                                CaptureResult.CONTROL_AF_SCENE_CHANGE_DETECTED,
+                                CaptureResult.CONTROL_AF_SCENE_CHANGE_NOT_DETECTED);
                     }
 
                     mCameraSession.stopRepeating();
