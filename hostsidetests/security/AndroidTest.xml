@@ -86,7 +86,6 @@
         <!-- Bulletin 2017-11 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
 
-
         <option name="append-bitness" value="true" />
     </target_preparer>
 
