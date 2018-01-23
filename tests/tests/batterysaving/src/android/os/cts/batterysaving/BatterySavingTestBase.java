@@ -17,7 +17,9 @@ package android.os.cts.batterysaving;
 
 import static junit.framework.Assert.fail;
 
+import android.app.KeyguardManager;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.os.BatteryManager;
 import android.os.ParcelFileDescriptor;
 import android.os.PowerManager;
@@ -27,6 +29,7 @@ import android.support.test.InstrumentationRegistry;
 import android.util.Log;
 
 import org.junit.After;
+import org.junit.Before;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -38,11 +41,17 @@ public class BatterySavingTestBase {
 
     public static final boolean DEBUG = true;
 
-    private static final int DEFAULT_TIMEOUT_SECONDS = 30;
+    public static final int DEFAULT_TIMEOUT_SECONDS = 30;
+
+    @Before
+    public final void resetDumpsysBatteryBeforeTest() throws Exception {
+        turnOnScreen(true);
+    }
 
     @After
     public final void resetDumpsysBatteryAfterTest() throws Exception {
         runDumpsysBatteryReset();
+        turnOnScreen(true);
     }
 
     @FunctionalInterface
@@ -50,6 +59,10 @@ public class BatterySavingTestBase {
         boolean getAsBoolean() throws Exception;
     }
 
+    @FunctionalInterface
+    public interface RunnableWithThrow {
+        void run() throws Exception;
+    }
 
     public String getLogTag() {
         return TAG;
@@ -118,11 +131,15 @@ public class BatterySavingTestBase {
         return runCommand(command, null);
     }
 
+    /** Run a command and return the result. */
+    public String runCommandWithNoOutput(String command) {
+        return runCommand(command, (output) -> output.length() == 0);
+    }
+
     /** Run "cmd settings put" */
     private void putSetting(String scope, String key, String value) {
         // Hmm, technically we should escape a value, but if I do like '1', it won't work. ??
-        runCommand("settings put " + scope + " " + key + " " + value,
-                (output) -> output.length() == 0);
+        runCommandWithNoOutput("settings put " + scope + " " + key + " " + value);
     }
 
     /** Run "cmd settings put global" */
@@ -130,9 +147,14 @@ public class BatterySavingTestBase {
         putSetting("global", key, value);
     }
 
+    /** Run "cmd settings put secure" */
+    public void putSecureSetting(String key, String value) {
+        putSetting("secure", key, value);
+    }
+
     /** Make the target device think it's off charger. */
     public void runDumpsysBatteryUnplug() throws Exception {
-        runCommand("dumpsys battery unplug", (output) -> output.length() == 0);
+        runCommandWithNoOutput("dumpsys battery unplug");
         waitUntil("Device still charging", () -> !getBatteryManager().isCharging());
 
         Log.d(TAG, "Battery UNPLUGGED");
@@ -140,19 +162,19 @@ public class BatterySavingTestBase {
 
     /** Reset {@link #runDumpsysBatteryUnplug}.  */
     public void runDumpsysBatteryReset() throws Exception {
-        runCommand("dumpsys battery reset", (output) -> output.length() == 0);
+        runCommandWithNoOutput("dumpsys battery reset");
 
         Log.d(TAG, "Battery RESET");
     }
 
     /** Run "adb shell am make-uid-idle PACKAGE" */
     public void runMakeUidIdle(String packageName) {
-        runCommand("am make-uid-idle " + packageName, (output) -> output.length() == 0);
+        runCommandWithNoOutput("am make-uid-idle " + packageName);
     }
 
     /** Run "adb shell am kill PACKAGE" */
     public void runKill(String packageName) {
-        runCommand("am kill " + packageName, (output) -> output.length() == 0);
+        runCommandWithNoOutput("am kill " + packageName);
     }
 
     /**
@@ -199,12 +221,25 @@ public class BatterySavingTestBase {
         return InstrumentationRegistry.getContext();
     }
 
+    public PackageManager getPackageManager() {
+        return getContext().getPackageManager();
+    }
+
     public PowerManager getPowerManager() {
         return getContext().getSystemService(PowerManager.class);
     }
 
     public BatteryManager getBatteryManager() {
         return getContext().getSystemService(BatteryManager.class);
+    }
+
+    public boolean hasFeatures(String... features) {
+        for (String feature : features) {
+            if (!getPackageManager().hasSystemFeature(feature)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -227,5 +262,16 @@ public class BatterySavingTestBase {
         }
 
         Log.d(TAG, "Battery saver turned " + (enabled ? "ON" : "OFF"));
+    }
+
+    public void turnOnScreen(boolean on) throws Exception {
+        if (on) {
+            runCommandWithNoOutput("input keyevent KEYCODE_WAKEUP");
+            waitUntil("Device still not interactive", () -> getPowerManager().isInteractive());
+
+        } else {
+            runCommandWithNoOutput("input keyevent KEYCODE_SLEEP");
+            waitUntil("Device still interactive", () -> !getPowerManager().isInteractive());
+        }
     }
 }
