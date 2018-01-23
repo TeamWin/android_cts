@@ -3579,6 +3579,51 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="managed_user_check_managed_user_test">Check affiliated profile owner</string>
     <string name="managed_user_incorrect_managed_user">Missing or incorrect affiliated profile owner: CTSVerifier is not affilaited PO!</string>
 
+    <string name="device_owner_disallow_user_switch">Disallow user switch</string>
+    <string name="device_owner_disallow_user_switch_info">
+        Please press the Set restriction button to set the user restriction.
+        Then press Go to open the Settings, and manually find and open user settings section.
+        Confirm that:\n
+        \n
+        - Trying to switch to guest users triggers a support message.\n
+        - Trying to switch to secondary users triggers a support message.\n
+        \n
+        In additional, if quick settings is available, confirm that user switcher is hidden or
+        disabled.
+        Use the Back button to return to this page.
+    </string>
+
+    <string name="device_owner_user_switcher_message">User switcher message</string>
+    <string name="device_owner_user_switcher_message_info">
+        1. Please press the \'With user switcher message\' button to set the user switcher message.
+        You will then be automatically switched to a secondary user. If a user switcher dialog shows
+        up, it should read \'Start user session\'. Wait until you are automatically switched back to
+        primary, if a user switcher dialog shows up, it should read \'End user session\'.
+
+        \n
+        2. Please press the \'Without user switcher message\' button to clear the user switcher
+        message. You will then be automatically switched to a secondary user. If a user switcher
+        dialog shows up, it should read \'Switching to managed user\'. Wait until you are
+        automatically switched back to primary, if a user switcher dialog shows up, it should read
+        \'Switching to (name of primary user)\'.
+    </string>
+    <string name="device_owner_with_user_switcher_message">With user switcher message</string>
+    <string name="device_owner_without_user_switcher_message">Without user switcher message</string>
+
+    <string name="device_owner_enable_logout">Logout</string>
+    <string name="device_owner_enable_logout_info">
+        Please press the Go button to enable logout. You will then be switched to a newly created
+        user.
+        Look for a way to logout the current user without unlocking the lock screen. The control is
+        usually named \'End session\'.\n
+        The location may vary depending on manufacturer, typical locations are:\n
+        - In power button menu by long pressing power button.\n
+        - On the lock screen.\n
+        \n
+        When successfully logout and switched back to primary user, confirm that the logout control
+        is not available in primary user.
+    </string>
+
     <!-- Strings for JobScheduler Tests -->
     <string name="js_test_description">This test is mostly automated, but requires some user interaction. You can pass this test once the list items below are checked.</string>
 

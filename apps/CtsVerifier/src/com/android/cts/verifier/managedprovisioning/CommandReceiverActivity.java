@@ -111,6 +111,10 @@ public class CommandReceiverActivity extends Activity {
     public static final String COMMAND_SET_DEFAULT_IME = "set-default-ime";
     public static final String COMMAND_CLEAR_DEFAULT_IME = "clear-default-ime";
     public static final String COMMAND_CREATE_MANAGED_USER = "create-managed-user";
+    public static final String COMMAND_WITH_USER_SWITCHER_MESSAGE = "with-user-switcher-message";
+    public static final String COMMAND_WITHOUT_USER_SWITCHER_MESSAGE =
+            "without-user-switcher-message";
+    public static final String COMMAND_ENABLE_LOGOUT = "enable-logout";
 
     public static final String EXTRA_USER_RESTRICTION =
             "com.android.cts.verifier.managedprovisioning.extra.USER_RESTRICTION";
@@ -486,6 +490,22 @@ public class CommandReceiverActivity extends Activity {
                             Collections.singleton(DeviceAdminTestReceiver.AFFILIATION_ID));
                     mDpm.startUserInBackground(mAdmin, userHandle);
                 } break;
+                case COMMAND_WITH_USER_SWITCHER_MESSAGE: {
+                    createAndSwitchUserWithMessage("Start user session", "End user session");
+                } break;
+                case COMMAND_WITHOUT_USER_SWITCHER_MESSAGE: {
+                    createAndSwitchUserWithMessage(null, null);
+                } break;
+                case COMMAND_ENABLE_LOGOUT: {
+                    if (!mDpm.isDeviceOwnerApp(getPackageName())) {
+                        return;
+                    }
+                    mDpm.addUserRestriction(mAdmin, UserManager.DISALLOW_USER_SWITCH);
+                    mDpm.setLogoutEnabled(mAdmin, true);
+                    UserHandle userHandle = mDpm.createAndManageUser(mAdmin, "managed user", mAdmin,
+                            null, SKIP_SETUP_WIZARD | MAKE_USER_EPHEMERAL);
+                    mDpm.switchUser(mAdmin, userHandle);
+                } break;
             }
         } catch (Exception e) {
             Log.e(TAG, "Failed to execute command: " + intent, e);
@@ -533,6 +553,7 @@ public class CommandReceiverActivity extends Activity {
         mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_CONFIG_BLUETOOTH);
         mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_CONFIG_VPN);
         mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_DATA_ROAMING);
+        mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_USER_SWITCH);
 
         mDpm.setDeviceOwnerLockScreenInfo(mAdmin, null);
         mDpm.setKeyguardDisabled(mAdmin, false);
@@ -554,6 +575,10 @@ public class CommandReceiverActivity extends Activity {
         mDpm.uninstallCaCert(mAdmin, TEST_CA.getBytes());
         mDpm.setMaximumFailedPasswordsForWipe(mAdmin, 0);
         mDpm.setSecureSetting(mAdmin, Settings.Secure.DEFAULT_INPUT_METHOD, null);
+        mDpm.setAffiliationIds(mAdmin, Collections.emptySet());
+        mDpm.setStartUserSessionMessage(mAdmin, null);
+        mDpm.setEndUserSessionMessage(mAdmin, null);
+        mDpm.setLogoutEnabled(mAdmin, false);
 
         uninstallHelperPackage();
         removeManagedProfile();
@@ -610,5 +635,23 @@ public class CommandReceiverActivity extends Activity {
 
     private boolean isSystemInputMethodInfo(InputMethodInfo inputMethodInfo) {
         return inputMethodInfo.getServiceInfo().applicationInfo.isSystemApp();
+    }
+
+    private void createAndSwitchUserWithMessage(String startUserSessionMessage,
+            String endUserSessionMessage) {
+        if (!mDpm.isDeviceOwnerApp(getPackageName())) {
+            return;
+        }
+        mDpm.setStartUserSessionMessage(mAdmin, startUserSessionMessage);
+        mDpm.setEndUserSessionMessage(mAdmin, endUserSessionMessage);
+        mDpm.setAffiliationIds(mAdmin,
+                Collections.singleton(DeviceAdminTestReceiver.AFFILIATION_ID));
+
+        PersistableBundle extras = new PersistableBundle();
+        extras.putBoolean(DeviceAdminTestReceiver.EXTRA_LOGOUT_ON_START, true);
+        UserHandle userHandle = mDpm.createAndManageUser(mAdmin, "managed user", mAdmin,
+                extras,
+                SKIP_SETUP_WIZARD | MAKE_USER_EPHEMERAL);
+        mDpm.switchUser(mAdmin, userHandle);
     }
 }
