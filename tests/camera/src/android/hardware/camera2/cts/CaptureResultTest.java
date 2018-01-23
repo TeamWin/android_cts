@@ -426,6 +426,10 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
                                 result.get(CaptureResult.NOISE_REDUCTION_MODE));
                     } else if (key.equals(CaptureResult.REQUEST_PIPELINE_DEPTH)) {
 
+                    } else if (key.equals(CaptureResult.STATISTICS_OIS_DATA_MODE)) {
+                        mCollector.expectEquals(msg,
+                                requestBuilder.get(CaptureRequest.STATISTICS_OIS_DATA_MODE),
+                                result.get(CaptureResult.STATISTICS_OIS_DATA_MODE));
                     } else {
                         // Only do non-null check for the rest of keys.
                         mCollector.expectKeyValueNotNull(failMsg, result, key);
@@ -537,6 +541,13 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
 
         if (!mStaticInfo.isAfSceneChangeSupported()) {
             waiverKeys.add(CaptureResult.CONTROL_AF_SCENE_CHANGE);
+        }
+
+        if (!mStaticInfo.isOisDataModeSupported()) {
+            waiverKeys.add(CaptureResult.STATISTICS_OIS_DATA_MODE);
+            waiverKeys.add(CaptureResult.STATISTICS_OIS_TIMESTAMPS);
+            waiverKeys.add(CaptureResult.STATISTICS_OIS_X_SHIFTS);
+            waiverKeys.add(CaptureResult.STATISTICS_OIS_Y_SHIFTS);
         }
 
         if (mStaticInfo.isHardwareLevelAtLeastFull()) {
@@ -818,6 +829,10 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
         resultKeys.add(CaptureResult.STATISTICS_SCENE_FLICKER);
         resultKeys.add(CaptureResult.STATISTICS_HOT_PIXEL_MAP);
         resultKeys.add(CaptureResult.STATISTICS_LENS_SHADING_MAP_MODE);
+        resultKeys.add(CaptureResult.STATISTICS_OIS_DATA_MODE);
+        resultKeys.add(CaptureResult.STATISTICS_OIS_TIMESTAMPS);
+        resultKeys.add(CaptureResult.STATISTICS_OIS_X_SHIFTS);
+        resultKeys.add(CaptureResult.STATISTICS_OIS_Y_SHIFTS);
         resultKeys.add(CaptureResult.TONEMAP_CURVE);
         resultKeys.add(CaptureResult.TONEMAP_MODE);
         resultKeys.add(CaptureResult.TONEMAP_GAMMA);

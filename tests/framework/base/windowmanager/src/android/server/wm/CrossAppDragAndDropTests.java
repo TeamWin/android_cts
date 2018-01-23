@@ -35,7 +35,9 @@ import android.content.Context;
 import android.graphics.Point;
 import android.os.RemoteException;
 import android.os.SystemClock;
+import android.platform.test.annotations.Presubmit;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.FlakyTest;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 
@@ -50,7 +52,8 @@ import java.util.regex.Pattern;
  * Build: mmma -j32 cts/tests/framework/base
  * Run: cts/tests/framework/base/activitymanager/util/run-test CtsWindowManagerDeviceTestCases android.server.wm.CrossAppDragAndDropTests
  */
-//@Presubmit b/68038788
+@Presubmit
+@FlakyTest(bugId = 65739235)
 public class CrossAppDragAndDropTests {
     private static final String TAG = "CrossAppDragAndDrop";
 

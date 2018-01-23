@@ -17,14 +17,13 @@ package android.slice.cts;
 import static java.util.stream.Collectors.toList;
 
 import android.app.PendingIntent;
+import android.app.slice.Slice;
+import android.app.slice.Slice.Builder;
 import android.app.slice.SliceSpec;
-import android.content.ContentProvider;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.graphics.drawable.Icon;
 import android.net.Uri;
-import android.app.slice.Slice;
-import android.app.slice.Slice.Builder;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -45,8 +44,12 @@ public class SliceProvider extends android.app.slice.SliceProvider {
             "/int",
             "/timestamp",
             "/hints",
-            "/bundle"
+            "/bundle",
+            "/spec",
     };
+
+    public static final String SPEC_TYPE = "android.cts.SliceType";
+    public static final int SPEC_REV = 4;
 
     @Override
     public boolean onCreate() {
@@ -100,6 +103,10 @@ public class SliceProvider extends android.app.slice.SliceProvider {
                 Bundle b1 = new Bundle();
                 b1.putParcelable("a", new TestParcel());
                 return new Slice.Builder(sliceUri).addBundle(b1, "bundle").build();
+            case "/spec":
+                return new Slice.Builder(sliceUri)
+                        .setSpec(new SliceSpec(SPEC_TYPE, SPEC_REV))
+                        .build();
         }
         return new Slice.Builder(sliceUri).build();
     }

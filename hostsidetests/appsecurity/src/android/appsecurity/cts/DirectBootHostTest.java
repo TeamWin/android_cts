@@ -42,12 +42,11 @@ public class DirectBootHostTest extends BaseHostJUnit4Test {
     private static final String TAG = "DirectBootHostTest";
 
     private static final String PKG = "com.android.cts.encryptionapp";
-    private static final String CLASS = ".EncryptionAppTest";
+    private static final String CLASS = PKG + ".EncryptionAppTest";
     private static final String APK = "CtsEncryptionApp.apk";
 
     private static final String OTHER_APK = "CtsSplitApp.apk";
     private static final String OTHER_PKG = "com.android.cts.splitapp";
-    private static final String OTHER_CLASS = ".SplitAppTest";
 
     private static final String MODE_NATIVE = "native";
     private static final String MODE_EMULATED = "emulated";

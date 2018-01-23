@@ -988,22 +988,14 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                     int sequenceId = mCameraSession.setRepeatingRequest(previewRequest.build(),
                             previewListener, mHandler);
 
-                    // Verify that AF scene change is NOT_DETECTED or DETECTED in CONTINUOUS_VIDEO
-                    // and CONTINUOUS_PICTURE AF modes, and NOT_DETECTED in other AF modes.
+                    // Verify that AF scene change is NOT_DETECTED or DETECTED.
                     for (int i = 0; i < NUM_FRAMES_VERIFIED; i++) {
                         TotalCaptureResult result =
                             previewListener.getTotalCaptureResult(CAPTURE_TIMEOUT);
-                        if (afMode == CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO ||
-                                afMode == CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE) {
-                            mCollector.expectKeyValueIsIn(result,
-                                    CaptureResult.CONTROL_AF_SCENE_CHANGE,
-                                    CaptureResult.CONTROL_AF_SCENE_CHANGE_DETECTED,
-                                    CaptureResult.CONTROL_AF_SCENE_CHANGE_NOT_DETECTED);
-                        } else {
-                            mCollector.expectKeyValueEquals(result,
-                                    CaptureResult.CONTROL_AF_SCENE_CHANGE,
-                                    CaptureResult.CONTROL_AF_SCENE_CHANGE_NOT_DETECTED);
-                        }
+                        mCollector.expectKeyValueIsIn(result,
+                                CaptureResult.CONTROL_AF_SCENE_CHANGE,
+                                CaptureResult.CONTROL_AF_SCENE_CHANGE_DETECTED,
+                                CaptureResult.CONTROL_AF_SCENE_CHANGE_NOT_DETECTED);
                     }
 
                     mCameraSession.stopRepeating();
@@ -1016,6 +1008,83 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         }
     }
 
+    public void testOisDataMode() throws Exception {
+        final int NUM_FRAMES_VERIFIED = 3;
+
+        for (String id : mCameraIds) {
+            Log.i(TAG, String.format("Testing Camera %s for OIS mode", id));
+
+            StaticMetadata staticInfo =
+                    new StaticMetadata(mCameraManager.getCameraCharacteristics(id));
+            if (!staticInfo.isOisDataModeSupported()) {
+                continue;
+            }
+
+            openDevice(id);
+
+            try {
+                SurfaceTexture preview = new SurfaceTexture(/*random int*/ 1);
+                Surface previewSurface = new Surface(preview);
+
+                CaptureRequest.Builder previewRequest = preparePreviewTestSession(preview);
+                SimpleCaptureCallback previewListener = new CameraTestUtils.SimpleCaptureCallback();
+
+                int[] availableOisDataModes = staticInfo.getCharacteristics().get(
+                        CameraCharacteristics.STATISTICS_INFO_AVAILABLE_OIS_DATA_MODES);
+
+                // Test each OIS data mode
+                for (int oisMode : availableOisDataModes) {
+                    previewRequest.set(CaptureRequest.STATISTICS_OIS_DATA_MODE, oisMode);
+
+                    int sequenceId = mCameraSession.setRepeatingRequest(previewRequest.build(),
+                            previewListener, mHandler);
+
+                    // Check OIS data in each mode.
+                    for (int i = 0; i < NUM_FRAMES_VERIFIED; i++) {
+                        TotalCaptureResult result =
+                            previewListener.getTotalCaptureResult(CAPTURE_TIMEOUT);
+
+                        long[] oisTimestamps = result.get(CaptureResult.STATISTICS_OIS_TIMESTAMPS);
+                        float[] oisXShifts = result.get(CaptureResult.STATISTICS_OIS_X_SHIFTS);
+                        float[] oisYShifts = result.get(CaptureResult.STATISTICS_OIS_Y_SHIFTS);
+
+                        if (oisMode == CameraCharacteristics.STATISTICS_OIS_DATA_MODE_OFF) {
+                            mCollector.expectKeyValueEquals(result,
+                                    CaptureResult.STATISTICS_OIS_DATA_MODE,
+                                    CaptureResult.STATISTICS_OIS_DATA_MODE_OFF);
+                            mCollector.expectTrue("OIS timestamps reported in OIS_DATA_MODE_OFF",
+                                    oisTimestamps == null || oisTimestamps.length == 0);
+                            mCollector.expectTrue("OIS x shifts reported in OIS_DATA_MODE_OFF",
+                                    oisXShifts == null || oisXShifts.length == 0);
+                            mCollector.expectTrue("OIS y shifts reported in OIS_DATA_MODE_OFF",
+                                    oisYShifts == null || oisYShifts.length == 0);
+
+                        } else if (oisMode == CameraCharacteristics.STATISTICS_OIS_DATA_MODE_ON) {
+                            mCollector.expectKeyValueEquals(result,
+                                    CaptureResult.STATISTICS_OIS_DATA_MODE,
+                                    CaptureResult.STATISTICS_OIS_DATA_MODE_ON);
+                            mCollector.expectTrue("OIS timestamps not reported in OIS_DATA_MODE_ON",
+                                    oisTimestamps != null && oisTimestamps.length != 0);
+                            mCollector.expectTrue(
+                                    "Number of x shifts doesn't match number of OIS timetamps.",
+                                    oisXShifts != null && oisXShifts.length == oisTimestamps.length);
+                            mCollector.expectTrue(
+                                    "Number of y shifts doesn't match number of OIS timetamps.",
+                                    oisYShifts != null && oisYShifts.length == oisTimestamps.length);
+                        } else {
+                            mCollector.addMessage(String.format("Invalid OIS mode: %d", oisMode));
+                        }
+                    }
+
+                    mCameraSession.stopRepeating();
+                    previewListener.getCaptureSequenceLastFrameNumber(sequenceId, CAPTURE_TIMEOUT);
+                    previewListener.drain();
+                }
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
 
     private CaptureRequest.Builder preparePreviewTestSession(SurfaceTexture preview)
             throws Exception {

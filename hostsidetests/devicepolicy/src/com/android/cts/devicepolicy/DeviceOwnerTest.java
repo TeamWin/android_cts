@@ -612,6 +612,13 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         executeDeviceOwnerTest("BluetoothRestrictionTest");
     }
 
+    public void testSetTime() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        executeDeviceOwnerTest("SetTimeTest");
+    }
+
     public void testDeviceOwnerProvisioning() throws Exception {
         if (!mHasFeature) {
             return;
@@ -753,6 +760,14 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         }
         executeDeviceOwnerTest("AirplaneModeRestrictionTest");
     }
+
+    public void testSetSystemSetting() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        executeDeviceOwnerTest("SetSystemSettingTest");
+    }
+
 
     private void executeDeviceOwnerTest(String testClassName) throws Exception {
         if (!mHasFeature) {

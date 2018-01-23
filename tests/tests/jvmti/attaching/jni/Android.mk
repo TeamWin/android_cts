@@ -18,9 +18,10 @@
 
 LOCAL_PATH:= $(call my-dir)
 
+define jvmti-attaching-test-agent
 include $(CLEAR_VARS)
 
-LOCAL_MODULE := libjvmtiattachingtestagent
+LOCAL_MODULE := libjvmtiattachingtestagent$1
 
 LOCAL_MODULE_TAGS := optional
 
@@ -29,8 +30,15 @@ LOCAL_SRC_FILES := agent.c
 LOCAL_C_INCLUDES := $(JNI_H_INCLUDE)
 
 LOCAL_SDK_VERSION := current
-LOCAL_NDK_STL_VARIANT := c++_static
 
 LOCAL_CFLAGS := -Wall -Werror -Wno-unused-parameter
 
+LOCAL_CFLAGS += -DAGENT_NR=$1
+
 include $(BUILD_SHARED_LIBRARY)
+endef
+
+$(eval $(call jvmti-attaching-test-agent,1))
+$(eval $(call jvmti-attaching-test-agent,2))
+$(eval $(call jvmti-attaching-test-agent,3))
+$(eval $(call jvmti-attaching-test-agent,4))

@@ -22,6 +22,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.PendingIntent.CanceledException;
 import android.app.slice.SliceManager;
+import android.app.slice.SliceSpec;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -192,6 +193,15 @@ public class SliceTest {
     }
 
     @Test
+    public void testHasHints() {
+        Uri uri = BASE_URI.buildUpon().appendPath("hints").build();
+        Slice s = mSliceManager.bindSlice(uri, Collections.emptyList());
+
+        assertTrue(s.getItems().get(0).hasHint(Slice.HINT_TITLE));
+        assertFalse(s.getItems().get(0).hasHint(Slice.HINT_LIST));
+    }
+
+    @Test
     public void testBundle() {
         Uri uri = BASE_URI.buildUpon().appendPath("bundle").build();
         Slice s = mSliceManager.bindSlice(uri, Collections.emptyList());
@@ -216,5 +226,12 @@ public class SliceTest {
 
         assertEquals(0, mSliceManager.getSliceDescendants(
                 BASE_URI.buildUpon().appendPath("/nothing").build()).size());
+    }
+
+    @Test
+    public void testGetSliceSpec() {
+        Uri uri = BASE_URI.buildUpon().appendPath("spec").build();
+        Slice s = mSliceManager.bindSlice(uri, Collections.emptyList());
+        assertEquals(new SliceSpec(SliceProvider.SPEC_TYPE, SliceProvider.SPEC_REV), s.getSpec());
     }
 }

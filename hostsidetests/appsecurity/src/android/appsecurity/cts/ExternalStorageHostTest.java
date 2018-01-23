@@ -49,16 +49,16 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
 
     private static final String NONE_APK = "CtsExternalStorageApp.apk";
     private static final String NONE_PKG = "com.android.cts.externalstorageapp";
-    private static final String NONE_CLASS = ".ExternalStorageTest";
+    private static final String NONE_CLASS = NONE_PKG + ".ExternalStorageTest";
     private static final String READ_APK = "CtsReadExternalStorageApp.apk";
     private static final String READ_PKG = "com.android.cts.readexternalstorageapp";
-    private static final String READ_CLASS = ".ReadExternalStorageTest";
+    private static final String READ_CLASS = READ_PKG + ".ReadExternalStorageTest";
     private static final String WRITE_APK = "CtsWriteExternalStorageApp.apk";
     private static final String WRITE_PKG = "com.android.cts.writeexternalstorageapp";
-    private static final String WRITE_CLASS = ".WriteExternalStorageTest";
+    private static final String WRITE_CLASS = WRITE_PKG + ".WriteExternalStorageTest";
     private static final String MULTIUSER_APK = "CtsMultiUserStorageApp.apk";
     private static final String MULTIUSER_PKG = "com.android.cts.multiuserstorageapp";
-    private static final String MULTIUSER_CLASS = ".MultiUserStorageTest";
+    private static final String MULTIUSER_CLASS = MULTIUSER_PKG + ".MultiUserStorageTest";
 
     private int[] mUsers;
 
@@ -159,14 +159,14 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
             // verify that the daemon correctly invalidates any caches.
             assertNull(getDevice().installPackage(getTestAppFile(WRITE_APK), false, options));
             for (int user : mUsers) {
-                runDeviceTests(WRITE_PKG, ".WriteGiftTest", user);
+                runDeviceTests(WRITE_PKG, WRITE_PKG + ".WriteGiftTest", user);
             }
 
             assertNull(getDevice().installPackage(getTestAppFile(NONE_APK), false, options));
             assertNull(getDevice().installPackage(getTestAppFile(READ_APK), false, options));
             for (int user : mUsers) {
-                runDeviceTests(READ_PKG, ".ReadGiftTest", user);
-                runDeviceTests(NONE_PKG, ".GiftTest", user);
+                runDeviceTests(READ_PKG, READ_PKG + ".ReadGiftTest", user);
+                runDeviceTests(NONE_PKG, NONE_PKG + ".GiftTest", user);
             }
         } finally {
             getDevice().uninstallPackage(NONE_PKG);
@@ -239,24 +239,24 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
             assertNull(getDevice().installPackage(getTestAppFile(READ_APK), false, options));
 
             for (int user : mUsers) {
-                runDeviceTests(READ_PKG, ".ReadMultiViewTest", "testFolderSetup", user);
+                runDeviceTests(READ_PKG, READ_PKG + ".ReadMultiViewTest", "testFolderSetup", user);
             }
             for (int user : mUsers) {
-                runDeviceTests(READ_PKG, ".ReadMultiViewTest", "testRWAccess", user);
-            }
-
-            for (int user : mUsers) {
-                runDeviceTests(WRITE_PKG, ".WriteMultiViewTest", "testMoveAway", user);
-            }
-            for (int user : mUsers) {
-                runDeviceTests(READ_PKG, ".ReadMultiViewTest", "testROAccess", user);
+                runDeviceTests(READ_PKG, READ_PKG + ".ReadMultiViewTest", "testRWAccess", user);
             }
 
             for (int user : mUsers) {
-                runDeviceTests(WRITE_PKG, ".WriteMultiViewTest", "testMoveBack", user);
+                runDeviceTests(WRITE_PKG, WRITE_PKG + ".WriteMultiViewTest", "testMoveAway", user);
             }
             for (int user : mUsers) {
-                runDeviceTests(READ_PKG, ".ReadMultiViewTest", "testRWAccess", user);
+                runDeviceTests(READ_PKG, READ_PKG + ".ReadMultiViewTest", "testROAccess", user);
+            }
+
+            for (int user : mUsers) {
+                runDeviceTests(WRITE_PKG, WRITE_PKG + ".WriteMultiViewTest", "testMoveBack", user);
+            }
+            for (int user : mUsers) {
+                runDeviceTests(READ_PKG, READ_PKG + ".ReadMultiViewTest", "testRWAccess", user);
             }
         } finally {
             getDevice().uninstallPackage(NONE_PKG);
