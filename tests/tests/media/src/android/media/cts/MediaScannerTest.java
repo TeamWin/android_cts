@@ -391,11 +391,21 @@ public class MediaScannerTest extends AndroidTestCase {
         mMediaScannerConnection.connect();
         checkConnectionState(true);
 
+        // test unlocalizable file
+        canonicalizeTest(R.raw.testmp3);
+
+        mMediaScannerConnectionClient.reset();
+
+        // test localizable file
+        canonicalizeTest(R.raw.testmp3_4);
+    }
+
+    private void canonicalizeTest(int resId) throws Exception {
         // write file and scan to insert into database
         String fileDir = Environment.getExternalStorageDirectory() + "/"
                 + getClass().getCanonicalName() + "/canonicaltest-" + System.currentTimeMillis();
         String fileName = fileDir + "/test.mp3";
-        writeFile(R.raw.testmp3, fileName);
+        writeFile(resId, fileName);
         mMediaScannerConnection.scanFile(fileName, MEDIA_TYPE);
         checkMediaScannerConnection();
 
@@ -420,7 +430,7 @@ public class MediaScannerTest extends AndroidTestCase {
         // write same file again and scan to insert into database
         mMediaScannerConnectionClient.reset();
         String fileName2 = fileDir + "/test2.mp3";
-        writeFile(R.raw.testmp3, fileName2);
+        writeFile(resId, fileName2);
         mMediaScannerConnection.scanFile(fileName2, MEDIA_TYPE);
         checkMediaScannerConnection();
 
