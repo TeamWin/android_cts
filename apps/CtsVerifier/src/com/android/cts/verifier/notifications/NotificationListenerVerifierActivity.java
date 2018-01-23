@@ -20,7 +20,6 @@ import static android.app.NotificationManager.IMPORTANCE_LOW;
 import static android.app.NotificationManager.IMPORTANCE_NONE;
 import static android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS;
 import static android.provider.Settings.EXTRA_APP_PACKAGE;
-import static android.provider.Settings.EXTRA_CHANNEL_GROUP_ID;
 import static android.provider.Settings.EXTRA_CHANNEL_ID;
 
 import static com.android.cts.verifier.notifications.MockListener.JSON_FLAGS;
@@ -381,10 +380,9 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
 
         @Override
         protected Intent getIntent() {
-            return new Intent(Settings.ACTION_CHANNEL_GROUP_NOTIFICATION_SETTINGS)
+            return new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
                     .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                    .putExtra(EXTRA_APP_PACKAGE, mContext.getPackageName())
-                    .putExtra(EXTRA_CHANNEL_GROUP_ID, mGroupId);
+                    .putExtra(EXTRA_APP_PACKAGE, mContext.getPackageName());
         }
     }
 
