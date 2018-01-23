@@ -19,7 +19,7 @@ package android.alarmmanager.cts;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import android.alarmmanager.alarmtestapp.cts.TestAlarmActivity;
+import android.alarmmanager.alarmtestapp.cts.TestAlarmScheduler;
 import android.alarmmanager.alarmtestapp.cts.TestAlarmReceiver;
 import android.app.AlarmManager;
 import android.content.BroadcastReceiver;
@@ -41,23 +41,27 @@ import org.junit.runner.RunWith;
 
 import java.io.IOException;
 
+/**
+ * Tests that apps put in forced app standby by the user do not get to run alarms while in the
+ * background
+ */
 @LargeTest
 @RunWith(AndroidJUnit4.class)
 public class BackgroundRestrictedAlarmsTest {
     private static final String TAG = BackgroundRestrictedAlarmsTest.class.getSimpleName();
     private static final String TEST_APP_PACKAGE = "android.alarmmanager.alarmtestapp.cts";
-    private static final String TEST_APP_ACTIVITY = TEST_APP_PACKAGE + ".TestAlarmActivity";
+    private static final String TEST_APP_RECEIVER = TEST_APP_PACKAGE + ".TestAlarmScheduler";
     private static final String APP_OP_RUN_ANY_IN_BACKGROUND = "RUN_ANY_IN_BACKGROUND";
     private static final String APP_OP_MODE_ALLOWED = "allow";
     private static final String APP_OP_MODE_IGNORED = "ignore";
 
     private static final long DEFAULT_WAIT = 1_000;
-    private static final long POLL_INTERVAL = 1_000;
+    private static final long POLL_INTERVAL = 200;
     private static final long MIN_REPEATING_INTERVAL = 10_000;
 
     private Object mLock = new Object();
     private Context mContext;
-    private ComponentName mAlarmActivity;
+    private ComponentName mAlarmScheduler;
     private UiDevice mUiDevice;
     private int mAlarmCount;
 
@@ -76,7 +80,7 @@ public class BackgroundRestrictedAlarmsTest {
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getTargetContext();
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
-        mAlarmActivity = new ComponentName(TEST_APP_PACKAGE, TEST_APP_ACTIVITY);
+        mAlarmScheduler = new ComponentName(TEST_APP_PACKAGE, TEST_APP_RECEIVER);
         mAlarmCount = 0;
         updateAlarmManagerConstants();
         setAppOpsMode(APP_OP_MODE_IGNORED);
@@ -86,23 +90,21 @@ public class BackgroundRestrictedAlarmsTest {
     }
 
     private void scheduleAlarm(int type, long triggerMillis, long interval) {
-        final Intent setAlarmIntent = new Intent(TestAlarmActivity.ACTION_SET_ALARM);
-        setAlarmIntent.setComponent(mAlarmActivity);
-        setAlarmIntent.putExtra(TestAlarmActivity.EXTRA_TYPE, type);
-        setAlarmIntent.putExtra(TestAlarmActivity.EXTRA_TRIGGER_TIME, triggerMillis);
-        setAlarmIntent.putExtra(TestAlarmActivity.EXTRA_REPEAT_INTERVAL, interval);
-        setAlarmIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(setAlarmIntent);
+        final Intent setAlarmIntent = new Intent(TestAlarmScheduler.ACTION_SET_ALARM);
+        setAlarmIntent.setComponent(mAlarmScheduler);
+        setAlarmIntent.putExtra(TestAlarmScheduler.EXTRA_TYPE, type);
+        setAlarmIntent.putExtra(TestAlarmScheduler.EXTRA_TRIGGER_TIME, triggerMillis);
+        setAlarmIntent.putExtra(TestAlarmScheduler.EXTRA_REPEAT_INTERVAL, interval);
+        mContext.sendBroadcast(setAlarmIntent);
     }
 
     private void scheduleAlarmClock(long triggerRTC) {
         AlarmManager.AlarmClockInfo alarmInfo = new AlarmManager.AlarmClockInfo(triggerRTC, null);
 
-        final Intent setAlarmClockIntent = new Intent(TestAlarmActivity.ACTION_SET_ALARM_CLOCK);
-        setAlarmClockIntent.setComponent(mAlarmActivity);
-        setAlarmClockIntent.putExtra(TestAlarmActivity.EXTRA_ALARM_CLOCK_INFO, alarmInfo);
-        setAlarmClockIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(setAlarmClockIntent);
+        final Intent setAlarmClockIntent = new Intent(TestAlarmScheduler.ACTION_SET_ALARM_CLOCK);
+        setAlarmClockIntent.setComponent(mAlarmScheduler);
+        setAlarmClockIntent.putExtra(TestAlarmScheduler.EXTRA_ALARM_CLOCK_INFO, alarmInfo);
+        mContext.sendBroadcast(setAlarmClockIntent);
     }
 
     private static int getMinExpectedExpirations(long now, long start, long interval) {
@@ -118,7 +120,6 @@ public class BackgroundRestrictedAlarmsTest {
         final long triggerElapsed = SystemClock.elapsedRealtime() + interval;
         scheduleAlarm(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerElapsed, interval);
         Thread.sleep(DEFAULT_WAIT);
-        makeTestPackageIdle();
         Thread.sleep(2 * interval);
         assertFalse("Alarm got triggered even under restrictions", waitForAlarms(1, DEFAULT_WAIT));
         Thread.sleep(interval);
@@ -147,10 +148,9 @@ public class BackgroundRestrictedAlarmsTest {
         deleteAlarmManagerConstants();
         setAppOpsMode(APP_OP_MODE_ALLOWED);
         // Cancel any leftover alarms
-        final Intent cancelAlarmsIntent = new Intent(TestAlarmActivity.ACTION_CANCEL_ALL_ALARMS);
-        cancelAlarmsIntent.setComponent(mAlarmActivity);
-        cancelAlarmsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(cancelAlarmsIntent);
+        final Intent cancelAlarmsIntent = new Intent(TestAlarmScheduler.ACTION_CANCEL_ALL_ALARMS);
+        cancelAlarmsIntent.setComponent(mAlarmScheduler);
+        mContext.sendBroadcast(cancelAlarmsIntent);
         mContext.unregisterReceiver(mAlarmStateReceiver);
         // Broadcast unregister may race with the next register in setUp
         Thread.sleep(DEFAULT_WAIT);
@@ -173,12 +173,6 @@ public class BackgroundRestrictedAlarmsTest {
                 .append(APP_OP_RUN_ANY_IN_BACKGROUND)
                 .append(" ")
                 .append(mode);
-        mUiDevice.executeShellCommand(commandBuilder.toString());
-    }
-
-    private void makeTestPackageIdle() throws IOException {
-        StringBuilder commandBuilder = new StringBuilder("am make-uid-idle --user current ")
-                .append(TEST_APP_PACKAGE);
         mUiDevice.executeShellCommand(commandBuilder.toString());
     }
 

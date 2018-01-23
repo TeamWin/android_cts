@@ -18,7 +18,7 @@
         package="android.alarmmanager.alarmtestapp.cts">
 
     <application>
-        <activity android:name=".TestAlarmActivity"
+        <receiver android:name=".TestAlarmScheduler"
                   android:exported="true" />
         <receiver android:name=".TestAlarmReceiver" />
     </application>
