@@ -466,6 +466,89 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
         }
     }
 
+    private MediaFormat createVideoFormatForBitrateMode(String mime, int width, int height,
+            int bitrateMode, CodecCapabilities caps) {
+        MediaCodecInfo.EncoderCapabilities encoderCaps = caps.getEncoderCapabilities();
+        if (!encoderCaps.isBitrateModeSupported(bitrateMode)) {
+            return null;
+        }
+
+        VideoCapabilities vidCaps = caps.getVideoCapabilities();
+        MediaFormat format = MediaFormat.createVideoFormat(mime, width, height);
+
+        // bitrate
+        int maxWidth = vidCaps.getSupportedWidths().getUpper();
+        int maxHeight = vidCaps.getSupportedHeightsFor(width).getUpper();
+        int maxRate = vidCaps.getSupportedFrameRatesFor(width, height).getUpper().intValue();
+        format.setInteger(MediaFormat.KEY_BITRATE_MODE, bitrateMode);
+        if (bitrateMode == MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CQ) {
+            int quality = encoderCaps.getQualityRange().getLower();
+            Log.i(TAG, "reasonable quality for " + width + "x" + height + "@" + maxRate
+                    + " " + mime + " = " + quality);
+            format.setInteger(MediaFormat.KEY_QUALITY, quality);
+        } else {
+            int bitrate = vidCaps.getBitrateRange().clamp(
+                    (int)(vidCaps.getBitrateRange().getUpper()
+                            / Math.sqrt((double)maxWidth * maxHeight / width / height)));
+            Log.i(TAG, "reasonable bitrate for " + width + "x" + height + "@" + maxRate
+                    + " " + mime + " = " + bitrate + " mode " + bitrateMode);
+            format.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
+        }
+        format.setInteger(MediaFormat.KEY_FRAME_RATE, maxRate);
+        format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, IFRAME_INTERVAL);
+        format.setInteger(MediaFormat.KEY_COLOR_FORMAT,
+                CodecCapabilities.COLOR_FormatYUV420Flexible);
+
+        return format;
+    }
+
+    public void testAllAdvertisedVideoEncoderBitrateModes() throws IOException {
+        boolean skipped = true;
+        final int[] modes = {
+                MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CQ,
+                MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR,
+                MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR
+        };
+        for (MediaCodecInfo info : mAllInfos) {
+            if (!info.isEncoder()) {
+                continue;
+            }
+
+            for (String mime: info.getSupportedTypes()) {
+                boolean isVideo = isVideoMime(mime);
+                if (!isVideo) {
+                    continue;
+                }
+                skipped = false;
+
+                int numSupportedModes = 0;
+                for (int mode : modes) {
+                    MediaFormat format = createVideoFormatForBitrateMode(
+                            mime, 176, 144, mode, info.getCapabilitiesForType(mime));
+                    if (format == null) {
+                        continue;
+                    }
+                    MediaCodec codec = null;
+                    try {
+                        codec = MediaCodec.createByCodecName(info.getName());
+                        codec.configure(format, null /* surface */, null /* crypto */,
+                                MediaCodec.CONFIGURE_FLAG_ENCODE);
+                    } finally {
+                        if (codec != null) {
+                            codec.release();
+                        }
+                    }
+                    numSupportedModes++;
+                }
+                assertTrue(info.getName() + " has no supported bitrate mode",
+                        numSupportedModes > 0);
+            }
+        }
+        if (skipped) {
+            MediaUtils.skipTest("no video encoders found");
+        }
+    }
+
     public void testAllNonTunneledVideoCodecsSupportFlexibleYUV() throws IOException {
         boolean skipped = true;
         for (MediaCodecInfo info : mAllInfos) {
