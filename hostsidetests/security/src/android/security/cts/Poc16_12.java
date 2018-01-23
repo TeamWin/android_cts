@@ -21,6 +21,7 @@ import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceTestCase;
 
+import android.platform.test.annotations.RootPermissionTest;
 import android.platform.test.annotations.SecurityTest;
 
 import java.io.BufferedOutputStream;
