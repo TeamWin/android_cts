@@ -999,7 +999,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         mOnUiThread.evaluateJavascript("'custom_property' in dummy", jsResult);
         jsResult.run();
 
-        mOnUiThread.reload();
+        mOnUiThread.reloadAndWaitForCompletion();
 
         jsResult = new EvaluateJsResultPollingCheck("false");
         mOnUiThread.evaluateJavascript("'custom_property' in dummy", jsResult);
