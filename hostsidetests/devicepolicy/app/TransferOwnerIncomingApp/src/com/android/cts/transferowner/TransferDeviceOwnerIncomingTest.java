@@ -49,4 +49,9 @@ public class TransferDeviceOwnerIncomingTest extends DeviceAndProfileOwnerTransf
                 && policy1.getInstallWindowStart() == policy2.getInstallWindowStart()
                 && policy1.getInstallWindowEnd() == policy2.getInstallWindowEnd());
     }
+
+    @Test
+    public void testTransferAffiliatedProfileOwnershipCompleteCallbackIsCalled() {
+        assertTrue(getBooleanPref(mContext, KEY_TRANSFER_AFFILIATED_PROFILE_COMPLETED_CALLED));
+    }
 }

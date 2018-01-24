@@ -17,6 +17,8 @@ package com.android.cts.transferowner;
 
 import static junit.framework.Assert.assertNotNull;
 
+import static org.junit.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertThrows;
 
 import android.app.admin.DeviceAdminReceiver;
@@ -24,7 +26,10 @@ import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.PersistableBundle;
+import android.os.UserHandle;
+import android.os.UserManager;
 import android.support.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
@@ -33,10 +38,17 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collections;
+import java.util.Set;
 
 public abstract class DeviceAndProfileOwnerTransferOutgoingTest {
     public static class BasicAdminReceiver extends DeviceAdminReceiver {
         public BasicAdminReceiver() {}
+
+        @Override
+        public void onTransferAffiliatedProfileOwnershipComplete(Context context, UserHandle user) {
+            putBooleanPref(context, KEY_TRANSFER_AFFILIATED_PROFILE_COMPLETED_CALLED, true);
+        }
     }
 
     private static final String TRANSFER_OWNER_INCOMING_PKG =
@@ -53,6 +65,9 @@ public abstract class DeviceAndProfileOwnerTransferOutgoingTest {
                     TRANSFER_OWNER_INCOMING_TEST_RECEIVER_NO_METADATA_CLASS);
     private static final ComponentName INVALID_TARGET_COMPONENT =
             new ComponentName("com.android.cts.intent.receiver", ".BroadcastIntentReceiver");
+    private final static String SHARED_PREFERENCE_NAME = "shared-preference-name";
+    static final String KEY_TRANSFER_AFFILIATED_PROFILE_COMPLETED_CALLED =
+            "key-transfer-affiliated-completed-called";
 
     protected DevicePolicyManager mDevicePolicyManager;
     protected ComponentName mOutgoingComponentName;
@@ -133,5 +148,50 @@ public abstract class DeviceAndProfileOwnerTransferOutgoingTest {
                     transferOwnership(mOutgoingComponentName,
                             INCOMING_NO_METADATA_COMPONENT_NAME, b);
                 });
+    }
+
+    @Test
+    public void testClearDisallowAddManagedProfileRestriction() {
+        setUserRestriction(UserManager.DISALLOW_ADD_MANAGED_PROFILE, false);
+    }
+
+    @Test
+    public void testAddDisallowAddManagedProfileRestriction() {
+        setUserRestriction(UserManager.DISALLOW_REMOVE_MANAGED_PROFILE, true);
+    }
+
+    @Test
+    public void testSetAffiliationId1() {
+        setAffiliationId("id.number.1");
+    }
+
+    private void setUserRestriction(String restriction, boolean add) {
+        DevicePolicyManager dpm = mContext.getSystemService(DevicePolicyManager.class);
+        if (add) {
+            dpm.addUserRestriction(mOutgoingComponentName, restriction);
+        } else {
+            dpm.clearUserRestriction(mOutgoingComponentName, restriction);
+        }
+    }
+
+    private void setAffiliationId(String id) {
+        ComponentName admin = mOutgoingComponentName;
+        DevicePolicyManager dpm = (DevicePolicyManager)
+                mContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
+        Set<String> ids = Collections.singleton(id);
+        dpm.setAffiliationIds(admin, ids);
+        assertEquals(ids, dpm.getAffiliationIds(admin));
+    }
+
+    private static SharedPreferences getPrefs(Context context) {
+        return context.getSharedPreferences(SHARED_PREFERENCE_NAME, Context.MODE_PRIVATE);
+    }
+
+    private static void putBooleanPref(Context context, String key, boolean value) {
+        getPrefs(context).edit().putBoolean(key, value).apply();
+    }
+
+    protected static boolean getBooleanPref(Context context, String key) {
+        return getPrefs(context).getBoolean(key, false);
     }
 }

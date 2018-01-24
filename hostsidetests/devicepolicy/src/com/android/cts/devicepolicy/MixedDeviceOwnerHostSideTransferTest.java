@@ -46,4 +46,75 @@ public class MixedDeviceOwnerHostSideTransferTest extends
             }
         }
     }
+
+    public void testTransferAffiliatedProfileOwnershipCompleteCallback() throws Exception {
+        if (!mHasFeature || !hasDeviceFeature("android.software.managed_users")) {
+            return;
+        }
+        final int profileUserId = setupManagedProfileOnDeviceOwner(TRANSFER_OWNER_OUTGOING_APK,
+                TRANSFER_OWNER_OUTGOING_TEST_RECEIVER);
+
+        setSameAffiliationId(profileUserId, mOutgoingTestClassName);
+
+        installAppAsUser(TRANSFER_OWNER_INCOMING_APK, profileUserId);
+
+        runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
+                mOutgoingTestClassName,
+                "testTransferOwner", profileUserId);
+
+        waitForBroadcastIdle();
+
+        runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
+                mOutgoingTestClassName,
+                "testTransferAffiliatedProfileOwnershipCompleteCallbackIsCalled",
+                mUserId);
+    }
+
+    public void testTransferAffiliatedProfileOwnershipInComp() throws Exception {
+        if (!mHasFeature || !hasDeviceFeature("android.software.managed_users")) {
+            return;
+        }
+        final int profileUserId = setupManagedProfileOnDeviceOwner(TRANSFER_OWNER_OUTGOING_APK,
+                TRANSFER_OWNER_OUTGOING_TEST_RECEIVER);
+
+        setSameAffiliationId(profileUserId, mOutgoingTestClassName);
+
+        installAppAsUser(TRANSFER_OWNER_INCOMING_APK, profileUserId);
+
+        runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
+                mOutgoingTestClassName,
+                "testTransferOwner", mUserId);
+        runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
+                mOutgoingTestClassName,
+                "testTransferOwner", profileUserId);
+
+        assertAffiliationIdsAreIntact(profileUserId, mIncomingTestClassName);
+
+        waitForBroadcastIdle();
+
+        runDeviceTestsAsUser(TRANSFER_OWNER_INCOMING_PKG,
+                mIncomingTestClassName,
+                "testTransferAffiliatedProfileOwnershipCompleteCallbackIsCalled",
+                mUserId);
+    }
+
+    private void assertAffiliationIdsAreIntact(int profileUserId,
+            String testClassName) throws Exception {
+        runDeviceTestsAsUser(TRANSFER_OWNER_INCOMING_PKG,
+                testClassName,
+                "testIsAffiliationId1", mPrimaryUserId);
+        runDeviceTestsAsUser(TRANSFER_OWNER_INCOMING_PKG,
+                testClassName,
+                "testIsAffiliationId1", profileUserId);
+    }
+
+    private void setSameAffiliationId(int profileUserId, String testClassName)
+            throws Exception {
+        runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
+                testClassName,
+                "testSetAffiliationId1", mPrimaryUserId);
+        runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
+                testClassName,
+                "testSetAffiliationId1", profileUserId);
+    }
 }
