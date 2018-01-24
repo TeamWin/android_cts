@@ -484,7 +484,7 @@ public class CommandReceiverActivity extends Activity {
                             SKIP_SETUP_WIZARD | MAKE_USER_EPHEMERAL);
                     mDpm.setAffiliationIds(mAdmin,
                             Collections.singleton(DeviceAdminTestReceiver.AFFILIATION_ID));
-                    mDpm.switchUser(mAdmin, userHandle);
+                    mDpm.startUserInBackground(mAdmin, userHandle);
                 } break;
             }
         } catch (Exception e) {
