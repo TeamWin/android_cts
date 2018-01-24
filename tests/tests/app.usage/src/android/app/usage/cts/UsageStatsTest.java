@@ -178,6 +178,27 @@ public class UsageStatsTest extends InstrumentationTestCase {
         }
     }
 
+    public void testStandbyBucketChangeLog() throws Exception {
+        final long startTime = System.currentTimeMillis();
+        mUiDevice.executeShellCommand("am set-standby-bucket " + mTargetPackage + " rare");
+
+        final long endTime = System.currentTimeMillis();
+        UsageEvents events = mUsageStatsManager.queryEvents(startTime, endTime);
+
+        boolean found = false;
+        // Check all the events.
+        ArrayList<UsageEvents.Event> eventList = new ArrayList<>();
+        while (events.hasNextEvent()) {
+            UsageEvents.Event event = new UsageEvents.Event();
+            assertTrue(events.getNextEvent(event));
+            if (event.mEventType == UsageEvents.Event.STANDBY_BUCKET_CHANGED) {
+                found |= event.mBucket == UsageStatsManager.STANDBY_BUCKET_RARE;
+            }
+        }
+
+        assertTrue(found);
+    }
+
     /**
      * We can't run this test because we are unable to change the system time.
      * It would be nice to add a shell command or other to allow the shell user
