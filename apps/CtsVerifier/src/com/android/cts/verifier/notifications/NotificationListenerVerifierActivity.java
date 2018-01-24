@@ -116,6 +116,8 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
             tests.add(new SnoozeNotificationForTimeCancelTest());
             tests.add(new GetSnoozedNotificationTest());
             tests.add(new EnableHintsTest());
+            tests.add(new ReceiveAppBlockNoticeTest());
+            tests.add(new ReceiveAppUnblockNoticeTest());
             tests.add(new ReceiveChannelBlockNoticeTest());
             tests.add(new ReceiveGroupBlockNoticeTest());
             tests.add(new RequestUnbindTest());
@@ -362,7 +364,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
                     }
                 }
             } else {
-                // user hasn't jumped to settings to block the channel yet
+                // user hasn't jumped to settings to block the group yet
                 status = WAIT_FOR_USER;
             }
 
@@ -376,6 +378,146 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
                     NotificationListenerVerifierActivity.PREFS, Context.MODE_PRIVATE);
             SharedPreferences.Editor editor = prefs.edit();
             editor.remove(mGroupId);
+        }
+
+        @Override
+        protected Intent getIntent() {
+            return new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                    .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                    .putExtra(EXTRA_APP_PACKAGE, mContext.getPackageName());
+        }
+    }
+
+    /**
+     * Sends the user to settings to block the app. Waits to receive the broadcast that the app was
+     * blocked, and confirms that the broadcast contains the correct extras.
+     */
+    protected class ReceiveAppBlockNoticeTest extends InteractiveTestCase {
+        private int mRetries = 2;
+        private View mView;
+        @Override
+        protected View inflate(ViewGroup parent) {
+            mView = createNlsSettingsItem(parent, R.string.nls_block_app);
+            Button button = mView.findViewById(R.id.nls_action_button);
+            button.setEnabled(false);
+            return mView;
+        }
+
+        @Override
+        protected void setUp() {
+            status = READY;
+            Button button = mView.findViewById(R.id.nls_action_button);
+            button.setEnabled(true);
+        }
+
+        @Override
+        boolean autoStart() {
+            return true;
+        }
+
+        @Override
+        protected void test() {
+            SharedPreferences prefs = mContext.getSharedPreferences(
+                    NotificationListenerVerifierActivity.PREFS, Context.MODE_PRIVATE);
+
+            if (!mNm.areNotificationsEnabled()) {
+                Log.d(TAG, "Got broadcast " + prefs.contains(mContext.getPackageName()));
+                Log.d(TAG, "Broadcast contains correct data? " +
+                        prefs.getBoolean(mContext.getPackageName(), false));
+                if (prefs.contains(mContext.getPackageName())
+                        && prefs.getBoolean(mContext.getPackageName(), false)) {
+                    status = PASS;
+                } else {
+                    if (mRetries > 0) {
+                        mRetries--;
+                        status = RETEST;
+                    } else {
+                        status = FAIL;
+                    }
+                }
+            } else {
+                Log.d(TAG, "Notifications still enabled");
+                // user hasn't jumped to settings to block the app yet
+                status = WAIT_FOR_USER;
+            }
+
+            next();
+        }
+
+        protected void tearDown() {
+            MockListener.getInstance().resetData();
+            SharedPreferences prefs = mContext.getSharedPreferences(
+                    NotificationListenerVerifierActivity.PREFS, Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.remove(mContext.getPackageName());
+        }
+
+        @Override
+        protected Intent getIntent() {
+            return new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                    .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                    .putExtra(EXTRA_APP_PACKAGE, mContext.getPackageName());
+        }
+    }
+
+    /**
+     * Sends the user to settings to unblock the app. Waits to receive the broadcast that the app
+     * was unblocked, and confirms that the broadcast contains the correct extras.
+     */
+    protected class ReceiveAppUnblockNoticeTest extends InteractiveTestCase {
+        private int mRetries = 2;
+        private View mView;
+        @Override
+        protected View inflate(ViewGroup parent) {
+            mView = createNlsSettingsItem(parent, R.string.nls_unblock_app);
+            Button button = mView.findViewById(R.id.nls_action_button);
+            button.setEnabled(false);
+            return mView;
+        }
+
+        @Override
+        protected void setUp() {
+            status = READY;
+            Button button = mView.findViewById(R.id.nls_action_button);
+            button.setEnabled(true);
+        }
+
+        @Override
+        boolean autoStart() {
+            return true;
+        }
+
+        @Override
+        protected void test() {
+            SharedPreferences prefs = mContext.getSharedPreferences(
+                    NotificationListenerVerifierActivity.PREFS, Context.MODE_PRIVATE);
+
+            if (mNm.areNotificationsEnabled()) {
+                if (prefs.contains(mContext.getPackageName())
+                        && !prefs.getBoolean(mContext.getPackageName(), true)) {
+                    status = PASS;
+                } else {
+                    if (mRetries > 0) {
+                        mRetries--;
+                        status = RETEST;
+                    } else {
+                        status = FAIL;
+                    }
+                }
+            } else {
+                // user hasn't jumped to settings to block the app yet
+                status = WAIT_FOR_USER;
+            }
+
+            next();
+        }
+
+        protected void tearDown() {
+            MockListener.getInstance().resetData();
+            SharedPreferences prefs = mContext.getSharedPreferences(
+                    NotificationListenerVerifierActivity.PREFS, Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.remove(mContext.getPackageName());
         }
 
         @Override
@@ -686,6 +828,11 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         @Override
         protected void tearDown() {
             MockListener.getInstance().resetData();
+        }
+
+        @Override
+        protected Intent getIntent() {
+            return new Intent(ACTION_NOTIFICATION_LISTENER_SETTINGS);
         }
     }
 

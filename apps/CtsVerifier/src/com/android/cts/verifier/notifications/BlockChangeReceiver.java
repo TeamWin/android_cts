@@ -1,5 +1,6 @@
 package com.android.cts.verifier.notifications;
 
+import static android.app.NotificationManager.ACTION_APP_BLOCK_STATE_CHANGED;
 import static android.app.NotificationManager.ACTION_NOTIFICATION_CHANNEL_BLOCK_STATE_CHANGED;
 import static android.app.NotificationManager.ACTION_NOTIFICATION_CHANNEL_GROUP_BLOCK_STATE_CHANGED;
 
@@ -16,10 +17,14 @@ public class BlockChangeReceiver extends BroadcastReceiver {
         SharedPreferences prefs = context.getSharedPreferences(
                 NotificationListenerVerifierActivity.PREFS, Context.MODE_PRIVATE);
         if (ACTION_NOTIFICATION_CHANNEL_GROUP_BLOCK_STATE_CHANGED.equals(intent.getAction())
-                || ACTION_NOTIFICATION_CHANNEL_BLOCK_STATE_CHANGED.equals(intent.getAction())) {
+                || ACTION_NOTIFICATION_CHANNEL_BLOCK_STATE_CHANGED.equals(intent.getAction())
+                || ACTION_APP_BLOCK_STATE_CHANGED.equals(intent.getAction())) {
             SharedPreferences.Editor editor = prefs.edit();
-            editor.putBoolean(
-                    intent.getStringExtra(NotificationManager.EXTRA_BLOCK_STATE_CHANGED_ID),
+            String id = intent.getStringExtra(NotificationManager.EXTRA_BLOCK_STATE_CHANGED_ID);
+            if (id == null) {
+                id = context.getPackageName();
+            }
+            editor.putBoolean(id,
                     intent.getBooleanExtra(NotificationManager.EXTRA_BLOCKED_STATE, false));
             editor.commit();
         }
