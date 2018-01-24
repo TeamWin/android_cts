@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.MediumTest;
+import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.widget.Toolbar;
@@ -54,21 +55,29 @@ public class ToolbarWithMarginsTest {
         assertEquals(20, mMainToolbar.getTitleMarginBottom());
     }
 
-    @UiThreadTest
     @Test
-    public void testSetTitleMargins() {
-        Toolbar toolbar = (Toolbar) mActivity.findViewById(R.id.toolbar2);
+    public void testSetTitleMargins() throws Throwable {
+        final Toolbar toolbar = (Toolbar) mActivity.findViewById(R.id.toolbar2);
 
-        toolbar.setTitleMargin(5, 10, 15, 20);
-        assertEquals(5, toolbar.getTitleMarginStart());
-        assertEquals(10, toolbar.getTitleMarginTop());
-        assertEquals(15, toolbar.getTitleMarginEnd());
-        assertEquals(20, toolbar.getTitleMarginBottom());
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                toolbar.setTitleMargin(5, 10, 15, 20);
+            }
+        });
+        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
 
-        toolbar.setTitleMarginStart(25);
-        toolbar.setTitleMarginTop(30);
-        toolbar.setTitleMarginEnd(35);
-        toolbar.setTitleMarginBottom(40);
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                toolbar.setTitleMarginStart(25);
+                toolbar.setTitleMarginTop(30);
+                toolbar.setTitleMarginEnd(35);
+                toolbar.setTitleMarginBottom(40);
+            }
+        });
+        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+
         assertEquals(25, toolbar.getTitleMarginStart());
         assertEquals(30, toolbar.getTitleMarginTop());
         assertEquals(35, toolbar.getTitleMarginEnd());
