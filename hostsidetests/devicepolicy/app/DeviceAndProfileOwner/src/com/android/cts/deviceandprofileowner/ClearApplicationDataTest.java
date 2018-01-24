@@ -26,19 +26,46 @@ import java.util.concurrent.TimeUnit;
  */
 public class ClearApplicationDataTest extends BaseDeviceAdminTest {
     private static final String TEST_PKG = "com.android.cts.intent.receiver";
+    private static final String DEVICE_ADMIN_PKG = "com.android.cts.deviceandprofileowner";
     private static final Semaphore mSemaphore = new Semaphore(0);
     private static final long CLEAR_APPLICATION_DATA_TIMEOUT_S = 10;
 
-    public void testClearApplicationData() throws Exception {
-        mDevicePolicyManager.clearApplicationUserData(ADMIN_RECEIVER_COMPONENT, TEST_PKG,
-                AsyncTask.THREAD_POOL_EXECUTOR,
+    public void testClearApplicationData_testPkg() throws Exception {
+        clearApplicationDataTest(TEST_PKG, /* shouldSucceed */ true);
+    }
+
+    public void testClearApplicationData_deviceProvisioning() throws Exception {
+        String deviceProvisioningPackageName = getDeviceProvisioningPackageName();
+        if (deviceProvisioningPackageName == null) {
+            return;
+        }
+        clearApplicationDataTest(deviceProvisioningPackageName, /* shouldSucceed */ false);
+    }
+
+    public void testClearApplicationData_activeAdmin() throws Exception {
+        clearApplicationDataTest(DEVICE_ADMIN_PKG, /* shouldSucceed */ false);
+    }
+
+    private void clearApplicationDataTest(String packageName, boolean shouldSucceed)
+            throws Exception {
+        mDevicePolicyManager.clearApplicationUserData(ADMIN_RECEIVER_COMPONENT,
+                packageName, AsyncTask.THREAD_POOL_EXECUTOR,
                 (String pkg, boolean succeeded) -> {
-                    assertEquals(TEST_PKG, pkg);
-                    assertTrue(succeeded);
+                    assertEquals(packageName, pkg);
+                    assertEquals(shouldSucceed, succeeded);
                     mSemaphore.release();
                 });
-
         assertTrue("Clearing application data took too long",
                 mSemaphore.tryAcquire(CLEAR_APPLICATION_DATA_TIMEOUT_S, TimeUnit.SECONDS));
+    }
+
+    private String getDeviceProvisioningPackageName() {
+        final int provisioning_app_id = mContext.getResources().getIdentifier(
+                "config_deviceProvisioningPackage", "string", "android");
+        if (provisioning_app_id > 0) {
+            return mContext.getResources().getString(provisioning_app_id);
+        } else {
+            return null;
+        }
     }
 }
