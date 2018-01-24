@@ -20,7 +20,8 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
 	ctstestrunner \
-	mockito-target-minus-junit4
+	mockito-target-minus-junit4 \
+	compatibility-device-util
 
 LOCAL_JAVA_LIBRARIES := android.test.runner.stubs android.test.base.stubs
 
