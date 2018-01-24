@@ -22,7 +22,6 @@ import android.os.PowerManager;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 
-import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
