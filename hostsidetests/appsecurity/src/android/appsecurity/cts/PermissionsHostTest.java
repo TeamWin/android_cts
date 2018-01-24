@@ -16,6 +16,8 @@
 
 package android.appsecurity.cts;
 
+import android.platform.test.annotations.Presubmit;
+
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -271,6 +273,7 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
                 "testRequestNonExistentPermission");
     }
 
+    @Presubmit
     public void testRequestPermissionFromTwoGroups23() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_23), false, false));
         runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
