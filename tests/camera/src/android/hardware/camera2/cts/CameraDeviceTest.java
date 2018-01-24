@@ -1382,6 +1382,9 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
             // expected
         }
 
+        output1.release();
+        output2.release();
+        output3.release();
     }
 
     private void prepareTestForSharedSurfacesByCamera() throws Exception {
@@ -1972,6 +1975,10 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
      */
     private void checkRequestForTemplate(CaptureRequest.Builder request, int template,
             CameraCharacteristics props) {
+        Integer hwLevel = props.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL);
+        boolean isExternalCamera = (hwLevel ==
+                CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_EXTERNAL);
+
         // 3A settings--AE/AWB/AF.
         Integer maxRegionsAeVal = props.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AE);
         int maxRegionsAe = maxRegionsAeVal != null ? maxRegionsAeVal : 0;
@@ -2066,11 +2073,15 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
             }
         }
 
-        float[] availableFocalLen =
-                props.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS);
-        if (availableFocalLen.length > 1) {
-            mCollector.expectKeyValueNotNull(request, LENS_FOCAL_LENGTH);
+
+        if (!isExternalCamera) {
+            float[] availableFocalLen =
+                    props.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS);
+            if (availableFocalLen.length > 1) {
+                mCollector.expectKeyValueNotNull(request, LENS_FOCAL_LENGTH);
+            }
         }
+
 
         mCollector.expectEquals("Lens optical stabilization must be present in request if " +
                         "available optical stabilizations are present in metadata, and vice-versa.",

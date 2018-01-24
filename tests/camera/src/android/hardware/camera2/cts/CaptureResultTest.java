@@ -642,6 +642,19 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
         }
 
         /*
+         * Hardware Level = EXTERNAL
+         */
+        if (staticInfo.isExternalCamera()) {
+            waiverKeys.add(CaptureResult.LENS_FOCAL_LENGTH);
+            waiverKeys.add(CaptureResult.SENSOR_TEST_PATTERN_MODE);
+            waiverKeys.add(CaptureResult.SENSOR_ROLLING_SHUTTER_SKEW);
+        }
+
+        if (staticInfo.isExternalCamera() && staticInfo.isColorOutputSupported()) {
+            return waiverKeys;
+        }
+
+        /*
          * Hardware Level = LEGACY or no regular output is supported
          */
         waiverKeys.add(CaptureResult.CONTROL_AE_PRECAPTURE_TRIGGER);

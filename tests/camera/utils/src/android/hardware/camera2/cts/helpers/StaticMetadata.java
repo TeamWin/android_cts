@@ -208,11 +208,35 @@ public class StaticMetadata {
      */
     public boolean isHardwareLevelAtLeast(int level) {
         int deviceLevel = getHardwareLevelChecked();
+        if (level == deviceLevel) {
+            return true;
+        }
         if (deviceLevel == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY) {
             return level == deviceLevel;
+        } else if (deviceLevel == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_EXTERNAL) {
+            // External is between LEGACY and LIMITED
+            if (level == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY) {
+                return true;
+            }
+            return false;
         }
         // deviceLevel is not LEGACY, can use numerical sort
         return level <= deviceLevel;
+    }
+
+    /**
+     * Whether or not the camera is an external camera. If so the hardware level
+     * reported by android.info.supportedHardwareLevel is
+     * {@value CameraMetadata#INFO_SUPPORTED_HARDWARE_LEVEL_EXTERNAL}.
+     *
+     * <p>If the camera device is not reporting the hardwareLevel, this
+     * will cause the test to fail.</p>
+     *
+     * @return {@code true} if the device is external, {@code false} otherwise.
+     */
+    public boolean isExternalCamera() {
+        int deviceLevel = getHardwareLevelChecked();
+        return deviceLevel == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_EXTERNAL;
     }
 
     /**

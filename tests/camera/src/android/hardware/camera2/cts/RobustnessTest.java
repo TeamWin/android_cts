@@ -1314,14 +1314,22 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
             maxRawSize = (rawSizes.length != 0) ? CameraTestUtils.getMaxSize(rawSizes) : null;
 
+            StreamConfigurationMap configs = sm.getCharacteristics().get(
+                    CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
             if (sm.isColorOutputSupported()) {
                 maxPrivSizes[PREVIEW] = getMaxSize(privSizes, maxPreviewSize);
                 maxYuvSizes[PREVIEW]  = getMaxSize(yuvSizes, maxPreviewSize);
                 maxJpegSizes[PREVIEW] = getMaxSize(jpegSizes, maxPreviewSize);
 
-                maxPrivSizes[RECORD] = getMaxRecordingSize(cameraId);
-                maxYuvSizes[RECORD]  = getMaxRecordingSize(cameraId);
-                maxJpegSizes[RECORD] = getMaxRecordingSize(cameraId);
+                if (sm.isExternalCamera()) {
+                    maxPrivSizes[RECORD] = getMaxExternalRecordingSize(cameraId, configs);
+                    maxYuvSizes[RECORD]  = getMaxExternalRecordingSize(cameraId, configs);
+                    maxJpegSizes[RECORD] = getMaxExternalRecordingSize(cameraId, configs);
+                } else {
+                    maxPrivSizes[RECORD] = getMaxRecordingSize(cameraId);
+                    maxYuvSizes[RECORD]  = getMaxRecordingSize(cameraId);
+                    maxJpegSizes[RECORD] = getMaxRecordingSize(cameraId);
+                }
 
                 maxPrivSizes[MAXIMUM] = CameraTestUtils.getMaxSize(privSizes);
                 maxYuvSizes[MAXIMUM] = CameraTestUtils.getMaxSize(yuvSizes);
@@ -1399,8 +1407,6 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
             }
 
-            StreamConfigurationMap configs = sm.getCharacteristics().get(
-                    CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
             Size[] privInputSizes = configs.getInputSizes(ImageFormat.PRIVATE);
             maxInputPrivSize = privInputSizes != null ?
                     CameraTestUtils.getMaxSize(privInputSizes) : null;
@@ -1985,6 +1991,31 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
         CamcorderProfile maxProfile = CamcorderProfile.get(id, quality);
         return new Size(maxProfile.videoFrameWidth, maxProfile.videoFrameHeight);
+    }
+
+    private static Size getMaxExternalRecordingSize(
+            String cameraId, StreamConfigurationMap config) {
+        final Size FULLHD = new Size(1920, 1080);
+
+        Size[] videoSizeArr = config.getOutputSizes(android.media.MediaRecorder.class);
+        List<Size> sizes = new ArrayList<Size>();
+        for (Size sz: videoSizeArr) {
+            if (sz.getWidth() <= FULLHD.getWidth() && sz.getHeight() <= FULLHD.getHeight()) {
+                sizes.add(sz);
+            }
+        }
+        List<Size> videoSizes = getAscendingOrderSizes(sizes, /*ascending*/false);
+        for (Size sz : videoSizes) {
+            long minFrameDuration = config.getOutputMinFrameDuration(
+                    android.media.MediaRecorder.class, sz);
+            // Give some margin for rounding error
+            if (minFrameDuration > (1e9 / 30.1)) {
+                Log.i(TAG, "External camera " + cameraId + " has max video size:" + sz);
+                return sz;
+            }
+        }
+        fail("Camera " + cameraId + " does not support any 30fps video output");
+        return FULLHD; // doesn't matter what size is returned here
     }
 
     /**

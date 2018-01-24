@@ -38,8 +38,9 @@ public class CameraUtils {
      */
     public static boolean isLegacyHAL(Context context, int cameraId) throws Exception {
         CameraManager manager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
+        String cameraIdStr = manager.getCameraIdList()[cameraId];
         CameraCharacteristics characteristics =
-                manager.getCameraCharacteristics(Integer.toString(cameraId));
+                manager.getCameraCharacteristics(cameraIdStr);
 
         return characteristics.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL) ==
                 CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY;
