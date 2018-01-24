@@ -450,7 +450,7 @@ public class UsePermissionTest23 extends BasePermissionsTest {
                 Manifest.permission.WRITE_CALENDAR
         };
 
-        // Request the permission and do nothing
+        // Request the permission and allow it
         BasePermissionActivity.Result result = requestPermissions(permissions,
                 REQUEST_CODE_PERMISSIONS, BasePermissionActivity.class, () -> {
             try {
@@ -463,9 +463,24 @@ public class UsePermissionTest23 extends BasePermissionsTest {
             }
         });
 
-        // Expect the permission is not granted
+        // Expect the permission are reported as granted
         assertPermissionRequestResult(result, REQUEST_CODE_PERMISSIONS,
                 permissions, new boolean[] {true, true});
+
+        // The permissions are granted
+        assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
+                .checkSelfPermission(Manifest.permission.WRITE_CONTACTS));
+        assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
+                .checkSelfPermission(Manifest.permission.WRITE_CALENDAR));
+
+        // In API < N_MR1 all permissions of a group are granted. I.e. the grant was "expanded"
+        assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
+                .checkSelfPermission(Manifest.permission.READ_CALENDAR));
+
+        // Even the contacts group was expanded, the read-calendar permission is not in the
+        // manifest, hence not granted.
+        assertEquals(PackageManager.PERMISSION_DENIED, getInstrumentation().getContext()
+                .checkSelfPermission(Manifest.permission.READ_CONTACTS));
     }
 
     @Test
