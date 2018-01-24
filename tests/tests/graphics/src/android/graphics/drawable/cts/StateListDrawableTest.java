@@ -225,28 +225,25 @@ public class StateListDrawableTest {
             origWidth1 = tempWidth1;
         }
 
-        // NOTE: instrinsic W/H may already be a scaled and truncated value computed from the
-        // underlying asset (e.g. bitmap) so account for this previously applied scaling/truncation
-        // by applying a small delta to the asserts.
-
         // Set density to half of original.
         DrawableTestUtils.setResourcesDensity(res, densityDpi / 2);
         final StateListDrawable halfDrawable =
                 (StateListDrawable) preloadedConstantState.newDrawable(res);
+        // NOTE: densityDpi may not be an even number, so account for *actual* scaling in asserts
+        final float approxHalf = (float)(densityDpi / 2) / densityDpi;
         halfDrawable.selectDrawable(0);
-        assertEquals(Math.round(origWidth0 * 0.5f), halfDrawable.getIntrinsicWidth(), 1);
+        assertEquals(Math.round(origWidth0 * approxHalf), halfDrawable.getIntrinsicWidth());
         halfDrawable.selectDrawable(1);
-        assertEquals(Math.round(origWidth1 * 0.5f), halfDrawable.getIntrinsicWidth(), 1);
+        assertEquals(Math.round(origWidth1 * approxHalf), halfDrawable.getIntrinsicWidth());
 
         // Set density to double original.
-        // NOTE: densityDpi may not be an even number, so account for *actual* scaling in asserts
         DrawableTestUtils.setResourcesDensity(res, densityDpi * 2);
         final StateListDrawable doubleDrawable =
                 (StateListDrawable) preloadedConstantState.newDrawable(res);
         doubleDrawable.selectDrawable(0);
-        assertEquals(origWidth0 * 2, doubleDrawable.getIntrinsicWidth(), 1);
+        assertEquals(origWidth0 * 2, doubleDrawable.getIntrinsicWidth());
         doubleDrawable.selectDrawable(1);
-        assertEquals(origWidth1 * 2, doubleDrawable.getIntrinsicWidth(), 1);
+        assertEquals(origWidth1 * 2, doubleDrawable.getIntrinsicWidth());
 
         // Restore original configuration and metrics.
         DrawableTestUtils.setResourcesDensity(res, densityDpi);
