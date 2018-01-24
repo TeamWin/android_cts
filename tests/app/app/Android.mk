@@ -24,11 +24,11 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 LOCAL_PROGUARD_ENABLED := disabled
 
 LOCAL_JAVA_LIBRARIES := \
-    android.test.runner \
+    android.test.runner.stubs \
     telephony-common \
     voip-common \
     org.apache.http.legacy \
-    android.test.base \
+    android.test.base.stubs \
 
 
 LOCAL_STATIC_JAVA_LIBRARIES := \

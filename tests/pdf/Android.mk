@@ -20,7 +20,7 @@ LOCAL_MODULE_TAGS := tests
 
 LOCAL_MULTILIB := both
 
-LOCAL_JAVA_LIBRARIES := android.test.runner
+LOCAL_JAVA_LIBRARIES := android.test.runner.stubs
 
 LOCAL_STATIC_JAVA_LIBRARIES += \
     android-support-test \

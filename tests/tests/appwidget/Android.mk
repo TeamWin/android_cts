@@ -30,7 +30,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestrunner \
     junit
 
-LOCAL_JAVA_LIBRARIES := android.test.base
+LOCAL_JAVA_LIBRARIES := android.test.base.stubs
 
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests

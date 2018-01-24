@@ -33,7 +33,7 @@ LOCAL_STATIC_JAVA_LIBRARIES += \
     ctstestrunner \
     platform-test-annotations
 
-LOCAL_JAVA_LIBRARIES := android.test.runner
+LOCAL_JAVA_LIBRARIES := android.test.runner.stubs
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 

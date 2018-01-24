@@ -20,7 +20,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util \
     junit
 
-LOCAL_JAVA_LIBRARIES := android.test.base
+LOCAL_JAVA_LIBRARIES := android.test.base.stubs
 
 LOCAL_SRC_FILES := \
     $(call all-java-files-under, src)

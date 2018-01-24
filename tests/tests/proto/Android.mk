@@ -33,7 +33,7 @@ LOCAL_PACKAGE_NAME := CtsProtoTestCases
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 #LOCAL_SDK_VERSION := current
-LOCAL_JAVA_LIBRARIES += android.test.runner
+LOCAL_JAVA_LIBRARIES += android.test.runner.stubs
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
         ctstestrunner

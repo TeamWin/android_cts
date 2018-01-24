@@ -28,7 +28,7 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src) \
 LOCAL_AIDL_INCLUDES := $(LOCAL_PATH)/src
 
 LOCAL_JAVA_LIBRARIES := \
-    android.test.runner \
+    android.test.runner.stubs \
     conscrypt \
     cts-junit \
     android.test.base.stubs \

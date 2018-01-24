@@ -49,8 +49,8 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 # uncomment when b/13282254 is fixed
 #LOCAL_SDK_VERSION := current
-LOCAL_JAVA_LIBRARIES += android.test.runner
-LOCAL_JAVA_LIBRARIES += android.test.base
+LOCAL_JAVA_LIBRARIES += android.test.runner.stubs
+LOCAL_JAVA_LIBRARIES += android.test.base.stubs
 
 # Do not compress minijail policy files.
 LOCAL_AAPT_FLAGS := -0 .policy

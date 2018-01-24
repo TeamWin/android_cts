@@ -34,7 +34,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ub-uiautomator \
     ub-janktesthelper
 
-LOCAL_JAVA_LIBRARIES := android.test.base
+LOCAL_JAVA_LIBRARIES := android.test.base.stubs
 
 include $(BUILD_CTS_PACKAGE)
 

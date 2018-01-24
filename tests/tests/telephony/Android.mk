@@ -43,8 +43,8 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 # uncomment when b/13250611 is fixed
 #LOCAL_SDK_VERSION := current
-LOCAL_JAVA_LIBRARIES += android.test.runner
-LOCAL_JAVA_LIBRARIES += android.test.base
+LOCAL_JAVA_LIBRARIES += android.test.runner.stubs
+LOCAL_JAVA_LIBRARIES += android.test.base.stubs
 
 include $(BUILD_CTS_PACKAGE)
 include $(call all-makefiles-under,$(LOCAL_PATH))
