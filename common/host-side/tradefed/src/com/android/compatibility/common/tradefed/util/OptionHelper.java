@@ -107,8 +107,8 @@ public final class OptionHelper {
         Pattern cliPattern = Pattern.compile(
             // match -option=value or --option=value
             "((-[-\\w]+([ =]"
-            // allow -option "...", -option x y z, and -option x:y:z
-            + "(" + quoteMatching + "|([\\w\\/\\s:.]|"+ nonSpacedHypen + ")+))?"
+            // allow -option "...", -option x y z, and -option x:y:z and -option x:y:z1=z2
+            + "(" + quoteMatching + "|([\\w\\/\\s:=.]|"+ nonSpacedHypen + ")+))?"
             + "))|"
             // allow anything in direct quotes
             + quoteMatching
@@ -116,16 +116,16 @@ public final class OptionHelper {
         Matcher matcher = cliPattern.matcher(commandString);
 
         while (matcher.find()) {
-            String optionInput = matcher.group();
+            String optionInput = cleanNameValueDelimiter(matcher.group());
             // split between the option name and value
-            String[] keyNameTokens = optionInput.split("[ =]", 2);
+            String[] keyNameTokens = optionInput.split(" ", 2);
             // remove initial hyphens and any starting double quote from option args
             String keyName = keyNameTokens[0].replaceFirst("^\"?--?", "");
 
             // add substrings only when the options are recognized
             if (optionShortNames.contains(keyName) || optionNames.contains(keyName)) {
                 // add values separated by spaces or in quotes separately to the return array
-                Pattern tokenPattern = Pattern.compile("(\".*\")|[^\\s=]+");
+                Pattern tokenPattern = Pattern.compile("(\".*\")|[^\\s]+");
                 Matcher tokenMatcher = tokenPattern.matcher(optionInput);
                 while (tokenMatcher.find()) {
                     String token = tokenMatcher.group().replaceAll("\"", "");
@@ -134,5 +134,15 @@ public final class OptionHelper {
             }
         }
         return validCliArgs;
+    }
+
+    /*
+     * The "=" sign is a valid character within an option value (such as in key-value map pairs).
+     * However, it may also act as delimiter between the option name and value. For simplicity,
+     * ensure the name-value delimiter is a space, so that we may treat the "=" as any other
+     * character in the getValidCliArgs() logic above.
+     */
+    private static String cleanNameValueDelimiter(String optionNameValue) {
+        return optionNameValue.replaceFirst("[ =]", " ");
     }
 }
