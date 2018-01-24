@@ -908,7 +908,6 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                 verifyLensCalibration(poseRotation, poseTranslation, poseReference,
                         cameraIntrinsics, radialDistortion, precorrectionArray);
 
-
             } else {
                 boolean hasFields =
                     hasDepth16 && (poseTranslation != null) &&
@@ -1463,6 +1462,63 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
             counter++;
         }
     }
+
+    /**
+     * Check Logical camera capability
+     */
+    public void testLogicalCameraCharacteristics() throws Exception {
+        int counter = 0;
+        List<String> cameraIdList = Arrays.asList(mIds);
+
+        for (CameraCharacteristics c : mCharacteristics) {
+            int[] capabilities = CameraTestUtils.getValueNotNull(
+                    c, CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
+            boolean supportLogicalCamera = arrayContains(capabilities,
+                    CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA);
+            if (supportLogicalCamera) {
+                List<String> physicalCameraIds = c.getPhysicalCameraIds();
+                assertNotNull("android.logicalCam.physicalCameraIds shouldn't be null",
+                    physicalCameraIds);
+                assertTrue("Logical camera must contain at least 2 physical camera ids",
+                    physicalCameraIds.size() >= 2);
+
+                mCollector.expectKeyValueInRange(c,
+                        CameraCharacteristics.LOGICAL_MULTI_CAMERA_SENSOR_SYNC_TYPE,
+                        CameraCharacteristics.LOGICAL_MULTI_CAMERA_SENSOR_SYNC_TYPE_APPROXIMATE,
+                        CameraCharacteristics.LOGICAL_MULTI_CAMERA_SENSOR_SYNC_TYPE_CALIBRATED);
+
+                for (String physicalCameraId : physicalCameraIds) {
+                    assertNotNull("Physical camera id shouldn't be null", physicalCameraId);
+                    assertTrue(
+                            String.format("Physical camera id %s shouldn't be the same as logical"
+                                    + " camera id %s", physicalCameraId, mIds[counter]),
+                            physicalCameraId != mIds[counter]);
+                    assertTrue(
+                            String.format("Physical camera id %s should be in available camera ids",
+                                    physicalCameraId),
+                            cameraIdList.contains(physicalCameraId));
+
+                    //validation for depth static metadata of physical cameras
+                    CameraCharacteristics pc =
+                            mCameraManager.getCameraCharacteristics(physicalCameraId);
+
+                    float[] poseRotation = pc.get(CameraCharacteristics.LENS_POSE_ROTATION);
+                    float[] poseTranslation = pc.get(CameraCharacteristics.LENS_POSE_TRANSLATION);
+                    Integer poseReference = pc.get(CameraCharacteristics.LENS_POSE_REFERENCE);
+                    float[] cameraIntrinsics = pc.get(
+                            CameraCharacteristics.LENS_INTRINSIC_CALIBRATION);
+                    float[] radialDistortion = pc.get(CameraCharacteristics.LENS_RADIAL_DISTORTION);
+                    Rect precorrectionArray = pc.get(
+                            CameraCharacteristics.SENSOR_INFO_PRE_CORRECTION_ACTIVE_ARRAY_SIZE);
+
+                    verifyLensCalibration(poseRotation, poseTranslation, poseReference,
+                            cameraIntrinsics, radialDistortion, precorrectionArray);
+                }
+            }
+            counter++;
+        }
+    }
+
     /**
      * Create an invalid size that's close to one of the good sizes in the list, but not one of them
      */
