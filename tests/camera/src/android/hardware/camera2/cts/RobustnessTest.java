@@ -48,7 +48,9 @@ import com.android.ex.camera2.blocking.BlockingSessionCallback;
 
 import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 import static junit.framework.Assert.assertTrue;
 import static org.mockito.Mockito.*;
@@ -239,6 +241,11 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             {YUV,  PREVIEW,  JPEG, MAXIMUM,  RAW, MAXIMUM}
         };
 
+        final int[][] MOTION_TRACKING_COMBINATIONS = {
+            // YUV preview with tracking YUV output and high-resolution 30fps JPEG for still capture
+            {YUV, PREVIEW, YUV, VGA_FULL_FOV, JPEG, MAX_30FPS}
+        };
+
         final int[][] LEVEL_3_COMBINATIONS = {
             // In-app viewfinder analysis with dynamic selection of output format
             {PRIV, PREVIEW, PRIV, VGA, YUV, MAXIMUM, RAW, MAXIMUM},
@@ -303,6 +310,13 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                 if (mStaticInfo.isCapabilitySupported(
                         CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_RAW)) {
                     for (int[] config : RAW_COMBINATIONS) {
+                        testOutputCombination(id, config, maxSizes);
+                    }
+                }
+
+                if (mStaticInfo.isCapabilitySupported(
+                        CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MOTION_TRACKING)) {
+                    for (int[] config : MOTION_TRACKING_COMBINATIONS) {
                         testOutputCombination(id, config, maxSizes);
                     }
                 }
@@ -1300,7 +1314,11 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         static final int RECORD  = 1;
         static final int MAXIMUM = 2;
         static final int VGA = 3;
-        static final int RESOLUTION_COUNT = 4;
+        static final int VGA_FULL_FOV = 4;
+        static final int MAX_30FPS = 5;
+        static final int RESOLUTION_COUNT = 6;
+
+        static final long FRAME_DURATION_30FPS_NSEC = (long) 1e9 / 30;
 
         public MaxStreamSizes(StaticMetadata sm, String cameraId, Context context) {
             Size[] privSizes = sm.getAvailableSizesForFormatChecked(ImageFormat.PRIVATE,
@@ -1332,6 +1350,71 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                 maxPrivSizes[VGA] = vgaSize;
                 maxYuvSizes[VGA] = vgaSize;
                 maxJpegSizes[VGA] = vgaSize;
+
+                // VGA resolution, but with aspect ratio matching full res FOV
+                float fullFovAspect = maxYuvSizes[MAXIMUM].getWidth() / (float) maxYuvSizes[MAXIMUM].getHeight();
+                Size vgaFullFovSize = new Size(640, (int) (640 / fullFovAspect));
+
+                maxPrivSizes[VGA_FULL_FOV] = vgaFullFovSize;
+                maxYuvSizes[VGA_FULL_FOV] = vgaFullFovSize;
+                maxJpegSizes[VGA_FULL_FOV] = vgaFullFovSize;
+
+                // Max resolution that runs at 30fps
+
+                Size maxPriv30fpsSize = null;
+                Size maxYuv30fpsSize = null;
+                Size maxJpeg30fpsSize = null;
+                Comparator<Size> comparator = new SizeComparator();
+                for (Map.Entry<Size, Long> e :
+                             sm.getAvailableMinFrameDurationsForFormatChecked(ImageFormat.PRIVATE).
+                             entrySet()) {
+                    Size s = e.getKey();
+                    Long minDuration = e.getValue();
+                    Log.d(TAG, String.format("Priv Size: %s, duration %d limit %d", s, minDuration, FRAME_DURATION_30FPS_NSEC));
+                    if (minDuration <= FRAME_DURATION_30FPS_NSEC) {
+                        if (maxPriv30fpsSize == null ||
+                                comparator.compare(maxPriv30fpsSize, s) < 0) {
+                            maxPriv30fpsSize = s;
+                        }
+                    }
+                }
+                assertTrue("No PRIVATE resolution available at 30fps!", maxPriv30fpsSize != null);
+
+                for (Map.Entry<Size, Long> e :
+                             sm.getAvailableMinFrameDurationsForFormatChecked(
+                                     ImageFormat.YUV_420_888).
+                             entrySet()) {
+                    Size s = e.getKey();
+                    Long minDuration = e.getValue();
+                    Log.d(TAG, String.format("YUV Size: %s, duration %d limit %d", s, minDuration, FRAME_DURATION_30FPS_NSEC));
+                    if (minDuration <= FRAME_DURATION_30FPS_NSEC) {
+                        if (maxYuv30fpsSize == null ||
+                                comparator.compare(maxYuv30fpsSize, s) < 0) {
+                            maxYuv30fpsSize = s;
+                        }
+                    }
+                }
+                assertTrue("No YUV_420_888 resolution available at 30fps!", maxYuv30fpsSize != null);
+
+                for (Map.Entry<Size, Long> e :
+                             sm.getAvailableMinFrameDurationsForFormatChecked(ImageFormat.JPEG).
+                             entrySet()) {
+                    Size s = e.getKey();
+                    Long minDuration = e.getValue();
+                    Log.d(TAG, String.format("JPEG Size: %s, duration %d limit %d", s, minDuration, FRAME_DURATION_30FPS_NSEC));
+                    if (minDuration <= FRAME_DURATION_30FPS_NSEC) {
+                        if (maxJpeg30fpsSize == null ||
+                                comparator.compare(maxJpeg30fpsSize, s) < 0) {
+                            maxJpeg30fpsSize = s;
+                        }
+                    }
+                }
+                assertTrue("No JPEG resolution available at 30fps!", maxJpeg30fpsSize != null);
+
+                maxPrivSizes[MAX_30FPS] = maxPriv30fpsSize;
+                maxYuvSizes[MAX_30FPS] = maxYuv30fpsSize;
+                maxJpegSizes[MAX_30FPS] = maxJpeg30fpsSize;
+
             }
 
             StreamConfigurationMap configs = sm.getCharacteristics().get(
@@ -1415,6 +1498,12 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                     break;
                 case VGA:
                     b.append("VGA]");
+                    break;
+                case VGA_FULL_FOV:
+                    b.append("VGA_FULL_FOV]");
+                    break;
+                case MAX_30FPS:
+                    b.append("MAX_30FPS]");
                     break;
                 default:
                     b.append("UNK]");

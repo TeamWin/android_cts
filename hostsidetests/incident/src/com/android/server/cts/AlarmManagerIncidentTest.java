@@ -76,7 +76,6 @@ public class AlarmManagerIncidentTest extends ProtoDumpTestCase {
             // time_until_next_non_wakeup_delivery_ms could be negative if the delivery time is in the past.
         }
 
-        assertTrue(0 < dump.getTimeUntilNextNonWakeupAlarmMs());
         assertTrue(0 < dump.getTimeUntilNextWakeupMs());
         assertTrue(0 < dump.getTimeSinceLastWakeupMs());
         assertTrue(0 < dump.getTimeSinceLastWakeupSetMs());

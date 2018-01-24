@@ -199,6 +199,10 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         return getDevice().getMaxNumberOfUsersSupported();
     }
 
+    protected int getMaxNumberOfRunningUsersSupported() throws DeviceNotAvailableException {
+        return getDevice().getMaxNumberOfRunningUsersSupported();
+    }
+
     protected int getUserFlags(int userId) throws DeviceNotAvailableException {
         String command = "pm list users";
         String commandOutput = getDevice().executeShellCommand(command);
@@ -223,6 +227,16 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
 
     protected ArrayList<Integer> listUsers() throws DeviceNotAvailableException {
         return getDevice().listUsers();
+    }
+
+    protected  ArrayList<Integer> listRunningUsers() throws DeviceNotAvailableException {
+        ArrayList<Integer> runningUsers = new ArrayList<>();
+        for (int userId : listUsers()) {
+            if (getDevice().isUserRunning(userId)) {
+                runningUsers.add(userId);
+            }
+        }
+        return runningUsers;
     }
 
     protected int getFirstManagedProfileUserId() throws DeviceNotAvailableException {
@@ -292,7 +306,10 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
             String stopUserCommand = "am stop-user -w -f " + userId;
             CLog.d("stopping and removing user " + userId);
             getDevice().executeShellCommand(stopUserCommand);
-            assertTrue("Couldn't remove user", getDevice().removeUser(userId));
+            // Ephemeral users may have already been removed after being stopped.
+            if (listUsers().contains(userId)) {
+                assertTrue("Couldn't remove user", getDevice().removeUser(userId));
+            }
         }
     }
 
@@ -434,6 +451,12 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     protected boolean canCreateAdditionalUsers(int numberOfUsers)
             throws DeviceNotAvailableException {
         return listUsers().size() + numberOfUsers <= getMaxNumberOfUsersSupported();
+    }
+
+    /** Checks whether it is possible to start the desired number of users. */
+    protected boolean canStartAdditionalUsers(int numberOfUsers)
+            throws DeviceNotAvailableException {
+        return listRunningUsers().size() + numberOfUsers <= getMaxNumberOfRunningUsersSupported();
     }
 
     protected boolean hasDeviceFeature(String requiredFeature) throws DeviceNotAvailableException {

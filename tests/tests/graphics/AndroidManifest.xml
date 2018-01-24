@@ -39,6 +39,16 @@
         <activity android:name="android.graphics.drawable.cts.DrawableStubActivity"
                   android:theme="@style/WhiteBackgroundNoWindowAnimation"
                   android:screenOrientation="locked"/>
+        <provider
+            android:name="android.support.v4.content.FileProvider"
+            android:authorities="android.graphics.cts.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true"
+            >
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"

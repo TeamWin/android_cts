@@ -1,4 +1,4 @@
-# Copyright (C) 2008 The Android Open Source Project
+# Copyright (C) 2018 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,34 +16,22 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_MODULE_TAGS := tests
+# Don't include this package in any target.
+LOCAL_MODULE_TAGS := optional
 
-LOCAL_MULTILIB := both
-
-LOCAL_JAVA_LIBRARIES := android.test.runner android.test.base.stubs
-
-LOCAL_STATIC_JAVA_LIBRARIES += \
-    android-support-test \
-    android-support-v4 \
-    mockito-target-minus-junit4 \
-    compatibility-device-util \
-    ctsdeviceutillegacy \
-    ctstestrunner \
-    android-support-annotations \
-    junit
-
-LOCAL_JNI_SHARED_LIBRARIES := libctsgraphics_jni
+# When built, explicitly put it in the data partition.
+LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
-
-LOCAL_PACKAGE_NAME := CtsGraphicsTestCases
 
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
-# Enforce public / test api only
-LOCAL_SDK_VERSION := test_current
+LOCAL_PACKAGE_NAME := CtsMeteredDataTestApp
+
+LOCAL_SDK_VERSION := current
+
+# tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := arcts cts vts general-tests
 
 include $(BUILD_CTS_PACKAGE)
-
-include $(call all-makefiles-under,$(LOCAL_PATH))

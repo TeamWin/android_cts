@@ -28,6 +28,9 @@ public class BasicAdminReceiver extends DeviceAdminReceiver {
 
     final static String ACTION_USER_ADDED = "com.android.cts.deviceowner.action.USER_ADDED";
     final static String ACTION_USER_REMOVED = "com.android.cts.deviceowner.action.USER_REMOVED";
+    final static String ACTION_USER_STARTED = "com.android.cts.deviceowner.action.USER_STARTED";
+    final static String ACTION_USER_STOPPED = "com.android.cts.deviceowner.action.USER_STOPPED";
+    final static String ACTION_USER_SWITCHED = "com.android.cts.deviceowner.action.USER_SWITCHED";
     final static String EXTRA_USER_HANDLE = "com.android.cts.deviceowner.extra.USER_HANDLE";
     final static String ACTION_NETWORK_LOGS_AVAILABLE =
             "com.android.cts.deviceowner.action.ACTION_NETWORK_LOGS_AVAILABLE";
@@ -49,13 +52,27 @@ public class BasicAdminReceiver extends DeviceAdminReceiver {
 
     @Override
     public void onUserAdded(Context context, Intent intent, UserHandle userHandle) {
-        sendUserAddedOrRemovedBroadcast(context, ACTION_USER_ADDED, userHandle);
+        sendUserBroadcast(context, ACTION_USER_ADDED, userHandle);
     }
 
     @Override
     public void onUserRemoved(Context context, Intent intent, UserHandle userHandle) {
-        sendUserAddedOrRemovedBroadcast(context, ACTION_USER_REMOVED,
-                userHandle);
+        sendUserBroadcast(context, ACTION_USER_REMOVED, userHandle);
+    }
+
+    @Override
+    public void onUserStarted(Context context, Intent intent, UserHandle userHandle) {
+        sendUserBroadcast(context, ACTION_USER_STARTED, userHandle);
+    }
+
+    @Override
+    public void onUserStopped(Context context, Intent intent, UserHandle userHandle) {
+        sendUserBroadcast(context, ACTION_USER_STOPPED, userHandle);
+    }
+
+    @Override
+    public void onUserSwitched(Context context, Intent intent, UserHandle userHandle) {
+        sendUserBroadcast(context, ACTION_USER_SWITCHED, userHandle);
     }
 
     @Override
@@ -67,7 +84,7 @@ public class BasicAdminReceiver extends DeviceAdminReceiver {
         LocalBroadcastManager.getInstance(context).sendBroadcast(batchIntent);
     }
 
-    private void sendUserAddedOrRemovedBroadcast(Context context, String action,
+    private void sendUserBroadcast(Context context, String action,
             UserHandle userHandle) {
         Intent intent = new Intent(action);
         intent.putExtra(EXTRA_USER_HANDLE, userHandle);

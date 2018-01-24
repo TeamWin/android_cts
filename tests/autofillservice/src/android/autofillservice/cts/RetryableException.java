@@ -35,7 +35,7 @@ public class RetryableException extends RuntimeException {
     }
 
     public RetryableException(Throwable cause, String format, Object...args) {
-        this((Timeout) null, String.format(format, args), cause);
+        this((Timeout) null, cause, String.format(format, args), cause);
     }
 
     public RetryableException(@Nullable Timeout timeout, String msg) {

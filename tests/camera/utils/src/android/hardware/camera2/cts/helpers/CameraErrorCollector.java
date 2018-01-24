@@ -841,6 +841,23 @@ public class CameraErrorCollector extends ErrorCollector {
         expectInRange(key.getName(), value, min, max);
     }
 
+  /**
+     * Check if the key is non-null, and the key value is in the expected range.
+     *
+     * @param request {@link CaptureRequest.Builder} to check.
+     * @param key The {@link CaptureRequest} key to be checked.
+     * @param min The min value of the range
+     * @param max The max value of the range
+     */
+    public <T extends Comparable<? super T>> void expectKeyValueInRange(
+            Builder request, CaptureRequest.Key<T> key, T min, T max) {
+        T value;
+        if ((value = expectKeyValueNotNull(request, key)) == null) {
+            return;
+        }
+        expectInRange(key.getName(), value, min, max);
+    }
+
     /**
      * Check if the key is non-null, and the key value is one of the expected values.
      *

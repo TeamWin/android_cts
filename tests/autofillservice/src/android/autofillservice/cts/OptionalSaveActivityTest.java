@@ -15,7 +15,6 @@
  */
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.Helper.assertNoDanglingSessions;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.OptionalSaveActivity.ID_ADDRESS1;
@@ -136,9 +135,6 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
 
         // Assert value of fields
         assertions.visit(saveRequest.structure);
-
-        // Once saved, the session should be finsihed.
-        assertNoDanglingSessions();
     }
 
     @Test
@@ -190,9 +186,6 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
 
         // Assert the snack bar is shown and tap "Save".
         mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_ADDRESS);
-
-        // Once saved, the session should be finsihed.
-        assertNoDanglingSessions();
     }
 
     @Test
@@ -333,9 +326,6 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
 
         // Assert value of fields
         assertions.visit(saveRequest.structure);
-
-        // Once saved, the session should be finsihed.
-        assertNoDanglingSessions();
     }
 
     @Test
@@ -426,9 +416,6 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
 
         // Assert the snack bar is not shown.
         mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_ADDRESS);
-
-        // Once saved, the session should be finsihed.
-        assertNoDanglingSessions();
     }
 
     @Test
