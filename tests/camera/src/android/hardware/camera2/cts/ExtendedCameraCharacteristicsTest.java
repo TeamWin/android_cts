@@ -38,6 +38,7 @@ import android.util.Range;
 import android.util.Size;
 import android.util.Patterns;
 import android.view.Surface;
+import android.view.WindowManager;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -73,6 +74,7 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
     private static final Size VGA = new Size(640, 480);
     private static final Size QVGA = new Size(320, 240);
 
+    private static final long FRAME_DURATION_30FPS_NSEC = (long) 1e9 / 30;
     /*
      * HW Levels short hand
      */
@@ -845,8 +847,11 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
 
             float[] poseRotation = c.get(CameraCharacteristics.LENS_POSE_ROTATION);
             float[] poseTranslation = c.get(CameraCharacteristics.LENS_POSE_TRANSLATION);
+            Integer poseReference = c.get(CameraCharacteristics.LENS_POSE_REFERENCE);
             float[] cameraIntrinsics = c.get(CameraCharacteristics.LENS_INTRINSIC_CALIBRATION);
             float[] radialDistortion = c.get(CameraCharacteristics.LENS_RADIAL_DISTORTION);
+            Rect precorrectionArray = c.get(
+                CameraCharacteristics.SENSOR_INFO_PRE_CORRECTION_ACTIVE_ARRAY_SIZE);
 
             if (supportDepth) {
                 mCollector.expectTrue("Supports DEPTH_OUTPUT but does not support DEPTH16",
@@ -900,64 +905,9 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                 mCollector.expectTrue("Supports DEPTH_OUTPUT but DEPTH_IS_EXCLUSIVE is not defined",
                         depthIsExclusive != null);
 
-                mCollector.expectTrue(
-                        "Supports DEPTH_OUTPUT but LENS_POSE_ROTATION not right size",
-                        poseRotation != null && poseRotation.length == 4);
-                mCollector.expectTrue(
-                        "Supports DEPTH_OUTPUT but LENS_POSE_TRANSLATION not right size",
-                        poseTranslation != null && poseTranslation.length == 3);
-                mCollector.expectTrue(
-                        "Supports DEPTH_OUTPUT but LENS_INTRINSIC_CALIBRATION not right size",
-                        cameraIntrinsics != null && cameraIntrinsics.length == 5);
-                mCollector.expectTrue(
-                        "Supports DEPTH_OUTPUT but LENS_RADIAL_DISTORTION not right size",
-                        radialDistortion != null && radialDistortion.length == 6);
+                verifyLensCalibration(poseRotation, poseTranslation, poseReference,
+                        cameraIntrinsics, radialDistortion, precorrectionArray);
 
-                if (poseRotation != null && poseRotation.length == 4) {
-                    float normSq =
-                        poseRotation[0] * poseRotation[0] +
-                        poseRotation[1] * poseRotation[1] +
-                        poseRotation[2] * poseRotation[2] +
-                        poseRotation[3] * poseRotation[3];
-                    mCollector.expectTrue(
-                            "LENS_POSE_ROTATION quarternion must be unit-length",
-                            0.9999f < normSq && normSq < 1.0001f);
-
-                    // TODO: Cross-validate orientation/facing and poseRotation
-                    Integer orientation = c.get(CameraCharacteristics.SENSOR_ORIENTATION);
-                    Integer facing = c.get(CameraCharacteristics.LENS_FACING);
-                }
-
-                if (poseTranslation != null && poseTranslation.length == 3) {
-                    float normSq =
-                        poseTranslation[0] * poseTranslation[0] +
-                        poseTranslation[1] * poseTranslation[1] +
-                        poseTranslation[2] * poseTranslation[2];
-                    mCollector.expectTrue("Pose translation is larger than 1 m",
-                            normSq < 1.f);
-                }
-
-                Rect precorrectionArray =
-                    c.get(CameraCharacteristics.SENSOR_INFO_PRE_CORRECTION_ACTIVE_ARRAY_SIZE);
-                mCollector.expectTrue("Supports DEPTH_OUTPUT but does not have " +
-                        "precorrection active array defined", precorrectionArray != null);
-
-                if (cameraIntrinsics != null && precorrectionArray != null) {
-                    float fx = cameraIntrinsics[0];
-                    float fy = cameraIntrinsics[1];
-                    float cx = cameraIntrinsics[2];
-                    float cy = cameraIntrinsics[3];
-                    float s = cameraIntrinsics[4];
-                    mCollector.expectTrue("Optical center expected to be within precorrection array",
-                            0 <= cx && cx < precorrectionArray.width() &&
-                            0 <= cy && cy < precorrectionArray.height());
-
-                    // TODO: Verify focal lengths and skew are reasonable
-                }
-
-                if (radialDistortion != null) {
-                    // TODO: Verify radial distortion
-                }
 
             } else {
                 boolean hasFields =
@@ -971,6 +921,183 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
             }
             counter++;
         }
+    }
+
+    /**
+     * Check motion tracking capability metadata
+     */
+    public void testMotionTrackingCharacteristics() throws Exception {
+        int counter = 0;
+
+        for (CameraCharacteristics c : mCharacteristics) {
+            Log.i(TAG, "testMotionTrackingCharacteristics: Testing camera ID " + mIds[counter]);
+
+            int[] capabilities = c.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
+            assertNotNull("android.request.availableCapabilities must never be null",
+                    capabilities);
+            boolean supportMotionTracking = arrayContains(capabilities,
+                    CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MOTION_TRACKING);
+            StreamConfigurationMap configs =
+                    c.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+
+            int[] outputFormats = configs.getOutputFormats();
+
+            float[] poseRotation = c.get(CameraCharacteristics.LENS_POSE_ROTATION);
+            float[] poseTranslation = c.get(CameraCharacteristics.LENS_POSE_TRANSLATION);
+            Integer poseReference = c.get(CameraCharacteristics.LENS_POSE_REFERENCE);
+            float[] cameraIntrinsics = c.get(CameraCharacteristics.LENS_INTRINSIC_CALIBRATION);
+            float[] radialDistortion = c.get(CameraCharacteristics.LENS_RADIAL_DISTORTION);
+            Rect precorrectionArray = c.get(
+                CameraCharacteristics.SENSOR_INFO_PRE_CORRECTION_ACTIVE_ARRAY_SIZE);
+
+            Integer timestampSource = c.get(CameraCharacteristics.SENSOR_INFO_TIMESTAMP_SOURCE);
+
+            if (supportMotionTracking) {
+
+                verifyLensCalibration(poseRotation, poseTranslation, poseReference, cameraIntrinsics, radialDistortion, precorrectionArray);
+
+                if (poseReference != null) {
+                    mCollector.expectTrue("POSE_REFERENCE must be GYROSCOPE", poseReference == CameraCharacteristics.LENS_POSE_REFERENCE_GYROSCOPE);
+                }
+
+                mCollector.expectTrue("TIMESTAMP_SOURCE must be REALTIME",
+                        timestampSource != null && timestampSource == CameraCharacteristics.SENSOR_INFO_TIMESTAMP_SOURCE_REALTIME);
+
+                // Verify MOTION_TRACKING guaranteed stream configuration sizes and frame duration
+
+                Size[] yuvSizes = configs.getOutputSizes(ImageFormat.YUV_420_888);
+                Size maxYuvSize = CameraTestUtils.getMaxSize(yuvSizes);
+                float maxAspect = maxYuvSize.getWidth() / (float) maxYuvSize.getHeight();
+
+                Size vgaSize = new Size(640, (int)(640 / maxAspect));
+                boolean gotVgaSize = false;
+                for (Size s : yuvSizes) {
+                    if (s.equals(vgaSize)) {
+                        gotVgaSize = true;
+                    }
+                }
+                mCollector.expectTrue("MOTION_TRACKING requires a full-FOV YUV output with 640 width, which is "  + vgaSize +
+                        " for this camera device. Not found in list of YUV_420_888 output sizes", gotVgaSize);
+
+                if (gotVgaSize) {
+                    long minVgaDuration = configs.getOutputMinFrameDuration(ImageFormat.YUV_420_888, vgaSize);
+                    mCollector.expectTrue("Full-FOV YUV output " + vgaSize + " has minimum frame duration > 1/30s",
+                            minVgaDuration <= 1/30. * 1e9);
+                }
+
+                Size[] jpegSizes = configs.getOutputSizes(ImageFormat.JPEG);
+                Size maxJpegSizeAt30fps = null;
+                for (Size j : jpegSizes) {
+                    if (configs.getOutputMinFrameDuration(ImageFormat.JPEG, j) <=
+                            FRAME_DURATION_30FPS_NSEC) {
+                        if (maxJpegSizeAt30fps == null) {
+                            maxJpegSizeAt30fps = j;
+                        } else if (maxJpegSizeAt30fps.getWidth() < j.getWidth() ||
+                                maxJpegSizeAt30fps.getWidth() == j.getWidth() &&
+                                maxJpegSizeAt30fps.getHeight() < j.getHeight()) {
+                            maxJpegSizeAt30fps = j;
+                        }
+                    }
+                }
+                mCollector.expectTrue(
+                    "No JPEG resolution found with minimum frame duration at 1/30s or below",
+                    maxJpegSizeAt30fps != null);
+
+                WindowManager windowManager = (WindowManager) mContext.getSystemService(
+                    Context.WINDOW_SERVICE);
+
+                Size maxPreviewSize = CameraTestUtils.getSupportedPreviewSizes(
+                    mIds[counter], mCameraManager,
+                    CameraTestUtils.getPreviewSizeBound(windowManager,
+                            CameraTestUtils.PREVIEW_SIZE_BOUND)).get(0);
+                long minPreviewDuration = configs.getOutputMinFrameDuration(
+                    ImageFormat.YUV_420_888, maxPreviewSize);
+                mCollector.expectTrue(
+                    "Preview output " + maxPreviewSize + " has minimum frame duration > 1/30s",
+                    minPreviewDuration <= 1/30. * 1e9);
+
+            }
+
+            counter++;
+        }
+    }
+
+    private void verifyLensCalibration(float[] poseRotation, float[] poseTranslation,
+            Integer poseReference, float[] cameraIntrinsics, float[] radialDistortion,
+            Rect precorrectionArray) {
+
+        mCollector.expectTrue(
+            "LENS_POSE_ROTATION not right size",
+            poseRotation != null && poseRotation.length == 4);
+        mCollector.expectTrue(
+            "LENS_POSE_TRANSLATION not right size",
+            poseTranslation != null && poseTranslation.length == 3);
+        mCollector.expectTrue(
+            "LENS_POSE_REFERENCE is not defined",
+            poseReference != null);
+        mCollector.expectTrue(
+            "LENS_INTRINSIC_CALIBRATION not right size",
+            cameraIntrinsics != null && cameraIntrinsics.length == 5);
+        mCollector.expectTrue(
+            "LENS_RADIAL_DISTORTION not right size",
+            radialDistortion != null && radialDistortion.length == 6);
+
+        if (poseRotation != null && poseRotation.length == 4) {
+            float normSq =
+                    poseRotation[0] * poseRotation[0] +
+                    poseRotation[1] * poseRotation[1] +
+                    poseRotation[2] * poseRotation[2] +
+                    poseRotation[3] * poseRotation[3];
+            mCollector.expectTrue(
+                "LENS_POSE_ROTATION quarternion must be unit-length",
+                0.9999f < normSq && normSq < 1.0001f);
+
+            // TODO: Cross-validate orientation/facing and poseRotation
+        }
+
+        if (poseTranslation != null && poseTranslation.length == 3) {
+            float normSq =
+                    poseTranslation[0] * poseTranslation[0] +
+                    poseTranslation[1] * poseTranslation[1] +
+                    poseTranslation[2] * poseTranslation[2];
+            mCollector.expectTrue("Pose translation is larger than 1 m",
+                    normSq < 1.f);
+        }
+
+        if (poseReference != null) {
+            int ref = poseReference;
+            boolean validReference = false;
+            switch (ref) {
+                case CameraCharacteristics.LENS_POSE_REFERENCE_PRIMARY_CAMERA:
+                case CameraCharacteristics.LENS_POSE_REFERENCE_GYROSCOPE:
+                    // Allowed values
+                    validReference = true;
+                    break;
+                default:
+            }
+            mCollector.expectTrue("POSE_REFERENCE has unknown value", validReference);
+        }
+
+        mCollector.expectTrue("Does not have precorrection active array defined",
+                precorrectionArray != null);
+
+        if (cameraIntrinsics != null && precorrectionArray != null) {
+            float fx = cameraIntrinsics[0];
+            float fy = cameraIntrinsics[1];
+            float cx = cameraIntrinsics[2];
+            float cy = cameraIntrinsics[3];
+            float s = cameraIntrinsics[4];
+            mCollector.expectTrue("Optical center expected to be within precorrection array",
+                    0 <= cx && cx < precorrectionArray.width() &&
+                    0 <= cy && cy < precorrectionArray.height());
+
+            // TODO: Verify focal lengths and skew are reasonable
+        }
+
+        if (radialDistortion != null) {
+            // TODO: Verify radial distortion
+        }
+
     }
 
     /**
