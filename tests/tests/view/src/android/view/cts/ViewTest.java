@@ -344,11 +344,42 @@ public class ViewTest {
 
     @Test
     public void testFindViewById() {
+        // verify view can find self
         View parent = mActivity.findViewById(R.id.viewlayout_root);
         assertSame(parent, parent.findViewById(R.id.viewlayout_root));
 
+        // find expected view type
         View view = parent.findViewById(R.id.mock_view);
         assertTrue(view instanceof MockView);
+    }
+
+    @Test
+    public void testRequireViewById() {
+        View parent = mActivity.findViewById(R.id.viewlayout_root);
+
+        View requiredView = parent.requireViewById(R.id.mock_view);
+        View foundView = parent.findViewById(R.id.mock_view);
+        assertSame(foundView, requiredView);
+        assertTrue(requiredView instanceof MockView);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testRequireViewByIdNoId() {
+        View parent = mActivity.findViewById(R.id.viewlayout_root);
+        parent.requireViewById(View.NO_ID);
+    }
+
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testRequireViewByIdInvalid() {
+        View parent = mActivity.findViewById(R.id.viewlayout_root);
+        parent.requireViewById(0);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testRequireViewByIdNotFound() {
+        View parent = mActivity.findViewById(R.id.viewlayout_root);
+        parent.requireViewById(R.id.view); // id not present in view_layout
     }
 
     @Test
