@@ -3169,6 +3169,8 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="disallow_config_screen_timeout_action">Configuring sleep options in Display or Battery page.</string>
     <string name="disallow_config_brightness">Disallow config brightness settings</string>
     <string name="disallow_config_brightness_action">Configuring brightness level or adaptive brightness in Display or Battery page, or toggling brightness slider in quick settings</string>
+    <string name="disallow_ambient_display">Disallow ambient display</string>
+    <string name="disallow_ambient_display_action">Configuring ambient display in Display or Battery page</string>
     <string name="disallow_apps_control">Disallow controlling apps</string>
     <string name="disallow_apps_control_action">DISABLE/UNINSTALL/FORCE STOP-ing any app in the managed device/profile other than CtsVerifier</string>
     <string name="disallow_config_cell_broadcasts">Disallow config cell broadcasts</string>
