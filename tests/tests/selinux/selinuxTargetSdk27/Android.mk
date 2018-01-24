@@ -24,7 +24,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util \
     legacy-android-test \
 
-LOCAL_JAVA_LIBRARIES := android.test.runner
+LOCAL_JAVA_LIBRARIES := android.test.runner.stubs
 
 LOCAL_JNI_SHARED_LIBRARIES := \
     libc++ \

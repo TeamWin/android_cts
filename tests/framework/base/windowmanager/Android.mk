@@ -25,7 +25,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_PACKAGE_NAME := CtsWindowManagerDeviceTestCases
 
-LOCAL_JAVA_LIBRARIES := android.test.runner
+LOCAL_JAVA_LIBRARIES := android.test.runner.stubs
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util \

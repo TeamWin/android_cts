@@ -25,7 +25,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestrunner \
     ub-uiautomator
 
-LOCAL_JAVA_LIBRARIES := android.test.base
+LOCAL_JAVA_LIBRARIES := android.test.base.stubs
 
 LOCAL_SRC_FILES := $(call all-java-files-under, ../UsePermissionApp23/src) \
     ../ExternalStorageApp/src/com/android/cts/externalstorageapp/CommonExternalStorageTest.java

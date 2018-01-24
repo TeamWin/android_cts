@@ -87,7 +87,7 @@ LOCAL_PACKAGE_NAME := CtsNativeHardwareTestCases
 
 LOCAL_SDK_VERSION := current
 
-LOCAL_JAVA_LIBRARIES := android.test.runner
+LOCAL_JAVA_LIBRARIES := android.test.runner.stubs
 
 LOCAL_NDK_STL_VARIANT := c++_shared
 

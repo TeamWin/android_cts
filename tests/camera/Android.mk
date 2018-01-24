@@ -65,7 +65,7 @@ LOCAL_PACKAGE_NAME := CtsCameraTestCases
 
 LOCAL_SDK_VERSION := test_current
 
-LOCAL_JAVA_LIBRARIES := android.test.runner android.test.base.stubs
+LOCAL_JAVA_LIBRARIES := android.test.runner.stubs android.test.base.stubs
 
 cts_runtime_hint := 120
 

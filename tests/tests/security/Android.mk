@@ -31,9 +31,9 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     platform-test-annotations
 
 LOCAL_JAVA_LIBRARIES := \
-    android.test.runner \
+    android.test.runner.stubs \
     org.apache.http.legacy \
-    android.test.base \
+    android.test.base.stubs \
 
 
 LOCAL_JNI_SHARED_LIBRARIES := libctssecurity_jni libcts_jni libnativehelper_compat_libc++ \

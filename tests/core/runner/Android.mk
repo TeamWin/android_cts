@@ -30,7 +30,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     vogarexpect \
     testng
 
-LOCAL_JAVA_LIBRARIES := android.test.runner
+LOCAL_JAVA_LIBRARIES := android.test.runner.stubs
 
 include $(BUILD_STATIC_JAVA_LIBRARY)
 
