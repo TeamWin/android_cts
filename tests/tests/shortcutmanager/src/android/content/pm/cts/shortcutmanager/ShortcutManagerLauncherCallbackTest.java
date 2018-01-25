@@ -38,6 +38,9 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
+import com.android.compatibility.common.util.CddTest;
+
+@CddTest(requirement="3.8.1/C-2-3")
 @SmallTest
 public class ShortcutManagerLauncherCallbackTest extends ShortcutManagerCtsTestsBase {
 
