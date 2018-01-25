@@ -35,7 +35,7 @@ public class CtsMain {
 
     public static void waitFor() {
         try {
-            if (!sStartWaiter.await(15, TimeUnit.SECONDS)) {
+            if (!sStartWaiter.await(30, TimeUnit.SECONDS)) {
                 throw new RuntimeException("Timed out waiting for the agent");
             }
         } catch (InterruptedException e) {
