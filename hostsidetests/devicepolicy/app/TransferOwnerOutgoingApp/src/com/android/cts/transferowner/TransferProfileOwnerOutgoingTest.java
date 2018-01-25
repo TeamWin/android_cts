@@ -48,13 +48,13 @@ public class TransferProfileOwnerOutgoingTest extends DeviceAndProfileOwnerTrans
                 mOutgoingComponentName, passwordExpirationTimeout);
 
         PersistableBundle b = new PersistableBundle();
-        transferOwnership(mOutgoingComponentName, INCOMING_COMPONENT_NAME, b);
+        mDevicePolicyManager.transferOwnership(mOutgoingComponentName, INCOMING_COMPONENT_NAME, b);
     }
 
     @Test
     public void testTransfer() throws Throwable {
         PersistableBundle b = new PersistableBundle();
-        transferOwnership(mOutgoingComponentName, INCOMING_COMPONENT_NAME, b);
+        mDevicePolicyManager.transferOwnership(mOutgoingComponentName, INCOMING_COMPONENT_NAME, b);
         assertTrue(mDevicePolicyManager.isAdminActive(INCOMING_COMPONENT_NAME));
         assertTrue(mDevicePolicyManager.isProfileOwnerApp(INCOMING_COMPONENT_NAME.getPackageName()));
         assertFalse(

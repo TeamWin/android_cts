@@ -15,16 +15,14 @@
  */
 package com.android.cts.transferowner;
 
+import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
-
-import static org.junit.Assert.assertEquals;
 
 import android.app.admin.DeviceAdminReceiver;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.PersistableBundle;
 import android.os.UserHandle;
@@ -58,6 +56,7 @@ public class DeviceAndProfileOwnerTransferIncomingTest {
 
     private final static String SHARED_PREFERENCE_NAME = "shared-preference-name";
     private final static String KEY_TRANSFER_COMPLETED_CALLED = "key-transfer-completed-called";
+    private final static String ARE_PARAMETERS_SAVED = "ARE_PARAMETERS_SAVED";
     final static String KEY_TRANSFER_AFFILIATED_PROFILE_COMPLETED_CALLED =
             "key-transfer-affiliated-completed-called";
 
@@ -90,6 +89,19 @@ public class DeviceAndProfileOwnerTransferIncomingTest {
         assertNotNull(affiliationIds);
         assertEquals(1, affiliationIds.size());
         return affiliationIds.iterator().next();
+    }
+
+    public void testTransferOwnershipBundleLoaded() throws Throwable {
+        PersistableBundle bundle = mDevicePolicyManager.getTransferOwnershipBundle();
+        assertNotNull(bundle);
+        assertTrue(bundle.getBoolean(ARE_PARAMETERS_SAVED));
+    }
+
+    @Test
+    public void testTransferOwnershipEmptyBundleLoaded() throws Throwable {
+        PersistableBundle bundle = mDevicePolicyManager.getTransferOwnershipBundle();
+        assertNotNull(bundle);
+        assertTrue(bundle.isEmpty());
     }
 
     private static SharedPreferences getPrefs(Context context) {

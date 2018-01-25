@@ -49,13 +49,13 @@ public class TransferDeviceOwnerOutgoingTest extends DeviceAndProfileOwnerTransf
                 SystemUpdatePolicy.createWindowedInstallPolicy(123, 456));
 
         PersistableBundle b = new PersistableBundle();
-        transferOwnership(mOutgoingComponentName, INCOMING_COMPONENT_NAME, b);
+        mDevicePolicyManager.transferOwnership(mOutgoingComponentName, INCOMING_COMPONENT_NAME, b);
     }
 
     @Test
     public void testTransfer() throws Throwable {
         PersistableBundle b = new PersistableBundle();
-        transferOwnership(mOutgoingComponentName, INCOMING_COMPONENT_NAME, b);
+        mDevicePolicyManager.transferOwnership(mOutgoingComponentName, INCOMING_COMPONENT_NAME, b);
         assertTrue(mDevicePolicyManager.isAdminActive(INCOMING_COMPONENT_NAME));
         assertTrue(mDevicePolicyManager.isDeviceOwnerApp(INCOMING_COMPONENT_NAME.getPackageName()));
         assertFalse(
