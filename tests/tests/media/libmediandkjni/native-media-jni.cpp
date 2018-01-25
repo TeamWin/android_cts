@@ -121,7 +121,8 @@ jobject testExtractor(AMediaExtractor *ex, JNIEnv *env) {
     uint8_t *buf = new uint8_t[bufsize];
     while(true) {
         int n = AMediaExtractor_readSampleData(ex, buf, bufsize);
-        if (n < 0) {
+        ssize_t sampleSize = AMediaExtractor_getSampleSize(ex);
+        if (n < 0 || n != sampleSize) {
             break;
         }
         sizes.add(n);
@@ -217,6 +218,51 @@ static int checksum(const uint8_t *in, int len, AMediaFormat *format) {
     int sum = adler32(bb, width * height);
     delete[] bb;
     return sum;
+}
+
+extern "C" jlong Java_android_media_cts_NativeDecoderTest_getExtractorFileDurationNative(
+        JNIEnv * /*env*/, jclass /*clazz*/, int fd, jlong offset, jlong size)
+{
+    AMediaExtractor *ex = AMediaExtractor_new();
+    int err = AMediaExtractor_setDataSourceFd(ex, fd, offset, size);
+    if (err != 0) {
+        ALOGE("setDataSource error: %d", err);
+        AMediaExtractor_delete(ex);
+        return -1;
+    }
+    int64_t durationUs = -1;
+    AMediaFormat *format = AMediaExtractor_getFileFormat(ex);
+    AMediaFormat_getInt64(format, AMEDIAFORMAT_KEY_DURATION, &durationUs);
+    AMediaFormat_delete(format);
+    AMediaExtractor_delete(ex);
+    return durationUs;
+}
+
+extern "C" jlong Java_android_media_cts_NativeDecoderTest_getExtractorCachedDurationNative(
+        JNIEnv * env, jclass /*clazz*/, jstring jpath)
+{
+    AMediaExtractor *ex = AMediaExtractor_new();
+
+    const char *tmp = env->GetStringUTFChars(jpath, NULL);
+    if (tmp == NULL) {  // Out of memory
+        AMediaExtractor_delete(ex);
+        return -1;
+    }
+
+    int err = AMediaExtractor_setDataSource(ex, tmp);
+
+    env->ReleaseStringUTFChars(jpath, tmp);
+
+    if (err != 0) {
+        ALOGE("setDataSource error: %d", err);
+        AMediaExtractor_delete(ex);
+        return -1;
+    }
+
+    int64_t cachedDurationUs = AMediaExtractor_getCachedDuration(ex);
+    AMediaExtractor_delete(ex);
+    return cachedDurationUs;
+
 }
 
 extern "C" jobject Java_android_media_cts_NativeDecoderTest_getDecodedDataNative(JNIEnv *env,
