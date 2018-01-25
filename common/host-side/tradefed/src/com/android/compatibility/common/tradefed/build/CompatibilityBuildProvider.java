@@ -54,7 +54,7 @@ public class CompatibilityBuildProvider implements IDeviceBuildProvider, IInvoca
     private static final String SUITE_PLAN = "SUITE_PLAN";
     private static final String RESULT_DIR = "RESULT_DIR";
     private static final String START_TIME_MS = "START_TIME_MS";
-    private static final String DYNAMIC_CONFIG_OVERRIDE_URL = "DYNAMIC_CONFIG_OVERRIDE_URL";
+    public static final String DYNAMIC_CONFIG_OVERRIDE_URL = "DYNAMIC_CONFIG_OVERRIDE_URL";
 
     /* API Key for compatibility test project, used for dynamic configuration */
     private static final String API_KEY = "AIzaSyAbwX5JRlmsLeygY2WWihpIJPXFLueOQ3U";
@@ -80,6 +80,11 @@ public class CompatibilityBuildProvider implements IDeviceBuildProvider, IInvoca
             description = "Specify the url for override config")
     private String mURL = "https://androidpartner.googleapis.com/v1/dynamicconfig/"
             + "suites/{suite-name}/modules/{module}/version/{version}?key=" + API_KEY;
+
+    @Option(name = "url-suite-name-override",
+            description = "Override the name that should used to replace the {suite-name} "
+                    + "pattern in the dynamic-config-url.")
+    private String mUrlSuiteNameOverride = null;
 
     @Option(name = "plan",
             description = "the test suite plan to run, such as \"everything\" or \"cts\"",
@@ -221,8 +226,12 @@ public class CompatibilityBuildProvider implements IDeviceBuildProvider, IInvoca
             ((IDeviceBuildInfo) info).setTestsDir(testDir, "0");
         }
         if (mURL != null && !mURL.isEmpty()) {
+            String suiteName = mUrlSuiteNameOverride;
+            if (suiteName == null) {
+                suiteName = getSuiteInfoName();
+            }
             info.addBuildAttribute(DYNAMIC_CONFIG_OVERRIDE_URL,
-                    mURL.replace("{suite-name}", getSuiteInfoName()));
+                    mURL.replace("{suite-name}", suiteName));
         }
     }
 
