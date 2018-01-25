@@ -15,6 +15,8 @@
 
 package com.android.cts.content;
 
+import android.util.Log;
+
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -25,6 +27,8 @@ import org.junit.runners.model.Statement;
  */
 // TODO: Move this puppy in a common place, so ppl can use it.
 public class FlakyTestRule implements TestRule {
+    private static final String LOG_TAG = FlakyTestRule.class.getSimpleName();
+
     private final int mAttemptCount;
 
     public FlakyTestRule(int attemptCount) {
@@ -42,6 +46,8 @@ public class FlakyTestRule implements TestRule {
                         statement.evaluate();
                         return;
                     } catch (Throwable t) {
+                        Log.e(LOG_TAG, "Test failed ", t);
+
                         throwable = t;
                     }
                 }

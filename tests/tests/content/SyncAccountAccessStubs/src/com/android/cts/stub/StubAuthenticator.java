@@ -30,6 +30,7 @@ import android.os.IBinder;
 public class StubAuthenticator extends Service {
     public static final String TOKEN_TYPE_REMOVE_ACCOUNTS = "TOKEN_TYPE_REMOVE_ACCOUNTS";
 
+    private static long sNumAccountsAdded;
     private Authenticator mAuthenticator;
 
     @Override
@@ -59,10 +60,14 @@ public class StubAuthenticator extends Service {
                 String accountType, String tokenType, String[] strings,
                 Bundle bundle) throws NetworkErrorException {
             AccountManager accountManager = getSystemService(AccountManager.class);
-            accountManager.addAccountExplicitly(new Account("foo", accountType), "bar", null);
+
+            String accountName = "foo" + sNumAccountsAdded;
+            sNumAccountsAdded++;
+
+            accountManager.addAccountExplicitly(new Account(accountName, accountType), "bar", null);
 
             Bundle result = new Bundle();
-            result.putString(AccountManager.KEY_ACCOUNT_NAME, "foo");
+            result.putString(AccountManager.KEY_ACCOUNT_NAME, accountName);
             result.putString(AccountManager.KEY_ACCOUNT_TYPE, accountType);
             response.onResult(result);
 

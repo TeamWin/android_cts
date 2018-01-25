@@ -35,6 +35,13 @@
             android:syncable="true">
         </provider>
 
+        <provider
+            android:name=".StubProvider2"
+            android:authorities="com.android.cts.stub.provider2"
+            android:exported="true"
+            android:syncable="true">
+        </provider>
+
     </application>
 
 </manifest>

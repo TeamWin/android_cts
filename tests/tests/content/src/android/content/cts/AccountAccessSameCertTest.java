@@ -16,34 +16,26 @@
 
 package android.content.cts;
 
-import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static com.android.cts.content.Utils.ALWAYS_SYNCABLE_AUTHORITY;
+import static com.android.cts.content.Utils.SYNC_TIMEOUT_MILLIS;
+import static com.android.cts.content.Utils.allowSyncAdapterRunInBackgroundAndDataInBackground;
+import static com.android.cts.content.Utils.disallowSyncAdapterRunInBackgroundAndDataInBackground;
+import static com.android.cts.content.Utils.hasDataConnection;
+import static com.android.cts.content.Utils.requestSync;
+import static com.android.cts.content.Utils.withAccount;
 
 import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
-import android.accounts.Account;
-import android.accounts.AccountManager;
-import android.app.Activity;
 import android.content.AbstractThreadedSyncAdapter;
-import android.content.ContentResolver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.SyncRequest;
-import android.content.pm.PackageManager;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.os.Bundle;
-import android.os.Process;
-import android.os.SystemClock;
-import android.support.test.InstrumentationRegistry;
+import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 
-import com.android.compatibility.common.util.SystemUtil;
+import com.android.cts.content.AlwaysSyncableSyncService;
 import com.android.cts.content.FlakyTestRule;
 import com.android.cts.content.StubActivity;
-import com.android.cts.content.SyncAdapter;
 
 import org.junit.After;
 import org.junit.Before;
@@ -52,17 +44,16 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 
-import java.io.IOException;
-
 /**
  * Tests whether a sync adapter can access accounts.
  */
 @RunWith(AndroidJUnit4.class)
 public class AccountAccessSameCertTest {
-    private static final long SYNC_TIMEOUT_MILLIS = 20000; // 20 sec
-
     @Rule
     public final TestRule mFlakyTestTRule = new FlakyTestRule(3);
+
+    @Rule
+    public final ActivityTestRule<StubActivity> activity = new ActivityTestRule(StubActivity.class);
 
     @Before
     public void setUp() throws Exception {
@@ -77,83 +68,15 @@ public class AccountAccessSameCertTest {
     @Test
     public void testAccountAccess_sameCertAsAuthenticatorCanSeeAccount() throws Exception {
         assumeTrue(hasDataConnection());
-        assumeTrue(hasNotificationSupport());
 
-        Intent intent = new Intent(getContext(), StubActivity.class);
-        intent.addFlags(FLAG_ACTIVITY_NEW_TASK);
-        Activity activity = InstrumentationRegistry.getInstrumentation().startActivitySync(intent);
+        try (AutoCloseable ignored = withAccount(activity.getActivity())) {
+            AbstractThreadedSyncAdapter adapter = AlwaysSyncableSyncService.getInstance(
+                    activity.getActivity()).setNewDelegate();
 
-        AccountManager accountManager = getContext().getSystemService(AccountManager.class);
-        Bundle result = accountManager.addAccount("com.stub", null, null, null, activity,
-                null, null).getResult();
-
-        Account addedAccount = new Account(
-                result.getString(AccountManager.KEY_ACCOUNT_NAME),
-                        result.getString(AccountManager.KEY_ACCOUNT_TYPE));
-
-        waitForSyncManagerAccountChangeUpdate();
-
-        try {
-            AbstractThreadedSyncAdapter adapter = SyncAdapter.setNewDelegate();
-
-            Bundle extras = new Bundle();
-            extras.putBoolean(ContentResolver.SYNC_EXTRAS_DO_NOT_RETRY, true);
-            extras.putBoolean(ContentResolver.SYNC_EXTRAS_PRIORITY, true);
-            extras.getBoolean(ContentResolver.SYNC_EXTRAS_IGNORE_SETTINGS, true);
-            SyncRequest request = new SyncRequest.Builder()
-                    .setSyncAdapter(null, "com.android.cts.stub.provider")
-                    .syncOnce()
-                    .setExtras(extras)
-                    .setExpedited(true)
-                    .setManual(true)
-                    .build();
-            ContentResolver.requestSync(request);
+            requestSync(ALWAYS_SYNCABLE_AUTHORITY);
 
             verify(adapter, timeout(SYNC_TIMEOUT_MILLIS)).onPerformSync(any(), any(), any(), any(),
                     any());
-        } finally {
-            accountManager.removeAccount(addedAccount, activity, null, null);
-            activity.finish();
         }
-    }
-
-    private Context getContext() {
-        return InstrumentationRegistry.getInstrumentation().getContext();
-    }
-
-    private void waitForSyncManagerAccountChangeUpdate() {
-        // Wait for the sync manager to be notified for the new account.
-        // Unfortunately, there is no way to detect this event, sigh...
-        SystemClock.sleep(SYNC_TIMEOUT_MILLIS);
-    }
-
-    private boolean hasDataConnection() {
-        ConnectivityManager connectivityManager = getContext().getSystemService(
-                ConnectivityManager.class);
-        NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
-        return activeNetwork != null && activeNetwork.isConnectedOrConnecting();
-    }
-
-    private boolean hasNotificationSupport() {
-        return !getContext().getPackageManager()
-                .hasSystemFeature(PackageManager.FEATURE_LEANBACK);
-    }
-
-    private void allowSyncAdapterRunInBackgroundAndDataInBackground() throws IOException {
-        // Allow us to run in the background
-        SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(),
-                "cmd deviceidle whitelist +" + getContext().getPackageName());
-        // Allow us to use data in the background
-        SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(),
-                "cmd netpolicy add restrict-background-whitelist " + Process.myUid());
-    }
-
-    private void disallowSyncAdapterRunInBackgroundAndDataInBackground() throws IOException {
-        // Allow us to run in the background
-        SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(),
-                "cmd deviceidle whitelist -" + getContext().getPackageName());
-        // Allow us to use data in the background
-        SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(),
-                "cmd netpolicy remove restrict-background-whitelist " + Process.myUid());
     }
 }

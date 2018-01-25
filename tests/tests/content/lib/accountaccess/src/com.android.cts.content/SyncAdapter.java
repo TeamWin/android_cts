@@ -27,14 +27,15 @@ import android.content.SyncResult;
 import android.os.Bundle;
 
 public class SyncAdapter extends AbstractThreadedSyncAdapter {
-    private static final Object sLock = new Object();
-    private static AbstractThreadedSyncAdapter sDelegate;
+    private final Object mLock = new Object();
+    private AbstractThreadedSyncAdapter mDelegate;
 
-    public static AbstractThreadedSyncAdapter setNewDelegate() {
+    public AbstractThreadedSyncAdapter setNewDelegate() {
         AbstractThreadedSyncAdapter delegate = mock(AbstractThreadedSyncAdapter.class);
+        when(delegate.onUnsyncableAccount()).thenCallRealMethod();
 
-        synchronized (sLock) {
-            sDelegate = delegate;
+        synchronized (mLock) {
+            mDelegate = delegate;
         }
 
         return delegate;
@@ -45,8 +46,8 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
     }
 
     private AbstractThreadedSyncAdapter getCopyOfDelegate() {
-        synchronized (sLock) {
-            return sDelegate;
+        synchronized (mLock) {
+            return mDelegate;
         }
     }
 
@@ -57,6 +58,17 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 
         if (delegate != null) {
             delegate.onPerformSync(account, extras, authority, provider, syncResult);
+        }
+    }
+
+    @Override
+    public boolean onUnsyncableAccount() {
+        AbstractThreadedSyncAdapter delegate = getCopyOfDelegate();
+
+        if (delegate == null) {
+            return true;
+        } else {
+            return delegate.onUnsyncableAccount();
         }
     }
 }
