@@ -125,6 +125,7 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
             assertNotAvailable(PackageManager.FEATURE_CAMERA_CAPABILITY_MANUAL_SENSOR);
             assertNotAvailable(PackageManager.FEATURE_CAMERA_CAPABILITY_MANUAL_POST_PROCESSING);
             assertNotAvailable(PackageManager.FEATURE_CAMERA_CAPABILITY_RAW);
+            assertNotAvailable(PackageManager.FEATURE_CAMERA_AR);
 
             assertFalse("Devices supporting external cameras must have a representative camera " +
                     "connected for testing",
@@ -142,6 +143,7 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
         boolean fullCamera = false;
         boolean manualSensor = false;
         boolean manualPostProcessing = false;
+        boolean motionTracking = false;
         boolean raw = false;
         CameraCharacteristics[] cameraChars = new CameraCharacteristics[cameraIds.length];
         for (String cameraId : cameraIds) {
@@ -163,6 +165,9 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
                     case CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_RAW:
                         raw = true;
                         break;
+                  case CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MOTION_TRACKING:
+                        motionTracking = true;
+                        break;
                     default:
                         // Capabilities don't have a matching system feature
                         break;
@@ -174,6 +179,7 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
         assertFeature(manualPostProcessing,
                 PackageManager.FEATURE_CAMERA_CAPABILITY_MANUAL_POST_PROCESSING);
         assertFeature(raw, PackageManager.FEATURE_CAMERA_CAPABILITY_RAW);
+        assertFeature(motionTracking, PackageManager.FEATURE_CAMERA_AR);
     }
 
     private void checkFrontCamera() {
