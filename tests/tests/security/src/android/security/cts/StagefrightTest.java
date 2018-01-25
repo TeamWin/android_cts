@@ -254,6 +254,11 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.cve_2017_13229);
     }
 
+    @SecurityTest
+    public void testStagefright_cve_2017_0763() throws Exception {
+        doStagefrightTest(R.raw.cve_2017_0763);
+    }
+
     /***********************************************************
      to prevent merge conflicts, add M tests below this comment,
      before any existing test methods
