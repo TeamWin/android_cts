@@ -17,7 +17,7 @@
 package com.android.cts.deviceandprofileowner;
 
 import android.app.admin.DevicePolicyManager;
-import android.content.ComponentName;
+import android.os.UserManager;
 
 /**
  * Validates that Device Owner or Profile Owner can disable printing.
@@ -25,9 +25,8 @@ import android.content.ComponentName;
 public class PrintingPolicyTest extends BaseDeviceAdminTest {
 
     public void testPrintingPolicy() throws Exception {
-        DevicePolicyManager.class
-                .getDeclaredMethod("setPrintingEnabled", ComponentName.class, boolean.class)
-                .invoke(mDevicePolicyManager, ADMIN_RECEIVER_COMPONENT, false);
+        mDevicePolicyManager.addUserRestriction(ADMIN_RECEIVER_COMPONENT,
+                UserManager.DISALLOW_PRINTING);
         final PrintActivity activity = launchActivity("com.android.cts.deviceandprofileowner",
                 PrintActivity.class, null);
         final String errorMessage = activity.getErrorMessage();
