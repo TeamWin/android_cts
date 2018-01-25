@@ -27,6 +27,7 @@ LOCAL_SRC_FILES := \
     test_aaudio_mmap.cpp \
     test_aaudio_misc.cpp \
     test_aaudio_stream_builder.cpp \
+    test_session_id.cpp \
     utils.cpp \
 
 LOCAL_SHARED_LIBRARIES := \

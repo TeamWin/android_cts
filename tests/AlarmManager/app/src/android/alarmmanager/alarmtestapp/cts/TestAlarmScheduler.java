@@ -16,39 +16,38 @@
 
 package android.alarmmanager.alarmtestapp.cts;
 
-import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
-import android.os.Bundle;
 import android.util.Log;
 
 /**
- * This Activity is to be used as part of
- * {@link android.alarmmanager.cts.BackgroundRestrictedAlarmsTest}
+ * This receiver is to be used to schedule alarms as part of tests in
+ * {@link android.alarmmanager.cts}
  */
-public class TestAlarmActivity extends Activity {
-    private static final String TAG = TestAlarmActivity.class.getSimpleName();
+public class TestAlarmScheduler extends BroadcastReceiver {
+    private static final String TAG = TestAlarmScheduler.class.getSimpleName();
     private static final String PACKAGE_NAME = "android.alarmmanager.alarmtestapp.cts";
 
     public static final String ACTION_SET_ALARM = PACKAGE_NAME + ".action.SET_ALARM";
     public static final String EXTRA_TRIGGER_TIME = PACKAGE_NAME + ".extra.TRIGGER_TIME";
     public static final String EXTRA_REPEAT_INTERVAL = PACKAGE_NAME + ".extra.REPEAT_INTERVAL";
     public static final String EXTRA_TYPE = PACKAGE_NAME + ".extra.TYPE";
+    public static final String EXTRA_ALLOW_WHILE_IDLE = PACKAGE_NAME + ".extra.ALLOW_WHILE_IDLE";
     public static final String ACTION_SET_ALARM_CLOCK = PACKAGE_NAME + ".action.SET_ALARM_CLOCK";
     public static final String EXTRA_ALARM_CLOCK_INFO = PACKAGE_NAME + ".extra.ALARM_CLOCK_INFO";
     public static final String ACTION_CANCEL_ALL_ALARMS = PACKAGE_NAME + ".action.CANCEL_ALARMS";
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        final AlarmManager am = getSystemService(AlarmManager.class);
-        final Intent intent = getIntent();
-        final Intent receiverIntent = new Intent(this, TestAlarmReceiver.class);
+    public void onReceive(Context context, Intent intent) {
+        final AlarmManager am = context.getSystemService(AlarmManager.class);
+        final Intent receiverIntent = new Intent(context, TestAlarmReceiver.class);
         receiverIntent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         final PendingIntent alarmClockSender =
-                PendingIntent.getBroadcast(this, 0, receiverIntent, 0);
-        final PendingIntent alarmSender = PendingIntent.getBroadcast(this, 1, receiverIntent, 0);
+                PendingIntent.getBroadcast(context, 0, receiverIntent, 0);
+        final PendingIntent alarmSender = PendingIntent.getBroadcast(context, 1, receiverIntent, 0);
         switch (intent.getAction()) {
             case ACTION_SET_ALARM_CLOCK:
                 if (!intent.hasExtra(EXTRA_ALARM_CLOCK_INFO)) {
@@ -68,10 +67,14 @@ public class TestAlarmActivity extends Activity {
                 final int type = intent.getIntExtra(EXTRA_TYPE, 0);
                 final long triggerTime = intent.getLongExtra(EXTRA_TRIGGER_TIME, 0);
                 final long interval = intent.getLongExtra(EXTRA_REPEAT_INTERVAL, 0);
+                final boolean allowWhileIdle = intent.getBooleanExtra(EXTRA_ALLOW_WHILE_IDLE,
+                        false);
                 Log.d(TAG, "Setting alarm: type=" + type + ", triggerTime=" + triggerTime
-                        + ", interval=" + interval);
+                        + ", interval=" + interval + ", allowWhileIdle=" + allowWhileIdle);
                 if (interval > 0) {
                     am.setRepeating(type, triggerTime, interval, alarmSender);
+                } else if (allowWhileIdle) {
+                    am.setExactAndAllowWhileIdle(type, triggerTime, alarmSender);
                 } else {
                     am.setExact(type, triggerTime, alarmSender);
                 }
@@ -85,6 +88,5 @@ public class TestAlarmActivity extends Activity {
                 Log.e(TAG, "Unspecified action " + intent.getAction());
                 break;
         }
-        finish();
     }
 }

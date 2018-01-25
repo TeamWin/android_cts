@@ -221,8 +221,9 @@ public class VulkanFeaturesTest {
     }
 
     private int determineHardwareCompute(JSONObject device) throws JSONException {
-        JSONObject variablePointersFeatures = device.getJSONObject("variablePointersFeaturesKHR");
-        boolean variablePointers = variablePointersFeatures.getInt("variablePointers") != 0;
+        boolean variablePointers = device.getJSONObject("VK_KHR_variable_pointers")
+                                         .getJSONObject("variablePointerFeaturesKHR")
+                                         .getInt("variablePointers") != 0;
         JSONObject limits = device.getJSONObject("properties").getJSONObject("limits");
         int maxPerStageDescriptorStorageBuffers = limits.getInt("maxPerStageDescriptorStorageBuffers");
         if (DEBUG) {

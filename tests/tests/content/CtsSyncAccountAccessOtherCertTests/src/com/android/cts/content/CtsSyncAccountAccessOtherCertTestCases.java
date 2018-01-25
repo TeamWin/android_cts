@@ -16,8 +16,8 @@
 
 package com.android.cts.content;
 
-import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
-
+import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -25,6 +25,7 @@ import static org.mockito.Mockito.verify;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.content.AbstractThreadedSyncAdapter;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -41,7 +42,6 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
-import android.support.test.uiautomator.UiObject;
 import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.Until;
 import android.util.Log;
@@ -56,8 +56,6 @@ import org.junit.runner.RunWith;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.regex.Pattern;
-
-import static org.junit.Assume.assumeTrue;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -94,6 +92,10 @@ public class CtsSyncAccountAccessOtherCertTestCases {
         assumeTrue(hasDataConnection());
         assumeTrue(hasNotificationSupport());
 
+        // If running in a test harness the Account Manager never denies access to an account. Hence
+        // the permission request will not trigger. b/72114924
+        assumeFalse(ActivityManager.isRunningInTestHarness());
+
         Intent intent = new Intent(getContext(), StubActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         Activity activity = InstrumentationRegistry.getInstrumentation().startActivitySync(intent);
@@ -105,7 +107,6 @@ public class CtsSyncAccountAccessOtherCertTestCases {
         Account addedAccount = new Account(
                 result.getString(AccountManager.KEY_ACCOUNT_NAME),
                 result.getString(AccountManager.KEY_ACCOUNT_TYPE));
-        Log.i(LOG_TAG, "Added account " + addedAccount);
 
         waitForSyncManagerAccountChangeUpdate();
 
@@ -124,11 +125,9 @@ public class CtsSyncAccountAccessOtherCertTestCases {
                     .setManual(true)
                     .build();
             ContentResolver.requestSync(request);
-            Log.i(LOG_TAG, "Sync requested " + request);
 
             verify(adapter, timeout(SYNC_TIMEOUT_MILLIS).times(0)).onPerformSync(any(), any(),
                     any(), any(), any());
-            Log.i(LOG_TAG, "Did not get onPerformSync");
 
             UiDevice uiDevice = getUiDevice();
             if (isWatch()) {
@@ -136,12 +135,9 @@ public class CtsSyncAccountAccessOtherCertTestCases {
                 notification.click();
             } else {
                 uiDevice.openNotification();
-                Log.i(LOG_TAG, "openNotification done");
                 try {
                     UiObject2 permissionRequest = uiDevice.wait(
                             Until.findObject(By.text(PERMISSION_REQUESTED)), UI_TIMEOUT_MILLIS);
-
-                    Log.i(LOG_TAG, "permissionRequest=" + permissionRequest);
 
                     permissionRequest.click();
                 } catch (Throwable t) {
@@ -160,16 +156,12 @@ public class CtsSyncAccountAccessOtherCertTestCases {
                 }
             }
 
-            Log.i(LOG_TAG, "Permission opened");
-
             uiDevice.wait(Until.findObject(By.text(ALLOW_SYNC)), UI_TIMEOUT_MILLIS).click();
 
             ContentResolver.requestSync(request);
-            Log.i(LOG_TAG, "Sync requested " + request);
 
             verify(adapter, timeout(SYNC_TIMEOUT_MILLIS)).onPerformSync(any(), any(), any(), any(),
                     any());
-            Log.i(LOG_TAG, "Got onPerformSync");
         } finally {
             // Ask the differently signed authenticator to drop all accounts
             accountManager.getAuthToken(addedAccount, TOKEN_TYPE_REMOVE_ACCOUNTS,

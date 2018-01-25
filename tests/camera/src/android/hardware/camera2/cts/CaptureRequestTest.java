@@ -22,6 +22,7 @@ import static android.hardware.camera2.CameraCharacteristics.*;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
+import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraMetadata;
@@ -37,10 +38,13 @@ import android.hardware.camera2.params.MeteringRectangle;
 import android.hardware.camera2.params.RggbChannelVector;
 import android.hardware.camera2.params.TonemapCurve;
 import android.media.Image;
+import android.os.Parcel;
+import android.util.ArraySet;
 import android.util.Log;
 import android.util.Range;
 import android.util.Rational;
 import android.util.Size;
+import android.view.Surface;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -126,6 +130,84 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
     @Override
     protected void tearDown() throws Exception {
         super.tearDown();
+    }
+
+    /**
+     * Test CaptureRequest settings parcelling.
+     */
+    public void testSettingsBinderParcel() throws Exception {
+        SurfaceTexture outputTexture = new SurfaceTexture(/* random texture ID */ 5);
+        Surface surface = new Surface(outputTexture);
+
+        for (int i = 0; i < mCameraIds.length; i++) {
+            try {
+                openDevice(mCameraIds[i]);
+                CaptureRequest.Builder requestBuilder =
+                        mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+                requestBuilder.addTarget(surface);
+
+                // Check regular/default case
+                CaptureRequest captureRequestOriginal = requestBuilder.build();
+                Parcel p;
+                p = Parcel.obtain();
+                captureRequestOriginal.writeToParcel(p, 0);
+                p.setDataPosition(0);
+                CaptureRequest captureRequestParcelled = CaptureRequest.CREATOR.createFromParcel(p);
+                assertEquals("Parcelled camera settings should match",
+                        captureRequestParcelled.get(CaptureRequest.CONTROL_CAPTURE_INTENT),
+                        new Integer(CameraMetadata.CONTROL_CAPTURE_INTENT_PREVIEW));
+                p.recycle();
+
+                // Check capture request with additional physical camera settings
+                String physicalId = new String(Integer.toString(i + 1));
+                ArraySet<String> physicalIds = new ArraySet<String> ();
+                physicalIds.add(physicalId);
+
+                requestBuilder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW,
+                        physicalIds);
+                requestBuilder.addTarget(surface);
+                captureRequestOriginal = requestBuilder.build();
+                captureRequestOriginal.writeToParcel(p, 0);
+                p.setDataPosition(0);
+                captureRequestParcelled = CaptureRequest.CREATOR.createFromParcel(p);
+                assertEquals("Parcelled camera settings should match",
+                        captureRequestParcelled.get(CaptureRequest.CONTROL_CAPTURE_INTENT),
+                        new Integer(CameraMetadata.CONTROL_CAPTURE_INTENT_PREVIEW));
+                p.recycle();
+
+                // Check various invalid cases
+                p.writeInt(-1);
+                p.setDataPosition(0);
+                try {
+                    captureRequestParcelled = CaptureRequest.CREATOR.createFromParcel(p);
+                    fail("should get RuntimeException due to invalid number of settings");
+                } catch (RuntimeException e) {
+                    // Expected
+                }
+                p.recycle();
+
+                p.writeInt(0);
+                p.setDataPosition(0);
+                try {
+                    captureRequestParcelled = CaptureRequest.CREATOR.createFromParcel(p);
+                    fail("should get RuntimeException due to invalid number of settings");
+                } catch (RuntimeException e) {
+                    // Expected
+                }
+                p.recycle();
+
+                p.writeInt(1);
+                p.setDataPosition(0);
+                try {
+                    captureRequestParcelled = CaptureRequest.CREATOR.createFromParcel(p);
+                    fail("should get RuntimeException due to absent settings");
+                } catch (RuntimeException e) {
+                    // Expected
+                }
+            } finally {
+                closeDevice();
+            }
+        }
     }
 
     /**

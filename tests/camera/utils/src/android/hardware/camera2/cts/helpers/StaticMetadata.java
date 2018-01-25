@@ -1890,7 +1890,7 @@ public class StaticMetadata {
 
         checkArrayValuesInRange(key, availableCaps,
                 CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE,
-                CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MOTION_TRACKING);
+                CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA);
         capList = Arrays.asList(CameraTestUtils.toObject(availableCaps));
         return capList;
     }
@@ -2209,6 +2209,18 @@ public class StaticMetadata {
         List<Integer> availableCapabilities = getAvailableCapabilitiesChecked();
         return (availableCapabilities.contains(
                 CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_CONSTRAINED_HIGH_SPEED_VIDEO));
+    }
+
+    /**
+     * Check if this camera device is a logical multi-camera backed by multiple
+     * physical cameras.
+     *
+     * @return true if this is a logical multi-camera.
+     */
+    public boolean isLogicalMultiCamera() {
+        List<Integer> availableCapabilities = getAvailableCapabilitiesChecked();
+        return (availableCapabilities.contains(
+                CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA));
     }
 
     /**

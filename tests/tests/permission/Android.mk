@@ -43,8 +43,8 @@ LOCAL_PACKAGE_NAME := CtsPermissionTestCases
 
 # uncomment when b/13249777 is fixed
 #LOCAL_SDK_VERSION := current
-LOCAL_JAVA_LIBRARIES += android.test.runner
-LOCAL_JAVA_LIBRARIES += android.test.base
+LOCAL_JAVA_LIBRARIES += android.test.runner.stubs
+LOCAL_JAVA_LIBRARIES += android.test.base.stubs
 
 include $(BUILD_CTS_PACKAGE)
 

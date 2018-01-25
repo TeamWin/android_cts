@@ -864,6 +864,12 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         executeDeviceOwnerTest("SetSystemSettingTest");
     }
 
+    public void testOverrideApn() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        executeDeviceOwnerTest("OverrideApnTest");
+    }
 
     private void executeDeviceOwnerTest(String testClassName) throws Exception {
         if (!mHasFeature) {

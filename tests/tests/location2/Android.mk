@@ -26,7 +26,7 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner junit
 
-LOCAL_JAVA_LIBRARIES := android.test.base
+LOCAL_JAVA_LIBRARIES := android.test.base.stubs
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 

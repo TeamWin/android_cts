@@ -22,9 +22,9 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
 LOCAL_JAVA_LIBRARIES := \
-    android.test.runner \
+    android.test.runner.stubs \
     org.apache.http.legacy \
-    android.test.base \
+    android.test.base.stubs \
 
 
 LOCAL_STATIC_JAVA_LIBRARIES := \

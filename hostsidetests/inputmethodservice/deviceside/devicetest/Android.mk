@@ -27,7 +27,7 @@ LOCAL_PROGUARD_ENABLED := disabled
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_JAVA_RESOURCE_DIR := res
-LOCAL_JAVA_LIBRARY := android.test.runner
+LOCAL_JAVA_LIBRARY := android.test.runner.stubs
 LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-test \
     hamcrest hamcrest-library \

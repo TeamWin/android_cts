@@ -18,6 +18,9 @@ package com.android.cts.webkit;
 
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Looper;
 import android.os.StrictMode;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
@@ -48,6 +51,7 @@ public class WebViewDeviceSideStartupTest
         extends ActivityInstrumentationTestCase2<WebViewStartupCtsActivity> {
 
     private static final String TAG = WebViewDeviceSideStartupTest.class.getSimpleName();
+    private static final long TEST_TIMEOUT_MS = 3000;
 
     private WebViewStartupCtsActivity mActivity;
 
@@ -198,5 +202,68 @@ public class WebViewDeviceSideStartupTest
         WebViewOnUiThread onUiThread = new WebViewOnUiThread(this, mActivity.getWebView());
         onUiThread.loadUrlAndWaitForCompletion("about:blank");
         onUiThread.loadUrlAndWaitForCompletion("");
+    }
+
+    @UiThreadTest
+    public void testGetWebViewLooperOnUiThread() {
+        PackageManager pm = mActivity.getPackageManager();
+        if (!pm.hasSystemFeature(PackageManager.FEATURE_WEBVIEW)) return;
+
+        createAndCheckWebViewLooper();
+    }
+
+    /**
+     * Ensure that a WebView created on the UI thread returns that thread as its creator thread.
+     * This ensures WebView.getLooper() is not implemented as 'return Looper.myLooper();'.
+     */
+    public void testGetWebViewLooperCreatedOnUiThreadFromInstrThread() {
+        PackageManager pm = mActivity.getPackageManager();
+        if (!pm.hasSystemFeature(PackageManager.FEATURE_WEBVIEW)) return;
+
+        WebView[] webviewHolder = new WebView[1];
+        // Create the WebView on the UI thread and then ensure webview.getLooper() returns the UI
+        // thread.
+        getInstrumentation().runOnMainSync(new Runnable() {
+            @Override
+            public void run() {
+                webviewHolder[0] = createAndCheckWebViewLooper();
+            }
+        });
+        assertEquals(Looper.getMainLooper(), webviewHolder[0].getLooper());
+    }
+
+    /**
+     * Ensure that a WebView created on a background thread returns that thread as its creator
+     * thread.
+     * This ensures WebView.getLooper() is not bound to the UI thread regardless of the thread it is
+     * created on..
+     */
+    public void testGetWebViewLooperCreatedOnBackgroundThreadFromInstThread()
+            throws InterruptedException {
+        PackageManager pm = mActivity.getPackageManager();
+        if (!pm.hasSystemFeature(PackageManager.FEATURE_WEBVIEW)) return;
+
+        // Create a WebView on a background thread, check it from the UI thread
+        final WebView webviewHolder[] = new WebView[1];
+
+        // Use a HandlerThread, because such a thread owns a Looper.
+        HandlerThread backgroundThread = new HandlerThread("WebViewLooperCtsHandlerThread");
+        backgroundThread.start();
+        new Handler(backgroundThread.getLooper()).post(new Runnable() {
+            @Override
+            public void run() {
+                webviewHolder[0] = createAndCheckWebViewLooper();
+            }
+        });
+        backgroundThread.join(TEST_TIMEOUT_MS);
+        assertEquals(backgroundThread.getLooper(), webviewHolder[0].getLooper());
+    }
+
+    private WebView createAndCheckWebViewLooper() {
+        // Ensure we are running this on a thread with a Looper - otherwise there's no point.
+        assertNotNull(Looper.myLooper());
+        WebView webview = new WebView(mActivity);
+        assertEquals(Looper.myLooper(), webview.getLooper());
+        return webview;
     }
 }

@@ -318,6 +318,38 @@ public class DialogTest extends ActivityInstrumentationTestCase2<DialogStubActiv
         assertNotNull(d.findViewById(R.id.password_edit));
     }
 
+    public void testRequireViewById() throws Throwable {
+        startDialogActivity(DialogStubActivity.TEST_DIALOG_WITHOUT_THEME);
+        final Dialog d = mActivity.getDialog();
+        assertNotNull(d);
+
+        // set content view to a four elements layout
+        runTestOnUiThread(new Runnable() {
+            public void run() {
+                d.setContentView(R.layout.alert_dialog_text_entry);
+            }
+        });
+        mInstrumentation.waitForIdleSync();
+
+        // check if four elements are right there
+        assertNotNull(d.requireViewById(R.id.username_view));
+        assertNotNull(d.requireViewById(R.id.username_edit));
+        assertNotNull(d.requireViewById(R.id.password_view));
+        assertNotNull(d.requireViewById(R.id.password_edit));
+        try {
+            d.requireViewById(R.id.check_box); // not present
+            fail("should not get here, check_box should not be found");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
+        try {
+            d.requireViewById(View.NO_ID); // invalid
+            fail("should not get here, NO_ID should not be found");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
+    }
+
     public void testSetTitle() {
         final String expectedTitle = "Test Dialog Without theme";
         startDialogActivity(DialogStubActivity.TEST_DIALOG_WITHOUT_THEME);

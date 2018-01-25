@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,8 @@
  * limitations under the License.
  */
 
-package android.os.incident.cts;
+package com.android.cts.verifier.managedprovisioning;
 
-import junit.framework.TestSuite;
-
-public class IncidentTests {
-    public static TestSuite suite() {
-        TestSuite suite = new TestSuite(IncidentTests.class.getName());
-
-        suite.addTestSuite(IncidentSettingFormatTest.class);
-
-        return suite;
-    }
+interface ICrossUserService {
+    void switchUser(in UserHandle userHandle);
 }

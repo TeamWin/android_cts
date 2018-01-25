@@ -34,7 +34,7 @@ LOCAL_PACKAGE_NAME := CtsCarrierApiTestCases
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
-LOCAL_JAVA_LIBRARIES += android.test.runner telephony-common
-LOCAL_JAVA_LIBRARIES += android.test.base
+LOCAL_JAVA_LIBRARIES += android.test.runner.stubs telephony-common
+LOCAL_JAVA_LIBRARIES += android.test.base.stubs
 
 include $(BUILD_CTS_PACKAGE)
