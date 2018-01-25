@@ -53,7 +53,6 @@ import java.util.regex.Pattern;
  * Run: cts/tests/framework/base/activitymanager/util/run-test CtsWindowManagerDeviceTestCases android.server.wm.CrossAppDragAndDropTests
  */
 @Presubmit
-@FlakyTest(bugId = 65739235)
 public class CrossAppDragAndDropTests {
     private static final String TAG = "CrossAppDragAndDrop";
 
