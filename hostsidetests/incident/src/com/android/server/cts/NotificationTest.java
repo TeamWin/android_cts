@@ -62,19 +62,21 @@ public class NotificationTest extends ProtoDumpTestCase {
         assertTrue(found);
     }
 
-    // Tests default state: zen mode off, no suppressors
+    // Tests default state: zen mode is a valid/expected value
     public void testZenMode() throws Exception {
         final NotificationServiceDumpProto dump = getDump(NotificationServiceDumpProto.parser(),
                 "dumpsys notification --proto");
         ZenModeProto zenProto = dump.getZen();
 
-        assertEquals(ZenMode.ZEN_MODE_OFF, zenProto.getZenMode());
-        assertEquals(0, zenProto.getEnabledActiveConditionsCount());
-
-        // b/64606626 Watches intentionally suppress notifications always
-        if (!getDevice().hasFeature(FEATURE_WATCH)) {
-            assertEquals(0, zenProto.getSuppressedEffects());
-            assertEquals(0, zenProto.getSuppressorsCount());
+        switch(zenProto.getZenMode()) {
+            case ZEN_MODE_OFF:
+            case ZEN_MODE_IMPORTANT_INTERRUPTIONS:
+            case ZEN_MODE_NO_INTERRUPTIONS:
+            case ZEN_MODE_ALARMS:
+                break;
+            default:
+                fail("Unexpected ZenMode value");
+                break;
         }
 
         zenProto.getPolicy();
