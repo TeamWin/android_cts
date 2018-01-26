@@ -19,6 +19,7 @@ package android.database.sqlite.cts;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.Semaphore;
 
@@ -1599,8 +1600,7 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
     public void testDefaultJournalModeNotWAL() {
         String defaultJournalMode = SQLiteGlobal.getDefaultJournalMode();
         assertFalse("Default journal mode should not be WAL",
-                DatabaseUtils.stringForQuery(mDatabase, "PRAGMA journal_mode", null)
-                        .equalsIgnoreCase(defaultJournalMode));
+                "WAL".equalsIgnoreCase(defaultJournalMode));
     }
 
     public void testCompatibilityWALIsDefaultWhenSupported() {
@@ -1653,6 +1653,43 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
                 .stringForQuery(mDatabase, "PRAGMA synchronous", null);
 
         assertEquals("2" /* FULL */, syncMode);
+    }
+
+    /**
+     * This test starts a transaction and verifies that other threads are blocked on
+     * accessing the database. Waiting threads should be unblocked once transaction is complete.
+     *
+     * This is done to ensure that Compatibility WAL follows the original transaction semantics of
+     * {@link SQLiteDatabase} instance when {@link SQLiteDatabase#ENABLE_WRITE_AHEAD_LOGGING} flag
+     * is not set.
+     */
+    public void testActiveTransactionIsBlocking() throws Exception {
+        mDatabase.beginTransactionNonExclusive();
+        mDatabase.execSQL("CREATE TABLE t1 (i int);");
+        final List<Throwable> errors = new ArrayList<>();
+
+        Thread readThread = new Thread(
+                () -> {
+                    try {
+                        DatabaseUtils.longForQuery(mDatabase, "SELECT count(*) from t1", null);
+                    } catch (Throwable t) {
+                        Log.e(TAG, "ReadThread failed", t);
+                        errors.add(t);
+                    }
+                });
+        readThread.start();
+        readThread.join(500L);
+        assertTrue("ReadThread should be blocked while transaction is active",
+                readThread.isAlive());
+
+        mDatabase.setTransactionSuccessful();
+        mDatabase.endTransaction();
+
+        readThread.join(500L);
+        assertFalse("ReadThread should finish after transaction has ended",
+                readThread.isAlive());
+
+        assertTrue("ReadThread failed with errors: " + errors, errors.isEmpty());
     }
 
 }
