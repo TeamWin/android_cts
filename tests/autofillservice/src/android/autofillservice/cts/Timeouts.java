@@ -47,11 +47,6 @@ final class Timeouts {
     static final Timeout SAVE_TIMEOUT = new Timeout("SAVE_TIMEOUT", 2000, 3F, 5000);
 
     /**
-     * Time to wait if a UI change is not expected
-     */
-    static final Timeout NOT_SHOWING_TIMEOUT = new Timeout("NOT_SHOWING_TIMEOUT", 100, 2F, 500);
-
-    /**
      * Timeout for UI operations. Typically used by {@link UiBot}.
      */
     static final Timeout UI_TIMEOUT = new Timeout("UI_TIMEOUT", 1000, 2F, 2000);

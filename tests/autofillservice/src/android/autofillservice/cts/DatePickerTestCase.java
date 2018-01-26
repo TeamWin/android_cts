@@ -51,7 +51,7 @@ abstract class DatePickerTestCase<T extends AbstractDatePickerActivity>
         // Set expectations.
         final Calendar cal = Calendar.getInstance();
         cal.set(Calendar.YEAR, 2012);
-        cal.set(Calendar.MONTH, 11);
+        cal.set(Calendar.MONTH, Calendar.DECEMBER);
         cal.set(Calendar.DAY_OF_MONTH, 20);
 
         sReplier.addResponse(new CannedFillResponse.Builder()
@@ -62,7 +62,7 @@ abstract class DatePickerTestCase<T extends AbstractDatePickerActivity>
                     .build())
                 .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_OUTPUT, ID_DATE_PICKER)
                 .build());
-        activity.expectAutoFill("2012/11/20", 2012, 11, 20);
+        activity.expectAutoFill("2012/11/20", 2012, Calendar.DECEMBER, 20);
 
         // Trigger auto-fill.
         activity.onOutput((v) -> v.requestFocus());
@@ -79,7 +79,7 @@ abstract class DatePickerTestCase<T extends AbstractDatePickerActivity>
         activity.assertAutoFilled();
 
         // Trigger save.
-        activity.setDate(2010, 11, 12);
+        activity.setDate(2010, Calendar.DECEMBER, 12);
         activity.tapOk();
 
         mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_GENERIC);

@@ -304,7 +304,6 @@ public class CustomDescriptionTest extends AutoFillServiceTestCase {
 
         testCustomDescription((usernameId, passwordId) -> {
             Validator validCondition = new RegexValidator(usernameId, Pattern.compile(".*"));
-            Validator invalidCondition = new RegexValidator(usernameId, Pattern.compile("D'OH"));
             Pattern firstCharGroupRegex = Pattern.compile("^(.).*$");
 
             final RemoteViews presentation =
@@ -541,32 +540,9 @@ public class CustomDescriptionTest extends AutoFillServiceTestCase {
     private UiObject2 assertSaveUiWithLinesIsShown(@Nullable Visitor<UiObject2> line1Visitor,
             @Nullable Visitor<UiObject2> line2Visitor, @Nullable Visitor<UiObject2> line3Visitor) {
         final UiObject2 saveUi = assertSaveUiWithCustomDescriptionIsShown();
-        assertSaveUiChild(saveUi, "first", line1Visitor);
-        assertSaveUiChild(saveUi, "second", line2Visitor);
-        assertSaveUiChild(saveUi, "third", line3Visitor);
+        mUiBot.assertChild(saveUi, "first", line1Visitor);
+        mUiBot.assertChild(saveUi, "second", line2Visitor);
+        mUiBot.assertChild(saveUi, "third", line3Visitor);
         return saveUi;
-    }
-
-    /**
-     * Asserts the contents of save UI child element.
-     *
-     * @param saveUi save UI
-     * @param childId resource id of the child
-     * @param assertion if {@code null}, asserts the child does not exist; otherwise, asserts the
-     * child with it.
-     */
-    private void assertSaveUiChild(@NonNull UiObject2 saveUi, @NonNull String childId,
-            @Nullable Visitor<UiObject2> assertion) {
-        final UiObject2 child = saveUi.findObject(By.res(mPackageName, childId));
-        if (assertion != null) {
-            assertWithMessage("Didn't find child with id '%s'", childId).that(child).isNotNull();
-            try {
-                assertion.visit(child);
-            } catch (Throwable t) {
-                throw new AssertionError("Error on child '" + childId + "'", t);
-            }
-        } else {
-            assertWithMessage("Shouldn't find child with id '%s'", childId).that(child).isNull();
-        }
     }
 }
