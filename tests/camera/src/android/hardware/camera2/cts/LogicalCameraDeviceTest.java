@@ -198,17 +198,24 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
 
                 List<OutputConfiguration> outputConfigs = new ArrayList<>();
                 List<ImageReader> imageReaders = new ArrayList<>();
-                SimpleImageReaderListener readerListener = new SimpleImageReaderListener();
-                ImageReader yuvTarget = CameraTestUtils.makeImageReader(yuvSize,
-                        ImageFormat.YUV_420_888, MAX_IMAGE_COUNT,
-                        readerListener, mHandler);
-                imageReaders.add(yuvTarget);
-                OutputConfiguration config = new OutputConfiguration(yuvTarget.getSurface());
-                outputConfigs.add(new OutputConfiguration(yuvTarget.getSurface()));
+                List<SimpleImageReaderListener> imageReaderListeners = new ArrayList<>();
+                for (String physicalCameraId : dualPhysicalCameraIds) {
+                    SimpleImageReaderListener readerListener = new SimpleImageReaderListener();
+                    ImageReader yuvTarget = CameraTestUtils.makeImageReader(yuvSize,
+                            ImageFormat.YUV_420_888, MAX_IMAGE_COUNT,
+                            readerListener, mHandler);
+                    OutputConfiguration config = new OutputConfiguration(yuvTarget.getSurface());
+                    config.setPhysicalCameraId(physicalCameraId);
+                    outputConfigs.add(config);
+                    imageReaders.add(yuvTarget);
+                    imageReaderListeners.add(readerListener);
+                }
 
                 CaptureRequest.Builder requestBuilder =
                     mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW, physicalIdSet);
-                requestBuilder.addTarget(config.getSurface());
+                for (OutputConfiguration c : outputConfigs) {
+                    requestBuilder.addTarget(c.getSurface());
+                }
 
                 mSessionListener = new BlockingSessionCallback();
                 mSession = configureCameraSessionWithConfig(mCamera, outputConfigs,
@@ -216,7 +223,9 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
 
                 for (int i = 0; i < MAX_IMAGE_COUNT; i++) {
                     mSession.capture(requestBuilder.build(), new SimpleCaptureCallback(), mHandler);
-                    readerListener.getImage(WAIT_FOR_RESULT_TIMEOUT_MS);
+                    for (SimpleImageReaderListener readerListener : imageReaderListeners) {
+                        readerListener.getImage(WAIT_FOR_RESULT_TIMEOUT_MS);
+                    }
                 }
 
                 if (mSession != null) {
@@ -315,7 +324,7 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
                     try {
                         mSession.setRepeatingRequest(request, new SimpleCaptureCallback(),
                                 mHandler);
-                        fail("Streaming requests that include physical camera settings are " +
+                        fail("Streaming requests that include physical camera settings are not " +
                                 "supported");
                     } catch (IllegalArgumentException e) {
                         //expected
@@ -326,8 +335,16 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
                         requestList.add(request);
                         mSession.setRepeatingBurst(requestList, new SimpleCaptureCallback(),
                                 mHandler);
-                        fail("Streaming requests that include physical camera settings are " +
+                        fail("Streaming requests that include physical camera settings are not " +
                                 "supported");
+                    } catch (IllegalArgumentException e) {
+                        //expected
+                    }
+
+                    try {
+                        mSession.capture(request, new SimpleCaptureCallback(), mHandler);
+                        fail("Capture requests that don't configure outputs with corresponding " +
+                                "physical camera id should fail");
                     } catch (IllegalArgumentException e) {
                         //expected
                     }
