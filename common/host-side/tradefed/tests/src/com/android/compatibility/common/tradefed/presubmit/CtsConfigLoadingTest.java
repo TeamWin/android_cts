@@ -63,6 +63,7 @@ public class CtsConfigLoadingTest {
             "devtools",
             "framework",
             "graphics",
+            "inputmethod",
             "libcore",
             "location",
             "media",
