@@ -20,9 +20,7 @@ import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MAX_FIELD_CLAS
 import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MAX_USER_DATA_SIZE;
 import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MAX_VALUE_LENGTH;
 import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MIN_VALUE_LENGTH;
-
 import static com.google.common.truth.Truth.assertThat;
-
 import static org.testng.Assert.assertThrows;
 
 import android.autofillservice.cts.common.SettingsStateChangerRule;
@@ -64,6 +62,7 @@ public class UserDataTest {
     private final String mShortValue = Strings.repeat("k", UserData.getMinValueLength() - 1);
     private final String mLongValue = "LONG VALUE, Y U NO SHORTER"
             + Strings.repeat("?", UserData.getMaxValueLength());
+    private final String mId = "4815162342";
     private final String mRemoteId = "id1";
     private final String mRemoteId2 = "id2";
     private final String mValue = mShortValue + "-1";
@@ -73,19 +72,24 @@ public class UserDataTest {
 
     @Before
     public void setFixtures() {
-        mBuilder = new UserData.Builder(mRemoteId, mValue);
+        mBuilder = new UserData.Builder(mId, mRemoteId, mValue);
     }
 
     @Test
     public void testBuilder_invalid() {
-        assertThrows(NullPointerException.class, () -> new UserData.Builder(mRemoteId, null));
-        assertThrows(IllegalArgumentException.class, () -> new UserData.Builder(mRemoteId, ""));
+        assertThrows(NullPointerException.class,
+                () -> new UserData.Builder(null, mRemoteId, mValue));
         assertThrows(IllegalArgumentException.class,
-                () -> new UserData.Builder(mRemoteId, mShortValue));
+                () -> new UserData.Builder("", mRemoteId, mValue));
+        assertThrows(NullPointerException.class, () -> new UserData.Builder(mId, mRemoteId, null));
         assertThrows(IllegalArgumentException.class,
-                () -> new UserData.Builder(mRemoteId, mLongValue));
-        assertThrows(NullPointerException.class, () -> new UserData.Builder(null, mValue));
-        assertThrows(IllegalArgumentException.class, () -> new UserData.Builder("", mValue));
+                () -> new UserData.Builder(mId, mRemoteId, ""));
+        assertThrows(IllegalArgumentException.class,
+                () -> new UserData.Builder(mId, mRemoteId, mShortValue));
+        assertThrows(IllegalArgumentException.class,
+                () -> new UserData.Builder(mId, mRemoteId, mLongValue));
+        assertThrows(NullPointerException.class, () -> new UserData.Builder(mId, null, mValue));
+        assertThrows(IllegalArgumentException.class, () -> new UserData.Builder(mId, "", mValue));
     }
 
     @Test
@@ -118,8 +122,18 @@ public class UserDataTest {
     }
 
     @Test
+    public void testSetFcAlgorithm() {
+        final UserData userData = mBuilder.setFieldClassificationAlgorithm("algo_mas", null)
+                .build();
+        assertThat(userData.getFieldClassificationAlgorithm()).isEqualTo("algo_mas");
+    }
+
+    @Test
     public void testBuild_valid() {
-        assertThat(mBuilder.build()).isNotNull();
+        final UserData userData = mBuilder.build();
+        assertThat(userData).isNotNull();
+        assertThat(userData.getId()).isEqualTo(mId);
+        assertThat(userData.getFieldClassificationAlgorithm()).isNull();
     }
 
     @Test
