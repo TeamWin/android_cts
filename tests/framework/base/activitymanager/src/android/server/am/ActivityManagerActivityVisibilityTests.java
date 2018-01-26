@@ -144,6 +144,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     }
 
     @Presubmit
+    @FlakyTest(bugId = 72526786)
     @Test
     public void testTurnScreenOnActivity() throws Exception {
         sleepDevice();
