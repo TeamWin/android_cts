@@ -44,9 +44,10 @@ def main():
         for i, cap in enumerate(caps):
             s_req = sens_list[i]
             s_res = cap['metadata']['android.sensor.sensitivity']
-            s_values = 's_write: %d, s_read: %d' % (s_req, s_res)
-            assert s_req >= s_res, s_values
-            assert s_res/float(s_req) > ERROR_TOLERANCE, ERROR_TOLERANCE
+            msg = 's_write: %d, s_read: %d, TOL: %.2f' % (s_req, s_res,
+                                                          ERROR_TOLERANCE)
+            assert s_req >= s_res, msg
+            assert s_res/float(s_req) > ERROR_TOLERANCE, msg
 
 if __name__ == '__main__':
     main()
