@@ -233,14 +233,11 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
             // Activity adds EditText at a later point.
             TestUtils.waitOnMainUntil(() -> layoutRef.get().hasWindowFocus(), TIMEOUT);
             InstrumentationRegistry.getInstrumentation().waitForIdleSync();
-            testActivity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    final EditText editText = new EditText(testActivity);
-                    editText.setText("Editable");
-                    layoutRef.get().addView(editText);
-                    editText.requestFocus();
-                }
+            testActivity.runOnUiThread(() -> {
+                final EditText editText = new EditText(testActivity);
+                editText.setText("Editable");
+                layoutRef.get().addView(editText);
+                editText.requestFocus();
             });
 
             // Input should start
