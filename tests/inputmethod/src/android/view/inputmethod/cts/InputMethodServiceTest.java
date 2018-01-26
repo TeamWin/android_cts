@@ -60,7 +60,7 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
     }
 
     private TestActivity createTestActivity() {
-        return TestActivity.startSync((TestActivity activity) -> {
+        return TestActivity.startSync(activity -> {
             final LinearLayout layout = new LinearLayout(activity);
             layout.setOrientation(LinearLayout.VERTICAL);
 
