@@ -18,6 +18,7 @@ package android.permission2.cts;
 
 import com.android.compatibility.common.util.SystemUtil;
 
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
@@ -101,6 +102,11 @@ public class PrivappPermissionsTest extends AndroidTestCase {
                         + " Not granted: " + notGranted + "."
                         + " Whitelisted: " + whitelist + "."
                         + " Denylisted: " + denylist);
+                if ((pkg.applicationInfo.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0) {
+                    Log.w(TAG, "Skipping whitelist checks for " + pkg.packageName
+                            + " - application was updated");
+                    continue;
+                }
 
                 Set<String> grantedNotInWhitelist = new TreeSet<>(grantedPrivPermissions);
                 grantedNotInWhitelist.removeAll(whitelist);
