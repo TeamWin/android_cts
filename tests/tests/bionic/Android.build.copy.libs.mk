@@ -105,6 +105,10 @@ my_bionic_testlib_files := \
   libtest_with_dependency_loop_c.so \
   ns2/ld_config_test_helper_lib1.so \
   ns2/ld_config_test_helper_lib2.so \
+  ns_a/libnstest_ns_a_public1.so \
+  ns_a/libnstest_ns_a_public1_internal.so \
+  ns_b/libnstest_ns_b_public2.so \
+  ns_b/libnstest_ns_b_public3.so \
   prebuilt-elf-files/libtest_invalid-empty_shdr_table.so \
   prebuilt-elf-files/libtest_invalid-rw_load_segment.so \
   prebuilt-elf-files/libtest_invalid-textrels.so \
