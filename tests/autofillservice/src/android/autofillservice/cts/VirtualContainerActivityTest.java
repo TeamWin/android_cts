@@ -48,6 +48,7 @@ import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Test case for an activity containing virtual children.
@@ -81,6 +82,22 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
     }
 
     /**
+     * Focus to username and expect window event
+     */
+    void focusToUsername() throws TimeoutException {
+        sUiBot.waitForWindowChange(() -> mActivity.mUsername.changeFocus(true),
+                Helper.UI_TIMEOUT_MS);
+    }
+
+    /**
+     * Focus to password and expect window event
+     */
+    void focusToPassword() throws TimeoutException {
+        sUiBot.waitForWindowChange(() -> mActivity.mUsername.changeFocus(true),
+                Helper.UI_TIMEOUT_MS);
+    }
+
+    /**
      * Tests autofilling the virtual views, using the sync / async version of ViewStructure.addChild
      */
     private void autofillTest(boolean sync) throws Exception {
@@ -97,13 +114,13 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         mActivity.mCustomView.setSync(sync);
 
         // Trigger auto-fill.
-        mActivity.mUsername.changeFocus(true);
+        focusToUsername();
         assertDatasetShown(mActivity.mUsername, "The Dude");
 
         // Play around with focus to make sure picker is properly drawn.
-        mActivity.mPassword.changeFocus(true);
+        focusToPassword();
         assertDatasetShown(mActivity.mPassword, "The Dude");
-        mActivity.mUsername.changeFocus(true);
+        focusToUsername();
         assertDatasetShown(mActivity.mUsername, "The Dude");
 
         // Make sure input was sanitized.
@@ -175,14 +192,14 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("DUDE", "SWEET");
 
         // Trigger auto-fill.
-        mActivity.mUsername.changeFocus(true);
+        focusToUsername();
         sReplier.getNextFillRequest();
         assertDatasetShown(mActivity.mUsername, "The Dude", "THE DUDE");
 
         // Play around with focus to make sure picker is properly drawn.
-        mActivity.mPassword.changeFocus(true);
+        focusToPassword();
         assertDatasetShown(mActivity.mPassword, "The Dude", "THE DUDE");
-        mActivity.mUsername.changeFocus(true);
+        focusToUsername();
         assertDatasetShown(mActivity.mUsername, "The Dude", "THE DUDE");
 
         // Auto-fill it.
@@ -292,13 +309,13 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger auto-fill.
-        mActivity.mUsername.changeFocus(true);
+        focusToUsername();
         sReplier.getNextFillRequest();
 
         callback.assertUiShownEvent(mActivity.mCustomView, mActivity.mUsername.text.id);
 
         // Change focus
-        mActivity.mPassword.changeFocus(true);
+        focusToPassword();
         callback.assertUiHiddenEvent(mActivity.mCustomView, mActivity.mUsername.text.id);
         callback.assertUiShownEvent(mActivity.mCustomView, mActivity.mPassword.text.id);
     }
@@ -310,7 +327,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         final MyAutofillCallback callback = mActivity.registerCallback();
 
         // Trigger auto-fill.
-        mActivity.mUsername.changeFocus(true);
+        focusToUsername();
 
         // Assert callback was called
         callback.assertUiUnavailableEvent(mActivity.mCustomView, mActivity.mUsername.text.id);
@@ -337,7 +354,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         sReplier.addResponse(response);
 
         // Trigger auto-fill.
-        mActivity.mUsername.changeFocus(true);
+        focusToUsername();
         sReplier.getNextFillRequest();
 
         // Auto-fill it.
@@ -364,7 +381,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger auto-fill.
-        mActivity.mUsername.changeFocus(true);
+        focusToUsername();
         sReplier.getNextFillRequest();
         assertDatasetShown(mActivity.mUsername, "The Dude");
 
@@ -387,10 +404,8 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         final CountDownLatch latch = new CountDownLatch(1);
 
         // Trigger auto-fill.
-        mActivity.runOnUiThread(() -> {
-            mActivity.mUsername.changeFocus(true);
-            latch.countDown();
-        });
+        focusToUsername();
+        latch.countDown();
         latch.await(Helper.UI_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         sReplier.getNextFillRequest();
 
