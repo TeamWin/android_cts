@@ -85,7 +85,7 @@ public class NavigationBarInfo {
         final int actualBottomInset;
         {
             final AtomicReference<View> viewRef = new AtomicReference<>();
-            TestActivity.startSync((TestActivity activity) -> {
+            TestActivity.startSync(activity -> {
                 final View view = new View(activity);
                 view.setLayoutParams(new ViewGroup.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
