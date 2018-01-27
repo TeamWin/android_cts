@@ -29,6 +29,7 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Environment;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -47,6 +48,7 @@ public class UsePermissionTest23 extends BasePermissionsTest {
         mWatch = pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
     }
 
+    @Ignore
     public void testFail() throws Exception {
         fail("Expected");
     }
