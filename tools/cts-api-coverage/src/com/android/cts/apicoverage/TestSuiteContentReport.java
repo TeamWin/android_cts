@@ -19,34 +19,33 @@ package com.android.cts.apicoverage;
 
 import com.android.cts.apicoverage.TestSuiteProto.*;
 
-import org.jf.dexlib2.DexFileFactory;
-import org.jf.dexlib2.Opcodes;
-import org.jf.dexlib2.iface.Annotation;
-import org.jf.dexlib2.iface.AnnotationElement;
-import org.jf.dexlib2.iface.ClassDef;
-import org.jf.dexlib2.iface.DexFile;
-import org.jf.dexlib2.iface.Method;
-import org.jf.dexlib2.iface.value.StringEncodedValue;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.InputStreamReader;
+import java.io.InputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
 
 class TestSuiteContentReport {
     // configuration option
@@ -76,6 +75,14 @@ class TestSuiteContentReport {
     private static final String JAR_EXT_TAG = ".jar";
     private static final String APK_EXT_TAG = ".apk";
     private static final String SO_EXT_TAG = ".so";
+    private static final String TEST_SUITE_HARNESS = "-tradefed.jar";
+    private static final String KNOWN_FAILURES_XML_FILE = "-known-failures.xml";
+
+    private static final String OPTION_TAG = "option";
+    private static final String NAME_TAG = "name";
+    private static final String EXCLUDE_FILTER_TAG = "compatibility:exclude-filter";
+    private static final String VALUE_TAG = "value";
+
 
     private static void printUsage() {
         System.out.println("Usage: test-suite-content-report [OPTION]...");
@@ -150,6 +157,52 @@ class TestSuiteContentReport {
         }
     }
 
+    private static class KnownFailuresXmlHandler extends DefaultHandler {
+        private TestSuiteContent.Builder mTsBld = null;
+
+        KnownFailuresXmlHandler(TestSuiteContent.Builder tsBld) {
+            mTsBld = tsBld;
+        }
+
+        @Override
+        public void startElement(String uri, String localName, String name, Attributes attributes)
+                throws SAXException {
+            super.startElement(uri, localName, name, attributes);
+
+            System.err.printf(
+                    "ele %s: %s: %s \n",
+                    localName, attributes.getValue(NAME_TAG), attributes.getValue(VALUE_TAG));
+            if (EXCLUDE_FILTER_TAG.equals(attributes.getValue(NAME_TAG))) {
+                String kfFilter = attributes.getValue(VALUE_TAG).replace(' ', '.');
+                mTsBld.addKnownFailures(kfFilter);
+            }
+        }
+    }
+
+    private static void parseKnownFailures(TestSuiteContent.Builder tsBld, File file)
+            throws Exception {
+
+        ZipFile zip = new ZipFile(file);
+        try {
+            Enumeration<? extends ZipEntry> entries = zip.entries();
+            while (entries.hasMoreElements()) {
+                ZipEntry entry = entries.nextElement();
+
+                if (entry.getName().endsWith(KNOWN_FAILURES_XML_FILE)) {
+                    SAXParserFactory spf = SAXParserFactory.newInstance();
+                    spf.setNamespaceAware(false);
+                    SAXParser saxParser = spf.newSAXParser();
+                    InputStream xmlStream = zip.getInputStream(entry);
+                    KnownFailuresXmlHandler kfXmlHandler = new KnownFailuresXmlHandler(tsBld);
+                    saxParser.parse(xmlStream, kfXmlHandler);
+                    xmlStream.close();
+                }
+            }
+        } finally {
+            zip.close();
+        }
+    }
+
     // Parse a folder to add all entries
     private static Entry.Builder parseFolder(TestSuiteContent.Builder testSuiteContent, String fPath, String rPath)
             throws IOException, NoSuchAlgorithmException {
@@ -178,6 +231,10 @@ class TestSuiteContentReport {
                     FileMetadata fMetadata = parseFileMetadata(fileEntry, file);
                     if (null != fMetadata) {
                         fileEntry.setFileMetadata(fMetadata);
+                    }
+                    // get [cts]-known-failures.xml
+                    if (file.getName().endsWith(TEST_SUITE_HARNESS)) {
+                        parseKnownFailures(testSuiteContent, file);
                     }
                 } catch (Exception ex) {
                     System.err.println(
@@ -324,6 +381,11 @@ class TestSuiteContentReport {
             }
             System.out.printf("\n");
         }
+
+        System.out.printf("\nKnown Failures\n");
+        for (String kf : tsContent.getKnownFailuresList()) {
+            System.out.printf("%s\n", kf);
+        }
     }
 
     public static void main(String[] args)
@@ -363,7 +425,7 @@ class TestSuiteContentReport {
 
         // Read message from the file and print them out
         TestSuiteContent tsContent1 =
-          TestSuiteContent.parseFrom(new FileInputStream(outputFilePath));
+                TestSuiteContent.parseFrom(new FileInputStream(outputFilePath));
         printTestSuiteContent(tsContent1);
     }
 }
