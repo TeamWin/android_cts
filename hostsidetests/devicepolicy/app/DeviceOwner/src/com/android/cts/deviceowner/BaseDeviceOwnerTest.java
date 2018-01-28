@@ -15,8 +15,11 @@
  */
 package com.android.cts.deviceowner;
 
+import android.app.Instrumentation;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.uiautomator.UiDevice;
 import android.test.AndroidTestCase;
 
 /**
@@ -30,11 +33,14 @@ import android.test.AndroidTestCase;
 public abstract class BaseDeviceOwnerTest extends AndroidTestCase {
 
     protected DevicePolicyManager mDevicePolicyManager;
-
+    protected Instrumentation mInstrumentation;
+    protected UiDevice mDevice;
     @Override
     protected void setUp() throws Exception {
         super.setUp();
 
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mDevice = UiDevice.getInstance(mInstrumentation);
         mDevicePolicyManager = mContext.getSystemService(DevicePolicyManager.class);
         assertDeviceOwner();
     }
@@ -48,5 +54,9 @@ public abstract class BaseDeviceOwnerTest extends AndroidTestCase {
 
     protected ComponentName getWho() {
         return BasicAdminReceiver.getComponentName(mContext);
+    }
+
+    protected String executeShellCommand(String... command) throws Exception {
+        return mDevice.executeShellCommand(String.join(" ", command));
     }
 }
