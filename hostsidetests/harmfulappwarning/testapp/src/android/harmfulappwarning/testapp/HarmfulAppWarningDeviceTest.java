@@ -88,13 +88,13 @@ public class HarmfulAppWarningDeviceTest {
     }
 
     private void clickLaunchAnyway() {
-        UiObject2 obj = getUiDevice().findObject(By.res("android:id/button1"));
+        UiObject2 obj = getUiDevice().findObject(By.res("android:id/button2"));
         Assert.assertNotNull(obj);
         obj.click();
     }
 
     private void clickUninstall() {
-        UiObject2 obj = getUiDevice().findObject(By.res("android:id/button2"));
+        UiObject2 obj = getUiDevice().findObject(By.res("android:id/button1"));
         Assert.assertNotNull(obj);
         obj.click();
     }

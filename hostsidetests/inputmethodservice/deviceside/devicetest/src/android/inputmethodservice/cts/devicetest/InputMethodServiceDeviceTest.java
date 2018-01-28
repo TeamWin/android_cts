@@ -58,14 +58,13 @@ public class InputMethodServiceDeviceTest {
     public void testCreateIme1() throws Throwable {
         final TestHelper helper = new TestHelper(getClass(), DeviceTestConstants.TEST_CREATE_IME1);
 
+        final long startActivityTime = SystemClock.uptimeMillis();
+        helper.launchActivity(DeviceTestConstants.PACKAGE, DeviceTestConstants.TEST_ACTIVITY_CLASS);
+
         pollingCheck(() -> helper.queryAllEvents()
                         .collect(startingFrom(helper.isStartOfTest()))
                         .anyMatch(isFrom(Ime1Constants.CLASS).and(isType(ON_CREATE))),
                 TIMEOUT, "CtsInputMethod1.onCreate is called");
-
-        final long startActivityTime = SystemClock.uptimeMillis();
-        helper.launchActivity(DeviceTestConstants.PACKAGE, DeviceTestConstants.TEST_ACTIVITY_CLASS);
-
         pollingCheck(() -> helper.queryAllEvents()
                         .filter(isNewerThan(startActivityTime))
                         .anyMatch(isFrom(Ime1Constants.CLASS).and(isType(ON_START_INPUT))),
@@ -78,14 +77,13 @@ public class InputMethodServiceDeviceTest {
         final TestHelper helper = new TestHelper(
                 getClass(), DeviceTestConstants.TEST_SWITCH_IME1_TO_IME2);
 
+        final long startActivityTime = SystemClock.uptimeMillis();
+        helper.launchActivity(DeviceTestConstants.PACKAGE, DeviceTestConstants.TEST_ACTIVITY_CLASS);
+
         pollingCheck(() -> helper.queryAllEvents()
                         .collect(startingFrom(helper.isStartOfTest()))
                         .anyMatch(isFrom(Ime1Constants.CLASS).and(isType(ON_CREATE))),
                 TIMEOUT, "CtsInputMethod1.onCreate is called");
-
-        final long startActivityTime = SystemClock.uptimeMillis();
-        helper.launchActivity(DeviceTestConstants.PACKAGE, DeviceTestConstants.TEST_ACTIVITY_CLASS);
-
         pollingCheck(() -> helper.queryAllEvents()
                         .filter(isNewerThan(startActivityTime))
                         .anyMatch(isFrom(Ime1Constants.CLASS).and(isType(ON_START_INPUT))),

@@ -291,12 +291,20 @@
 
         <activity android:name="com.android.cts.content.StubActivity"/>
 
-        <service android:name="com.android.cts.content.SyncService">
+        <service android:name="com.android.cts.content.NotAlwaysSyncableSyncService">
             <intent-filter>
                 <action android:name="android.content.SyncAdapter"/>
             </intent-filter>
             <meta-data android:name="android.content.SyncAdapter"
-                android:resource="@xml/accountaccesssyncadapter" />
+                android:resource="@xml/not_always_syncable_account_access_adapter" />
+        </service>
+
+        <service android:name="com.android.cts.content.AlwaysSyncableSyncService">
+            <intent-filter>
+                <action android:name="android.content.SyncAdapter"/>
+            </intent-filter>
+            <meta-data android:name="android.content.SyncAdapter"
+                android:resource="@xml/always_syncable_account_access_adapter" />
         </service>
 
     </application>

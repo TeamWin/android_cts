@@ -856,16 +856,34 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 Collections.singletonMap(ARG_ALLOW_FAILURE, Boolean.toString(allowFailures)));
     }
 
-    public void testClearApplicationData() throws Exception {
+    public void testClearApplicationData_testPkg() throws Exception {
         if (!mHasFeature) {
             return;
         }
         installAppAsUser(INTENT_RECEIVER_APK, mUserId);
         runDeviceTestsAsUser(INTENT_RECEIVER_PKG, INTENT_RECEIVER_PKG + ".ClearApplicationDataTest",
                 "testWriteToSharedPreference", mUserId);
-        executeDeviceTestMethod(".ClearApplicationDataTest", "testClearApplicationData");
+        executeDeviceTestMethod(".ClearApplicationDataTest", "testClearApplicationData_testPkg");
         runDeviceTestsAsUser(INTENT_RECEIVER_PKG, INTENT_RECEIVER_PKG + ".ClearApplicationDataTest",
                 "testSharedPreferenceCleared", mUserId);
+    }
+
+    public void testClearApplicationData_deviceProvisioning() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        // Clearing data of device configuration app should fail
+        executeDeviceTestMethod(".ClearApplicationDataTest",
+                "testClearApplicationData_deviceProvisioning");
+    }
+
+    public void testClearApplicationData_activeAdmin() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        // Clearing data of active admin should fail
+        executeDeviceTestMethod(".ClearApplicationDataTest",
+                "testClearApplicationData_activeAdmin");
     }
 
     public void testPrintingPolicy() throws Exception {

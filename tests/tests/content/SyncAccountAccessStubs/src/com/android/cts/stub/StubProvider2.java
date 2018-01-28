@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.cts.content;
+package com.android.cts.stub;
 
-import android.app.Service;
-import android.content.Intent;
-import android.os.IBinder;
-
-public class SyncService extends Service {
-    private SyncAdapter mInstance;
-
-    @Override
-    public void onCreate() {
-        super.onCreate();
-        mInstance = new SyncAdapter(this, false);
-    }
-
-    @Override
-    public IBinder onBind(Intent intent) {
-        return mInstance.getSyncAdapterBinder();
-    }
+public class StubProvider2 extends StubProvider {
 }

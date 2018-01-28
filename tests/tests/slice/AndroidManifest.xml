@@ -30,6 +30,17 @@
         <provider android:name=".SliceProvider"
             android:authorities="android.slice.cts"
             android:process=":slice_process" />
+
+        <provider android:name=".LocalSliceProvider"
+            android:authorities="android.slice.cts.local" />
+
+        <activity android:name=".Launcher">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.HOME" />
+            </intent-filter>
+        </activity>
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"

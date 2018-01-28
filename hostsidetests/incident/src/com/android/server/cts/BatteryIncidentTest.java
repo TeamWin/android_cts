@@ -16,7 +16,9 @@
 
 package com.android.server.cts;
 
-import android.os.BatteryManagerProto;
+import android.os.BatteryHealthEnum;
+import android.os.BatteryPluggedStateEnum;
+import android.os.BatteryStatusEnum;
 import android.service.battery.BatteryServiceDumpProto;
 import com.android.tradefed.device.DeviceNotAvailableException;
 
@@ -38,14 +40,14 @@ public class BatteryIncidentTest extends ProtoDumpTestCase {
             return;
         }
 
-        assertTrue(dump.getPlugged() != BatteryManagerProto.PlugType.PLUG_TYPE_WIRELESS);
+        assertTrue(dump.getPlugged() != BatteryPluggedStateEnum.BATTERY_PLUGGED_WIRELESS);
         assertTrue(dump.getMaxChargingCurrent() >= 0);
         assertTrue(dump.getMaxChargingVoltage() >= 0);
         assertTrue(dump.getChargeCounter() >= 0);
         assertTrue(
-                dump.getStatus() != BatteryServiceDumpProto.BatteryStatus.BATTERY_STATUS_INVALID);
+                dump.getStatus() != BatteryStatusEnum.BATTERY_STATUS_INVALID);
         assertTrue(
-                dump.getHealth() != BatteryServiceDumpProto.BatteryHealth.BATTERY_HEALTH_INVALID);
+                dump.getHealth() != BatteryHealthEnum.BATTERY_HEALTH_INVALID);
         int scale = dump.getScale();
         assertTrue(scale > 0);
         int level = dump.getLevel();

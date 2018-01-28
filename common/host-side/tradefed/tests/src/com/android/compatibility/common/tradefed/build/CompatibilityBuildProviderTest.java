@@ -95,4 +95,22 @@ public class CompatibilityBuildProviderTest {
         mProvider.cleanUp(info);
         assertNotNull(((IDeviceBuildInfo)info).getTestsDir());
     }
+
+    /**
+     * Test that the {suite-name} pattern of the dynamic URL can be overriden by something different
+     * from the build-in suite name.
+     */
+    @Test
+    public void testDynamicUrlOverride() throws Exception {
+        final String uniquePattern = "UNIQUE_SUITE_NAME_PATTERN";
+        OptionSetter setter = new OptionSetter(mProvider);
+        setter.setOptionValue("url-suite-name-override", uniquePattern);
+        EasyMock.replay(mMockDevice);
+        IBuildInfo info = mProvider.getBuild(mMockDevice);
+        EasyMock.verify(mMockDevice);
+        String url = info.getBuildAttributes().get(
+                CompatibilityBuildProvider.DYNAMIC_CONFIG_OVERRIDE_URL);
+        assertTrue(String.format("URL was %s and should have contained %s", url, uniquePattern),
+                url.contains(uniquePattern));
+    }
 }

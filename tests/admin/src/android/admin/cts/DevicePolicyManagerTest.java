@@ -29,10 +29,17 @@ import android.os.Build;
 import android.os.Process;
 import android.os.UserManager;
 import android.provider.Settings;
+import android.security.keystore.KeyGenParameterSpec;
+import android.security.keystore.KeyProperties;
 import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.Suppress;
 import android.util.Log;
 
+import java.io.ByteArrayInputStream;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -935,6 +942,46 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         }
         try {
             mDevicePolicyManager.getPasswordBlacklistName(mComponent);
+            fail("did not throw expected SecurityException");
+        } catch (SecurityException e) {
+            assertProfileOwnerMessage(e.getMessage());
+        }
+    }
+
+    public void testGenerateKeyPair_failIfNotProfileOwner() {
+        if (!mDeviceAdmin) {
+            Log.w(TAG, "Skipping testGenerateKeyPair_failIfNotProfileOwner");
+            return;
+        }
+        try {
+            KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(
+                    "gen-should-fail",
+                    KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_VERIFY)
+                    .setKeySize(2048)
+                    .setDigests(KeyProperties.DIGEST_SHA256)
+                    .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PSS,
+                        KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)
+                    .build();
+
+            mDevicePolicyManager.generateKeyPair(mComponent, "RSA", spec, 0);
+            fail("did not throw expected SecurityException");
+        } catch (SecurityException e) {
+            assertProfileOwnerMessage(e.getMessage());
+        }
+    }
+
+    public void testSetKeyPairCertificate_failIfNotProfileOwner() throws CertificateException {
+        if (!mDeviceAdmin) {
+            Log.w(TAG, "Skipping testSetKeyPairCertificate_failIfNotProfileOwner");
+            return;
+        }
+        try {
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            Certificate cert  = cf.generateCertificate(
+                    new ByteArrayInputStream(TEST_CA_STRING1.getBytes()));
+            List<Certificate> certs = new ArrayList();
+            certs.add(cert);
+            mDevicePolicyManager.setKeyPairCertificate(mComponent, "set-should-fail", certs, true);
             fail("did not throw expected SecurityException");
         } catch (SecurityException e) {
             assertProfileOwnerMessage(e.getMessage());

@@ -678,7 +678,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
         assumeTrue(supportsSplitScreenMultiWindow());
 
         // Setup split-screen.
-        launchActivitiesInSplitScreen(RESIZEABLE_ACTIVITY_NAME, LAUNCHING_ACTIVITY);
+        launchActivitiesInSplitScreen(TEST_ACTIVITY_NAME, LAUNCHING_ACTIVITY);
         mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true /* visible */);
 
         tryCreatingAndRemovingDisplayWithActivity(true /* splitScreen */,
@@ -722,9 +722,9 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             }
 
             // Launch activity on new secondary display.
-            launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mId);
+            launchActivityOnDisplay(RESIZEABLE_ACTIVITY_NAME, newDisplay.mId);
             mAmWmState.assertFocusedActivity("Focus must be on secondary display",
-                    TEST_ACTIVITY_NAME);
+                    RESIZEABLE_ACTIVITY_NAME);
             final int frontStackId = mAmWmState.getAmState().getFrontStackId(newDisplay.mId);
             mAmWmState.assertFocusedStack("Focus must be on secondary display", frontStackId);
 
@@ -732,19 +732,20 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             logSeparator = clearLogcat();
         }
 
-        assertActivityLifecycle(TEST_ACTIVITY_NAME, false /* relaunched */, logSeparator);
-        mAmWmState.waitForValidState(TEST_ACTIVITY_NAME, windowingMode, ACTIVITY_TYPE_STANDARD);
+        assertActivityLifecycle(RESIZEABLE_ACTIVITY_NAME, false /* relaunched */, logSeparator);
+        mAmWmState.waitForValidState(RESIZEABLE_ACTIVITY_NAME, windowingMode,
+                ACTIVITY_TYPE_STANDARD);
         mAmWmState.assertSanity();
         mAmWmState.assertValidBounds(true /* compareTaskAndStackBounds */);
 
         // Check if the focus is switched back to primary display.
-        mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, true /* visible */);
+        mAmWmState.assertVisibility(RESIZEABLE_ACTIVITY_NAME, true /* visible */);
         mAmWmState.assertFocusedStack(
                 "Default stack on primary display must be focused after display removed",
                 windowingMode, ACTIVITY_TYPE_STANDARD);
         mAmWmState.assertFocusedActivity(
                 "Focus must be switched back to activity on primary display",
-                TEST_ACTIVITY_NAME);
+                RESIZEABLE_ACTIVITY_NAME);
     }
 
     /**

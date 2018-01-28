@@ -16,13 +16,14 @@
 
 package com.android.server.cts;
 
+import android.app.PolicyProto;
 import android.service.notification.NotificationRecordProto;
 import android.service.notification.NotificationServiceDumpProto;
 import android.service.notification.NotificationRecordProto.State;
 import android.service.notification.RankingHelperProto;
 import android.service.notification.RankingHelperProto.RecordProto;
+import android.service.notification.ZenMode;
 import android.service.notification.ZenModeProto;
-import android.service.notification.ZenModeProto.ZenMode;
 
 /**
  * Test to check that the notification service properly outputs its dump state.
@@ -102,21 +103,35 @@ public class NotificationIncidentTest extends ProtoDumpTestCase {
                  rp.getVisibility() <= VISIBILITY_PUBLIC));
     }
 
-    // Tests default state: zen mode off, no suppressors
+    // Tests default state: zen mode is a valid/expected value
     public void testZenMode() throws Exception {
         final NotificationServiceDumpProto dump = getDump(NotificationServiceDumpProto.parser(),
                 "dumpsys notification --proto");
         ZenModeProto zenProto = dump.getZen();
 
-        assertEquals(ZenMode.ZEN_MODE_OFF, zenProto.getZenMode());
-        assertEquals(0, zenProto.getEnabledActiveConditionsCount());
-
-        // b/64606626 Watches intentionally suppress notifications always
-        if (!getDevice().hasFeature(FEATURE_WATCH)) {
-            assertEquals(0, zenProto.getSuppressedEffects());
-            assertEquals(0, zenProto.getSuppressorsCount());
+        switch(zenProto.getZenMode()) {
+            case ZEN_MODE_OFF:
+            case ZEN_MODE_IMPORTANT_INTERRUPTIONS:
+            case ZEN_MODE_NO_INTERRUPTIONS:
+            case ZEN_MODE_ALARMS:
+                break;
+            default:
+                fail("Unexpected ZenMode value");
+                break;
         }
 
-        zenProto.getPolicy();
+        PolicyProto policy = zenProto.getPolicy();
+        for (PolicyProto.Category c : policy.getPriorityCategoriesList()) {
+            assertTrue(PolicyProto.Category.getDescriptor().getValues()
+                    .contains(c.getValueDescriptor()));
+        }
+        assertTrue(PolicyProto.Sender.getDescriptor().getValues()
+                .contains(policy.getPriorityCallSender().getValueDescriptor()));
+        assertTrue(PolicyProto.Sender.getDescriptor().getValues()
+                .contains(policy.getPriorityMessageSender().getValueDescriptor()));
+        for (PolicyProto.SuppressedVisualEffect sve : policy.getSuppressedVisualEffectsList()) {
+            assertTrue(PolicyProto.SuppressedVisualEffect.getDescriptor().getValues()
+                    .contains(sve.getValueDescriptor()));
+        }
     }
 }

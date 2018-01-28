@@ -183,6 +183,46 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
     private static native int[] getSampleSizesNative(int fd, long offset, long size);
     private static native int[] getSampleSizesNativePath(String path);
 
+    public void testExtractorFileDurationNative() throws Exception {
+        int res = R.raw.video_1280x720_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz;
+        testExtractorFileDurationNative(res);
+    }
+
+    private void testExtractorFileDurationNative(int res) throws Exception {
+
+        AssetFileDescriptor fd = mResources.openRawResourceFd(res);
+        long durationUs = getExtractorFileDurationNative(
+                fd.getParcelFileDescriptor().getFd(), fd.getStartOffset(), fd.getLength());
+
+        MediaExtractor ex = new MediaExtractor();
+        ex.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
+
+        int numtracks = ex.getTrackCount();
+        long aDurationUs = -1, vDurationUs = -1;
+        for (int i = 0; i < numtracks; i++) {
+            MediaFormat format = ex.getTrackFormat(i);
+            String mime = format.getString(MediaFormat.KEY_MIME);
+            if (mime.startsWith("audio/")) {
+                aDurationUs = format.getLong(MediaFormat.KEY_DURATION);
+            } else if (mime.startsWith("video/")) {
+                vDurationUs = format.getLong(MediaFormat.KEY_DURATION);
+            }
+        }
+
+        assertTrue("duration inconsistency",
+                durationUs < 0 || durationUs >= aDurationUs && durationUs >= vDurationUs);
+
+    }
+
+    private static native long getExtractorFileDurationNative(int fd, long offset, long size);
+
+    public void testExtractorCachedDurationNative() throws Exception {
+        CtsTestServer foo = new CtsTestServer(mContext);
+        long cachedDurationUs = getExtractorCachedDurationNative(foo.getAssetUrl("ringer.mp3"));
+        assertTrue("cached duration negative", cachedDurationUs >= 0);
+    }
+
+    private static native long getExtractorCachedDurationNative(String uri);
 
     public void testDecoder() throws Exception {
         int testsRun =
@@ -203,7 +243,18 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
         }
     }
 
+    public void testDataSource() throws Exception {
+        int testsRun = testDecoder(R.raw.video_176x144_3gp_h263_300kbps_12fps_aac_mono_24kbps_11025hz, true);
+        if (testsRun == 0) {
+            MediaUtils.skipTest("no decoders found");
+        }
+    }
+
     private int testDecoder(int res) throws Exception {
+        return testDecoder(res, /* wrapFd */ false);
+    }
+
+    private int testDecoder(int res, boolean wrapFd) throws Exception {
         if (!MediaUtils.hasCodecsForResource(mContext, res)) {
             return 0; // skip
         }
@@ -213,7 +264,7 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
         int[] jdata = getDecodedData(
                 fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
         int[] ndata = getDecodedDataNative(
-                fd.getParcelFileDescriptor().getFd(), fd.getStartOffset(), fd.getLength());
+                fd.getParcelFileDescriptor().getFd(), fd.getStartOffset(), fd.getLength(), wrapFd);
 
         fd.close();
         Log.i("@@@", Arrays.toString(jdata));
@@ -384,7 +435,7 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
         return ret;
     }
 
-    private static native int[] getDecodedDataNative(int fd, long offset, long size)
+    private static native int[] getDecodedDataNative(int fd, long offset, long size, boolean wrapFd)
             throws IOException;
 
     public void testVideoPlayback() throws Exception {

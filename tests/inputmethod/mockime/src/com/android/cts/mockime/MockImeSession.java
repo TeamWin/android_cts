@@ -324,4 +324,18 @@ public class MockImeSession implements AutoCloseable {
         mContext.sendBroadcast(intent);
         return command;
     }
+
+    @NonNull
+    public ImeCommand callSetBackDisposition(int backDisposition) {
+        final Bundle params = new Bundle();
+        params.putInt("backDisposition", backDisposition);
+        final ImeCommand command = new ImeCommand(
+                "setBackDisposition", SystemClock.elapsedRealtimeNanos(), true, params);
+        final Intent intent = new Intent();
+        intent.setPackage(mContext.getPackageName());
+        intent.setAction(MockIme.getCommandActionName(mImeEventActionName));
+        intent.putExtras(command.toBundle());
+        mContext.sendBroadcast(intent);
+        return command;
+    }
 }

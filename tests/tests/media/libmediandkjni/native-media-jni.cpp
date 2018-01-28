@@ -35,6 +35,7 @@
 #include "media/NdkMediaExtractor.h"
 #include "media/NdkMediaCodec.h"
 #include "media/NdkMediaCrypto.h"
+#include "media/NdkMediaDataSource.h"
 #include "media/NdkMediaFormat.h"
 #include "media/NdkMediaMuxer.h"
 
@@ -76,6 +77,49 @@ public:
     }
 };
 
+struct FdDataSource {
+
+    FdDataSource(int fd, jlong offset, jlong size)
+        : mFd(fd),
+          mOffset(offset),
+          mSize(size) {
+    }
+
+    ssize_t readAt(off64_t offset, void *data, size_t size) {
+        ssize_t ssize = size;
+        if (!data || offset < 0 || offset >= mSize || offset + ssize < offset) {
+            return -1;
+        }
+        if (offset + ssize > mSize) {
+            ssize = mSize - offset;
+        }
+        if (lseek(mFd, mOffset + offset, SEEK_SET) < 0) {
+            return -1;
+        }
+        return read(mFd, data, ssize);
+    }
+
+    ssize_t getSize() {
+        return mSize;
+    }
+
+private:
+
+    int mFd;
+    off64_t mOffset;
+    int64_t mSize;
+
+};
+
+static ssize_t FdSourceReadAt(void *userdata, off64_t offset, void *data, size_t size) {
+    FdDataSource *src = (FdDataSource*) userdata;
+    return src->readAt(offset, data, size);
+}
+
+static ssize_t FdSourceGetSize(void *userdata) {
+    FdDataSource *src = (FdDataSource*) userdata;
+    return src->getSize();
+}
 
 
 jobject testExtractor(AMediaExtractor *ex, JNIEnv *env) {
@@ -121,7 +165,8 @@ jobject testExtractor(AMediaExtractor *ex, JNIEnv *env) {
     uint8_t *buf = new uint8_t[bufsize];
     while(true) {
         int n = AMediaExtractor_readSampleData(ex, buf, bufsize);
-        if (n < 0) {
+        ssize_t sampleSize = AMediaExtractor_getSampleSize(ex);
+        if (n < 0 || n != sampleSize) {
             break;
         }
         sizes.add(n);
@@ -219,12 +264,68 @@ static int checksum(const uint8_t *in, int len, AMediaFormat *format) {
     return sum;
 }
 
-extern "C" jobject Java_android_media_cts_NativeDecoderTest_getDecodedDataNative(JNIEnv *env,
-        jclass /*clazz*/, int fd, jlong offset, jlong size) {
-    ALOGV("getDecodedDataNative");
-
+extern "C" jlong Java_android_media_cts_NativeDecoderTest_getExtractorFileDurationNative(
+        JNIEnv * /*env*/, jclass /*clazz*/, int fd, jlong offset, jlong size)
+{
     AMediaExtractor *ex = AMediaExtractor_new();
     int err = AMediaExtractor_setDataSourceFd(ex, fd, offset, size);
+    if (err != 0) {
+        ALOGE("setDataSource error: %d", err);
+        AMediaExtractor_delete(ex);
+        return -1;
+    }
+    int64_t durationUs = -1;
+    AMediaFormat *format = AMediaExtractor_getFileFormat(ex);
+    AMediaFormat_getInt64(format, AMEDIAFORMAT_KEY_DURATION, &durationUs);
+    AMediaFormat_delete(format);
+    AMediaExtractor_delete(ex);
+    return durationUs;
+}
+
+extern "C" jlong Java_android_media_cts_NativeDecoderTest_getExtractorCachedDurationNative(
+        JNIEnv * env, jclass /*clazz*/, jstring jpath)
+{
+    AMediaExtractor *ex = AMediaExtractor_new();
+
+    const char *tmp = env->GetStringUTFChars(jpath, NULL);
+    if (tmp == NULL) {  // Out of memory
+        AMediaExtractor_delete(ex);
+        return -1;
+    }
+
+    int err = AMediaExtractor_setDataSource(ex, tmp);
+
+    env->ReleaseStringUTFChars(jpath, tmp);
+
+    if (err != 0) {
+        ALOGE("setDataSource error: %d", err);
+        AMediaExtractor_delete(ex);
+        return -1;
+    }
+
+    int64_t cachedDurationUs = AMediaExtractor_getCachedDuration(ex);
+    AMediaExtractor_delete(ex);
+    return cachedDurationUs;
+
+}
+
+extern "C" jobject Java_android_media_cts_NativeDecoderTest_getDecodedDataNative(JNIEnv *env,
+        jclass /*clazz*/, int fd, jlong offset, jlong size, jboolean wrapFd) {
+    ALOGV("getDecodedDataNative");
+
+    FdDataSource fdSrc(fd, offset, size);
+    AMediaExtractor *ex = AMediaExtractor_new();
+    AMediaDataSource *ndkSrc = AMediaDataSource_new();
+
+    int err;
+    if (wrapFd) {
+        AMediaDataSource_setUserdata(ndkSrc, &fdSrc);
+        AMediaDataSource_setReadAt(ndkSrc, FdSourceReadAt);
+        AMediaDataSource_setGetSize(ndkSrc, FdSourceGetSize);
+        err = AMediaExtractor_setDataSourceCustom(ex, ndkSrc);
+    } else {
+        err = AMediaExtractor_setDataSourceFd(ex, fd, offset, size);
+    }
     if (err != 0) {
         ALOGE("setDataSource error: %d", err);
         return NULL;
@@ -367,6 +468,7 @@ extern "C" jobject Java_android_media_cts_NativeDecoderTest_getDecodedDataNative
     delete[] format;
     delete[] codec;
     AMediaExtractor_delete(ex);
+    AMediaDataSource_delete(ndkSrc);
     return ret;
 }
 

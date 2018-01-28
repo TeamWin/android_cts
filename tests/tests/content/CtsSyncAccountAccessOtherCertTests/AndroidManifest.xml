@@ -24,7 +24,7 @@
 
         <activity android:name=".StubActivity"/>
 
-        <service android:name=".SyncService">
+        <service android:name=".AlwaysSyncableSyncService">
             <intent-filter>
                 <action android:name="android.content.SyncAdapter"/>
             </intent-filter>

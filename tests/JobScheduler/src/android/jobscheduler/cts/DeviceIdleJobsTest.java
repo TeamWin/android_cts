@@ -165,6 +165,16 @@ public class DeviceIdleJobsTest {
                 + BACKGROUND_JOBS_EXPECTED_DELAY + "ms", awaitJobStart(DEFAULT_WAIT_TIMEOUT));
     }
 
+    @Test
+    public void testJobsInNeverApp() throws Exception {
+        makeTestPackageStandbyNever();
+        enterFakeUnpluggedState();
+        Thread.sleep(DEFAULT_WAIT_TIMEOUT);
+        sendScheduleJobBroadcast(false);
+        assertFalse("New job started in NEVER standby", awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+        resetFakeUnpluggedState();
+    }
+
     @After
     public void tearDown() throws Exception {
         toggleDeviceIdleState(false);
@@ -225,6 +235,18 @@ public class DeviceIdleJobsTest {
 
     private void makeTestPackageStandbyActive() throws Exception {
         mUiDevice.executeShellCommand("am set-standby-bucket " + TEST_APP_PACKAGE + " active");
+    }
+
+    private void makeTestPackageStandbyNever() throws Exception {
+        mUiDevice.executeShellCommand("am set-standby-bucket " + TEST_APP_PACKAGE + " never");
+    }
+
+    private void enterFakeUnpluggedState() throws Exception {
+        mUiDevice.executeShellCommand("dumpsys battery unplug");
+    }
+
+    private void resetFakeUnpluggedState() throws Exception  {
+        mUiDevice.executeShellCommand("dumpsys battery reset");
     }
 
     private boolean waitUntilTestAppNotInTempWhitelist() throws Exception {

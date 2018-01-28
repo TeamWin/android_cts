@@ -24,6 +24,7 @@ import com.android.tradefed.config.IConfiguration;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.Option.Importance;
 import com.android.tradefed.config.OptionClass;
+import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.suite.BaseTestSuite;
 import com.android.tradefed.util.xml.AbstractXmlParser.ParseException;
 
@@ -32,6 +33,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.LinkedHashMap;
+import java.util.Set;
 
 /**
  * A Test for running Compatibility Test Suite with new suite system.
@@ -106,5 +108,24 @@ public class CompatibilityTestSuite extends BaseTestSuite {
      */
     public final void resetRetryId() {
         mRetrySessionId = null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public LinkedHashMap<String, IConfiguration> loadingStrategy(
+            Set<IAbi> abis, File testsDir, String suitePrefix, String suiteTag) {
+        LinkedHashMap<String, IConfiguration> loadedConfigs = new LinkedHashMap<>();
+        // Load the configs that are part of the tests dir
+        loadedConfigs.putAll(
+                getModuleLoader().loadConfigsFromDirectory(testsDir, abis, suitePrefix, suiteTag));
+        // Add an extra check in CTS since we never expect the config folder to be empty.
+        if (loadedConfigs.size() == 0) {
+            throw new IllegalArgumentException(
+                    String.format("No config files found in %s or in resources.",
+                            testsDir.getAbsolutePath()));
+        }
+        return loadedConfigs;
     }
 }

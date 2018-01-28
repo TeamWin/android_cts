@@ -15,6 +15,7 @@
 package android.jvmti.cts;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.ddmlib.NullOutputReceiver;
 import com.android.ddmlib.testrunner.ITestRunListener;
 import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
 import com.android.ddmlib.testrunner.TestIdentifier;
@@ -64,7 +65,106 @@ public class JvmtiAttachingHostTest extends DeviceTestCase implements IBuildRece
         mAbi = arg0;
     }
 
-    public void testJvmtiAttach() throws Exception {
+    private static interface TestRun {
+        public void run(ITestDevice device, String pkg, String apk, String abiName);
+    }
+
+    private final static String AGENT = "libctsjvmtiattachagent.so";
+
+    public void testJvmtiAttachDuringBind() throws Exception {
+        runJvmtiAgentLoadTest((ITestDevice device, String pkg, String apk, String abiName) -> {
+            try {
+                runAttachTestCmd(device, pkg, "--attach-agent-bind " + AGENT);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed bind-time attaching", e);
+            }
+        });
+    };
+
+    public void testJvmtiAttachEarly() throws Exception {
+        runJvmtiAgentLoadTest((ITestDevice device, String pkg, String apk, String abiName) -> {
+            try {
+                String pwd = device.executeShellCommand("run-as " + pkg + " pwd");
+                if (pwd == null) {
+                    throw new RuntimeException("pwd failed");
+                }
+                pwd = pwd.trim();
+                if (pwd.isEmpty()) {
+                    throw new RuntimeException("pwd failed");
+                }
+
+                // Give it a different name, so we do not have "contamination" from
+                // the test APK.
+                String libInDataData = AGENT.substring(0, AGENT.length() - ".so".length())
+                        + "2.so";
+                String agentInDataData =
+                        installLibToDataData(device, pkg, abiName, apk, pwd, AGENT,
+                                libInDataData);
+                runAttachTestCmd(device, pkg, "--attach-agent " + agentInDataData);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed pre-bind attaching", e);
+            }
+        });
+    };
+
+    public void testJvmtiAgentAppInternal() throws Exception {
+        runJvmtiAgentLoadTest((ITestDevice device, String pkg, String apk, String abiName) -> {
+            try {
+                String setAgentAppCmd = "cmd activity set-agent-app " + pkg + " " + AGENT;
+                device.executeShellCommand(setAgentAppCmd);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed running set-agent-app", e);
+            }
+
+            try {
+                runAttachTestCmd(device, pkg, "");
+
+                // And again.
+                runAttachTestCmd(device, pkg, "");
+            } catch (Exception e) {
+                throw new RuntimeException("Failed agent-app attaching", e);
+            }
+        });
+    };
+
+    public void testJvmtiAgentAppExternal() throws Exception {
+        runJvmtiAgentLoadTest((ITestDevice device, String pkg, String apk, String abiName) -> {
+            try {
+                String pwd = device.executeShellCommand("run-as " + pkg + " pwd");
+                if (pwd == null) {
+                    throw new RuntimeException("pwd failed");
+                }
+                pwd = pwd.trim();
+                if (pwd.isEmpty()) {
+                    throw new RuntimeException("pwd failed");
+                }
+
+                // Give it a different name, so we do not have "contamination" from
+                // the test APK.
+                String libInDataData = AGENT.substring(0, AGENT.length() - ".so".length())
+                        + "2.so";
+                String agentInDataData =
+                        installLibToDataData(device, pkg, abiName, apk, pwd, AGENT,
+                                libInDataData);
+
+                String setAgentAppCmd = "cmd activity set-agent-app " + pkg + " " + agentInDataData;
+                device.executeShellCommand(setAgentAppCmd);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed running set-agent-app", e);
+            }
+
+            try {
+                runAttachTestCmd(device, pkg, "");
+
+                // And again.
+                runAttachTestCmd(device, pkg, "");
+            } catch (Exception e) {
+                throw new RuntimeException("Failed agent-app attaching", e);
+            }
+        });
+    };
+
+    private void runJvmtiAgentLoadTest(TestRun runner) throws Exception {
         final ITestDevice device = getDevice();
 
         String testingArch = AbiUtils.getBaseArchForAbi(mAbi.getName());
@@ -84,7 +184,7 @@ public class JvmtiAttachingHostTest extends DeviceTestCase implements IBuildRece
             throw new IllegalStateException("Incorrect configuration");
         }
 
-        runAttachTest(device, mTestPackageName, mTestApk);
+        runner.run(device, mTestPackageName, mTestApk, mAbi.getName());
     }
 
     private String getDeviceBaseArch(ITestDevice device) throws Exception {
@@ -93,50 +193,19 @@ public class JvmtiAttachingHostTest extends DeviceTestCase implements IBuildRece
         return AbiUtils.getBaseArchForAbi(abi);
     }
 
-    private void runAttachTestCmd(ITestDevice device, String pkg, String agentParams)
+    private static void runAttachTestCmd(ITestDevice device, String pkg, String agentParams)
             throws Exception {
         String attachCmd = "cmd activity start -S -W " + agentParams + " -n " + pkg
                 + "/android.jvmti.JvmtiActivity";
 
-        String attachReply = device.executeShellCommand(attachCmd);
         // Don't try to parse the output. The test will time out anyways if this didn't
         // work.
-        if (attachReply != null && !attachReply.trim().isEmpty()) {
-            CLog.e(attachReply);
-        }
+        device.executeShellCommand(attachCmd, NullOutputReceiver.getReceiver(), 10,
+                TimeUnit.SECONDS, 1);
     }
 
-    private final static String AGENT = "libctsjvmtiattachagent.so";
-
-    private void runAttachTest(ITestDevice device, String pkg, String apk) {
-        try {
-            runAttachTestCmd(device, pkg, "--attach-agent-bind " + AGENT);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed bind-time attaching", e);
-        }
-        try {
-            String pwd = device.executeShellCommand("run-as " + pkg + " pwd");
-            if (pwd == null) {
-                throw new RuntimeException("pwd failed");
-            }
-            pwd = pwd.trim();
-            if (pwd.isEmpty()) {
-                throw new RuntimeException("pwd failed");
-            }
-
-            // Give it a different name, so we do not have "contamination" from
-            // the test APK.
-            String libInDataData = AGENT.substring(0, AGENT.length() - ".so".length()) + "2.so";
-            String agentInDataData =
-                    installLibToDataData(device, pkg, apk, pwd, AGENT, libInDataData);
-            runAttachTestCmd(device, pkg, "--attach-agent " + agentInDataData);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed pre-bind attaching", e);
-        }
-    }
-
-    String installLibToDataData(ITestDevice device, String pkg, String apk, String dataData,
-            String library, String newLibName) throws Exception {
+    private String installLibToDataData(ITestDevice device, String pkg, String abiName,
+            String apk, String dataData, String library, String newLibName) throws Exception {
         ZipFile zf = null;
         File tmpFile = null;
         String libInTmp = null;
@@ -146,7 +215,7 @@ public class JvmtiAttachingHostTest extends DeviceTestCase implements IBuildRece
             File apkFile = mBuildHelper.getTestFile(apk);
             zf = new ZipFile(apkFile);
 
-            String libPathInApk = "lib/" + mAbi.getName() + "/" + library;
+            String libPathInApk = "lib/" + abiName + "/" + library;
             tmpFile = ZipUtil.extractFileFromZip(zf, libPathInApk);
 
             libInTmp = "/data/local/tmp/" + tmpFile.getName();

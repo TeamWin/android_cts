@@ -50,17 +50,19 @@ public final class TestUtils {
      *
      * @param condition Condition to be satisfied. This is guaranteed to run on the UI thread.
      * @param timeout timeout in millisecond
+     * @param message message to display when timeout occurs.
      * @throws TimeoutException when the no event is matched to the given condition within
      *                          {@code timeout}
      */
-    public static void waitOnMainUntil(@NonNull BooleanSupplier condition, long timeout)
+    public static void waitOnMainUntil(
+            @NonNull BooleanSupplier condition, long timeout, String message)
             throws TimeoutException {
         final AtomicBoolean result = new AtomicBoolean();
 
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         while (!result.get()) {
             if (timeout < 0) {
-                throw new TimeoutException();
+                throw new TimeoutException(message);
             }
             instrumentation.runOnMainSync(() -> {
                 if (condition.getAsBoolean()) {
@@ -74,5 +76,18 @@ public final class TestUtils {
             }
             timeout -= TIME_SLICE;
         }
+    }
+
+    /**
+     * Does polling loop on the UI thread to wait until the given condition is met.
+     *
+     * @param condition Condition to be satisfied. This is guaranteed to run on the UI thread.
+     * @param timeout timeout in millisecond
+     * @throws TimeoutException when the no event is matched to the given condition within
+     *                          {@code timeout}
+     */
+    public static void waitOnMainUntil(@NonNull BooleanSupplier condition, long timeout)
+            throws TimeoutException {
+        waitOnMainUntil(condition, timeout, "");
     }
 }

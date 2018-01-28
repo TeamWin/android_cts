@@ -70,7 +70,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
 
     public EditText launchTestActivity() {
         final AtomicReference<EditText> editTextRef = new AtomicReference<>();
-        TestActivity.startSync((TestActivity activity) -> {
+        TestActivity.startSync(activity-> {
             final LinearLayout layout = new LinearLayout(activity);
             layout.setOrientation(LinearLayout.VERTICAL);
 
@@ -127,7 +127,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
                 new ImeSettings.Builder())) {
             final ImeEventStream stream = imeSession.openEventStream();
 
-            final TestActivity testActivity = TestActivity.startSync((TestActivity activity) -> {
+            final TestActivity testActivity = TestActivity.startSync(activity -> {
                 final LinearLayout layout = new LinearLayout(activity);
                 layout.setOrientation(LinearLayout.VERTICAL);
 
@@ -169,7 +169,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
                 new ImeSettings.Builder())) {
             final ImeEventStream stream = imeSession.openEventStream();
 
-            TestActivity.startSync((TestActivity activity) -> {
+            TestActivity.startSync(activity -> {
                 final LinearLayout layout = new LinearLayout(activity);
                 layout.setOrientation(LinearLayout.VERTICAL);
 
@@ -198,7 +198,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
                 new ImeSettings.Builder())) {
             final ImeEventStream stream = imeSession.openEventStream();
 
-            TestActivity.startSync((TestActivity activity) -> {
+            TestActivity.startSync(activity -> {
                 final LinearLayout layout = new LinearLayout(activity);
                 layout.setOrientation(LinearLayout.VERTICAL);
 
@@ -222,7 +222,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
             final ImeEventStream stream = imeSession.openEventStream();
 
             final AtomicReference<LinearLayout> layoutRef = new AtomicReference<>();
-            final TestActivity testActivity = TestActivity.startSync((TestActivity activity) -> {
+            final TestActivity testActivity = TestActivity.startSync(activity -> {
                 final LinearLayout layout = new LinearLayout(activity);
                 layout.setOrientation(LinearLayout.VERTICAL);
                 layoutRef.set(layout);
@@ -233,14 +233,11 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
             // Activity adds EditText at a later point.
             TestUtils.waitOnMainUntil(() -> layoutRef.get().hasWindowFocus(), TIMEOUT);
             InstrumentationRegistry.getInstrumentation().waitForIdleSync();
-            testActivity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    final EditText editText = new EditText(testActivity);
-                    editText.setText("Editable");
-                    layoutRef.get().addView(editText);
-                    editText.requestFocus();
-                }
+            testActivity.runOnUiThread(() -> {
+                final EditText editText = new EditText(testActivity);
+                editText.setText("Editable");
+                layoutRef.get().addView(editText);
+                editText.requestFocus();
             });
 
             // Input should start
@@ -256,7 +253,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
                 new ImeSettings.Builder())) {
             final ImeEventStream stream = imeSession.openEventStream();
 
-            TestActivity.startSync((TestActivity activity) -> {
+            TestActivity.startSync(activity -> {
                 final LinearLayout layout = new LinearLayout(activity);
                 layout.setOrientation(LinearLayout.VERTICAL);
 

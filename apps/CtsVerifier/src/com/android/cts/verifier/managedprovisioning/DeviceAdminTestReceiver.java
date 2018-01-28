@@ -55,6 +55,8 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
             DEVICE_OWNER_PKG, ADMIN_RECEIVER_TEST_CLASS);
     public static final String EXTRA_MANAGED_USER_TEST =
             "com.android.cts.verifier.managedprovisioning.extra.MANAGED_USER_TEST";
+    public static final String EXTRA_LOGOUT_ON_START =
+            "com.android.cts.verifier.managedprovisioning.extra.LOGOUT_ON_START";
     public static final String AFFILIATION_ID = "affiliationId";
 
     public static ComponentName getReceiverComponentName() {
@@ -120,6 +122,12 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
                     Log.e(TAG, "Error when calling primary user", re);
                 }
             });
+        } else if (intent.getBooleanExtra(EXTRA_LOGOUT_ON_START, false)) {
+            DevicePolicyManager dpm = context.getSystemService(DevicePolicyManager.class);
+            ComponentName admin = getReceiverComponentName();
+            dpm.setAffiliationIds(admin,
+                    Collections.singleton(DeviceAdminTestReceiver.AFFILIATION_ID));
+            dpm.logoutUser(admin);
         }
     }
 
