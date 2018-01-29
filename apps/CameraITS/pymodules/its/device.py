@@ -25,6 +25,7 @@ import subprocess
 import hashlib
 import numpy
 import string
+import unicodedata
 
 CMD_DELAY = 1  # seconds
 
@@ -497,6 +498,17 @@ class ItsSession(object):
         "dng", "raw", "raw10", "raw12", or "rawStats". The default is a YUV420
         frame ("yuv") corresponding to a full sensor frame.
 
+        Optionally the out_surfaces field can specify physical camera id(s) if the
+        current camera device is a logical multi-camera. The physical camera id
+        must refer to a physical camera backing this logical camera device. And
+        only "yuv", "raw", "raw10", "raw12" support the physical camera id field.
+
+        Currently only 2 physical streams with the same format are supported, one
+        from each physical camera:
+        - yuv physical streams of the same size.
+        - raw physical streams with the same or different sizes, depending on
+          device capability. (Different physical cameras may have different raw sizes).
+
         Note that one or more surfaces can be specified, allowing a capture to
         request images back in multiple formats (e.g.) raw+yuv, raw+jpeg,
         yuv+jpeg, raw+yuv+jpeg. If the size is omitted for a surface, the
@@ -658,14 +670,36 @@ class ItsSession(object):
             cmd["outputSurfaces"] = [{"format": "yuv",
                                       "width" : max_yuv_size[0],
                                       "height": max_yuv_size[1]}]
+
+        # Figure out requested physical camera ids, physical and logical
+        # streams.
+        physical_cam_ids = {}
+        physical_buffers = {}
+        physical_cam_format = None
+        logical_cam_formats = []
+        for i,s in enumerate(cmd["outputSurfaces"]):
+            if "format" in s and s["format"] in ["yuv", "raw", "raw10", "raw12"]:
+                if "physicalCamera" in s:
+                    if physical_cam_format is not None and s["format"] != physical_cam_format:
+                        raise its.error.Error('ITS does not support capturing multiple ' +
+                                              'physical formats yet')
+                    physical_cam_ids[i] = s["physicalCamera"]
+                    physical_buffers[s["physicalCamera"]] = []
+                    physical_cam_format = s["format"]
+                else:
+                    logical_cam_formats.append(s["format"])
+            else:
+                logical_cam_formats.append(s["format"])
+
         ncap = len(cmd["captureRequests"])
         nsurf = 1 if out_surfaces is None else len(cmd["outputSurfaces"])
         # Only allow yuv output to multiple targets
-        yuv_surfaces = [s for s in cmd["outputSurfaces"] if s["format"]=="yuv"]
-        n_yuv = len(yuv_surfaces)
+        logical_yuv_surfaces = [s for s in cmd["outputSurfaces"] if s["format"]=="yuv"\
+                        and "physicalCamera" not in s]
+        n_yuv = len(logical_yuv_surfaces)
         # Compute the buffer size of YUV targets
         yuv_maxsize_1d = 0
-        for s in yuv_surfaces:
+        for s in logical_yuv_surfaces:
             if not ("width" in s and "height" in s):
                 if self.props is None:
                     raise its.error.Error('Camera props are unavailable')
@@ -676,14 +710,14 @@ class ItsSession(object):
         yuv_sizes = [c["width"]*c["height"]*3/2
                      if "width" in c and "height" in c
                      else yuv_maxsize_1d
-                     for c in yuv_surfaces]
+                     for c in logical_yuv_surfaces]
         # Currently we don't pass enough metadta from ItsService to distinguish
         # different yuv stream of same buffer size
         if len(yuv_sizes) != len(set(yuv_sizes)):
             raise its.error.Error(
                     'ITS does not support yuv outputs of same buffer size')
-        if len(formats) > len(set(formats)):
-            if n_yuv != len(formats) - len(set(formats)) + 1:
+        if len(logical_cam_formats) > len(set(logical_cam_formats)):
+          if n_yuv != len(logical_cam_formats) - len(set(logical_cam_formats)) + 1:
                 raise its.error.Error('Duplicate format requested')
 
         raw_formats = 0;
@@ -742,8 +776,13 @@ class ItsSession(object):
                 widths = [out['width'] for out in outputs]
                 heights = [out['height'] for out in outputs]
             else:
-                # Just ignore other tags
-                None
+                tagString = unicodedata.normalize('NFKD', jsonObj['tag']).encode('ascii', 'ignore');
+                for x in ['rawImage', 'raw10Image', 'raw12Image', 'yuvImage']:
+                    if (tagString.startswith(x)):
+                        physicalId = jsonObj['tag'][len(x):];
+                        if physicalId in physical_cam_ids.values():
+                            physical_buffers[physicalId].append(buf)
+                            nbufs += 1
         rets = []
         for j,fmt in enumerate(formats):
             objs = []
@@ -753,7 +792,10 @@ class ItsSession(object):
                 obj["height"] = heights[j]
                 obj["format"] = fmt
                 obj["metadata"] = mds[i]
-                if fmt == 'yuv':
+
+                if j in physical_cam_ids:
+                    obj["data"] = physical_buffers[physical_cam_ids[j]][i]
+                elif fmt == 'yuv':
                     buf_size = widths[j] * heights[j] * 3 / 2
                     obj["data"] = yuv_bufs[buf_size][i]
                 else:
