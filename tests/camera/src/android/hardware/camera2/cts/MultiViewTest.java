@@ -410,10 +410,6 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
 
     private void testSharedSurfaceImageReaderSwitch(String cameraId, int switchCount)
             throws Exception {
-        if (OutputConfiguration.getMaxSharedSurfaceCount() < (IMG_READER_COUNT + 1)) {
-            return;
-        }
-
         SimpleImageListener imageListeners[] = new SimpleImageListener[IMG_READER_COUNT];
         SimpleCaptureCallback resultListener = new SimpleCaptureCallback();
         ImageReader imageReaders[] = new ImageReader[IMG_READER_COUNT];
@@ -431,6 +427,10 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
         outputConfig.enableSurfaceSharing();
         List<OutputConfiguration> outputConfigurations = new ArrayList<>();
         outputConfigurations.add(outputConfig);
+
+        if (outputConfig.getMaxSharedSurfaceCount() < (IMG_READER_COUNT + 1)) {
+            return;
+        }
 
         //Start regular preview streaming
         startPreviewWithConfigs(cameraId, outputConfigurations, null);
@@ -505,11 +505,6 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
         Surface[] surfaces = new Surface[surfaceLimit];
         int sequenceId = -1;
 
-        if ((surfaceLimit <= 1) ||
-                (surfaceLimit < OutputConfiguration.getMaxSharedSurfaceCount())) {
-            return;
-        }
-
         // Create surface textures with the same size
         for (int i = 0; i < surfaceLimit; i++) {
             previewListener[i] = new CameraPreviewListener();
@@ -529,6 +524,11 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
         OutputConfiguration surfaceSharedOutput = new OutputConfiguration(surfaces[0]);
         surfaceSharedOutput.enableSurfaceSharing();
 
+        if ((surfaceLimit <= 1) ||
+                (surfaceLimit < surfaceSharedOutput.getMaxSharedSurfaceCount())) {
+            return;
+        }
+
         List<OutputConfiguration> outputConfigurations = new ArrayList<>();
         outputConfigurations.add(surfaceSharedOutput);
 
@@ -544,7 +544,7 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
         int i = 1;
         for (; i < surfaceLimit; i++) {
             //Add one more output surface while preview is streaming
-            if (i >= OutputConfiguration.getMaxSharedSurfaceCount()){
+            if (i >= surfaceSharedOutput.getMaxSharedSurfaceCount()){
                 try {
                     surfaceSharedOutput.addSurface(surfaces[i]);
                     fail("should get IllegalArgumentException due to output surface limit");
@@ -562,7 +562,7 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
         }
 
         for (; i > 0; i--) {
-            if (i >= OutputConfiguration.getMaxSharedSurfaceCount()) {
+            if (i >= surfaceSharedOutput.getMaxSharedSurfaceCount()) {
                 try {
                     surfaceSharedOutput.removeSurface(surfaces[i]);
                     fail("should get IllegalArgumentException due to output surface limit");
