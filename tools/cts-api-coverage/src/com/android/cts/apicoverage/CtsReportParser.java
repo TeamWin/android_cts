@@ -23,15 +23,11 @@ import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
 
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.List;
 /**
  * Class that outputs an XML report of the {@link ApiCoverage} collected. It can be viewed in a
  * browser when used with the api-coverage.css and api-coverage.xsl files.
@@ -47,6 +43,8 @@ class CtsReportParser {
         System.out.println("Options:");
         System.out.println("  -o FILE                output file or standard out if not given");
         System.out.println("  -i PATH                path to the Test_Result.xml");
+        System.out.println("  -s FILE                summary output file");
+
         System.out.println();
         System.exit(1);
     }
@@ -71,17 +69,19 @@ class CtsReportParser {
 
     private static void printCtsReport(CtsReport ctsReport) {
         //Header
-        System.out.println("no,Abi,Module,Class,Test,Result");
+        System.out.println("Module,Class,Test,no,Abi,Result");
         int i = 1;
         for (CtsReport.TestPackage tPkg : ctsReport.getTestPackageList()) {
-            for (CtsReport.TestPackage.TestSuite module : tPkg.getTestSuiteList()) {
-                for (CtsReport.TestPackage.TestSuite.TestCase testCase : module.getTestCaseList()) {
+            for (CtsReport.TestPackage.TestSuite tSuite : tPkg.getTestSuiteList()) {
+                for (CtsReport.TestPackage.TestSuite.TestCase testCase : tSuite.getTestCaseList()) {
                     for (CtsReport.TestPackage.TestSuite.TestCase.Test test : testCase.getTestList()) {
-                        System.out.printf("%d,%s,%s,%s,%s\n",
-                                i++,
-                                module.getName(),
+                        System.out.printf(
+                                "%s,%s,%s,%d,%s,%s\n",
+                                tPkg.getName(),
                                 testCase.getName(),
                                 test.getName(),
+                                i++,
+                                tPkg.getAbi(),
                                 test.getResult());
                     }
                 }
@@ -96,22 +96,20 @@ class CtsReportParser {
         PrintWriter pWriter = new PrintWriter(fWriter);
 
         //Header
-        pWriter.print("no,Module,Test#\n");
+        pWriter.print("Module,Test#,no,abi\n");
 
+        int moduleCnt = 0;
         for (CtsReport.TestPackage tPkg : ctsReport.getTestPackageList()) {
-            int moduleCnt = 0;
-            for (CtsReport.TestPackage.TestSuite module : tPkg.getTestSuiteList()) {
-                int testCaseCnt = 0;
-                for (CtsReport.TestPackage.TestSuite.TestCase testCase : module.getTestCaseList()) {
+            int testCaseCnt = 0;
+            for (CtsReport.TestPackage.TestSuite tSuite : tPkg.getTestSuiteList()) {
+                for (CtsReport.TestPackage.TestSuite.TestCase testCase : tSuite.getTestCaseList()) {
                     for (CtsReport.TestPackage.TestSuite.TestCase.Test test : testCase.getTestList()) {
                         testCaseCnt++;
                     }
                 }
-                pWriter.printf("%d,%s,%d\n",
-                        moduleCnt++,
-                        module.getName(),
-                        testCaseCnt);
             }
+            pWriter.printf(
+                    "%s,%d,%d,%s\n", tPkg.getName(), testCaseCnt, moduleCnt++, tPkg.getAbi());
         }
 
         pWriter.close();

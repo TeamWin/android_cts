@@ -59,6 +59,7 @@ LOCAL_MODULE := cts-api-coverage
 # dependencies of all of the tests must be on its classpath. This is
 # super fragile.
 LOCAL_STATIC_JAVA_LIBRARIES += \
-        platformprotos
+  tradefed hosttestlib \
+  platformprotos
 
 include $(BUILD_HOST_JAVA_LIBRARY)
