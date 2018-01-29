@@ -97,6 +97,55 @@ public abstract class DeviceAndProfileOwnerHostSideTransferTest extends BaseDevi
                 "testTransferNoMetadata", mUserId);
     }
 
+    protected int setupManagedProfileOnDeviceOwner(String apkName, String adminReceiverClassName)
+            throws Exception {
+        // Temporary disable the DISALLOW_ADD_MANAGED_PROFILE, so that we can create profile
+        // using adb command.
+        clearDisallowAddManagedProfileRestriction();
+        try {
+            return setupManagedProfile(apkName, adminReceiverClassName);
+        } finally {
+            // Adding back DISALLOW_ADD_MANAGED_PROFILE.
+            addDisallowAddManagedProfileRestriction();
+        }
+    }
+
+    protected int setupManagedProfile(String apkName, String adminReceiverClassName)
+            throws Exception {
+        final int userId = createManagedProfile(mPrimaryUserId);
+        installAppAsUser(apkName, userId);
+        if (!setProfileOwner(adminReceiverClassName, userId, false)) {
+            removeAdmin(TRANSFER_OWNER_OUTGOING_TEST_RECEIVER, userId);
+            getDevice().uninstallPackage(TRANSFER_OWNER_OUTGOING_PKG);
+            fail("Failed to set device owner");
+            return -1;
+        }
+        startUser(userId);
+        return userId;
+    }
+
+    /**
+     * Clear {@link android.os.UserManager#DISALLOW_ADD_MANAGED_PROFILE}.
+     */
+    private void clearDisallowAddManagedProfileRestriction() throws Exception {
+        runDeviceTestsAsUser(
+                TRANSFER_OWNER_OUTGOING_PKG,
+                mOutgoingTestClassName,
+                "testClearDisallowAddManagedProfileRestriction",
+                mPrimaryUserId);
+    }
+
+    /**
+     * Add {@link android.os.UserManager#DISALLOW_ADD_MANAGED_PROFILE}.
+     */
+    private void addDisallowAddManagedProfileRestriction() throws Exception {
+        runDeviceTestsAsUser(
+                TRANSFER_OWNER_OUTGOING_PKG,
+                mOutgoingTestClassName,
+                "testAddDisallowAddManagedProfileRestriction",
+                mPrimaryUserId);
+    }
+
     /* TODO: Add tests for:
     * 1. startServiceForOwner
     * 2. passwordOwner
