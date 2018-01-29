@@ -18,6 +18,7 @@ package com.android.compatibility.common.util;
 
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.device.PackageInfo;
 
 /**
  * Host-side utility class for PackageManager-related operations
@@ -33,6 +34,14 @@ public class PackageUtil {
     /** Returns true if the app for the given package name is a system app for this device */
     public static boolean isSystemApp(ITestDevice device, String packageName)
             throws DeviceNotAvailableException {
-        return device.getAppPackageInfo(packageName).isSystemApp();
+        PackageInfo info = device.getAppPackageInfo(packageName);
+        return (info != null) && info.isSystemApp();
+    }
+
+    /** Returns the version string of the package name, or null if the package can't be found */
+    public static String getVersionString(ITestDevice device, String packageName)
+            throws DeviceNotAvailableException {
+        PackageInfo info = device.getAppPackageInfo(packageName);
+        return (info != null) ? info.getVersionName() : null;
     }
 }
