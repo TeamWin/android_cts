@@ -27,19 +27,19 @@ import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.VirtualContainerView.LABEL_CLASS;
 import static android.autofillservice.cts.VirtualContainerView.TEXT_CLASS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
-
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
+import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.autofillservice.cts.VirtualContainerView.Line;
 import android.content.ComponentName;
 import android.graphics.Rect;
-import android.os.SystemClock;
 import android.service.autofill.SaveInfo;
 import android.support.test.uiautomator.UiObject2;
+import android.view.ViewGroup;
 import android.view.autofill.AutofillManager;
 
 import org.junit.Before;
@@ -380,35 +380,74 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
-    public void testSaveDialogShownWhenAllVirtualViewsNotVisible() throws Throwable {
+    public void testSave_childViewsGone() throws Throwable {
+        saveTest(CommitType.CHILDREN_VIEWS_GONE);
+    }
+
+    @Test
+    public void testSave_parentViewGone() throws Throwable {
+        saveTest(CommitType.PARENT_VIEW_GONE);
+    }
+
+    @Test
+    public void testSave_appCallsCommit() throws Throwable {
+        saveTest(CommitType.EXPLICIT_COMMIT);
+    }
+
+    enum CommitType {
+        CHILDREN_VIEWS_GONE,
+        PARENT_VIEW_GONE,
+        EXPLICIT_COMMIT
+    }
+
+    private void saveTest(CommitType commitType) throws Throwable {
         // Set service.
         enableService();
 
         // Set expectations.
-        sReplier.addResponse(new CannedFillResponse.Builder()
-                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
-                .setSaveInfoFlags(SaveInfo.FLAG_SAVE_ON_ALL_VIEWS_INVISIBLE)
-                .build());
+        final CannedFillResponse.Builder response = new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD);
+        if (commitType == CommitType.CHILDREN_VIEWS_GONE
+                || commitType == CommitType.PARENT_VIEW_GONE) {
+            response.setSaveInfoFlags(SaveInfo.FLAG_SAVE_ON_ALL_VIEWS_INVISIBLE);
+        }
+        sReplier.addResponse(response.build());
 
         // Trigger auto-fill.
         focusToUsernameExpectNoWindowEvent();
         sReplier.getNextFillRequest();
 
-        // TODO: 63602573 Should be removed once this bug is fixed
-        SystemClock.sleep(1000);
-
         mActivity.runOnUiThread(() -> {
             // Fill in some stuff
             mActivity.mUsername.setText("foo");
             mActivity.mPassword.setText("bar");
-
-            // Hide all virtual views
-            mActivity.mUsername.changeVisibility(false);
-            mActivity.mPassword.changeVisibility(false);
+            switch (commitType) {
+                case CHILDREN_VIEWS_GONE:
+                    mActivity.mUsername.changeVisibility(false);
+                    mActivity.mPassword.changeVisibility(false);
+                    break;
+                case PARENT_VIEW_GONE:
+                    final ViewGroup parent = (ViewGroup) mActivity.mCustomView.getParent();
+                    parent.removeView(mActivity.mCustomView);
+                    break;
+                case EXPLICIT_COMMIT:
+                    mActivity.getAutofillManager().commit();
+                    break;
+                default:
+                    throw new IllegalArgumentException("unknown type: " + commitType);
+            }
         });
 
-        // Make sure save is shown
-        mUiBot.assertSaveShowing(SAVE_DATA_TYPE_PASSWORD);
+        // Trigger save.
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+
+        // Assert results
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+        final ViewNode username = findNodeByResourceId(saveRequest.structure, ID_USERNAME);
+        final ViewNode password = findNodeByResourceId(saveRequest.structure, ID_PASSWORD);
+
+        assertTextAndValue(username, "foo");
+        assertTextAndValue(password, "bar");
     }
 
     @Test
