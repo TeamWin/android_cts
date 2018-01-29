@@ -307,7 +307,7 @@ class TestCaseReport {
                 if (je.isDirectory()
                         || !je.getName().endsWith(".class")
                         || je.getName().contains("$")
-                        || je.getName().contains("junit/framework/TestSuite")) {
+                        || je.getName().contains("junit/")) {
                     continue;
                 }
                 String className = getClassName(je.getName());
@@ -321,7 +321,8 @@ class TestCaseReport {
                     if (IRemoteTest.class.isAssignableFrom(cls)
                             || Test.class.isAssignableFrom(cls)) {
                         classes.add(cls);
-                    } else if (hasJUnit4Annotation(cls)) {
+                    } else if (!Modifier.isAbstract(cls.getModifiers())
+                            && hasJUnit4Annotation(cls)) {
                         classes.add(cls);
                     }
                 } catch (ClassNotFoundException | Error x) {

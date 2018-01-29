@@ -67,7 +67,8 @@ class ComparisonReport {
             CtsReport tsReport,
             String outputFileName,
             String outputExtraTestFileName,
-            List<String> knownFailures)
+            List<String> knownFailures,
+            String extraTestSubPlanFileName)
             throws IOException {
 
         HashMap<String, String> testCaseMap = new HashMap<String, String>();
@@ -142,6 +143,21 @@ class ComparisonReport {
         System.out.printf(
                 "After: testCaseMap entries: %d & extraTestCaseMap: %d\n",
                 testCaseMap.size(), extraTestCaseMap.size());
+                
+        if (null != extraTestSubPlanFileName) {
+            //Create extra Test Cases subplan
+            fWriter = new FileWriter(extraTestSubPlanFileName);
+            pWriter = new PrintWriter(fWriter);
+            pWriter.println("<?xml version=\'1.0\' encoding=\'UTF-8\' standalone=\'no\' ?>");
+            pWriter.println("<SubPlan version=\'2.0\'>");
+            for (Map.Entry<String, String> test : extraTestCaseMap.entrySet()) {
+                pWriter.printf(
+                        "  <Entry include=\"%s\"/>\n", test.getKey().replaceFirst("\\.", " "));
+            }
+            pWriter.println("</SubPlan>");
+            pWriter.close();
+        }
+
     }
 
     public static void main(String[] args) throws IOException, SAXException, Exception {
@@ -150,6 +166,7 @@ class ComparisonReport {
         String testSuiteFileName = null;
         String testSuiteContentFileName = null;
         String outputExtraTestFileName = null;
+        String extraTestSubPlanFileName = null;
         int numTestModule = 0;
 
         for (int i = 0; i < args.length; i++) {
@@ -164,6 +181,8 @@ class ComparisonReport {
                     testSuiteFileName = getExpectedArg(args, ++i);
                 } else if ("-s".equals(args[i])) {
                     testSuiteContentFileName = getExpectedArg(args, ++i);
+                } else if ("-p".equals(args[i])) {
+                    extraTestSubPlanFileName = getExpectedArg(args, ++i);
                 } else {
                     printUsage();
                 }
@@ -186,7 +205,8 @@ class ComparisonReport {
                 tsReport,
                 outputFileName,
                 outputExtraTestFileName,
-                tsContent.getKnownFailuresList());
+                tsContent.getKnownFailuresList(),
+                extraTestSubPlanFileName);
         System.err.printf("%s", tsContent.getKnownFailuresList());
     }
 
