@@ -34,7 +34,6 @@ import static org.junit.Assume.assumeTrue;
 import android.support.test.filters.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 
-import org.junit.After;
 import org.junit.Test;
 
 /**
@@ -147,11 +146,13 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     @FlakyTest(bugId = 72526786)
     @Test
     public void testTurnScreenOnActivity() throws Exception {
-        sleepDevice();
-        launchActivity(TURN_SCREEN_ON_ACTIVITY_NAME);
-        mAmWmState.computeState(new String[] { TURN_SCREEN_ON_ACTIVITY_NAME });
-        mAmWmState.assertVisibility(TURN_SCREEN_ON_ACTIVITY_NAME, true);
-        assertTrue(isDisplayOn());
+        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+            lockScreenSession.sleepDevice();
+            launchActivity(TURN_SCREEN_ON_ACTIVITY_NAME);
+            mAmWmState.computeState(TURN_SCREEN_ON_ACTIVITY_NAME);
+            mAmWmState.assertVisibility(TURN_SCREEN_ON_ACTIVITY_NAME, true);
+            assertTrue(isDisplayOn());
+        }
     }
 
     @Presubmit
@@ -323,26 +324,28 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
 
     @Test
     public void testTurnScreenOnAttrNoLockScreen() throws Exception {
-        wakeUpAndRemoveLock();
-        sleepDevice();
-        final String logSeparator = clearLogcat();
-        launchActivity(TURN_SCREEN_ON_ATTR_ACTIVITY_NAME);
-        mAmWmState.computeState(new String[] { TURN_SCREEN_ON_ATTR_ACTIVITY_NAME });
-        mAmWmState.assertVisibility(TURN_SCREEN_ON_ATTR_ACTIVITY_NAME, true);
-        assertTrue(isDisplayOn());
-        assertSingleLaunch(TURN_SCREEN_ON_ATTR_ACTIVITY_NAME, logSeparator);
+        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+            lockScreenSession.disableLockScreen()
+                    .sleepDevice();
+            final String logSeparator = clearLogcat();
+            launchActivity(TURN_SCREEN_ON_ATTR_ACTIVITY_NAME);
+            mAmWmState.computeState(TURN_SCREEN_ON_ATTR_ACTIVITY_NAME);
+            mAmWmState.assertVisibility(TURN_SCREEN_ON_ATTR_ACTIVITY_NAME, true);
+            assertTrue(isDisplayOn());
+            assertSingleLaunch(TURN_SCREEN_ON_ATTR_ACTIVITY_NAME, logSeparator);
+        }
     }
 
     @Test
     public void testTurnScreenOnAttrWithLockScreen() throws Exception {
         assumeTrue(isHandheld());
 
-        try (final LockCredentialSession lockCredentialSession = new LockCredentialSession()) {
-            lockCredentialSession.setLockCredential();
-            sleepDevice();
+        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+            lockScreenSession.setLockCredential()
+                    .sleepDevice();
             final String logSeparator = clearLogcat();
             launchActivity(TURN_SCREEN_ON_ATTR_ACTIVITY_NAME);
-            mAmWmState.computeState(new String[]{TURN_SCREEN_ON_ATTR_ACTIVITY_NAME});
+            mAmWmState.computeState(TURN_SCREEN_ON_ATTR_ACTIVITY_NAME);
             assertFalse(isDisplayOn());
             assertSingleLaunchAndStop(TURN_SCREEN_ON_ATTR_ACTIVITY_NAME, logSeparator);
         }
@@ -350,71 +353,78 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
 
     @Test
     public void testTurnScreenOnShowOnLockAttr() throws Exception {
-        sleepDevice();
-        mAmWmState.waitForAllStoppedActivities();
-        final String logSeparator = clearLogcat();
-        launchActivity(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY_NAME);
-        mAmWmState.computeState(new String[] { TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY_NAME });
-        mAmWmState.assertVisibility(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY_NAME, true);
-        assertTrue(isDisplayOn());
-        assertSingleLaunch(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY_NAME, logSeparator);
+        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+            lockScreenSession.sleepDevice();
+            mAmWmState.waitForAllStoppedActivities();
+            final String logSeparator = clearLogcat();
+            launchActivity(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY_NAME);
+            mAmWmState.computeState(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY_NAME);
+            mAmWmState.assertVisibility(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY_NAME, true);
+            assertTrue(isDisplayOn());
+            assertSingleLaunch(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY_NAME, logSeparator);
+        }
     }
 
     @Test
     public void testTurnScreenOnAttrRemove() throws Exception {
-        sleepDevice();
-        mAmWmState.waitForAllStoppedActivities();
-        String logSeparator = clearLogcat();
-        launchActivity(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY_NAME);
-        mAmWmState.computeState(new String[] {
-                TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY_NAME});
-        assertTrue(isDisplayOn());
-        assertSingleLaunch(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY_NAME, logSeparator);
+        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+            lockScreenSession.sleepDevice();
+            mAmWmState.waitForAllStoppedActivities();
+            String logSeparator = clearLogcat();
+            launchActivity(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY_NAME);
+            mAmWmState.computeState(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY_NAME);
+            assertTrue(isDisplayOn());
+            assertSingleLaunch(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY_NAME, logSeparator);
 
-        sleepDevice();
-        mAmWmState.waitForAllStoppedActivities();
-        logSeparator = clearLogcat();
-        launchActivity(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY_NAME);
-        assertFalse(isDisplayOn());
-        assertSingleStartAndStop(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY_NAME, logSeparator);
+            lockScreenSession.sleepDevice();
+            mAmWmState.waitForAllStoppedActivities();
+            logSeparator = clearLogcat();
+            launchActivity(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY_NAME);
+            assertFalse(isDisplayOn());
+            assertSingleStartAndStop(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY_NAME, logSeparator);
+        }
     }
 
     @Test
     @Presubmit
     @FlakyTest(bugId = 71868306)
     public void testTurnScreenOnSingleTask() throws Exception {
-        sleepDevice();
-        String logSeparator = clearLogcat();
-        launchActivity(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME);
-        mAmWmState.computeState(new String[] { TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME });
-        mAmWmState.assertVisibility(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME, true);
-        assertTrue(isDisplayOn());
-        assertSingleLaunch(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME, logSeparator);
+        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+            lockScreenSession.sleepDevice();
+            String logSeparator = clearLogcat();
+            launchActivity(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME);
+            mAmWmState.computeState(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME);
+            mAmWmState.assertVisibility(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME, true);
+            assertTrue(isDisplayOn());
+            assertSingleLaunch(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME, logSeparator);
 
-        sleepDevice();
-        logSeparator = clearLogcat();
-        launchActivity(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME);
-        mAmWmState.computeState(new String[] { TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME });
-        mAmWmState.assertVisibility(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME, true);
-        assertTrue(isDisplayOn());
-        assertSingleStart(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME, logSeparator);
+            lockScreenSession.sleepDevice();
+            logSeparator = clearLogcat();
+            launchActivity(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME);
+            mAmWmState.computeState(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME);
+            mAmWmState.assertVisibility(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME, true);
+            assertTrue(isDisplayOn());
+            assertSingleStart(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME, logSeparator);
+        }
     }
 
     @Test
     public void testTurnScreenOnActivity_withRelayout() throws Exception {
-        sleepDevice();
-        launchActivity(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY);
-        mAmWmState.computeState(new String[] { TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY });
-        mAmWmState.assertVisibility(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY, true);
+        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+            lockScreenSession.sleepDevice();
+            launchActivity(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY);
+            mAmWmState.computeState(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY);
+            mAmWmState.assertVisibility(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY, true);
 
-        String logSeparator = clearLogcat();
-        sleepDevice();
-        mAmWmState.waitFor("Waiting for stopped state", () ->
-                lifecycleStopOccurred(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY, logSeparator));
+            String logSeparator = clearLogcat();
+            lockScreenSession.sleepDevice();
+            mAmWmState.waitFor("Waiting for stopped state", () ->
+                    lifecycleStopOccurred(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY, logSeparator));
 
-        // Ensure there was an actual stop if the waitFor timed out.
-        assertTrue(lifecycleStopOccurred(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY, logSeparator));
-        assertFalse(isDisplayOn());
+            // Ensure there was an actual stop if the waitFor timed out.
+            assertTrue(lifecycleStopOccurred(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY, logSeparator));
+            assertFalse(isDisplayOn());
+        }
     }
 
     private boolean lifecycleStopOccurred(String activityName, String logSeparator) {

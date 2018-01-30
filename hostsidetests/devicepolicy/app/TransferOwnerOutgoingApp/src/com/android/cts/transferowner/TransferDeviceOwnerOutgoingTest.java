@@ -65,4 +65,9 @@ public class TransferDeviceOwnerOutgoingTest extends DeviceAndProfileOwnerTransf
             mDevicePolicyManager.getSecondaryUsers(mOutgoingComponentName);
         });
     }
+
+    @Test
+    public void testTransferAffiliatedProfileOwnershipCompleteCallbackIsCalled() {
+        assertTrue(getBooleanPref(mContext, KEY_TRANSFER_AFFILIATED_PROFILE_COMPLETED_CALLED));
+    }
 }

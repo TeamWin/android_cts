@@ -37,7 +37,10 @@ import static org.mockito.Mockito.verify;
 import android.app.ActivityManager;
 import android.content.AbstractThreadedSyncAdapter;
 import android.content.ContentResolver;
+import android.content.Context;
+import android.content.res.Configuration;
 import android.content.SyncRequest;
+import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.By;
@@ -89,6 +92,7 @@ public class CtsSyncAccountAccessOtherCertTestCases {
     public void testAccountAccess_otherCertAsAuthenticatorCanNotSeeAccount() throws Exception {
         assumeTrue(hasDataConnection());
         assumeTrue(hasNotificationSupport());
+        assumeFalse(isRunningInVR());
 
         // If running in a test harness the Account Manager never denies access to an account. Hence
         // the permission request will not trigger. b/72114924
@@ -169,5 +173,11 @@ public class CtsSyncAccountAccessOtherCertTestCases {
             width / 2 /* endX */,
             1 /* endY */,
             50 /* numberOfSteps */);
+    }
+
+    private boolean isRunningInVR() {
+        final Context context = InstrumentationRegistry.getTargetContext();
+        return ((context.getResources().getConfiguration().uiMode &
+                 Configuration.UI_MODE_TYPE_MASK) == Configuration.UI_MODE_TYPE_VR_HEADSET);
     }
 }

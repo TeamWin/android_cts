@@ -17,9 +17,9 @@
 package android.server.am;
 
 import static org.junit.Assume.assumeTrue;
+
 import android.server.am.ActivityManagerState.ActivityDisplay;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -39,8 +39,6 @@ public class ActivityManagerDisplayKeyguardTests extends ActivityManagerDisplayT
 
         assumeTrue(supportsMultiDisplay());
         assumeTrue(isHandheld());
-
-        setLockDisabled(false);
     }
 
     /**
@@ -49,10 +47,11 @@ public class ActivityManagerDisplayKeyguardTests extends ActivityManagerDisplayT
      */
     @Test
     public void testDismissKeyguardActivity_secondaryDisplay() throws Exception {
-        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+        try (final LockScreenSession lockScreenSession = new LockScreenSession();
+             final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
 
-            gotoKeyguard();
+            lockScreenSession.gotoKeyguard();
             mAmWmState.waitForKeyguardShowingAndNotOccluded();
             mAmWmState.assertKeyguardShowingAndNotOccluded();
             launchActivityOnDisplay(DISMISS_KEYGUARD_ACTIVITY, newDisplay.mId);

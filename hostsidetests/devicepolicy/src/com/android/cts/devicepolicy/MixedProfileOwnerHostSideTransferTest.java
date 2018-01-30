@@ -44,19 +44,4 @@ public class MixedProfileOwnerHostSideTransferTest extends
             }
         }
     }
-
-    private int setupManagedProfile(String apkName, String adminReceiverClassName)
-            throws Exception {
-        final int userId = createManagedProfile(mPrimaryUserId);
-
-        installAppAsUser(apkName, userId);
-        if (!setProfileOwner(adminReceiverClassName, userId, false)) {
-            removeAdmin(TRANSFER_OWNER_OUTGOING_TEST_RECEIVER, userId);
-            getDevice().uninstallPackage(TRANSFER_OWNER_OUTGOING_PKG);
-            fail("Failed to set device owner");
-            return -1;
-        }
-        startUser(userId);
-        return userId;
-    }
 }
