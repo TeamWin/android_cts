@@ -18,10 +18,13 @@ package android.os.cts.batterysaving.app;
 import static android.os.cts.batterysaving.common.Values.KEY_REQUEST_FOREGROUND;
 import static android.os.cts.batterysaving.common.Values.getTestService;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.cts.batterysaving.common.BaseCommunicationReceiver;
 import android.os.cts.batterysaving.common.BatterySavingCtsCommon.Payload;
+import android.os.cts.batterysaving.common.BatterySavingCtsCommon.Payload.TestServiceRequest.SetAlarmRequest;
 import android.os.cts.batterysaving.common.BatterySavingCtsCommon.Payload.TestServiceResponse;
 import android.util.Log;
 
@@ -73,6 +76,32 @@ public class CommReceiver extends BaseCommunicationReceiver {
                 context.startService(intent);
             }
             rb.setStartServiceAck(true);
+
+        } else if (request.getTestServiceRequest().hasSetAlarm()) {
+            // Set an alarm with a given intent.
+
+            final SetAlarmRequest req = request.getTestServiceRequest().getSetAlarm();
+
+            final AlarmManager am = context.getSystemService(AlarmManager.class);
+
+            final int type = req.getType();
+            final long triggerTime = req.getTriggerTime();
+            final long interval = req.getRepeatInterval();
+            final boolean allowWhileIdle = req.getAllowWhileIdle();
+
+            final PendingIntent alarmSender = PendingIntent.getBroadcast(context, 1,
+                    new Intent(req.getIntentAction()), 0);
+
+            Log.d(TAG, "Setting alarm: type=" + type + ", triggerTime=" + triggerTime
+                    + ", interval=" + interval + ", allowWhileIdle=" + allowWhileIdle);
+            if (interval > 0) {
+                am.setRepeating(type, triggerTime, interval, alarmSender);
+            } else if (allowWhileIdle) {
+                am.setExactAndAllowWhileIdle(type, triggerTime, alarmSender);
+            } else {
+                am.setExact(type, triggerTime, alarmSender);
+            }
+            rb.setSetAlarmAck(true);
         }
 
         responseBuilder.setTestServiceResponse(rb);
