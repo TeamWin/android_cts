@@ -109,7 +109,8 @@ public class MeteredDataRestrictionTest extends BaseDeviceAdminTest {
         mNetworkInfos.clear();
         final Intent launchIntent = new Intent()
                 .setClassName(METERED_DATA_APP_PKG, METERED_DATA_APP_MAIN_ACTIVITY)
-                .putExtras(extras);
+                .putExtras(extras)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         mContext.startActivity(launchIntent);
 
         try {
