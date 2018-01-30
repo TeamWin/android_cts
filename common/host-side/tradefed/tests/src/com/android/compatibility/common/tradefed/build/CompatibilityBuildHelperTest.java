@@ -98,6 +98,9 @@ public class CompatibilityBuildHelperTest extends TestCase {
         assertEquals("Incorrect suite version", SUITE_VERSION, mHelper.getSuiteVersion());
     }
 
+    /**
+     * Test loading of CTS_ROOT is it exists or not.
+     */
     public void testProperty() throws Exception {
         setProperty(null);
         CompatibilityBuildProvider provider = new CompatibilityBuildProvider() {
@@ -106,19 +109,23 @@ public class CompatibilityBuildHelperTest extends TestCase {
                 return SUITE_NAME;
             }
         };
-        OptionSetter setter = new OptionSetter(provider);
-        setter.setOptionValue("plan", SUITE_PLAN);
-        setter.setOptionValue("dynamic-config-url", DYNAMIC_CONFIG_URL);
+        IBuildInfo info = null;
+        File rootDir = null;
         try {
-            // Should fail with root unset
-            new CompatibilityBuildHelper(provider.getBuild());
-            fail("Expected fail for unset root property");
-        } catch (IllegalArgumentException e) {
-            /* expected */
+            OptionSetter setter = new OptionSetter(provider);
+            setter.setOptionValue("plan", SUITE_PLAN);
+            setter.setOptionValue("dynamic-config-url", DYNAMIC_CONFIG_URL);
+            info = provider.getBuild();
+            rootDir = new CompatibilityBuildHelper(info).getRootDir();
+            assertNotNull(info.getBuildAttributes().get("ROOT_DIR"));
+        } finally {
+            provider.cleanUp(info);
         }
         setProperty(mRoot.getAbsolutePath());
         // Shouldn't fail with root set
-        new CompatibilityBuildHelper(provider.getBuild());
+        CompatibilityBuildHelper helper = new CompatibilityBuildHelper(provider.getBuild());
+        // If the root dir property is set then we use it.
+        assertFalse(helper.getRootDir().equals(rootDir));
     }
 
     public void testValidation() throws Exception {

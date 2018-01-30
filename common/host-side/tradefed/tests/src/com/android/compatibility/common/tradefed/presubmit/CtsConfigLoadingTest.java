@@ -29,6 +29,7 @@ import com.android.tradefed.config.IConfiguration;
 import com.android.tradefed.targetprep.ITargetPreparer;
 import com.android.tradefed.testtype.HostTest;
 import com.android.tradefed.testtype.IRemoteTest;
+import com.android.tradefed.testtype.ITestFilterReceiver;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -157,6 +158,12 @@ public class CtsConfigLoadingTest {
                         throw new ConfigurationException(
                                 String.format("%s: %s reports 0 test cases.", config, test));
                     }
+                }
+                // Tests are expected to implement that interface.
+                if (!(test instanceof ITestFilterReceiver)) {
+                    throw new IllegalArgumentException(String.format(
+                            "Test in module %s must implement ITestFilterReceiver.",
+                            config.getName()));
                 }
             }
             ConfigurationDescriptor cd = c.getConfigurationDescription();

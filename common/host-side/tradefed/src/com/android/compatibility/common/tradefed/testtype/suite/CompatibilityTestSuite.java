@@ -26,6 +26,8 @@ import com.android.tradefed.config.Option.Importance;
 import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.suite.BaseTestSuite;
+import com.android.tradefed.testtype.suite.SuiteModuleLoader;
+import com.android.tradefed.testtype.suite.SuiteTestFilter;
 import com.android.tradefed.util.xml.AbstractXmlParser.ParseException;
 
 import java.io.File;
@@ -33,6 +35,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -65,6 +69,16 @@ public class CompatibilityTestSuite extends BaseTestSuite {
     @Override
     public File getTestsDir() throws FileNotFoundException {
         return mBuildHelper.getTestsDir();
+    }
+
+    @Override
+    public SuiteModuleLoader createModuleLoader(
+            Map<String, List<SuiteTestFilter>> includeFiltersFormatted,
+            Map<String, List<SuiteTestFilter>> excludeFiltersFormatted,
+            List<String> testArgs,
+            List<String> moduleArgs) {
+        return new CompatibilitySuiteModuleLoader(includeFiltersFormatted,
+                excludeFiltersFormatted, testArgs, moduleArgs);
     }
 
     @Override
