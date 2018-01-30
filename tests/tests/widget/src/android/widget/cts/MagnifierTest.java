@@ -91,4 +91,21 @@ public class MagnifierTest {
         // Should be no-op.
         magnifier.dismiss();
     }
+
+    @Test
+    @UiThreadTest
+    public void testUpdate() {
+        View view = new View(mActivity);
+        mMagnifierLayout.addView(view, new LayoutParams(200, 200));
+        Magnifier magnifier = new Magnifier(view);
+        // Should be no-op.
+        magnifier.update();
+        // Valid coordinates.
+        magnifier.show(10, 10);
+        // Should not crash.
+        magnifier.update();
+        magnifier.dismiss();
+        // Should be no-op.
+        magnifier.update();
+    }
 }
