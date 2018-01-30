@@ -3583,17 +3583,18 @@ You should be prompted to select credentials; choose the ones you just installed
 
     <string name="device_owner_disallow_user_switch">Disallow user switch</string>
     <string name="device_owner_disallow_user_switch_info">
-        Please press the Set restriction button to set the user restriction.
+        Press \'Create uninitialized user\' to create a user that is not setup.
+        Then press Set restriction button to set the user restriction.
         Then press Go to open the Settings, and manually find and open user settings section.
         Confirm that:\n
         \n
-        - Trying to switch to guest users triggers a support message.\n
-        - Trying to switch to secondary users triggers a support message.\n
+        - Selecting uninitialized user should not trigger user switch.\n
         \n
         In additional, if quick settings is available, confirm that user switcher is hidden or
         disabled.
         Use the Back button to return to this page.
     </string>
+    <string name="device_owner_disallow_user_switch_create_user">Create uninitialized user</string>
 
     <string name="device_owner_user_switcher_message">User switcher message</string>
     <string name="device_owner_user_switcher_message_info">
