@@ -300,6 +300,15 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         return isFullTrebleDevice(mDevice);
     }
 
+    // NOTE: cts/tools/selinux depends on this method. Rename/change with caution.
+    /**
+     * Returns {@code true} if this device is required to enforce compatible property.
+     */
+    public static boolean isCompatiblePropertyEnforcedDevice(ITestDevice device)
+            throws DeviceNotAvailableException {
+        return PropertyUtil.getFirstApiLevel(device) > 27;
+    }
+
     /**
      * Asserts that no vendor domains are exempted from the prohibition on Binder use.
      *
