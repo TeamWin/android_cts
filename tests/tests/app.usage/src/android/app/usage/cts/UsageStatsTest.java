@@ -16,6 +16,8 @@
 
 package android.app.usage.cts;
 
+import static org.junit.Assert.*;
+
 import android.app.Activity;
 import android.app.AppOpsManager;
 import android.app.usage.UsageEvents;
@@ -25,15 +27,18 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Parcel;
 import android.os.SystemClock;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.Until;
 import android.test.InstrumentationTestCase;
 import android.util.SparseLongArray;
 
-import junit.framework.AssertionFailedError;
-
+import org.junit.Before;
 import org.junit.Ignore;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -55,7 +60,8 @@ import java.util.concurrent.TimeUnit;
  *   along with the new time.
  * - Proper eviction of old data.
  */
-public class UsageStatsTest extends InstrumentationTestCase {
+@RunWith(AndroidJUnit4.class)
+public class UsageStatsTest {
     private static final String APPOPS_SET_SHELL_COMMAND = "appops set {0} " +
             AppOpsManager.OPSTR_GET_USAGE_STATS + " {1}";
 
@@ -71,38 +77,32 @@ public class UsageStatsTest extends InstrumentationTestCase {
     private UsageStatsManager mUsageStatsManager;
     private String mTargetPackage;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mUiDevice = UiDevice.getInstance(getInstrumentation());
-        mUsageStatsManager = (UsageStatsManager) getInstrumentation().getContext()
-                .getSystemService(Context.USAGE_STATS_SERVICE);
-        mTargetPackage = getInstrumentation().getContext().getPackageName();
+    @Before
+    public void setUp() throws Exception {
+        mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        mUsageStatsManager = (UsageStatsManager) InstrumentationRegistry.getInstrumentation()
+                .getContext().getSystemService(Context.USAGE_STATS_SERVICE);
+        mTargetPackage = InstrumentationRegistry.getContext().getPackageName();
 
         setAppOpsMode("allow");
     }
 
     private static void assertLessThan(long left, long right) {
-        if (left >= right) {
-            throw new AssertionFailedError("Expected " + left + " to be less than " + right);
-        }
+        assertTrue("Expected " + left + " to be less than " + right, left < right);
     }
 
     private static void assertLessThanOrEqual(long left, long right) {
-        if (left > right) {
-            throw new AssertionFailedError("Expected " + left + " to be less than or equal to "
-                    + right);
-        }
+        assertTrue("Expected " + left + " to be less than " + right, left <= right);
     }
 
     private void setAppOpsMode(String mode) throws Exception {
         final String command = MessageFormat.format(APPOPS_SET_SHELL_COMMAND,
-                getInstrumentation().getContext().getPackageName(), mode);
+                InstrumentationRegistry.getContext().getPackageName(), mode);
         mUiDevice.executeShellCommand(command);
     }
 
     private void launchSubActivity(Class<? extends Activity> clazz) {
-        final Context context = getInstrumentation().getContext();
+        final Context context = InstrumentationRegistry.getInstrumentation().getContext();
         final Intent intent = new Intent(Intent.ACTION_MAIN);
         intent.setClassName(mTargetPackage, clazz.getName());
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -116,6 +116,7 @@ public class UsageStatsTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testOrderedActivityLaunchSequenceInEventLog() throws Exception {
         @SuppressWarnings("unchecked")
         Class<? extends Activity>[] activitySequence = new Class[] {
@@ -178,6 +179,7 @@ public class UsageStatsTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testStandbyBucketChangeLog() throws Exception {
         final long startTime = System.currentTimeMillis();
         mUiDevice.executeShellCommand("am set-standby-bucket " + mTargetPackage + " rare");
@@ -205,6 +207,7 @@ public class UsageStatsTest extends InstrumentationTestCase {
      * to set the time, thereby allowing this test to set the time using the UIAutomator.
      */
     @Ignore
+    @Test
     public void ignore_testStatsAreShiftedInTimeWhenSystemTimeChanges() throws Exception {
         launchSubActivity(Activities.ActivityOne.class);
         launchSubActivity(Activities.ActivityThree.class);
@@ -240,6 +243,7 @@ public class UsageStatsTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testUsageEventsParceling() throws Exception {
         final long startTime = System.currentTimeMillis() - MINUTE;
 
@@ -278,6 +282,7 @@ public class UsageStatsTest extends InstrumentationTestCase {
         assertEquals(events.hasNextEvent(), reparceledEvents.hasNextEvent());
     }
 
+    @Test
     public void testPackageUsageStatsIntervals() throws Exception {
         final long beforeTime = System.currentTimeMillis();
 
@@ -318,6 +323,7 @@ public class UsageStatsTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testNoAccessSilentlyFails() throws Exception {
         final long startTime = System.currentTimeMillis() - MINUTE;
 

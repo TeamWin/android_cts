@@ -41,6 +41,5 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 LOCAL_SDK_VERSION := test_current
 
 include $(BUILD_CTS_PACKAGE)
-#include $(BUILD_PACKAGE)
 
 include $(call all-makefiles-under,$(LOCAL_PATH))
