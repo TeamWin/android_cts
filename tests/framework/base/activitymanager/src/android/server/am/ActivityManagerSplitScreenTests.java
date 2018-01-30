@@ -42,7 +42,6 @@ import static org.junit.Assume.assumeTrue;
 import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
 
-import android.support.test.filters.FlakyTest;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -388,11 +387,13 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
 
         String[] waitForActivitiesVisible =
                 new String[] {LAUNCHING_ACTIVITY, TEST_ACTIVITY_NAME};
-        try (final RotationSession rotationSession = new RotationSession()) {
+        try (final RotationSession rotationSession = new RotationSession();
+             final LockScreenSession lockScreenSession = new LockScreenSession()) {
             for (int i = 0; i < 4; i++) {
-                sleepDevice();
+                lockScreenSession.sleepDevice();
                 rotationSession.set(i);
-                wakeUpAndUnlockDevice();
+                lockScreenSession.wakeUpDevice()
+                        .unlockDevice();
                 mAmWmState.computeState(waitForActivitiesVisible);
             }
         }
@@ -490,24 +491,30 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
     @Presubmit
     public void testDockedStackToMinimizeWhenUnlocked() throws Exception {
         launchActivityInSplitScreenWithRecents(TEST_ACTIVITY_NAME);
-        mAmWmState.computeState(new WaitForValidActivityState.Builder(TEST_ACTIVITY_NAME).build());
-        sleepDevice();
-        wakeUpAndUnlockDevice();
-        mAmWmState.computeState(new WaitForValidActivityState.Builder(TEST_ACTIVITY_NAME).build());
-        assertDockMinimized();
+        mAmWmState.computeState(new WaitForValidActivityState(TEST_ACTIVITY_NAME));
+        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+            lockScreenSession.sleepDevice()
+                    .wakeUpDevice()
+                    .unlockDevice();
+            mAmWmState.computeState(new WaitForValidActivityState(TEST_ACTIVITY_NAME));
+            assertDockMinimized();
+        }
     }
 
     @Test
     public void testMinimizedStateWhenUnlockedAndUnMinimized() throws Exception {
         launchActivityInDockStackAndMinimize(TEST_ACTIVITY_NAME);
 
-        sleepDevice();
-        wakeUpAndUnlockDevice();
-        mAmWmState.computeState(new WaitForValidActivityState.Builder(TEST_ACTIVITY_NAME).build());
+        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+            lockScreenSession.sleepDevice()
+                    .wakeUpDevice()
+                    .unlockDevice();
+            mAmWmState.computeState(new WaitForValidActivityState(TEST_ACTIVITY_NAME));
 
-        // Unminimized back to splitscreen
-        pressAppSwitchButton();
-        mAmWmState.computeState(new WaitForValidActivityState.Builder(TEST_ACTIVITY_NAME).build());
+            // Unminimized back to splitscreen
+            pressAppSwitchButton();
+            mAmWmState.computeState(new WaitForValidActivityState(TEST_ACTIVITY_NAME));
+        }
     }
 
     @Test

@@ -25,8 +25,6 @@ import android.platform.test.annotations.Presubmit;
 import android.server.am.ActivityManagerState.ActivityDisplay;
 import android.util.Size;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
@@ -120,7 +118,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
     public void testForceDisplayMetrics() throws Exception {
         launchHomeActivity();
 
-        try (final DisplayMetricsSession displayMetricsSession = new DisplayMetricsSession()) {
+        try (final DisplayMetricsSession displayMetricsSession = new DisplayMetricsSession();
+             final LockScreenSession lockScreenSession = new LockScreenSession()) {
             // Read initial sizes.
             final ReportedDisplayMetrics originalDisplayMetrics =
                     displayMetricsSession.getInitialDisplayMetrics();
@@ -139,9 +138,9 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
 
             // Lock and unlock device. This will cause a DISPLAY_CHANGED event to be triggered and
             // might update the metrics.
-            sleepDevice();
-
-            wakeUpAndUnlockDevice();
+            lockScreenSession.sleepDevice()
+                    .wakeUpDevice()
+                    .unlockDevice();
             mAmWmState.waitForHomeActivityVisible();
 
             // Check if overrides are still applied.

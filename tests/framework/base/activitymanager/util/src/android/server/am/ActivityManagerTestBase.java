@@ -32,8 +32,11 @@ import static android.content.pm.PackageManager.FEATURE_SCREEN_PORTRAIT;
 import static android.content.pm.PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE;
 import static android.content.pm.PackageManager.FEATURE_WATCH;
 import static android.server.am.StateLogger.log;
+import static android.server.am.StateLogger.logAlways;
 import static android.server.am.StateLogger.logE;
 import static android.view.KeyEvent.KEYCODE_APP_SWITCH;
+import static android.view.KeyEvent.KEYCODE_SLEEP;
+import static android.view.KeyEvent.KEYCODE_WAKEUP;
 
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -127,8 +130,6 @@ public abstract class ActivityManagerTestBase {
     protected Context mContext;
     protected ActivityManager mAm;
     protected UiDevice mDevice;
-
-    private boolean mLockDisabled;
 
     @Deprecated
     protected static String getAmStartCmd(final String activityName) {
@@ -281,20 +282,18 @@ public abstract class ActivityManagerTestBase {
         executeShellCommand("pm grant " + mContext.getPackageName()
                 + " android.permission.ACTIVITY_EMBEDDING");
 
-        wakeUpAndUnlockDevice();
+        pressWakeupButton();
+        pressUnlockButton();
         pressHomeButton();
         removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
-        mLockDisabled = isLockDisabled();
     }
 
     @After
     public void tearDown() throws Exception {
-        setLockDisabled(mLockDisabled);
         executeShellCommand(AM_FORCE_STOP_TEST_PACKAGE);
         executeShellCommand(AM_FORCE_STOP_SECOND_TEST_PACKAGE);
         executeShellCommand(AM_FORCE_STOP_THIRD_TEST_PACKAGE);
         removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
-        wakeUpAndUnlockDevice();
         pressHomeButton();
     }
 
@@ -557,6 +556,18 @@ public abstract class ActivityManagerTestBase {
         mAmWmState.waitForAppTransitionIdle();
     }
 
+    protected void pressWakeupButton() {
+        mDevice.pressKeyCode(KEYCODE_WAKEUP);
+    }
+
+    protected void pressUnlockButton() {
+        mDevice.pressMenu();
+    }
+
+    protected void pressSleepButton() {
+        mDevice.pressKeyCode(KEYCODE_SLEEP);
+    }
+
     // Utility method for debugging, not used directly here, but useful, so kept around.
     protected void printStacksAndTasks() {
         String output = executeShellCommand(AM_STACK_LIST);
@@ -675,85 +686,42 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected boolean isDisplayOn() {
-        String output = executeShellCommand("dumpsys power");
-        for (String line : output.split("\\n")) {
-            line = line.trim();
-
-            final Matcher matcher = sDisplayStatePattern.matcher(line);
-            if (matcher.matches()) {
-                final String state = matcher.group(1);
-                log("power state=" + state);
-                return "ON".equals(state);
-            }
+        final String output = executeShellCommand("dumpsys power");
+        final Matcher matcher = sDisplayStatePattern.matcher(output);
+        if (matcher.find()) {
+            final String state = matcher.group(1);
+            log("power state=" + state);
+            return "ON".equals(state);
         }
-        log("power state :(");
+        logAlways("power state :(");
         return false;
     }
 
-    protected void sleepDevice() {
-        int retriesLeft = 5;
-        runCommandAndPrintOutput("input keyevent SLEEP");
-        do {
-            if (isDisplayOn()) {
-                log("***Waiting for display to turn off...");
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    log(e.toString());
-                    // Well I guess we are not waiting...
-                }
-            } else {
-                break;
-            }
-        } while (retriesLeft-- > 0);
-    }
+    protected class LockScreenSession implements AutoCloseable {
+        private static final boolean DEBUG = false;
 
-    protected void wakeUpAndUnlockDevice() {
-        wakeUpDevice();
-        unlockDevice();
-    }
-
-    protected void wakeUpAndRemoveLock() {
-        wakeUpDevice();
-        setLockDisabled(true);
-    }
-
-    protected void wakeUpDevice() {
-        runCommandAndPrintOutput("input keyevent WAKEUP");
-    }
-
-    protected void unlockDevice() {
-        mDevice.pressMenu();
-    }
-
-    protected void gotoKeyguard() throws Exception {
-        sleepDevice();
-        wakeUpDevice();
-        mAmWmState.waitForKeyguardShowingAndNotOccluded();
-    }
-
-    protected class LockCredentialSession implements AutoCloseable {
+        private final boolean mIsLockDisabled;
         private boolean mLockCredentialSet;
 
-        public LockCredentialSession() {
+        public LockScreenSession() {
+            mIsLockDisabled = isLockDisabled();
             mLockCredentialSet = false;
+            // Enable lock screen (swipe) by default.
+            setLockDisabled(false);
         }
 
-        public void setLockCredential() {
+        public LockScreenSession setLockCredential() {
             mLockCredentialSet = true;
             runCommandAndPrintOutput("locksettings set-pin " + LOCK_CREDENTIAL);
+            return this;
         }
 
-        public void unlockDeviceWithCredential() throws Exception {
-            mDevice.pressMenu();
-            enterAndConfirmLockCredential();
-        }
-
-        public void enterAndConfirmLockCredential() throws Exception {
+        public LockScreenSession enterAndConfirmLockCredential() throws Exception {
             mDevice.waitForIdle(3000);
 
             runCommandAndPrintOutput("input text " + LOCK_CREDENTIAL);
             mDevice.pressEnter();
+            return this;
         }
 
         private void removeLockCredential() {
@@ -761,38 +729,78 @@ public abstract class ActivityManagerTestBase {
             mLockCredentialSet = false;
         }
 
+        LockScreenSession disableLockScreen() {
+            setLockDisabled(true);
+            return this;
+        }
+
+        LockScreenSession sleepDevice() {
+            pressSleepButton();
+            for (int retry = 1; isDisplayOn() && retry <= 5; retry++) {
+                logAlways("***Waiting for display to turn off... retry=" + retry);
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    logAlways(e.toString());
+                    // Well I guess we are not waiting...
+                }
+            }
+            return this;
+        }
+
+        LockScreenSession wakeUpDevice() {
+            pressWakeupButton();
+            return this;
+        }
+
+        LockScreenSession unlockDevice() {
+            pressUnlockButton();
+            return this;
+        }
+
+        public LockScreenSession gotoKeyguard() throws Exception {
+            if (DEBUG && isLockDisabled()) {
+                logE("LockScreenSession.gotoKeygurad() is called without lock enabled.");
+            }
+            sleepDevice();
+            wakeUpDevice();
+            mAmWmState.waitForKeyguardShowingAndNotOccluded();
+            return this;
+        }
+
         @Override
         public void close() throws Exception {
+            setLockDisabled(mIsLockDisabled);
             if (mLockCredentialSet) {
                 removeLockCredential();
                 // Dismiss active keyguard after credential is cleared, so keyguard doesn't ask for
                 // the stale credential.
                 pressBackButton();
                 sleepDevice();
-                wakeUpAndUnlockDevice();
+                wakeUpDevice();
+                unlockDevice();
             }
         }
-    }
 
-    /**
-     * Returns whether the lock screen is disabled.
-     * @return true if the lock screen is disabled, false otherwise.
-     */
-    private boolean isLockDisabled() {
-        final String isLockDisabled = runCommandAndPrintOutput("locksettings get-disabled").trim();
-        if ("null".equals(isLockDisabled)) {
-            return false;
+        /**
+         * Returns whether the lock screen is disabled.
+         *
+         * @return true if the lock screen is disabled, false otherwise.
+         */
+        private boolean isLockDisabled() {
+            final String isLockDisabled = runCommandAndPrintOutput(
+                    "locksettings get-disabled").trim();
+            return !"null".equals(isLockDisabled) && Boolean.parseBoolean(isLockDisabled);
         }
-        return Boolean.parseBoolean(isLockDisabled);
 
-    }
-
-    /**
-     * Disable the lock screen.
-     * @param lockDisabled true if should disable, false otherwise.
-     */
-    void setLockDisabled(boolean lockDisabled) {
-        runCommandAndPrintOutput("locksettings set-disabled " + lockDisabled);
+        /**
+         * Disable the lock screen.
+         *
+         * @param lockDisabled true if should disable, false otherwise.
+         */
+        protected void setLockDisabled(boolean lockDisabled) {
+            runCommandAndPrintOutput("locksettings set-disabled " + lockDisabled);
+        }
     }
 
     /** Helper class to save, set & wait, and restore rotation related preferences. */
