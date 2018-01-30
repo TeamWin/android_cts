@@ -78,7 +78,7 @@ public class ApiLevelUtil {
             return Integer.parseInt(versionString); // e.g. "24" for M
         } catch (NumberFormatException e1) {
             try {
-                Field versionField = Build.VERSION_CODES.class.getField(
+                Field versionField = VersionCodes.class.getField(
                         versionString.toUpperCase());
                 return versionField.getInt(null); // no instance for VERSION_CODES, use null
             } catch (IllegalAccessException | NoSuchFieldException e2) {
