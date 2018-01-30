@@ -380,6 +380,9 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         }
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
+        // Make the test app standby-active so it can run jobs immediately
+        getDevice().executeShellCommand("am set-standby-bucket "
+                + DEVICE_SIDE_TEST_PACKAGE + " active");
 
         // Background test.
         executeBackground(ACTION_JOB_SCHEDULE, 60_000);
@@ -400,6 +403,9 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         }
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
+        // Make the test app standby-active so it can run syncs immediately
+        getDevice().executeShellCommand("am set-standby-bucket "
+                + DEVICE_SIDE_TEST_PACKAGE + " active");
 
         // Background test.
         executeBackground(ACTION_SYNC, 60_000);
