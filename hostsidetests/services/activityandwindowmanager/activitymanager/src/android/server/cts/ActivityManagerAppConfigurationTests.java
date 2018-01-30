@@ -508,16 +508,6 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         assertEquals(rotationB.displayWidth, rotationB.metricsWidth);
         assertEquals(rotationB.displayHeight, rotationB.metricsHeight);
 
-        final boolean beforePortrait = rotationA.displayWidth < rotationA.displayHeight;
-        final boolean afterPortrait = rotationB.displayWidth < rotationB.displayHeight;
-        assertFalse(beforePortrait == afterPortrait);
-
-        final boolean beforeConfigPortrait = rotationA.widthDp < rotationA.heightDp;
-        final boolean afterConfigPortrait = rotationB.widthDp < rotationB.heightDp;
-        assertEquals(beforePortrait, beforeConfigPortrait);
-        assertEquals(afterPortrait, afterConfigPortrait);
-
-        assertEquals(rotationA.smallestWidthDp, rotationB.smallestWidthDp);
     }
 
     /**
