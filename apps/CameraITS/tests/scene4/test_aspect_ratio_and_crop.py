@@ -261,8 +261,13 @@ def measure_aspect_ratio(img, raw_avlb, img_name, debug):
             cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
     # connected component
-    contours, hierarchy = cv2.findContours(255-img_bw, cv2.RETR_TREE,
-            cv2.CHAIN_APPROX_SIMPLE)
+    cv2_version = cv2.__version__
+    if cv2_version.startswith('2.4.'):
+        contours, hierarchy = cv2.findContours(255-img_bw, cv2.RETR_TREE,
+                cv2.CHAIN_APPROX_SIMPLE)
+    elif cv2_version.startswith('3.2.'):
+        _, contours, hierarchy = cv2.findContours(255-img_bw, cv2.RETR_TREE,
+                cv2.CHAIN_APPROX_SIMPLE)
 
     # Check each component and find the black circle
     min_cmpt = size[0] * size[1] * 0.005
