@@ -756,6 +756,7 @@ class ItsSession(object):
                 "rawStats":[], "dng":[], "jpeg":[]}
         yuv_bufs = {size:[] for size in yuv_sizes}
         mds = []
+        physical_mds = []
         widths = None
         heights = None
         while nbufs < ncap*nsurf or len(mds) < ncap:
@@ -772,6 +773,7 @@ class ItsSession(object):
                 nbufs += 1
             elif jsonObj['tag'] == 'captureResults':
                 mds.append(jsonObj['objValue']['captureResult'])
+                physical_mds.append(jsonObj['objValue']['physicalResults'])
                 outputs = jsonObj['objValue']['outputs']
                 widths = [out['width'] for out in outputs]
                 heights = [out['height'] for out in outputs]
@@ -791,7 +793,13 @@ class ItsSession(object):
                 obj["width"] = widths[j]
                 obj["height"] = heights[j]
                 obj["format"] = fmt
-                obj["metadata"] = mds[i]
+                if j in physical_cam_ids:
+                    for physical_md in physical_mds[i]:
+                        if physical_cam_ids[j] in physical_md:
+                            obj["metadata"] = physical_md[physical_cam_ids[j]]
+                            break
+                else:
+                    obj["metadata"] = mds[i]
 
                 if j in physical_cam_ids:
                     obj["data"] = physical_buffers[physical_cam_ids[j]][i]
