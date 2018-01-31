@@ -510,6 +510,33 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         assertInstallFailsWithError("v2-only-starts-with-dex-magic.apk", error);
     }
 
+    public void testInstallV3KeyRotation() throws Exception {
+        // tests that a v3 signed APK with RSA key can rotate to a new key
+        assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-1.apk");
+        assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-2-with-por_1_2-full-caps.apk");
+    }
+
+    public void testInstallV3KeyRotationMultipleHops() throws Exception {
+        // tests that a v3 signed APK with RSA key can rotate to a new key which is the result of
+        // multiple rotations from the original: APK signed with key 1 can be updated by key 3, when
+        // keys were: 1 -> 2 -> 3
+        assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-1.apk");
+        assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-3-with-por_1_2_3-full-caps.apk");
+    }
+
+    public void testInstallV3PorSignerMismatch() throws Exception {
+        // tests that an APK with a proof-of-rotation struct that doesn't include the current
+        // signing certificate fails to install
+        assertInstallFails("v3-rsa-pkcs1-sha256-2048-3-with-por_1_2-full-caps.apk");
+    }
+
+    public void testInstallV3KeyRotationWrongPor() throws Exception {
+        // tests that a valid APK with a proof-of-rotation record can't upgrade an APK with a
+        // signing certificate that isn't in the proof-of-rotation record
+        assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-1.apk");
+        assertInstallFails("v3-rsa-pkcs1-sha256-2048-3-with-por_2_3-full-caps.apk");
+    }
+
     private void assertInstallSucceeds(String apkFilenameInResources) throws Exception {
         String installResult = installPackageFromResource(apkFilenameInResources);
         if (installResult != null) {
