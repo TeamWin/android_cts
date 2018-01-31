@@ -456,6 +456,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * Test that device doesn't change device orientation by app request while in multi-window.
      */
     @Presubmit
+    @FlakyTest(bugId = 71918731)
     @Test
     public void testSplitscreenPortraitAppOrientationRequests() throws Exception {
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
