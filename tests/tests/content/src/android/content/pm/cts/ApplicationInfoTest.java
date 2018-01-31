@@ -16,6 +16,7 @@
 
 package android.content.pm.cts;
 
+import static android.content.pm.ApplicationInfo.CATEGORY_MAPS;
 import static android.content.pm.ApplicationInfo.CATEGORY_PRODUCTIVITY;
 import static android.content.pm.ApplicationInfo.CATEGORY_UNDEFINED;
 import static android.os.Process.FIRST_APPLICATION_UID;
@@ -45,6 +46,8 @@ import org.junit.runner.RunWith;
  */
 @RunWith(AndroidJUnit4.class)
 public class ApplicationInfoTest {
+    private static final String SYNC_ACCOUNT_ACCESS_STUB_PACKAGE_NAME = "com.android.cts.stub";
+
     private ApplicationInfo mApplicationInfo;
     private String mPackageName;
 
@@ -142,14 +145,14 @@ public class ApplicationInfoTest {
     @Test
     public void verifyDefaultValues() throws NameNotFoundException {
         // The application "com.android.cts.stub" does not have any attributes set
-        String PACKAGE_NAME = "com.android.cts.stub";
-        mApplicationInfo = getContext().getPackageManager().getApplicationInfo(PACKAGE_NAME, 0);
+        mApplicationInfo = getContext().getPackageManager().getApplicationInfo(
+                SYNC_ACCOUNT_ACCESS_STUB_PACKAGE_NAME, 0);
 
         assertNull(mApplicationInfo.className);
         assertNull(mApplicationInfo.permission);
-        assertEquals(PACKAGE_NAME, mApplicationInfo.packageName);
-        assertEquals(PACKAGE_NAME, mApplicationInfo.processName);
-        assertEquals(PACKAGE_NAME, mApplicationInfo.taskAffinity);
+        assertEquals(SYNC_ACCOUNT_ACCESS_STUB_PACKAGE_NAME, mApplicationInfo.packageName);
+        assertEquals(SYNC_ACCOUNT_ACCESS_STUB_PACKAGE_NAME, mApplicationInfo.processName);
+        assertEquals(SYNC_ACCOUNT_ACCESS_STUB_PACKAGE_NAME, mApplicationInfo.taskAffinity);
         assertTrue(FIRST_APPLICATION_UID <= mApplicationInfo.uid
                 && LAST_APPLICATION_UID >= mApplicationInfo.uid);
         assertEquals(0, mApplicationInfo.theme);
@@ -175,5 +178,17 @@ public class ApplicationInfoTest {
         assertEquals(0, mApplicationInfo.descriptionRes);
         assertEquals(0, mApplicationInfo.uiOptions);
         assertEquals(CATEGORY_UNDEFINED, mApplicationInfo.category);
+    }
+
+    @Test(expected=IllegalArgumentException.class)
+    public void setOwnAppCategory() throws Exception {
+        getContext().getPackageManager().setApplicationCategoryHint(getContext().getPackageName(),
+                CATEGORY_MAPS);
+    }
+
+    @Test(expected=IllegalArgumentException.class)
+    public void setAppCategoryByNotInstaller() throws Exception {
+        getContext().getPackageManager().setApplicationCategoryHint(
+                SYNC_ACCOUNT_ACCESS_STUB_PACKAGE_NAME, CATEGORY_MAPS);
     }
 }
