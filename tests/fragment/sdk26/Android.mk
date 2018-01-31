@@ -16,7 +16,7 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_PACKAGE_NAME := CtsFragmentTestCases
+LOCAL_PACKAGE_NAME := CtsFragmentTestCasesSdk26
 
 # don't include this package in any target
 LOCAL_MODULE_TAGS := tests
@@ -28,22 +28,13 @@ LOCAL_DEX_PREOPT := false
 
 LOCAL_PROGUARD_ENABLED := disabled
 
-LOCAL_STATIC_JAVA_LIBRARIES += \
-    android-support-test \
-    mockito-target-minus-junit4 \
-    android-common \
-    compatibility-device-util \
-    ctstestrunner
-LOCAL_JAVA_LIBRARIES := android.test.base.stubs
-#LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util android-support-test
+LOCAL_STATIC_JAVA_LIBRARIES += android-support-test
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
-LOCAL_SDK_VERSION := current
+LOCAL_SDK_VERSION := 26
 
 include $(BUILD_CTS_PACKAGE)
-
-include $(call all-makefiles-under,$(LOCAL_PATH))

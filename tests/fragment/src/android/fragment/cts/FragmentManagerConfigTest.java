@@ -15,37 +15,35 @@
  */
 package android.fragment.cts;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
-import android.app.Activity;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 
-import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
-public class FragmentManagerNonConfigTest {
+public class FragmentManagerConfigTest {
 
     @Rule
-    public ActivityTestRule<NonConfigOnStopActivity> mActivityRule =
-            new ActivityTestRule<>(NonConfigOnStopActivity.class);
+    public ActivityTestRule<ConfigOnStopActivity> mActivityRule =
+            new ActivityTestRule<>(ConfigOnStopActivity.class);
 
     /**
-     * When a fragment is added during onStop(), it shouldn't show up in non-config
-     * state when restored.
+     * When a fragment is added during onStop(), it should show up in non-config
+     * state when restored for apps targeting SDKs P+.
      */
     @Test
-    public void nonConfigStop() throws Throwable {
-        NonConfigOnStopActivity activity = FragmentTestUtil.recreateActivity(mActivityRule,
+    public void configStop() throws Throwable {
+        ConfigOnStopActivity activity = FragmentTestUtil.recreateActivity(mActivityRule,
                 mActivityRule.getActivity());
 
         // A fragment was added in onStop(), but we shouldn't see it here...
-        assertTrue(activity.getFragmentManager().getFragments().isEmpty());
+        assertFalse(activity.getFragmentManager().getFragments().isEmpty());
     }
 
 }
