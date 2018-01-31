@@ -16,7 +16,6 @@
 
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.Timeouts.NOT_SHOWING_TIMEOUT;
 import static android.autofillservice.cts.Timeouts.SAVE_TIMEOUT;
 import static android.autofillservice.cts.Timeouts.UI_DATASET_PICKER_TIMEOUT;
 import static android.autofillservice.cts.Timeouts.UI_RECENTS_SWITCH_TIMEOUT;
@@ -38,6 +37,8 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.os.SystemClock;
 import android.service.autofill.SaveInfo;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
@@ -125,7 +126,9 @@ final class UiBot {
      * Asserts the dataset chooser is not shown.
      */
     void assertNoDatasets() throws Exception {
-        assertNotShowing("datasets", DATASET_PICKER_SELECTOR, NOT_SHOWING_TIMEOUT);
+        // TODO: split between assertDatasetsGone() and assertDatasetNeverShown() to optimize
+        // which method to use (assertNotShowing() or assertNeverShown());
+        assertNotShowingAnymore("datasets", DATASET_PICKER_SELECTOR, UI_DATASET_PICKER_TIMEOUT);
     }
 
     /**
@@ -292,9 +295,13 @@ final class UiBot {
     }
 
     /**
-     * Asserts that a {@code selector} is not showing after {@code timeout} milliseconds.
+     * Asserts that a {@code selector} is not showing *anymore* after {@code timeout} milliseconds.
+     *
+     * <p><b>Note:</b> this method should only be called when the object was known to be shown
+     * *before*, otherwise it might pass when it should failed. If the object was *never* expected
+     * to be shown, you should use {@link #assertNeverShown(String, BySelector, Timeout)}.
      */
-    private void assertNotShowing(String description, BySelector selector, Timeout timeout)
+    private void assertNotShowingAnymore(String description, BySelector selector, Timeout timeout)
             throws Exception {
         final UiObject2 object;
         try {
@@ -307,6 +314,18 @@ final class UiBot {
                 description, getChildrenAsText(object));
     }
 
+    /**
+     * Asserts that a {@code selector} is not showing after {@code timeout} milliseconds.
+     */
+    private void assertNeverShown(String description, BySelector selector, Timeout timeout)
+            throws Exception {
+        SystemClock.sleep(timeout.ms());
+        final UiObject2 object = mDevice.findObject(selector);
+        if (object != null) {
+            throw new RetryableException(timeout, "Should not be showing %s, but got %s",
+                    description, getChildrenAsText(object));
+        }
+    }
     /**
      * Gets the text set on a view.
      */
@@ -379,7 +398,7 @@ final class UiBot {
      * Asserts the save snackbar is not showing and returns it.
      */
     void assertSaveNotShowing(int type) throws Exception {
-        assertNotShowing("save UI for type " + type, SAVE_UI_SELECTOR, NOT_SHOWING_TIMEOUT);
+        assertNeverShown("save UI for type " + type, SAVE_UI_SELECTOR, SAVE_TIMEOUT);
     }
 
     private String getSaveTypeString(int type) {
@@ -733,6 +752,29 @@ final class UiBot {
             // Just ignore it...
             Log.e(TAG, "exception dumping window hierarchy", e);
             return;
+        }
+    }
+
+    /**
+     * Asserts the contents of a child element.
+     *
+     * @param parent parent object
+     * @param childId (relative) resource id of the child
+     * @param assertion if {@code null}, asserts the child does not exist; otherwise, asserts the
+     * child with it.
+     */
+    public void assertChild(@NonNull UiObject2 parent, @NonNull String childId,
+            @Nullable Visitor<UiObject2> assertion) {
+        final UiObject2 child = parent.findObject(By.res(mPackageName, childId));
+        if (assertion != null) {
+            assertWithMessage("Didn't find child with id '%s'", childId).that(child).isNotNull();
+            try {
+                assertion.visit(child);
+            } catch (Throwable t) {
+                throw new AssertionError("Error on child '" + childId + "'", t);
+            }
+        } else {
+            assertWithMessage("Shouldn't find child with id '%s'", childId).that(child).isNull();
         }
     }
 }
