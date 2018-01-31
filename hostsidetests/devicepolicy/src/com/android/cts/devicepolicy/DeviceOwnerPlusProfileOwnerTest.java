@@ -423,6 +423,46 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
                 mPrimaryUserId);
     }
 
+    public void testCannotStartManagedProfileInBackground() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        setupManagedProfile(COMP_DPC_APK, COMP_DPC_PKG, COMP_DPC_ADMIN);
+
+        runDeviceTestsAsUser(
+                COMP_DPC_PKG,
+                MANAGEMENT_TEST,
+                "testCannotStartManagedProfileInBackground",
+                mPrimaryUserId);
+    }
+
+    public void testCannotStopManagedProfile() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        setupManagedProfile(COMP_DPC_APK, COMP_DPC_PKG, COMP_DPC_ADMIN);
+
+        runDeviceTestsAsUser(
+                COMP_DPC_PKG,
+                MANAGEMENT_TEST,
+                "testCannotStopManagedProfile",
+                mPrimaryUserId);
+    }
+
+    public void testCannotLogoutManagedProfile() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        int profileUserId = setupManagedProfile(COMP_DPC_APK, COMP_DPC_PKG, COMP_DPC_ADMIN);
+        setSameAffiliationId(profileUserId);
+
+        runDeviceTestsAsUser(
+                COMP_DPC_PKG,
+                MANAGEMENT_TEST,
+                "testCannotLogoutManagedProfile",
+                profileUserId);
+    }
+
     private void verifyBindDeviceAdminServiceAsUser(int profileOwnerUserId) throws Exception {
         // Installing a non managing app (neither device owner nor profile owner).
         installAppAsUser(COMP_DPC_APK2, mPrimaryUserId);

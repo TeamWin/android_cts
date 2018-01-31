@@ -87,6 +87,7 @@ public class BackgroundRestrictedAlarmsTest {
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(TestAlarmReceiver.ACTION_REPORT_ALARM_EXPIRED);
         mContext.registerReceiver(mAlarmStateReceiver, intentFilter);
+        setAppStandbyBucket("active");
     }
 
     private void scheduleAlarm(int type, long triggerMillis, long interval) {
@@ -164,6 +165,10 @@ public class BackgroundRestrictedAlarmsTest {
 
     private void deleteAlarmManagerConstants() throws IOException {
         mUiDevice.executeShellCommand("settings delete global alarm_manager_constants");
+    }
+
+    private void setAppStandbyBucket(String bucket) throws IOException {
+        mUiDevice.executeShellCommand("am set-standby-bucket " + TEST_APP_PACKAGE + " " + bucket);
     }
 
     private void setAppOpsMode(String mode) throws IOException {

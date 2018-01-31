@@ -19,8 +19,8 @@ package android.alarmmanager.cts;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import android.alarmmanager.alarmtestapp.cts.TestAlarmScheduler;
 import android.alarmmanager.alarmtestapp.cts.TestAlarmReceiver;
+import android.alarmmanager.alarmtestapp.cts.TestAlarmScheduler;
 import android.app.AlarmManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -28,7 +28,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.BatteryManager;
-import android.os.PowerManager;
 import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.LargeTest;
@@ -44,12 +43,12 @@ import org.junit.runner.RunWith;
 import java.io.IOException;
 
 /**
- * Tests that battery saver imposes the appropriate restrictions on alarms
+ * Tests that app standby imposes the appropriate restrictions on alarms
  */
 @LargeTest
 @RunWith(AndroidJUnit4.class)
-public class BatterySaverTests {
-    private static final String TAG = BatterySaverTests.class.getSimpleName();
+public class AppStandbyTests {
+    private static final String TAG = AppStandbyTests.class.getSimpleName();
     private static final String TEST_APP_PACKAGE = "android.alarmmanager.alarmtestapp.cts";
     private static final String TEST_APP_RECEIVER = TEST_APP_PACKAGE + ".TestAlarmScheduler";
 
@@ -57,14 +56,15 @@ public class BatterySaverTests {
     private static final long POLL_INTERVAL = 200;
 
     // Tweaked alarm manager constants to facilitate testing
-    private static final long MIN_REPEATING_INTERVAL = 5_000;
-    private static final long ALLOW_WHILE_IDLE_SHORT_TIME = 10_000;
     private static final long MIN_FUTURITY = 2_000;
+    private static final long APP_STANDBY_WORKING_DELAY = 10_000;
+    private static final long APP_STANDBY_FREQUENT_DELAY = 30_000;
 
     private Context mContext;
     private ComponentName mAlarmScheduler;
     private UiDevice mUiDevice;
     private volatile int mAlarmCount;
+    private long mLastAlarmTime;
 
     private final BroadcastReceiver mAlarmStateReceiver = new BroadcastReceiver() {
         @Override
@@ -83,44 +83,54 @@ public class BatterySaverTests {
         mAlarmCount = 0;
         updateAlarmManagerConstants();
         setBatteryCharging(false);
-        setBatterySaverMode(true);
-        setAppStandbyBucket("active");
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(TestAlarmReceiver.ACTION_REPORT_ALARM_EXPIRED);
         mContext.registerReceiver(mAlarmStateReceiver, intentFilter);
+        setAppStandbyBucket("active");
+        mLastAlarmTime = SystemClock.elapsedRealtime() + MIN_FUTURITY;
+        scheduleAlarm(AlarmManager.ELAPSED_REALTIME_WAKEUP, mLastAlarmTime, 0);
+        Thread.sleep(MIN_FUTURITY);
+        assertTrue("Alarm not sent when app in active", waitForAlarms(1));
     }
 
-    private void scheduleAlarm(int type, boolean whileIdle, long triggerMillis, long interval) {
+    private void scheduleAlarm(int type, long triggerMillis, long interval) {
         final Intent setAlarmIntent = new Intent(TestAlarmScheduler.ACTION_SET_ALARM);
         setAlarmIntent.setComponent(mAlarmScheduler);
         setAlarmIntent.putExtra(TestAlarmScheduler.EXTRA_TYPE, type);
         setAlarmIntent.putExtra(TestAlarmScheduler.EXTRA_TRIGGER_TIME, triggerMillis);
         setAlarmIntent.putExtra(TestAlarmScheduler.EXTRA_REPEAT_INTERVAL, interval);
-        setAlarmIntent.putExtra(TestAlarmScheduler.EXTRA_ALLOW_WHILE_IDLE, whileIdle);
         mContext.sendBroadcast(setAlarmIntent);
     }
 
     @Test
-    public void testAllowWhileIdleNotBlocked() throws Exception {
-        final long triggerElapsed1 = SystemClock.elapsedRealtime() + MIN_FUTURITY;
-        scheduleAlarm(AlarmManager.ELAPSED_REALTIME_WAKEUP, true, triggerElapsed1, 0);
+    public void testWorkingSetDelay() throws Exception {
+        setAppStandbyBucket("working_set");
+        final long triggerTime = SystemClock.elapsedRealtime() + MIN_FUTURITY;
+        scheduleAlarm(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerTime, 0);
         Thread.sleep(MIN_FUTURITY);
-        assertTrue("Allow-while-idle alarm blocked in battery saver",
-                waitForAlarms(1));
-        final long triggerElapsed2 = triggerElapsed1 + 2_000;
-        scheduleAlarm(AlarmManager.ELAPSED_REALTIME_WAKEUP, true, triggerElapsed2, 0);
-        Thread.sleep(2_000);
-        assertFalse("Follow up allow-while-idle alarm went off before short time",
-                waitForAlarms(1));
-        final long expectedTriggerElapsed = triggerElapsed1 + ALLOW_WHILE_IDLE_SHORT_TIME;
-        Thread.sleep(expectedTriggerElapsed - SystemClock.elapsedRealtime());
-        assertTrue("Follow-up allow-while-idle alarm did not go off even after short time",
+        assertFalse("The alarm went off before working_set delay", waitForAlarms(1));
+        final long expectedTriggerTime = mLastAlarmTime + APP_STANDBY_WORKING_DELAY;
+        Thread.sleep(expectedTriggerTime - SystemClock.elapsedRealtime());
+        assertTrue("Deferred alarm did not go off at the expected time", waitForAlarms(1));
+    }
+
+    @Test
+    public void testBucketUpgrade() throws Exception {
+        setAppStandbyBucket("frequent");
+        final long triggerTime1 = SystemClock.elapsedRealtime() + MIN_FUTURITY;
+        scheduleAlarm(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerTime1, 0);
+        Thread.sleep(MIN_FUTURITY);
+        assertFalse("The alarm went off before frequent delay", waitForAlarms(1));
+        final long workingSetExpectedTrigger = mLastAlarmTime + APP_STANDBY_WORKING_DELAY;
+        Thread.sleep(workingSetExpectedTrigger - SystemClock.elapsedRealtime() + 1_000);
+        assertFalse("The alarm went off before frequent delay", waitForAlarms(1));
+        setAppStandbyBucket("working_set");
+        assertTrue("The alarm did not go off when app bucket upgraded to working_set",
                 waitForAlarms(1));
     }
 
     @After
     public void tearDown() throws Exception {
-        setBatterySaverMode(false);
         setBatteryCharging(true);
         deleteAlarmManagerConstants();
         final Intent cancelAlarmsIntent = new Intent(TestAlarmScheduler.ACTION_CANCEL_ALL_ALARMS);
@@ -133,9 +143,9 @@ public class BatterySaverTests {
 
     private void updateAlarmManagerConstants() throws IOException {
         final String cmd = "settings put global alarm_manager_constants "
-                + "min_interval=" + MIN_REPEATING_INTERVAL + ","
                 + "min_futurity=" + MIN_FUTURITY + ","
-                + "allow_while_idle_short_time=" + ALLOW_WHILE_IDLE_SHORT_TIME;
+                + "standby_working_delay=" + APP_STANDBY_WORKING_DELAY + ","
+                + "standby_frequent_delay=" + APP_STANDBY_FREQUENT_DELAY;
         executeAndLog(cmd);
     }
 
@@ -156,17 +166,10 @@ public class BatterySaverTests {
         }
     }
 
-    private void setBatterySaverMode(final boolean enabled) throws Exception {
-        final PowerManager pm = mContext.getSystemService(PowerManager.class);
-        final String cmd = "settings put global low_power " + (enabled ? "1" : "0");
-        executeAndLog(cmd);
-        assertTrue("Battery saver state could not be changed to " + enabled,
-                waitUntil(() -> (enabled == pm.isPowerSaveMode()), 5_000));
-    }
-
-    private void executeAndLog(String cmd) throws IOException {
+    private String executeAndLog(String cmd) throws IOException {
         final String output = mUiDevice.executeShellCommand(cmd);
         Log.d(TAG, "command: [" + cmd + "], output: [" + output.trim() + "]");
+        return output;
     }
 
     private boolean waitForAlarms(final int minExpirations) throws InterruptedException {

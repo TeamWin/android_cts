@@ -250,8 +250,8 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     }
 
     /**
-     * Test creating an user using the DevicePolicyManager's createAndManageUser method and start
-     * the user in background to test APIs on that user.
+     * Test creating an user using the DevicePolicyManager's createAndManageUser method and switch
+     * to the user.
      * {@link android.app.admin.DevicePolicyManager#switchUser} is tested.
      */
     public void testCreateAndManageUser_SwitchUser() throws Exception {
@@ -261,6 +261,20 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
 
         executeDeviceTestMethod(".CreateAndManageUserTest",
                 "testCreateAndManageUser_SwitchUser");
+    }
+
+    /**
+     * Test creating an user using the DevicePolicyManager's createAndManageUser method and switch
+     * to the user to test stop user while target user is in foreground.
+     * {@link android.app.admin.DevicePolicyManager#stopUser} is tested.
+     */
+    public void testCreateAndManageUser_CannotStopCurrentUser() throws Exception {
+        if (!mHasFeature || !canCreateAdditionalUsers(1) || !canStartAdditionalUsers(1)) {
+            return;
+        }
+
+        executeDeviceTestMethod(".CreateAndManageUserTest",
+                "testCreateAndManageUser_CannotStopCurrentUser");
     }
 
     /**
@@ -275,6 +289,27 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
 
         executeDeviceTestMethod(".CreateAndManageUserTest",
                 "testCreateAndManageUser_StartInBackground");
+    }
+
+    /**
+     * Test creating an user using the DevicePolicyManager's createAndManageUser method and start
+     * the user in background to test APIs on that user.
+     * {@link android.app.admin.DevicePolicyManager#startUserInBackground} is tested.
+     */
+    public void testCreateAndManageUser_StartInBackground_MaxRunningUsers() throws Exception {
+        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
+            return;
+        }
+
+        int maxRunningUsers = getDevice().getMaxNumberOfRunningUsersSupported();
+        // Primary user is already running, so we can start up to maxRunningUsers -1.
+        for (int i = 0; i < maxRunningUsers - 1; i++) {
+            executeDeviceTestMethod(".CreateAndManageUserTest",
+                    "testCreateAndManageUser_StartInBackground");
+        }
+        // The next startUserInBackground should return USER_OPERATION_ERROR_MAX_RUNNING_USERS.
+        executeDeviceTestMethod(".CreateAndManageUserTest",
+                "testCreateAndManageUser_StartInBackground_MaxRunningUsers");
     }
 
     /**

@@ -33,7 +33,6 @@ import android.widget.RemoteViews;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentMatcher;
 
 import java.util.regex.Pattern;
 
@@ -242,23 +241,5 @@ public class CharSequenceTransformationTest {
         trans.apply(finder, template, 0);
 
         verify(template).setCharSequence(eq(0), any(), argThat(new CharSequenceMatcher("ACB")));
-    }
-
-    static class CharSequenceMatcher implements ArgumentMatcher<CharSequence> {
-        private final CharSequence mExpected;
-
-        public CharSequenceMatcher(CharSequence expected) {
-            mExpected = expected;
-        }
-
-        @Override
-        public boolean matches(CharSequence actual) {
-            return actual.toString().equals(mExpected.toString());
-        }
-
-        @Override
-        public String toString() {
-            return mExpected.toString();
-        }
     }
 }

@@ -1480,6 +1480,53 @@ public class ImageDecoderTest {
         }
     }
 
+    @Test
+    public void testRespectOrientation() {
+        // These 8 images test the 8 EXIF orientations. If the orientation is
+        // respected, they all have the same dimensions: 100 x 80.
+        // They are also identical (after adjusting), so compare them.
+        Bitmap reference = null;
+        for (int resId : new int[] { R.drawable.orientation_1,
+                                     R.drawable.orientation_2,
+                                     R.drawable.orientation_3,
+                                     R.drawable.orientation_4,
+                                     R.drawable.orientation_5,
+                                     R.drawable.orientation_6,
+                                     R.drawable.orientation_7,
+                                     R.drawable.orientation_8,
+                                     R.drawable.webp_orientation1,
+                                     R.drawable.webp_orientation2,
+                                     R.drawable.webp_orientation3,
+                                     R.drawable.webp_orientation4,
+                                     R.drawable.webp_orientation5,
+                                     R.drawable.webp_orientation6,
+                                     R.drawable.webp_orientation7,
+                                     R.drawable.webp_orientation8,
+        }) {
+            if (resId == R.drawable.webp_orientation1) {
+                // The webp files may not look exactly the same as the jpegs.
+                // Recreate the reference.
+                reference = null;
+            }
+            Uri uri = getAsResourceUri(resId);
+            ImageDecoder.Source src = ImageDecoder.createSource(mContentResolver, uri);
+            try {
+                Bitmap bm = ImageDecoder.decodeBitmap(src);
+                assertNotNull(bm);
+                assertEquals(100, bm.getWidth());
+                assertEquals(80,  bm.getHeight());
+
+                if (reference == null) {
+                    reference = bm;
+                } else {
+                    BitmapUtils.compareBitmaps(bm, reference);
+                }
+            } catch (IOException e) {
+                fail("Decoding " + uri.toString() + " yielded " + e);
+            }
+        }
+    }
+
     @Test(expected=IOException.class)
     public void testZeroLengthByteBuffer() throws IOException {
         Drawable drawable = ImageDecoder.decodeDrawable(

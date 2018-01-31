@@ -34,6 +34,7 @@ import com.android.tradefed.testtype.suite.TestSuiteInfo;
 import com.android.tradefed.util.FileUtil;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -92,6 +93,7 @@ public class CompatibilityBuildProvider implements IDeviceBuildProvider, IInvoca
     private String mSuitePlan;
 
     private String mTestTag;
+    private File mArtificialRootDir;
 
     /**
      * Util method to inject build attributes into supplied {@link IBuildInfo}
@@ -197,6 +199,7 @@ public class CompatibilityBuildProvider implements IDeviceBuildProvider, IInvoca
         } else {
             info.cleanUp();
         }
+        FileUtil.recursiveDelete(mArtificialRootDir);
     }
 
     private void addCompatibilitySuiteInfo(IBuildInfo info) {
@@ -240,7 +243,23 @@ public class CompatibilityBuildProvider implements IDeviceBuildProvider, IInvoca
      */
     @VisibleForTesting
     String getRootDirPath() {
-        return System.getProperty(String.format("%s_ROOT", getSuiteInfoName()));
+        String varName = String.format("%s_ROOT", getSuiteInfoName());
+        String rootDirVariable = System.getProperty(varName);
+        if (rootDirVariable != null) {
+            return rootDirVariable;
+        }
+        // Create an artificial root dir, we are most likely running from Tradefed directly.
+        try {
+            mArtificialRootDir = FileUtil.createTempDir(
+                    String.format("%s-root-dir", getSuiteInfoName()));
+            new File(mArtificialRootDir, String.format("android-%s/testcases",
+                    getSuiteInfoName().toLowerCase())).mkdirs();
+            return mArtificialRootDir.getAbsolutePath();
+        } catch (IOException e) {
+            throw new RuntimeException(
+                    String.format("%s was not set, and couldn't create an artificial one.",
+                            varName));
+        }
     }
 
     /**

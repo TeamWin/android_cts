@@ -16,13 +16,18 @@
 
 package com.android.cts.deviceidle;
 
-import com.android.tradefed.build.IBuildInfo;
+import static org.junit.Assert.*;
+
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil;
-import com.android.tradefed.testtype.DeviceTestCase;
-import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
+import org.junit.After;
 import org.junit.Assume;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,23 +35,17 @@ import java.util.List;
 /**
  * Tests that it is possible to remove apps from the system whitelist
  */
-public class DeviceIdleWhitelistTest extends DeviceTestCase implements IBuildReceiver {
+@RunWith(DeviceJUnit4ClassRunner.class)
+public class DeviceIdleWhitelistTest extends BaseHostJUnit4Test {
 
     private static final String DEVICE_IDLE_COMMAND_PREFIX = "cmd deviceidle sys-whitelist ";
     private static final String RESET_SYS_WHITELIST_COMMAND = "cmd deviceidle sys-whitelist reset";
     private static final String SHOW_SYS_WHITELIST_COMMAND = DEVICE_IDLE_COMMAND_PREFIX;
 
     private List<String> mOriginalSystemWhitelist;
-    protected IBuildInfo mCtsBuild;
 
-    @Override
-    public void setBuild(IBuildInfo buildInfo) {
-        mCtsBuild = buildInfo;
-    }
-
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
         getDevice().executeShellCommand(RESET_SYS_WHITELIST_COMMAND);
         mOriginalSystemWhitelist = getSystemWhitelist();
         if (mOriginalSystemWhitelist.size() < 1) {
@@ -55,12 +54,12 @@ public class DeviceIdleWhitelistTest extends DeviceTestCase implements IBuildRec
         }
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
+    @After
+    public void tearDown() throws Exception {
         getDevice().executeShellCommand(RESET_SYS_WHITELIST_COMMAND);
     }
 
+    @Test
     public void testRemoveFromSysWhitelist() throws Exception {
         final String packageToRemove = mOriginalSystemWhitelist.get(0);
         getDevice().executeShellCommand(DEVICE_IDLE_COMMAND_PREFIX + "-" + packageToRemove);
@@ -69,6 +68,7 @@ public class DeviceIdleWhitelistTest extends DeviceTestCase implements IBuildRec
                 newWhitelist.contains(packageToRemove));
     }
 
+    @Test
     public void testRemovesPersistedAcrossReboots() throws Exception {
         for (int i = 0; i < mOriginalSystemWhitelist.size(); i+=2) {
             // remove odd indexed packages from the whitelist
