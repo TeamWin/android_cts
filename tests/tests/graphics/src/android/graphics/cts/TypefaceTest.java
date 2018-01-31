@@ -316,19 +316,19 @@ public class TypefaceTest {
 
     @Test
     public void testCreateFromAsset_cachesTypeface() {
-        Typeface typeface1 = Typeface.createFromAsset(mContext.getAssets(), "bombfont2.ttf");
+        Typeface typeface1 = Typeface.createFromAsset(mContext.getAssets(), "samplefont.ttf");
         assertNotNull(typeface1);
 
-        Typeface typeface2 = Typeface.createFromAsset(mContext.getAssets(), "bombfont2.ttf");
+        Typeface typeface2 = Typeface.createFromAsset(mContext.getAssets(), "samplefont.ttf");
         assertNotNull(typeface2);
         assertSame("Same font asset should return same Typeface object", typeface1, typeface2);
 
-        Typeface typeface3 = Typeface.createFromAsset(mContext.getAssets(), "bombfont.ttf");
+        Typeface typeface3 = Typeface.createFromAsset(mContext.getAssets(), "samplefont2.ttf");
         assertNotNull(typeface3);
         assertNotSame("Different font asset should return different Typeface object",
                 typeface2, typeface3);
 
-        Typeface typeface4 = Typeface.createFromAsset(mContext.getAssets(), "samplefont.ttf");
+        Typeface typeface4 = Typeface.createFromAsset(mContext.getAssets(), "samplefont3.ttf");
         assertNotNull(typeface4);
         assertNotSame("Different font asset should return different Typeface object",
                 typeface2, typeface4);
