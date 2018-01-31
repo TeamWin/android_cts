@@ -336,8 +336,7 @@ public class ClientTest {
     public void testStartNormal() throws Exception {
         // start the normal activity
         try {
-            final Intent startNormalIntent = new Intent(ACTION_START_NORMAL)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            final Intent startNormalIntent = new Intent(ACTION_START_NORMAL);
             InstrumentationRegistry
                     .getContext().startActivity(startNormalIntent, null /*options*/);
             final TestResult testResult = getResult();
@@ -347,8 +346,7 @@ public class ClientTest {
 
         // start the normal activity; directed package
         try {
-            final Intent startNormalIntent = new Intent(ACTION_START_NORMAL)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            final Intent startNormalIntent = new Intent(ACTION_START_NORMAL);
             startNormalIntent.setPackage("com.android.cts.normalapp");
             InstrumentationRegistry
                     .getContext().startActivity(startNormalIntent, null /*options*/);
@@ -359,8 +357,7 @@ public class ClientTest {
 
         // start the normal activity; directed component
         try {
-            final Intent startNormalIntent = new Intent(ACTION_START_NORMAL)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            final Intent startNormalIntent = new Intent(ACTION_START_NORMAL);
             startNormalIntent.setComponent(new ComponentName(
                     "com.android.cts.normalapp", "com.android.cts.normalapp.NormalActivity"));
             InstrumentationRegistry
@@ -374,8 +371,7 @@ public class ClientTest {
 //       the normal app and chrome; for which there is no easy solution.
 //        // start the normal activity; using VIEW/BROWSABLE
 //        {
-//            final Intent startViewIntent = new Intent(Intent.ACTION_VIEW)
-//                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//            final Intent startViewIntent = new Intent(Intent.ACTION_VIEW);
 //            startViewIntent.addCategory(Intent.CATEGORY_BROWSABLE);
 //            startViewIntent.setData(Uri.parse("https://cts.google.com/normal"));
 //            InstrumentationRegistry.getContext().startActivity(startViewIntent, null /*options*/);
@@ -443,8 +439,7 @@ public class ClientTest {
     @Test
     public void testStartExposed01() throws Exception {
         // start the explicitly exposed activity
-        final Intent startExposedIntent = new Intent(ACTION_START_EXPOSED)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        final Intent startExposedIntent = new Intent(ACTION_START_EXPOSED);
         InstrumentationRegistry
                 .getContext().startActivity(startExposedIntent, null /*options*/);
         final TestResult testResult = getResult();
@@ -463,8 +458,7 @@ public class ClientTest {
     @Test
     public void testStartExposed02() throws Exception {
         // start the explicitly exposed activity; directed package
-        final Intent startExposedIntent = new Intent(ACTION_START_EXPOSED)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        final Intent startExposedIntent = new Intent(ACTION_START_EXPOSED);
         startExposedIntent.setPackage("com.android.cts.normalapp");
         InstrumentationRegistry
                 .getContext().startActivity(startExposedIntent, null /*options*/);
@@ -484,8 +478,7 @@ public class ClientTest {
     @Test
     public void testStartExposed03() throws Exception {
         // start the explicitly exposed activity; directed component
-        final Intent startExposedIntent = new Intent(ACTION_START_EXPOSED)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        final Intent startExposedIntent = new Intent(ACTION_START_EXPOSED);
         startExposedIntent.setComponent(new ComponentName(
                 "com.android.cts.normalapp", "com.android.cts.normalapp.ExposedActivity"));
         InstrumentationRegistry
@@ -507,8 +500,7 @@ public class ClientTest {
     public void testStartExposed04() throws Exception {
         // start the implicitly exposed activity; directed package
         try {
-            final Intent startExposedIntent = new Intent(Intent.ACTION_VIEW)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            final Intent startExposedIntent = new Intent(Intent.ACTION_VIEW);
             startExposedIntent.setPackage("com.android.cts.implicitapp");
             startExposedIntent.addCategory(Intent.CATEGORY_BROWSABLE);
             startExposedIntent.setData(Uri.parse("https://cts.google.com/implicit"));
@@ -522,8 +514,7 @@ public class ClientTest {
     public void testStartExposed05() throws Exception {
         // start the implicitly exposed activity; directed component
         try {
-            final Intent startExposedIntent = new Intent(Intent.ACTION_VIEW)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            final Intent startExposedIntent = new Intent(Intent.ACTION_VIEW);
             startExposedIntent.setComponent(new ComponentName(
                     "com.android.cts.implicitapp",
                     "com.android.cts.implicitapp.ImplicitActivity"));
@@ -538,8 +529,7 @@ public class ClientTest {
     @Test
     public void testStartExposed06() throws Exception {
         // start the exposed service; directed package
-        final Intent startExposedIntent = new Intent(ACTION_START_EXPOSED)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        final Intent startExposedIntent = new Intent(ACTION_START_EXPOSED);
         startExposedIntent.setPackage("com.android.cts.normalapp");
         InstrumentationRegistry.getContext().startForegroundService(startExposedIntent);
         final TestResult testResult = getResult();
@@ -668,8 +658,7 @@ public class ClientTest {
     public void testStartEphemeral() throws Exception {
         // start the ephemeral activity
         {
-            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL);
             InstrumentationRegistry
                     .getContext().startActivity(startEphemeralIntent, null /*options*/);
             final TestResult testResult = getResult();
@@ -685,8 +674,7 @@ public class ClientTest {
 
         // start the ephemeral activity; directed package
         {
-            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL);
             startEphemeralIntent.setPackage("com.android.cts.ephemeralapp1");
             InstrumentationRegistry
                     .getContext().startActivity(startEphemeralIntent, null /*options*/);
@@ -703,8 +691,7 @@ public class ClientTest {
 
         // start the ephemeral activity; directed component
         {
-            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL);
             startEphemeralIntent.setComponent(
                     new ComponentName("com.android.cts.ephemeralapp1",
                             "com.android.cts.ephemeralapp1.EphemeralActivity"));
@@ -723,8 +710,7 @@ public class ClientTest {
 
         // start a private ephemeral activity
         {
-            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL_PRIVATE)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL_PRIVATE);
             InstrumentationRegistry
                     .getContext().startActivity(startEphemeralIntent, null /*options*/);
             final TestResult testResult = getResult();
@@ -740,8 +726,7 @@ public class ClientTest {
 
         // start a private ephemeral activity; directed package
         {
-            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL_PRIVATE)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL_PRIVATE);
             startEphemeralIntent.setPackage("com.android.cts.ephemeralapp1");
             InstrumentationRegistry
                     .getContext().startActivity(startEphemeralIntent, null /*options*/);
@@ -758,8 +743,7 @@ public class ClientTest {
 
         // start a private ephemeral activity; directed component
         {
-            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL_PRIVATE)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL_PRIVATE);
             startEphemeralIntent.setComponent(
                     new ComponentName("com.android.cts.ephemeralapp1",
                             "com.android.cts.ephemeralapp1.EphemeralActivity2"));
@@ -778,8 +762,7 @@ public class ClientTest {
 
         // start a private ephemeral activity; directed component
         {
-            final Intent startEphemeralIntent = new Intent()
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            final Intent startEphemeralIntent = new Intent();
             startEphemeralIntent.setComponent(
                     new ComponentName("com.android.cts.ephemeralapp1",
                             "com.android.cts.ephemeralapp1.EphemeralActivity3"));
