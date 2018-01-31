@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2016 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,4 +33,36 @@ public class Poc17_09 extends SecurityTestCase {
                          "[\\s\\n\\S]*>>> /system/bin/" +
                          "mediaserver <<<[\\s\\n\\S]*", logcat);
     }
-}
+
+    /**
+     * b/63852675
+     */
+    @SecurityTest
+    public void testPocCve_2017_6983() throws Exception {
+      // Error code of 139 represents segmentation fault
+      assertFalse("Segfault found",
+        AdbUtils.runCommandGetExitCode("sqlite3 ':memory:' \"CREATE VIRTUAL TABLE a using fts3(b);"
+                                                          + "INSERT INTO a values(x'efbeaddeefbeadde');"
+                                                          + "SELECT optimize(b)  FROM a;\""
+                                      , getDevice()
+                                      )==139);
+      assertFalse("Segfault found",
+        AdbUtils.runCommandGetExitCode("sqlite3 ':memory:' \"CREATE VIRTUAL TABLE a using fts3(b);"
+                                                          + "INSERT INTO a values(x'efbeaddeefbeadde');"
+                                                          + "SELECT snippet(b)   FROM a;\""
+                                      , getDevice()
+                                      )==139);
+      assertFalse("Segfault found",
+        AdbUtils.runCommandGetExitCode("sqlite3 ':memory:' \"CREATE VIRTUAL TABLE a using fts3(b);"
+                                                          + "INSERT INTO a values(x'efbeaddeefbeadde');"
+                                                          + "SELECT offsets(b)   FROM a;\""
+                                      , getDevice()
+                                      )==139);
+      assertFalse("Segfault found",
+        AdbUtils.runCommandGetExitCode("sqlite3 ':memory:' \"CREATE VIRTUAL TABLE a using fts3(b);"
+                                                          + "INSERT INTO a values(x'efbeaddeefbeadde');"
+                                                          + "SELECT matchinfo(b) FROM a;\""
+                                      , getDevice()
+                                      )==139);
+    }
+ }
