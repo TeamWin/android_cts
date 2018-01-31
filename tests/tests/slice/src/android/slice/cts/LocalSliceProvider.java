@@ -32,19 +32,19 @@ public class LocalSliceProvider extends SliceProvider {
 
     @Override
     public Slice onBindSlice(Uri sliceUri, List<SliceSpec> specs) {
-        if (sProxy != null) sProxy.onBindSlice(sliceUri, specs);
+        if (sProxy != null) return sProxy.onBindSlice(sliceUri, specs);
         return super.onBindSlice(sliceUri, specs);
     }
 
     @Override
     public Uri onMapIntentToUri(Intent intent) {
-        if (sProxy != null) sProxy.onMapIntentToUri(intent);
+        if (sProxy != null) return sProxy.onMapIntentToUri(intent);
         return super.onMapIntentToUri(intent);
     }
 
     @Override
     public Collection<Uri> onGetSliceDescendants(Uri uri) {
-        if (sProxy != null) sProxy.onGetSliceDescendants(uri);
+        if (sProxy != null) return sProxy.onGetSliceDescendants(uri);
         return super.onGetSliceDescendants(uri);
     }
 
