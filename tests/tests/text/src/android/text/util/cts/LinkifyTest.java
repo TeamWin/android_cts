@@ -19,6 +19,9 @@ package android.text.util.cts;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
@@ -32,13 +35,21 @@ import android.text.style.URLSpan;
 import android.text.util.Linkify;
 import android.text.util.Linkify.MatchFilter;
 import android.text.util.Linkify.TransformFilter;
+import android.view.textclassifier.TextClassifier;
+import android.view.textclassifier.TextLinks;
 import android.widget.TextView;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -932,6 +943,38 @@ public class LinkifyTest {
         email = email + "m";
         verifyAddLinksWithEmailFails("Should not match email domain of length:" +
                 domain.length(), email);
+    }
+
+    @Test
+    public void testLinkifyAsync() throws Exception {
+        final String email = "wales@example.com";
+        final Spannable text = new SpannableString(email + " is an email address");
+        final int start = 0;
+        final int end = email.length();
+        final Map<String, Float> entityScores = new HashMap<>();
+        entityScores.put(TextClassifier.TYPE_EMAIL, 1f);
+        final TextClassifier classifier = mock(TextClassifier.class);
+
+        final TextView textView = new TextView(mContext);
+        textView.setText(text);
+        textView.setTextClassifier(classifier);
+        final TextLinks.Options options = TextLinks.Options.fromLinkMask(Linkify.EMAIL_ADDRESSES);
+        final Executor executor = Executors.newSingleThreadExecutor();
+        final Consumer<Integer> callback = mock(Consumer.class);
+        final TextLinks links = new TextLinks.Builder(text.toString())
+                .addLink(start, end, entityScores)
+                .build();
+
+        when(classifier.generateLinks(text, options)).thenReturn(links);
+
+        final Future future = Linkify.addLinksAsync(textView, options, executor, callback);
+        future.get();
+
+        verify(callback).accept(TextLinks.STATUS_LINKS_APPLIED);
+        assertEquals(1,
+                ((Spannable) textView.getText()).getSpans(start, end, TextLinks.TextLinkSpan.class)
+                        .length);
+        // TODO: Add more Linkify async tests.
     }
 
     // Utility functions
