@@ -1511,7 +1511,10 @@ public class ImageDecoderTest {
             Uri uri = getAsResourceUri(resId);
             ImageDecoder.Source src = ImageDecoder.createSource(mContentResolver, uri);
             try {
-                Bitmap bm = ImageDecoder.decodeBitmap(src);
+                Bitmap bm = ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
+                    // Use software allocator so we can compare.
+                    decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
+                });
                 assertNotNull(bm);
                 assertEquals(100, bm.getWidth());
                 assertEquals(80,  bm.getHeight());
