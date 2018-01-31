@@ -3606,6 +3606,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mUiBot.assertNoDatasets();
     }
 
+    // TODO(b/70682223): add a new test to make sure service with BIND_AUTOFILL permission works
     @Test
     public void testServiceIsDisabledWhenNewServiceInfoIsInvalid() throws Exception {
         serviceIsDisabledWhenNewServiceIsInvalid(BadAutofillService.SERVICE_NAME);
