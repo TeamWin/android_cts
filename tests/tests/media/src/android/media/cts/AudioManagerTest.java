@@ -47,6 +47,7 @@ import android.content.res.Resources;
 import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.media.MicrophoneInfo;
 import android.os.Vibrator;
 import android.provider.Settings;
 import android.provider.Settings.System;
@@ -55,9 +56,11 @@ import android.util.Log;
 import android.view.SoundEffectConstants;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class AudioManagerTest extends InstrumentationTestCase {
+    private final static String TAG = "AudioManagerTest";
 
     private final static int MP3_TO_PLAY = R.raw.testmp3;
     private final static long TIME_TO_PLAY = 2000;
@@ -1237,6 +1240,36 @@ public class AudioManagerTest extends InstrumentationTestCase {
 
         // Call the method with illegal stream. System should not reboot.
         mAudioManager.adjustSuggestedStreamVolume(AudioManager.ADJUST_RAISE, 66747, 0);
+    }
+
+    public void testGetMicrophones() throws Exception {
+        if (!mContext.getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_MICROPHONE)) {
+            return;
+        }
+        List<MicrophoneInfo> microphones = mAudioManager.getMicrophones();
+        assertTrue(microphones.size() > 0);
+        for (int i = 0; i < microphones.size(); i++) {
+            MicrophoneInfo microphone = microphones.get(i);
+            Log.i(TAG, "deviceId:" + microphone.getDescription());
+            Log.i(TAG, "portId:" + microphone.getId());
+            Log.i(TAG, "type:" + microphone.getType());
+            Log.i(TAG, "deviceLocation:" + microphone.getLocation());
+            Log.i(TAG, "deviceGroup:" + microphone.getGroup()
+                    + " index:" + microphone.getIndexInTheGroup());
+            MicrophoneInfo.Coordinate3F position = microphone.getPosition();
+            Log.i(TAG, "position:" + position.x + " " + position.y + " " + position.z);
+            MicrophoneInfo.Coordinate3F orientation = microphone.getOrientation();
+            Log.i(TAG, "orientation:" + orientation.x + " "
+                    + orientation.y + " " + orientation.z);
+            Log.i(TAG, "frequencyResponse:" + microphone.getFrequencyResponse());
+            Log.i(TAG, "channelMapping:" + microphone.getChannelMapping());
+            Log.i(TAG, "sensitivity:" + microphone.getSensitivity());
+            Log.i(TAG, "max spl:" + microphone.getMaxSpl());
+            Log.i(TAG, "min spl:" + microphone.getMinSpl());
+            Log.i(TAG, "directionality:" + microphone.getDirectionality());
+            Log.i(TAG, "--------------");
+        }
     }
 
     private void setInterruptionFilter(int filter) throws Exception {
