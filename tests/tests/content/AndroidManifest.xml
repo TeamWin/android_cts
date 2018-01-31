@@ -120,7 +120,8 @@
                 android:maxRecents="1"
                 android:multiArch="true"
                 android:name="android.content.cts.MockApplication"
-                android:supportsRtl="true">
+                android:supportsRtl="true"
+                android:appCategory="productivity">
         <activity android:name="android.content.cts.MockActivity">
             <meta-data android:name="android.app.alias"
                 android:resource="@xml/alias" />
