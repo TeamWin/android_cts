@@ -107,6 +107,11 @@ final class Helper {
     static final int UI_SCREEN_ORIENTATION_TIMEOUT_MS = 5000;
 
     /**
+     * Timeout (in milliseconds) for using Recents to swtich activities.
+     */
+    static final int UI_RECENTS_SWITCH_TIMEOUT_MS = 200;
+
+    /**
      * Time to wait in between retries
      */
     static final int RETRY_MS = 100;
