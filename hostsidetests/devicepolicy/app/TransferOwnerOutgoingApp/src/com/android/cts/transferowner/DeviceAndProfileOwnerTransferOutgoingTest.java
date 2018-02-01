@@ -16,9 +16,11 @@
 package com.android.cts.transferowner;
 
 import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertTrue;
 
 import static org.junit.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertThrows;
 
 import android.app.admin.DeviceAdminReceiver;
@@ -37,7 +39,6 @@ import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.Set;
 
@@ -54,9 +55,12 @@ public abstract class DeviceAndProfileOwnerTransferOutgoingTest {
     private static final String TRANSFER_OWNER_INCOMING_PKG =
             "com.android.cts.transferownerincoming";
     private static final String TRANSFER_OWNER_INCOMING_TEST_RECEIVER_CLASS =
-            "com.android.cts.transferowner.DeviceAndProfileOwnerTransferIncomingTest$BasicAdminReceiver";
+            "com.android.cts.transferowner.DeviceAndProfileOwnerTransferIncomingTest"
+                    + "$BasicAdminReceiver";
     private static final String TRANSFER_OWNER_INCOMING_TEST_RECEIVER_NO_METADATA_CLASS =
-            "com.android.cts.transferowner.DeviceAndProfileOwnerTransferIncomingTest$BasicAdminReceiverNoMetadata";
+            "com.android.cts.transferowner.DeviceAndProfileOwnerTransferIncomingTest"
+                    + "$BasicAdminReceiverNoMetadata";
+    private static final String ARE_PARAMETERS_SAVED = "ARE_PARAMETERS_SAVED";
     static final ComponentName INCOMING_COMPONENT_NAME =
             new ComponentName(
                     TRANSFER_OWNER_INCOMING_PKG, TRANSFER_OWNER_INCOMING_TEST_RECEIVER_CLASS);
@@ -91,7 +95,7 @@ public abstract class DeviceAndProfileOwnerTransferOutgoingTest {
         assertThrows(
                 IllegalArgumentException.class,
                 () -> {
-                    transferOwnership(
+                    mDevicePolicyManager.transferOwnership(
                             mOutgoingComponentName, mOutgoingComponentName, b);
                 });
     }
@@ -102,20 +106,9 @@ public abstract class DeviceAndProfileOwnerTransferOutgoingTest {
         assertThrows(
                 IllegalArgumentException.class,
                 () -> {
-                    transferOwnership(mOutgoingComponentName, INVALID_TARGET_COMPONENT, b);
+                    mDevicePolicyManager.transferOwnership(mOutgoingComponentName,
+                            INVALID_TARGET_COMPONENT, b);
                 });
-    }
-
-    protected void transferOwnership(ComponentName outgoing, ComponentName incoming,
-            PersistableBundle parameters)
-            throws Throwable {
-        try {
-            mDevicePolicyManager.getClass().getMethod("transferOwnership",
-                    ComponentName.class, ComponentName.class, PersistableBundle.class)
-                    .invoke(mDevicePolicyManager, outgoing, incoming, parameters);
-        } catch (InvocationTargetException e) {
-            throw e.getTargetException();
-        }
     }
 
     @Test
@@ -125,7 +118,8 @@ public abstract class DeviceAndProfileOwnerTransferOutgoingTest {
         try {
             receiver.register();
             PersistableBundle b = new PersistableBundle();
-            transferOwnership(mOutgoingComponentName, INCOMING_COMPONENT_NAME, b);
+            mDevicePolicyManager.transferOwnership(mOutgoingComponentName,
+                    INCOMING_COMPONENT_NAME, b);
             Intent intent = receiver.awaitForBroadcast();
             assertNotNull(intent);
         } finally {
@@ -136,7 +130,13 @@ public abstract class DeviceAndProfileOwnerTransferOutgoingTest {
     @Test
     public void testTransferOwner() throws Throwable {
         PersistableBundle b = new PersistableBundle();
-        transferOwnership(mOutgoingComponentName, INCOMING_COMPONENT_NAME, b);
+        mDevicePolicyManager.transferOwnership(mOutgoingComponentName, INCOMING_COMPONENT_NAME, b);
+    }
+
+    @Test
+    public void testTransferOwnershipNullBundle() throws Throwable {
+        mDevicePolicyManager.transferOwnership(mOutgoingComponentName,
+                INCOMING_COMPONENT_NAME, null);
     }
 
     @Test
@@ -145,7 +145,7 @@ public abstract class DeviceAndProfileOwnerTransferOutgoingTest {
         assertThrows(
                 IllegalArgumentException.class,
                 () -> {
-                    transferOwnership(mOutgoingComponentName,
+                    mDevicePolicyManager.transferOwnership(mOutgoingComponentName,
                             INCOMING_NO_METADATA_COMPONENT_NAME, b);
                 });
     }
@@ -163,6 +163,26 @@ public abstract class DeviceAndProfileOwnerTransferOutgoingTest {
     @Test
     public void testSetAffiliationId1() {
         setAffiliationId("id.number.1");
+    }
+
+    @Test
+    public void testTransferOwnershipBundleSaved() throws Throwable {
+        PersistableBundle b = new PersistableBundle();
+        b.putBoolean(ARE_PARAMETERS_SAVED, true);
+        mDevicePolicyManager.transferOwnership(mOutgoingComponentName, INCOMING_COMPONENT_NAME, b);
+    }
+
+    @Test
+    public void testGetTransferOwnershipBundleOnlyCalledFromAdmin() throws Throwable {
+        PersistableBundle b = new PersistableBundle();
+        b.putBoolean(ARE_PARAMETERS_SAVED, true);
+        mDevicePolicyManager.transferOwnership(mOutgoingComponentName, INCOMING_COMPONENT_NAME, b);
+        assertThrows(SecurityException.class, mDevicePolicyManager::getTransferOwnershipBundle);
+    }
+
+    @Test
+    public void testIsBundleNullNoTransfer() throws Throwable {
+        assertNull(mDevicePolicyManager.getTransferOwnershipBundle());
     }
 
     private void setUserRestriction(String restriction, boolean add) {
