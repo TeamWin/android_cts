@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.fragment.cts;
 
+package android.fragment.cts.sdk26;
+
+import android.app.Activity;
 import android.app.Fragment;
+import android.os.Bundle;
 
-public class NonConfigOnStopActivity extends RecreatedActivity {
+import java.util.concurrent.CountDownLatch;
+
+public class NonConfigOnStopActivity extends Activity {
+    static NonConfigOnStopActivity sActivity;
+    static CountDownLatch sDestroyed;
+    static CountDownLatch sResumed;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        sActivity = this;
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (sResumed != null) {
+            sResumed.countDown();
+        }
+    }
+
     @Override
     protected void onStop() {
         super.onStop();
@@ -26,6 +49,14 @@ public class NonConfigOnStopActivity extends RecreatedActivity {
                 .beginTransaction()
                 .add(new RetainedFragment(), "1")
                 .commitNowAllowingStateLoss();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (sDestroyed != null) {
+            sDestroyed.countDown();
+        }
     }
 
     public static class RetainedFragment extends Fragment {

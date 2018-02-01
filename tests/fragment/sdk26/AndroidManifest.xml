@@ -14,27 +14,15 @@
      limitations under the License.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.fragment.cts">
-
-    <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
+    package="android.fragment.cts.sdk26">
 
     <application>
         <uses-library android:name="android.test.runner" />
-
-        <activity android:name=".FragmentTestActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        <activity android:name=".LoaderActivity"/>
-        <activity android:name=".NewIntentActivity" android:launchMode="singleInstance" />
-        <activity android:name=".ConfigOnStopActivity"/>
+        <activity android:name=".NonConfigOnStopActivity"/>
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
-                     android:targetPackage="android.fragment.cts"
+                     android:targetPackage="android.fragment.cts.sdk26"
                      android:label="CTS tests of android.app Fragments" />
-
 </manifest>
 
