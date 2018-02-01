@@ -1338,6 +1338,68 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
+    public void filterTextDisabledUsingNullRegex() throws Exception {
+        // Dataset presentations.
+        final String unfilterable = "Unfilterabled";
+        final String aOrW = "A or W";
+        final String w = "Wazzup";
+
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                // This dataset has a value but filter is disabled
+                .addDataset(new CannedDataset.Builder()
+                        .setUnfilterableField(ID_USERNAME, "a am I")
+                        .setPresentation(createPresentation(unfilterable))
+                        .build())
+                // This dataset uses pattern to filter
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "whatsoever", createPresentation(aOrW),
+                                Pattern.compile("a|aw"))
+                        .build())
+                // This dataset uses value to filter
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "wazzup")
+                        .setPresentation(createPresentation(w))
+                        .build())
+                .build());
+
+        // Trigger auto-fill.
+        requestFocusOnUsername();
+        sReplier.getNextFillRequest();
+
+        // With no filter text all datasets should be shown
+        mUiBot.assertDatasets(unfilterable, aOrW, w);
+
+        // Only one dataset start with 'a'
+        mActivity.onUsername((v) -> v.setText("a"));
+        mUiBot.assertDatasets(aOrW);
+
+        // No dataset starts with 'aa'
+        mActivity.onUsername((v) -> v.setText("aa"));
+        mUiBot.assertNoDatasets();
+
+        // Only one datasets start with 'a'
+        mActivity.onUsername((v) -> v.setText("a"));
+        mUiBot.assertDatasets(aOrW);
+
+        // With no filter text all datasets should be shown
+        mActivity.onUsername((v) -> v.setText(""));
+        mUiBot.assertDatasets(unfilterable, aOrW, w);
+
+        // Only one datasets start with 'w'
+        mActivity.onUsername((v) -> v.setText("w"));
+        mUiBot.assertDatasets(w);
+
+        // No dataset start with 'aaa'
+        final MyAutofillCallback callback = mActivity.registerCallback();
+        mActivity.onUsername((v) -> v.setText("aaa"));
+        callback.assertUiHiddenEvent(mActivity.getUsername());
+        mUiBot.assertNoDatasets();
+    }
+
+    @Test
     public void testSaveOnly() throws Exception {
         saveOnlyTest(false);
     }
@@ -3544,6 +3606,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mUiBot.assertNoDatasets();
     }
 
+    // TODO(b/70682223): add a new test to make sure service with BIND_AUTOFILL permission works
     @Test
     public void testServiceIsDisabledWhenNewServiceInfoIsInvalid() throws Exception {
         serviceIsDisabledWhenNewServiceIsInvalid(BadAutofillService.SERVICE_NAME);

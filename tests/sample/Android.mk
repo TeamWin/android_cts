@@ -40,4 +40,4 @@ LOCAL_PACKAGE_NAME := CtsSampleDeviceTestCases
 
 LOCAL_SDK_VERSION := current
 
-include $(BUILD_PACKAGE)
+include $(BUILD_CTS_PACKAGE)

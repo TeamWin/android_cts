@@ -14,6 +14,7 @@
 
 package android.slice.cts;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -29,6 +30,7 @@ import android.app.slice.SliceManager;
 import android.app.slice.SliceManager.SliceCallback;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
 import android.support.test.InstrumentationRegistry;
@@ -38,6 +40,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.mockito.verification.Timeout;
 
 import java.io.BufferedReader;
@@ -137,6 +141,22 @@ public class SliceManagerTest {
             mSliceManager.unregisterSliceCallback(BASE_URI, callback);
             verify(LocalSliceProvider.sProxy, timeout(2000)).onSliceUnpinned(eq(BASE_URI));
         }
+    }
+
+    @Test
+    public void testMapIntentToUri() {
+        Intent intent = new Intent("android.slice.cts.action.TEST_ACTION");
+        intent.setPackage("android.slice.cts");
+        intent.putExtra("path", "intent");
+
+        when(LocalSliceProvider.sProxy.onMapIntentToUri(any())).then(
+                (Answer<Uri>) invocation -> BASE_URI.buildUpon().path(
+                        ((Intent) invocation.getArguments()[0]).getStringExtra("path")).build());
+
+        Uri uri = mSliceManager.mapIntentToUri(intent);
+
+        assertEquals(BASE_URI.buildUpon().path("intent").build(), uri);
+        verify(LocalSliceProvider.sProxy).onMapIntentToUri(eq(intent));
     }
 
     public static String getDefaultLauncher() throws Exception {

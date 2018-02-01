@@ -466,7 +466,7 @@ final class CannedFillResponse {
     static class CannedDataset {
         private final Map<String, AutofillValue> mFieldValues;
         private final Map<String, RemoteViews> mFieldPresentations;
-        private final Map<String, Pattern> mFieldFilters;
+        private final Map<String, Pair<Boolean, Pattern>> mFieldFilters;
         private final RemoteViews mPresentation;
         private final IntentSender mAuthentication;
         private final String mId;
@@ -498,18 +498,18 @@ final class CannedFillResponse {
                     final AutofillId autofillid = node.getAutofillId();
                     final AutofillValue value = entry.getValue();
                     final RemoteViews presentation = mFieldPresentations.get(id);
-                    final Pattern filter = mFieldFilters.get(id);
+                    final Pair<Boolean, Pattern> filter = mFieldFilters.get(id);
                     if (presentation != null) {
                         if (filter == null) {
                             builder.setValue(autofillid, value, presentation);
                         } else {
-                            builder.setValue(autofillid, value, filter, presentation);
+                            builder.setValue(autofillid, value, filter.second, presentation);
                         }
                     } else {
                         if (filter == null) {
                             builder.setValue(autofillid, value);
                         } else {
-                            builder.setValue(autofillid, value, filter);
+                            builder.setValue(autofillid, value, filter.second);
                         }
                     }
                 }
@@ -530,7 +530,7 @@ final class CannedFillResponse {
         static class Builder {
             private final Map<String, AutofillValue> mFieldValues = new HashMap<>();
             private final Map<String, RemoteViews> mFieldPresentations = new HashMap<>();
-            private final Map<String, Pattern> mFieldFilters = new HashMap<>();
+            private final Map<String, Pair<Boolean, Pattern>> mFieldFilters = new HashMap<>();
 
             private RemoteViews mPresentation;
             private IntentSender mAuthentication;
@@ -563,7 +563,11 @@ final class CannedFillResponse {
              * {@link IdMode}.
              */
             public Builder setField(String id, String text, Pattern filter) {
-                return setField(id, AutofillValue.forText(text), filter);
+                return setField(id, AutofillValue.forText(text), true, filter);
+            }
+
+            public Builder setUnfilterableField(String id, String text) {
+                return setField(id, AutofillValue.forText(text), false, null);
             }
 
             /**
@@ -618,9 +622,10 @@ final class CannedFillResponse {
              * For example, {@link InstrumentedAutoFillService.Replier} resolves the id based on
              * {@link IdMode}.
              */
-            public Builder setField(String id, AutofillValue value, Pattern filter) {
+            public Builder setField(String id, AutofillValue value, boolean filterable,
+                    Pattern filter) {
                 setField(id, value);
-                mFieldFilters.put(id, filter);
+                mFieldFilters.put(id, new Pair<>(filterable, filter));
                 return this;
             }
 
@@ -647,7 +652,7 @@ final class CannedFillResponse {
             public Builder setField(String id, String text, RemoteViews presentation,
                     Pattern filter) {
                 setField(id, text, presentation);
-                mFieldFilters.put(id, filter);
+                mFieldFilters.put(id, new Pair<>(true, filter));
                 return this;
             }
 

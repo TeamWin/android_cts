@@ -42,6 +42,7 @@ import static org.junit.Assume.assumeTrue;
 import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
 
+import android.support.test.filters.FlakyTest;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -82,6 +83,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
 
     @Test
     @Presubmit
+    @FlakyTest(bugId = 71792393)
     public void testStackList() throws Exception {
         launchActivity(TEST_ACTIVITY_NAME);
         mAmWmState.computeState(new String[] {TEST_ACTIVITY_NAME});
@@ -207,6 +209,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
 
     @Test
     @Presubmit
+    @FlakyTest(bugId = 71792393)
     public void testLaunchToSideMultiple() throws Exception {
         launchActivitiesInSplitScreen(LAUNCHING_ACTIVITY, TEST_ACTIVITY_NAME);
 
@@ -243,6 +246,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
     }
 
     @Presubmit
+    @FlakyTest(bugId = 71792393)
     @Test
     public void testLaunchToSideMultipleWithDifferentIntent() throws Exception {
         launchTargetToSide(TEST_ACTIVITY_NAME, true);

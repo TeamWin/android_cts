@@ -67,16 +67,14 @@ public class DatasetTest {
 
     @Test
     public void testBuilder_setFilteredValueWithNullFilter() {
-        final Dataset.Builder builder = new Dataset.Builder();
-        assertThrows(NullPointerException.class, () -> builder.setValue(mId, mValue,
-                (Pattern) null));
+        assertThat(new Dataset.Builder(mPresentation).setValue(mId, mValue, (Pattern) null).build())
+                .isNotNull();
     }
 
     @Test
     public void testBuilder_setFilteredValueWithPresentationNullFilter() {
-        final Dataset.Builder builder = new Dataset.Builder();
-        assertThrows(NullPointerException.class, () -> builder.setValue(mId, mValue, null,
-                mPresentation));
+        assertThat(new Dataset.Builder().setValue(mId, mValue, null, mPresentation).build())
+                .isNotNull();
     }
 
     @Test

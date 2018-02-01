@@ -293,7 +293,8 @@ public class ClientTest {
     public void testStartNormal() throws Exception {
         // start the normal activity
         {
-            final Intent startNormalIntent = new Intent(ACTION_START_NORMAL_ACTIVITY);
+            final Intent startNormalIntent = new Intent(ACTION_START_NORMAL_ACTIVITY)
+                    .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             InstrumentationRegistry.getContext().startActivity(startNormalIntent, null /*options*/);
             final TestResult testResult = getResult();
             assertThat(testResult.getPackageName(),
@@ -306,7 +307,8 @@ public class ClientTest {
 
         // start the normal activity; directed package
         {
-            final Intent startNormalIntent = new Intent(ACTION_START_NORMAL_ACTIVITY);
+            final Intent startNormalIntent = new Intent(ACTION_START_NORMAL_ACTIVITY)
+                    .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startNormalIntent.setPackage("com.android.cts.normalapp");
             InstrumentationRegistry.getContext().startActivity(startNormalIntent, null /*options*/);
             final TestResult testResult = getResult();
@@ -320,7 +322,8 @@ public class ClientTest {
 
         // start the normal activity; directed component
         {
-            final Intent startNormalIntent = new Intent(ACTION_START_NORMAL_ACTIVITY);
+            final Intent startNormalIntent = new Intent(ACTION_START_NORMAL_ACTIVITY)
+                    .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startNormalIntent.setComponent(new ComponentName(
                     "com.android.cts.normalapp", "com.android.cts.normalapp.NormalActivity"));
             InstrumentationRegistry.getContext().startActivity(startNormalIntent, null /*options*/);
@@ -354,9 +357,10 @@ public class ClientTest {
 
     @Test
     public void testStartEphemeral() throws Exception {
-        // start the ephemeral activity
+        // start the ephemeral activity; no EXTERNAL flag
         try {
-            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL_ACTIVITY);
+            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL_ACTIVITY)
+                    .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             InstrumentationRegistry.getContext().startActivity(
                     startEphemeralIntent, null /*options*/);
             final TestResult testResult = getResult();
@@ -364,9 +368,21 @@ public class ClientTest {
         } catch (ActivityNotFoundException expected) {
         }
 
-        // start the ephemeral activity; directed package
+        // start the ephemeral activity; EXTERNAL flag
+        {
+            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL_ACTIVITY)
+                    .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MATCH_EXTERNAL);
+            InstrumentationRegistry.getContext().startActivity(
+                    startEphemeralIntent, null /*options*/);
+            final TestResult testResult = getResult();
+            assertThat("com.android.cts.ephemeralapp1", is(testResult.getPackageName()));
+        }
+
+
+        // start the ephemeral activity; directed package, no EXTERNAL flag
         try {
-            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL_ACTIVITY);
+            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL_ACTIVITY)
+                    .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startEphemeralIntent.setPackage("com.android.cts.ephemeralapp1");
             InstrumentationRegistry.getContext().startActivity(
                     startEphemeralIntent, null /*options*/);
@@ -375,9 +391,36 @@ public class ClientTest {
         } catch (ActivityNotFoundException expected) {
         }
 
+        // start the ephemeral activity; directed package, includes EXTERNAL flag
+        {
+            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL_ACTIVITY)
+                    .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MATCH_EXTERNAL);
+            startEphemeralIntent.setPackage("com.android.cts.ephemeralapp1");
+            InstrumentationRegistry.getContext().startActivity(
+                    startEphemeralIntent, null /*options*/);
+            final TestResult testResult = getResult();
+            assertThat("com.android.cts.ephemeralapp1", is(testResult.getPackageName()));
+        }
+
         // start the ephemeral activity; directed component
         try {
-            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL_ACTIVITY);
+            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL_ACTIVITY)
+                    .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startEphemeralIntent.setComponent(
+                    new ComponentName("com.android.cts.ephemeralapp1",
+                            "com.android.cts.ephemeralapp1.EphemeralActivity"));
+            InstrumentationRegistry.getContext().startActivity(
+                    startEphemeralIntent, null /*options*/);
+            final TestResult testResult = getResult();
+            fail();
+        } catch (ActivityNotFoundException expected) {
+        }
+
+
+        // start the ephemeral activity; directed component, includes EXTERNAL flag
+        try {
+            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL_ACTIVITY)
+                    .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MATCH_EXTERNAL);
             startEphemeralIntent.setComponent(
                     new ComponentName("com.android.cts.ephemeralapp1",
                             "com.android.cts.ephemeralapp1.EphemeralActivity"));
@@ -390,7 +433,8 @@ public class ClientTest {
 
         // start the ephemeral activity; using VIEW/BROWSABLE
         {
-            final Intent startViewIntent = new Intent(Intent.ACTION_VIEW);
+            final Intent startViewIntent = new Intent(Intent.ACTION_VIEW)
+                    .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startViewIntent.addCategory(Intent.CATEGORY_BROWSABLE);
             startViewIntent.setData(Uri.parse("https://cts.google.com/ephemeral"));
             InstrumentationRegistry.getContext().startActivity(

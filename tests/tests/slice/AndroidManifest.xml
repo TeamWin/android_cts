@@ -28,11 +28,16 @@
         <uses-library android:name="android.test.runner" />
 
         <provider android:name=".SliceProvider"
-            android:authorities="android.slice.cts"
-            android:process=":slice_process" />
+                  android:authorities="android.slice.cts"
+                  android:process=":slice_process" />
 
         <provider android:name=".LocalSliceProvider"
-            android:authorities="android.slice.cts.local" />
+            android:authorities="android.slice.cts.local">
+            <intent-filter>
+                <action android:name="android.slice.cts.action.TEST_ACTION" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </provider>
 
         <activity android:name=".Launcher">
             <intent-filter>
