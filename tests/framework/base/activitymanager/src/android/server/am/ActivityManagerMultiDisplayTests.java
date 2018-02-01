@@ -60,15 +60,21 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
     private static final String SHOW_WHEN_LOCKED_ATTR_ACTIVITY_NAME = "ShowWhenLockedAttrActivity";
     private static final String SECOND_PACKAGE = "android.server.am.second";
     private static final String THIRD_PACKAGE = "android.server.am.third";
+    private static final ComponentName TEST_ACTIVITY = ComponentName.createRelative(
+            componentName, "." + TEST_ACTIVITY_NAME);
     private static final ComponentName SECOND_ACTIVITY = ComponentName.createRelative(
             SECOND_PACKAGE, ".SecondActivity");
     private static final ComponentName SECOND_NO_EMBEDDING_ACTIVITY = ComponentName.createRelative(
             SECOND_PACKAGE, ".SecondActivityNoEmbedding");
-    private static final ComponentName LAUNCH_BROADCAST_RECEIVER = ComponentName.createRelative(
-            SECOND_PACKAGE, ".LaunchBroadcastReceiver");
     /** See AndroidManifest.xml of appSecondUid. */
-    private static final String LAUNCH_BROADCAST_ACTION =
+    private static final ComponentName SECOND_LAUNCH_BROADCAST_RECEIVER =
+            ComponentName.createRelative(SECOND_PACKAGE, ".LaunchBroadcastReceiver");
+    /** See AndroidManifest.xml of appSecondUid. */
+    private static final String SECOND_LAUNCH_BROADCAST_ACTION =
             SECOND_PACKAGE + ".LAUNCH_BROADCAST_ACTION";
+    private final ComponentName LAUNCH_BROADCAST_RECEIVER = ComponentName.createRelative(
+            componentName, ".LaunchBroadcastReceiver");
+    private final String LAUNCH_BROADCAST_ACTION = componentName + ".LAUNCH_BROADCAST_ACTION";
     private static final ComponentName THIRD_ACTIVITY = ComponentName.createRelative(
             THIRD_PACKAGE, ".ThirdActivity");
 
@@ -315,16 +321,14 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             final String logSeparator = clearLogcat();
 
             // Try to launch an activity and check it security exception was triggered.
-            final String broadcastTarget = "-a " + LAUNCH_BROADCAST_ACTION
-                    + " -p " + LAUNCH_BROADCAST_RECEIVER.getPackageName();
-            final String includeStoppedPackagesFlag = " -f 0x00000020";
-            executeShellCommand("am broadcast " + broadcastTarget
-                    + " --ez launch_activity true --es target_activity " + TEST_ACTIVITY_NAME
-                    + " --es package_name " + componentName
-                    + " --ei display_id " + newDisplay.mId
-                    + includeStoppedPackagesFlag);
+            getLaunchActivityBuilder()
+                    .setUseBroadcastReceiver(SECOND_LAUNCH_BROADCAST_RECEIVER,
+                            SECOND_LAUNCH_BROADCAST_ACTION)
+                    .setDisplayId(newDisplay.mId)
+                    .setTargetActivity(TEST_ACTIVITY)
+                    .execute();
 
-            assertSecurityException("LaunchBroadcastReceiver", logSeparator);
+            assertSecurityException("ActivityLauncher", logSeparator);
 
             mAmWmState.computeState(new WaitForValidActivityState(TEST_ACTIVITY_NAME));
             assertFalse("Restricted activity must not be launched",
@@ -343,12 +347,11 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
 
             // Try to launch an activity and check it security exception was triggered.
-            final String broadcastTarget = "-a " + componentName + ".LAUNCH_BROADCAST_ACTION"
-                    + " -p " + componentName;
-            executeShellCommand("am broadcast " + broadcastTarget
-                    + " --ez launch_activity true --es target_activity " + TEST_ACTIVITY_NAME
-                    + " --es package_name " + componentName
-                    + " --ei display_id " + newDisplay.mId);
+            getLaunchActivityBuilder()
+                    .setUseBroadcastReceiver(LAUNCH_BROADCAST_RECEIVER, LAUNCH_BROADCAST_ACTION)
+                    .setDisplayId(newDisplay.mId)
+                    .setTargetActivity(TEST_ACTIVITY)
+                    .execute();
 
             mAmWmState.waitForValidState(TEST_ACTIVITY_NAME);
 
@@ -506,7 +509,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
 
             // Launch other activity with different uid and check if it has launched successfully.
             getLaunchActivityBuilder()
-                    .setUseBroadcastReceiver(LAUNCH_BROADCAST_RECEIVER, LAUNCH_BROADCAST_ACTION)
+                    .setUseBroadcastReceiver(SECOND_LAUNCH_BROADCAST_RECEIVER,
+                            SECOND_LAUNCH_BROADCAST_ACTION)
                     .setDisplayId(newDisplay.mId)
                     .setTargetActivity(THIRD_ACTIVITY)
                     .execute();
@@ -732,6 +736,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             logSeparator = clearLogcat();
         }
 
+        mAmWmState.computeState();
         assertActivityLifecycle(RESIZEABLE_ACTIVITY_NAME, false /* relaunched */, logSeparator);
         mAmWmState.waitForValidState(RESIZEABLE_ACTIVITY_NAME, windowingMode,
                 ACTIVITY_TYPE_STANDARD);
@@ -876,14 +881,12 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
 
             // Launch another activity with third different uid from app on secondary display and
             // check it is launched on secondary display.
-            final String targetActivity =
-                    " --es target_activity " + THIRD_ACTIVITY.getShortClassName()
-                    + " --es package_name " + THIRD_ACTIVITY.getPackageName()
-                    + " --ei display_id " + newDisplay.mId;
-            final String includeStoppedPackagesFlag = " -f 0x00000020";
-            executeShellCommand("am broadcast -a " + LAUNCH_BROADCAST_ACTION
-                    + " -p " + LAUNCH_BROADCAST_RECEIVER.getPackageName()
-                    + targetActivity + includeStoppedPackagesFlag);
+            getLaunchActivityBuilder()
+                    .setUseBroadcastReceiver(SECOND_LAUNCH_BROADCAST_RECEIVER,
+                            SECOND_LAUNCH_BROADCAST_ACTION)
+                    .setDisplayId(newDisplay.mId)
+                    .setTargetActivity(THIRD_ACTIVITY)
+                    .execute();
 
             mAmWmState.waitForValidState(new WaitForValidActivityState(THIRD_ACTIVITY));
             mAmWmState.assertFocusedActivity("Focus must be on newly launched app", THIRD_ACTIVITY);
@@ -954,10 +957,12 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                     focusedStack.mDisplayId);
 
             // Check that owner uid can launch its own activity on secondary display.
-            final String broadcastAction = componentName + ".LAUNCH_BROADCAST_ACTION";
-            executeShellCommand("am broadcast -a " + broadcastAction + " -p " + componentName
-                    + " --ez launch_activity true --ez new_task true --ez multiple_task true"
-                    + " --ei display_id " + newDisplay.mId);
+            getLaunchActivityBuilder()
+                    .setUseBroadcastReceiver(LAUNCH_BROADCAST_RECEIVER, LAUNCH_BROADCAST_ACTION)
+                    .setNewTask(true)
+                    .setMultipleTask(true)
+                    .setDisplayId(newDisplay.mId)
+                    .execute();
 
             mAmWmState.waitForValidState(TEST_ACTIVITY_NAME);
             mAmWmState.assertFocusedActivity("Focus must be on newly launched app",
@@ -997,13 +1002,14 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             final String logSeparator = clearLogcat();
 
             // Launch other activity with different uid and check security exception is triggered.
-            final String includeStoppedPackagesFlag = " -f 0x00000020";
-            executeShellCommand("am broadcast -a " + LAUNCH_BROADCAST_ACTION
-                    + " -p " + LAUNCH_BROADCAST_RECEIVER.getPackageName()
-                    + " --ei display_id " + newDisplay.mId
-                    + includeStoppedPackagesFlag);
+            getLaunchActivityBuilder()
+                    .setUseBroadcastReceiver(SECOND_LAUNCH_BROADCAST_RECEIVER,
+                            SECOND_LAUNCH_BROADCAST_ACTION)
+                    .setDisplayId(newDisplay.mId)
+                    .setTargetActivity(THIRD_ACTIVITY)
+                    .execute();
 
-            assertSecurityException("LaunchBroadcastReceiver", logSeparator);
+            assertSecurityException("ActivityLauncher", logSeparator);
 
             mAmWmState.waitForValidState(false /* compareTaskAndStackBounds */, componentName,
                     new WaitForValidActivityState(TEST_ACTIVITY_NAME));

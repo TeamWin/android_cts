@@ -1404,7 +1404,7 @@ public abstract class ActivityManagerTestBase {
         private boolean mSuppressExceptions;
         // Use of the following variables indicates that a broadcast receiver should be used instead
         // of a launching activity;
-        private String mBroadcastReceiverComponent;
+        private String mBroadcastReceiverPackage;
         private String mBroadcastReceiverAction;
 
         public LaunchActivityBuilder(ActivityAndWindowManagersState amWmState) {
@@ -1483,16 +1483,7 @@ public abstract class ActivityManagerTestBase {
         /** Use broadcast receiver instead of launching activity. */
         public LaunchActivityBuilder setUseBroadcastReceiver(final ComponentName broadcastReceiver,
                 final String broadcastAction) {
-            mBroadcastReceiverComponent = broadcastReceiver.flattenToShortString();
-            mBroadcastReceiverAction = broadcastAction;
-            return this;
-        }
-
-        /** Use {@link #setUseBroadcastReceiver(ComponentName, String)} instead. */
-        @Deprecated
-        public LaunchActivityBuilder setUseBroadcastReceiver(String componentName,
-                String broadcastAction) {
-            mBroadcastReceiverComponent = componentName;
+            mBroadcastReceiverPackage = broadcastReceiver.getPackageName();
             mBroadcastReceiverAction = broadcastAction;
             return this;
         }
@@ -1504,10 +1495,12 @@ public abstract class ActivityManagerTestBase {
 
         public void execute() throws Exception {
             StringBuilder commandBuilder = new StringBuilder();
-            if (mBroadcastReceiverComponent != null && mBroadcastReceiverAction != null) {
+            if (mBroadcastReceiverPackage != null && mBroadcastReceiverAction != null) {
                 // Use broadcast receiver to launch the target.
                 commandBuilder.append("am broadcast -a ").append(mBroadcastReceiverAction);
-                commandBuilder.append(" -p ").append(mBroadcastReceiverComponent);
+                commandBuilder.append(" -p ").append(mBroadcastReceiverPackage);
+                // Include stopped packages
+                commandBuilder.append(" -f 0x00000020");
             } else {
                 // Use launching activity to launch the target.
                 if (mLaunchingActivity != null) {
@@ -1515,7 +1508,7 @@ public abstract class ActivityManagerTestBase {
                 } else {
                     commandBuilder.append(getAmStartCmd(mLaunchingActivityName));
                 }
-                commandBuilder.append(" -f 0x20000000");
+                commandBuilder.append(" -f 0x20000020");
             }
 
             // Add a flag to ensure we actually mean to launch an activity.

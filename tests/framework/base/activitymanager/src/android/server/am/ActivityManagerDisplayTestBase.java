@@ -314,6 +314,9 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
             }
             mAmWmState.computeState(false /* compareTaskAndStackBounds */,
                     new WaitForValidActivityState(VIRTUAL_DISPLAY_ACTIVITY));
+            mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
+            mAmWmState.assertFocusedActivity("Focus must be on virtual display host activity",
+                    VIRTUAL_DISPLAY_ACTIVITY);
             final List<ActivityDisplay> originalDS = getDisplaysStates();
 
             // Create virtual display with custom density dpi.
