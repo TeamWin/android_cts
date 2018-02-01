@@ -2021,11 +2021,11 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
             device.getDeviceProtocol();
 
             Set<UsbInterface> interfacesFromAllConfigs = new ArraySet<>();
-            Set<Pair<Integer, Integer>> knownInterfaceIds = new ArraySet<>();
             Set<Integer> knownConfigurationIds = new ArraySet<>();
             int numConfigurations = device.getConfigurationCount();
             for (int configNum = 0; configNum < numConfigurations; configNum++) {
                 UsbConfiguration config = device.getConfiguration(configNum);
+                Set<Pair<Integer, Integer>> knownInterfaceIds = new ArraySet<>();
 
                 // Configuration ID should be unique
                 assertFalse(knownConfigurationIds.contains(config.getId()));
