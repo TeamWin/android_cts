@@ -18,6 +18,7 @@ package android.autofillservice.cts;
 
 import static android.autofillservice.cts.Helper.NOT_SHOWING_TIMEOUT_MS;
 import static android.autofillservice.cts.Helper.SAVE_TIMEOUT_MS;
+import static android.autofillservice.cts.Helper.UI_RECENTS_SWITCH_TIMEOUT_MS;
 import static android.autofillservice.cts.Helper.UI_TIMEOUT_MS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_ADDRESS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_CREDIT_CARD;
@@ -33,7 +34,6 @@ import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.Context;
 import android.content.res.Resources;
-import android.os.RemoteException;
 import android.os.SystemClock;
 import android.service.autofill.SaveInfo;
 import android.support.test.uiautomator.By;
@@ -295,11 +295,16 @@ final class UiBot {
     /**
      * Uses the Recents button to switch back to previous activity
      */
-    void switchAppsUsingRecents() throws RemoteException {
+    void switchAppsUsingRecents() throws Exception {
         Log.d(TAG, "switchAppsUsingRecents()");
 
         // Press once to show list of apps...
         mDevice.pressRecentApps();
+
+        // ...wait until apps are shown...
+        // TODO(b/37566627): figure out a way to wait for a specific UI instead.
+        SystemClock.sleep(UI_RECENTS_SWITCH_TIMEOUT_MS);
+
         // ...press again to go back to the activity.
         mDevice.pressRecentApps();
     }
