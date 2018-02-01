@@ -16,14 +16,17 @@
 
 package android.appsecurity.cts;
 
+import android.platform.test.annotations.SecurityTest;
+
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
 
-import android.platform.test.annotations.SecurityTest;
 import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,6 +40,9 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
 
     private static final String TEST_PKG = "android.appsecurity.cts.tinyapp";
     private static final String COMPANION_TEST_PKG = "android.appsecurity.cts.tinyapp_companion";
+    private static final String DEVICE_TESTS_APK = "CtsV3SigningSchemeRotationTest.apk";
+    private static final String DEVICE_TESTS_PKG = "android.appsecurity.cts.v3rotationtests";
+    private static final String DEVICE_TESTS_CLASS = DEVICE_TESTS_PKG + ".V3RotationTest";
     private static final String TEST_APK_RESOURCE_PREFIX = "/pkgsigverify/";
 
     private static final String[] DSA_KEY_NAMES = {"1024", "2048", "3072"};
@@ -59,13 +65,14 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         Utils.prepareSingleUser(getDevice());
         assertNotNull(mCtsBuild);
         uninstallPackage();
+        uninstallCompanionPackage();
+        installDeviceTestPkg();
     }
 
     @Override
     protected void tearDown() throws Exception {
         try {
-            uninstallPackage();
-            uninstallCompanionPackage();
+            uninstallPackages();
         } catch (DeviceNotAvailableException ignored) {
         } finally {
             super.tearDown();
@@ -582,6 +589,95 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-2-sharedUid.apk");
     }
 
+    public void testInstallV3KeyRotationSigPerm() throws Exception {
+        // tests that a v3 signed APK can still get a signature permission from an app with its
+        // older signing certificate.
+        assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-1-permdef.apk");
+        assertInstallSucceeds(
+                "v3-rsa-pkcs1-sha256-2048-2-with-por_1_2-full-caps-permcli-companion.apk");
+        Utils.runDeviceTests(getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS, "testHasPerm");
+    }
+
+    public void testInstallV3KeyRotationOlderSigPerm() throws Exception {
+        // tests that an apk with an older signing certificate than the one which defines a
+        // signature permission it wants gets the permission if the defining APK grants the
+        // capability
+        assertInstallSucceeds(
+                "v3-rsa-pkcs1-sha256-2048-2-with-por_1_2-full-caps-permdef.apk");
+        assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-1-permcli-companion.apk");
+        Utils.runDeviceTests(getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS, "testHasPerm");
+    }
+
+    public void testInstallV3KeyRotationSigPermNoCap() throws Exception {
+        // tests that an APK signed by an older signing certificate is unable to get a requested
+        // signature permission when the defining APK has rotated to a newer signing certificiate
+        // and does not grant the permission capability to the older cert
+        assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-2-with-por_1_2-no-perm-cap-permdef.apk");
+        assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-1-permcli-companion.apk");
+        Utils.runDeviceTests(getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS, "testHasNoPerm");
+    }
+
+    public void testInstallV3KeyRotationOlderSigPermNoCap() throws Exception {
+        // tests that an APK signed by a newer signing certificate than the APK which defines a
+        // signature permission is able to get that permission, even if the newer APK does not
+        // grant the permission capability to the older signing certificate.
+        assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-1-permdef.apk");
+        assertInstallSucceeds(
+                "v3-rsa-pkcs1-sha256-2048-2-with-por_1_2-no-perm-cap-permcli-companion.apk");
+        Utils.runDeviceTests(getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS, "testHasPerm");
+    }
+
+    public void testInstallV3NoRotationSigPerm() throws Exception {
+        // make sure that an APK, which wants to use a signature permission defined by an APK, which
+        // has not granted that capability to older signing certificates, can still install
+        assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-2-with-por_1_2-no-perm-cap-permdef.apk");
+        assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-2-permcli-companion.apk");
+        Utils.runDeviceTests(getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS, "testHasPerm");
+    }
+
+    public void testInstallV3SigPermDoubleDefNewerSucceeds() throws Exception {
+        // make sure that if an app defines a signature permission already defined by another app,
+        // it successfully installs if the other app's signing cert is in its past signing certs and
+        // the signature permission capability is granted
+        assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-1-permdef.apk");
+        assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-2-with_por_1_2-permdef-companion.apk");
+    }
+
+    public void testInstallV3SigPermDoubleDefOlderSucceeds() throws Exception {
+        // make sure that if an app defines a signature permission already defined by another app,
+        // it successfully installs if it is in the other app's past signing certs and the signature
+        // permission capability is granted
+        assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-2-with_por_1_2-permdef-companion.apk");
+        assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-1-permdef.apk");
+    }
+
+    public void testInstallV3SigPermDoubleDefNewerNoCapFails() throws Exception {
+        // make sure that if an app defines a signature permission already defined by another app,
+        // it fails to install if the other app's signing cert is in its past signing certs but the
+        // signature permission capability is not granted
+        assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-1-permdef.apk");
+        assertInstallFails(
+                "v3-rsa-pkcs1-sha256-2048-2-with_por_1_2-no-perm-cap-permdef-companion.apk");
+    }
+
+    public void testInstallV3SigPermDoubleDefOlderNoCapFails() throws Exception {
+        // make sure that if an app defines a signature permission already defined by another app,
+        // it fails to install if it is in the other app's past signing certs but the signature
+        // permission capability is not granted
+        assertInstallSucceeds(
+                "v3-rsa-pkcs1-sha256-2048-2-with_por_1_2-no-perm-cap-permdef-companion.apk");
+        assertInstallFails("v3-rsa-pkcs1-sha256-2048-1-permdef.apk");
+    }
+
+    public void testInstallV3SigPermDoubleDefSameNoCapSucceeds() throws Exception {
+        // make sure that if an app defines a signature permission already defined by another app,
+        // it installs successfully when signed by the same certificate, even if the original app
+        // does not grant signature capabilities to its past certs
+        assertInstallSucceeds(
+                "v3-rsa-pkcs1-sha256-2048-2-with_por_1_2-no-perm-cap-permdef-companion.apk");
+        assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-2-permdef.apk");
+    }
+
     private void assertInstallSucceeds(String apkFilenameInResources) throws Exception {
         String installResult = installPackageFromResource(apkFilenameInResources);
         if (installResult != null) {
@@ -658,6 +754,13 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         }
     }
 
+    private void installDeviceTestPkg() throws Exception {
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
+        File apk = buildHelper.getTestFile(DEVICE_TESTS_APK);
+        String result = getDevice().installPackage(apk, true);
+        assertNull("failed to install " + DEVICE_TESTS_APK + ", Reason: " + result, result);
+    }
+
     private String installPackageFromResource(String apkFilenameInResources, boolean ephemeral)
             throws IOException, DeviceNotAvailableException {
         // ITestDevice.installPackage API requires the APK to be install to be a File. We thus
@@ -704,5 +807,15 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
 
     private String uninstallCompanionPackage() throws DeviceNotAvailableException {
         return getDevice().uninstallPackage(COMPANION_TEST_PKG);
+    }
+
+    private String uninstallDeviceTestPackage() throws DeviceNotAvailableException {
+        return getDevice().uninstallPackage(DEVICE_TESTS_PKG);
+    }
+
+    private void uninstallPackages() throws DeviceNotAvailableException {
+        uninstallPackage();
+        uninstallCompanionPackage();
+        uninstallDeviceTestPackage();
     }
 }
