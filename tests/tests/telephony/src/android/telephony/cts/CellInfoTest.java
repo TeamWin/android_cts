@@ -56,6 +56,10 @@ public class CellInfoTest extends AndroidTestCase{
     // Maximum and minimum possible CQI values.
     private static final int MAX_CQI = 30;
     private static final int MIN_CQI = 0;
+
+    // 3gpp 36.101 Sec 5.7.2
+    private static final int CHANNEL_RASTER_EUTRAN = 100; //kHz
+
     private PackageManager mPm;
 
     @Override
@@ -161,8 +165,23 @@ public class CellInfoTest extends AndroidTestCase{
 
         int earfcn = lte.getCellIdentity().getEarfcn();
         // Reference 3GPP 36.101 Table 5.7.3-1
-        assertTrue("getEarfcn() out of range [0,47000], earfcn=" + earfcn,
-            earfcn >= 0 && earfcn <= 47000);
+        // As per NOTE 1 in the table, although 0-6 are valid channel numbers for
+        // LTE, the reported EARFCN is the center frequency, rendering these channels
+        // out of the range of the narrowest 1.4Mhz deployment.
+        int minEarfcn = 7;
+        if (bw != Integer.MAX_VALUE) {
+            // The number of channels used by a cell is equal to the cell bandwidth divided
+            // by the channel raster (bandwidth of a channel). The center channel is the channel
+            // the n/2-th channel where n is the number of channels, and since it is the center
+            // channel that is reported as the channel number for a cell, we can exclude any channel
+            // numbers within a band that would place the bottom of a cell's bandwidth below the
+            // edge of the band. For channel numbers in Band 1, the EARFCN numbering starts from
+            // channel 0, which means that we can exclude from the valid range channels starting
+            // from 0 and numbered less than half the total number of channels occupied by a cell.
+            minEarfcn = bw / CHANNEL_RASTER_EUTRAN / 2;
+        }
+        assertTrue("getEarfcn() out of range [7,47000], earfcn=" + earfcn,
+            earfcn >= minEarfcn && earfcn <= 47000);
         CellSignalStrengthLte cellSignalStrengthLte = lte.getCellSignalStrength();
         //Integer.MAX_VALUE indicates an unavailable field
         int rsrp = cellSignalStrengthLte.getRsrp();
@@ -197,8 +216,10 @@ public class CellInfoTest extends AndroidTestCase{
 
         int uarfcn = wcdma.getCellIdentity().getUarfcn();
         // Reference 3GPP 25.101 Table 5.2
-        assertTrue("getUarfcn() out of range [400,11000], uarfcn=" + uarfcn,
-            uarfcn >= 400 && uarfcn <= 11000);
+        // From Appendix E.1, even though UARFCN is numbered from 400, the minumum
+        // usable channel is 412 due to the fixed bandwidth of 5Mhz
+        assertTrue("getUarfcn() out of range [412,11000], uarfcn=" + uarfcn,
+            uarfcn >= 412 && uarfcn <= 11000);
 
         String alphaLong = (String) wcdma.getCellIdentity().getOperatorAlphaLong();
         assertNotNull("getOperatorAlphaLong() returns NULL!", alphaLong);
