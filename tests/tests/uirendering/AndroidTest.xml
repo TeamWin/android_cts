@@ -23,5 +23,6 @@
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.uirendering.cts" />
         <option name="runtime-hint" value="11m55s" />
+        <option name="runner" value="android.uirendering.cts.runner.UiRenderingRunner" />
     </test>
 </configuration>
