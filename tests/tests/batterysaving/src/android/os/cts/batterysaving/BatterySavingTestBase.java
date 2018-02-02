@@ -15,33 +15,27 @@
  */
 package android.os.cts.batterysaving;
 
-import static junit.framework.Assert.fail;
+import static com.android.compatibility.common.util.BatteryUtils.runDumpsysBatteryReset;
+import static com.android.compatibility.common.util.BatteryUtils.turnOnScreen;
+import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
+import static com.android.compatibility.common.util.TestUtils.waitUntil;
 
-import android.app.KeyguardManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.BatteryManager;
-import android.os.ParcelFileDescriptor;
 import android.os.PowerManager;
-import android.os.SystemClock;
-import android.provider.Settings.Global;
 import android.support.test.InstrumentationRegistry;
 import android.util.Log;
 
 import org.junit.After;
 import org.junit.Before;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.function.Predicate;
-
 public class BatterySavingTestBase {
     private static final String TAG = "BatterySavingTestBase";
 
-    public static final boolean DEBUG = true;
-
     public static final int DEFAULT_TIMEOUT_SECONDS = 30;
+
+    public static final boolean DEBUG = true;
 
     @Before
     public final void resetDumpsysBatteryBeforeTest() throws Exception {
@@ -52,16 +46,6 @@ public class BatterySavingTestBase {
     public final void resetDumpsysBatteryAfterTest() throws Exception {
         runDumpsysBatteryReset();
         turnOnScreen(true);
-    }
-
-    @FunctionalInterface
-    public interface BooleanSupplierWithThrow {
-        boolean getAsBoolean() throws Exception;
-    }
-
-    @FunctionalInterface
-    public interface RunnableWithThrow {
-        void run() throws Exception;
     }
 
     public String getLogTag() {
@@ -75,146 +59,20 @@ public class BatterySavingTestBase {
         }
     }
 
-    /** Print an error log and fail. */
-    public void failWithLog(String message) {
-        Log.e(getLogTag(), message);
-        fail(message);
-    }
-
-    private static String readAll(ParcelFileDescriptor pfd) {
-        try {
-            try {
-                final StringBuilder ret = new StringBuilder(1024);
-
-                try (BufferedReader r = new BufferedReader(
-                        new FileReader(pfd.getFileDescriptor()))) {
-                    String line;
-                    while ((line = r.readLine()) != null) {
-                        ret.append(line);
-                        ret.append("\n");
-                    }
-                    r.readLine();
-                }
-                return ret.toString();
-            } finally {
-                pfd.close();
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * Run a command and returns the result. IF resultAsserter is not null, apply it on the output
-     * and fail it it returns false.
-     */
-    public String runCommand(String command, Predicate<String> resultAsserter) {
-        debug("Running command: " + command);
-
-        final String result;
-        try {
-            result = readAll(InstrumentationRegistry.getInstrumentation()
-                    .getUiAutomation().executeShellCommand(command));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        debug("Command output (" + result.length() + " chars):\n" + result);
-
-        if (resultAsserter != null && !resultAsserter.test(result)) {
-            failWithLog("Command '" + command + "' failed, output was:\n" + result);
-        }
-        return result;
-    }
-
-    /** Run a command and return the result. */
-    public String runCommand(String command) {
-        return runCommand(command, null);
-    }
-
-    /** Run a command and return the result. */
-    public String runCommandWithNoOutput(String command) {
-        return runCommand(command, (output) -> output.length() == 0);
-    }
-
-    /** Run "cmd settings put" */
-    private void putSetting(String scope, String key, String value) {
-        // Hmm, technically we should escape a value, but if I do like '1', it won't work. ??
-        runCommandWithNoOutput("settings put " + scope + " " + key + " " + value);
-    }
-
-    /** Run "cmd settings put global" */
-    public void putGlobalSetting(String key, String value) {
-        putSetting("global", key, value);
-    }
-
-    /** Run "cmd settings put secure" */
-    public void putSecureSetting(String key, String value) {
-        putSetting("secure", key, value);
-    }
-
-    /** Make the target device think it's off charger. */
-    public void runDumpsysBatteryUnplug() throws Exception {
-        runCommandWithNoOutput("dumpsys battery unplug");
-        waitUntil("Device still charging", () -> !getBatteryManager().isCharging());
-
-        Log.d(TAG, "Battery UNPLUGGED");
-    }
-
-    /** Reset {@link #runDumpsysBatteryUnplug}.  */
-    public void runDumpsysBatteryReset() throws Exception {
-        runCommandWithNoOutput("dumpsys battery reset");
-
-        Log.d(TAG, "Battery RESET");
-    }
-
-    /** Run "adb shell am make-uid-idle PACKAGE" */
-    public void runMakeUidIdle(String packageName) {
-        runCommandWithNoOutput("am make-uid-idle " + packageName);
-    }
-
-    /** Run "adb shell am kill PACKAGE" */
-    public void runKill(String packageName) {
-        runCommandWithNoOutput("am kill " + packageName);
-    }
-
-    /**
-     * Wait until {@code predicate} is satisfied, or fail, with the default timeout.
-     */
-    public void waitUntil(String message, BooleanSupplierWithThrow predicate) throws Exception {
-        waitUntil(message, 0, predicate);
-    }
-
-    /**
-     * Wait until {@code predicate} is satisfied, or fail, with a given timeout.
-     */
-    public void waitUntil(String message, int timeoutSecond, BooleanSupplierWithThrow predicate)
-            throws Exception {
-        if (timeoutSecond <= 0) {
-            timeoutSecond = DEFAULT_TIMEOUT_SECONDS;
-        }
-        final long timeout = SystemClock.uptimeMillis() + timeoutSecond * 1000;
-        while (SystemClock.uptimeMillis() < timeout) {
-            if (predicate.getAsBoolean()) {
-                return; // okay
-            }
-            Thread.sleep(1000);
-        }
-        failWithLog("Timeout: " + message);
-    }
-
     public void waitUntilAlarmForceAppStandby(boolean expected) throws Exception {
         waitUntil("Force all apps standby still " + !expected + " (alarm)", () ->
-                runCommand("dumpsys alarm").contains("Force all apps standby: " + expected));
+                runShellCommand("dumpsys alarm").contains("Force all apps standby: " + expected));
     }
 
     public void waitUntilJobForceAppStandby(boolean expected) throws Exception {
         waitUntil("Force all apps standby still " + !expected + " (job)", () ->
-                runCommand("dumpsys jobscheduler").contains("Force all apps standby: " + expected));
+                runShellCommand("dumpsys jobscheduler")
+                        .contains("Force all apps standby: " + expected));
     }
 
     public void waitUntilForceBackgroundCheck(boolean expected) throws Exception {
         waitUntil("Force background check still " + !expected + " (job)", () ->
-                runCommand("dumpsys activity").contains("mForceBackgroundCheck=" + expected));
+                runShellCommand("dumpsys activity").contains("mForceBackgroundCheck=" + expected));
     }
 
     public static Context getContext() {
@@ -231,47 +89,5 @@ public class BatterySavingTestBase {
 
     public BatteryManager getBatteryManager() {
         return getContext().getSystemService(BatteryManager.class);
-    }
-
-    public boolean hasFeatures(String... features) {
-        for (String feature : features) {
-            if (!getPackageManager().hasSystemFeature(feature)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /**
-     * Enable / disable battery saver. Note {@link #runDumpsysBatteryUnplug} must have been
-     * executed before enabling BS.
-     */
-    public void enableBatterySaver(boolean enabled) throws Exception {
-        if (enabled) {
-            putGlobalSetting(Global.LOW_POWER_MODE, "1");
-            waitUntil("Battery saver still off", () -> getPowerManager().isPowerSaveMode());
-            waitUntil("Location mode still " + getPowerManager().getLocationPowerSaveMode(),
-                    () -> (PowerManager.LOCATION_MODE_NO_CHANGE
-                            != getPowerManager().getLocationPowerSaveMode()));
-        } else {
-            putGlobalSetting(Global.LOW_POWER_MODE, "0");
-            waitUntil("Battery saver still on", () -> !getPowerManager().isPowerSaveMode());
-            waitUntil("Location mode still " + getPowerManager().getLocationPowerSaveMode(),
-                    () -> (PowerManager.LOCATION_MODE_NO_CHANGE
-                            == getPowerManager().getLocationPowerSaveMode()));
-        }
-
-        Log.d(TAG, "Battery saver turned " + (enabled ? "ON" : "OFF"));
-    }
-
-    public void turnOnScreen(boolean on) throws Exception {
-        if (on) {
-            runCommandWithNoOutput("input keyevent KEYCODE_WAKEUP");
-            waitUntil("Device still not interactive", () -> getPowerManager().isInteractive());
-
-        } else {
-            runCommandWithNoOutput("input keyevent KEYCODE_SLEEP");
-            waitUntil("Device still interactive", () -> !getPowerManager().isInteractive());
-        }
     }
 }

@@ -15,6 +15,9 @@
  */
 package android.os.cts.batterysaving;
 
+import static com.android.compatibility.common.util.BatteryUtils.enableBatterySaver;
+import static com.android.compatibility.common.util.BatteryUtils.runDumpsysBatteryUnplug;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
