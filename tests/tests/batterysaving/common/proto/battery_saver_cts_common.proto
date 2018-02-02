@@ -34,6 +34,15 @@ message Payload {
         }
 
         optional StartServiceRequest start_service = 3;
+
+        message SetAlarmRequest {
+            optional int32 type = 1;
+            optional int64 trigger_time = 2;
+            optional int64 repeat_interval = 3;
+            optional bool allow_while_idle = 4;
+            optional string intent_action = 5;
+        }
+        optional SetAlarmRequest set_alarm = 4;
     }
 
     optional TestServiceRequest test_service_request = 1;
@@ -42,6 +51,7 @@ message Payload {
         optional bool clear_last_intent_ack = 1;
         optional string get_last_intent_action = 2;
         optional bool start_service_ack = 3;
+        optional bool set_alarm_ack = 4;
     }
 
     optional TestServiceResponse test_service_response = 2;
