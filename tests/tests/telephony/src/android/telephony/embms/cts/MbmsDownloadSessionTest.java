@@ -182,6 +182,18 @@ public class MbmsDownloadSessionTest extends MbmsDownloadTestBase {
         assertEquals(request, downloads.get(0));
     }
 
+    public void testSetTempFileDirFailure() throws Exception {
+        String tempFileDirName = "CTSTestDir101010";
+        File tempFileRootDirectory = new File(mContext.getFilesDir(), tempFileDirName);
+        tempFileRootDirectory.mkdirs();
+
+        mMiddlewareControl.forceErrorCode(
+                MbmsErrors.DownloadErrors.ERROR_CANNOT_CHANGE_TEMP_FILE_ROOT);
+        mDownloadSession.setTempFileRootDirectory(tempFileRootDirectory);
+        assertNotNull(mCallback.waitOnError());
+        assertNotSame(mDownloadSession.getTempFileRootDirectory(), tempFileDirName);
+    }
+
     public void testDownloadRequestOpacity() throws Exception {
         Intent intent = new Intent("sample_intent_action");
         DownloadRequest request = DOWNLOAD_REQUEST_TEMPLATE.setAppIntent(intent).build();
