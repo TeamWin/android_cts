@@ -16,9 +16,6 @@ package android.jvmti.cts;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.ddmlib.NullOutputReceiver;
-import com.android.ddmlib.testrunner.ITestRunListener;
-import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
-import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.device.ITestDevice;
@@ -30,10 +27,8 @@ import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.util.AbiUtils;
 import com.android.tradefed.util.FileUtil;
 import com.android.tradefed.util.ZipUtil;
+
 import java.io.File;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipFile;
 
@@ -79,7 +74,7 @@ public class JvmtiAttachingHostTest extends DeviceTestCase implements IBuildRece
                 throw new RuntimeException("Failed bind-time attaching", e);
             }
         });
-    };
+    }
 
     public void testJvmtiAttachEarly() throws Exception {
         runJvmtiAgentLoadTest((ITestDevice device, String pkg, String apk, String abiName) -> {
@@ -105,7 +100,7 @@ public class JvmtiAttachingHostTest extends DeviceTestCase implements IBuildRece
                 throw new RuntimeException("Failed pre-bind attaching", e);
             }
         });
-    };
+    }
 
     public void testJvmtiAgentAppInternal() throws Exception {
         runJvmtiAgentLoadTest((ITestDevice device, String pkg, String apk, String abiName) -> {
@@ -125,7 +120,7 @@ public class JvmtiAttachingHostTest extends DeviceTestCase implements IBuildRece
                 throw new RuntimeException("Failed agent-app attaching", e);
             }
         });
-    };
+    }
 
     public void testJvmtiAgentAppExternal() throws Exception {
         runJvmtiAgentLoadTest((ITestDevice device, String pkg, String apk, String abiName) -> {
@@ -162,7 +157,7 @@ public class JvmtiAttachingHostTest extends DeviceTestCase implements IBuildRece
                 throw new RuntimeException("Failed agent-app attaching", e);
             }
         });
-    };
+    }
 
     private void runJvmtiAgentLoadTest(TestRun runner) throws Exception {
         final ITestDevice device = getDevice();
