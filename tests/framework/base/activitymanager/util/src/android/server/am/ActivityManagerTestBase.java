@@ -35,6 +35,7 @@ import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logAlways;
 import static android.server.am.StateLogger.logE;
 import static android.view.KeyEvent.KEYCODE_APP_SWITCH;
+import static android.view.KeyEvent.KEYCODE_MENU;
 import static android.view.KeyEvent.KEYCODE_SLEEP;
 import static android.view.KeyEvent.KEYCODE_WAKEUP;
 
@@ -42,10 +43,12 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.app.ActivityManager;
+import android.app.KeyguardManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.ParcelFileDescriptor;
+import android.os.PowerManager;
 import android.provider.Settings;
 import android.server.am.settings.SettingsSession;
 import android.support.annotation.NonNull;
@@ -63,6 +66,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.BooleanSupplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -557,15 +561,40 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected void pressWakeupButton() {
-        mDevice.pressKeyCode(KEYCODE_WAKEUP);
+        final PowerManager pm = mContext.getSystemService(PowerManager.class);
+        retryPressKeyCode(KEYCODE_WAKEUP, () -> pm != null && pm.isInteractive(),
+                "***Waiting for device wakeup...");
     }
 
     protected void pressUnlockButton() {
-        mDevice.pressMenu();
+        final KeyguardManager kgm = mContext.getSystemService(KeyguardManager.class);
+        retryPressKeyCode(KEYCODE_MENU, () -> kgm != null && !kgm.isKeyguardLocked(),
+                "***Waiting for device unlock...");
     }
 
     protected void pressSleepButton() {
-        mDevice.pressKeyCode(KEYCODE_SLEEP);
+        final PowerManager pm = mContext.getSystemService(PowerManager.class);
+        retryPressKeyCode(KEYCODE_SLEEP, () -> pm != null && !pm.isInteractive(),
+                "***Waiting for device sleep...");
+    }
+
+    private void retryPressKeyCode(int keyCode, BooleanSupplier waitFor, String msg) {
+        int retry = 1;
+        do {
+            mDevice.pressKeyCode(keyCode);
+            if (waitFor.getAsBoolean()) {
+                return;
+            }
+            logAlways(msg + " retry=" + retry);
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                logE("Sleep interrupted: " + msg, e);
+            }
+        } while (retry++ < 5);
+        if (!waitFor.getAsBoolean()) {
+            logE(msg + " FAILED");
+        }
     }
 
     // Utility method for debugging, not used directly here, but useful, so kept around.
