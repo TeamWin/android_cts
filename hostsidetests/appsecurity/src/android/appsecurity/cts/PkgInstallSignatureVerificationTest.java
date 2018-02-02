@@ -565,20 +565,18 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
     }
 
     public void testInstallV3KeyRotationOlderSharedUidNoCap() throws Exception {
-
-        // tests that a sharedUid APK cannot install with another app that is signed by a newer
-        // signing certificate but hasn't granted its older signing certificate the sharedUid
-        // capability
+        // tests that a sharedUid APK signed with an old certificate cannot install with
+        // an app having a proof-of-rotation structure that hasn't granted the older
+        // certificate the sharedUid capability
         assertInstallSucceeds(
                 "v3-rsa-pkcs1-sha256-2048-2-with-por_1_2-no-shUid-cap-sharedUid-companion.apk");
         assertInstallFails("v3-rsa-pkcs1-sha256-2048-1-sharedUid.apk");
     }
 
     public void testInstallV3NoRotationSharedUid() throws Exception {
-
-        // make sure that a sharedUid APK can still install when a different APK with the same
-        // sharedUid is already installed and they share signing certificates, even if the already
-        // installed APK doesn't grant the sharedUid capability in its proof-of-rotation struct
+        // tests that a sharedUid APK signed with a new certificate installs with
+        // an app having a proof-of-rotation structure that hasn't granted an older
+        // certificate the sharedUid capability
         assertInstallSucceeds(
                 "v3-rsa-pkcs1-sha256-2048-2-with-por_1_2-no-shUid-cap-sharedUid-companion.apk");
         assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-2-sharedUid.apk");
