@@ -37,7 +37,7 @@
         <uses-library android:name="android.test.runner" />
     </application>
 
-    <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
+    <instrumentation android:name="android.uirendering.cts.runner.UiRenderingRunner"
                      android:targetPackage="android.uirendering.cts">
     </instrumentation>
 
