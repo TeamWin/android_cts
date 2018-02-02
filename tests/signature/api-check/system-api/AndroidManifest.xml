@@ -16,14 +16,14 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.signature.cts.api.system_current">
+          package="android.signature.cts.api.system">
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
 
     <application/>
 
     <instrumentation android:name="repackaged.android.test.InstrumentationTestRunner"
-                     android:targetPackage="android.signature.cts.api.system_current"
-                     android:label="System Current API Signature Test"/>
+                     android:targetPackage="android.signature.cts.api.system"
+                     android:label="System API Signature Test"/>
 
 </manifest>

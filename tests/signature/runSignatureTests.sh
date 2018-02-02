@@ -12,7 +12,7 @@ fi
 if [ $# -eq 0 ]; then
     PACKAGES="
 CtsCurrentApiSignatureTestCases
-CtsSystemCurrentApiSignatureTestCases
+CtsSystemApiSignatureTestCases
 CtsAndroidTestMockCurrentApiSignatureTestCases
 CtsAndroidTestRunnerCurrentApiSignatureTestCases
 CtsAndroidTestBase27ApiSignatureTestCases
