@@ -18,6 +18,7 @@
 #include <stdio.h>
 
 extern int register_android_graphics_cts_ANativeWindowTest(JNIEnv*);
+extern int register_android_graphics_cts_ASurfaceTextureTest(JNIEnv*);
 extern int register_android_graphics_cts_BitmapTest(JNIEnv*);
 extern int register_android_graphics_cts_CameraGpuCtsActivity(JNIEnv*);
 extern int register_android_graphics_cts_VulkanFeaturesTest(JNIEnv*);
@@ -27,6 +28,8 @@ jint JNI_OnLoad(JavaVM* vm, void* /*reserved*/) {
     if (vm->GetEnv((void**)&env, JNI_VERSION_1_4) != JNI_OK)
         return JNI_ERR;
     if (register_android_graphics_cts_ANativeWindowTest(env))
+        return JNI_ERR;
+    if (register_android_graphics_cts_ASurfaceTextureTest(env))
         return JNI_ERR;
     if (register_android_graphics_cts_BitmapTest(env))
         return JNI_ERR;
