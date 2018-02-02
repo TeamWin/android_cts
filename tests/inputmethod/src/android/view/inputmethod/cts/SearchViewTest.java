@@ -81,12 +81,12 @@ public class SearchViewTest extends EndToEndImeTestBase {
 
             final SearchView searchView = launchTestActivity();
 
-            // Wait until the MockIme gets bound to the TestActivity.
-            expectBindInput(stream, Process.myPid(), TIMEOUT);
-
-            // Emulate tap event
+            // Emulate tap event on SearchView
             CtsTouchUtils.emulateTapOnViewCenter(
                     InstrumentationRegistry.getInstrumentation(), searchView);
+
+            // Expect input to bind since EditText is focused.
+            expectBindInput(stream, Process.myPid(), TIMEOUT);
 
             // Wait until "showSoftInput" gets called with a real InputConnection
             expectEvent(stream, event ->

@@ -77,6 +77,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
             final EditText editText = new EditText(activity);
             editText.setPrivateImeOptions(TEST_MARKER);
             editText.setHint("editText");
+            editText.requestFocus();
             editTextRef.set(editText);
 
             layout.addView(editText);
@@ -204,6 +205,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
 
                 final EditText editText = new EditText(activity);
                 editText.setText("Editable");
+                editText.requestFocus();
                 layout.addView(editText);
                 return layout;
             });
