@@ -52,7 +52,7 @@ public class UserRestrictions {
         UserManager.DISALLOW_UNINSTALL_APPS,
         UserManager.DISALLOW_UNIFIED_PASSWORD,
         UserManager.DISALLOW_CONFIG_DATE_TIME,
-        UserManager.DISALLOW_CONFIG_LOCATION_MODE,
+        UserManager.DISALLOW_CONFIG_LOCATION,
         UserManager.DISALLOW_AIRPLANE_MODE,
         UserManager.DISALLOW_CONFIG_SCREEN_TIMEOUT,
         UserManager.DISALLOW_CONFIG_BRIGHTNESS,
@@ -83,7 +83,7 @@ public class UserRestrictions {
             R.string.disallow_uninstall_apps,
             R.string.disallow_unified_challenge,
             R.string.disallow_config_date_time,
-            R.string.disallow_config_location_mode,
+            R.string.disallow_config_location,
             R.string.disallow_airplane_mode,
             R.string.disallow_config_screen_timeout,
             R.string.disallow_config_brightness,
@@ -112,7 +112,7 @@ public class UserRestrictions {
             R.string.disallow_uninstall_apps_action,
             R.string.disallow_unified_challenge_action,
             R.string.disallow_config_date_time_action,
-            R.string.disallow_config_location_mode_action,
+            R.string.disallow_config_location_action,
             R.string.disallow_airplane_mode_action,
             R.string.disallow_config_screen_timeout_action,
             R.string.disallow_config_brightness_action,
@@ -172,7 +172,7 @@ public class UserRestrictions {
         ALSO_VALID_FOR_PO_POLICY_TRANSPARENCY.add(UserManager.DISALLOW_MODIFY_ACCOUNTS);
         ALSO_VALID_FOR_PO_POLICY_TRANSPARENCY.add(UserManager.DISALLOW_SHARE_LOCATION);
         ALSO_VALID_FOR_PO_POLICY_TRANSPARENCY.add(UserManager.DISALLOW_UNIFIED_PASSWORD);
-        ALSO_VALID_FOR_PO_POLICY_TRANSPARENCY.add(UserManager.DISALLOW_CONFIG_LOCATION_MODE);
+        ALSO_VALID_FOR_PO_POLICY_TRANSPARENCY.add(UserManager.DISALLOW_CONFIG_LOCATION);
     }
 
     public static String getRestrictionLabel(Context context, String restriction) {
