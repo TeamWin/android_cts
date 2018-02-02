@@ -313,6 +313,10 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                     for (int[] config : RAW_COMBINATIONS) {
                         testOutputCombination(id, config, maxSizes);
                     }
+                } else if (mStaticInfo.isLogicalMultiCamera()) {
+                    for (int[] config : RAW_COMBINATIONS) {
+                        testMultiCameraOutputCombination(id, config, maxSizes);
+                    }
                 }
 
                 if (mStaticInfo.isCapabilitySupported(
@@ -1695,7 +1699,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                     rawStreams++;
                 }
             }
-            if ((yuvStreams > 2) || (yuvStreams == 2 && rawStreams == 1)) {
+            if (yuvStreams > 2) {
                 return;
             }
         }
@@ -1729,7 +1733,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
         setupConfigurationTargets(config, maxSizes, privTargets, jpegTargets, yuvTargets,
                 rawTargets, outputConfigs, MIN_RESULT_COUNT, -1 /*overrideStreamIndex*/,
-                null /*overridePhysicalCameraIds*/);
+                null /*overridePhysicalCameraIds*/, null /*overridePhysicalCameraSizes*/);
 
         boolean haveSession = false;
         try {
@@ -1800,7 +1804,33 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
         for (int i = 0; i < config.length; i += 2) {
             int format = config[i];
+            int sizeLimit = config[i+1];
             if (format != YUV && format != RAW) {
+                continue;
+            }
+
+            // Find physical cameras with matching size.
+            Size targetSize = (format == YUV) ? maxSizes.maxYuvSizes[sizeLimit] :
+                    maxSizes.maxRawSize;
+            List<String> physicalCamerasForSize = new ArrayList<String>();
+            List<Size> physicalCameraSizes = new ArrayList<Size>();
+            for (String physicalId : physicalCameraIds) {
+                Size[] sizes = mAllStaticInfo.get(physicalId).getAvailableSizesForFormatChecked(
+                        format, StaticMetadata.StreamDirection.Output);
+                if (targetSize != null) {
+                    if (Arrays.asList(sizes).contains(targetSize)) {
+                        physicalCameraSizes.add(targetSize);
+                        physicalCamerasForSize.add(physicalId);
+                    }
+                } else if (format == RAW && sizes.length > 0) {
+                    physicalCamerasForSize.add(physicalId);
+                    physicalCameraSizes.add(CameraTestUtils.getMaxSize(sizes));
+                }
+                if (physicalCamerasForSize.size() == 2) {
+                    break;
+                }
+            }
+            if (physicalCamerasForSize.size() < 2) {
                 continue;
             }
 
@@ -1812,7 +1842,8 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             List<ImageReader> rawTargets = new ArrayList<ImageReader>();
 
             setupConfigurationTargets(config, maxSizes, privTargets, jpegTargets, yuvTargets,
-                    rawTargets, outputConfigs, MIN_RESULT_COUNT, i, physicalCameraIds);
+                    rawTargets, outputConfigs, MIN_RESULT_COUNT, i, physicalCamerasForSize,
+                    physicalCameraSizes);
 
             boolean haveSession = false;
             try {
@@ -1882,7 +1913,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
         setupConfigurationTargets(configs, maxSizes, privTargets, jpegTargets, yuvTargets,
                 rawTargets, outputConfigs, numBuffers, -1 /*overrideStreamIndex*/,
-                null /*overridePhysicalCameraIds*/);
+                null /*overridePhysicalCameraIds*/, null /* overridePhysicalCameraSizes) */);
 
         for (OutputConfiguration outputConfig : outputConfigs) {
             outputSurfaces.add(outputConfig.getSurface());
@@ -1893,7 +1924,8 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             List<SurfaceTexture> privTargets, List<ImageReader> jpegTargets,
             List<ImageReader> yuvTargets, List<ImageReader> rawTargets,
             List<OutputConfiguration> outputConfigs, int numBuffers,
-            int overrideStreamIndex, List<String> overridePhysicalCameraIds) {
+            int overrideStreamIndex, List<String> overridePhysicalCameraIds,
+            List<Size> overridePhysicalCameraSizes) {
 
         ImageDropperListener imageDropperListener = new ImageDropperListener();
 
@@ -1903,27 +1935,19 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             Surface newSurface;
 
             int numConfigs = 1;
-            StaticMetadata physicalStaticMetadata;
-
-            if (overridePhysicalCameraIds != null &&
+            if (overrideStreamIndex == i && overridePhysicalCameraIds != null &&
                     overridePhysicalCameraIds.size() > 1) {
                 numConfigs = overridePhysicalCameraIds.size();
             }
             for (int j = 0; j < numConfigs; j++) {
                 switch (format) {
                     case PRIV: {
-                        Size targetSize = maxSizes.maxPrivSizes[sizeLimit];
+                        Size targetSize = (numConfigs == 1) ? maxSizes.maxPrivSizes[sizeLimit] :
+                                overridePhysicalCameraSizes.get(j);
                         SurfaceTexture target = new SurfaceTexture(/*random int*/1);
                         target.setDefaultBufferSize(targetSize.getWidth(), targetSize.getHeight());
                         OutputConfiguration config = new OutputConfiguration(new Surface(target));
                         if (numConfigs > 1) {
-                            physicalStaticMetadata =
-                                mAllStaticInfo.get(overridePhysicalCameraIds.get(j));
-                            Size[] privSizes = physicalStaticMetadata.getAvailableSizesForFormatChecked(PRIV,
-                                    StaticMetadata.StreamDirection.Output);
-                            if (!Arrays.asList(privSizes).contains(targetSize)) {
-                                continue;
-                            }
                             config.setPhysicalCameraId(overridePhysicalCameraIds.get(j));
                         }
                         outputConfigs.add(config);
@@ -1931,19 +1955,13 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                         break;
                     }
                     case JPEG: {
-                        Size targetSize = maxSizes.maxJpegSizes[sizeLimit];
+                        Size targetSize = (numConfigs == 1) ? maxSizes.maxJpegSizes[sizeLimit] :
+                                overridePhysicalCameraSizes.get(j);
                         ImageReader target = ImageReader.newInstance(
                             targetSize.getWidth(), targetSize.getHeight(), JPEG, numBuffers);
                         target.setOnImageAvailableListener(imageDropperListener, mHandler);
                         OutputConfiguration config = new OutputConfiguration(target.getSurface());
                         if (numConfigs > 1) {
-                            physicalStaticMetadata =
-                                    mAllStaticInfo.get(overridePhysicalCameraIds.get(j));
-                            Size[] jpegSizes = physicalStaticMetadata.getAvailableSizesForFormatChecked(JPEG,
-                                    StaticMetadata.StreamDirection.Output);
-                            if (!Arrays.asList(jpegSizes).contains(targetSize)) {
-                                continue;
-                            }
                             config.setPhysicalCameraId(overridePhysicalCameraIds.get(j));
                         }
                         outputConfigs.add(config);
@@ -1951,19 +1969,13 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                         break;
                     }
                     case YUV: {
-                        Size targetSize = maxSizes.maxYuvSizes[sizeLimit];
+                        Size targetSize = (numConfigs == 1) ? maxSizes.maxYuvSizes[sizeLimit] :
+                                overridePhysicalCameraSizes.get(j);
                         ImageReader target = ImageReader.newInstance(
                             targetSize.getWidth(), targetSize.getHeight(), YUV, numBuffers);
                         target.setOnImageAvailableListener(imageDropperListener, mHandler);
                         OutputConfiguration config = new OutputConfiguration(target.getSurface());
                         if (numConfigs > 1) {
-                            physicalStaticMetadata =
-                                    mAllStaticInfo.get(overridePhysicalCameraIds.get(j));
-                            Size[] yuvSizes = physicalStaticMetadata.getAvailableSizesForFormatChecked(YUV,
-                                    StaticMetadata.StreamDirection.Output);
-                            if (!Arrays.asList(yuvSizes).contains(targetSize)) {
-                                continue;
-                            }
                             config.setPhysicalCameraId(overridePhysicalCameraIds.get(j));
                         }
                         outputConfigs.add(config);
@@ -1971,19 +1983,13 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                         break;
                     }
                     case RAW: {
-                        Size targetSize = maxSizes.maxRawSize;
+                        Size targetSize = (numConfigs == 1) ? maxSizes.maxRawSize :
+                                overridePhysicalCameraSizes.get(j);
                         ImageReader target = ImageReader.newInstance(
                             targetSize.getWidth(), targetSize.getHeight(), RAW, numBuffers);
                         target.setOnImageAvailableListener(imageDropperListener, mHandler);
                         OutputConfiguration config = new OutputConfiguration(target.getSurface());
                         if (numConfigs > 1) {
-                            physicalStaticMetadata =
-                                    mAllStaticInfo.get(overridePhysicalCameraIds.get(j));
-                            Size[] rawSizes = physicalStaticMetadata.getAvailableSizesForFormatChecked(RAW,
-                                    StaticMetadata.StreamDirection.Output);
-                            if (!Arrays.asList(rawSizes).contains(targetSize)) {
-                                continue;
-                            }
                             config.setPhysicalCameraId(overridePhysicalCameraIds.get(j));
                         }
                         outputConfigs.add(config);
