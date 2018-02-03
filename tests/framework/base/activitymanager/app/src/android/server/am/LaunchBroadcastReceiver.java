@@ -19,7 +19,6 @@ package android.server.am;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.server.am.util.ActivityLauncher;
 import android.util.Log;
 
 /** Broadcast receiver that can launch activities. */

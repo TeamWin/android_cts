@@ -20,6 +20,9 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.server.am.ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID;
+import static android.server.am.ActivityLauncher.KEY_LAUNCH_ACTIVITY;
+import static android.server.am.ActivityLauncher.KEY_NEW_TASK;
+import static android.server.am.ActivityLauncher.KEY_TARGET_ACTIVITY;
 import static android.server.am.ActivityManagerDisplayTestBase.ReportedDisplayMetrics
         .getDisplayMetrics;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
@@ -248,8 +251,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             mAmWmState.assertFocusedStack("Focus must be on the secondary display", frontStackId);
 
             // Launch non-resizeable activity from secondary display.
-            executeShellCommand("am broadcast -a trigger_broadcast --ez launch_activity true "
-                    + "--ez new_task true --es target_activity "
+            executeShellCommand("am broadcast -a trigger_broadcast --ez " + KEY_LAUNCH_ACTIVITY
+                    + " true --ez " + KEY_NEW_TASK + " true --es " + KEY_TARGET_ACTIVITY + " "
                     + getSimpleClassName(NON_RESIZEABLE_ACTIVITY));
             mAmWmState.computeState(NON_RESIZEABLE_ACTIVITY);
 
@@ -1464,8 +1467,9 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             assertEquals("Focus must be on primary display", DEFAULT_DISPLAY_ID,
                     focusedStack.mDisplayId);
 
-            executeShellCommand("am broadcast -a trigger_broadcast --ez launch_activity true "
-                    + "--ez new_task true --es target_activity " + LAUNCHING_ACTIVITY);
+            executeShellCommand("am broadcast -a trigger_broadcast --ez " + KEY_LAUNCH_ACTIVITY
+                    + " true --ez " + KEY_NEW_TASK + " true --es " + KEY_TARGET_ACTIVITY + " "
+                    + LAUNCHING_ACTIVITY);
 
             // Check that the third activity ends up in a new task in the same stack as the
             // first activity
