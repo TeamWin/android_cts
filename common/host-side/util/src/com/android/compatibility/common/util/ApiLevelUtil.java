@@ -88,7 +88,7 @@ public class ApiLevelUtil {
 
     protected static int resolveVersionString(String versionString) {
         try {
-            return Integer.parseInt(versionString); // e.g. "24" for M
+            return Integer.parseInt(versionString); // e.g. "23" for M
         } catch (NumberFormatException e1) {
             try {
                 Field versionField = VersionCodes.class.getField(
