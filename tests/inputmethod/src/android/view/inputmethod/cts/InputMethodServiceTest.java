@@ -75,7 +75,7 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
     }
 
     @Test
-    public void testSetBackDispoWillDismiss() throws Exception {
+    public void testSetBackDispositionWillDismiss() throws Exception {
         try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getContext(),
                 InstrumentationRegistry.getInstrumentation().getUiAutomation(),
@@ -99,7 +99,7 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
     }
 
     @Test
-    public void testSetBackDispoWillNotDismiss() throws Exception {
+    public void testSetBackDispositionWillNotDismiss() throws Exception {
         try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getContext(),
                 InstrumentationRegistry.getInstrumentation().getUiAutomation(),
