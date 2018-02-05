@@ -517,7 +517,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
 
         // Launch to docked stack and record size.
         String logSeparator = clearLogcat();
-        launchActivity(activityName, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
+        launchActivityInSplitScreenWithRecents(activityName);
         final ReportedSizes initialDockedSizes = getActivityDisplaySize(activityName, logSeparator);
         // Make sure docked stack is focused. This way when we dismiss it later fullscreen stack
         // will come up.
