@@ -74,6 +74,10 @@ public class SELinuxNeverallowRulesTest extends DeviceTestCase implements IBuild
     private boolean isFullTrebleDevice() throws Exception {
         return android.security.cts.SELinuxHostTest.isFullTrebleDevice(mDevice);
     }
+
+    private boolean isCompatiblePropertyEnforcedDevice() throws Exception {
+        return android.security.cts.SELinuxHostTest.isCompatiblePropertyEnforcedDevice(mDevice);
+    }
 """
 src_body = ""
 src_footer = """}
@@ -84,9 +88,15 @@ src_method = """
     public void testNeverallowRules() throws Exception {
         String neverallowRule = "$NEVERALLOW_RULE_HERE$";
         boolean fullTrebleOnly = $FULL_TREBLE_ONLY_BOOL_HERE$;
+        boolean compatiblePropertyOnly = $COMPATIBLE_PROPERTY_ONLY_BOOL_HERE$;
 
         if ((fullTrebleOnly) && (!isFullTrebleDevice())) {
             // This test applies only to Treble devices but this device isn't one
+            return;
+        }
+        if ((compatiblePropertyOnly) && (!isCompatiblePropertyEnforcedDevice())) {
+            // This test applies only to devices on which compatible property is enforced but this
+            // device isn't one
             return;
         }
 
