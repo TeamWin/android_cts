@@ -1510,6 +1510,7 @@
     <string name="ringer_mode_info">This test checks that Audio manager functionality that requires
         particular ringer mode states works properly.
     </string>
+    <string name="ringer_mode_pass_test">These tests are handled by CTS.</string>
     <string name="test_sound_effects">Test sound effects</string>
     <string name="test_vibrate_notification">Test vibrate notification</string>
     <string name="test_vibrate_ringer">Test vibrate ringer</string>

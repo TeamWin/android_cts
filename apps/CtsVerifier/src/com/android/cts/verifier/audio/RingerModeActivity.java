@@ -109,6 +109,7 @@ public class RingerModeActivity extends InteractiveVerifierActivity {
     protected List<InteractiveTestCase> createTestItems() {
         List<InteractiveTestCase> tests = new ArrayList<>();
         if (supportsConditionProviders()) {
+            tests.add(new PassTest());
             return tests;
         }
         tests.add(new SetModeAllTest());
@@ -178,6 +179,18 @@ public class RingerModeActivity extends InteractiveVerifierActivity {
     }
 
     // Tests
+
+    protected class PassTest extends InteractiveTestCase {
+        @Override
+        protected View inflate(ViewGroup parent) {
+            return createRetryItem(parent, R.string.ringer_mode_pass_test);
+        }
+
+        @Override
+        protected void test() {
+           status = PASS;
+        }
+    }
 
 
     protected class SetModeAllTest extends InteractiveTestCase {
