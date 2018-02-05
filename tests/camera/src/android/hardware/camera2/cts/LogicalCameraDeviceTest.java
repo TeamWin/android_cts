@@ -228,6 +228,40 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
                     }
                 }
 
+                // Test streaming requests
+                imageReaders.clear();
+                outputConfigs.clear();
+
+                // Add physical YUV streams
+                List<ImageReader> physicalTargets = new ArrayList<>();
+                for (String physicalCameraId : dualPhysicalCameraIds) {
+                    ImageReader physicalTarget = CameraTestUtils.makeImageReader(yuvSize,
+                            ImageFormat.YUV_420_888, MAX_IMAGE_COUNT,
+                            new ImageDropperListener(), mHandler);
+                    OutputConfiguration config = new OutputConfiguration(
+                            physicalTarget.getSurface());
+                    config.setPhysicalCameraId(physicalCameraId);
+                    outputConfigs.add(config);
+                    physicalTargets.add(physicalTarget);
+                }
+
+                mSessionListener = new BlockingSessionCallback();
+                mSession = configureCameraSessionWithConfig(mCamera, outputConfigs,
+                        mSessionListener, mHandler);
+
+                requestBuilder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW,
+                            physicalIdSet);
+                for (OutputConfiguration c : outputConfigs) {
+                    requestBuilder.addTarget(c.getSurface());
+                }
+
+                SimpleCaptureCallback simpleResultListener = new SimpleCaptureCallback();
+                mSession.setRepeatingRequest(requestBuilder.build(), simpleResultListener,
+                        mHandler);
+
+                // Converge AE
+                waitForAeStable(simpleResultListener, NUM_FRAMES_WAITED_FOR_UNKNOWN_LATENCY);
+
                 if (mSession != null) {
                     mSession.close();
                 }
@@ -318,28 +352,6 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
                         mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW, physicalIdSet);
                     requestBuilder.addTarget(config.getSurface());
                     CaptureRequest request = requestBuilder.build();
-
-                    // Streaming requests with individual physical camera settings are not
-                    // supported.
-                    try {
-                        mSession.setRepeatingRequest(request, new SimpleCaptureCallback(),
-                                mHandler);
-                        fail("Streaming requests that include physical camera settings are not " +
-                                "supported");
-                    } catch (IllegalArgumentException e) {
-                        //expected
-                    }
-
-                    try {
-                        ArrayList<CaptureRequest> requestList = new ArrayList<CaptureRequest>();
-                        requestList.add(request);
-                        mSession.setRepeatingBurst(requestList, new SimpleCaptureCallback(),
-                                mHandler);
-                        fail("Streaming requests that include physical camera settings are not " +
-                                "supported");
-                    } catch (IllegalArgumentException e) {
-                        //expected
-                    }
 
                     try {
                         mSession.capture(request, new SimpleCaptureCallback(), mHandler);
