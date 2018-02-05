@@ -22,22 +22,25 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.os.cts.batterysaving.common.BaseCommunicationReceiver;
 import android.os.cts.batterysaving.common.BatterySavingCtsCommon.Payload;
 import android.os.cts.batterysaving.common.BatterySavingCtsCommon.Payload.TestServiceRequest.SetAlarmRequest;
 import android.os.cts.batterysaving.common.BatterySavingCtsCommon.Payload.TestServiceResponse;
 import android.util.Log;
 
-public class CommReceiver extends BaseCommunicationReceiver {
+import com.android.compatibility.common.util.BroadcastRpcBase;
+
+import com.google.protobuf.InvalidProtocolBufferException;
+
+public class CommReceiver extends BroadcastRpcBase.ReceiverBase<Payload, Payload> {
     private static final String TAG = "CommReceiver";
 
     @Override
-    protected void handleRequest(
-            Context context, Payload request, Payload.Builder responseBuilder) {
+    protected Payload handleRequest(Context context, Payload request) {
+        final Payload.Builder responseBuilder = Payload.newBuilder();
         if (request.hasTestServiceRequest()) {
             handleBatterySaverBgServiceRequest(context, request, responseBuilder);
         }
-        return;
+        return responseBuilder.build();
     }
 
     private void handleBatterySaverBgServiceRequest(Context context,
@@ -105,5 +108,19 @@ public class CommReceiver extends BaseCommunicationReceiver {
         }
 
         responseBuilder.setTestServiceResponse(rb);
+    }
+
+    @Override
+    protected byte[] responseToBytes(Payload payload) {
+        return payload.toByteArray();
+    }
+
+    @Override
+    protected Payload bytesToRequest(byte[] bytes) {
+        try {
+            return Payload.parseFrom(bytes);
+        } catch (InvalidProtocolBufferException e) {
+            throw new RuntimeException("InvalidProtocolBufferException", e);
+        }
     }
 }

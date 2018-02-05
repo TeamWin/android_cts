@@ -31,7 +31,6 @@ import static org.junit.Assert.assertTrue;
 import android.os.cts.batterysaving.common.BatterySavingCtsCommon.Payload;
 import android.os.cts.batterysaving.common.BatterySavingCtsCommon.Payload.TestServiceRequest;
 import android.os.cts.batterysaving.common.BatterySavingCtsCommon.Payload.TestServiceRequest.StartServiceRequest;
-import android.os.cts.batterysaving.common.CommUtils;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 
@@ -114,7 +113,7 @@ public class BatterySaverBgServiceTest extends BatterySavingTestBase {
 
     /** Ask to clear the last received intent in the test service. */
     private void requestClearIntent(String targetPackage) throws Exception {
-        final Payload response = CommUtils.sendRequest(targetPackage,
+        final Payload response = mRpc.sendRequest(targetPackage,
                 Payload.newBuilder().setTestServiceRequest(
                         TestServiceRequest.newBuilder().setClearLastIntent(true))
                         .build());
@@ -124,7 +123,7 @@ public class BatterySaverBgServiceTest extends BatterySavingTestBase {
 
     /** Get the last received intent in the test service. */
     private String requestLastIntent(String targetPackage) throws Exception {
-        final Payload response = CommUtils.sendRequest(targetPackage,
+        final Payload response = mRpc.sendRequest(targetPackage,
                 Payload.newBuilder().setTestServiceRequest(
                         TestServiceRequest.newBuilder().setGetLastIntent(true))
                         .build());
@@ -153,7 +152,7 @@ public class BatterySaverBgServiceTest extends BatterySavingTestBase {
             throws Exception {
         final String action = "start_service_" + getRandomInt() + "_fg=" + foreground;
 
-        final Payload response = CommUtils.sendRequest(targetPackage,
+        final Payload response = mRpc.sendRequest(targetPackage,
                 Payload.newBuilder().setTestServiceRequest(
                         TestServiceRequest.newBuilder().setStartService(
                             StartServiceRequest.newBuilder()
