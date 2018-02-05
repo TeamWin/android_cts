@@ -484,7 +484,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         assertInstallEphemeralFailsWithError("unsigned-ephemeral.apk",
                 "Failed to collect certificates");
         assertInstallEphemeralFailsWithError("v1-only-ephemeral.apk",
-                "No APK Signature Scheme v2 signature");
+                "must be signed with APK Signature Scheme v2 or greater");
         assertInstallEphemeralSucceeds("v2-only-ephemeral.apk");
         assertInstallEphemeralSucceeds("v1-v2-ephemeral.apk"); // signed with both schemes
     }
