@@ -21,7 +21,9 @@ import static android.content.Intent.FLAG_RECEIVER_FOREGROUND;
 import static android.view.inputmethod.cts.util.TestUtils.waitOnMainUntil;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Instrumentation;
@@ -31,16 +33,19 @@ import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.ResultReceiver;
+import android.support.annotation.NonNull;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
+import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.inputmethod.BaseInputConnection;
 import android.view.inputmethod.InputMethodInfo;
 import android.view.inputmethod.InputMethodManager;
+import android.view.inputmethod.InputMethodSubtype;
 import android.view.inputmethod.cts.util.TestActivity;
 import android.widget.EditText;
 import android.widget.LinearLayout.LayoutParams;
@@ -55,6 +60,7 @@ import org.junit.runner.RunWith;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
@@ -124,14 +130,53 @@ public class InputMethodManagerTest {
             // status: hide to show to hide
             mImManager.toggleSoftInputFromWindow(token, 0, InputMethodManager.HIDE_NOT_ALWAYS);
             mImManager.toggleSoftInputFromWindow(token, 0, InputMethodManager.HIDE_NOT_ALWAYS);
-
-            List<InputMethodInfo> enabledImList = mImManager.getEnabledInputMethodList();
-            List<InputMethodInfo> imList = mImManager.getInputMethodList();
-            if (imList != null && enabledImList != null) {
-                assertTrue(imList.size() >= enabledImList.size());
-            }
         });
         mInstrumentation.waitForIdleSync();
+    }
+
+    @Test
+    public void testGetInputMethodList() throws Exception {
+        final List<InputMethodInfo> enabledImes = mImManager.getEnabledInputMethodList();
+        assertNotNull(enabledImes);
+        final List<InputMethodInfo> imes = mImManager.getInputMethodList();
+        assertNotNull(imes);
+
+        // Make sure that IMM#getEnabledInputMethodList() is a subset of IMM#getInputMethodList().
+        // TODO: Consider moving this to hostside test to test more realistic and useful scenario.
+        if (!imes.containsAll(enabledImes)) {
+            fail("Enabled IMEs must be a subset of all the IMEs.\n"  +
+                    "all=" + dumpInputMethodInfoList(imes) + "\n" +
+                    "enabled=" + dumpInputMethodInfoList(enabledImes));
+        }
+    }
+
+    private static String dumpInputMethodInfoList(@NonNull List<InputMethodInfo> imiList) {
+        return "[" + imiList.stream().map(imi -> {
+            final StringBuilder sb = new StringBuilder();
+            final int subtypeCount = imi.getSubtypeCount();
+            sb.append("InputMethodInfo{id=").append(imi.getId())
+                    .append(", subtypeCount=").append(subtypeCount)
+                    .append(", subtypes=[");
+            for (int i = 0; i < subtypeCount; ++i) {
+                if (i != 0) {
+                    sb.append(",");
+                }
+                final InputMethodSubtype subtype = imi.getSubtypeAt(i);
+                sb.append("{id=0x").append(Integer.toHexString(subtype.hashCode()));
+                if (!TextUtils.isEmpty(subtype.getMode())) {
+                    sb.append(",mode=").append(subtype.getMode());
+                }
+                if (!TextUtils.isEmpty(subtype.getLocale())) {
+                    sb.append(",locale=").append(subtype.getLocale());
+                }
+                if (!TextUtils.isEmpty(subtype.getLanguageTag())) {
+                    sb.append(",languageTag=").append(subtype.getLanguageTag());
+                }
+                sb.append("}");
+            }
+            sb.append("]");
+            return sb.toString();
+        }).collect(Collectors.joining( ", " )) + "]";
     }
 
     @Test
