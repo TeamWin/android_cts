@@ -15,13 +15,13 @@
 package android.jvmti.cts;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
-import com.android.ddmlib.testrunner.ITestRunListener;
 import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
 import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.result.ITestLifeCycleReceiver;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IAbiReceiver;
@@ -29,6 +29,7 @@ import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.util.AbiUtils;
 import com.android.tradefed.util.FileUtil;
 import com.android.tradefed.util.ZipUtil;
+
 import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
@@ -190,7 +191,7 @@ public class JvmtiHostTest extends DeviceTestCase implements IBuildReceiver, IAb
         }
     }
 
-    private static class TestResults implements ITestRunListener {
+    private static class TestResults implements ITestLifeCycleReceiver {
         private boolean mFailed = false;
         private boolean mStarted = false;
         private final Runnable mOnStart;
