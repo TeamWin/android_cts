@@ -24,11 +24,13 @@ import android.signature.cts.JDiffClassDescription;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
+import java.util.zip.ZipFile;
 import org.xmlpull.v1.XmlPullParserException;
 import repackaged.android.test.InstrumentationTestCase;
 import repackaged.android.test.InstrumentationTestRunner;
@@ -129,17 +131,37 @@ public class AbstractApiTest extends InstrumentationTestCase {
         return argument.split(",");
     }
 
+    static Stream<InputStream> readFile(File file) {
+        try {
+            if (file.getName().endsWith(".zip")) {
+                ZipFile zip = new ZipFile(file);
+                return zip.stream().map(entry -> {
+                    try {
+                        return zip.getInputStream(entry);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }});
+            } else {
+                return Stream.of(new FileInputStream(file));
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     static Stream<JDiffClassDescription> parseApiFilesAsStream(
             ApiDocumentParser apiDocumentParser, String[] apiFiles)
             throws XmlPullParserException, IOException {
-        return Stream.of(apiFiles).flatMap(apiFile -> {
-            File file = new File(API_FILE_DIRECTORY + "/" + apiFile);
-            try {
-                return apiDocumentParser.parseAsStream(new FileInputStream(file))
-                        .filter(AbstractApiTest::isAccessibleClass);
-            } catch (IOException|XmlPullParserException e) {
-                throw new RuntimeException(e);
-            }
-        });
+        return Stream.of(apiFiles)
+                .map(name -> new File(API_FILE_DIRECTORY + "/" + name))
+                .flatMap(file -> readFile(file))
+                .flatMap(stream -> {
+                    try {
+                        return apiDocumentParser.parseAsStream(stream)
+                              .filter(AbstractApiTest::isAccessibleClass);
+                    } catch (IOException | XmlPullParserException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
     }
 }

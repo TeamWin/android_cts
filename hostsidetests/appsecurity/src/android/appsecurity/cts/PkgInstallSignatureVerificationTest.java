@@ -36,6 +36,7 @@ import java.util.Locale;
 public class PkgInstallSignatureVerificationTest extends DeviceTestCase implements IBuildReceiver {
 
     private static final String TEST_PKG = "android.appsecurity.cts.tinyapp";
+    private static final String COMPANION_TEST_PKG = "android.appsecurity.cts.tinyapp_companion";
     private static final String TEST_APK_RESOURCE_PREFIX = "/pkgsigverify/";
 
     private static final String[] DSA_KEY_NAMES = {"1024", "2048", "3072"};
@@ -64,6 +65,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
     protected void tearDown() throws Exception {
         try {
             uninstallPackage();
+            uninstallCompanionPackage();
         } catch (DeviceNotAvailableException ignored) {
         } finally {
             super.tearDown();
@@ -537,6 +539,49 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         assertInstallFails("v3-rsa-pkcs1-sha256-2048-3-with-por_2_3-full-caps.apk");
     }
 
+    public void testInstallV3KeyRotationSharedUid() throws Exception {
+        // tests that a v3 signed sharedUid APK can still be sharedUid with apps with its older
+        // signing certificate, if it so desires
+        assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-1-sharedUid.apk");
+        assertInstallSucceeds(
+                "v3-rsa-pkcs1-sha256-2048-2-with-por_1_2-full-caps-sharedUid-companion.apk");
+    }
+
+    public void testInstallV3KeyRotationOlderSharedUid() throws Exception {
+
+        // tests that a sharedUid APK can still install with another app that is signed by a newer
+        // signing certificate, but which allows sharedUid with the older one
+        assertInstallSucceeds(
+                "v3-rsa-pkcs1-sha256-2048-2-with-por_1_2-full-caps-sharedUid-companion.apk");
+        assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-1-sharedUid.apk");
+    }
+
+    public void testInstallV3KeyRotationSharedUidNoCap() throws Exception {
+        // tests that a v3 signed sharedUid APK cannot be sharedUid with apps with its older
+        // signing certificate, when it has not granted that certificate the sharedUid capability
+        assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-1-sharedUid.apk");
+        assertInstallFails(
+                "v3-rsa-pkcs1-sha256-2048-2-with-por_1_2-no-shUid-cap-sharedUid-companion.apk");
+    }
+
+    public void testInstallV3KeyRotationOlderSharedUidNoCap() throws Exception {
+        // tests that a sharedUid APK signed with an old certificate cannot install with
+        // an app having a proof-of-rotation structure that hasn't granted the older
+        // certificate the sharedUid capability
+        assertInstallSucceeds(
+                "v3-rsa-pkcs1-sha256-2048-2-with-por_1_2-no-shUid-cap-sharedUid-companion.apk");
+        assertInstallFails("v3-rsa-pkcs1-sha256-2048-1-sharedUid.apk");
+    }
+
+    public void testInstallV3NoRotationSharedUid() throws Exception {
+        // tests that a sharedUid APK signed with a new certificate installs with
+        // an app having a proof-of-rotation structure that hasn't granted an older
+        // certificate the sharedUid capability
+        assertInstallSucceeds(
+                "v3-rsa-pkcs1-sha256-2048-2-with-por_1_2-no-shUid-cap-sharedUid-companion.apk");
+        assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-2-sharedUid.apk");
+    }
+
     private void assertInstallSucceeds(String apkFilenameInResources) throws Exception {
         String installResult = installPackageFromResource(apkFilenameInResources);
         if (installResult != null) {
@@ -655,5 +700,9 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
 
     private String uninstallPackage() throws DeviceNotAvailableException {
         return getDevice().uninstallPackage(TEST_PKG);
+    }
+
+    private String uninstallCompanionPackage() throws DeviceNotAvailableException {
+        return getDevice().uninstallPackage(COMPANION_TEST_PKG);
     }
 }

@@ -443,6 +443,10 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.bug_67737022);
     }
 
+    @SecurityTest
+    public void testStagefright_bug_38115076() throws Exception {
+        doStagefrightTest(R.raw.bug_38115076);
+    }
 
     private void doStagefrightTest(final int rid) throws Exception {
         doStagefrightTestMediaPlayer(rid);
@@ -934,6 +938,11 @@ public class StagefrightTest extends InstrumentationTestCase {
     @SecurityTest
     public void testBug_37930177() throws Exception {
         doStagefrightTestRawBlob(R.raw.bug_37930177_hevc, "video/hevc", 320, 240);
+    }
+
+    @SecurityTest
+    public void testBug_37712181() throws Exception {
+        doStagefrightTestRawBlob(R.raw.bug_37712181_hevc, "video/hevc", 320, 240);
     }
 
     private void runWithTimeout(Runnable runner, int timeout) {

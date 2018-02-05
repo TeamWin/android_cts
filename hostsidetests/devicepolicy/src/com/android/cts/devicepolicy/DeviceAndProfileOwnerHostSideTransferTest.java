@@ -1,5 +1,7 @@
 package com.android.cts.devicepolicy;
 
+import com.android.tradefed.device.DeviceNotAvailableException;
+
 public abstract class DeviceAndProfileOwnerHostSideTransferTest extends BaseDevicePolicyTest {
     protected static final String TRANSFER_OWNER_OUTGOING_PKG =
             "com.android.cts.transferowneroutgoing";
@@ -95,6 +97,49 @@ public abstract class DeviceAndProfileOwnerHostSideTransferTest extends BaseDevi
         runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
                 mOutgoingTestClassName,
                 "testTransferNoMetadata", mUserId);
+    }
+
+    public void testIsTransferBundlePersisted() throws DeviceNotAvailableException {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
+                mOutgoingTestClassName,
+                "testTransferOwnershipBundleSaved", mUserId);
+        runDeviceTestsAsUser(TRANSFER_OWNER_INCOMING_PKG,
+                mIncomingTestClassName,
+                "testTransferOwnershipBundleLoaded", mUserId);
+    }
+
+    public void testGetTransferOwnershipBundleOnlyCalledFromAdmin()
+            throws DeviceNotAvailableException {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
+                mOutgoingTestClassName,
+                "testGetTransferOwnershipBundleOnlyCalledFromAdmin", mUserId);
+    }
+
+    public void testBundleEmptyAfterTransferWithNullBundle() throws DeviceNotAvailableException {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
+                mOutgoingTestClassName,
+                "testTransferOwnershipNullBundle", mUserId);
+        runDeviceTestsAsUser(TRANSFER_OWNER_INCOMING_PKG,
+                mIncomingTestClassName,
+                "testTransferOwnershipEmptyBundleLoaded", mUserId);
+    }
+
+    public void testIsBundleNullNoTransfer() throws DeviceNotAvailableException {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
+                mOutgoingTestClassName,
+                "testIsBundleNullNoTransfer", mUserId);
     }
 
     protected int setupManagedProfileOnDeviceOwner(String apkName, String adminReceiverClassName)

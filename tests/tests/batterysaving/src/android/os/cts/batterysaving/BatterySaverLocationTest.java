@@ -20,22 +20,30 @@ import static android.content.pm.PackageManager.FEATURE_LOCATION_GPS;
 import static android.provider.Settings.Secure.LOCATION_MODE_OFF;
 import static android.provider.Settings.Secure.LOCATION_PROVIDERS_ALLOWED;
 
+import static com.android.compatibility.common.util.BatteryUtils.enableBatterySaver;
+import static com.android.compatibility.common.util.BatteryUtils.runDumpsysBatteryUnplug;
+import static com.android.compatibility.common.util.BatteryUtils.turnOnScreen;
+import static com.android.compatibility.common.util.SettingsUtils.putSecureSetting;
+import static com.android.compatibility.common.util.TestUtils.waitUntil;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import android.content.IntentFilter;
 import android.location.LocationManager;
 import android.os.PowerManager;
-import android.os.cts.batterysaving.common.CallbackAsserter;
 import android.provider.Settings;
 import android.provider.Settings.Global;
 import android.provider.Settings.Secure;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
+
+import com.android.compatibility.common.util.CallbackAsserter;
+import com.android.compatibility.common.util.FeatureUtil;
+import com.android.compatibility.common.util.TestUtils.RunnableWithThrow;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -55,7 +63,7 @@ public class BatterySaverLocationTest extends BatterySavingTestBase {
      */
     @Test
     public void testLocationAllDisabled() throws Exception {
-        if (!hasFeatures(FEATURE_LOCATION, FEATURE_LOCATION_GPS)) {
+        if (!FeatureUtil.hasAllSystemFeatures(FEATURE_LOCATION, FEATURE_LOCATION_GPS)) {
             Log.i(TAG, "Device doesn't support GPS");
             return;
         }

@@ -340,7 +340,7 @@ public class VulkanFeaturesTest {
     private static native String nativeGetVkJSON();
 
     private JSONObject[] getVulkanDevices() throws JSONException, UnsupportedEncodingException {
-        JSONArray vkjson = new JSONArray(nativeGetVkJSON());
+        JSONArray vkjson = (new JSONObject(nativeGetVkJSON())).getJSONArray("devices");
         JSONObject[] devices = new JSONObject[vkjson.length()];
         for (int i = 0; i < vkjson.length(); i++) {
             devices[i] = vkjson.getJSONObject(i);

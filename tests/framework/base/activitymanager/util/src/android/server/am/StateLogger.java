@@ -42,4 +42,8 @@ public class StateLogger {
     public static void logE(String logText) {
         Log.e(TAG, logText);
     }
+
+    public static void logE(String logText, Throwable e) {
+        Log.e(TAG, logText, e);
+    }
 }

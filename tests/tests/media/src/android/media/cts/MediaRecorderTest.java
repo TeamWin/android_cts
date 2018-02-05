@@ -35,6 +35,7 @@ import android.media.MediaCodecInfo.CodecProfileLevel;
 import android.media.MediaRecorder.OnErrorListener;
 import android.media.MediaRecorder.OnInfoListener;
 import android.media.MediaMetadataRetriever;
+import android.media.MicrophoneInfo;
 import android.opengl.GLES20;
 import android.os.ConditionVariable;
 import android.os.Environment;
@@ -605,6 +606,47 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         mMediaRecorder.setAudioEncoder(codec);
         recordMedia(MAX_FILE_SIZE, mOutFile);
         return 1;
+    }
+
+    public void testGetActiveMicrophones() throws Exception {
+        if (!hasMicrophone() || !hasAac()) {
+            MediaUtils.skipTest("no audio codecs or microphone");
+            return;
+        }
+        mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+        mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+        mMediaRecorder.setOutputFile(OUTPUT_PATH);
+        mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+        mMediaRecorder.setMaxFileSize(MAX_FILE_SIZE * 10);
+        mMediaRecorder.prepare();
+        mMediaRecorder.start();
+        Thread.sleep(1000);
+        List<MicrophoneInfo> activeMicrophones = mMediaRecorder.getActiveMicrophones();
+        assertTrue(activeMicrophones.size() > 0);
+        for (MicrophoneInfo activeMicrophone : activeMicrophones) {
+            printMicrophoneInfo(activeMicrophone);
+        }
+        mMediaRecorder.stop();
+    }
+
+    private void printMicrophoneInfo(MicrophoneInfo microphone) {
+        Log.i(TAG, "deviceId:" + microphone.getDescription());
+        Log.i(TAG, "portId:" + microphone.getId());
+        Log.i(TAG, "type:" + microphone.getType());
+        Log.i(TAG, "deviceLocation:" + microphone.getLocation());
+        Log.i(TAG, "deviceGroup:" + microphone.getGroup()
+            + " index:" + microphone.getIndexInTheGroup());
+        MicrophoneInfo.Coordinate3F position = microphone.getPosition();
+        Log.i(TAG, "position:" + position.x + "," + position.y + "," + position.z);
+        MicrophoneInfo.Coordinate3F orientation = microphone.getOrientation();
+        Log.i(TAG, "orientation:" + orientation.x + "," + orientation.y + "," + orientation.z);
+        Log.i(TAG, "frequencyResponse:" + microphone.getFrequencyResponse());
+        Log.i(TAG, "channelMapping:" + microphone.getChannelMapping());
+        Log.i(TAG, "sensitivity:" + microphone.getSensitivity());
+        Log.i(TAG, "max spl:" + microphone.getMaxSpl());
+        Log.i(TAG, "min spl:" + microphone.getMinSpl());
+        Log.i(TAG, "directionality:" + microphone.getDirectionality());
+        Log.i(TAG, "******");
     }
 
     public void testRecordAudioFromAudioSourceUnprocessed() throws Exception {

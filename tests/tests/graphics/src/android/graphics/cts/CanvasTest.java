@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -2129,13 +2130,35 @@ public class CanvasTest {
         assertEquals(DisplayMetrics.DENSITY_HIGH, mCanvas.getDensity());
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void testDrawHwBitmapInSwCanvas() {
+    @Test(expected = IllegalArgumentException.class)
+    public void testDrawHwBitmap_inSwCanvas() {
         Bitmap hwBitmap = mImmutableBitmap.copy(Config.HARDWARE, false);
-        mCanvas.drawBitmap(hwBitmap, 0, 0, null);
+        mCanvas.drawBitmap(hwBitmap, 0, 0, null); // we verify this specific call should IAE
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = IllegalArgumentException.class)
+    public void testDrawHwBitmap_inPictureCanvas_inSwCanvas() {
+        Bitmap hwBitmap = mImmutableBitmap.copy(Config.HARDWARE, false);
+        Picture picture = new Picture();
+        Canvas pictureCanvas = picture.beginRecording(100, 100);
+        pictureCanvas.drawBitmap(hwBitmap, 0, 0, null);
+        mCanvas.drawPicture(picture); // we verify this specific call should IAE
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testDrawHwBitmap_inPictureCanvas_inPictureCanvas_inSwCanvas() {
+        Bitmap hwBitmap = mImmutableBitmap.copy(Config.HARDWARE, false);
+        Picture innerPicture = new Picture();
+        Canvas pictureCanvas = innerPicture.beginRecording(100, 100);
+        pictureCanvas.drawBitmap(hwBitmap, 0, 0, null);
+
+        Picture outerPicture = new Picture();
+        Canvas outerPictureCanvas = outerPicture.beginRecording(100, 100);
+        outerPictureCanvas.drawPicture(innerPicture);
+        mCanvas.drawPicture(outerPicture); // we verify this specific call should IAE
+    }
+
+    @Test(expected = IllegalArgumentException.class)
     public void testHwBitmapShaderInSwCanvas1() {
         Bitmap hwBitmap = mImmutableBitmap.copy(Config.HARDWARE, false);
         BitmapShader bitmapShader = new BitmapShader(hwBitmap, Shader.TileMode.REPEAT,
@@ -2148,7 +2171,7 @@ public class CanvasTest {
         mCanvas.drawRect(0, 0, 10, 10, p);
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testHwBitmapShaderInSwCanvas2() {
         Bitmap hwBitmap = mImmutableBitmap.copy(Config.HARDWARE, false);
         BitmapShader bitmapShader = new BitmapShader(hwBitmap, Shader.TileMode.REPEAT,
@@ -2230,7 +2253,7 @@ public class CanvasTest {
             // Verify that the pixel is now max red.
             Assert.assertEquals(0xFFFF0000, canvasBitmap.getPixel(0, 0));
         } catch (IOException e) {
-            Assert.fail();
+            fail();
         }
     }
 

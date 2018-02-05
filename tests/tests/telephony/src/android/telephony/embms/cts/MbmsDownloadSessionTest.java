@@ -20,7 +20,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.telephony.MbmsDownloadSession;
 import android.telephony.cts.embmstestapp.CtsDownloadService;
-import android.telephony.cts.embmstestapp.CtsStreamingService;
 import android.telephony.mbms.DownloadRequest;
 import android.telephony.mbms.FileServiceInfo;
 import android.telephony.mbms.MbmsErrors;
@@ -152,7 +151,7 @@ public class MbmsDownloadSessionTest extends MbmsDownloadTestBase {
 
     public void testGetDownloadStatus() throws Exception {
         DownloadRequest request = DOWNLOAD_REQUEST_TEMPLATE.build();
-        mDownloadSession.getDownloadStatus(request, CtsDownloadService.FILE_INFO);
+        mDownloadSession.requestDownloadState(request, CtsDownloadService.FILE_INFO);
 
         List<Bundle> getDownloadStatusCalls =
                 getMiddlewareCalls(CtsDownloadService.METHOD_GET_DOWNLOAD_STATUS);
@@ -181,6 +180,18 @@ public class MbmsDownloadSessionTest extends MbmsDownloadTestBase {
         List<DownloadRequest> downloads = mDownloadSession.listPendingDownloads();
         assertEquals(1, downloads.size());
         assertEquals(request, downloads.get(0));
+    }
+
+    public void testSetTempFileDirFailure() throws Exception {
+        String tempFileDirName = "CTSTestDir101010";
+        File tempFileRootDirectory = new File(mContext.getFilesDir(), tempFileDirName);
+        tempFileRootDirectory.mkdirs();
+
+        mMiddlewareControl.forceErrorCode(
+                MbmsErrors.DownloadErrors.ERROR_CANNOT_CHANGE_TEMP_FILE_ROOT);
+        mDownloadSession.setTempFileRootDirectory(tempFileRootDirectory);
+        assertNotNull(mCallback.waitOnError());
+        assertNotSame(mDownloadSession.getTempFileRootDirectory(), tempFileDirName);
     }
 
     public void testDownloadRequestOpacity() throws Exception {

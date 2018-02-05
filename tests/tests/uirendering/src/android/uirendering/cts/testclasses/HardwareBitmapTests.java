@@ -22,22 +22,24 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.BitmapRegionDecoder;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Picture;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.NinePatchDrawable;
+import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.uirendering.cts.R;
-
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.support.test.filters.MediumTest;
 import android.uirendering.cts.bitmapcomparers.ExactComparer;
 import android.uirendering.cts.bitmapcomparers.MSSIMComparer;
 import android.uirendering.cts.bitmapverifiers.GoldenImageVerifier;
+import android.uirendering.cts.bitmapverifiers.RectVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.util.DisplayMetrics;
 
@@ -71,7 +73,7 @@ public class HardwareBitmapTests extends ActivityTestBase {
 
     @Test
     public void testDecodeResource() {
-        createTest().addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
+        createTest().addCanvasClient((canvas, width, height) -> {
             Bitmap hardwareBitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot,
                     HARDWARE_OPTIONS);
             canvas.drawBitmap(hardwareBitmap, 0, 0, new Paint());
@@ -80,10 +82,70 @@ public class HardwareBitmapTests extends ActivityTestBase {
     }
 
     @Test
+    public void testCreateFromPicture() {
+        final Rect rect = new Rect(10, 10, 80, 80);
+        Picture picture = new Picture();
+        {
+            Canvas canvas = picture.beginRecording(TEST_WIDTH, TEST_HEIGHT);
+            Paint p = new Paint();
+            p.setAntiAlias(false);
+            p.setColor(Color.BLUE);
+            canvas.drawRect(rect, p);
+            picture.endRecording();
+        }
+        Bitmap hardwareBitmap = Bitmap.createBitmap(picture);
+        assertEquals(TEST_WIDTH, hardwareBitmap.getWidth());
+        assertEquals(TEST_HEIGHT, hardwareBitmap.getHeight());
+        assertEquals(Bitmap.Config.HARDWARE, hardwareBitmap.getConfig());
+        createTest().addCanvasClient((canvas, width, height) -> {
+            canvas.drawBitmap(hardwareBitmap, 0, 0, null);
+        }, true).runWithVerifier(new RectVerifier(Color.WHITE, Color.BLUE, rect));
+    }
+
+    @Test
+    public void testReadbackThroughPicture() {
+        Bitmap hardwareBitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot,
+                HARDWARE_OPTIONS);
+        Picture picture = new Picture();
+        {
+            Canvas canvas = picture.beginRecording(TEST_WIDTH, TEST_HEIGHT);
+            canvas.drawColor(Color.WHITE);
+            canvas.drawBitmap(hardwareBitmap, 0, 0, null);
+            picture.endRecording();
+        }
+        assertTrue(picture.requiresHardwareAcceleration());
+        Bitmap result = Bitmap.createBitmap(picture, picture.getWidth(), picture.getHeight(),
+                Bitmap.Config.ARGB_8888);
+        assertTrue(new GoldenImageVerifier(getActivity(),
+                R.drawable.golden_robot, new MSSIMComparer(0.95)).verify(result));
+    }
+
+    @Test
+    public void testCreateScaledBitmapFromPicture() {
+        Picture picture = new Picture();
+        {
+            Bitmap bitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot, HARDWARE_OPTIONS);
+            Canvas canvas = picture.beginRecording(bitmap.getWidth(), bitmap.getHeight());
+            Paint paint = new Paint();
+            paint.setFilterBitmap(true);
+            paint.setAntiAlias(true);
+            canvas.drawBitmap(bitmap, 0, 0, paint);
+            picture.endRecording();
+        }
+        assertTrue(picture.requiresHardwareAcceleration());
+        Bitmap scaled = Bitmap.createBitmap(picture, 24, 24, Bitmap.Config.HARDWARE);
+        createTest().addCanvasClient((canvas, width, height) -> {
+            assertEquals(Bitmap.Config.HARDWARE, scaled.getConfig());
+            canvas.drawBitmap(scaled, 0, 0, null);
+        }, true).runWithVerifier(new GoldenImageVerifier(getActivity(),
+                R.drawable.golden_hardwaretest_create_scaled, new MSSIMComparer(0.9)));
+    }
+
+    @Test
     public void testBitmapRegionDecode() throws IOException {
         InputStream inputStream = mRes.openRawResource(R.drawable.robot);
         BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(inputStream, false);
-        createTest().addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
+        createTest().addCanvasClient((canvas, width, height) -> {
             Bitmap hardwareBitmap = decoder.decodeRegion(new Rect(10, 15, 34, 39),
                     HARDWARE_OPTIONS);
             canvas.drawBitmap(hardwareBitmap, 0, 0, new Paint());
@@ -134,7 +196,7 @@ public class HardwareBitmapTests extends ActivityTestBase {
 
     @Test
     public void testNinePatch() {
-        createTest().addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
+        createTest().addCanvasClient((canvas, width, height) -> {
             InputStream is = mRes.openRawResource(R.drawable.blue_padded_square);
             NinePatchDrawable ninePatch = (NinePatchDrawable) Drawable.createFromResourceStream(
                     mRes, null, is, null, HARDWARE_OPTIONS);
@@ -154,7 +216,7 @@ public class HardwareBitmapTests extends ActivityTestBase {
 
     @Test
     public void testCreateScaledBitmap() {
-        createTest().addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
+        createTest().addCanvasClient((canvas, width, height) -> {
             Bitmap hardwareBitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot,
                     HARDWARE_OPTIONS);
             Bitmap scaled = Bitmap.createScaledBitmap(hardwareBitmap, 24, 24, false);
@@ -166,7 +228,7 @@ public class HardwareBitmapTests extends ActivityTestBase {
 
     @Test
     public void testCreateSubsetBitmap() {
-        createTest().addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
+        createTest().addCanvasClient((canvas, width, height) -> {
             Bitmap hardwareBitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot,
                     HARDWARE_OPTIONS);
             Matrix matrix = new Matrix();
@@ -180,7 +242,7 @@ public class HardwareBitmapTests extends ActivityTestBase {
 
     @Test
     public void testCreateTransformedBitmap() {
-        createTest().addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
+        createTest().addCanvasClient((canvas, width, height) -> {
             Bitmap hardwareBitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot,
                     HARDWARE_OPTIONS);
             Matrix matrix = new Matrix();
@@ -192,7 +254,6 @@ public class HardwareBitmapTests extends ActivityTestBase {
                 R.drawable.golden_hardwaretest_create_transformed, new MSSIMComparer(0.9)));
     }
 
-
     @Test
     public void testCompressHardware() {
         Bitmap hardwareBitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot,
@@ -201,10 +262,10 @@ public class HardwareBitmapTests extends ActivityTestBase {
         assertTrue(hardwareBitmap.compress(Bitmap.CompressFormat.PNG, 50, stream));
         Bitmap decoded = BitmapFactory.decodeStream(
                 new ByteArrayInputStream(stream.toByteArray()));
-        createTest().addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
+        createTest().addCanvasClient((canvas, width, height) -> {
             canvas.drawColor(Color.CYAN);
             canvas.drawBitmap(hardwareBitmap, 0, 0, null);
-        }, true).addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
+        }, true).addCanvasClient((canvas, width, height) -> {
             canvas.drawColor(Color.CYAN);
             canvas.drawBitmap(decoded, 0, 0, null);
         }, true).runWithComparer(new MSSIMComparer(0.99));
@@ -231,10 +292,10 @@ public class HardwareBitmapTests extends ActivityTestBase {
         Bitmap bitmap = BitmapFactory.decodeResource(getActivity().getResources(), id, options);
         assertEquals(from, bitmap.getConfig());
 
-        createTest().addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
+        createTest().addCanvasClient((canvas, width, height) -> {
             canvas.drawColor(Color.CYAN);
             canvas.drawBitmap(bitmap, 0, 0, null);
-        }, true).addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
+        }, true).addCanvasClient((canvas, width, height) -> {
             canvas.drawColor(Color.CYAN);
             Bitmap copy = bitmap.copy(to, false);
             assertNotNull(copy);

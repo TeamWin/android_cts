@@ -214,7 +214,6 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         StrictMode.setThreadPolicy(oldPolicy);
     }
 
-    @Presubmit
     @UiThreadTest
     public void testConstructor() {
         if (!NullWebViewUtils.isWebViewAvailable()) {
@@ -492,6 +491,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         assertFalse(mWebView.overlayVerticalScrollbar());
     }
 
+    @Presubmit
     @UiThreadTest
     public void testLoadUrl() throws Exception {
         if (!NullWebViewUtils.isWebViewAvailable()) {

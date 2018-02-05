@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+/*
  * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,17 +12,25 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- -->
+ */
+package android.fragment.cts;
 
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.signature.cts.api.system_current">
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+import android.app.Fragment;
 
-    <application/>
+public class ConfigOnStopActivity extends RecreatedActivity {
+    @Override
+    protected void onStop() {
+        super.onStop();
 
-    <instrumentation android:name="repackaged.android.test.InstrumentationTestRunner"
-                     android:targetPackage="android.signature.cts.api.system_current"
-                     android:label="System Current API Signature Test"/>
+        getFragmentManager()
+                .beginTransaction()
+                .add(new RetainedFragment(), "1")
+                .commitNowAllowingStateLoss();
+    }
 
-</manifest>
+    public static class RetainedFragment extends Fragment {
+        public RetainedFragment() {
+            setRetainInstance(true);
+        }
+    }
+}

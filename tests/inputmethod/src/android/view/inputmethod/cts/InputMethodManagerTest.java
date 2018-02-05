@@ -16,11 +16,17 @@
 
 package android.view.inputmethod.cts;
 
+import static android.content.Intent.ACTION_CLOSE_SYSTEM_DIALOGS;
+import static android.content.Intent.FLAG_RECEIVER_FOREGROUND;
+import static android.view.inputmethod.cts.util.TestUtils.waitOnMainUntil;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.Instrumentation;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.IBinder;
@@ -30,12 +36,14 @@ import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.view.KeyEvent;
+import android.view.View;
 import android.view.Window;
 import android.view.inputmethod.BaseInputConnection;
 import android.view.inputmethod.InputMethodInfo;
 import android.view.inputmethod.InputMethodManager;
-import android.view.inputmethod.cts.R;
+import android.view.inputmethod.cts.util.TestActivity;
 import android.widget.EditText;
+import android.widget.LinearLayout.LayoutParams;
 
 import com.android.compatibility.common.util.PollingCheck;
 
@@ -46,12 +54,15 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class InputMethodManagerTest {
+    private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
     private Instrumentation mInstrumentation;
-    private InputMethodCtsActivity mActivity;
+    private Context mContext;
+    private InputMethodManager mImManager;
 
     @Rule
     public ActivityTestRule<InputMethodCtsActivity> mActivityRule =
@@ -60,7 +71,8 @@ public class InputMethodManagerTest {
     @Before
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
-        mActivity = mActivityRule.getActivity();
+        mContext = mInstrumentation.getTargetContext();
+        mImManager = mContext.getSystemService(InputMethodManager.class);
     }
 
     @After
@@ -70,13 +82,12 @@ public class InputMethodManagerTest {
 
     @Test
     public void testInputMethodManager() throws Throwable {
-        if (!mActivity.getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_INPUT_METHODS)) {
-            return;
-        }
+        final InputMethodCtsActivity activity = mActivityRule.getActivity();
+        assumeTrue(mContext.getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_INPUT_METHODS));
 
-        Window window = mActivity.getWindow();
-        final EditText view = (EditText) window.findViewById(R.id.entry);
+        Window window = activity.getWindow();
+        final EditText view = window.findViewById(R.id.entry);
 
         PollingCheck.waitFor(1000, view::hasWindowFocus);
 
@@ -85,52 +96,76 @@ public class InputMethodManagerTest {
         assertTrue(view.isFocused());
 
         BaseInputConnection connection = new BaseInputConnection(view, false);
-        Context context = mInstrumentation.getTargetContext();
-        final InputMethodManager imManager = (InputMethodManager) context
-                .getSystemService(Context.INPUT_METHOD_SERVICE);
 
-        PollingCheck.waitFor(imManager::isActive);
+        PollingCheck.waitFor(mImManager::isActive);
 
-        assertTrue(imManager.isAcceptingText());
-        assertTrue(imManager.isActive(view));
+        assertTrue(mImManager.isAcceptingText());
+        assertTrue(mImManager.isActive(view));
 
-        assertFalse(imManager.isFullscreenMode());
+        assertFalse(mImManager.isFullscreenMode());
         connection.reportFullscreenMode(true);
         // Only IMEs are allowed to report full-screen mode.  Calling this method from the
         // application should have no effect.
-        assertFalse(imManager.isFullscreenMode());
+        assertFalse(mImManager.isFullscreenMode());
 
         mActivityRule.runOnUiThread(() -> {
             IBinder token = view.getWindowToken();
 
             // Show and hide input method.
-            assertTrue(imManager.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT));
-            assertTrue(imManager.hideSoftInputFromWindow(token, 0));
+            assertTrue(mImManager.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT));
+            assertTrue(mImManager.hideSoftInputFromWindow(token, 0));
 
             Handler handler = new Handler();
             ResultReceiver receiver = new ResultReceiver(handler);
-            assertTrue(imManager.showSoftInput(view, 0, receiver));
+            assertTrue(mImManager.showSoftInput(view, 0, receiver));
             receiver = new ResultReceiver(handler);
-            assertTrue(imManager.hideSoftInputFromWindow(token, 0, receiver));
+            assertTrue(mImManager.hideSoftInputFromWindow(token, 0, receiver));
 
-            imManager.showSoftInputFromInputMethod(token, InputMethodManager.SHOW_FORCED);
-            imManager.hideSoftInputFromInputMethod(token, InputMethodManager.HIDE_NOT_ALWAYS);
+            mImManager.showSoftInputFromInputMethod(token, InputMethodManager.SHOW_FORCED);
+            mImManager.hideSoftInputFromInputMethod(token, InputMethodManager.HIDE_NOT_ALWAYS);
 
             // status: hide to show to hide
-            imManager.toggleSoftInputFromWindow(token, 0, InputMethodManager.HIDE_NOT_ALWAYS);
-            imManager.toggleSoftInputFromWindow(token, 0, InputMethodManager.HIDE_NOT_ALWAYS);
+            mImManager.toggleSoftInputFromWindow(token, 0, InputMethodManager.HIDE_NOT_ALWAYS);
+            mImManager.toggleSoftInputFromWindow(token, 0, InputMethodManager.HIDE_NOT_ALWAYS);
 
-            List<InputMethodInfo> enabledImList = imManager.getEnabledInputMethodList();
+            List<InputMethodInfo> enabledImList = mImManager.getEnabledInputMethodList();
             if (enabledImList != null && enabledImList.size() > 0) {
-                imManager.setInputMethod(token, enabledImList.get(0).getId());
+                mImManager.setInputMethod(token, enabledImList.get(0).getId());
                 // cannot test whether setting was successful
             }
 
-            List<InputMethodInfo> imList = imManager.getInputMethodList();
+            List<InputMethodInfo> imList = mImManager.getInputMethodList();
             if (imList != null && enabledImList != null) {
                 assertTrue(imList.size() >= enabledImList.size());
             }
         });
         mInstrumentation.waitForIdleSync();
+    }
+
+    @Test
+    public void testShowInputMethodPicker() throws Exception {
+        TestActivity.startSync(activity -> {
+            final View view = new View(activity);
+            view.setLayoutParams(new LayoutParams(
+                    LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+            return view;
+        });
+
+        // Make sure that InputMethodPicker is not shown in the initial state.
+        mContext.sendBroadcast(
+                new Intent(ACTION_CLOSE_SYSTEM_DIALOGS).setFlags(FLAG_RECEIVER_FOREGROUND));
+        waitOnMainUntil(() -> !mImManager.isInputMethodPickerShown(), TIMEOUT,
+                "InputMethod picker should be closed");
+
+        // Test InputMethodManager#showInputMethodPicker() works as expected.
+        mImManager.showInputMethodPicker();
+        waitOnMainUntil(() -> mImManager.isInputMethodPickerShown(), TIMEOUT,
+                "InputMethod picker should be shown");
+
+        // Make sure that InputMethodPicker can be closed with ACTION_CLOSE_SYSTEM_DIALOGS
+        mContext.sendBroadcast(
+                new Intent(ACTION_CLOSE_SYSTEM_DIALOGS).setFlags(FLAG_RECEIVER_FOREGROUND));
+        waitOnMainUntil(() -> !mImManager.isInputMethodPickerShown(), TIMEOUT,
+                "InputMethod picker should be closed");
     }
 }

@@ -114,8 +114,6 @@ public class ActivityAndWindowManagersState {
     void computeState(boolean compareTaskAndStackBounds,
             WaitForValidActivityState... waitForActivitiesVisible) throws Exception {
         waitForValidState(compareTaskAndStackBounds, waitForActivitiesVisible);
-        assertSanity();
-        assertValidBounds(compareTaskAndStackBounds);
     }
 
     /**
@@ -232,7 +230,8 @@ public class ActivityAndWindowManagersState {
             // requesting dump in some intermediate state.
             mAmState.computeState();
             mWmState.computeState();
-            if (shouldWaitForValidStacks(compareTaskAndStackBounds)
+            if (shouldWaitForSanityCheck(compareTaskAndStackBounds)
+                    || shouldWaitForValidStacks(compareTaskAndStackBounds)
                     || shouldWaitForActivities(packageName, waitForActivitiesVisible)
                     || shouldWaitForWindows()) {
                 log("***Waiting for valid stacks and activities states...");
@@ -561,6 +560,17 @@ public class ActivityAndWindowManagersState {
                 log("ActivityRecord " + waitForActivityRecords[i] + " not visible yet");
                 return true;
             }
+        }
+        return false;
+    }
+
+    private boolean shouldWaitForSanityCheck(boolean compareTaskAndStackBounds) {
+        try {
+            assertSanity();
+            assertValidBounds(compareTaskAndStackBounds);
+        } catch (Throwable t) {
+            log("Waiting for sanity check: " + t.toString());
+            return true;
         }
         return false;
     }

@@ -830,6 +830,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         final Intent activityIntent = new Intent();
         activityIntent.setClassName(SIMPLE_PACKAGE_NAME,
                 SIMPLE_PACKAGE_NAME + SIMPLE_ACTIVITY_START_SERVICE);
+        activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
         final ServiceProcessController controller = new ServiceProcessController(mContext,
                 getInstrumentation(), STUB_PACKAGE_NAME, mAllProcesses, WAIT_TIME);

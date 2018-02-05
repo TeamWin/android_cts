@@ -29,7 +29,7 @@
         </activity>
         <activity android:name=".LoaderActivity"/>
         <activity android:name=".NewIntentActivity" android:launchMode="singleInstance" />
-        <activity android:name=".NonConfigOnStopActivity"/>
+        <activity android:name=".ConfigOnStopActivity"/>
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"

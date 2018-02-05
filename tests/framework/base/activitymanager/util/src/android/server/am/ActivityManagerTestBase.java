@@ -35,6 +35,7 @@ import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logAlways;
 import static android.server.am.StateLogger.logE;
 import static android.view.KeyEvent.KEYCODE_APP_SWITCH;
+import static android.view.KeyEvent.KEYCODE_MENU;
 import static android.view.KeyEvent.KEYCODE_SLEEP;
 import static android.view.KeyEvent.KEYCODE_WAKEUP;
 
@@ -42,10 +43,12 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.app.ActivityManager;
+import android.app.KeyguardManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.ParcelFileDescriptor;
+import android.os.PowerManager;
 import android.provider.Settings;
 import android.server.am.settings.SettingsSession;
 import android.support.annotation.NonNull;
@@ -63,6 +66,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.BooleanSupplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -557,15 +561,40 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected void pressWakeupButton() {
-        mDevice.pressKeyCode(KEYCODE_WAKEUP);
+        final PowerManager pm = mContext.getSystemService(PowerManager.class);
+        retryPressKeyCode(KEYCODE_WAKEUP, () -> pm != null && pm.isInteractive(),
+                "***Waiting for device wakeup...");
     }
 
     protected void pressUnlockButton() {
-        mDevice.pressMenu();
+        final KeyguardManager kgm = mContext.getSystemService(KeyguardManager.class);
+        retryPressKeyCode(KEYCODE_MENU, () -> kgm != null && !kgm.isKeyguardLocked(),
+                "***Waiting for device unlock...");
     }
 
     protected void pressSleepButton() {
-        mDevice.pressKeyCode(KEYCODE_SLEEP);
+        final PowerManager pm = mContext.getSystemService(PowerManager.class);
+        retryPressKeyCode(KEYCODE_SLEEP, () -> pm != null && !pm.isInteractive(),
+                "***Waiting for device sleep...");
+    }
+
+    private void retryPressKeyCode(int keyCode, BooleanSupplier waitFor, String msg) {
+        int retry = 1;
+        do {
+            mDevice.pressKeyCode(keyCode);
+            if (waitFor.getAsBoolean()) {
+                return;
+            }
+            logAlways(msg + " retry=" + retry);
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                logE("Sleep interrupted: " + msg, e);
+            }
+        } while (retry++ < 5);
+        if (!waitFor.getAsBoolean()) {
+            logE(msg + " FAILED");
+        }
     }
 
     // Utility method for debugging, not used directly here, but useful, so kept around.
@@ -1404,7 +1433,7 @@ public abstract class ActivityManagerTestBase {
         private boolean mSuppressExceptions;
         // Use of the following variables indicates that a broadcast receiver should be used instead
         // of a launching activity;
-        private String mBroadcastReceiverComponent;
+        private String mBroadcastReceiverPackage;
         private String mBroadcastReceiverAction;
 
         public LaunchActivityBuilder(ActivityAndWindowManagersState amWmState) {
@@ -1483,16 +1512,7 @@ public abstract class ActivityManagerTestBase {
         /** Use broadcast receiver instead of launching activity. */
         public LaunchActivityBuilder setUseBroadcastReceiver(final ComponentName broadcastReceiver,
                 final String broadcastAction) {
-            mBroadcastReceiverComponent = broadcastReceiver.flattenToShortString();
-            mBroadcastReceiverAction = broadcastAction;
-            return this;
-        }
-
-        /** Use {@link #setUseBroadcastReceiver(ComponentName, String)} instead. */
-        @Deprecated
-        public LaunchActivityBuilder setUseBroadcastReceiver(String componentName,
-                String broadcastAction) {
-            mBroadcastReceiverComponent = componentName;
+            mBroadcastReceiverPackage = broadcastReceiver.getPackageName();
             mBroadcastReceiverAction = broadcastAction;
             return this;
         }
@@ -1504,10 +1524,12 @@ public abstract class ActivityManagerTestBase {
 
         public void execute() throws Exception {
             StringBuilder commandBuilder = new StringBuilder();
-            if (mBroadcastReceiverComponent != null && mBroadcastReceiverAction != null) {
+            if (mBroadcastReceiverPackage != null && mBroadcastReceiverAction != null) {
                 // Use broadcast receiver to launch the target.
                 commandBuilder.append("am broadcast -a ").append(mBroadcastReceiverAction);
-                commandBuilder.append(" -p ").append(mBroadcastReceiverComponent);
+                commandBuilder.append(" -p ").append(mBroadcastReceiverPackage);
+                // Include stopped packages
+                commandBuilder.append(" -f 0x00000020");
             } else {
                 // Use launching activity to launch the target.
                 if (mLaunchingActivity != null) {
@@ -1515,7 +1537,7 @@ public abstract class ActivityManagerTestBase {
                 } else {
                     commandBuilder.append(getAmStartCmd(mLaunchingActivityName));
                 }
-                commandBuilder.append(" -f 0x20000000");
+                commandBuilder.append(" -f 0x20000020");
             }
 
             // Add a flag to ensure we actually mean to launch an activity.

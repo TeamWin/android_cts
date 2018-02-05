@@ -322,6 +322,7 @@ public class SplitAppTest extends AndroidTestCase {
         getContext().registerReceiver(r, filter);
         final Intent i = new Intent("com.android.cts.norestart.START");
         i.addCategory(Intent.CATEGORY_DEFAULT);
+        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         getContext().startActivity(i);
         assertTrue(cv.block(2000L));
         getContext().unregisterReceiver(r);
@@ -347,6 +348,7 @@ public class SplitAppTest extends AndroidTestCase {
         getContext().registerReceiver(r, filter);
         final Intent i = new Intent("com.android.cts.norestart.START");
         i.addCategory(Intent.CATEGORY_DEFAULT);
+        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         getContext().startActivity(i);
         assertTrue(cv.block(2000L));
         getContext().unregisterReceiver(r);

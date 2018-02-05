@@ -68,6 +68,7 @@ public class ErrorsTests {
                 "java.lang.RuntimeException: This is a test exception");
         Intent intent = new Intent();
         intent.setClass(mContext, ExceptionActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         mContext.startActivity(intent);
 
         assertTrue(mResultsReceivedSignal.await(TIMEOUT_SECS, TimeUnit.SECONDS));
@@ -82,6 +83,7 @@ public class ErrorsTests {
                 "Subject: Broadcast of Intent { act=android.intent.action.SCREEN_ON");
         Intent intent = new Intent();
         intent.setClass(mContext, ANRActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         mContext.startActivity(intent);
 
         assertTrue(mResultsReceivedSignal.await(TIMEOUT_SECS, TimeUnit.SECONDS));
@@ -95,6 +97,7 @@ public class ErrorsTests {
                 mContext.getPackageName() + ":TestProcess", "backtrace:");
         Intent intent = new Intent();
         intent.setClass(mContext, NativeActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         mContext.startActivity(intent);
 
         assertTrue(mResultsReceivedSignal.await(TIMEOUT_SECS, TimeUnit.SECONDS));

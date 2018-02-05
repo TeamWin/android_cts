@@ -189,6 +189,10 @@ public class CtsDownloadService extends Service {
 
         @Override
         public int setTempFileRootDirectory(int subscriptionId, String rootDirectoryPath) {
+            if (mErrorCodeOverride != MbmsErrors.SUCCESS) {
+                return mErrorCodeOverride;
+            }
+
             Bundle b = new Bundle();
             b.putString(METHOD_NAME, METHOD_SET_TEMP_FILE_ROOT);
             b.putInt(ARGUMENT_SUBSCRIPTION_ID, subscriptionId);
@@ -214,7 +218,7 @@ public class CtsDownloadService extends Service {
         }
 
         @Override
-        public int getDownloadStatus(DownloadRequest downloadRequest, FileInfo fileInfo) {
+        public int requestDownloadState(DownloadRequest downloadRequest, FileInfo fileInfo) {
             Bundle b = new Bundle();
             b.putString(METHOD_NAME, METHOD_GET_DOWNLOAD_STATUS);
             b.putParcelable(ARGUMENT_DOWNLOAD_REQUEST, downloadRequest);

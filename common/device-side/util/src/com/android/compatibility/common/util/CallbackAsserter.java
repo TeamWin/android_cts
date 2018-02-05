@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.os.cts.batterysaving.common;
+package com.android.compatibility.common.util;
 
 import static junit.framework.Assert.fail;
 
@@ -30,6 +30,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
+/**
+ * CallbackAsserter helps wait until a callback is called.
+ */
 public class CallbackAsserter {
     private static final String TAG = "CallbackAsserter";
 
@@ -38,6 +41,9 @@ public class CallbackAsserter {
     CallbackAsserter() {
     }
 
+    /**
+     * Call this to assert a callback be called within the given timeout.
+     */
     public final void assertCalled(String message, int timeoutSeconds) throws Exception {
         try {
             if (mLatch.await(timeoutSeconds, TimeUnit.SECONDS)) {
@@ -52,18 +58,30 @@ public class CallbackAsserter {
     void cleanUp() {
     }
 
+    /**
+     * Create an instance for a broadcast.
+     */
     public static CallbackAsserter forBroadcast(IntentFilter filter) {
         return forBroadcast(filter, null);
     }
 
+    /**
+     * Create an instance for a broadcast.
+     */
     public static CallbackAsserter forBroadcast(IntentFilter filter, Predicate<Intent> checker) {
         return new BroadcastAsserter(filter, checker);
     }
 
+    /**
+     * Create an instance for a content changed notification.
+     */
     public static CallbackAsserter forContentUri(Uri watchUri) {
         return forContentUri(watchUri, null);
     }
 
+    /**
+     * Create an instance for a content changed notification.
+     */
     public static CallbackAsserter forContentUri(Uri watchUri, Predicate<Uri> checker) {
         return new ContentObserverAsserter(watchUri, checker);
     }
