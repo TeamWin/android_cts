@@ -33,7 +33,7 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_MODULE := compatibility-device-util
 
-LOCAL_SDK_VERSION := current
+LOCAL_SDK_VERSION := test_current
 
 include $(BUILD_STATIC_JAVA_LIBRARY)
 

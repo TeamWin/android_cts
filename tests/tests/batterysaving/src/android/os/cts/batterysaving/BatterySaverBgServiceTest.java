@@ -18,6 +18,12 @@ package android.os.cts.batterysaving;
 import static android.os.cts.batterysaving.common.Values.APP_25_PACKAGE;
 import static android.os.cts.batterysaving.common.Values.getRandomInt;
 
+import static com.android.compatibility.common.util.AmUtils.runKill;
+import static com.android.compatibility.common.util.AmUtils.runMakeUidIdle;
+import static com.android.compatibility.common.util.BatteryUtils.enableBatterySaver;
+import static com.android.compatibility.common.util.BatteryUtils.runDumpsysBatteryUnplug;
+import static com.android.compatibility.common.util.TestUtils.waitUntil;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
