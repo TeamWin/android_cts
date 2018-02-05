@@ -17,6 +17,9 @@ package com.android.cts.deviceowner;
 
 import static android.keystore.cts.CertificateUtils.createCertificate;
 import static com.android.compatibility.common.util.FakeKeys.FAKE_RSA_1;
+import static android.app.admin.DevicePolicyManager.ID_TYPE_BASE_INFO;
+import static android.app.admin.DevicePolicyManager.ID_TYPE_IMEI;
+import static android.app.admin.DevicePolicyManager.ID_TYPE_MEID;
 import static android.app.admin.DevicePolicyManager.ID_TYPE_SERIAL;
 
 import android.app.admin.DevicePolicyManager;
@@ -33,6 +36,7 @@ import android.security.KeyChainAliasCallback;
 import android.security.KeyChainException;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
+import android.telephony.TelephonyManager;
 import android.test.ActivityInstrumentationTestCase2;
 
 import java.io.ByteArrayInputStream;
@@ -60,7 +64,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.HashSet;
 import java.util.List;
+import java.util.LinkedList;
 import java.util.Set;
 import javax.security.auth.x500.X500Principal;
 
@@ -68,6 +74,27 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
 
     private static final long KEYCHAIN_TIMEOUT_MINS = 6;
     private DevicePolicyManager mDevicePolicyManager;
+
+    private static class SupportedKeyAlgorithm {
+        public final String keyAlgorithm;
+        public final String signatureAlgorithm;
+        public final String[] signaturePaddingSchemes;
+
+        public SupportedKeyAlgorithm(
+                String keyAlgorithm, String signatureAlgorithm,
+                String[] signaturePaddingSchemes) {
+            this.keyAlgorithm = keyAlgorithm;
+            this.signatureAlgorithm = signatureAlgorithm;
+            this.signaturePaddingSchemes = signaturePaddingSchemes;
+        }
+    };
+
+    private final SupportedKeyAlgorithm[] SUPPORTED_KEY_ALGORITHMS = new SupportedKeyAlgorithm[] {
+        new SupportedKeyAlgorithm(KeyProperties.KEY_ALGORITHM_RSA, "SHA256withRSA",
+                new String[] {KeyProperties.SIGNATURE_PADDING_RSA_PSS,
+                    KeyProperties.SIGNATURE_PADDING_RSA_PKCS1}),
+        new SupportedKeyAlgorithm(KeyProperties.KEY_ALGORITHM_EC, "SHA256withECDSA", null)
+    };
 
     public KeyManagementTest() {
         super(KeyManagementActivity.class);
@@ -358,55 +385,109 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
         leaf.verify(rootKey);
     }
 
-    public void testCanGenerateECKeyPairWithKeyAttestation() throws Exception {
-        final String alias = "com.android.test.attested-ec-1";
+    /**
+     * Generates a key using DevicePolicyManager.generateKeyPair using the given key algorithm,
+     * then test signing and verifying using generated key.
+     * If {@code signaturePaddings} is not null, it is added to the key parameters specification.
+     * Returns the Attestation leaf certificate.
+     */
+    private Certificate generateKeyAndCheckAttestation(
+            String keyAlgorithm, String signatureAlgorithm,
+            String[] signaturePaddings, int deviceIdAttestationFlags)
+            throws Exception {
+        final String alias =
+                String.format("com.android.test.attested-%s", keyAlgorithm.toLowerCase());
         byte[] attestationChallenge = new byte[] {0x01, 0x02, 0x03};
         try {
-            KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(
+            KeyGenParameterSpec.Builder specBuilder =  new KeyGenParameterSpec.Builder(
                     alias,
                     KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_VERIFY)
                     .setDigests(KeyProperties.DIGEST_SHA256)
-                    .setAttestationChallenge(attestationChallenge)
-                    .build();
+                    .setAttestationChallenge(attestationChallenge);
+            if (signaturePaddings != null) {
+                specBuilder.setSignaturePaddings(signaturePaddings);
+            }
+
+            KeyGenParameterSpec spec = specBuilder.build();
             AttestedKeyPair generated = mDevicePolicyManager.generateKeyPair(
-                    getWho(), "EC", spec, 0);
-            assertNotNull(generated);
+                    getWho(), keyAlgorithm, spec, deviceIdAttestationFlags);
+            assertNotNull(
+                    String.format("Failed generation of %s key with Device ID attestation %d",
+                        keyAlgorithm, deviceIdAttestationFlags), generated);
             final KeyPair keyPair = generated.getKeyPair();
-            final String algorithmIdentifier = "SHA256withECDSA";
-            verifySignatureOverData(algorithmIdentifier, keyPair);
+            verifySignatureOverData(signatureAlgorithm, keyPair);
             List<Certificate> attestation = generated.getAttestationRecord();
             validateAttestationRecord(attestation, attestationChallenge);
             validateSignatureChain(attestation, keyPair.getPublic());
+            return attestation.get(0);
         } finally {
             assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
         }
     }
 
-    public void testCanGenerateECKeyPairWithDeviceIdAttestation() throws Exception {
-        final String alias = "com.android.test.devid-attested-ec-1";
-        byte[] attestationChallenge = new byte[] {0x01, 0x02, 0x03};
-        try {
-            KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(
-                    alias,
-                    KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_VERIFY)
-                    .setDigests(KeyProperties.DIGEST_SHA256)
-                    .setAttestationChallenge(attestationChallenge)
-                    .build();
-            AttestedKeyPair generated = mDevicePolicyManager.generateKeyPair(
-                    getWho(), "EC", spec, ID_TYPE_SERIAL);
-            if (generated == null) {
-                // Since supporting Device ID attestation is optional, do not fail the test if no
-                // attestation record was generated.
-                return;
+    /**
+     * Test key generation, including requesting Key Attestation, for all supported key
+     * algorithms.
+     */
+    public void testCanGenerateKeyPairWithKeyAttestation() throws Exception {
+        for (SupportedKeyAlgorithm supportedKey: SUPPORTED_KEY_ALGORITHMS) {
+            generateKeyAndCheckAttestation(
+                    supportedKey.keyAlgorithm, supportedKey.signatureAlgorithm,
+                    supportedKey.signaturePaddingSchemes, 0);
+        }
+    }
+
+    public void testAllVariationsOfDeviceIdAttestation() throws Exception {
+        List<Integer> modesToTest = new ArrayList<Integer>();
+        // All devices must support at least basic device information attestation as well as serial
+        // number attestation.
+        modesToTest.add(ID_TYPE_BASE_INFO);
+        modesToTest.add(ID_TYPE_SERIAL);
+        // Get IMEI and MEID of the device.
+        TelephonyManager telephonyService = (TelephonyManager) getActivity().getSystemService(
+                Context.TELEPHONY_SERVICE);
+        assertNotNull("Need to be able to read device identifiers", telephonyService);
+        String imei = telephonyService.getImei(0);
+        // If the device has a valid IMEI it must support attestation for it.
+        if (imei != null) {
+            modesToTest.add(ID_TYPE_IMEI);
+        }
+
+        int numCombinations = 1 << modesToTest.size();
+        for (int i = 1; i < numCombinations; i++) {
+            // Set the bits in devIdOpt to be passed into generateKeyPair according to the
+            // current modes tested.
+            int devIdOpt = 0;
+            for (int j = 0; j < modesToTest.size(); j++) {
+                if ((i & (1 << j)) != 0) {
+                    devIdOpt = devIdOpt | modesToTest.get(j);
+                }
             }
-            final KeyPair keyPair = generated.getKeyPair();
-            verifySignatureOverData("SHA256withECDSA", keyPair);
-            List<Certificate> attestation = generated.getAttestationRecord();
-            validateAttestationRecord(attestation, attestationChallenge);
-            validateDeviceIdAttestationData(attestation.get(0), Build.getSerial(), null, null);
-            validateSignatureChain(attestation, keyPair.getPublic());
-        } finally {
-            assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
+            // Now run the test with all supported key algorithms
+            for (SupportedKeyAlgorithm supportedKey: SUPPORTED_KEY_ALGORITHMS) {
+                Certificate attestation = generateKeyAndCheckAttestation(
+                        supportedKey.keyAlgorithm, supportedKey.signatureAlgorithm,
+                        supportedKey.signaturePaddingSchemes, devIdOpt);
+                assertNotNull(String.format(
+                        "Attestation should be valid for key %s with attestation modes %s",
+                        supportedKey.keyAlgorithm, devIdOpt), attestation);
+                // Set the expected values for serial, IMEI and MEID depending on whether
+                // attestation for them was requested.
+                String expectedSerial = null;
+                if ((devIdOpt & ID_TYPE_SERIAL) != 0) {
+                    expectedSerial = Build.getSerial();
+                }
+                String expectedImei = null;
+                if ((devIdOpt & ID_TYPE_IMEI) != 0) {
+                    expectedImei = imei;
+                }
+                // Expected MEID is always null for now.
+                // TODO: Figure out a better way to identify whether MEID attestation on the
+                // device should work.
+                String expectedMeid = null;
+                validateDeviceIdAttestationData(attestation, expectedSerial, expectedImei,
+                        expectedMeid);
+            }
         }
     }
 
