@@ -104,6 +104,53 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         assertImeNotSelectedInSecureSettings(Ime1Constants.IME_ID, TIMEOUT);
     }
 
+    @Test
+    public void testSetInputMethodAndSubtype() throws Exception {
+        final TestInfo testSetInputMethod = new TestInfo(
+                DeviceTestConstants.PACKAGE, DeviceTestConstants.TEST_CLASS,
+                DeviceTestConstants.TEST_SET_INPUTMETHOD_AND_SUBTYPE);
+        sendTestStartEvent(testSetInputMethod);
+        installPackage(Ime1Constants.APK, "-r");
+        installPackage(Ime2Constants.APK, "-r");
+        shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
+        shell(ShellCommandUtils.enableIme(Ime2Constants.IME_ID));
+        shell(ShellCommandUtils.setCurrentIme(Ime1Constants.IME_ID));
+
+        assertTrue(runDeviceTestMethod(testSetInputMethod));
+    }
+
+    @Test
+    public void testSwitchToNextInput() throws Exception {
+        final TestInfo testSwitchInputs = new TestInfo(
+                DeviceTestConstants.PACKAGE, DeviceTestConstants.TEST_CLASS,
+                DeviceTestConstants.TEST_SWITCH_NEXT_INPUT);
+        sendTestStartEvent(testSwitchInputs);
+        installPackage(Ime1Constants.APK, "-r");
+        installPackage(Ime2Constants.APK, "-r");
+        shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
+        // Make sure that there is at least one more IME that specifies
+        // supportsSwitchingToNextInputMethod="true"
+        shell(ShellCommandUtils.enableIme(Ime2Constants.IME_ID));
+        shell(ShellCommandUtils.setCurrentIme(Ime1Constants.IME_ID));
+
+        assertTrue(runDeviceTestMethod(testSwitchInputs));
+    }
+
+    @Test
+    public void testSwitchToLastInput() throws Exception {
+        final TestInfo testSwitchInputs = new TestInfo(
+                DeviceTestConstants.PACKAGE, DeviceTestConstants.TEST_CLASS,
+                DeviceTestConstants.TEST_SWITCH_LAST_INPUT);
+        sendTestStartEvent(testSwitchInputs);
+        installPackage(Ime1Constants.APK, "-r");
+        installPackage(Ime2Constants.APK, "-r");
+        shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
+        shell(ShellCommandUtils.enableIme(Ime2Constants.IME_ID));
+        shell(ShellCommandUtils.setCurrentIme(Ime1Constants.IME_ID));
+
+        assertTrue(runDeviceTestMethod(testSwitchInputs));
+    }
+
     private void sendTestStartEvent(final TestInfo deviceTest) throws Exception {
         final String sender = deviceTest.getTestName();
         // {@link EventType#EXTRA_EVENT_TIME} will be recorded at device side.
