@@ -121,19 +121,11 @@ public class InputMethodManagerTest {
             receiver = new ResultReceiver(handler);
             assertTrue(mImManager.hideSoftInputFromWindow(token, 0, receiver));
 
-            mImManager.showSoftInputFromInputMethod(token, InputMethodManager.SHOW_FORCED);
-            mImManager.hideSoftInputFromInputMethod(token, InputMethodManager.HIDE_NOT_ALWAYS);
-
             // status: hide to show to hide
             mImManager.toggleSoftInputFromWindow(token, 0, InputMethodManager.HIDE_NOT_ALWAYS);
             mImManager.toggleSoftInputFromWindow(token, 0, InputMethodManager.HIDE_NOT_ALWAYS);
 
             List<InputMethodInfo> enabledImList = mImManager.getEnabledInputMethodList();
-            if (enabledImList != null && enabledImList.size() > 0) {
-                mImManager.setInputMethod(token, enabledImList.get(0).getId());
-                // cannot test whether setting was successful
-            }
-
             List<InputMethodInfo> imList = mImManager.getInputMethodList();
             if (imList != null && enabledImList != null) {
                 assertTrue(imList.size() >= enabledImList.size());
