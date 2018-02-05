@@ -16,17 +16,21 @@ public class BlockChangeReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         SharedPreferences prefs = context.getSharedPreferences(
                 NotificationListenerVerifierActivity.PREFS, Context.MODE_PRIVATE);
-        if (ACTION_NOTIFICATION_CHANNEL_GROUP_BLOCK_STATE_CHANGED.equals(intent.getAction())
-                || ACTION_NOTIFICATION_CHANNEL_BLOCK_STATE_CHANGED.equals(intent.getAction())
-                || ACTION_APP_BLOCK_STATE_CHANGED.equals(intent.getAction())) {
-            SharedPreferences.Editor editor = prefs.edit();
-            String id = intent.getStringExtra(NotificationManager.EXTRA_BLOCK_STATE_CHANGED_ID);
-            if (id == null) {
-                id = context.getPackageName();
-            }
+        SharedPreferences.Editor editor = prefs.edit();
+        if (ACTION_NOTIFICATION_CHANNEL_GROUP_BLOCK_STATE_CHANGED.equals(intent.getAction())) {
+            String id = intent.getStringExtra(
+                    NotificationManager.EXTRA_NOTIFICATION_CHANNEL_GROUP_ID);
             editor.putBoolean(id,
                     intent.getBooleanExtra(NotificationManager.EXTRA_BLOCKED_STATE, false));
-            editor.commit();
+        } else if (ACTION_NOTIFICATION_CHANNEL_BLOCK_STATE_CHANGED.equals(intent.getAction())) {
+            String id = intent.getStringExtra(NotificationManager.EXTRA_NOTIFICATION_CHANNEL_ID);
+            editor.putBoolean(id,
+                    intent.getBooleanExtra(NotificationManager.EXTRA_BLOCKED_STATE, false));
+        } else if (ACTION_APP_BLOCK_STATE_CHANGED.equals(intent.getAction())) {
+            String id = context.getPackageName();
+            editor.putBoolean(id,
+                    intent.getBooleanExtra(NotificationManager.EXTRA_BLOCKED_STATE, false));
         }
+        editor.commit();
     }
 }
