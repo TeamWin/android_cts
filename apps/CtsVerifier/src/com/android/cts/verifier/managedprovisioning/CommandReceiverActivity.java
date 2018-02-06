@@ -111,6 +111,8 @@ public class CommandReceiverActivity extends Activity {
     public static final String COMMAND_SET_DEFAULT_IME = "set-default-ime";
     public static final String COMMAND_CLEAR_DEFAULT_IME = "clear-default-ime";
     public static final String COMMAND_CREATE_MANAGED_USER = "create-managed-user";
+    public static final String COMMAND_CREATE_MANAGED_USER_WITHOUT_SETUP =
+            "create-managed-user-without-setup";
     public static final String COMMAND_WITH_USER_SWITCHER_MESSAGE = "with-user-switcher-message";
     public static final String COMMAND_WITHOUT_USER_SWITCHER_MESSAGE =
             "without-user-switcher-message";
@@ -489,6 +491,14 @@ public class CommandReceiverActivity extends Activity {
                     mDpm.setAffiliationIds(mAdmin,
                             Collections.singleton(DeviceAdminTestReceiver.AFFILIATION_ID));
                     mDpm.startUserInBackground(mAdmin, userHandle);
+                } break;
+                case COMMAND_CREATE_MANAGED_USER_WITHOUT_SETUP:{
+                    if (!mDpm.isDeviceOwnerApp(getPackageName())) {
+                        return;
+                    }
+                    PersistableBundle extras = new PersistableBundle();
+                    extras.putBoolean(DeviceAdminTestReceiver.EXTRA_MANAGED_USER_TEST, true);
+                    mDpm.createAndManageUser(mAdmin, "managed user", mAdmin, extras, /* flags */ 0);
                 } break;
                 case COMMAND_WITH_USER_SWITCHER_MESSAGE: {
                     createAndSwitchUserWithMessage("Start user session", "End user session");

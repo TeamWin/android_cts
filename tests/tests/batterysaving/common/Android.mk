@@ -24,6 +24,7 @@ LOCAL_JAVA_LIBRARIES := \
     android-support-test \
     android-support-v4 \
     mockito-target \
+    compatibility-device-util \
     android.test.runner.stubs
 
 LOCAL_MODULE_TAGS := optional

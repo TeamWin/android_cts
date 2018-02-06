@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.os.cts.batterysaving.common;
+package com.android.compatibility.common.util;
 
-import static android.os.cts.batterysaving.common.Values.getCommReceiver;
-
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -33,28 +33,31 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class CommUtils {
-    private static final String TAG = "CommUtils";
+/**
+ * Base class to help broadcast-based RPC.
+ */
+public abstract class BroadcastRpcBase<TRequest, TResponse> {
+    private static final String TAG = "BroadcastRpc";
 
     static final String ACTION_REQUEST = "ACTION_REQUEST";
     static final String EXTRA_PAYLOAD = "EXTRA_PAYLOAD";
 
     static Handler sMainHandler = new Handler(Looper.getMainLooper());
 
-    /**
-     * Sends a request to the "CommReceiver" in a given package, and return the response.
-     */
-    public static BatterySavingCtsCommon.Payload sendRequest(
-            String targetPackage, BatterySavingCtsCommon.Payload request)
-            throws Exception {
+    /** Implement in a subclass */
+    protected abstract byte[] requestToBytes(TRequest request);
 
+    /** Implement in a subclass */
+    protected abstract TResponse bytesToResponse(byte[] bytes);
+
+    public TResponse invoke(ComponentName targetReceiver, TRequest request) throws Exception {
         // Create a request intent.
-        Log.i(TAG, "Request generated: " + request.toString());
+        Log.i(TAG, "Request generated: " + request);
 
         final Intent requestIntent = new Intent(ACTION_REQUEST)
-                .setComponent(getCommReceiver(targetPackage))
+                .setComponent(targetReceiver)
                 .addFlags(Intent.FLAG_RECEIVER_FOREGROUND)
-                .putExtra(EXTRA_PAYLOAD, request.toByteArray());
+                .putExtra(EXTRA_PAYLOAD, requestToBytes(request));
 
         // Send it.
         final CountDownLatch latch = new CountDownLatch(1);
@@ -70,8 +73,7 @@ public class CommUtils {
                 }, sMainHandler, 0, null, null);
 
         // Wait for a reply and check it.
-        assertTrue("Didn't receive broadcast result.",
-                latch.await(60, TimeUnit.SECONDS));
+        assertTrue("Didn't receive broadcast result.", latch.await(60, TimeUnit.SECONDS));
 
         assertNotNull("Didn't receive result extras", responseBundle.get());
 
@@ -80,6 +82,42 @@ public class CommUtils {
 
         Log.i(TAG, "Response received: " + resultPayload.toString());
 
-        return BatterySavingCtsCommon.Payload.parseFrom(resultPayload);
+        return bytesToResponse(resultPayload);
+    }
+
+    /**
+     * Base class for a receiver for a broadcast-based RPC.
+     */
+    public abstract static class ReceiverBase<TRequest, TResponse> extends BroadcastReceiver {
+        private static final String TAG = "ReceiverBase";
+
+        @Override
+        public final void onReceive(Context context, Intent intent) {
+            assertEquals(ACTION_REQUEST, intent.getAction());
+
+            // Parse the request.
+            final TRequest request = bytesToRequest(intent.getByteArrayExtra(EXTRA_PAYLOAD));
+
+            Log.i(TAG, "Request received: " + request);
+
+            // Handle it and generate a response.
+            final TResponse response = handleRequest(context, request);
+
+            Log.i(TAG, "Response generated: " + response);
+
+            // Send back.
+            final Bundle extras = new Bundle();
+            extras.putByteArray(EXTRA_PAYLOAD, responseToBytes(response));
+            setResultExtras(extras);
+        }
+
+        /** Implement in a subclass */
+        protected abstract TResponse handleRequest(Context context, TRequest request);
+
+        /** Implement in a subclass */
+        protected abstract byte[] responseToBytes(TResponse response);
+
+        /** Implement in a subclass */
+        protected abstract TRequest bytesToRequest(byte[] bytes);
     }
 }

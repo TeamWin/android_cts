@@ -35,6 +35,7 @@ import android.hardware.camera2.DngCreator;
 import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.InputConfiguration;
 import android.hardware.camera2.params.MeteringRectangle;
+import android.hardware.camera2.params.OutputConfiguration;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -54,6 +55,7 @@ import android.os.Vibrator;
 import android.util.Log;
 import android.util.Rational;
 import android.util.Size;
+import android.util.SparseArray;
 import android.view.Surface;
 
 import com.android.ex.camera2.blocking.BlockingCameraManager;
@@ -84,8 +86,10 @@ import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -142,6 +146,7 @@ public class ItsService extends Service implements SensorEventListener {
     private CameraDevice mCamera = null;
     private CameraCaptureSession mSession = null;
     private ImageReader[] mOutputImageReaders = null;
+    private SparseArray<String> mPhysicalStreamMap = new SparseArray<String>();
     private ImageReader mInputImageReader = null;
     private CameraCharacteristics mCameraCharacteristics = null;
 
@@ -208,8 +213,11 @@ public class ItsService extends Service implements SensorEventListener {
     private HandlerThread mSensorThread = null;
     private Handler mSensorHandler = null;
 
+    private static final int SERIALIZER_SURFACES_ID = 2;
+    private static final int SERIALIZER_PHYSICAL_METADATA_ID = 3;
+
     public interface CaptureCallback {
-        void onCaptureAvailable(Image capture);
+        void onCaptureAvailable(Image capture, String physicalCameraId);
     }
 
     public abstract class CaptureResultListener extends CameraCaptureSession.CaptureCallback {}
@@ -417,9 +425,20 @@ public class ItsService extends Service implements SensorEventListener {
                             jsonObj.put("captureResult", ItsSerializer.serialize(
                                     (CaptureResult)obj));
                         } else if (obj instanceof JSONArray) {
-                            jsonObj.put("outputs", (JSONArray)obj);
+                            if (tag == "captureResults") {
+                                if (i == SERIALIZER_SURFACES_ID) {
+                                    jsonObj.put("outputs", (JSONArray)obj);
+                                } else if (i == SERIALIZER_PHYSICAL_METADATA_ID) {
+                                    jsonObj.put("physicalResults", (JSONArray)obj);
+                                } else {
+                                    throw new ItsException(
+                                            "Unsupported JSONArray for captureResults");
+                                }
+                            } else {
+                                jsonObj.put("outputs", (JSONArray)obj);
+                            }
                         } else {
-                            throw new ItsException("Invalid object received for serialiation");
+                            throw new ItsException("Invalid object received for serialization");
                         }
                     }
                     if (tag == null) {
@@ -747,7 +766,7 @@ public class ItsService extends Service implements SensorEventListener {
 
         public void sendResponseCaptureResult(CameraCharacteristics props,
                                               CaptureRequest request,
-                                              CaptureResult result,
+                                              TotalCaptureResult result,
                                               ImageReader[] readers)
                 throws ItsException {
             try {
@@ -785,12 +804,19 @@ public class ItsService extends Service implements SensorEventListener {
                     jsonSurfaces.put(jsonSurface);
                 }
 
-                Object objs[] = new Object[5];
+                Map<String, CaptureResult> physicalMetadata =
+                        result.getPhysicalCameraResults();
+                JSONArray jsonPhysicalMetadata = new JSONArray();
+                for (Map.Entry<String, CaptureResult> pair : physicalMetadata.entrySet()) {
+                    JSONObject jsonOneMetadata = new JSONObject();
+                    jsonOneMetadata.put(pair.getKey(), ItsSerializer.serialize(pair.getValue()));
+                    jsonPhysicalMetadata.put(jsonOneMetadata);
+                }
+                Object objs[] = new Object[4];
                 objs[0] = "captureResults";
-                objs[1] = props;
-                objs[2] = request;
-                objs[3] = result;
-                objs[4] = jsonSurfaces;
+                objs[1] = result;
+                objs[SERIALIZER_SURFACES_ID] = jsonSurfaces;
+                objs[SERIALIZER_PHYSICAL_METADATA_ID] = jsonPhysicalMetadata;
                 mSerializerQueue.put(objs);
             } catch (org.json.JSONException e) {
                 throw new ItsException("JSON error: ", e);
@@ -808,7 +834,13 @@ public class ItsService extends Service implements SensorEventListener {
                 Image i = null;
                 try {
                     i = reader.acquireNextImage();
-                    listener.onCaptureAvailable(i);
+                    String physicalCameraId = new String();
+                    for (int idx = 0; idx < mOutputImageReaders.length; idx++) {
+                        if (mOutputImageReaders[idx] == reader) {
+                            physicalCameraId = mPhysicalStreamMap.get(idx);
+                        }
+                    }
+                    listener.onCaptureAvailable(i, physicalCameraId);
                 } finally {
                     if (i != null) {
                         i.close();
@@ -1141,6 +1173,7 @@ public class ItsService extends Service implements SensorEventListener {
         Size outputSizes[];
         int outputFormats[];
         int numSurfaces = 0;
+        mPhysicalStreamMap.clear();
 
         if (jsonOutputSpecs != null) {
             try {
@@ -1208,6 +1241,10 @@ public class ItsService extends Service implements SensorEventListener {
                     }
                     if (height <= 0) {
                         height = ItsUtils.getMaxSize(sizes).getHeight();
+                    }
+                    String physicalCameraId = surfaceObj.optString("physicalCamera");
+                    if (physicalCameraId != null) {
+                        mPhysicalStreamMap.put(i, physicalCameraId);
                     }
 
                     // The stats computation only applies to the active array region.
@@ -1300,11 +1337,18 @@ public class ItsService extends Service implements SensorEventListener {
                 numSurfaces = mOutputImageReaders.length;
                 numCaptureSurfaces = numSurfaces - (backgroundRequest ? 1 : 0);
 
-                List<Surface> outputSurfaces = new ArrayList<Surface>(numSurfaces);
+                List<OutputConfiguration> outputConfigs =
+                        new ArrayList<OutputConfiguration>(numSurfaces);
                 for (int i = 0; i < numSurfaces; i++) {
-                    outputSurfaces.add(mOutputImageReaders[i].getSurface());
+                    OutputConfiguration config = new OutputConfiguration(
+                            mOutputImageReaders[i].getSurface());
+                    if (mPhysicalStreamMap.get(i) != null) {
+                        config.setPhysicalCameraId(mPhysicalStreamMap.get(i));
+                    }
+                    outputConfigs.add(config);
                 }
-                mCamera.createCaptureSession(outputSurfaces, sessionListener, mCameraHandler);
+                mCamera.createCaptureSessionByOutputConfigurations(outputConfigs,
+                        sessionListener, mCameraHandler);
                 mSession = sessionListener.waitAndGetSession(TIMEOUT_IDLE_MS);
 
                 for (int i = 0; i < numSurfaces; i++) {
@@ -1569,7 +1613,7 @@ public class ItsService extends Service implements SensorEventListener {
 
     private final CaptureCallback mCaptureCallback = new CaptureCallback() {
         @Override
-        public void onCaptureAvailable(Image capture) {
+        public void onCaptureAvailable(Image capture, String physicalCameraId) {
             try {
                 int format = capture.getFormat();
                 if (format == ImageFormat.JPEG) {
@@ -1582,20 +1626,21 @@ public class ItsService extends Service implements SensorEventListener {
                     Logt.i(TAG, "Received YUV capture");
                     byte[] img = ItsUtils.getDataFromImage(capture, mSocketQueueQuota);
                     ByteBuffer buf = ByteBuffer.wrap(img);
-                    int count = mCountYuv.getAndIncrement();
-                    mSocketRunnableObj.sendResponseCaptureBuffer("yuvImage", buf);
+                    mSocketRunnableObj.sendResponseCaptureBuffer(
+                            "yuvImage"+physicalCameraId, buf);
                 } else if (format == ImageFormat.RAW10) {
                     Logt.i(TAG, "Received RAW10 capture");
                     byte[] img = ItsUtils.getDataFromImage(capture, mSocketQueueQuota);
                     ByteBuffer buf = ByteBuffer.wrap(img);
                     int count = mCountRaw10.getAndIncrement();
-                    mSocketRunnableObj.sendResponseCaptureBuffer("raw10Image", buf);
+                    mSocketRunnableObj.sendResponseCaptureBuffer(
+                            "raw10Image"+physicalCameraId, buf);
                 } else if (format == ImageFormat.RAW12) {
                     Logt.i(TAG, "Received RAW12 capture");
                     byte[] img = ItsUtils.getDataFromImage(capture, mSocketQueueQuota);
                     ByteBuffer buf = ByteBuffer.wrap(img);
                     int count = mCountRaw12.getAndIncrement();
-                    mSocketRunnableObj.sendResponseCaptureBuffer("raw12Image", buf);
+                    mSocketRunnableObj.sendResponseCaptureBuffer("raw12Image"+physicalCameraId, buf);
                 } else if (format == ImageFormat.RAW_SENSOR) {
                     Logt.i(TAG, "Received RAW16 capture");
                     int count = mCountRawOrDng.getAndIncrement();
@@ -1603,7 +1648,8 @@ public class ItsService extends Service implements SensorEventListener {
                         byte[] img = ItsUtils.getDataFromImage(capture, mSocketQueueQuota);
                         if (! mCaptureRawIsStats) {
                             ByteBuffer buf = ByteBuffer.wrap(img);
-                            mSocketRunnableObj.sendResponseCaptureBuffer("rawImage", buf);
+                            mSocketRunnableObj.sendResponseCaptureBuffer(
+                                    "rawImage" + physicalCameraId, buf);
                         } else {
                             // Compute the requested stats on the raw frame, and return the results
                             // in a new "stats image".
