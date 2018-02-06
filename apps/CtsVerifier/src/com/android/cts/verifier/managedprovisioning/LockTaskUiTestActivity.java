@@ -21,12 +21,11 @@ import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_HOME;
 import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_KEYGUARD;
 import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_NONE;
 import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_NOTIFICATIONS;
-import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_RECENTS;
+import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_OVERVIEW;
 import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_SYSTEM_INFO;
 
 import static com.android.cts.verifier.managedprovisioning.Utils.createInteractiveTestItem;
 
-import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -152,7 +151,7 @@ public class LockTaskUiTestActivity extends PassFailButtons.TestListActivity {
 
         adapter.add(createSetLockTaskFeaturesTest(
                 TEST_ID_RECENTS,
-                LOCK_TASK_FEATURE_RECENTS,
+                LOCK_TASK_FEATURE_OVERVIEW,
                 R.string.device_owner_lock_task_ui_recents_test,
                 R.string.device_owner_lock_task_ui_recents_test_info));
 
