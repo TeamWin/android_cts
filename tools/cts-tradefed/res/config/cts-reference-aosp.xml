@@ -166,4 +166,7 @@
     <!-- b/69131975: Exclude android.jni.cts.JniStaticTest#test_linker_namespaces -->
     <option name="compatibility:exclude-filter" value="CtsJniTestCases android.jni.cts.JniStaticTest#test_linker_namespaces" />
 
+    <!-- b/65561379: Exclude android.media.cts.MediaPlayerFlakyNetworkTest -->
+    <option name="compatibility:exclude-filter" value="CtsMediaTestCases android.media.cts.MediaPlayerFlakyNetworkTest" />
+
 </configuration>
