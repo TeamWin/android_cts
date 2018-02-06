@@ -86,8 +86,10 @@ import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -210,6 +212,9 @@ public class ItsService extends Service implements SensorEventListener {
     private volatile boolean mEventsEnabled = false;
     private HandlerThread mSensorThread = null;
     private Handler mSensorHandler = null;
+
+    private static final int SERIALIZER_SURFACES_ID = 2;
+    private static final int SERIALIZER_PHYSICAL_METADATA_ID = 3;
 
     public interface CaptureCallback {
         void onCaptureAvailable(Image capture, String physicalCameraId);
@@ -420,9 +425,20 @@ public class ItsService extends Service implements SensorEventListener {
                             jsonObj.put("captureResult", ItsSerializer.serialize(
                                     (CaptureResult)obj));
                         } else if (obj instanceof JSONArray) {
-                            jsonObj.put("outputs", (JSONArray)obj);
+                            if (tag == "captureResults") {
+                                if (i == SERIALIZER_SURFACES_ID) {
+                                    jsonObj.put("outputs", (JSONArray)obj);
+                                } else if (i == SERIALIZER_PHYSICAL_METADATA_ID) {
+                                    jsonObj.put("physicalResults", (JSONArray)obj);
+                                } else {
+                                    throw new ItsException(
+                                            "Unsupported JSONArray for captureResults");
+                                }
+                            } else {
+                                jsonObj.put("outputs", (JSONArray)obj);
+                            }
                         } else {
-                            throw new ItsException("Invalid object received for serialiation");
+                            throw new ItsException("Invalid object received for serialization");
                         }
                     }
                     if (tag == null) {
@@ -750,7 +766,7 @@ public class ItsService extends Service implements SensorEventListener {
 
         public void sendResponseCaptureResult(CameraCharacteristics props,
                                               CaptureRequest request,
-                                              CaptureResult result,
+                                              TotalCaptureResult result,
                                               ImageReader[] readers)
                 throws ItsException {
             try {
@@ -788,12 +804,19 @@ public class ItsService extends Service implements SensorEventListener {
                     jsonSurfaces.put(jsonSurface);
                 }
 
-                Object objs[] = new Object[5];
+                Map<String, CaptureResult> physicalMetadata =
+                        result.getPhysicalCameraResults();
+                JSONArray jsonPhysicalMetadata = new JSONArray();
+                for (Map.Entry<String, CaptureResult> pair : physicalMetadata.entrySet()) {
+                    JSONObject jsonOneMetadata = new JSONObject();
+                    jsonOneMetadata.put(pair.getKey(), ItsSerializer.serialize(pair.getValue()));
+                    jsonPhysicalMetadata.put(jsonOneMetadata);
+                }
+                Object objs[] = new Object[4];
                 objs[0] = "captureResults";
-                objs[1] = props;
-                objs[2] = request;
-                objs[3] = result;
-                objs[4] = jsonSurfaces;
+                objs[1] = result;
+                objs[SERIALIZER_SURFACES_ID] = jsonSurfaces;
+                objs[SERIALIZER_PHYSICAL_METADATA_ID] = jsonPhysicalMetadata;
                 mSerializerQueue.put(objs);
             } catch (org.json.JSONException e) {
                 throw new ItsException("JSON error: ", e);
