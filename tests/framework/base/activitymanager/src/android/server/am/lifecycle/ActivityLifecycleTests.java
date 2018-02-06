@@ -24,6 +24,7 @@ import org.junit.runner.RunWith;
 @Presubmit
 public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
 
+    @FlakyTest(bugId = 72956507)
     @Test
     public void testSingleLaunch() throws Exception {
         final Activity activity = mFirstActivityTestRule.launchActivity(new Intent());
@@ -57,6 +58,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         LifecycleVerifier.assertLaunchAndDestroySequence(FirstActivity.class, getLifecycleLog());
     }
 
+    @FlakyTest(bugId = 72956507)
     @Test
     public void testRelaunch() throws Exception {
         final Activity activity = mFirstActivityTestRule.launchActivity(new Intent());
