@@ -20,6 +20,8 @@ import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.nfc.tech.NfcUtils;
 
+import com.android.compatibility.common.util.CddTest;
+
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.PendingIntent;
@@ -34,6 +36,7 @@ import android.widget.TextView;
 /**
  * Test activity that waits to receive a particular NDEF Push message from another NFC device.
  */
+@CddTest(requirement="7.4.4/C-1-4,C-1-5")
 public class NdefPushReceiverActivity extends PassFailButtons.Activity {
 
     private static final int NFC_NOT_ENABLED_DIALOG_ID = 1;

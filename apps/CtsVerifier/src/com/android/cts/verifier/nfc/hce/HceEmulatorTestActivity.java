@@ -21,6 +21,8 @@ import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.TestListAdapter.TestListItem;
 
+import com.android.compatibility.common.util.CddTest;
+
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.nfc.NfcAdapter;
@@ -29,6 +31,7 @@ import android.os.Build;
 import android.os.Bundle;
 
 /** Activity that lists all the NFC HCE emulator tests. */
+@CddTest(requirement="7.4.4/C-2-2")
 public class HceEmulatorTestActivity extends PassFailButtons.TestListActivity {
 
     @Override

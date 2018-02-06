@@ -7,9 +7,12 @@ import android.content.Intent;
 import android.nfc.cardemulation.CardEmulation;
 import android.os.Bundle;
 
+import com.android.compatibility.common.util.CddTest;
+
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.nfc.NfcDialogs;
 
+@CddTest(requirement="7.4.4/C-2-2")
 @TargetApi(19)
 public class DualPaymentEmulatorActivity extends BaseEmulatorActivity {
     final static int STATE_IDLE = 0;
