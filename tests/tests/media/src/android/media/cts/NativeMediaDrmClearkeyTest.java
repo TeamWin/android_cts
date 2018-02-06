@@ -36,8 +36,8 @@ import java.util.UUID;
  * Tests MediaDrm NDK APIs. ClearKey system uses a subset of NDK APIs,
  * this test only tests the APIs that are supported by ClearKey system.
  */
-public class NativeClearKeySystemTest extends MediaPlayerTestBase {
-    private static final String TAG = NativeClearKeySystemTest.class.getSimpleName();
+public class NativeMediaDrmClearkeyTest extends MediaPlayerTestBase {
+    private static final String TAG = NativeMediaDrmClearkeyTest.class.getSimpleName();
 
     private static final int CONNECTION_RETRIES = 10;
     private static final int VIDEO_WIDTH_CENC = 1280;
@@ -65,13 +65,13 @@ public class NativeClearKeySystemTest extends MediaPlayerTestBase {
         try {
             System.loadLibrary("ctsmediadrm_jni");
         } catch (UnsatisfiedLinkError e) {
-            Log.e(TAG, "NativeClearKeySystemTest: Error loading JNI library");
+            Log.e(TAG, "NativeMediaDrmClearkeyTest: Error loading JNI library");
             e.printStackTrace();
         }
         try {
             System.loadLibrary("mediandk");
         } catch (UnsatisfiedLinkError e) {
-            Log.e(TAG, "NativeClearKeySystemTest: Error loading JNI library");
+            Log.e(TAG, "NativeMediaDrmClearkeyTest: Error loading JNI library");
             e.printStackTrace();
         }
     }
