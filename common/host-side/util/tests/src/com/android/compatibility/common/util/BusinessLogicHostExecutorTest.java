@@ -28,6 +28,7 @@ import com.android.tradefed.device.ITestDevice;
 import org.easymock.EasyMock;
 import org.junit.AssumptionViolatedException;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -298,6 +299,7 @@ public class BusinessLogicHostExecutorTest {
     }
 
     // throw AssertionFailedError
+    @Ignore
     public void method9() throws AssertionFailedError {
         assertTrue(false);
     }
