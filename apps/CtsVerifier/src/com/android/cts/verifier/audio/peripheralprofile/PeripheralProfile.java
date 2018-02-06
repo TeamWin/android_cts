@@ -148,7 +148,6 @@ public class PeripheralProfile extends DefaultHandler {
     private static final String kAttr_HasBtnA = "HasBtnA";
     private static final String kAttr_HasBtnB = "HasBtnB";
     private static final String kAttr_HasBtnC = "HasBtnC";
-    private static final String kAttr_HasBtnD = "HasBtnD";
 
     private void parseProfileAttributes(ProfileAttributes attribs, String elementName,
                                         Attributes xmlAtts) {
@@ -164,7 +163,6 @@ public class PeripheralProfile extends DefaultHandler {
         buttonAttributes.mHasBtnA = Integer.parseInt(xmlAtts.getValue(kAttr_HasBtnA)) == 1;
         buttonAttributes.mHasBtnB = Integer.parseInt(xmlAtts.getValue(kAttr_HasBtnB)) == 1;
         buttonAttributes.mHasBtnC = Integer.parseInt(xmlAtts.getValue(kAttr_HasBtnC)) == 1;
-        buttonAttributes.mHasBtnD = Integer.parseInt(xmlAtts.getValue(kAttr_HasBtnD)) == 1;
     }
 
     //
