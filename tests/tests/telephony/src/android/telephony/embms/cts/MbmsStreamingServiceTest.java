@@ -127,7 +127,7 @@ public class MbmsStreamingServiceTest extends MbmsStreamingTestBase {
     public void testStartStreaming() throws Exception {
         StreamingService streamingService = mStreamingSession.startStreaming(
                 CtsStreamingService .STREAMING_SERVICE_INFO,
-                mStreamingServiceCallback, mCallbackHandler);
+                mCallbackExecutor, mStreamingServiceCallback);
         assertNotNull(streamingService);
         assertEquals(CtsStreamingService.STREAMING_SERVICE_INFO, streamingService.getInfo());
 
@@ -145,7 +145,7 @@ public class MbmsStreamingServiceTest extends MbmsStreamingTestBase {
     public void testGetPlaybackUri() throws Exception {
         StreamingService streamingService = mStreamingSession.startStreaming(
                 CtsStreamingService .STREAMING_SERVICE_INFO,
-                mStreamingServiceCallback, mCallbackHandler);
+                mCallbackExecutor, mStreamingServiceCallback);
         assertEquals(CtsStreamingService.STREAMING_URI, streamingService.getPlaybackUri());
 
         List<List<Object>> getPlaybackUriCalls =
@@ -158,8 +158,8 @@ public class MbmsStreamingServiceTest extends MbmsStreamingTestBase {
     public void testStopStreaming() throws Exception {
         StreamingService streamingService = mStreamingSession.startStreaming(
                 CtsStreamingService .STREAMING_SERVICE_INFO,
-                mStreamingServiceCallback, mCallbackHandler);
-        streamingService.stopStreaming();
+                mCallbackExecutor, mStreamingServiceCallback);
+        streamingService.close();
         List<List<Object>> stopStreamingCalls =
                 getMiddlewareCalls(CtsStreamingService.METHOD_STOP_STREAMING);
         assertEquals(1, stopStreamingCalls.size());
@@ -170,7 +170,7 @@ public class MbmsStreamingServiceTest extends MbmsStreamingTestBase {
     public void testStreamingCallbacks() throws Exception {
         mStreamingSession.startStreaming(
                 CtsStreamingService .STREAMING_SERVICE_INFO,
-                mStreamingServiceCallback, mCallbackHandler);
+                mCallbackExecutor, mStreamingServiceCallback);
 
         mMiddlewareControl.fireErrorOnStream(
                 MbmsErrors.StreamingErrors.ERROR_UNABLE_TO_START_SERVICE, "");
@@ -194,7 +194,7 @@ public class MbmsStreamingServiceTest extends MbmsStreamingTestBase {
         mMiddlewareControl.forceErrorCode(
                 MbmsErrors.GeneralErrors.ERROR_MIDDLEWARE_TEMPORARILY_UNAVAILABLE);
         mStreamingSession.startStreaming(CtsStreamingService.STREAMING_SERVICE_INFO,
-                mStreamingServiceCallback, mCallbackHandler);
+                mCallbackExecutor, mStreamingServiceCallback);
         assertEquals(MbmsErrors.GeneralErrors.ERROR_MIDDLEWARE_TEMPORARILY_UNAVAILABLE,
                 mCallback.waitOnError().arg1);
     }
