@@ -26,11 +26,14 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
 
+import com.android.compatibility.common.util.CddTest;
+
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 
 import java.io.IOException;
 
+@CddTest(requirement="7.4.4/C-3-2")
 @TargetApi(24)
 public class HceFReaderActivity extends PassFailButtons.Activity implements ReaderCallback,
         OnItemSelectedListener {
