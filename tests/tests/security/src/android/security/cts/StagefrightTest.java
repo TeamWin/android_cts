@@ -88,11 +88,6 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.bug_38342499);
     }
 
-    public void testStagefright_bug_23270724() throws Exception {
-        doStagefrightTest(R.raw.bug_23270724_1);
-        doStagefrightTest(R.raw.bug_23270724_2);
-    }
-
     public void testStagefright_bug_22771132() throws Exception {
         doStagefrightTest(R.raw.bug_22771132);
     }
