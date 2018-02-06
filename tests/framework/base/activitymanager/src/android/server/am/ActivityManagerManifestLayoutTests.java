@@ -147,7 +147,7 @@ public class ActivityManagerManifestLayoutTests extends ActivityManagerTestBase 
 
     private void getDisplayAndWindowState(String activityName, boolean checkFocus)
             throws Exception {
-        final String windowName = getWindowName(activityName);
+        final String windowName = getActivityWindowName(activityName);
 
         mAmWmState.computeState(new WaitForValidActivityState.Builder(activityName).build());
 

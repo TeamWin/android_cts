@@ -24,6 +24,7 @@ import static android.server.am.ActivityManagerDisplayTestBase.ReportedDisplayMe
         .getDisplayMetrics;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.ActivityManagerState.STATE_STOPPED;
+import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.StateLogger.logE;
 
 import static org.junit.Assert.assertEquals;
@@ -332,7 +333,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
 
             mAmWmState.computeState(new WaitForValidActivityState(TEST_ACTIVITY_NAME));
             assertFalse("Restricted activity must not be launched",
-                    mAmWmState.getAmState().containsActivity(TEST_ACTIVITY_NAME));
+                    mAmWmState.getAmState().containsActivity(
+                            getActivityComponentName(TEST_ACTIVITY_NAME)));
         }
     }
 
@@ -505,7 +507,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             ActivityManagerState.ActivityStack frontStack =
                     mAmWmState.getAmState().getStackById(frontStackId);
             assertEquals("Launched activity must be resumed in front stack",
-                    SECOND_ACTIVITY.flattenToShortString(), frontStack.mResumedActivity);
+                    getActivityName(SECOND_ACTIVITY), frontStack.mResumedActivity);
 
             // Launch other activity with different uid and check if it has launched successfully.
             getLaunchActivityBuilder()
@@ -521,7 +523,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             frontStackId = mAmWmState.getAmState().getFrontStackId(newDisplay.mId);
             frontStack = mAmWmState.getAmState().getStackById(frontStackId);
             assertEquals("Launched activity must be resumed in front stack",
-                    THIRD_ACTIVITY.flattenToShortString(), frontStack.mResumedActivity);
+                    getActivityName(THIRD_ACTIVITY), frontStack.mResumedActivity);
         }
     }
 
@@ -845,7 +847,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
 
             // Launch other activity with different uid and check it is launched on dynamic stack on
             // secondary display.
-            final String startCmd = "am start -n " + SECOND_ACTIVITY.flattenToShortString()
+            final String startCmd = "am start -n " + getActivityName(SECOND_ACTIVITY)
                             + " --display " + newDisplay.mId;
             executeShellCommand(startCmd);
 
@@ -866,7 +868,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                     .createDisplay();
 
             // Launch activity with different uid on secondary display.
-            final String startCmd = "am start -n " + SECOND_ACTIVITY.flattenToShortString()
+            final String startCmd = "am start -n " + getActivityName(SECOND_ACTIVITY)
                     + " --display " + newDisplay.mId;
             executeShellCommand(startCmd);
 
@@ -944,7 +946,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                     focusedStack.mDisplayId);
 
             // Launch other activity with different uid on secondary display.
-            final String startCmd = "am start -n " + SECOND_ACTIVITY.flattenToShortString()
+            final String startCmd = "am start -n " + getActivityName(SECOND_ACTIVITY)
                     + " --display " + newDisplay.mId;
             executeShellCommand(startCmd);
 
@@ -1087,12 +1089,10 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             logSeparator = clearLogcat();
         }
 
-        final String activityName1 = ActivityManagerTestBase.getActivityComponentName(
-                TEST_ACTIVITY_NAME);
-        final String activityName2 = ActivityManagerTestBase.getActivityComponentName(
-                RESIZEABLE_ACTIVITY_NAME);
-        final String windowName1 = ActivityManagerTestBase.getWindowName(TEST_ACTIVITY_NAME);
-        final String windowName2 = ActivityManagerTestBase.getWindowName(RESIZEABLE_ACTIVITY_NAME);
+        final String activityName1 = getActivityComponentName(TEST_ACTIVITY_NAME);
+        final String activityName2 = getActivityComponentName(RESIZEABLE_ACTIVITY_NAME);
+        final String windowName1 = getActivityWindowName(TEST_ACTIVITY_NAME);
+        final String windowName2 = getActivityWindowName(RESIZEABLE_ACTIVITY_NAME);
         mAmWmState.waitForWithAmState(
                 (state) -> !state.containsActivity(activityName1)
                         && !state.containsActivity(activityName2),

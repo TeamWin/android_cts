@@ -1022,7 +1022,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         executeShellCommand("am stack resize-animated 4 20 20 500 500");
         executeShellCommand("am broadcast -a " + TEST_ACTIVITY_ACTION_FINISH);
         mAmWmState.waitFor((amState, wmState) -> !amState.containsActivity(
-                TRANSLUCENT_TEST_ACTIVITY), "Waiting for test activity to finish...");
+                getActivityComponentName(TRANSLUCENT_TEST_ACTIVITY)),
+                "Waiting for test activity to finish...");
         final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(PIP_ACTIVITY,
                 logSeparator);
         assertTrue(lifecycleCounts.mResumeCount == 0);
@@ -1431,7 +1432,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
      * @return the window state for the given {@param activity}'s window.
      */
     private WindowManagerState.WindowState getWindowState(String activity) throws Exception {
-        String windowName = getWindowName(activity);
+        String windowName = getActivityWindowName(activity);
         mAmWmState.computeState(new WaitForValidActivityState.Builder(activity).build());
         final List<WindowManagerState.WindowState> tempWindowList = new ArrayList<>();
         mAmWmState.getWmState().getMatchingVisibleWindowState(windowName, tempWindowList);
@@ -1521,7 +1522,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         mAmWmState.computeState();
 
         if (supportsPip()) {
-            final String windowName = getWindowName(topActivityName);
+            final String windowName = getActivityWindowName(topActivityName);
             assertPinnedStackExists();
             mAmWmState.assertFrontStack("Pinned stack must be the front stack.",
                     WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);

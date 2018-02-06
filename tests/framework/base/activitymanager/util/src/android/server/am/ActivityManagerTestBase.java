@@ -31,6 +31,8 @@ import static android.content.pm.PackageManager.FEATURE_SCREEN_LANDSCAPE;
 import static android.content.pm.PackageManager.FEATURE_SCREEN_PORTRAIT;
 import static android.content.pm.PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE;
 import static android.content.pm.PackageManager.FEATURE_WATCH;
+import static android.server.am.ComponentNameUtils.getActivityName;
+import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logAlways;
 import static android.server.am.StateLogger.logE;
@@ -147,7 +149,7 @@ public abstract class ActivityManagerTestBase {
     // TODO: Make this more generic, for instance accepting flags or extras of other types.
     protected static String getAmStartCmd(final ComponentName activityName,
             final String... keyValuePairs) {
-        return getAmStartCmdInternal(activityName.flattenToShortString(), keyValuePairs);
+        return getAmStartCmdInternal(getActivityName(activityName), keyValuePairs);
     }
 
     @Deprecated
@@ -229,24 +231,16 @@ public abstract class ActivityManagerTestBase {
         setComponentName(DEFAULT_COMPONENT_NAME);
     }
 
-    protected static String getBaseWindowName() {
-        return getBaseWindowName(componentName);
-    }
-
-    static String getBaseWindowName(final String packageName) {
-        return getBaseWindowName(packageName, true /*prependPackageName*/);
-    }
-
-    static String getBaseWindowName(final String packageName, boolean prependPackageName) {
+    private static String getBaseWindowName(final String packageName, boolean prependPackageName) {
         return packageName + "/" + (prependPackageName ? packageName + "." : "");
     }
 
     // TODO: Remove this when all activity name are specified by {@link ComponentName}.
-    static String getWindowName(final String activityName) {
-        return getWindowName(componentName, activityName);
+    static String getActivityWindowName(final String activityName) {
+        return getActivityWindowName(componentName, activityName);
     }
 
-    static String getWindowName(final String packageName, final String activityName) {
+    static String getActivityWindowName(final String packageName, final String activityName) {
         return getBaseWindowName(packageName, !isFullyQualifiedActivityName(activityName))
                 + activityName;
     }
@@ -607,12 +601,12 @@ public abstract class ActivityManagerTestBase {
 
     @Deprecated
     protected int getActivityTaskId(final ComponentName activityName) {
-        return getWindowTaskId(activityName.flattenToString());
+        return getWindowTaskId(getWindowName(activityName));
     }
 
     @Deprecated
     protected int getActivityTaskId(final String activityName) {
-        return getWindowTaskId(getWindowName(activityName));
+        return getWindowTaskId(getActivityWindowName(activityName));
     }
 
     @Deprecated
@@ -1571,8 +1565,10 @@ public abstract class ActivityManagerTestBase {
             }
 
             if (mComponent != null) {
+                // {@link ActivityLauncher} parses this extra string by
+                // {@link ComponentName#unflattenFromString(String)}.
                 commandBuilder.append(" --es target_component ")
-                        .append(mComponent.flattenToString());
+                        .append(getActivityName(mComponent));
             }
 
             if (mSuppressExceptions) {

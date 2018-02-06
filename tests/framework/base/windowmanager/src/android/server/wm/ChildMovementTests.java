@@ -16,6 +16,7 @@
 
 package android.server.wm;
 
+import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.am.StateLogger.logE;
 
 import static org.junit.Assert.assertTrue;
@@ -62,7 +63,7 @@ public class ChildMovementTests extends ParentChildTestBase {
 
         mAmWmState.computeState(waitForVisible);
         WindowState popup = getSingleWindow(POPUP_WINDOW_NAME);
-        WindowState parent = getSingleWindow(activityName().flattenToString());
+        WindowState parent = getSingleWindow(getWindowName(activityName()));
 
         t.doTest(parent, popup);
     }

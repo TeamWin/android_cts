@@ -17,6 +17,8 @@
 package android.server.am;
 
 import static android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP;
+import static android.server.am.ComponentNameUtils.getActivityName;
+import static android.server.am.ComponentNameUtils.getWindowName;
 
 import static org.junit.Assert.assertTrue;
 
@@ -91,7 +93,7 @@ public class DisplaySizeTest extends ActivityManagerTestBase {
         // Launch another activity.
         final String startActivityOnTop = String.format("%s -f 0x%x --es %s %s",
                 getAmStartCmd(SMALLEST_WIDTH_ACTIVITY), FLAG_ACTIVITY_SINGLE_TOP,
-                EXTRA_LAUNCH_ANOTHER_ACTIVITY, TEST_ACTIVITY.flattenToShortString());
+                EXTRA_LAUNCH_ANOTHER_ACTIVITY, getActivityName(TEST_ACTIVITY));
         executeShellCommand(startActivityOnTop);
         assertActivityDisplayed(TEST_ACTIVITY);
 
@@ -137,7 +139,7 @@ public class DisplaySizeTest extends ActivityManagerTestBase {
     }
 
     private void assertActivityDisplayed(final ComponentName activityName) throws Exception {
-        assertWindowDisplayed(activityName.flattenToString());
+        assertWindowDisplayed(getWindowName(activityName));
     }
 
     private void assertWindowDisplayed(final String windowName) throws Exception {

@@ -61,7 +61,7 @@ public class ActivityManagerReplaceWindowTests extends ActivityManagerTestBase {
     private void testReplaceWindow_Dock(boolean relaunch) throws Exception {
         final String activityName =
                 relaunch ? SLOW_CREATE_ACTIVITY_NAME : NO_RELAUNCH_ACTIVITY_NAME;
-        final String windowName = getWindowName(activityName);
+        final String windowName = getActivityWindowName(activityName);
         final String amStartCmd = getAmStartCmd(activityName);
 
         executeShellCommand(amStartCmd);
