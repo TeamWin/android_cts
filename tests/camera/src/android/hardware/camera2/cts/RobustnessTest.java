@@ -242,11 +242,6 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             {YUV,  PREVIEW,  JPEG, MAXIMUM,  RAW, MAXIMUM}
         };
 
-        final int[][] MOTION_TRACKING_COMBINATIONS = {
-            // YUV preview with tracking YUV output and high-resolution 30fps JPEG for still capture
-            {YUV, PREVIEW, YUV, VGA_FULL_FOV, JPEG, MAX_30FPS}
-        };
-
         final int[][] LEVEL_3_COMBINATIONS = {
             // In-app viewfinder analysis with dynamic selection of output format
             {PRIV, PREVIEW, PRIV, VGA, YUV, MAXIMUM, RAW, MAXIMUM},
@@ -316,13 +311,6 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                 } else if (mStaticInfo.isLogicalMultiCamera()) {
                     for (int[] config : RAW_COMBINATIONS) {
                         testMultiCameraOutputCombination(id, config, maxSizes);
-                    }
-                }
-
-                if (mStaticInfo.isCapabilitySupported(
-                        CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MOTION_TRACKING)) {
-                    for (int[] config : MOTION_TRACKING_COMBINATIONS) {
-                        testOutputCombination(id, config, maxSizes);
                     }
                 }
 
