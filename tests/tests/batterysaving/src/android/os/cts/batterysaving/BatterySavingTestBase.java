@@ -37,6 +37,8 @@ public class BatterySavingTestBase {
 
     public static final boolean DEBUG = true;
 
+    protected final BroadcastRpc mRpc = new BroadcastRpc();
+
     @Before
     public final void resetDumpsysBatteryBeforeTest() throws Exception {
         turnOnScreen(true);

@@ -40,10 +40,9 @@ import android.os.cts.batterysaving.common.BatterySavingCtsCommon.Payload;
 import android.os.cts.batterysaving.common.BatterySavingCtsCommon.Payload.TestServiceRequest;
 import android.os.cts.batterysaving.common.BatterySavingCtsCommon.Payload.TestServiceRequest.SetAlarmRequest;
 import android.os.cts.batterysaving.common.BatterySavingCtsCommon.Payload.TestServiceRequest.StartServiceRequest;
-import android.os.cts.batterysaving.common.CommUtils;
 import android.os.cts.batterysaving.common.Values;
-import android.support.test.filters.MediumTest;
 import android.support.test.filters.LargeTest;
+import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
@@ -129,7 +128,7 @@ public class BatterySaverAlarmTest extends BatterySavingTestBase {
                 .setAllowWhileIdle(true)
                 .setTriggerTime(triggerMillis)
                 .build();
-        final Payload response = CommUtils.sendRequest(targetPackage,
+        final Payload response = mRpc.sendRequest(targetPackage,
                 Payload.newBuilder().setTestServiceRequest(
                         TestServiceRequest.newBuilder().setSetAlarm(areq))
                         .build());
@@ -144,7 +143,7 @@ public class BatterySaverAlarmTest extends BatterySavingTestBase {
             throws Exception {
         final String action = "start_service_" + getRandomInt() + "_fg=" + foreground;
 
-        final Payload response = CommUtils.sendRequest(targetPackage,
+        final Payload response = mRpc.sendRequest(targetPackage,
                 Payload.newBuilder().setTestServiceRequest(
                         TestServiceRequest.newBuilder().setStartService(
                                 StartServiceRequest.newBuilder()
