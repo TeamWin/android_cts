@@ -20,6 +20,7 @@ import com.android.compatibility.common.tradefed.command.CompatibilityConsoleTes
 import com.android.compatibility.common.tradefed.result.ChecksumReporterTest;
 import com.android.compatibility.common.tradefed.result.ConsoleReporterTest;
 import com.android.compatibility.common.tradefed.result.MetadataReporterTest;
+import com.android.compatibility.common.tradefed.result.ResultReporterBuildInfoTest;
 import com.android.compatibility.common.tradefed.result.ResultReporterTest;
 import com.android.compatibility.common.tradefed.result.SubPlanHelperTest;
 import com.android.compatibility.common.tradefed.targetprep.PropertyCheckTest;
@@ -49,6 +50,7 @@ public class UnitTests extends TestSuite {
         addTestSuite(CompatibilityTestTest.class);
         addTestSuite(ConsoleReporterTest.class);
         addTestSuite(ChecksumReporterTest.class);
+        addTestSuite(ResultReporterBuildInfoTest.class);
         addTestSuite(ResultReporterTest.class);
         addTestSuite(CompatibilityTestTest.class);
         addTestSuite(OptionHelperTest.class);
