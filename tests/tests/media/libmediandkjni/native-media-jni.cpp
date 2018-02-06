@@ -103,6 +103,10 @@ struct FdDataSource {
         return mSize;
     }
 
+    void close() {
+        ::close(mFd);
+    }
+
 private:
 
     int mFd;
@@ -121,6 +125,10 @@ static ssize_t FdSourceGetSize(void *userdata) {
     return src->getSize();
 }
 
+static void FdSourceClose(void *userdata) {
+    FdDataSource *src = (FdDataSource*) userdata;
+    src->close();
+}
 
 jobject testExtractor(AMediaExtractor *ex, JNIEnv *env) {
 
@@ -322,6 +330,7 @@ extern "C" jobject Java_android_media_cts_NativeDecoderTest_getDecodedDataNative
         AMediaDataSource_setUserdata(ndkSrc, &fdSrc);
         AMediaDataSource_setReadAt(ndkSrc, FdSourceReadAt);
         AMediaDataSource_setGetSize(ndkSrc, FdSourceGetSize);
+        AMediaDataSource_setClose(ndkSrc, FdSourceClose);
         err = AMediaExtractor_setDataSourceCustom(ex, ndkSrc);
     } else {
         err = AMediaExtractor_setDataSourceFd(ex, fd, offset, size);
