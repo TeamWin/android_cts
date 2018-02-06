@@ -446,6 +446,33 @@ def fixed_focus(props):
     return props.has_key("android.lens.info.minimumFocusDistance") and \
         props["android.lens.info.minimumFocusDistance"] == 0
 
+def logical_multi_camera(props):
+    """Returns whether a device is a logical multi-camera.
+
+    Args:
+        props: Camera properties object.
+
+    Return:
+        Boolean.
+    """
+    return props.has_key("android.request.availableCapabilities") and \
+           11 in props["android.request.availableCapabilities"]
+
+def logical_multi_camera_physical_ids(props):
+    """Returns a logical multi-camera's underlying physical cameras.
+
+    Args:
+        props: Camera properties object.
+
+    Return:
+        list of physical cameras backing the logical multi-camera.
+    """
+    physicalIdsList = []
+    if logical_multi_camera(props):
+        physicalIds = props['android.logicalMultiCamera.physicalIds'];
+        physicalIdsString = ''.join(chr(e) for e in physicalIds);
+        physicalIdsList = physicalIdsString.split('\x00');
+    return physicalIdsList
 
 def debug_mode():
     """Returns True/False for whether test is run in debug mode.
