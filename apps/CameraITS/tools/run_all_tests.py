@@ -65,6 +65,7 @@ def evaluate_socket_failure(err_file_path):
     with open(err_file_path, 'r') as ferr:
         for line in ferr:
             if (line.find('socket.error') != -1 or
+                line.find('socket.timeout') != -1 or
                 line.find('Problem with socket') != -1):
                 socket_fail = True
     return socket_fail
