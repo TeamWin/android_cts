@@ -41,6 +41,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Tests that app standby imposes the appropriate restrictions on alarms
@@ -57,19 +58,33 @@ public class AppStandbyTests {
 
     // Tweaked alarm manager constants to facilitate testing
     private static final long MIN_FUTURITY = 2_000;
-    private static final long APP_STANDBY_WORKING_DELAY = 10_000;
-    private static final long APP_STANDBY_FREQUENT_DELAY = 30_000;
+    private static final long[] APP_STANDBY_DELAYS = {0, 10_000, 20_000, 30_000, 600_000};
+    private static final String[] APP_BUCKET_TAGS = {
+            "active",
+            "working_set",
+            "frequent",
+            "rare",
+            "never"
+    };
+    private static final String[] APP_BUCKET_KEYS = {
+            "standby_active_delay",
+            "standby_working_delay",
+            "standby_frequent_delay",
+            "standby_rare_delay",
+            "standby_never_delay",
+    };
 
     private Context mContext;
     private ComponentName mAlarmScheduler;
     private UiDevice mUiDevice;
-    private volatile int mAlarmCount;
-    private long mLastAlarmTime;
+    private AtomicInteger mAlarmCount;
+    private volatile long mLastAlarmTime;
 
     private final BroadcastReceiver mAlarmStateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            mAlarmCount = intent.getIntExtra(TestAlarmReceiver.EXTRA_ALARM_COUNT, 1);
+            mAlarmCount.getAndAdd(intent.getIntExtra(TestAlarmReceiver.EXTRA_ALARM_COUNT, 1));
+            mLastAlarmTime = SystemClock.elapsedRealtime();
             Log.d(TAG, "No. of expirations: " + mAlarmCount
                     + " elapsed: " + SystemClock.elapsedRealtime());
         }
@@ -80,15 +95,14 @@ public class AppStandbyTests {
         mContext = InstrumentationRegistry.getTargetContext();
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         mAlarmScheduler = new ComponentName(TEST_APP_PACKAGE, TEST_APP_RECEIVER);
-        mAlarmCount = 0;
+        mAlarmCount = new AtomicInteger(0);
         updateAlarmManagerConstants();
         setBatteryCharging(false);
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(TestAlarmReceiver.ACTION_REPORT_ALARM_EXPIRED);
         mContext.registerReceiver(mAlarmStateReceiver, intentFilter);
         setAppStandbyBucket("active");
-        mLastAlarmTime = SystemClock.elapsedRealtime() + MIN_FUTURITY;
-        scheduleAlarm(AlarmManager.ELAPSED_REALTIME_WAKEUP, mLastAlarmTime, 0);
+        scheduleAlarm(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime(), 0);
         Thread.sleep(MIN_FUTURITY);
         assertTrue("Alarm not sent when app in active", waitForAlarms(1));
     }
@@ -102,30 +116,75 @@ public class AppStandbyTests {
         mContext.sendBroadcast(setAlarmIntent);
     }
 
-    @Test
-    public void testWorkingSetDelay() throws Exception {
-        setAppStandbyBucket("working_set");
+    private void testBucketDelay(int bucketIndex) throws Exception {
+        setAppStandbyBucket(APP_BUCKET_TAGS[bucketIndex]);
         final long triggerTime = SystemClock.elapsedRealtime() + MIN_FUTURITY;
+        final long minTriggerTime = mLastAlarmTime + APP_STANDBY_DELAYS[bucketIndex];
         scheduleAlarm(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerTime, 0);
         Thread.sleep(MIN_FUTURITY);
-        assertFalse("The alarm went off before working_set delay", waitForAlarms(1));
-        final long expectedTriggerTime = mLastAlarmTime + APP_STANDBY_WORKING_DELAY;
-        Thread.sleep(expectedTriggerTime - SystemClock.elapsedRealtime());
-        assertTrue("Deferred alarm did not go off at the expected time", waitForAlarms(1));
+        if (triggerTime + DEFAULT_WAIT < minTriggerTime) {
+            assertFalse("Alarm went off before " + APP_BUCKET_TAGS[bucketIndex] + " delay",
+                    waitForAlarms(1));
+            Thread.sleep(minTriggerTime - SystemClock.elapsedRealtime());
+        }
+        assertTrue("Deferred alarm did not go off after " + APP_BUCKET_TAGS[bucketIndex] + " delay",
+                waitForAlarms(1));
     }
 
     @Test
-    public void testBucketUpgrade() throws Exception {
-        setAppStandbyBucket("frequent");
-        final long triggerTime1 = SystemClock.elapsedRealtime() + MIN_FUTURITY;
-        scheduleAlarm(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerTime1, 0);
-        Thread.sleep(MIN_FUTURITY);
+    public void testWorkingSetDelay() throws Exception {
+        testBucketDelay(1);
+    }
+
+    @Test
+    public void testFrequentDelay() throws Exception {
+        testBucketDelay(2);
+    }
+
+    @Test
+    public void testRareDelay() throws Exception {
+        testBucketDelay(3);
+    }
+
+    @Test
+    public void testBucketUpgradeToSmallerDelay() throws Exception {
+        setAppStandbyBucket(APP_BUCKET_TAGS[2]);
+        final long triggerTime = SystemClock.elapsedRealtime() + MIN_FUTURITY;
+        final long workingSetExpectedTrigger = mLastAlarmTime + APP_STANDBY_DELAYS[1];
+        scheduleAlarm(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerTime, 0);
+        Thread.sleep(workingSetExpectedTrigger - SystemClock.elapsedRealtime());
         assertFalse("The alarm went off before frequent delay", waitForAlarms(1));
-        final long workingSetExpectedTrigger = mLastAlarmTime + APP_STANDBY_WORKING_DELAY;
-        Thread.sleep(workingSetExpectedTrigger - SystemClock.elapsedRealtime() + 1_000);
-        assertFalse("The alarm went off before frequent delay", waitForAlarms(1));
-        setAppStandbyBucket("working_set");
+        setAppStandbyBucket(APP_BUCKET_TAGS[1]);
         assertTrue("The alarm did not go off when app bucket upgraded to working_set",
+                waitForAlarms(1));
+    }
+
+
+    /**
+     * This is different to {@link #testBucketUpgradeToSmallerDelay()} in the sense that the bucket
+     * upgrade shifts eligibility to a point earlier than when the alarm is scheduled for.
+     * The alarm must then go off as soon as possible - at either the scheduled time or the bucket
+     * change, whichever happened later.
+     */
+    @Test
+    public void testBucketUpgradeToNoDelay() throws Exception {
+        setAppStandbyBucket(APP_BUCKET_TAGS[3]);
+        final long triggerTime1 = mLastAlarmTime + APP_STANDBY_DELAYS[2];
+        scheduleAlarm(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerTime1, 0);
+        Thread.sleep(triggerTime1 - SystemClock.elapsedRealtime());
+        assertFalse("The alarm went off after frequent delay when app in rare bucket",
+                waitForAlarms(1));
+        setAppStandbyBucket(APP_BUCKET_TAGS[1]);
+        assertTrue("The alarm did not go off when app bucket upgraded to working_set",
+                waitForAlarms(1));
+
+        // Once more
+        setAppStandbyBucket(APP_BUCKET_TAGS[3]);
+        final long triggerTime2 = mLastAlarmTime + APP_STANDBY_DELAYS[2];
+        scheduleAlarm(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerTime2, 0);
+        setAppStandbyBucket(APP_BUCKET_TAGS[0]);
+        Thread.sleep(triggerTime2 - SystemClock.elapsedRealtime());
+        assertTrue("The alarm did not go off as scheduled when the app was in active",
                 waitForAlarms(1));
     }
 
@@ -138,15 +197,17 @@ public class AppStandbyTests {
         mContext.sendBroadcast(cancelAlarmsIntent);
         mContext.unregisterReceiver(mAlarmStateReceiver);
         // Broadcast unregister may race with the next register in setUp
-        Thread.sleep(1000);
+        Thread.sleep(500);
     }
 
     private void updateAlarmManagerConstants() throws IOException {
-        final String cmd = "settings put global alarm_manager_constants "
-                + "min_futurity=" + MIN_FUTURITY + ","
-                + "standby_working_delay=" + APP_STANDBY_WORKING_DELAY + ","
-                + "standby_frequent_delay=" + APP_STANDBY_FREQUENT_DELAY;
-        executeAndLog(cmd);
+        final StringBuffer cmd = new StringBuffer("settings put global alarm_manager_constants ");
+        cmd.append("min_futurity="); cmd.append(MIN_FUTURITY);
+        for (int i = 0; i < APP_STANDBY_DELAYS.length; i++) {
+            cmd.append(",");
+            cmd.append(APP_BUCKET_KEYS[i]); cmd.append("="); cmd.append(APP_STANDBY_DELAYS[i]);
+        }
+        executeAndLog(cmd.toString());
     }
 
     private void deleteAlarmManagerConstants() throws IOException {
@@ -172,9 +233,9 @@ public class AppStandbyTests {
         return output;
     }
 
-    private boolean waitForAlarms(final int minExpirations) throws InterruptedException {
-        final boolean success = waitUntil(() -> (mAlarmCount >= minExpirations), DEFAULT_WAIT);
-        mAlarmCount = 0;
+    private boolean waitForAlarms(final int numAlarms) throws InterruptedException {
+        final boolean success = waitUntil(() -> (mAlarmCount.get() == numAlarms), DEFAULT_WAIT);
+        mAlarmCount.set(0);
         return success;
     }
 
