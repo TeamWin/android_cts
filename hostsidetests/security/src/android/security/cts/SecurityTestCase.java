@@ -34,8 +34,10 @@ public class SecurityTestCase extends DeviceTestCase {
     public void setUp() throws Exception {
         super.setUp();
 
-        kernelStartTime = System.currentTimeMillis()/1000 -
-            Integer.parseInt(getDevice().executeShellCommand("cut -f1 -d. /proc/uptime").trim());
+        String cmdOut = getDevice().executeShellCommand("dumpsys meminfo");
+        long uptime = Long.parseLong(cmdOut.substring(cmdOut.indexOf("Uptime: ") + 8,
+                      cmdOut.indexOf("Realtime: ") - 1))/1000;
+        kernelStartTime = System.currentTimeMillis()/1000 - uptime;
         //TODO:(badash@): Watch for other things to track.
         //     Specifically time when app framework starts
     }
@@ -65,10 +67,11 @@ public class SecurityTestCase extends DeviceTestCase {
     @Override
     public void tearDown() throws Exception {
         getDevice().waitForDeviceOnline(60 * 1000);
+        String cmdOut = getDevice().executeShellCommand("dumpsys meminfo");
+        long uptime = Long.parseLong(cmdOut.substring(cmdOut.indexOf("Uptime: ") + 8,
+                      cmdOut.indexOf("Realtime: ") - 1))/1000;
         assertTrue("Phone has had a hard reset",
-            (System.currentTimeMillis()/1000 -
-                Integer.parseInt(getDevice().executeShellCommand("cut -f1 -d. /proc/uptime").trim())
-                    - kernelStartTime < 2));
+            (System.currentTimeMillis()/1000 - uptime - kernelStartTime < 2));
         //TODO(badash@): add ability to catch runtime restart
         getDevice().disableAdbRoot();
     }
