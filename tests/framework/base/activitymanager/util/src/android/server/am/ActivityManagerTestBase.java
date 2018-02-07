@@ -135,6 +135,15 @@ public abstract class ActivityManagerTestBase {
     protected ActivityManager mAm;
     protected UiDevice mDevice;
 
+    /**
+     * The variables below are to store the doze states so they can be restored at the end.
+     */
+    private String mIsDozeAlwaysOn;
+    private String mIsDozeEnabled;
+    private String mIsDozePulseOnPickUp;
+    private String mIsDozePulseOnLongPress;
+    private String mIsDozePulseOnDoubleTap;
+
     @Deprecated
     protected static String getAmStartCmd(final String activityName) {
         return "am start -n " + getActivityComponentName(activityName);
@@ -724,6 +733,33 @@ public abstract class ActivityManagerTestBase {
         }
         logAlways("power state :(");
         return false;
+    }
+
+    protected void disableDozeStates() {
+        mIsDozeAlwaysOn = executeShellCommand("settings get secure doze_always_on").trim();
+        mIsDozeEnabled = executeShellCommand("settings get secure doze_enabled").trim();
+        mIsDozePulseOnPickUp = executeShellCommand(
+                "settings get secure doze_pulse_on_pick_up").trim();
+        mIsDozePulseOnLongPress = executeShellCommand(
+                "settings get secure doze_pulse_on_long_press").trim();
+        mIsDozePulseOnDoubleTap = executeShellCommand(
+                "settings get secure doze_pulse_on_double_tap").trim();
+
+        executeShellCommand("settings put secure doze_always_on 0");
+        executeShellCommand("settings put secure doze_enabled 0");
+        executeShellCommand("settings put secure doze_pulse_on_pick_up 0");
+        executeShellCommand("settings put secure doze_pulse_on_long_press 0");
+        executeShellCommand("settings put secure doze_pulse_on_double_tap 0");
+    }
+
+    protected void resetDozeStates() {
+        executeShellCommand("settings put secure doze_always_on " + mIsDozeAlwaysOn);
+        executeShellCommand("settings put secure doze_enabled " + mIsDozeEnabled);
+        executeShellCommand("settings put secure doze_pulse_on_pick_up " + mIsDozePulseOnPickUp);
+        executeShellCommand(
+                "settings put secure doze_pulse_on_long_press " + mIsDozePulseOnLongPress);
+        executeShellCommand(
+                "settings put secure doze_pulse_on_double_tap " + mIsDozePulseOnDoubleTap);
     }
 
     protected class LockScreenSession implements AutoCloseable {
