@@ -20,16 +20,17 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import android.app.Instrumentation;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Point;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
+import android.view.PixelCopy;
 import android.view.View;
+import android.view.Window;
 
+import com.android.compatibility.common.util.SynchronousPixelCopy;
 import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
@@ -42,8 +43,9 @@ import java.util.concurrent.TimeoutException;
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class TextureViewTest {
-    private Instrumentation mInstrumentation;
     private TextureViewCtsActivity mActivity;
+    private SynchronousPixelCopy mPixelCopy;
+    private Window mWindow;
 
     @Rule
     public ActivityTestRule<TextureViewCtsActivity> mActivityRule =
@@ -51,10 +53,9 @@ public class TextureViewTest {
 
     @Before
     public void setup() {
-        mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mActivity = mActivityRule.getActivity();
+        mPixelCopy = new SynchronousPixelCopy();
         assertNotNull(mActivity);
-        assertNotNull(mInstrumentation);
     }
 
     @Test
@@ -68,6 +69,7 @@ public class TextureViewTest {
             content.getLocationOnScreen(outLocation);
             center.x = outLocation[0] + (content.getWidth() / 2);
             center.y = outLocation[1] + (content.getHeight() / 2);
+            mWindow = mActivity.getWindow();
         });
         assertTrue(center.x > 0);
         assertTrue(center.y > 0);
@@ -94,7 +96,10 @@ public class TextureViewTest {
     }
 
     private int getPixel(Point point) {
-        Bitmap screenshot = mInstrumentation.getUiAutomation().takeScreenshot();
+        Bitmap screenshot = Bitmap.createBitmap(mWindow.getDecorView().getWidth(),
+                mWindow.getDecorView().getHeight(), Bitmap.Config.ARGB_8888);
+        int result = mPixelCopy.request(mWindow, screenshot);
+        assertEquals("Copy request failed", PixelCopy.SUCCESS, result);
         int pixel = screenshot.getPixel(point.x, point.y);
         screenshot.recycle();
         return pixel;
