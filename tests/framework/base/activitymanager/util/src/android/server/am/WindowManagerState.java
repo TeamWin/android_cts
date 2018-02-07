@@ -891,7 +891,7 @@ public class WindowManagerState {
             return mCrop;
         }
 
-        boolean isShown() {
+        public boolean isShown() {
             return mShown;
         }
 
