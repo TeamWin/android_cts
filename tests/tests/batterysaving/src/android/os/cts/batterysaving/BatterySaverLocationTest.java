@@ -51,7 +51,7 @@ import org.junit.runner.RunWith;
 /**
  * Tests related to battery saver:
  *
- * atest $ANDROID_BUILD_TOP/cts/tests/tests/batterysaving/src/android/os/cts/batterysaving/BatterySaverLocationTest.java
+ atest $ANDROID_BUILD_TOP/cts/tests/tests/batterysaving/src/android/os/cts/batterysaving/BatterySaverLocationTest.java
  */
 @MediumTest
 @RunWith(AndroidJUnit4.class)
@@ -78,6 +78,7 @@ public class BatterySaverLocationTest extends BatterySavingTestBase {
         // Make sure GPS is enabled.
         putSecureSetting(LOCATION_PROVIDERS_ALLOWED, "+gps");
         assertNotEquals(LOCATION_MODE_OFF, getLocationMode());
+        assertTrue(getLocationManager().isLocationEnabled());
 
         // Unplug the charger and activate battery saver.
         runDumpsysBatteryUnplug();
@@ -98,12 +99,14 @@ public class BatterySaverLocationTest extends BatterySavingTestBase {
 
         // Make sure location is still enabled.
         assertNotEquals(LOCATION_MODE_OFF, getLocationMode());
+        assertTrue(getLocationManager().isLocationEnabled());
 
         // Turn screen off.
         runWithExpectingLocationCallback(() -> {
             turnOnScreen(false);
             waitUntil("Kill switch still off", () -> getLocationGlobalKillSwitch() == 1);
             assertEquals(LOCATION_MODE_OFF, getLocationMode());
+            assertFalse(getLocationManager().isLocationEnabled());
         });
 
         // On again.
@@ -111,6 +114,7 @@ public class BatterySaverLocationTest extends BatterySavingTestBase {
             turnOnScreen(true);
             waitUntil("Kill switch still off", () -> getLocationGlobalKillSwitch() == 0);
             assertNotEquals(LOCATION_MODE_OFF, getLocationMode());
+            assertTrue(getLocationManager().isLocationEnabled());
         });
 
         // Off again.
@@ -118,6 +122,7 @@ public class BatterySaverLocationTest extends BatterySavingTestBase {
             turnOnScreen(false);
             waitUntil("Kill switch still off", () -> getLocationGlobalKillSwitch() == 1);
             assertEquals(LOCATION_MODE_OFF, getLocationMode());
+            assertFalse(getLocationManager().isLocationEnabled());
         });
 
         // Disable battery saver and make sure the kill swtich is off.
@@ -125,6 +130,7 @@ public class BatterySaverLocationTest extends BatterySavingTestBase {
             enableBatterySaver(false);
             waitUntil("Kill switch still on", () -> getLocationGlobalKillSwitch() == 0);
             assertNotEquals(LOCATION_MODE_OFF, getLocationMode());
+            assertTrue(getLocationManager().isLocationEnabled());
         });
     }
 
