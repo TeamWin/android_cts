@@ -20,13 +20,19 @@ import static org.junit.Assert.*;
 
 import android.app.Activity;
 import android.app.AppOpsManager;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.usage.UsageEvents;
+import android.app.usage.UsageEvents.Event;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Parcel;
 import android.os.SystemClock;
+import android.provider.Settings;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.By;
@@ -72,6 +78,8 @@ public class UsageStatsTest {
     private static final long MONTH = 30 * DAY;
     private static final long YEAR = 365 * DAY;
     private static final long TIME_DIFF_THRESHOLD = 200;
+    private static final String CHANNEL_ID = "my_channel";
+
 
     private UiDevice mUiDevice;
     private UsageStatsManager mUsageStatsManager;
@@ -327,8 +335,8 @@ public class UsageStatsTest {
     public void testNoAccessSilentlyFails() throws Exception {
         final long startTime = System.currentTimeMillis() - MINUTE;
 
-        launchSubActivity(Activities.ActivityOne.class);
-        launchSubActivity(Activities.ActivityThree.class);
+        launchSubActivity(android.app.usage.cts.Activities.ActivityOne.class);
+        launchSubActivity(android.app.usage.cts.Activities.ActivityThree.class);
 
         final long endTime = System.currentTimeMillis();
         List<UsageStats> stats = mUsageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_BEST,
@@ -342,5 +350,58 @@ public class UsageStatsTest {
         stats = mUsageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_BEST,
                 startTime, endTime);
         assertTrue(stats.isEmpty());
+    }
+
+    @Test
+    public void testNotificationSeen() throws Exception {
+        final long startTime = System.currentTimeMillis();
+        Context context = InstrumentationRegistry.getContext();
+        NotificationManager mNotificationManager =
+            (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        int importance = NotificationManager.IMPORTANCE_DEFAULT;
+        NotificationChannel mChannel = new NotificationChannel(CHANNEL_ID, "Channel",
+            importance);
+        // Configure the notification channel.
+        mChannel.setDescription("Test channel");
+        mNotificationManager.createNotificationChannel(mChannel);
+        Notification.Builder mBuilder =
+                new Notification.Builder(context, CHANNEL_ID)
+                    .setSmallIcon(R.drawable.ic_notification)
+                    .setContentTitle("My notification")
+                    .setContentText("Hello World!");
+        PendingIntent pi = PendingIntent.getActivity(context, 1,
+                new Intent(Settings.ACTION_SETTINGS), 0);
+        mBuilder.setContentIntent(pi);
+        mNotificationManager.notify(1, mBuilder.build());
+        Thread.sleep(500);
+        long endTime = System.currentTimeMillis();
+        UsageEvents events = mUsageStatsManager.queryEvents(startTime, endTime);
+        boolean found = false;
+        Event event = new Event();
+        while (events.hasNextEvent()) {
+            events.getNextEvent(event);
+            if (event.mEventType == Event.NOTIFICATION_SEEN) {
+                found = true;
+            }
+        }
+        assertFalse(found);
+        // Pull down shade
+        mUiDevice.openNotification();
+        outer:
+        for (int i = 0; i < 5; i++) {
+            Thread.sleep(500);
+            endTime = System.currentTimeMillis();
+            events = mUsageStatsManager.queryEvents(startTime, endTime);
+            found = false;
+            while (events.hasNextEvent()) {
+                events.getNextEvent(event);
+                if (event.mEventType == Event.NOTIFICATION_SEEN) {
+                    found = true;
+                    break outer;
+                }
+            }
+        }
+        assertTrue(found);
+        mUiDevice.pressBack();
     }
 }
