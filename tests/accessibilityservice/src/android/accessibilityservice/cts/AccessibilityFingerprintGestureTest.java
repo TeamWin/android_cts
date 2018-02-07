@@ -16,13 +16,16 @@ package android.accessibilityservice.cts;
 
 import android.accessibilityservice.FingerprintGestureController;
 import android.accessibilityservice.FingerprintGestureController.FingerprintGestureCallback;
+import android.accessibilityservice.cts.activities.AccessibilityEndToEndActivity;
 import android.app.Instrumentation;
 import android.hardware.fingerprint.FingerprintManager;
 import android.os.CancellationSignal;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -52,6 +55,11 @@ public class AccessibilityFingerprintGestureTest {
     StubFingerprintGestureService mFingerprintGestureService;
     FingerprintGestureController mFingerprintGestureController;
     CancellationSignal mCancellationSignal = new CancellationSignal();
+
+    @Rule
+    public ActivityTestRule<AccessibilityEndToEndActivity> mActivityRule =
+            new ActivityTestRule<>(AccessibilityEndToEndActivity.class, false, false);
+
 
     @Mock FingerprintManager.AuthenticationCallback mMockAuthenticationCallback;
     @Mock FingerprintGestureCallback mMockFingerprintGestureCallback;
@@ -86,6 +94,8 @@ public class AccessibilityFingerprintGestureTest {
         if (!mIsHardwareAvailable) {
             return;
         }
+        // Launch an activity to make sure we're in the foreground
+        mActivityRule.launchActivity(null);
         mFingerprintGestureController.registerFingerprintGestureCallback(
                 mMockFingerprintGestureCallback, null);
         try {
