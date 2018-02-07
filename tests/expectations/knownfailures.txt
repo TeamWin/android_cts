@@ -278,5 +278,10 @@
     "android.telecom.cts.WiredHeadsetTest"
   ],
   bug: 26149528
+},
+{
+  description: "UsbTest does not work without rooted shell (will not work on userdebug and user released builds)",
+  names: ["com.android.cts.verifier.admin.tapjacking.UsbTest"],
+  bug: 72442012
 }
 ]
