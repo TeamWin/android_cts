@@ -83,6 +83,9 @@ public class StorageHostTest extends BaseHostJUnit4Test {
             runDeviceTests(PKG_A, CLASS, "testAllocate", user);
         }
 
+        // for fuse file system
+        Thread.sleep(10000);
+
         // TODO: remove this once 34723223 is fixed
         getDevice().executeShellCommand("sync");
 

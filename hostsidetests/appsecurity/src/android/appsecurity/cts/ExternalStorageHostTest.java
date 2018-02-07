@@ -252,6 +252,8 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
                 runDeviceTests(READ_PKG, READ_PKG + ".ReadMultiViewTest", "testROAccess", user);
             }
 
+            // for fuse file system
+            Thread.sleep(10000);
             for (int user : mUsers) {
                 runDeviceTests(WRITE_PKG, WRITE_PKG + ".WriteMultiViewTest", "testMoveBack", user);
             }
