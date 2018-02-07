@@ -56,7 +56,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     private static final String TEST_APP_LOCATION = "/data/local/tmp/cts/packageinstaller/";
 
     private static final String ARG_SECURITY_LOGGING_BATCH_NUMBER = "batchNumber";
-    private static final int BUFFER_SECURITY_ENTRIES_NOTIFICATION_LEVEL = 1024;
+    private static final int SECURITY_EVENTS_BATCH_SIZE = 100;
 
     private static final String ARG_NETWORK_LOGGING_BATCH_COUNT = "batchCount";
 
@@ -471,23 +471,22 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestMethod(".SecurityLoggingTest", "testDisablingSecurityLogging");
 
         // Generate more than enough events for a batch of security events.
-        int batchSize = BUFFER_SECURITY_ENTRIES_NOTIFICATION_LEVEL + 100;
         try {
             executeDeviceTestMethod(".SecurityLoggingTest", "testEnablingSecurityLogging");
             // Reboot to ensure ro.device_owner is set to true in logd.
             rebootAndWaitUntilReady();
 
             // First batch: retrieve and verify the events.
-            runBatch(0, batchSize);
+            runBatch(0);
 
             // Verify event ids are consistent across a consecutive batch.
-            runBatch(1, batchSize);
+            runBatch(1);
 
             // Reboot the device, so the security event ids are reset.
             rebootAndWaitUntilReady();
 
             // First batch after reboot: retrieve and verify the events.
-            runBatch(0 /* batch number */, batchSize);
+            runBatch(0 /* batch number */);
 
             // Immediately attempting to fetch events again should fail.
             executeDeviceTestMethod(".SecurityLoggingTest",
@@ -498,16 +497,14 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
-    private void runBatch(int batchNumber, int batchSize) throws Exception {
+    private void runBatch(int batchNumber) throws Exception {
         // Trigger security events of type TAG_ADB_SHELL_CMD.
-        for (int i = 0; i < batchSize; i++) {
-            getDevice().executeShellCommand("adb shell echo just_testing_" + i);
+        for (int i = 0; i < SECURITY_EVENTS_BATCH_SIZE; i++) {
+            getDevice().executeShellCommand("echo just_testing_" + i);
         }
 
-        // Sleep for ~1 minute so that SecurityLogMonitor fetches the security events. This is
-        // an implementation detail we shouldn't rely on but there is no other way to do it
-        // currently.
-        Thread.sleep(TimeUnit.SECONDS.toMillis(70));
+        // Force log batch.
+        getDevice().executeShellCommand("dpm force-security-logs");
 
         // Verify the contents of the batch.
         executeDeviceTestMethod(".SecurityLoggingTest", "testGetSecurityLogs",
