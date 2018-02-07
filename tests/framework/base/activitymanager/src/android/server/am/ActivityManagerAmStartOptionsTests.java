@@ -36,8 +36,7 @@ public class ActivityManagerAmStartOptionsTests extends ActivityManagerTestBase 
 
     @Test
     public void testDashD() throws Exception {
-        final String activityComponentName =
-                ActivityManagerTestBase.getActivityComponentName(TEST_ACTIVITY_NAME);
+        final String activityComponentName = getActivityComponentName(TEST_ACTIVITY_NAME);
 
         final String[] waitForActivityRecords = new String[] {activityComponentName};
 

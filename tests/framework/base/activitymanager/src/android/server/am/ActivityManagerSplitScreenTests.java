@@ -148,6 +148,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
 
     @Test
     @Presubmit
+    @FlakyTest(bugId = 72956284)
     public void testNoUserLeaveHintOnMultiWindowModeChanged() throws Exception {
         launchActivity(TEST_ACTIVITY_NAME, WINDOWING_MODE_FULLSCREEN);
 

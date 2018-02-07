@@ -16,11 +16,22 @@
 
 package android.widget.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
+
 import android.app.Activity;
+import android.app.Instrumentation;
+import android.graphics.Bitmap;
+import android.graphics.PointF;
+import android.graphics.Rect;
+import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
+import android.util.DisplayMetrics;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
@@ -33,14 +44,19 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Tests for {@link Magnifier}.
  */
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class MagnifierTest {
+    private Instrumentation mInstrumentation;
     private Activity mActivity;
-    private LinearLayout mMagnifierLayout;
+    private LinearLayout mLayout;
+    private Magnifier mMagnifier;
 
     @Rule
     public ActivityTestRule<MagnifierCtsActivity> mActivityRule =
@@ -48,9 +64,24 @@ public class MagnifierTest {
 
     @Before
     public void setup() {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mActivity = mActivityRule.getActivity();
         PollingCheck.waitFor(mActivity::hasWindowFocus);
-        mMagnifierLayout = mActivity.findViewById(R.id.magnifier_layout);
+        mLayout = mActivity.findViewById(R.id.magnifier_activity_basic_layout);
+
+        // Do not run the tests, unless the device screen is big enough to fit the magnifier.
+        assumeTrue(isScreenBigEnough());
+    }
+
+    private boolean isScreenBigEnough() {
+        // Get the size of the screen in dp.
+        final DisplayMetrics displayMetrics = mActivity.getResources().getDisplayMetrics();
+        final float dpScreenWidth = displayMetrics.widthPixels / displayMetrics.density;
+        final float dpScreenHeight = displayMetrics.heightPixels / displayMetrics.density;
+        // Get the size of the magnifier window in dp.
+        final PointF dpMagnifier = Magnifier.getMagnifierDefaultSize();
+
+        return dpScreenWidth >= dpMagnifier.x * 1.1 && dpScreenHeight >= dpMagnifier.y * 1.1;
     }
 
     @Test
@@ -66,46 +97,138 @@ public class MagnifierTest {
     @Test
     @UiThreadTest
     public void testShow() {
-        View view = new View(mActivity);
-        mMagnifierLayout.addView(view, new LayoutParams(200, 200));
-        Magnifier magnifier = new Magnifier(view);
+        final View view = new View(mActivity);
+        mLayout.addView(view, new LayoutParams(200, 200));
+        mMagnifier = new Magnifier(view);
         // Valid coordinates.
-        magnifier.show(0, 0);
+        mMagnifier.show(0, 0);
         // Invalid coordinates, should both be clamped to 0.
-        magnifier.show(-1, -1);
+        mMagnifier.show(-1, -1);
         // Valid coordinates.
-        magnifier.show(10, 10);
+        mMagnifier.show(10, 10);
         // Same valid coordinate as above, should skip making another copy request.
-        magnifier.show(10, 10);
+        mMagnifier.show(10, 10);
     }
 
     @Test
     @UiThreadTest
     public void testDismiss() {
-        View view = new View(mActivity);
-        mMagnifierLayout.addView(view, new LayoutParams(200, 200));
-        Magnifier magnifier = new Magnifier(view);
+        final View view = new View(mActivity);
+        mLayout.addView(view, new LayoutParams(200, 200));
+        mMagnifier = new Magnifier(view);
         // Valid coordinates.
-        magnifier.show(10, 10);
-        magnifier.dismiss();
+        mMagnifier.show(10, 10);
+        mMagnifier.dismiss();
         // Should be no-op.
-        magnifier.dismiss();
+        mMagnifier.dismiss();
     }
 
     @Test
     @UiThreadTest
     public void testUpdate() {
-        View view = new View(mActivity);
-        mMagnifierLayout.addView(view, new LayoutParams(200, 200));
-        Magnifier magnifier = new Magnifier(view);
+        final View view = new View(mActivity);
+        mLayout.addView(view, new LayoutParams(200, 200));
+        mMagnifier = new Magnifier(view);
         // Should be no-op.
-        magnifier.update();
+        mMagnifier.update();
         // Valid coordinates.
-        magnifier.show(10, 10);
+        mMagnifier.show(10, 10);
         // Should not crash.
-        magnifier.update();
-        magnifier.dismiss();
+        mMagnifier.update();
+        mMagnifier.dismiss();
         // Should be no-op.
-        magnifier.update();
+        mMagnifier.update();
+    }
+
+    @Test
+    public void testWindowContent() {
+        prepareFourQuadrantsScenario();
+        // Show the magnifier at the center of the activity.
+        mInstrumentation.runOnMainSync(() -> {
+            mMagnifier.show(mLayout.getWidth() / 2, mLayout.getHeight() / 2);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        assertFourQuadrants(mMagnifier.getContent());
+    }
+
+    @Test
+    public void testWindowPosition() {
+        prepareFourQuadrantsScenario();
+        // Show the magnifier at the center of the activity.
+        mInstrumentation.runOnMainSync(() -> {
+            mMagnifier.show(mLayout.getWidth() / 2, mLayout.getHeight() / 2);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        // Assert that the magnifier position represents a valid rectangle on screen.
+        final Rect position = mMagnifier.getWindowPositionOnScreen();
+        assertFalse(position.isEmpty());
+        assertTrue(0 <= position.left && position.right <= mLayout.getWidth());
+        assertTrue(0 <= position.top && position.bottom <= mLayout.getHeight());
+    }
+
+    @Test
+    public void testWindowContent_modifiesAfterUpdate() {
+        prepareFourQuadrantsScenario();
+        // Show the magnifier at the center of the activity.
+        mInstrumentation.runOnMainSync(() -> {
+            mMagnifier.show(mLayout.getWidth() / 2, mLayout.getHeight() / 2);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        final Bitmap initialBitmap = mMagnifier.getContent()
+                .copy(mMagnifier.getContent().getConfig(), true);
+        assertFourQuadrants(initialBitmap);
+
+        // Make the one quadrant white.
+        mInstrumentation.runOnMainSync(() -> {
+            mActivity.findViewById(R.id.magnifier_activity_four_quadrants_layout_quadrant_1)
+                    .setBackground(null);
+        });
+        mInstrumentation.waitForIdleSync();
+        // Update the magnifier.
+        mInstrumentation.runOnMainSync(mMagnifier::update);
+        mInstrumentation.waitForIdleSync();
+
+        final Bitmap newBitmap = mMagnifier.getContent();
+        assertFourQuadrants(newBitmap);
+        assertFalse(newBitmap.sameAs(initialBitmap));
+    }
+
+    /**
+     * Sets the activity to contain four equal quadrants coloured differently and
+     * instantiates a magnifier. This method should not be called on the UI thread.
+     */
+    private void prepareFourQuadrantsScenario() {
+        mInstrumentation.runOnMainSync(() -> {
+            mActivity.setContentView(R.layout.magnifier_activity_four_quadrants_layout);
+            mLayout = mActivity.findViewById(R.id.magnifier_activity_four_quadrants_layout);
+            mMagnifier = new Magnifier(mLayout);
+        });
+        mInstrumentation.waitForIdleSync();
+    }
+
+    /**
+     * Asserts that the current bitmap contains exactly four different colors,
+     * and that they are (almost) equally distributed.
+     *
+     * @param bitmap the bitmap to be checked
+     */
+    private void assertFourQuadrants(final Bitmap bitmap) {
+        final int totalPixels = bitmap.getWidth() * bitmap.getHeight();
+        final Map<Integer, Integer> colorCount = new HashMap<>();
+        for (int x = 0; x < bitmap.getWidth(); ++x) {
+            for (int y = 0; y < bitmap.getHeight(); ++y) {
+                final int currentColor = bitmap.getPixel(x, y);
+                colorCount.put(currentColor, colorCount.getOrDefault(currentColor, 0) + 1);
+            }
+        }
+        assertEquals(4, colorCount.size());
+        for (Integer color : colorCount.keySet()) {
+            final int currentCount = colorCount.get(color);
+            final float proportion = 1.0f * Math.abs(4 * currentCount - totalPixels) / totalPixels;
+            assertTrue(proportion <= 0.2f);
+        }
     }
 }

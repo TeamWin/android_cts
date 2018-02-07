@@ -43,6 +43,7 @@ import android.hardware.camera2.params.OutputConfiguration;
 import android.hardware.camera2.params.SessionConfiguration;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.ImageReader;
+import android.os.ConditionVariable;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.util.Log;
@@ -51,6 +52,7 @@ import android.view.Surface;
 
 import com.android.ex.camera2.blocking.BlockingSessionCallback;
 import com.android.ex.camera2.blocking.BlockingStateCallback;
+import com.android.ex.camera2.exceptions.TimeoutRuntimeException;
 import com.android.ex.camera2.utils.StateWaiter;
 
 import java.util.ArrayList;
@@ -892,6 +894,174 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
             finally {
                 closeDevice(mCameraIds[i], mCameraMockListener);
             }
+        }
+    }
+
+    /**
+     * Check for any state leakage in case of internal re-configure
+     */
+    public void testSessionParametersStateLeak() throws Exception {
+        for (int i = 0; i < mCameraIds.length; i++) {
+            try {
+                openDevice(mCameraIds[i], mCameraMockListener);
+                waitForDeviceState(STATE_OPENED, CAMERA_OPEN_TIMEOUT_MS);
+                if (!mStaticInfo.isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + mCameraIds[i] +
+                            " does not support color outputs, skipping");
+                    continue;
+                }
+                testSessionParametersStateLeakByCamera(mCameraIds[i]);
+            }
+            finally {
+                closeDevice(mCameraIds[i], mCameraMockListener);
+            }
+        }
+    }
+
+    /**
+     * Check for any state leakage in case of internal re-configure
+     */
+    private void testSessionParametersStateLeakByCamera(String cameraId)
+            throws Exception {
+        int outputFormat = ImageFormat.YUV_420_888;
+        Size outputSize = mOrderedPreviewSizes.get(0);
+
+        CameraCharacteristics characteristics = mCameraManager.getCameraCharacteristics(cameraId);
+        StreamConfigurationMap config = characteristics.get(
+                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+        List <CaptureRequest.Key<?>> sessionKeys = characteristics.getAvailableSessionKeys();
+        if (sessionKeys == null) {
+            return;
+        }
+
+        if (config.isOutputSupportedFor(outputFormat)) {
+            outputSize = config.getOutputSizes(outputFormat)[0];
+        } else {
+            return;
+        }
+
+        ImageReader imageReader = ImageReader.newInstance(outputSize.getWidth(),
+                outputSize.getHeight(), outputFormat, /*maxImages*/3);
+
+        class OnReadyCaptureStateCallback extends CameraCaptureSession.StateCallback {
+            private ConditionVariable onReadyTriggeredCond = new ConditionVariable();
+            private boolean onReadyTriggered = false;
+
+            @Override
+            public void onConfigured(CameraCaptureSession session) {
+            }
+
+            @Override
+            public void onConfigureFailed(CameraCaptureSession session) {
+            }
+
+            @Override
+            public synchronized void onReady(CameraCaptureSession session) {
+                onReadyTriggered = true;
+                onReadyTriggeredCond.open();
+            }
+
+            public void waitForOnReady(long timeout) {
+                synchronized (this) {
+                    if (onReadyTriggered) {
+                        onReadyTriggered = false;
+                        onReadyTriggeredCond.close();
+                        return;
+                    }
+                }
+
+                if (onReadyTriggeredCond.block(timeout)) {
+                    synchronized (this) {
+                        onReadyTriggered = false;
+                        onReadyTriggeredCond.close();
+                    }
+                } else {
+                    throw new TimeoutRuntimeException("Unable to receive onReady after "
+                        + timeout + "ms");
+                }
+            }
+        }
+
+        OnReadyCaptureStateCallback sessionListener = new OnReadyCaptureStateCallback();
+
+        try {
+            mSessionMockListener = spy(new BlockingSessionCallback(sessionListener));
+            mSessionWaiter = mSessionMockListener.getStateWaiter();
+            List<OutputConfiguration> outputs = new ArrayList<>();
+            outputs.add(new OutputConfiguration(imageReader.getSurface()));
+            SessionConfiguration sessionConfig = new SessionConfiguration(
+                    SessionConfiguration.SESSION_REGULAR, outputs, mSessionMockListener, mHandler);
+
+            CaptureRequest.Builder builder =
+                    mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
+            builder.addTarget(imageReader.getSurface());
+            CaptureRequest request = builder.build();
+
+            sessionConfig.setSessionParameters(request);
+            mCamera.createCaptureSession(sessionConfig);
+
+            mSession = mSessionMockListener.waitAndGetSession(SESSION_CONFIGURE_TIMEOUT_MS);
+            sessionListener.waitForOnReady(SESSION_CONFIGURE_TIMEOUT_MS);
+
+            SimpleCaptureCallback captureListener = new SimpleCaptureCallback();
+            ImageDropperListener imageListener = new ImageDropperListener();
+            imageReader.setOnImageAvailableListener(imageListener, mHandler);
+
+            // To check the state leak condition, we need a capture request that has
+            // at least one session pararameter value difference from the initial session
+            // parameters configured above. Scan all available template types for the
+            // required delta.
+            CaptureRequest.Builder requestBuilder = null;
+            ArrayList<CaptureRequest.Builder> builders = new ArrayList<CaptureRequest.Builder> ();
+            if (mStaticInfo.isCapabilitySupported(
+                        CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR)) {
+                builders.add(mCamera.createCaptureRequest(CameraDevice.TEMPLATE_MANUAL));
+            }
+            if (mStaticInfo.isCapabilitySupported(
+                        CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_PRIVATE_REPROCESSING)
+                    || mStaticInfo.isCapabilitySupported(
+                        CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_YUV_REPROCESSING)) {
+                builders.add(mCamera.createCaptureRequest(CameraDevice.TEMPLATE_ZERO_SHUTTER_LAG));
+            }
+            builders.add(mCamera.createCaptureRequest(CameraDevice.TEMPLATE_VIDEO_SNAPSHOT));
+            builders.add(mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW));
+            builders.add(mCamera.createCaptureRequest(CameraDevice.TEMPLATE_RECORD));
+            for (CaptureRequest.Key<?> key : sessionKeys) {
+                Object sessionValue = builder.get(key);
+                for (CaptureRequest.Builder newBuilder : builders) {
+                    Object currentValue = newBuilder.get(key);
+                    if ((sessionValue == null) && (currentValue == null)) {
+                        continue;
+                    }
+
+                    if (((sessionValue == null) && (currentValue != null)) ||
+                            ((sessionValue != null) && (currentValue == null)) ||
+                            (!sessionValue.equals(currentValue))) {
+                        requestBuilder = newBuilder;
+                        break;
+                    }
+                }
+
+                if (requestBuilder != null) {
+                    break;
+                }
+            }
+
+            if (requestBuilder != null) {
+                requestBuilder.addTarget(imageReader.getSurface());
+                request = requestBuilder.build();
+                mSession.setRepeatingRequest(request, captureListener, mHandler);
+                try {
+                    sessionListener.waitForOnReady(SESSION_CONFIGURE_TIMEOUT_MS);
+                    fail("Camera shouldn't switch to ready state when session parameters are " +
+                            "modified");
+                } catch (TimeoutRuntimeException e) {
+                    //expected
+                }
+            }
+        } finally {
+            imageReader.close();
+            mSession.close();
         }
     }
 

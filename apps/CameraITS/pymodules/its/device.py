@@ -119,10 +119,10 @@ class ItsSession(object):
             try:
                 socket_lock.bind((ItsSession.IPADDR, ItsSession.LOCK_PORT))
                 break
-            except socket.error:
+            except socket.error or socket.timeout:
                 if i == NUM_RETRIES - 1:
                     raise its.error.Error(self.device_id,
-                                          "acquiring socket lock timed out")
+                                          "socket lock returns error")
                 else:
                     time.sleep(RETRY_WAIT_TIME_SEC)
 

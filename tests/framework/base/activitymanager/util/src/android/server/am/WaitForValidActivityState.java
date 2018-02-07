@@ -19,6 +19,8 @@ package android.server.am;
 import static android.app.ActivityManager.StackId.INVALID_STACK_ID;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
+import static android.server.am.ComponentNameUtils.getActivityName;
+import static android.server.am.ComponentNameUtils.getWindowName;
 
 import android.content.ComponentName;
 import android.support.annotation.Nullable;
@@ -41,8 +43,8 @@ public class WaitForValidActivityState {
     }
 
     public WaitForValidActivityState(final ComponentName activityName) {
-        this.componentName = activityName.flattenToShortString();
-        this.windowName = activityName.flattenToString();
+        this.componentName = getActivityName(activityName);
+        this.windowName = getWindowName(activityName);
         this.activityName = getSimpleClassName(activityName);
         this.stackId = INVALID_STACK_ID;
         this.windowingMode = WINDOWING_MODE_UNDEFINED;
@@ -70,20 +72,15 @@ public class WaitForValidActivityState {
     }
 
     /**
-     * @return the class name of <code>componentName</code>, either fully qualified class name or in
+     * Get component's simple class name.
+     *
+     * @return the class name of {@code componentName}, either fully qualified class name or in
      *         a shortened form (WITHOUT a leading '.') if it is a suffix of the package.
-     * @see ComponentName#getShortClassName()
+     * @see ComponentNameUtils#getLogTag(ComponentName)
      */
-    private static String getSimpleClassName(final ComponentName componentName) {
-        final String packageName = componentName.getPackageName();
-        final String className = componentName.getClassName();
-        if (className.startsWith(packageName)) {
-            final int packageNameLen = packageName.length();
-            if (className.length() > packageNameLen && className.charAt(packageNameLen) == '.') {
-                return className.substring(packageNameLen + 1);
-            }
-        }
-        return className;
+    public static String getSimpleClassName(final ComponentName componentName) {
+        final String shortClassName = componentName.getShortClassName();
+        return shortClassName.startsWith(".") ? shortClassName.substring(1) : shortClassName;
     }
 
     public static class Builder {
@@ -100,8 +97,8 @@ public class WaitForValidActivityState {
         private Builder() {}
 
         public Builder(final ComponentName activityName) {
-            mComponentName = activityName.flattenToShortString();
-            mWindowName = activityName.flattenToString();
+            mComponentName = getActivityName(activityName);
+            mWindowName = getWindowName(activityName);
             mActivityName = getSimpleClassName(activityName);
         }
 

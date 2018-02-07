@@ -23,7 +23,11 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.content.pm.ActivityInfo.RESIZE_MODE_RESIZEABLE;
-import static android.server.am.ActivityManagerTestBase.componentName;
+import static android.server.am.ActivityManagerTestBase.getActivityComponentName;
+import static android.server.am.ActivityManagerTestBase.getActivityWindowName;
+import static android.server.am.ActivityManagerTestBase.getActivityWindowName;
+import static android.server.am.ComponentNameUtils.getActivityName;
+import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logE;
 
@@ -211,7 +215,8 @@ public class ActivityAndWindowManagersState {
      */
     private void waitForValidState(boolean compareTaskAndStackBounds,
             WaitForValidActivityState... waitForActivitiesVisible) throws Exception {
-        waitForValidState(compareTaskAndStackBounds, componentName, waitForActivitiesVisible);
+        waitForValidState(compareTaskAndStackBounds, ActivityManagerTestBase.componentName,
+                waitForActivitiesVisible);
     }
 
     /**
@@ -470,12 +475,12 @@ public class ActivityAndWindowManagersState {
             } else {
                 final String activityName = state.activityName;
                 activityComponentName = (activityName != null)
-                        ? ActivityManagerTestBase.getActivityComponentName(packageName, activityName)
+                        ? getActivityComponentName(packageName, activityName)
                         : null;
                 // Check if window is visible - it should be represented as one of the window
                 // states.
                 windowName = (state.windowName != null) ? state.windowName
-                        : ActivityManagerTestBase.getWindowName(packageName, activityName);
+                        : ActivityManagerTestBase.getActivityWindowName(packageName, activityName);
             }
             final int stackId = state.stackId;
             final int windowingMode = state.windowingMode;
@@ -657,21 +662,20 @@ public class ActivityAndWindowManagersState {
     }
 
     void assertFocusedActivity(final String msg, final ComponentName activityName) {
-        final String activityComponentName = activityName.flattenToShortString();
+        final String activityComponentName = getActivityName(activityName);
         assertEquals(msg, activityComponentName, mAmState.getFocusedActivity());
         assertEquals(msg, activityComponentName, mWmState.getFocusedApp());
     }
 
     @Deprecated
     void assertFocusedActivity(final String msg, final String activityName) {
-        final String activityComponentName =
-                ActivityManagerTestBase.getActivityComponentName(activityName);
+        final String activityComponentName = getActivityComponentName(activityName);
         assertEquals(msg, activityComponentName, mAmState.getFocusedActivity());
         assertEquals(msg, activityComponentName, mWmState.getFocusedApp());
     }
 
     void assertNotFocusedActivity(String msg, String activityName) throws Exception {
-        final String componentName = ActivityManagerTestBase.getActivityComponentName(activityName);
+        final String componentName = getActivityComponentName(activityName);
         if (mAmState.getFocusedActivity().equals(componentName)) {
             assertNotEquals(msg, mAmState.getFocusedActivity(), componentName);
         }
@@ -681,17 +685,17 @@ public class ActivityAndWindowManagersState {
     }
 
     void assertResumedActivity(final String msg, final ComponentName activityName) {
-        assertEquals(msg, activityName.flattenToShortString(), mAmState.getResumedActivity());
+        assertEquals(msg, getActivityName(activityName), mAmState.getResumedActivity());
     }
 
     @Deprecated
     void assertResumedActivity(String msg, String activityName) throws Exception {
-        final String componentName = ActivityManagerTestBase.getActivityComponentName(activityName);
+        final String componentName = getActivityComponentName(activityName);
         assertEquals(msg, componentName, mAmState.getResumedActivity());
     }
 
     void assertNotResumedActivity(String msg, String activityName) throws Exception {
-        final String componentName = ActivityManagerTestBase.getActivityComponentName(activityName);
+        final String componentName = getActivityComponentName(activityName);
         if (mAmState.getResumedActivity().equals(componentName)) {
             assertNotEquals(msg, mAmState.getResumedActivity(), componentName);
         }
@@ -713,17 +717,13 @@ public class ActivityAndWindowManagersState {
 
     @Deprecated
     public void assertVisibility(String activityName, boolean visible) {
-        final String activityComponentName =
-                ActivityManagerTestBase.getActivityComponentName(activityName);
-        final String windowName =
-                ActivityManagerTestBase.getWindowName(activityName);
+        final String activityComponentName = getActivityComponentName(activityName);
+        final String windowName = getActivityWindowName(activityName);
         assertVisibility(activityComponentName, windowName, visible);
     }
 
     public void assertVisibility(final ComponentName activityName, final boolean visible) {
-        final String activityComponentName = activityName.flattenToShortString();
-        final String windowName = activityName.flattenToString();
-        assertVisibility(activityComponentName, windowName, visible);
+        assertVisibility(getActivityName(activityName), getWindowName(activityName), visible);
     }
 
     private void assertVisibility(String activityComponentName, String windowName,

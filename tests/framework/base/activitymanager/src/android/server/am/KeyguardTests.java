@@ -88,7 +88,7 @@ public class KeyguardTests extends KeyguardTestBase {
             mAmWmState.computeState();
             mAmWmState.assertVisibility("ShowWhenLockedWithDialogActivity", true);
             assertTrue(mAmWmState.getWmState().allWindowsVisible(
-                    getWindowName("ShowWhenLockedWithDialogActivity")));
+                    getActivityWindowName("ShowWhenLockedWithDialogActivity")));
             mAmWmState.assertKeyguardShowingAndOccluded();
         }
     }

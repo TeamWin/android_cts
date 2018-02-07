@@ -377,8 +377,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         launchActivity(PORTRAIT_ACTIVITY_NAME);
 
         assertFalse("target SDK > 26 non-fullscreen activity should not reach onResume",
-                mAmWmState.getAmState().containsActivity(
-                        TRANSLUCENT_LANDSCAPE_ACTIVITY.flattenToShortString()));
+                mAmWmState.getAmState().containsActivity(TRANSLUCENT_LANDSCAPE_ACTIVITY));
     }
 
     @Test
@@ -517,7 +516,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
 
         // Launch to docked stack and record size.
         String logSeparator = clearLogcat();
-        launchActivity(activityName, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
+        launchActivityInSplitScreenWithRecents(activityName);
         final ReportedSizes initialDockedSizes = getActivityDisplaySize(activityName, logSeparator);
         // Make sure docked stack is focused. This way when we dismiss it later fullscreen stack
         // will come up.
@@ -607,7 +606,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
 
     private Rect getDisplayRect(String activityName)
             throws Exception {
-        final String windowName = getWindowName(activityName);
+        final String windowName = getActivityWindowName(activityName);
 
         mAmWmState.computeState(new String[] {activityName});
         mAmWmState.assertFocusedWindow("Test window must be the front window.", windowName);

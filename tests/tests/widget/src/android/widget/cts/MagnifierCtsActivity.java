@@ -26,6 +26,6 @@ public class MagnifierCtsActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.magnifier_layout);
+        setContentView(R.layout.magnifier_activity_basic_layout);
     }
 }

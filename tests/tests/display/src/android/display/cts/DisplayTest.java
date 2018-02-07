@@ -22,8 +22,10 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.Presentation;
 import android.app.UiAutomation;
+import android.app.UiModeManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
@@ -78,6 +80,7 @@ public class DisplayTest {
 
     private DisplayManager mDisplayManager;
     private WindowManager mWindowManager;
+    private UiModeManager mUiModeManager;
     private Context mContext;
 
     // To test display mode switches.
@@ -96,6 +99,7 @@ public class DisplayTest {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mDisplayManager = (DisplayManager)mContext.getSystemService(Context.DISPLAY_SERVICE);
         mWindowManager = (WindowManager)mContext.getSystemService(Context.WINDOW_SERVICE);
+        mUiModeManager = (UiModeManager)mContext.getSystemService(Context.UI_MODE_SERVICE);
     }
 
     @After
@@ -309,6 +313,12 @@ public class DisplayTest {
      */
     @Test
     public void testModeSwitch() throws Exception {
+        // Standalone VR devices globally ignore SYSTEM_ALERT_WINDOW via AppOps.
+        // Skip this test, which depends on a Presentation SYSTEM_ALERT_WINDOW to pass.
+        if (mUiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_VR_HEADSET) {
+            return;
+        }
+
         enableAppOps();
         final Display display = getSecondaryDisplay(mDisplayManager.getDisplays());
         Display.Mode[] modes = display.getSupportedModes();
