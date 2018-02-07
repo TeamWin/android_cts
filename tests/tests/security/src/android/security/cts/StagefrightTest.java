@@ -458,6 +458,10 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.bug_67737022);
     }
 
+    @SecurityTest
+    public void testStagefright_bug_37093318() throws Exception {
+        doStagefrightTest(R.raw.bug_37093318, (4 * 60 * 1000));
+    }
 
     private void doStagefrightTest(final int rid) throws Exception {
         doStagefrightTestMediaPlayer(rid);
@@ -499,6 +503,19 @@ public class StagefrightTest extends InstrumentationTestCase {
         in1.close();
         in2.close();
         Log.i(TAG, "checked server");
+    }
+  
+    private void doStagefrightTest(final int rid, int timeout) throws Exception {
+        runWithTimeout(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    doStagefrightTest(rid);
+                } catch (Exception e) {
+                    //unhandled exception
+                }
+            }
+        }, timeout);
     }
 
     private void doStagefrightTestANR(final int rid) throws Exception {
