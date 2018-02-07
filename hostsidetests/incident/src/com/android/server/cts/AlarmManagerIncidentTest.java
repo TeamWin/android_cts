@@ -129,10 +129,6 @@ public class AlarmManagerIncidentTest extends ProtoDumpTestCase {
             testFilterStatsProto(f.getFilterStats());
         }
 
-        long awimds = dump.getAllowWhileIdleMinDurationMs();
-        assertTrue(awimds == settings.getAllowWhileIdleShortDurationMs()
-                || awimds == settings.getAllowWhileIdleLongDurationMs());
-
         for (AlarmManagerServiceProto.LastAllowWhileIdleDispatch l : dump.getLastAllowWhileIdleDispatchTimesList()) {
             assertTrue(0 <= l.getUid());
             assertTrue(0 < l.getTimeMs());
