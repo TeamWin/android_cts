@@ -257,6 +257,8 @@ public class ExternalStorageHostTest extends DeviceTestCase
                 runDeviceTests(READ_PKG, ".ReadMultiViewTest", "testROAccess", user);
             }
 
+            // for fuse file system
+            Thread.sleep(10000);
             for (int user : mUsers) {
                 runDeviceTests(WRITE_PKG, ".WriteMultiViewTest", "testMoveBack", user);
             }
