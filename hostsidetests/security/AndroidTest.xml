@@ -41,7 +41,6 @@
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
         <option name="push" value="CVE-2017-0387->/data/local/tmp/CVE-2017-0387" />
 
-
         <!--__________________-->
         <!-- Bulletin 2017-02 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
@@ -58,11 +57,9 @@
         <!-- Bulletin 2017-04 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
 
-
         <!--__________________-->
         <!-- Bulletin 2017-05 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
-
         <option name="push" value="CVE-2017-0595->/data/local/tmp/CVE-2017-0595" />
         <option name="push" value="CVE-2017-0596->/data/local/tmp/CVE-2017-0596" />
 
@@ -70,33 +67,33 @@
         <!-- Bulletin 2017-06 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
 
-
         <!--__________________-->
         <!-- Bulletin 2017-07 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
-
         <option name="push" value="CVE-2017-0340->/data/local/tmp/CVE-2017-0340" />
         <option name="push" value="Bug-36991414->/data/local/tmp/Bug-36991414" />
 
         <!--__________________-->
         <!-- Bulletin 2017-08 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
-
+        <option name="push" value="CVE-2017-0727->/data/local/tmp/CVE-2017-0727" />
         <option name="push" value="CVE-2017-0731->/data/local/tmp/CVE-2017-0731" />
 
         <!--__________________-->
         <!-- Bulletin 2017-09 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
-
         <option name="push" value="CVE-2017-0770->/data/local/tmp/CVE-2017-0770" />
 
         <!--__________________-->
         <!-- Bulletin 2017-10 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
 
-
         <!--__________________-->
         <!-- Bulletin 2017-11 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+
+        <!--__________________-->
+        <!-- Bulletin 2017-12 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
 
 
