@@ -43,7 +43,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -537,7 +537,7 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
     }
 
     static class LocalBroadcastReceiver extends BroadcastReceiver {
-        private SynchronousQueue<UserHandle> mQueue = new SynchronousQueue<UserHandle>();
+        private LinkedBlockingQueue<UserHandle> mQueue = new LinkedBlockingQueue<UserHandle>(1);
 
         @Override
         public void onReceive(Context context, Intent intent) {
