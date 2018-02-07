@@ -16,6 +16,8 @@
 
 package android.server.am;
 
+import static android.server.am.ComponentNameUtils.getActivityName;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -135,7 +137,7 @@ public class ActivityManagerAmProfileTests extends ActivityManagerTestBase {
             builder.append(" profile start");
         } else {
             builder.append(String.format(" start -n %s -W -S --start-profiler %s",
-                    activityName.flattenToShortString(), OUTPUT_FILE_PATH));
+                    getActivityName(activityName), OUTPUT_FILE_PATH));
         }
         if (sampling) {
             builder.append(" --sampling 1000");

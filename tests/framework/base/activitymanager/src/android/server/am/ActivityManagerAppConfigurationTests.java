@@ -377,8 +377,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         launchActivity(PORTRAIT_ACTIVITY_NAME);
 
         assertFalse("target SDK > 26 non-fullscreen activity should not reach onResume",
-                mAmWmState.getAmState().containsActivity(
-                        TRANSLUCENT_LANDSCAPE_ACTIVITY.flattenToShortString()));
+                mAmWmState.getAmState().containsActivity(TRANSLUCENT_LANDSCAPE_ACTIVITY));
     }
 
     @Test
@@ -607,7 +606,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
 
     private Rect getDisplayRect(String activityName)
             throws Exception {
-        final String windowName = getWindowName(activityName);
+        final String windowName = getActivityWindowName(activityName);
 
         mAmWmState.computeState(new String[] {activityName});
         mAmWmState.assertFocusedWindow("Test window must be the front window.", windowName);

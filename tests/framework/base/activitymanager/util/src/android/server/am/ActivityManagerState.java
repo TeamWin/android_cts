@@ -22,6 +22,8 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
+import static android.server.am.ActivityManagerTestBase.getActivityComponentName;
+import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.ProtoExtractors.extract;
 import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logE;
@@ -299,7 +301,7 @@ class ActivityManagerState {
 
     /** Get the stack position on its display. */
     int getStackIndexByActivityName(String activityName) {
-        final String fullName = ActivityManagerTestBase.getActivityComponentName(activityName);
+        final String fullName = getActivityComponentName(activityName);
 
         for (ActivityDisplay display : mDisplays) {
             for (int i = display.mStacks.size() - 1; i >= 0; --i) {
@@ -328,11 +330,16 @@ class ActivityManagerState {
         return mStacks.size();
     }
 
-    boolean containsActivity(String activityName) {
+    boolean containsActivity(ComponentName activityName) {
+        return containsActivity(getActivityName(activityName));
+    }
+
+    @Deprecated
+    boolean containsActivity(String fullActivityName) {
         for (ActivityStack stack : mStacks) {
             for (ActivityTask task : stack.mTasks) {
                 for (Activity activity : task.mActivities) {
-                    if (activity.name.equals(activityName)) {
+                    if (activity.name.equals(fullActivityName)) {
                         return true;
                     }
                 }
@@ -342,7 +349,7 @@ class ActivityManagerState {
     }
 
     boolean containsActivityInWindowingMode(String activityName, int windowingMode) {
-        final String fullName = ActivityManagerTestBase.getActivityComponentName(activityName);
+        final String fullName = getActivityComponentName(activityName);
         for (ActivityStack stack : mStacks) {
             for (ActivityTask task : stack.mTasks) {
                 for (Activity activity : task.mActivities) {
@@ -356,11 +363,11 @@ class ActivityManagerState {
         return false;
     }
 
-    boolean isActivityVisible(String activityName) {
+    boolean isActivityVisible(String fullActivityName) {
         for (ActivityStack stack : mStacks) {
             for (ActivityTask task : stack.mTasks) {
                 for (Activity activity : task.mActivities) {
-                    if (activity.name.equals(activityName)) {
+                    if (activity.name.equals(fullActivityName)) {
                         return activity.visible;
                     }
                 }
@@ -384,7 +391,7 @@ class ActivityManagerState {
     }
 
     boolean hasActivityState(String activityName, String activityState) {
-        String fullName = ActivityManagerTestBase.getActivityComponentName(activityName);
+        String fullName = getActivityComponentName(activityName);
         for (ActivityStack stack : mStacks) {
             for (ActivityTask task : stack.mTasks) {
                 for (Activity activity : task.mActivities) {
@@ -397,11 +404,11 @@ class ActivityManagerState {
         return false;
     }
 
-    int getActivityProcId(String activityName) {
+    int getActivityProcId(String fullActivityName) {
         for (ActivityStack stack : mStacks) {
             for (ActivityTask task : stack.mTasks) {
                 for (Activity activity : task.mActivities) {
-                    if (activity.name.equals(activityName)) {
+                    if (activity.name.equals(fullActivityName)) {
                         return activity.procId;
                     }
                 }
@@ -465,7 +472,7 @@ class ActivityManagerState {
     }
 
     ActivityTask getTaskByActivityName(String activityName, int windowingMode) {
-        String fullName = ActivityManagerTestBase.getActivityComponentName(activityName);
+        String fullName = getActivityComponentName(activityName);
         for (ActivityStack stack : mStacks) {
             if (windowingMode == WINDOWING_MODE_UNDEFINED
                     || windowingMode == stack.getWindowingMode()) {

@@ -67,7 +67,7 @@ public class StartActivityTests extends ActivityManagerTestBase {
         mAmWmState.computeState(new WaitForValidActivityState(TEST_ACTIVITY_2));
 
         // Verify Activity was not started.
-        assertFalse(mAmWmState.getAmState().containsActivity(TEST_ACTIVITY.flattenToShortString()));
+        assertFalse(mAmWmState.getAmState().containsActivity(TEST_ACTIVITY));
         mAmWmState.assertResumedActivity(
                 "Activity launched from activity context should be present", TEST_ACTIVITY_2);
     }

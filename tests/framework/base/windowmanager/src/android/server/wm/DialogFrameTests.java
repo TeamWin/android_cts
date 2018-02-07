@@ -16,6 +16,7 @@
 
 package android.server.wm;
 
+import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.am.StateLogger.logE;
 
 import static org.junit.Assert.assertEquals;
@@ -64,7 +65,7 @@ public class DialogFrameTests extends ParentChildTestBase {
 
         mAmWmState.computeState(waitForVisible);
         WindowState dialog = getSingleWindow(DIALOG_WINDOW_NAME);
-        WindowState parent = getSingleWindow(activityName().flattenToString());
+        WindowState parent = getSingleWindow(getWindowName(activityName()));
 
         t.doTest(parent, dialog);
     }
