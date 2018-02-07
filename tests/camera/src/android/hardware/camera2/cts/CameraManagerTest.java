@@ -16,9 +16,9 @@
 
 package android.hardware.camera2.cts;
 
-import static org.mockito.Mockito.*;
-import static org.mockito.AdditionalMatchers.not;
 import static org.mockito.AdditionalMatchers.and;
+import static org.mockito.AdditionalMatchers.not;
+import static org.mockito.Mockito.*;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -33,17 +33,14 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.test.AndroidTestCase;
 import android.util.Log;
-
 import com.android.ex.camera2.blocking.BlockingStateCallback;
-
-import org.mockito.ArgumentCaptor;
-import org.mockito.InOrder;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 
 /**
  * <p>Basic test for CameraManager class.</p>
@@ -123,7 +120,7 @@ public class CameraManagerTest extends AndroidTestCase {
 
         return -1; // unreachable
     }
-
+    
     public void testCameraManagerGetDeviceIdList() throws Exception {
 
         // Test: that the getCameraIdList method runs without exceptions.

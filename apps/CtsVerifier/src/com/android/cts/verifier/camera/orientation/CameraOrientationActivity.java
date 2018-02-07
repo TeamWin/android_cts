@@ -36,6 +36,8 @@ import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.TestResult;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -46,6 +48,7 @@ import java.util.TreeSet;
  * Tests for manual verification of the CDD-required camera output formats
  * for preview callbacks
  */
+@CddTest(requirement="7.5.2/C-1-5,C-1-6,C-1-7,C-2-1")
 public class CameraOrientationActivity extends PassFailButtons.Activity
 implements OnClickListener, SurfaceHolder.Callback {
 

@@ -46,6 +46,7 @@ import android.view.Surface;
 
 import com.android.ex.camera2.blocking.BlockingSessionCallback;
 import com.android.ex.camera2.exceptions.TimeoutRuntimeException;
+import com.android.compatibility.common.util.CddTest;
 
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
@@ -482,6 +483,7 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
      * the devices.
      * </p>
      */
+    @CddTest(requirement="7.5/C-1-2")
     public void testAllocateBitmap() throws Exception {
         for (String id : mCameraIds) {
             try {
