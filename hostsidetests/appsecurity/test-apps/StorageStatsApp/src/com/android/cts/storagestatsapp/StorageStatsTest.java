@@ -223,6 +223,9 @@ public class StorageStatsTest extends InstrumentationTestCase {
         useWrite(makeUniqueFile(pics), 5 * MB_IN_BYTES);
         useWrite(makeUniqueFile(pics), 5 * MB_IN_BYTES);
 
+        // for fuse file system
+        Thread.sleep(10000);
+
         // TODO: remove this once 34723223 is fixed
         logCommand("sync");
 
