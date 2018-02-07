@@ -678,6 +678,23 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-2-permdef.apk");
     }
 
+    public void testInstallV3KeyRotationGetSignatures() throws Exception {
+        // tests that a PackageInfo w/GET_SIGNATURES flag returns the older cert
+        assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-1.apk");
+        assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-2-with-por_1_2-full-caps.apk");
+        Utils.runDeviceTests(
+                getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS, "testGetSignaturesShowsOld");
+    }
+
+    public void testInstallV3KeyRotationGetSigningCertificates() throws Exception {
+        // tests that a PackageInfo w/GET_SIGNING_CERTIFICATES flag returns the old and new certs
+        assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-1.apk");
+        assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-2-with-por_1_2-full-caps.apk");
+        Utils.runDeviceTests(
+                getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS,
+                "testGetSigningCertificatesShowsAll");
+    }
+
     private void assertInstallSucceeds(String apkFilenameInResources) throws Exception {
         String installResult = installPackageFromResource(apkFilenameInResources);
         if (installResult != null) {
