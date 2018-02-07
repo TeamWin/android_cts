@@ -36,6 +36,19 @@
         <option name="push" value="CVE-2016-8432->/data/local/tmp/CVE-2016-8432" />
 
         <!--__________________-->
+        <!-- Bulletin 2016-10 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+
+        <!--__________________-->
+        <!-- Bulletin 2016-11 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2016-6746->/data/local/tmp/CVE-2016-6746" />
+
+        <!--__________________-->
+        <!-- Bulletin 2016-12 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+
+        <!--__________________-->
         <!-- Bulletin 2017-01 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
         <option name="push" value="CVE-2017-0387->/data/local/tmp/CVE-2017-0387" />
