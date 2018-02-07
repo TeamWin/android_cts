@@ -52,7 +52,8 @@
 
         <activity
             android:label="Full screen activity for gesture dispatch testing"
-            android:name=".AccessibilityGestureDispatchTest$GestureDispatchActivity" />
+            android:name=".AccessibilityGestureDispatchTest$GestureDispatchActivity"
+            android:screenOrientation="portrait" />
 
         <service
             android:name=".StubGestureAccessibilityService"
