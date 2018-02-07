@@ -58,8 +58,8 @@ import org.json.JSONObject;
 /**
  * Tests of MediaPlayer streaming capabilities.
  */
-public class ClearKeySystemTest extends MediaPlayerTestBase {
-    private static final String TAG = ClearKeySystemTest.class.getSimpleName();
+public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
+    private static final String TAG = MediaDrmClearkeyTest.class.getSimpleName();
 
     // Add additional keys here if the content has more keys.
     private static final byte[] CLEAR_KEY_CENC = {
