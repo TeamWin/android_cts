@@ -56,6 +56,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         ActivityManagerState.ActivityStack assistantStack
                 = mAmWmState.getAmState().getStackById(ASSISTANT_STACK_ID);
         mAssistantDisplayId = assistantStack.mDisplayId;
+        removeStacks(ASSISTANT_STACK_ID);
         disableAssistant();
     }
 
