@@ -112,4 +112,27 @@ public class SystemUtil {
                 result.length() == 0);
         return result;
     }
+
+    /**
+     * Run a command and print the result on logcat.
+     */
+    public static void runCommandAndPrintOnLogcat(String logtag, String cmd) {
+        Log.i(logtag, "Executing: " + cmd);
+        final String output = runShellCommand(cmd);
+        for (String line : output.split("\\n", -1)) {
+            Log.i(logtag, line);
+        }
+    }
+
+    /**
+     * Run a command and return the section matching the patterns.
+     *
+     * @see TextUtils#extractSection
+     */
+    public static String runCommandAndExtractSection(String cmd,
+            String extractionStartRegex, boolean startInclusive,
+            String extractionEndRegex, boolean endInclusive) {
+        return TextUtils.extractSection(runShellCommand(cmd), extractionStartRegex, startInclusive,
+                extractionEndRegex, endInclusive);
+    }
 }
