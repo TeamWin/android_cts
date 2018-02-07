@@ -73,7 +73,6 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
     private volatile boolean mReceived;
     private volatile boolean mTestProfileOwnerWasUsed;
     private volatile boolean mSetupComplete;
-    private UserHandle mUserHandle;
 
     @Override
     protected void setUp() throws Exception {
@@ -86,11 +85,6 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
     protected void tearDown() throws Exception {
         mDevicePolicyManager.clearUserRestriction(getWho(), UserManager.DISALLOW_ADD_USER);
         mDevicePolicyManager.clearUserRestriction(getWho(), UserManager.DISALLOW_REMOVE_USER);
-        // Remove user in case of failed test.
-        if (mUserHandle != null) {
-            mDevicePolicyManager.removeUser(getWho(), mUserHandle);
-            mUserHandle = null;
-        }
         super.tearDown();
     }
 
@@ -183,11 +177,11 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
         mContext.registerReceiver(receiver, filter);
 
         synchronized (this) {
-            mUserHandle = mDevicePolicyManager.createAndManageUser(getWho(), testUserName,
+            UserHandle userHandle = mDevicePolicyManager.createAndManageUser(getWho(), testUserName,
                     TestProfileOwner.getComponentName(), bundle, flags);
-            assertNotNull(mUserHandle);
+            assertNotNull(userHandle);
 
-            mDevicePolicyManager.switchUser(getWho(), mUserHandle);
+            mDevicePolicyManager.switchUser(getWho(), userHandle);
             try {
                 wait(USER_SWITCH_DELAY);
             } catch (InterruptedException e) {
@@ -201,9 +195,9 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
             assertTrue(mTestProfileOwnerWasUsed);
             assertEquals(expectedSetupComplete, mSetupComplete);
 
-            assertTrue(mDevicePolicyManager.removeUser(getWho(), mUserHandle));
+            assertTrue(mDevicePolicyManager.removeUser(getWho(), userHandle));
 
-            mUserHandle = null;
+            userHandle = null;
         }
 
         mContext.unregisterReceiver(receiver);
@@ -212,17 +206,17 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
     public void testCreateAndManageUser_GetSecondaryUsers() throws Exception {
         String testUserName = "TestUser_" + System.currentTimeMillis();
 
-        mUserHandle = mDevicePolicyManager.createAndManageUser(
+        UserHandle userHandle = mDevicePolicyManager.createAndManageUser(
                 getWho(),
                 testUserName,
                 getWho(),
                 null,
                 /* flags */ 0);
-        Log.d(TAG, "User create: " + mUserHandle);
+        Log.d(TAG, "User create: " + userHandle);
 
         List<UserHandle> secondaryUsers = mDevicePolicyManager.getSecondaryUsers(getWho());
         assertEquals(1, secondaryUsers.size());
-        assertEquals(mUserHandle, secondaryUsers.get(0));
+        assertEquals(userHandle, secondaryUsers.get(0));
     }
 
     public void testCreateAndManageUser_SwitchUser() throws Exception {
@@ -231,20 +225,20 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
 
         String testUserName = "TestUser_" + System.currentTimeMillis();
 
-        mUserHandle = mDevicePolicyManager.createAndManageUser(
+        UserHandle userHandle = mDevicePolicyManager.createAndManageUser(
                 getWho(),
                 testUserName,
                 getWho(),
                 null,
                 /* flags */ 0);
-        Log.d(TAG, "User create: " + mUserHandle);
+        Log.d(TAG, "User create: " + userHandle);
 
         LocalBroadcastReceiver broadcastReceiver = new LocalBroadcastReceiver();
         localBroadcastManager.registerReceiver(broadcastReceiver,
                 new IntentFilter(BasicAdminReceiver.ACTION_USER_SWITCHED));
         try {
-            assertTrue(mDevicePolicyManager.switchUser(getWho(), mUserHandle));
-            assertEquals(mUserHandle, broadcastReceiver.waitForBroadcastReceived());
+            assertTrue(mDevicePolicyManager.switchUser(getWho(), userHandle));
+            assertEquals(userHandle, broadcastReceiver.waitForBroadcastReceived());
         } finally {
             localBroadcastManager.unregisterReceiver(broadcastReceiver);
         }
@@ -256,22 +250,22 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
 
         String testUserName = "TestUser_" + System.currentTimeMillis();
 
-        mUserHandle = mDevicePolicyManager.createAndManageUser(
+        UserHandle userHandle = mDevicePolicyManager.createAndManageUser(
                 getWho(),
                 testUserName,
                 getWho(),
                 null,
                 /* flags */ 0);
-        Log.d(TAG, "User create: " + mUserHandle);
+        Log.d(TAG, "User create: " + userHandle);
 
         LocalBroadcastReceiver broadcastReceiver = new LocalBroadcastReceiver();
         localBroadcastManager.registerReceiver(broadcastReceiver,
                 new IntentFilter(BasicAdminReceiver.ACTION_USER_SWITCHED));
         try {
-            assertTrue(mDevicePolicyManager.switchUser(getWho(), mUserHandle));
-            assertEquals(mUserHandle, broadcastReceiver.waitForBroadcastReceived());
+            assertTrue(mDevicePolicyManager.switchUser(getWho(), userHandle));
+            assertEquals(userHandle, broadcastReceiver.waitForBroadcastReceived());
             assertEquals(DevicePolicyManager.USER_OPERATION_ERROR_CURRENT_USER,
-                    mDevicePolicyManager.stopUser(getWho(), mUserHandle));
+                    mDevicePolicyManager.stopUser(getWho(), userHandle));
         } finally {
             localBroadcastManager.unregisterReceiver(broadcastReceiver);
         }
@@ -283,7 +277,6 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
 
         String testUserName = "TestUser_" + System.currentTimeMillis();
 
-        // Do not assign return value to mUserHandle, so it is not removed in tearDown.
         UserHandle userHandle = mDevicePolicyManager.createAndManageUser(
                 getWho(),
                 testUserName,
@@ -309,17 +302,17 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
     public void testCreateAndManageUser_StartInBackground_MaxRunningUsers() throws Exception {
         String testUserName = "TestUser_" + System.currentTimeMillis();
 
-        mUserHandle = mDevicePolicyManager.createAndManageUser(
+        UserHandle userHandle = mDevicePolicyManager.createAndManageUser(
                 getWho(),
                 testUserName,
                 getWho(),
                 null,
                 /* flags */ 0);
-        Log.d(TAG, "User create: " + mUserHandle);
+        Log.d(TAG, "User create: " + userHandle);
 
         // Start user in background and should receive max running users error
         assertEquals(DevicePolicyManager.USER_OPERATION_ERROR_MAX_RUNNING_USERS,
-                mDevicePolicyManager.startUserInBackground(getWho(), mUserHandle));
+                mDevicePolicyManager.startUserInBackground(getWho(), userHandle));
     }
 
     public void testCreateAndManageUser_StopUser() throws Exception {
@@ -328,7 +321,6 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
 
         String testUserName = "TestUser_" + System.currentTimeMillis();
 
-        // Do not assign return value to mUserHandle, so it is not removed in tearDown.
         UserHandle userHandle = mDevicePolicyManager.createAndManageUser(
                 getWho(),
                 testUserName,
@@ -349,6 +341,40 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
             assertEquals(userHandle, broadcastReceiver.waitForBroadcastReceived());
         } finally {
             localBroadcastManager.unregisterReceiver(broadcastReceiver);
+        }
+    }
+
+    public void testCreateAndManageUser_StopEphemeralUser_DisallowRemoveUser() throws Exception {
+        LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(
+                getContext());
+
+        String testUserName = "TestUser_" + System.currentTimeMillis();
+
+        // Set DISALLOW_REMOVE_USER restriction
+        mDevicePolicyManager.addUserRestriction(getWho(), UserManager.DISALLOW_REMOVE_USER);
+
+        UserHandle userHandle = mDevicePolicyManager.createAndManageUser(
+                getWho(),
+                testUserName,
+                getWho(),
+                null,
+                DevicePolicyManager.MAKE_USER_EPHEMERAL);
+        Log.d(TAG, "User create: " + userHandle);
+        assertEquals(DevicePolicyManager.USER_OPERATION_SUCCESS,
+                mDevicePolicyManager.startUserInBackground(getWho(), userHandle));
+
+        LocalBroadcastReceiver broadcastReceiver = new LocalBroadcastReceiver();
+        localBroadcastManager.registerReceiver(broadcastReceiver,
+                new IntentFilter(BasicAdminReceiver.ACTION_USER_REMOVED));
+
+        try {
+            assertEquals(DevicePolicyManager.USER_OPERATION_SUCCESS,
+                    mDevicePolicyManager.stopUser(getWho(), userHandle));
+            assertEquals(userHandle, broadcastReceiver.waitForBroadcastReceived());
+        } finally {
+            localBroadcastManager.unregisterReceiver(broadcastReceiver);
+            // Clear DISALLOW_REMOVE_USER restriction
+            mDevicePolicyManager.clearUserRestriction(getWho(), UserManager.DISALLOW_REMOVE_USER);
         }
     }
 
@@ -438,7 +464,6 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
         bundle.putString(EXTRA_AFFILIATION_ID, AFFILIATION_ID);
         bundle.putString(EXTRA_METHOD_NAME, methodName);
 
-        // Do not assign return value to mUserHandle, so it is not removed in tearDown.
         UserHandle userHandle = mDevicePolicyManager.createAndManageUser(
                 getWho(),
                 testUserName,
@@ -468,19 +493,19 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
     public void testCreateAndManageUser_AddRestrictionSet() {
         mDevicePolicyManager.addUserRestriction(getWho(), UserManager.DISALLOW_ADD_USER);
 
-        mUserHandle = mDevicePolicyManager.createAndManageUser(getWho(), "Test User", getWho(),
-                null, 0);
-        assertNotNull(mUserHandle);
+        UserHandle userHandle = mDevicePolicyManager.createAndManageUser(getWho(), "Test User",
+                getWho(), null, 0);
+        assertNotNull(userHandle);
     }
 
     public void testCreateAndManageUser_RemoveRestrictionSet() {
         mDevicePolicyManager.addUserRestriction(getWho(), UserManager.DISALLOW_REMOVE_USER);
 
-        mUserHandle = mDevicePolicyManager.createAndManageUser(getWho(), "Test User", getWho(),
-                null, 0);
-        assertNotNull(mUserHandle);
+        UserHandle userHandle = mDevicePolicyManager.createAndManageUser(getWho(), "Test User",
+                getWho(), null, 0);
+        assertNotNull(userHandle);
 
-        boolean removed = mDevicePolicyManager.removeUser(getWho(), mUserHandle);
+        boolean removed = mDevicePolicyManager.removeUser(getWho(), userHandle);
         // When the device owner itself has set the user restriction, it should still be allowed
         // to remove a user.
         assertTrue(removed);
@@ -492,20 +517,20 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
                 getContext());
         localBroadcastManager.registerReceiver(receiver,
                 new IntentFilter(BasicAdminReceiver.ACTION_USER_ADDED));
+        UserHandle userHandle;
         try {
-            mUserHandle = mDevicePolicyManager.createAndManageUser(getWho(), "Test User", getWho(),
+            userHandle = mDevicePolicyManager.createAndManageUser(getWho(), "Test User", getWho(),
                     null, 0);
-            assertNotNull(mUserHandle);
-            assertEquals(mUserHandle, receiver.waitForBroadcastReceived());
+            assertNotNull(userHandle);
+            assertEquals(userHandle, receiver.waitForBroadcastReceived());
         } finally {
             localBroadcastManager.unregisterReceiver(receiver);
         }
         localBroadcastManager.registerReceiver(receiver,
                 new IntentFilter(BasicAdminReceiver.ACTION_USER_REMOVED));
         try {
-            assertTrue(mDevicePolicyManager.removeUser(getWho(), mUserHandle));
-            assertEquals(mUserHandle, receiver.waitForBroadcastReceived());
-            mUserHandle = null;
+            assertTrue(mDevicePolicyManager.removeUser(getWho(), userHandle));
+            assertEquals(userHandle, receiver.waitForBroadcastReceived());
         } finally {
             localBroadcastManager.unregisterReceiver(receiver);
         }

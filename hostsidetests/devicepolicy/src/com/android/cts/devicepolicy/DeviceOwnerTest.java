@@ -60,6 +60,9 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
 
     private static final String ARG_NETWORK_LOGGING_BATCH_COUNT = "batchCount";
 
+    /** CreateAndManageUser is available and an additional user can be created. */
+    private boolean mHasCreateAndManageUserFeature;
+
     /** Forcing ephemeral users is implemented and supported on the device. */
     private boolean mHasForceEphemeralUserFeature;
 
@@ -68,9 +71,6 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
      * missing split system user).
      */
     private boolean mHasDisabledForceEphemeralUserFeature;
-
-    /** CreateAndManageUser is available and an additional user can be created. */
-    private boolean mHasCreateAndManageUserFeature;
 
     @Override
     protected void setUp() throws Exception {
@@ -84,11 +84,12 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
                 fail("Failed to set device owner");
             }
         }
-        mHasForceEphemeralUserFeature = mHasFeature && canCreateAdditionalUsers(1)
+        mHasCreateAndManageUserFeature = mHasFeature && canCreateAdditionalUsers(1)
+                && hasDeviceFeature("android.software.managed_users");
+        mHasForceEphemeralUserFeature = mHasCreateAndManageUserFeature
                 && hasUserSplit();
-        mHasDisabledForceEphemeralUserFeature = mHasFeature && canCreateAdditionalUsers(1)
+        mHasDisabledForceEphemeralUserFeature = mHasCreateAndManageUserFeature
                 && !hasUserSplit();
-        mHasCreateAndManageUserFeature = mHasFeature && canCreateAdditionalUsers(1);
     }
 
     @Override
@@ -241,7 +242,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
      * {@link android.app.admin.DevicePolicyManager#getSecondaryUsers} is tested.
      */
     public void testCreateAndManageUser_GetSecondaryUsers() throws Exception {
-        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
+        if (!mHasCreateAndManageUserFeature) {
             return;
         }
 
@@ -255,7 +256,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
      * {@link android.app.admin.DevicePolicyManager#switchUser} is tested.
      */
     public void testCreateAndManageUser_SwitchUser() throws Exception {
-        if (!mHasFeature || !canCreateAdditionalUsers(1) || !canStartAdditionalUsers(1)) {
+        if (!mHasCreateAndManageUserFeature || !canStartAdditionalUsers(1)) {
             return;
         }
 
@@ -269,7 +270,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
      * {@link android.app.admin.DevicePolicyManager#stopUser} is tested.
      */
     public void testCreateAndManageUser_CannotStopCurrentUser() throws Exception {
-        if (!mHasFeature || !canCreateAdditionalUsers(1) || !canStartAdditionalUsers(1)) {
+        if (!mHasCreateAndManageUserFeature || !canStartAdditionalUsers(1)) {
             return;
         }
 
@@ -283,7 +284,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
      * {@link android.app.admin.DevicePolicyManager#startUserInBackground} is tested.
      */
     public void testCreateAndManageUser_StartInBackground() throws Exception {
-        if (!mHasFeature || !canCreateAdditionalUsers(1) || !canStartAdditionalUsers(1)) {
+        if (!mHasCreateAndManageUserFeature || !canStartAdditionalUsers(1)) {
             return;
         }
 
@@ -297,7 +298,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
      * {@link android.app.admin.DevicePolicyManager#startUserInBackground} is tested.
      */
     public void testCreateAndManageUser_StartInBackground_MaxRunningUsers() throws Exception {
-        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
+        if (!mHasCreateAndManageUserFeature) {
             return;
         }
 
@@ -318,7 +319,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
      * {@link android.app.admin.DevicePolicyManager#stopUser} is tested.
      */
     public void testCreateAndManageUser_StopUser() throws Exception {
-        if (!mHasFeature || !canCreateAdditionalUsers(1) || !canStartAdditionalUsers(1)) {
+        if (!mHasCreateAndManageUserFeature || !canStartAdditionalUsers(1)) {
             return;
         }
 
@@ -328,12 +329,27 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     }
 
     /**
+     * Test creating an ephemeral user using the DevicePolicyManager's createAndManageUser method
+     * and start the user in background, user is then stopped. The user should be removed
+     * automatically even when DISALLOW_REMOVE_USER is set.
+     */
+    public void testCreateAndManageUser_StopEphemeralUser_DisallowRemoveUser() throws Exception {
+        if (!mHasCreateAndManageUserFeature || !canStartAdditionalUsers(1)) {
+            return;
+        }
+
+        executeDeviceTestMethod(".CreateAndManageUserTest",
+                "testCreateAndManageUser_StopEphemeralUser_DisallowRemoveUser");
+        assertEquals(0, getUsersCreatedByTests().size());
+    }
+
+    /**
      * Test creating an user using the DevicePolicyManager's createAndManageUser method, affiliate
      * the user and start the user in background to test APIs on that user.
      * {@link android.app.admin.DevicePolicyManager#logoutUser} is tested.
      */
     public void testCreateAndManageUser_LogoutUser() throws Exception {
-        if (!mHasFeature || !canCreateAdditionalUsers(1) || !canStartAdditionalUsers(1)) {
+        if (!mHasCreateAndManageUserFeature || !canStartAdditionalUsers(1)) {
             return;
         }
 
@@ -348,7 +364,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
      * {@link android.app.admin.DevicePolicyManager#isAffiliatedUser} is tested.
      */
     public void testCreateAndManageUser_Affiliated() throws Exception {
-        if (!mHasFeature || !canCreateAdditionalUsers(1) || !canStartAdditionalUsers(1)) {
+        if (!mHasCreateAndManageUserFeature || !canStartAdditionalUsers(1)) {
             return;
         }
 
@@ -362,7 +378,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
      * {@link android.app.admin.DevicePolicyManager#isEphemeralUser} is tested.
      */
     public void testCreateAndManageUser_Ephemeral() throws Exception {
-        if (!mHasFeature || !canCreateAdditionalUsers(1) || !canStartAdditionalUsers(1)) {
+        if (!mHasCreateAndManageUserFeature || !canStartAdditionalUsers(1)) {
             return;
         }
 
@@ -384,7 +400,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
      * {@link android.app.admin.DevicePolicyManager#LEAVE_ALL_SYSTEM_APPS_ENABLED} is tested.
      */
     public void testCreateAndManageUser_LeaveAllSystemApps() throws Exception {
-        if (!mHasFeature || !canCreateAdditionalUsers(1) || !canStartAdditionalUsers(1)) {
+        if (!mHasCreateAndManageUserFeature || !canStartAdditionalUsers(1)) {
             return;
         }
 
@@ -408,21 +424,21 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     }
 
     public void testCreateAndManageUser_AddRestrictionSet() throws Exception {
-        if (mHasFeature && canCreateAdditionalUsers(1)) {
+        if (mHasCreateAndManageUserFeature) {
             executeDeviceTestMethod(".CreateAndManageUserTest",
                     "testCreateAndManageUser_AddRestrictionSet");
         }
     }
 
     public void testCreateAndManageUser_RemoveRestrictionSet() throws Exception {
-        if (mHasFeature && canCreateAdditionalUsers(1)) {
+        if (mHasCreateAndManageUserFeature) {
             executeDeviceTestMethod(".CreateAndManageUserTest",
                     "testCreateAndManageUser_RemoveRestrictionSet");
         }
     }
 
     public void testUserAddedOrRemovedBroadcasts() throws Exception {
-        if (mHasFeature && canCreateAdditionalUsers(1)) {
+        if (mHasCreateAndManageUserFeature) {
             executeDeviceTestMethod(".CreateAndManageUserTest",
                     "testUserAddedOrRemovedBroadcasts");
         }
