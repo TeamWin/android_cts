@@ -24,7 +24,6 @@ import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
 import com.android.compatibility.common.tradefed.testtype.IModuleDef;
 import com.android.compatibility.common.util.IInvocationResult;
 import com.android.compatibility.common.util.TestStatus;
-import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.ConfigurationFactory;
 import com.android.tradefed.config.OptionSetter;
@@ -35,6 +34,7 @@ import com.android.tradefed.invoker.InvocationContext;
 import com.android.tradefed.invoker.ShardListener;
 import com.android.tradefed.result.ITestInvocationListener;
 import com.android.tradefed.result.ResultForwarder;
+import com.android.tradefed.result.TestDescription;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IDeviceTest;
 import com.android.tradefed.testtype.IInvocationContextReceiver;
@@ -259,7 +259,7 @@ public class IntegrationTest {
                         .getAttributes().get(IModuleDef.MODULE_ABI));
             }
             @Override
-            public void testEnded(TestIdentifier test, long endTime,
+            public void testEnded(TestDescription test, long endTime,
                     Map<String, String> testMetrics) {
                 receivedComponentsTestEnded.addAll(myContext.getModuleInvocationContext()
                         .getConfigurationDescriptor().getMetaData("component"));

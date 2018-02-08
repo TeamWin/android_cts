@@ -282,7 +282,7 @@ public class JarHostTestTest {
         OptionSetter setter = new OptionSetter(mTest);
         setter.setOptionValue("jar", "thisjardoesnotexistatall.jar");
         mListener.testRunStarted(EasyMock.anyObject(), EasyMock.eq(0));
-        mListener.testRunEnded(EasyMock.anyLong(), EasyMock.anyObject());
+        mListener.testRunEnded(EasyMock.anyLong(), (Map<String, String>) EasyMock.anyObject());
         EasyMock.replay(mListener);
         try {
             mTest.run(mListener);
@@ -308,7 +308,7 @@ public class JarHostTestTest {
         Map<String, String> metrics = new HashMap<>();
         metrics.put("key", "value");
         mListener.testEnded(EasyMock.eq(tid), EasyMock.anyLong(), EasyMock.eq(metrics));
-        mListener.testRunEnded(EasyMock.anyLong(), EasyMock.anyObject());
+        mListener.testRunEnded(EasyMock.anyLong(), (Map<String, String>) EasyMock.anyObject());
         EasyMock.replay(mListener);
         mTest.run(mListener);
         EasyMock.verify(mListener);

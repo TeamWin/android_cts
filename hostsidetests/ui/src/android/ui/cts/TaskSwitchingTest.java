@@ -20,10 +20,10 @@ import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.util.MetricsStore;
 import com.android.compatibility.common.util.ReportLog;
 import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
-import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.result.CollectingTestListener;
+import com.android.tradefed.result.TestDescription;
 import com.android.tradefed.result.TestRunResult;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IAbi;
@@ -111,7 +111,7 @@ public class TaskSwitchingTest extends DeviceTestCase implements IAbiReceiver, I
 
     public class LocalListener extends CollectingTestListener {
         @Override
-        public void testEnded(TestIdentifier test, Map<String, String> testMetrics) {
+        public void testEnded(TestDescription test, Map<String, String> testMetrics) {
             // necessary as testMetrics passed from CollectingTestListerner is empty
             if (testMetrics.containsKey(RESULT_KEY)) {
                 try {

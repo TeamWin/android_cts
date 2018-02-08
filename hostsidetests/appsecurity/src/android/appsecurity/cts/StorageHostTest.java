@@ -16,9 +16,9 @@
 
 package android.appsecurity.cts;
 
-import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.ddmlib.testrunner.TestResult.TestStatus;
 import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.result.TestDescription;
 import com.android.tradefed.result.TestResult;
 import com.android.tradefed.result.TestRunResult;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -247,7 +247,7 @@ public class StorageHostTest extends BaseHostJUnit4Test {
             TestRunResult res = getLastDeviceRunResults();
             if (res != null) {
                 StringBuilder errorBuilder = new StringBuilder("on-device tests failed:\n");
-                for (Map.Entry<TestIdentifier, TestResult> resultEntry :
+                for (Map.Entry<TestDescription, TestResult> resultEntry :
                     res.getTestResults().entrySet()) {
                     if (!resultEntry.getValue().getStatus().equals(TestStatus.PASSED)) {
                         errorBuilder.append(resultEntry.getKey().toString());

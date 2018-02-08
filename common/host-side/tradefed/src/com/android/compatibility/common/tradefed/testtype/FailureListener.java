@@ -15,7 +15,6 @@
  */
 package com.android.compatibility.common.tradefed.testtype;
 
-import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
@@ -23,6 +22,7 @@ import com.android.tradefed.result.ITestInvocationListener;
 import com.android.tradefed.result.InputStreamSource;
 import com.android.tradefed.result.LogDataType;
 import com.android.tradefed.result.ResultForwarder;
+import com.android.tradefed.result.TestDescription;
 import com.android.tradefed.util.RunUtil;
 
 public class FailureListener extends ResultForwarder {
@@ -65,7 +65,7 @@ public class FailureListener extends ResultForwarder {
      * {@inheritDoc}
      */
     @Override
-    public void testFailed(TestIdentifier test, String trace) {
+    public void testFailed(TestDescription test, String trace) {
         super.testFailed(test, trace);
         CLog.i("FailureListener.testFailed %s %b %b %b",
                 test.toString(), mBugReportOnFailure, mLogcatOnFailure, mScreenshotOnFailure);
