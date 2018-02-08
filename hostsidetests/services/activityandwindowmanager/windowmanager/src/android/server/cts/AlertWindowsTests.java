@@ -106,15 +106,34 @@ public class AlertWindowsTests extends ActivityManagerTestBase {
         assertAlertWindows(packageName, hasAlertWindowPermission, atLeastO);
     }
 
+    private boolean allWindowsHidden(ArrayList<WindowManagerState.WindowState> windows) {
+        for (WindowManagerState.WindowState ws : windows) {
+            if (ws.isShown()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private void assertAlertWindows(String packageName, boolean hasAlertWindowPermission,
-            boolean atLeastO) {
+            boolean atLeastO) throws DeviceNotAvailableException {
         final WindowManagerState wMState = mAmWmState.getWmState();
 
         final ArrayList<WindowManagerState.WindowState> alertWindows = new ArrayList();
         wMState.getWindowsByPackageName(packageName, mAlertWindowTypes, alertWindows);
 
         if (!hasAlertWindowPermission) {
-            assertTrue("Should be empty alertWindows=" + alertWindows, alertWindows.isEmpty());
+            // When running in VR Mode, an App Op restriction is
+            // in place for SYSTEM_ALERT_WINDOW, which allows the window
+            // to be created, but will be hidden instead.
+            if (isUiModeLockedToVrHeadset()) {
+                assertTrue("Should not be empty alertWindows=" + alertWindows,
+                        !alertWindows.isEmpty());
+                assertTrue("All alert windows should be hidden",
+                        allWindowsHidden(alertWindows));
+            } else {
+                assertTrue("Should be empty alertWindows=" + alertWindows, alertWindows.isEmpty());
+            }
             return;
         }
 
