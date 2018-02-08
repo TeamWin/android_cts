@@ -353,6 +353,33 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
                     + " -f 0x20000000"
                     + " --es command destroy_display";
             executeShellCommand(destroyVirtualDisplayCommand);
+            waitForDisplaysDestroyed();
+        }
+
+        private void waitForDisplaysDestroyed() throws Exception {
+            int tries = 0;
+            boolean done;
+            do {
+                done = !isHostedVirtualDisplayPresent();
+                if (!done && tries > 0) {
+                    log("Waiting for hosted displays destruction");
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
+                        // Oh well
+                    }
+                }
+
+                tries++;
+            } while (tries < 10 && !done);
+
+            assertTrue(done);
+        }
+
+        private boolean isHostedVirtualDisplayPresent() throws Exception {
+            mAmWmState.computeState();
+            return mAmWmState.getWmState().getDisplays().stream().anyMatch(
+                    d -> d.getName() != null && d.getName().contains("HostedVirtualDisplay"));
         }
 
         /**
