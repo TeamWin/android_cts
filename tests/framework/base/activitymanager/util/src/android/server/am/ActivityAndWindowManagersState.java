@@ -25,7 +25,6 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.content.pm.ActivityInfo.RESIZE_MODE_RESIZEABLE;
 import static android.server.am.ActivityManagerTestBase.getActivityComponentName;
 import static android.server.am.ActivityManagerTestBase.getActivityWindowName;
-import static android.server.am.ActivityManagerTestBase.getActivityWindowName;
 import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.am.StateLogger.log;
@@ -49,6 +48,7 @@ import android.server.am.WindowManagerState.WindowState;
 import android.server.am.WindowManagerState.WindowTask;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiPredicate;
@@ -229,8 +229,7 @@ public class ActivityAndWindowManagersState {
      */
     void waitForValidState(boolean compareTaskAndStackBounds, String packageName,
             WaitForValidActivityState... waitForActivitiesVisible) throws Exception {
-        int retriesLeft = 5;
-        do {
+        for (int retry = 1; retry <= 5; retry++) {
             // TODO: Get state of AM and WM at the same time to avoid mismatches caused by
             // requesting dump in some intermediate state.
             mAmState.computeState();
@@ -239,7 +238,7 @@ public class ActivityAndWindowManagersState {
                     || shouldWaitForValidStacks(compareTaskAndStackBounds)
                     || shouldWaitForActivities(packageName, waitForActivitiesVisible)
                     || shouldWaitForWindows()) {
-                log("***Waiting for valid stacks and activities states...");
+                log("***Waiting for valid stacks and activities states... retry=" + retry);
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
@@ -247,9 +246,10 @@ public class ActivityAndWindowManagersState {
                     // Well I guess we are not waiting...
                 }
             } else {
-                break;
+                return;
             }
-        } while (retriesLeft-- > 0);
+        }
+        logE("***Waiting for states failed: " + Arrays.toString(waitForActivitiesVisible));
     }
 
     /**
