@@ -41,7 +41,6 @@
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
         <option name="push" value="CVE-2017-0387->/data/local/tmp/CVE-2017-0387" />
 
-
         <!--__________________-->
         <!-- Bulletin 2017-02 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
@@ -57,6 +56,40 @@
         <!--__________________-->
         <!-- Bulletin 2017-04 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+
+        <!--__________________-->
+        <!-- Bulletin 2017-05 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+
+        <!--__________________-->
+        <!-- Bulletin 2017-06 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+
+        <!--__________________-->
+        <!-- Bulletin 2017-07 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+
+        <!--__________________-->
+        <!-- Bulletin 2017-08 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2017-0727->/data/local/tmp/CVE-2017-0727" />
+
+        <!--__________________-->
+        <!-- Bulletin 2017-09 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+
+        <!--__________________-->
+        <!-- Bulletin 2017-10 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+
+        <!--__________________-->
+        <!-- Bulletin 2017-11 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+
+        <!--__________________-->
+        <!-- Bulletin 2017-12 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+
 
         <option name="append-bitness" value="true" />
     </target_preparer>
