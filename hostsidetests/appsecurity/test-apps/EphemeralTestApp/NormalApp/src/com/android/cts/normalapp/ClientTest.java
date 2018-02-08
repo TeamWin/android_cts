@@ -16,6 +16,7 @@
 
 package com.android.cts.normalapp;
 
+import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -376,6 +377,7 @@ public class ClientTest {
                     startEphemeralIntent, null /*options*/);
             final TestResult testResult = getResult();
             assertThat("com.android.cts.ephemeralapp1", is(testResult.getPackageName()));
+            assertThat(ACTION_START_EPHEMERAL_ACTIVITY, is(testResult.getIntent().getAction()));
         }
 
 
@@ -400,6 +402,7 @@ public class ClientTest {
                     startEphemeralIntent, null /*options*/);
             final TestResult testResult = getResult();
             assertThat("com.android.cts.ephemeralapp1", is(testResult.getPackageName()));
+            assertThat(ACTION_START_EPHEMERAL_ACTIVITY, is(testResult.getIntent().getAction()));
         }
 
         // start the ephemeral activity; directed component
@@ -442,6 +445,10 @@ public class ClientTest {
             final TestResult testResult = getResult();
             assertThat("com.android.cts.ephemeralapp1", is(testResult.getPackageName()));
             assertThat("EphemeralActivity", is(testResult.getComponentName()));
+            assertThat(Intent.ACTION_VIEW, is(testResult.getIntent().getAction()));
+            assertThat(testResult.getIntent().getCategories(), hasItems(Intent.CATEGORY_BROWSABLE));
+            assertThat("https://cts.google.com/ephemeral",
+                    is(testResult.getIntent().getData().toString()));
         }
 
         // connect to the instant app provider
