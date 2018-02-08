@@ -65,6 +65,8 @@ public class DragDropTest {
     private CountDownLatch mStartReceived;
     private CountDownLatch mEndReceived;
 
+    private AssertionError mMainThreadAssertionError;
+
     /**
      * Check whether two objects have the same binary data when dumped into Parcels
      * @return True if the objects are equal
@@ -340,8 +342,18 @@ public class DragDropTest {
         }
     }
 
-    private void runOnMain(Runnable runner) {
-        mInstrumentation.runOnMainSync(runner);
+    private void runOnMain(Runnable runner) throws AssertionError {
+        mMainThreadAssertionError = null;
+        mInstrumentation.runOnMainSync(() -> {
+            try {
+                runner.run();
+            } catch (AssertionError error) {
+                mMainThreadAssertionError = error;
+            }
+        });
+        if (mMainThreadAssertionError != null) {
+            throw mMainThreadAssertionError;
+        }
     }
 
     private void startDrag() {
