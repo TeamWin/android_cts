@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package android.security.cts;
 
 import android.platform.test.annotations.SecurityTest;
+import java.util.concurrent.TimeUnit;
 
 @SecurityTest
 public class Poc17_08 extends SecurityTestCase {
@@ -32,5 +33,19 @@ public class Poc17_08 extends SecurityTestCase {
         assertNotMatches("[\\s\\n\\S]*Fatal signal 11 \\(SIGSEGV\\)" +
                          "[\\s\\n\\S]*>>> /system/bin/" +
                          "mediaserver <<<[\\s\\n\\S]*", logcat);
+    }
+
+    /*
+     * b/32660278
+     */
+    @SecurityTest
+    public void testPocCVE_2017_0727() throws Exception {
+        AdbUtils.runCommandLine("logcat -c" , getDevice());
+        AdbUtils.runPocNoOutput("CVE-2017-0727", getDevice(), 60);
+        String logcatOut = AdbUtils.runCommandLine("logcat -d", getDevice());
+        assertNotMatches("[\\s\\n\\S]*Fatal signal 11 \\(SIGSEGV\\)" +
+                         "[\\s\\n\\S]*>>> /system/bin/" +
+                         "mediaserver <<<[\\s\\n\\S]*", logcatOut);
+        TimeUnit.SECONDS.sleep(50);
     }
 }
