@@ -81,7 +81,7 @@ public class CtsSyncAccountAccessOtherCertTestCases {
 
     @Test
     public void testAccountAccess_otherCertAsAuthenticatorCanNotSeeAccount() throws Exception {
-        if (!hasDataConnection() || !hasNotificationSupport()) {
+        if (!hasDataConnection() || !hasNotificationSupport() || isRunningInVR()) {
             return;
         }
 
@@ -225,4 +225,11 @@ public class CtsSyncAccountAccessOtherCertTestCases {
         SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(),
                 "cmd netpolicy remove restrict-background-whitelist " + Process.myUid());
     }
+
+    private boolean isRunningInVR() {
+        final Context context = InstrumentationRegistry.getTargetContext();
+        return ((context.getResources().getConfiguration().uiMode &
+                 Configuration.UI_MODE_TYPE_MASK) == Configuration.UI_MODE_TYPE_VR_HEADSET);
+    }
+
 }
