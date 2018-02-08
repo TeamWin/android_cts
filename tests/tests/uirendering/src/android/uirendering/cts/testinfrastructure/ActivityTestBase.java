@@ -125,26 +125,25 @@ public abstract class ActivityTestBase {
         }
     }
 
-    public Bitmap takeScreenshot(Point testOffset) {
+    public Bitmap takeScreenshot(TestPositionInfo testPositionInfo) {
         if (mScreenshotter == null) {
             SynchronousPixelCopy copy = new SynchronousPixelCopy();
             Bitmap dest = Bitmap.createBitmap(
                     TEST_WIDTH, TEST_HEIGHT,
                     getActivity().getWindow().isWideColorGamut()
                             ? Config.RGBA_F16 : Config.ARGB_8888);
-            Rect srcRect = new Rect(testOffset.x, testOffset.y,
-                    testOffset.x + TEST_WIDTH, testOffset.y + TEST_HEIGHT);
-            Log.d("UiRendering", "capturing screenshot of " + srcRect.toShortString());
+            Rect srcRect = new Rect(0, 0, TEST_WIDTH, TEST_HEIGHT);
+            srcRect.offset(testPositionInfo.surfaceOffset.x, testPositionInfo.surfaceOffset.y);
+            Log.d(TAG, "capturing screenshot of " + srcRect.toShortString());
             int copyResult = copy.request(getActivity().getWindow(), srcRect, dest);
             Assert.assertEquals(PixelCopy.SUCCESS, copyResult);
             return dest;
         } else {
-            return mScreenshotter.takeScreenshot(testOffset);
+            return mScreenshotter.takeScreenshot(testPositionInfo);
         }
     }
-
-    protected Point runRenderSpec(TestCase testCase) {
-        Point testOffset = getActivity().enqueueRenderSpecAndWait(
+    protected TestPositionInfo runRenderSpec(TestCase testCase) {
+        TestPositionInfo testPositionInfo = getActivity().enqueueRenderSpecAndWait(
                 testCase.layoutID, testCase.canvasClient,
                 testCase.viewInitializer, testCase.useHardware, testCase.usePicture);
         testCase.wasTestRan = true;
@@ -155,15 +154,14 @@ public abstract class ActivityTestBase {
                 throw new RuntimeException("readyFence didn't signal within 5 seconds");
             }
         }
-        return testOffset;
+        return testPositionInfo;
     }
 
     /**
      * Used to execute a specific part of a test and get the resultant bitmap
      */
     protected Bitmap captureRenderSpec(TestCase testCase) {
-        Point testOffset = runRenderSpec(testCase);
-        return takeScreenshot(testOffset);
+        return takeScreenshot(runRenderSpec(testCase));
     }
 
     protected TestCaseBuilder createTest() {
@@ -172,8 +170,28 @@ public abstract class ActivityTestBase {
         return mTestCaseBuilder;
     }
 
+    public static class TestPositionInfo {
+        /**
+         * Position of capture area in surface space - use this offset for e.g.
+         * PixelCopy from a window's surface.
+         */
+        public final Point surfaceOffset;
+
+        /**
+         * Position of capture area in screen space - use this offset for e.g.
+         * {@code getInstrumentation().getUiAutomation().takeScreenshot()},
+         * since those screenshots are captured in screen space.
+         */
+        public final Point screenOffset;
+
+        public TestPositionInfo(Point surfaceOffset, Point screenOffset) {
+            this.surfaceOffset = surfaceOffset;
+            this.screenOffset = screenOffset;
+        }
+    }
+
     public interface Screenshotter {
-        Bitmap takeScreenshot(Point point);
+        Bitmap takeScreenshot(TestPositionInfo params);
     }
 
     /**
@@ -237,7 +255,7 @@ public abstract class ActivityTestBase {
             }
 
             for (TestCase testCase : mTestCases) {
-                Point testOffset = runRenderSpec(testCase);
+                TestPositionInfo testPositionInfo = runRenderSpec(testCase);
 
                 for (int i = 0; i < VERIFY_ANIMATION_LOOP_COUNT; i++) {
                     try {
@@ -245,7 +263,7 @@ public abstract class ActivityTestBase {
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                    Bitmap testCaseBitmap = takeScreenshot(testOffset);
+                    Bitmap testCaseBitmap = takeScreenshot(testPositionInfo);
                     mBitmapAsserter.assertBitmapIsVerified(testCaseBitmap, bitmapVerifier,
                             getName(), testCase.getDebugString());
                 }
