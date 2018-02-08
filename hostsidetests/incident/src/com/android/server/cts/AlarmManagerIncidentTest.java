@@ -37,6 +37,10 @@ public class AlarmManagerIncidentTest extends ProtoDumpTestCase {
         final AlarmManagerServiceProto dump =
                 getDump(AlarmManagerServiceProto.parser(), "dumpsys alarm --proto");
 
+        verifyAlarmManagerServiceProto(dump, PRIVACY_NONE);
+    }
+
+    static void verifyAlarmManagerServiceProto(AlarmManagerServiceProto dump, final int filterLevel) throws Exception {
         // Times should be positive.
         assertTrue(0 < dump.getCurrentTime());
         assertTrue(0 < dump.getElapsedRealtime());
@@ -98,18 +102,18 @@ public class AlarmManagerIncidentTest extends ProtoDumpTestCase {
             assertTrue("Batch end time (" + end + ") is negative", 0 <= end);
             assertTrue("Batch start time (" + start + ") is after its end time (" + end + ")",
                 start <= end);
-            testAlarmProtoList(b.getAlarmsList());
+            testAlarmProtoList(b.getAlarmsList(), filterLevel);
         }
 
-        testAlarmProtoList(dump.getPendingUserBlockedBackgroundAlarmsList());
+        testAlarmProtoList(dump.getPendingUserBlockedBackgroundAlarmsList(), filterLevel);
 
-        testAlarmProto(dump.getPendingIdleUntil());
+        testAlarmProto(dump.getPendingIdleUntil(), filterLevel);
 
-        testAlarmProtoList(dump.getPendingWhileIdleAlarmsList());
+        testAlarmProtoList(dump.getPendingWhileIdleAlarmsList(), filterLevel);
 
-        testAlarmProto(dump.getNextWakeFromIdle());
+        testAlarmProto(dump.getNextWakeFromIdle(), filterLevel);
 
-        testAlarmProtoList(dump.getPastDueNonWakeupAlarmsList());
+        testAlarmProtoList(dump.getPastDueNonWakeupAlarmsList(), filterLevel);
 
         assertTrue(0 <= dump.getDelayedAlarmCount());
         assertTrue(0 <= dump.getTotalDelayTimeMs());
@@ -126,7 +130,10 @@ public class AlarmManagerIncidentTest extends ProtoDumpTestCase {
             assertTrue(0 <= f.getUid());
             assertTrue(0 < f.getWhenElapsedMs());
             testBroadcastStatsProto(f.getBroadcastStats());
-            testFilterStatsProto(f.getFilterStats());
+            testFilterStatsProto(f.getFilterStats(), filterLevel);
+            if (filterLevel == PRIVACY_AUTO) {
+                assertTrue(f.getTag().isEmpty());
+            }
         }
 
         for (AlarmManagerServiceProto.LastAllowWhileIdleDispatch l : dump.getLastAllowWhileIdleDispatchTimesList()) {
@@ -136,13 +143,13 @@ public class AlarmManagerIncidentTest extends ProtoDumpTestCase {
 
         for (AlarmManagerServiceProto.TopAlarm ta : dump.getTopAlarmsList()) {
             assertTrue(0 <= ta.getUid());
-            testFilterStatsProto(ta.getFilter());
+            testFilterStatsProto(ta.getFilter(), filterLevel);
         }
 
         for (AlarmManagerServiceProto.AlarmStat as : dump.getAlarmStatsList()) {
             testBroadcastStatsProto(as.getBroadcast());
             for (FilterStatsProto f : as.getFiltersList()) {
-                testFilterStatsProto(f);
+                testFilterStatsProto(f, filterLevel);
             }
         }
 
@@ -150,6 +157,9 @@ public class AlarmManagerIncidentTest extends ProtoDumpTestCase {
             assertTrue(0 <= id.getUid());
             assertTrue(0 <= id.getEntryCreationRealtime());
             assertTrue(0 <= id.getArgRealtime());
+            if (filterLevel == PRIVACY_AUTO) {
+                assertTrue(id.getTag().isEmpty());
+            }
         }
 
         for (WakeupEventProto we : dump.getRecentWakeupHistoryList()) {
@@ -158,22 +168,26 @@ public class AlarmManagerIncidentTest extends ProtoDumpTestCase {
         }
     }
 
-    private void testAlarmProtoList(List<AlarmProto> alarms) throws Exception {
+    private static void testAlarmProtoList(List<AlarmProto> alarms, final int filterLevel) throws Exception {
         for (AlarmProto a : alarms) {
-            testAlarmProto(a);
+            testAlarmProto(a, filterLevel);
         }
     }
 
-    private void testAlarmProto(AlarmProto alarm) throws Exception {
+    private static void testAlarmProto(AlarmProto alarm, final int filterLevel) throws Exception {
         assertNotNull(alarm);
 
+        if (filterLevel == PRIVACY_AUTO) {
+            assertTrue(alarm.getTag().isEmpty());
+            assertTrue(alarm.getListener().isEmpty());
+        }
         // alarm.time_until_when_elapsed_ms can be negative if 'when' is in the past.
         assertTrue(0 <= alarm.getWindowLengthMs());
         assertTrue(0 <= alarm.getRepeatIntervalMs());
         assertTrue(0 <= alarm.getCount());
     }
 
-    private void testBroadcastStatsProto(BroadcastStatsProto broadcast) throws Exception {
+    private static void testBroadcastStatsProto(BroadcastStatsProto broadcast) throws Exception {
         assertNotNull(broadcast);
 
         assertTrue(0 <= broadcast.getUid());
@@ -185,9 +199,12 @@ public class AlarmManagerIncidentTest extends ProtoDumpTestCase {
         assertTrue(0 <= broadcast.getNesting());
     }
 
-    private void testFilterStatsProto(FilterStatsProto filter) throws Exception {
+    private static void testFilterStatsProto(FilterStatsProto filter, final int filterLevel) throws Exception {
         assertNotNull(filter);
 
+        if (filterLevel == PRIVACY_AUTO) {
+            assertTrue(filter.getTag().isEmpty());
+        }
         assertTrue(0 <= filter.getLastFlightTimeRealtime());
         assertTrue(0 <= filter.getTotalFlightDurationMs());
         assertTrue(0 <= filter.getCount());

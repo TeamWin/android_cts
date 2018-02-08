@@ -21,22 +21,26 @@ import android.os.BatteryPluggedStateEnum;
 import android.os.BatteryStatusEnum;
 import android.service.battery.BatteryServiceDumpProto;
 import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.device.ITestDevice;
 
 /** Test to check that the battery manager properly outputs its dump state. */
 public class BatteryIncidentTest extends ProtoDumpTestCase {
-    private final String LEANBACK_FEATURE = "android.software.leanback";
+    private static final String LEANBACK_FEATURE = "android.software.leanback";
 
     public void testBatteryServiceDump() throws Exception {
-        final BatteryServiceDumpProto dump =
-                getDump(BatteryServiceDumpProto.parser(), "dumpsys battery --proto");
-
-        if (!dump.getIsPresent()) {
-            /* If the battery isn't present, no need to run this test. */
+        if (hasBattery(getDevice())) {
             return;
         }
 
-        if (isLeanback()) {
-            /* Android TV reports that it has a battery, but it doesn't really. */
+        final BatteryServiceDumpProto dump =
+                getDump(BatteryServiceDumpProto.parser(), "dumpsys battery --proto");
+
+        verifyBatteryServiceDumpProto(dump, PRIVACY_NONE);
+    }
+
+    static void verifyBatteryServiceDumpProto(BatteryServiceDumpProto dump, final int filterLevel) {
+        if (!dump.getIsPresent()) {
+            /* If the battery isn't present, no need to run this test. */
             return;
         }
 
@@ -56,8 +60,13 @@ public class BatteryIncidentTest extends ProtoDumpTestCase {
         assertTrue(dump.getTemperature() > 0);
     }
 
-    private boolean isLeanback() throws DeviceNotAvailableException {
-        final String commandOutput = getDevice().executeShellCommand("pm list features");
+    static boolean hasBattery(ITestDevice device) throws DeviceNotAvailableException {
+        /* Android TV reports that it has a battery, but it doesn't really. */
+        return !isLeanback(device);
+    }
+
+    private static boolean isLeanback(ITestDevice device) throws DeviceNotAvailableException {
+        final String commandOutput = device.executeShellCommand("pm list features");
         return commandOutput.contains(LEANBACK_FEATURE);
     }
 }

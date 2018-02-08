@@ -19,6 +19,7 @@ import com.android.server.fingerprint.FingerprintServiceDumpProto;
 
 import android.os.IncidentProto;
 import android.os.SystemPropertiesProto;
+import com.android.tradefed.log.LogUtil.CLog;
 
 /**
  * Tests incidentd reports filters fields correctly based on its privacy tags.
@@ -26,10 +27,49 @@ import android.os.SystemPropertiesProto;
 public class IncidentdTest extends ProtoDumpTestCase {
     private static final String TAG = "IncidentdTest";
 
-    public void testIncidentReportDump() throws Exception {
-        final IncidentProto dump = getDump(IncidentProto.parser(), "incident 3000 2>/dev/null");
-        FingerprintServiceDumpProto fingerprint = dump.getFingerprint();
-        assertTrue(1 <= fingerprint.getUsersCount());
+    public void testIncidentReportDump(final int filterLevel, final String dest) throws Exception {
+        final String destArg = dest == null || dest.isEmpty() ? "" : "-p " + dest;
+        final IncidentProto dump = getDump(IncidentProto.parser(), "incident " + destArg + " 2>/dev/null");
+
+        if (FingerprintIncidentTest.supportsFingerprint(getDevice())) {
+            FingerprintIncidentTest.verifyFingerprintServiceDumpProto(dump.getFingerprint(), filterLevel);
+        }
+
+        SettingsIncidentTest.verifySettingsServiceDumpProto(dump.getSettings(), filterLevel);
+
+        BatteryStatsIncidentTest.verifyBatteryStatsServiceDumpProto(dump.getBatterystats(), filterLevel);
+
+        if (BatteryIncidentTest.hasBattery(getDevice())) {
+            BatteryIncidentTest.verifyBatteryServiceDumpProto(dump.getBattery(), filterLevel);
+        }
+
+        PackageIncidentTest.verifyPackageServiceDumpProto(dump.getPackage(), filterLevel);
+
+        PowerIncidentTest.verifyPowerManagerServiceDumpProto(dump.getPower(), filterLevel);
+
+        AlarmManagerIncidentTest.verifyAlarmManagerServiceProto(dump.getAlarm(), filterLevel);
+
+        MemInfoIncidentTest.verifyMemInfoProto(dump.getMeminfo(), filterLevel);
+
+        JobSchedulerIncidentTest.verifyJobSchedulerServiceDumpProto(dump.getJobscheduler(), filterLevel);
+    }
+
+    // Splitting these into separate methods to make debugging easier.
+
+    public void testIncidentReportDumpAuto() throws Exception {
+        testIncidentReportDump(PRIVACY_AUTO, "A");
+        testIncidentReportDump(PRIVACY_AUTO, "AUTO");
+        testIncidentReportDump(PRIVACY_AUTO, "AUTOMATIC");
+    }
+
+    public void testIncidentReportDumpExplicit() throws Exception {
+        testIncidentReportDump(PRIVACY_EXPLICIT, "E" );
+        testIncidentReportDump(PRIVACY_EXPLICIT, "EXPLICIT");
+    }
+
+    public void testIncidentReportDumpLocal() throws Exception {
+        testIncidentReportDump(PRIVACY_LOCAL, "L" );
+        testIncidentReportDump(PRIVACY_LOCAL, "LOCAL");
     }
 
     public void testSystemPropertiesLocal() throws Exception {
@@ -56,6 +96,8 @@ public class IncidentdTest extends ProtoDumpTestCase {
         // check explicit tagged data show up
         assertFalse(properties.getDalvikVm().getHeapmaxfree().isEmpty());
         // check automatic tagged data show up
+        CLog.i(mCtsBuild.getBuildId());
+        CLog.i(properties.getRo().getBuild().getVersion().getIncremental());
         assertTrue(properties.getRo().getBuild().getVersion().getIncremental()
             .equals(mCtsBuild.getBuildId()));
     }
