@@ -364,6 +364,25 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
                 "testNoProtectionFlagsAddedToNonSignatureProtectionPermissions");
     }
 
+    public void testNullPermissionRequest() throws Exception {
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_23), false, false));
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
+                "testNullPermissionRequest");
+    }
+
+    public void testNullAndRealPermission() throws Exception {
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_23), false, false));
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
+                "testNullAndRealPermission");
+    }
+
+    public void testInvalidPermission() throws Exception {
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_23), false, false));
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
+                "testInvalidPermission");
+    }
+
+
     public void testSerialAccessPolicy() throws Exception {
         // Verify legacy app behavior
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(

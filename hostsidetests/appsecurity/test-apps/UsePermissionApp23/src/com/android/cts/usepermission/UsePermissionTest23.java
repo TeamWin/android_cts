@@ -17,6 +17,8 @@
 package com.android.cts.usepermission;
 
 import static junit.framework.Assert.assertEquals;
+
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertDirNoAccess;
@@ -549,6 +551,76 @@ public class UsePermissionTest23 extends BasePermissionsTest {
     @Test
     public void testAllPermissionsGrantedOnUpgrade() throws Exception {
         assertAllPermissionsGrantState(PackageManager.PERMISSION_GRANTED);
+    }
+
+    @Test
+    public void testNullPermissionRequest() throws Exception {
+        String[] permissions = new String[] {null};
+
+        // Go through normal grant flow
+        BasePermissionActivity.Result result = requestPermissions(permissions,
+                REQUEST_CODE_PERMISSIONS,
+                BasePermissionActivity.class,
+                () -> { /* empty */ });
+
+        assertPermissionRequestResult(result, REQUEST_CODE_PERMISSIONS,
+                permissions, new boolean[] {false});
+    }
+
+    @Test
+    public void testNullAndRealPermission() throws Exception {
+        // Make sure we don't have the permissions
+        assertEquals(PackageManager.PERMISSION_DENIED, getInstrumentation().getContext()
+                .checkSelfPermission(Manifest.permission.WRITE_CONTACTS));
+        assertEquals(PackageManager.PERMISSION_DENIED, getInstrumentation().getContext()
+                .checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE));
+
+        String[] permissions = new String[] {
+                null,
+                Manifest.permission.WRITE_CONTACTS,
+                null,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+        };
+
+        // Request the permission and allow it
+        BasePermissionActivity.Result result = requestPermissions(permissions,
+                REQUEST_CODE_PERMISSIONS, BasePermissionActivity.class, () -> {
+                    try {
+                        clickAllowButton();
+                        getUiDevice().waitForIdle();
+                        clickAllowButton();
+                        getUiDevice().waitForIdle();
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+
+        // Expect the permission are reported as granted
+        assertPermissionRequestResult(result, REQUEST_CODE_PERMISSIONS,
+                permissions, new boolean[] {false, true, false, true});
+
+        // The permissions are granted
+        assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
+                .checkSelfPermission(Manifest.permission.WRITE_CONTACTS));
+        assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
+                .checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE));
+    }
+
+    @Test
+    public void testInvalidPermission() throws Exception {
+        String[] permissions = new String[] {
+                getInstrumentation().getContext().getPackageName() + ".abadname"
+        };
+
+        // Request the permission and allow it
+        BasePermissionActivity.Result result = requestPermissions(permissions,
+                REQUEST_CODE_PERMISSIONS,
+                BasePermissionActivity.class,
+                () -> { /* empty */ });
+
+        // Expect the permissions is not granted
+        assertPermissionRequestResult(result, REQUEST_CODE_PERMISSIONS,
+                permissions, new boolean[] {false});
     }
 
     private void assertAllPermissionsRevoked() {
