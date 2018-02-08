@@ -21,6 +21,8 @@ import android.content.pm.PackageManager;
 import android.util.Log;
 import android.test.AndroidTestCase;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.lang.Override;
 
 /**
@@ -137,5 +139,91 @@ public class V3RotationTest extends AndroidTestCase {
                 + FIRST_CERT_HEX, matchedFirst);
         assertTrue("Current signing certificate not found for " + PKG + " expected "
                 + SECOND_CERT_HEX, matchedSecond);
+    }
+
+    public void testHasSigningCertificate() throws Exception {
+        // make sure that hasSigningCertificate() reports that both certificates in the signing
+        // history are present
+        PackageManager pm = getContext().getPackageManager();
+        byte[] firstCertBytes = fromHexToByteArray(FIRST_CERT_HEX);
+        assertTrue("Old signing certificate not found for " + PKG,
+               pm.hasSigningCertificate(PKG, firstCertBytes, PackageManager.CERT_INPUT_RAW_X509));
+        byte[] secondCertBytes = fromHexToByteArray(SECOND_CERT_HEX);
+        assertTrue("Current signing certificate not found for " + PKG,
+                pm.hasSigningCertificate(PKG, secondCertBytes, PackageManager.CERT_INPUT_RAW_X509));
+    }
+
+    public void testHasSigningCertificateSha256() throws Exception {
+        // make sure that hasSigningCertificate() reports that both certificates in the signing
+        // history are present
+        PackageManager pm = getContext().getPackageManager();
+        byte[] firstCertBytes = computeSha256DigestBytes(fromHexToByteArray(FIRST_CERT_HEX));
+
+        assertTrue("Old signing certificate not found for " + PKG,
+                pm.hasSigningCertificate(PKG, firstCertBytes, PackageManager.CERT_INPUT_SHA256));
+        byte[] secondCertBytes = computeSha256DigestBytes(fromHexToByteArray(SECOND_CERT_HEX));
+        assertTrue("Current signing certificate not found for " + PKG,
+                pm.hasSigningCertificate(PKG, secondCertBytes, PackageManager.CERT_INPUT_SHA256));
+    }
+
+    public void testHasSigningCertificateByUid() throws Exception {
+        // make sure that hasSigningCertificate() reports that both certificates in the signing
+        // history are present
+        PackageManager pm = getContext().getPackageManager();
+        int uid = pm.getPackageUid(PKG, 0);
+        byte[] firstCertBytes = fromHexToByteArray(FIRST_CERT_HEX);
+        assertTrue("Old signing certificate not found for " + PKG,
+                pm.hasSigningCertificate(uid, firstCertBytes, PackageManager.CERT_INPUT_RAW_X509));
+        byte[] secondCertBytes = fromHexToByteArray(SECOND_CERT_HEX);
+        assertTrue("Current signing certificate not found for " + PKG,
+                pm.hasSigningCertificate(uid, secondCertBytes, PackageManager.CERT_INPUT_RAW_X509));
+    }
+
+    public void testHasSigningCertificateByUidSha256() throws Exception {
+        // make sure that hasSigningCertificate() reports that both certificates in the signing
+        // history are present
+        PackageManager pm = getContext().getPackageManager();
+        int uid = pm.getPackageUid(PKG, 0);
+        byte[] firstCertBytes = computeSha256DigestBytes(fromHexToByteArray(FIRST_CERT_HEX));
+
+        assertTrue("Old signing certificate not found for " + PKG,
+                pm.hasSigningCertificate(uid, firstCertBytes, PackageManager.CERT_INPUT_SHA256));
+        byte[] secondCertBytes = computeSha256DigestBytes(fromHexToByteArray(SECOND_CERT_HEX));
+        assertTrue("Current signing certificate not found for " + PKG,
+                pm.hasSigningCertificate(uid, secondCertBytes, PackageManager.CERT_INPUT_SHA256));
+    }
+
+    private  static byte[] fromHexToByteArray(String str) {
+        if (str == null || str.length() == 0 || str.length() % 2 != 0) {
+            return null;
+        }
+
+        final char[] chars = str.toCharArray();
+        final int charLength = chars.length;
+        final byte[] bytes = new byte[charLength / 2];
+
+        for (int i = 0; i < bytes.length; i++) {
+            bytes[i] =
+                    (byte)(((getIndex(chars[i * 2]) << 4) & 0xF0)
+                            | (getIndex(chars[i * 2 + 1]) & 0x0F));
+        }
+        return bytes;
+    }
+
+    // copy of ByteStringUtils - lowercase version (to match inputs)
+    private static int getIndex(char c) {
+        final char[] HEX_ARRAY = "0123456789abcdef".toCharArray();
+        for (int i = 0; i < HEX_ARRAY.length; i++) {
+            if (HEX_ARRAY[i] == c) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private static byte[] computeSha256DigestBytes(byte[] data) throws NoSuchAlgorithmException {
+        MessageDigest messageDigest = MessageDigest.getInstance("SHA256");
+        messageDigest.update(data);
+        return messageDigest.digest();
     }
 }
