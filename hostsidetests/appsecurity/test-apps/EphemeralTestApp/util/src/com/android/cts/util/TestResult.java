@@ -100,7 +100,7 @@ public class TestResult implements Parcelable {
         dest.writeString(mStatus);
         dest.writeString(mException);
         dest.writeParcelable(mIntent, 0 /* flags */);
-        dest.writeBoolean(mInstantAppPackageInfoExposed);
+        dest.writeInt(mInstantAppPackageInfoExposed ? 1 : 0);
     }
 
     public static final Creator<TestResult> CREATOR = new Creator<TestResult>() {
