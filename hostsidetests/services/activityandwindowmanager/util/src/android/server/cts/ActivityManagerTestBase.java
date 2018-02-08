@@ -391,10 +391,14 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         mAmWmState.waitForHomeActivityVisible(mDevice);
     }
 
+    protected void launchActivityOnDisplayNoWait(String targetActivityName, int displayId,
+                                                 String... keyValuePairs) throws Exception {
+        executeShellCommand(getAmStartCmd(targetActivityName, displayId, keyValuePairs));
+    }
+
     protected void launchActivityOnDisplay(String targetActivityName, int displayId,
                                            String... keyValuePairs) throws Exception {
-        executeShellCommand(getAmStartCmd(targetActivityName, displayId, keyValuePairs));
-
+        launchActivityOnDisplayNoWait(targetActivityName, displayId, keyValuePairs);
         mAmWmState.waitForValidState(mDevice, targetActivityName);
     }
 

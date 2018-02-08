@@ -27,8 +27,9 @@ import java.awt.image.BufferedImage;
 public class SplashscreenTests extends ActivityManagerTestBase {
 
     public void testSplashscreenContent() throws Exception {
-        launchActivityNoWait("SplashscreenActivity");
-        mAmWmState.waitForAppTransitionIdle(mDevice);
+        launchActivityOnDisplayNoWait("SplashscreenActivity",
+                ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID);
+        mAmWmState.waitForDisplayUnfrozen(mDevice);
         mAmWmState.getWmState().getStableBounds();
         final BufferedImage image = takeScreenshot();
 
