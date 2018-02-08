@@ -20,9 +20,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.os.Parcelable.Creator;
-
-import java.util.ArrayList;
 
 public class TestResult implements Parcelable {
     public static final String EXTRA_TEST_RESULT =
@@ -35,6 +32,7 @@ public class TestResult implements Parcelable {
     private final String mMethodName;
     private final String mStatus;
     private final String mException;
+    private final Intent mIntent;
     private final boolean mInstantAppPackageInfoExposed;
 
     public String getPackageName() {
@@ -61,6 +59,10 @@ public class TestResult implements Parcelable {
         return mInstantAppPackageInfoExposed;
     }
 
+    public Intent getIntent() {
+        return mIntent;
+    }
+
     public static Builder getBuilder() {
         return new Builder();
     }
@@ -74,12 +76,14 @@ public class TestResult implements Parcelable {
     }
 
     private TestResult(String packageName, String componentName, String methodName,
-            String status, String exception, boolean ephemeralPackageInfoExposed) {
+            String status, String exception, Intent intent,
+            boolean ephemeralPackageInfoExposed) {
         mPackageName = packageName;
         mComponentName = componentName;
         mMethodName = methodName;
         mStatus = status;
         mException = exception;
+        mIntent = intent;
         mInstantAppPackageInfoExposed = ephemeralPackageInfoExposed;
     }
 
@@ -95,6 +99,7 @@ public class TestResult implements Parcelable {
         dest.writeString(mMethodName);
         dest.writeString(mStatus);
         dest.writeString(mException);
+        dest.writeParcelable(mIntent, 0 /* flags */);
         dest.writeBoolean(mInstantAppPackageInfoExposed);
     }
 
@@ -113,6 +118,7 @@ public class TestResult implements Parcelable {
         mMethodName = source.readString();
         mStatus = source.readString();
         mException = source.readString();
+        mIntent = source.readParcelable(Object.class.getClassLoader());
         mInstantAppPackageInfoExposed = source.readBoolean();
     }
 
@@ -122,6 +128,7 @@ public class TestResult implements Parcelable {
         private String methodName;
         private String status;
         private String exception;
+        private Intent intent;
         private boolean instantAppPackageInfoExposed;
 
         private Builder() {
@@ -150,9 +157,13 @@ public class TestResult implements Parcelable {
             instantAppPackageInfoExposed = _instantAppPackageInfoExposed;
             return this;
         }
+        public Builder setIntent(Intent _intent) {
+            intent = _intent;
+            return this;
+        }
         public TestResult build() {
             return new TestResult(packageName, componentName, methodName,
-                    status, exception, instantAppPackageInfoExposed);
+                    status, exception, intent, instantAppPackageInfoExposed);
         }
     }
 }
