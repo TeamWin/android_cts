@@ -124,13 +124,15 @@ public abstract class ActivityTestBase {
         }
     }
 
-    public Bitmap takeScreenshot(Point testOffset) {
+    public Bitmap takeScreenshot(TestPositionInfo testPositionInfo) {
         Bitmap source = getInstrumentation().getUiAutomation().takeScreenshot();
-        return Bitmap.createBitmap(source, testOffset.x, testOffset.y, TEST_WIDTH, TEST_HEIGHT);
+        return Bitmap.createBitmap(source,
+            testPositionInfo.screenOffset.x, testPositionInfo.screenOffset.y,
+            TEST_WIDTH, TEST_HEIGHT);
     }
 
-    protected Point runRenderSpec(TestCase testCase) {
-        Point testOffset = getActivity().enqueueRenderSpecAndWait(
+    protected TestPositionInfo runRenderSpec(TestCase testCase) {
+        TestPositionInfo testPositionInfo = getActivity().enqueueRenderSpecAndWait(
                 testCase.layoutID, testCase.canvasClient,
                 null, testCase.viewInitializer, testCase.useHardware);
         testCase.wasTestRan = true;
@@ -141,15 +143,14 @@ public abstract class ActivityTestBase {
                 throw new RuntimeException("readyFence didn't signal within 5 seconds");
             }
         }
-        return testOffset;
+        return testPositionInfo;
     }
 
     /**
      * Used to execute a specific part of a test and get the resultant bitmap
      */
     protected Bitmap captureRenderSpec(TestCase testCase) {
-        Point testOffset = runRenderSpec(testCase);
-        return takeScreenshot(testOffset);
+        return takeScreenshot(runRenderSpec(testCase));
     }
 
     /**
@@ -203,6 +204,26 @@ public abstract class ActivityTestBase {
     protected TestCaseBuilder createTest() {
         mTestCaseBuilder = new TestCaseBuilder();
         return mTestCaseBuilder;
+    }
+
+    public static class TestPositionInfo {
+        /**
+         * Position of capture area in surface space - use this offset for e.g.
+         * PixelCopy from a window's surface.
+         */
+        public final Point surfaceOffset;
+
+        /**
+         * Position of capture area in screen space - use this offset for e.g.
+         * {@code getInstrumentation().getUiAutomation().takeScreenshot()},
+         * since those screenshots are captured in screen space.
+         */
+        public final Point screenOffset;
+
+        public TestPositionInfo(Point surfaceOffset, Point screenOffset) {
+            this.surfaceOffset = surfaceOffset;
+            this.screenOffset = screenOffset;
+        }
     }
 
     /**
@@ -264,7 +285,7 @@ public abstract class ActivityTestBase {
             }
 
             for (TestCase testCase : mTestCases) {
-                Point testOffset = runRenderSpec(testCase);
+                TestPositionInfo testPositionInfo = runRenderSpec(testCase);
 
                 for (int i = 0; i < VERIFY_ANIMATION_LOOP_COUNT; i++) {
                     try {
@@ -272,7 +293,7 @@ public abstract class ActivityTestBase {
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                    Bitmap testCaseBitmap = takeScreenshot(testOffset);
+                    Bitmap testCaseBitmap = takeScreenshot(testPositionInfo);
                     assertBitmapIsVerified(testCaseBitmap, bitmapVerifier,
                             testCase.getDebugString());
                 }
