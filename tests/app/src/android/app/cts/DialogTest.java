@@ -124,6 +124,20 @@ public class DialogTest extends ActivityInstrumentationTestCase2<DialogStubActiv
         assertFalse(mActivity.onCancelListenerCalled);
     }
 
+    public void testConstructor_protectedCancellableEsc() {
+        startDialogActivity(DialogStubActivity.TEST_PROTECTED_CANCELABLE);
+        mActivity.onCancelListenerCalled = false;
+        sendKeys(KeyEvent.KEYCODE_ESCAPE);
+        assertTrue(mActivity.onCancelListenerCalled);
+    }
+
+    public void testConstructor_protectedNotCancellableEsc() {
+        startDialogActivity(DialogStubActivity.TEST_PROTECTED_NOT_CANCELABLE);
+        mActivity.onCancelListenerCalled = false;
+        sendKeys(KeyEvent.KEYCODE_ESCAPE);
+        assertFalse(mActivity.onCancelListenerCalled);
+    }
+
     private void assertTextAppearanceStyle(TypedArray ta) {
         final int defValue = -1;
         // get Theme and assert
@@ -155,6 +169,18 @@ public class DialogTest extends ActivityInstrumentationTestCase2<DialogStubActiv
 
         assertFalse(d.isOnStopCalled);
         sendKeys(KeyEvent.KEYCODE_BACK);
+        assertTrue(d.isOnStopCalled);
+    }
+
+    public void testOnStartCreateStopEsc(){
+        startDialogActivity(DialogStubActivity.TEST_ONSTART_AND_ONSTOP);
+        final TestDialog d = (TestDialog) mActivity.getDialog();
+
+        assertTrue(d.isOnStartCalled);
+        assertTrue(d.isOnCreateCalled);
+
+        assertFalse(d.isOnStopCalled);
+        sendKeys(KeyEvent.KEYCODE_ESCAPE);
         assertTrue(d.isOnStopCalled);
     }
 
@@ -755,7 +781,7 @@ public class DialogTest extends ActivityInstrumentationTestCase2<DialogStubActiv
         assertEquals(d.getWindow().getLayoutInflater(), d.getLayoutInflater());
     }
 
-    public void testSetCancelable_true() {
+    public void testSetCancellable_true() {
         startDialogActivity(DialogStubActivity.TEST_DIALOG_WITHOUT_THEME);
         final Dialog d = mActivity.getDialog();
 
@@ -775,6 +801,26 @@ public class DialogTest extends ActivityInstrumentationTestCase2<DialogStubActiv
         assertTrue(d.isShowing());
     }
 
+    public void testSetCancellableEsc_true() {
+        startDialogActivity(DialogStubActivity.TEST_DIALOG_WITHOUT_THEME);
+        final Dialog d = mActivity.getDialog();
+
+        d.setCancelable(true);
+        assertTrue(d.isShowing());
+        sendKeys(KeyEvent.KEYCODE_ESCAPE);
+        assertFalse(d.isShowing());
+    }
+
+    public void testSetCancellableEsc_false() {
+        startDialogActivity(DialogStubActivity.TEST_DIALOG_WITHOUT_THEME);
+        final Dialog d = mActivity.getDialog();
+
+        d.setCancelable(false);
+        assertTrue(d.isShowing());
+        sendKeys(KeyEvent.KEYCODE_ESCAPE);
+        assertTrue(d.isShowing());
+    }
+
     /*
      * Test point
      * 1. Cancel the dialog.
@@ -786,6 +832,7 @@ public class DialogTest extends ActivityInstrumentationTestCase2<DialogStubActiv
 
         assertTrue(d.isShowing());
         mOnCancelListenerCalled = false;
+
         d.setOnCancelListener(new OnCancelListener() {
             public void onCancel(DialogInterface dialog) {
                 mOnCancelListenerCalled = true;

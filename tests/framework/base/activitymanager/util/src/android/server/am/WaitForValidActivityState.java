@@ -17,7 +17,16 @@
 package android.server.am;
 
 import static android.app.ActivityManager.StackId.INVALID_STACK_ID;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_ASSISTANT;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
+import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
+import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
+import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
+import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.ComponentNameUtils.getWindowName;
@@ -69,6 +78,54 @@ public class WaitForValidActivityState {
         this.stackId = builder.mStackId;
         this.windowingMode = builder.mWindowingMode;
         this.activityType = builder.mActivityType;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("wait:");
+        if (componentName != null) {
+            sb.append(" activity=").append(componentName);
+        } else if (activityName != null) {
+            sb.append(" activity=").append(activityName);
+        }
+        if (activityType != ACTIVITY_TYPE_UNDEFINED) {
+            sb.append(" type=").append(activityTypeName(activityType));
+        }
+        if (windowName != null) {
+            sb.append(" window=").append(windowName);
+        }
+        if (windowingMode != WINDOWING_MODE_UNDEFINED) {
+            sb.append(" mode=").append(windowingModeName(windowingMode));
+        }
+        if (stackId != INVALID_STACK_ID) {
+            sb.append(" stack=").append(stackId);
+        }
+        return sb.toString();
+    }
+
+    private static String windowingModeName(int windowingMode) {
+        switch (windowingMode) {
+            case WINDOWING_MODE_UNDEFINED: return "UNDEFINED";
+            case WINDOWING_MODE_FULLSCREEN: return "FULLSCREEN";
+            case WINDOWING_MODE_PINNED: return "PINNED";
+            case WINDOWING_MODE_SPLIT_SCREEN_PRIMARY: return "SPLIT_SCREEN_PRIMARY";
+            case WINDOWING_MODE_SPLIT_SCREEN_SECONDARY: return "SPLIT_SCREEN_SECONDARY";
+            case WINDOWING_MODE_FREEFORM: return "FREEFORM";
+            default:
+                throw new IllegalArgumentException("Unknown WINDOWING_MODE_: " + windowingMode);
+        }
+    }
+
+    private static String activityTypeName(int activityType) {
+        switch (activityType) {
+            case ACTIVITY_TYPE_UNDEFINED: return "UNDEFINED";
+            case ACTIVITY_TYPE_STANDARD: return "STANDARD";
+            case ACTIVITY_TYPE_HOME: return "HOME";
+            case ACTIVITY_TYPE_RECENTS: return "RECENTS";
+            case ACTIVITY_TYPE_ASSISTANT: return "ASSISTANT";
+            default:
+                throw new IllegalArgumentException("Unknown ACTIVITY_TYPE_: " + activityType);
+        }
     }
 
     /**

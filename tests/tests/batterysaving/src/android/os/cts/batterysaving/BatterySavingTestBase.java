@@ -22,6 +22,7 @@ import static com.android.compatibility.common.util.TestUtils.waitUntil;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.location.LocationManager;
 import android.os.BatteryManager;
 import android.os.PowerManager;
 import android.support.test.InstrumentationRegistry;
@@ -91,5 +92,9 @@ public class BatterySavingTestBase {
 
     public BatteryManager getBatteryManager() {
         return getContext().getSystemService(BatteryManager.class);
+    }
+
+    public LocationManager getLocationManager() {
+        return getContext().getSystemService(LocationManager.class);
     }
 }
