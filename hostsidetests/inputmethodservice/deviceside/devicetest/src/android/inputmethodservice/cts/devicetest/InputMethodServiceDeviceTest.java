@@ -23,7 +23,13 @@ import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceE
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_DESTROY;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_START_INPUT;
 import static android.inputmethodservice.cts.common.ImeCommandConstants.ACTION_IME_COMMAND;
+import static android.inputmethodservice.cts.common.ImeCommandConstants
+        .COMMAND_SET_INPUT_METHOD_AND_SUBTYPE;
 import static android.inputmethodservice.cts.common.ImeCommandConstants.COMMAND_SWITCH_INPUT_METHOD;
+import static android.inputmethodservice.cts.common.ImeCommandConstants
+        .COMMAND_SWITCH_TO_LAST_INPUT;
+import static android.inputmethodservice.cts.common.ImeCommandConstants
+        .COMMAND_SWITCH_TO_NEXT_INPUT;
 import static android.inputmethodservice.cts.common.ImeCommandConstants.EXTRA_ARG_STRING1;
 import static android.inputmethodservice.cts.common.ImeCommandConstants.EXTRA_COMMAND;
 import static android.inputmethodservice.cts.devicetest.BusyWaitUtils.pollingCheck;
@@ -112,6 +118,78 @@ public class InputMethodServiceDeviceTest {
                         .matched(),
                 TIMEOUT,
                 "CtsInputMethod2.onCreate and onStartInput are called in sequence");
+    }
+
+    @Test
+    public void testSetInputMethodAndSubtype() throws Throwable {
+        final TestHelper helper = new TestHelper(
+                getClass(), DeviceTestConstants.TEST_SET_INPUTMETHOD_AND_SUBTYPE);
+        final long startActivityTime = SystemClock.uptimeMillis();
+        helper.launchActivity(DeviceTestConstants.PACKAGE, DeviceTestConstants.TEST_ACTIVITY_CLASS);
+        pollingCheck(() -> helper.queryAllEvents()
+                        .filter(isNewerThan(startActivityTime))
+                        .anyMatch(isFrom(Ime1Constants.CLASS).and(isType(ON_START_INPUT))),
+                TIMEOUT, "CtsInputMethod1.onStartInput is called");
+        helper.findUiObject(R.id.text_entry).click();
+
+        final long setImeTime = SystemClock.uptimeMillis();
+        // call setInputMethodAndSubtype(IME2, null)
+        helper.shell(ShellCommandUtils.broadcastIntent(
+                ACTION_IME_COMMAND, Ime1Constants.PACKAGE,
+                "-e", EXTRA_COMMAND, COMMAND_SET_INPUT_METHOD_AND_SUBTYPE,
+                "-e", EXTRA_ARG_STRING1, Ime2Constants.IME_ID));
+        pollingCheck(() -> helper.shell(ShellCommandUtils.getCurrentIme())
+                        .equals(Ime2Constants.IME_ID),
+                TIMEOUT, "CtsInputMethod2 is current IME");
+        pollingCheck(() -> helper.queryAllEvents()
+                        .filter(isNewerThan(setImeTime))
+                        .anyMatch(isFrom(Ime1Constants.CLASS).and(isType(ON_DESTROY))),
+                TIMEOUT, "CtsInputMethod1.onDestroy is called");
+    }
+
+    @Test
+    public void testSwitchToNextInputMethod() throws Throwable {
+        final TestHelper helper = new TestHelper(
+                getClass(), DeviceTestConstants.TEST_SWITCH_NEXT_INPUT);
+        final long startActivityTime = SystemClock.uptimeMillis();
+        helper.launchActivity(DeviceTestConstants.PACKAGE, DeviceTestConstants.TEST_ACTIVITY_CLASS);
+        pollingCheck(() -> helper.queryAllEvents()
+                        .filter(isNewerThan(startActivityTime))
+                        .anyMatch(isFrom(Ime1Constants.CLASS).and(isType(ON_START_INPUT))),
+                TIMEOUT, "CtsInputMethod1.onStartInput is called");
+        helper.findUiObject(R.id.text_entry).click();
+
+        pollingCheck(() -> helper.shell(ShellCommandUtils.getCurrentIme())
+                        .equals(Ime1Constants.IME_ID),
+                TIMEOUT, "CtsInputMethod1 is current IME");
+        helper.shell(ShellCommandUtils.broadcastIntent(
+                ACTION_IME_COMMAND, Ime1Constants.PACKAGE,
+                "-e", EXTRA_COMMAND, COMMAND_SWITCH_TO_NEXT_INPUT));
+        pollingCheck(() -> !helper.shell(ShellCommandUtils.getCurrentIme())
+                        .equals(Ime1Constants.IME_ID),
+                TIMEOUT, "CtsInputMethod1 shouldn't be current IME");
+    }
+
+    @Test
+    public void testSwitchToLastInputMethod() throws Throwable {
+        final TestHelper helper = new TestHelper(
+                getClass(), DeviceTestConstants.TEST_SWITCH_LAST_INPUT);
+        final long startActivityTime = SystemClock.uptimeMillis();
+        helper.launchActivity(DeviceTestConstants.PACKAGE, DeviceTestConstants.TEST_ACTIVITY_CLASS);
+        helper.findUiObject(R.id.text_entry).click();
+
+        final String initialIme = helper.shell(ShellCommandUtils.getCurrentIme());
+        helper.shell(ShellCommandUtils.setCurrentIme(Ime2Constants.IME_ID));
+        pollingCheck(() -> helper.queryAllEvents()
+                        .filter(isNewerThan(startActivityTime))
+                        .anyMatch(isFrom(Ime2Constants.CLASS).and(isType(ON_START_INPUT))),
+                TIMEOUT, "CtsInputMethod2.onStartInput is called");
+        helper.shell(ShellCommandUtils.broadcastIntent(
+                ACTION_IME_COMMAND, Ime2Constants.PACKAGE,
+                "-e", EXTRA_COMMAND, COMMAND_SWITCH_TO_LAST_INPUT));
+        pollingCheck(() -> helper.shell(ShellCommandUtils.getCurrentIme())
+                        .equals(initialIme),
+                TIMEOUT, initialIme + " is current IME");
     }
 
     /**
