@@ -24,7 +24,6 @@ import com.android.compatibility.common.util.IInvocationResult;
 import com.android.compatibility.common.util.IModuleResult;
 import com.android.compatibility.common.util.ITestResult;
 import com.android.compatibility.common.util.TestStatus;
-import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.OptionSetter;
 import com.android.tradefed.invoker.IInvocationContext;
@@ -32,6 +31,7 @@ import com.android.tradefed.invoker.InvocationContext;
 import com.android.tradefed.result.ByteArrayInputStreamSource;
 import com.android.tradefed.result.InputStreamSource;
 import com.android.tradefed.result.LogDataType;
+import com.android.tradefed.result.TestDescription;
 import com.android.tradefed.util.AbiUtils;
 import com.android.tradefed.util.FileUtil;
 
@@ -144,13 +144,13 @@ public class ResultReporterTest extends TestCase {
     public void testResultReporting() throws Exception {
         mReporter.invocationStarted(mContext);
         mReporter.testRunStarted(ID, 2);
-        TestIdentifier test1 = new TestIdentifier(CLASS, METHOD_1);
+        TestDescription test1 = new TestDescription(CLASS, METHOD_1);
         mReporter.testStarted(test1);
         mReporter.testEnded(test1, new HashMap<String, String>());
-        TestIdentifier test2 = new TestIdentifier(CLASS, METHOD_2);
+        TestDescription test2 = new TestDescription(CLASS, METHOD_2);
         mReporter.testStarted(test2);
         mReporter.testFailed(test2, STACK_TRACE);
-        TestIdentifier test3 = new TestIdentifier(CLASS, METHOD_3);
+        TestDescription test3 = new TestDescription(CLASS, METHOD_3);
         mReporter.testStarted(test3);
         mReporter.testFailed(test3, STACK_TRACE);
         mReporter.testEnded(test3, new HashMap<String, String>());
@@ -187,7 +187,7 @@ public class ResultReporterTest extends TestCase {
         mReporter.testRunStarted(ID, methods.length);
 
         for (int i = 0; i < methods.length; i++) {
-            TestIdentifier test = new TestIdentifier(CLASS, methods[i]);
+            TestDescription test = new TestDescription(CLASS, methods[i]);
             mReporter.testStarted(test);
             if (!passes[i]) {
                 mReporter.testFailed(test, STACK_TRACE);
@@ -263,11 +263,11 @@ public class ResultReporterTest extends TestCase {
         testResult2.setRetry(true);
 
         // Flip results for the current session
-        TestIdentifier test1 = new TestIdentifier(CLASS, METHOD_1);
+        TestDescription test1 = new TestDescription(CLASS, METHOD_1);
         mReporter.testStarted(test1);
         mReporter.testFailed(test1, STACK_TRACE);
         mReporter.testEnded(test1, new HashMap<String, String>());
-        TestIdentifier test2 = new TestIdentifier(CLASS, METHOD_2);
+        TestDescription test2 = new TestDescription(CLASS, METHOD_2);
         mReporter.testStarted(test2);
         mReporter.testEnded(test2, new HashMap<String, String>());
 
@@ -323,7 +323,7 @@ public class ResultReporterTest extends TestCase {
         // been collected. Thus, module "done" value should switch.
         mReporter.testRunStarted(ID, 1);
 
-        TestIdentifier test2 = new TestIdentifier(CLASS, METHOD_2);
+        TestDescription test2 = new TestDescription(CLASS, METHOD_2);
         mReporter.testStarted(test2);
         mReporter.testEnded(test2, new HashMap<String, String>());
 
@@ -362,7 +362,7 @@ public class ResultReporterTest extends TestCase {
         // and don't run any non-executed tests, so module "done" value should not switch.
         mReporter.testRunStarted(ID, 1);
 
-        TestIdentifier test2 = new TestIdentifier(CLASS, METHOD_2);
+        TestDescription test2 = new TestDescription(CLASS, METHOD_2);
         mReporter.testStarted(test2);
         mReporter.testEnded(test2, new HashMap<String, String>());
 
@@ -382,7 +382,7 @@ public class ResultReporterTest extends TestCase {
     public void testResultReporting_moduleNotDone() throws Exception {
         mReporter.invocationStarted(mContext);
         mReporter.testRunStarted(ID, 2);
-        TestIdentifier test1 = new TestIdentifier(CLASS, METHOD_1);
+        TestDescription test1 = new TestDescription(CLASS, METHOD_1);
         mReporter.testStarted(test1);
         mReporter.testEnded(test1, new HashMap<String, String>());
         mReporter.testRunFailed("error");

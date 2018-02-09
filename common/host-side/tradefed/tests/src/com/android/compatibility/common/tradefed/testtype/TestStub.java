@@ -15,10 +15,10 @@
  */
 package com.android.compatibility.common.tradefed.testtype;
 
-import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.result.ITestInvocationListener;
+import com.android.tradefed.result.TestDescription;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IAbiReceiver;
 import com.android.tradefed.testtype.IRemoteTest;
@@ -51,7 +51,7 @@ public class TestStub implements IRemoteTest, IAbiReceiver, IRuntimeHintProvider
     @Option(name = "internal-retry")
     protected boolean mRetry = false;
 
-    protected List<TestIdentifier> mShardedTestToRun;
+    protected List<TestDescription> mShardedTestToRun;
     protected Integer mShardIndex = null;
 
     /**
@@ -60,18 +60,18 @@ public class TestStub implements IRemoteTest, IAbiReceiver, IRuntimeHintProvider
     private void testAttempt(ITestInvocationListener listener) {
      // We report 3 tests: 2 pass, 1 failed
         listener.testRunStarted("module-run", 3);
-        TestIdentifier tid = new TestIdentifier("TestStub", "test1");
+        TestDescription tid = new TestDescription("TestStub", "test1");
         listener.testStarted(tid);
         listener.testEnded(tid, Collections.emptyMap());
 
         if (mIsComplete) {
             // possibly skip this one to create some not_executed case.
-            TestIdentifier tid2 = new TestIdentifier("TestStub", "test2");
+            TestDescription tid2 = new TestDescription("TestStub", "test2");
             listener.testStarted(tid2);
             listener.testEnded(tid2, Collections.emptyMap());
         }
 
-        TestIdentifier tid3 = new TestIdentifier("TestStub", "test3");
+        TestDescription tid3 = new TestDescription("TestStub", "test3");
         listener.testStarted(tid3);
         if (mDoesOneTestFail) {
             listener.testFailed(tid3, "ouch this is bad.");
@@ -105,18 +105,18 @@ public class TestStub implements IRemoteTest, IAbiReceiver, IRuntimeHintProvider
                 }
 
                 if (mIsComplete) {
-                    for (TestIdentifier tid : mShardedTestToRun) {
+                    for (TestDescription tid : mShardedTestToRun) {
                         listener.testStarted(tid);
                         listener.testEnded(tid, Collections.emptyMap());
                     }
                 } else {
-                    TestIdentifier tid = mShardedTestToRun.get(0);
+                    TestDescription tid = mShardedTestToRun.get(0);
                     listener.testStarted(tid);
                     listener.testEnded(tid, Collections.emptyMap());
                 }
 
                 if (mDoesOneTestFail) {
-                    TestIdentifier tid = new TestIdentifier("TestStub", "failed" + mShardIndex);
+                    TestDescription tid = new TestDescription("TestStub", "failed" + mShardIndex);
                     listener.testStarted(tid);
                     listener.testFailed(tid, "shard failed this one.");
                     listener.testEnded(tid, Collections.emptyMap());

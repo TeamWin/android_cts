@@ -17,13 +17,13 @@
 package com.android.compatibility.common.tradefed.result;
 
 import com.android.ddmlib.Log.LogLevel;
-import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.OptionCopier;
 import com.android.tradefed.invoker.IInvocationContext;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.IShardableListener;
+import com.android.tradefed.result.TestDescription;
 import com.android.tradefed.util.TimeUtil;
 
 import java.util.Map;
@@ -84,7 +84,7 @@ public class ConsoleReporter implements IShardableListener {
      * {@inheritDoc}
      */
     @Override
-    public void testStarted(TestIdentifier test) {
+    public void testStarted(TestDescription test) {
         mTestFailed = false;
         mCurrentTestNum++;
     }
@@ -93,7 +93,7 @@ public class ConsoleReporter implements IShardableListener {
      * {@inheritDoc}
      */
     @Override
-    public void testFailed(TestIdentifier test, String trace) {
+    public void testFailed(TestDescription test, String trace) {
         logProgress("%s fail: %s", test, trace);
         mTestFailed = true;
         mFailedTests++;
@@ -103,7 +103,7 @@ public class ConsoleReporter implements IShardableListener {
      * {@inheritDoc}
      */
     @Override
-    public void testIgnored(TestIdentifier test) {
+    public void testIgnored(TestDescription test) {
         mCurrentTestNum--;
         logProgress("%s ignore", test);
     }
@@ -112,7 +112,7 @@ public class ConsoleReporter implements IShardableListener {
      * {@inheritDoc}
      */
     @Override
-    public void testAssumptionFailure(TestIdentifier test, String trace) {
+    public void testAssumptionFailure(TestDescription test, String trace) {
         logProgress("%s skip", test);
     }
 
@@ -120,7 +120,7 @@ public class ConsoleReporter implements IShardableListener {
      * {@inheritDoc}
      */
     @Override
-    public void testEnded(TestIdentifier test, Map<String, String> testMetrics) {
+    public void testEnded(TestDescription test, Map<String, String> testMetrics) {
         if (!mTestFailed) {
             logProgress("%s pass", test);
             mPassedTests++;

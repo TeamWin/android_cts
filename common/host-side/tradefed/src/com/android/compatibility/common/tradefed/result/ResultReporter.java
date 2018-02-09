@@ -32,7 +32,6 @@ import com.android.compatibility.common.util.ResultHandler;
 import com.android.compatibility.common.util.ResultUploader;
 import com.android.compatibility.common.util.TestStatus;
 import com.android.ddmlib.Log.LogLevel;
-import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.Option.Importance;
@@ -50,6 +49,7 @@ import com.android.tradefed.result.InputStreamSource;
 import com.android.tradefed.result.LogDataType;
 import com.android.tradefed.result.LogFile;
 import com.android.tradefed.result.LogFileSaver;
+import com.android.tradefed.result.TestDescription;
 import com.android.tradefed.result.TestSummary;
 import com.android.tradefed.result.suite.SuiteResultReporter;
 import com.android.tradefed.util.FileUtil;
@@ -327,7 +327,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      * {@inheritDoc}
      */
     @Override
-    public void testStarted(TestIdentifier test) {
+    public void testStarted(TestDescription test) {
         mCurrentCaseResult = mCurrentModuleResult.getOrCreateResult(test.getClassName());
         mCurrentResult = mCurrentCaseResult.getOrCreateResult(test.getTestName().trim());
         if (mCurrentResult.isRetry()) {
@@ -340,7 +340,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      * {@inheritDoc}
      */
     @Override
-    public void testEnded(TestIdentifier test, Map<String, String> metrics) {
+    public void testEnded(TestDescription test, Map<String, String> metrics) {
         if (mCurrentResult.getResultStatus() == TestStatus.FAIL) {
             // Test has previously failed.
             return;
@@ -370,7 +370,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      * {@inheritDoc}
      */
     @Override
-    public void testIgnored(TestIdentifier test) {
+    public void testIgnored(TestDescription test) {
         mCurrentResult.skipped();
     }
 
@@ -378,7 +378,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      * {@inheritDoc}
      */
     @Override
-    public void testFailed(TestIdentifier test, String trace) {
+    public void testFailed(TestDescription test, String trace) {
         mCurrentResult.failed(trace);
     }
 
@@ -386,7 +386,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      * {@inheritDoc}
      */
     @Override
-    public void testAssumptionFailure(TestIdentifier test, String trace) {
+    public void testAssumptionFailure(TestDescription test, String trace) {
         mCurrentResult.skipped();
     }
 

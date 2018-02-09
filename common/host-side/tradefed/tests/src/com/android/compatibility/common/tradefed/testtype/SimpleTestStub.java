@@ -15,10 +15,10 @@
  */
 package com.android.compatibility.common.tradefed.testtype;
 
-import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.result.ITestInvocationListener;
+import com.android.tradefed.result.TestDescription;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IAbiReceiver;
 import com.android.tradefed.testtype.IRemoteTest;
@@ -52,7 +52,7 @@ public class SimpleTestStub implements IRemoteTest, IAbiReceiver, IRuntimeHintPr
     public void run(ITestInvocationListener listener) throws DeviceNotAvailableException {
         // We report 1 passing tes
         listener.testRunStarted("module-run", 1);
-        TestIdentifier tid = new TestIdentifier("TestStub", "test1");
+        TestDescription tid = new TestDescription("TestStub", "test1");
         listener.testStarted(tid);
         listener.testEnded(tid, Collections.emptyMap());
         listener.testRunEnded(0, Collections.emptyMap());

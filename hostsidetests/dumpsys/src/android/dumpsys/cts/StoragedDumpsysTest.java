@@ -17,17 +17,9 @@
 package android.dumpsys.cts;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
-import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
-import com.android.ddmlib.testrunner.TestIdentifier;
-import com.android.ddmlib.testrunner.TestResult;
-import com.android.ddmlib.testrunner.TestResult.TestStatus;
-import com.android.ddmlib.testrunner.TestRunResult;
-import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.result.CollectingTestListener;
 
 import java.io.BufferedReader;
 import java.io.StringReader;
-import java.util.Map;
 
 /**
  * Test to check the format of the dumps of the processstats test.
