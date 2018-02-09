@@ -24,11 +24,15 @@ import com.android.server.am.proto.MemInfoProto.ProcessMemory;
 /** Test to check that ActivityManager properly outputs meminfo data. */
 public class MemInfoIncidentTest extends ProtoDumpTestCase {
 
-    public void testBatteryServiceDump() throws Exception {
+    public void testMemInfoDump() throws Exception {
         final MemInfoProto dump =
                 getDump(MemInfoProto.parser(), "dumpsys meminfo -a --proto");
 
-        assertTrue(dump.getUptimeDurationMs() > 0);
+        verifyMemInfoProto(dump, PRIVACY_NONE);
+    }
+
+    static void verifyMemInfoProto(MemInfoProto dump, final int filterLevel) throws Exception {
+        assertTrue(dump.getUptimeDurationMs() >= 0);
         assertTrue(dump.getElapsedRealtimeMs() >= 0);
 
         for (ProcessMemory pm : dump.getNativeProcessesList()) {
@@ -67,7 +71,7 @@ public class MemInfoIncidentTest extends ProtoDumpTestCase {
         assertTrue(0 <= dump.getKsmUnsharedKb());
         assertTrue(0 <= dump.getKsmVolatileKb());
 
-        assertTrue(0 < dump.getTuningMb());
+        assertTrue("Tuning_mb (" + dump.getTuningMb() + ") is not positive", 0 < dump.getTuningMb());
         assertTrue(0 < dump.getTuningLargeMb());
 
         assertTrue(0 <= dump.getOomKb());
@@ -75,7 +79,7 @@ public class MemInfoIncidentTest extends ProtoDumpTestCase {
         assertTrue(0 < dump.getRestoreLimitKb());
     }
 
-    private void testProcessMemory(ProcessMemory pm) throws Exception {
+    private static void testProcessMemory(ProcessMemory pm) throws Exception {
         assertNotNull(pm);
 
         assertTrue(0 < pm.getPid());
@@ -108,7 +112,7 @@ public class MemInfoIncidentTest extends ProtoDumpTestCase {
         assertTrue(0 <= as.getTotalSwapKb());
     }
 
-    private void testMemoryInfo(ProcessMemory.MemoryInfo mi) throws Exception {
+    private static void testMemoryInfo(ProcessMemory.MemoryInfo mi) throws Exception {
         assertNotNull(mi);
 
         assertTrue(0 <= mi.getTotalPssKb());
@@ -121,7 +125,7 @@ public class MemInfoIncidentTest extends ProtoDumpTestCase {
         assertTrue(0 <= mi.getDirtySwapPssKb());
     }
 
-    private void testHeapInfo(ProcessMemory.HeapInfo hi) throws Exception {
+    private static void testHeapInfo(ProcessMemory.HeapInfo hi) throws Exception {
         assertNotNull(hi);
 
         testMemoryInfo(hi.getMemInfo());
@@ -130,7 +134,7 @@ public class MemInfoIncidentTest extends ProtoDumpTestCase {
         assertTrue(0 <= hi.getHeapFreeKb());
     }
 
-    private void testAppData(AppData ad) throws Exception {
+    private static void testAppData(AppData ad) throws Exception {
         assertNotNull(ad);
 
         testProcessMemory(ad.getProcessMemory());
@@ -161,7 +165,7 @@ public class MemInfoIncidentTest extends ProtoDumpTestCase {
         }
     }
 
-    private void testMemItem(MemItem mi) throws Exception {
+    private static void testMemItem(MemItem mi) throws Exception {
         assertNotNull(mi);
 
         assertTrue(0 <= mi.getPssKb());

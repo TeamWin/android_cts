@@ -34,6 +34,10 @@ public class PowerIncidentTest extends ProtoDumpTestCase {
         final PowerManagerServiceDumpProto dump =
                 getDump(PowerManagerServiceDumpProto.parser(), "dumpsys power --proto");
 
+        verifyPowerManagerServiceDumpProto(dump, PRIVACY_NONE);
+    }
+
+    static void verifyPowerManagerServiceDumpProto(PowerManagerServiceDumpProto dump, int filterLevel) {
         assertTrue(dump.getBatteryLevel() >= 0);
         assertTrue(dump.getBatteryLevel() <= 100);
 
@@ -67,7 +71,8 @@ public class PowerIncidentTest extends ProtoDumpTestCase {
         int settingMin = brightnessLimits.getSettingMinimum();
         assertTrue(settingMin >= 0);
         assertTrue(settingMax > 0);
-        assertTrue(settingMax >= settingMin);
+        assertTrue("Brightness limit max setting (" + settingMax + ") is less than min setting (" + settingMin + ")",
+                settingMax >= settingMin);
         assertTrue(brightnessLimits.getSettingDefault() > 0);
 
         final PowerManagerServiceDumpProto.UidStateProto uid = dump.getUidStates(0);
@@ -106,6 +111,10 @@ public class PowerIncidentTest extends ProtoDumpTestCase {
         assertTrue(dump.getScreenDimDurationMs() >= 0);
 
         for (WakeLockProto wl : dump.getWakeLocksList()) {
+            if (filterLevel == PRIVACY_AUTO) {
+                // Tag may or may not be empty, but for AUTO, it should always be empty.
+                assertTrue(wl.getTag().isEmpty());
+            }
             assertTrue(0 <= wl.getAcqMs());
             assertTrue(0 <= wl.getUid());
             assertTrue(0 <= wl.getPid());

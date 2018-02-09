@@ -44,6 +44,10 @@ public class SettingsIncidentTest extends ProtoDumpTestCase {
         SettingsServiceDumpProto dump = getDump(SettingsServiceDumpProto.parser(),
                 "dumpsys settings --proto");
 
+        verifySettingsServiceDumpProto(dump, PRIVACY_NONE);
+    }
+
+    static void verifySettingsServiceDumpProto(SettingsServiceDumpProto dump, final int filterLevel) throws Exception {
         assertTrue(dump.getUserSettingsCount() > 0);
 
         UserSettingsProto userSettings = dump.getUserSettings(0);
@@ -55,7 +59,7 @@ public class SettingsIncidentTest extends ProtoDumpTestCase {
         verifySettings(dump.getGlobalSettings());
     }
 
-    private void verifySettings(GeneratedMessage settings) throws Exception {
+    private static void verifySettings(GeneratedMessage settings) throws Exception {
         verifySettings(getSettingProtos(settings));
 
         final List<SettingsOperationProto> ops = invoke(settings, "getHistoricalOperationsList");
@@ -101,7 +105,7 @@ public class SettingsIncidentTest extends ProtoDumpTestCase {
         return c == Integer.class ? int.class : c;
     }
 
-    private void verifySettings(List<SettingProto> settings) throws Exception {
+    private static void verifySettings(List<SettingProto> settings) throws Exception {
         assertFalse(settings.isEmpty());
 
         for (SettingProto setting : settings) {

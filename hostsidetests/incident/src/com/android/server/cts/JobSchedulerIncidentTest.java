@@ -34,6 +34,10 @@ public class JobSchedulerIncidentTest extends ProtoDumpTestCase {
         final JobSchedulerServiceDumpProto dump =
                 getDump(JobSchedulerServiceDumpProto.parser(), "dumpsys jobscheduler --proto");
 
+        verifyJobSchedulerServiceDumpProto(dump, PRIVACY_NONE);
+    }
+
+    static void verifyJobSchedulerServiceDumpProto(JobSchedulerServiceDumpProto dump, final int filterLevel) throws Exception {
         testConstantsProto(dump.getSettings());
 
         for (int u : dump.getStartedUsersList()) {
@@ -41,12 +45,12 @@ public class JobSchedulerIncidentTest extends ProtoDumpTestCase {
         }
 
         for (JobSchedulerServiceDumpProto.RegisteredJob rj : dump.getRegisteredJobsList()) {
-            testJobStatusShortInfoProto(rj.getInfo());
+            testJobStatusShortInfoProto(rj.getInfo(), filterLevel);
             testJobStatusDumpProto(rj.getDump());
         }
 
         for (StateControllerProto c : dump.getControllersList()) {
-            testStateControllerProto(c);
+            testStateControllerProto(c, filterLevel);
         }
 
         for (JobSchedulerServiceDumpProto.PriorityOverride po : dump.getPriorityOverridesList()) {
@@ -57,12 +61,12 @@ public class JobSchedulerIncidentTest extends ProtoDumpTestCase {
             assertTrue(0 <= buu);
         }
 
-        testJobPackageHistoryProto(dump.getHistory());
+        testJobPackageHistoryProto(dump.getHistory(), filterLevel);
 
         testJobPackageTrackerDumpProto(dump.getPackageTracker());
 
         for (JobSchedulerServiceDumpProto.PendingJob pj : dump.getPendingJobsList()) {
-            testJobStatusShortInfoProto(pj.getInfo());
+            testJobStatusShortInfoProto(pj.getInfo(), filterLevel);
             testJobStatusDumpProto(pj.getDump());
             assertTrue(0 <= pj.getEnqueuedDurationMs());
         }
@@ -72,7 +76,7 @@ public class JobSchedulerIncidentTest extends ProtoDumpTestCase {
             assertTrue(0 <= ajIj.getTimeSinceStoppedMs());
 
             JobSchedulerServiceDumpProto.ActiveJob.RunningJob ajRj = aj.getRunning();
-            testJobStatusShortInfoProto(ajRj.getInfo());
+            testJobStatusShortInfoProto(ajRj.getInfo(), filterLevel);
             assertTrue(0 <= ajRj.getRunningDurationMs());
             assertTrue(0 <= ajRj.getTimeUntilTimeoutMs());
             testJobStatusDumpProto(ajRj.getDump());
@@ -83,7 +87,7 @@ public class JobSchedulerIncidentTest extends ProtoDumpTestCase {
         assertTrue(0 <= dump.getMaxActiveJobs());
     }
 
-    private void testConstantsProto(ConstantsProto c) throws Exception {
+    private static void testConstantsProto(ConstantsProto c) throws Exception {
         assertNotNull(c);
 
         assertTrue(0 <= c.getMinIdleCount());
@@ -110,7 +114,7 @@ public class JobSchedulerIncidentTest extends ProtoDumpTestCase {
         }
     }
 
-    private void testDataSetProto(DataSetProto ds) throws Exception {
+    private static void testDataSetProto(DataSetProto ds) throws Exception {
         assertNotNull(ds);
 
         assertTrue(0 <= ds.getStartClockTimeMs());
@@ -137,7 +141,7 @@ public class JobSchedulerIncidentTest extends ProtoDumpTestCase {
         assertTrue(0 <= ds.getMaxForegroundConcurrency());
     }
 
-    private void testJobPackageHistoryProto(JobPackageHistoryProto jph) throws Exception {
+    private static void testJobPackageHistoryProto(JobPackageHistoryProto jph, int filterLevel) throws Exception {
         assertNotNull(jph);
 
         for (JobPackageHistoryProto.HistoryEvent he : jph.getHistoryEventList()) {
@@ -147,10 +151,13 @@ public class JobSchedulerIncidentTest extends ProtoDumpTestCase {
             assertTrue(0 <= he.getUid());
             assertTrue(JobParametersProto.CancelReason.getDescriptor().getValues()
                     .contains(he.getStopReason().getValueDescriptor()));
+            if (filterLevel == PRIVACY_AUTO) {
+                assertTrue(he.getTag().isEmpty());
+            }
         }
     }
 
-    private void testJobPackageTrackerDumpProto(JobPackageTrackerDumpProto jptd) throws Exception {
+    private static void testJobPackageTrackerDumpProto(JobPackageTrackerDumpProto jptd) throws Exception {
         assertNotNull(jptd);
 
         for (DataSetProto ds : jptd.getHistoricalStatsList()) {
@@ -159,13 +166,16 @@ public class JobSchedulerIncidentTest extends ProtoDumpTestCase {
         testDataSetProto(jptd.getCurrentStats());
     }
 
-    private void testJobStatusShortInfoProto(JobStatusShortInfoProto jssi) throws Exception {
+    private static void testJobStatusShortInfoProto(JobStatusShortInfoProto jssi, final int filterLevel) throws Exception {
         assertNotNull(jssi);
 
         assertTrue(0 <= jssi.getCallingUid());
+        if (filterLevel == PRIVACY_AUTO) {
+            assertTrue(jssi.getBatteryName().isEmpty());
+        }
     }
 
-    private void testJobStatusDumpProto(JobStatusDumpProto jsd) throws Exception {
+    private static void testJobStatusDumpProto(JobStatusDumpProto jsd) throws Exception {
         assertNotNull(jsd);
 
         assertTrue(0 <= jsd.getCallingUid());
@@ -224,7 +234,7 @@ public class JobSchedulerIncidentTest extends ProtoDumpTestCase {
         assertTrue(0 <= jsd.getLastFailedRunTime());
     }
 
-    private void testNetworkRequestProto(NetworkRequestProto nr) throws Exception {
+    private static void testNetworkRequestProto(NetworkRequestProto nr) throws Exception {
         assertNotNull(nr);
 
         assertTrue(NetworkRequestProto.Type.getDescriptor().getValues()
@@ -232,7 +242,7 @@ public class JobSchedulerIncidentTest extends ProtoDumpTestCase {
         testNetworkCapabilitesProto(nr.getNetworkCapabilities());
     }
 
-    private void testNetworkCapabilitesProto(NetworkCapabilitiesProto nc) throws Exception {
+    private static void testNetworkCapabilitesProto(NetworkCapabilitiesProto nc) throws Exception {
         assertNotNull(nc);
 
         for (NetworkCapabilitiesProto.Transport t : nc.getTransportsList()) {
@@ -248,61 +258,73 @@ public class JobSchedulerIncidentTest extends ProtoDumpTestCase {
         assertTrue(0 <= nc.getLinkDownBandwidthKbps());
     }
 
-    private void testStateControllerProto(StateControllerProto sc) throws Exception {
+    private static void testStateControllerProto(StateControllerProto sc, int filterLevel) throws Exception {
         assertNotNull(sc);
 
         StateControllerProto.AppIdleController aic = sc.getAppIdle();
         for (StateControllerProto.AppIdleController.TrackedJob tj : aic.getTrackedJobsList()) {
-            testJobStatusShortInfoProto(tj.getInfo());
+            testJobStatusShortInfoProto(tj.getInfo(), filterLevel);
             assertTrue(0 <= tj.getSourceUid());
         }
         StateControllerProto.BackgroundJobsController bjc = sc.getBackground();
         for (StateControllerProto.BackgroundJobsController.TrackedJob tj : bjc.getTrackedJobsList()) {
-            testJobStatusShortInfoProto(tj.getInfo());
+            testJobStatusShortInfoProto(tj.getInfo(), filterLevel);
             assertTrue(0 <= tj.getSourceUid());
         }
         StateControllerProto.BatteryController bc = sc.getBattery();
         for (StateControllerProto.BatteryController.TrackedJob tj : bc.getTrackedJobsList()) {
-            testJobStatusShortInfoProto(tj.getInfo());
+            testJobStatusShortInfoProto(tj.getInfo(), filterLevel);
             assertTrue(0 <= tj.getSourceUid());
         }
         StateControllerProto.ConnectivityController cc = sc.getConnectivity();
         for (StateControllerProto.ConnectivityController.TrackedJob tj : cc.getTrackedJobsList()) {
-            testJobStatusShortInfoProto(tj.getInfo());
+            testJobStatusShortInfoProto(tj.getInfo(), filterLevel);
             assertTrue(0 <= tj.getSourceUid());
             testNetworkRequestProto(tj.getRequiredNetwork());
         }
         StateControllerProto.ContentObserverController coc = sc.getContentObserver();
         for (StateControllerProto.ContentObserverController.TrackedJob tj : coc.getTrackedJobsList()) {
-            testJobStatusShortInfoProto(tj.getInfo());
+            testJobStatusShortInfoProto(tj.getInfo(), filterLevel);
             assertTrue(0 <= tj.getSourceUid());
         }
         for (StateControllerProto.ContentObserverController.Observer o : coc.getObserversList()) {
             assertTrue(0 <= o.getUserId());
 
             for (StateControllerProto.ContentObserverController.Observer.TriggerContentData tcd : o.getTriggersList()) {
+                if (filterLevel == PRIVACY_AUTO) {
+                    assertTrue(tcd.getUri().isEmpty());
+                }
                 for (StateControllerProto.ContentObserverController.Observer.TriggerContentData.JobInstance ji : tcd.getJobsList()) {
-                    testJobStatusShortInfoProto(ji.getInfo());
+                    testJobStatusShortInfoProto(ji.getInfo(), filterLevel);
 
                     assertTrue(0 <= ji.getSourceUid());
                     assertTrue(0 <= ji.getTriggerContentUpdateDelayMs());
                     assertTrue(0 <= ji.getTriggerContentMaxDelayMs());
+
+                    if (filterLevel == PRIVACY_AUTO) {
+                        for (String ca : ji.getChangedAuthoritiesList()) {
+                            assertTrue(ca.isEmpty());
+                        }
+                        for (String ca : ji.getChangedUrisList()) {
+                            assertTrue(ca.isEmpty());
+                        }
+                    }
                 }
             }
         }
         StateControllerProto.DeviceIdleJobsController dijc = sc.getDeviceIdle();
         for (StateControllerProto.DeviceIdleJobsController.TrackedJob tj : dijc.getTrackedJobsList()) {
-            testJobStatusShortInfoProto(tj.getInfo());
+            testJobStatusShortInfoProto(tj.getInfo(), filterLevel);
             assertTrue(0 <= tj.getSourceUid());
         }
         StateControllerProto.IdleController ic = sc.getIdle();
         for (StateControllerProto.IdleController.TrackedJob tj : ic.getTrackedJobsList()) {
-            testJobStatusShortInfoProto(tj.getInfo());
+            testJobStatusShortInfoProto(tj.getInfo(), filterLevel);
             assertTrue(0 <= tj.getSourceUid());
         }
         StateControllerProto.StorageController scr = sc.getStorage();
         for (StateControllerProto.StorageController.TrackedJob tj : scr.getTrackedJobsList()) {
-            testJobStatusShortInfoProto(tj.getInfo());
+            testJobStatusShortInfoProto(tj.getInfo(), filterLevel);
             assertTrue(0 <= tj.getSourceUid());
         }
         StateControllerProto.TimeController tc = sc.getTime();
@@ -310,7 +332,7 @@ public class JobSchedulerIncidentTest extends ProtoDumpTestCase {
         assertTrue(0 <= tc.getTimeUntilNextDelayAlarmMs());
         assertTrue(0 <= tc.getTimeUntilNextDeadlineAlarmMs());
         for (StateControllerProto.TimeController.TrackedJob tj : tc.getTrackedJobsList()) {
-            testJobStatusShortInfoProto(tj.getInfo());
+            testJobStatusShortInfoProto(tj.getInfo(), filterLevel);
             assertTrue(0 <= tj.getSourceUid());
         }
     }

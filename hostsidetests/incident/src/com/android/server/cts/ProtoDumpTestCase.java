@@ -48,6 +48,11 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class ProtoDumpTestCase extends DeviceTestCase implements IBuildReceiver {
+    protected static final int PRIVACY_AUTO = 0;
+    protected static final int PRIVACY_EXPLICIT = 1;
+    protected static final int PRIVACY_LOCAL = 2;
+    /** No privacy filtering has been done. All fields should be present. */
+    protected static final int PRIVACY_NONE = 3;
 
     protected IBuildInfo mCtsBuild;
 

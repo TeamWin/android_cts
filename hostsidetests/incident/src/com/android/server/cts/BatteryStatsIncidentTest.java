@@ -53,6 +53,13 @@ public class BatteryStatsIncidentTest extends ProtoDumpTestCase {
 
         final BatteryStatsServiceDumpProto dump = getDump(BatteryStatsServiceDumpProto.parser(),
                 "dumpsys batterystats --proto");
+
+        verifyBatteryStatsServiceDumpProto(dump, PRIVACY_NONE);
+
+        batteryOffScreenOn();
+    }
+
+    static void verifyBatteryStatsServiceDumpProto(BatteryStatsServiceDumpProto dump, final int filterLevel) throws Exception {
         final BatteryStatsProto bs = dump.getBatterystats();
         assertNotNull(bs);
 
@@ -66,15 +73,13 @@ public class BatteryStatsIncidentTest extends ProtoDumpTestCase {
         assertFalse(bs.getEndPlatformVersion().isEmpty());
 
         for (UidProto u : bs.getUidsList()) {
-            testUidProto(u);
+            testUidProto(u, filterLevel);
         }
 
         testSystemProto(bs.getSystem());
-
-        batteryOffScreenOn();
     }
 
-    private void testControllerActivityProto(ControllerActivityProto ca) throws Exception {
+    private static void testControllerActivityProto(ControllerActivityProto ca) throws Exception {
         assertNotNull(ca);
 
         assertTrue(0 <= ca.getIdleDurationMs());
@@ -85,7 +90,7 @@ public class BatteryStatsIncidentTest extends ProtoDumpTestCase {
         }
     }
 
-    private void testBatteryLevelStep(SystemProto.BatteryLevelStep bls) throws Exception {
+    private static void testBatteryLevelStep(SystemProto.BatteryLevelStep bls) throws Exception {
         assertNotNull(bls);
 
         assertTrue(0 < bls.getDurationMs());
@@ -100,7 +105,8 @@ public class BatteryStatsIncidentTest extends ProtoDumpTestCase {
                 .contains(bls.getIdleMode().getValueDescriptor()));
     }
 
-    private void testSystemProto(SystemProto s) throws Exception {
+    private static void testSystemProto(SystemProto s) throws Exception {
+        final long epsilon = 500; // Allow ~500 ms of error when comparing times.
         assertNotNull(s);
 
         SystemProto.Battery b = s.getBattery();
@@ -109,22 +115,23 @@ public class BatteryStatsIncidentTest extends ProtoDumpTestCase {
         long totalRealtimeMs = b.getTotalRealtimeMs();
         long totalUptimeMs = b.getTotalUptimeMs();
         assertTrue(0 <= totalUptimeMs);
-        assertTrue(totalUptimeMs <= totalRealtimeMs);
+        assertTrue(totalUptimeMs <= totalRealtimeMs + epsilon);
         long batteryRealtimeMs = b.getBatteryRealtimeMs();
         long batteryUptimeMs = b.getBatteryUptimeMs();
         assertTrue(0 <= batteryUptimeMs);
-        assertTrue(batteryUptimeMs <= batteryRealtimeMs);
-        assertTrue(batteryRealtimeMs <= totalRealtimeMs);
-        assertTrue(batteryUptimeMs <= totalUptimeMs);
+        assertTrue(batteryUptimeMs <= batteryRealtimeMs + epsilon);
+        assertTrue("Battery realtime (" + batteryRealtimeMs + ") is greater than total realtime (" + totalRealtimeMs + ")",
+            batteryRealtimeMs <= totalRealtimeMs + epsilon);
+        assertTrue(batteryUptimeMs <= totalUptimeMs + epsilon);
         long screenOffRealtimeMs = b.getScreenOffRealtimeMs();
         long screenOffUptimeMs = b.getScreenOffUptimeMs();
         assertTrue(0 <= screenOffUptimeMs);
-        assertTrue(screenOffUptimeMs <= screenOffRealtimeMs);
-        assertTrue(screenOffRealtimeMs <= totalRealtimeMs);
-        assertTrue(screenOffUptimeMs <= totalUptimeMs);
+        assertTrue(screenOffUptimeMs <= screenOffRealtimeMs + epsilon);
+        assertTrue(screenOffRealtimeMs <= totalRealtimeMs + epsilon);
+        assertTrue(screenOffUptimeMs <= totalUptimeMs + epsilon);
         long screenDozeDurationMs = b.getScreenDozeDurationMs();
         assertTrue(0 <= screenDozeDurationMs);
-        assertTrue(screenDozeDurationMs <= screenOffRealtimeMs);
+        assertTrue(screenDozeDurationMs <= screenOffRealtimeMs + epsilon);
         assertTrue(0 < b.getEstimatedBatteryCapacityMah());
         long minLearnedCapacityUah = b.getMinLearnedBatteryCapacityUah();
         long maxLearnedCapacityUah = b.getMaxLearnedBatteryCapacityUah();
@@ -276,7 +283,7 @@ public class BatteryStatsIncidentTest extends ProtoDumpTestCase {
         }
     }
 
-    private void testTimerProto(TimerProto t) throws Exception {
+    private static void testTimerProto(TimerProto t) throws Exception {
         assertNotNull(t);
 
         long duration = t.getDurationMs();
@@ -300,7 +307,7 @@ public class BatteryStatsIncidentTest extends ProtoDumpTestCase {
         }
     }
 
-    private void testByFrequency(UidProto.Cpu.ByFrequency bf) throws Exception {
+    private static void testByFrequency(UidProto.Cpu.ByFrequency bf) throws Exception {
         assertNotNull(bf);
 
         assertTrue(1 <= bf.getFrequencyIndex());
@@ -310,7 +317,7 @@ public class BatteryStatsIncidentTest extends ProtoDumpTestCase {
         assertTrue(screenOff <= total);
     }
 
-    private void testUidProto(UidProto u) throws Exception {
+    private static void testUidProto(UidProto u, final int filterLevel) throws Exception {
         assertNotNull(u);
 
         assertTrue(0 <= u.getUid());
@@ -363,15 +370,23 @@ public class BatteryStatsIncidentTest extends ProtoDumpTestCase {
         testTimerProto(u.getVideo());
 
         for (UidProto.Job j : u.getJobsList()) {
-            assertNotNull(j.getName());
-            assertFalse(j.getName().isEmpty());
+            if (filterLevel >= PRIVACY_EXPLICIT) {
+                assertNotNull(j.getName());
+                assertFalse(j.getName().isEmpty());
+            } else {
+                assertTrue(j.getName().isEmpty());
+            }
             testTimerProto(j.getTotal());
             testTimerProto(j.getBackground());
         }
 
         for (UidProto.JobCompletion jc : u.getJobCompletionList()) {
-            assertNotNull(jc.getName());
-            assertFalse(jc.getName().isEmpty());
+            if (filterLevel >= PRIVACY_EXPLICIT) {
+                assertNotNull(jc.getName());
+                assertFalse(jc.getName().isEmpty());
+            } else {
+                assertTrue(jc.getName().isEmpty());
+            }
             for (UidProto.JobCompletion.ReasonCount rc : jc.getReasonCountList()) {
                 assertTrue(0 <= rc.getCount());
             }
@@ -429,6 +444,11 @@ public class BatteryStatsIncidentTest extends ProtoDumpTestCase {
         }
 
         for (UidProto.Sync s : u.getSyncsList()) {
+            if (filterLevel >= PRIVACY_EXPLICIT) {
+                assertFalse(s.getName().isEmpty());
+            } else {
+                assertTrue(s.getName().isEmpty());
+            }
             testTimerProto(s.getTotal());
             testTimerProto(s.getBackground());
         }
@@ -444,6 +464,11 @@ public class BatteryStatsIncidentTest extends ProtoDumpTestCase {
         assertTrue(awBgPartial <= awPartial);
 
         for (UidProto.Wakelock w : u.getWakelocksList()) {
+            // Unfortunately, apps can legitimately pass an empty string as the wakelock name, so we
+            // can't guarantee that wakelock names will be non-empty for EXPLICIT+.
+            if (filterLevel == PRIVACY_AUTO) {
+                assertTrue(w.getName().isEmpty());
+            }
             testTimerProto(w.getFull());
             testTimerProto(w.getPartial());
             testTimerProto(w.getBackgroundPartial());
@@ -451,6 +476,9 @@ public class BatteryStatsIncidentTest extends ProtoDumpTestCase {
         }
 
         for (UidProto.WakeupAlarm wa : u.getWakeupAlarmList()) {
+            if (filterLevel == PRIVACY_AUTO) {
+                assertTrue(wa.getName().isEmpty());
+            }
             assertTrue(0 <= wa.getCount());
         }
 
