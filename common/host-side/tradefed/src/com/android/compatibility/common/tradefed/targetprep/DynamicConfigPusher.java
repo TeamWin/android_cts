@@ -54,6 +54,10 @@ public class DynamicConfigPusher implements ITargetCleaner {
             "target after test completion.")
     private boolean mCleanup = true;
 
+    @Option(name = "config-url", description = "The url path of the dynamic config. If set, " +
+            "will override the default config location defined in CompatibilityBuildProvider.")
+    private String mConfigUrl;
+
     @Option(name="config-filename", description = "The module name for module-level " +
             "configurations, or the suite name for suite-level configurations", mandatory = true)
     private String mModuleName;
@@ -94,7 +98,7 @@ public class DynamicConfigPusher implements ITargetCleaner {
         }
 
         String apfeConfigInJson = null;
-        String originUrl = buildHelper.getDynamicConfigUrl();
+        String originUrl = (mConfigUrl != null) ? mConfigUrl : buildHelper.getDynamicConfigUrl();
 
         if (originUrl != null) {
             String requestUrl = originUrl;
