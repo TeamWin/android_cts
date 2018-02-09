@@ -34,6 +34,8 @@ import static org.junit.Assume.assumeTrue;
 import android.support.test.filters.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -57,6 +59,18 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     private static final String TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME = "TurnScreenOnSingleTaskActivity";
     private static final String TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY =
             "TurnScreenOnWithRelayoutActivity";
+
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
+        disableDozeStates();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        super.tearDown();
+        resetDozeStates();
+    }
 
     @Presubmit
     @Test
