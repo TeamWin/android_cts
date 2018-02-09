@@ -39,6 +39,7 @@ import android.support.test.runner.AndroidJUnit4;
 import android.util.TypedValue;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -99,7 +100,17 @@ public class AssetManagerTest {
 
         String[] files = mAssets.list("");
         assertThat(files).isNotNull();
-        assertThat(files).asList().contains(fileName);
+
+        // We don't do an exact match because the framework can add asset files and this test
+        // would be too brittle.
+        assertThat(files).asList().containsAllOf(fileName, "subdir");
+
+        files = mAssets.list("subdir");
+        assertThat(files).isNotNull();
+        assertThat(files).asList().contains("subdir_text.txt");
+
+        // This directory doesn't exist.
+        assertThat(mAssets.list("__foo__bar__dir__")).asList().isEmpty();
 
         try {
             mAssets.open("notExistFile.txt", AssetManager.ACCESS_BUFFER);
