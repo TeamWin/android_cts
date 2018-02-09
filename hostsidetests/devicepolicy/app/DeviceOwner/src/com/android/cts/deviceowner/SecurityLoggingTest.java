@@ -53,16 +53,25 @@ import android.app.admin.SecurityLog.SecurityEvent;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Parcel;
+import android.os.Process;
+import android.security.keystore.KeyGenParameterSpec;
+import android.security.keystore.KeyProperties;
+import android.security.keystore.KeyProtection;
 import android.support.test.InstrumentationRegistry;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.KeyStore;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import javax.crypto.spec.SecretKeySpec;
 
 public class SecurityLoggingTest extends BaseDeviceOwnerTest {
     private static final String ARG_BATCH_NUMBER = "batchNumber";
@@ -109,6 +118,9 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
                     .put(TAG_CRYPTO_SELF_TEST_COMPLETED, of(I))
                     .build();
 
+    private static final String GENERATED_KEY_ALIAS = "generated_key_alias";
+    private static final String IMPORTED_KEY_ALIAS = "imported_key_alias";
+
     /**
      * Test: retrieving security logs can only be done if there's one user on the device or all
      * secondary users / profiles are affiliated.
@@ -134,10 +146,37 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
     }
 
     /**
-     * Test: retrieving security logs. This test has should be called when security logging is
-     * enabled and a batch of events is available.
+     * Test: retrieves security logs and verifies that all events generated as a result of host
+     * side actions and by {@link #testGenerateLogs()} are there.
      */
-    public void testGetSecurityLogs() throws Exception {
+    public void testVerifyGeneratedLogs() throws Exception {
+        // Automatically generated events.
+        final List<SecurityEvent> events = getEvents();
+        verifyOsStartup(events);
+        verifyLoggingStarted(events);
+        verifyCryptoSelfTest(events);
+
+        final int uid = Process.myUid();
+        verifyKeyGenerated(events, GENERATED_KEY_ALIAS, uid);
+        verifyKeyDeleted(events, GENERATED_KEY_ALIAS, uid);
+        verifyKeyImported(events, IMPORTED_KEY_ALIAS, uid);
+        verifyKeyDeleted(events, IMPORTED_KEY_ALIAS, uid);
+    }
+
+    /**
+     * Generates events for positive test cases.
+     */
+    public void testGenerateLogs() throws Exception {
+        generateKey(GENERATED_KEY_ALIAS);
+        deleteKey(GENERATED_KEY_ALIAS);
+        importKey(IMPORTED_KEY_ALIAS);
+        deleteKey(IMPORTED_KEY_ALIAS);
+    }
+
+    /**
+     * Fetches and sanity-checks the events.
+     */
+    private List<SecurityEvent> getEvents() throws Exception {
         List<SecurityEvent> events = null;
         // Retry once after seeping for 1 second, in case "dpm force-security-logs" hasn't taken
         // effect just yet.
@@ -146,19 +185,41 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
             if (events == null) Thread.sleep(1000);
         }
 
-        final String param = InstrumentationRegistry.getArguments().getString(ARG_BATCH_NUMBER);
-        final int batchNumber = param == null ? 0 : Integer.parseInt(param);
-        verifySecurityLogs(batchNumber, events);
+        verifySecurityLogs(events);
+
+        return events;
     }
 
-    private void verifySecurityLogs(int batchNumber, List<SecurityEvent> events) {
-        assertTrue("Unable to get events", events != null && events.size() > 0);
+    /**
+     * Test: check that there are no gaps between ids in two consecutive batches. Shared preference
+     * is used to store these numbers between test invocations.
+     */
+    public void testVerifyLogIds() throws Exception {
+        final String param = InstrumentationRegistry.getArguments().getString(ARG_BATCH_NUMBER);
+        final int batchId = param == null ? 0 : Integer.parseInt(param);
+        final List<SecurityEvent> events = getEvents();
+        final SharedPreferences prefs =
+                mContext.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
 
-        verifyContinuousIdsBetweenBatches(batchNumber, events);
-
-        if (batchNumber == 0) {
-            verifyAutomaticEvents(events);
+        final long firstId = events.get(0).getId();
+        if (batchId == 0) {
+            assertEquals("Event id wasn't reset.", 0L, firstId);
+        } else {
+            final String prevBatchLastIdKey = PREF_KEY_PREFIX + (batchId - 1);
+            assertTrue("Last event id from previous batch not found in shared prefs",
+                    prefs.contains(prevBatchLastIdKey));
+            final long prevBatchLastId = prefs.getLong(prevBatchLastIdKey, 0);
+            assertEquals("Event ids aren't consecutive between batches",
+                    firstId, prevBatchLastId + 1);
         }
+
+        final String currBatchLastIdKey = PREF_KEY_PREFIX + batchId;
+        final long lastId = events.get(events.size() - 1).getId();
+        prefs.edit().putLong(currBatchLastIdKey, lastId).commit();
+    }
+
+    private void verifySecurityLogs(List<SecurityEvent> events) {
+        assertTrue("Unable to get events", events != null && events.size() > 0);
 
         // We don't know much about the events, so just call public API methods.
         for (int i = 0; i < events.size(); i++) {
@@ -221,12 +282,6 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
         }
     }
 
-    private void verifyAutomaticEvents(List<SecurityEvent> events) {
-        verifyOsStartup(events);
-        verifyLoggingStarted(events);
-        verifyCryptoSelfTest(events);
-    }
-
     private void verifyOsStartup(List<SecurityEvent> events) {
         final SecurityEvent event = findEvent("os startup", events, TAG_OS_STARTUP);
         // Verified boot state
@@ -268,33 +323,11 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
     }
 
     private static int getInt(SecurityEvent event) {
-        assertTrue(event.getData() instanceof Integer);
         return (Integer) event.getData();
     }
 
-    /**
-     * Check that there are no gaps between ids in two consecutive batches. Shared preference is
-     * used to store these numbers between invocations.
-     */
-    private void verifyContinuousIdsBetweenBatches(int batchNumber, List<SecurityEvent> events) {
-        final SharedPreferences prefs =
-                mContext.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
-
-        final long firstId = events.get(0).getId();
-        if (batchNumber == 0) {
-            assertEquals("Event id wasn't reset.", 0L, firstId);
-        } else {
-            final String prevBatchLastIdKey = PREF_KEY_PREFIX + (batchNumber - 1);
-            assertTrue("Last event id from previous batch not found in shared prefs",
-                    prefs.contains(prevBatchLastIdKey));
-            final long prevBatchLastId = prefs.getLong(prevBatchLastIdKey, 0);
-            assertEquals("Event ids aren't consecutive between batches",
-                    firstId, prevBatchLastId + 1);
-        }
-
-        final String currBatchLastIdKey = PREF_KEY_PREFIX + batchNumber;
-        final long lastId = events.get(events.size() - 1).getId();
-        prefs.edit().putLong(currBatchLastIdKey, lastId).commit();
+    private static int getInt(SecurityEvent event, int pos) {
+        return (Integer) getDatum(event, pos);
     }
 
     /**
@@ -315,6 +348,9 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
     public void testDisablingSecurityLogging() {
         mDevicePolicyManager.setSecurityLoggingEnabled(getWho(), false);
         assertFalse(mDevicePolicyManager.isSecurityLoggingEnabled(getWho()));
+
+        // Verify that logs are actually not available.
+        assertNull(mDevicePolicyManager.retrieveSecurityLogs(getWho()));
     }
 
     /**
@@ -328,5 +364,44 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
             assertNull(mDevicePolicyManager.retrieveSecurityLogs(getWho()));
             assertNull(mDevicePolicyManager.retrieveSecurityLogs(getWho()));
         }
+    }
+
+    private void importKey(String alias) throws Exception{
+        final KeyStore ks = KeyStore.getInstance("AndroidKeyStore");
+        ks.load(null);
+        ks.setEntry(alias, new KeyStore.SecretKeyEntry(new SecretKeySpec(new byte[32], "AES")),
+                new KeyProtection.Builder(KeyProperties.PURPOSE_ENCRYPT).build());
+    }
+
+    private void verifyKeyGenerated(List<SecurityEvent> events, String alias, int uid) {
+        findEvent("key generated", events,
+                e -> e.getTag() == TAG_KEY_GENERATED && getInt(e, 0) == 1
+                && getString(e, 1).contains(alias) && getInt(e, 2) == uid);
+    }
+
+    private void verifyKeyDeleted(List<SecurityEvent> events, String alias, int uid) {
+        findEvent("key deleted", events,
+                e -> e.getTag() == TAG_KEY_DESTRUCTION && getInt(e, 0) == 1
+                        && getString(e, 1).contains(alias) && getInt(e, 2) == uid);
+    }
+
+    private void verifyKeyImported(List<SecurityEvent> events, String alias, int uid) {
+        findEvent("key imported", events,
+                e -> e.getTag() == TAG_KEY_IMPORT && getInt(e, 0) == 1
+                        && getString(e, 1).contains(alias) && getInt(e, 2) == uid);
+    }
+
+    private void deleteKey(String keyAlias) throws Exception {
+        final KeyStore ks = KeyStore.getInstance("AndroidKeyStore");
+        ks.load(null);
+        ks.deleteEntry(keyAlias);
+    }
+
+    private void generateKey(String keyAlias) throws Exception {
+        final KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA", "AndroidKeyStore");
+        generator.initialize(
+                new KeyGenParameterSpec.Builder(keyAlias, KeyProperties.PURPOSE_SIGN).build());
+        final KeyPair keyPair = generator.generateKeyPair();
+        assertNotNull(keyPair);
     }
 }
