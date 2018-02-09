@@ -17,7 +17,6 @@ package android.appsecurity.cts;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
-import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
 
@@ -44,13 +43,16 @@ public class OverlayHostTest extends DeviceTestCase implements IBuildReceiver {
     }
 
     public void testInstallingOverlayHasNoEffect() throws Exception {
-        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK), false, false));
-        CollectingOutputReceiver receiver = new CollectingOutputReceiver();
-        getDevice().getIDevice().executeShellCommand("cmd overlay list", receiver);
+        assertFalse(getDevice().getInstalledPackageNames().contains(PKG));
+
+        // Try to install the overlay, but expect an error.
+        assertNotNull(getDevice().installPackage(mBuildHelper.getTestFile(APK), false, false));
+
+        // The install should have failed.
+        assertFalse(getDevice().getInstalledPackageNames().contains(PKG));
 
         // The package of the installed overlay should not appear in the overlay manager list.
-        final String output = receiver.getOutput();
-        assertFalse(output.contains(PKG));
+        assertFalse(getDevice().executeShellCommand("cmd overlay list").contains(PKG));
     }
 
 }
