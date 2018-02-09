@@ -91,6 +91,7 @@ public class DeviceAndProfileOwnerTransferIncomingTest {
         return affiliationIds.iterator().next();
     }
 
+    @Test
     public void testTransferOwnershipBundleLoaded() throws Throwable {
         PersistableBundle bundle = mDevicePolicyManager.getTransferOwnershipBundle();
         assertNotNull(bundle);
