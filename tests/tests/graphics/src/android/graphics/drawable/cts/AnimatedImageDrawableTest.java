@@ -57,7 +57,9 @@ public class AnimatedImageDrawableTest {
     private static final int RES_ID = R.drawable.animated;
     private static final int WIDTH = 278;
     private static final int HEIGHT = 183;
-    private static final int DURATION = 1000; // in milliseconds
+    private static final int NUM_FRAMES = 4;
+    private static final int FRAME_DURATION = 250; // in milliseconds
+    private static final int DURATION = NUM_FRAMES * FRAME_DURATION;
     private static final int LAYOUT = R.layout.animated_image_layout;
     private static final int IMAGE_ID = R.id.animated_image;
     @Rule
@@ -227,7 +229,6 @@ public class AnimatedImageDrawableTest {
         cb.assertStarted(false);
         cb.assertEnded(false);
 
-
         mActivityRule.runOnUiThread(() -> {
             drawable.start();
             assertTrue(drawable.isRunning());
@@ -242,6 +243,51 @@ public class AnimatedImageDrawableTest {
         cb.waitForEnd(DURATION * 2);
         cb.assertEnded(true);
         assertFalse(drawable.isRunning());
+    }
+
+    @Test
+    public void testLifeCycleSoftware() throws Throwable {
+        AnimatedImageDrawable drawable = createFromImageDecoder(RES_ID);
+
+        Bitmap bm = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(),
+                Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bm);
+
+        Callback cb = new Callback(drawable);
+        mActivityRule.runOnUiThread(() -> {
+            drawable.registerAnimationCallback(cb);
+            drawable.draw(canvas);
+        });
+
+        assertFalse(drawable.isRunning());
+        cb.assertStarted(false);
+        cb.assertEnded(false);
+
+        mActivityRule.runOnUiThread(() -> {
+            drawable.start();
+            assertTrue(drawable.isRunning());
+            drawable.draw(canvas);
+        });
+        cb.waitForStart();
+        cb.assertStarted(true);
+
+        // Only run the animation one time.
+        drawable.setLoopCount(0);
+
+        // The drawable will prevent skipping frames, so we actually have to
+        // draw each frame. (Start with 1, since we already drew frame 0.)
+        for (int i = 1; i < NUM_FRAMES; i++) {
+            cb.waitForEnd(FRAME_DURATION);
+            cb.assertEnded(false);
+            mActivityRule.runOnUiThread(() -> {
+                assertTrue(drawable.isRunning());
+                drawable.draw(canvas);
+            });
+        }
+
+        cb.waitForEnd(FRAME_DURATION);
+        assertFalse(drawable.isRunning());
+        cb.assertEnded(true);
     }
 
     @Test
