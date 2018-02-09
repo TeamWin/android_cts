@@ -43,6 +43,18 @@ LOCAL_DX_FLAGS := --multi-dex
 
 # Resource unit tests use a private locale and some densities
 LOCAL_AAPT_INCLUDE_ALL_RESOURCES := true
+LOCAL_AAPT_FLAGS := \
+	-c cs \
+	-c fil,fil-rPH,fil-rSA \
+	-c fr,fr-rFR \
+	-c iw,iw-rIL \
+	-c kok,b+kok+419,b+kok+419+variant,b+kok+IN,b+kok+Knda,b+kok+Knda+419,b+kok+Knda+419+variant \
+	-c b+kok+variant \
+	-c mk,mk-rMK \
+	-c tl,tl-rPH \
+	-c tgl,tgl-rPH \
+	-c tlh \
+	-c xx,xx-rYY
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_MULTILIB := both
