@@ -357,8 +357,8 @@ public class BitmapDrawableTest {
     @Test
     public void testGetIntrinsicSize() {
         BitmapDrawable bitmapDrawable = new BitmapDrawable();
-        assertEquals(-1, bitmapDrawable.getIntrinsicWidth());
-        assertEquals(-1, bitmapDrawable.getIntrinsicHeight());
+        assertEquals(0, bitmapDrawable.getIntrinsicWidth());
+        assertEquals(0, bitmapDrawable.getIntrinsicHeight());
 
         Bitmap bitmap = Bitmap.createBitmap(200, 300, Config.RGB_565);
         bitmapDrawable = new BitmapDrawable(bitmap);
