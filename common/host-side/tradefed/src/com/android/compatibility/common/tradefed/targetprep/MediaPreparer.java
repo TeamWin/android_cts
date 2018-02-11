@@ -16,16 +16,15 @@
 package com.android.compatibility.common.tradefed.targetprep;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
-import com.android.compatibility.common.tradefed.targetprep.PreconditionPreparer;
 import com.android.compatibility.common.tradefed.util.DynamicConfigFileReader;
 import com.android.ddmlib.IDevice;
-import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.result.ITestInvocationListener;
+import com.android.tradefed.result.TestDescription;
 import com.android.tradefed.targetprep.BuildError;
 import com.android.tradefed.targetprep.TargetSetupError;
 import com.android.tradefed.testtype.AndroidJUnitTest;
@@ -380,7 +379,7 @@ public class MediaPreparer extends PreconditionPreparer {
     private class MediaPreparerListener implements ITestInvocationListener {
 
         @Override
-        public void testEnded(TestIdentifier test, Map<String, String> metrics) {
+        public void testEnded(TestDescription test, Map<String, String> metrics) {
             String resString = metrics.get(RESOLUTION_STRING_KEY);
             if (resString != null) {
                 mMaxRes = new Resolution(resString);
@@ -388,7 +387,7 @@ public class MediaPreparer extends PreconditionPreparer {
         }
 
         @Override
-        public void testFailed(TestIdentifier test, String trace) {
+        public void testFailed(TestDescription test, String trace) {
             mFailureStackTrace = trace;
         }
     }

@@ -17,11 +17,11 @@
 package android.appsecurity.cts;
 
 import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
-import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.ddmlib.testrunner.TestResult.TestStatus;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.result.CollectingTestListener;
+import com.android.tradefed.result.TestDescription;
 import com.android.tradefed.result.TestResult;
 import com.android.tradefed.result.TestRunResult;
 
@@ -93,7 +93,7 @@ public class Utils {
         if (result.hasFailedTests()) {
             // build a meaningful error message
             StringBuilder errorBuilder = new StringBuilder("on-device tests failed:\n");
-            for (Map.Entry<TestIdentifier, TestResult> resultEntry :
+            for (Map.Entry<TestDescription, TestResult> resultEntry :
                 result.getTestResults().entrySet()) {
                 if (!resultEntry.getValue().getStatus().equals(TestStatus.PASSED)) {
                     errorBuilder.append(resultEntry.getKey().toString());

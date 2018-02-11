@@ -165,4 +165,10 @@ class CertificateData {
       "8D:A7:F9:65:EC:5E:FC:37:91:0F:1C:6E:59:FD:C1:CC:6A:6E:DE:16",
       "B1:2E:13:63:45:86:A4:6F:1A:B2:60:68:37:58:2D:C4:AC:FD:94:97",
   };
+
+  static final String[] WFA_CERTIFICATE_DATA = {
+      "BB:49:24:83:18:47:95:2B:DB:1A:12:B0:38:EC:51:54:AD:CB:DE:43",
+      "38:D6:63:9F:51:D7:24:21:AD:75:3C:C6:07:54:99:B7:1F:EC:F7:FC",
+      "51:50:1F:BF:CE:69:18:9D:60:9C:FA:F1:40:C5:76:75:5D:CC:1F:DF",
+  };
 }

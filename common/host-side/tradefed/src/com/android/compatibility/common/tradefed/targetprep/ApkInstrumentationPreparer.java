@@ -17,7 +17,6 @@
 package com.android.compatibility.common.tradefed.targetprep;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
-import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.OptionClass;
@@ -25,6 +24,7 @@ import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.ITestInvocationListener;
+import com.android.tradefed.result.TestDescription;
 import com.android.tradefed.targetprep.BuildError;
 import com.android.tradefed.targetprep.ITargetCleaner;
 import com.android.tradefed.targetprep.TargetSetupError;
@@ -57,9 +57,9 @@ public class ApkInstrumentationPreparer extends PreconditionPreparer implements 
     @Option(name = "throw-error", description = "Whether to throw error for device test failure")
     protected boolean mThrowError = true;
 
-    protected ConcurrentHashMap<TestIdentifier, Map<String, String>> testMetrics =
+    protected ConcurrentHashMap<TestDescription, Map<String, String>> testMetrics =
             new ConcurrentHashMap<>();
-    private ConcurrentHashMap<TestIdentifier, String> testFailures = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<TestDescription, String> testFailures = new ConcurrentHashMap<>();
 
     /**
      * {@inheritDoc}
@@ -126,7 +126,7 @@ public class ApkInstrumentationPreparer extends PreconditionPreparer implements 
         instrTest.run(listener);
         boolean success = true;
         if (!testFailures.isEmpty()) {
-            for (TestIdentifier test : testFailures.keySet()) {
+            for (TestDescription test : testFailures.keySet()) {
                 success = false;
                 String trace = testFailures.get(test);
                 if (mThrowError) {
@@ -143,12 +143,12 @@ public class ApkInstrumentationPreparer extends PreconditionPreparer implements 
     private class TargetPreparerListener implements ITestInvocationListener {
 
         @Override
-        public void testEnded(TestIdentifier test, Map<String, String> metrics) {
+        public void testEnded(TestDescription test, Map<String, String> metrics) {
             testMetrics.put(test, metrics);
         }
 
         @Override
-        public void testFailed(TestIdentifier test, String trace) {
+        public void testFailed(TestDescription test, String trace) {
             testFailures.put(test, trace);
         }
 

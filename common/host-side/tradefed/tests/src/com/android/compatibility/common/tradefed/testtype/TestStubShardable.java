@@ -15,8 +15,8 @@
  */
 package com.android.compatibility.common.tradefed.testtype;
 
-import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.config.OptionCopier;
+import com.android.tradefed.result.TestDescription;
 import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.IStrictShardableTest;
 
@@ -32,10 +32,10 @@ public class TestStubShardable extends TestStub implements IStrictShardableTest 
         TestStubShardable test = new TestStubShardable();
         OptionCopier.copyOptionsNoThrow(this, test);
         test.mShardedTestToRun = new ArrayList<>();
-        TestIdentifier tid = new TestIdentifier("TestStub", "test" + shardIndex);
+        TestDescription tid = new TestDescription("TestStub", "test" + shardIndex);
         test.mShardedTestToRun.add(tid);
         if (mIsComplete == false) {
-            TestIdentifier tid2 = new TestIdentifier("TestStub", "test" + shardIndex + 100);
+            TestDescription tid2 = new TestDescription("TestStub", "test" + shardIndex + 100);
             test.mShardedTestToRun.add(tid2);
             test.mIsComplete = false;
         }

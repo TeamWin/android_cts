@@ -16,9 +16,9 @@
 
 package com.android.compatibility.common.tradefed.result;
 
-import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.config.OptionSetter;
 import com.android.tradefed.invoker.IInvocationContext;
+import com.android.tradefed.result.TestDescription;
 import com.android.tradefed.util.AbiUtils;
 
 import junit.framework.TestCase;
@@ -94,24 +94,24 @@ public class ConsoleReporterTest extends TestCase {
 
     /** Run 4 test, but one is ignored */
     private void runTests() {
-        TestIdentifier test1 = new TestIdentifier(CLASS, METHOD_1);
+        TestDescription test1 = new TestDescription(CLASS, METHOD_1);
         mReporter.testStarted(test1);
         mReporter.testEnded(test1, new HashMap<String, String>());
         assertFalse(mReporter.getTestFailed());
 
-        TestIdentifier test2 = new TestIdentifier(CLASS, METHOD_2);
+        TestDescription test2 = new TestDescription(CLASS, METHOD_2);
         mReporter.testStarted(test2);
         assertFalse(mReporter.getTestFailed());
         mReporter.testFailed(test2, STACK_TRACE);
         assertTrue(mReporter.getTestFailed());
 
-        TestIdentifier test3 = new TestIdentifier(CLASS, METHOD_3);
+        TestDescription test3 = new TestDescription(CLASS, METHOD_3);
         mReporter.testStarted(test3);
         assertFalse(mReporter.getTestFailed());
         mReporter.testFailed(test3, STACK_TRACE);
         assertTrue(mReporter.getTestFailed());
 
-        TestIdentifier test4 = new TestIdentifier(CLASS, METHOD_3);
+        TestDescription test4 = new TestDescription(CLASS, METHOD_3);
         mReporter.testStarted(test4);
         assertFalse(mReporter.getTestFailed());
         mReporter.testIgnored(test4);

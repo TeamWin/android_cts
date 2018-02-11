@@ -18,12 +18,12 @@ package com.android.compatibility.common.tradefed.result;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.util.AbiUtils;
-import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.BuildInfo;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.OptionSetter;
 import com.android.tradefed.invoker.IInvocationContext;
 import com.android.tradefed.invoker.InvocationContext;
+import com.android.tradefed.result.TestDescription;
 import com.android.tradefed.util.FileUtil;
 import com.android.tradefed.util.RunUtil;
 
@@ -115,23 +115,23 @@ public class MetadataReporterTest extends TestCase {
 
     /** Run 4 test. */
     private void runTests(long waitTime) {
-        TestIdentifier test1 = new TestIdentifier(CLASS, METHOD_1);
+        TestDescription test1 = new TestDescription(CLASS, METHOD_1);
         mReporter.testStarted(test1);
         RunUtil.getDefault().sleep(waitTime);
         mReporter.testEnded(test1, new HashMap<String, String>());
 
-        TestIdentifier test2 = new TestIdentifier(CLASS, METHOD_2);
+        TestDescription test2 = new TestDescription(CLASS, METHOD_2);
         mReporter.testStarted(test2);
         RunUtil.getDefault().sleep(waitTime);
         mReporter.testEnded(test1, new HashMap<String, String>());
 
-        TestIdentifier test3 = new TestIdentifier(CLASS, METHOD_3);
+        TestDescription test3 = new TestDescription(CLASS, METHOD_3);
         mReporter.testStarted(test3);
         RunUtil.getDefault().sleep(waitTime);
         mReporter.testFailed(test3, STACK_TRACE);
         mReporter.testEnded(test3, new HashMap<String, String>());
 
-        TestIdentifier test4 = new TestIdentifier(CLASS, METHOD_3);
+        TestDescription test4 = new TestDescription(CLASS, METHOD_3);
         mReporter.testStarted(test4);
         RunUtil.getDefault().sleep(waitTime);
         mReporter.testIgnored(test4);

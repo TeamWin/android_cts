@@ -56,7 +56,7 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
 
         // marshal and unmarshal the node info
         Parcel parcel = Parcel.obtain();
-        sentInfo.writeToParcel(parcel, 0);
+        sentInfo.writeToParcelNoRecycle(parcel, 0);
         parcel.setDataPosition(0);
         AccessibilityNodeInfo receivedInfo = AccessibilityNodeInfo.CREATOR.createFromParcel(parcel);
 

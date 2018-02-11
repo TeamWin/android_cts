@@ -17,7 +17,6 @@
 package com.android.compatibility.common.tradefed.result;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
-import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.json.stream.JsonWriter;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
@@ -25,6 +24,7 @@ import com.android.tradefed.config.OptionCopier;
 import com.android.tradefed.invoker.IInvocationContext;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.IShardableListener;
+import com.android.tradefed.result.TestDescription;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -96,7 +96,7 @@ public class MetadataReporter implements IShardableListener {
      * {@inheritDoc}
      */
     @Override
-    public void testStarted(TestIdentifier test) {
+    public void testStarted(TestDescription test) {
         mStartTime = System.currentTimeMillis();
         mTestFailed = false;
     }
@@ -105,7 +105,7 @@ public class MetadataReporter implements IShardableListener {
      * {@inheritDoc}
      */
     @Override
-    public void testFailed(TestIdentifier test, String trace) {
+    public void testFailed(TestDescription test, String trace) {
         mTestFailed = true;
     }
 
@@ -113,7 +113,7 @@ public class MetadataReporter implements IShardableListener {
      * {@inheritDoc}
      */
     @Override
-    public void testIgnored(TestIdentifier test) {
+    public void testIgnored(TestDescription test) {
         mTestFailed = true;
     }
 
@@ -121,7 +121,7 @@ public class MetadataReporter implements IShardableListener {
      * {@inheritDoc}
      */
     @Override
-    public void testAssumptionFailure(TestIdentifier test, String trace) {
+    public void testAssumptionFailure(TestDescription test, String trace) {
         mTestFailed = true;
     }
 
@@ -129,7 +129,7 @@ public class MetadataReporter implements IShardableListener {
      * {@inheritDoc}
      */
     @Override
-    public void testEnded(TestIdentifier test, Map<String, String> testMetrics) {
+    public void testEnded(TestDescription test, Map<String, String> testMetrics) {
         long duration = System.currentTimeMillis() - mStartTime;
         if (mTestFailed && !mIncludeFailures) {
             return;
@@ -163,7 +163,7 @@ public class MetadataReporter implements IShardableListener {
         long seconds;
     }
 
-    private static String buildTestId(TestIdentifier test) {
+    private static String buildTestId(TestDescription test) {
         return String.format("%s.%s", test.getClassName(), test.getTestName());
     }
 

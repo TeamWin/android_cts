@@ -185,7 +185,7 @@ public class VirtualDisplayActivity extends Activity implements SurfaceHolder.Ca
                 + ", publicDisplay=" + publicDisplay);
         try {
             VirtualDisplay virtualDisplay = mDisplayManager.createVirtualDisplay(
-                    "VirtualDisplay" + mVirtualDisplays.size(), width,
+                    "HostedVirtualDisplay" + mVirtualDisplays.size(), width,
                     height, densityDpi, surface, flags);
             mVirtualDisplays.put(surface,
                     new VirtualDisplayEntry(virtualDisplay, entry.surfaceView, densityDpi,

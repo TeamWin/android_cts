@@ -19,7 +19,6 @@ package com.android.server.cts;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.ddmlib.IShellOutputReceiver;
 import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
-import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.ddmlib.testrunner.TestResult.TestStatus;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.CollectingByteOutputReceiver;
@@ -27,6 +26,7 @@ import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.CollectingTestListener;
+import com.android.tradefed.result.TestDescription;
 import com.android.tradefed.result.TestResult;
 import com.android.tradefed.result.TestRunResult;
 import com.android.tradefed.testtype.DeviceTestCase;
@@ -48,6 +48,11 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class ProtoDumpTestCase extends DeviceTestCase implements IBuildReceiver {
+    protected static final int PRIVACY_AUTO = 0;
+    protected static final int PRIVACY_EXPLICIT = 1;
+    protected static final int PRIVACY_LOCAL = 2;
+    /** No privacy filtering has been done. All fields should be present. */
+    protected static final int PRIVACY_NONE = 3;
 
     protected IBuildInfo mCtsBuild;
 
@@ -137,7 +142,7 @@ public class ProtoDumpTestCase extends DeviceTestCase implements IBuildReceiver 
         if (result.hasFailedTests()) {
             // build a meaningful error message
             StringBuilder errorBuilder = new StringBuilder("On-device tests failed:\n");
-            for (Map.Entry<TestIdentifier, TestResult> resultEntry :
+            for (Map.Entry<TestDescription, TestResult> resultEntry :
                     result.getTestResults().entrySet()) {
                 if (!resultEntry.getValue().getStatus().equals(TestStatus.PASSED)) {
                     errorBuilder.append(resultEntry.getKey().toString());
@@ -150,14 +155,21 @@ public class ProtoDumpTestCase extends DeviceTestCase implements IBuildReceiver 
     }
 
     /**
+     * Execute the given command, and returns the output.
+     */
+    protected String execCommandAndGet(String command) throws Exception {
+        final CollectingOutputReceiver receiver = new CollectingOutputReceiver();
+        getDevice().executeShellCommand(command, receiver);
+        return receiver.getOutput();
+    }
+
+    /**
      * Execute the given command, and find the given pattern with given flags and return the
      * resulting {@link Matcher}.
      */
     protected Matcher execCommandAndFind(String command, String pattern, int patternFlags)
             throws Exception {
-        final CollectingOutputReceiver receiver = new CollectingOutputReceiver();
-        getDevice().executeShellCommand(command, receiver);
-        final String output = receiver.getOutput();
+        final String output = execCommandAndGet(command);
         final Matcher matcher = Pattern.compile(pattern, patternFlags).matcher(output);
         assertTrue("Pattern '" + pattern + "' didn't match. Output=\n" + output, matcher.find());
         return matcher;

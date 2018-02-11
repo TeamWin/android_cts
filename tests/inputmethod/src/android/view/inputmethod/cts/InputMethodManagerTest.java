@@ -30,9 +30,6 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.os.Handler;
-import android.os.IBinder;
-import android.os.ResultReceiver;
 import android.support.annotation.NonNull;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
@@ -114,23 +111,6 @@ public class InputMethodManagerTest {
         // application should have no effect.
         assertFalse(mImManager.isFullscreenMode());
 
-        mActivityRule.runOnUiThread(() -> {
-            IBinder token = view.getWindowToken();
-
-            // Show and hide input method.
-            assertTrue(mImManager.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT));
-            assertTrue(mImManager.hideSoftInputFromWindow(token, 0));
-
-            Handler handler = new Handler();
-            ResultReceiver receiver = new ResultReceiver(handler);
-            assertTrue(mImManager.showSoftInput(view, 0, receiver));
-            receiver = new ResultReceiver(handler);
-            assertTrue(mImManager.hideSoftInputFromWindow(token, 0, receiver));
-
-            // status: hide to show to hide
-            mImManager.toggleSoftInputFromWindow(token, 0, InputMethodManager.HIDE_NOT_ALWAYS);
-            mImManager.toggleSoftInputFromWindow(token, 0, InputMethodManager.HIDE_NOT_ALWAYS);
-        });
         mInstrumentation.waitForIdleSync();
     }
 

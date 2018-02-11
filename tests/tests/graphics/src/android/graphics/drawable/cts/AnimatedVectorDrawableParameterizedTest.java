@@ -118,8 +118,7 @@ public class AnimatedVectorDrawableParameterizedTest {
 
     @Test
     public void testAnimationOnLayer() throws Throwable {
-        final AnimatedVectorDrawableTest.MyCallback callback
-                = new AnimatedVectorDrawableTest.MyCallback();
+        final Animatable2Callback callback = new Animatable2Callback();
         // Can't simply use final here, b/c it needs to be initialized and referred later in UI
         // thread.
         final ImageView[] imageView = new ImageView[1];
@@ -231,8 +230,7 @@ public class AnimatedVectorDrawableParameterizedTest {
     @Test
     public void testEmptyAnimatorSet() throws Throwable {
         int resId = R.drawable.avd_empty_animator;
-        final AnimatedVectorDrawableTest.MyCallback callback =
-                new AnimatedVectorDrawableTest.MyCallback();
+        final Animatable2Callback callback = new Animatable2Callback();
         final AnimatedVectorDrawable d1 =
                 (AnimatedVectorDrawable) mResources.getDrawable(resId);
         d1.registerAnimationCallback(callback);
@@ -284,8 +282,7 @@ public class AnimatedVectorDrawableParameterizedTest {
 
     @Test
     public void testInfiniteAVD() throws Throwable {
-        final AnimatedVectorDrawableTest.MyCallback callback
-                = new AnimatedVectorDrawableTest.MyCallback();
+        final Animatable2Callback callback = new Animatable2Callback();
         // Can't simply use final here, b/c it needs to be initialized and referred later in UI
         // thread.
         final ImageView[] imageView = new ImageView[1];

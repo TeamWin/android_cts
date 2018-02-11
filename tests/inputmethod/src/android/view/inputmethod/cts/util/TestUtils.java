@@ -30,6 +30,17 @@ public final class TestUtils {
     private static final long TIME_SLICE = 100;  // msec
 
     /**
+     * Executes a call on the application's main thread, blocking until it is complete.
+     *
+     * <p>A simple wrapper for {@link Instrumentation#runOnMainSync(Runnable)}.</p>
+     *
+     * @param task task to be called on the UI thread
+     */
+    public static void runOnMainSync(@NonNull Runnable task) {
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(task);
+    }
+
+    /**
      * Retrieves a value that needs to be obtained on the main thread.
      *
      * <p>A simple utility method that helps to return an object from the UI thread.</p>

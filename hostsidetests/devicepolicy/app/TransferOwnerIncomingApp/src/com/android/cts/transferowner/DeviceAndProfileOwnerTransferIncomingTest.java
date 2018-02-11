@@ -25,7 +25,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.PersistableBundle;
-import android.os.UserHandle;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 
@@ -43,11 +42,6 @@ public class DeviceAndProfileOwnerTransferIncomingTest {
         public void onTransferOwnershipComplete(Context context, PersistableBundle bundle) {
             putBooleanPref(context, KEY_TRANSFER_COMPLETED_CALLED, true);
         }
-
-        @Override
-        public void onTransferAffiliatedProfileOwnershipComplete(Context context, UserHandle user) {
-            putBooleanPref(context, KEY_TRANSFER_AFFILIATED_PROFILE_COMPLETED_CALLED, true);
-        }
     }
 
     public static class BasicAdminReceiverNoMetadata extends DeviceAdminReceiver {
@@ -57,8 +51,6 @@ public class DeviceAndProfileOwnerTransferIncomingTest {
     private final static String SHARED_PREFERENCE_NAME = "shared-preference-name";
     private final static String KEY_TRANSFER_COMPLETED_CALLED = "key-transfer-completed-called";
     private final static String ARE_PARAMETERS_SAVED = "ARE_PARAMETERS_SAVED";
-    final static String KEY_TRANSFER_AFFILIATED_PROFILE_COMPLETED_CALLED =
-            "key-transfer-affiliated-completed-called";
 
     protected Context mContext;
     protected ComponentName mIncomingComponentName;
@@ -91,6 +83,7 @@ public class DeviceAndProfileOwnerTransferIncomingTest {
         return affiliationIds.iterator().next();
     }
 
+    @Test
     public void testTransferOwnershipBundleLoaded() throws Throwable {
         PersistableBundle bundle = mDevicePolicyManager.getTransferOwnershipBundle();
         assertNotNull(bundle);

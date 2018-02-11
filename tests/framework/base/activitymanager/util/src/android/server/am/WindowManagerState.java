@@ -390,6 +390,10 @@ public class WindowManagerState {
         return null;
     }
 
+    List<Display> getDisplays() {
+        return mDisplays;
+    }
+
     String getFrontWindow() {
         if (mWindowStates == null || mWindowStates.isEmpty()) {
             return null;
@@ -704,6 +708,7 @@ public class WindowManagerState {
         private Rect mAppRect = new Rect();
         private int mDpi;
         private Rect mStableBounds;
+        private String mName;
 
         public Display(DisplayProto proto) {
             super(proto.windowContainer);
@@ -722,6 +727,7 @@ public class WindowManagerState {
             if (infoProto != null) {
                 mDisplayRect.set(0, 0, infoProto.logicalWidth, infoProto.logicalHeight);
                 mAppRect.set(0, 0, infoProto.appWidth, infoProto.appHeight);
+                mName = infoProto.name;
             }
             final DisplayFramesProto displayFramesProto = proto.displayFrames;
             if (displayFramesProto != null) {
@@ -754,9 +760,13 @@ public class WindowManagerState {
             return mAppRect;
         }
 
+        String getName() {
+            return mName;
+        }
+
         @Override
         public String toString() {
-            return "Display #" + mDisplayId + ": mDisplayRect=" + mDisplayRect
+            return "Display #" + mDisplayId + ": name=" + mName + " mDisplayRect=" + mDisplayRect
                     + " mAppRect=" + mAppRect;
         }
     }

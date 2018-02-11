@@ -83,17 +83,18 @@ public class MixedDeviceOwnerHostSideTransferTest extends
 
         runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
                 mOutgoingTestClassName,
-                "testTransferOwner", mUserId);
+                "testTransferOwner", profileUserId);
+        waitForBroadcastIdle();
+
         runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
                 mOutgoingTestClassName,
-                "testTransferOwner", profileUserId);
+                "testTransferOwner", mUserId);
+        waitForBroadcastIdle();
 
         assertAffiliationIdsAreIntact(profileUserId, mIncomingTestClassName);
 
-        waitForBroadcastIdle();
-
-        runDeviceTestsAsUser(TRANSFER_OWNER_INCOMING_PKG,
-                mIncomingTestClassName,
+        runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
+                mOutgoingTestClassName,
                 "testTransferAffiliatedProfileOwnershipCompleteCallbackIsCalled",
                 mUserId);
     }

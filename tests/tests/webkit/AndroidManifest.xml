@@ -66,6 +66,11 @@
 
         <meta-data android:name="android.webkit.WebView.EnableSafeBrowsing" android:value="false" />
 
+        <!-- Specify a preloaded font list to ensure that this doesn't interfere
+             with the operation of the renderer process (as in b/70968451)
+         -->
+        <meta-data android:name="preloaded_fonts" android:resource="@array/preloaded_fonts" />
+
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
