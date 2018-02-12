@@ -17,12 +17,12 @@
 package com.android.cts.devicepolicy;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.tradefed.device.DeviceNotAvailableException;
 
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Set of tests for Device Owner use cases.
@@ -468,48 +468,41 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        executeDeviceTestMethod(".SecurityLoggingTest", "testDisablingSecurityLogging");
 
-        // Generate more than enough events for a batch of security events.
-        try {
-            executeDeviceTestMethod(".SecurityLoggingTest", "testEnablingSecurityLogging");
-            // Reboot to ensure ro.device_owner is set to true in logd.
-            rebootAndWaitUntilReady();
+        // Turn logging on.
+        executeDeviceTestMethod(".SecurityLoggingTest", "testEnablingSecurityLogging");
+        // Reboot to ensure ro.device_owner is set to true in logd and logging is on.
+        rebootAndWaitUntilReady();
 
-            // First batch: retrieve and verify the events.
-            runBatch(0);
+        // Generate various types of events on device side and check that they are logged.
+        executeDeviceTestMethod(".SecurityLoggingTest", "testGenerateLogs");
+        getDevice().executeShellCommand("dpm force-security-logs");
+        executeDeviceTestMethod(".SecurityLoggingTest", "testVerifyGeneratedLogs");
 
-            // Verify event ids are consistent across a consecutive batch.
-            runBatch(1);
+        // Reboot the device, so the security event ids are reset.
+        rebootAndWaitUntilReady();
 
-            // Reboot the device, so the security event ids are reset.
-            rebootAndWaitUntilReady();
-
-            // First batch after reboot: retrieve and verify the events.
-            runBatch(0 /* batch number */);
-
-            // Immediately attempting to fetch events again should fail.
-            executeDeviceTestMethod(".SecurityLoggingTest",
-                    "testSecurityLoggingRetrievalRateLimited");
-        } finally {
-            // Always attempt to disable security logging to bring the device to initial state.
-            executeDeviceTestMethod(".SecurityLoggingTest", "testDisablingSecurityLogging");
+        // Verify event ids are consistent across a consecutive batch.
+        for (int batchNumber = 0; batchNumber < 3; batchNumber++) {
+            generateDummySecurityLogs();
+            getDevice().executeShellCommand("dpm force-security-logs");
+            executeDeviceTestMethod(".SecurityLoggingTest", "testVerifyLogIds",
+                    Collections.singletonMap(ARG_SECURITY_LOGGING_BATCH_NUMBER,
+                            Integer.toString(batchNumber)));
         }
+
+        // Immediately attempting to fetch events again should fail.
+        executeDeviceTestMethod(".SecurityLoggingTest",
+                "testSecurityLoggingRetrievalRateLimited");
+        // Turn logging off.
+        executeDeviceTestMethod(".SecurityLoggingTest", "testDisablingSecurityLogging");
     }
 
-    private void runBatch(int batchNumber) throws Exception {
+    private void generateDummySecurityLogs() throws DeviceNotAvailableException {
         // Trigger security events of type TAG_ADB_SHELL_CMD.
         for (int i = 0; i < SECURITY_EVENTS_BATCH_SIZE; i++) {
             getDevice().executeShellCommand("echo just_testing_" + i);
         }
-
-        // Force log batch.
-        getDevice().executeShellCommand("dpm force-security-logs");
-
-        // Verify the contents of the batch.
-        executeDeviceTestMethod(".SecurityLoggingTest", "testGetSecurityLogs",
-                Collections.singletonMap(ARG_SECURITY_LOGGING_BATCH_NUMBER,
-                        Integer.toString(batchNumber)));
     }
 
     public void testNetworkLoggingWithTwoUsers() throws Exception {
