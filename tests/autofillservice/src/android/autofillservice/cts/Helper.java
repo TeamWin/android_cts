@@ -1111,6 +1111,23 @@ final class Helper {
         }
     }
 
+    public static String importantForAutofillAsString(int mode) {
+        switch (mode) {
+            case View.IMPORTANT_FOR_AUTOFILL_AUTO:
+                return "IMPORTANT_FOR_AUTOFILL_AUTO";
+            case View.IMPORTANT_FOR_AUTOFILL_YES:
+                return "IMPORTANT_FOR_AUTOFILL_YES";
+            case View.IMPORTANT_FOR_AUTOFILL_YES_EXCLUDE_DESCENDANTS:
+                return "IMPORTANT_FOR_AUTOFILL_YES_EXCLUDE_DESCENDANTS";
+            case View.IMPORTANT_FOR_AUTOFILL_NO:
+                return "IMPORTANT_FOR_AUTOFILL_NO";
+            case View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS:
+                return "IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS";
+            default:
+                return "UNKNOWN:" + mode;
+        }
+    }
+
     private Helper() {
         throw new UnsupportedOperationException("contain static methods only");
     }
