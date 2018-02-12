@@ -18,6 +18,7 @@ package android.server.wm;
 
 import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.am.StateLogger.logE;
+import static android.server.wm.frametestapp.Components.MOVING_CHILD_TEST_ACTIVITY;
 
 import static org.junit.Assert.assertTrue;
 
@@ -31,10 +32,11 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Build/Install/Run:
+ *     atest CtsWindowManagerDeviceTestCases:ChildMovementTests
+ */
 public class ChildMovementTests extends ParentChildTestBase {
-
-    private static final ComponentName MOVING_CHILD_TEST_ACTIVITY = ComponentName
-            .unflattenFromString("android.server.wm.frametestapp/.MovingChildTestActivity");
 
     /** @see android.server.wm.frametestapp.MovingChildTestActivity#POPUP_WINDOW_NAME */
     private static final String POPUP_WINDOW_NAME = "ChildWindow";
