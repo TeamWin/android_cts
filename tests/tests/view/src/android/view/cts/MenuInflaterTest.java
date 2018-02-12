@@ -25,7 +25,7 @@ import static org.junit.Assert.assertTrue;
 import android.app.Activity;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.ImageDecoder;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.MediumTest;
@@ -39,8 +39,6 @@ import android.view.SubMenu;
 import android.widget.PopupMenu;
 
 import com.android.compatibility.common.util.WidgetTestUtils;
-
-import junit.framework.Assert;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -326,14 +324,7 @@ public class MenuInflaterTest {
     }
 
     private void verifyDrawableContent(BitmapDrawable b, int resId) {
-        try {
-            ImageDecoder.Source src = ImageDecoder.createSource(mActivity.getResources(), resId);
-            Bitmap expected = ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
-                decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
-            });
-            WidgetTestUtils.assertEquals(expected, b.getBitmap());
-        } catch (java.io.IOException e) {
-            Assert.fail("the resource could not be decoded");
-        }
+        Bitmap expected = BitmapFactory.decodeResource(mActivity.getResources(), resId);
+        WidgetTestUtils.assertEquals(expected, b.getBitmap());
     }
 }
