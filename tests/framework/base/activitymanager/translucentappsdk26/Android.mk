@@ -19,7 +19,10 @@ include $(CLEAR_VARS)
 # Don't include this package in any target.
 LOCAL_MODULE_TAGS := tests
 
+LOCAL_STATIC_JAVA_LIBRARIES := cts-am-app-base
+
 LOCAL_SRC_FILES := \
+    $(call all-java-files-under, src) \
     $(call all-java-files-under, ../translucentapp/src) \
 
 LOCAL_SDK_VERSION := 26

@@ -24,6 +24,8 @@ import static android.server.am.ActivityAndWindowManagersState.dpToPx;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logE;
+import static android.server.am.translucentapp.Components.TRANSLUCENT_LANDSCAPE_ACTIVITY;
+import static android.server.am.translucentapp26.Components.SDK26_TRANSLUCENT_LANDSCAPE_ACTIVITY;
 import static android.view.Surface.ROTATION_0;
 import static android.view.Surface.ROTATION_180;
 import static android.view.Surface.ROTATION_270;
@@ -35,7 +37,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
-import android.content.ComponentName;
 import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
 import android.support.test.filters.FlakyTest;
@@ -56,15 +57,6 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     private static final String LANDSCAPE_ACTIVITY_NAME = "LandscapeOrientationActivity";
     private static final String NIGHT_MODE_ACTIVITY = "NightModeActivity";
     private static final String DIALOG_WHEN_LARGE_ACTIVITY = "DialogWhenLargeActivity";
-
-    private static final String TRANSLUCENT_ACTIVITY_NAME =
-            "android.server.am.translucentapp.TranslucentLandscapeActivity";
-    private static final ComponentName TRANSLUCENT_LANDSCAPE_ACTIVITY = new ComponentName(
-            "android.server.am.translucentapp", TRANSLUCENT_ACTIVITY_NAME);
-    private static final ComponentName SDK26_TRANSLUCENT_LANDSCAPE_ACTIVITY = new ComponentName(
-            "android.server.am.translucentapp26", TRANSLUCENT_ACTIVITY_NAME);
-
-    private static final String EXTRA_LAUNCH_NEW_TASK = "launch_new_task";
 
     private static final int SMALL_WIDTH_DP = 426;
     private static final int SMALL_HEIGHT_DP = 320;
