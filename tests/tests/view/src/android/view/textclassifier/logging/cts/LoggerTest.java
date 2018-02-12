@@ -68,14 +68,23 @@ public class LoggerTest {
 
     private void startSelectionSession() {
         // A selection started event needs to be fired before any non started event will be logged.
-        mLogger.logSelectionStartedEvent(START);
+        mLogger.logSelectionStartedEvent(SelectionEvent.INVOCATION_MANUAL, START);
     }
 
     @Test
-    public void testLogger_logSelectionStartedEvent() {
-        mLogger.logSelectionStartedEvent(START);
+    public void testLogger_logManualSelectionStartedEvent() {
+        mLogger.logSelectionStartedEvent(SelectionEvent.INVOCATION_MANUAL, START);
         assertThat(mCapturedSelectionEvent,
-                isSelectionEvent(START, START + 1, SelectionEvent.EVENT_SELECTION_STARTED));
+                isSelectionEvent(START, START + 1, SelectionEvent.INVOCATION_MANUAL,
+                        SelectionEvent.EVENT_SELECTION_STARTED));
+    }
+
+    @Test
+    public void testLogger_logLinkSelectionStartedEvent() {
+        mLogger.logSelectionStartedEvent(SelectionEvent.INVOCATION_LINK, START);
+        assertThat(mCapturedSelectionEvent,
+                isSelectionEvent(START, START + 1, SelectionEvent.INVOCATION_LINK,
+                        SelectionEvent.EVENT_SELECTION_STARTED));
     }
 
     @Test
@@ -83,7 +92,8 @@ public class LoggerTest {
         startSelectionSession();
         mLogger.logSelectionModifiedEvent(START, END);
         assertThat(mCapturedSelectionEvent,
-                isSelectionEvent(START, END, SelectionEvent.EVENT_SELECTION_MODIFIED));
+                isSelectionEvent(START, END, SelectionEvent.INVOCATION_MANUAL,
+                        SelectionEvent.EVENT_SELECTION_MODIFIED));
     }
 
     @Test
@@ -91,7 +101,8 @@ public class LoggerTest {
         startSelectionSession();
         mLogger.logSelectionActionEvent(START, END, SelectionEvent.ACTION_SMART_SHARE);
         assertThat(mCapturedSelectionEvent,
-                isSelectionEvent(START, END, SelectionEvent.ACTION_SMART_SHARE));
+                isSelectionEvent(START, END, SelectionEvent.INVOCATION_MANUAL,
+                        SelectionEvent.ACTION_SMART_SHARE));
     }
 
     @Test
@@ -107,7 +118,8 @@ public class LoggerTest {
     }
 
     private static Matcher<SelectionEvent> isSelectionEvent(
-            final int start, final int end, @EventType int eventType) {
+            final int start, final int end, @SelectionEvent.InvocationMethod int invocationMethod,
+            @EventType int eventType) {
         return new BaseMatcher<SelectionEvent>() {
             @Override
             public boolean matches(Object o) {
@@ -115,6 +127,7 @@ public class LoggerTest {
                     SelectionEvent event = (SelectionEvent) o;
                     return event.getStart() == start
                             && event.getEnd() == end
+                            && event.getInvocationMethod() == invocationMethod
                             && event.getEventType() == eventType;
                     // TODO: Test more fields.
                 }
