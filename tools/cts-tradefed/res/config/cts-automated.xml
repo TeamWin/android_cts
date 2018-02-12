@@ -20,7 +20,7 @@
     <option name="plan" value="cts" />
 
     <option name="skip-preconditions" value="false" />
-    <option name="skip-connectivity-check" value="false" />
+    <option name="skip-system-status-check" value="com.android.compatibility.common.tradefed.targetprep.NetworkConnectivityChecker" />
 
     <!-- Tell all AndroidJUnitTests to exclude certain annotations -->
     <option name="compatibility:test-arg" value="com.android.tradefed.testtype.AndroidJUnitTest:exclude-annotation:android.platform.test.annotations.RestrictedBuildTest" />
