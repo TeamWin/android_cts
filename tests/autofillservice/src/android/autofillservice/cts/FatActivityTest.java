@@ -82,10 +82,10 @@ public class FatActivityTest extends AutoFillServiceTestCase {
         mStructure = fillRequest.structure;
         mUiBot.assertNoDatasets();
 
-        // TODO: should only have 5 children, but there is an extra
+        // TODO: should only have X children, but there is an extra
         // TextView that's probably coming from the title. For now we're just ignoring it, but
         // ideally we should change the .xml to exclude it.
-        assertNumberOfChildren(fillRequest.structure, 8);
+        assertNumberOfChildren(fillRequest.structure, 9);
 
         // Should not have ImageView...
         assertThat(findNodeByResourceId(fillRequest.structure, ID_IMAGE)).isNull();
@@ -149,7 +149,7 @@ public class FatActivityTest extends AutoFillServiceTestCase {
         // TODO: should only have X children, but there is an extra
         // TextView that's probably coming from the title. For now we're just ignoring it, but
         // ideally we should change the .xml to exclude it.
-        assertNumberOfChildren(fillRequest.structure, 27);
+        assertNumberOfChildren(fillRequest.structure, 28);
 
         // Assert all nodes are present
         assertNodeExists(ID_IMAGE, IMPORTANT_FOR_AUTOFILL_NO);
