@@ -86,6 +86,7 @@ import android.widget.RemoteViews;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -1188,6 +1189,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
+    @Ignore("Test fail on some devices because Recents UI is not well defined: b/72044685")
     public void testSaveGoesAwayWhenTappingRecentsButton() throws Exception {
         // Launches new activity first...
         startCheckoutActivityAsNewTask();
