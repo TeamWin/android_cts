@@ -48,6 +48,7 @@ import android.view.View;
 import android.view.autofill.AutofillId;
 import android.widget.RemoteViews;
 
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -348,6 +349,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
     }
 
     @Test
+    @Ignore("Test fail on some devices because Recents UI is not well defined: b/72044685")
     public void testDismissSave_byTappingRecents() throws Exception {
         // Launches a different activity first.
         startWelcomeActivityOnNewTask();
