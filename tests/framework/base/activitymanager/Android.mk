@@ -21,7 +21,9 @@ LOCAL_MODULE_TAGS := tests optional
 # Must match the package name in CtsTestCaseList.mk
 LOCAL_PACKAGE_NAME := CtsActivityManagerDeviceTestCases
 
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
+LOCAL_SRC_FILES := \
+    $(call all-java-files-under, src) \
+    $(call all-named-files-under,Components.java, appDebuggable) \
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-test \
