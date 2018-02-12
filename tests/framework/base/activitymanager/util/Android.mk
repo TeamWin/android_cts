@@ -25,8 +25,6 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util \
     android-support-test
 
-LOCAL_JAVA_LIBRARIES := core-oj core-libart
-
 LOCAL_MODULE := cts-amwm-util
 
 LOCAL_SDK_VERSION := test_current
