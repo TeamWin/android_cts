@@ -19,6 +19,7 @@ package android.server.am;
 import static android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP;
 import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.ComponentNameUtils.getWindowName;
+import static android.server.am.displaysize.Components.SMALLEST_WIDTH_ACTIVITY;
 
 import static org.junit.Assert.assertTrue;
 
@@ -41,9 +42,8 @@ public class DisplaySizeTest extends ActivityManagerTestBase {
 
     private static final ComponentName TEST_ACTIVITY = ComponentName.createRelative(
             "android.server.am", ".TestActivity");
-    private static final ComponentName SMALLEST_WIDTH_ACTIVITY = ComponentName.createRelative(
-            "android.server.am.displaysize", ".SmallestWidthActivity");
-    /** @see android.server.am.displaysize.SmallestWidthActivity#EXTRA_LAUNCH_ANOTHER_ACTIVITY */
+
+    /** SmallestWidthActivity#EXTRA_LAUNCH_ANOTHER_ACTIVITY */
     private static final String EXTRA_LAUNCH_ANOTHER_ACTIVITY = "launch_another_activity";
 
     /** @see com.android.server.am.UnsupportedDisplaySizeDialog */
