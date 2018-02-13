@@ -19,10 +19,9 @@ package android.server.wm.frametestapp;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
-import android.os.Bundle;
-import android.view.WindowManager;
-import android.view.Window;
 import android.view.Gravity;
+import android.view.Window;
+import android.view.WindowManager;
 
 public class DialogTestActivity extends Activity {
 
@@ -36,15 +35,13 @@ public class DialogTestActivity extends Activity {
 
     private AlertDialog mDialog;
 
-    protected void onCreate(Bundle icicle) {
-        super.onCreate(icicle);
-    }
-
+    @Override
     protected void onStop() {
         super.onStop();
         mDialog.dismiss();
     }
 
+    @Override
     protected void onResume() {
         super.onResume();
         setupTest(getIntent());

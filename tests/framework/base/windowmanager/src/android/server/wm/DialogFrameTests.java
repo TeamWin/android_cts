@@ -18,6 +18,7 @@ package android.server.wm;
 
 import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.am.StateLogger.logE;
+import static android.server.wm.frametestapp.Components.DIALOG_TEST_ACTIVITY;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -33,10 +34,11 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Build/Install/Run:
+ *     atest CtsWindowManagerDeviceTestCases:DialogFrameTests
+ */
 public class DialogFrameTests extends ParentChildTestBase {
-
-    private static final ComponentName DIALOG_TEST_ACTIVITY = ComponentName
-            .unflattenFromString("android.server.wm.frametestapp/.DialogTestActivity");
 
     /** @see android.server.wm.frametestapp.DialogTestActivity#DIALOG_WINDOW_NAME */
     private static final String DIALOG_WINDOW_NAME = "TestDialog";
