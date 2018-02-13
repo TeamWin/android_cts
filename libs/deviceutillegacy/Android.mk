@@ -31,4 +31,6 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_MODULE := ctsdeviceutillegacy
 
+LOCAL_SDK_VERSION := current
+
 include $(BUILD_STATIC_JAVA_LIBRARY)
