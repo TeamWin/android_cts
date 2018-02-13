@@ -16,10 +16,12 @@
 
 package android.view.inputmethod.cts;
 
+import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
 import static android.view.inputmethod.cts.util.TestUtils.waitOnMainUntil;
 
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
+import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.waitForInputViewLayoutStable;
 
 import android.app.Instrumentation;
@@ -59,7 +61,7 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
     }
 
-    private TestActivity createTestActivity() {
+    private TestActivity createTestActivity(final int windowFlags) {
         return TestActivity.startSync(activity -> {
             final LinearLayout layout = new LinearLayout(activity);
             layout.setOrientation(LinearLayout.VERTICAL);
@@ -69,7 +71,7 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
             layout.addView(editText);
             editText.requestFocus();
 
-            activity.getWindow().setSoftInputMode(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+            activity.getWindow().setSoftInputMode(windowFlags);
             return layout;
         });
     }
@@ -82,7 +84,7 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
                 new ImeSettings.Builder())) {
             final ImeEventStream stream = imeSession.openEventStream();
 
-            final TestActivity testActivity = createTestActivity();
+            final TestActivity testActivity = createTestActivity(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
             expectEvent(stream, event -> "onStartInputView".equals(event.getEventName()), TIMEOUT);
 
             imeSession.callSetBackDisposition(InputMethodService.BACK_DISPOSITION_WILL_DISMISS);
@@ -106,7 +108,7 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
                 new ImeSettings.Builder())) {
             final ImeEventStream stream = imeSession.openEventStream();
 
-            final TestActivity testActivity = createTestActivity();
+            final TestActivity testActivity = createTestActivity(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
             expectEvent(stream, event -> "onStartInputView".equals(event.getEventName()), TIMEOUT);
 
             imeSession.callSetBackDisposition(InputMethodService.BACK_DISPOSITION_WILL_NOT_DISMISS);
@@ -119,6 +121,48 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
             // activity should've gone (or going) away since IME wont consume the back event.
             waitOnMainUntil(() -> testActivity.isFinishing(), LAYOUT_STABLE_THRESHOLD,
                     "Activity should be finishing or finished.");
+        }
+    }
+
+    @Test
+    public void testRequestHideSelf() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            createTestActivity(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+            expectEvent(stream, event -> "onStartInputView".equals(event.getEventName()), TIMEOUT);
+
+            imeSession.callRequestHideSelf(0);
+            // TODO(b/73077694): Consider fixing MockIme.Tracer event ordering.
+            // In the event stream, we observe onFinishInputView() first, followed by
+            // hideSoftInput(). For now, we can use ImeEventStream.copy() to preserve the
+            // stream position of the original stream.
+            expectEvent(stream.copy(),
+                    event -> "hideSoftInput".equals(event.getEventName()), TIMEOUT);
+            expectEvent(stream.copy(),
+                    event -> "onFinishInputView".equals(event.getEventName()), TIMEOUT);
+            stream.skipAll();
+        }
+    }
+
+    @Test
+    public void testRequestShowSelf() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            createTestActivity(SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+            notExpectEvent(
+                    stream, event -> "onStartInputView".equals(event.getEventName()), TIMEOUT);
+
+            imeSession.callRequestShowSelf(0);
+            expectEvent(stream, event -> "onStartInputView".equals(event.getEventName()), TIMEOUT);
+            expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
         }
     }
 }
