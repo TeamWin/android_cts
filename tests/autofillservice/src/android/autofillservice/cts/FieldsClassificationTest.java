@@ -22,6 +22,7 @@ import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MAX_FIELD_CLAS
 import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MAX_USER_DATA_SIZE;
 import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MAX_VALUE_LENGTH;
 import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MIN_VALUE_LENGTH;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import android.autofillservice.cts.Helper.FieldClassificationResult;
@@ -111,7 +112,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         assertThat(mAfm.getUserDataId()).isNull();
 
         enableService();
-        mAfm.setUserData(new UserData.Builder("user_data_id", "remote_id", "value")
+        mAfm.setUserData(new UserData.Builder("user_data_id", "value", "remote_id")
                 .build());
         assertThat(mAfm.getUserDataId()).isEqualTo("user_data_id");
         final UserData userData = mAfm.getUserData();
@@ -146,7 +147,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         enableService();
 
         // Set expectations.
-        final UserData.Builder userData = new UserData.Builder("id", "myId", "FULLY");
+        final UserData.Builder userData = new UserData.Builder("id", "FULLY", "myId");
         if (setAlgorithm) {
             userData.setFieldClassificationAlgorithm(algorithm, null);
         }
@@ -191,8 +192,8 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         enableService();
 
         // Set expectations.
-        mAfm.setUserData(new UserData.Builder("id", "1stId", "Iam1ST")
-                .add("2ndId", "Iam2ND").build());
+        mAfm.setUserData(new UserData.Builder("id", "Iam1ST", "1stId")
+                .add("Iam2ND", "2ndId").build());
         final MyAutofillCallback callback = mActivity.registerCallback();
         final EditText field = mActivity.getCell(1, 1);
         final AutofillId fieldId = field.getAutofillId();
@@ -233,7 +234,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         enableService();
 
         // Set expectations.
-        mAfm.setUserData(new UserData.Builder("id", "myId", "FULLY").build());
+        mAfm.setUserData(new UserData.Builder("id", "FULLY", "myId").build());
         final MyAutofillCallback callback = mActivity.registerCallback();
         final EditText field1 = mActivity.getCell(1, 1);
         final AutofillId fieldId1 = field1.getAutofillId();
@@ -272,9 +273,64 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         enableService();
 
         // Set expectations.
-        mAfm.setUserData(new UserData.Builder("id", "myId", "FULLY")
-                .add("totalMiss", "ZZZZZZZZZZ") // should not have matched any
-                .add("otherId", "EMPTY")
+        mAfm.setUserData(new UserData.Builder("id", "FULLY", "myId")
+                .add("ZZZZZZZZZZ", "totalMiss") // should not have matched any
+                .add("EMPTY", "otherId")
+                .build());
+        final MyAutofillCallback callback = mActivity.registerCallback();
+        final EditText field1 = mActivity.getCell(1, 1);
+        final AutofillId fieldId1 = field1.getAutofillId();
+        final EditText field2 = mActivity.getCell(1, 2);
+        final AutofillId fieldId2 = field2.getAutofillId();
+        final EditText field3 = mActivity.getCell(2, 1);
+        final AutofillId fieldId3 = field3.getAutofillId();
+        final EditText field4 = mActivity.getCell(2, 2);
+        final AutofillId fieldId4 = field4.getAutofillId();
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setFieldClassificationIds(fieldId1, fieldId2)
+                .build());
+
+        // Trigger autofill
+        mActivity.focusCell(1, 1);
+        sReplier.getNextFillRequest();
+
+        mUiBot.assertNoDatasets();
+        callback.assertUiUnavailableEvent(field1);
+
+        // Simulate user input
+        mActivity.setText(1, 1, "fully"); // u1: 100% u2:  20%
+        mActivity.setText(1, 2, "empty"); // u1:  20% u2: 100%
+        mActivity.setText(2, 1, "fooly"); // u1:  60% u2:  20%
+        mActivity.setText(2, 2, "emppy"); // u1:  20% u2:  80%
+
+        // Finish context.
+        mAfm.commit();
+
+        // Assert results
+        final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
+        assertFillEventForFieldsClassification(events.get(0),
+                new FieldClassificationResult[] {
+                        new FieldClassificationResult(fieldId1, new String[] { "myId", "otherId" },
+                                new float[] { 1.0F, 0.2F }),
+                        new FieldClassificationResult(fieldId2, new String[] { "otherId", "myId" },
+                                new float[] { 1.0F, 0.2F }),
+                        new FieldClassificationResult(fieldId3, new String[] { "myId", "otherId" },
+                                new float[] { 0.6F, 0.2F }),
+                        new FieldClassificationResult(fieldId4, new String[] { "otherId", "myId"},
+                                new float[] { 0.80F, 0.2F })});
+    }
+
+    @Test
+    public void testHit_manyUserDataPerField_manyDetectableFields() throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        mAfm.setUserData(new UserData.Builder("id", "zzzzz", "myId") // should not have matched any
+                .add("FULL1", "myId") // match 80%, should not have been reported
+                .add("FULLY", "myId") // match 100%
+                .add("ZZZZZZZZZZ", "totalMiss") // should not have matched any
+                .add("EMPTY", "otherId")
                 .build());
         final MyAutofillCallback callback = mActivity.registerCallback();
         final EditText field1 = mActivity.getCell(1, 1);
@@ -325,7 +381,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         enableService();
 
         // Set expectations.
-        mAfm.setUserData(new UserData.Builder("id", "myId", "ABCDEF").build());
+        mAfm.setUserData(new UserData.Builder("id", "ABCDEF", "myId").build());
         final MyAutofillCallback callback = mActivity.registerCallback();
         final EditText field = mActivity.getCell(1, 1);
         final AutofillId fieldId = field.getAutofillId();
@@ -357,7 +413,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         enableService();
 
         // Set expectations.
-        mAfm.setUserData(new UserData.Builder("id", "myId", "FULLY").build());
+        mAfm.setUserData(new UserData.Builder("id", "FULLY", "myId").build());
         final MyAutofillCallback callback = mActivity.registerCallback();
         final EditText field = mActivity.getCell(1, 1);
         final AutofillId fieldId = field.getAutofillId();
