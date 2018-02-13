@@ -16,6 +16,7 @@
 
 package android.autofillservice.cts;
 
+import static android.autofillservice.cts.Helper.findViewByAutofillHint;
 import static android.view.View.IMPORTANT_FOR_AUTOFILL_AUTO;
 import static android.view.View.IMPORTANT_FOR_AUTOFILL_NO;
 import static android.view.View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS;
@@ -79,6 +80,8 @@ public class FatActivity extends AbstractAutoFillActivity {
     private View mNotImportantContainerMixedDescendantsChild;
     private View mNotImportantContainerMixedDescendantsGrandChild;
 
+    private View mViewWithAutofillHints;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -111,6 +114,9 @@ public class FatActivity extends AbstractAutoFillActivity {
         mNotImportantContainerMixedDescendantsGrandChild = findViewById(
                 R.id.not_important_container_mixed_descendants_grand_child);
 
+        mViewWithAutofillHints = findViewByAutofillHint(this, "importantAmI");
+        assertThat(mViewWithAutofillHints).isNotNull();
+
         // Sanity check for importantForAutofill modes
         assertThat(mInput.getImportantForAutofill()).isEqualTo(IMPORTANT_FOR_AUTOFILL_YES);
         assertThat(mCaptcha.getImportantForAutofill()).isEqualTo(IMPORTANT_FOR_AUTOFILL_NO);
@@ -137,6 +143,10 @@ public class FatActivity extends AbstractAutoFillActivity {
                 .isEqualTo(IMPORTANT_FOR_AUTOFILL_YES);
         assertThat(mNotImportantContainerMixedDescendantsGrandChild.getImportantForAutofill())
                 .isEqualTo(IMPORTANT_FOR_AUTOFILL_NO);
+
+        assertThat(mViewWithAutofillHints.getImportantForAutofill())
+                .isEqualTo(IMPORTANT_FOR_AUTOFILL_AUTO);
+        assertThat(mViewWithAutofillHints.isImportantForAutofill()).isTrue();
     }
 
     /**

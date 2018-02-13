@@ -492,9 +492,9 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
             // using secure codec even though it is clear key DRM
             MIME_VIDEO_AVC, new String[] { CodecCapabilities.FEATURE_SecurePlayback },
             "cenc", new byte[][] { CLEAR_KEY_CENC },
-            CENC_AUDIO_URL, false,
-            CENC_VIDEO_URL, true,
-            VIDEO_WIDTH_CENC, VIDEO_HEIGHT_CENC, false);
+            CENC_AUDIO_URL, false  /* audioEncrypted */,
+            CENC_VIDEO_URL, true /* videoEncrypted */,
+            VIDEO_WIDTH_CENC, VIDEO_HEIGHT_CENC, false /* scrambled */);
     }
 
     public void testClearKeyPlaybackCenc2() throws Exception {
@@ -503,9 +503,9 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
             // using secure codec even though it is clear key DRM
             MIME_VIDEO_AVC, new String[] { CodecCapabilities.FEATURE_SecurePlayback },
             "cenc", new byte[][] { CLEAR_KEY_CENC },
-            CENC_AUDIO_URL, false,
-            CENC_VIDEO_URL, true,
-            VIDEO_WIDTH_CENC, VIDEO_HEIGHT_CENC, false);
+            CENC_AUDIO_URL, false /* audioEncrypted */ ,
+            CENC_VIDEO_URL, true /* videoEncrypted */,
+            VIDEO_WIDTH_CENC, VIDEO_HEIGHT_CENC, false /* scrambled */);
     }
 
     public void testClearKeyPlaybackWebm() throws Exception {
@@ -513,9 +513,9 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
             COMMON_PSSH_SCHEME_UUID,
             MIME_VIDEO_VP8, new String[0],
             "webm", new byte[][] { CLEAR_KEY_WEBM },
-            WEBM_URL, true,
-            WEBM_URL, true,
-            VIDEO_WIDTH_WEBM, VIDEO_HEIGHT_WEBM, false);
+            WEBM_URL, true /* audioEncrypted */,
+            WEBM_URL, true /* videoEncrypted */,
+            VIDEO_WIDTH_WEBM, VIDEO_HEIGHT_WEBM, false /* scrambled */);
     }
 
     public void testClearKeyPlaybackMpeg2ts() throws Exception {
@@ -523,9 +523,9 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
             COMMON_PSSH_SCHEME_UUID,
             MIME_VIDEO_AVC, new String[0],
             "mpeg2ts", null,
-            MPEG2TS_SCRAMBLED_URL, false,
-            MPEG2TS_SCRAMBLED_URL, false,
-            VIDEO_WIDTH_MPEG2TS, VIDEO_HEIGHT_MPEG2TS, true);
+            MPEG2TS_SCRAMBLED_URL, false /* audioEncrypted */,
+            MPEG2TS_SCRAMBLED_URL, false /* videoEncrypted */,
+            VIDEO_WIDTH_MPEG2TS, VIDEO_HEIGHT_MPEG2TS, true /* scrambled */);
     }
 
     public void testPlaybackMpeg2ts() throws Exception {
@@ -533,9 +533,9 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
             COMMON_PSSH_SCHEME_UUID,
             MIME_VIDEO_AVC, new String[0],
             "mpeg2ts", null,
-            MPEG2TS_CLEAR_URL, false,
-            MPEG2TS_CLEAR_URL, false,
-            VIDEO_WIDTH_MPEG2TS, VIDEO_HEIGHT_MPEG2TS, false);
+            MPEG2TS_CLEAR_URL, false /* audioEncrypted */,
+            MPEG2TS_CLEAR_URL, false /* videoEncrypted */,
+            VIDEO_WIDTH_MPEG2TS, VIDEO_HEIGHT_MPEG2TS, false /* scrambled */);
     }
 
     private String getStringProperty(final MediaDrm drm,  final String key) {
@@ -689,4 +689,105 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
         }
     }
 
+    public void testGetOpenSessionCount() {
+        byte[] sessionId = null;
+        MediaDrm drm = null;
+        try {
+            drm = new MediaDrm(COMMON_PSSH_SCHEME_UUID);
+
+            if (drm.getOpenSessionCount() != 0) {
+                throw new Error("expected open session count to be 0");
+            }
+            sessionId = drm.openSession();
+            if (drm.getOpenSessionCount() != 1) {
+                throw new Error("expected open session count to be 1");
+            }
+            drm.closeSession(sessionId);
+            sessionId = null;
+
+            if (drm.getOpenSessionCount() != 0) {
+                throw new Error("expected open session count to be 0");
+            }
+        } catch(Exception e) {
+            throw new Error("Unexpected exception requesting open sessions", e);
+        } finally  {
+            if (sessionId != null) {
+                drm.closeSession(sessionId);
+            }
+        }
+    }
+
+    private final static int CLEARKEY_MAX_SESSIONS = 10;
+
+    public void testMaxSessionCount() {
+        try {
+            MediaDrm drm = new MediaDrm(COMMON_PSSH_SCHEME_UUID);
+
+            if (drm.getMaxSessionCount() != CLEARKEY_MAX_SESSIONS) {
+                throw new Error("expected open session count to be " +
+                        CLEARKEY_MAX_SESSIONS);
+            }
+        } catch(Exception e) {
+            throw new Error("Unexpected exception requesting open sessions", e);
+        }
+    }
+
+    public void testHdcpLevels() {
+        try {
+            MediaDrm drm = new MediaDrm(COMMON_PSSH_SCHEME_UUID);
+
+            if (drm.getConnectedHdcpLevel() != MediaDrm.HDCP_NONE) {
+                throw new Error("expected connected hdcp level to be HDCP_NONE");
+            }
+
+            if (drm.getMaxHdcpLevel() != MediaDrm.HDCP_NO_DIGITAL_OUTPUT) {
+                throw new Error("expected max hdcp level to be HDCP_NO_DIGITAL_OUTPUT");
+            }
+        } catch(Exception e) {
+            throw new Error("Unexpected exception requesting open sessions", e);
+        }
+    }
+
+    public void testSecurityLevels() {
+        MediaDrm drm = null;
+        byte[] sessionId = null;
+        try {
+            drm = new MediaDrm(COMMON_PSSH_SCHEME_UUID);
+
+            sessionId = drm.openSession(MediaDrm.SW_SECURE_CRYPTO);
+            if (drm.getSecurityLevel(sessionId) != MediaDrm.SW_SECURE_CRYPTO) {
+                throw new Error("expected security level to be SW_SECURE_CRYPTO");
+            }
+            drm.closeSession(sessionId);
+            sessionId = null;
+
+            sessionId = drm.openSession();
+            if (drm.getSecurityLevel(sessionId) != MediaDrm.SW_SECURE_CRYPTO) {
+                throw new Error("expected security level to be SW_SECURE_CRYPTO");
+            }
+            drm.closeSession(sessionId);
+            sessionId = null;
+
+            try {
+                sessionId = drm.openSession(MediaDrm.SW_SECURE_DECODE);
+            } catch (IllegalArgumentException e) {
+                /* caught expected exception */
+            } catch (Exception e) {
+                throw new Exception ("did't get expected IllegalArgumentException" +
+                        " while opening a session with disallowed security level");
+            } finally  {
+                if (sessionId != null) {
+                    drm.closeSession(sessionId);
+                }
+            }
+        } catch(Exception e) {
+            throw new Error("Unexpected exception requesting open sessions", e);
+        } finally  {
+            if (sessionId != null) {
+                drm.closeSession(sessionId);
+            }
+        }
+     }
+
+    /* TODO: add secure stop tests */
 }

@@ -30,6 +30,7 @@ import static android.service.autofill.FillEventHistory.Event.TYPE_SAVE_SHOWN;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.app.Activity;
 import android.app.assist.AssistStructure;
 import android.app.assist.AssistStructure.ViewNode;
 import android.app.assist.AssistStructure.WindowNode;
@@ -50,6 +51,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewStructure.HtmlInfo;
 import android.view.autofill.AutofillId;
 import android.view.autofill.AutofillManager.AutofillCallback;
@@ -94,38 +96,44 @@ final class Helper {
                     + "--bind value:i:%d";
 
     /**
-     * Helper interface used to filter Assist nodes.
+     * Helper interface used to filter nodes.
+     *
+     * @param <T> node type
      */
-    interface NodeFilter {
+    interface NodeFilter<T> {
         /**
          * Returns whether the node passes the filter for such given id.
          */
-        boolean matches(ViewNode node, Object id);
+        boolean matches(T node, String id);
     }
 
-    private static final NodeFilter RESOURCE_ID_FILTER = (node, id) -> {
+    private static final NodeFilter<ViewNode> RESOURCE_ID_FILTER = (node, id) -> {
         return id.equals(node.getIdEntry());
     };
 
-    private static final NodeFilter HTML_NAME_FILTER = (node, id) -> {
+    private static final NodeFilter<ViewNode> HTML_NAME_FILTER = (node, id) -> {
         return id.equals(getHtmlName(node));
     };
 
-    private static final NodeFilter HTML_NAME_OR_RESOURCE_ID_FILTER = (node, id) -> {
+    private static final NodeFilter<ViewNode> HTML_NAME_OR_RESOURCE_ID_FILTER = (node, id) -> {
         return id.equals(getHtmlName(node)) || id.equals(node.getIdEntry());
     };
 
-    private static final NodeFilter TEXT_FILTER = (node, id) -> {
+    private static final NodeFilter<ViewNode> TEXT_FILTER = (node, id) -> {
         return id.equals(node.getText());
     };
 
-    private static final NodeFilter WEBVIEW_FORM_FILTER = (node, id) -> {
+    private static final NodeFilter<ViewNode> WEBVIEW_FORM_FILTER = (node, id) -> {
         final String className = node.getClassName();
         if (!className.equals("android.webkit.WebView")) return false;
 
         final HtmlInfo htmlInfo = assertHasHtmlTag(node, "form");
         final String formName = getAttributeValue(htmlInfo, "name");
         return id.equals(formName);
+    };
+
+    private static final NodeFilter<View> AUTOFILL_HINT_VIEW_FILTER = (view, id) -> {
+        return hasHint(view.getAutofillHints(), id);
     };
 
     /**
@@ -201,8 +209,8 @@ final class Helper {
     /**
      * Gets a node if it matches the filter criteria for the given id.
      */
-    static ViewNode findNodeByFilter(@NonNull AssistStructure structure, @NonNull Object id,
-            @NonNull NodeFilter filter) {
+    static ViewNode findNodeByFilter(@NonNull AssistStructure structure, @NonNull String id,
+            @NonNull NodeFilter<ViewNode> filter) {
         Log.v(TAG, "Parsing request for activity " + structure.getActivityComponent());
         final int nodes = structure.getWindowNodeCount();
         for (int i = 0; i < nodes; i++) {
@@ -219,8 +227,8 @@ final class Helper {
     /**
      * Gets a node if it matches the filter criteria for the given id.
      */
-    static ViewNode findNodeByFilter(@NonNull List<FillContext> contexts, @NonNull Object id,
-            @NonNull NodeFilter filter) {
+    static ViewNode findNodeByFilter(@NonNull List<FillContext> contexts, @NonNull String id,
+            @NonNull NodeFilter<ViewNode> filter) {
         for (FillContext context : contexts) {
             ViewNode node = findNodeByFilter(context.getStructure(), id, filter);
             if (node != null) {
@@ -233,8 +241,8 @@ final class Helper {
     /**
      * Gets a node if it matches the filter criteria for the given id.
      */
-    static ViewNode findNodeByFilter(@NonNull ViewNode node, @NonNull Object id,
-            @NonNull NodeFilter filter) {
+    static ViewNode findNodeByFilter(@NonNull ViewNode node, @NonNull String id,
+            @NonNull NodeFilter<ViewNode> filter) {
         if (filter.matches(node, id)) {
             return node;
         }
@@ -335,6 +343,30 @@ final class Helper {
      */
     static ViewNode findNodeByText(ViewNode node, String text) {
         return findNodeByFilter(node, text, TEXT_FILTER);
+    }
+
+    /**
+     * Gets a view that contains the an autofill hint, or {@code null} if not found.
+     */
+    static View findViewByAutofillHint(Activity activity, String hint) {
+        final View rootView = activity.getWindow().getDecorView().getRootView();
+        return findViewByAutofillHint(rootView, hint);
+    }
+
+    /**
+     * Gets a view (or a descendant of it) that contains the an autofill hint, or {@code null} if
+     * not found.
+     */
+    static View findViewByAutofillHint(View view, String hint) {
+        if (AUTOFILL_HINT_VIEW_FILTER.matches(view, hint)) return view;
+        if ((view instanceof ViewGroup)) {
+            final ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                final View child = findViewByAutofillHint(group.getChildAt(i), hint);
+                if (child != null) return child;
+            }
+        }
+        return null;
     }
 
     /**
@@ -1109,6 +1141,31 @@ final class Helper {
             default:
                 return "UNKNOWN:" + event;
         }
+    }
+
+    public static String importantForAutofillAsString(int mode) {
+        switch (mode) {
+            case View.IMPORTANT_FOR_AUTOFILL_AUTO:
+                return "IMPORTANT_FOR_AUTOFILL_AUTO";
+            case View.IMPORTANT_FOR_AUTOFILL_YES:
+                return "IMPORTANT_FOR_AUTOFILL_YES";
+            case View.IMPORTANT_FOR_AUTOFILL_YES_EXCLUDE_DESCENDANTS:
+                return "IMPORTANT_FOR_AUTOFILL_YES_EXCLUDE_DESCENDANTS";
+            case View.IMPORTANT_FOR_AUTOFILL_NO:
+                return "IMPORTANT_FOR_AUTOFILL_NO";
+            case View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS:
+                return "IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS";
+            default:
+                return "UNKNOWN:" + mode;
+        }
+    }
+
+    public static boolean hasHint(@Nullable String[] hints, @Nullable String expectedHint) {
+        if (hints == null || expectedHint == null) return false;
+        for (String actualHint : hints) {
+            if (expectedHint.equals(actualHint)) return true;
+        }
+        return false;
     }
 
     private Helper() {
