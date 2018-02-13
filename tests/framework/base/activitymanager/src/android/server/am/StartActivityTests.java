@@ -16,16 +16,19 @@
 
 package android.server.am;
 
-import android.app.Activity;
-import android.content.ComponentName;
-import android.platform.test.annotations.Presubmit;
-import android.support.test.filters.FlakyTest;
-import android.util.Log;
-
-import org.junit.Test;
+import static android.server.am.app27.Components.SDK_27_LAUNCHING_ACTIVITY;
 
 import static org.junit.Assert.assertFalse;
 
+import android.app.Activity;
+import android.content.ComponentName;
+import android.platform.test.annotations.Presubmit;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.FlakyTest;
+import android.support.test.rule.ActivityTestRule;
+
+import org.junit.Rule;
+import org.junit.Test;
 
 /**
  * Build/Install/Run:
@@ -34,17 +37,14 @@ import static org.junit.Assert.assertFalse;
 @Presubmit
 @FlakyTest
 public class StartActivityTests extends ActivityManagerTestBase {
-    private static final String SDK_27_PACKAGE = "android.server.am.app27";
     private static final String SDK_CURRENT_PACKAGE = "android.server.am";
-
-    private static final ComponentName SDK_27_LAUNCHING_ACTIVITY = ComponentName.createRelative(
-            SDK_27_PACKAGE, "android.server.am.LaunchingActivity");
 
     private static final ComponentName TEST_ACTIVITY = ComponentName.createRelative(
             SDK_CURRENT_PACKAGE, ".TestActivity");
-    private static final ComponentName TEST_ACTIVITY_2 = ComponentName.createRelative(
-            "android.server.cts.am",
-            "android.server.am.StartActivityTests$TestActivity");
+
+    @Rule
+    public final ActivityTestRule<TestActivity2> mTestActivity2Rule =
+            new ActivityTestRule<>(TestActivity2.class);
 
     /**
      * Ensures {@link Activity} can only be launched from an {@link Activity}
@@ -60,16 +60,15 @@ public class StartActivityTests extends ActivityManagerTestBase {
                 .execute();
 
         // Launch second Activity from Activity Context to ensure previous Activity has launched.
-        getLaunchActivityBuilder()
-                .setTargetActivity(TEST_ACTIVITY_2)
-                .execute();
+        final Activity testActivity2 = mTestActivity2Rule.launchActivity(null);
 
-        mAmWmState.computeState(new WaitForValidActivityState(TEST_ACTIVITY_2));
+        mAmWmState.computeState(testActivity2.getComponentName());
 
         // Verify Activity was not started.
         assertFalse(mAmWmState.getAmState().containsActivity(TEST_ACTIVITY));
         mAmWmState.assertResumedActivity(
-                "Activity launched from activity context should be present", TEST_ACTIVITY_2);
+                "Activity launched from activity context should be present",
+                testActivity2.getComponentName());
     }
 
     /**
@@ -86,7 +85,7 @@ public class StartActivityTests extends ActivityManagerTestBase {
                 .setNewTask(true)
                 .execute();
 
-        mAmWmState.computeState(new WaitForValidActivityState(TEST_ACTIVITY));
+        mAmWmState.computeState(TEST_ACTIVITY);
         mAmWmState.assertResumedActivity("Test Activity should be started with new task flag",
                 TEST_ACTIVITY);
     }
@@ -103,11 +102,11 @@ public class StartActivityTests extends ActivityManagerTestBase {
                 .setUseApplicationContext(true)
                 .execute();
 
-        mAmWmState.computeState(new WaitForValidActivityState(TEST_ACTIVITY));
+        mAmWmState.computeState(TEST_ACTIVITY);
         mAmWmState.assertResumedActivity("Test Activity should be resumed without older sdk",
                 TEST_ACTIVITY);
     }
 
-    public static class TestActivity extends Activity {
+    public static class TestActivity2 extends Activity {
     }
 }

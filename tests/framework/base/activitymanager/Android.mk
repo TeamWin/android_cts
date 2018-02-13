@@ -23,6 +23,8 @@ LOCAL_PACKAGE_NAME := CtsActivityManagerDeviceTestCases
 
 LOCAL_SRC_FILES := \
     $(call all-java-files-under, src) \
+    $(call all-named-files-under,Components.java, app) \
+    $(call all-named-files-under,Components.java, app27) \
     $(call all-named-files-under,Components.java, appDebuggable) \
     $(call all-named-files-under,Components.java, appDisplaySize) \
     $(call all-named-files-under,Components.java, appSecondUid) \
