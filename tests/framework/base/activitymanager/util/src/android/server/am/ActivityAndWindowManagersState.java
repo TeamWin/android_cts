@@ -184,23 +184,6 @@ public class ActivityAndWindowManagersState {
                         .build());
     }
 
-    void waitForValidStateWithActivityType(String waitForActivityVisible, int activityType)
-            throws Exception {
-        waitForValidState(false /* compareTaskAndStackBounds */,
-                new WaitForValidActivityState.Builder(waitForActivityVisible)
-                        .setActivityType(activityType)
-                        .build());
-    }
-
-    void waitForValidState(final ComponentName activityName, final int windowingMode,
-            final int activityType) throws Exception {
-        waitForValidState(false /* compareTaskAndStackBounds */,
-                new WaitForValidActivityState.Builder(activityName)
-                        .setActivityType(activityType)
-                        .setWindowingMode(windowingMode)
-                        .build());
-    }
-
     @Deprecated
     void waitForValidState(String waitForActivityVisible, int windowingMode, int activityType)
             throws Exception {
@@ -347,6 +330,13 @@ public class ActivityAndWindowManagersState {
                 "***Waiting for Display unfrozen");
     }
 
+    void waitForActivityState(ComponentName activityName, String activityState)
+            throws Exception {
+        waitForWithAmState(state -> state.hasActivityState(activityName, activityState),
+                "***Waiting for Activity State: " + activityState);
+    }
+
+    @Deprecated
     void waitForActivityState(String activityName, String activityState)
             throws Exception {
         waitForWithAmState(state -> state.hasActivityState(activityName, activityState),

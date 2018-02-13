@@ -50,4 +50,15 @@ public class ComponentNameUtils {
         return pos >= 0 ? className.substring(pos + 1) : className;
     }
 
+    /**
+     * Get component's simple class name.
+     *
+     * @return the class name of {@code componentName}, either fully qualified class name or in
+     *         a shortened form (WITHOUT a leading '.') if it is a suffix of the package.
+     * @see ComponentNameUtils#getLogTag(ComponentName)
+     */
+    public static String getSimpleClassName(final ComponentName componentName) {
+        final String shortClassName = componentName.getShortClassName();
+        return shortClassName.startsWith(".") ? shortClassName.substring(1) : shortClassName;
+    }
 }

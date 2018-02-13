@@ -26,6 +26,7 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
+import static android.server.am.Components.TestActivity.TEST_ACTIVITY_ACTION_FINISH_SELF;
 import static android.server.am.WindowManagerState.TRANSIT_WALLPAPER_OPEN;
 import static android.view.Surface.ROTATION_0;
 import static android.view.Surface.ROTATION_180;
@@ -41,8 +42,8 @@ import static org.junit.Assume.assumeTrue;
 
 import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
-
 import android.support.test.filters.FlakyTest;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -58,9 +59,6 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
     private static final String NO_RELAUNCH_ACTIVITY_NAME = "NoRelaunchActivity";
     private static final String SINGLE_INSTANCE_ACTIVITY_NAME = "SingleInstanceActivity";
     private static final String SINGLE_TASK_ACTIVITY_NAME = "SingleTaskActivity";
-
-    private static final String TEST_ACTIVITY_ACTION_FINISH =
-        "android.server.am.TestActivity.finish_self";
 
     private static final int TASK_SIZE = 600;
     private static final int STACK_SIZE = 300;
@@ -486,7 +484,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
     public void testFinishDockActivityWhileMinimized() throws Exception {
         launchActivityInDockStackAndMinimize(TEST_ACTIVITY_NAME);
 
-        executeShellCommand("am broadcast -a " + TEST_ACTIVITY_ACTION_FINISH);
+        executeShellCommand("am broadcast -a " + TEST_ACTIVITY_ACTION_FINISH_SELF);
         waitForDockNotMinimized();
         mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, false);
         assertDockNotMinimized();

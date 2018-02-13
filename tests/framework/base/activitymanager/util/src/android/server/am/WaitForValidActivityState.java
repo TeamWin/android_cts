@@ -29,6 +29,7 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMAR
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.server.am.ComponentNameUtils.getActivityName;
+import static android.server.am.ComponentNameUtils.getSimpleClassName;
 import static android.server.am.ComponentNameUtils.getWindowName;
 
 import android.content.ComponentName;
@@ -126,18 +127,6 @@ public class WaitForValidActivityState {
             default:
                 throw new IllegalArgumentException("Unknown ACTIVITY_TYPE_: " + activityType);
         }
-    }
-
-    /**
-     * Get component's simple class name.
-     *
-     * @return the class name of {@code componentName}, either fully qualified class name or in
-     *         a shortened form (WITHOUT a leading '.') if it is a suffix of the package.
-     * @see ComponentNameUtils#getLogTag(ComponentName)
-     */
-    public static String getSimpleClassName(final ComponentName componentName) {
-        final String shortClassName = componentName.getShortClassName();
-        return shortClassName.startsWith(".") ? shortClassName.substring(1) : shortClassName;
     }
 
     public static class Builder {

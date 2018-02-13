@@ -16,24 +16,29 @@
 
 package android.server.am;
 
+import static android.server.am.Components.LaunchAssistantActivityIntoAssistantStack
+        .EXTRA_IS_TRANSLUCENT;
+
 import android.app.Activity;
+import android.content.Intent;
 
 public class LaunchAssistantActivityIntoAssistantStack extends Activity {
-
-    // Launches the translucent assist activity
-    public static final String EXTRA_IS_TRANSLUCENT = "is_translucent";
 
     @Override
     protected void onResume() {
         super.onResume();
 
-        if (getIntent().hasExtra(EXTRA_IS_TRANSLUCENT) &&
-                Boolean.valueOf(getIntent().getStringExtra(EXTRA_IS_TRANSLUCENT))) {
-            TranslucentAssistantActivity.launchActivityIntoAssistantStack(this,
-                    getIntent().getExtras());
+        final Intent intent = getIntent();
+        if (isTranslucent(intent)) {
+            TranslucentAssistantActivity.launchActivityIntoAssistantStack(this, intent.getExtras());
         } else {
             AssistantActivity.launchActivityIntoAssistantStack(this, getIntent().getExtras());
         }
         finishAndRemoveTask();
+    }
+
+    private static boolean isTranslucent(Intent intent) {
+        return intent.hasExtra(EXTRA_IS_TRANSLUCENT)
+                && Boolean.valueOf(intent.getStringExtra(EXTRA_IS_TRANSLUCENT));
     }
 }
