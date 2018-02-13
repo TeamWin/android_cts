@@ -69,9 +69,7 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
     private static final int MAX_IMAGE_COUNT = 3;
     private static final int NUM_FRAMES_CHECKED = 30;
 
-    //TODO: Tighten threshold once HAL implementation is fixed.
-    //b/71427920
-    private static final double FRAME_DURATION_THRESHOLD = 2.0;
+    private static final double FRAME_DURATION_THRESHOLD = 0.03;
 
     /**
      * Test that passing in invalid physical camera ids in OutputConfiguragtion behaves as expected
