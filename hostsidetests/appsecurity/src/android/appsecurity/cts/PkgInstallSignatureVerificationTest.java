@@ -361,16 +361,15 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         // The APKs below are competely fine except they don't start with ZIP Local File Header
         // magic. Thus, these APKs will install just fine unless Package Manager requires that APKs
         // start with ZIP Local File Header magic.
-        String error = "Failed to parse";
 
         // Obtained by modifying apksigner to output four unused 0x00 bytes at the start of the APK
-        assertInstallFailsWithError("v1-only-starts-with-00000000-magic.apk", error);
-        assertInstallFailsWithError("v2-only-starts-with-00000000-magic.apk", error);
+        assertInstallFails("v1-only-starts-with-00000000-magic.apk");
+        assertInstallFails("v2-only-starts-with-00000000-magic.apk");
 
         // Obtained by modifying apksigner to output 8 unused bytes (DEX magic and version) at the
         // start of the APK
-        assertInstallFailsWithError("v1-only-starts-with-dex-magic.apk", error);
-        assertInstallFailsWithError("v2-only-starts-with-dex-magic.apk", error);
+        assertInstallFails("v1-only-starts-with-dex-magic.apk");
+        assertInstallFails("v2-only-starts-with-dex-magic.apk");
     }
 
     private void assertInstallSucceeds(String apkFilenameInResources) throws Exception {
