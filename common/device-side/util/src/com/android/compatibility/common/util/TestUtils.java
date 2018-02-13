@@ -61,14 +61,37 @@ public class TestUtils {
         if (timeoutSecond <= 0) {
             timeoutSecond = DEFAULT_TIMEOUT_SECONDS;
         }
+        int sleep = 125;
         final long timeout = SystemClock.uptimeMillis() + timeoutSecond * 1000;
         while (SystemClock.uptimeMillis() < timeout) {
             if (predicate.getAsBoolean()) {
                 return; // okay
             }
-            Thread.sleep(200);
+            Thread.sleep(sleep);
+            sleep *= 5;
+            sleep = Math.min(2000, sleep);
         }
         failWithLog("Timeout: " + message);
+    }
+
+    /**
+     * Run a Runnable {@code r}, and if it throws, also run {@code onFailure}.
+     */
+    public static void runWithFailureHook(RunnableWithThrow r, RunnableWithThrow onFailure)
+            throws Exception {
+        if (r == null) {
+            throw new NullPointerException("r");
+        }
+        if (onFailure == null) {
+            throw new NullPointerException("onFailure");
+        }
+        try {
+            r.run();
+        } catch (Throwable th) {
+            Log.e(TAG, "Caught exception: " + th, th);
+            onFailure.run();
+            throw th;
+        }
     }
 }
 
