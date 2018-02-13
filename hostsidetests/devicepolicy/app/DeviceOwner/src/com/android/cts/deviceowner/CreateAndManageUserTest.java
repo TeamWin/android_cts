@@ -34,7 +34,7 @@ import android.provider.Settings;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import java.lang.reflect.Field;
-import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -303,7 +303,7 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
     }
 
     static class LocalBroadcastReceiver extends BroadcastReceiver {
-        private SynchronousQueue<UserHandle> mQueue = new SynchronousQueue<UserHandle>();
+        private LinkedBlockingQueue<UserHandle> mQueue = new LinkedBlockingQueue<UserHandle>(1);
 
         @Override
         public void onReceive(Context context, Intent intent) {
