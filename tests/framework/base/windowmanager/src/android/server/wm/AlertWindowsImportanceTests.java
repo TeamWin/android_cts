@@ -22,6 +22,8 @@ import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIB
 import static android.content.Context.BIND_ALLOW_OOM_MANAGEMENT;
 import static android.content.Context.BIND_AUTO_CREATE;
 import static android.content.Context.BIND_NOT_FOREGROUND;
+import static android.server.wm.alertwindowappsdk25.Components.SDK25_ALERT_WINDOW_TEST_ACTIVITY;
+import static android.server.wm.alertwindowservice.Components.ALERT_WINDOW_SERVICE;
 
 import static org.junit.Assert.assertEquals;
 
@@ -54,8 +56,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.ToIntFunction;
 
 /**
- * Build: mmma -j32 cts/tests/framework/base
- * Run: cts/tests/framework/base/activitymanager/util/run-test CtsWindowManagerDeviceTestCases android.server.wm.AlertWindowsImportanceTests
+ * Build/Install/Run:
+ *     atest CtsWindowManagerDeviceTestCases:AlertWindowsImportanceTests
  */
 @Presubmit
 @RunWith(AndroidJUnit4.class)
@@ -65,8 +67,6 @@ public final class AlertWindowsImportanceTests {
 
     private static final boolean DEBUG = false;
     private static final long WAIT_TIME_MS = 2 * 1000;
-
-    private static final String SDK25_PACKAGE_NAME = "android.server.wm.alertwindowappsdk25";
 
     private Messenger mService;
     private String mServicePackageName;
@@ -84,11 +84,11 @@ public final class AlertWindowsImportanceTests {
         final Context context = InstrumentationRegistry.getTargetContext();
 
         mAm = context.getSystemService(ActivityManager.class);
-        mAm25 = context.createPackageContext(SDK25_PACKAGE_NAME, 0)
+        mAm25 = context.createPackageContext(SDK25_ALERT_WINDOW_TEST_ACTIVITY.getPackageName(), 0)
                 .getSystemService(ActivityManager.class);
 
         final Intent intent = new Intent()
-                .setClassName(AlertWindowService.PACKAGE_NAME, AlertWindowService.class.getName())
+                .setComponent(ALERT_WINDOW_SERVICE)
                 .putExtra(AlertWindowService.EXTRA_MESSENGER, mMessenger);
         // Needs to be both BIND_NOT_FOREGROUND and BIND_ALLOW_OOM_MANAGEMENT to avoid the binding
         // to this instrumentation test from increasing its importance.

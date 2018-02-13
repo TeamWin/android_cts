@@ -19,6 +19,8 @@ package android.server.wm;
 import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.AppOpsManager.MODE_ERRORED;
 import static android.app.AppOpsManager.OPSTR_SYSTEM_ALERT_WINDOW;
+import static android.server.wm.alertwindowapp.Components.ALERT_WINDOW_TEST_ACTIVITY;
+import static android.server.wm.alertwindowappsdk25.Components.SDK25_ALERT_WINDOW_TEST_ACTIVITY;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -40,16 +42,11 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Build: mmma -j32 cts/tests/framework/base
- * Run: cts/tests/framework/base/activitymanager/util/run-test CtsWindowManagerDeviceTestCases android.server.wm.AlertWindowsTests
+ * Build/Install/Run:
+ *     atest CtsWindowManagerDeviceTestCases:AlertWindowsTests
  */
 @Presubmit
 public class AlertWindowsTests extends ActivityManagerTestBase {
-
-    private static final ComponentName TEST_ACTIVITY = ComponentName.createRelative(
-            "android.server.wm.alertwindowapp", ".AlertWindowTestActivity");
-    private static final ComponentName SDK25_TEST_ACTIVITY = ComponentName.createRelative(
-            "android.server.wm.alertwindowappsdk25", ".AlertWindowTestActivitySdk25");
 
     // From WindowManager.java
     private static final int TYPE_BASE_APPLICATION      = 1;
@@ -82,41 +79,41 @@ public class AlertWindowsTests extends ActivityManagerTestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        resetPermissionState(TEST_ACTIVITY);
-        resetPermissionState(SDK25_TEST_ACTIVITY);
+        resetPermissionState(ALERT_WINDOW_TEST_ACTIVITY);
+        resetPermissionState(SDK25_ALERT_WINDOW_TEST_ACTIVITY);
     }
 
     @After
     @Override
     public void tearDown() throws Exception {
         super.tearDown();
-        resetPermissionState(TEST_ACTIVITY);
-        resetPermissionState(SDK25_TEST_ACTIVITY);
-        stopTestPackage(TEST_ACTIVITY);
-        stopTestPackage(SDK25_TEST_ACTIVITY);
+        resetPermissionState(ALERT_WINDOW_TEST_ACTIVITY);
+        resetPermissionState(SDK25_ALERT_WINDOW_TEST_ACTIVITY);
+        stopTestPackage(ALERT_WINDOW_TEST_ACTIVITY);
+        stopTestPackage(SDK25_ALERT_WINDOW_TEST_ACTIVITY);
     }
 
     @Test
     public void testAlertWindowAllowed() throws Exception {
-        runAlertWindowTest(TEST_ACTIVITY, true /* hasAlertWindowPermission */,
+        runAlertWindowTest(ALERT_WINDOW_TEST_ACTIVITY, true /* hasAlertWindowPermission */,
                 true /* atLeastO */);
     }
 
     @Test
     public void testAlertWindowDisallowed() throws Exception {
-        runAlertWindowTest(TEST_ACTIVITY, false /* hasAlertWindowPermission */,
+        runAlertWindowTest(ALERT_WINDOW_TEST_ACTIVITY, false /* hasAlertWindowPermission */,
                 true /* atLeastO */);
     }
 
     @Test
     public void testAlertWindowAllowedSdk25() throws Exception {
-        runAlertWindowTest(SDK25_TEST_ACTIVITY, true /* hasAlertWindowPermission */,
+        runAlertWindowTest(SDK25_ALERT_WINDOW_TEST_ACTIVITY, true /* hasAlertWindowPermission */,
                 false /* atLeastO */);
     }
 
     @Test
     public void testAlertWindowDisallowedSdk25() throws Exception {
-        runAlertWindowTest(SDK25_TEST_ACTIVITY, false /* hasAlertWindowPermission */,
+        runAlertWindowTest(SDK25_ALERT_WINDOW_TEST_ACTIVITY, false /* hasAlertWindowPermission */,
                 false /* atLeastO */);
     }
 
