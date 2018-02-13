@@ -79,22 +79,27 @@ public class ActivityAndWindowManagersState {
     private WindowManagerState mWmState = new WindowManagerState();
 
     @Deprecated
-    public void computeState(String... waitForActivitiesVisible)
-            throws Exception {
-        WaitForValidActivityState[] states = waitForActivitiesVisible != null ?
-                new WaitForValidActivityState[waitForActivitiesVisible.length] : null;
-        if (states != null) {
-            for (int i = 0; i < waitForActivitiesVisible.length; i++) {
-                states[i] =
-                        new WaitForValidActivityState.Builder(waitForActivitiesVisible[i]).build();
-            }
-        }
-        computeState(states);
+    public void computeState(String... simpleActivityNames) throws Exception {
+        computeState(true, Arrays.stream(simpleActivityNames)
+                .map(WaitForValidActivityState::new)
+                .toArray(WaitForValidActivityState[]::new));
     }
 
     @Deprecated
     public void computeState() throws Exception {
         computeState(true);
+    }
+
+    /**
+     * Compute AM and WM state of device, check sanity and bounds.
+     * WM state will include only visible windows, stack and task bounds will be compared.
+     *
+     * @param componentNames array of activity names to wait for.
+     */
+    public void computeState(ComponentName... componentNames) throws Exception {
+        computeState(true, Arrays.stream(componentNames)
+                .map(WaitForValidActivityState::new)
+                .toArray(WaitForValidActivityState[]::new));
     }
 
     /**
