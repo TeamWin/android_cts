@@ -85,8 +85,8 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         // Dock a task
         launchActivity(TEST_ACTIVITY);
         launchActivityInDockStack(DOCKED_ACTIVITY);
-        mAmWmState.assertContainsStack("Must contain fullscreen stack.",
-                FULLSCREEN_WORKSPACE_STACK_ID);
+        mAmWmState.assertHasFullscreenTypeStackOnDisplay("Must contain fullscreen stack.",
+                mAssistantDisplayId);
         mAmWmState.assertContainsStack("Must contain docked stack.", DOCKED_STACK_ID);
 
         // Enable the assistant and launch an assistant activity, ensure it is on top
@@ -112,8 +112,8 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         // Dock a task
         launchActivity(TEST_ACTIVITY);
         launchActivityInDockStack(DOCKED_ACTIVITY);
-        mAmWmState.assertContainsStack("Must contain fullscreen stack.",
-                FULLSCREEN_WORKSPACE_STACK_ID);
+        mAmWmState.assertHasFullscreenTypeStackOnDisplay("Must contain fullscreen stack.",
+                mAssistantDisplayId);
         mAmWmState.assertContainsStack("Must contain docked stack.", DOCKED_STACK_ID);
 
         enableAssistant();
@@ -132,10 +132,9 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         // Ensure that the fullscreen stack is on top and the test activity is now visible
         mAmWmState.waitForValidState(mDevice, TEST_ACTIVITY, FULLSCREEN_WORKSPACE_STACK_ID);
         mAmWmState.assertFocusedActivity("TestActivity should be resumed", TEST_ACTIVITY);
-        mAmWmState.assertFrontStack("Fullscreen stack should be on top.",
-                FULLSCREEN_WORKSPACE_STACK_ID);
-        mAmWmState.assertFocusedStack("Fullscreen stack should be focused.",
-                FULLSCREEN_WORKSPACE_STACK_ID);
+        mAmWmState.assertActivityInFullscreenTypeStack(
+                "TestActivity should go on a suitable fullscreen-type stack.",
+                TEST_ACTIVITY);
 
         // Now, tell it to finish itself and ensure that the assistant stack is brought back forward
         executeShellCommand("am broadcast -a " + TEST_ACTIVITY_ACTION_FINISH_SELF);
@@ -155,10 +154,9 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         mAmWmState.waitForValidState(mDevice, TEST_ACTIVITY, FULLSCREEN_WORKSPACE_STACK_ID);
         mAmWmState.waitForActivityState(mDevice, TEST_ACTIVITY, STATE_RESUMED);
         mAmWmState.assertFocusedActivity("TestActivity should be resumed", TEST_ACTIVITY);
-        mAmWmState.assertFrontStack("Fullscreen stack should be on top.",
-                FULLSCREEN_WORKSPACE_STACK_ID);
-        mAmWmState.assertFocusedStack("Fullscreen stack should be focused.",
-                FULLSCREEN_WORKSPACE_STACK_ID);
+        mAmWmState.assertActivityInFullscreenTypeStack(
+                "TestActivity should go on a suitable fullscreen-type stack.",
+                TEST_ACTIVITY);
     }
 
     public void testDisallowEnterPiPFromAssistantStack() throws Exception {

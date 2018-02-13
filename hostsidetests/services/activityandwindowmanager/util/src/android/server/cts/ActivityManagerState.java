@@ -33,8 +33,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
-import static android.server.cts.ActivityManagerTestBase.HOME_STACK_ID;
-import static android.server.cts.ActivityManagerTestBase.RECENTS_STACK_ID;
+import static android.server.cts.ActivityManagerTestBase.*;
 import static android.server.cts.StateLogger.log;
 import static android.server.cts.StateLogger.logE;
 
@@ -233,6 +232,21 @@ class ActivityManagerState {
             }
         }
         return null;
+    }
+
+    boolean containsSuitableStackOnDisplay(int displayId) {
+        for (ActivityStack stack : mDisplayStacks.get(displayId)) {
+            if (isSuitableStack(stack.mStackId)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    boolean isSuitableStack(int stackId) {
+        return stackId != HOME_STACK_ID
+                && stackId != DOCKED_STACK_ID
+                && stackId != PINNED_STACK_ID;
     }
 
     int getStackPosition(int stackId) {
