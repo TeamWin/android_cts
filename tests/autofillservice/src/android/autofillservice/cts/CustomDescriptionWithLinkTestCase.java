@@ -25,6 +25,7 @@ import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiObject2;
 import android.widget.RemoteViews;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -166,6 +167,7 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
      * the Save UI should have been canceled.
      */
     @Test
+    @Ignore("Test fail on some devices because Recents UI is not well defined: b/72044685")
     public final void testTapLink_backToPreviousActivityByTappingRecents()
             throws Exception {
         saveUiCancelledAfterTappingLinkTest(PostSaveLinkTappedAction.TAP_RECENTS);
