@@ -46,6 +46,8 @@ import android.graphics.PointF;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.test.ActivityInstrumentationTestCase2;
+import android.util.Log;
+import android.view.Display;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -65,6 +67,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class AccessibilityGestureDispatchTest extends
         ActivityInstrumentationTestCase2<AccessibilityGestureDispatchTest.GestureDispatchActivity> {
+    private static final String TAG = AccessibilityGestureDispatchTest.class.getSimpleName();
+
     private static final int GESTURE_COMPLETION_TIMEOUT = 5000; // millis
     private static final int MOTION_EVENT_TIMEOUT = 1000; // millis
 
@@ -302,6 +306,12 @@ public class AccessibilityGestureDispatchTest extends
         final float CLICK_OFFSET_Y = 20;
         final float MAGNIFICATION_FACTOR = 2;
         if (!mHasTouchScreen) {
+            return;
+        }
+
+        int displayId = getActivity().getWindow().getDecorView().getDisplay().getDisplayId();
+        if (displayId != Display.DEFAULT_DISPLAY) {
+            Log.i(TAG, "Magnification is not supported on virtual displays.");
             return;
         }
 
