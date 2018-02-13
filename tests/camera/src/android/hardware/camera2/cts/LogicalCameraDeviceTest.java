@@ -30,7 +30,9 @@ import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.CaptureFailure;
+import android.hardware.camera2.cts.CaptureResultTest;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
+import android.hardware.camera2.cts.helpers.StaticMetadata.CheckLevel;
 import android.hardware.camera2.cts.testcases.Camera2SurfaceViewTestCase;
 import android.hardware.camera2.params.OutputConfiguration;
 import android.hardware.camera2.params.StreamConfigurationMap;
@@ -70,6 +72,21 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
     private static final int NUM_FRAMES_CHECKED = 30;
 
     private static final double FRAME_DURATION_THRESHOLD = 0.03;
+
+    private HashMap<String, StaticMetadata> mAllStaticInfo;
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+
+        mAllStaticInfo = new HashMap<String, StaticMetadata>();
+        for (String cameraId : mCameraIds) {
+            StaticMetadata staticMetadata = new StaticMetadata(
+                    mCameraManager.getCameraCharacteristics(cameraId),
+                    CheckLevel.ASSERT, /*collector*/null);
+            mAllStaticInfo.put(cameraId, staticMetadata);
+        }
+    }
 
     /**
      * Test that passing in invalid physical camera ids in OutputConfiguragtion behaves as expected
@@ -495,6 +512,11 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
                     CaptureResult.CONTROL_AE_STATE_LOCKED, NUM_RESULTS_WAIT_TIMEOUT);
         }
 
+        // Verify results
+        CaptureResultTest.validateCaptureResult(mCollector, simpleResultListener,
+                mStaticInfo, mAllStaticInfo, null/*requestedPhysicalIds*/,
+                requestBuilder, NUM_FRAMES_CHECKED);
+
         // Collect timestamps for one logical stream only.
         long prevTimestamp = -1;
         long[] logicalTimestamps = new long[NUM_FRAMES_CHECKED];
@@ -504,14 +526,6 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
                     CameraTestUtils.CAPTURE_RESULT_TIMEOUT_MS);
             logicalTimestamps[i] = totalCaptureResult.get(CaptureResult.SENSOR_TIMESTAMP);
         }
-        // Make sure that a logical stream request wont' generate physical result metadata.
-        TotalCaptureResult totalCaptureResult =
-                simpleResultListener.getTotalCaptureResult(
-                CameraTestUtils.CAPTURE_RESULT_TIMEOUT_MS);
-        Map<String, CaptureResult> physicalResults =
-                totalCaptureResult.getPhysicalCameraResults();
-        assertTrue("Logical stream request must not generate physical result metadata",
-                physicalResults.isEmpty());
 
         double logicalAvgDurationMs = (logicalTimestamps[NUM_FRAMES_CHECKED-1] -
                 logicalTimestamps[0])/(NS_PER_MS*(NUM_FRAMES_CHECKED-1));
@@ -525,6 +539,12 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
         mSession.setRepeatingRequest(requestBuilder.build(), simpleResultListenerDual,
                 mHandler);
 
+        // Verify results for physical streams request.
+        CaptureResultTest.validateCaptureResult(mCollector, simpleResultListenerDual,
+                mStaticInfo, mAllStaticInfo, physicalCameraIds, requestBuilder,
+                NUM_FRAMES_CHECKED);
+
+        // Acquire the timestamps of the physical camera.
         long[] logicalTimestamps2 = new long[NUM_FRAMES_CHECKED];
         long [][] physicalTimestamps = new long[physicalTargets.size()][];
         for (int i = 0; i < physicalTargets.size(); i++) {
@@ -545,14 +565,6 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
                  index++;
             }
         }
-        // Verify the size of the physical result metadata map
-        TotalCaptureResult totalCaptureResultDual =
-                simpleResultListenerDual.getTotalCaptureResult(
-                CameraTestUtils.CAPTURE_RESULT_TIMEOUT_MS);
-        Map<String, CaptureResult> physicalResultsDual =
-                totalCaptureResultDual.getPhysicalCameraResults();
-        assertTrue("Stream request must generate 2 physical result metadata",
-                physicalResultsDual.size() == 2);
 
         // Check timestamp monolithity for individual camera and across cameras
         for (int i = 0; i < NUM_FRAMES_CHECKED-1; i++) {

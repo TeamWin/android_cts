@@ -1388,6 +1388,7 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                         CameraCharacteristics.LOGICAL_MULTI_CAMERA_SENSOR_SYNC_TYPE_APPROXIMATE,
                         CameraCharacteristics.LOGICAL_MULTI_CAMERA_SENSOR_SYNC_TYPE_CALIBRATED);
 
+                Integer timestampSource = c.get(CameraCharacteristics.SENSOR_INFO_TIMESTAMP_SOURCE);
                 for (String physicalCameraId : physicalCameraIds) {
                     assertNotNull("Physical camera id shouldn't be null", physicalCameraId);
                     assertTrue(
@@ -1414,6 +1415,11 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
 
                     verifyLensCalibration(poseRotation, poseTranslation, poseReference,
                             cameraIntrinsics, radialDistortion, precorrectionArray);
+
+                    Integer timestampSourcePhysical =
+                            pc.get(CameraCharacteristics.SENSOR_INFO_TIMESTAMP_SOURCE);
+                    mCollector.expectEquals("Logical camera and physical cameras must have same " +
+                            "timestamp source", timestampSource, timestampSourcePhysical);
                 }
             }
             counter++;
