@@ -492,9 +492,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         logSeparator = clearLogcat();
         moveActivityToStack(activityName, DOCKED_STACK_ID);
         final ReportedSizes finalDockedSizes = getActivityDisplaySize(activityName, logSeparator);
-
-        // After activity configuration was changed twice it must report same size as original one.
-        assertSizesAreSame(initialDockedSizes, finalDockedSizes);
+        assertSizesAreSane(fullscreenSizes, finalDockedSizes);
     }
 
     /**
