@@ -282,6 +282,9 @@ public class TestUtils {
      */
     public static SelfManagedConnection waitForAndGetConnection(Uri address) {
         // Wait for creation of the new connection.
+        if (!CtsSelfManagedConnectionService.waitForBinding()) {
+            TestCase.fail("Could not bind to Self-Managed ConnectionService");
+        }
         CtsSelfManagedConnectionService connectionService =
                 CtsSelfManagedConnectionService.getConnectionService();
         TestCase.assertTrue(connectionService.waitForUpdate(
