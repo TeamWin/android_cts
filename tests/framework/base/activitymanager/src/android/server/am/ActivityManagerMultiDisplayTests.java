@@ -26,6 +26,11 @@ import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.ActivityManagerState.STATE_STOPPED;
 import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.StateLogger.logE;
+import static android.server.am.second.Components.SECOND_ACTIVITY;
+import static android.server.am.second.Components.SECOND_LAUNCH_BROADCAST_ACTION;
+import static android.server.am.second.Components.SECOND_LAUNCH_BROADCAST_RECEIVER;
+import static android.server.am.second.Components.SECOND_NO_EMBEDDING_ACTIVITY;
+import static android.server.am.third.Components.THIRD_ACTIVITY;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -40,8 +45,8 @@ import android.platform.test.annotations.Presubmit;
 import android.server.am.ActivityManagerState.ActivityDisplay;
 import android.server.am.displayservice.DisplayHelper;
 import android.support.annotation.Nullable;
-
 import android.support.test.filters.FlakyTest;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -59,25 +64,12 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
     private static final String RESIZEABLE_ACTIVITY_NAME = "ResizeableActivity";
     private static final String NON_RESIZEABLE_ACTIVITY_NAME = "NonResizeableActivity";
     private static final String SHOW_WHEN_LOCKED_ATTR_ACTIVITY_NAME = "ShowWhenLockedAttrActivity";
-    private static final String SECOND_PACKAGE = "android.server.am.second";
-    private static final String THIRD_PACKAGE = "android.server.am.third";
+
     private static final ComponentName TEST_ACTIVITY = ComponentName.createRelative(
             componentName, "." + TEST_ACTIVITY_NAME);
-    private static final ComponentName SECOND_ACTIVITY = ComponentName.createRelative(
-            SECOND_PACKAGE, ".SecondActivity");
-    private static final ComponentName SECOND_NO_EMBEDDING_ACTIVITY = ComponentName.createRelative(
-            SECOND_PACKAGE, ".SecondActivityNoEmbedding");
-    /** See AndroidManifest.xml of appSecondUid. */
-    private static final ComponentName SECOND_LAUNCH_BROADCAST_RECEIVER =
-            ComponentName.createRelative(SECOND_PACKAGE, ".LaunchBroadcastReceiver");
-    /** See AndroidManifest.xml of appSecondUid. */
-    private static final String SECOND_LAUNCH_BROADCAST_ACTION =
-            SECOND_PACKAGE + ".LAUNCH_BROADCAST_ACTION";
     private final ComponentName LAUNCH_BROADCAST_RECEIVER = ComponentName.createRelative(
             componentName, ".LaunchBroadcastReceiver");
     private final String LAUNCH_BROADCAST_ACTION = componentName + ".LAUNCH_BROADCAST_ACTION";
-    private static final ComponentName THIRD_ACTIVITY = ComponentName.createRelative(
-            THIRD_PACKAGE, ".ThirdActivity");
 
     @Before
     @Override
