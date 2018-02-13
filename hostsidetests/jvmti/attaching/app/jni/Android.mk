@@ -33,8 +33,8 @@ LOCAL_SHARED_LIBRARIES := liblog \
 # Note: Needs to be "whole" as this exposes JNI functions.
 LOCAL_WHOLE_STATIC_LIBRARIES := libctstiagent
 
-# Platform libraries that are not available to apps. Link in statically.
-LOCAL_STATIC_LIBRARIES += libbase
+# Platform libraries that may not be available to apps. Link in statically.
+LOCAL_STATIC_LIBRARIES += libbase libcutils libutils
 
 LOCAL_STRIP_MODULE := keep_symbols
 
