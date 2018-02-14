@@ -23,6 +23,8 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
+import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.pm.PackageManager.FEATURE_EMBEDDED;
 import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT;
 import static android.content.pm.PackageManager.FEATURE_LEANBACK;
@@ -32,6 +34,7 @@ import static android.content.pm.PackageManager.FEATURE_SCREEN_PORTRAIT;
 import static android.content.pm.PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE;
 import static android.content.pm.PackageManager.FEATURE_WATCH;
 import static android.server.am.ComponentNameUtils.getActivityName;
+import static android.server.am.ComponentNameUtils.getSimpleClassName;
 import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logAlways;
@@ -44,10 +47,13 @@ import static android.view.KeyEvent.KEYCODE_WAKEUP;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import static java.lang.Integer.toHexString;
+
 import android.app.ActivityManager;
 import android.app.KeyguardManager;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.ParcelFileDescriptor;
 import android.os.PowerManager;
@@ -169,34 +175,49 @@ public abstract class ActivityManagerTestBase {
 
     private static String getAmStartCmdInternal(final String activityName,
             final String... keyValuePairs) {
-        final StringBuilder cmd = new StringBuilder("am start -n ").append(activityName);
+        return appendKeyValuePairs(
+                new StringBuilder("am start -n ").append(activityName),
+                keyValuePairs);
+    }
+
+    private static String appendKeyValuePairs(
+            final StringBuilder cmd, final String... keyValuePairs) {
         if (keyValuePairs.length % 2 != 0) {
             throw new RuntimeException("keyValuePairs must be pairs of key/value arguments");
         }
         for (int i = 0; i < keyValuePairs.length; i += 2) {
             final String key = keyValuePairs[i];
             final String value = keyValuePairs[i + 1];
-            cmd.append(String.format(" --es %s %s", key, value));
+            cmd.append(" --es ")
+                    .append(key)
+                    .append(" ")
+                    .append(value);
         }
         return cmd.toString();
     }
 
-    protected static String getAmStartCmd(final String activityName, final int displayId) {
-        return "am start -n " + getActivityComponentName(activityName) + " -f 0x18000000"
-                + " --display " + displayId;
+    protected static String getAmStartCmd(final ComponentName activityName, final int displayId,
+            final String... keyValuePair) {
+        return getAmStartCmdInternal(getActivityName(activityName), displayId, keyValuePair);
     }
 
+    @Deprecated
     protected static String getAmStartCmd(final String activityName, final int displayId,
-                                          final String... keyValuePairs) {
-        String base = "am start -n " + getActivityComponentName(activityName) + " -f 0x18000000"
-                + " --display " + displayId;
-        if (keyValuePairs.length % 2 != 0) {
-            throw new RuntimeException("keyValuePairs must be pairs of key/value arguments");
-        }
-        for (int i = 0; i < keyValuePairs.length; i += 2) {
-            base += " --es " + keyValuePairs[i] + " " + keyValuePairs[i + 1];
-        }
-        return base;
+            final String... keyValuePair) {
+        return getAmStartCmdInternal(
+                getActivityComponentName(activityName), displayId, keyValuePair);
+    }
+
+    private static String getAmStartCmdInternal(final String activityName, final int displayId,
+            final String... keyValuePairs) {
+        return appendKeyValuePairs(
+                new StringBuilder("am start -n ")
+                        .append(activityName)
+                        .append(" -f 0x")
+                        .append(toHexString(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK))
+                        .append(" --display ")
+                        .append(displayId),
+                keyValuePairs);
     }
 
     protected static String getAmStartCmdInNewTask(final String activityName) {
@@ -431,6 +452,14 @@ public abstract class ActivityManagerTestBase {
                 .build());
     }
 
+    protected void launchActivityOnDisplay(ComponentName targetActivityName, int displayId,
+            String... keyValuePairs) throws Exception {
+        executeShellCommand(getAmStartCmd(targetActivityName, displayId, keyValuePairs));
+
+        mAmWmState.waitForValidState(new WaitForValidActivityState(targetActivityName));
+    }
+
+    @Deprecated
     protected void launchActivityOnDisplay(String targetActivityName, int displayId,
             String... keyValuePairs) throws Exception {
         executeShellCommand(getAmStartCmd(targetActivityName, displayId, keyValuePairs));
@@ -459,6 +488,7 @@ public abstract class ActivityManagerTestBase {
     }
 
     /** @see #launchActivitiesInSplitScreen(LaunchActivityBuilder, LaunchActivityBuilder) */
+    @Deprecated
     protected void launchActivitiesInSplitScreen(String primaryActivity, String secondaryActivity)
             throws Exception {
         launchActivitiesInSplitScreen(
@@ -509,7 +539,10 @@ public abstract class ActivityManagerTestBase {
             final int windowingMode) throws Exception {
         final int taskId = getActivityTaskId(activityName);
         mAm.setTaskWindowingMode(taskId, windowingMode, true /* toTop */);
-        mAmWmState.waitForValidState(activityName, windowingMode, ACTIVITY_TYPE_STANDARD);
+        mAmWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
+                .setActivityType(ACTIVITY_TYPE_STANDARD)
+                .setWindowingMode(windowingMode)
+                .build());
     }
 
     @Deprecated
@@ -1504,7 +1537,7 @@ public abstract class ActivityManagerTestBase {
         public LaunchActivityBuilder setTargetActivity(ComponentName activity) {
             mComponent = activity;
 
-            mTargetActivityName = activity.getShortClassName();
+            mTargetActivityName = getSimpleClassName(activity);
             mTargetPackage = activity.getPackageName();
             return this;
         }
