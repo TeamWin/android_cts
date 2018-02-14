@@ -459,6 +459,18 @@ public class ActivityAndWindowManagersState extends Assert {
         assertTrue(msg, mWmState.containsStack(stackId));
     }
 
+    void assertHasFullscreenTypeStackOnDisplay(String msg, int displayId) {
+        assertTrue(msg, mAmState.containsSuitableStackOnDisplay(displayId));
+    }
+
+    void assertActivityInFullscreenTypeStack(String msg, String activityName)
+            throws Exception {
+        final int stackId = mAmState.getTaskByActivityName(activityName).mStackId;
+        assertTrue(mAmState.isSuitableStack(stackId));
+        assertFrontStack(msg, stackId);
+        assertFocusedStack(msg, stackId);
+    }
+
     void assertDoesNotContainStack(String msg, int stackId) throws Exception {
         assertFalse(msg, mAmState.containsStack(stackId));
         assertFalse(msg, mWmState.containsStack(stackId));
