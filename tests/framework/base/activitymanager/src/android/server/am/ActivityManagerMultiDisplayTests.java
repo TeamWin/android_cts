@@ -730,7 +730,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             logSeparator = clearLogcat();
         }
 
-        mAmWmState.computeState();
+        mAmWmState.computeState(true);
         assertActivityLifecycle(RESIZEABLE_ACTIVITY_NAME, false /* relaunched */, logSeparator);
         mAmWmState.waitForValidState(RESIZEABLE_ACTIVITY_NAME, windowingMode,
                 ACTIVITY_TYPE_STANDARD);

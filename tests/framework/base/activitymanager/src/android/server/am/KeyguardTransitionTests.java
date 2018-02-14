@@ -86,7 +86,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
             launchActivity("ShowWhenLockedActivity");
             launchActivity("TestActivity");
             mAmWmState.waitForKeyguardShowingAndNotOccluded();
-            mAmWmState.computeState();
+            mAmWmState.computeState(true);
             assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_UNOCCLUDE,
                     mAmWmState.getWmState().getLastTransition());
         }

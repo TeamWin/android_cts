@@ -334,6 +334,7 @@ class ActivityManagerState {
         return containsActivity(getActivityName(activityName));
     }
 
+    /** TODO(b/73349193): Use {@link #containsActivity(ComponentName)} instaed. */
     @Deprecated
     boolean containsActivity(String fullActivityName) {
         for (ActivityStack stack : mStacks) {
@@ -394,6 +395,7 @@ class ActivityManagerState {
         return hasActivityStateInternal(getActivityName(activityName), activityState);
     }
 
+    /** TODO(b/73349193): Use {@link #hasActivityState(ComponentName, String)} instead. */
     @Deprecated
     boolean hasActivityState(String activityName, String activityState) {
         return hasActivityStateInternal(getActivityComponentName(activityName), activityState);
@@ -479,12 +481,14 @@ class ActivityManagerState {
         return getTaskByActivityInternal(getActivityName(activityName), WINDOWING_MODE_UNDEFINED);
     }
 
+    /** TODO(b/73349193): Use {@link #getTaskByActivity(ComponentName)} instead. */
     @Deprecated
     ActivityTask getTaskByActivityName(String activityName) {
         return getTaskByActivityInternal(
                 getActivityComponentName(activityName), WINDOWING_MODE_UNDEFINED);
     }
 
+    /** TODO(b/73349193): Add getTaskByActicityOfWidowingMode(Component, int). */
     @Deprecated
     ActivityTask getTaskByActivityName(String activityName, int windowingMode) {
         return getTaskByActivityInternal(getActivityComponentName(activityName), windowingMode);

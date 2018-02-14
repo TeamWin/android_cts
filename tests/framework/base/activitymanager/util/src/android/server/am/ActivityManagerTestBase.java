@@ -134,7 +134,7 @@ public abstract class ActivityManagerTestBase {
 
     private static Boolean sHasHomeScreen = null;
 
-    // TODO: Remove this when all activity name are specified by {@link ComponentName}.
+    // TODO(b/73349193): Remove this when all activity name are specified by {@link ComponentName}.
     static String componentName = DEFAULT_COMPONENT_NAME;
 
     protected static final int INVALID_DEVICE_ROTATION = -1;
@@ -152,6 +152,7 @@ public abstract class ActivityManagerTestBase {
     private String mIsDozePulseOnLongPress;
     private String mIsDozePulseOnDoubleTap;
 
+    /** TODO(b/73349193): Use {@link #getAmStartCmd(ComponentName, String...)} instead. */
     @Deprecated
     protected static String getAmStartCmd(final String activityName) {
         return "am start -n " + getActivityComponentName(activityName);
@@ -167,6 +168,7 @@ public abstract class ActivityManagerTestBase {
         return getAmStartCmdInternal(getActivityName(activityName), keyValuePairs);
     }
 
+    /** TODO(b/73349193): Use {@link #getAmStartCmd(ComponentName, String...)} instead. */
     @Deprecated
     protected static String getAmStartCmd(final String activityName,
             final String... keyValuePairs) {
@@ -201,6 +203,7 @@ public abstract class ActivityManagerTestBase {
         return getAmStartCmdInternal(getActivityName(activityName), displayId, keyValuePair);
     }
 
+    /** TODO(b/73349193): Use {@link #getAmStartCmd(ComponentName, String...)} instead. */
     @Deprecated
     protected static String getAmStartCmd(final String activityName, final int displayId,
             final String... keyValuePair) {
@@ -236,7 +239,7 @@ public abstract class ActivityManagerTestBase {
         return "am broadcast -a trigger_broadcast --ei orientation " + orientation;
     }
 
-    // TODO: Remove this when all activity name are specified by {@link ComponentName}.
+    // TODO(b/73349193): Remove this when all activity name are specified by {@link ComponentName}.
     static String getActivityComponentName(final String activityName) {
         return getActivityComponentName(componentName, activityName);
     }
@@ -250,7 +253,7 @@ public abstract class ActivityManagerTestBase {
                 activityName;
     }
 
-    // TODO: Remove this when all activity name are specified by {@link ComponentName}.
+    // TODO(b/73349193): Remove this when all activity name are specified by {@link ComponentName}.
     // A little ugly, but lets avoid having to strip static everywhere for
     // now.
     public static void setComponentName(String name) {
@@ -265,11 +268,12 @@ public abstract class ActivityManagerTestBase {
         return packageName + "/" + (prependPackageName ? packageName + "." : "");
     }
 
-    // TODO: Remove this when all activity name are specified by {@link ComponentName}.
+    // TODO(b/73349193): Remove this when all activity name are specified by {@link ComponentName}.
     static String getActivityWindowName(final String activityName) {
         return getActivityWindowName(componentName, activityName);
     }
 
+    // TODO(b/73349193): Remove this when all activity name are specified by {@link ComponentName}.
     static String getActivityWindowName(final String packageName, final String activityName) {
         return getBaseWindowName(packageName, !isFullyQualifiedActivityName(activityName))
                 + activityName;
@@ -364,6 +368,7 @@ public abstract class ActivityManagerTestBase {
         return InstrumentationRegistry.getInstrumentation().getUiAutomation().takeScreenshot();
     }
 
+    /** TODO(b/73349193): Remove this method. */
     @Deprecated
     protected void launchActivityInComponent(final String componentName,
             final String targetActivityName, final String... keyValuePairs) throws Exception {
@@ -379,6 +384,7 @@ public abstract class ActivityManagerTestBase {
         mAmWmState.waitForValidState(new WaitForValidActivityState(activityName));
     }
 
+    /** TODO(b/73349193): Use {@link #launchActivity(ComponentName, String...)} instead. */
     @Deprecated
     protected void launchActivity(final String targetActivityName, final String... keyValuePairs)
             throws Exception {
@@ -391,6 +397,7 @@ public abstract class ActivityManagerTestBase {
         executeShellCommand(getAmStartCmd(targetActivityName, keyValuePairs));
     }
 
+    /** TODO(b/73349193): Use {@link #launchActivity(ComponentName, String...)} instead. */
     @Deprecated
     protected void launchActivityNoWait(final String targetActivityName,
             final String... keyValuePairs) throws Exception {
@@ -428,7 +435,7 @@ public abstract class ActivityManagerTestBase {
 
     /** Returns the set of stack ids. */
     private HashSet<Integer> getStackIds() throws Exception {
-        mAmWmState.computeState();
+        mAmWmState.computeState(true);
         final List<ActivityManagerState.ActivityStack> stacks = mAmWmState.getAmState().getStacks();
         final HashSet<Integer> stackIds = new HashSet<>();
         for (ActivityManagerState.ActivityStack s : stacks) {
@@ -459,6 +466,7 @@ public abstract class ActivityManagerTestBase {
         mAmWmState.waitForValidState(new WaitForValidActivityState(targetActivityName));
     }
 
+    /** TODO(b/73349193): Use {@link #launchActivityOnDisplay(ComponentName, int, String...)} */
     @Deprecated
     protected void launchActivityOnDisplay(String targetActivityName, int displayId,
             String... keyValuePairs) throws Exception {
@@ -487,7 +495,10 @@ public abstract class ActivityManagerTestBase {
         mAmWmState.waitForRecentsActivityVisible();
     }
 
-    /** @see #launchActivitiesInSplitScreen(LaunchActivityBuilder, LaunchActivityBuilder) */
+    /**
+     * TODO(b/73349193): Use
+     * {@link #launchActivitiesInSplitScreen(LaunchActivityBuilder, LaunchActivityBuilder)
+     */
     @Deprecated
     protected void launchActivitiesInSplitScreen(String primaryActivity, String secondaryActivity)
             throws Exception {
@@ -545,6 +556,7 @@ public abstract class ActivityManagerTestBase {
                 .build());
     }
 
+    /** TODO(b/73349193): Use {@link #setActivityTaskWindowingMode(ComponentName, int)} instead. */
     @Deprecated
     protected void setActivityTaskWindowingMode(String activityName, int windowingMode)
             throws Exception {
@@ -646,6 +658,7 @@ public abstract class ActivityManagerTestBase {
         return getWindowTaskId(getWindowName(activityName));
     }
 
+    /** TODO(b/73349193): Use {@link #getActivityTaskId(ComponentName)} instead. */
     @Deprecated
     protected int getActivityTaskId(final String activityName) {
         return getWindowTaskId(getActivityWindowName(activityName));
@@ -1542,11 +1555,15 @@ public abstract class ActivityManagerTestBase {
             return this;
         }
 
+        /** TODO(b/73349193): Use {@link #setTargetActivity(ComponentName)} instead. */
+        @Deprecated
         public LaunchActivityBuilder setTargetActivityName(String name) {
             mTargetActivityName = name;
             return this;
         }
 
+        /** TODO(b/73349193): Use {@link #setTargetActivity(ComponentName)} instead. */
+        @Deprecated
         public LaunchActivityBuilder setTargetPackage(String pkg) {
             mTargetPackage = pkg;
             return this;
@@ -1557,6 +1574,8 @@ public abstract class ActivityManagerTestBase {
             return this;
         }
 
+        /** TODO(b/73349193): Use {@link #setLaunchingActivity(ComponentName)} instead. */
+        @Deprecated
         public LaunchActivityBuilder setLaunchingActivityName(String name) {
             mLaunchingActivityName = name;
             return this;

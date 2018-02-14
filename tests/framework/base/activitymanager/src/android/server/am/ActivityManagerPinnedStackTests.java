@@ -1518,7 +1518,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
         mAmWmState.waitForValidState(topActivityName,
                 WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
-        mAmWmState.computeState();
+        mAmWmState.computeState(true);
 
         if (supportsPip()) {
             final String windowName = getActivityWindowName(topActivityName);

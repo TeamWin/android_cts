@@ -40,7 +40,7 @@ public class WaitForValidActivityState {
     public final String componentName;
     @Nullable
     public final String windowName;
-    /** Use {@link #componentName} and  {@link #windowName}. */
+    /** TODO(b/73349193): Use {@link #componentName} and  {@link #windowName}. */
     @Deprecated
     @Nullable
     public final String activityName;
@@ -61,7 +61,7 @@ public class WaitForValidActivityState {
         this.activityType = ACTIVITY_TYPE_UNDEFINED;
     }
 
-    /** Use {@link #WaitForValidActivityState(ComponentName)}. */
+    /** TODO(b/73349193): Use {@link #WaitForValidActivityState(ComponentName)}. */
     @Deprecated
     public WaitForValidActivityState(String activityName) {
         this.componentName = null;
@@ -148,7 +148,7 @@ public class WaitForValidActivityState {
             mActivityName = getSimpleClassName(activityName);
         }
 
-        /** Use {@link #Builder(ComponentName)}. */
+        /** Use(b/73349193): {@link #Builder(ComponentName)}. */
         @Deprecated
         public Builder(String activityName) {
             mActivityName = activityName;
