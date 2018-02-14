@@ -31,6 +31,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     testng
 
 LOCAL_JAVA_LIBRARIES := android.test.runner.stubs
+LOCAL_SDK_VERSION := current
 
 include $(BUILD_STATIC_JAVA_LIBRARY)
 
