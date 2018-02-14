@@ -63,5 +63,13 @@ public final class VintfDeviceInfo extends DeviceInfo {
             store.endGroup();
         }
         store.endArray();
+
+        // getTargetFrameworkCompatibilityMatrixVersion is available Android P onward.
+        // (Use O_MR1 until P is released.)
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.O_MR1) {
+           return;
+        }
+        store.addResult("target_fcm_version",
+                        VintfObject.getTargetFrameworkCompatibilityMatrixVersion());
     }
 }
