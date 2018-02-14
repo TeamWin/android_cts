@@ -38,7 +38,5 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 LOCAL_PACKAGE_NAME := CtsIcuTestCases
 
-LOCAL_SDK_VERSION := current
-
 include $(BUILD_CTS_SUPPORT_PACKAGE)
 
