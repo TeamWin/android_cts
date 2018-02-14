@@ -18,6 +18,7 @@ package android.cts.backup;
 
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.log.LogUtil.CLog;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

@@ -16,6 +16,8 @@
 
 package android.server.am;
 
+import static android.server.am.Components.SPLASHSCREEN_ACTIVITY;
+
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -33,7 +35,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
 
     @Test
     public void testSplashscreenContent() throws Exception {
-        launchActivityNoWait("SplashscreenActivity");
+        launchActivityNoWait(SPLASHSCREEN_ACTIVITY);
         mAmWmState.waitForAppTransitionIdle();
         mAmWmState.getWmState().getStableBounds();
         final Bitmap image = takeScreenshot();

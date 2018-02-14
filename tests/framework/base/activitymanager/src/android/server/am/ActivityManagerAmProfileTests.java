@@ -17,6 +17,7 @@
 package android.server.am;
 
 import static android.server.am.ComponentNameUtils.getActivityName;
+import static android.server.am.debuggable.Components.DEBUGGABLE_APP_ACTIVITY;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -38,8 +39,6 @@ import java.io.FileInputStream;
  */
 public class ActivityManagerAmProfileTests extends ActivityManagerTestBase {
 
-    private static final ComponentName DEBUGGABLE_APP_ACTIVITY = ComponentName.createRelative(
-            "android.server.am.debuggable", ".DebuggableAppActivity");
     private static final String OUTPUT_FILE_PATH = "/data/local/tmp/profile.trace";
     private static final String FIRST_WORD_NO_STREAMING = "*version\n";
     private static final String FIRST_WORD_STREAMING = "SLOW";  // Magic word set by runtime.

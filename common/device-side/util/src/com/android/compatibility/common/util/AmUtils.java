@@ -30,4 +30,10 @@ public class AmUtils {
     public static void runKill(String packageName) {
         SystemUtil.runShellCommandForNoOutput("am kill " + packageName);
     }
+
+    /** Run "adb shell am set-standby-bucket" */
+    public static void setStandbyBucket(String packageName, int value) {
+        SystemUtil.runShellCommandForNoOutput("am set-standby-bucket " + packageName
+                + " " + value);
+    }
 }

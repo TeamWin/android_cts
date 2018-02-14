@@ -145,6 +145,16 @@ public final class MockIme extends InputMethodService {
                         setBackDisposition(backDisposition);
                         break;
                     }
+                    case "requestHideSelf": {
+                        final int flags = command.getExtras().getInt("flags");
+                        requestHideSelf(flags);
+                        break;
+                    }
+                    case "requestShowSelf": {
+                        final int flags = command.getExtras().getInt("flags");
+                        requestShowSelf(flags);
+                        break;
+                    }
                 }
             }
         });

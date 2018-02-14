@@ -101,11 +101,6 @@ public abstract class ActivityTestBase {
         }
     }
 
-    @Before
-    public void setUp() {
-        mBitmapAsserter.setUp(getActivity());
-    }
-
     @After
     public void tearDown() {
         if (mTestCaseBuilder != null) {

@@ -320,12 +320,8 @@ public class ResourcesTest extends AndroidTestCase {
         assertEquals(212 * targetDensity / defaultDensity, draw.getIntrinsicWidth(), 1);
         assertEquals(142 * targetDensity / defaultDensity, draw.getIntrinsicHeight(), 1);
 
-        try {
-            mResources.getDrawable(R.drawable.fake_image_will_not_decode);
-            fail("Expected decode failure as exception");
-        } catch (NotFoundException e) {
-            //expected
-        }
+        // Some apps rely on the fact that this will return null (rather than throwing).
+        assertNull(mResources.getDrawable(R.drawable.fake_image_will_not_decode));
     }
 
     public void testGetDrawable_StackOverflowErrorDrawable() {

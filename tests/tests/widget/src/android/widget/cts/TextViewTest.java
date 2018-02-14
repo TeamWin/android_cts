@@ -86,7 +86,7 @@ import android.text.Editable;
 import android.text.InputFilter;
 import android.text.InputType;
 import android.text.Layout;
-import android.text.MeasuredText;
+import android.text.PrecomputedText;
 import android.text.Selection;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -1637,14 +1637,38 @@ public class TextViewTest {
 
     @UiThreadTest
     @Test
-    public void testSetText_MeasuredText() {
+    public void testSetPrecomputedTextOrThrow() {
         final TextView tv = findTextView(R.id.textview_text);
-        final MeasuredText measured = new MeasuredText.Builder(
-                "This is an example text.", new TextPaint())
-                .setBreakStrategy(tv.getBreakStrategy())
-                .setHyphenationFrequency(tv.getHyphenationFrequency()).build();
-        tv.setText(measured);
-        assertEquals(measured.toString(), tv.getText().toString());
+        final PrecomputedText measured = PrecomputedText.create(
+                "This is an example text.", tv.getTextMetricsParams());
+        tv.setPrecomputedTextOrThrow(measured);
+        assertEquals(measured.getText().toString(), tv.getText().toString());
+
+        // Change the parameter. IllegalArgumentException is expected.
+        tv.setBreakStrategy(tv.getBreakStrategy() == Layout.BREAK_STRATEGY_HIGH_QUALITY
+                ?  Layout.BREAK_STRATEGY_SIMPLE : Layout.BREAK_STRATEGY_HIGH_QUALITY);
+        try {
+            tv.setPrecomputedTextOrThrow(measured);
+            fail();
+        } catch (IllegalArgumentException e) {
+            // pass
+        }
+    }
+
+    @UiThreadTest
+    @Test
+    public void testSetPrecomputedTextAndParams() {
+        final TextView tv = findTextView(R.id.textview_text);
+        final PrecomputedText measured = PrecomputedText.create(
+                "This is an example text.", tv.getTextMetricsParams());
+        tv.setPrecomputedTextAndParams(measured);
+        assertEquals(measured.getText().toString(), tv.getText().toString());
+
+        // Change the parameter. The text view parameter must be updated.
+        tv.setBreakStrategy(tv.getBreakStrategy() == Layout.BREAK_STRATEGY_HIGH_QUALITY
+                ?  Layout.BREAK_STRATEGY_SIMPLE : Layout.BREAK_STRATEGY_HIGH_QUALITY);
+        tv.setPrecomputedTextAndParams(measured);
+        assertEquals(measured.getParams().getBreakStrategy(), tv.getBreakStrategy());
     }
 
     @Test
@@ -8024,6 +8048,28 @@ public class TextViewTest {
         mTextView.setFallbackLineSpacing(true);
         mTextView.setTextAppearance(R.style.TextAppearance);
         assertTrue(mTextView.isFallbackLineSpacing());
+    }
+
+    @UiThreadTest
+    @Test
+    public void testTextLayoutParam() {
+        mActivity.setContentView(R.layout.textview_fallbacklinespacing_layout);
+        mTextView = findTextView(R.id.textview_default);
+        PrecomputedText.Params param = mTextView.getTextMetricsParams();
+
+        assertEquals(mTextView.getBreakStrategy(), param.getBreakStrategy());
+        assertEquals(mTextView.getHyphenationFrequency(), param.getHyphenationFrequency());
+
+        assertTrue(param.sameTextMetrics(mTextView.getTextMetricsParams()));
+
+        mTextView.setBreakStrategy(
+                mTextView.getBreakStrategy() == Layout.BREAK_STRATEGY_SIMPLE
+                ?  Layout.BREAK_STRATEGY_BALANCED : Layout.BREAK_STRATEGY_SIMPLE);
+
+        assertFalse(param.sameTextMetrics(mTextView.getTextMetricsParams()));
+
+        mTextView.setTextMetricsParams(param);
+        assertTrue(param.sameTextMetrics(mTextView.getTextMetricsParams()));
     }
 
     private void initializeTextForSmartSelection(CharSequence text) throws Throwable {

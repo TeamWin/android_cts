@@ -45,7 +45,6 @@ public final class AlertWindowService extends Service {
     private static final String TAG = "AlertWindowService";
     private static final boolean DEBUG = false;
 
-    public static final String PACKAGE_NAME = "android.server.wm.alertwindowservice";
     public static final String EXTRA_MESSENGER = "messenger";
 
     public static final int MSG_ADD_ALERT_WINDOW = 1;

@@ -21,6 +21,8 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.testng.Assert.expectThrows;
 
+import android.autofillservice.cts.SafeCleanerRule.Dumper;
+
 import com.google.common.collect.ImmutableList;
 
 import org.junit.Test;
@@ -52,6 +54,8 @@ public class SafeCleanerRuleTest {
     private final Description mDescription = Description.createSuiteDescription("Whatever");
     private final RuntimeException mRuntimeException = new RuntimeException("D'OH!");
 
+    @Mock private Dumper mDumper;
+
     // Use mocks for objects that don't throw any exception.
     @Mock private Runnable mGoodGuyRunner1;
     @Mock private Runnable mGoodGuyRunner2;
@@ -74,6 +78,15 @@ public class SafeCleanerRuleTest {
     }
 
     @Test
+    public void testEmptyRule_testFails_withDumper() throws Throwable {
+        final SafeCleanerRule rule = new SafeCleanerRule().setDumper(mDumper);
+        final Throwable actualException = expectThrows(RuntimeException.class,
+                () -> rule.apply(new FailureStatement(mRuntimeException), mDescription).evaluate());
+        assertThat(actualException).isSameAs(mRuntimeException);
+        verify(mDumper).dump("Whatever", actualException);
+    }
+
+    @Test
     public void testOnlyTestFails() throws Throwable {
         final SafeCleanerRule rule = new SafeCleanerRule()
                 .run(mGoodGuyRunner1)
@@ -83,6 +96,20 @@ public class SafeCleanerRuleTest {
         assertThat(actualException).isSameAs(mRuntimeException);
         verify(mGoodGuyRunner1).run();
         verify(mGoodGuyExtraExceptions1).call();
+    }
+
+    @Test
+    public void testOnlyTestFails_withDumper() throws Throwable {
+        final SafeCleanerRule rule = new SafeCleanerRule()
+                .setDumper(mDumper)
+                .run(mGoodGuyRunner1)
+                .add(mGoodGuyExtraExceptions1);
+        final Throwable actualException = expectThrows(RuntimeException.class,
+                () -> rule.apply(new FailureStatement(mRuntimeException), mDescription).evaluate());
+        assertThat(actualException).isSameAs(mRuntimeException);
+        verify(mGoodGuyRunner1).run();
+        verify(mGoodGuyExtraExceptions1).call();
+        verify(mDumper).dump("Whatever", actualException);
     }
 
     @Test
@@ -101,8 +128,45 @@ public class SafeCleanerRuleTest {
     }
 
     @Test
+    public void testTestPass_oneRunnerFails_withDumper() throws Throwable {
+        final SafeCleanerRule rule = new SafeCleanerRule()
+                .setDumper(mDumper)
+                .run(mGoodGuyRunner1)
+                .run(() -> {
+                    throw mRuntimeException;
+                })
+                .run(mGoodGuyRunner2)
+                .add(mGoodGuyExtraExceptions1);
+        final Throwable actualException = expectThrows(RuntimeException.class,
+                () -> rule.apply(mGoodGuyStatement, mDescription).evaluate());
+        assertThat(actualException).isSameAs(mRuntimeException);
+        verify(mGoodGuyRunner1).run();
+        verify(mGoodGuyRunner2).run();
+        verify(mGoodGuyExtraExceptions1).call();
+        verify(mDumper).dump("Whatever", actualException);
+    }
+
+    @Test
     public void testTestPass_oneExtraExceptionThrown() throws Throwable {
         final SafeCleanerRule rule = new SafeCleanerRule()
+                .run(mGoodGuyRunner1)
+                .add(() -> {
+                    return ImmutableList.of(mRuntimeException);
+                })
+                .add(mGoodGuyExtraExceptions1)
+                .run(mGoodGuyRunner2);
+        final Throwable actualException = expectThrows(RuntimeException.class,
+                () -> rule.apply(mGoodGuyStatement, mDescription).evaluate());
+        assertThat(actualException).isSameAs(mRuntimeException);
+        verify(mGoodGuyRunner1).run();
+        verify(mGoodGuyRunner2).run();
+        verify(mGoodGuyExtraExceptions1).call();
+    }
+
+    @Test
+    public void testTestPass_oneExtraExceptionThrown_withDumper() throws Throwable {
+        final SafeCleanerRule rule = new SafeCleanerRule()
+                .setDumper(mDumper)
                 .run(mGoodGuyRunner1)
                 .add(() -> { return ImmutableList.of(mRuntimeException); })
                 .add(mGoodGuyExtraExceptions1)
@@ -113,6 +177,7 @@ public class SafeCleanerRuleTest {
         verify(mGoodGuyRunner1).run();
         verify(mGoodGuyRunner2).run();
         verify(mGoodGuyExtraExceptions1).call();
+        verify(mDumper).dump("Whatever", actualException);
     }
 
     @Test
@@ -126,7 +191,47 @@ public class SafeCleanerRuleTest {
         final SafeCleanerRule rule = new SafeCleanerRule()
                 .run(mGoodGuyRunner1)
                 .add(mGoodGuyExtraExceptions1)
-                .add(() -> { return ImmutableList.of(extra1, extra2); })
+                .add(() -> {
+                    return ImmutableList.of(extra1, extra2);
+                })
+                .run(() -> {
+                    throw error1;
+                })
+                .run(mGoodGuyRunner2)
+                .add(() -> {
+                    return ImmutableList.of(extra3);
+                })
+                .add(mGoodGuyExtraExceptions2)
+                .run(() -> {
+                    throw error2;
+                });
+
+        final SafeCleanerRule.MultipleExceptions actualException = expectThrows(
+                SafeCleanerRule.MultipleExceptions.class,
+                () -> rule.apply(new FailureStatement(testException), mDescription).evaluate());
+        assertThat(actualException.getThrowables())
+                .containsExactly(testException, error1, error2, extra1, extra2, extra3)
+                .inOrder();
+        verify(mGoodGuyRunner1).run();
+        verify(mGoodGuyRunner2).run();
+        verify(mGoodGuyExtraExceptions1).call();
+    }
+
+    @Test
+    public void testThrowTheKitchenSinkAKAEverybodyThrows_withDumper() throws Throwable {
+        final Exception extra1 = new Exception("1");
+        final Exception extra2 = new Exception("2");
+        final Exception extra3 = new Exception("3");
+        final Error error1 = new Error("one");
+        final Error error2 = new Error("two");
+        final RuntimeException testException  = new RuntimeException("TEST, Y U NO PASS?");
+        final SafeCleanerRule rule = new SafeCleanerRule()
+                .setDumper(mDumper)
+                .run(mGoodGuyRunner1)
+                .add(mGoodGuyExtraExceptions1)
+                .add(() -> {
+                    return ImmutableList.of(extra1, extra2);
+                })
                 .run(() -> {
                     throw error1;
                 })
@@ -144,5 +249,6 @@ public class SafeCleanerRuleTest {
         verify(mGoodGuyRunner1).run();
         verify(mGoodGuyRunner2).run();
         verify(mGoodGuyExtraExceptions1).call();
+        verify(mDumper).dump("Whatever", actualException);
     }
 }

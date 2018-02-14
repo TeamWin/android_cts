@@ -18,6 +18,7 @@ package com.android.compatibility.common.util;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -41,6 +42,7 @@ public abstract class BroadcastRpcBase<TRequest, TResponse> {
 
     static final String ACTION_REQUEST = "ACTION_REQUEST";
     static final String EXTRA_PAYLOAD = "EXTRA_PAYLOAD";
+    static final String EXTRA_EXCEPTION = "EXTRA_EXCEPTION";
 
     static Handler sMainHandler = new Handler(Looper.getMainLooper());
 
@@ -52,7 +54,7 @@ public abstract class BroadcastRpcBase<TRequest, TResponse> {
 
     public TResponse invoke(ComponentName targetReceiver, TRequest request) throws Exception {
         // Create a request intent.
-        Log.i(TAG, "Request generated: " + request);
+        Log.i(TAG, "Sending to: " + targetReceiver + "\nRequest: " + request);
 
         final Intent requestIntent = new Intent(ACTION_REQUEST)
                 .setComponent(targetReceiver)
@@ -73,9 +75,18 @@ public abstract class BroadcastRpcBase<TRequest, TResponse> {
                 }, sMainHandler, 0, null, null);
 
         // Wait for a reply and check it.
-        assertTrue("Didn't receive broadcast result.", latch.await(60, TimeUnit.SECONDS));
+        final boolean responseArrived = latch.await(60, TimeUnit.SECONDS);
+        assertTrue("Didn't receive broadcast result.", responseArrived);
+
+        // TODO If responseArrived is false, print if the package / component is installed?
 
         assertNotNull("Didn't receive result extras", responseBundle.get());
+
+        final String exception = responseBundle.get().getString(EXTRA_EXCEPTION);
+        if (exception != null) {
+            fail("Target throw exception: receiver=" + targetReceiver
+                    + "\nException: " + exception);
+        }
 
         final byte[] resultPayload = responseBundle.get().getByteArray(EXTRA_PAYLOAD);
         assertNotNull("Didn't receive result payload", resultPayload);
@@ -89,8 +100,6 @@ public abstract class BroadcastRpcBase<TRequest, TResponse> {
      * Base class for a receiver for a broadcast-based RPC.
      */
     public abstract static class ReceiverBase<TRequest, TResponse> extends BroadcastReceiver {
-        private static final String TAG = "ReceiverBase";
-
         @Override
         public final void onReceive(Context context, Intent intent) {
             assertEquals(ACTION_REQUEST, intent.getAction());
@@ -100,19 +109,33 @@ public abstract class BroadcastRpcBase<TRequest, TResponse> {
 
             Log.i(TAG, "Request received: " + request);
 
-            // Handle it and generate a response.
-            final TResponse response = handleRequest(context, request);
+            Throwable exception = null;
 
-            Log.i(TAG, "Response generated: " + response);
+            // Handle it and generate a response.
+            TResponse response = null;
+            try {
+                response = handleRequest(context, request);
+                Log.i(TAG, "Response generated: " + response);
+            } catch (Throwable e) {
+                exception = e;
+                Log.e(TAG, "Exception thrown: " + e.getMessage(), e);
+            }
 
             // Send back.
             final Bundle extras = new Bundle();
-            extras.putByteArray(EXTRA_PAYLOAD, responseToBytes(response));
+            if (response != null) {
+                extras.putByteArray(EXTRA_PAYLOAD, responseToBytes(response));
+            }
+            if (exception != null) {
+                extras.putString(EXTRA_EXCEPTION,
+                        exception.toString() + "\n" + Log.getStackTraceString(exception));
+            }
             setResultExtras(extras);
         }
 
         /** Implement in a subclass */
-        protected abstract TResponse handleRequest(Context context, TRequest request);
+        protected abstract TResponse handleRequest(Context context, TRequest request)
+                throws Exception;
 
         /** Implement in a subclass */
         protected abstract byte[] responseToBytes(TResponse response);

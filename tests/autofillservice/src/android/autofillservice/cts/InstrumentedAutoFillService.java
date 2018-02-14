@@ -557,8 +557,8 @@ public class InstrumentedAutoFillService extends AutofillService {
 
                 Log.v(TAG, "onFillRequest(): fillResponse = " + fillResponse);
                 callback.onSuccess(fillResponse);
-            } catch (Exception e) {
-                addException(e);
+            } catch (Throwable t) {
+                addException(t);
             } finally {
                 mFillRequests.offer(new FillRequest(contexts, data, cancellationSignal, callback,
                         flags));

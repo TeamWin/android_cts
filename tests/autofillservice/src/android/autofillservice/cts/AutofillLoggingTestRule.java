@@ -18,6 +18,7 @@ package android.autofillservice.cts;
 
 import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
 
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import org.junit.rules.TestRule;
@@ -32,9 +33,10 @@ import org.junit.runners.model.Statement;
  *   <li>Call {@code dumpsys autofill} in case of failure.
  * </ol>
  */
-public class AutofillLoggingTestRule implements TestRule {
+public class AutofillLoggingTestRule implements TestRule, SafeCleanerRule.Dumper {
 
     private final String mTag;
+    private boolean mDumped;
 
     public AutofillLoggingTestRule(String tag) {
         mTag = tag;
@@ -53,12 +55,7 @@ public class AutofillLoggingTestRule implements TestRule {
                 try {
                     base.evaluate();
                 } catch (Throwable t) {
-                    final String name = description.getDisplayName();
-                    final String autofillDump = runShellCommand("dumpsys autofill");
-                    Log.e(mTag, "autofill dump for " + name + ": \n" + autofillDump, t);
-                    final String activityDump =
-                            runShellCommand("dumpsys activity android.autofillservice.cts");
-                    Log.e(mTag, "activity dump for " + name + ": \n" + activityDump, t);
+                    dump(description.getDisplayName(), t);
                     throw t;
                 } finally {
                     if (!levelBefore.equals("verbose")) {
@@ -69,4 +66,17 @@ public class AutofillLoggingTestRule implements TestRule {
         };
     }
 
+    @Override
+    public void dump(@NonNull String testName, @NonNull Throwable t) {
+        if (mDumped) {
+            Log.e(mTag, "dump(" + testName + "): already dumped");
+            return;
+        }
+        Log.e(mTag, "Dumping after exception on " + testName, t);
+        final String autofillDump = runShellCommand("dumpsys autofill");
+        Log.e(mTag, "autofill dump: \n" + autofillDump);
+        final String activityDump = runShellCommand("dumpsys activity top");
+        Log.e(mTag, "top activity dump: \n" + activityDump);
+        mDumped = true;
+    }
 }
