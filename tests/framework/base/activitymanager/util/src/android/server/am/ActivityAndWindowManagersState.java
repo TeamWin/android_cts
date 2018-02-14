@@ -148,17 +148,23 @@ public class ActivityAndWindowManagersState {
         } while (retriesLeft-- > 0);
     }
 
+    void waitForValidState(ComponentName... activityNames) throws Exception {
+        waitForValidState(Arrays.stream(activityNames)
+                .map(WaitForValidActivityState::new)
+                .toArray(WaitForValidActivityState[]::new));
+
+    }
+
     /**
      * Wait for the activity to appear and for valid state in AM and WM.
      * TODO(b/73349193): Use {@link #waitForValidState(WaitForValidActivityState...)} instead.
      *
-     * @param waitForActivityVisible name of activity to wait for.
+     * @param simpleActivityName name of activity to wait for.
      */
     @Deprecated
-    void waitForValidState(String waitForActivityVisible)
-            throws Exception {
+    void waitForValidState(String simpleActivityName) throws Exception {
         waitForValidState(false /* compareTaskAndStackBounds */,
-                new WaitForValidActivityState(waitForActivityVisible));
+                new WaitForValidActivityState(simpleActivityName));
     }
 
     /** Wait for the activity to appear and for valid state in AM and WM. */
@@ -170,24 +176,23 @@ public class ActivityAndWindowManagersState {
      * Wait for the activity to appear in proper stack and for valid state in AM and WM.
      * TODO(b/73349193): Use {@link #waitForValidState(WaitForValidActivityState...)} instead.
      *
-     * @param waitForActivityVisible name of activity to wait for.
+     * @param simpleActivityName name of activity to wait for.
      * @param stackId                id of the stack where provided activity should be found.
      */
     @Deprecated
-    void waitForValidState(String waitForActivityVisible, int stackId)
-            throws Exception {
+    void waitForValidState(String simpleActivityName, int stackId) throws Exception {
         waitForValidState(false /* compareTaskAndStackBounds */,
-                new WaitForValidActivityState.Builder(waitForActivityVisible)
+                new WaitForValidActivityState.Builder(simpleActivityName)
                         .setStackId(stackId)
                         .build());
     }
 
     /** TODO(b/73349193): Use {@link #waitForValidState(WaitForValidActivityState...)} instead. */
     @Deprecated
-    void waitForValidState(String waitForActivityVisible, int windowingMode, int activityType)
+    void waitForValidState(String simpleActivityName, int windowingMode, int activityType)
             throws Exception {
         waitForValidState(false /* compareTaskAndStackBounds */,
-                new WaitForValidActivityState.Builder(waitForActivityVisible)
+                new WaitForValidActivityState.Builder(simpleActivityName)
                         .setActivityType(activityType)
                         .setWindowingMode(windowingMode)
                         .build());

@@ -34,6 +34,7 @@ import static android.content.pm.PackageManager.FEATURE_SCREEN_PORTRAIT;
 import static android.content.pm.PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE;
 import static android.content.pm.PackageManager.FEATURE_WATCH;
 import static android.server.am.ComponentNameUtils.getActivityName;
+import static android.server.am.ComponentNameUtils.getLogTag;
 import static android.server.am.ComponentNameUtils.getSimpleClassName;
 import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.am.StateLogger.log;
@@ -44,9 +45,8 @@ import static android.view.KeyEvent.KEYCODE_MENU;
 import static android.view.KeyEvent.KEYCODE_SLEEP;
 import static android.view.KeyEvent.KEYCODE_WAKEUP;
 
-import static junit.framework.Assert.fail;
-
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import static java.lang.Integer.toHexString;
 
@@ -228,8 +228,8 @@ public abstract class ActivityManagerTestBase {
         return "am start -n " + getActivityComponentName(activityName) + " -f 0x18000000";
     }
 
-    protected static String getAmStartCmdOverHome(final String activityName) {
-        return "am start --activity-task-on-home -n " + getActivityComponentName(activityName);
+    protected static String getAmStartCmdOverHome(final ComponentName activityName) {
+        return "am start --activity-task-on-home -n " + getActivityName(activityName);
     }
 
     protected static String getMoveToPinnedStackCommand(int stackId) {
@@ -451,6 +451,17 @@ public abstract class ActivityManagerTestBase {
         mAmWmState.waitForHomeActivityVisible();
     }
 
+    protected void launchActivity(ComponentName activityName, int windowingMode,
+            final String... keyValuePairs) throws Exception {
+        executeShellCommand(getAmStartCmd(activityName, keyValuePairs)
+                + " --windowingMode " + windowingMode);
+        mAmWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
+                .setWindowingMode(windowingMode)
+                .build());
+    }
+
+    /** TODO(b/73349193): Use {@link #launchActivity(ComponentName, int, String...)} instead. */
+    @Deprecated
     protected void launchActivity(String activityName, int windowingMode,
             final String... keyValuePairs) throws Exception {
         executeShellCommand(getAmStartCmd(activityName, keyValuePairs)
@@ -1198,29 +1209,53 @@ public abstract class ActivityManagerTestBase {
         }.assertValidator("***Waiting for activity destroyed");
     }
 
-    void assertSingleLaunch(String activityName, LogSeparator logSeparator) {
-        new ActivityLifecycleCountsValidator(activityName, logSeparator, 1 /* createCount */,
+    void assertSingleLaunch(ComponentName activityName, LogSeparator logSeparator) {
+        assertSingleLaunch(getLogTag(activityName), logSeparator);
+    }
+
+    /** TODO(b/73349193): Use {@link #assertSingleLaunch(ComponentName, LogSeparator)} instead. */
+    @Deprecated
+    void assertSingleLaunch(String logTag, LogSeparator logSeparator) {
+        new ActivityLifecycleCountsValidator(logTag, logSeparator, 1 /* createCount */,
                 1 /* startCount */, 1 /* resumeCount */, 0 /* pauseCount */, 0 /* stopCount */,
                 0 /* destroyCount */)
                 .assertValidator("***Waiting for activity create, start, and resume");
     }
 
-    void assertSingleLaunchAndStop(String activityName, LogSeparator logSeparator) {
-        new ActivityLifecycleCountsValidator(activityName, logSeparator, 1 /* createCount */,
+    void assertSingleLaunchAndStop(ComponentName activityName, LogSeparator logSeparator) {
+        assertSingleStartAndStop(getLogTag(activityName), logSeparator);
+    }
+
+    /** TODO(b/73349193): Use {@link #assertSingleLaunchAndStop(ComponentName, LogSeparator)}. */
+    @Deprecated
+    void assertSingleLaunchAndStop(String logTag, LogSeparator logSeparator) {
+        new ActivityLifecycleCountsValidator(logTag, logSeparator, 1 /* createCount */,
                 1 /* startCount */, 1 /* resumeCount */, 1 /* pauseCount */, 1 /* stopCount */,
                 0 /* destroyCount */)
                 .assertValidator("***Waiting for activity create, start, resume, pause, and stop");
     }
 
-    void assertSingleStartAndStop(String activityName, LogSeparator logSeparator) {
-        new ActivityLifecycleCountsValidator(activityName, logSeparator, 0 /* createCount */,
+    void assertSingleStartAndStop(ComponentName activityName, LogSeparator logSeparator) {
+        assertSingleStartAndStop(getLogTag(activityName), logSeparator);
+    }
+
+    /** TODO(b/73349193): Use {@link #assertSingleStartAndStop(ComponentName, LogSeparator)}. */
+    @Deprecated
+    void assertSingleStartAndStop(String logTag, LogSeparator logSeparator) {
+        new ActivityLifecycleCountsValidator(logTag, logSeparator, 0 /* createCount */,
                 1 /* startCount */, 1 /* resumeCount */, 1 /* pauseCount */, 1 /* stopCount */,
                 0 /* destroyCount */)
                 .assertValidator("***Waiting for activity start, resume, pause, and stop");
     }
 
-    void assertSingleStart(String activityName, LogSeparator logSeparator) {
-        new ActivityLifecycleCountsValidator(activityName, logSeparator, 0 /* createCount */,
+    void assertSingleStart(ComponentName activityName, LogSeparator logSeparator) {
+        assertSingleStart(getLogTag(activityName), logSeparator);
+    }
+
+    /** TODO(b/73349193): Use {@link #assertSingleStart(ComponentName, LogSeparator)} instead. */
+    @Deprecated
+    void assertSingleStart(String logTag, LogSeparator logSeparator) {
+        new ActivityLifecycleCountsValidator(logTag, logSeparator, 0 /* createCount */,
                 1 /* startCount */, 1 /* resumeCount */, 0 /* pauseCount */, 0 /* stopCount */,
                 0 /* destroyCount */)
                 .assertValidator("***Waiting for activity start and resume");
@@ -1373,6 +1408,10 @@ public abstract class ActivityManagerTestBase {
         int mStopCount;
         int mLastStopLineIndex;
         int mDestroyCount;
+
+        ActivityLifecycleCounts(ComponentName componentName, LogSeparator logSeparator) {
+            this(getLogTag(componentName), logSeparator);
+        }
 
         ActivityLifecycleCounts(String logTag, LogSeparator logSeparator) {
             int lineIndex = 0;

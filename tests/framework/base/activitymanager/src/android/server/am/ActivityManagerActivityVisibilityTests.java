@@ -25,12 +25,27 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMAR
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.server.am.ActivityManagerState.STATE_PAUSED;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
+import static android.server.am.Components.ALWAYS_FOCUSABLE_PIP_ACTIVITY;
+import static android.server.am.Components.DOCKED_ACTIVITY;
+import static android.server.am.Components.LAUNCH_PIP_ON_PIP_ACTIVITY;
+import static android.server.am.Components.MOVE_TASK_TO_BACK_ACTIVITY;
+import static android.server.am.Components.NO_HISTORY_ACTIVITY;
+import static android.server.am.Components.SWIPE_REFRESH_ACTIVITY;
+import static android.server.am.Components.TEST_ACTIVITY;
+import static android.server.am.Components.TRANSLUCENT_ACTIVITY;
+import static android.server.am.Components.TURN_SCREEN_ON_ACTIVITY;
+import static android.server.am.Components.TURN_SCREEN_ON_ATTR_ACTIVITY;
+import static android.server.am.Components.TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY;
+import static android.server.am.Components.TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY;
+import static android.server.am.Components.TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY;
+import static android.server.am.Components.TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
+import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
 import android.support.test.filters.FlakyTest;
 
@@ -42,22 +57,6 @@ import org.junit.Test;
  *     atest CtsActivityManagerDeviceTestCases:ActivityManagerActivityVisibilityTests
  */
 public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestBase {
-    private static final String TRANSLUCENT_ACTIVITY = "AlwaysFocusablePipActivity";
-    private static final String PIP_ON_PIP_ACTIVITY = "LaunchPipOnPipActivity";
-    private static final String TEST_ACTIVITY_NAME = "TestActivity";
-    private static final String TRANSLUCENT_ACTIVITY_NAME = "TranslucentActivity";
-    private static final String DOCKED_ACTIVITY_NAME = "DockedActivity";
-    private static final String TURN_SCREEN_ON_ACTIVITY_NAME = "TurnScreenOnActivity";
-    private static final String MOVE_TASK_TO_BACK_ACTIVITY_NAME = "MoveTaskToBackActivity";
-    private static final String SWIPE_REFRESH_ACTIVITY = "SwipeRefreshActivity";
-
-    private static final String NOHISTORY_ACTIVITY = "NoHistoryActivity";
-    private static final String TURN_SCREEN_ON_ATTR_ACTIVITY_NAME = "TurnScreenOnAttrActivity";
-    private static final String TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY_NAME = "TurnScreenOnShowOnLockActivity";
-    private static final String TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY_NAME = "TurnScreenOnAttrRemoveAttrActivity";
-    private static final String TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME = "TurnScreenOnSingleTaskActivity";
-    private static final String TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY =
-            "TurnScreenOnWithRelayoutActivity";
 
     @Rule
     public final DisableScreenDozeRule mDisableScreenDozeRule = new DisableScreenDozeRule();
@@ -67,20 +66,21 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     public void testTranslucentActivityOnTopOfPinnedStack() throws Exception {
         assumeTrue(supportsPip());
 
-        executeShellCommand(getAmStartCmdOverHome(PIP_ON_PIP_ACTIVITY));
-        mAmWmState.waitForValidState(PIP_ON_PIP_ACTIVITY);
+        executeShellCommand(getAmStartCmdOverHome(LAUNCH_PIP_ON_PIP_ACTIVITY));
+        mAmWmState.waitForValidState(LAUNCH_PIP_ON_PIP_ACTIVITY);
         // NOTE: moving to pinned stack will trigger the pip-on-pip activity to launch the
         // translucent activity.
-        final int stackId = mAmWmState.getAmState().getStackIdByActivityName(PIP_ON_PIP_ACTIVITY);
+        final int stackId = mAmWmState.getAmState().getStackIdByActivity(
+                LAUNCH_PIP_ON_PIP_ACTIVITY);
 
         assertNotEquals(stackId, INVALID_STACK_ID);
         executeShellCommand(getMoveToPinnedStackCommand(stackId));
 
-        mAmWmState.computeState(new String[] {PIP_ON_PIP_ACTIVITY, TRANSLUCENT_ACTIVITY});
+        mAmWmState.computeState(LAUNCH_PIP_ON_PIP_ACTIVITY, ALWAYS_FOCUSABLE_PIP_ACTIVITY);
         mAmWmState.assertFrontStack("Pinned stack must be the front stack.",
                 WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
-        mAmWmState.assertVisibility(PIP_ON_PIP_ACTIVITY, true);
-        mAmWmState.assertVisibility(TRANSLUCENT_ACTIVITY, true);
+        mAmWmState.assertVisibility(LAUNCH_PIP_ON_PIP_ACTIVITY, true);
+        mAmWmState.assertVisibility(ALWAYS_FOCUSABLE_PIP_ACTIVITY, true);
     }
 
     /**
@@ -92,12 +92,12 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         assumeTrue(hasHomeScreen());
 
         launchHomeActivity();
-        launchActivity(TRANSLUCENT_ACTIVITY);
+        launchActivity(ALWAYS_FOCUSABLE_PIP_ACTIVITY);
 
-        mAmWmState.computeState( new String[]{TRANSLUCENT_ACTIVITY});
+        mAmWmState.computeState(ALWAYS_FOCUSABLE_PIP_ACTIVITY);
         mAmWmState.assertFrontStack("Fullscreen stack must be the front stack.",
                 WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD);
-        mAmWmState.assertVisibility(TRANSLUCENT_ACTIVITY, true);
+        mAmWmState.assertVisibility(ALWAYS_FOCUSABLE_PIP_ACTIVITY, true);
         mAmWmState.assertHomeActivityVisible(true);
     }
 
@@ -111,18 +111,19 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         assumeTrue(supportsPip());
 
         launchHomeActivity();
-        launchActivity(TEST_ACTIVITY_NAME);
+        launchActivity(TEST_ACTIVITY);
         launchHomeActivity();
-        launchActivity(TRANSLUCENT_ACTIVITY);
-        final int stackId = mAmWmState.getAmState().getStackIdByActivityName(TRANSLUCENT_ACTIVITY);
+        launchActivity(ALWAYS_FOCUSABLE_PIP_ACTIVITY);
+        final int stackId = mAmWmState.getAmState().getStackIdByActivity(
+                ALWAYS_FOCUSABLE_PIP_ACTIVITY);
 
         assertNotEquals(stackId, INVALID_STACK_ID);
         executeShellCommand(getMoveToPinnedStackCommand(stackId));
 
-        mAmWmState.computeState(new String[]{TRANSLUCENT_ACTIVITY});
+        mAmWmState.computeState(ALWAYS_FOCUSABLE_PIP_ACTIVITY);
 
-        mAmWmState.assertVisibility(TRANSLUCENT_ACTIVITY, true);
-        mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, false);
+        mAmWmState.assertVisibility(ALWAYS_FOCUSABLE_PIP_ACTIVITY, true);
+        mAmWmState.assertVisibility(TEST_ACTIVITY, false);
         mAmWmState.assertHomeActivityVisible(true);
     }
 
@@ -131,19 +132,21 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     public void testTranslucentActivityOverDockedStack() throws Exception {
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
-        launchActivitiesInSplitScreen(DOCKED_ACTIVITY_NAME, TEST_ACTIVITY_NAME);
-        launchActivity(TRANSLUCENT_ACTIVITY_NAME, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
+        launchActivitiesInSplitScreen(
+                getLaunchActivityBuilder().setTargetActivity(DOCKED_ACTIVITY),
+                getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY));
+        launchActivity(TRANSLUCENT_ACTIVITY, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
         mAmWmState.computeState(false /* compareTaskAndStackBounds */,
-                new WaitForValidActivityState.Builder(TEST_ACTIVITY_NAME).build(),
-                new WaitForValidActivityState.Builder(DOCKED_ACTIVITY_NAME).build(),
-                new WaitForValidActivityState.Builder(TRANSLUCENT_ACTIVITY_NAME).build());
+                new WaitForValidActivityState(TEST_ACTIVITY),
+                new WaitForValidActivityState(DOCKED_ACTIVITY),
+                new WaitForValidActivityState(TRANSLUCENT_ACTIVITY));
         mAmWmState.assertContainsStack("Must contain fullscreen stack.",
                 WINDOWING_MODE_SPLIT_SCREEN_SECONDARY, ACTIVITY_TYPE_STANDARD);
         mAmWmState.assertContainsStack("Must contain docked stack.",
                 WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
-        mAmWmState.assertVisibility(DOCKED_ACTIVITY_NAME, true);
-        mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, true);
-        mAmWmState.assertVisibility(TRANSLUCENT_ACTIVITY_NAME, true);
+        mAmWmState.assertVisibility(DOCKED_ACTIVITY, true);
+        mAmWmState.assertVisibility(TEST_ACTIVITY, true);
+        mAmWmState.assertVisibility(TRANSLUCENT_ACTIVITY, true);
     }
 
     @Presubmit
@@ -152,9 +155,9 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     public void testTurnScreenOnActivity() throws Exception {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.sleepDevice();
-            launchActivity(TURN_SCREEN_ON_ACTIVITY_NAME);
-            mAmWmState.computeState(TURN_SCREEN_ON_ACTIVITY_NAME);
-            mAmWmState.assertVisibility(TURN_SCREEN_ON_ACTIVITY_NAME, true);
+            launchActivity(TURN_SCREEN_ON_ACTIVITY);
+            mAmWmState.computeState(TURN_SCREEN_ON_ACTIVITY);
+            mAmWmState.assertVisibility(TURN_SCREEN_ON_ACTIVITY, true);
             assertTrue(isDisplayOn());
         }
     }
@@ -167,19 +170,19 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         // Launch two activities in docked stack.
         launchActivityInSplitScreenWithRecents(LAUNCHING_ACTIVITY);
         getLaunchActivityBuilder().setTargetActivityName(BROADCAST_RECEIVER_ACTIVITY).execute();
-        mAmWmState.computeState(new String[] { BROADCAST_RECEIVER_ACTIVITY });
+        mAmWmState.computeState(BROADCAST_RECEIVER_ACTIVITY);
         mAmWmState.assertVisibility(BROADCAST_RECEIVER_ACTIVITY, true);
         // Launch something to fullscreen stack to make it focused.
-        launchActivity(TEST_ACTIVITY_NAME, WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
-        mAmWmState.computeState(new String[] { TEST_ACTIVITY_NAME });
-        mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, true);
+        launchActivity(TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
+        mAmWmState.computeState(TEST_ACTIVITY);
+        mAmWmState.assertVisibility(TEST_ACTIVITY, true);
         // Finish activity in non-focused (docked) stack.
         executeShellCommand(FINISH_ACTIVITY_BROADCAST);
 
         mAmWmState.waitForActivityState(LAUNCHING_ACTIVITY, STATE_PAUSED);
         mAmWmState.waitForAllExitingWindows();
 
-        mAmWmState.computeState(new String[] { LAUNCHING_ACTIVITY });
+        mAmWmState.computeState(LAUNCHING_ACTIVITY);
         mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true);
         mAmWmState.assertVisibility(BROADCAST_RECEIVER_ACTIVITY, false);
     }
@@ -202,15 +205,15 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         }
 
         // Launch an activity that calls "moveTaskToBack" to finish itself.
-        launchActivity(MOVE_TASK_TO_BACK_ACTIVITY_NAME, "finish_point", finishPoint);
-        mAmWmState.waitForValidState(MOVE_TASK_TO_BACK_ACTIVITY_NAME);
-        mAmWmState.assertVisibility(MOVE_TASK_TO_BACK_ACTIVITY_NAME, true);
+        launchActivity(MOVE_TASK_TO_BACK_ACTIVITY, "finish_point", finishPoint);
+        mAmWmState.waitForValidState(MOVE_TASK_TO_BACK_ACTIVITY);
+        mAmWmState.assertVisibility(MOVE_TASK_TO_BACK_ACTIVITY, true);
 
         // Launch a different activity on top.
         launchActivity(BROADCAST_RECEIVER_ACTIVITY);
         mAmWmState.waitForValidState(BROADCAST_RECEIVER_ACTIVITY);
         mAmWmState.waitForActivityState(BROADCAST_RECEIVER_ACTIVITY, STATE_RESUMED);
-        mAmWmState.assertVisibility(MOVE_TASK_TO_BACK_ACTIVITY_NAME, false);
+        mAmWmState.assertVisibility(MOVE_TASK_TO_BACK_ACTIVITY, false);
         mAmWmState.assertVisibility(BROADCAST_RECEIVER_ACTIVITY, true);
 
         // Finish the top-most activity.
@@ -316,7 +319,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         launchHomeActivity();
 
         // Launch no history activity
-        launchActivity(NOHISTORY_ACTIVITY);
+        launchActivity(NO_HISTORY_ACTIVITY);
 
         // Launch an activity with a swipe refresh layout configured to prevent idle.
         launchActivity(SWIPE_REFRESH_ACTIVITY);
@@ -332,11 +335,11 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
             lockScreenSession.disableLockScreen()
                     .sleepDevice();
             final LogSeparator logSeparator = clearLogcat();
-            launchActivity(TURN_SCREEN_ON_ATTR_ACTIVITY_NAME);
-            mAmWmState.computeState(TURN_SCREEN_ON_ATTR_ACTIVITY_NAME);
-            mAmWmState.assertVisibility(TURN_SCREEN_ON_ATTR_ACTIVITY_NAME, true);
+            launchActivity(TURN_SCREEN_ON_ATTR_ACTIVITY);
+            mAmWmState.computeState(TURN_SCREEN_ON_ATTR_ACTIVITY);
+            mAmWmState.assertVisibility(TURN_SCREEN_ON_ATTR_ACTIVITY, true);
             assertTrue(isDisplayOn());
-            assertSingleLaunch(TURN_SCREEN_ON_ATTR_ACTIVITY_NAME, logSeparator);
+            assertSingleLaunch(TURN_SCREEN_ON_ATTR_ACTIVITY, logSeparator);
         }
     }
 
@@ -348,10 +351,10 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
             lockScreenSession.setLockCredential()
                     .sleepDevice();
             final LogSeparator logSeparator = clearLogcat();
-            launchActivity(TURN_SCREEN_ON_ATTR_ACTIVITY_NAME);
-            mAmWmState.computeState(TURN_SCREEN_ON_ATTR_ACTIVITY_NAME);
+            launchActivity(TURN_SCREEN_ON_ATTR_ACTIVITY);
+            mAmWmState.computeState(TURN_SCREEN_ON_ATTR_ACTIVITY);
             assertFalse(isDisplayOn());
-            assertSingleLaunchAndStop(TURN_SCREEN_ON_ATTR_ACTIVITY_NAME, logSeparator);
+            assertSingleLaunchAndStop(TURN_SCREEN_ON_ATTR_ACTIVITY, logSeparator);
         }
     }
 
@@ -361,11 +364,11 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
             lockScreenSession.sleepDevice();
             mAmWmState.waitForAllStoppedActivities();
             final LogSeparator logSeparator = clearLogcat();
-            launchActivity(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY_NAME);
-            mAmWmState.computeState(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY_NAME);
-            mAmWmState.assertVisibility(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY_NAME, true);
+            launchActivity(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY);
+            mAmWmState.computeState(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY);
+            mAmWmState.assertVisibility(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY, true);
             assertTrue(isDisplayOn());
-            assertSingleLaunch(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY_NAME, logSeparator);
+            assertSingleLaunch(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY, logSeparator);
         }
     }
 
@@ -375,17 +378,17 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
             lockScreenSession.sleepDevice();
             mAmWmState.waitForAllStoppedActivities();
             LogSeparator logSeparator = clearLogcat();
-            launchActivity(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY_NAME);
-            mAmWmState.computeState(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY_NAME);
+            launchActivity(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY);
+            mAmWmState.computeState(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY);
             assertTrue(isDisplayOn());
-            assertSingleLaunch(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY_NAME, logSeparator);
+            assertSingleLaunch(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY, logSeparator);
 
             lockScreenSession.sleepDevice();
             mAmWmState.waitForAllStoppedActivities();
             logSeparator = clearLogcat();
-            launchActivity(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY_NAME);
+            launchActivity(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY);
             assertFalse(isDisplayOn());
-            assertSingleStartAndStop(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY_NAME, logSeparator);
+            assertSingleStartAndStop(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY, logSeparator);
         }
     }
 
@@ -395,19 +398,19 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.sleepDevice();
             LogSeparator logSeparator = clearLogcat();
-            launchActivity(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME);
-            mAmWmState.computeState(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME);
-            mAmWmState.assertVisibility(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME, true);
+            launchActivity(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY);
+            mAmWmState.computeState(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY);
+            mAmWmState.assertVisibility(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY, true);
             assertTrue(isDisplayOn());
-            assertSingleLaunch(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME, logSeparator);
+            assertSingleLaunch(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY, logSeparator);
 
             lockScreenSession.sleepDevice();
             logSeparator = clearLogcat();
-            launchActivity(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME);
-            mAmWmState.computeState(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME);
-            mAmWmState.assertVisibility(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME, true);
+            launchActivity(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY);
+            mAmWmState.computeState(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY);
+            mAmWmState.assertVisibility(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY, true);
             assertTrue(isDisplayOn());
-            assertSingleStart(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME, logSeparator);
+            assertSingleStart(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY, logSeparator);
         }
     }
 
@@ -430,7 +433,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         }
     }
 
-    private boolean lifecycleStopOccurred(String activityName, LogSeparator logSeparator) {
+    private boolean lifecycleStopOccurred(ComponentName activityName, LogSeparator logSeparator) {
         ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(activityName,
                 logSeparator);
         return lifecycleCounts.mStopCount > 0;
