@@ -85,6 +85,7 @@ public abstract class AutoFillServiceTestCase {
 
     @Rule
     public final SafeCleanerRule mSafeCleanerRule = new SafeCleanerRule()
+            .setDumper(mLoggingRule)
             .run(() -> sReplier.assertNoUnhandledFillRequests())
             .run(() -> sReplier.assertNoUnhandledSaveRequests())
             .add(() -> { return sReplier.getExceptions(); });

@@ -42,6 +42,7 @@ public final class SafeCleanerRule implements TestRule {
     private final List<Runnable> mCleaners = new ArrayList<>();
     private final List<Callable<List<Throwable>>> mExtraThrowables = new ArrayList<>();
     private final List<Throwable> mThrowables = new ArrayList<>();
+    private Dumper mDumper;
 
     /**
      * Runs {@code cleaner} after the test is finished, catching any {@link Throwable} thrown by it.
@@ -58,6 +59,14 @@ public final class SafeCleanerRule implements TestRule {
      */
     public SafeCleanerRule add(@NonNull Callable<List<Throwable>> exceptions) {
         mExtraThrowables.add(exceptions);
+        return this;
+    }
+
+    /**
+     * Sets a {@link Dumper} used to log errors.
+     */
+    public SafeCleanerRule setDumper(@NonNull Dumper dumper) {
+        mDumper = dumper;
         return this;
     }
 
@@ -98,11 +107,19 @@ public final class SafeCleanerRule implements TestRule {
 
                 final int numberExceptions = mThrowables.size();
                 if (numberExceptions == 1) {
-                    throw mThrowables.get(0);
+                    fail(description, mThrowables.get(0));
                 }
-                throw new MultipleExceptions(mThrowables);
+                fail(description, new MultipleExceptions(mThrowables));
             }
+
         };
+    }
+
+    private void fail(Description description, Throwable t) throws Throwable {
+        if (mDumper != null) {
+            mDumper.dump(description.getDisplayName(), t);
+        }
+        throw t;
     }
 
     private static String toMesssage(List<Throwable> throwables) {
@@ -138,5 +155,16 @@ public final class SafeCleanerRule implements TestRule {
         List<Throwable> getThrowables() {
             return mThrowables;
         }
+    }
+
+    /**
+     * Optional interface used to dump an error.
+     */
+    public interface Dumper {
+
+        /**
+         * Dumps an error.
+         */
+        void dump(@NonNull String testName, @NonNull Throwable t);
     }
 }
