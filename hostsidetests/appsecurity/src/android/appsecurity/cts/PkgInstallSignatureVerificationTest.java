@@ -680,7 +680,6 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
 
     public void testInstallV3KeyRotationGetSignatures() throws Exception {
         // tests that a PackageInfo w/GET_SIGNATURES flag returns the older cert
-        assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-1.apk");
         assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-2-with-por_1_2-full-caps.apk");
         Utils.runDeviceTests(
                 getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS, "testGetSignaturesShowsOld");
@@ -688,11 +687,43 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
 
     public void testInstallV3KeyRotationGetSigningCertificates() throws Exception {
         // tests that a PackageInfo w/GET_SIGNING_CERTIFICATES flag returns the old and new certs
-        assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-1.apk");
         assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-2-with-por_1_2-full-caps.apk");
         Utils.runDeviceTests(
                 getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS,
                 "testGetSigningCertificatesShowsAll");
+    }
+
+    public void testInstallV3KeyRotationHasSigningCertificate() throws Exception {
+        // tests that hasSigningCertificate() recognizes past and current signing certs
+        assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-2-with-por_1_2-full-caps.apk");
+        Utils.runDeviceTests(
+                getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS,
+                "testHasSigningCertificate");
+    }
+
+    public void testInstallV3KeyRotationHasSigningCertificateSha256() throws Exception {
+        // tests that hasSigningCertificate() recognizes past and current signing certs by sha256
+        assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-2-with-por_1_2-full-caps.apk");
+        Utils.runDeviceTests(
+                getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS,
+                "testHasSigningCertificateSha256");
+    }
+
+    public void testInstallV3KeyRotationHasSigningCertificateByUid() throws Exception {
+        // tests that hasSigningCertificate() recognizes past and current signing certs by uid
+        assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-2-with-por_1_2-full-caps.apk");
+        Utils.runDeviceTests(
+                getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS,
+                "testHasSigningCertificateByUid");
+    }
+
+    public void testInstallV3KeyRotationHasSigningCertificateByUidSha256() throws Exception {
+        // tests that hasSigningCertificate() recognizes past and current signing certs by uid
+        // and sha256
+        assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-2-with-por_1_2-full-caps.apk");
+        Utils.runDeviceTests(
+                getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS,
+                "testHasSigningCertificateByUidSha256");
     }
 
     private void assertInstallSucceeds(String apkFilenameInResources) throws Exception {
