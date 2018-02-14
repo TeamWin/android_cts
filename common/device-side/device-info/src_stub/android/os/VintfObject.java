@@ -12,5 +12,4 @@ public class VintfObject {
     public static String getSepolicyVersion() { return null; }
     public static String[] getHalNamesAndVersions() { return null; }
     public static String[] report() { return null; }
-    public static Long getTargetFrameworkCompatibilityMatrixVersion() { return null; }
 }
