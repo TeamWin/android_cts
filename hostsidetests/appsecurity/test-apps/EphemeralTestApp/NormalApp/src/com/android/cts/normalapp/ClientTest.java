@@ -453,7 +453,7 @@ public class ClientTest {
 
         final ContentResolver contentResolver =
                 InstrumentationRegistry.getContext().getContentResolver();
-        final int originalSetting = Secure.getInt(contentResolver, Secure.INSTANT_APPS_ENABLED);
+        final int originalSetting = Secure.getInt(contentResolver, Secure.INSTANT_APPS_ENABLED, 1);
         Secure.putInt(contentResolver, Secure.INSTANT_APPS_ENABLED, 0);
         try {
             // start the ephemeral activity; using VIEW/BROWSABLE with setting disabled
