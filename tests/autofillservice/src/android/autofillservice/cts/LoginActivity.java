@@ -234,6 +234,10 @@ public class LoginActivity extends AbstractAutoFillActivity {
         syncRunOnUiThread(() -> getAutofillManager().requestAutofill(mUsernameEditText));
     }
 
+    void forceAutofillOnPassword() {
+        syncRunOnUiThread(() -> getAutofillManager().requestAutofill(mPasswordEditText));
+    }
+
     /**
      * Visits the {@code username_label} in the UiThread.
      */

@@ -418,6 +418,18 @@ public class InstrumentedAutoFillService extends AutofillService {
         }
 
         /**
+         * Asserts that {@link #onFillRequest(List, Bundle, CancellationSignal, FillCallback, int)}
+         * was not called.
+         *
+         * <p>Should only be called in cases where it's not expected to be called, as it will
+         * sleep for a few ms.
+         */
+        void assertOnFillRequestNotCalled() {
+            SystemClock.sleep(FILL_TIMEOUT.getMaxValue());
+            assertThat(mFillRequests).isEmpty();
+        }
+
+        /**
          * Asserts all {@link AutofillService#onFillRequest(
          * android.service.autofill.FillRequest,  CancellationSignal, FillCallback) fill requests}
          * received by the service were properly {@link #getNextFillRequest() handled} by the test
