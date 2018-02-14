@@ -26,7 +26,9 @@ import static android.view.accessibility.AccessibilityNodeInfo.ACTION_SELECT;
 
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
+import android.app.ActivityManager;
 import android.app.UiAutomation;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Rect;
@@ -43,6 +45,8 @@ import android.view.accessibility.AccessibilityWindowInfo;
 import android.widget.Button;
 import android.accessibilityservice.cts.R;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -617,13 +621,22 @@ public class AccessibilityWindowQueryTest
             // Do nothing, assume split screen multi window is supported.
         }
 
-        // Get com.android.internal.R.bool.config_supportsMultiWindow
-        if (!getInstrumentation().getContext().getResources().getBoolean(
-                Resources.getSystem().getIdentifier("config_supportsMultiWindow", "bool",
-                        "android"))) {
-            // Check if multiWindow is supported.
+        /* In P as ActivityManager.supportsMultiWindow() becomes a @TestAPI
+           i.e. a compatibility requirement, make the test fail in the next API */
+        try {
+            final Method method = ActivityManager.class
+                    .getMethod("supportsMultiWindow", Context.class);
+            if (!(Boolean)method.invoke(getInstrumentation().getContext().getSystemService(
+                    ActivityManager.class), getInstrumentation().getContext())) {
+                // Check if multiWindow is supported.
+                return;
+            }
+        } catch (NoSuchMethodException e) {
+        } catch (IllegalAccessException e) {
+        } catch (InvocationTargetException e) {
             return;
         }
+
         setAccessInteractiveWindowsFlag();
         final UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
         assertFalse(isDividerWindowPresent(uiAutomation));
