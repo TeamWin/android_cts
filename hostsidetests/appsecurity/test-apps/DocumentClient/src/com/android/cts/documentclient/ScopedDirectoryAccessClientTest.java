@@ -288,6 +288,17 @@ public class ScopedDirectoryAccessClientTest extends DocumentsClientTestCase {
         final String volumeDesc = volume.getDescription(context);
         final Intent data = assertActivitySucceeded("should have already granted "
                 + "permission to " + volumeDesc + " and " + directoryName);
+
+        return assertPermissionGranted(data);
+    }
+
+    /**
+     * Asserts a permission was effectively granted by using it to write docs.
+     *
+     * @return the granted URI.
+     */
+    private Uri assertPermissionGranted(Intent data) throws Exception {
+        final Context context = getInstrumentation().getContext();
         final Uri grantedUri = data.getData();
 
         // Test granted permission directly by persisting it...
@@ -331,23 +342,11 @@ public class ScopedDirectoryAccessClientTest extends DocumentsClientTestCase {
 
         // Then reset it using settings.
 
-        // Launch settings.
-        final Intent intent = new Intent(Settings.ACTION_STORAGE_VOLUME_ACCESS_SETTINGS)
-                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK );
-        final Context context = getInstrumentation().getContext();
-        final String appLabel = context.getPackageManager().getApplicationLabel(
-                context.getApplicationInfo()).toString();
-        context.startActivity(intent);
-
-        // Select app.
-        final BySelector byAppLabel = By.text(appLabel);
-        boolean gotIt = mDevice.wait(Until.hasObject(byAppLabel), TIMEOUT);
-        assertTrue("object with text'(" + appLabel + "') not visible yet", gotIt);
-        final UiObject2 appRow = mDevice.findObject(byAppLabel);
-        appRow.click();
+        // Launch screen.
+        launchDirectoryAccessSettingsScreenAndSelectApp();
 
         // Toggle permission for dir.
-        gotIt = mDevice.wait(Until.hasObject(By.text(dir)), TIMEOUT);
+        final boolean gotIt = mDevice.wait(Until.hasObject(By.text(dir)), TIMEOUT);
         assertTrue("object with text'(" + dir + "') not visible yet", gotIt);
         // TODO: find a better way to get the toggle rather then getting all
         final List<UiObject2> toggles = mDevice.findObjects(By.res("android:id/switch_widget"));
@@ -363,10 +362,61 @@ public class ScopedDirectoryAccessClientTest extends DocumentsClientTestCase {
         mDevice.pressBack();
 
         // Finally, make sure it's reset by requesting it again.
-        // TODO(b/63720392): currently it only resets the DocumentsUI preference, but it will
-        // eventually grant the permission directly from Settings, in which case we'll need to
-        // change this assertion.
-        userAcceptsTest(volume, dir);
+        sendOpenExternalDirectoryIntent(volume, dir);
+        final Intent newData = assertActivitySucceeded("should have already granted "
+                + "permission to " + volume+ " and " + dir);
+        assertPermissionGranted(newData);
+    }
+
+    public void testResetGranted() throws Exception {
+        if (!supportedHardwareForScopedDirectoryAccess()) return;
+
+        final StorageVolume volume = getPrimaryVolume();
+        final String dir = DIRECTORY_PICTURES;
+
+        // First, grants it
+        userAcceptsTest(volume, DIRECTORY_PICTURES);
+
+        // Then revoke it using settings.
+
+        // Launch screen.
+        launchDirectoryAccessSettingsScreenAndSelectApp();
+
+        // Toggle permission for dir.
+        final boolean gotIt = mDevice.wait(Until.hasObject(By.text(dir)), TIMEOUT);
+        assertTrue("object with text'(" + dir + "') not visible yet", gotIt);
+        // TODO: find a better way to get the toggle rather then getting all
+        final List<UiObject2> toggles = mDevice.findObjects(By.res("android:id/switch_widget"));
+        assertEquals("should have just one toggle: " + toggles, 1, toggles.size());
+        final UiObject2 toggle = toggles.get(0);
+        assertTrue("toggle for '" + dir + "' should be checked", toggle.isChecked());
+        toggle.click();
+        assertFalse("toggle for '" + dir + "' should not be checked", toggle.isChecked());
+
+        // Close app screen.
+        mDevice.pressBack();
+        // Close main screen.
+        mDevice.pressBack();
+
+        // Then tries again - should be denied.
+        sendOpenExternalDirectoryIntent(volume, dir);
+        assertActivityFailed();
+    }
+
+    private void launchDirectoryAccessSettingsScreenAndSelectApp() {
+        final Intent intent = new Intent(Settings.ACTION_STORAGE_VOLUME_ACCESS_SETTINGS)
+                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK );
+        final Context context = getInstrumentation().getContext();
+        context.startActivity(intent);
+
+        // Select app.
+        final String appLabel = context.getPackageManager().getApplicationLabel(
+                context.getApplicationInfo()).toString();
+        final BySelector byAppLabel = By.text(appLabel);
+        boolean gotIt = mDevice.wait(Until.hasObject(byAppLabel), TIMEOUT);
+        assertTrue("object with text'(" + appLabel + "') not visible yet", gotIt);
+        final UiObject2 appRow = mDevice.findObject(byAppLabel);
+        appRow.click();
     }
 
     private void openExternalDirectoryInvalidPath(StorageVolume volume, String directoryName) {
