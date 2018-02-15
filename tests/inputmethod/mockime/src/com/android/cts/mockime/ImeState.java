@@ -11,13 +11,14 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License
+ * limitations under the License.
  */
 
 package com.android.cts.mockime;
 
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 /**
  * An immutable object that stores several runtime state of {@link MockIme}.
@@ -30,13 +31,17 @@ public final class ImeState {
      * @return {@code true} if {@link MockIme#getCurrentInputBinding()} returned non-null
      *         {@link android.view.inputmethod.InputBinding} when this snapshot was taken.
      */
-    public boolean hasInputBinding() { return mHasInputBinding; }
+    public boolean hasInputBinding() {
+        return mHasInputBinding;
+    }
 
     /**
      * @return {@code true} if {@link MockIme#getCurrentInputConnection()} returned non-dummy
      *         {@link android.view.inputmethod.InputConnection} when this snapshot was taken.
      */
-    public boolean hasDummyInputConnection() { return mHasDummyInputConnection; }
+    public boolean hasDummyInputConnection() {
+        return mHasDummyInputConnection;
+    }
 
     ImeState(boolean hasInputBinding, boolean hasDummyInputConnection) {
         mHasInputBinding = hasInputBinding;
@@ -44,15 +49,18 @@ public final class ImeState {
     }
 
     @NonNull
-    final Bundle toBundle() {
+    Bundle toBundle() {
         final Bundle bundle = new Bundle();
         bundle.putBoolean("mHasInputBinding", mHasInputBinding);
         bundle.putBoolean("mHasDummyInputConnection", mHasDummyInputConnection);
         return bundle;
     }
 
-    @NonNull
-    static ImeState fromBundle(@NonNull Bundle bundle) {
+    @Nullable
+    static ImeState fromBundle(@Nullable Bundle bundle) {
+        if (bundle == null) {
+            return null;
+        }
         final boolean hasInputBinding = bundle.getBoolean("mHasInputBinding");
         final boolean hasDummyInputConnection = bundle.getBoolean("mHasDummyInputConnection");
         return new ImeState(hasInputBinding, hasDummyInputConnection);

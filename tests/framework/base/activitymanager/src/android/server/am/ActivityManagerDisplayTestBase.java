@@ -377,7 +377,7 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
         }
 
         private boolean isHostedVirtualDisplayPresent() throws Exception {
-            mAmWmState.computeState();
+            mAmWmState.computeState(true);
             return mAmWmState.getWmState().getDisplays().stream().anyMatch(
                     d -> d.getName() != null && d.getName().contains("HostedVirtualDisplay"));
         }

@@ -134,6 +134,30 @@ public class AppOpsTest extends InstrumentationTestCase {
         }
     }
 
+    public void testStartOpAndFinishOp() throws Exception {
+        setOpMode(mOpPackageName, OPSTR_READ_SMS, MODE_ALLOWED);
+        assertEquals(MODE_ALLOWED, mAppOps.startOp(OPSTR_READ_SMS, mMyUid, mOpPackageName));
+        mAppOps.finishOp(OPSTR_READ_SMS, mMyUid, mOpPackageName);
+        assertEquals(MODE_ALLOWED, mAppOps.startOpNoThrow(OPSTR_READ_SMS, mMyUid, mOpPackageName));
+        mAppOps.finishOp(OPSTR_READ_SMS, mMyUid, mOpPackageName);
+
+        setOpMode(mOpPackageName, OPSTR_READ_SMS, MODE_IGNORED);
+        assertEquals(MODE_IGNORED, mAppOps.startOp(OPSTR_READ_SMS, mMyUid, mOpPackageName));
+        assertEquals(MODE_IGNORED, mAppOps.startOpNoThrow(OPSTR_READ_SMS, mMyUid, mOpPackageName));
+
+        setOpMode(mOpPackageName, OPSTR_READ_SMS, MODE_DEFAULT);
+        assertEquals(MODE_DEFAULT, mAppOps.startOp(OPSTR_READ_SMS, mMyUid, mOpPackageName));
+        assertEquals(MODE_DEFAULT, mAppOps.startOpNoThrow(OPSTR_READ_SMS, mMyUid, mOpPackageName));
+
+        setOpMode(mOpPackageName, OPSTR_READ_SMS, MODE_ERRORED);
+        assertEquals(MODE_ERRORED, mAppOps.startOpNoThrow(OPSTR_READ_SMS, mMyUid, mOpPackageName));
+        try {
+            mAppOps.startOp(OPSTR_READ_SMS, mMyUid, mOpPackageName);
+            fail("SecurityException expected");
+        } catch (SecurityException expected) {
+        }
+    }
+
     public void testCheckPackagePassesTest() throws Exception {
         mAppOps.checkPackage(mMyUid, mOpPackageName);
         mAppOps.checkPackage(Process.SYSTEM_UID, "android");

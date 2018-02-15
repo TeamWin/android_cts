@@ -334,6 +334,7 @@ class ActivityManagerState {
         return containsActivity(getActivityName(activityName));
     }
 
+    /** TODO(b/73349193): Use {@link #containsActivity(ComponentName)} instaed. */
     @Deprecated
     boolean containsActivity(String fullActivityName) {
         for (ActivityStack stack : mStacks) {
@@ -390,8 +391,17 @@ class ActivityManagerState {
         return false;
     }
 
+    boolean hasActivityState(ComponentName activityName, String activityState) {
+        return hasActivityStateInternal(getActivityName(activityName), activityState);
+    }
+
+    /** TODO(b/73349193): Use {@link #hasActivityState(ComponentName, String)} instead. */
+    @Deprecated
     boolean hasActivityState(String activityName, String activityState) {
-        String fullName = getActivityComponentName(activityName);
+        return hasActivityStateInternal(getActivityComponentName(activityName), activityState);
+    }
+
+    private boolean hasActivityStateInternal(String fullName, String activityState) {
         for (ActivityStack stack : mStacks) {
             for (ActivityTask task : stack.mTasks) {
                 for (Activity activity : task.mActivities) {
@@ -467,12 +477,24 @@ class ActivityManagerState {
         return task.mStackId;
     }
 
-    ActivityTask getTaskByActivityName(String activityName) {
-        return getTaskByActivityName(activityName, WINDOWING_MODE_UNDEFINED);
+    ActivityTask getTaskByActivity(ComponentName activityName) {
+        return getTaskByActivityInternal(getActivityName(activityName), WINDOWING_MODE_UNDEFINED);
     }
 
+    /** TODO(b/73349193): Use {@link #getTaskByActivity(ComponentName)} instead. */
+    @Deprecated
+    ActivityTask getTaskByActivityName(String activityName) {
+        return getTaskByActivityInternal(
+                getActivityComponentName(activityName), WINDOWING_MODE_UNDEFINED);
+    }
+
+    /** TODO(b/73349193): Add getTaskByActicityOfWidowingMode(Component, int). */
+    @Deprecated
     ActivityTask getTaskByActivityName(String activityName, int windowingMode) {
-        String fullName = getActivityComponentName(activityName);
+        return getTaskByActivityInternal(getActivityComponentName(activityName), windowingMode);
+    }
+
+    private ActivityTask getTaskByActivityInternal(String fullName, int windowingMode) {
         for (ActivityStack stack : mStacks) {
             if (windowingMode == WINDOWING_MODE_UNDEFINED
                     || windowingMode == stack.getWindowingMode()) {

@@ -19,6 +19,10 @@ package android.server.am;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_ASSISTANT;
 import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.server.am.Components.AssistantActivity.EXTRA_ASSISTANT_DISPLAY_ID;
+import static android.server.am.Components.AssistantActivity.EXTRA_ENTER_PIP;
+import static android.server.am.Components.AssistantActivity.EXTRA_FINISH_SELF;
+import static android.server.am.Components.AssistantActivity.EXTRA_LAUNCH_NEW_TASK;
 
 import android.app.Activity;
 import android.app.ActivityOptions;
@@ -27,15 +31,6 @@ import android.content.Intent;
 import android.os.Bundle;
 
 public class AssistantActivity extends Activity {
-
-    // Launches the given activity in onResume
-    public static final String EXTRA_LAUNCH_NEW_TASK = "launch_new_task";
-    // Finishes this activity in onResume, this happens after EXTRA_LAUNCH_NEW_TASK
-    public static final String EXTRA_FINISH_SELF = "finish_self";
-    // Attempts to enter picture-in-picture in onResume
-    public static final String EXTRA_ENTER_PIP = "enter_pip";
-    // Display on which Assistant runs
-    public static final String EXTRA_ASSISTANT_DISPLAY_ID = "assistant_display_id";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,17 +41,18 @@ public class AssistantActivity extends Activity {
 
         // Launch the new activity if requested
         if (getIntent().hasExtra(EXTRA_LAUNCH_NEW_TASK)) {
-            Intent i = new Intent();
-            i.setComponent(new ComponentName(this, getPackageName() + "."
-                    + getIntent().getStringExtra(EXTRA_LAUNCH_NEW_TASK)));
-            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            final ComponentName launchActivity = ComponentName.unflattenFromString(
+                    getIntent().getStringExtra(EXTRA_LAUNCH_NEW_TASK));
+            final Intent launchIntent = new Intent();
+            launchIntent.setComponent(launchActivity)
+                    .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             if (getIntent().hasExtra(EXTRA_ASSISTANT_DISPLAY_ID)) {
                 ActivityOptions displayOptions = ActivityOptions.makeBasic();
                 displayOptions.setLaunchDisplayId(Integer.parseInt(getIntent()
                         .getStringExtra(EXTRA_ASSISTANT_DISPLAY_ID)));
-                startActivity(i, displayOptions.toBundle());
+                startActivity(launchIntent, displayOptions.toBundle());
             } else {
-                startActivity(i);
+                startActivity(launchIntent);
             }
         }
 

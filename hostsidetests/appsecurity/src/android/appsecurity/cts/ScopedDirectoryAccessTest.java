@@ -62,4 +62,8 @@ public class ScopedDirectoryAccessTest extends DocumentsTestCase {
     public void testResetDoNotAskAgain() throws Exception {
         runDeviceTests(CLIENT_PKG, ".ScopedDirectoryAccessClientTest", "testResetDoNotAskAgain");
     }
+
+    public void testResetGranted() throws Exception {
+        runDeviceTests(CLIENT_PKG, ".ScopedDirectoryAccessClientTest", "testResetGranted");
+    }
 }

@@ -992,6 +992,28 @@ public class ClientTest {
     }
 
     @Test
+    public void testGetInstaller01() throws Exception {
+        // test we can read our own installer
+        final String installerPackageName = InstrumentationRegistry.getContext().getPackageManager()
+                .getInstallerPackageName("com.android.cts.ephemeralapp1");
+        assertThat(installerPackageName, is("com.android.cts.normalapp"));
+    }
+    @Test
+    public void testGetInstaller02() throws Exception {
+        // test we can read someone else's installer if they're exposed to instant applications
+        final String installerPackageName = InstrumentationRegistry.getContext().getPackageManager()
+                .getInstallerPackageName("com.android.cts.normalapp");
+        assertThat(installerPackageName, is("com.android.cts.normalapp"));
+    }
+    @Test
+    public void testGetInstaller03() throws Exception {
+        // test we can't read installer if they're not exposed to instant applications
+        final String installerPackageName = InstrumentationRegistry.getContext().getPackageManager()
+                .getInstallerPackageName("com.android.cts.unexposedapp");
+        assertThat(installerPackageName, is(nullValue()));
+    }
+
+    @Test
     public void testStartForegroundService() throws Exception {
         final Context context = InstrumentationRegistry.getContext();
         final Intent intent = new Intent(context, SomeService.class);

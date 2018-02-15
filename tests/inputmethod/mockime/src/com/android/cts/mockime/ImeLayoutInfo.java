@@ -11,7 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License
+ * limitations under the License.
  */
 
 package com.android.cts.mockime;
@@ -32,12 +32,12 @@ import android.view.WindowInsets;
  */
 public final class ImeLayoutInfo {
 
-    private final static String NEW_LAYOUT_KEY = "newLayout";
-    private final static String OLD_LAYOUT_KEY = "oldLayout";
-    private final static String VIEW_ORIGIN_ON_SCREEN_KEY = "viewOriginOnScreen";
-    private final static String DISPLAY_SIZE_KEY = "displaySize";
-    private final static String SYSTEM_WINDOW_INSET_KEY = "systemWindowInset";
-    private final static String STABLE_INSET_KEY = "stableInset";
+    private static final String NEW_LAYOUT_KEY = "newLayout";
+    private static final String OLD_LAYOUT_KEY = "oldLayout";
+    private static final String VIEW_ORIGIN_ON_SCREEN_KEY = "viewOriginOnScreen";
+    private static final String DISPLAY_SIZE_KEY = "displaySize";
+    private static final String SYSTEM_WINDOW_INSET_KEY = "systemWindowInset";
+    private static final String STABLE_INSET_KEY = "stableInset";
 
     @NonNull
     private final Rect mNewLayout;

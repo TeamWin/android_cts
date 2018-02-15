@@ -18,9 +18,7 @@
     <option name="disable-strict-sharding" value="true" />
     <device_recovery class="com.android.tradefed.device.WaitDeviceRecovery" />
     <build_provider class="com.android.compatibility.common.tradefed.build.CompatibilityBuildProvider" />
-    <test class="com.android.compatibility.common.tradefed.testtype.suite.CompatibilityTestSuite">
-        <option name="run-suite-tag" value="cts" />
-    </test>
+    <test class="com.android.compatibility.common.tradefed.testtype.suite.CompatibilityTestSuite" />
 
     <option name="compatibility:test-arg" value="com.android.tradefed.testtype.AndroidJUnitTest:rerun-from-file:true" />
     <option name="compatibility:test-arg" value="com.android.tradefed.testtype.AndroidJUnitTest:fallback-to-serial-rerun:false" />

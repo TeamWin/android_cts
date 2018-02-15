@@ -11,7 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License
+ * limitations under the License.
  */
 
 package android.view.inputmethod.cts.util;
@@ -36,10 +36,10 @@ import java.util.function.Supplier;
 public class LightNavigationBarVerifier {
 
     /** This value actually does not have strong rationale. */
-    private static float LIGHT_NAVBAR_SUPPORTED_THRESHOLD = 20.0f;
+    private static final float LIGHT_NAVBAR_SUPPORTED_THRESHOLD = 20.0f;
 
     /** This value actually does not have strong rationale. */
-    private static float LIGHT_NAVBAR_NOT_SUPPORTED_THRESHOLD = 5.0f;
+    private static final float LIGHT_NAVBAR_NOT_SUPPORTED_THRESHOLD = 5.0f;
 
     @FunctionalInterface
     public interface ScreenshotSupplier {
@@ -68,7 +68,7 @@ public class LightNavigationBarVerifier {
         @NonNull
         public final Supplier<String> mAssertionMessageProvider;
 
-        public Result(@NonNull ResultType result,
+        Result(@NonNull ResultType result,
                 @Nullable Supplier<String> assertionMessageProvider) {
             mResult = result;
             mAssertionMessageProvider = assertionMessageProvider;

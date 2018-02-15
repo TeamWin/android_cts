@@ -41,7 +41,6 @@ public class BatteryUtils {
     /** Make the target device think it's off charger. */
     public static void runDumpsysBatteryUnplug() throws Exception {
         SystemUtil.runShellCommandForNoOutput("dumpsys battery unplug");
-        TestUtils.waitUntil("Device still charging", () -> !getBatteryManager().isCharging());
 
         Log.d(TAG, "Battery UNPLUGGED");
     }

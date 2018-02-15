@@ -73,7 +73,7 @@ public class NavigationBarColorTest extends EndToEndImeTestBase {
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
     private static final long LAYOUT_STABLE_THRESHOLD = TimeUnit.SECONDS.toMillis(3);
 
-    private final static String TEST_MARKER = "android.view.inputmethod.cts.NavigationBarColorTest";
+    private static final String TEST_MARKER = "android.view.inputmethod.cts.NavigationBarColorTest";
 
     private static void updateSystemUiVisibility(@NonNull View view, int flags, int mask) {
         final int currentFlags = view.getSystemUiVisibility();
@@ -157,7 +157,7 @@ public class NavigationBarColorTest extends EndToEndImeTestBase {
         switch (dimmingTestMode) {
             case NO_DIMMING_DIALOG:
                 // Dialog is not necessary.
-                return () -> {};
+                return () -> { };
             case DIMMING_DIALOG_ABOVE_IME: {
                 final AlertDialog alertDialog = getOnMainSync(() -> {
                     final TextView textView = new TextView(activity);
@@ -235,7 +235,7 @@ public class NavigationBarColorTest extends EndToEndImeTestBase {
             throws Exception {
         final UiAutomation uiAutomation =
                 InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        try(MockImeSession imeSession = MockImeSession.create(
+        try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getContext(), uiAutomation, builder)) {
             final ImeEventStream stream = imeSession.openEventStream();
 

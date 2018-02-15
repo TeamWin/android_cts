@@ -152,27 +152,15 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
             assertTrue("showSoftInput must success if the View has IME focus",
                     getOnMainSync(() -> imm.showSoftInput(editText, 0)));
 
-            // Nested events: "showSoftInput" internally triggers "onStartInputView" hence the
-            // event order is reversed.  For now we just make sure that both get called, by passing
-            // stream.copy() because we are not sure if having a strong requirements regarding
-            // nested callback is a good idea or not.
-            // TODO(Bug 73077694): Change the event order.
-            expectEvent(stream.copy(), showSoftInputMatcher(InputMethod.SHOW_EXPLICIT), TIMEOUT);
-            expectEvent(stream.copy(), editorMatcher("onStartInputView", marker), TIMEOUT);
-            stream.skipAll();
+            expectEvent(stream, showSoftInputMatcher(InputMethod.SHOW_EXPLICIT), TIMEOUT);
+            expectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
 
             // Test hideSoftInputFromWindow() flow
             assertTrue("hideSoftInputFromWindow must success if the View has IME focus",
                     getOnMainSync(() -> imm.hideSoftInputFromWindow(editText.getWindowToken(), 0)));
 
-            // Nested events: "hideSoftInput" internally triggers "onFinishInputView" hence the
-            // event order is reversed.  For now we just make sure that both get called, by passing
-            // stream.copy() because we are not sure if having a strong requirements regarding
-            // nested callback is a good idea or not.
-            // TODO(Bug 73077694): Change the event order.
-            expectEvent(stream.copy(), hideSoftInputMatcher(), TIMEOUT);
-            expectEvent(stream.copy(), onFinishInputViewMatcher(false), TIMEOUT);
-            stream.skipAll();
+            expectEvent(stream, hideSoftInputMatcher(), TIMEOUT);
+            expectEvent(stream, onFinishInputViewMatcher(false), TIMEOUT);
         }
     }
 
@@ -228,26 +216,14 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
             // Test toggleSoftInputFromWindow() flow
             runOnMainSync(() -> imm.toggleSoftInputFromWindow(editText.getWindowToken(), 0, 0));
 
-            // Nested events: "showSoftInput" internally triggers "onStartInputView" hence the
-            // event order is reversed.  For now we just make sure that both get called, by passing
-            // stream.copy() because we are not sure if having a strong requirements regarding
-            // nested callback is a good idea or not.
-            // TODO(Bug 73077694): Change the event order.
             expectEvent(stream.copy(), showSoftInputMatcher(InputMethod.SHOW_EXPLICIT), TIMEOUT);
             expectEvent(stream.copy(), editorMatcher("onStartInputView", marker), TIMEOUT);
-            stream.skipAll();
 
             // Calling toggleSoftInputFromWindow() must hide the IME.
             runOnMainSync(() -> imm.toggleSoftInputFromWindow(editText.getWindowToken(), 0, 0));
 
-            // Nested events: "hideSoftInput" internally triggers "onFinishInputView" hence the
-            // event order is reversed.  For now we just make sure that both get called, by passing
-            // stream.copy() because we are not sure if having a strong requirements regarding
-            // nested callback is a good idea or not.
-            // TODO(Bug 73077694): Change the event order.
-            expectEvent(stream.copy(), hideSoftInputMatcher(), TIMEOUT);
-            expectEvent(stream.copy(), onFinishInputViewMatcher(false), TIMEOUT);
-            stream.skipAll();
+            expectEvent(stream, hideSoftInputMatcher(), TIMEOUT);
+            expectEvent(stream, onFinishInputViewMatcher(false), TIMEOUT);
         }
     }
 }

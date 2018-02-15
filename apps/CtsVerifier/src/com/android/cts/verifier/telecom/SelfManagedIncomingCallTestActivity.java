@@ -117,6 +117,13 @@ public class SelfManagedIncomingCallTestActivity extends PassFailButtons.Activit
                         // Make it active to simulate an answer.
                         connection.setActive();
 
+                        // Removes the hold capability of the self-managed call, so that the follow
+                        // incoming call can trigger the incoming call UX that allow user to answer
+                        // the incoming call to disconnect the ongoing call.
+                        int capabilities = connection.getConnectionCapabilities();
+                        capabilities &= ~Connection.CAPABILITY_HOLD;
+                        connection.setConnectionCapabilities(capabilities);
+
                         // Place the second call. It should trigger the incoming call UX.
                         Bundle extras2 = new Bundle();
                         extras2.putParcelable(TelecomManager.EXTRA_INCOMING_CALL_ADDRESS,
@@ -149,12 +156,13 @@ public class SelfManagedIncomingCallTestActivity extends PassFailButtons.Activit
         mStep3Status = view.findViewById(R.id.step_3_status);
         mConfirm = view.findViewById(R.id.telecom_incoming_self_mgd_confirm_answer_button);
         mConfirm.setOnClickListener(v -> {
-            CtsConnectionService ctsConnectionService = CtsConnectionService.getConnectionService();
-            if (ctsConnectionService == null) {
+            CtsSelfManagedConnectionService ctsSelfConnSvr =
+                    CtsSelfManagedConnectionService.waitForAndGetConnectionService();
+            if (ctsSelfConnSvr == null) {
                 mStep3Status.setImageResource(R.drawable.fs_error);
                 return;
             }
-            List<CtsConnection> connections = ctsConnectionService.getConnections();
+            List<CtsConnection> connections = ctsSelfConnSvr.getConnections();
             if (connections.size() != 1) {
                 mStep3Status.setImageResource(R.drawable.fs_error);
                 return;
@@ -168,6 +176,13 @@ public class SelfManagedIncomingCallTestActivity extends PassFailButtons.Activit
                 getPassButton().setEnabled(true);
             } else {
                 mStep3Status.setImageResource(R.drawable.fs_error);
+            }
+
+            // The self-managed connection service should be disconnected, because all of the
+            // self-managed connections are disconnected.
+            if (CtsConnectionService.getConnectionService() != null) {
+                mStep3Status.setImageResource(R.drawable.fs_error);
+                return;
             }
 
             PhoneAccountUtils.unRegisterTestSelfManagedPhoneAccount(this);

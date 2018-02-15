@@ -220,6 +220,36 @@ public class SQLiteOpenHelperTest extends AndroidTestCase {
     }
 
     /**
+     * Test for {@link SQLiteOpenHelper#setOpenParams(SQLiteDatabase.OpenParams)}.
+     * <p>Opens the database using the helper and verifies that params have been applied</p>
+     */
+    public void testSetOpenParams() {
+        mOpenHelper.close();
+
+        SQLiteDatabase.OpenParams.Builder paramsBuilder = new SQLiteDatabase.OpenParams.Builder();
+        paramsBuilder.addOpenFlags(SQLiteDatabase.ENABLE_WRITE_AHEAD_LOGGING);
+
+        MockOpenHelper helper = new MockOpenHelper(mContext, TEST_DATABASE_NAME, null, 1);
+        helper.setOpenParams(paramsBuilder.build());
+        assertTrue("database must be opened with ENABLE_WRITE_AHEAD_LOGGING flag",
+                helper.getWritableDatabase().isWriteAheadLoggingEnabled());
+    }
+
+    /**
+     * Verifies that {@link SQLiteOpenHelper#setOpenParams(SQLiteDatabase.OpenParams)} cannot be
+     * called after opening the database.
+     */
+    public void testSetOpenParamsFailsIfDbIsOpen() {
+        mOpenHelper.getWritableDatabase();
+        try {
+            mOpenHelper.setOpenParams(new SQLiteDatabase.OpenParams.Builder().build());
+            fail("setOpenParams should fail if the database is open");
+        } catch (IllegalStateException e) {
+            // Expected
+        }
+    }
+
+    /**
      * Tests a scenario in WAL mode with multiple connections, when a connection should see schema
      * changes made from another connection.
      */

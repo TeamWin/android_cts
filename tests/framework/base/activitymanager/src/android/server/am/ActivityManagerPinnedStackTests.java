@@ -26,6 +26,7 @@ import static android.server.am.ActivityAndWindowManagersState.DEFAULT_DISPLAY_I
 import static android.server.am.ActivityManagerState.STATE_DESTROYED;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.ActivityManagerState.STATE_STOPPED;
+import static android.server.am.Components.TestActivity.TEST_ACTIVITY_ACTION_FINISH_SELF;
 import static android.view.KeyEvent.KEYCODE_WINDOW;
 
 import static org.junit.Assert.assertEquals;
@@ -101,8 +102,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
             "android.server.am.PipActivity.set_requested_orientation";
     private static final String PIP_ACTIVITY_ACTION_FINISH =
             "android.server.am.PipActivity.finish";
-    private static final String TEST_ACTIVITY_ACTION_FINISH =
-            "android.server.am.TestActivity.finish_self";
 
     private static final String APP_OPS_OP_ENTER_PICTURE_IN_PICTURE = "PICTURE_IN_PICTURE";
     private static final int APP_OPS_MODE_ALLOWED = 0;
@@ -1020,7 +1019,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // got resumed
         String logSeparator = clearLogcat();
         executeShellCommand("am stack resize-animated 4 20 20 500 500");
-        executeShellCommand("am broadcast -a " + TEST_ACTIVITY_ACTION_FINISH);
+        executeShellCommand("am broadcast -a " + TEST_ACTIVITY_ACTION_FINISH_SELF);
         mAmWmState.waitFor((amState, wmState) -> !amState.containsActivity(
                 getActivityComponentName(TRANSLUCENT_TEST_ACTIVITY)),
                 "Waiting for test activity to finish...");
@@ -1227,7 +1226,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         mAmWmState.waitForValidState(PIP_ACTIVITY, WINDOWING_MODE_FULLSCREEN,
                 ACTIVITY_TYPE_STANDARD);
         launchActivity(TEST_ACTIVITY);
-        executeShellCommand("am broadcast -a " + TEST_ACTIVITY_ACTION_FINISH);
+        executeShellCommand("am broadcast -a " + TEST_ACTIVITY_ACTION_FINISH_SELF);
         mAmWmState.waitForActivityState(PIP_ACTIVITY, STATE_RESUMED);
         executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_ENTER_PIP);
         mAmWmState.waitForValidState(PIP_ACTIVITY, WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
@@ -1519,7 +1518,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
         mAmWmState.waitForValidState(topActivityName,
                 WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
-        mAmWmState.computeState();
+        mAmWmState.computeState(true);
 
         if (supportsPip()) {
             final String windowName = getActivityWindowName(topActivityName);

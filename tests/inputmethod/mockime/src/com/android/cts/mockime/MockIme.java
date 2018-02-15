@@ -11,7 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License
+ * limitations under the License.
  */
 
 package com.android.cts.mockime;
@@ -92,7 +92,7 @@ public final class MockIme extends InputMethodService {
         @NonNull
         private final Consumer<ImeCommand> mOnReceiveCommand;
 
-        public CommandReceiver(@NonNull String actionName,
+        CommandReceiver(@NonNull String actionName,
                 @NonNull Consumer<ImeCommand> onReceiveCommand) {
             mActionName = actionName;
             mOnReceiveCommand = onReceiveCommand;
@@ -230,14 +230,16 @@ public final class MockIme extends InputMethodService {
 
     @Override
     public void onCreate() {
+        // Initialize minimum settings to send events in Tracer#onCreate().
+        mSettings = readSettings();
+        if (mSettings == null) {
+            throw new IllegalStateException("Settings file is not found. "
+                    + "Make sure MockImeSession.create() is used to launch Mock IME.");
+        }
+        mImeEventActionName.set(mSettings.getEventCallbackActionName());
+
         getTracer().onCreate(() -> {
             super.onCreate();
-            mSettings = readSettings();
-            if (mSettings == null) {
-                throw new IllegalStateException("Settings file is not found. "
-                        + "Make sure MockImeSession.create() is used to launch Mock IME.");
-            }
-
             mHandlerThread.start();
             final String actionName = getCommandActionName(mSettings.getEventCallbackActionName());
             mCommandReceiver = new CommandReceiver(actionName, this::onReceiveCommand);
@@ -245,7 +247,6 @@ public final class MockIme extends InputMethodService {
                     new IntentFilter(actionName), null /* broadcastPermission */,
                     new Handler(mHandlerThread.getLooper()));
 
-            mImeEventActionName.set(mSettings.getEventCallbackActionName());
             final int windowFlags = mSettings.getWindowFlags(0);
             final int windowFlagsMask = mSettings.getWindowFlagsMask(0);
             if (windowFlags != 0 || windowFlagsMask != 0) {
@@ -288,7 +289,7 @@ public final class MockIme extends InputMethodService {
         @NonNull
         private final View.OnLayoutChangeListener mLayoutListener;
 
-        public KeyboardLayoutView(Context context, @NonNull ImeSettings imeSettings,
+        KeyboardLayoutView(Context context, @NonNull ImeSettings imeSettings,
                 @Nullable Consumer<ImeLayoutInfo> onInputViewLayoutChangedCallback) {
             super(context);
 
@@ -324,8 +325,10 @@ public final class MockIme extends InputMethodService {
 
             mLayoutListener = (View v, int left, int top, int right, int bottom, int oldLeft,
                     int oldTop, int oldRight, int oldBottom) ->
-                    onInputViewLayoutChangedCallback.accept(ImeLayoutInfo.fromLayoutListenerCallback(
-                            v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom));
+                    onInputViewLayoutChangedCallback.accept(
+                            ImeLayoutInfo.fromLayoutListenerCallback(
+                                    v, left, top, right, bottom, oldLeft, oldTop, oldRight,
+                                    oldBottom));
             this.addOnLayoutChangeListener(mLayoutListener);
         }
 
@@ -349,8 +352,8 @@ public final class MockIme extends InputMethodService {
             // that have bottom chin are examples.  For now, assume that it's a navigation bar if it
             // has the same height as the root window's stable bottom inset.
             final WindowInsets rootWindowInsets = getRootWindowInsets();
-            if (rootWindowInsets != null && (rootWindowInsets.getStableInsetBottom() !=
-                    insets.getSystemWindowInsetBottom())) {
+            if (rootWindowInsets != null && (rootWindowInsets.getStableInsetBottom()
+                    != insets.getSystemWindowInsetBottom())) {
                 // This is probably not a NavBar.
                 updateBottomPaddingIfNecessary(0);
                 return insets;
@@ -375,7 +378,7 @@ public final class MockIme extends InputMethodService {
     }
 
     private void onInputViewLayoutChanged(@NonNull ImeLayoutInfo layoutInfo) {
-        getTracer().onInputViewLayoutChanged(layoutInfo, () -> {});
+        getTracer().onInputViewLayoutChanged(layoutInfo, () -> { });
     }
 
     @Override
@@ -497,7 +500,7 @@ public final class MockIme extends InputMethodService {
 
         private String mImeEventActionName;
 
-        public Tracer(@NonNull MockIme mockIme) {
+        Tracer(@NonNull MockIme mockIme) {
             mIme = mockIme;
         }
 
@@ -522,7 +525,9 @@ public final class MockIme extends InputMethodService {
 
         private void recordEventInternal(@NonNull String eventName, @NonNull Runnable runnable,
                 @NonNull Bundle arguments) {
-            recordEventInternal(eventName, () -> { runnable.run(); return null; }, arguments);
+            recordEventInternal(eventName, () -> {
+                runnable.run(); return null;
+            }, arguments);
         }
 
         private <T> T recordEventInternal(@NonNull String eventName,
@@ -536,6 +541,10 @@ public final class MockIme extends InputMethodService {
             final long enterTimestamp = SystemClock.elapsedRealtimeNanos();
             final long enterWallTime = System.currentTimeMillis();
             final int nestLevel = mNestLevel;
+            // Send enter event
+            sendEventInternal(new ImeEvent(eventName, nestLevel, mThreadName,
+                    mThreadId, mIsMainThread, enterTimestamp, 0, enterWallTime,
+                    0, enterState, null, arguments));
             ++mNestLevel;
             T result;
             try {
@@ -546,6 +555,7 @@ public final class MockIme extends InputMethodService {
             final long exitTimestamp = SystemClock.elapsedRealtimeNanos();
             final long exitWallTime = System.currentTimeMillis();
             final ImeState exitState = mIme.getState();
+            // Send exit event
             sendEventInternal(new ImeEvent(eventName, nestLevel, mThreadName,
                     mThreadId, mIsMainThread, enterTimestamp, exitTimestamp, enterWallTime,
                     exitWallTime, enterState, exitState, arguments));

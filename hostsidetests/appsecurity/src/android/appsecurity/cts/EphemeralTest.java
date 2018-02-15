@@ -188,6 +188,19 @@ public class EphemeralTest extends DeviceTestCase
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartEphemeral");
     }
 
+    public void testEphemeralGetInstaller01() throws Exception {
+        installEphemeralApp(EPHEMERAL_1_APK, "com.android.cts.normalapp");
+        runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testGetInstaller01");
+    }
+    public void testEphemeralGetInstaller02() throws Exception {
+        installApp(NORMAL_APK, "com.android.cts.normalapp");
+        runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testGetInstaller03");
+    }
+    public void testEphemeralGetInstaller03() throws Exception {
+        installEphemeralApp(EPHEMERAL_1_APK, "com.android.cts.normalapp");
+        runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testGetInstaller02");
+    }
+
     public void testExposedSystemActivities() throws Exception {
         for (Map<String, String> testArgs : EXPECTED_EXPOSED_INTENTS) {
             final boolean exposed = isIntentExposed(testArgs);
@@ -320,9 +333,21 @@ public class EphemeralTest extends DeviceTestCase
         assertNull(getDevice().installPackage(buildHelper.getTestFile(apk), false));
     }
 
+    private void installApp(String apk, String installer) throws Exception {
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mBuildInfo);
+        assertNull(getDevice().installPackage(buildHelper.getTestFile(apk), false,
+                "-i", installer));
+    }
+
     private void installEphemeralApp(String apk) throws Exception {
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mBuildInfo);
         assertNull(getDevice().installPackage(buildHelper.getTestFile(apk), false, "--ephemeral"));
+    }
+
+    private void installEphemeralApp(String apk, String installer) throws Exception {
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mBuildInfo);
+        assertNull(getDevice().installPackage(buildHelper.getTestFile(apk), false,
+                "--ephemeral", "-i", installer));
     }
 
     private void installTestPackages() throws Exception {

@@ -29,6 +29,7 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMAR
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.server.am.ComponentNameUtils.getActivityName;
+import static android.server.am.ComponentNameUtils.getSimpleClassName;
 import static android.server.am.ComponentNameUtils.getWindowName;
 
 import android.content.ComponentName;
@@ -39,7 +40,7 @@ public class WaitForValidActivityState {
     public final String componentName;
     @Nullable
     public final String windowName;
-    /** Use {@link #componentName} and  {@link #windowName}. */
+    /** TODO(b/73349193): Use {@link #componentName} and  {@link #windowName}. */
     @Deprecated
     @Nullable
     public final String activityName;
@@ -60,7 +61,7 @@ public class WaitForValidActivityState {
         this.activityType = ACTIVITY_TYPE_UNDEFINED;
     }
 
-    /** Use {@link #WaitForValidActivityState(ComponentName)}. */
+    /** TODO(b/73349193): Use {@link #WaitForValidActivityState(ComponentName)}. */
     @Deprecated
     public WaitForValidActivityState(String activityName) {
         this.componentName = null;
@@ -128,18 +129,6 @@ public class WaitForValidActivityState {
         }
     }
 
-    /**
-     * Get component's simple class name.
-     *
-     * @return the class name of {@code componentName}, either fully qualified class name or in
-     *         a shortened form (WITHOUT a leading '.') if it is a suffix of the package.
-     * @see ComponentNameUtils#getLogTag(ComponentName)
-     */
-    public static String getSimpleClassName(final ComponentName componentName) {
-        final String shortClassName = componentName.getShortClassName();
-        return shortClassName.startsWith(".") ? shortClassName.substring(1) : shortClassName;
-    }
-
     public static class Builder {
         @Nullable
         private String mComponentName = null;
@@ -159,7 +148,7 @@ public class WaitForValidActivityState {
             mActivityName = getSimpleClassName(activityName);
         }
 
-        /** Use {@link #Builder(ComponentName)}. */
+        /** Use(b/73349193): {@link #Builder(ComponentName)}. */
         @Deprecated
         public Builder(String activityName) {
             mActivityName = activityName;

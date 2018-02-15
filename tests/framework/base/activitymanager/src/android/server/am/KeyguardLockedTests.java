@@ -118,7 +118,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
             lockScreenSession.setLockCredential();
             final String logSeparator = clearLogcat();
             lockScreenSession.gotoKeyguard();
-            mAmWmState.computeState();
+            mAmWmState.computeState(true);
             assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
             launchActivity("DismissKeyguardMethodActivity");
             lockScreenSession.enterAndConfirmLockCredential();
@@ -136,12 +136,12 @@ public class KeyguardLockedTests extends KeyguardTestBase {
             lockScreenSession.setLockCredential();
             final String logSeparator = clearLogcat();
             lockScreenSession.gotoKeyguard();
-            mAmWmState.computeState();
+            mAmWmState.computeState(true);
             assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
             launchActivity("DismissKeyguardMethodActivity");
             pressBackButton();
             assertOnDismissCancelledInLogcat(logSeparator);
-            mAmWmState.computeState();
+            mAmWmState.computeState(true);
             mAmWmState.assertVisibility("DismissKeyguardMethodActivity", false);
             assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
         }

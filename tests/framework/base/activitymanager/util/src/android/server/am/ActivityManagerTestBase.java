@@ -23,6 +23,8 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
+import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.pm.PackageManager.FEATURE_EMBEDDED;
 import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT;
 import static android.content.pm.PackageManager.FEATURE_LEANBACK;
@@ -32,6 +34,7 @@ import static android.content.pm.PackageManager.FEATURE_SCREEN_PORTRAIT;
 import static android.content.pm.PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE;
 import static android.content.pm.PackageManager.FEATURE_WATCH;
 import static android.server.am.ComponentNameUtils.getActivityName;
+import static android.server.am.ComponentNameUtils.getSimpleClassName;
 import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logAlways;
@@ -43,6 +46,8 @@ import static android.view.KeyEvent.KEYCODE_WAKEUP;
 
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+
+import static java.lang.Integer.toHexString;
 
 import android.app.ActivityManager;
 import android.app.KeyguardManager;
@@ -62,11 +67,17 @@ import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.rules.TestRule;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.BooleanSupplier;
 import java.util.regex.Matcher;
@@ -128,7 +139,7 @@ public abstract class ActivityManagerTestBase {
 
     private static Boolean sHasHomeScreen = null;
 
-    // TODO: Remove this when all activity name are specified by {@link ComponentName}.
+    // TODO(b/73349193): Remove this when all activity name are specified by {@link ComponentName}.
     static String componentName = DEFAULT_COMPONENT_NAME;
 
     protected static final int INVALID_DEVICE_ROTATION = -1;
@@ -137,15 +148,7 @@ public abstract class ActivityManagerTestBase {
     protected ActivityManager mAm;
     protected UiDevice mDevice;
 
-    /**
-     * The variables below are to store the doze states so they can be restored at the end.
-     */
-    private String mIsDozeAlwaysOn;
-    private String mIsDozeEnabled;
-    private String mIsDozePulseOnPickUp;
-    private String mIsDozePulseOnLongPress;
-    private String mIsDozePulseOnDoubleTap;
-
+    /** TODO(b/73349193): Use {@link #getAmStartCmd(ComponentName, String...)} instead. */
     @Deprecated
     protected static String getAmStartCmd(final String activityName) {
         return "am start -n " + getActivityComponentName(activityName);
@@ -161,6 +164,7 @@ public abstract class ActivityManagerTestBase {
         return getAmStartCmdInternal(getActivityName(activityName), keyValuePairs);
     }
 
+    /** TODO(b/73349193): Use {@link #getAmStartCmd(ComponentName, String...)} instead. */
     @Deprecated
     protected static String getAmStartCmd(final String activityName,
             final String... keyValuePairs) {
@@ -169,34 +173,50 @@ public abstract class ActivityManagerTestBase {
 
     private static String getAmStartCmdInternal(final String activityName,
             final String... keyValuePairs) {
-        final StringBuilder cmd = new StringBuilder("am start -n ").append(activityName);
+        return appendKeyValuePairs(
+                new StringBuilder("am start -n ").append(activityName),
+                keyValuePairs);
+    }
+
+    private static String appendKeyValuePairs(
+            final StringBuilder cmd, final String... keyValuePairs) {
         if (keyValuePairs.length % 2 != 0) {
             throw new RuntimeException("keyValuePairs must be pairs of key/value arguments");
         }
         for (int i = 0; i < keyValuePairs.length; i += 2) {
             final String key = keyValuePairs[i];
             final String value = keyValuePairs[i + 1];
-            cmd.append(String.format(" --es %s %s", key, value));
+            cmd.append(" --es ")
+                    .append(key)
+                    .append(" ")
+                    .append(value);
         }
         return cmd.toString();
     }
 
-    protected static String getAmStartCmd(final String activityName, final int displayId) {
-        return "am start -n " + getActivityComponentName(activityName) + " -f 0x18000000"
-                + " --display " + displayId;
+    protected static String getAmStartCmd(final ComponentName activityName, final int displayId,
+            final String... keyValuePair) {
+        return getAmStartCmdInternal(getActivityName(activityName), displayId, keyValuePair);
     }
 
+    /** TODO(b/73349193): Use {@link #getAmStartCmd(ComponentName, String...)} instead. */
+    @Deprecated
     protected static String getAmStartCmd(final String activityName, final int displayId,
-                                          final String... keyValuePairs) {
-        String base = "am start -n " + getActivityComponentName(activityName) + " -f 0x18000000"
-                + " --display " + displayId;
-        if (keyValuePairs.length % 2 != 0) {
-            throw new RuntimeException("keyValuePairs must be pairs of key/value arguments");
-        }
-        for (int i = 0; i < keyValuePairs.length; i += 2) {
-            base += " --es " + keyValuePairs[i] + " " + keyValuePairs[i + 1];
-        }
-        return base;
+            final String... keyValuePair) {
+        return getAmStartCmdInternal(
+                getActivityComponentName(activityName), displayId, keyValuePair);
+    }
+
+    private static String getAmStartCmdInternal(final String activityName, final int displayId,
+            final String... keyValuePairs) {
+        return appendKeyValuePairs(
+                new StringBuilder("am start -n ")
+                        .append(activityName)
+                        .append(" -f 0x")
+                        .append(toHexString(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK))
+                        .append(" --display ")
+                        .append(displayId),
+                keyValuePairs);
     }
 
     protected static String getAmStartCmdInNewTask(final String activityName) {
@@ -215,7 +235,7 @@ public abstract class ActivityManagerTestBase {
         return "am broadcast -a trigger_broadcast --ei orientation " + orientation;
     }
 
-    // TODO: Remove this when all activity name are specified by {@link ComponentName}.
+    // TODO(b/73349193): Remove this when all activity name are specified by {@link ComponentName}.
     static String getActivityComponentName(final String activityName) {
         return getActivityComponentName(componentName, activityName);
     }
@@ -229,7 +249,7 @@ public abstract class ActivityManagerTestBase {
                 activityName;
     }
 
-    // TODO: Remove this when all activity name are specified by {@link ComponentName}.
+    // TODO(b/73349193): Remove this when all activity name are specified by {@link ComponentName}.
     // A little ugly, but lets avoid having to strip static everywhere for
     // now.
     public static void setComponentName(String name) {
@@ -244,11 +264,12 @@ public abstract class ActivityManagerTestBase {
         return packageName + "/" + (prependPackageName ? packageName + "." : "");
     }
 
-    // TODO: Remove this when all activity name are specified by {@link ComponentName}.
+    // TODO(b/73349193): Remove this when all activity name are specified by {@link ComponentName}.
     static String getActivityWindowName(final String activityName) {
         return getActivityWindowName(componentName, activityName);
     }
 
+    // TODO(b/73349193): Remove this when all activity name are specified by {@link ComponentName}.
     static String getActivityWindowName(final String packageName, final String activityName) {
         return getBaseWindowName(packageName, !isFullyQualifiedActivityName(activityName))
                 + activityName;
@@ -343,6 +364,7 @@ public abstract class ActivityManagerTestBase {
         return InstrumentationRegistry.getInstrumentation().getUiAutomation().takeScreenshot();
     }
 
+    /** TODO(b/73349193): Remove this method. */
     @Deprecated
     protected void launchActivityInComponent(final String componentName,
             final String targetActivityName, final String... keyValuePairs) throws Exception {
@@ -358,6 +380,7 @@ public abstract class ActivityManagerTestBase {
         mAmWmState.waitForValidState(new WaitForValidActivityState(activityName));
     }
 
+    /** TODO(b/73349193): Use {@link #launchActivity(ComponentName, String...)} instead. */
     @Deprecated
     protected void launchActivity(final String targetActivityName, final String... keyValuePairs)
             throws Exception {
@@ -370,6 +393,7 @@ public abstract class ActivityManagerTestBase {
         executeShellCommand(getAmStartCmd(targetActivityName, keyValuePairs));
     }
 
+    /** TODO(b/73349193): Use {@link #launchActivity(ComponentName, String...)} instead. */
     @Deprecated
     protected void launchActivityNoWait(final String targetActivityName,
             final String... keyValuePairs) throws Exception {
@@ -407,7 +431,7 @@ public abstract class ActivityManagerTestBase {
 
     /** Returns the set of stack ids. */
     private HashSet<Integer> getStackIds() throws Exception {
-        mAmWmState.computeState();
+        mAmWmState.computeState(true);
         final List<ActivityManagerState.ActivityStack> stacks = mAmWmState.getAmState().getStacks();
         final HashSet<Integer> stackIds = new HashSet<>();
         for (ActivityManagerState.ActivityStack s : stacks) {
@@ -431,6 +455,15 @@ public abstract class ActivityManagerTestBase {
                 .build());
     }
 
+    protected void launchActivityOnDisplay(ComponentName targetActivityName, int displayId,
+            String... keyValuePairs) throws Exception {
+        executeShellCommand(getAmStartCmd(targetActivityName, displayId, keyValuePairs));
+
+        mAmWmState.waitForValidState(new WaitForValidActivityState(targetActivityName));
+    }
+
+    /** TODO(b/73349193): Use {@link #launchActivityOnDisplay(ComponentName, int, String...)} */
+    @Deprecated
     protected void launchActivityOnDisplay(String targetActivityName, int displayId,
             String... keyValuePairs) throws Exception {
         executeShellCommand(getAmStartCmd(targetActivityName, displayId, keyValuePairs));
@@ -458,7 +491,11 @@ public abstract class ActivityManagerTestBase {
         mAmWmState.waitForRecentsActivityVisible();
     }
 
-    /** @see #launchActivitiesInSplitScreen(LaunchActivityBuilder, LaunchActivityBuilder) */
+    /**
+     * TODO(b/73349193): Use
+     * {@link #launchActivitiesInSplitScreen(LaunchActivityBuilder, LaunchActivityBuilder)
+     */
+    @Deprecated
     protected void launchActivitiesInSplitScreen(String primaryActivity, String secondaryActivity)
             throws Exception {
         launchActivitiesInSplitScreen(
@@ -509,9 +546,13 @@ public abstract class ActivityManagerTestBase {
             final int windowingMode) throws Exception {
         final int taskId = getActivityTaskId(activityName);
         mAm.setTaskWindowingMode(taskId, windowingMode, true /* toTop */);
-        mAmWmState.waitForValidState(activityName, windowingMode, ACTIVITY_TYPE_STANDARD);
+        mAmWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
+                .setActivityType(ACTIVITY_TYPE_STANDARD)
+                .setWindowingMode(windowingMode)
+                .build());
     }
 
+    /** TODO(b/73349193): Use {@link #setActivityTaskWindowingMode(ComponentName, int)} instead. */
     @Deprecated
     protected void setActivityTaskWindowingMode(String activityName, int windowingMode)
             throws Exception {
@@ -613,6 +654,7 @@ public abstract class ActivityManagerTestBase {
         return getWindowTaskId(getWindowName(activityName));
     }
 
+    /** TODO(b/73349193): Use {@link #getActivityTaskId(ComponentName)} instead. */
     @Deprecated
     protected int getActivityTaskId(final String activityName) {
         return getWindowTaskId(getActivityWindowName(activityName));
@@ -729,31 +771,45 @@ public abstract class ActivityManagerTestBase {
         return false;
     }
 
-    protected void disableDozeStates() {
-        mIsDozeAlwaysOn = executeShellCommand("settings get secure doze_always_on").trim();
-        mIsDozeEnabled = executeShellCommand("settings get secure doze_enabled").trim();
-        mIsDozePulseOnPickUp = executeShellCommand(
-                "settings get secure doze_pulse_on_pick_up").trim();
-        mIsDozePulseOnLongPress = executeShellCommand(
-                "settings get secure doze_pulse_on_long_press").trim();
-        mIsDozePulseOnDoubleTap = executeShellCommand(
-                "settings get secure doze_pulse_on_double_tap").trim();
+    /**
+     * Test @Rule class that disables screen doze settings before each test method running and
+     * restoring to initial values after test method finished.
+     */
+    protected static class DisableScreenDozeRule implements TestRule {
 
-        executeShellCommand("settings put secure doze_always_on 0");
-        executeShellCommand("settings put secure doze_enabled 0");
-        executeShellCommand("settings put secure doze_pulse_on_pick_up 0");
-        executeShellCommand("settings put secure doze_pulse_on_long_press 0");
-        executeShellCommand("settings put secure doze_pulse_on_double_tap 0");
-    }
+        /** Copied from android.provider.Settings.Secure since these keys are hiden. */
+        private static final String[] DOZE_SETTINGS = {
+                "doze_enabled",
+                "doze_always_on",
+                "doze_pulse_on_pick_up",
+                "doze_pulse_on_long_press",
+                "doze_pulse_on_double_tap"
+        };
 
-    protected void resetDozeStates() {
-        executeShellCommand("settings put secure doze_always_on " + mIsDozeAlwaysOn);
-        executeShellCommand("settings put secure doze_enabled " + mIsDozeEnabled);
-        executeShellCommand("settings put secure doze_pulse_on_pick_up " + mIsDozePulseOnPickUp);
-        executeShellCommand(
-                "settings put secure doze_pulse_on_long_press " + mIsDozePulseOnLongPress);
-        executeShellCommand(
-                "settings put secure doze_pulse_on_double_tap " + mIsDozePulseOnDoubleTap);
+        private String get(String key) {
+            return executeShellCommand("settings get secure " + key).trim();
+        }
+
+        private void put(String key, String value) {
+            executeShellCommand("settings put secure " + key + " " + value);
+        }
+
+        @Override
+        public Statement apply(final Statement base, final Description description) {
+            return new Statement() {
+                @Override
+                public void evaluate() throws Throwable {
+                    final Map<String, String> initialValues = new HashMap<>();
+                    Arrays.stream(DOZE_SETTINGS).forEach(k -> initialValues.put(k, get(k)));
+                    try {
+                        Arrays.stream(DOZE_SETTINGS).forEach(k -> put(k, "0"));
+                        base.evaluate();
+                    } finally {
+                        Arrays.stream(DOZE_SETTINGS).forEach(k -> put(k, initialValues.get(k)));
+                    }
+                }
+            };
+        }
     }
 
     protected class LockScreenSession implements AutoCloseable {
@@ -1504,16 +1560,20 @@ public abstract class ActivityManagerTestBase {
         public LaunchActivityBuilder setTargetActivity(ComponentName activity) {
             mComponent = activity;
 
-            mTargetActivityName = activity.getShortClassName();
+            mTargetActivityName = getSimpleClassName(activity);
             mTargetPackage = activity.getPackageName();
             return this;
         }
 
+        /** TODO(b/73349193): Use {@link #setTargetActivity(ComponentName)} instead. */
+        @Deprecated
         public LaunchActivityBuilder setTargetActivityName(String name) {
             mTargetActivityName = name;
             return this;
         }
 
+        /** TODO(b/73349193): Use {@link #setTargetActivity(ComponentName)} instead. */
+        @Deprecated
         public LaunchActivityBuilder setTargetPackage(String pkg) {
             mTargetPackage = pkg;
             return this;
@@ -1524,6 +1584,8 @@ public abstract class ActivityManagerTestBase {
             return this;
         }
 
+        /** TODO(b/73349193): Use {@link #setLaunchingActivity(ComponentName)} instead. */
+        @Deprecated
         public LaunchActivityBuilder setLaunchingActivityName(String name) {
             mLaunchingActivityName = name;
             return this;
