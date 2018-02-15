@@ -827,7 +827,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // Launch a PiP activity and ensure configuration change only happened once, and that the
         // configuration change happened after the picture-in-picture and multi-window callbacks
         launchActivity(PIP_ACTIVITY);
-        String logSeparator = clearLogcat();
+        LogSeparator logSeparator = clearLogcat();
         executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_ENTER_PIP);
         mAmWmState.waitForValidState(PIP_ACTIVITY, WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
         assertPinnedStackExists();
@@ -869,7 +869,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
             assertPinnedStackExists();
 
             // Relaunch the PiP activity back into fullscreen
-            String logSeparator = clearLogcat();
+            LogSeparator logSeparator = clearLogcat();
             launchActivity(PIP_ACTIVITY);
             // Wait until the PiP activity is reparented into the fullscreen stack (happens after
             // the transition has finished)
@@ -897,7 +897,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         assertPinnedStackExists();
 
         // Dismiss it
-        String logSeparator = clearLogcat();
+        LogSeparator logSeparator = clearLogcat();
         removeStacksInWindowingModes(WINDOWING_MODE_PINNED);
         mAmWmState.waitForValidState(
                 PIP_ACTIVITY, WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD);
@@ -1017,7 +1017,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
         // Finish the task overlay activity while animating and ensure that the PiP activity never
         // got resumed
-        String logSeparator = clearLogcat();
+        LogSeparator logSeparator = clearLogcat();
         executeShellCommand("am stack resize-animated 4 20 20 500 500");
         executeShellCommand("am broadcast -a " + TEST_ACTIVITY_ACTION_FINISH_SELF);
         mAmWmState.waitFor((amState, wmState) -> !amState.containsActivity(
@@ -1151,7 +1151,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     public void testDisplayMetricsPinUnpin() throws Exception {
         assumeTrue(supportsPip());
 
-        String logSeparator = clearLogcat();
+        LogSeparator logSeparator = clearLogcat();
         launchActivity(TEST_ACTIVITY);
         final int defaultWindowingMode = mAmWmState.getAmState()
                 .getTaskByActivityName(TEST_ACTIVITY).getWindowingMode();
@@ -1278,8 +1278,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
             "(.+)mAppBounds=Rect\\((\\d+), (\\d+) - (\\d+), (\\d+)\\)(.*)");
 
     /** Read app bounds in last applied configuration from logs. */
-    private Rect readAppBounds(String activityName, String logSeparator) throws Exception {
-        final String[] lines = getDeviceLogsForComponent(activityName, logSeparator);
+    private Rect readAppBounds(String activityName, LogSeparator logSeparator) throws Exception {
+        final String[] lines = getDeviceLogsForComponents(logSeparator, activityName);
         for (int i = lines.length - 1; i >= 0; i--) {
             final String line = lines[i].trim();
             final Matcher matcher = sAppBoundsPattern.matcher(line);
@@ -1374,8 +1374,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
      * Asserts that the activity received exactly one of each of the callbacks when entering and
      * exiting picture-in-picture.
      */
-    private void assertValidPictureInPictureCallbackOrder(String activityName, String logSeparator)
-            throws Exception {
+    private void assertValidPictureInPictureCallbackOrder(
+            String activityName, LogSeparator logSeparator) throws Exception {
         final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(activityName,
                 logSeparator);
 
@@ -1403,8 +1403,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     /**
      * Waits until the expected picture-in-picture callbacks have been made.
      */
-    private void waitForValidPictureInPictureCallbacks(String activityName, String logSeparator)
-            throws Exception {
+    private void waitForValidPictureInPictureCallbacks(
+            String activityName, LogSeparator logSeparator) throws Exception {
         mAmWmState.waitFor((amState, wmState) -> {
             try {
                 final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(

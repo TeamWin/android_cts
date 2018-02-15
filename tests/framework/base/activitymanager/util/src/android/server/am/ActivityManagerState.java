@@ -467,14 +467,17 @@ class ActivityManagerState {
                 : null;
     }
 
+    int getStackIdByActivity(ComponentName activityName) {
+        return getStackIdByActivityInternal(getTaskByActivity(activityName));
+    }
+
+    @Deprecated
     int getStackIdByActivityName(String activityName) {
-        final ActivityTask task = getTaskByActivityName(activityName);
+        return getStackIdByActivityInternal(getTaskByActivityName(activityName));
+    }
 
-        if (task == null) {
-            return INVALID_STACK_ID;
-        }
-
-        return task.mStackId;
+    private int getStackIdByActivityInternal(ActivityTask task) {
+        return  (task == null) ? INVALID_STACK_ID : task.mStackId;
     }
 
     ActivityTask getTaskByActivity(ComponentName activityName) {

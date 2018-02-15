@@ -74,7 +74,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     public void testConfigurationUpdatesWhenResizedFromFullscreen() throws Exception {
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
-        String logSeparator = clearLogcat();
+        LogSeparator logSeparator = clearLogcat();
         launchActivity(RESIZEABLE_ACTIVITY_NAME, WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
         final ReportedSizes fullscreenSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
                 logSeparator);
@@ -97,7 +97,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     public void testConfigurationUpdatesWhenResizedFromDockedStack() throws Exception {
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
-        String logSeparator = clearLogcat();
+        LogSeparator logSeparator = clearLogcat();
         launchActivity(RESIZEABLE_ACTIVITY_NAME, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
         final ReportedSizes dockedSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
                 logSeparator);
@@ -120,7 +120,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         try (final RotationSession rotationSession = new RotationSession()) {
             rotationSession.set(ROTATION_0);
 
-            final String logSeparator = clearLogcat();
+            final LogSeparator logSeparator = clearLogcat();
             launchActivity(RESIZEABLE_ACTIVITY_NAME,
                     WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
             final ReportedSizes initialSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
@@ -142,7 +142,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         try (final RotationSession rotationSession = new RotationSession()) {
             rotationSession.set(ROTATION_0);
 
-            final String logSeparator = clearLogcat();
+            final LogSeparator logSeparator = clearLogcat();
             // Launch our own activity to side in case Recents (or other activity to side) doesn't
             // support rotation.
             launchActivitiesInSplitScreen(LAUNCHING_ACTIVITY, TEST_ACTIVITY_NAME);
@@ -167,7 +167,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         try (final RotationSession rotationSession = new RotationSession()) {
             rotationSession.set(ROTATION_0);
 
-            final String logSeparator = clearLogcat();
+            final LogSeparator logSeparator = clearLogcat();
             launchActivitiesInSplitScreen(LAUNCHING_ACTIVITY, RESIZEABLE_ACTIVITY_NAME);
             final ReportedSizes initialSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
                     logSeparator);
@@ -180,7 +180,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
             throws Exception {
         final int[] rotations = { ROTATION_270, ROTATION_180, ROTATION_90, ROTATION_0 };
         for (final int rotation : rotations) {
-            final String logSeparator = clearLogcat();
+            final LogSeparator logSeparator = clearLogcat();
             final int actualStackId = mAmWmState.getAmState().getTaskByActivityName(
                     RESIZEABLE_ACTIVITY_NAME).mStackId;
             final int displayId = mAmWmState.getAmState().getStackById(actualStackId).mDisplayId;
@@ -231,7 +231,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
         // Launch to fullscreen stack and record size.
-        String logSeparator = clearLogcat();
+        LogSeparator logSeparator = clearLogcat();
         launchActivity(activityName, WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
         final ReportedSizes initialFullscreenSizes = getActivityDisplaySize(activityName,
                 logSeparator);
@@ -312,7 +312,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     @Test
     @FlakyTest(bugId = 71875755)
     public void testFullscreenAppOrientationRequests() throws Exception {
-        String logSeparator = clearLogcat();
+        LogSeparator logSeparator = clearLogcat();
         launchActivity(PORTRAIT_ACTIVITY_NAME);
         mAmWmState.assertVisibility(PORTRAIT_ACTIVITY_NAME, true /* visible */);
         ReportedSizes reportedSizes =
@@ -340,7 +340,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
 
     @Test
     public void testNonfullscreenAppOrientationRequests() throws Exception {
-        String logSeparator = clearLogcat();
+        LogSeparator logSeparator = clearLogcat();
         launchActivity(PORTRAIT_ACTIVITY_NAME);
         final ReportedSizes initialReportedSizes =
                 getLastReportedSizesForActivity(PORTRAIT_ACTIVITY_NAME, logSeparator);
@@ -507,7 +507,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
         // Launch to docked stack and record size.
-        String logSeparator = clearLogcat();
+        LogSeparator logSeparator = clearLogcat();
         launchActivityInSplitScreenWithRecents(activityName);
         final ReportedSizes initialDockedSizes = getActivityDisplaySize(activityName, logSeparator);
         // Make sure docked stack is focused. This way when we dismiss it later fullscreen stack
@@ -587,7 +587,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         assertEquals(firstSize.smallestWidthDp, secondSize.smallestWidthDp);
     }
 
-    private ReportedSizes getActivityDisplaySize(String activityName, String logSeparator)
+    private ReportedSizes getActivityDisplaySize(String activityName, LogSeparator logSeparator)
             throws Exception {
         mAmWmState.computeState(false /* compareTaskAndStackBounds */,
                 new WaitForValidActivityState.Builder(activityName).build());

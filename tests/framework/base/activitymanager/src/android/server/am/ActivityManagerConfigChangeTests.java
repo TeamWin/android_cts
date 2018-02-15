@@ -110,7 +110,7 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
             }
 
             for (int rotation = 0; rotation < 4; rotation += rotationStep) {
-                final String logSeparator = clearLogcat();
+                final LogSeparator logSeparator = clearLogcat();
                 rotationSession.set(rotation);
                 mAmWmState.computeState(waitForActivitiesVisible);
                 assertRelaunchOrConfigChanged(activityName, numRelaunch, numConfigChange,
@@ -132,7 +132,7 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
             String activityName, boolean relaunch) throws Exception {
         try (final FontScaleSession fontScaleSession = new FontScaleSession()) {
             fontScaleSession.set(1.0f);
-            String logSeparator = clearLogcat();
+            LogSeparator logSeparator = clearLogcat();
             launchActivity(activityName);
             final String[] waitForActivitiesVisible = new String[]{activityName};
             mAmWmState.computeState(waitForActivitiesVisible);
@@ -161,13 +161,13 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
      */
     @Test
     public void testUpdateApplicationInfo() throws Exception {
-        final String firstLogSeparator = clearLogcat();
+        final LogSeparator firstLogSeparator = clearLogcat();
 
         // Launch an activity that prints applied config.
         launchActivity(TEST_ACTIVITY_NAME);
         final int assetSeq = readAssetSeqNumber(TEST_ACTIVITY_NAME, firstLogSeparator);
 
-        final String logSeparator = clearLogcat();
+        final LogSeparator logSeparator = clearLogcat();
         // Update package info.
         executeShellCommand("am update-appinfo all " + componentName);
         mAmWmState.waitForWithAmState((amState) -> {
@@ -192,8 +192,9 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
             "(.+): Configuration: \\{(.*) as.(\\d+)(.*)\\}");
 
     /** Read asset sequence number in last applied configuration from logs. */
-    private int readAssetSeqNumber(String activityName, String logSeparator) throws Exception {
-        final String[] lines = getDeviceLogsForComponent(activityName, logSeparator);
+    private int readAssetSeqNumber(String activityName, LogSeparator logSeparator)
+            throws Exception {
+        final String[] lines = getDeviceLogsForComponents(logSeparator, activityName);
         for (int i = lines.length - 1; i >= 0; i--) {
             final String line = lines[i].trim();
             final Matcher matcher = sConfigurationPattern.matcher(line);
@@ -218,8 +219,9 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
 
     private static Pattern sDeviceDensityPattern = Pattern.compile("^(.+): fontActivityDpi=(.+)$");
 
-    private int getActivityDensityDpi(String activityName, String logSeparator) throws Exception {
-        final String[] lines = getDeviceLogsForComponent(activityName, logSeparator);
+    private int getActivityDensityDpi(String activityName, LogSeparator logSeparator)
+            throws Exception {
+        final String[] lines = getDeviceLogsForComponents(logSeparator, activityName);
         for (int i = lines.length - 1; i >= 0; i--) {
             final String line = lines[i].trim();
             final Matcher matcher = sDeviceDensityPattern.matcher(line);
@@ -235,8 +237,8 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
 
     /** Read the font size in the last log line. */
     private void assertExpectedFontPixelSize(String activityName, int fontPixelSize,
-            String logSeparator) throws Exception {
-        final String[] lines = getDeviceLogsForComponent(activityName, logSeparator);
+            LogSeparator logSeparator) throws Exception {
+        final String[] lines = getDeviceLogsForComponents(logSeparator, activityName);
         for (int i = lines.length - 1; i >= 0; i--) {
             final String line = lines[i].trim();
             final Matcher matcher = sFontSizePattern.matcher(line);
