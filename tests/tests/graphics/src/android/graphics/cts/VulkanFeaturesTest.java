@@ -221,17 +221,14 @@ public class VulkanFeaturesTest {
     }
 
     private int determineHardwareCompute(JSONObject device) throws JSONException {
-        boolean have16bitStorage = false;
         boolean haveVariablePointers = false;
         JSONArray extensions = device.getJSONArray("extensions");
         for (int i = 0; i < extensions.length(); i++) {
             String name = extensions.getJSONObject(i).getString("extensionName");
-            if (name.equals("VK_KHR_16bit_storage"))
-                have16bitStorage = true;
-            else if (name.equals("VK_KHR_variable_pointers"))
+            if (name.equals("VK_KHR_variable_pointers"))
                 haveVariablePointers = true;
         }
-        if (!have16bitStorage || !haveVariablePointers) {
+        if (!haveVariablePointers) {
             return -1;
         }
         return 0;
