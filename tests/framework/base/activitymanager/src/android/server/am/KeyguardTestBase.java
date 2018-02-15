@@ -20,10 +20,20 @@ import static android.server.am.StateLogger.log;
 
 import static org.junit.Assert.fail;
 
+import android.app.KeyguardManager;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class KeyguardTestBase extends ActivityManagerTestBase {
+
+    protected KeyguardManager mKeyguardManager;
+
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
+        mKeyguardManager = mContext.getSystemService(KeyguardManager.class);
+    }
 
     protected void assertOnDismissSucceededInLogcat(LogSeparator logSeparator) throws Exception {
         assertInLogcat("KeyguardDismissLoggerCallback", "onDismissSucceeded", logSeparator);

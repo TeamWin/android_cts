@@ -22,6 +22,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
+import android.app.KeyguardManager;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -41,7 +43,6 @@ public class KeyguardLockedTests extends KeyguardTestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-
         assumeTrue(isHandheld());
     }
 
@@ -50,12 +51,18 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.setLockCredential()
                     .gotoKeyguard();
+            assertTrue(mKeyguardManager.isKeyguardLocked());
+            assertTrue(mKeyguardManager.isDeviceLocked());
+            assertTrue(mKeyguardManager.isDeviceSecure());
+            assertTrue(mKeyguardManager.isKeyguardSecure());
             mAmWmState.waitForKeyguardShowingAndNotOccluded();
             mAmWmState.assertKeyguardShowingAndNotOccluded();
             lockScreenSession.unlockDevice()
                     .enterAndConfirmLockCredential();
             mAmWmState.waitForKeyguardGone();
             mAmWmState.assertKeyguardGone();
+            assertFalse(mKeyguardManager.isDeviceLocked());
+            assertFalse(mKeyguardManager.isKeyguardLocked());
         }
     }
 
