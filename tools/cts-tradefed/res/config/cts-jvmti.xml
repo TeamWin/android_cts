@@ -56,6 +56,7 @@
     <option name="compatibility:include-filter" value="CtsJvmtiRunTest947HostTestCases" />
     <option name="compatibility:include-filter" value="CtsJvmtiRunTest951HostTestCases" />
     <option name="compatibility:include-filter" value="CtsJvmtiRunTest982HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest983HostTestCases" />
     <option name="compatibility:include-filter" value="CtsJvmtiRunTest984HostTestCases" />
     <option name="compatibility:include-filter" value="CtsJvmtiRunTest985HostTestCases" />
     <option name="compatibility:include-filter" value="CtsJvmtiRunTest986HostTestCases" />
