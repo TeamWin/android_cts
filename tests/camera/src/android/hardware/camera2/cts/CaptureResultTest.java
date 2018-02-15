@@ -545,9 +545,7 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
 
         if (!mStaticInfo.isOisDataModeSupported()) {
             waiverKeys.add(CaptureResult.STATISTICS_OIS_DATA_MODE);
-            waiverKeys.add(CaptureResult.STATISTICS_OIS_TIMESTAMPS);
-            waiverKeys.add(CaptureResult.STATISTICS_OIS_X_SHIFTS);
-            waiverKeys.add(CaptureResult.STATISTICS_OIS_Y_SHIFTS);
+            waiverKeys.add(CaptureResult.STATISTICS_OIS_SAMPLES);
         }
 
         if (mStaticInfo.isHardwareLevelAtLeastFull()) {
@@ -830,9 +828,7 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
         resultKeys.add(CaptureResult.STATISTICS_HOT_PIXEL_MAP);
         resultKeys.add(CaptureResult.STATISTICS_LENS_SHADING_MAP_MODE);
         resultKeys.add(CaptureResult.STATISTICS_OIS_DATA_MODE);
-        resultKeys.add(CaptureResult.STATISTICS_OIS_TIMESTAMPS);
-        resultKeys.add(CaptureResult.STATISTICS_OIS_X_SHIFTS);
-        resultKeys.add(CaptureResult.STATISTICS_OIS_Y_SHIFTS);
+        resultKeys.add(CaptureResult.STATISTICS_OIS_SAMPLES);
         resultKeys.add(CaptureResult.TONEMAP_CURVE);
         resultKeys.add(CaptureResult.TONEMAP_MODE);
         resultKeys.add(CaptureResult.TONEMAP_GAMMA);

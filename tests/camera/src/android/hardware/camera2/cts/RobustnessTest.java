@@ -33,6 +33,7 @@ import android.hardware.camera2.CaptureFailure;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
 import android.hardware.camera2.params.InputConfiguration;
+import android.hardware.camera2.params.OisSample;
 import android.hardware.camera2.params.OutputConfiguration;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.CamcorderProfile;
@@ -1051,33 +1052,21 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                         TotalCaptureResult result =
                             previewListener.getTotalCaptureResult(CAPTURE_TIMEOUT);
 
-                        long[] oisTimestamps = result.get(CaptureResult.STATISTICS_OIS_TIMESTAMPS);
-                        float[] oisXShifts = result.get(CaptureResult.STATISTICS_OIS_X_SHIFTS);
-                        float[] oisYShifts = result.get(CaptureResult.STATISTICS_OIS_Y_SHIFTS);
+                        OisSample[] oisSamples = result.get(CaptureResult.STATISTICS_OIS_SAMPLES);
 
                         if (oisMode == CameraCharacteristics.STATISTICS_OIS_DATA_MODE_OFF) {
                             mCollector.expectKeyValueEquals(result,
                                     CaptureResult.STATISTICS_OIS_DATA_MODE,
                                     CaptureResult.STATISTICS_OIS_DATA_MODE_OFF);
-                            mCollector.expectTrue("OIS timestamps reported in OIS_DATA_MODE_OFF",
-                                    oisTimestamps == null || oisTimestamps.length == 0);
-                            mCollector.expectTrue("OIS x shifts reported in OIS_DATA_MODE_OFF",
-                                    oisXShifts == null || oisXShifts.length == 0);
-                            mCollector.expectTrue("OIS y shifts reported in OIS_DATA_MODE_OFF",
-                                    oisYShifts == null || oisYShifts.length == 0);
+                            mCollector.expectTrue("OIS samples reported in OIS_DATA_MODE_OFF",
+                                    oisSamples == null || oisSamples.length == 0);
 
                         } else if (oisMode == CameraCharacteristics.STATISTICS_OIS_DATA_MODE_ON) {
                             mCollector.expectKeyValueEquals(result,
                                     CaptureResult.STATISTICS_OIS_DATA_MODE,
                                     CaptureResult.STATISTICS_OIS_DATA_MODE_ON);
-                            mCollector.expectTrue("OIS timestamps not reported in OIS_DATA_MODE_ON",
-                                    oisTimestamps != null && oisTimestamps.length != 0);
-                            mCollector.expectTrue(
-                                    "Number of x shifts doesn't match number of OIS timetamps.",
-                                    oisXShifts != null && oisXShifts.length == oisTimestamps.length);
-                            mCollector.expectTrue(
-                                    "Number of y shifts doesn't match number of OIS timetamps.",
-                                    oisYShifts != null && oisYShifts.length == oisTimestamps.length);
+                            mCollector.expectTrue("OIS samples not reported in OIS_DATA_MODE_ON",
+                                    oisSamples != null && oisSamples.length != 0);
                         } else {
                             mCollector.addMessage(String.format("Invalid OIS mode: %d", oisMode));
                         }
