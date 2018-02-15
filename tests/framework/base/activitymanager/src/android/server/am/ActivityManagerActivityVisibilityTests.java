@@ -331,7 +331,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.disableLockScreen()
                     .sleepDevice();
-            final String logSeparator = clearLogcat();
+            final LogSeparator logSeparator = clearLogcat();
             launchActivity(TURN_SCREEN_ON_ATTR_ACTIVITY_NAME);
             mAmWmState.computeState(TURN_SCREEN_ON_ATTR_ACTIVITY_NAME);
             mAmWmState.assertVisibility(TURN_SCREEN_ON_ATTR_ACTIVITY_NAME, true);
@@ -347,7 +347,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.setLockCredential()
                     .sleepDevice();
-            final String logSeparator = clearLogcat();
+            final LogSeparator logSeparator = clearLogcat();
             launchActivity(TURN_SCREEN_ON_ATTR_ACTIVITY_NAME);
             mAmWmState.computeState(TURN_SCREEN_ON_ATTR_ACTIVITY_NAME);
             assertFalse(isDisplayOn());
@@ -360,7 +360,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.sleepDevice();
             mAmWmState.waitForAllStoppedActivities();
-            final String logSeparator = clearLogcat();
+            final LogSeparator logSeparator = clearLogcat();
             launchActivity(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY_NAME);
             mAmWmState.computeState(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY_NAME);
             mAmWmState.assertVisibility(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY_NAME, true);
@@ -374,7 +374,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.sleepDevice();
             mAmWmState.waitForAllStoppedActivities();
-            String logSeparator = clearLogcat();
+            LogSeparator logSeparator = clearLogcat();
             launchActivity(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY_NAME);
             mAmWmState.computeState(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY_NAME);
             assertTrue(isDisplayOn());
@@ -394,7 +394,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     public void testTurnScreenOnSingleTask() throws Exception {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.sleepDevice();
-            String logSeparator = clearLogcat();
+            LogSeparator logSeparator = clearLogcat();
             launchActivity(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME);
             mAmWmState.computeState(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME);
             mAmWmState.assertVisibility(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY_NAME, true);
@@ -419,7 +419,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
             mAmWmState.computeState(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY);
             mAmWmState.assertVisibility(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY, true);
 
-            String logSeparator = clearLogcat();
+            LogSeparator logSeparator = clearLogcat();
             lockScreenSession.sleepDevice();
             mAmWmState.waitFor("Waiting for stopped state", () ->
                     lifecycleStopOccurred(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY, logSeparator));
@@ -430,7 +430,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         }
     }
 
-    private boolean lifecycleStopOccurred(String activityName, String logSeparator) {
+    private boolean lifecycleStopOccurred(String activityName, LogSeparator logSeparator) {
         ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(activityName,
                 logSeparator);
         return lifecycleCounts.mStopCount > 0;

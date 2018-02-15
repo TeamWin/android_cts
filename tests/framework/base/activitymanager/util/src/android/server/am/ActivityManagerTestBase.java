@@ -83,7 +83,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
-import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -974,16 +973,57 @@ public abstract class ActivityManagerTestBase {
         return output;
     }
 
+    protected static class LogSeparator {
+        private final String mUniqueString;
+
+        private LogSeparator() {
+            mUniqueString = UUID.randomUUID().toString();
+        }
+
+        @Override
+        public String toString() {
+            return mUniqueString;
+        }
+    }
+
     /**
      * Tries to clear logcat and inserts log separator in case clearing didn't succeed, so we can
      * always find the starting point from where to evaluate following logs.
      * @return Unique log separator.
      */
-    protected String clearLogcat() {
+    protected LogSeparator clearLogcat() {
         executeShellCommand("logcat -c");
-        final String uniqueString = UUID.randomUUID().toString();
-        executeShellCommand("log -t " + LOG_SEPARATOR + " " + uniqueString);
-        return uniqueString;
+        final LogSeparator logSeparator = new LogSeparator();
+        executeShellCommand("log -t " + LOG_SEPARATOR + " " + logSeparator);
+        return logSeparator;
+    }
+
+    protected static String[] getDeviceLogsForComponents(
+            LogSeparator logSeparator, String... logTags) {
+        String filters = LOG_SEPARATOR + ":I ";
+        for (String component : logTags) {
+            filters += component + ":I ";
+        }
+        final String[] result = executeShellCommand("logcat -v brief -d " + filters + " *:S")
+                .split("\\n");
+        if (logSeparator == null) {
+            return result;
+        }
+
+        // Make sure that we only check logs after the separator.
+        int i = 0;
+        boolean lookingForSeparator = true;
+        while (i < result.length && lookingForSeparator) {
+            if (result[i].contains(logSeparator.toString())) {
+                lookingForSeparator = false;
+            }
+            i++;
+        }
+        final String[] filteredResult = new String[result.length - i];
+        for (int curPos = 0; i < result.length; curPos++, i++) {
+            filteredResult[curPos] = result[i];
+        }
+        return filteredResult;
     }
 
     /**
@@ -1026,7 +1066,7 @@ public abstract class ActivityManagerTestBase {
 
     private static class ActivityLifecycleCountsValidator extends RetryValidator {
         private final String mActivityName;
-        private final String mLogSeparator;
+        private final LogSeparator mLogSeparator;
         private final int mCreateCount;
         private final int mStartCount;
         private final int mResumeCount;
@@ -1034,7 +1074,7 @@ public abstract class ActivityManagerTestBase {
         private final int mStopCount;
         private final int mDestroyCount;
 
-        ActivityLifecycleCountsValidator(String activityName, String logSeparator,
+        ActivityLifecycleCountsValidator(String activityName, LogSeparator logSeparator,
                 int createCount, int startCount, int resumeCount, int pauseCount, int stopCount,
                 int destroyCount) {
             mActivityName = activityName;
@@ -1070,7 +1110,8 @@ public abstract class ActivityManagerTestBase {
         }
     }
 
-    void assertActivityLifecycle(String activityName, boolean relaunched, String logSeparator) {
+    void assertActivityLifecycle(
+            String activityName, boolean relaunched, LogSeparator logSeparator) {
         new RetryValidator() {
 
             @Nullable
@@ -1108,7 +1149,7 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected void assertRelaunchOrConfigChanged(String activityName, int numRelaunch,
-            int numConfigChange, String logSeparator) {
+            int numConfigChange, LogSeparator logSeparator) {
         new RetryValidator() {
 
             @Nullable
@@ -1132,7 +1173,7 @@ public abstract class ActivityManagerTestBase {
         }.assertValidator("***Waiting for relaunch or config changed");
     }
 
-    protected void assertActivityDestroyed(String activityName, String logSeparator) {
+    protected void assertActivityDestroyed(String activityName, LogSeparator logSeparator) {
         new RetryValidator() {
 
             @Nullable
@@ -1157,60 +1198,28 @@ public abstract class ActivityManagerTestBase {
         }.assertValidator("***Waiting for activity destroyed");
     }
 
-    protected static String[] getDeviceLogsForComponent(String logTag, String logSeparator) {
-        return getDeviceLogsForComponents(new String[]{logTag}, logSeparator);
-    }
-
-    protected static String[] getDeviceLogsForComponents(final String[] logTags,
-            String logSeparator) {
-        String filters = LOG_SEPARATOR + ":I ";
-        for (String component : logTags) {
-            filters += component + ":I ";
-        }
-        final String[] result = executeShellCommand("logcat -v brief -d " + filters + " *:S")
-                .split("\\n");
-        if (logSeparator == null) {
-            return result;
-        }
-
-        // Make sure that we only check logs after the separator.
-        int i = 0;
-        boolean lookingForSeparator = true;
-        while (i < result.length && lookingForSeparator) {
-            if (result[i].contains(logSeparator)) {
-                lookingForSeparator = false;
-            }
-            i++;
-        }
-        final String[] filteredResult = new String[result.length - i];
-        for (int curPos = 0; i < result.length; curPos++, i++) {
-            filteredResult[curPos] = result[i];
-        }
-        return filteredResult;
-    }
-
-    void assertSingleLaunch(String activityName, String logSeparator) {
+    void assertSingleLaunch(String activityName, LogSeparator logSeparator) {
         new ActivityLifecycleCountsValidator(activityName, logSeparator, 1 /* createCount */,
                 1 /* startCount */, 1 /* resumeCount */, 0 /* pauseCount */, 0 /* stopCount */,
                 0 /* destroyCount */)
                 .assertValidator("***Waiting for activity create, start, and resume");
     }
 
-    void assertSingleLaunchAndStop(String activityName, String logSeparator) {
+    void assertSingleLaunchAndStop(String activityName, LogSeparator logSeparator) {
         new ActivityLifecycleCountsValidator(activityName, logSeparator, 1 /* createCount */,
                 1 /* startCount */, 1 /* resumeCount */, 1 /* pauseCount */, 1 /* stopCount */,
                 0 /* destroyCount */)
                 .assertValidator("***Waiting for activity create, start, resume, pause, and stop");
     }
 
-    void assertSingleStartAndStop(String activityName, String logSeparator) {
+    void assertSingleStartAndStop(String activityName, LogSeparator logSeparator) {
         new ActivityLifecycleCountsValidator(activityName, logSeparator, 0 /* createCount */,
                 1 /* startCount */, 1 /* resumeCount */, 1 /* pauseCount */, 1 /* stopCount */,
                 0 /* destroyCount */)
                 .assertValidator("***Waiting for activity start, resume, pause, and stop");
     }
 
-    void assertSingleStart(String activityName, String logSeparator) {
+    void assertSingleStart(String activityName, LogSeparator logSeparator) {
         new ActivityLifecycleCountsValidator(activityName, logSeparator, 0 /* createCount */,
                 1 /* startCount */, 1 /* resumeCount */, 0 /* pauseCount */, 0 /* stopCount */,
                 0 /* destroyCount */)
@@ -1281,7 +1290,7 @@ public abstract class ActivityManagerTestBase {
         }
     }
 
-    ReportedSizes getLastReportedSizesForActivity(String activityName, String logSeparator) {
+    ReportedSizes getLastReportedSizesForActivity(String activityName, LogSeparator logSeparator) {
         int retriesLeft = 5;
         ReportedSizes result;
         do {
@@ -1301,8 +1310,8 @@ public abstract class ActivityManagerTestBase {
         return result;
     }
 
-    private ReportedSizes readLastReportedSizes(String activityName, String logSeparator) {
-        final String[] lines = getDeviceLogsForComponent(activityName, logSeparator);
+    private ReportedSizes readLastReportedSizes(String activityName, LogSeparator logSeparator) {
+        final String[] lines = getDeviceLogsForComponents(logSeparator, activityName);
         for (int i = lines.length - 1; i >= 0; i--) {
             final String line = lines[i].trim();
             final Matcher matcher = sNewConfigPattern.matcher(line);
@@ -1325,7 +1334,7 @@ public abstract class ActivityManagerTestBase {
 
     /** Waits for at least one onMultiWindowModeChanged event. */
     ActivityLifecycleCounts waitForOnMultiWindowModeChanged(
-            String activityName, String logSeparator) {
+            String activityName, LogSeparator logSeparator) {
         int retriesLeft = 5;
         ActivityLifecycleCounts result;
         do {
@@ -1365,10 +1374,10 @@ public abstract class ActivityManagerTestBase {
         int mLastStopLineIndex;
         int mDestroyCount;
 
-        ActivityLifecycleCounts(String activityName, String logSeparator) {
+        ActivityLifecycleCounts(String logTag, LogSeparator logSeparator) {
             int lineIndex = 0;
             waitForIdle();
-            for (String line : getDeviceLogsForComponent(activityName, logSeparator)) {
+            for (String line : getDeviceLogsForComponents(logSeparator, logTag)) {
                 line = line.trim();
                 lineIndex++;
 

@@ -18,8 +18,6 @@ package android.server.am;
 
 import static android.server.am.StateLogger.log;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.regex.Matcher;
@@ -27,24 +25,24 @@ import java.util.regex.Pattern;
 
 public class KeyguardTestBase extends ActivityManagerTestBase {
 
-    protected void assertOnDismissSucceededInLogcat(String logSeparator) throws Exception {
+    protected void assertOnDismissSucceededInLogcat(LogSeparator logSeparator) throws Exception {
         assertInLogcat("KeyguardDismissLoggerCallback", "onDismissSucceeded", logSeparator);
     }
 
-    protected void assertOnDismissCancelledInLogcat(String logSeparator) throws Exception {
+    protected void assertOnDismissCancelledInLogcat(LogSeparator logSeparator) throws Exception {
         assertInLogcat("KeyguardDismissLoggerCallback", "onDismissCancelled", logSeparator);
     }
 
-    protected void assertOnDismissErrorInLogcat(String logSeparator) throws Exception {
+    protected void assertOnDismissErrorInLogcat(LogSeparator logSeparator) throws Exception {
         assertInLogcat("KeyguardDismissLoggerCallback", "onDismissError", logSeparator);
     }
 
-    private void assertInLogcat(String activityName, String entry, String logSeparator)
+    private void assertInLogcat(String activityName, String entry, LogSeparator logSeparator)
             throws Exception {
         final Pattern pattern = Pattern.compile("(.+)" + entry);
         int tries = 0;
         while (tries < 5) {
-            final String[] lines = getDeviceLogsForComponent(activityName, logSeparator);
+            final String[] lines = getDeviceLogsForComponents(logSeparator, activityName);
             log("Looking at logcat");
             for (int i = lines.length - 1; i >= 0; i--) {
                 final String line = lines[i].trim();

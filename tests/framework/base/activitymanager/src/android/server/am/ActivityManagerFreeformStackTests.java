@@ -122,7 +122,7 @@ public class ActivityManagerFreeformStackTests extends ActivityManagerTestBase {
         mAmWmState.computeState(new WaitForValidActivityState.Builder(TEST_ACTIVITY).build(),
                 new WaitForValidActivityState.Builder(NO_RELAUNCH_ACTIVITY).build());
 
-        final String logSeparator = clearLogcat();
+        final LogSeparator logSeparator = clearLogcat();
         resizeActivityTask(TEST_ACTIVITY,
                 TEST_TASK_OFFSET, TEST_TASK_OFFSET, testTaskSize2, testTaskSize1);
         resizeActivityTask(NO_RELAUNCH_ACTIVITY,
