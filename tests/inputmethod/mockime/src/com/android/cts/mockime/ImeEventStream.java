@@ -11,7 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License
+ * limitations under the License.
  */
 
 package com.android.cts.mockime;
@@ -171,7 +171,7 @@ public final class ImeEventStream {
         return sb.toString();
     }
 
-    private static final void dumpBundle(@NonNull StringBuilder sb, @NonNull Bundle bundle) {
+    private static void dumpBundle(@NonNull StringBuilder sb, @NonNull Bundle bundle) {
         sb.append('{');
         boolean first = true;
         for (String key : bundle.keySet()) {
@@ -197,11 +197,11 @@ public final class ImeEventStream {
         sb.append('}');
     }
 
-    final static class ImeEventArray {
+    static class ImeEventArray {
         @NonNull
         public final ImeEvent[] mArray;
         public final int mLength;
-        public ImeEventArray(ImeEvent[] array, int length) {
+        ImeEventArray(ImeEvent[] array, int length) {
             mArray = array;
             mLength = length;
         }

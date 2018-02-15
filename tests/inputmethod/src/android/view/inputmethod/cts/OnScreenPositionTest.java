@@ -54,7 +54,7 @@ public class OnScreenPositionTest extends EndToEndImeTestBase {
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
     private static final long LAYOUT_STABLE_THRESHOLD = TimeUnit.SECONDS.toMillis(3);
 
-    private final static String TEST_MARKER = "android.view.inputmethod.cts.OnScreenPositionTest";
+    private static final String TEST_MARKER = "android.view.inputmethod.cts.OnScreenPositionTest";
 
     public EditText launchTestActivity() {
         final AtomicReference<EditText> editTextRef = new AtomicReference<>();
@@ -73,14 +73,14 @@ public class OnScreenPositionTest extends EndToEndImeTestBase {
         return editTextRef.get();
     }
 
+    private static final int EXPECTED_KEYBOARD_HEIGHT = 100;
+
     /**
      * Regression test for Bug 33308065.
      */
     @Test
     public void testImeIsNotBehindNavBar() throws Exception {
-        final int EXPECTED_KEYBOARD_HEIGHT = 100;
-
-        try(MockImeSession imeSession = MockImeSession.create(
+        try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getContext(),
                 InstrumentationRegistry.getInstrumentation().getUiAutomation(),
                 new ImeSettings.Builder()

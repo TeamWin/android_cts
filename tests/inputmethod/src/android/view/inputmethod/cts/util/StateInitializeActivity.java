@@ -11,7 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License
+ * limitations under the License.
  */
 
 package android.view.inputmethod.cts.util;
@@ -37,7 +37,7 @@ import android.view.ViewGroup;
  */
 public class StateInitializeActivity extends Activity {
     @Override
-    protected void onCreate(Bundle bundle){
+    protected void onCreate(Bundle bundle) {
         super.onCreate(bundle);
         final View view = new View(this);
         view.setBackgroundColor(Color.WHITE);

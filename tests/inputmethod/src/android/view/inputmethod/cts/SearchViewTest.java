@@ -73,7 +73,7 @@ public class SearchViewTest extends EndToEndImeTestBase {
 
     @Test
     public void testTapThenSetQuery() throws Exception {
-        try(MockImeSession imeSession = MockImeSession.create(
+        try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getContext(),
                 InstrumentationRegistry.getInstrumentation().getUiAutomation(),
                 new ImeSettings.Builder())) {

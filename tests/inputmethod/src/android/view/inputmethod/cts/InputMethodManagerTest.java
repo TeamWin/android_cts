@@ -124,9 +124,9 @@ public class InputMethodManagerTest {
         // Make sure that IMM#getEnabledInputMethodList() is a subset of IMM#getInputMethodList().
         // TODO: Consider moving this to hostside test to test more realistic and useful scenario.
         if (!imes.containsAll(enabledImes)) {
-            fail("Enabled IMEs must be a subset of all the IMEs.\n"  +
-                    "all=" + dumpInputMethodInfoList(imes) + "\n" +
-                    "enabled=" + dumpInputMethodInfoList(enabledImes));
+            fail("Enabled IMEs must be a subset of all the IMEs.\n"
+                    + "all=" + dumpInputMethodInfoList(imes) + "\n"
+                    + "enabled=" + dumpInputMethodInfoList(enabledImes));
         }
     }
 
@@ -156,7 +156,7 @@ public class InputMethodManagerTest {
             }
             sb.append("]");
             return sb.toString();
-        }).collect(Collectors.joining( ", " )) + "]";
+        }).collect(Collectors.joining(", ")) + "]";
     }
 
     @Test
