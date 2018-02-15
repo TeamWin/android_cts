@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
+import android.icu.text.SimpleDateFormat;
 import android.icu.util.Calendar;
 import android.service.autofill.DateValueSanitizer;
 import android.support.test.runner.AndroidJUnit4;
@@ -29,7 +30,6 @@ import android.view.autofill.AutofillValue;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 @RunWith(AndroidJUnit4.class)

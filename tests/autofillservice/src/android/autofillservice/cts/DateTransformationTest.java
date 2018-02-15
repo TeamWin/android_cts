@@ -24,6 +24,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertThrows;
 
+import android.icu.text.SimpleDateFormat;
 import android.icu.util.Calendar;
 import android.service.autofill.DateTransformation;
 import android.service.autofill.ValueFinder;
@@ -35,8 +36,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import java.text.SimpleDateFormat;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DateTransformationTest {
