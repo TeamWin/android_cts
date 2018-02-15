@@ -117,10 +117,8 @@ public class PermissionPolicyTest extends AndroidTestCase {
             }
 
             // OEMs cannot change permission protection flags
-            final int expectedProtectionFlags = expectedPermission.protectionLevel
-                    & PermissionInfo.PROTECTION_MASK_FLAGS;
-            final int declaredProtectionFlags = declaredPermission.protectionLevel
-                    & PermissionInfo.PROTECTION_MASK_FLAGS;
+            final int expectedProtectionFlags = expectedPermission.getProtectionFlags();
+            final int declaredProtectionFlags = declaredPermission.getProtectionFlags();
             if (expectedProtectionFlags != declaredProtectionFlags) {
                 offendingList.add(
                         String.format(
@@ -261,6 +259,9 @@ public class PermissionPolicyTest extends AndroidTestCase {
                 } break;
                 case "setup": {
                     protectionLevel |= PermissionInfo.PROTECTION_FLAG_SETUP;
+                } break;
+                case "textClassifier": {
+                    protectionLevel |= PermissionInfo.PROTECTION_FLAG_SYSTEM_TEXT_CLASSIFIER;
                 } break;
                 case "instant": {
                     protectionLevel |= PermissionInfo.PROTECTION_FLAG_INSTANT;
