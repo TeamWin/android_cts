@@ -18,6 +18,7 @@ package com.android.cts.mockime;
 
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 /**
  * An immutable object that stores several runtime state of {@link MockIme}.
@@ -55,8 +56,11 @@ public final class ImeState {
         return bundle;
     }
 
-    @NonNull
-    static ImeState fromBundle(@NonNull Bundle bundle) {
+    @Nullable
+    static ImeState fromBundle(@Nullable Bundle bundle) {
+        if (bundle == null) {
+            return null;
+        }
         final boolean hasInputBinding = bundle.getBoolean("mHasInputBinding");
         final boolean hasDummyInputConnection = bundle.getBoolean("mHasDummyInputConnection");
         return new ImeState(hasInputBinding, hasDummyInputConnection);

@@ -16,6 +16,7 @@
 
 package android.view.inputmethod.cts;
 
+import static com.android.cts.mockime.ImeEventStreamTestUtils.EventFilterMode.CHECK_EXIT_EVENT_ONLY;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectBindInput;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 
@@ -91,7 +92,8 @@ public class SearchViewTest extends EndToEndImeTestBase {
             // Wait until "showSoftInput" gets called with a real InputConnection
             expectEvent(stream, event ->
                     "showSoftInput".equals(event.getEventName())
-                            && !event.getExitState().hasDummyInputConnection(), TIMEOUT);
+                            && !event.getExitState().hasDummyInputConnection(),
+                    CHECK_EXIT_EVENT_ONLY, TIMEOUT);
 
             // Make sure that "setQuery" triggers "hideSoftInput" in the IME side.
             InstrumentationRegistry.getInstrumentation().runOnMainSync(
