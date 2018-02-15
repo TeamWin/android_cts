@@ -334,7 +334,7 @@ class ActivityManagerState {
         return containsActivity(getActivityName(activityName));
     }
 
-    /** TODO(b/73349193): Use {@link #containsActivity(ComponentName)} instaed. */
+    /** TODO(b/73349193): Use {@link #containsActivity(ComponentName)} instead. */
     @Deprecated
     boolean containsActivity(String fullActivityName) {
         for (ActivityStack stack : mStacks) {
@@ -364,6 +364,12 @@ class ActivityManagerState {
         return false;
     }
 
+    boolean isActivityVisible(ComponentName activityName) {
+        return isActivityVisible(getActivityName(activityName));
+    }
+
+    /** TODO(b/73349193): Use {@link #isActivityVisible(ComponentName)} instead. */
+    @Deprecated
     boolean isActivityVisible(String fullActivityName) {
         for (ActivityStack stack : mStacks) {
             for (ActivityTask task : stack.mTasks) {
@@ -414,11 +420,12 @@ class ActivityManagerState {
         return false;
     }
 
-    int getActivityProcId(String fullActivityName) {
+    int getActivityProcId(ComponentName activityName) {
+        final String fullName = getActivityName(activityName);
         for (ActivityStack stack : mStacks) {
             for (ActivityTask task : stack.mTasks) {
                 for (Activity activity : task.mActivities) {
-                    if (activity.name.equals(fullActivityName)) {
+                    if (activity.name.equals(fullName)) {
                         return activity.procId;
                     }
                 }
