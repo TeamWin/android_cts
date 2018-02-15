@@ -167,6 +167,26 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     }
 
     private void rotateAndCheckSizes(ReportedSizes prevSizes) throws Exception {
+        // If an activity gets almost square frame,
+        // resize docked stack to make sure the activity gets a non-square frame.
+        Rectangle adjustedDockedBounds = new Rectangle();
+        if (isInSplitMode(RESIZEABLE_ACTIVITY_NAME)) {
+            final int appWidth = prevSizes.displayWidth;
+            final int appHeight = prevSizes.displayHeight;
+            final float aspectRatio = (appWidth > appHeight) ?
+                    appWidth / (float) appHeight : appHeight / (float) appWidth;
+            if (aspectRatio < 1.1f) {
+                final String logSeparator = clearLogcat();
+                Rectangle dockBounds = mAmWmState.getAmState().getStackById(
+                        DOCKED_STACK_ID).getBounds();
+                adjustedDockedBounds.setBounds(dockBounds.x, dockBounds.y, dockBounds.width,
+                        (int) (dockBounds.height * 0.7f));
+                resizeDockedStack(adjustedDockedBounds.width, adjustedDockedBounds.height,
+                        adjustedDockedBounds.width, adjustedDockedBounds.height);
+                prevSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME, logSeparator);
+            }
+        }
+
         for (int rotation = 3; rotation >= 0; --rotation) {
             final String logSeparator = clearLogcat();
             final int actualStackId = mAmWmState.getAmState().getTaskByActivityName(
@@ -183,11 +203,32 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
                 return;
             }
 
+            if (!adjustedDockedBounds.isEmpty()) {
+                if (rotation == ROTATION_0 || rotation == ROTATION_180) {
+                    resizeDockedStack(adjustedDockedBounds.width, adjustedDockedBounds.height,
+                            adjustedDockedBounds.width, adjustedDockedBounds.height);
+                } else {
+                    resizeDockedStack(adjustedDockedBounds.height, adjustedDockedBounds.width,
+                            adjustedDockedBounds.height, adjustedDockedBounds.width);
+                }
+            }
+
             final ReportedSizes rotatedSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
                     logSeparator);
             assertSizesRotate(prevSizes, rotatedSizes);
             prevSizes = rotatedSizes;
         }
+    }
+
+    private boolean isInSplitMode(String activityName) throws Exception {
+        mAmWmState.computeState(mDevice, new String[] { activityName });
+        ActivityManagerState.ActivityTask task = mAmWmState.getAmState().getTaskByActivityName(
+                activityName);
+        return task != null && !task.isFullscreen() &&
+                (task.mStackId == HOME_STACK_ID
+                        || task.mStackId == FULLSCREEN_WORKSPACE_STACK_ID
+                        || task.mStackId == DOCKED_STACK_ID
+                        || task.mStackId == RECENTS_STACK_ID);
     }
 
     /**
