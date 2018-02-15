@@ -61,7 +61,7 @@ public class InputConnectionTest extends EndToEndImeTestBase {
     public void testReportLanguageHint() throws Exception {
         final String testMarker = "testReportLanguageHint-" + SystemClock.elapsedRealtimeNanos();
 
-        try(MockImeSession imeSession = MockImeSession.create(
+        try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getContext(),
                 InstrumentationRegistry.getInstrumentation().getUiAutomation(),
                 new ImeSettings.Builder())) {

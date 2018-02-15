@@ -43,7 +43,7 @@ public final class ImeEvent {
     }
 
     @NonNull
-    final Bundle toBundle() {
+    Bundle toBundle() {
         final Bundle bundle = new Bundle();
         bundle.putString("mEventName", mEventName);
         bundle.putInt("mNestLevel", mNestLevel);

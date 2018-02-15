@@ -11,7 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License
+ * limitations under the License.
  */
 
 package com.android.cts.mockime;
@@ -92,7 +92,7 @@ public final class MockIme extends InputMethodService {
         @NonNull
         private final Consumer<ImeCommand> mOnReceiveCommand;
 
-        public CommandReceiver(@NonNull String actionName,
+        CommandReceiver(@NonNull String actionName,
                 @NonNull Consumer<ImeCommand> onReceiveCommand) {
             mActionName = actionName;
             mOnReceiveCommand = onReceiveCommand;
@@ -288,7 +288,7 @@ public final class MockIme extends InputMethodService {
         @NonNull
         private final View.OnLayoutChangeListener mLayoutListener;
 
-        public KeyboardLayoutView(Context context, @NonNull ImeSettings imeSettings,
+        KeyboardLayoutView(Context context, @NonNull ImeSettings imeSettings,
                 @Nullable Consumer<ImeLayoutInfo> onInputViewLayoutChangedCallback) {
             super(context);
 
@@ -324,8 +324,10 @@ public final class MockIme extends InputMethodService {
 
             mLayoutListener = (View v, int left, int top, int right, int bottom, int oldLeft,
                     int oldTop, int oldRight, int oldBottom) ->
-                    onInputViewLayoutChangedCallback.accept(ImeLayoutInfo.fromLayoutListenerCallback(
-                            v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom));
+                    onInputViewLayoutChangedCallback.accept(
+                            ImeLayoutInfo.fromLayoutListenerCallback(
+                                    v, left, top, right, bottom, oldLeft, oldTop, oldRight,
+                                    oldBottom));
             this.addOnLayoutChangeListener(mLayoutListener);
         }
 
@@ -349,8 +351,8 @@ public final class MockIme extends InputMethodService {
             // that have bottom chin are examples.  For now, assume that it's a navigation bar if it
             // has the same height as the root window's stable bottom inset.
             final WindowInsets rootWindowInsets = getRootWindowInsets();
-            if (rootWindowInsets != null && (rootWindowInsets.getStableInsetBottom() !=
-                    insets.getSystemWindowInsetBottom())) {
+            if (rootWindowInsets != null && (rootWindowInsets.getStableInsetBottom()
+                    != insets.getSystemWindowInsetBottom())) {
                 // This is probably not a NavBar.
                 updateBottomPaddingIfNecessary(0);
                 return insets;
@@ -375,7 +377,7 @@ public final class MockIme extends InputMethodService {
     }
 
     private void onInputViewLayoutChanged(@NonNull ImeLayoutInfo layoutInfo) {
-        getTracer().onInputViewLayoutChanged(layoutInfo, () -> {});
+        getTracer().onInputViewLayoutChanged(layoutInfo, () -> { });
     }
 
     @Override
@@ -497,7 +499,7 @@ public final class MockIme extends InputMethodService {
 
         private String mImeEventActionName;
 
-        public Tracer(@NonNull MockIme mockIme) {
+        Tracer(@NonNull MockIme mockIme) {
             mIme = mockIme;
         }
 
@@ -522,7 +524,9 @@ public final class MockIme extends InputMethodService {
 
         private void recordEventInternal(@NonNull String eventName, @NonNull Runnable runnable,
                 @NonNull Bundle arguments) {
-            recordEventInternal(eventName, () -> { runnable.run(); return null; }, arguments);
+            recordEventInternal(eventName, () -> {
+                runnable.run(); return null;
+            }, arguments);
         }
 
         private <T> T recordEventInternal(@NonNull String eventName,

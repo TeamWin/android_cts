@@ -83,8 +83,8 @@ public final class WindowFocusStealerService extends Service {
         WindowManager.LayoutParams params = new WindowManager.LayoutParams(
                 150, 150, 10, 10,
                 WindowManager.LayoutParams.TYPE_APPLICATION_PANEL,
-                WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM |
-                        WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+                WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM
+                        | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
                 PixelFormat.OPAQUE);
         params.packageName = getPackageName();
         params.token = parentAppWindowToken;

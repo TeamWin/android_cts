@@ -45,7 +45,6 @@ import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputContentInfo;
 import android.view.inputmethod.InputMethodManager;
-import android.view.inputmethod.cts.R;
 import android.view.inputmethod.cts.util.InputConnectionTestUtils;
 import android.widget.EditText;
 

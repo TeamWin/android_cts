@@ -25,6 +25,7 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.os.ResultReceiver;
 import android.support.annotation.NonNull;
+
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -36,10 +37,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class WindowFocusStealer implements AutoCloseable {
 
-    private final static class MyResultReceiver extends ResultReceiver {
+    private static final class MyResultReceiver extends ResultReceiver {
         final BlockingQueue<Integer> mQueue = new ArrayBlockingQueue<>(1);
 
-        public MyResultReceiver() {
+        MyResultReceiver() {
             super(null);
         }
 
@@ -68,9 +69,10 @@ public class WindowFocusStealer implements AutoCloseable {
 
     /**
      * Let a window in a different process gain the window focus.
+     *
      * @param parentAppWindowToken Token returned from
      *                             {@link android.view.View#getApplicationWindowToken()}
-     * @param timeout timeout in millisecond
+     * @param timeout              timeout in millisecond
      * @throws TimeoutException when failed to have the window focused within {@code timeout}
      */
     public void stealWindowFocus(IBinder parentAppWindowToken, long timeout)
@@ -94,7 +96,6 @@ public class WindowFocusStealer implements AutoCloseable {
      *
      * @param context {@link Context} to which {@link WindowFocusStealerService} belongs
      * @param timeout timeout in millisecond
-     * @return
      * @throws TimeoutException when failed to establish the connection within {@code timeout}
      */
     public static WindowFocusStealer connect(Context context, long timeout)
@@ -105,6 +106,7 @@ public class WindowFocusStealer implements AutoCloseable {
             public void onServiceConnected(ComponentName className, IBinder service) {
                 queue.add(IWindowFocusStealer.Stub.asInterface(service));
             }
+
             public void onServiceDisconnected(ComponentName className) {
             }
         };

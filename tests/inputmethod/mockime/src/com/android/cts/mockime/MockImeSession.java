@@ -11,7 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License
+ * limitations under the License.
  */
 
 package com.android.cts.mockime;
@@ -67,19 +67,19 @@ public class MockImeSession implements AutoCloseable {
 
     private final HandlerThread mHandlerThread = new HandlerThread("EventReceiver");
 
-    private final static class EventStore {
-        private final static int INITIAL_ARRAY_SIZE = 32;
+    private static final class EventStore {
+        private static final int INITIAL_ARRAY_SIZE = 32;
 
         @NonNull
         public final ImeEvent[] mArray;
         public int mLength;
 
-        public EventStore() {
+        EventStore() {
             mArray = new ImeEvent[INITIAL_ARRAY_SIZE];
             mLength = 0;
         }
 
-        public EventStore(EventStore src, int newLength) {
+        EventStore(EventStore src, int newLength) {
             mArray = new ImeEvent[newLength];
             mLength = src.mLength;
             System.arraycopy(src.mArray, 0, mArray, 0, src.mLength);
@@ -110,7 +110,7 @@ public class MockImeSession implements AutoCloseable {
         @NonNull
         private final String mActionName;
 
-        public MockImeEventReceiver(@NonNull String actionName) {
+        MockImeEventReceiver(@NonNull String actionName) {
             mActionName = actionName;
         }
 

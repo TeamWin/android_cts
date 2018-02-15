@@ -66,7 +66,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
     static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
     static final long NOT_EXPECT_TIMEOUT = TimeUnit.SECONDS.toMillis(1);
 
-    private final static String TEST_MARKER = "android.view.inputmethod.cts.FocusHandlingTest";
+    private static final String TEST_MARKER = "android.view.inputmethod.cts.FocusHandlingTest";
 
     public EditText launchTestActivity() {
         final AtomicReference<EditText> editTextRef = new AtomicReference<>();
@@ -88,7 +88,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
 
     @Test
     public void testOnStartInputCalledOnceIme() throws Exception {
-        try(MockImeSession imeSession = MockImeSession.create(
+        try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getContext(),
                 InstrumentationRegistry.getInstrumentation().getUiAutomation(),
                 new ImeSettings.Builder())) {
@@ -122,7 +122,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
 
     @Test
     public void testSoftInputStateAlwaysVisibleWithoutFocusedEditorView() throws Exception {
-        try(MockImeSession imeSession = MockImeSession.create(
+        try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getContext(),
                 InstrumentationRegistry.getInstrumentation().getUiAutomation(),
                 new ImeSettings.Builder())) {
@@ -164,7 +164,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
 
     @Test
     public void testNoEditorNoStartInput() throws Exception {
-        try(MockImeSession imeSession = MockImeSession.create(
+        try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getContext(),
                 InstrumentationRegistry.getInstrumentation().getUiAutomation(),
                 new ImeSettings.Builder())) {
@@ -193,7 +193,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
 
     @Test
     public void testEditorStartsInput() throws Exception {
-        try(MockImeSession imeSession = MockImeSession.create(
+        try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getContext(),
                 InstrumentationRegistry.getInstrumentation().getUiAutomation(),
                 new ImeSettings.Builder())) {
@@ -217,7 +217,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
 
     @Test
     public void testDelayedAddEditorStartsInput() throws Exception {
-        try(MockImeSession imeSession = MockImeSession.create(
+        try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getContext(),
                 InstrumentationRegistry.getInstrumentation().getUiAutomation(),
                 new ImeSettings.Builder())) {
@@ -249,7 +249,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
 
     @Test
     public void testSoftInputStateAlwaysVisibleFocusedEditorView() throws Exception {
-        try(MockImeSession imeSession = MockImeSession.create(
+        try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getContext(),
                 InstrumentationRegistry.getInstrumentation().getUiAutomation(),
                 new ImeSettings.Builder())) {
@@ -290,7 +290,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
     @Test
     public void testFocusableWindowDoesNotInvalidateExistingInputConnection() throws Exception {
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-        try(MockImeSession imeSession = MockImeSession.create(
+        try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getContext(),
                 instrumentation.getUiAutomation(),
                 new ImeSettings.Builder())) {
@@ -397,7 +397,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
     @Test
     public void testRestartInputWhileOtherProcessHasWindowFocus() throws Exception {
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-        try(MockImeSession imeSession = MockImeSession.create(
+        try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getContext(),
                 instrumentation.getUiAutomation(),
                 new ImeSettings.Builder())) {

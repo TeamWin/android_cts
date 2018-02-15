@@ -11,7 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License
+ * limitations under the License.
  */
 
 package android.view.inputmethod.cts.util;
@@ -38,7 +38,7 @@ public class NavigationBarColorVerifier {
         @NonNull
         public final int[] mPixels;
 
-        public ScreenShot(@ColorInt int backgroundColor, @NonNull Bitmap bitmap) {
+        ScreenShot(@ColorInt int backgroundColor, @NonNull Bitmap bitmap) {
             mBackgroundColor = backgroundColor;
             final int width = bitmap.getWidth();
             final int height = bitmap.getHeight();
@@ -65,7 +65,7 @@ public class NavigationBarColorVerifier {
         @NonNull
         public final String mAssertionMessage;
 
-        public Result(@NonNull ResultType result, @NonNull String assertionMessage) {
+        Result(@NonNull ResultType result, @NonNull String assertionMessage) {
             mResult = result;
             mAssertionMessage = assertionMessage;
         }
