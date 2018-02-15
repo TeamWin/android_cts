@@ -258,6 +258,53 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         saveOnlyTest(manually);
     }
 
+    /**
+     * More detailed test of what should happen after a service returns a {@code null} FillResponse:
+     * views that have already been visit should not trigger a new session, unless a manual autofill
+     * workflow was requested.
+     */
+    @Test
+    public void testMultipleIterationsAfterServiceReturnedNoDatasets() throws Exception {
+        // Set service.
+        enableService();
+
+        // Trigger autofill on username - should call service
+        sReplier.addResponse(NO_RESPONSE);
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+        waitUntilDisconnected();
+
+        // Trigger autofill on password - should call service
+        sReplier.addResponse(NO_RESPONSE);
+        mActivity.onPassword(View::requestFocus);
+        sReplier.getNextFillRequest();
+        waitUntilDisconnected();
+
+        // Tap username again - should be ignored
+        mActivity.onUsername(View::requestFocus);
+        sReplier.assertOnFillRequestNotCalled();
+        waitUntilDisconnected();
+
+        // Tap password again - should be ignored
+        mActivity.onPassword(View::requestFocus);
+        sReplier.assertOnFillRequestNotCalled();
+        waitUntilDisconnected();
+
+        // Trigger autofill by manually requesting username - should call service
+        sReplier.addResponse(NO_RESPONSE);
+        mActivity.forceAutofillOnUsername();
+        final FillRequest manualRequest1 = sReplier.getNextFillRequest();
+        assertHasFlags(manualRequest1.flags, FLAG_MANUAL_REQUEST);
+        waitUntilDisconnected();
+
+        // Trigger autofill by manually requesting password - should call service
+        sReplier.addResponse(NO_RESPONSE);
+        mActivity.forceAutofillOnPassword();
+        final FillRequest manualRequest2 = sReplier.getNextFillRequest();
+        assertHasFlags(manualRequest2.flags, FLAG_MANUAL_REQUEST);
+        waitUntilDisconnected();
+    }
+
     @Test
     public void testAutofillManuallyAlwaysCallServiceAgain() throws Exception {
         // Set service.
