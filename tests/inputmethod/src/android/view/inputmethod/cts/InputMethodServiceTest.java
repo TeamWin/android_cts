@@ -136,15 +136,8 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
             expectEvent(stream, event -> "onStartInputView".equals(event.getEventName()), TIMEOUT);
 
             imeSession.callRequestHideSelf(0);
-            // TODO(b/73077694): Consider fixing MockIme.Tracer event ordering.
-            // In the event stream, we observe onFinishInputView() first, followed by
-            // hideSoftInput(). For now, we can use ImeEventStream.copy() to preserve the
-            // stream position of the original stream.
-            expectEvent(stream.copy(),
-                    event -> "hideSoftInput".equals(event.getEventName()), TIMEOUT);
-            expectEvent(stream.copy(),
-                    event -> "onFinishInputView".equals(event.getEventName()), TIMEOUT);
-            stream.skipAll();
+            expectEvent(stream, event -> "hideSoftInput".equals(event.getEventName()), TIMEOUT);
+            expectEvent(stream, event -> "onFinishInputView".equals(event.getEventName()), TIMEOUT);
         }
     }
 
@@ -161,8 +154,8 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
                     stream, event -> "onStartInputView".equals(event.getEventName()), TIMEOUT);
 
             imeSession.callRequestShowSelf(0);
-            expectEvent(stream, event -> "onStartInputView".equals(event.getEventName()), TIMEOUT);
             expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
+            expectEvent(stream, event -> "onStartInputView".equals(event.getEventName()), TIMEOUT);
         }
     }
 }
