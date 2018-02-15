@@ -53,7 +53,6 @@ import android.app.ActivityManager;
 import android.app.KeyguardManager;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.ParcelFileDescriptor;
 import android.os.PowerManager;
@@ -68,11 +67,17 @@ import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.rules.TestRule;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.BooleanSupplier;
 import java.util.regex.Matcher;
@@ -142,15 +147,6 @@ public abstract class ActivityManagerTestBase {
     protected Context mContext;
     protected ActivityManager mAm;
     protected UiDevice mDevice;
-
-    /**
-     * The variables below are to store the doze states so they can be restored at the end.
-     */
-    private String mIsDozeAlwaysOn;
-    private String mIsDozeEnabled;
-    private String mIsDozePulseOnPickUp;
-    private String mIsDozePulseOnLongPress;
-    private String mIsDozePulseOnDoubleTap;
 
     /** TODO(b/73349193): Use {@link #getAmStartCmd(ComponentName, String...)} instead. */
     @Deprecated
@@ -775,31 +771,45 @@ public abstract class ActivityManagerTestBase {
         return false;
     }
 
-    protected void disableDozeStates() {
-        mIsDozeAlwaysOn = executeShellCommand("settings get secure doze_always_on").trim();
-        mIsDozeEnabled = executeShellCommand("settings get secure doze_enabled").trim();
-        mIsDozePulseOnPickUp = executeShellCommand(
-                "settings get secure doze_pulse_on_pick_up").trim();
-        mIsDozePulseOnLongPress = executeShellCommand(
-                "settings get secure doze_pulse_on_long_press").trim();
-        mIsDozePulseOnDoubleTap = executeShellCommand(
-                "settings get secure doze_pulse_on_double_tap").trim();
+    /**
+     * Test @Rule class that disables screen doze settings before each test method running and
+     * restoring to initial values after test method finished.
+     */
+    protected static class DisableScreenDozeRule implements TestRule {
 
-        executeShellCommand("settings put secure doze_always_on 0");
-        executeShellCommand("settings put secure doze_enabled 0");
-        executeShellCommand("settings put secure doze_pulse_on_pick_up 0");
-        executeShellCommand("settings put secure doze_pulse_on_long_press 0");
-        executeShellCommand("settings put secure doze_pulse_on_double_tap 0");
-    }
+        /** Copied from android.provider.Settings.Secure since these keys are hiden. */
+        private static final String[] DOZE_SETTINGS = {
+                "doze_enabled",
+                "doze_always_on",
+                "doze_pulse_on_pick_up",
+                "doze_pulse_on_long_press",
+                "doze_pulse_on_double_tap"
+        };
 
-    protected void resetDozeStates() {
-        executeShellCommand("settings put secure doze_always_on " + mIsDozeAlwaysOn);
-        executeShellCommand("settings put secure doze_enabled " + mIsDozeEnabled);
-        executeShellCommand("settings put secure doze_pulse_on_pick_up " + mIsDozePulseOnPickUp);
-        executeShellCommand(
-                "settings put secure doze_pulse_on_long_press " + mIsDozePulseOnLongPress);
-        executeShellCommand(
-                "settings put secure doze_pulse_on_double_tap " + mIsDozePulseOnDoubleTap);
+        private String get(String key) {
+            return executeShellCommand("settings get secure " + key).trim();
+        }
+
+        private void put(String key, String value) {
+            executeShellCommand("settings put secure " + key + " " + value);
+        }
+
+        @Override
+        public Statement apply(final Statement base, final Description description) {
+            return new Statement() {
+                @Override
+                public void evaluate() throws Throwable {
+                    final Map<String, String> initialValues = new HashMap<>();
+                    Arrays.stream(DOZE_SETTINGS).forEach(k -> initialValues.put(k, get(k)));
+                    try {
+                        Arrays.stream(DOZE_SETTINGS).forEach(k -> put(k, "0"));
+                        base.evaluate();
+                    } finally {
+                        Arrays.stream(DOZE_SETTINGS).forEach(k -> put(k, initialValues.get(k)));
+                    }
+                }
+            };
+        }
     }
 
     protected class LockScreenSession implements AutoCloseable {
