@@ -59,6 +59,53 @@
     <option name="compatibility:include-filter" value="CtsJvmtiRunTest984HostTestCases" />
     <option name="compatibility:include-filter" value="CtsJvmtiRunTest985HostTestCases" />
     <option name="compatibility:include-filter" value="CtsJvmtiRunTest986HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest988HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest989HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest990HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest991HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest992HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest993HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest994HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest995HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest996HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest997HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest1900HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest1901HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest1902HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest1903HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest1904HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest1906HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest1907HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest1908HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest1909HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest1910HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest1911HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest1912HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest1913HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest1914HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest1915HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest1916HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest1917HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest1920HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest1921HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest1922HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest1923HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest1924HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest1925HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest1926HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest1927HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest1928HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest1930HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest1931HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest1932HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest1933HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest1934HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest1936HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest1937HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest1939HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest1941HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest1942HostTestCases" />
+    <option name="compatibility:include-filter" value="CtsJvmtiRunTest1943HostTestCases" />
     <option name="compatibility:include-filter" value="CtsJvmtiTaggingHostTestCases" />
     <option name="compatibility:include-filter" value="CtsJvmtiTrackingHostTestCases" />
 
