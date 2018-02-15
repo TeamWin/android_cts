@@ -18,6 +18,7 @@ package com.android.cts.mockime;
 
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 /**
  * An immutable object that stores event happened in the {@link MockIme}.
@@ -26,7 +27,7 @@ public final class ImeEvent {
 
     ImeEvent(@NonNull String eventName, int nestLevel, @NonNull String threadName, int threadId,
             boolean isMainThread, long enterTimestamp, long exitTimestamp, long enterWallTime,
-            long exitWallTime, @NonNull ImeState enterState, @NonNull ImeState exitState,
+            long exitWallTime, @NonNull ImeState enterState, @Nullable ImeState exitState,
             @NonNull Bundle arguments) {
         mEventName = eventName;
         mNestLevel = nestLevel;
@@ -55,7 +56,7 @@ public final class ImeEvent {
         bundle.putLong("mEnterWallTime", mEnterWallTime);
         bundle.putLong("mExitWallTime", mExitWallTime);
         bundle.putBundle("mEnterState", mEnterState.toBundle());
-        bundle.putBundle("mExitState", mExitState.toBundle());
+        bundle.putBundle("mExitState", mExitState != null ? mExitState.toBundle() : null);
         bundle.putBundle("mArguments", mArguments);
         return bundle;
     }
@@ -168,7 +169,7 @@ public final class ImeEvent {
     /**
      * @return IME state snapshot taken when the corresponding event handler finished.
      */
-    @NonNull
+    @Nullable
     public ImeState getExitState() {
         return mExitState;
     }
@@ -179,6 +180,14 @@ public final class ImeEvent {
     @NonNull
     public Bundle getArguments() {
         return mArguments;
+    }
+
+    /**
+     * @return {@code true} if the event is issued when the event starts, not when the event
+     * finishes.
+     */
+    public boolean isEnterEvent() {
+        return mExitState == null;
     }
 
     @NonNull
@@ -194,7 +203,7 @@ public final class ImeEvent {
     private final long mExitWallTime;
     @NonNull
     private final ImeState mEnterState;
-    @NonNull
+    @Nullable
     private final ImeState mExitState;
     @NonNull
     private final Bundle mArguments;

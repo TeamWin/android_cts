@@ -21,9 +21,10 @@ import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.view.inputmethod.EditorInfo;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -35,6 +36,11 @@ import java.util.function.Supplier;
  * <p>All public methods are not thread-safe.</p>
  */
 public final class ImeEventStream {
+
+    private static final String LONG_LONG_SPACES = "                                        ";
+
+    private static DateTimeFormatter sSimpleDateTimeFormatter =
+            DateTimeFormatter.ofPattern("MM-dd HH:mm:ss.SSS").withZone(ZoneId.systemDefault());
 
     @NonNull
     private final Supplier<ImeEventArray> mEventSupplier;
@@ -134,41 +140,77 @@ public final class ImeEventStream {
         }
     }
 
+    private static void dumpEvent(@NonNull StringBuilder sb, @NonNull ImeEvent event,
+            boolean fused) {
+        final String indentation = getWhiteSpaces(event.getNestLevel() * 2 + 2);
+        final long wallTime =
+                fused ? event.getEnterWallTime() :
+                        event.isEnterEvent() ? event.getEnterWallTime() : event.getExitWallTime();
+        sb.append(sSimpleDateTimeFormatter.format(Instant.ofEpochMilli(wallTime)))
+                .append("  ")
+                .append(String.format("%5d", event.getThreadId()))
+                .append(indentation);
+        sb.append(fused ? "" : event.isEnterEvent() ? "[" : "]");
+        if (fused || event.isEnterEvent()) {
+            sb.append(event.getEventName())
+                    .append(':')
+                    .append(" args=");
+            dumpBundle(sb, event.getArguments());
+        }
+        sb.append('\n');
+    }
+
     /**
      * @return Debug info as a {@link String}.
      */
     public String dump() {
         final ImeEventArray latest = mEventSupplier.get();
         final StringBuilder sb = new StringBuilder();
-        final SimpleDateFormat dataFormat =
-                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US);
         sb.append("ImeEventStream:\n");
         sb.append("  latest: array[").append(latest.mArray.length).append("] + {\n");
         for (int i = 0; i < latest.mLength; ++i) {
-            final ImeEvent event = latest.mArray[i];
-            if (i == mCurrentPosition) {
+            // To compress the dump message, if the current event is an enter event and the next
+            // one is a corresponding exit event, we unify the output.
+            final boolean fused = areEnterExitPairedMessages(latest, i);
+            if (i == mCurrentPosition || (fused && ((i + 1) == mCurrentPosition))) {
                 sb.append("  ======== CurrentPosition ========  \n");
             }
-            sb.append("   ").append(i).append(" :");
-            if (event != null) {
-                for (int j = 0; j < event.getNestLevel(); ++j) {
-                    sb.append(' ');
-                }
-                sb.append('{');
-                sb.append(dataFormat.format(new Date(event.getEnterWallTime())));
-                sb.append(" event=").append(event.getEventName());
-                sb.append(": args=");
-                dumpBundle(sb, event.getArguments());
-                sb.append("},\n");
-            } else {
-                sb.append("{null},\n");
-            }
+            dumpEvent(sb, latest.mArray[fused ? ++i : i], fused);
         }
         if (mCurrentPosition >= latest.mLength) {
             sb.append("  ======== CurrentPosition ========  \n");
         }
         sb.append("}\n");
         return sb.toString();
+    }
+
+    /**
+     * @param array event array to be checked
+     * @param i index to be checked
+     * @return {@code true} if {@code array.mArray[i]} and {@code array.mArray[i + 1]} are two
+     *         paired events.
+     */
+    private static boolean areEnterExitPairedMessages(@NonNull ImeEventArray array,
+            @IntRange(from = 0) int i) {
+        return array.mArray[i] != null
+                && array.mArray[i].isEnterEvent()
+                && (i + 1) < array.mLength
+                && array.mArray[i + 1] != null
+                && array.mArray[i].getEventName().equals(array.mArray[i + 1].getEventName())
+                && array.mArray[i].getEnterTimestamp() == array.mArray[i + 1].getEnterTimestamp();
+    }
+
+    /**
+     * @param length length of the requested white space string
+     * @return {@link String} object whose length is {@code length}
+     */
+    private static String getWhiteSpaces(@IntRange(from = 0) final int length) {
+        if (length < LONG_LONG_SPACES.length()) {
+            return LONG_LONG_SPACES.substring(0, length);
+        }
+        final char[] indentationChars = new char[length];
+        Arrays.fill(indentationChars, ' ');
+        return new String(indentationChars);
     }
 
     private static void dumpBundle(@NonNull StringBuilder sb, @NonNull Bundle bundle) {

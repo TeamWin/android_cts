@@ -230,14 +230,16 @@ public final class MockIme extends InputMethodService {
 
     @Override
     public void onCreate() {
+        // Initialize minimum settings to send events in Tracer#onCreate().
+        mSettings = readSettings();
+        if (mSettings == null) {
+            throw new IllegalStateException("Settings file is not found. "
+                    + "Make sure MockImeSession.create() is used to launch Mock IME.");
+        }
+        mImeEventActionName.set(mSettings.getEventCallbackActionName());
+
         getTracer().onCreate(() -> {
             super.onCreate();
-            mSettings = readSettings();
-            if (mSettings == null) {
-                throw new IllegalStateException("Settings file is not found. "
-                        + "Make sure MockImeSession.create() is used to launch Mock IME.");
-            }
-
             mHandlerThread.start();
             final String actionName = getCommandActionName(mSettings.getEventCallbackActionName());
             mCommandReceiver = new CommandReceiver(actionName, this::onReceiveCommand);
@@ -245,7 +247,6 @@ public final class MockIme extends InputMethodService {
                     new IntentFilter(actionName), null /* broadcastPermission */,
                     new Handler(mHandlerThread.getLooper()));
 
-            mImeEventActionName.set(mSettings.getEventCallbackActionName());
             final int windowFlags = mSettings.getWindowFlags(0);
             final int windowFlagsMask = mSettings.getWindowFlagsMask(0);
             if (windowFlags != 0 || windowFlagsMask != 0) {
@@ -540,6 +541,10 @@ public final class MockIme extends InputMethodService {
             final long enterTimestamp = SystemClock.elapsedRealtimeNanos();
             final long enterWallTime = System.currentTimeMillis();
             final int nestLevel = mNestLevel;
+            // Send enter event
+            sendEventInternal(new ImeEvent(eventName, nestLevel, mThreadName,
+                    mThreadId, mIsMainThread, enterTimestamp, 0, enterWallTime,
+                    0, enterState, null, arguments));
             ++mNestLevel;
             T result;
             try {
@@ -550,6 +555,7 @@ public final class MockIme extends InputMethodService {
             final long exitTimestamp = SystemClock.elapsedRealtimeNanos();
             final long exitWallTime = System.currentTimeMillis();
             final ImeState exitState = mIme.getState();
+            // Send exit event
             sendEventInternal(new ImeEvent(eventName, nestLevel, mThreadName,
                     mThreadId, mIsMainThread, enterTimestamp, exitTimestamp, enterWallTime,
                     exitWallTime, enterState, exitState, arguments));
