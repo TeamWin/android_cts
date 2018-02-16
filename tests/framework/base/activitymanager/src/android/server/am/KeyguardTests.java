@@ -56,8 +56,10 @@ public class KeyguardTests extends KeyguardTestBase {
             lockScreenSession.gotoKeyguard();
             mAmWmState.computeState(true);
             mAmWmState.assertKeyguardShowingAndNotOccluded();
+            assertTrue(mKeyguardManager.isKeyguardLocked());
             mAmWmState.assertVisibility("TestActivity", false);
         }
+        assertFalse(mKeyguardManager.isKeyguardLocked());
     }
 
     @Test

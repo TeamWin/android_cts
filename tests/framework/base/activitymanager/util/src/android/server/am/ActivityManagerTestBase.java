@@ -904,13 +904,14 @@ public abstract class ActivityManagerTestBase {
             setLockDisabled(mIsLockDisabled);
             if (mLockCredentialSet) {
                 removeLockCredential();
-                // Dismiss active keyguard after credential is cleared, so keyguard doesn't ask for
-                // the stale credential.
-                pressBackButton();
-                sleepDevice();
-                wakeUpDevice();
-                unlockDevice();
             }
+
+            // Dismiss active keyguard after credential is cleared, so keyguard doesn't ask for
+            // the stale credential.
+            pressBackButton();
+            sleepDevice();
+            wakeUpDevice();
+            unlockDevice();
         }
 
         /**
