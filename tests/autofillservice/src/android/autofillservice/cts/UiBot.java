@@ -299,7 +299,7 @@ final class UiBot {
      *
      * <p><b>Note:</b> this method should only be called when the object was known to be shown
      * *before*, otherwise it might pass when it should failed. If the object was *never* expected
-     * to be shown, you should use {@link #assertNeverShown(String, BySelector, Timeout)}.
+     * to be shown, you should use {@link #assertNeverShown(String, BySelector, long)}.
      */
     private void assertNotShowingAnymore(String description, BySelector selector, Timeout timeout)
             throws Exception {
@@ -317,13 +317,14 @@ final class UiBot {
     /**
      * Asserts that a {@code selector} is not showing after {@code timeout} milliseconds.
      */
-    private void assertNeverShown(String description, BySelector selector, Timeout timeout)
+    private void assertNeverShown(String description, BySelector selector, long timeout)
             throws Exception {
-        SystemClock.sleep(timeout.ms());
+        SystemClock.sleep(timeout);
         final UiObject2 object = mDevice.findObject(selector);
         if (object != null) {
-            throw new RetryableException(timeout, "Should not be showing %s, but got %s",
-                    description, getChildrenAsText(object));
+            throw new AssertionError(
+                    String.format("Should not be showing %s after %dms, but got %s",
+                            description, timeout, getChildrenAsText(object)));
         }
     }
     /**
@@ -398,7 +399,8 @@ final class UiBot {
      * Asserts the save snackbar is not showing and returns it.
      */
     void assertSaveNotShowing(int type) throws Exception {
-        assertNeverShown("save UI for type " + type, SAVE_UI_SELECTOR, SAVE_TIMEOUT);
+        // TODO: need a better mechanism to wait undefinitely than using getMaxValue()
+        assertNeverShown("save UI for type " + type, SAVE_UI_SELECTOR, SAVE_TIMEOUT.getMaxValue());
     }
 
     private String getSaveTypeString(int type) {

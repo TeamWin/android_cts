@@ -27,6 +27,8 @@ import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.VirtualContainerView.LABEL_CLASS;
 import static android.autofillservice.cts.VirtualContainerView.TEXT_CLASS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
+import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_USERNAME;
+
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -43,6 +45,7 @@ import android.view.ViewGroup;
 import android.view.autofill.AutofillManager;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -385,6 +388,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
+    @Ignore("Disabled until b/73493342 is fixed")
     public void testSave_parentViewGone() throws Throwable {
         saveTest(CommitType.PARENT_VIEW_GONE);
     }
@@ -417,26 +421,26 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         focusToUsernameExpectNoWindowEvent();
         sReplier.getNextFillRequest();
 
-        mActivity.runOnUiThread(() -> {
-            // Fill in some stuff
-            mActivity.mUsername.setText("foo");
-            mActivity.mPassword.setText("bar");
-            switch (commitType) {
-                case CHILDREN_VIEWS_GONE:
-                    mActivity.mUsername.changeVisibility(false);
-                    mActivity.mPassword.changeVisibility(false);
-                    break;
-                case PARENT_VIEW_GONE:
+        // Fill in some stuff
+        mActivity.mUsername.setText("foo");
+        mActivity.mPassword.setText("bar");
+        switch (commitType) {
+            case CHILDREN_VIEWS_GONE:
+                mActivity.mUsername.changeVisibility(false);
+                mActivity.mPassword.changeVisibility(false);
+                break;
+            case PARENT_VIEW_GONE:
+                mActivity.runOnUiThread(() -> {
                     final ViewGroup parent = (ViewGroup) mActivity.mCustomView.getParent();
                     parent.removeView(mActivity.mCustomView);
-                    break;
-                case EXPLICIT_COMMIT:
-                    mActivity.getAutofillManager().commit();
-                    break;
-                default:
-                    throw new IllegalArgumentException("unknown type: " + commitType);
-            }
-        });
+                });
+                break;
+            case EXPLICIT_COMMIT:
+                mActivity.getAutofillManager().commit();
+                break;
+            default:
+                throw new IllegalArgumentException("unknown type: " + commitType);
+        }
 
         // Trigger save.
         mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
@@ -448,6 +452,28 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
 
         assertTextAndValue(username, "foo");
         assertTextAndValue(password, "bar");
+    }
+
+    @Test
+    public void testSaveNotShownWhenVirtualViewValueChanges() throws Throwable {
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_USERNAME, ID_USERNAME)
+                .setSaveInfoFlags(SaveInfo.FLAG_SAVE_ON_ALL_VIEWS_INVISIBLE)
+                .build());
+
+        // Trigger auto-fill.
+        focusToUsernameExpectNoWindowEvent();
+        sReplier.getNextFillRequest();
+
+        // Fill in some stuff
+        mActivity.mUsername.setText("foo");
+
+        // Trigger save.
+        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_USERNAME);
     }
 
     @Test
