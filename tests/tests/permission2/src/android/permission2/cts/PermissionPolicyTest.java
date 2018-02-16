@@ -156,7 +156,7 @@ public class PermissionPolicyTest extends AndroidTestCase {
             if (!expectedPermissionGroups.contains(declaredGroup.name)) {
                 if (declaredGroup.name != null) {
                     if (declaredGroup.packageName.equals(PLATFORM_PACKAGE_NAME)
-                            || declaredGroup.name.startsWith(PLATFORM_ROOT_NAMESPACE)) {
+                            && declaredGroup.name.startsWith(PLATFORM_ROOT_NAMESPACE)) {
                         offendingList.add(
                                 "Cannot define group "
                                         + declaredGroup.name
