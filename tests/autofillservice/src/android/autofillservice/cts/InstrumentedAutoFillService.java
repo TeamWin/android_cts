@@ -68,7 +68,7 @@ public class InstrumentedAutoFillService extends AutofillService {
     private static final boolean DUMP_FILL_REQUESTS = false;
     private static final boolean DUMP_SAVE_REQUESTS = false;
 
-    private static final AtomicReference<InstrumentedAutoFillService> sInstance =
+    protected static final AtomicReference<InstrumentedAutoFillService> sInstance =
             new AtomicReference<>();
     private static final Replier sReplier = new Replier();
 
@@ -80,8 +80,11 @@ public class InstrumentedAutoFillService extends AutofillService {
     // @GuardedBy("sLock") // NOTE: not using annotation because of dependencies
     private static boolean sConnected;
 
+    protected static String sServiceLabel = SERVICE_CLASS;
+
     public InstrumentedAutoFillService() {
         sInstance.set(this);
+        sServiceLabel = SERVICE_CLASS;
     }
 
     private static InstrumentedAutoFillService peekInstance() {
@@ -145,6 +148,13 @@ public class InstrumentedAutoFillService extends AutofillService {
         SystemClock.sleep(FILL_EVENTS_TIMEOUT.ms());
         assertThat(peekInstance().getFillEventHistory()).isNull();
 
+    }
+
+    /**
+     * Gets the service label associated with the current instance.
+     */
+    public static String getServiceLabel() {
+        return sServiceLabel;
     }
 
     @Override
@@ -259,6 +269,7 @@ public class InstrumentedAutoFillService extends AutofillService {
     static void resetStaticState() {
         sInstance.set(null);
         sConnected = false;
+        sServiceLabel = SERVICE_CLASS;
     }
 
     /**
