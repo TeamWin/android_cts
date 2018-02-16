@@ -728,7 +728,6 @@ public class StorageManagerTest extends AndroidTestCase {
 
     private List<File> getTargetFiles() {
         final List<File> targets = new ArrayList<File>();
-        targets.add(mContext.getFilesDir());
         for (File dir : mContext.getObbDirs()) {
             assertNotNull("Valid media must be inserted during CTS", dir);
             assertEquals("Valid media must be inserted during CTS", Environment.MEDIA_MOUNTED,
