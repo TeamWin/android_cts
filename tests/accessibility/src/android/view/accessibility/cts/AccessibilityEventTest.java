@@ -18,6 +18,7 @@ package android.view.accessibility.cts;
 
 import android.os.Message;
 import android.os.Parcel;
+import android.platform.test.annotations.Presubmit;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.text.TextUtils;
 import android.view.accessibility.AccessibilityEvent;
@@ -29,6 +30,7 @@ import junit.framework.TestCase;
 /**
  * Class for testing {@link AccessibilityEvent}.
  */
+@Presubmit
 public class AccessibilityEventTest extends TestCase {
 
     /** The number of properties of the {@link AccessibilityEvent} class. */

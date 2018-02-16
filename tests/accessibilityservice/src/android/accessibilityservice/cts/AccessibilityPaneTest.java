@@ -16,10 +16,14 @@
 
 package android.accessibilityservice.cts;
 
-import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.AccessibilityEventTypeMatcher;
-import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.ContentChangesMatcher;
-import static android.accessibilityservice.cts.AccessibilityActivityTestCase.TIMEOUT_ASYNC_PROCESSING;
-import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
+import static android.accessibilityservice.cts.AccessibilityActivityTestCase
+        .TIMEOUT_ASYNC_PROCESSING;
+import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils
+        .AccessibilityEventTypeMatcher;
+import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils
+        .ContentChangesMatcher;
+import static android.accessibilityservice.cts.utils.ActivityLaunchUtils
+        .launchActivityAndWaitForItToBeOnscreen;
 import static android.view.accessibility.AccessibilityEvent.CONTENT_CHANGE_TYPE_PANE_APPEARED;
 import static android.view.accessibility.AccessibilityEvent.CONTENT_CHANGE_TYPE_PANE_DISAPPEARED;
 import static android.view.accessibility.AccessibilityEvent.CONTENT_CHANGE_TYPE_PANE_TITLE;
@@ -33,6 +37,7 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.app.UiAutomation.AccessibilityEventFilter;
+import android.platform.test.annotations.Presubmit;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -50,6 +55,7 @@ import org.junit.runner.RunWith;
  * Tests reporting of window-like views
  */
 @RunWith(AndroidJUnit4.class)
+@Presubmit
 public class AccessibilityPaneTest {
     private static Instrumentation sInstrumentation;
     private static UiAutomation sUiAutomation;

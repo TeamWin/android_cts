@@ -29,7 +29,6 @@ import static android.view.accessibility.AccessibilityEvent.WINDOWS_CHANGE_ADDED
 import static android.view.accessibility.AccessibilityEvent.WINDOWS_CHANGE_BOUNDS;
 import static android.view.accessibility.AccessibilityEvent.WINDOWS_CHANGE_CHILDREN;
 import static android.view.accessibility.AccessibilityEvent.WINDOWS_CHANGE_FOCUSED;
-import static android.view.accessibility.AccessibilityEvent.WINDOWS_CHANGE_PIP;
 import static android.view.accessibility.AccessibilityEvent.WINDOWS_CHANGE_REMOVED;
 import static android.view.accessibility.AccessibilityEvent.WINDOWS_CHANGE_TITLE;
 
@@ -44,15 +43,12 @@ import android.accessibilityservice.cts.activities.AccessibilityWindowReportingA
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
-import android.os.Debug;
+import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
-import android.support.test.InstrumentationRegistry;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
-import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
 import android.widget.ArrayAdapter;

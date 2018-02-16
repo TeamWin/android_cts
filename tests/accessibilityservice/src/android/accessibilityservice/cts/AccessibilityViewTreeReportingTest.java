@@ -14,7 +14,8 @@
 
 package android.accessibilityservice.cts;
 
-import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
+import static android.accessibilityservice.cts.utils.ActivityLaunchUtils
+        .launchActivityAndWaitForItToBeOnscreen;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -23,20 +24,19 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import android.accessibilityservice.AccessibilityServiceInfo;
+import android.accessibilityservice.cts.R;
 import android.accessibilityservice.cts.activities.AccessibilityViewTreeReportingActivity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.Context;
+import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
-import android.support.test.InstrumentationRegistry;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
-
-import android.accessibilityservice.cts.R;
 import android.widget.Button;
 import android.widget.LinearLayout;
 
