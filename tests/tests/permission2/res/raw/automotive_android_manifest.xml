@@ -111,7 +111,11 @@
         android:protectionLevel="system|signature"
         android:label="@string/car_permission_label_vms_subscriber"
         android:description="@string/car_permission_desc_vms_subscriber" />
-
+    <permission
+        android:name="android.car.permission.CAR_DRIVING_STATE"
+        android:protectionLevel="system|signature"
+        android:label="@string/car_permission_label_driving_state"
+        android:description="@string/car_permission_desc_driving_state" />
     <!--  may replace this with system permission if proper one is defined. -->
     <permission
         android:name="android.car.permission.CONTROL_APP_BLOCKING"
@@ -177,15 +181,16 @@
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.MANAGE_USERS" />
+    <uses-permission android:name="android.permission.LOCATION_HARDWARE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <application android:label="Car service"
                  android:directBootAware="true"
                  android:allowBackup="false"
                  android:persistent="true">
 
-       
         <uses-library android:name="android.test.runner" />
- <service android:name=".CarService"
+        <service android:name=".CarService"
                 android:singleUser="true">
             <intent-filter>
                 <action android:name="android.car.ICar" />
