@@ -679,9 +679,10 @@ public class BuildDalvikSuite {
             FileReader reader = new FileReader(f);
             reader.skip(result.end());
 
-            char currentChar;
+            int readResult;
             int blocks = 1;
-            while ((currentChar = (char) reader.read()) != -1 && blocks > 0) {
+            while ((readResult = reader.read()) != -1 && blocks > 0) {
+                char currentChar = (char) readResult;
                 switch (currentChar) {
                     case '}': {
                         blocks--;
