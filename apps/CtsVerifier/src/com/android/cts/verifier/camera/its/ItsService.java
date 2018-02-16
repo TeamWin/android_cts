@@ -650,6 +650,8 @@ public class ItsService extends Service implements SensorEventListener {
                     closeCameraDevice();
                 } else if ("getCameraProperties".equals(cmdObj.getString("cmdName"))) {
                     doGetProps();
+                } else if ("getCameraPropertiesById".equals(cmdObj.getString("cmdName"))) {
+                    doGetPropsById(cmdObj);
                 } else if ("startSensorEvents".equals(cmdObj.getString("cmdName"))) {
                     doStartSensorEvents();
                 } else if ("getSensorEvents".equals(cmdObj.getString("cmdName"))) {
@@ -878,6 +880,34 @@ public class ItsService extends Service implements SensorEventListener {
 
     private void doGetProps() throws ItsException {
         mSocketRunnableObj.sendResponse(mCameraCharacteristics);
+    }
+
+    private void doGetPropsById(JSONObject params) throws ItsException {
+        String[] devices;
+        try {
+            devices = mCameraManager.getCameraIdList();
+            if (devices == null || devices.length == 0) {
+                throw new ItsException("No camera devices");
+            }
+        } catch (CameraAccessException e) {
+            throw new ItsException("Failed to get device ID list", e);
+        }
+
+        try {
+            String cameraId = params.getString("cameraId");
+            if (Arrays.asList(devices).contains(cameraId)) {
+                CameraCharacteristics characteristics =
+                        mCameraManager.getCameraCharacteristics(cameraId);
+                mSocketRunnableObj.sendResponse(characteristics);
+            } else {
+                Log.e(TAG, "Invalid camera ID: " + cameraId);
+                throw new ItsException("Invalid cameraId:" + cameraId);
+            }
+        } catch (org.json.JSONException e) {
+            throw new ItsException("JSON error: ", e);
+        } catch (CameraAccessException e) {
+            throw new ItsException("Access error: ", e);
+        }
     }
 
     private void doGetCameraIds() throws ItsException {
