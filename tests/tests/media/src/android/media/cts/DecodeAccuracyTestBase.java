@@ -639,18 +639,16 @@ public class DecodeAccuracyTestBase {
             handler.post(viewCleaner);
         }
 
-        public synchronized Bitmap generateBitmapFromVideoViewSnapshot(VideoViewSnapshot snapshot) {
-            final long timeOutMs = TimeUnit.SECONDS.toMillis(30);
-            final long start = SystemClock.elapsedRealtime();
+        public Bitmap generateBitmapFromVideoViewSnapshot(VideoViewSnapshot snapshot) {
             handler.post(snapshot);
-            try {
-                while (!snapshot.isBitmapReady()
-                        && (SystemClock.elapsedRealtime() - start < timeOutMs)) {
-                    Thread.sleep(100);
+            synchronized (snapshot.getSyncObject()) {
+                try {
+                    snapshot.getSyncObject().wait(snapshot.SNAPSHOT_TIMEOUT_MS + 100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                    Log.e(TAG, "Unable to finish generateBitmapFromVideoViewSnapshot().");
+                    return null;
                 }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-                return null;
             }
             if (!snapshot.isBitmapReady()) {
                 Log.e(TAG, "Time out in generateBitmapFromVideoViewSnapshot().");
@@ -1300,9 +1298,15 @@ class GLSurfaceViewFactory extends VideoViewFactory {
 /* Definition of a VideoViewSnapshot and a runnable to get a bitmap from a view. */
 abstract class VideoViewSnapshot implements Runnable {
 
+    public static final long SNAPSHOT_TIMEOUT_MS = TimeUnit.SECONDS.toMillis(30);
+    public static final long SLEEP_TIME_MS = 30;
+    public static final Object SYNC_TOKEN = new Object();
+
     public abstract Bitmap getBitmap();
 
     public abstract boolean isBitmapReady();
+
+    public abstract Object getSyncObject();
 
 }
 
@@ -1320,9 +1324,12 @@ class TextureViewSnapshot extends VideoViewSnapshot {
     }
 
     @Override
-    public synchronized void run() {
+    public void run() {
         bitmap = null;
         bitmap = tv.getBitmap();
+        synchronized (SYNC_TOKEN) {
+            SYNC_TOKEN.notify();
+        }
     }
 
     @Override
@@ -1333,6 +1340,11 @@ class TextureViewSnapshot extends VideoViewSnapshot {
     @Override
     public boolean isBitmapReady() {
         return bitmap != null;
+    }
+
+    @Override
+    public Object getSyncObject() {
+        return SYNC_TOKEN;
     }
 
 }
@@ -1346,7 +1358,6 @@ class TextureViewSnapshot extends VideoViewSnapshot {
 class SurfaceViewSnapshot extends VideoViewSnapshot  {
 
     private static final String TAG = SurfaceViewSnapshot.class.getSimpleName();
-    private static final int PIXELCOPY_REQUEST_SLEEP_MS = 30;
     private static final int PIXELCOPY_TIMEOUT_MS = 1000;
     private static final int INITIAL_STATE = -1;
 
@@ -1354,7 +1365,6 @@ class SurfaceViewSnapshot extends VideoViewSnapshot  {
     private final int width;
     private final int height;
 
-    private SynchronousPixelCopy copyHelper;
     private Bitmap bitmap;
     private int copyResult;
 
@@ -1367,20 +1377,26 @@ class SurfaceViewSnapshot extends VideoViewSnapshot  {
     }
 
     @Override
-    public synchronized void run() {
+    public void run() {
+        final long start = SystemClock.elapsedRealtime();
         copyResult = INITIAL_STATE;
         final SynchronousPixelCopy copyHelper = new SynchronousPixelCopy();
         bitmap = Bitmap.createBitmap(width, height, Config.ARGB_8888);
         try {
             // Wait for PixelCopy to finish.
-            while ((copyResult = copyHelper.request(surfaceView, bitmap)) != PixelCopy.SUCCESS) {
-                Thread.sleep(PIXELCOPY_REQUEST_SLEEP_MS);
+            while ((copyResult = copyHelper.request(surfaceView, bitmap)) != PixelCopy.SUCCESS
+                    && (SystemClock.elapsedRealtime() - start) < SNAPSHOT_TIMEOUT_MS) {
+                Thread.sleep(SLEEP_TIME_MS);
             }
         } catch (InterruptedException e) {
             Log.e(TAG, "Pixel Copy is stopped/interrupted before it finishes.", e);
             bitmap = null;
+        } finally {
+            copyHelper.release();
+            synchronized (SYNC_TOKEN) {
+                SYNC_TOKEN.notify();
+            }
         }
-        copyHelper.release();
     }
 
     @Override
@@ -1391,6 +1407,11 @@ class SurfaceViewSnapshot extends VideoViewSnapshot  {
     @Override
     public boolean isBitmapReady() {
         return bitmap != null && copyResult == PixelCopy.SUCCESS;
+    }
+
+    @Override
+    public Object getSyncObject() {
+        return SYNC_TOKEN;
     }
 
     private static class SynchronousPixelCopy implements OnPixelCopyFinishedListener {
@@ -1453,8 +1474,6 @@ class SurfaceViewSnapshot extends VideoViewSnapshot  {
 class GLSurfaceViewSnapshot extends VideoViewSnapshot {
 
     private static final String TAG = GLSurfaceViewSnapshot.class.getSimpleName();
-    private static final int GET_BYTEBUFFER_SLEEP_MS = 30;
-    private static final int GET_BYTEBUFFER_MAX_ATTEMPTS = 30;
 
     private final GLSurfaceViewFactory glSurfaceViewFactory;
     private final int width;
@@ -1470,7 +1489,7 @@ class GLSurfaceViewSnapshot extends VideoViewSnapshot {
     }
 
     @Override
-    public synchronized void run() {
+    public void run() {
         bitmapIsReady = false;
         bitmap = null;
         try {
@@ -1478,6 +1497,7 @@ class GLSurfaceViewSnapshot extends VideoViewSnapshot {
         } catch (InterruptedException exception) {
             Log.e(TAG, exception.getMessage());
             bitmap = null;
+            notifyObject();
             return;
         }
         try {
@@ -1490,6 +1510,8 @@ class GLSurfaceViewSnapshot extends VideoViewSnapshot {
         } catch (NullPointerException exception) {
             Log.e(TAG, "glSurfaceViewFactory or byteBuffer may have been released", exception);
             bitmap = null;
+        } finally {
+            notifyObject();
         }
     }
 
@@ -1503,13 +1525,25 @@ class GLSurfaceViewSnapshot extends VideoViewSnapshot {
         return bitmapIsReady;
     }
 
+    @Override
+    public Object getSyncObject() {
+        return SYNC_TOKEN;
+    }
+
+    private void notifyObject() {
+        synchronized (SYNC_TOKEN) {
+            SYNC_TOKEN.notify();
+        }
+    }
+
     private void waitForByteBuffer() throws InterruptedException {
         // Wait for byte buffer to be ready.
-        for (int i = 0; i < GET_BYTEBUFFER_MAX_ATTEMPTS; i++) {
+        final long start = SystemClock.elapsedRealtime();
+        while (SystemClock.elapsedRealtime() - start < SNAPSHOT_TIMEOUT_MS) {
             if (glSurfaceViewFactory.byteBufferIsReady()) {
                 return;
             }
-            Thread.sleep(GET_BYTEBUFFER_SLEEP_MS);
+            Thread.sleep(SLEEP_TIME_MS);
         }
         throw new InterruptedException("Taking too long to read pixels into a ByteBuffer.");
     }
