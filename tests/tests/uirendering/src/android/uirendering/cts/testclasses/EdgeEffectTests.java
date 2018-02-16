@@ -33,6 +33,7 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.uirendering.cts.bitmapverifiers.PerPixelBitmapVerifier;
+import android.uirendering.cts.testinfrastructure.Tracer;
 import android.uirendering.cts.util.BitmapAsserter;
 import android.uirendering.cts.util.MockVsyncHelper;
 import android.view.ContextThemeWrapper;
@@ -41,7 +42,6 @@ import android.widget.EdgeEffect;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 
@@ -53,7 +53,7 @@ public class EdgeEffectTests {
     private static final int HEIGHT = 90;
 
     @Rule
-    public TestName name = new TestName();
+    public Tracer name = new Tracer();
 
     private BitmapAsserter mBitmapAsserter = new BitmapAsserter(this.getClass().getSimpleName(),
             name.getMethodName());
