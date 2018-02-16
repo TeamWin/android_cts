@@ -26,6 +26,8 @@ import android.autofillservice.cts.VirtualContainerView.Line;
 import android.autofillservice.cts.VirtualContainerView.Line.OneTimeLineWatcher;
 import android.graphics.Canvas;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.autofill.AutofillId;
 
 /**
  * A custom activity that uses {@link Canvas} to draw the following fields:
@@ -37,12 +39,17 @@ import android.os.Bundle;
  */
 public class VirtualContainerActivity extends AbstractAutoFillActivity {
 
+    private static final String TAG = "VirtualContainerActivity";
+    private static final int LOGIN_BUTTON_VIRTUAL_ID = 666;
+
     static final String BLANK_VALUE = "        ";
 
     VirtualContainerView mCustomView;
 
     Line mUsername;
     Line mPassword;
+
+    AutofillId mLoginButtonId;
 
     private FillExpectation mExpectation;
 
@@ -56,6 +63,16 @@ public class VirtualContainerActivity extends AbstractAutoFillActivity {
 
         mUsername = mCustomView.addLine(ID_USERNAME_LABEL, "Username", ID_USERNAME, BLANK_VALUE);
         mPassword = mCustomView.addLine(ID_PASSWORD_LABEL, "Password", ID_PASSWORD, BLANK_VALUE);
+
+        mLoginButtonId = new AutofillId(mCustomView.getAutofillId(), LOGIN_BUTTON_VIRTUAL_ID);
+    }
+
+    /**
+     * Emulates clicking the login button.
+     */
+    void clickLogin() {
+        Log.d(TAG, "clickLogin()");
+        getAutofillManager().notifyViewClicked(mCustomView, LOGIN_BUTTON_VIRTUAL_ID);
     }
 
     /**

@@ -398,10 +398,16 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         saveTest(CommitType.EXPLICIT_COMMIT);
     }
 
+    @Test
+    public void testSave_submitButtonClicked() throws Throwable {
+        saveTest(CommitType.SUBMIT_BUTTON_CLICKED);
+    }
+
     enum CommitType {
         CHILDREN_VIEWS_GONE,
         PARENT_VIEW_GONE,
-        EXPLICIT_COMMIT
+        EXPLICIT_COMMIT,
+        SUBMIT_BUTTON_CLICKED
     }
 
     private void saveTest(CommitType commitType) throws Throwable {
@@ -411,9 +417,18 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         // Set expectations.
         final CannedFillResponse.Builder response = new CannedFillResponse.Builder()
                 .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD);
-        if (commitType == CommitType.CHILDREN_VIEWS_GONE
-                || commitType == CommitType.PARENT_VIEW_GONE) {
-            response.setSaveInfoFlags(SaveInfo.FLAG_SAVE_ON_ALL_VIEWS_INVISIBLE);
+
+        switch (commitType) {
+            case CHILDREN_VIEWS_GONE:
+            case PARENT_VIEW_GONE:
+                response.setSaveInfoFlags(SaveInfo.FLAG_SAVE_ON_ALL_VIEWS_INVISIBLE);
+                break;
+            case SUBMIT_BUTTON_CLICKED:
+                System.out.println(">DUDE: SET CLKIC IT"); // felipeal: tmp
+                response
+                    .setSaveInfoFlags(SaveInfo.FLAG_DONT_SAVE_ON_FINISH)
+                    .setSaveTriggerId(mActivity.mLoginButtonId);
+                break;
         }
         sReplier.addResponse(response.build());
 
@@ -437,6 +452,10 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
                 break;
             case EXPLICIT_COMMIT:
                 mActivity.getAutofillManager().commit();
+                break;
+            case SUBMIT_BUTTON_CLICKED:
+                System.out.println(">DUDE: CLICK IT"); // felipeal: tmp
+                mActivity.clickLogin();
                 break;
             default:
                 throw new IllegalArgumentException("unknown type: " + commitType);
