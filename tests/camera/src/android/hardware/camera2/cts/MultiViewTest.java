@@ -54,6 +54,7 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
     private final static long PREVIEW_TIME_MS = 2000;
     private final static int NUM_SURFACE_SWITCHES = 10;
     private final static int IMG_READER_COUNT = 2;
+    private final static int YUV_IMG_READER_COUNT = 3;
 
     public void testTextureViewPreview() throws Exception {
         for (String cameraId : mCameraIds) {
@@ -472,6 +473,112 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
     }
 
     /*
+     * Verify dynamic shared surface behavior using YUV ImageReaders.
+     */
+    public void testSharedSurfaceYUVImageReaderSwitch() throws Exception {
+        int YUVFormats[] = {ImageFormat.YUV_420_888, ImageFormat.YUV_422_888,
+            ImageFormat.YUV_444_888, ImageFormat.YUY2, ImageFormat.YV12,
+            ImageFormat.NV16, ImageFormat.NV21};
+        for (String cameraId : mCameraIds) {
+            try {
+                openCamera(cameraId);
+                if (getStaticInfo(cameraId).isHardwareLevelLegacy()) {
+                    Log.i(TAG, "Camera " + cameraId + " is legacy, skipping");
+                    continue;
+                }
+                if (!getStaticInfo(cameraId).isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + cameraId +
+                            " does not support color outputs, skipping");
+                    continue;
+                }
+                Size frameSize = null;
+                int yuvFormat = -1;
+                for (int it : YUVFormats) {
+                    Size yuvSizes[] = getStaticInfo(cameraId).getAvailableSizesForFormatChecked(
+                            it, StaticMetadata.StreamDirection.Output);
+                    if (yuvSizes != null) {
+                        frameSize = yuvSizes[0];
+                        yuvFormat = it;
+                        break;
+                    }
+                }
+
+                if ((yuvFormat != -1) && (frameSize.getWidth() > 0) &&
+                        (frameSize.getHeight() > 0)) {
+                    testSharedSurfaceYUVImageReaderSwitch(cameraId, NUM_SURFACE_SWITCHES, yuvFormat,
+                            frameSize);
+                } else {
+                    Log.i(TAG, "Camera " + cameraId +
+                            " does not support YUV outputs, skipping");
+                }
+            }
+            finally {
+                closeCamera(cameraId);
+            }
+        }
+    }
+
+    private void testSharedSurfaceYUVImageReaderSwitch(String cameraId, int switchCount, int format,
+            Size frameSize) throws Exception {
+
+        assertTrue("YUV_IMG_READER_COUNT should be equal or greater than 2",
+                (YUV_IMG_READER_COUNT >= 2));
+
+        SimpleImageListener imageListeners[] = new SimpleImageListener[YUV_IMG_READER_COUNT];
+        SimpleCaptureCallback resultListener = new SimpleCaptureCallback();
+        ImageReader imageReaders[] = new ImageReader[YUV_IMG_READER_COUNT];
+        Surface readerSurfaces[] = new Surface[YUV_IMG_READER_COUNT];
+
+        for (int i = 0; i < YUV_IMG_READER_COUNT; i++) {
+            imageListeners[i] = new SimpleImageListener();
+            imageReaders[i] = ImageReader.newInstance(frameSize.getWidth(), frameSize.getHeight(),
+                    format, 2);
+            imageReaders[i].setOnImageAvailableListener(imageListeners[i], mHandler);
+            readerSurfaces[i] = imageReaders[i].getSurface();
+        }
+
+        OutputConfiguration outputConfig = new OutputConfiguration(readerSurfaces[0]);
+        outputConfig.enableSurfaceSharing();
+        List<OutputConfiguration> outputConfigurations = new ArrayList<>();
+        outputConfigurations.add(outputConfig);
+        if (outputConfig.getMaxSharedSurfaceCount() < YUV_IMG_READER_COUNT) {
+            return;
+        }
+
+        createSessionWithConfigs(cameraId, outputConfigurations);
+
+        // Test YUV ImageReader surface sharing. The first ImageReader will
+        // always be part of the capture request, the rest will switch on each
+        // iteration.
+        for (int j = 0; j < switchCount; j++) {
+            for (int i = 1; i < YUV_IMG_READER_COUNT; i++) {
+                outputConfig.addSurface(readerSurfaces[i]);
+                updateOutputConfiguration(cameraId, outputConfig);
+                CaptureRequest.Builder imageReaderRequestBuilder = getCaptureBuilder(cameraId,
+                        CameraDevice.TEMPLATE_PREVIEW);
+                imageReaderRequestBuilder.addTarget(readerSurfaces[i]);
+                imageReaderRequestBuilder.addTarget(readerSurfaces[0]);
+                capture(cameraId, imageReaderRequestBuilder.build(), resultListener);
+                imageListeners[i].waitForAnyImageAvailable(PREVIEW_TIME_MS);
+                Image img = imageReaders[i].acquireLatestImage();
+                assertNotNull("Invalid image acquired!", img);
+                assertNotNull("Image planes are invalid!", img.getPlanes());
+                img.close();
+                imageListeners[0].waitForAnyImageAvailable(PREVIEW_TIME_MS);
+                img = imageReaders[0].acquireLatestImage();
+                assertNotNull("Invalid image acquired!", img);
+                img.close();
+                outputConfig.removeSurface(readerSurfaces[i]);
+                updateOutputConfiguration(cameraId, outputConfig);
+            }
+        }
+
+        for (int i = 0; i < YUV_IMG_READER_COUNT; i++) {
+            imageReaders[i].close();
+        }
+    }
+
+    /*
      * Test the dynamic shared surface limit.
      */
     public void testSharedSurfaceLimit() throws Exception {
@@ -871,31 +978,6 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
             fail("No error for invalid output config created deferred class with different type");
         } catch (IllegalArgumentException e) {
             // expected;
-        }
-
-        // Verify that non implementation-defined formats sharing are not supported.
-        int[] unsupportedFormats =
-                {ImageFormat.YUV_420_888, ImageFormat.DEPTH16, ImageFormat.DEPTH_POINT_CLOUD,
-                 ImageFormat.JPEG, ImageFormat.RAW_SENSOR, ImageFormat.RAW_PRIVATE};
-        for (int format : unsupportedFormats) {
-            Size[] availableSizes = getStaticInfo(cameraId).getAvailableSizesForFormatChecked(
-                    format, StaticMetadata.StreamDirection.Output);
-            if (availableSizes.length == 0) {
-                continue;
-            }
-            Size size = availableSizes[0];
-
-            imageReader = makeImageReader(size, format, MAX_READER_IMAGES,
-                    new ImageDropperListener(), mHandler);
-            configuration = new OutputConfiguration(OutputConfiguration.SURFACE_GROUP_ID_NONE,
-                    imageReader.getSurface());
-            configuration.enableSurfaceSharing();
-
-            List<OutputConfiguration> outputConfigs = new ArrayList<>();
-            outputConfigs.add(configuration);
-
-            verifyCreateSessionWithConfigsFailure(cameraId, outputConfigs);
-
         }
     }
 
