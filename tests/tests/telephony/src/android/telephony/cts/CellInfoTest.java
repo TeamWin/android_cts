@@ -125,8 +125,13 @@ public class CellInfoTest extends AndroidTestCase{
 
         int earfcn = lte.getCellIdentity().getEarfcn();
         // Reference 3GPP 36.101 Table 5.7.3-1
-        assertTrue("getEarfcn() out of range [0,47000], earfcn=" + earfcn,
-            earfcn >= 0 && earfcn <= 47000);
+        // As per NOTE 1 in the table, although 0-6 are valid channel numbers for
+        // LTE, the reported EARFCN is the center frequency, rendering these channels
+        // out of the range of the narrowest 1.4Mhz deployment.
+        // TODO: cross-reference with the bandwidth to adjust the minimum for 5, 10, and 20
+        // MHz channels
+        assertTrue("getEarfcn() out of range [7,47000], earfcn=" + earfcn,
+            earfcn >= 7 && earfcn <= 47000);
         CellSignalStrengthLte cellSignalStrengthLte = lte.getCellSignalStrength();
         //Integer.MAX_VALUE indicates an unavailable field
         int rsrp = cellSignalStrengthLte.getRsrp();
@@ -159,8 +164,10 @@ public class CellInfoTest extends AndroidTestCase{
 
         int uarfcn = wcdma.getCellIdentity().getUarfcn();
         // Reference 3GPP 25.101 Table 5.2
-        assertTrue("getUarfcn() out of range [400,11000], uarfcn=" + uarfcn,
-            uarfcn >= 400 && uarfcn <= 11000);
+        // From Appendix E.1, even though UARFCN is numbered from 400, the minumum
+        // usable channel is 412 due to the fixed bandwidth of 5Mhz
+        assertTrue("getUarfcn() out of range [412,11000], uarfcn=" + uarfcn,
+            uarfcn >= 412 && uarfcn <= 11000);
 
         int level = wcdma.getCellSignalStrength().getLevel();
         assertTrue("getLevel() out of range [0,4], level=" + level, level >=0 && level <= 4);
