@@ -115,7 +115,7 @@ public class DisplaySizeTest extends ActivityManagerTestBase {
 
     private int getStableDensity() {
         final String densityProp;
-        if (Build.getSerial().startsWith("emulator-")) {
+        if (Build.IS_EMULATOR) {
             densityProp = DENSITY_PROP_EMULATOR;
         } else {
             densityProp = DENSITY_PROP_DEVICE;
