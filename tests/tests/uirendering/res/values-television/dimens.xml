@@ -1,6 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
-     Copyright (C) 2015 The Android Open Source Project
+<!-- Copyright (C) 2018 The Android Open Source Project
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -13,15 +11,8 @@
        WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
        See the License for the specific language governing permissions and
        limitations under the License.
--->
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="@dimen/test_width"
-    android:layout_height="@dimen/test_height">
-    <View android:id="@+id/shadow_view"
-        android:layout_width="40px"
-        android:layout_height="40px"
-        android:translationX="25px"
-        android:translationY="25px"
-        android:elevation="10dp"
-        android:background="#fff" />
-</FrameLayout>
+  -->
+<resources>
+    <item type="dimen" format="float" name="expected_ambient_shadow_alpha">0.15</item>
+    <item type="dimen" format="float" name="expected_spot_shadow_alpha">0.3</item>
+</resources>
