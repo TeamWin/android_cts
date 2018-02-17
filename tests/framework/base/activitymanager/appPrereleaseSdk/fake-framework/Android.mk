@@ -1,4 +1,5 @@
-# Copyright (C) 2016 The Android Open Source Project
+#
+# Copyright (C) 2008 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,28 +12,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+LOCAL_PATH := $(call my-dir)
 
-LOCAL_PATH:= $(call my-dir)
+# A fake framework that mimics an older, pre-release SDK for the purposes of
+# testing what happens when an app linked against a pre-release SDK is installed
+# on release device.
 
 include $(CLEAR_VARS)
-
 LOCAL_USE_AAPT2 := true
-
-# don't include this package in any target
-LOCAL_MODULE_TAGS := optional
-
+LOCAL_PACKAGE_NAME := fake-framework
 LOCAL_SDK_VERSION := core_current
-
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
-
-LOCAL_APK_LIBRARIES := fake-framework
-LOCAL_RES_LIBRARIES := fake-framework
-
-# Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
-
-LOCAL_PACKAGE_NAME := CtsDevicePrereleaseSdkApp
-
-include $(BUILD_CTS_SUPPORT_PACKAGE)
-
-include $(call all-makefiles-under,$(LOCAL_PATH))
+LOCAL_MODULE_TAGS := optional
+LOCAL_EXPORT_PACKAGE_RESOURCES := true
+LOCAL_PROGUARD_ENABLED := disabled
+LOCAL_UNINSTALLABLE_MODULE := true
+include $(BUILD_PACKAGE)
