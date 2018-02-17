@@ -198,10 +198,14 @@ public class AccessibilityTextActionTest extends
 
     public void testTextLocations_textViewShouldProvideWhenRequested() {
         final TextView textView = (TextView) getActivity().findViewById(R.id.text);
-        makeTextViewVisibleAndSetText(textView, getString(R.string.a_b));
+        // Use text with a strong s, since that gets replaced with a double s for all caps.
+        // That replacement requires us to properly handle the length of the string changing.
+        String stringToSet = getString(R.string.german_text_with_strong_s);
+        makeTextViewVisibleAndSetText(textView, stringToSet);
+        getInstrumentation().runOnMainSync(() -> textView.setAllCaps(true));
 
         final AccessibilityNodeInfo text = mUiAutomation.getRootInActiveWindow()
-                .findAccessibilityNodeInfosByText(getString(R.string.a_b)).get(0);
+                .findAccessibilityNodeInfosByText(stringToSet).get(0);
         List<String> textAvailableExtraData = text.getAvailableExtraData();
         assertTrue("Text view should offer text location to accessibility",
                 textAvailableExtraData.contains(EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY));
