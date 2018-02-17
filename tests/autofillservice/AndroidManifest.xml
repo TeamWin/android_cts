@@ -92,6 +92,18 @@
             </intent-filter>
         </service>
         <service
+            android:name=".InstrumentedAutoFillServiceCompatMode"
+            android:label="InstrumentedAutoFillServiceCompatMode"
+            android:permission="android.permission.BIND_AUTOFILL_SERVICE" >
+            <intent-filter>
+                <action android:name="android.service.autofill.AutofillService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.autofill"
+                android:resource="@xml/autofill_service_compat_mode_config">
+            </meta-data>
+        </service>
+        <service
             android:name=".NoOpAutofillService"
             android:label="NoOpAutofillService"
             android:permission="android.permission.BIND_AUTOFILL_SERVICE" >

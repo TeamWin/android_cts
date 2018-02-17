@@ -29,7 +29,7 @@ import android.support.annotation.Nullable;
 public class SettingsStateChangerRule extends StateChangerRule<String> {
 
     /**
-     * Default constructor.
+     * Default constructor for the 'secure' context.
      *
      * @param context context used to retrieve the {@link Settings} provider.
      * @param key prefence key.
@@ -37,6 +37,19 @@ public class SettingsStateChangerRule extends StateChangerRule<String> {
      */
     public SettingsStateChangerRule(@NonNull Context context, @NonNull String key,
             @Nullable String value) {
-        super(new SettingsStateManager(context, key), value);
+        this(context, SettingsHelper.NAMESPACE_SECURE, key, value);
+    }
+
+    /**
+     * Default constructor.
+     *
+     * @param context context used to retrieve the {@link Settings} provider.
+     * @param namespace settings namespace.
+     * @param key prefence key.
+     * @param value value to be set before the test is run.
+     */
+    public SettingsStateChangerRule(@NonNull Context context, @NonNull String namespace,
+            @NonNull String key, @Nullable String value) {
+        super(new SettingsStateManager(context, namespace, key), value);
     }
 }

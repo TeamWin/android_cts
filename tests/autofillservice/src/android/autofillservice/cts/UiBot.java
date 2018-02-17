@@ -460,7 +460,7 @@ final class UiBot {
         final String actualTitle = titleView.getText();
         Log.d(TAG, "save title: " + actualTitle);
 
-        final String serviceLabel = InstrumentedAutoFillService.class.getSimpleName();
+        final String serviceLabel = InstrumentedAutoFillService.getServiceLabel();
         switch (types.length) {
             case 1:
                 final String expectedTitle = (types[0] == SAVE_DATA_TYPE_GENERIC)

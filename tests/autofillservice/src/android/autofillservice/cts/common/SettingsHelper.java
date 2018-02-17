@@ -28,64 +28,89 @@ import android.support.annotation.Nullable;
 /**
  * Provides utilities to interact with the device's {@link Settings}.
  */
-// TODO: make it more generic (it's hardcoded to 'secure' provider on current user
 public final class SettingsHelper {
+
+    public static final String NAMESPACE_SECURE = "secure";
+    public static final String NAMESPACE_GLOBAL = "global";
 
     /**
      * Uses a Shell command to set the given preference.
      */
-    public static void set(@NonNull String key, @Nullable String value) {
+    public static void set(@NonNull String namespace, @NonNull String key, @Nullable String value) {
         if (value == null) {
-            delete(key);
+            delete(namespace, key);
             return;
         }
-        runShellCommand("settings put secure %s %s default", key, value);
+        runShellCommand("settings put %s %s %s default", namespace, key, value);
+    }
+
+    public static void set(@NonNull String key, @Nullable String value) {
+        set(NAMESPACE_SECURE, key, value);
     }
 
     /**
      * Uses a Shell command to set the given preference, and verifies it was correctly set.
      */
-    public static void syncSet(@NonNull Context context, @NonNull String key,
-            @Nullable String value) {
+    public static void syncSet(@NonNull Context context, @NonNull String namespace,
+            @NonNull String key, @Nullable String value) {
         if (value == null) {
-            syncDelete(context, key);
+            syncDelete(context, namespace, key);
             return;
         }
 
         final OneTimeSettingsListener observer = new OneTimeSettingsListener(context, key);
-        set(key, value);
+        set(namespace, key, value);
         observer.assertCalled();
 
-        final String newValue = get(key);
+        final String newValue = get(namespace, key);
         assertWithMessage("invalid value for '%s' settings", key).that(newValue).isEqualTo(value);
+    }
+
+    public static void syncSet(@NonNull Context context, @NonNull String key,
+            @Nullable String value) {
+        syncSet(context, NAMESPACE_SECURE, key, value);
     }
 
     /**
      * Uses a Shell command to delete the given preference.
      */
+    public static void delete(@NonNull String namespace, @NonNull String key) {
+        runShellCommand("settings delete %s %s", namespace, key);
+    }
+
     public static void delete(@NonNull String key) {
-        runShellCommand("settings delete secure %s", key);
+        delete(NAMESPACE_SECURE, key);
     }
 
     /**
      * Uses a Shell command to delete the given preference, and verifies it was correctly deleted.
      */
-    public static void syncDelete(@NonNull Context context, @NonNull String key) {
+    public static void syncDelete(@NonNull Context context, @NonNull String namespace,
+            @NonNull String key) {
 
         final OneTimeSettingsListener observer = new OneTimeSettingsListener(context, key);
-        delete(key);
+        delete(namespace, key);
         observer.assertCalled();
 
-        final String newValue = get(key);
+        final String newValue = get(namespace, key);
         assertWithMessage("invalid value for '%s' settings", key).that(newValue).isEqualTo("null");
+    }
+
+    public static void syncDelete(@NonNull Context context, @NonNull String key) {
+        syncDelete(context, NAMESPACE_SECURE, key);
     }
 
     /**
      * Gets the value of a given preference using Shell command.
      */
     @NonNull
+    public static String get(@NonNull String namespace, @NonNull String key) {
+        return runShellCommand("settings get %s %s", namespace, key);
+    }
+
+    @NonNull
     public static String get(@NonNull String key) {
-        return runShellCommand("settings get secure %s", key);
+        return get(NAMESPACE_SECURE, key);
     }
 
     private SettingsHelper() {

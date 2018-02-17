@@ -29,27 +29,31 @@ import com.google.common.base.Preconditions;
 public class SettingsStateManager implements StateManager<String> {
 
     private final Context mContext;
+    private final String mNamespace;
     private final String mKey;
 
     /**
      * Default constructor.
      *
      * @param context context used to retrieve the {@link Settings} provider.
+     * @param namespace settings namespace.
      * @param key prefence key.
      */
-    public SettingsStateManager(@NonNull Context context, @NonNull String key) {
+    public SettingsStateManager(@NonNull Context context, @NonNull String namespace,
+            @NonNull String key) {
         mContext = Preconditions.checkNotNull(context);
+        mNamespace = Preconditions.checkNotNull(namespace);
         mKey = Preconditions.checkNotNull(key);
     }
 
     @Override
     public void set(@Nullable String value) {
-        SettingsHelper.syncSet(mContext, mKey, value);
+        SettingsHelper.syncSet(mContext, mNamespace, mKey, value);
     }
 
     @Override
     @Nullable
     public String get() {
-        return SettingsHelper.get(mKey);
+        return SettingsHelper.get(mNamespace, mKey);
     }
 }
