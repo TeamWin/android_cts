@@ -34,6 +34,7 @@ import static android.content.pm.PackageManager.FEATURE_SCREEN_PORTRAIT;
 import static android.content.pm.PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE;
 import static android.content.pm.PackageManager.FEATURE_WATCH;
 import static android.server.am.ComponentNameUtils.getActivityName;
+import static android.server.am.ComponentNameUtils.getLogTag;
 import static android.server.am.ComponentNameUtils.getSimpleClassName;
 import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.am.StateLogger.log;
@@ -44,8 +45,8 @@ import static android.view.KeyEvent.KEYCODE_MENU;
 import static android.view.KeyEvent.KEYCODE_SLEEP;
 import static android.view.KeyEvent.KEYCODE_WAKEUP;
 
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import static java.lang.Integer.toHexString;
 
@@ -59,6 +60,7 @@ import android.os.PowerManager;
 import android.provider.Settings;
 import android.server.am.settings.SettingsSession;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.UiDevice;
 import android.view.Display;
@@ -79,9 +81,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public abstract class ActivityManagerTestBase {
     private static final boolean PRETEND_DEVICE_SUPPORTS_PIP = false;
@@ -223,8 +228,8 @@ public abstract class ActivityManagerTestBase {
         return "am start -n " + getActivityComponentName(activityName) + " -f 0x18000000";
     }
 
-    protected static String getAmStartCmdOverHome(final String activityName) {
-        return "am start --activity-task-on-home -n " + getActivityComponentName(activityName);
+    protected static String getAmStartCmdOverHome(final ComponentName activityName) {
+        return "am start --activity-task-on-home -n " + getActivityName(activityName);
     }
 
     protected static String getMoveToPinnedStackCommand(int stackId) {
@@ -446,6 +451,17 @@ public abstract class ActivityManagerTestBase {
         mAmWmState.waitForHomeActivityVisible();
     }
 
+    protected void launchActivity(ComponentName activityName, int windowingMode,
+            final String... keyValuePairs) throws Exception {
+        executeShellCommand(getAmStartCmd(activityName, keyValuePairs)
+                + " --windowingMode " + windowingMode);
+        mAmWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
+                .setWindowingMode(windowingMode)
+                .build());
+    }
+
+    /** TODO(b/73349193): Use {@link #launchActivity(ComponentName, int, String...)} instead. */
+    @Deprecated
     protected void launchActivity(String activityName, int windowingMode,
             final String... keyValuePairs) throws Exception {
         executeShellCommand(getAmStartCmd(activityName, keyValuePairs)
@@ -888,13 +904,14 @@ public abstract class ActivityManagerTestBase {
             setLockDisabled(mIsLockDisabled);
             if (mLockCredentialSet) {
                 removeLockCredential();
-                // Dismiss active keyguard after credential is cleared, so keyguard doesn't ask for
-                // the stale credential.
-                pressBackButton();
-                sleepDevice();
-                wakeUpDevice();
-                unlockDevice();
             }
+
+            // Dismiss active keyguard after credential is cleared, so keyguard doesn't ask for
+            // the stale credential.
+            pressBackButton();
+            sleepDevice();
+            wakeUpDevice();
+            unlockDevice();
         }
 
         /**
@@ -968,158 +985,35 @@ public abstract class ActivityManagerTestBase {
         return output;
     }
 
+    protected static class LogSeparator {
+        private final String mUniqueString;
+
+        private LogSeparator() {
+            mUniqueString = UUID.randomUUID().toString();
+        }
+
+        @Override
+        public String toString() {
+            return mUniqueString;
+        }
+    }
+
     /**
      * Tries to clear logcat and inserts log separator in case clearing didn't succeed, so we can
      * always find the starting point from where to evaluate following logs.
      * @return Unique log separator.
      */
-    protected String clearLogcat() {
+    protected LogSeparator clearLogcat() {
         executeShellCommand("logcat -c");
-        final String uniqueString = UUID.randomUUID().toString();
-        executeShellCommand("log -t " + LOG_SEPARATOR + " " + uniqueString);
-        return uniqueString;
+        final LogSeparator logSeparator = new LogSeparator();
+        executeShellCommand("log -t " + LOG_SEPARATOR + " " + logSeparator);
+        return logSeparator;
     }
 
-    void assertActivityLifecycle(String activityName, boolean relaunched,
-            String logSeparator) {
-        int retriesLeft = 5;
-        String resultString;
-        do {
-            resultString = verifyLifecycleCondition(activityName, logSeparator, relaunched);
-            if (resultString != null) {
-                log("***Waiting for valid lifecycle state: " + resultString);
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    log(e.toString());
-                }
-            } else {
-                break;
-            }
-        } while (retriesLeft-- > 0);
-
-        assertNull(resultString, resultString);
-    }
-
-    /** @return Error string if lifecycle counts don't match, null if everything is fine. */
-    private String verifyLifecycleCondition(String activityName, String logSeparator,
-            boolean relaunched) {
-        final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(activityName,
-                logSeparator);
-        if (relaunched) {
-            if (lifecycleCounts.mDestroyCount < 1) {
-                return activityName + " must have been destroyed. mDestroyCount="
-                        + lifecycleCounts.mDestroyCount;
-            }
-            if (lifecycleCounts.mCreateCount < 1) {
-                return activityName + " must have been (re)created. mCreateCount="
-                        + lifecycleCounts.mCreateCount;
-            }
-        } else {
-            if (lifecycleCounts.mDestroyCount > 0) {
-                return activityName + " must *NOT* have been destroyed. mDestroyCount="
-                        + lifecycleCounts.mDestroyCount;
-            }
-            if (lifecycleCounts.mCreateCount > 0) {
-                return activityName + " must *NOT* have been (re)created. mCreateCount="
-                        + lifecycleCounts.mCreateCount;
-            }
-            if (lifecycleCounts.mConfigurationChangedCount < 1) {
-                return activityName + " must have received configuration changed. "
-                        + "mConfigurationChangedCount="
-                        + lifecycleCounts.mConfigurationChangedCount;
-            }
-        }
-        return null;
-    }
-
-    protected void assertRelaunchOrConfigChanged(
-            String activityName, int numRelaunch, int numConfigChange, String logSeparator) {
-        int retriesLeft = 5;
-        String resultString;
-        do {
-            resultString = verifyRelaunchOrConfigChanged(activityName, numRelaunch, numConfigChange,
-                    logSeparator);
-            if (resultString != null) {
-                log("***Waiting for relaunch or config changed: " + resultString);
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    log(e.toString());
-                }
-            } else {
-                break;
-            }
-        } while (retriesLeft-- > 0);
-
-        assertNull(resultString, resultString);
-    }
-
-    /** @return Error string if lifecycle counts don't match, null if everything is fine. */
-    private String verifyRelaunchOrConfigChanged(String activityName, int numRelaunch,
-            int numConfigChange, String logSeparator) {
-        final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(activityName,
-                logSeparator);
-
-        if (lifecycleCounts.mDestroyCount != numRelaunch) {
-            return activityName + " has been destroyed " + lifecycleCounts.mDestroyCount
-                    + " time(s), expecting " + numRelaunch;
-        } else if (lifecycleCounts.mCreateCount != numRelaunch) {
-            return activityName + " has been (re)created " + lifecycleCounts.mCreateCount
-                    + " time(s), expecting " + numRelaunch;
-        } else if (lifecycleCounts.mConfigurationChangedCount != numConfigChange) {
-            return activityName + " has received " + lifecycleCounts.mConfigurationChangedCount
-                    + " onConfigurationChanged() calls, expecting " + numConfigChange;
-        }
-        return null;
-    }
-
-    protected void assertActivityDestroyed(String activityName, String logSeparator) {
-        int retriesLeft = 5;
-        String resultString;
-        do {
-            resultString = verifyActivityDestroyed(activityName, logSeparator);
-            if (resultString != null) {
-                log("***Waiting for activity destroyed: " + resultString);
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    log(e.toString());
-                }
-            } else {
-                break;
-            }
-        } while (retriesLeft-- > 0);
-
-        assertNull(resultString, resultString);
-    }
-
-    /** @return Error string if lifecycle counts don't match, null if everything is fine. */
-    private String verifyActivityDestroyed(String activityName, String logSeparator) {
-        final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(activityName,
-                logSeparator);
-
-        if (lifecycleCounts.mDestroyCount != 1) {
-            return activityName + " has been destroyed " + lifecycleCounts.mDestroyCount
-                    + " time(s), expecting single destruction.";
-        } else if (lifecycleCounts.mCreateCount != 0) {
-            return activityName + " has been (re)created " + lifecycleCounts.mCreateCount
-                    + " time(s), not expecting any.";
-        } else if (lifecycleCounts.mConfigurationChangedCount != 0) {
-            return activityName + " has received " + lifecycleCounts.mConfigurationChangedCount
-                    + " onConfigurationChanged() calls, not expecting any.";
-        }
-        return null;
-    }
-
-    protected static String[] getDeviceLogsForComponent(String componentName, String logSeparator) {
-        return getDeviceLogsForComponents(new String[]{componentName}, logSeparator);
-    }
-
-    protected static String[] getDeviceLogsForComponents(final String[] componentNames,
-            String logSeparator) {
+    protected static String[] getDeviceLogsForComponents(
+            LogSeparator logSeparator, String... logTags) {
         String filters = LOG_SEPARATOR + ":I ";
-        for (String component : componentNames) {
+        for (String component : logTags) {
             filters += component + ":I ";
         }
         final String[] result = executeShellCommand("logcat -v brief -d " + filters + " *:S")
@@ -1132,7 +1026,7 @@ public abstract class ActivityManagerTestBase {
         int i = 0;
         boolean lookingForSeparator = true;
         while (i < result.length && lookingForSeparator) {
-            if (result[i].contains(logSeparator)) {
+            if (result[i].contains(logSeparator.toString())) {
                 lookingForSeparator = false;
             }
             i++;
@@ -1144,120 +1038,228 @@ public abstract class ActivityManagerTestBase {
         return filteredResult;
     }
 
-    void assertSingleLaunch(String activityName, String logSeparator) {
-        int retriesLeft = 5;
-        String resultString;
-        do {
-            resultString = validateLifecycleCounts(activityName, logSeparator, 1 /* createCount */,
-                    1 /* startCount */, 1 /* resumeCount */, 0 /* pauseCount */, 0 /* stopCount */,
-                    0 /* destroyCount */);
-            if (resultString != null) {
-                log("***Waiting for valid lifecycle state: " + resultString);
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    log(e.toString());
-                }
-            } else {
-                break;
-            }
-        } while (retriesLeft-- > 0);
+    /**
+     * Base helper class for retrying validator success.
+     */
+    private abstract static class RetryValidator {
 
-        assertNull(resultString, resultString);
+        private static final int RETRY_LIMIT = 5;
+        private static final long RETRY_INTERVAL = TimeUnit.SECONDS.toMillis(1);
+
+        /**
+         * @return Error string if validation is failed, null if everything is fine.
+         **/
+        @Nullable
+        protected abstract String validate();
+
+        /**
+         * Executes {@link #validate()}. Retries {@link #RETRY_LIMIT} times with
+         * {@link #RETRY_INTERVAL} interval.
+         *
+         * @param waitingMessage logging message while waiting validation.
+         */
+        void assertValidator(String waitingMessage) {
+            String resultString = null;
+            for (int retry = 1; retry <= RETRY_LIMIT; retry++) {
+                resultString = validate();
+                if (resultString == null) {
+                    return;
+                }
+                logAlways(waitingMessage + ": " + resultString);
+                try {
+                    Thread.sleep(RETRY_INTERVAL);
+                } catch (InterruptedException e) {
+                    logE(waitingMessage + ": interrupted", e);
+                }
+            }
+            fail(resultString);
+        }
     }
 
-    public void assertSingleLaunchAndStop(String activityName, String logSeparator) {
-        int retriesLeft = 5;
-        String resultString;
-        do {
-            resultString = validateLifecycleCounts(activityName, logSeparator, 1 /* createCount */,
-                    1 /* startCount */, 1 /* resumeCount */, 1 /* pauseCount */, 1 /* stopCount */,
-                    0 /* destroyCount */);
-            if (resultString != null) {
-                log("***Waiting for valid lifecycle state: " + resultString);
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    log(e.toString());
-                }
-            } else {
-                break;
-            }
-        } while (retriesLeft-- > 0);
+    private static class ActivityLifecycleCountsValidator extends RetryValidator {
+        private final String mActivityName;
+        private final LogSeparator mLogSeparator;
+        private final int mCreateCount;
+        private final int mStartCount;
+        private final int mResumeCount;
+        private final int mPauseCount;
+        private final int mStopCount;
+        private final int mDestroyCount;
 
-        assertNull(resultString, resultString);
+        ActivityLifecycleCountsValidator(String activityName, LogSeparator logSeparator,
+                int createCount, int startCount, int resumeCount, int pauseCount, int stopCount,
+                int destroyCount) {
+            mActivityName = activityName;
+            mLogSeparator = logSeparator;
+            mCreateCount = createCount;
+            mStartCount = startCount;
+            mResumeCount = resumeCount;
+            mPauseCount = pauseCount;
+            mStopCount = stopCount;
+            mDestroyCount = destroyCount;
+        }
+
+        @Override
+        @Nullable
+        protected String validate() {
+            final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(
+                    mActivityName, mLogSeparator);
+            if (lifecycleCounts.mCreateCount == mCreateCount
+                    && lifecycleCounts.mStartCount == mStartCount
+                    && lifecycleCounts.mResumeCount == mResumeCount
+                    && lifecycleCounts.mPauseCount == mPauseCount
+                    && lifecycleCounts.mStopCount == mStopCount
+                    && lifecycleCounts.mDestroyCount == mDestroyCount) {
+                return null;
+            }
+            final String expected = IntStream.of(mCreateCount, mStopCount, mResumeCount,
+                    mPauseCount, mStopCount, mDestroyCount)
+                    .mapToObj(Integer::toString)
+                    .collect(Collectors.joining("/"));
+            return mActivityName + " lifecycle count mismatched:"
+                    + " expected=" + expected
+                    + " actual=" + lifecycleCounts.counters();
+        }
     }
 
-    public void assertSingleStartAndStop(String activityName, String logSeparator) {
-        int retriesLeft = 5;
-        String resultString;
-        do {
-            resultString =  validateLifecycleCounts(activityName, logSeparator, 0 /* createCount */,
-                    1 /* startCount */, 1 /* resumeCount */, 1 /* pauseCount */, 1 /* stopCount */,
-                    0 /* destroyCount */);
-            if (resultString != null) {
-                log("***Waiting for valid lifecycle state: " + resultString);
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    log(e.toString());
-                }
-            } else {
-                break;
-            }
-        } while (retriesLeft-- > 0);
+    void assertActivityLifecycle(
+            String activityName, boolean relaunched, LogSeparator logSeparator) {
+        new RetryValidator() {
 
-        assertNull(resultString, resultString);
+            @Nullable
+            @Override
+            protected String validate() {
+                final ActivityLifecycleCounts lifecycleCounts =
+                        new ActivityLifecycleCounts(activityName, logSeparator);
+                if (relaunched) {
+                    if (lifecycleCounts.mDestroyCount < 1) {
+                        return activityName + " must have been destroyed. mDestroyCount="
+                                + lifecycleCounts.mDestroyCount;
+                    }
+                    if (lifecycleCounts.mCreateCount < 1) {
+                        return activityName + " must have been (re)created. mCreateCount="
+                                + lifecycleCounts.mCreateCount;
+                    }
+                    return null;
+                }
+                if (lifecycleCounts.mDestroyCount > 0) {
+                    return activityName + " must *NOT* have been destroyed. mDestroyCount="
+                            + lifecycleCounts.mDestroyCount;
+                }
+                if (lifecycleCounts.mCreateCount > 0) {
+                    return activityName + " must *NOT* have been (re)created. mCreateCount="
+                            + lifecycleCounts.mCreateCount;
+                }
+                if (lifecycleCounts.mConfigurationChangedCount < 1) {
+                    return activityName + " must have received configuration changed. "
+                            + "mConfigurationChangedCount="
+                            + lifecycleCounts.mConfigurationChangedCount;
+                }
+                return null;
+            }
+        }.assertValidator("***Waiting for valid lifecycle state");
     }
 
-    void assertSingleStart(String activityName, String logSeparator) {
-        int retriesLeft = 5;
-        String resultString;
-        do {
-            resultString = validateLifecycleCounts(activityName, logSeparator, 0 /* createCount */,
-                    1 /* startCount */, 1 /* resumeCount */, 0 /* pauseCount */, 0 /* stopCount */,
-                    0 /* destroyCount */);
-            if (resultString != null) {
-                log("***Waiting for valid lifecycle state: " + resultString);
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    log(e.toString());
-                }
-            } else {
-                break;
-            }
-        } while (retriesLeft-- > 0);
+    protected void assertRelaunchOrConfigChanged(String activityName, int numRelaunch,
+            int numConfigChange, LogSeparator logSeparator) {
+        new RetryValidator() {
 
-        assertNull(resultString, resultString);
+            @Nullable
+            @Override
+            protected String validate() {
+                final ActivityLifecycleCounts lifecycleCounts =
+                        new ActivityLifecycleCounts(activityName, logSeparator);
+                if (lifecycleCounts.mDestroyCount != numRelaunch) {
+                    return activityName + " has been destroyed " + lifecycleCounts.mDestroyCount
+                            + " time(s), expecting " + numRelaunch;
+                } else if (lifecycleCounts.mCreateCount != numRelaunch) {
+                    return activityName + " has been (re)created " + lifecycleCounts.mCreateCount
+                            + " time(s), expecting " + numRelaunch;
+                } else if (lifecycleCounts.mConfigurationChangedCount != numConfigChange) {
+                    return activityName + " has received "
+                            + lifecycleCounts.mConfigurationChangedCount
+                            + " onConfigurationChanged() calls, expecting " + numConfigChange;
+                }
+                return null;
+            }
+        }.assertValidator("***Waiting for relaunch or config changed");
     }
 
-    private String validateLifecycleCounts(String activityName, String logSeparator,
-            int createCount, int startCount, int resumeCount, int pauseCount, int stopCount,
-            int destroyCount) {
+    protected void assertActivityDestroyed(String activityName, LogSeparator logSeparator) {
+        new RetryValidator() {
 
-        final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(activityName,
-                logSeparator);
+            @Nullable
+            @Override
+            protected String validate() {
+                final ActivityLifecycleCounts lifecycleCounts =
+                        new ActivityLifecycleCounts(activityName, logSeparator);
 
-        if (lifecycleCounts.mCreateCount != createCount) {
-            return activityName + " created " + lifecycleCounts.mCreateCount + " times.";
-        }
-        if (lifecycleCounts.mStartCount != startCount) {
-            return activityName + " started " + lifecycleCounts.mStartCount + " times.";
-        }
-        if (lifecycleCounts.mResumeCount != resumeCount) {
-            return activityName + " resumed " + lifecycleCounts.mResumeCount + " times.";
-        }
-        if (lifecycleCounts.mPauseCount != pauseCount) {
-            return activityName + " paused " + lifecycleCounts.mPauseCount + " times.";
-        }
-        if (lifecycleCounts.mStopCount != stopCount) {
-            return activityName + " stopped " + lifecycleCounts.mStopCount + " times.";
-        }
-        if (lifecycleCounts.mDestroyCount != destroyCount) {
-            return activityName + " destroyed " + lifecycleCounts.mDestroyCount + " times.";
-        }
-        return null;
+                if (lifecycleCounts.mDestroyCount != 1) {
+                    return activityName + " has been destroyed " + lifecycleCounts.mDestroyCount
+                            + " time(s), expecting single destruction.";
+                } else if (lifecycleCounts.mCreateCount != 0) {
+                    return activityName + " has been (re)created " + lifecycleCounts.mCreateCount
+                            + " time(s), not expecting any.";
+                } else if (lifecycleCounts.mConfigurationChangedCount != 0) {
+                    return activityName + " has received "
+                            + lifecycleCounts.mConfigurationChangedCount
+                            + " onConfigurationChanged() calls, not expecting any.";
+                }
+                return null;
+            }
+        }.assertValidator("***Waiting for activity destroyed");
+    }
+
+    void assertSingleLaunch(ComponentName activityName, LogSeparator logSeparator) {
+        assertSingleLaunch(getLogTag(activityName), logSeparator);
+    }
+
+    /** TODO(b/73349193): Use {@link #assertSingleLaunch(ComponentName, LogSeparator)} instead. */
+    @Deprecated
+    void assertSingleLaunch(String logTag, LogSeparator logSeparator) {
+        new ActivityLifecycleCountsValidator(logTag, logSeparator, 1 /* createCount */,
+                1 /* startCount */, 1 /* resumeCount */, 0 /* pauseCount */, 0 /* stopCount */,
+                0 /* destroyCount */)
+                .assertValidator("***Waiting for activity create, start, and resume");
+    }
+
+    void assertSingleLaunchAndStop(ComponentName activityName, LogSeparator logSeparator) {
+        assertSingleStartAndStop(getLogTag(activityName), logSeparator);
+    }
+
+    /** TODO(b/73349193): Use {@link #assertSingleLaunchAndStop(ComponentName, LogSeparator)}. */
+    @Deprecated
+    void assertSingleLaunchAndStop(String logTag, LogSeparator logSeparator) {
+        new ActivityLifecycleCountsValidator(logTag, logSeparator, 1 /* createCount */,
+                1 /* startCount */, 1 /* resumeCount */, 1 /* pauseCount */, 1 /* stopCount */,
+                0 /* destroyCount */)
+                .assertValidator("***Waiting for activity create, start, resume, pause, and stop");
+    }
+
+    void assertSingleStartAndStop(ComponentName activityName, LogSeparator logSeparator) {
+        assertSingleStartAndStop(getLogTag(activityName), logSeparator);
+    }
+
+    /** TODO(b/73349193): Use {@link #assertSingleStartAndStop(ComponentName, LogSeparator)}. */
+    @Deprecated
+    void assertSingleStartAndStop(String logTag, LogSeparator logSeparator) {
+        new ActivityLifecycleCountsValidator(logTag, logSeparator, 0 /* createCount */,
+                1 /* startCount */, 1 /* resumeCount */, 1 /* pauseCount */, 1 /* stopCount */,
+                0 /* destroyCount */)
+                .assertValidator("***Waiting for activity start, resume, pause, and stop");
+    }
+
+    void assertSingleStart(ComponentName activityName, LogSeparator logSeparator) {
+        assertSingleStart(getLogTag(activityName), logSeparator);
+    }
+
+    /** TODO(b/73349193): Use {@link #assertSingleStart(ComponentName, LogSeparator)} instead. */
+    @Deprecated
+    void assertSingleStart(String logTag, LogSeparator logSeparator) {
+        new ActivityLifecycleCountsValidator(logTag, logSeparator, 0 /* createCount */,
+                1 /* startCount */, 1 /* resumeCount */, 0 /* pauseCount */, 0 /* stopCount */,
+                0 /* destroyCount */)
+                .assertValidator("***Waiting for activity start and resume");
     }
 
     // TODO: Now that our test are device side, we can convert these to a more direct communication
@@ -1324,7 +1326,7 @@ public abstract class ActivityManagerTestBase {
         }
     }
 
-    ReportedSizes getLastReportedSizesForActivity(String activityName, String logSeparator) {
+    ReportedSizes getLastReportedSizesForActivity(String activityName, LogSeparator logSeparator) {
         int retriesLeft = 5;
         ReportedSizes result;
         do {
@@ -1344,8 +1346,8 @@ public abstract class ActivityManagerTestBase {
         return result;
     }
 
-    private ReportedSizes readLastReportedSizes(String activityName, String logSeparator) {
-        final String[] lines = getDeviceLogsForComponent(activityName, logSeparator);
+    private ReportedSizes readLastReportedSizes(String activityName, LogSeparator logSeparator) {
+        final String[] lines = getDeviceLogsForComponents(logSeparator, activityName);
         for (int i = lines.length - 1; i >= 0; i--) {
             final String line = lines[i].trim();
             final Matcher matcher = sNewConfigPattern.matcher(line);
@@ -1368,7 +1370,7 @@ public abstract class ActivityManagerTestBase {
 
     /** Waits for at least one onMultiWindowModeChanged event. */
     ActivityLifecycleCounts waitForOnMultiWindowModeChanged(
-            String activityName, String logSeparator) {
+            String activityName, LogSeparator logSeparator) {
         int retriesLeft = 5;
         ActivityLifecycleCounts result;
         do {
@@ -1408,10 +1410,14 @@ public abstract class ActivityManagerTestBase {
         int mLastStopLineIndex;
         int mDestroyCount;
 
-        ActivityLifecycleCounts(String activityName, String logSeparator) {
+        ActivityLifecycleCounts(ComponentName componentName, LogSeparator logSeparator) {
+            this(getLogTag(componentName), logSeparator);
+        }
+
+        ActivityLifecycleCounts(String logTag, LogSeparator logSeparator) {
             int lineIndex = 0;
             waitForIdle();
-            for (String line : getDeviceLogsForComponent(activityName, logSeparator)) {
+            for (String line : getDeviceLogsForComponents(logSeparator, logTag)) {
                 line = line.trim();
                 lineIndex++;
 
@@ -1485,6 +1491,13 @@ public abstract class ActivityManagerTestBase {
                     continue;
                 }
             }
+        }
+
+        String counters() {
+            return IntStream.of(mCreateCount, mStartCount, mResumeCount, mPauseCount, mStopCount,
+                    mDestroyCount)
+                    .mapToObj(Integer::toString)
+                    .collect(Collectors.joining("/"));
         }
     }
 

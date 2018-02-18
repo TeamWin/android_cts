@@ -42,6 +42,7 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.v4.content.FileProvider;
 import android.util.Size;
+import android.util.TypedValue;
 
 import com.android.compatibility.common.util.BitmapUtils;
 
@@ -477,6 +478,17 @@ public class ImageDecoderTest {
                 }
             }
         }
+    }
+
+    @Test
+    public void testNinepatchWithDensityNone() {
+        TypedValue value = new TypedValue();
+        InputStream is = mRes.openRawResource(R.drawable.ninepatch_nodpi, value);
+        // This does not call ImageDecoder directly because this entry point is not public.
+        Drawable dr = Drawable.createFromResourceStream(mRes, value, is, null, null);
+        assertNotNull(dr);
+        assertEquals(5, dr.getIntrinsicWidth());
+        assertEquals(5, dr.getIntrinsicHeight());
     }
 
     @Test

@@ -15,11 +15,17 @@
  */
 package com.android.cts.deviceowner;
 
+import static android.app.admin.DevicePolicyManager.KEYGUARD_DISABLE_FINGERPRINT;
+import static android.app.admin.DevicePolicyManager.PASSWORD_QUALITY_COMPLEX;
+import static android.app.admin.SecurityLog.LEVEL_ERROR;
+import static android.app.admin.SecurityLog.LEVEL_INFO;
+import static android.app.admin.SecurityLog.LEVEL_WARNING;
 import static android.app.admin.SecurityLog.TAG_ADB_SHELL_CMD;
 import static android.app.admin.SecurityLog.TAG_ADB_SHELL_INTERACTIVE;
 import static android.app.admin.SecurityLog.TAG_APP_PROCESS_START;
 import static android.app.admin.SecurityLog.TAG_CERT_AUTHORITY_INSTALLED;
 import static android.app.admin.SecurityLog.TAG_CERT_AUTHORITY_REMOVED;
+import static android.app.admin.SecurityLog.TAG_CERT_VALIDATION_FAILURE;
 import static android.app.admin.SecurityLog.TAG_CRYPTO_SELF_TEST_COMPLETED;
 import static android.app.admin.SecurityLog.TAG_KEYGUARD_DISABLED_FEATURES_SET;
 import static android.app.admin.SecurityLog.TAG_KEYGUARD_DISMISSED;
@@ -28,6 +34,7 @@ import static android.app.admin.SecurityLog.TAG_KEYGUARD_SECURED;
 import static android.app.admin.SecurityLog.TAG_KEY_DESTRUCTION;
 import static android.app.admin.SecurityLog.TAG_KEY_GENERATED;
 import static android.app.admin.SecurityLog.TAG_KEY_IMPORT;
+import static android.app.admin.SecurityLog.TAG_KEY_INTEGRITY_VIOLATION;
 import static android.app.admin.SecurityLog.TAG_LOGGING_STARTED;
 import static android.app.admin.SecurityLog.TAG_LOGGING_STOPPED;
 import static android.app.admin.SecurityLog.TAG_LOG_BUFFER_SIZE_CRITICAL;
@@ -54,6 +61,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Parcel;
 import android.os.Process;
+import android.os.UserManager;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.security.keystore.KeyProtection;
@@ -68,6 +76,7 @@ import java.security.KeyStore;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -106,7 +115,7 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
                     .put(TAG_MAX_SCREEN_LOCK_TIMEOUT_SET, of(S, I, I, L))
                     .put(TAG_MAX_PASSWORD_ATTEMPTS_SET, of(S, I, I, I))
                     .put(TAG_KEYGUARD_DISABLED_FEATURES_SET, of(S, I, I, I))
-                    .put(TAG_REMOTE_LOCK, of(S, I))
+                    .put(TAG_REMOTE_LOCK, of(S, I, I))
                     .put(TAG_WIPE_FAILURE, of())
                     .put(TAG_KEY_GENERATED, of(I, S, I))
                     .put(TAG_KEY_IMPORT, of(I, S, I))
@@ -116,6 +125,8 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
                     .put(TAG_USER_RESTRICTION_ADDED, of(S, I, S))
                     .put(TAG_USER_RESTRICTION_REMOVED, of(S, I, S))
                     .put(TAG_CRYPTO_SELF_TEST_COMPLETED, of(I))
+                    .put(TAG_KEY_INTEGRITY_VIOLATION, of(S, I))
+                    .put(TAG_CERT_VALIDATION_FAILURE, of(S))
                     .build();
 
     private static final String GENERATED_KEY_ALIAS = "generated_key_alias";
@@ -156,9 +167,35 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
     private static final int ALIAS_INDEX = 1;
     private static final int UID_INDEX = 2;
     private static final int SUBJECT_INDEX = 1;
+    private static final int ADMIN_PKG_INDEX = 0;
+    private static final int ADMIN_USER_INDEX = 1;
+    private static final int TARGET_USER_INDEX = 2;
+    private static final int PWD_LEN_INDEX = 3;
+    private static final int PWD_QUALITY_INDEX = 4;
+    private static final int LETTERS_INDEX = 5;
+    private static final int NON_LETTERS_INDEX = 6;
+    private static final int NUMERIC_INDEX = 7;
+    private static final int UPPERCASE_INDEX = 8;
+    private static final int LOWERCASE_INDEX = 9;
+    private static final int SYMBOLS_INDEX = 10;
+    private static final int PWD_EXPIRATION_INDEX = 3;
+    private static final int PWD_HIST_LEN_INDEX = 3;
+    private static final int USER_RESTRICTION_INDEX = 2;
+    private static final int MAX_PWD_ATTEMPTS_INDEX = 3;
+    private static final int KEYGUARD_FEATURES_INDEX = 3;
+    private static final int MAX_SCREEN_TIMEOUT_INDEX = 3;
 
     // Value that indicates success in events that have corresponding field in their payload.
     private static final int SUCCESS_VALUE = 1;
+
+    private static final int TEST_PWD_LENGTH = 10;
+    // Min number of various character types to use.
+    private static final int TEST_PWD_CHARS = 2;
+
+    private static final long TEST_PWD_EXPIRATION_TIMEOUT = TimeUnit.DAYS.toMillis(356);
+    private static final int TEST_PWD_HISTORY_LENGTH = 3;
+    private static final int TEST_PWD_MAX_ATTEMPTS = 5;
+    private static final long TEST_MAX_TIME_TO_LOCK = TimeUnit.HOURS.toMillis(1);
 
     /**
      * Test: retrieving security logs can only be done if there's one user on the device or all
@@ -193,6 +230,7 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
         verifyAutomaticEventsPresent(events);
         verifyKeystoreEventsPresent(events);
         verifyKeyChainEventsPresent(events);
+        verifyAdminEventsPresent(events);
     }
 
     private void verifyAutomaticEventsPresent(List<SecurityEvent> events) {
@@ -213,12 +251,19 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
         verifyKeyDeletedEventPresent(events, IMPORTED_KEY_ALIAS);
     }
 
+    private void verifyAdminEventsPresent(List<SecurityEvent> events) {
+        verifyPasswordComplexityEventsPresent(events);
+        verifyUserRestrictionEventsPresent(events);
+        verifyLockingPolicyEventsPresent(events);
+    }
+
     /**
      * Generates events for positive test cases.
      */
     public void testGenerateLogs() throws Exception {
         generateKeystoreEvents();
         generateKeyChainEvents();
+        generateAdminEvents();
     }
 
     private void generateKeyChainEvents() {
@@ -231,6 +276,12 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
         deleteKey(GENERATED_KEY_ALIAS);
         importKey(IMPORTED_KEY_ALIAS);
         deleteKey(IMPORTED_KEY_ALIAS);
+    }
+
+    private void generateAdminEvents() {
+        generatePasswordComplexityEvents();
+        generateUserRestrictionEvents();
+        generateLockingPolicyEvents();
     }
 
     /**
@@ -301,6 +352,9 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
             // Restore from parcel and check contents.
             final SecurityEvent restored = SecurityEvent.CREATOR.createFromParcel(p);
             p.recycle();
+
+            final int level = event.getLogLevel();
+            assertTrue(level == LEVEL_INFO || level == LEVEL_WARNING || level == LEVEL_ERROR);
 
             // For some events data is encapsulated into Object array.
             if (event.getData() instanceof Object[]) {
@@ -388,6 +442,10 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
 
     private static int getInt(SecurityEvent event, int index) {
         return (Integer) getDatum(event, index);
+    }
+
+    private static long getLong(SecurityEvent event, int index) {
+        return (Long) getDatum(event, index);
     }
 
     /**
@@ -491,5 +549,132 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
                 e -> e.getTag() == TAG_CERT_AUTHORITY_REMOVED
                         && getInt(e, SUCCESS_INDEX) == SUCCESS_VALUE
                         && getString(e, SUBJECT_INDEX).equals(TEST_CA_SUBJECT));
+    }
+
+    private void generatePasswordComplexityEvents() {
+        mDevicePolicyManager.setPasswordQuality(getWho(), PASSWORD_QUALITY_COMPLEX);
+        mDevicePolicyManager.setPasswordMinimumLength(getWho(), TEST_PWD_LENGTH);
+        mDevicePolicyManager.setPasswordMinimumLetters(getWho(), TEST_PWD_CHARS);
+        mDevicePolicyManager.setPasswordMinimumNonLetter(getWho(), TEST_PWD_CHARS);
+        mDevicePolicyManager.setPasswordMinimumUpperCase(getWho(), TEST_PWD_CHARS);
+        mDevicePolicyManager.setPasswordMinimumLowerCase(getWho(), TEST_PWD_CHARS);
+        mDevicePolicyManager.setPasswordMinimumNumeric(getWho(), TEST_PWD_CHARS);
+        mDevicePolicyManager.setPasswordMinimumSymbols(getWho(), TEST_PWD_CHARS);
+    }
+
+    private void verifyPasswordComplexityEventsPresent(List<SecurityEvent> events) {
+        final int userId = Process.myUserHandle().getIdentifier();
+        // This reflects default values for password complexity event payload fields.
+        final Object[] expectedPayload = new Object[] {
+                getWho().getPackageName(), // admin package
+                userId,                    // admin user
+                userId,                    // target user
+                0,                         // default password length
+                0,                         // default password quality
+                1,                         // default min letters
+                0,                         // default min non-letters
+                1,                         // default min numeric
+                0,                         // default min uppercase
+                0,                         // default min lowercase
+                1,                         // default min symbols
+        };
+
+        // The order should be consistent with the order in generatePasswordComplexityEvents(), so
+        // that the expected values change in the same sequence as when setting password policies.
+        expectedPayload[PWD_QUALITY_INDEX] = PASSWORD_QUALITY_COMPLEX;
+        findPasswordComplexityEvent("set pwd quality", events, expectedPayload);
+        expectedPayload[PWD_LEN_INDEX] = TEST_PWD_LENGTH;
+        findPasswordComplexityEvent("set pwd length", events, expectedPayload);
+        expectedPayload[LETTERS_INDEX] = TEST_PWD_CHARS;
+        findPasswordComplexityEvent("set pwd min letters", events, expectedPayload);
+        expectedPayload[NON_LETTERS_INDEX] = TEST_PWD_CHARS;
+        findPasswordComplexityEvent("set pwd min non-letters", events, expectedPayload);
+        expectedPayload[UPPERCASE_INDEX] = TEST_PWD_CHARS;
+        findPasswordComplexityEvent("set pwd min uppercase", events, expectedPayload);
+        expectedPayload[LOWERCASE_INDEX] = TEST_PWD_CHARS;
+        findPasswordComplexityEvent("set pwd min lowercase", events, expectedPayload);
+        expectedPayload[NUMERIC_INDEX] = TEST_PWD_CHARS;
+        findPasswordComplexityEvent("set pwd min numeric", events, expectedPayload);
+        expectedPayload[SYMBOLS_INDEX] = TEST_PWD_CHARS;
+        findPasswordComplexityEvent("set pwd min symbols", events, expectedPayload);
+    }
+
+    private void generateLockingPolicyEvents() {
+        mDevicePolicyManager.setPasswordExpirationTimeout(getWho(), TEST_PWD_EXPIRATION_TIMEOUT);
+        mDevicePolicyManager.setPasswordHistoryLength(getWho(), TEST_PWD_HISTORY_LENGTH);
+        mDevicePolicyManager.setMaximumFailedPasswordsForWipe(getWho(), TEST_PWD_MAX_ATTEMPTS);
+        mDevicePolicyManager.setKeyguardDisabledFeatures(getWho(), KEYGUARD_DISABLE_FINGERPRINT);
+        mDevicePolicyManager.setMaximumTimeToLock(getWho(), TEST_MAX_TIME_TO_LOCK);
+        mDevicePolicyManager.lockNow();
+    }
+
+    private void verifyLockingPolicyEventsPresent(List<SecurityEvent> events) {
+        final int userId = Process.myUserHandle().getIdentifier();
+
+        findEvent("set password expiration", events,
+                e -> e.getTag() == TAG_PASSWORD_EXPIRATION_SET &&
+                        getString(e, ADMIN_PKG_INDEX).equals(getWho().getPackageName()) &&
+                        getInt(e, ADMIN_USER_INDEX) == userId &&
+                        getInt(e, TARGET_USER_INDEX) == userId &&
+                        getLong(e, PWD_EXPIRATION_INDEX) == TEST_PWD_EXPIRATION_TIMEOUT);
+
+        findEvent("set password history length", events,
+                e -> e.getTag() == TAG_PASSWORD_HISTORY_LENGTH_SET &&
+                        getString(e, ADMIN_PKG_INDEX).equals(getWho().getPackageName()) &&
+                        getInt(e, ADMIN_USER_INDEX) == userId &&
+                        getInt(e, TARGET_USER_INDEX) == userId &&
+                        getInt(e, PWD_HIST_LEN_INDEX) == TEST_PWD_HISTORY_LENGTH);
+
+        findEvent("set password attempts", events,
+                e -> e.getTag() == TAG_MAX_PASSWORD_ATTEMPTS_SET &&
+                        getString(e, ADMIN_PKG_INDEX).equals(getWho().getPackageName()) &&
+                        getInt(e, ADMIN_USER_INDEX) == userId &&
+                        getInt(e, TARGET_USER_INDEX) == userId &&
+                        getInt(e, MAX_PWD_ATTEMPTS_INDEX) == TEST_PWD_MAX_ATTEMPTS);
+
+        findEvent("set keyguard disabled features", events,
+                e -> e.getTag() == TAG_KEYGUARD_DISABLED_FEATURES_SET &&
+                        getString(e, ADMIN_PKG_INDEX).equals(getWho().getPackageName()) &&
+                        getInt(e, ADMIN_USER_INDEX) == userId &&
+                        getInt(e, TARGET_USER_INDEX) == userId &&
+                        getInt(e, KEYGUARD_FEATURES_INDEX) == KEYGUARD_DISABLE_FINGERPRINT);
+
+        findEvent("set screen lock timeout", events,
+                e -> e.getTag() == TAG_MAX_SCREEN_LOCK_TIMEOUT_SET &&
+                        getString(e, ADMIN_PKG_INDEX).equals(getWho().getPackageName()) &&
+                        getInt(e, ADMIN_USER_INDEX) == userId &&
+                        getInt(e, TARGET_USER_INDEX) == userId &&
+                        getLong(e, MAX_SCREEN_TIMEOUT_INDEX) == TEST_MAX_TIME_TO_LOCK);
+
+        findEvent("set screen lock timeout", events,
+                e -> e.getTag() == TAG_REMOTE_LOCK &&
+                        getString(e, ADMIN_PKG_INDEX).equals(getWho().getPackageName()) &&
+                        getInt(e, ADMIN_USER_INDEX) == userId);
+    }
+
+    private void findPasswordComplexityEvent(
+            String description, List<SecurityEvent> events, Object[] expectedPayload) {
+        findEvent(description, events,
+                e -> e.getTag() == TAG_PASSWORD_COMPLEXITY_SET &&
+                        Arrays.equals((Object[]) e.getData(), expectedPayload));
+    }
+
+    private void generateUserRestrictionEvents() {
+        mDevicePolicyManager.addUserRestriction(getWho(), UserManager.DISALLOW_FUN);
+        mDevicePolicyManager.clearUserRestriction(getWho(), UserManager.DISALLOW_FUN);
+    }
+
+    private void verifyUserRestrictionEventsPresent(List<SecurityEvent> events) {
+        findUserRestrictionEvent("set user restriction", events, TAG_USER_RESTRICTION_ADDED);
+        findUserRestrictionEvent("clear user restriction", events, TAG_USER_RESTRICTION_REMOVED);
+    }
+
+    private void findUserRestrictionEvent(String description, List<SecurityEvent> events, int tag) {
+        final int userId = Process.myUserHandle().getIdentifier();
+        findEvent(description, events,
+                e -> e.getTag() == tag &&
+                        getString(e, ADMIN_PKG_INDEX).equals(getWho().getPackageName()) &&
+                        getInt(e, ADMIN_USER_INDEX) == userId &&
+                        UserManager.DISALLOW_FUN.equals(getString(e, USER_RESTRICTION_INDEX)));
     }
 }

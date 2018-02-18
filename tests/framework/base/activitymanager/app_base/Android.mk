@@ -19,4 +19,6 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 LOCAL_MODULE := cts-am-app-base
 
+LOCAL_SDK_VERSION := current
+
 include $(BUILD_STATIC_JAVA_LIBRARY)

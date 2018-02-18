@@ -15,8 +15,6 @@
  */
 package android.uirendering.cts.testinfrastructure;
 
-import com.android.compatibility.common.util.SynchronousPixelCopy;
-
 import android.app.Instrumentation;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -31,12 +29,12 @@ import android.uirendering.cts.util.BitmapAsserter;
 import android.util.Log;
 import android.view.PixelCopy;
 
+import com.android.compatibility.common.util.SynchronousPixelCopy;
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Rule;
-import org.junit.rules.TestName;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,7 +60,7 @@ public abstract class ActivityTestBase {
     private static DrawActivity sActivity;
 
     @Rule
-    public TestName name = new TestName();
+    public Tracer name = new Tracer();
 
     private BitmapAsserter mBitmapAsserter = new BitmapAsserter(this.getClass().getSimpleName(),
             name.getMethodName());

@@ -1217,6 +1217,30 @@ public class LinearLayoutTest {
                 dividerSize, Color.RED, dividerPadding);
     }
 
+    @Test
+    public void testZeroWeightDistributionHorizontal() throws Throwable {
+        // Ensure that weight is correctly distributed when there is no excess space.
+        final View parent = mActivity.findViewById(android.R.id.content);
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, parent,
+                () -> mActivity.setContentView(R.layout.linearlayout_zero_weight_horizontal));
+
+        assertEquals(0, mActivity.findViewById(R.id.view1).getWidth());
+        assertEquals(0, mActivity.findViewById(R.id.view2).getWidth());
+        assertEquals(parent.getWidth(), mActivity.findViewById(R.id.view3).getWidth());
+    }
+
+    @Test
+    public void testZeroWeightDistributionVertical() throws Throwable {
+        // Ensure that weight is correctly distributed when there is no excess space.
+        final View parent = mActivity.findViewById(android.R.id.content);
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, parent,
+                () -> mActivity.setContentView(R.layout.linearlayout_zero_weight_vertical));
+
+        assertEquals(0, mActivity.findViewById(R.id.view1).getWidth());
+        assertEquals(0, mActivity.findViewById(R.id.view2).getWidth());
+        assertEquals(parent.getWidth(), mActivity.findViewById(R.id.view3).getWidth());
+    }
+
     private class MockListView extends ListView {
         private final static int DEFAULT_CHILD_BASE_LINE = 1;
 

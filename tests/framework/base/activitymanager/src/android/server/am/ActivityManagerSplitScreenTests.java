@@ -137,7 +137,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
                 WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
 
         // Exit split-screen mode and ensure we only get 1 multi-window mode changed callback.
-        final String logSeparator = clearLogcat();
+        final LogSeparator logSeparator = clearLogcat();
         removeStacksInWindowingModes(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
         final ActivityLifecycleCounts lifecycleCounts = waitForOnMultiWindowModeChanged(
                 TEST_ACTIVITY_NAME, logSeparator);
@@ -151,7 +151,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
         launchActivity(TEST_ACTIVITY_NAME, WINDOWING_MODE_FULLSCREEN);
 
         // Move to docked stack.
-        String logSeparator = clearLogcat();
+        LogSeparator logSeparator = clearLogcat();
         setActivityTaskWindowingMode(TEST_ACTIVITY_NAME, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
         ActivityLifecycleCounts lifecycleCounts = waitForOnMultiWindowModeChanged(
                 TEST_ACTIVITY_NAME, logSeparator);
@@ -560,7 +560,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
         final Rect initialDockBounds = mAmWmState.getWmState().getStandardStackByWindowingMode(
                 WINDOWING_MODE_SPLIT_SCREEN_PRIMARY) .getBounds();
 
-        final String logSeparator = clearLogcat();
+        final LogSeparator logSeparator = clearLogcat();
 
         Rect newBounds = computeNewDockBounds(fullScreenBounds, initialDockBounds, true);
         resizeDockedStack(newBounds.width(), newBounds.height(), newBounds.width(), newBounds.height());

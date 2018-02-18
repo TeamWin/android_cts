@@ -15,12 +15,8 @@
      limitations under the License.
 -->
 
-<!-- Manually set the compileSdkVersion and codename to simulate being compiled against
-     pre-release O SDK. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.server.am.prerelease"
-          android:compileSdkVersion="25"
-          android:compileSdkVersionCodename="O">
+    package="android.server.am.prerelease">
 
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
 

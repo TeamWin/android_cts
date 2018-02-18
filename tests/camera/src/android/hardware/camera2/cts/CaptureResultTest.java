@@ -29,6 +29,7 @@ import android.media.ImageReader;
 import android.os.SystemClock;
 import android.util.Pair;
 import android.util.Size;
+import android.hardware.camera2.cts.helpers.CameraErrorCollector;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
 
@@ -43,6 +44,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -54,14 +56,11 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
     private static final int NUM_FRAMES_VERIFIED = 30;
     private static final long WAIT_FOR_RESULT_TIMEOUT_MS = 3000;
 
-    // List that includes all public keys from CaptureResult
-    List<CaptureResult.Key<?>> mAllKeys;
 
     // List tracking the failed test keys.
 
     @Override
     public void setContext(Context context) {
-        mAllKeys = getAllCaptureResultKeys();
         super.setContext(context);
 
         /**
@@ -123,12 +122,9 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
                 SimpleCaptureCallback captureListener = new SimpleCaptureCallback();
                 startCapture(requestBuilder.build(), /*repeating*/true, captureListener, mHandler);
 
-                // Get the waived keys for current camera device
-                List<CaptureResult.Key<?>> waiverkeys = getWaiverKeysForCamera();
-
                 // Verify results
-                validateCaptureResult(captureListener, waiverkeys, requestBuilder,
-                        NUM_FRAMES_VERIFIED);
+                validateCaptureResult(mCollector, captureListener, mStaticInfo, mAllStaticInfo,
+                        null/*requestedPhysicalIds*/, requestBuilder, NUM_FRAMES_VERIFIED);
 
                 stopCapture(/*fast*/false);
             } finally {
@@ -379,76 +375,111 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
                 resultImage.getTimestamp(), captureTime);
     }
 
-    private void validateCaptureResult(SimpleCaptureCallback captureListener,
-            List<CaptureResult.Key<?>> skippedKeys, CaptureRequest.Builder requestBuilder,
-            int numFramesVerified) throws Exception {
-        CaptureResult result = null;
+    public static void validateCaptureResult(CameraErrorCollector errorCollector,
+            SimpleCaptureCallback captureListener, StaticMetadata staticInfo,
+            Map<String, StaticMetadata> allStaticInfo, List<String> requestedPhysicalIds,
+            CaptureRequest.Builder requestBuilder, int numFramesVerified) throws Exception {
+        // List that includes all public keys from CaptureResult
+        List<CaptureResult.Key<?>> allKeys = getAllCaptureResultKeys();
+        // Get the waived keys for current camera device
+        List<CaptureResult.Key<?>> waiverKeys = getWaiverKeysForCamera(staticInfo);
+        if (requestedPhysicalIds == null) {
+            requestedPhysicalIds = new ArrayList<String>();
+        }
+
+        HashMap<String, List<CaptureResult.Key<?>>> physicalWaiverKeys = new HashMap<>();
+        for (String physicalId : requestedPhysicalIds) {
+            StaticMetadata physicalStaticInfo = allStaticInfo.get(physicalId);
+            physicalWaiverKeys.put(physicalId, getWaiverKeysForCamera(physicalStaticInfo));
+        }
+
+        TotalCaptureResult result = null;
         for (int i = 0; i < numFramesVerified; i++) {
-            String failMsg = "Failed capture result " + i + " test ";
-            result = captureListener.getCaptureResult(WAIT_FOR_RESULT_TIMEOUT_MS);
+            result = captureListener.getTotalCaptureResult(WAIT_FOR_RESULT_TIMEOUT_MS);
+            Map<String, CaptureResult> physicalCaptureResults = result.getPhysicalCameraResults();
+            errorCollector.expectEquals("Number of physical result metadata doesn't match " +
+                    physicalCaptureResults.size() + " vs " + requestedPhysicalIds.size(),
+                    physicalCaptureResults.size(), requestedPhysicalIds.size());
 
-            for (CaptureResult.Key<?> key : mAllKeys) {
-                if (!skippedKeys.contains(key)) {
-                    /**
-                     * Check the critical tags here.
-                     * TODO: Can use the same key for request and result when request/result
-                     * becomes symmetric (b/14059883). Then below check can be wrapped into
-                     * a generic function.
-                     */
-                    String msg = failMsg + "for key " + key.getName();
-                    if (key.equals(CaptureResult.CONTROL_AE_MODE)) {
-                        mCollector.expectEquals(msg,
-                                requestBuilder.get(CaptureRequest.CONTROL_AE_MODE),
-                                result.get(CaptureResult.CONTROL_AE_MODE));
-                    } else if (key.equals(CaptureResult.CONTROL_AF_MODE)) {
-                        mCollector.expectEquals(msg,
-                                requestBuilder.get(CaptureRequest.CONTROL_AF_MODE),
-                                result.get(CaptureResult.CONTROL_AF_MODE));
-                    } else if (key.equals(CaptureResult.CONTROL_AWB_MODE)) {
-                        mCollector.expectEquals(msg,
-                                requestBuilder.get(CaptureRequest.CONTROL_AWB_MODE),
-                                result.get(CaptureResult.CONTROL_AWB_MODE));
-                    } else if (key.equals(CaptureResult.CONTROL_MODE)) {
-                        mCollector.expectEquals(msg,
-                                requestBuilder.get(CaptureRequest.CONTROL_MODE),
-                                result.get(CaptureResult.CONTROL_MODE));
-                    } else if (key.equals(CaptureResult.STATISTICS_FACE_DETECT_MODE)) {
-                        mCollector.expectEquals(msg,
-                                requestBuilder.get(CaptureRequest.STATISTICS_FACE_DETECT_MODE),
-                                result.get(CaptureResult.STATISTICS_FACE_DETECT_MODE));
-                    } else if (key.equals(CaptureResult.NOISE_REDUCTION_MODE)) {
-                        mCollector.expectEquals(msg,
-                                requestBuilder.get(CaptureRequest.NOISE_REDUCTION_MODE),
-                                result.get(CaptureResult.NOISE_REDUCTION_MODE));
-                    } else if (key.equals(CaptureResult.NOISE_REDUCTION_MODE)) {
-                        mCollector.expectEquals(msg,
-                                requestBuilder.get(CaptureRequest.NOISE_REDUCTION_MODE),
-                                result.get(CaptureResult.NOISE_REDUCTION_MODE));
-                    } else if (key.equals(CaptureResult.REQUEST_PIPELINE_DEPTH)) {
+            validateOneCaptureResult(errorCollector, waiverKeys, allKeys, requestBuilder, result,
+                    null/*cameraId*/, i);
+            for (String physicalId : requestedPhysicalIds) {
+                validateOneCaptureResult(errorCollector, physicalWaiverKeys.get(physicalId),
+                        allKeys, requestBuilder, physicalCaptureResults.get(physicalId),
+                        physicalId, i);
+            }
+        }
+    }
 
-                    } else if (key.equals(CaptureResult.STATISTICS_OIS_DATA_MODE)) {
-                        mCollector.expectEquals(msg,
-                                requestBuilder.get(CaptureRequest.STATISTICS_OIS_DATA_MODE),
-                                result.get(CaptureResult.STATISTICS_OIS_DATA_MODE));
-                    } else {
-                        // Only do non-null check for the rest of keys.
-                        mCollector.expectKeyValueNotNull(failMsg, result, key);
-                    }
+    private static void validateOneCaptureResult(CameraErrorCollector errorCollector,
+            List<CaptureResult.Key<?>> skippedKeys, List<CaptureResult.Key<?>> allKeys,
+            CaptureRequest.Builder requestBuilder, CaptureResult result, String cameraId,
+            int resultCount) throws Exception {
+        String failMsg = "Failed capture result " + resultCount + " test ";
+        if (cameraId != null) {
+            failMsg += "for camera " + cameraId + " ";
+        }
+        for (CaptureResult.Key<?> key : allKeys) {
+            if (!skippedKeys.contains(key)) {
+                /**
+                 * Check the critical tags here.
+                 * TODO: Can use the same key for request and result when request/result
+                 * becomes symmetric (b/14059883). Then below check can be wrapped into
+                 * a generic function.
+                 */
+                String msg = failMsg + "for key " + key.getName();
+                if (key.equals(CaptureResult.CONTROL_AE_MODE)) {
+                    errorCollector.expectEquals(msg,
+                            requestBuilder.get(CaptureRequest.CONTROL_AE_MODE),
+                            result.get(CaptureResult.CONTROL_AE_MODE));
+                } else if (key.equals(CaptureResult.CONTROL_AF_MODE)) {
+                    errorCollector.expectEquals(msg,
+                            requestBuilder.get(CaptureRequest.CONTROL_AF_MODE),
+                            result.get(CaptureResult.CONTROL_AF_MODE));
+                } else if (key.equals(CaptureResult.CONTROL_AWB_MODE)) {
+                    errorCollector.expectEquals(msg,
+                            requestBuilder.get(CaptureRequest.CONTROL_AWB_MODE),
+                            result.get(CaptureResult.CONTROL_AWB_MODE));
+                } else if (key.equals(CaptureResult.CONTROL_MODE)) {
+                    errorCollector.expectEquals(msg,
+                            requestBuilder.get(CaptureRequest.CONTROL_MODE),
+                            result.get(CaptureResult.CONTROL_MODE));
+                } else if (key.equals(CaptureResult.STATISTICS_FACE_DETECT_MODE)) {
+                    errorCollector.expectEquals(msg,
+                            requestBuilder.get(CaptureRequest.STATISTICS_FACE_DETECT_MODE),
+                            result.get(CaptureResult.STATISTICS_FACE_DETECT_MODE));
+                } else if (key.equals(CaptureResult.NOISE_REDUCTION_MODE)) {
+                    errorCollector.expectEquals(msg,
+                            requestBuilder.get(CaptureRequest.NOISE_REDUCTION_MODE),
+                            result.get(CaptureResult.NOISE_REDUCTION_MODE));
+                } else if (key.equals(CaptureResult.NOISE_REDUCTION_MODE)) {
+                    errorCollector.expectEquals(msg,
+                            requestBuilder.get(CaptureRequest.NOISE_REDUCTION_MODE),
+                            result.get(CaptureResult.NOISE_REDUCTION_MODE));
+                } else if (key.equals(CaptureResult.REQUEST_PIPELINE_DEPTH)) {
+
+                } else if (key.equals(CaptureResult.STATISTICS_OIS_DATA_MODE)) {
+                    errorCollector.expectEquals(msg,
+                            requestBuilder.get(CaptureRequest.STATISTICS_OIS_DATA_MODE),
+                            result.get(CaptureResult.STATISTICS_OIS_DATA_MODE));
                 } else {
-                    // These keys should always be null
-                    if (key.equals(CaptureResult.CONTROL_AE_REGIONS)) {
-                        mCollector.expectNull(
-                                "Capture result contains AE regions but aeMaxRegions is 0",
-                                result.get(CaptureResult.CONTROL_AE_REGIONS));
-                    } else if (key.equals(CaptureResult.CONTROL_AWB_REGIONS)) {
-                        mCollector.expectNull(
-                                "Capture result contains AWB regions but awbMaxRegions is 0",
-                                result.get(CaptureResult.CONTROL_AWB_REGIONS));
-                    } else if (key.equals(CaptureResult.CONTROL_AF_REGIONS)) {
-                        mCollector.expectNull(
-                                "Capture result contains AF regions but afMaxRegions is 0",
-                                result.get(CaptureResult.CONTROL_AF_REGIONS));
-                    }
+                    // Only do non-null check for the rest of keys.
+                    errorCollector.expectKeyValueNotNull(failMsg, result, key);
+                }
+            } else {
+                // These keys should always be null
+                if (key.equals(CaptureResult.CONTROL_AE_REGIONS)) {
+                    errorCollector.expectNull(
+                            "Capture result contains AE regions but aeMaxRegions is 0",
+                            result.get(CaptureResult.CONTROL_AE_REGIONS));
+                } else if (key.equals(CaptureResult.CONTROL_AWB_REGIONS)) {
+                    errorCollector.expectNull(
+                            "Capture result contains AWB regions but awbMaxRegions is 0",
+                            result.get(CaptureResult.CONTROL_AWB_REGIONS));
+                } else if (key.equals(CaptureResult.CONTROL_AF_REGIONS)) {
+                    errorCollector.expectNull(
+                            "Capture result contains AF regions but afMaxRegions is 0",
+                            result.get(CaptureResult.CONTROL_AF_REGIONS));
                 }
             }
         }
@@ -459,7 +490,7 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
      *
      * Must be called after camera device is opened.
      */
-    private List<CaptureResult.Key<?>> getWaiverKeysForCamera() {
+    private static List<CaptureResult.Key<?>> getWaiverKeysForCamera(StaticMetadata staticInfo) {
         List<CaptureResult.Key<?>> waiverKeys = new ArrayList<>();
 
         // Global waiver keys
@@ -488,7 +519,7 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
         waiverKeys.add(CaptureResult.REPROCESS_EFFECTIVE_EXPOSURE_FACTOR);
 
         //Keys not required if RAW is not supported
-        if (!mStaticInfo.isCapabilitySupported(
+        if (!staticInfo.isCapabilitySupported(
                 CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_RAW)) {
             waiverKeys.add(CaptureResult.SENSOR_NEUTRAL_COLOR_POINT);
             waiverKeys.add(CaptureResult.SENSOR_GREEN_SPLIT);
@@ -496,7 +527,7 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
         }
 
         //Keys for depth output capability
-        if (!mStaticInfo.isCapabilitySupported(
+        if (!staticInfo.isCapabilitySupported(
                 CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DEPTH_OUTPUT)) {
             waiverKeys.add(CaptureResult.LENS_POSE_ROTATION);
             waiverKeys.add(CaptureResult.LENS_POSE_TRANSLATION);
@@ -505,7 +536,7 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
         }
 
         // Waived if RAW output is not supported
-        int[] outputFormats = mStaticInfo.getAvailableFormats(
+        int[] outputFormats = staticInfo.getAvailableFormats(
                 StaticMetadata.StreamDirection.Output);
         boolean supportRaw = false;
         for (int format : outputFormats) {
@@ -519,38 +550,38 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
             waiverKeys.add(CaptureResult.CONTROL_POST_RAW_SENSITIVITY_BOOST);
         }
 
-        if (mStaticInfo.getAeMaxRegionsChecked() == 0) {
+        if (staticInfo.getAeMaxRegionsChecked() == 0) {
             waiverKeys.add(CaptureResult.CONTROL_AE_REGIONS);
         }
-        if (mStaticInfo.getAwbMaxRegionsChecked() == 0) {
+        if (staticInfo.getAwbMaxRegionsChecked() == 0) {
             waiverKeys.add(CaptureResult.CONTROL_AWB_REGIONS);
         }
-        if (mStaticInfo.getAfMaxRegionsChecked() == 0) {
+        if (staticInfo.getAfMaxRegionsChecked() == 0) {
             waiverKeys.add(CaptureResult.CONTROL_AF_REGIONS);
         }
 
         // Keys for dynamic black/white levels
-        if (!mStaticInfo.isOpticalBlackRegionSupported()) {
+        if (!staticInfo.isOpticalBlackRegionSupported()) {
             waiverKeys.add(CaptureResult.SENSOR_DYNAMIC_BLACK_LEVEL);
             waiverKeys.add(CaptureResult.SENSOR_DYNAMIC_WHITE_LEVEL);
         }
 
-        if (!mStaticInfo.isEnableZslSupported()) {
+        if (!staticInfo.isEnableZslSupported()) {
             waiverKeys.add(CaptureResult.CONTROL_ENABLE_ZSL);
         }
 
-        if (!mStaticInfo.isAfSceneChangeSupported()) {
+        if (!staticInfo.isAfSceneChangeSupported()) {
             waiverKeys.add(CaptureResult.CONTROL_AF_SCENE_CHANGE);
         }
 
-        if (!mStaticInfo.isOisDataModeSupported()) {
+        if (!staticInfo.isOisDataModeSupported()) {
             waiverKeys.add(CaptureResult.STATISTICS_OIS_DATA_MODE);
             waiverKeys.add(CaptureResult.STATISTICS_OIS_TIMESTAMPS);
             waiverKeys.add(CaptureResult.STATISTICS_OIS_X_SHIFTS);
             waiverKeys.add(CaptureResult.STATISTICS_OIS_Y_SHIFTS);
         }
 
-        if (mStaticInfo.isHardwareLevelAtLeastFull()) {
+        if (staticInfo.isHardwareLevelAtLeastFull()) {
             return waiverKeys;
         }
 
@@ -558,40 +589,40 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
          * Hardware Level = LIMITED or LEGACY
          */
         // Key not present if certain control is not supported
-        if (!mStaticInfo.isColorCorrectionSupported()) {
+        if (!staticInfo.isColorCorrectionSupported()) {
             waiverKeys.add(CaptureResult.COLOR_CORRECTION_GAINS);
             waiverKeys.add(CaptureResult.COLOR_CORRECTION_MODE);
             waiverKeys.add(CaptureResult.COLOR_CORRECTION_TRANSFORM);
         }
 
-        if (!mStaticInfo.isManualColorAberrationControlSupported()) {
+        if (!staticInfo.isManualColorAberrationControlSupported()) {
             waiverKeys.add(CaptureResult.COLOR_CORRECTION_ABERRATION_MODE);
         }
 
-        if (!mStaticInfo.isManualToneMapSupported()) {
+        if (!staticInfo.isManualToneMapSupported()) {
             waiverKeys.add(CaptureResult.TONEMAP_MODE);
         }
 
-        if (!mStaticInfo.isEdgeModeControlSupported()) {
+        if (!staticInfo.isEdgeModeControlSupported()) {
             waiverKeys.add(CaptureResult.EDGE_MODE);
         }
 
-        if (!mStaticInfo.isHotPixelMapModeControlSupported()) {
+        if (!staticInfo.isHotPixelMapModeControlSupported()) {
             waiverKeys.add(CaptureResult.HOT_PIXEL_MODE);
         }
 
-        if (!mStaticInfo.isNoiseReductionModeControlSupported()) {
+        if (!staticInfo.isNoiseReductionModeControlSupported()) {
             waiverKeys.add(CaptureResult.NOISE_REDUCTION_MODE);
         }
 
-        if (!mStaticInfo.isManualLensShadingMapSupported()) {
+        if (!staticInfo.isManualLensShadingMapSupported()) {
             waiverKeys.add(CaptureResult.SHADING_MODE);
         }
 
         //Keys not required if neither MANUAL_SENSOR nor READ_SENSOR_SETTINGS is supported
-        if (!mStaticInfo.isCapabilitySupported(
+        if (!staticInfo.isCapabilitySupported(
                 CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR) &&
-            !mStaticInfo.isCapabilitySupported(
+            !staticInfo.isCapabilitySupported(
                 CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_READ_SENSOR_SETTINGS)) {
             waiverKeys.add(CaptureResult.SENSOR_EXPOSURE_TIME);
             waiverKeys.add(CaptureResult.SENSOR_SENSITIVITY);
@@ -599,7 +630,7 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
             waiverKeys.add(CaptureResult.LENS_APERTURE);
         }
 
-        if (!mStaticInfo.isCapabilitySupported(
+        if (!staticInfo.isCapabilitySupported(
                 CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR)) {
             waiverKeys.add(CaptureResult.SENSOR_FRAME_DURATION);
             waiverKeys.add(CaptureResult.BLACK_LEVEL_LOCK);
@@ -608,7 +639,7 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
             waiverKeys.add(CaptureResult.LENS_FILTER_DENSITY);
         }
 
-        if (mStaticInfo.isHardwareLevelLimited() && mStaticInfo.isColorOutputSupported()) {
+        if (staticInfo.isHardwareLevelLimited() && staticInfo.isColorOutputSupported()) {
             return waiverKeys;
         }
 
@@ -627,7 +658,7 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
         waiverKeys.add(CaptureResult.CONTROL_AE_TARGET_FPS_RANGE);
         waiverKeys.add(CaptureResult.CONTROL_AF_TRIGGER);
 
-        if (mStaticInfo.isHardwareLevelLegacy()) {
+        if (staticInfo.isHardwareLevelLegacy()) {
             return waiverKeys;
         }
 

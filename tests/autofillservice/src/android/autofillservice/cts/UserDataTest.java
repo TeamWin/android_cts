@@ -16,11 +16,14 @@
 
 package android.autofillservice.cts;
 
+import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MAX_CATEGORY_COUNT;
 import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MAX_FIELD_CLASSIFICATION_IDS_SIZE;
 import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MAX_USER_DATA_SIZE;
 import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MAX_VALUE_LENGTH;
 import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MIN_VALUE_LENGTH;
+
 import static com.google.common.truth.Truth.assertThat;
+
 import static org.testng.Assert.assertThrows;
 
 import android.autofillservice.cts.common.SettingsStateChangerRule;
@@ -47,12 +50,16 @@ public class UserDataTest {
                     AUTOFILL_USER_DATA_MAX_FIELD_CLASSIFICATION_IDS_SIZE, "10");
 
     @ClassRule
+    public static final SettingsStateChangerRule sUserDataMaxCategoriesSizeChanger =
+            new SettingsStateChangerRule(sContext, AUTOFILL_USER_DATA_MAX_CATEGORY_COUNT, "2");
+
+    @ClassRule
     public static final SettingsStateChangerRule sUserDataMaxUserSizeChanger =
-            new SettingsStateChangerRule(sContext, AUTOFILL_USER_DATA_MAX_USER_DATA_SIZE, "10");
+            new SettingsStateChangerRule(sContext, AUTOFILL_USER_DATA_MAX_USER_DATA_SIZE, "4");
 
     @ClassRule
     public static final SettingsStateChangerRule sUserDataMinValueChanger =
-            new SettingsStateChangerRule(sContext, AUTOFILL_USER_DATA_MIN_VALUE_LENGTH, "5");
+            new SettingsStateChangerRule(sContext, AUTOFILL_USER_DATA_MIN_VALUE_LENGTH, "4");
 
     @ClassRule
     public static final SettingsStateChangerRule sUserDataMaxValueChanger =
@@ -63,62 +70,70 @@ public class UserDataTest {
     private final String mLongValue = "LONG VALUE, Y U NO SHORTER"
             + Strings.repeat("?", UserData.getMaxValueLength());
     private final String mId = "4815162342";
-    private final String mRemoteId = "id1";
-    private final String mRemoteId2 = "id2";
+    private final String mCategoryId = "id1";
+    private final String mCategoryId2 = "id2";
+    private final String mCategoryId3 = "id3";
     private final String mValue = mShortValue + "-1";
     private final String mValue2 = mShortValue + "-2";
+    private final String mValue3 = mShortValue + "-3";
+    private final String mValue4 = mShortValue + "-4";
+    private final String mValue5 = mShortValue + "-5";
 
     private UserData.Builder mBuilder;
 
     @Before
     public void setFixtures() {
-        mBuilder = new UserData.Builder(mId, mRemoteId, mValue);
+        mBuilder = new UserData.Builder(mId, mValue, mCategoryId);
     }
 
     @Test
     public void testBuilder_invalid() {
         assertThrows(NullPointerException.class,
-                () -> new UserData.Builder(null, mRemoteId, mValue));
+                () -> new UserData.Builder(null, mValue, mCategoryId));
         assertThrows(IllegalArgumentException.class,
-                () -> new UserData.Builder("", mRemoteId, mValue));
-        assertThrows(NullPointerException.class, () -> new UserData.Builder(mId, mRemoteId, null));
+                () -> new UserData.Builder("", mValue, mCategoryId));
+        assertThrows(NullPointerException.class,
+                () -> new UserData.Builder(mId, null, mCategoryId));
         assertThrows(IllegalArgumentException.class,
-                () -> new UserData.Builder(mId, mRemoteId, ""));
+                () -> new UserData.Builder(mId, "", mCategoryId));
         assertThrows(IllegalArgumentException.class,
-                () -> new UserData.Builder(mId, mRemoteId, mShortValue));
+                () -> new UserData.Builder(mId, mShortValue, mCategoryId));
         assertThrows(IllegalArgumentException.class,
-                () -> new UserData.Builder(mId, mRemoteId, mLongValue));
-        assertThrows(NullPointerException.class, () -> new UserData.Builder(mId, null, mValue));
-        assertThrows(IllegalArgumentException.class, () -> new UserData.Builder(mId, "", mValue));
+                () -> new UserData.Builder(mId, mLongValue, mCategoryId));
+        assertThrows(NullPointerException.class, () -> new UserData.Builder(mId, mValue, null));
+        assertThrows(IllegalArgumentException.class, () -> new UserData.Builder(mId, mValue, ""));
     }
 
     @Test
     public void testAdd_invalid() {
-        assertThrows(NullPointerException.class, () -> mBuilder.add(mRemoteId, null));
-        assertThrows(IllegalArgumentException.class, () -> mBuilder.add(mRemoteId, ""));
-        assertThrows(IllegalArgumentException.class, () -> mBuilder.add(mRemoteId, mShortValue));
-        assertThrows(IllegalArgumentException.class, () -> mBuilder.add(mRemoteId, mLongValue));
-        assertThrows(NullPointerException.class, () -> mBuilder.add(null, mValue));
-        assertThrows(IllegalArgumentException.class, () -> mBuilder.add("", mValue));
-    }
-
-    @Test
-    public void testAdd_duplicatedId() {
-        assertThrows(IllegalStateException.class, () -> mBuilder.add(mRemoteId, mValue2));
+        assertThrows(NullPointerException.class, () -> mBuilder.add(null, mCategoryId));
+        assertThrows(IllegalArgumentException.class, () -> mBuilder.add("", mCategoryId));
+        assertThrows(IllegalArgumentException.class, () -> mBuilder.add(mShortValue, mCategoryId));
+        assertThrows(IllegalArgumentException.class, () -> mBuilder.add(mLongValue, mCategoryId));
+        assertThrows(NullPointerException.class, () -> mBuilder.add(mValue, null));
+        assertThrows(IllegalArgumentException.class, () -> mBuilder.add(mValue, ""));
     }
 
     @Test
     public void testAdd_duplicatedValue() {
-        assertThrows(IllegalStateException.class, () -> mBuilder.add(mRemoteId2, mValue));
+        assertThrows(IllegalStateException.class, () -> mBuilder.add(mValue, mCategoryId));
+        assertThrows(IllegalStateException.class, () -> mBuilder.add(mValue, mCategoryId2));
     }
 
     @Test
-    public void testAdd_maximumReached() {
-        // Must start from 1 because first is added on builder
-        for (int i = 1; i < UserData.getMaxFieldClassificationIdsSize() - 1; i++) {
-            mBuilder.add("ID" + i, mShortValue.toUpperCase() + i);
-        }
-        assertThrows(IllegalStateException.class, () -> mBuilder.add(mRemoteId, mValue));
+    public void testAdd_maximumCategoriesReached() {
+        // Max is 2; one was added in the constructor
+        mBuilder.add(mValue2, mCategoryId2);
+        assertThrows(IllegalStateException.class, () -> mBuilder.add(mValue3, mCategoryId3));
+    }
+
+    @Test
+    public void testAdd_maximumUserDataReached() {
+        // Max is 4; one was added in the constructor
+        mBuilder.add(mValue2, mCategoryId);
+        mBuilder.add(mValue3, mCategoryId);
+        mBuilder.add(mValue4, mCategoryId2);
+        assertThrows(IllegalStateException.class, () -> mBuilder.add(mValue5, mCategoryId2));
     }
 
     @Test
@@ -140,7 +155,9 @@ public class UserDataTest {
     public void testNoMoreInteractionsAfterBuild() {
         testBuild_valid();
 
-        assertThrows(IllegalStateException.class, () -> mBuilder.add(mRemoteId2, mValue));
+        assertThrows(IllegalStateException.class, () -> mBuilder.add(mValue, mCategoryId2));
+        assertThrows(IllegalStateException.class,
+                () -> mBuilder.setFieldClassificationAlgorithm("algo_mas", null));
         assertThrows(IllegalStateException.class, () -> mBuilder.build());
     }
 }

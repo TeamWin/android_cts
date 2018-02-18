@@ -21,19 +21,39 @@ import android.server.am.component.ComponentsBase;
 
 public class Components extends ComponentsBase {
 
+    public static final ComponentName ALWAYS_FOCUSABLE_PIP_ACTIVITY =
+            component("AlwaysFocusablePipActivity");
     public static final ComponentName ANIMATION_TEST_ACTIVITY = component("AnimationTestActivity");
     public static final ComponentName ASSISTANT_ACTIVITY = component("AssistantActivity");
     public static final ComponentName DOCKED_ACTIVITY = component("DockedActivity");
-    public static final ComponentName LAUNCHING_ACTIVITY = component("LaunchingActivity");
     public static final ComponentName LAUNCH_ASSISTANT_ACTIVITY_FROM_SESSION =
             component("LaunchAssistantActivityFromSession");
     public static final ComponentName LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK  =
             component("LaunchAssistantActivityIntoAssistantStack");
+    public static final ComponentName LAUNCH_PIP_ON_PIP_ACTIVITY =
+            component("LaunchPipOnPipActivity");
+    public static final ComponentName LAUNCHING_ACTIVITY = component("LaunchingActivity");
+    public static final ComponentName MOVE_TASK_TO_BACK_ACTIVITY =
+            component("MoveTaskToBackActivity");
+    public static final ComponentName NO_HISTORY_ACTIVITY = component("NoHistoryActivity");
     public static final ComponentName PIP_ACTIVITY = component("PipActivity");
     public static final ComponentName SPLASHSCREEN_ACTIVITY = component("SplashscreenActivity");
+    public static final ComponentName SWIPE_REFRESH_ACTIVITY = component("SwipeRefreshActivity");
     public static final ComponentName TEST_ACTIVITY = component("TestActivity");
+    public static final ComponentName TRANSLUCENT_ACTIVITY = component("TranslucentActivity");
     public static final ComponentName TRANSLUCENT_ASSISTANT_ACTIVITY =
             component("TranslucentAssistantActivity");
+    public static final ComponentName TURN_SCREEN_ON_ACTIVITY = component("TurnScreenOnActivity");
+    public static final ComponentName TURN_SCREEN_ON_ATTR_ACTIVITY =
+            component("TurnScreenOnAttrActivity");
+    public static final ComponentName TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY =
+            component("TurnScreenOnAttrRemoveAttrActivity");
+    public static final ComponentName TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY =
+            component("TurnScreenOnShowOnLockActivity");
+    public static final ComponentName TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY =
+            component("TurnScreenOnSingleTaskActivity");
+    public static final ComponentName TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY =
+            component("TurnScreenOnWithRelayoutActivity");
 
     public static final ComponentName ASSISTANT_VOICE_INTERACTION_SERVICE =
             component("AssistantVoiceInteractionService");

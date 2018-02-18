@@ -111,7 +111,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
             final String activityName = "ShowWhenLockedAttrActivity";
 
             lockScreenSession.gotoKeyguard();
-            final String logSeparator = clearLogcat();
+            final LogSeparator logSeparator = clearLogcat();
             launchActivity(activityName);
             mAmWmState.computeState(new WaitForValidActivityState(activityName));
             assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_OCCLUDE,
@@ -126,7 +126,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
             final String activityName = "ShowWhenLockedAttrRemoveAttrActivity";
 
             lockScreenSession.gotoKeyguard();
-            String logSeparator = clearLogcat();
+            LogSeparator logSeparator = clearLogcat();
             launchActivity(activityName);
             mAmWmState.computeState(new WaitForValidActivityState(activityName));
             assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_OCCLUDE,

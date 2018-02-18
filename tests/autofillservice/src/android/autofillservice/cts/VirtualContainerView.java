@@ -29,6 +29,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Paint.Style;
 import android.graphics.Rect;
+import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -42,6 +43,10 @@ import android.view.View;
 import android.view.ViewStructure;
 import android.view.ViewStructure.HtmlInfo;
 import android.view.WindowManager;
+import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityManager;
+import android.view.accessibility.AccessibilityNodeInfo;
+import android.view.accessibility.AccessibilityNodeProvider;
 import android.view.autofill.AutofillManager;
 import android.view.autofill.AutofillValue;
 
@@ -56,7 +61,6 @@ class VirtualContainerView extends View {
 
     static final String LABEL_CLASS = "my.readonly.view";
     static final String TEXT_CLASS = "my.editable.view";
-
 
     private final ArrayList<Line> mLines = new ArrayList<>();
     private final SparseArray<Item> mItems = new SparseArray<>();
@@ -75,6 +79,10 @@ class VirtualContainerView extends View {
     private boolean mSync = true;
     private boolean mOverrideDispatchProvideAutofillStructure = false;
     private ComponentName mFackedComponentName;
+
+    private boolean mCompatMode = false;
+    private AccessibilityDelegate mAccessibilityDelegate;
+    private AccessibilityNodeProvider mAccessibilityNodeProvider;
 
     public VirtualContainerView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -102,23 +110,16 @@ class VirtualContainerView extends View {
     @Override
     public void autofill(SparseArray<AutofillValue> values) {
         Log.d(TAG, "autofill: " + values);
+        if (mCompatMode) {
+            Log.v(TAG, "using super.autofill() on compat mode");
+            super.autofill(values);
+            return;
+        }
         for (int i = 0; i < values.size(); i++) {
             final int id = values.keyAt(i);
             final AutofillValue value = values.valueAt(i);
-            final Item item = mItems.get(id);
-            if (item == null) {
-                Log.w(TAG, "No item for id " + id);
-                return;
-            }
-            if (!item.editable) {
-                Log.w(TAG, "Item for id " + id + " is not editable: " + item);
-                return;
-            }
-            item.text = value.getTextValue();
-            if (item.listener != null) {
-                Log.d(TAG, "Notify listener: " + item.text);
-                item.listener.onTextChanged(item.text, 0, 0, 0);
-            }
+            final Item item = getItem(id);
+            item.autofill(value.getTextValue());
         }
         postInvalidate();
     }
@@ -195,6 +196,12 @@ class VirtualContainerView extends View {
         Log.d(TAG, "onProvideAutofillVirtualStructure(): flags = " + flags);
         super.onProvideAutofillVirtualStructure(structure, flags);
 
+        if (mCompatMode) {
+            Log.v(TAG, "using super.onProvideAutofillVirtualStructure() on compat mode");
+            return;
+        }
+
+
         if (mFackedComponentName != null) {
             Log.d(TAG, "Faking package name to " + mFackedComponentName);
             try {
@@ -221,8 +228,7 @@ class VirtualContainerView extends View {
             child.setAutofillId(structure.getAutofillId(), item.id);
             child.setDataIsSensitive(item.sensitive);
             index++;
-            final String className = item.editable ? TEXT_CLASS : LABEL_CLASS;
-            child.setClassName(className);
+            child.setClassName(item.className);
             // Must set "fake" idEntry because that's what the test cases use to find nodes.
             child.setId(1000 + index, packageName, "id", item.resourceId);
             child.setText(item.text);
@@ -242,6 +248,31 @@ class VirtualContainerView extends View {
                 child.asyncCommit();
             }
         }
+    }
+
+    private Item getItem(int id) {
+        final Item item = mItems.get(id);
+        assertWithMessage("No item for id %s", id).that(item).isNotNull();
+        return item;
+    }
+
+    private AccessibilityNodeInfo onProvideAutofillCompatModeAccessibilityNodeInfo() {
+        final AccessibilityNodeInfo node = AccessibilityNodeInfo.obtain();
+
+        final String packageName = getContext().getPackageName();
+        node.setPackageName(packageName);
+        node.setClassName(getClass().getName());
+
+        final int childrenSize = mItems.size();
+        for (int i = 0; i < childrenSize; i++) {
+            final Item item = mItems.valueAt(i);
+            final int id = i + 1;
+            Log.d(TAG, "Adding new A11Y child with id " + id + ": " + item);
+
+            node.addChild(this, id);
+        }
+
+        return node;
     }
 
     static void assertHtmlInfo(ViewNode node) {
@@ -273,6 +304,46 @@ class VirtualContainerView extends View {
         mFackedComponentName = name;
     }
 
+    void setCompatMode(boolean compatMode) {
+        mCompatMode = compatMode;
+
+        if (mCompatMode) {
+            setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
+            mAccessibilityNodeProvider = new AccessibilityNodeProvider() {
+                @Override
+                public AccessibilityNodeInfo createAccessibilityNodeInfo(int virtualViewId) {
+                    Log.d(TAG, "createAccessibilityNodeInfo(): id=" + virtualViewId);
+                    if (virtualViewId == AccessibilityNodeProvider.HOST_VIEW_ID) {
+                        return onProvideAutofillCompatModeAccessibilityNodeInfo();
+                    }
+                    final Item item = getItem(virtualViewId);
+                    return item.provideAccessibilityNodeInfo(VirtualContainerView.this,
+                            getContext());
+                }
+
+                @Override
+                public boolean performAction(int virtualViewId, int action, Bundle arguments) {
+                    if (action == AccessibilityNodeInfo.ACTION_SET_TEXT) {
+                        final CharSequence text = arguments.getCharSequence(
+                                AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE);
+                        final Item item = getItem(virtualViewId);
+                        item.autofill(text);
+                        return true;
+                    }
+
+                    return false;
+                }
+            };
+            mAccessibilityDelegate = new AccessibilityDelegate() {
+                @Override
+                public AccessibilityNodeProvider getAccessibilityNodeProvider(View host) {
+                    return mAccessibilityNodeProvider;
+                }
+            };
+
+            setAccessibilityDelegate(mAccessibilityDelegate);
+        }
+    }
 
     void setOverrideDispatchProvideAutofillStructure(boolean flag) {
         mOverrideDispatchProvideAutofillStructure = flag;
@@ -297,6 +368,18 @@ class VirtualContainerView extends View {
 
         void changeFocus(boolean focused) {
             this.focused = focused;
+            if (mCompatMode) {
+                final AccessibilityEvent event = AccessibilityEvent.obtain();
+                event.setEventType(AccessibilityEvent.TYPE_VIEW_FOCUSED);
+                event.setSource(VirtualContainerView.this, text.id);
+                event.setEnabled(true);
+                event.setPackageName(getContext().getPackageName());
+                // TODO(b/72811561): recycle event?
+                getContext().getSystemService(AccessibilityManager.class)
+                    .sendAccessibilityEvent(event);
+                return;
+            }
+
             if (focused) {
                 final Rect absBounds = getAbsCoordinates();
                 Log.d(TAG, "focus gained on " + text.id + "; absBounds=" + absBounds);
@@ -390,6 +473,7 @@ class VirtualContainerView extends View {
         private CharSequence text;
         private final boolean editable;
         private final boolean sensitive;
+        private final String className;
         private TextWatcher listener;
 
         Item(Line line, int id, String resourceId, CharSequence text, boolean editable,
@@ -400,6 +484,32 @@ class VirtualContainerView extends View {
             this.text = text;
             this.editable = editable;
             this.sensitive = sensitive;
+            this.className = editable ? TEXT_CLASS : LABEL_CLASS;
+        }
+
+        AccessibilityNodeInfo provideAccessibilityNodeInfo(View parent, Context context) {
+            final AccessibilityNodeInfo node = AccessibilityNodeInfo.obtain();
+            node.setSource(parent, id);
+            node.setPackageName(context.getPackageName());
+            node.setClassName(className);
+            node.setEditable(editable);
+            node.setViewIdResourceName(resourceId);
+            // TODO(b/73548352): ideally item should have its own bounds
+            node.setBoundsInScreen(line.bounds);
+            node.setText(text);
+            return node;
+        }
+
+        private void autofill(CharSequence value) {
+            if (!editable) {
+                Log.w(TAG, "Item for id " + id + " is not editable: " + this);
+                return;
+            }
+            text = value;
+            if (listener != null) {
+                Log.d(TAG, "Notify listener: " + text);
+                listener.onTextChanged(text, 0, 0, 0);
+            }
         }
 
         @Override

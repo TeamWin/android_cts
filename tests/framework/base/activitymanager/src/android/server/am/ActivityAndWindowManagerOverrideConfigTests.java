@@ -44,12 +44,12 @@ public class ActivityAndWindowManagerOverrideConfigTests extends ActivityManager
         private ConfigurationChangeObserver() {
         }
 
-        private boolean findConfigurationChange(String activityName, String logSeparator)
+        private boolean findConfigurationChange(String activityName, LogSeparator logSeparator)
                 throws InterruptedException {
             int tries = 0;
             boolean observedChange = false;
             while (tries < 5 && !observedChange) {
-                final String[] lines = getDeviceLogsForComponent(activityName, logSeparator);
+                final String[] lines = getDeviceLogsForComponents(logSeparator, activityName);
                 log("Looking at logcat");
                 for (int i = lines.length - 1; i >= 0; i--) {
                     final String line = lines[i].trim();
@@ -75,7 +75,7 @@ public class ActivityAndWindowManagerOverrideConfigTests extends ActivityManager
 
         try (final RotationSession rotationSession = new RotationSession()) {
             rotationSession.set(ROTATION_0);
-            String logSeparator = clearLogcat();
+            LogSeparator logSeparator = clearLogcat();
             resizeActivityTask(TEST_ACTIVITY_NAME, 0, 0, 100, 100);
             ConfigurationChangeObserver c = new ConfigurationChangeObserver();
             final boolean reportedSizeAfterResize = c.findConfigurationChange(TEST_ACTIVITY_NAME,

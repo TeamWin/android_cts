@@ -999,8 +999,8 @@ final class Helper {
                 .isEqualTo(expectedResult.remoteIds.length);
         for (int j = 0; j < matches.size(); j++) {
             final Match match = matches.get(j);
-            assertWithMessage("Wrong remoteId at (%s, %s): %s", i, j, match)
-                .that(match.getRemoteId()).isEqualTo(expectedResult.remoteIds[j]);
+            assertWithMessage("Wrong categoryId at (%s, %s): %s", i, j, match)
+                .that(match.getCategoryId()).isEqualTo(expectedResult.remoteIds[j]);
             assertWithMessage("Wrong score at (%s, %s): %s", i, j, match)
                 .that(match.getScore()).isWithin(expectedResult.scores[j]);
         }

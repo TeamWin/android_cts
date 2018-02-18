@@ -83,7 +83,7 @@ public class ActivityManagerAmStartOptionsTests extends ActivityManagerTestBase 
     private void startActivityAndVerifyResult(final String entryActivity,
             final String actualActivity, boolean shouldStart) throws Exception {
         // See TODO below
-        // final String logSeparator = clearLogcat();
+        // final LogSeparator logSeparator = clearLogcat();
 
         // Pass in different data only when cold starting. This is to make the intent
         // different in subsequent warm/hot launches, so that the entrypoint alias
@@ -155,11 +155,11 @@ public class ActivityManagerAmStartOptionsTests extends ActivityManagerTestBase 
     private static final Pattern sDisplayTimePattern =
             Pattern.compile("(.+): Displayed (.*): (\\+{0,1})([0-9]+)ms(.*)");
 
-    void verifyLogcat(String actualActivityName, boolean shouldStart, String logSeparator) {
+    void verifyLogcat(String actualActivityName, boolean shouldStart, LogSeparator logSeparator) {
         int displayCount = 0;
         String activityName = null;
 
-        for (String line : getDeviceLogsForComponent("ActivityManager", logSeparator)) {
+        for (String line : getDeviceLogsForComponents(logSeparator, "ActivityManager")) {
             line = line.trim();
 
             Matcher matcher = sDisplayTimePattern.matcher(line);

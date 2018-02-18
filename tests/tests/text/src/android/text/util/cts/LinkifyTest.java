@@ -19,6 +19,8 @@ package android.text.util.cts;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -42,6 +44,7 @@ import android.widget.TextView;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatcher;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -965,7 +968,9 @@ public class LinkifyTest {
                 .addLink(start, end, entityScores)
                 .build();
 
-        when(classifier.generateLinks(text, options)).thenReturn(links);
+        when(classifier.generateLinks(argThat(new EqStringMatcher(text)), eq(options)))
+            .thenReturn(links);
+        when(classifier.getMaxGenerateLinksTextLength()).thenReturn(Integer.MAX_VALUE);
 
         final Future future = Linkify.addLinksAsync(textView, options, executor, callback);
         future.get();
@@ -1031,5 +1036,19 @@ public class LinkifyTest {
         URLSpan[] spans = spannable.getSpans(0, spannable.length(), URLSpan.class);
         assertTrue(msg, linksAdded);
         assertEquals(msg, expected, spans[0].getURL().toString());
+    }
+
+    /** Helper to match a CharSequence based on String equivalence. */
+    class EqStringMatcher implements ArgumentMatcher<CharSequence> {
+        private final String mReference;
+
+        EqStringMatcher(CharSequence reference) {
+            mReference = reference.toString();
+        }
+
+        @Override
+        public boolean matches(CharSequence arg) {
+            return mReference.equals(arg.toString());
+        }
     }
 }

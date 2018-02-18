@@ -22,6 +22,7 @@ import static android.app.AppOpsManager.MODE_ERRORED;
 import static android.app.AppOpsManager.MODE_IGNORED;
 import static android.app.AppOpsManager.OPSTR_READ_CALENDAR;
 import static android.app.AppOpsManager.OPSTR_READ_SMS;
+import static android.app.AppOpsManager.OPSTR_RECORD_AUDIO;
 import static com.android.compatibility.common.util.AppOpsUtils.allowedOperationLogged;
 import static com.android.compatibility.common.util.AppOpsUtils.rejectedOperationLogged;
 import static com.android.compatibility.common.util.AppOpsUtils.setOpMode;
@@ -241,19 +242,27 @@ public class AppOpsTest extends InstrumentationTestCase {
 
     @SmallTest
     public void testGetOpsForPackage_opsAreLogged() throws Exception {
-        assertFalse(allowedOperationLogged(mOpPackageName, OPSTR_READ_SMS));
-        assertFalse(allowedOperationLogged(mOpPackageName, OPSTR_READ_CALENDAR));
+        // This test checks if operations get logged by the system. It needs to start with a clean
+        // slate, i.e. these ops can't have been logged previously for this test package. The reason
+        // is that there's no API for clearing the app op logs before a test run. However, the op
+        // logs are cleared when this test package is reinstalled between test runs. To make sure
+        // that other test methods in this class don't affect this test method, here we use
+        // operations that are not used by any other test cases.
+        String mustNotBeLogged = "Operation mustn't be logged before the test runs";
+        assertFalse(mustNotBeLogged, allowedOperationLogged(mOpPackageName, OPSTR_RECORD_AUDIO));
+        assertFalse(mustNotBeLogged, allowedOperationLogged(mOpPackageName, OPSTR_READ_CALENDAR));
 
-        setOpMode(mOpPackageName, OPSTR_READ_SMS, MODE_ALLOWED);
+        setOpMode(mOpPackageName, OPSTR_RECORD_AUDIO, MODE_ALLOWED);
         setOpMode(mOpPackageName, OPSTR_READ_CALENDAR, MODE_ERRORED);
 
         // Note an op that's allowed.
-        mAppOps.noteOp(OPSTR_READ_SMS, mMyUid, mOpPackageName);
-        assertTrue(allowedOperationLogged(mOpPackageName, OPSTR_READ_SMS));
+        mAppOps.noteOp(OPSTR_RECORD_AUDIO, mMyUid, mOpPackageName);
+        String mustBeLogged = "Operation must be logged";
+        assertTrue(mustBeLogged, allowedOperationLogged(mOpPackageName, OPSTR_RECORD_AUDIO));
 
         // Note another op that's not allowed.
         mAppOps.noteOpNoThrow(OPSTR_READ_CALENDAR, mMyUid, mOpPackageName);
-        assertTrue(allowedOperationLogged(mOpPackageName, OPSTR_READ_SMS));
-        assertTrue(rejectedOperationLogged(mOpPackageName, OPSTR_READ_CALENDAR));
+        assertTrue(mustBeLogged, allowedOperationLogged(mOpPackageName, OPSTR_RECORD_AUDIO));
+        assertTrue(mustBeLogged, rejectedOperationLogged(mOpPackageName, OPSTR_READ_CALENDAR));
     }
 }

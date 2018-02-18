@@ -386,6 +386,26 @@ class ItsSession(object):
         self.props = data['objValue']['cameraProperties']
         return data['objValue']['cameraProperties']
 
+    def get_camera_properties_by_id(self, camera_id):
+        """Get the camera properties object for device with camera_id
+
+        Args:
+            camera_id: The ID string of the camera
+
+        Returns:
+            The Python dictionary object for the CameraProperties object. Empty
+            if no such device exists.
+
+        """
+        cmd = {}
+        cmd["cmdName"] = "getCameraPropertiesById"
+        cmd["cameraId"] = camera_id
+        self.sock.send(json.dumps(cmd) + "\n")
+        data,_ = self.__read_response_from_socket()
+        if data['tag'] != 'cameraProperties':
+            raise its.error.Error('Invalid command response')
+        return data['objValue']['cameraProperties']
+
     def do_3a(self, regions_ae=[[0,0,1,1,1]],
                     regions_awb=[[0,0,1,1,1]],
                     regions_af=[[0,0,1,1,1]],
