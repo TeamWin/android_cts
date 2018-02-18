@@ -27,6 +27,7 @@ import java.util.zip.ZipFile;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import com.android.compatibility.common.util.PropertyUtil;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -167,18 +168,21 @@ public class UnofficialApisUsageTest extends DeviceTestCase {
      */
     @Test
     public void testNonApiReferences() throws Exception {
-        StringBuffer sb = new StringBuffer(10000);
-        extractedApis.collectUndefinedTypeReferences().sorted().forEach(
-                ref -> sb.append("Undefined type ref: " + ref.getName() + " from: "
-                        + ref.printReferencedFrom() + "\n"));
-        extractedApis.collectUndefinedMethodReferences().sorted().forEach(
-                ref -> sb.append("Undefined method ref: " + ref.getFullSignature() + " from: "
-                        + ref.printReferencedFrom() + "\n"));
-        extractedApis.collectUndefinedFieldReferences().sorted().forEach(
-                ref -> sb.append("Undefined field ref: " + ref.getFullSignature() + " from: "
-                        + ref.printReferencedFrom() + "\n"));
-        if (sb.length() != 0) {
-            fail(sb.toString());
+        if (PropertyUtil.propertyEquals(device, "ro.treble.enabled", "true") &&
+               PropertyUtil.getFirstApiLevel(device) > 27 /* O_MR1 */) {
+            StringBuffer sb = new StringBuffer(10000);
+            extractedApis.collectUndefinedTypeReferences().sorted().forEach(
+                    ref -> sb.append("Undefined type ref: " + ref.getName() + " from: "
+                            + ref.printReferencedFrom() + "\n"));
+            extractedApis.collectUndefinedMethodReferences().sorted().forEach(
+                    ref -> sb.append("Undefined method ref: " + ref.getFullSignature() + " from: "
+                            + ref.printReferencedFrom() + "\n"));
+            extractedApis.collectUndefinedFieldReferences().sorted().forEach(
+                    ref -> sb.append("Undefined field ref: " + ref.getFullSignature() + " from: "
+                            + ref.printReferencedFrom() + "\n"));
+            if (sb.length() != 0) {
+                fail(sb.toString());
+            }
         }
     }
 }

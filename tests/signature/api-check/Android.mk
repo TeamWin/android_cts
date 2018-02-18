@@ -33,6 +33,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     repackaged.android.test.base \
     repackaged.android.test.runner \
     repackaged.android.test.mock \
+    compatibility-device-util \
 
 include $(BUILD_STATIC_JAVA_LIBRARY)
 
