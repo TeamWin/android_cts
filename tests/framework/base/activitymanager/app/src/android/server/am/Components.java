@@ -24,9 +24,13 @@ public class Components extends ComponentsBase {
             component("AlwaysFocusablePipActivity");
     public static final ComponentName ANIMATION_TEST_ACTIVITY = component("AnimationTestActivity");
     public static final ComponentName ASSISTANT_ACTIVITY = component("AssistantActivity");
+    public static final ComponentName DIALOG_WHEN_LARGE_ACTIVITY =
+            component("DialogWhenLargeActivity");
     public static final ComponentName DOCKED_ACTIVITY = component("DockedActivity");
     public static final ComponentName ENTRY_POINT_ALIAS_ACTIVITY =
             component("EntryPointAliasActivity");
+    public static final ComponentName LANDSCAPE_ORIENTATION_ACTIVITY =
+            component("LandscapeOrientationActivity");
     public static final ComponentName LAUNCH_ASSISTANT_ACTIVITY_FROM_SESSION =
             component("LaunchAssistantActivityFromSession");
     public static final ComponentName LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK  =
@@ -36,8 +40,12 @@ public class Components extends ComponentsBase {
     public static final ComponentName LAUNCHING_ACTIVITY = component("LaunchingActivity");
     public static final ComponentName MOVE_TASK_TO_BACK_ACTIVITY =
             component("MoveTaskToBackActivity");
+    public static final ComponentName NIGHT_MODE_ACTIVITY = component("NightModeActivity");
     public static final ComponentName NO_HISTORY_ACTIVITY = component("NoHistoryActivity");
     public static final ComponentName PIP_ACTIVITY = component("PipActivity");
+    public static final ComponentName PORTRAIT_ORIENTATION_ACTIVITY =
+            component("PortraitOrientationActivity");
+    public static final ComponentName RESIZEABLE_ACTIVITY = component("ResizeableActivity");
     public static final ComponentName SINGLE_TASK_ACTIVITY = component("SingleTaskActivity");
     public static final ComponentName SPLASHSCREEN_ACTIVITY = component("SplashscreenActivity");
     public static final ComponentName SWIPE_REFRESH_ACTIVITY = component("SwipeRefreshActivity");
