@@ -30,6 +30,8 @@ import android.support.test.runner.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.io.File;
 import java.util.List;
 
@@ -63,6 +65,7 @@ public class RequiredComponentsTest {
         }
     }
 
+    @CddTest(requirement="3.1.1/C-0-1")
     @Test
     public void testExtServicesPresent() throws Exception {
         enforceSharedLibPresentAndProperlyHosted(
@@ -71,6 +74,7 @@ public class RequiredComponentsTest {
                 ApplicationInfo.PRIVATE_FLAG_PRIVILEGED);
     }
 
+    @CddTest(requirement="3.1.1/C-0-1")
     @Test
     public void testSharedServicesPresent() throws Exception {
         enforceSharedLibPresentAndProperlyHosted(

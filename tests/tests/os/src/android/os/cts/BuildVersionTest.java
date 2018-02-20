@@ -22,6 +22,8 @@ import android.platform.test.annotations.RestrictedBuildTest;
 import android.support.test.InstrumentationRegistry;
 import android.util.Log;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -61,6 +63,7 @@ public class BuildVersionTest extends TestCase {
      * (BUILD_NUMBER):(BUILD_VARIANT)/(TAGS)
      * </code>
      */
+    @CddTest(requirement="3.2.2/C-0-1")
     @RestrictedBuildTest
     public void testBuildFingerprint() {
         final String fingerprint = Build.FINGERPRINT;

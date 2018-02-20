@@ -21,6 +21,8 @@ import android.os.Build;
 import android.os.SystemProperties;
 import android.platform.test.annotations.RestrictedBuildTest;
 
+import com.android.compatibility.common.util.CddTest;
+
 import dalvik.system.VMRuntime;
 
 import java.io.IOException;
@@ -43,6 +45,7 @@ public class BuildTest extends TestCase {
     private static final String RO_PRODUCT_CPU_ABILIST64 = "ro.product.cpu.abilist64";
 
     /** Tests that check the values of {@link Build#CPU_ABI} and {@link Build#CPU_ABI2}. */
+    @CddTest(requirement="3.2.2/C-0-1,3.3.1/C-0-5,3.3.1/C-0-4")
     public void testCpuAbi() throws Exception {
         runTestCpuAbiCommon();
         if (VMRuntime.getRuntime().is64Bit()) {
@@ -192,6 +195,7 @@ public class BuildTest extends TestCase {
         Pattern.compile("^([0-9A-Za-z._-]+)$");
 
     /** Tests that check for valid values of constants in Build. */
+    @CddTest(requirement="3.2.2/C-0-1")
     public void testBuildConstants() {
         // Build.VERSION.* constants tested by BuildVersionTest
 

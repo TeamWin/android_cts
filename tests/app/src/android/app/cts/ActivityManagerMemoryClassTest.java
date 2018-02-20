@@ -150,7 +150,7 @@ public class ActivityManagerMemoryClassTest
         }
     }
 
-    @CddTest(requirement="3.7")
+    @CddTest(requirement="3.7/C-0-2")
     public void testGetMemoryClass() throws Exception {
         int memoryClass = getMemoryClass();
         int screenDensity = getScreenDensity();

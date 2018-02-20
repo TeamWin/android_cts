@@ -16,6 +16,7 @@
 
 package android.os.cts;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.CollectingOutputReceiver;
@@ -95,6 +96,7 @@ public class OsHostTests extends DeviceTestCase implements IBuildReceiver, IAbiR
         assertTrue(output.contains("Permission Denial") && output.contains(" not exported"));
     }
 
+    @CddTest(requirement="3.2.3.2/C-0-4,C-0-5")
     public void testIntentFilterHostValidation() throws Exception {
         String line = null;
         try {

@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.CpuFeatures;
 
 import junit.framework.TestCase;
@@ -97,6 +98,7 @@ public class CpuFeaturesTest extends TestCase {
                 features.contains(feature));
     }
 
+    @CddTest(requirement="3.3.1/C-0-6,3.3.2/C-2-1")
     public void testArmCpuinfo() throws IOException {
         if (!CpuFeatures.isArmCpu())
             return;
