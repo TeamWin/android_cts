@@ -18,9 +18,7 @@ package android.graphics.drawable.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -29,15 +27,18 @@ import android.content.ContentResolver;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.ColorFilter;
 import android.graphics.ImageDecoder;
+import android.graphics.LightingColorFilter;
 import android.graphics.PixelFormat;
+import android.graphics.cts.R;
 import android.graphics.drawable.AnimatedImageDrawable;
 import android.graphics.drawable.Drawable;
-import android.graphics.cts.R;
 import android.net.Uri;
 import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
 import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.widget.ImageView;
 
 import org.junit.Before;
@@ -374,6 +375,35 @@ public class AnimatedImageDrawableTest {
     public void testGetOpacity() {
         AnimatedImageDrawable drawable = createFromImageDecoder(RES_ID);
         assertEquals(PixelFormat.TRANSLUCENT, drawable.getOpacity());
+    }
+
+    @Test
+    public void testColorFilter() {
+        AnimatedImageDrawable drawable = createFromImageDecoder(RES_ID);
+
+        ColorFilter filter = new LightingColorFilter(0, Color.RED);
+        drawable.setColorFilter(filter);
+        assertEquals(filter, drawable.getColorFilter());
+
+        Bitmap actual = Bitmap.createBitmap(drawable.getIntrinsicWidth(),
+                drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        {
+            Canvas canvas = new Canvas(actual);
+            drawable.draw(canvas);
+        }
+
+        for (int i = 0; i < actual.getWidth(); ++i) {
+            for (int j = 0; j < actual.getHeight(); ++j) {
+                int color = actual.getPixel(i, j);
+                // The LightingColorFilter does not affect the transparent pixels,
+                // so all pixels should either remain transparent or turn red.
+                if (color != Color.RED && color != Color.TRANSPARENT) {
+                    fail("pixel at " + i + ", " + j + " does not match expected. "
+                            + "expected: " + Color.RED + " OR " + Color.TRANSPARENT
+                            + " actual: " + color);
+                }
+            }
+        }
     }
 
     @Test
