@@ -17,15 +17,15 @@ package android.accessibilityservice.cts;
 import static android.view.accessibility.AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS;
 import static android.view.accessibility.AccessibilityNodeInfo.ACTION_CLEAR_ACCESSIBILITY_FOCUS;
 
+import android.accessibilityservice.cts.R;
 import android.accessibilityservice.cts.activities.AccessibilityFocusAndInputFocusSyncActivity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
+import android.platform.test.annotations.Presubmit;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
-
-import android.accessibilityservice.cts.R;
 
 import java.util.LinkedList;
 import java.util.Queue;
@@ -45,6 +45,7 @@ public class AccessibilityFocusAndInputFocusSyncTest
     }
 
     @MediumTest
+    @Presubmit
     public void testFindAccessibilityFocus() throws Exception {
         getInstrumentation().runOnMainSync(() -> {
             getActivity().findViewById(R.id.firstEditText).requestFocus();
@@ -81,6 +82,7 @@ public class AccessibilityFocusAndInputFocusSyncTest
     }
 
     @MediumTest
+    @Presubmit
     public void testInitialStateNoAccessibilityFocus() throws Exception {
         // Get the root which is only accessibility focused.
         AccessibilityNodeInfo focused = getInstrumentation().getUiAutomation()
@@ -118,6 +120,7 @@ public class AccessibilityFocusAndInputFocusSyncTest
     }
 
     @MediumTest
+    @Presubmit
     public void testActionClearAccessibilityFocus() throws Exception {
         // Get the root linear layout info.
         final AccessibilityNodeInfo rootLinearLayout = getInstrumentation().getUiAutomation()
@@ -166,6 +169,7 @@ public class AccessibilityFocusAndInputFocusSyncTest
     }
 
     @MediumTest
+    @Presubmit
     public void testOnlyOneNodeHasAccessibilityFocus() throws Exception {
         // Get the first not focused edit text.
         final AccessibilityNodeInfo firstEditText = getInstrumentation().getUiAutomation()
@@ -233,6 +237,7 @@ public class AccessibilityFocusAndInputFocusSyncTest
         }
     }
 
+    @Presubmit
     public void testScreenReaderFocusableAttribute_reportedToAccessibility() {
         final Instrumentation instrumentation = getInstrumentation();
         final UiAutomation uiAutomation = instrumentation.getUiAutomation();

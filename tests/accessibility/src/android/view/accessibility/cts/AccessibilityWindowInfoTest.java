@@ -18,6 +18,7 @@ package android.view.accessibility.cts;
 
 import android.graphics.Rect;
 import android.os.Parcel;
+import android.platform.test.annotations.Presubmit;
 import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.text.TextUtils;
@@ -26,6 +27,7 @@ import android.view.accessibility.AccessibilityWindowInfo;
 /**
  * Class for testing {@link AccessibilityWindowInfo}.
  */
+@Presubmit
 public class AccessibilityWindowInfoTest extends AndroidTestCase {
 
     @SmallTest

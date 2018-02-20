@@ -25,6 +25,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
+import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.test.InstrumentationTestCase;
 import android.view.FrameStats;
@@ -61,6 +62,7 @@ public class UiAutomationTest extends InstrumentationTestCase {
         grantWriteSecureSettingsPermission(uiAutomation);
     }
 
+    @Presubmit
     public void testWindowContentFrameStats() throws Exception {
         Activity activity = null;
         try {
@@ -119,6 +121,7 @@ public class UiAutomationTest extends InstrumentationTestCase {
         }
     }
 
+    @Presubmit
     public void testWindowContentFrameStatsNoAnimation() throws Exception {
         Activity activity = null;
         try {
@@ -169,6 +172,7 @@ public class UiAutomationTest extends InstrumentationTestCase {
         }
     }
 
+    @Presubmit
     public void testWindowAnimationFrameStats() throws Exception {
         Activity firstActivity = null;
         Activity secondActivity = null;
@@ -265,6 +269,7 @@ public class UiAutomationTest extends InstrumentationTestCase {
         assertEquals(stats.getEndTimeNano(), FrameStats.UNDEFINED_TIME_NANO);
     }
 
+    @Presubmit
     public void testUsingUiAutomationAfterDestroy_shouldThrowException() {
         UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
         uiAutomation.destroy();

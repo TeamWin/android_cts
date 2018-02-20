@@ -17,6 +17,7 @@
 package android.view.accessibility.cts;
 
 import android.os.Message;
+import android.platform.test.annotations.Presubmit;
 import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.view.accessibility.AccessibilityEvent;
@@ -32,6 +33,7 @@ import java.util.List;
 /**
  * Class for testing {@link AccessibilityRecord}.
  */
+@Presubmit
 public class AccessibilityRecordTest extends AndroidTestCase {
 
     /** The number of properties of the {@link AccessibilityEvent} class. */

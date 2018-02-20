@@ -14,11 +14,13 @@
 package android.accessibilityservice.cts;
 
 import static android.app.AppOpsManager.OPSTR_BIND_ACCESSIBILITY_SERVICE;
+
 import static junit.framework.Assert.assertTrue;
 
 import android.content.Context;
-import android.support.test.runner.AndroidJUnit4;
+import android.platform.test.annotations.Presubmit;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AppOpsUtils;
 
@@ -26,6 +28,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
+@Presubmit
 public class AccessibilityLoggingTest {
 
     /**

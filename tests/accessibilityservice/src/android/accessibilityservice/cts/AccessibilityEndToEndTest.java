@@ -16,13 +16,16 @@
 
 package android.accessibilityservice.cts;
 
-import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterForEventType;
+import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils
+        .filterForEventType;
 import static android.accessibilityservice.cts.utils.RunOnMainUtils.getOnMain;
-import static android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction.ACTION_HIDE_TOOLTIP;
-import static android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction.ACTION_SHOW_TOOLTIP;
+import static android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction
+        .ACTION_HIDE_TOOLTIP;
+import static android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction
+        .ACTION_SHOW_TOOLTIP;
 
 import static org.hamcrest.Matchers.in;
-import static org.hamcrest.core.IsNot.not;
+import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
 
 import android.accessibilityservice.cts.activities.AccessibilityEndToEndActivity;
@@ -44,6 +47,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.os.Process;
+import android.platform.test.annotations.Presubmit;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.text.TextUtils;
 import android.util.Log;
@@ -58,7 +62,6 @@ import android.widget.ListView;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This class performs end-to-end testing of the accessibility feature by
@@ -86,6 +89,7 @@ public class AccessibilityEndToEndTest extends
     }
 
     @MediumTest
+    @Presubmit
     public void testTypeViewSelectedAccessibilityEvent() throws Throwable {
         // create and populate the expected event
         final AccessibilityEvent expected = AccessibilityEvent.obtain();
@@ -127,6 +131,7 @@ public class AccessibilityEndToEndTest extends
     }
 
     @MediumTest
+    @Presubmit
     public void testTypeViewClickedAccessibilityEvent() throws Throwable {
         // create and populate the expected event
         final AccessibilityEvent expected = AccessibilityEvent.obtain();
@@ -163,6 +168,7 @@ public class AccessibilityEndToEndTest extends
     }
 
     @MediumTest
+    @Presubmit
     public void testTypeViewLongClickedAccessibilityEvent() throws Throwable {
         // create and populate the expected event
         final AccessibilityEvent expected = AccessibilityEvent.obtain();
@@ -199,6 +205,7 @@ public class AccessibilityEndToEndTest extends
     }
 
     @MediumTest
+    @Presubmit
     public void testTypeViewFocusedAccessibilityEvent() throws Throwable {
         // create and populate the expected event
         final AccessibilityEvent expected = AccessibilityEvent.obtain();
@@ -237,6 +244,7 @@ public class AccessibilityEndToEndTest extends
     }
 
     @MediumTest
+    @Presubmit
     public void testTypeViewTextChangedAccessibilityEvent() throws Throwable {
         // focus the edit text
         final EditText editText = (EditText) getActivity().findViewById(R.id.edittext);
@@ -305,6 +313,7 @@ public class AccessibilityEndToEndTest extends
     }
 
     @MediumTest
+    @Presubmit
     public void testTypeWindowStateChangedAccessibilityEvent() throws Throwable {
         // create and populate the expected event
         final AccessibilityEvent expected = AccessibilityEvent.obtain();
@@ -342,6 +351,7 @@ public class AccessibilityEndToEndTest extends
 
     @MediumTest
     @SuppressWarnings("deprecation")
+    @Presubmit
     public void testTypeNotificationStateChangedAccessibilityEvent() throws Throwable {
         // No notification UI on televisions.
         if ((getActivity().getResources().getConfiguration().uiMode
@@ -484,6 +494,7 @@ public class AccessibilityEndToEndTest extends
     }
 
     @MediumTest
+    @Presubmit
     public void testPackageNameCannotBeFakedAppWidget() throws Exception {
         if (!hasAppWidgets()) {
             return;
@@ -561,6 +572,7 @@ public class AccessibilityEndToEndTest extends
     }
 
     @MediumTest
+    @Presubmit
     public void testViewHeadingReportedToAccessibility() throws Exception {
         final Instrumentation instrumentation = getInstrumentation();
         final EditText editText = (EditText) getOnMain(instrumentation, () -> {
@@ -590,6 +602,7 @@ public class AccessibilityEndToEndTest extends
     }
 
     @MediumTest
+    @Presubmit
     public void testTooltipTextReportedToAccessibility() {
         final Instrumentation instrumentation = getInstrumentation();
         final UiAutomation uiAutomation = instrumentation.getUiAutomation();

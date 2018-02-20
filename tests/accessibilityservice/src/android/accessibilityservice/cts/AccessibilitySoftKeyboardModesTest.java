@@ -14,8 +14,9 @@
 
 package android.accessibilityservice.cts;
 
-import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.AccessibilityService.SoftKeyboardController;
+import android.accessibilityservice.AccessibilityServiceInfo;
+import android.accessibilityservice.cts.R;
 import android.accessibilityservice.cts.activities.AccessibilityTestActivity;
 import android.app.Activity;
 import android.app.Instrumentation;
@@ -28,8 +29,6 @@ import android.os.SystemClock;
 import android.test.ActivityInstrumentationTestCase2;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
-
-import android.accessibilityservice.cts.R;
 import android.view.accessibility.AccessibilityWindowInfo;
 import android.view.inputmethod.InputMethodManager;
 
