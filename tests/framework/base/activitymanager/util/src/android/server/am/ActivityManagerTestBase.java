@@ -604,9 +604,21 @@ public abstract class ActivityManagerTestBase {
                 .build());
     }
 
+    protected void resizeActivityTask(
+            ComponentName activityName, int left, int top, int right, int bottom)
+            throws Exception {
+        resizeActivityTask(getActivityTaskId(activityName), left, top, right, bottom);
+    }
+
+    /** TODO(b/73349193): Use {@link #resizeActivityTask(ComponentName, int, int, int, int)}. */
+    @Deprecated
     protected void resizeActivityTask(String activityName, int left, int top, int right, int bottom)
             throws Exception {
-        final int taskId = getActivityTaskId(activityName);
+        resizeActivityTask(getActivityTaskId(activityName), left, top, right, bottom);
+    }
+
+    private void resizeActivityTask(int taskId, int left, int top, int right, int bottom)
+            throws Exception {
         final String cmd = "am task resize "
                 + taskId + " " + left + " " + top + " " + right + " " + bottom;
         executeShellCommand(cmd);

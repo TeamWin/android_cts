@@ -34,6 +34,7 @@ public class Components extends ComponentsBase {
     public static final ComponentName FONT_SCALE_ACTIVITY = component("FontScaleActivity");
     public static final ComponentName FONT_SCALE_NO_RELAUNCH_ACTIVITY =
             component("FontScaleNoRelaunchActivity");
+    public static final ComponentName FREEFORM_ACTIVITY = component("FreeformActivity");
     public static final ComponentName LANDSCAPE_ORIENTATION_ACTIVITY =
             component("LandscapeOrientationActivity");
     public static final ComponentName LAUNCH_ASSISTANT_ACTIVITY_FROM_SESSION =
