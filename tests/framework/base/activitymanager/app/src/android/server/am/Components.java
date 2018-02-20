@@ -26,6 +26,8 @@ public class Components extends ComponentsBase {
     public static final ComponentName ASSISTANT_ACTIVITY = component("AssistantActivity");
     public static final ComponentName DIALOG_WHEN_LARGE_ACTIVITY =
             component("DialogWhenLargeActivity");
+    public static final ComponentName DISMISS_KEYGUARD_ACTIVITY =
+            component("DismissKeyguardActivity");
     public static final ComponentName DOCKED_ACTIVITY = component("DockedActivity");
     public static final ComponentName ENTRY_POINT_ALIAS_ACTIVITY =
             component("EntryPointAliasActivity");
@@ -51,6 +53,8 @@ public class Components extends ComponentsBase {
     public static final ComponentName PORTRAIT_ORIENTATION_ACTIVITY =
             component("PortraitOrientationActivity");
     public static final ComponentName RESIZEABLE_ACTIVITY = component("ResizeableActivity");
+    public static final ComponentName SHOW_WHEN_LOCKED_ACTIVITY =
+            component("ShowWhenLockedActivity");
     public static final ComponentName SHOW_WHEN_LOCKED_ATTR_ACTIVITY =
             component("ShowWhenLockedAttrActivity");
     public static final ComponentName SINGLE_TASK_ACTIVITY = component("SingleTaskActivity");
@@ -73,6 +77,7 @@ public class Components extends ComponentsBase {
             component("TurnScreenOnWithRelayoutActivity");
     public static final ComponentName VIRTUAL_DISPLAY_ACTIVITY =
             component("VirtualDisplayActivity");
+    public static final ComponentName VR_TEST_ACTIVITY = component("VrTestActivity");
 
     public static final ComponentName ASSISTANT_VOICE_INTERACTION_SERVICE =
             component("AssistantVoiceInteractionService");

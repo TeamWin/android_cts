@@ -19,6 +19,7 @@ package android.server.am;
 import static android.content.pm.PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS;
 import static android.server.am.ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID;
 import static android.server.am.ComponentNameUtils.getSimpleClassName;
+import static android.server.am.Components.VIRTUAL_DISPLAY_ACTIVITY;
 import static android.server.am.StateLogger.log;
 
 import static org.junit.Assert.assertEquals;
@@ -45,13 +46,9 @@ import java.util.regex.Pattern;
  * @see ActivityManagerDisplayTests
  * @see ActivityManagerDisplayLockedKeyguardTests
  */
-public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
-    private static final String WM_SIZE = "wm size";
-    private static final String WM_DENSITY = "wm density";
+class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
 
     static final int CUSTOM_DENSITY_DPI = 222;
-
-    private static final String VIRTUAL_DISPLAY_ACTIVITY = "VirtualDisplayActivity";
     private static final int INVALID_DENSITY_DPI = -1;
 
     ActivityDisplay getDisplayState(List<ActivityDisplay> displays, int displayId) {
@@ -309,7 +306,7 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
             if (mLaunchInSplitScreen) {
                 getLaunchActivityBuilder()
                         .setToSide(true)
-                        .setTargetActivityName(VIRTUAL_DISPLAY_ACTIVITY)
+                        .setTargetActivity(VIRTUAL_DISPLAY_ACTIVITY)
                         .execute();
             } else {
                 launchActivity(VIRTUAL_DISPLAY_ACTIVITY);
