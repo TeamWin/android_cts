@@ -20,12 +20,13 @@ import android.content.ComponentName;
 import android.server.am.component.ComponentsBase;
 
 public class Components extends ComponentsBase {
-
     public static final ComponentName ALWAYS_FOCUSABLE_PIP_ACTIVITY =
             component("AlwaysFocusablePipActivity");
     public static final ComponentName ANIMATION_TEST_ACTIVITY = component("AnimationTestActivity");
     public static final ComponentName ASSISTANT_ACTIVITY = component("AssistantActivity");
     public static final ComponentName DOCKED_ACTIVITY = component("DockedActivity");
+    public static final ComponentName ENTRY_POINT_ALIAS_ACTIVITY =
+            component("EntryPointAliasActivity");
     public static final ComponentName LAUNCH_ASSISTANT_ACTIVITY_FROM_SESSION =
             component("LaunchAssistantActivityFromSession");
     public static final ComponentName LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK  =
@@ -37,6 +38,7 @@ public class Components extends ComponentsBase {
             component("MoveTaskToBackActivity");
     public static final ComponentName NO_HISTORY_ACTIVITY = component("NoHistoryActivity");
     public static final ComponentName PIP_ACTIVITY = component("PipActivity");
+    public static final ComponentName SINGLE_TASK_ACTIVITY = component("SingleTaskActivity");
     public static final ComponentName SPLASHSCREEN_ACTIVITY = component("SplashscreenActivity");
     public static final ComponentName SWIPE_REFRESH_ACTIVITY = component("SwipeRefreshActivity");
     public static final ComponentName TEST_ACTIVITY = component("TestActivity");

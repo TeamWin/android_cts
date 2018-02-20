@@ -16,9 +16,12 @@
 
 package android.signature.cts.api;
 
+import android.os.Build;
 import android.os.Bundle;
 import android.signature.cts.AnnotationChecker;
 import android.signature.cts.ApiDocumentParser;
+
+import com.android.compatibility.common.util.PropertyUtil;
 
 /**
  * Checks that parts of the device's API that are annotated (e.g. with android.annotation.SystemApi)
@@ -42,17 +45,20 @@ public class AnnotationTest extends AbstractApiTest {
      * android.annotation.SystemApi) match the API definition.
      */
     public void testAnnotation() {
-        runWithTestResultObserver(resultObserver -> {
-            AnnotationChecker complianceChecker = new AnnotationChecker(resultObserver,
-                    classProvider, annotationForExactMatch);
+        if ("true".equals(PropertyUtil.getProperty("ro.treble.enabled")) &&
+                PropertyUtil.getFirstApiLevel() > Build.VERSION_CODES.O_MR1) {
+            runWithTestResultObserver(resultObserver -> {
+                AnnotationChecker complianceChecker = new AnnotationChecker(resultObserver,
+                        classProvider, annotationForExactMatch);
 
-            ApiDocumentParser apiDocumentParser = new ApiDocumentParser(TAG);
+                ApiDocumentParser apiDocumentParser = new ApiDocumentParser(TAG);
 
-            parseApiFilesAsStream(apiDocumentParser, expectedApiFiles)
-                    .forEach(complianceChecker::checkSignatureCompliance);
+                parseApiFilesAsStream(apiDocumentParser, expectedApiFiles)
+                        .forEach(complianceChecker::checkSignatureCompliance);
 
-            // After done parsing all expected API files, perform any deferred checks.
-            complianceChecker.checkDeferred();
-        });
+                // After done parsing all expected API files, perform any deferred checks.
+                complianceChecker.checkDeferred();
+            });
+        }
     }
 }

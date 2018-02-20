@@ -43,6 +43,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Locale;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -55,14 +56,20 @@ public class TypefaceTest {
     private static final float GLYPH_1EM_WIDTH;
     private static final float GLYPH_3EM_WIDTH;
 
+    private static float measureText(String text, Typeface typeface) {
+        final Paint paint = new Paint();
+        // Fix the locale so that fix the locale based fallback.
+        paint.setTextLocale(Locale.US);
+        paint.setTypeface(typeface);
+        return paint.measureText(text);
+    }
+
     static {
         // 3em.ttf supports "a", "b", "c". The width of "a" is 3em, others are 1em.
         final Context ctx = InstrumentationRegistry.getTargetContext();
         final Typeface typeface = ctx.getResources().getFont(R.font.a3em);
-        final Paint paint = new Paint();
-        paint.setTypeface(typeface);
-        GLYPH_3EM_WIDTH = paint.measureText("a");
-        GLYPH_1EM_WIDTH = paint.measureText("b");
+        GLYPH_3EM_WIDTH = measureText("a", typeface);
+        GLYPH_1EM_WIDTH = measureText("b", typeface);
     }
 
     // list of family names to try when attempting to find a typeface with a given style
@@ -244,11 +251,9 @@ public class TypefaceTest {
     public void testInvalidCmapFont() {
         Typeface typeface = Typeface.createFromAsset(mContext.getAssets(), "bombfont.ttf");
         assertNotNull(typeface);
-        Paint p = new Paint();
         final String testString = "abcde";
-        float widthDefaultTypeface = p.measureText(testString);
-        p.setTypeface(typeface);
-        float widthCustomTypeface = p.measureText(testString);
+        float widthDefaultTypeface = measureText(testString, Typeface.DEFAULT);
+        float widthCustomTypeface = measureText(testString, typeface);
         assertEquals(widthDefaultTypeface, widthCustomTypeface, 1.0f);
     }
 
@@ -256,11 +261,9 @@ public class TypefaceTest {
     public void testInvalidCmapFont2() {
         Typeface typeface = Typeface.createFromAsset(mContext.getAssets(), "bombfont2.ttf");
         assertNotNull(typeface);
-        Paint p = new Paint();
         final String testString = "abcde";
-        float widthDefaultTypeface = p.measureText(testString);
-        p.setTypeface(typeface);
-        float widthCustomTypeface = p.measureText(testString);
+        float widthDefaultTypeface = measureText(testString, Typeface.DEFAULT);
+        float widthCustomTypeface = measureText(testString, typeface);
         assertEquals(widthDefaultTypeface, widthCustomTypeface, 1.0f);
     }
 
@@ -288,11 +291,9 @@ public class TypefaceTest {
         for (final String file : INVALID_CMAP_FONTS) {
             final Typeface typeface = Typeface.createFromAsset(mContext.getAssets(), file);
             assertNotNull(typeface);
-            final Paint p = new Paint();
             final String testString = "\u0100\u0400";
-            final float widthDefaultTypeface = p.measureText(testString);
-            p.setTypeface(typeface);
-            final float widthCustomTypeface = p.measureText(testString);
+            final float widthDefaultTypeface = measureText(testString, Typeface.DEFAULT);
+            final float widthCustomTypeface = measureText(testString, typeface);
             assertEquals(widthDefaultTypeface, widthCustomTypeface, 0.0f);
         }
 
@@ -305,11 +306,9 @@ public class TypefaceTest {
         for (final String file : INVALID_CMAP_VS_FONTS) {
             final Typeface typeface = Typeface.createFromAsset(mContext.getAssets(), file);
             assertNotNull(typeface);
-            final Paint p = new Paint();
             final String testString = "\u0100\uFE00\u0400\uFE00";
-            final float widthDefaultTypeface = p.measureText(testString);
-            p.setTypeface(typeface);
-            final float widthCustomTypeface = p.measureText(testString);
+            final float widthDefaultTypeface = measureText(testString, Typeface.DEFAULT);
+            final float widthCustomTypeface = measureText(testString, typeface);
             assertEquals(widthDefaultTypeface, widthCustomTypeface, 0.0f);
         }
     }
@@ -511,11 +510,9 @@ public class TypefaceTest {
         for (String fontPath : fontPaths) {
             Typeface typeface = Typeface.createFromAsset(mContext.getAssets(), fontPath);
             assertNotNull(typeface);
-            Paint p = new Paint();
             final String testString = "a";
-            float widthDefaultTypeface = p.measureText(testString);
-            p.setTypeface(typeface);
-            float widthCustomTypeface = p.measureText(testString);
+            float widthDefaultTypeface = measureText(testString, Typeface.DEFAULT);
+            float widthCustomTypeface = measureText(testString, typeface);
             // The width of the glyph "a" from above fonts are 2em.
             // So the width should be different from the default one.
             assertNotEquals(widthDefaultTypeface, widthCustomTypeface, 1.0f);
@@ -534,6 +531,7 @@ public class TypefaceTest {
         final String testString = "WWWWWWWWWWWWWWWWWWWWW";
 
         final Paint p = new Paint();
+        p.setTextLocale(Locale.US);
         p.setTextSize(128);
 
         p.setTypeface(regularTypeface);
@@ -542,7 +540,7 @@ public class TypefaceTest {
         p.setTypeface(blackTypeface);
         final float widthFromBlack = p.measureText(testString);
 
-        assertTrue(Math.abs(widthFromRegular - widthFromBlack) > 1.0f);
+        assertNotEquals(widthFromRegular, widthFromBlack, 1.0f);
     }
 
     @Test
@@ -557,24 +555,22 @@ public class TypefaceTest {
         final Typeface family = mContext.getResources().getFont(R.font.multiweight_family);
         assertNotNull(family);
 
-        final Paint paint = new Paint();
         // By default, the font which weight is 400 is selected.
-        paint.setTypeface(family);
-        assertEquals(GLYPH_1EM_WIDTH, paint.measureText("a"), 0f);
-        assertEquals(GLYPH_3EM_WIDTH, paint.measureText("b"), 0f);
-        assertEquals(GLYPH_1EM_WIDTH, paint.measureText("c"), 0f);
+        assertEquals(GLYPH_1EM_WIDTH, measureText("a", family), 0f);
+        assertEquals(GLYPH_3EM_WIDTH, measureText("b", family), 0f);
+        assertEquals(GLYPH_1EM_WIDTH, measureText("c", family), 0f);
 
         // Draw with the font which weight is 100.
-        paint.setTypeface(Typeface.create(family, 100 /* weight */, false /* italic */));
-        assertEquals(GLYPH_3EM_WIDTH, paint.measureText("a"), 0f);
-        assertEquals(GLYPH_1EM_WIDTH, paint.measureText("b"), 0f);
-        assertEquals(GLYPH_1EM_WIDTH, paint.measureText("c"), 0f);
+        final Typeface thinFamily = Typeface.create(family, 100 /* weight */, false /* italic */);
+        assertEquals(GLYPH_3EM_WIDTH, measureText("a", thinFamily), 0f);
+        assertEquals(GLYPH_1EM_WIDTH, measureText("b", thinFamily), 0f);
+        assertEquals(GLYPH_1EM_WIDTH, measureText("c", thinFamily), 0f);
 
         // Draw with the font which weight is 700.
-        paint.setTypeface(Typeface.create(family, 700 /* weight */, false /* italic */));
-        assertEquals(GLYPH_1EM_WIDTH, paint.measureText("a"), 0f);
-        assertEquals(GLYPH_1EM_WIDTH, paint.measureText("b"), 0f);
-        assertEquals(GLYPH_3EM_WIDTH, paint.measureText("c"), 0f);
+        final Typeface boldFamily = Typeface.create(family, 700 /* weight */, false /* italic */);
+        assertEquals(GLYPH_1EM_WIDTH, measureText("a", boldFamily), 0f);
+        assertEquals(GLYPH_1EM_WIDTH, measureText("b", boldFamily), 0f);
+        assertEquals(GLYPH_3EM_WIDTH, measureText("c", boldFamily), 0f);
     }
 
     @Test
@@ -589,23 +585,22 @@ public class TypefaceTest {
         final Typeface family = mContext.getResources().getFont(R.font.multistyle_family);
         assertNotNull(family);
 
-        final Paint paint = new Paint();
         // By default, the normal style font which weight is 400 is selected.
-        paint.setTypeface(family);
-        assertEquals(GLYPH_3EM_WIDTH, paint.measureText("a"), 0f);
-        assertEquals(GLYPH_1EM_WIDTH, paint.measureText("b"), 0f);
-        assertEquals(GLYPH_1EM_WIDTH, paint.measureText("c"), 0f);
+        assertEquals(GLYPH_3EM_WIDTH, measureText("a", family), 0f);
+        assertEquals(GLYPH_1EM_WIDTH, measureText("b", family), 0f);
+        assertEquals(GLYPH_1EM_WIDTH, measureText("c", family), 0f);
 
         // Draw with the italic font.
-        paint.setTypeface(Typeface.create(family, 400 /* weight */, true /* italic */));
-        assertEquals(GLYPH_1EM_WIDTH, paint.measureText("a"), 0f);
-        assertEquals(GLYPH_3EM_WIDTH, paint.measureText("b"), 0f);
-        assertEquals(GLYPH_1EM_WIDTH, paint.measureText("c"), 0f);
+        final Typeface italicFamily = Typeface.create(family, 400 /* weight */, true /* italic */);
+        assertEquals(GLYPH_1EM_WIDTH, measureText("a", italicFamily), 0f);
+        assertEquals(GLYPH_3EM_WIDTH, measureText("b", italicFamily), 0f);
+        assertEquals(GLYPH_1EM_WIDTH, measureText("c", italicFamily), 0f);
 
         // Draw with the italic font which weigth is 700.
-        paint.setTypeface(Typeface.create(family, 700 /* weight */, true /* italic */));
-        assertEquals(GLYPH_1EM_WIDTH, paint.measureText("a"), 0f);
-        assertEquals(GLYPH_1EM_WIDTH, paint.measureText("b"), 0f);
-        assertEquals(GLYPH_3EM_WIDTH, paint.measureText("c"), 0f);
+        final Typeface boldItalicFamily =
+                Typeface.create(family, 700 /* weight */, true /* italic */);
+        assertEquals(GLYPH_1EM_WIDTH, measureText("a", boldItalicFamily), 0f);
+        assertEquals(GLYPH_1EM_WIDTH, measureText("b", boldItalicFamily), 0f);
+        assertEquals(GLYPH_3EM_WIDTH, measureText("c", boldItalicFamily), 0f);
     }
 }

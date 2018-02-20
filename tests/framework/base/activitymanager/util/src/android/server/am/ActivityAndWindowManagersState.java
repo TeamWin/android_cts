@@ -28,6 +28,7 @@ import static android.server.am.ActivityManagerTestBase.getActivityWindowName;
 import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.am.StateLogger.log;
+import static android.server.am.StateLogger.logAlways;
 import static android.server.am.StateLogger.logE;
 
 import static org.junit.Assert.assertEquals;
@@ -119,33 +120,6 @@ public class ActivityAndWindowManagersState {
     void computeState(boolean compareTaskAndStackBounds,
             WaitForValidActivityState... waitForActivitiesVisible) throws Exception {
         waitForValidState(compareTaskAndStackBounds, waitForActivitiesVisible);
-    }
-
-    /**
-     * Compute AM and WM state of device, wait for the activity records to be added, and
-     * wait for debugger window to show up.
-     *
-     * This should only be used when starting with -D (debugger) option, where we pop up the
-     * waiting-for-debugger window, but real activity window won't show up since we're waiting
-     * for debugger.
-     */
-    void waitForDebuggerWindowVisible(String[] waitForActivityRecords) {
-        int retriesLeft = 5;
-        do {
-            mAmState.computeState();
-            mWmState.computeState();
-            if (shouldWaitForDebuggerWindow() ||
-                    shouldWaitForActivityRecords(waitForActivityRecords)) {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    log(e.toString());
-                    // Well I guess we are not waiting...
-                }
-            } else {
-                break;
-            }
-        } while (retriesLeft-- > 0);
     }
 
     void waitForValidState(ComponentName... activityNames) throws Exception {
@@ -284,6 +258,34 @@ public class ActivityAndWindowManagersState {
         } while (retriesLeft-- > 0);
 
         assertFalse(mAmState.containsStartedActivities());
+    }
+
+    /**
+     * Compute AM and WM state of device, wait for the activity records to be added, and
+     * wait for debugger window to show up.
+     *
+     * This should only be used when starting with -D (debugger) option, where we pop up the
+     * waiting-for-debugger window, but real activity window won't show up since we're waiting
+     * for debugger.
+     */
+    void waitForDebuggerWindowVisible(ComponentName activityName) {
+        int retriesLeft = 5;
+        do {
+            mAmState.computeState();
+            mWmState.computeState();
+            if (shouldWaitForDebuggerWindow()
+                    || shouldWaitForActivityRecords(activityName)) {
+                logAlways("***Waiting for debugger window...");
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    log(e.toString());
+                    // Well I guess we are not waiting...
+                }
+            } else {
+                break;
+            }
+        } while (retriesLeft-- > 0);
     }
 
     void waitForHomeActivityVisible() throws Exception {
@@ -551,18 +553,15 @@ public class ActivityAndWindowManagersState {
                 return false;
             }
         }
-        log("Debugger window not available yet");
+        logAlways("Debugger window not available yet");
         return true;
     }
 
-    private boolean shouldWaitForActivityRecords(String[] waitForActivityRecords) {
-        if (waitForActivityRecords == null || waitForActivityRecords.length == 0) {
-            return false;
-        }
+    private boolean shouldWaitForActivityRecords(ComponentName... activityNames) {
         // Check if the activity records we're looking for is already added.
-        for (int i = 0; i < waitForActivityRecords.length; i++) {
-            if (!mAmState.isActivityVisible(waitForActivityRecords[i])) {
-                log("ActivityRecord " + waitForActivityRecords[i] + " not visible yet");
+        for (final ComponentName activityName : activityNames) {
+            if (!mAmState.isActivityVisible(activityName)) {
+                logAlways("ActivityRecord " + getActivityName(activityName) + " not visible yet");
                 return true;
             }
         }
