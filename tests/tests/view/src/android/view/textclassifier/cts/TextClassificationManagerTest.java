@@ -39,6 +39,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class TextClassificationManagerTest {
@@ -121,6 +125,38 @@ public class TextClassificationManagerTest {
     @Test
     public void testDisabledLogger() {
         assertFalse(Logger.DISABLED.isSmartSelection("sig.na.ture"));
+    }
+
+    @Test
+    public void testResolveEntityListModifications_only_hints() {
+        TextClassifier.EntityConfig entityConfig = TextClassifier.EntityConfig.create(
+                Arrays.asList("some_hint"));
+        assertEquals(1, entityConfig.getHints().size());
+        assertTrue(entityConfig.getHints().contains("some_hint"));
+        assertEquals(Arrays.asList("foo", "bar"),
+                entityConfig.resolveEntityListModifications(Arrays.asList("foo", "bar")));
+    }
+
+    @Test
+    public void testResolveEntityListModifications_include_exclude() {
+        TextClassifier.EntityConfig entityConfig = TextClassifier.EntityConfig.create(
+                Arrays.asList("some_hint"),
+                Arrays.asList("a", "b", "c"),
+                Arrays.asList("b", "d", "x"));
+        assertEquals(1, entityConfig.getHints().size());
+        assertTrue(entityConfig.getHints().contains("some_hint"));
+        assertEquals(new HashSet(Arrays.asList("a", "c", "w")),
+                new HashSet(entityConfig.resolveEntityListModifications(
+                        Arrays.asList("c", "w", "x"))));
+    }
+
+    @Test
+    public void testResolveEntityListModifications_explicit() {
+        TextClassifier.EntityConfig entityConfig =
+                TextClassifier.EntityConfig.createWithEntityList(Arrays.asList("a", "b"));
+        assertEquals(Collections.EMPTY_LIST, entityConfig.getHints());
+        assertEquals(Arrays.asList("a", "b"),
+                entityConfig.resolveEntityListModifications(Arrays.asList("w", "x")));
     }
 
     private static void assertValidResult(TextSelection selection) {
