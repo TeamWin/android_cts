@@ -18,43 +18,40 @@ package android.view.inputmethod.cts;
 
 import static android.content.Intent.ACTION_CLOSE_SYSTEM_DIALOGS;
 import static android.content.Intent.FLAG_RECEIVER_FOREGROUND;
+import static android.view.inputmethod.cts.util.TestUtils.runOnMainSync;
 import static android.view.inputmethod.cts.util.TestUtils.waitOnMainUntil;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
 
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
-import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.text.TextUtils;
-import android.view.KeyEvent;
 import android.view.View;
-import android.view.Window;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.InputMethodSubtype;
 import android.view.inputmethod.cts.util.TestActivity;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 
-import com.android.compatibility.common.util.PollingCheck;
-
-import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @MediumTest
@@ -65,10 +62,6 @@ public class InputMethodManagerTest {
     private Context mContext;
     private InputMethodManager mImManager;
 
-    @Rule
-    public ActivityTestRule<InputMethodCtsActivity> mActivityRule =
-            new ActivityTestRule<>(InputMethodCtsActivity.class);
-
     @Before
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
@@ -76,32 +69,55 @@ public class InputMethodManagerTest {
         mImManager = mContext.getSystemService(InputMethodManager.class);
     }
 
-    @After
-    public void teardown() {
-        mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
+    @Test
+    public void testIsActive() throws Throwable {
+        final AtomicReference<EditText> focusedEditTextRef = new AtomicReference<>();
+        final AtomicReference<EditText> nonFocusedEditTextRef = new AtomicReference<>();
+        TestActivity.startSync(activity -> {
+            final LinearLayout layout = new LinearLayout(activity);
+            layout.setOrientation(LinearLayout.VERTICAL);
+
+            final EditText focusedEditText = new EditText(activity);
+            layout.addView(focusedEditText);
+            focusedEditTextRef.set(focusedEditText);
+            focusedEditText.requestFocus();
+
+            final EditText nonFocusedEditText = new EditText(activity);
+            layout.addView(nonFocusedEditText);
+            nonFocusedEditTextRef.set(nonFocusedEditText);
+
+            return layout;
+        });
+        waitOnMainUntil(() -> mImManager.isActive(), TIMEOUT);
+        assertTrue(mImManager.isAcceptingText());
+        assertTrue(mImManager.isActive(focusedEditTextRef.get()));
+        assertFalse(mImManager.isActive(nonFocusedEditTextRef.get()));
     }
 
     @Test
-    public void testInputMethodManager() throws Throwable {
-        final InputMethodCtsActivity activity = mActivityRule.getActivity();
-        assumeTrue(mContext.getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_INPUT_METHODS));
+    public void testIsAcceptingText() throws Throwable {
+        final AtomicReference<EditText> focusedFakeEditTextRef = new AtomicReference<>();
+        TestActivity.startSync(activity -> {
+            final LinearLayout layout = new LinearLayout(activity);
+            layout.setOrientation(LinearLayout.VERTICAL);
 
-        Window window = activity.getWindow();
-        final EditText view = window.findViewById(R.id.entry);
-
-        PollingCheck.waitFor(1000, view::hasWindowFocus);
-
-        mActivityRule.runOnUiThread(view::requestFocus);
-        mInstrumentation.waitForIdleSync();
-        assertTrue(view.isFocused());
-
-        PollingCheck.waitFor(mImManager::isActive);
-
-        assertTrue(mImManager.isAcceptingText());
-        assertTrue(mImManager.isActive(view));
-
-        mInstrumentation.waitForIdleSync();
+            final EditText focusedFakeEditText = new EditText(activity) {
+                @Override
+                public InputConnection onCreateInputConnection(EditorInfo info) {
+                    super.onCreateInputConnection(info);
+                    return null;
+                }
+            };
+            layout.addView(focusedFakeEditText);
+            focusedFakeEditTextRef.set(focusedFakeEditText);
+            focusedFakeEditText.requestFocus();
+            return layout;
+        });
+        waitOnMainUntil(() -> mImManager.isActive(), TIMEOUT);
+        assertTrue(mImManager.isActive(focusedFakeEditTextRef.get()));
+        assertFalse("InputMethodManager#isAcceptingText() must return false "
+                + "if target View returns null from onCreateInputConnection().",
+                mImManager.isAcceptingText());
     }
 
     @Test
