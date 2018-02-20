@@ -1165,6 +1165,14 @@ public abstract class ActivityManagerTestBase {
         }.assertValidator("***Waiting for valid lifecycle state");
     }
 
+    protected void assertRelaunchOrConfigChanged(ComponentName activityName, int numRelaunch,
+            int numConfigChange, LogSeparator logSeparator) {
+        assertRelaunchOrConfigChanged(
+                getLogTag(activityName), numRelaunch, numConfigChange, logSeparator);
+    }
+
+    // TODO(b/73349193): Use {@link #assertRelaunchOrConfigChanged(ComponentName, int, int, LogSeparator)}.
+    @Deprecated
     protected void assertRelaunchOrConfigChanged(String activityName, int numRelaunch,
             int numConfigChange, LogSeparator logSeparator) {
         new RetryValidator() {
@@ -1421,6 +1429,8 @@ public abstract class ActivityManagerTestBase {
             this(getLogTag(componentName), logSeparator);
         }
 
+        // TODO(b/73349193): Use {@link ActivityLifecycleCounts(ComponentName, LogSeparator)}.
+        @Deprecated
         ActivityLifecycleCounts(String logTag, LogSeparator logSeparator) {
             int lineIndex = 0;
             waitForIdle();
@@ -1589,13 +1599,6 @@ public abstract class ActivityManagerTestBase {
         @Deprecated
         public LaunchActivityBuilder setTargetActivityName(String name) {
             mTargetActivityName = name;
-            return this;
-        }
-
-        // TODO(b/73349193): Use {@link #setTargetActivity(ComponentName)} instead.
-        @Deprecated
-        public LaunchActivityBuilder setTargetPackage(String pkg) {
-            mTargetPackage = pkg;
             return this;
         }
 

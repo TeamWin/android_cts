@@ -29,6 +29,9 @@ public class Components extends ComponentsBase {
     public static final ComponentName DOCKED_ACTIVITY = component("DockedActivity");
     public static final ComponentName ENTRY_POINT_ALIAS_ACTIVITY =
             component("EntryPointAliasActivity");
+    public static final ComponentName FONT_SCALE_ACTIVITY = component("FontScaleActivity");
+    public static final ComponentName FONT_SCALE_NO_RELAUNCH_ACTIVITY =
+            component("FontScaleNoRelaunchActivity");
     public static final ComponentName LANDSCAPE_ORIENTATION_ACTIVITY =
             component("LandscapeOrientationActivity");
     public static final ComponentName LAUNCH_ASSISTANT_ACTIVITY_FROM_SESSION =
@@ -42,6 +45,7 @@ public class Components extends ComponentsBase {
             component("MoveTaskToBackActivity");
     public static final ComponentName NIGHT_MODE_ACTIVITY = component("NightModeActivity");
     public static final ComponentName NO_HISTORY_ACTIVITY = component("NoHistoryActivity");
+    public static final ComponentName NO_RELAUNCH_ACTIVITY = component("NoRelaunchActivity");
     public static final ComponentName PIP_ACTIVITY = component("PipActivity");
     public static final ComponentName PORTRAIT_ORIENTATION_ACTIVITY =
             component("PortraitOrientationActivity");
