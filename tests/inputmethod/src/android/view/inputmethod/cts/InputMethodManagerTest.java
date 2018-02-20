@@ -20,7 +20,6 @@ import static android.content.Intent.ACTION_CLOSE_SYSTEM_DIALOGS;
 import static android.content.Intent.FLAG_RECEIVER_FOREGROUND;
 import static android.view.inputmethod.cts.util.TestUtils.waitOnMainUntil;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -39,7 +38,6 @@ import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
-import android.view.inputmethod.BaseInputConnection;
 import android.view.inputmethod.InputMethodInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.InputMethodSubtype;
@@ -98,18 +96,10 @@ public class InputMethodManagerTest {
         mInstrumentation.waitForIdleSync();
         assertTrue(view.isFocused());
 
-        BaseInputConnection connection = new BaseInputConnection(view, false);
-
         PollingCheck.waitFor(mImManager::isActive);
 
         assertTrue(mImManager.isAcceptingText());
         assertTrue(mImManager.isActive(view));
-
-        assertFalse(mImManager.isFullscreenMode());
-        connection.reportFullscreenMode(true);
-        // Only IMEs are allowed to report full-screen mode.  Calling this method from the
-        // application should have no effect.
-        assertFalse(mImManager.isFullscreenMode());
 
         mInstrumentation.waitForIdleSync();
     }
