@@ -20,6 +20,7 @@ import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
 import com.android.ddmlib.testrunner.TestResult.TestStatus;
 import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.config.Option;
 import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
@@ -53,6 +54,14 @@ import javax.annotation.Nullable;
  * owner, etc.
  */
 public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiver {
+
+    @Option(
+            name = "skip-device-admin-feature-check",
+            description = "Flag that allows to skip the check for android.software.device_admin "
+                + "and run the tests no matter what. This is useful for system that do not what "
+                + "to expose that feature publicly."
+    )
+    private boolean mSkipDeviceAdminFeatureCheck = false;
 
     private static final String RUNNER = "android.support.test.runner.AndroidJUnitRunner";
 
@@ -122,8 +131,10 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     protected void setUp() throws Exception {
         super.setUp();
         assertNotNull(mCtsBuild);  // ensure build has been set before test is run.
-        mHasFeature = getDevice().getApiLevel() >= 21 /* Build.VERSION_CODES.L */
-                && hasDeviceFeature("android.software.device_admin");
+        mHasFeature = getDevice().getApiLevel() >= 21; /* Build.VERSION_CODES.L */
+        if (!mSkipDeviceAdminFeatureCheck) {
+            mHasFeature = mHasFeature && hasDeviceFeature("android.software.device_admin");
+        }
         mSupportsMultiUser = getMaxNumberOfUsersSupported() > 1;
         mSupportsFbe = hasDeviceFeature("android.software.file_based_encryption");
         mFixedPackages = getDevice().getInstalledPackageNames();
