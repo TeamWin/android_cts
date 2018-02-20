@@ -46,10 +46,13 @@ public class Components extends ComponentsBase {
     public static final ComponentName NIGHT_MODE_ACTIVITY = component("NightModeActivity");
     public static final ComponentName NO_HISTORY_ACTIVITY = component("NoHistoryActivity");
     public static final ComponentName NO_RELAUNCH_ACTIVITY = component("NoRelaunchActivity");
+    public static final ComponentName NON_RESIZEABLE_ACTIVITY = component("NonResizeableActivity");
     public static final ComponentName PIP_ACTIVITY = component("PipActivity");
     public static final ComponentName PORTRAIT_ORIENTATION_ACTIVITY =
             component("PortraitOrientationActivity");
     public static final ComponentName RESIZEABLE_ACTIVITY = component("ResizeableActivity");
+    public static final ComponentName SHOW_WHEN_LOCKED_ATTR_ACTIVITY =
+            component("ShowWhenLockedAttrActivity");
     public static final ComponentName SINGLE_TASK_ACTIVITY = component("SingleTaskActivity");
     public static final ComponentName SPLASHSCREEN_ACTIVITY = component("SplashscreenActivity");
     public static final ComponentName SWIPE_REFRESH_ACTIVITY = component("SwipeRefreshActivity");
@@ -68,6 +71,8 @@ public class Components extends ComponentsBase {
             component("TurnScreenOnSingleTaskActivity");
     public static final ComponentName TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY =
             component("TurnScreenOnWithRelayoutActivity");
+    public static final ComponentName VIRTUAL_DISPLAY_ACTIVITY =
+            component("VirtualDisplayActivity");
 
     public static final ComponentName ASSISTANT_VOICE_INTERACTION_SERVICE =
             component("AssistantVoiceInteractionService");

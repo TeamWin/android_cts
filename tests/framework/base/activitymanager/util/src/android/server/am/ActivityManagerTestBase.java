@@ -225,6 +225,12 @@ public abstract class ActivityManagerTestBase {
                 keyValuePairs);
     }
 
+    protected static String getAmStartCmdInNewTask(final ComponentName activityName) {
+        return "am start -n " + getActivityName(activityName) + " -f 0x18000000";
+    }
+
+    /** TODO(b/73349193): Use {@link #getAmStartCmdInNewTask(ComponentName)} instead. */
+    @Deprecated
     protected static String getAmStartCmdInNewTask(final String activityName) {
         return "am start -n " + getActivityComponentName(activityName) + " -f 0x18000000";
     }
@@ -389,6 +395,12 @@ public abstract class ActivityManagerTestBase {
         executeShellCommand(getAmStartCmd(targetActivityName, keyValuePairs));
     }
 
+    protected void launchActivityInNewTask(final ComponentName activityName) throws Exception {
+        executeShellCommand(getAmStartCmdInNewTask(activityName));
+        mAmWmState.waitForValidState(activityName);
+    }
+
+    /** TODO(b/73349193): Use {@link #launchActivityInNewTask(ComponentName)} instead. */
     @Deprecated
     protected void launchActivityInNewTask(final String targetActivityName) throws Exception {
         executeShellCommand(getAmStartCmdInNewTask(targetActivityName));
@@ -582,12 +594,14 @@ public abstract class ActivityManagerTestBase {
         mAmWmState.waitForValidState(activityName, windowingMode, ACTIVITY_TYPE_STANDARD);
     }
 
-    protected void moveActivityToStack(String activityName, int stackId) throws Exception {
+    protected void moveActivityToStack(ComponentName activityName, int stackId) throws Exception {
         final int taskId = getActivityTaskId(activityName);
         final String cmd = AM_MOVE_TASK + taskId + " " + stackId + " true";
         executeShellCommand(cmd);
 
-        mAmWmState.waitForValidState(activityName, stackId);
+        mAmWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
+                .setStackId(stackId)
+                .build());
     }
 
     protected void resizeActivityTask(String activityName, int left, int top, int right, int bottom)
@@ -1128,6 +1142,15 @@ public abstract class ActivityManagerTestBase {
     }
 
     void assertActivityLifecycle(
+            ComponentName activityName, boolean relaunched, LogSeparator logSeparator) {
+        assertActivityLifecycle(getLogTag(activityName), relaunched, logSeparator);
+    }
+
+    /**
+     * TODO(b/73349193): Use {@link #assertActivityLifecycle(ComponentName, boolean, LogSeparator)}.
+     */
+    @Deprecated
+    void assertActivityLifecycle(
             String activityName, boolean relaunched, LogSeparator logSeparator) {
         new RetryValidator() {
 
@@ -1198,7 +1221,7 @@ public abstract class ActivityManagerTestBase {
         }.assertValidator("***Waiting for relaunch or config changed");
     }
 
-    protected void assertActivityDestroyed(String activityName, LogSeparator logSeparator) {
+    protected void assertActivityDestroyed(ComponentName activityName, LogSeparator logSeparator) {
         new RetryValidator() {
 
             @Nullable
@@ -1208,13 +1231,16 @@ public abstract class ActivityManagerTestBase {
                         new ActivityLifecycleCounts(activityName, logSeparator);
 
                 if (lifecycleCounts.mDestroyCount != 1) {
-                    return activityName + " has been destroyed " + lifecycleCounts.mDestroyCount
+                    return getActivityName(activityName) + " has been destroyed "
+                            + lifecycleCounts.mDestroyCount
                             + " time(s), expecting single destruction.";
-                } else if (lifecycleCounts.mCreateCount != 0) {
-                    return activityName + " has been (re)created " + lifecycleCounts.mCreateCount
-                            + " time(s), not expecting any.";
-                } else if (lifecycleCounts.mConfigurationChangedCount != 0) {
-                    return activityName + " has received "
+                }
+                if (lifecycleCounts.mCreateCount != 0) {
+                    return getActivityName(activityName) + " has been (re)created "
+                            + lifecycleCounts.mCreateCount + " time(s), not expecting any.";
+                }
+                if (lifecycleCounts.mConfigurationChangedCount != 0) {
+                    return getActivityName(activityName) + " has received "
                             + lifecycleCounts.mConfigurationChangedCount
                             + " onConfigurationChanged() calls, not expecting any.";
                 }

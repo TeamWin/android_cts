@@ -146,21 +146,6 @@ public class ActivityAndWindowManagersState {
         waitForValidState(false /* compareTaskAndStackBounds */, waitForActivityVisible);
     }
 
-    /**
-     * Wait for the activity to appear in proper stack and for valid state in AM and WM.
-     * TODO(b/73349193): Use {@link #waitForValidState(WaitForValidActivityState...)} instead.
-     *
-     * @param simpleActivityName name of activity to wait for.
-     * @param stackId                id of the stack where provided activity should be found.
-     */
-    @Deprecated
-    void waitForValidState(String simpleActivityName, int stackId) throws Exception {
-        waitForValidState(false /* compareTaskAndStackBounds */,
-                new WaitForValidActivityState.Builder(simpleActivityName)
-                        .setStackId(stackId)
-                        .build());
-    }
-
     // TODO(b/73349193): Use {@link #waitForValidState(WaitForValidActivityState...)} instead.
     @Deprecated
     void waitForValidState(String simpleActivityName, int windowingMode, int activityType)
