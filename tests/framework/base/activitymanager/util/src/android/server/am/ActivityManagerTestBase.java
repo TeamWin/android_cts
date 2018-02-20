@@ -1301,15 +1301,9 @@ public abstract class ActivityManagerTestBase {
     }
 
     void assertSingleStart(ComponentName activityName, LogSeparator logSeparator) {
-        assertSingleStart(getLogTag(activityName), logSeparator);
-    }
-
-    // TODO(b/73349193): Use {@link #assertSingleStart(ComponentName, LogSeparator)} instead.
-    @Deprecated
-    void assertSingleStart(String logTag, LogSeparator logSeparator) {
-        new ActivityLifecycleCountsValidator(logTag, logSeparator, 0 /* createCount */,
-                1 /* startCount */, 1 /* resumeCount */, 0 /* pauseCount */, 0 /* stopCount */,
-                0 /* destroyCount */)
+        new ActivityLifecycleCountsValidator(getLogTag(activityName), logSeparator,
+                0 /* createCount */, 1 /* startCount */, 1 /* resumeCount */, 0 /* pauseCount */,
+                0 /* stopCount */, 0 /* destroyCount */)
                 .assertValidator("***Waiting for activity start and resume");
     }
 

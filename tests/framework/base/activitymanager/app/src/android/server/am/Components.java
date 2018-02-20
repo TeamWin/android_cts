@@ -44,6 +44,8 @@ public class Components extends ComponentsBase {
     public static final ComponentName LAUNCH_PIP_ON_PIP_ACTIVITY =
             component("LaunchPipOnPipActivity");
     public static final ComponentName LAUNCHING_ACTIVITY = component("LaunchingActivity");
+    public static final ComponentName LOG_CONFIGURATION_ACTIVITY =
+            component("LogConfigurationActivity");
     public static final ComponentName MOVE_TASK_TO_BACK_ACTIVITY =
             component("MoveTaskToBackActivity");
     public static final ComponentName NIGHT_MODE_ACTIVITY = component("NightModeActivity");
