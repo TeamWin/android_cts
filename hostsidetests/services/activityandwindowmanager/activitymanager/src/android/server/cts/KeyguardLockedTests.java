@@ -177,6 +177,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
 
         gotoKeyguard();
+        mAmWmState.computeState(mDevice, null);
         mAmWmState.waitForKeyguardShowingAndOccluded(mDevice);
         assertShowingAndOccluded();
         mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
