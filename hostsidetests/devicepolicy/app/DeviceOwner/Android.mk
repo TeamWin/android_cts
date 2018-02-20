@@ -41,8 +41,6 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-test \
     cts-security-test-support-library
 
-LOCAL_SDK_VERSION := test_current
-
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := arcts cts vts general-tests
 
