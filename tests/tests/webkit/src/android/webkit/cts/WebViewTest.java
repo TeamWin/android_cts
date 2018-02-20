@@ -69,6 +69,7 @@ import android.webkit.cts.WebViewOnUiThread.WaitForLoadedClient;
 import android.webkit.cts.WebViewOnUiThread.WaitForProgressClient;
 import android.widget.LinearLayout;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.EvaluateJsResultPollingCheck;
 import com.android.compatibility.common.util.NullWebViewUtils;
 import com.android.compatibility.common.util.PollingCheck;
@@ -103,6 +104,7 @@ import org.apache.http.HttpRequest;
 import org.apache.http.util.EncodingUtils;
 import org.apache.http.util.EntityUtils;
 
+@CddTest(requirement="3.4.1/H-0-1,T-0-1,A-0-1")
 public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActivity> {
     public static final long TEST_TIMEOUT = 20000L;
     private static final int INITIAL_PROGRESS = 100;

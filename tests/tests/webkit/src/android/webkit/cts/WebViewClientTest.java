@@ -34,6 +34,7 @@ import android.webkit.WebViewClient;
 import android.webkit.cts.WebViewOnUiThread.WaitForLoadedClient;
 import android.util.Pair;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.EvaluateJsResultPollingCheck;
 import com.android.compatibility.common.util.NullWebViewUtils;
 import com.android.compatibility.common.util.PollingCheck;
@@ -45,6 +46,7 @@ import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
 
+@CddTest(requirement="3.4.1/H-0-1,T-0-1,A-0-1")
 public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewCtsActivity> {
     private static final long TEST_TIMEOUT = 5000;
     private static final String TEST_URL = "http://www.example.com/";

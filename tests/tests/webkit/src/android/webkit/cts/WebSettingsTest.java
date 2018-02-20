@@ -39,6 +39,7 @@ import android.webkit.cts.WebViewOnUiThread.WaitForProgressClient;
 
 import com.android.compatibility.common.util.NullWebViewUtils;
 import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.CddTest;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileOutputStream;
@@ -52,6 +53,7 @@ import java.util.regex.Pattern;
 /**
  * Tests for {@link android.webkit.WebSettings}
  */
+@CddTest(requirement="3.4.1/H-0-1,T-0-1,A-0-1")
 public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCtsActivity> {
 
     private static final int WEBVIEW_TIMEOUT = 5000;
@@ -110,6 +112,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
      * Version/<major>.<minor> Chrome/<major>.<minor>.<branch>.<build>[ Mobile]
      * Safari/<major>.<minor>
      */
+    @CddTest(requirement="3.4.1/C-1-3")
     public void testUserAgentString_default() {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
@@ -138,7 +141,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         Log.i(LOG_TAG, String.format("Trying to match pattern %s", patternString));
         final Pattern userAgentExpr = Pattern.compile(patternString);
         Matcher patternMatcher = userAgentExpr.matcher(actualUserAgentString);
-        assertTrue(String.format("User agent string did not match expected pattern. \nExpected " +
+        assertTrue(String.format("CDD(3.4.1/C-1-3) User agent string did not match expected pattern. \nExpected " +
                         "pattern:\n%s\nActual:\n%s", patternString, actualUserAgentString),
                         patternMatcher.find());
         if (patternMatcher.group(3) != null) {
