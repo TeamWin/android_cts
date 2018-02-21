@@ -300,8 +300,8 @@ class ActivityManagerState {
     }
 
     /** Get the stack position on its display. */
-    int getStackIndexByActivityName(String activityName) {
-        final String fullName = getActivityComponentName(activityName);
+    int getStackIndexByActivity(ComponentName activityName) {
+        final String fullName = getActivityName(activityName);
 
         for (ActivityDisplay display : mDisplays) {
             for (int i = display.mStacks.size() - 1; i >= 0; --i) {
@@ -498,10 +498,8 @@ class ActivityManagerState {
                 getActivityComponentName(activityName), WINDOWING_MODE_UNDEFINED);
     }
 
-    /** TODO(b/73349193): Add getTaskByActicityOfWidowingMode(Component, int). */
-    @Deprecated
-    ActivityTask getTaskByActivityName(String activityName, int windowingMode) {
-        return getTaskByActivityInternal(getActivityComponentName(activityName), windowingMode);
+    ActivityTask getTaskByActivity(ComponentName activityName, int windowingMode) {
+        return getTaskByActivityInternal(getActivityName(activityName), windowingMode);
     }
 
     private ActivityTask getTaskByActivityInternal(String fullName, int windowingMode) {
