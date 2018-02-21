@@ -18,6 +18,7 @@ package android.accessibilityservice.cts;
 
 import android.accessibilityservice.AccessibilityService;
 import android.os.SystemClock;
+import android.platform.test.annotations.Presubmit;
 import android.test.InstrumentationTestCase;
 import android.test.suitebuilder.annotation.MediumTest;
 
@@ -26,6 +27,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * Test global actions
  */
+@Presubmit
 public class AccessibilityGlobalActionsTest extends InstrumentationTestCase {
     /**
      * Timeout required for pending Binder calls or event processing to

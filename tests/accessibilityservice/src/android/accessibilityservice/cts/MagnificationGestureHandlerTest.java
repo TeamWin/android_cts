@@ -34,8 +34,8 @@ import static android.view.MotionEvent.ACTION_DOWN;
 import static android.view.MotionEvent.ACTION_MOVE;
 import static android.view.MotionEvent.ACTION_UP;
 
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
@@ -53,9 +53,9 @@ import android.content.pm.PackageManager;
 import android.graphics.PointF;
 import android.os.SystemClock;
 import android.provider.Settings;
+import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
-import android.support.test.InstrumentationRegistry;
 import android.view.MotionEvent;
 import android.widget.TextView;
 

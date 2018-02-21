@@ -14,6 +14,19 @@
 
 package android.accessibilityservice.cts;
 
+import static android.view.accessibility.AccessibilityNodeInfo
+        .EXTRA_DATA_TEXT_CHARACTER_LOCATION_ARG_LENGTH;
+import static android.view.accessibility.AccessibilityNodeInfo
+        .EXTRA_DATA_TEXT_CHARACTER_LOCATION_ARG_START_INDEX;
+import static android.view.accessibility.AccessibilityNodeInfo
+        .EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
+import android.accessibilityservice.cts.R;
 import android.accessibilityservice.cts.activities.AccessibilityTextTraversalActivity;
 import android.app.UiAutomation;
 import android.graphics.RectF;
@@ -33,25 +46,10 @@ import android.view.accessibility.AccessibilityRequestPreparer;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import android.accessibilityservice.cts.R;
-
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-
-import static android.view.accessibility.AccessibilityNodeInfo.EXTRA_DATA_TEXT_CHARACTER_LOCATION_ARG_LENGTH;
-import static android.view.accessibility.AccessibilityNodeInfo.EXTRA_DATA_TEXT_CHARACTER_LOCATION_ARG_START_INDEX;
-import static android.view.accessibility.AccessibilityNodeInfo.EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
 /**
  * Test cases for actions taken on text views.
@@ -198,10 +196,14 @@ public class AccessibilityTextActionTest extends
 
     public void testTextLocations_textViewShouldProvideWhenRequested() {
         final TextView textView = (TextView) getActivity().findViewById(R.id.text);
-        makeTextViewVisibleAndSetText(textView, getString(R.string.a_b));
+        // Use text with a strong s, since that gets replaced with a double s for all caps.
+        // That replacement requires us to properly handle the length of the string changing.
+        String stringToSet = getString(R.string.german_text_with_strong_s);
+        makeTextViewVisibleAndSetText(textView, stringToSet);
+        getInstrumentation().runOnMainSync(() -> textView.setAllCaps(true));
 
         final AccessibilityNodeInfo text = mUiAutomation.getRootInActiveWindow()
-                .findAccessibilityNodeInfosByText(getString(R.string.a_b)).get(0);
+                .findAccessibilityNodeInfosByText(stringToSet).get(0);
         List<String> textAvailableExtraData = text.getAvailableExtraData();
         assertTrue("Text view should offer text location to accessibility",
                 textAvailableExtraData.contains(EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY));

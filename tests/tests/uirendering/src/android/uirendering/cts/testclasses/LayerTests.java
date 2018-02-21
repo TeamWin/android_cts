@@ -104,6 +104,17 @@ public class LayerTests extends ActivityTestBase {
     }
 
     @Test
+    public void testLayerPaintXfermodeWithSoftware() {
+        createTest()
+                .addLayout(R.layout.simple_red_layout, (ViewInitializer) view -> {
+                    Paint paint = new Paint();
+                    paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+                    view.setLayerType(View.LAYER_TYPE_SOFTWARE, paint);
+                }, true)
+                .runWithVerifier(new ColorVerifier(Color.TRANSPARENT));
+    }
+
+    @Test
     public void testLayerPaintColorFilter() {
         // Red, fully desaturated. Note that it's not 255/3 in each channel.
         // See ColorMatrix#setSaturation()

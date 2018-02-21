@@ -20,7 +20,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -29,16 +28,23 @@ import android.content.ContentResolver;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.ColorFilter;
 import android.graphics.ImageDecoder;
+import android.graphics.LightingColorFilter;
+import android.graphics.Paint;
 import android.graphics.PixelFormat;
+import android.graphics.Rect;
+import android.graphics.cts.R;
 import android.graphics.drawable.AnimatedImageDrawable;
 import android.graphics.drawable.Drawable;
-import android.graphics.cts.R;
 import android.net.Uri;
 import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
 import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.widget.ImageView;
+
+import com.android.compatibility.common.util.BitmapUtils;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -48,6 +54,7 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
+import java.util.function.BiFunction;
 
 @RunWith(AndroidJUnit4.class)
 public class AnimatedImageDrawableTest {
@@ -374,6 +381,104 @@ public class AnimatedImageDrawableTest {
     public void testGetOpacity() {
         AnimatedImageDrawable drawable = createFromImageDecoder(RES_ID);
         assertEquals(PixelFormat.TRANSLUCENT, drawable.getOpacity());
+    }
+
+    @Test
+    public void testColorFilter() {
+        AnimatedImageDrawable drawable = createFromImageDecoder(RES_ID);
+
+        ColorFilter filter = new LightingColorFilter(0, Color.RED);
+        drawable.setColorFilter(filter);
+        assertEquals(filter, drawable.getColorFilter());
+
+        Bitmap actual = Bitmap.createBitmap(drawable.getIntrinsicWidth(),
+                drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        {
+            Canvas canvas = new Canvas(actual);
+            drawable.draw(canvas);
+        }
+
+        for (int i = 0; i < actual.getWidth(); ++i) {
+            for (int j = 0; j < actual.getHeight(); ++j) {
+                int color = actual.getPixel(i, j);
+                // The LightingColorFilter does not affect the transparent pixels,
+                // so all pixels should either remain transparent or turn red.
+                if (color != Color.RED && color != Color.TRANSPARENT) {
+                    fail("pixel at " + i + ", " + j + " does not match expected. "
+                            + "expected: " + Color.RED + " OR " + Color.TRANSPARENT
+                            + " actual: " + color);
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testPostProcess() {
+        // Compare post processing a Rect in the middle of the (not-animating)
+        // image with drawing manually. They should be exactly the same.
+        BiFunction<Integer, Integer, Rect> rectCreator = (width, height) -> {
+            int quarterWidth  = width  / 4;
+            int quarterHeight = height / 4;
+            return new Rect(quarterWidth, quarterHeight,
+                    3 * quarterWidth, 3 * quarterHeight);
+        };
+
+        AnimatedImageDrawable drawable = createFromImageDecoder(RES_ID);
+        Bitmap expected = Bitmap.createBitmap(drawable.getIntrinsicWidth(),
+                drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+
+        Paint paint = new Paint();
+        paint.setColor(Color.RED);
+
+        {
+            Rect r = rectCreator.apply(drawable.getIntrinsicWidth(),
+                                       drawable.getIntrinsicHeight());
+            Canvas canvas = new Canvas(expected);
+            drawable.draw(canvas);
+
+            for (int i = r.left; i < r.right; ++i) {
+                for (int j = r.top; j < r.bottom; ++j) {
+                    assertNotEquals(Color.RED, expected.getPixel(i, j));
+                }
+            }
+
+            canvas.drawRect(r, paint);
+
+            for (int i = r.left; i < r.right; ++i) {
+                for (int j = r.top; j < r.bottom; ++j) {
+                    assertEquals(Color.RED, expected.getPixel(i, j));
+                }
+            }
+        }
+
+
+        AnimatedImageDrawable testDrawable = null;
+        Uri uri = null;
+        try {
+            uri = getAsResourceUri(RES_ID);
+            ImageDecoder.Source source = ImageDecoder.createSource(mContentResolver, uri);
+            Drawable dr = ImageDecoder.decodeDrawable(source, (decoder, info, src) -> {
+                decoder.setPostProcessor((canvas) -> {
+                    canvas.drawRect(rectCreator.apply(canvas.getWidth(),
+                                                      canvas.getHeight()), paint);
+                    return PixelFormat.TRANSLUCENT;
+                });
+            });
+            assertTrue(dr instanceof AnimatedImageDrawable);
+            testDrawable = (AnimatedImageDrawable) dr;
+        } catch (IOException e) {
+            fail("failed to create image from " + uri);
+        }
+
+        Bitmap actual = Bitmap.createBitmap(drawable.getIntrinsicWidth(),
+                drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+
+        {
+            Canvas canvas = new Canvas(actual);
+            testDrawable.draw(canvas);
+        }
+
+        BitmapUtils.compareBitmaps(expected, actual);
     }
 
     @Test

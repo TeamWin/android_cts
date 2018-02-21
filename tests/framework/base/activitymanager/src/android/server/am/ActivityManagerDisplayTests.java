@@ -17,6 +17,8 @@
 package android.server.am;
 
 import static android.server.am.ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID;
+import static android.server.am.ComponentNameUtils.getActivityName;
+import static android.server.am.Components.TEST_ACTIVITY;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeFalse;
@@ -34,7 +36,6 @@ import java.util.List;
  *     atest CtsActivityManagerDeviceTestCases:ActivityManagerDisplayTests
  */
 public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase {
-    private static final String TEST_ACTIVITY_NAME = "TestActivity";
 
     /**
      * Tests that the global configuration is equal to the default display's override configuration.
@@ -79,18 +80,18 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
             final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
 
             // Launch activity on new secondary display.
-            launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mId);
-            mAmWmState.computeState(new WaitForValidActivityState(TEST_ACTIVITY_NAME));
+            launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
+            mAmWmState.computeState(TEST_ACTIVITY);
 
             mAmWmState.assertFocusedActivity("Launched activity must be focused",
-                    TEST_ACTIVITY_NAME);
+                    TEST_ACTIVITY);
 
             // Check that activity is on the right display.
             final int frontStackId = mAmWmState.getAmState().getFrontStackId(DEFAULT_DISPLAY_ID);
             final ActivityManagerState.ActivityStack frontStack =
                     mAmWmState.getAmState().getStackById(frontStackId);
             assertEquals("Launched activity must be resumed",
-                    getActivityComponentName(TEST_ACTIVITY_NAME), frontStack.mResumedActivity);
+                    getActivityName(TEST_ACTIVITY), frontStack.mResumedActivity);
             assertEquals("Front stack must be on the default display", DEFAULT_DISPLAY_ID,
                     frontStack.mDisplayId);
             mAmWmState.assertFocusedStack("Focus must be on the default display", frontStackId);

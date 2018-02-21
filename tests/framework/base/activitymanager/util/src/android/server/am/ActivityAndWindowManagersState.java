@@ -79,7 +79,7 @@ public class ActivityAndWindowManagersState {
     private ActivityManagerState mAmState = new ActivityManagerState();
     private WindowManagerState mWmState = new WindowManagerState();
 
-    /** TODO(b/73349193): Use {@link #computeState(ComponentName...)} instead. */
+    // TODO(b/73349193): Use {@link #computeState(ComponentName...)} instead.
     @Deprecated
     public void computeState(String... simpleActivityNames) throws Exception {
         computeState(true, Arrays.stream(simpleActivityNames)
@@ -146,22 +146,7 @@ public class ActivityAndWindowManagersState {
         waitForValidState(false /* compareTaskAndStackBounds */, waitForActivityVisible);
     }
 
-    /**
-     * Wait for the activity to appear in proper stack and for valid state in AM and WM.
-     * TODO(b/73349193): Use {@link #waitForValidState(WaitForValidActivityState...)} instead.
-     *
-     * @param simpleActivityName name of activity to wait for.
-     * @param stackId                id of the stack where provided activity should be found.
-     */
-    @Deprecated
-    void waitForValidState(String simpleActivityName, int stackId) throws Exception {
-        waitForValidState(false /* compareTaskAndStackBounds */,
-                new WaitForValidActivityState.Builder(simpleActivityName)
-                        .setStackId(stackId)
-                        .build());
-    }
-
-    /** TODO(b/73349193): Use {@link #waitForValidState(WaitForValidActivityState...)} instead. */
+    // TODO(b/73349193): Use {@link #waitForValidState(WaitForValidActivityState...)} instead.
     @Deprecated
     void waitForValidState(String simpleActivityName, int windowingMode, int activityType)
             throws Exception {
@@ -342,7 +327,7 @@ public class ActivityAndWindowManagersState {
                 "***Waiting for Activity State: " + activityState);
     }
 
-    /** TODO(b/73349193): Use {@link #waitForActivityState(ComponentName, String)} instead. */
+    // TODO(b/73349193): Use {@link #waitForActivityState(ComponentName, String)} instead.
     @Deprecated
     void waitForActivityState(String activityName, String activityState)
             throws Exception {
@@ -612,12 +597,6 @@ public class ActivityAndWindowManagersState {
         assertTrue(msg, mWmState.containsStack(windowingMode, activityType));
     }
 
-    @Deprecated
-    void assertDoesNotContainStack(String msg, int stackId) throws Exception {
-        assertFalse(msg, mAmState.containsStack(stackId));
-        assertFalse(msg, mWmState.containsStack(stackId));
-    }
-
     void assertDoesNotContainStack(String msg, int windowingMode, int activityType)
             throws Exception {
         assertFalse(msg, mAmState.containsStack(windowingMode, activityType));
@@ -687,7 +666,7 @@ public class ActivityAndWindowManagersState {
         assertEquals(msg, getActivityName(activityName), mAmState.getResumedActivity());
     }
 
-    /** TODO(b/73349193): Use {@link #assertResumedActivity(String, ComponentName)} instead. */
+    // TODO(b/73349193): Use {@link #assertResumedActivity(String, ComponentName)} instead.
     @Deprecated
     void assertResumedActivity(String msg, String activityName) throws Exception {
         final String componentName = getActivityComponentName(activityName);
@@ -715,7 +694,7 @@ public class ActivityAndWindowManagersState {
         assertEquals(msg, windowName, mWmState.getFrontWindow());
     }
 
-    /** TODO(b/73349193): Use {@link #assertVisibility(ComponentName, boolean)} instead. */
+    // TODO(b/73349193): Use {@link #assertVisibility(ComponentName, boolean)} instead.
     @Deprecated
     public void assertVisibility(String activityName, boolean visible) {
         final String activityComponentName = getActivityComponentName(activityName);

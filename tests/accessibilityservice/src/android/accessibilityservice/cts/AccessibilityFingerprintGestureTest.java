@@ -14,6 +14,15 @@
 
 package android.accessibilityservice.cts;
 
+import static android.content.pm.PackageManager.FEATURE_FINGERPRINT;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+
 import android.accessibilityservice.FingerprintGestureController;
 import android.accessibilityservice.FingerprintGestureController.FingerprintGestureCallback;
 import android.accessibilityservice.cts.activities.AccessibilityEndToEndActivity;
@@ -23,6 +32,7 @@ import android.os.CancellationSignal;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -30,17 +40,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-
-import static android.content.pm.PackageManager.FEATURE_FINGERPRINT;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
 
 /**
  * Verify that a service listening for fingerprint gestures gets called back when apps

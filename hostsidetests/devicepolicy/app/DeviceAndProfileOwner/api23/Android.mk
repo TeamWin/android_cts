@@ -32,8 +32,6 @@ LOCAL_JAVA_LIBRARIES := \
 
 LOCAL_STATIC_JAVA_LIBRARIES = android-support-v4 compatibility-device-util ctstestrunner ub-uiautomator
 
-LOCAL_SDK_VERSION := test_current
-
 LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/../res
 
 # tag this module as a cts test artifact

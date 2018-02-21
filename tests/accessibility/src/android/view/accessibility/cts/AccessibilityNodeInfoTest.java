@@ -18,6 +18,7 @@ package android.view.accessibility.cts;
 
 import android.graphics.Rect;
 import android.os.Parcel;
+import android.platform.test.annotations.Presubmit;
 import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.text.TextUtils;
@@ -33,6 +34,7 @@ import java.util.List;
 /**
  * Class for testing {@link AccessibilityNodeInfo}.
  */
+@Presubmit
 public class AccessibilityNodeInfoTest extends AndroidTestCase {
 
     /** The number of properties of the {@link AccessibilityNodeInfo} class that are marshalled. */

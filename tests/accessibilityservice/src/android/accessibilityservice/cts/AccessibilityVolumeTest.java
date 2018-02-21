@@ -13,17 +13,20 @@
  */
 package android.accessibilityservice.cts;
 
+import static android.content.Context.AUDIO_SERVICE;
+
+import static org.junit.Assert.assertEquals;
+
 import android.app.Instrumentation;
 import android.content.pm.PackageManager;
+import android.media.AudioManager;
+import android.platform.test.annotations.Presubmit;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
-import android.media.AudioManager;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import static android.content.Context.AUDIO_SERVICE;
-import static org.junit.Assert.assertEquals;
 
 /**
  * Verify that accessibility services can control the accessibility volume.
@@ -47,6 +50,7 @@ public class AccessibilityVolumeTest {
     }
 
     @Test
+    @Presubmit
     public void testChangeAccessibilityVolume_outsideValidAccessibilityService_shouldFail() {
         if (mSingleVolume) {
             return;

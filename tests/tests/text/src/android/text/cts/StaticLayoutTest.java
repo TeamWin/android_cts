@@ -22,29 +22,29 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Typeface;
+import android.os.LocaleList;
 import android.support.test.filters.SmallTest;
 import android.support.test.filters.Suppress;
 import android.support.test.runner.AndroidJUnit4;
 import android.text.Editable;
 import android.text.Layout;
 import android.text.Layout.Alignment;
-import android.text.MeasuredText;
+import android.text.PrecomputedText;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.SpannedString;
 import android.text.StaticLayout;
+import android.text.TextDirectionHeuristic;
 import android.text.TextDirectionHeuristics;
 import android.text.TextPaint;
 import android.text.TextUtils;
 import android.text.TextUtils.TruncateAt;
 import android.text.method.cts.EditorState;
 import android.text.style.StyleSpan;
-import android.text.style.TextAppearanceSpan;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -1283,31 +1283,186 @@ public class StaticLayoutTest {
         return bmp;
     }
 
-    @Test
-    public void testPremeasured() {
-        final float wholeWidth = mDefaultPaint.measureText(LOREM_IPSUM);
+    private static String textPaintToString(TextPaint p) {
+        return "{"
+            + "mTextSize=" + p.getTextSize() + ", "
+            + "mTextSkewX=" + p.getTextSkewX() + ", "
+            + "mTextScaleX=" + p.getTextScaleX() + ", "
+            + "mLetterSpacing=" + p.getLetterSpacing() + ", "
+            + "mFlags=" + p.getFlags() + ", "
+            + "mTextLocales=" + p.getTextLocales() + ", "
+            + "mFontVariationSettings=" + p.getFontVariationSettings() + ", "
+            + "mTypeface=" + p.getTypeface() + ", "
+            + "mFontFeatureSettings=" + p.getFontFeatureSettings()
+            + "}";
+    }
+
+    private static String directionToString(TextDirectionHeuristic dir) {
+        if (dir == TextDirectionHeuristics.LTR) {
+            return "LTR";
+        } else if (dir == TextDirectionHeuristics.RTL) {
+            return "RTL";
+        } else if (dir == TextDirectionHeuristics.FIRSTSTRONG_LTR) {
+            return "FIRSTSTRONG_LTR";
+        } else if (dir == TextDirectionHeuristics.FIRSTSTRONG_RTL) {
+            return "FIRSTSTRONG_RTL";
+        } else if (dir == TextDirectionHeuristics.ANYRTL_LTR) {
+            return "ANYRTL_LTR";
+        } else {
+            throw new RuntimeException("Unknown Direction");
+        }
+    }
+
+    static class LayoutParam {
+        final int mStrategy;
+        final int mFrequency;
+        final TextPaint mPaint;
+        final TextDirectionHeuristic mDir;
+
+        LayoutParam(int strategy, int frequency, TextPaint paint, TextDirectionHeuristic dir) {
+            mStrategy = strategy;
+            mFrequency = frequency;
+            mPaint = new TextPaint(paint);
+            mDir = dir;
+        }
+
+        @Override
+        public String toString() {
+            return "{"
+                + "mStrategy=" + mStrategy + ", "
+                + "mFrequency=" + mFrequency + ", "
+                + "mPaint=" + textPaintToString(mPaint) + ", "
+                + "mDir=" + directionToString(mDir)
+                + "}";
+
+        }
+
+        Layout getLayout(CharSequence text, int width) {
+            return StaticLayout.Builder.obtain(text, 0, text.length(), mPaint, width)
+                .setBreakStrategy(mStrategy).setHyphenationFrequency(mFrequency)
+                .setTextDirection(mDir).build();
+        }
+
+        PrecomputedText getPrecomputedText(CharSequence text) {
+            PrecomputedText.Params param = new PrecomputedText.Params.Builder(mPaint)
+                    .setBreakStrategy(mStrategy)
+                    .setHyphenationFrequency(mFrequency)
+                    .setTextDirection(mDir).build();
+            return PrecomputedText.create(text, param);
+        }
+    };
+
+    void assertSameStaticLayout(CharSequence text, LayoutParam measuredTextParam,
+                                LayoutParam staticLayoutParam) {
+        String msg = "StaticLayout for " + staticLayoutParam + " with PrecomputedText"
+                + " created with " + measuredTextParam + " must output the same BMP.";
+
+        final float wholeWidth = mDefaultPaint.measureText(text.toString());
         final int lineWidth = (int) (wholeWidth / 10.0f);  // Make 10 lines per paragraph.
 
-        final ColorStateList textColor = ColorStateList.valueOf(0x88FF0000);
-        final TextAppearanceSpan span = new TextAppearanceSpan(
-                "serif", Typeface.BOLD, 64 /* text size */, textColor, textColor);
-        final SpannableStringBuilder ssb = new SpannableStringBuilder(
-                LOREM_IPSUM + "\n" + LOREM_IPSUM);
-        ssb.setSpan(span, 0, LOREM_IPSUM.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+        // Static layout parameter should be used for the final output.
+        final Layout expectedLayout = staticLayoutParam.getLayout(text, lineWidth);
 
-        final Layout layout = StaticLayout.Builder.obtain(ssb, 0, ssb.length(), mDefaultPaint,
-                lineWidth).build();
+        final PrecomputedText mt = measuredTextParam.getPrecomputedText(text);
+        final Layout resultLayout = StaticLayout.Builder.obtain(mt, 0, mt.length(),
+                staticLayoutParam.mPaint, lineWidth)
+                .setBreakStrategy(staticLayoutParam.mStrategy)
+                .setHyphenationFrequency(staticLayoutParam.mFrequency)
+                .setTextDirection(staticLayoutParam.mDir).build();
 
-        final MeasuredText premeasuredText = new MeasuredText.Builder(ssb, mDefaultPaint).build();
-        final Layout premLayout = StaticLayout.Builder.obtain(premeasuredText, 0,
-                premeasuredText.length(), mDefaultPaint, lineWidth)
-                .setTextDirection(TextDirectionHeuristics.FIRSTSTRONG_LTR).build();
+        assertEquals(msg, expectedLayout.getHeight(), resultLayout.getHeight(), 0.0f);
 
-        assertEquals(layout.getHeight(), premLayout.getHeight(), 0.0f);
+        final Bitmap expectedBMP = drawToBitmap(expectedLayout);
+        final Bitmap resultBMP = drawToBitmap(resultLayout);
 
-        final Bitmap bmp = drawToBitmap(layout);
-        final Bitmap premBmp = drawToBitmap(premLayout);
+        assertTrue(msg, resultBMP.sameAs(expectedBMP));
+    }
 
-        assertTrue(bmp.sameAs(premBmp));  // Need to be pixel perfect.
+    @Test
+    public void testPrecomputedText() {
+        int[] breaks = {
+            Layout.BREAK_STRATEGY_SIMPLE,
+            Layout.BREAK_STRATEGY_HIGH_QUALITY,
+            Layout.BREAK_STRATEGY_BALANCED,
+        };
+
+        int[] frequencies = {
+            Layout.HYPHENATION_FREQUENCY_NORMAL,
+            Layout.HYPHENATION_FREQUENCY_FULL,
+            Layout.HYPHENATION_FREQUENCY_NONE,
+        };
+
+        TextDirectionHeuristic[] dirs = {
+            TextDirectionHeuristics.LTR,
+            TextDirectionHeuristics.RTL,
+            TextDirectionHeuristics.FIRSTSTRONG_LTR,
+            TextDirectionHeuristics.FIRSTSTRONG_RTL,
+            TextDirectionHeuristics.ANYRTL_LTR,
+        };
+
+        float[] textSizes = {
+            8.0f, 16.0f, 32.0f
+        };
+
+        LocaleList[] locales = {
+            LocaleList.forLanguageTags("en-US"),
+            LocaleList.forLanguageTags("ja-JP"),
+            LocaleList.forLanguageTags("en-US,ja-JP"),
+        };
+
+        TextPaint paint = new TextPaint();
+
+        // If the PrecomputedText is created with the same argument of the StaticLayout, generate
+        // the same bitmap.
+        for (int b : breaks) {
+            for (int f : frequencies) {
+                for (TextDirectionHeuristic dir : dirs) {
+                    for (float textSize : textSizes) {
+                        for (LocaleList locale : locales) {
+                            paint.setTextSize(textSize);
+                            paint.setTextLocales(locale);
+
+                            assertSameStaticLayout(LOREM_IPSUM,
+                                    new LayoutParam(b, f, paint, dir),
+                                    new LayoutParam(b, f, paint, dir));
+                        }
+                    }
+                }
+            }
+        }
+
+        // If the parameters are different, the output of the static layout must be
+        // same bitmap.
+        for (int bi = 0; bi < breaks.length; bi++) {
+            for (int fi = 0; fi < frequencies.length; fi++) {
+                for (int diri = 0; diri < dirs.length; diri++) {
+                    for (int sizei = 0; sizei < textSizes.length; sizei++) {
+                        for (int localei = 0; localei < locales.length; localei++) {
+                            TextPaint p1 = new TextPaint();
+                            TextPaint p2 = new TextPaint();
+
+                            p1.setTextSize(textSizes[sizei]);
+                            p2.setTextSize(textSizes[(sizei + 1) % textSizes.length]);
+
+                            p1.setTextLocales(locales[localei]);
+                            p2.setTextLocales(locales[(localei + 1) % locales.length]);
+
+                            int b1 = breaks[bi];
+                            int b2 = breaks[(bi + 1) % breaks.length];
+
+                            int f1 = frequencies[fi];
+                            int f2 = frequencies[(fi + 1) % frequencies.length];
+
+                            TextDirectionHeuristic dir1 = dirs[diri];
+                            TextDirectionHeuristic dir2 = dirs[(diri + 1) % dirs.length];
+
+                            assertSameStaticLayout(LOREM_IPSUM,
+                                    new LayoutParam(b1, f1, p1, dir1),
+                                    new LayoutParam(b2, f2, p2, dir2));
+                        }
+                    }
+                }
+            }
+        }
     }
 }

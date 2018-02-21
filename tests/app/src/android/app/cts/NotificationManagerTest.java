@@ -97,58 +97,55 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
-    public void testPrePCannotDisallowAlarmsOrMediaTest() throws Exception {
+    public void testOnlyPostPCanToggleAlarmsAndMediaTest() throws Exception {
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
-        mContext.getApplicationInfo().targetSdkVersion = Build.VERSION_CODES.O;
 
-        // toggle on alarms and media
-        mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
-                NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS
-                        | NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA_SYSTEM_OTHER, 0, 0));
+        if (mContext.getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.P) {
+            // Post-P can toggle alarms and media
+            // toggle on alarms and media:
+            mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
+                    NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS
+                            | NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA_SYSTEM_OTHER, 0, 0));
+            NotificationManager.Policy policy = mNotificationManager.getNotificationPolicy();
+            assertTrue((policy.priorityCategories
+                    & NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS) != 0);
+            assertTrue((policy.priorityCategories
+                    & NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA_SYSTEM_OTHER) != 0);
 
-        NotificationManager.Policy policy = mNotificationManager.getNotificationPolicy();
-        assert((policy.priorityCategories & NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS)
-                != 0);
-        assert((policy.priorityCategories &
-                NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA_SYSTEM_OTHER) != 0);
+            // toggle off alarms and media
+            mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(0, 0, 0));
+            policy = mNotificationManager.getNotificationPolicy();
+            assertTrue((policy.priorityCategories
+                    & NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS) == 0);
+            assertTrue((policy.priorityCategories &
+                    NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA_SYSTEM_OTHER) == 0);
+        } else {
+            // Pre-P cannot toggle alarms and media
+            NotificationManager.Policy origPolicy = mNotificationManager.getNotificationPolicy();
+            int alarmBit = origPolicy.priorityCategories & NotificationManager.Policy
+                    .PRIORITY_CATEGORY_ALARMS;
+            int mediaBit = origPolicy.priorityCategories & NotificationManager.Policy
+                    .PRIORITY_CATEGORY_MEDIA_SYSTEM_OTHER;
 
-        // attempt to toggle off alarms and media
-        // toggle on alarms and media
-        mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(0, 0, 0));
+            // attempt to toggle off alarms and media:
+            mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(0, 0, 0));
+            NotificationManager.Policy policy = mNotificationManager.getNotificationPolicy();
+            assertEquals(alarmBit, policy.priorityCategories
+                    & NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS);
+            assertEquals(mediaBit, policy.priorityCategories
+                    & NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA_SYSTEM_OTHER);
 
-        policy = mNotificationManager.getNotificationPolicy();
-        assert((policy.priorityCategories & NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS)
-                != 0);
-        assert((policy.priorityCategories &
-                NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA_SYSTEM_OTHER) != 0);
-    }
-
-    public void testPostPCanDisallowAlarmsOrMediaTest() throws Exception {
-        toggleNotificationPolicyAccess(mContext.getPackageName(),
-                InstrumentationRegistry.getInstrumentation(), true);
-        mContext.getApplicationInfo().targetSdkVersion = Build.VERSION_CODES.P;
-
-        // toggle on alarms and media
-        mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
-                NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS
-                        | NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA_SYSTEM_OTHER, 0, 0));
-
-        NotificationManager.Policy policy = mNotificationManager.getNotificationPolicy();
-        assert((policy.priorityCategories & NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS)
-                != 0);
-        assert((policy.priorityCategories &
-                NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA_SYSTEM_OTHER) != 0);
-
-        // attempt to toggle off alarms and media
-        // toggle on alarms and media
-        mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(0, 0, 0));
-
-        policy = mNotificationManager.getNotificationPolicy();
-        assert((policy.priorityCategories & NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS)
-                == 0);
-        assert((policy.priorityCategories &
-                NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA_SYSTEM_OTHER) == 0);
+            // attempt to toggle on alarms and media:
+            mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
+                    NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS
+                            | NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA_SYSTEM_OTHER, 0, 0));
+            policy = mNotificationManager.getNotificationPolicy();
+            assertEquals(alarmBit, policy.priorityCategories
+                    & NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS);
+            assertEquals(mediaBit, policy.priorityCategories
+                    & NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA_SYSTEM_OTHER);
+        }
     }
 
     public void testCreateChannelGroup() throws Exception {
