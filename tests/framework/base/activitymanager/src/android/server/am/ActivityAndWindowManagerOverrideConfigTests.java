@@ -17,13 +17,19 @@
 package android.server.am;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
+import static android.server.am.ComponentNameUtils.getLogTag;
+import static android.server.am.Components.LOG_CONFIGURATION_ACTIVITY;
 import static android.server.am.StateLogger.log;
+import static android.server.am.StateLogger.logAlways;
 import static android.view.Surface.ROTATION_0;
 import static android.view.Surface.ROTATION_180;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
+
+import android.content.ComponentName;
+import android.os.SystemClock;
 
 import org.junit.Test;
 
@@ -35,35 +41,33 @@ import java.util.regex.Pattern;
  *     atest CtsActivityManagerDeviceTestCases:ActivityAndWindowManagerOverrideConfigTests
  */
 public class ActivityAndWindowManagerOverrideConfigTests extends ActivityManagerTestBase {
-    private static final String TEST_ACTIVITY_NAME = "LogConfigurationActivity";
 
     private static class ConfigurationChangeObserver {
-        private final Pattern mConfigurationChangedPattern =
+        private static final Pattern CONFIGURATION_CHANGED_PATTERN =
             Pattern.compile("(.+)Configuration changed: (\\d+),(\\d+)");
 
         private ConfigurationChangeObserver() {
         }
 
-        private boolean findConfigurationChange(String activityName, LogSeparator logSeparator)
-                throws InterruptedException {
-            int tries = 0;
-            boolean observedChange = false;
-            while (tries < 5 && !observedChange) {
-                final String[] lines = getDeviceLogsForComponents(logSeparator, activityName);
+        private boolean findConfigurationChange(
+                ComponentName activityName, LogSeparator logSeparator) {
+            for (int retry = 1; retry <= 5; retry++) {
+                final String[] lines =
+                        getDeviceLogsForComponents(logSeparator, getLogTag(activityName));
                 log("Looking at logcat");
                 for (int i = lines.length - 1; i >= 0; i--) {
                     final String line = lines[i].trim();
                     log(line);
-                    Matcher matcher = mConfigurationChangedPattern.matcher(line);
+                    Matcher matcher = CONFIGURATION_CHANGED_PATTERN.matcher(line);
                     if (matcher.matches()) {
-                        observedChange = true;
-                        break;
+                        return true;
                     }
                 }
-                tries++;
-                Thread.sleep(500);
+                logAlways("***Waiting configuration change of " + getLogTag(activityName)
+                        + " retry=" + retry);
+                SystemClock.sleep(500);
             }
-            return observedChange;
+            return false;
         }
     }
 
@@ -71,22 +75,22 @@ public class ActivityAndWindowManagerOverrideConfigTests extends ActivityManager
     public void testReceiveOverrideConfigFromRelayout() throws Exception {
         assumeTrue("Device doesn't support freeform. Skipping test.", supportsFreeform());
 
-        launchActivity(TEST_ACTIVITY_NAME, WINDOWING_MODE_FREEFORM);
+        launchActivity(LOG_CONFIGURATION_ACTIVITY, WINDOWING_MODE_FREEFORM);
 
         try (final RotationSession rotationSession = new RotationSession()) {
             rotationSession.set(ROTATION_0);
             LogSeparator logSeparator = clearLogcat();
-            resizeActivityTask(TEST_ACTIVITY_NAME, 0, 0, 100, 100);
+            resizeActivityTask(LOG_CONFIGURATION_ACTIVITY, 0, 0, 100, 100);
             ConfigurationChangeObserver c = new ConfigurationChangeObserver();
-            final boolean reportedSizeAfterResize = c.findConfigurationChange(TEST_ACTIVITY_NAME,
-                    logSeparator);
+            final boolean reportedSizeAfterResize = c.findConfigurationChange(
+                    LOG_CONFIGURATION_ACTIVITY, logSeparator);
             assertTrue("Expected to observe configuration change when resizing",
                     reportedSizeAfterResize);
 
             logSeparator = clearLogcat();
             rotationSession.set(ROTATION_180);
-            final boolean reportedSizeAfterRotation = c.findConfigurationChange(TEST_ACTIVITY_NAME,
-                    logSeparator);
+            final boolean reportedSizeAfterRotation = c.findConfigurationChange(
+                    LOG_CONFIGURATION_ACTIVITY, logSeparator);
             assertFalse("Not expected to observe configuration change after flip rotation",
                     reportedSizeAfterRotation);
         }
