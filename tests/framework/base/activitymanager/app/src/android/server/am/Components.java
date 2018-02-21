@@ -20,6 +20,7 @@ import android.content.ComponentName;
 import android.server.am.component.ComponentsBase;
 
 public class Components extends ComponentsBase {
+    public static final ComponentName ALT_LAUNCHING_ACTIVITY = component("AltLaunchingActivity");
     public static final ComponentName ALWAYS_FOCUSABLE_PIP_ACTIVITY =
             component("AlwaysFocusablePipActivity");
     public static final ComponentName ANIMATION_TEST_ACTIVITY = component("AnimationTestActivity");
@@ -28,6 +29,8 @@ public class Components extends ComponentsBase {
             component("BottomLeftLayoutActivity");
     public static final ComponentName BOTTOM_RIGHT_LAYOUT_ACTIVITY =
             component("BottomRightLayoutActivity");
+    public static final ComponentName BROADCAST_RECEIVER_ACTIVITY =
+            component("BroadcastReceiverActivity");
     public static final ComponentName DIALOG_WHEN_LARGE_ACTIVITY =
             component("DialogWhenLargeActivity");
     public static final ComponentName DISMISS_KEYGUARD_ACTIVITY =

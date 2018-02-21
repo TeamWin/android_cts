@@ -1036,21 +1036,21 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
         launchActivitiesInSplitScreen(
-                getLaunchActivityBuilder().setTargetActivityName(LAUNCHING_ACTIVITY),
+                getLaunchActivityBuilder().setTargetActivityName(LAUNCHING_ACTIVITY_NAME),
                 getLaunchActivityBuilder().setTargetActivityName(TEST_ACTIVITY).setRandomData(true)
                         .setMultipleTask(false)
         );
         mAmWmState.assertVisibility(PIP_ACTIVITY, true);
-        mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true);
+        mAmWmState.assertVisibility(LAUNCHING_ACTIVITY_NAME, true);
         mAmWmState.assertVisibility(TEST_ACTIVITY, true);
 
         // Launch the activities again to take focus and make sure nothing is hidden
         launchActivitiesInSplitScreen(
-                getLaunchActivityBuilder().setTargetActivityName(LAUNCHING_ACTIVITY),
+                getLaunchActivityBuilder().setTargetActivityName(LAUNCHING_ACTIVITY_NAME),
                 getLaunchActivityBuilder().setTargetActivityName(TEST_ACTIVITY).setRandomData(true)
                         .setMultipleTask(false)
         );
-        mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true);
+        mAmWmState.assertVisibility(LAUNCHING_ACTIVITY_NAME, true);
         mAmWmState.assertVisibility(TEST_ACTIVITY, true);
 
         // Go to recents to make sure that fullscreen stack is invisible
@@ -1058,7 +1058,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // separate stack id or as an activity), for those cases the visibility asserts will be
         // ignored
         pressAppSwitchButtonAndWaitForRecents();
-        mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true);
+        mAmWmState.assertVisibility(LAUNCHING_ACTIVITY_NAME, true);
         mAmWmState.assertVisibility(TEST_ACTIVITY, false);
     }
 

@@ -33,7 +33,7 @@ public class AnimationBackgroundTests extends ActivityManagerTestBase {
 
     @Test
     public void testAnimationBackground_duringAnimation() throws Exception {
-        launchActivityOnDisplay(LAUNCHING_ACTIVITY, DEFAULT_DISPLAY_ID);
+        launchActivityOnDisplay(LAUNCHING_ACTIVITY_NAME, DEFAULT_DISPLAY_ID);
         getLaunchActivityBuilder()
                 .setTargetActivityName("AnimationTestActivity")
                 .setWaitForLaunched(false)
@@ -51,7 +51,7 @@ public class AnimationBackgroundTests extends ActivityManagerTestBase {
 
     @Test
     public void testAnimationBackground_gone() throws Exception {
-        launchActivityOnDisplay(LAUNCHING_ACTIVITY, DEFAULT_DISPLAY_ID);
+        launchActivityOnDisplay(LAUNCHING_ACTIVITY_NAME, DEFAULT_DISPLAY_ID);
         getLaunchActivityBuilder().setTargetActivityName("AnimationTestActivity").execute();
         mAmWmState.computeState(new WaitForValidActivityState.Builder("AnimationTestActivity").build());
         assertFalse("window animation background needs to be gone", mAmWmState.getWmState()
