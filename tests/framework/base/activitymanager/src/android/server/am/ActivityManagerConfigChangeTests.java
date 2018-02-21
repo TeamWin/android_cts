@@ -32,6 +32,7 @@ import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.server.am.settings.SettingsSession;
+import android.support.test.filters.FlakyTest;
 
 import org.junit.Test;
 
@@ -70,6 +71,7 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
         testRotation(NO_RELAUNCH_ACTIVITY, 2, 0, 0);
     }
 
+    @FlakyTest(bugId = 73701185)
     @Presubmit
     @Test
     public void testChangeFontScaleRelaunch() throws Exception {
