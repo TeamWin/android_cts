@@ -74,7 +74,7 @@ public abstract class AutoFillServiceTestCase {
     };
 
     @Rule
-    public final RetryRule mRetryRule = new RetryRule(2);
+    public final RetryRule mRetryRule = new RetryRule(5);
 
     @Rule
     public final AutofillLoggingTestRule mLoggingRule = new AutofillLoggingTestRule(TAG);

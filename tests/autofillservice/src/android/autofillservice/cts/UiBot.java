@@ -16,6 +16,7 @@
 
 package android.autofillservice.cts;
 
+import static android.autofillservice.cts.Timeouts.SAVE_NOT_SHOWN_NAPTIME_MS;
 import static android.autofillservice.cts.Timeouts.SAVE_TIMEOUT;
 import static android.autofillservice.cts.Timeouts.UI_DATASET_PICKER_TIMEOUT;
 import static android.autofillservice.cts.Timeouts.UI_RECENTS_SWITCH_TIMEOUT;
@@ -399,8 +400,7 @@ final class UiBot {
      * Asserts the save snackbar is not showing and returns it.
      */
     void assertSaveNotShowing(int type) throws Exception {
-        // TODO: need a better mechanism to wait undefinitely than using getMaxValue()
-        assertNeverShown("save UI for type " + type, SAVE_UI_SELECTOR, SAVE_TIMEOUT.getMaxValue());
+        assertNeverShown("save UI for type " + type, SAVE_UI_SELECTOR, SAVE_NOT_SHOWN_NAPTIME_MS);
     }
 
     private String getSaveTypeString(int type) {
