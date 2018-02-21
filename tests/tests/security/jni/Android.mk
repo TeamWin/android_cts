@@ -31,7 +31,6 @@ LOCAL_SRC_FILES := \
 		android_security_cts_SeccompTest.cpp \
 		android_security_cts_MMapExecutableTest.cpp \
 		android_security_cts_EncryptionTest.cpp \
-		android_security_cts_BufferQueueProducerTest.cpp \
 
 LOCAL_SHARED_LIBRARIES := \
 		libnativehelper \
@@ -50,8 +49,7 @@ LOCAL_SHARED_LIBRARIES := \
 		libcamera_metadata \
 		libspeexresampler \
 		liblzma \
-		libstagefright_foundation \
-		libbinder
+		libstagefright_foundation
 
 LOCAL_C_INCLUDES += ndk/sources/cpufeatures
 LOCAL_STATIC_LIBRARIES := cpufeatures
