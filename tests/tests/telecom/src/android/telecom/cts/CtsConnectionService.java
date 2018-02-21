@@ -176,6 +176,24 @@ public class CtsConnectionService extends ConnectionService {
     }
 
     @Override
+    public void onConnectionServiceFocusGained() {
+        synchronized (sLock) {
+            if (sConnectionService != null) {
+                sConnectionService.onConnectionServiceFocusGained();
+            }
+        }
+    }
+
+    @Override
+    public void onConnectionServiceFocusLost() {
+        synchronized (sLock) {
+            if (sConnectionService != null) {
+                sConnectionService.onConnectionServiceFocusLost();
+            }
+        }
+    }
+
+    @Override
     public boolean onUnbind(Intent intent) {
         Log.i(LOG_TAG, "Service has been unbound");
         sServiceUnBoundLatch.countDown();
