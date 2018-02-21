@@ -90,7 +90,7 @@ public class MainInteractionSession extends VoiceInteractionSession {
 
             case SET_TIMER_FOR_DISMISSAL:
                 intent = new Intent(AlarmClock.ACTION_SET_TIMER);
-                intent.putExtra(AlarmClock.EXTRA_LENGTH, 10);
+                intent.putExtra(AlarmClock.EXTRA_LENGTH, 1);
                 break;
 
             case SNOOZE_ALARM:
