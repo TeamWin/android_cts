@@ -14,6 +14,8 @@
      limitations under the License.
 -->
 <configuration description="Runs a retry of a previous CTS session.">
+    <option name="dynamic-sharding" value="true" />
+    <option name="disable-strict-sharding" value="true" />
 
     <device_recovery class="com.android.tradefed.device.WaitDeviceRecovery" />
     <build_provider class="com.android.compatibility.common.tradefed.build.CompatibilityBuildProvider" />
@@ -21,6 +23,8 @@
 
     <option name="compatibility:test-arg" value="com.android.tradefed.testtype.AndroidJUnitTest:rerun-from-file:true" />
     <option name="compatibility:test-arg" value="com.android.tradefed.testtype.AndroidJUnitTest:fallback-to-serial-rerun:false" />
+    <option name="compatibility:test-arg" value="com.android.compatibility.testtype.LibcoreTest:rerun-from-file:true" />
+    <option name="compatibility:test-arg" value="com.android.compatibility.testtype.LibcoreTest:fallback-to-serial-rerun:false" />
 
     <logger class="com.android.tradefed.log.FileLogger">
         <option name="log-level-display" value="WARN" />
@@ -35,6 +39,16 @@
     <option name="test-tag" value="cts" />
     <option name="skip-device-info" value="true" />
     <option name="enable-root" value="false" />
+
+    <!-- retain 200MB of host log -->
+    <option name="max-log-size" value="200" />
+    <!--  retain 200MB of logcat -->
+    <option name="max-tmp-logcat-file" value="209715200" />
+
+    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
+        <option name="run-command" value="settings put global package_verifier_enable 0" />
+        <option name="teardown-command" value="settings put global package_verifier_enable 1"/>
+    </target_preparer>
 
     <result_reporter class="com.android.compatibility.common.tradefed.result.ConsoleReporter" />
     <result_reporter class="com.android.compatibility.common.tradefed.result.ResultReporter" />
