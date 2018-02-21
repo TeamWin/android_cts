@@ -136,6 +136,66 @@ public class RoutingTest extends AndroidTestCase {
         audioTrack.release();
     }
 
+    public void test_audioTrack_incallMusicRoutingPermissions() {
+        if (!mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT)) {
+            // Can't do it so skip this test
+            return;
+        }
+
+        // only apps with MODIFY_PHONE_STATE permission can route playback
+        // to the uplink stream during a phone call, so this test makes sure that
+        // audio is re-routed to default device when the permission is missing
+
+        AudioDeviceInfo telephonyDevice = getTelephonyDeviceAndSetInCommunicationMode();
+        if (telephonyDevice == null) {
+            // Can't do it so skip this test
+            return;
+        }
+
+        AudioTrack audioTrack = null;
+
+        try {
+            audioTrack = allocAudioTrack();
+            assertNotNull(audioTrack);
+
+            audioTrack.setPreferredDevice(telephonyDevice);
+            assertEquals(AudioDeviceInfo.TYPE_TELEPHONY, audioTrack.getPreferredDevice().getType());
+
+            audioTrack.play();
+            assertTrue(audioTrack.getRoutedDevice().getType() != AudioDeviceInfo.TYPE_TELEPHONY);
+
+        } finally {
+            if (audioTrack != null) {
+                audioTrack.stop();
+                audioTrack.release();
+            }
+            mAudioManager.setMode(AudioManager.MODE_NORMAL);
+        }
+    }
+
+    private AudioDeviceInfo getTelephonyDeviceAndSetInCommunicationMode() {
+        // get the output device for telephony
+        AudioDeviceInfo telephonyDevice = null;
+        AudioDeviceInfo[] deviceList = mAudioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS);
+        for (int index = 0; index < deviceList.length; index++) {
+            if (deviceList[index].getType() == AudioDeviceInfo.TYPE_TELEPHONY) {
+                telephonyDevice = deviceList[index];
+            }
+        }
+
+        if (telephonyDevice == null) {
+            return null;
+        }
+
+        // simulate an in call state using MODE_IN_COMMUNICATION since
+        // AudioManager.setMode requires MODIFY_PHONE_STATE permission
+        // for setMode with MODE_IN_CALL.
+        mAudioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
+        assertEquals(AudioManager.MODE_IN_COMMUNICATION, mAudioManager.getMode());
+
+        return telephonyDevice;
+    }
+
     /*
      * tests if the Looper for the current thread has been prepared,
      * If not, it makes one, prepares it and returns it.
@@ -632,6 +692,43 @@ public class RoutingTest extends AndroidTestCase {
         mediaPlayer.removeOnRoutingChangedListener(listener);
         mediaPlayer.stop();
         mediaPlayer.release();
+    }
+
+    public void test_mediaPlayer_incallMusicRoutingPermissions() {
+        if (!mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT)) {
+            // Can't do it so skip this test
+            return;
+        }
+
+        // only apps with MODIFY_PHONE_STATE permission can route playback
+        // to the uplink stream during a phone call, so this test makes sure that
+        // audio is re-routed to default device when the permission is missing
+
+        AudioDeviceInfo telephonyDevice = getTelephonyDeviceAndSetInCommunicationMode();
+        if (telephonyDevice == null) {
+            // Can't do it so skip this test
+            return;
+        }
+
+        MediaPlayer mediaPlayer = null;
+
+        try {
+            mediaPlayer = allocMediaPlayer();
+
+            mediaPlayer.setPreferredDevice(telephonyDevice);
+            assertEquals(AudioDeviceInfo.TYPE_TELEPHONY, mediaPlayer.getPreferredDevice().getType());
+
+            // Sleep for 1s to ensure the output device open
+            SystemClock.sleep(1000);
+            assertTrue(mediaPlayer.getRoutedDevice().getType() != AudioDeviceInfo.TYPE_TELEPHONY);
+
+        } finally {
+            if (mediaPlayer != null) {
+                mediaPlayer.stop();
+                mediaPlayer.release();
+            }
+            mAudioManager.setMode(AudioManager.MODE_NORMAL);
+        }
     }
 
     private MediaRecorder allocMediaRecorder() throws Exception {
