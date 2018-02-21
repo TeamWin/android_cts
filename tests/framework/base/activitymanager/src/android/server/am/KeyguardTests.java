@@ -178,7 +178,7 @@ public class KeyguardTests extends KeyguardTestBase {
 
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             launchActivitiesInSplitScreen(
-                    getLaunchActivityBuilder().setTargetActivityName(LAUNCHING_ACTIVITY),
+                    getLaunchActivityBuilder().setTargetActivityName(LAUNCHING_ACTIVITY_NAME),
                     getLaunchActivityBuilder().setTargetActivityName("ShowWhenLockedActivity")
                             .setRandomData(true)
                             .setMultipleTask(false)

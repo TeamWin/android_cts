@@ -120,7 +120,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
     @Test
     @Presubmit
     public void testLaunchToSide() throws Exception {
-        launchActivitiesInSplitScreen(LAUNCHING_ACTIVITY, TEST_ACTIVITY_NAME);
+        launchActivitiesInSplitScreen(LAUNCHING_ACTIVITY_NAME, TEST_ACTIVITY_NAME);
         mAmWmState.assertContainsStack("Must contain fullscreen stack.",
                 WINDOWING_MODE_SPLIT_SCREEN_SECONDARY, ACTIVITY_TYPE_STANDARD);
         mAmWmState.assertContainsStack("Must contain docked stack.",
@@ -131,7 +131,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
     @Presubmit
     public void testLaunchToSideMultiWindowCallbacks() throws Exception {
         // Launch two activities in split-screen mode.
-        launchActivitiesInSplitScreen(LAUNCHING_ACTIVITY, TEST_ACTIVITY_NAME);
+        launchActivitiesInSplitScreen(LAUNCHING_ACTIVITY_NAME, TEST_ACTIVITY_NAME);
         mAmWmState.assertContainsStack("Must contain fullscreen stack.",
                 WINDOWING_MODE_SPLIT_SCREEN_SECONDARY, ACTIVITY_TYPE_STANDARD);
         mAmWmState.assertContainsStack("Must contain docked stack.",
@@ -176,7 +176,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
     @Test
     @Presubmit
     public void testLaunchToSideAndBringToFront() throws Exception {
-        launchActivitiesInSplitScreen(LAUNCHING_ACTIVITY, TEST_ACTIVITY_NAME);
+        launchActivitiesInSplitScreen(LAUNCHING_ACTIVITY_NAME, TEST_ACTIVITY_NAME);
 
         int taskNumberInitial = mAmWmState.getAmState().getStandardTaskCountByWindowingMode(
                 WINDOWING_MODE_SPLIT_SCREEN_SECONDARY);
@@ -211,7 +211,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
     @Presubmit
     @FlakyTest(bugId = 71792393)
     public void testLaunchToSideMultiple() throws Exception {
-        launchActivitiesInSplitScreen(LAUNCHING_ACTIVITY, TEST_ACTIVITY_NAME);
+        launchActivitiesInSplitScreen(LAUNCHING_ACTIVITY_NAME, TEST_ACTIVITY_NAME);
 
         int taskNumberInitial = mAmWmState.getAmState().getStandardTaskCountByWindowingMode(
                 WINDOWING_MODE_SPLIT_SCREEN_SECONDARY);
@@ -222,7 +222,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
         // Try to launch to side same activity again.
         getLaunchActivityBuilder().setToSide(true).execute();
         final String[] waitForActivitiesVisible =
-                new String[] {TEST_ACTIVITY_NAME, LAUNCHING_ACTIVITY};
+                new String[] {TEST_ACTIVITY_NAME, LAUNCHING_ACTIVITY_NAME};
         mAmWmState.computeState(waitForActivitiesVisible);
         int taskNumberFinal = mAmWmState.getAmState().getStandardTaskCountByWindowingMode(
                 WINDOWING_MODE_SPLIT_SCREEN_SECONDARY);
@@ -264,13 +264,13 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
         // the target being launched directly. Options such as LaunchActivityBuilder#setRandomData
         // are not respected.
         launchActivitiesInSplitScreen(
-                getLaunchActivityBuilder().setTargetActivityName(LAUNCHING_ACTIVITY),
+                getLaunchActivityBuilder().setTargetActivityName(LAUNCHING_ACTIVITY_NAME),
                 targetActivityLauncher);
 
         final WaitForValidActivityState[] waitForActivitiesVisible =
                 new WaitForValidActivityState[] {
                     new WaitForValidActivityState.Builder(targetActivityName).build(),
-                    new WaitForValidActivityState.Builder(LAUNCHING_ACTIVITY).build()
+                    new WaitForValidActivityState.Builder(LAUNCHING_ACTIVITY_NAME).build()
                 };
 
         mAmWmState.computeState(waitForActivitiesVisible);
@@ -324,7 +324,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
     @Presubmit
     @Test
     public void testLaunchToSideMultipleWithFlag() throws Exception {
-        launchActivitiesInSplitScreen(LAUNCHING_ACTIVITY, TEST_ACTIVITY_NAME);
+        launchActivitiesInSplitScreen(LAUNCHING_ACTIVITY_NAME, TEST_ACTIVITY_NAME);
         int taskNumberInitial = mAmWmState.getAmState().getStandardTaskCountByWindowingMode(
                 WINDOWING_MODE_SPLIT_SCREEN_SECONDARY);
         assertNotNull("Launched to side activity must be in fullscreen stack.",
@@ -334,7 +334,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
         // Try to launch to side same activity again, but with Intent#FLAG_ACTIVITY_MULTIPLE_TASK.
         getLaunchActivityBuilder().setToSide(true).setMultipleTask(true).execute();
         final String[] waitForActivitiesVisible =
-                new String[] {LAUNCHING_ACTIVITY, TEST_ACTIVITY_NAME};
+                new String[] {LAUNCHING_ACTIVITY_NAME, TEST_ACTIVITY_NAME};
         mAmWmState.computeState(waitForActivitiesVisible);
         int taskNumberFinal = mAmWmState.getAmState().getStandardTaskCountByWindowingMode(
                 WINDOWING_MODE_SPLIT_SCREEN_SECONDARY);
@@ -349,7 +349,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
 
     @Test
     public void testRotationWhenDocked() throws Exception {
-        launchActivitiesInSplitScreen(LAUNCHING_ACTIVITY, TEST_ACTIVITY_NAME);
+        launchActivitiesInSplitScreen(LAUNCHING_ACTIVITY_NAME, TEST_ACTIVITY_NAME);
         mAmWmState.assertContainsStack("Must contain fullscreen stack.",
                 WINDOWING_MODE_SPLIT_SCREEN_SECONDARY, ACTIVITY_TYPE_STANDARD);
         mAmWmState.assertContainsStack("Must contain docked stack.",
@@ -358,7 +358,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
         // Rotate device single steps (90°) 0-1-2-3.
         // Each time we compute the state we implicitly assert valid bounds.
         String[] waitForActivitiesVisible =
-            new String[] {LAUNCHING_ACTIVITY, TEST_ACTIVITY_NAME};
+            new String[] {LAUNCHING_ACTIVITY_NAME, TEST_ACTIVITY_NAME};
         try (final RotationSession rotationSession = new RotationSession()) {
             for (int i = 0; i < 4; i++) {
                 rotationSession.set(i);
@@ -382,7 +382,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
     @Test
     @Presubmit
     public void testRotationWhenDockedWhileLocked() throws Exception {
-        launchActivitiesInSplitScreen(LAUNCHING_ACTIVITY, TEST_ACTIVITY_NAME);
+        launchActivitiesInSplitScreen(LAUNCHING_ACTIVITY_NAME, TEST_ACTIVITY_NAME);
         mAmWmState.assertSanity();
         mAmWmState.assertContainsStack("Must contain fullscreen stack.",
                 WINDOWING_MODE_SPLIT_SCREEN_SECONDARY, ACTIVITY_TYPE_STANDARD);
@@ -390,7 +390,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
                 WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
 
         String[] waitForActivitiesVisible =
-                new String[] {LAUNCHING_ACTIVITY, TEST_ACTIVITY_NAME};
+                new String[] {LAUNCHING_ACTIVITY_NAME, TEST_ACTIVITY_NAME};
         try (final RotationSession rotationSession = new RotationSession();
              final LockScreenSession lockScreenSession = new LockScreenSession()) {
             for (int i = 0; i < 4; i++) {

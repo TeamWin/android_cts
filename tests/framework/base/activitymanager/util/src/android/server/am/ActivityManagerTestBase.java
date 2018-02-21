@@ -115,9 +115,8 @@ public abstract class ActivityManagerTestBase {
     private static final String AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK_COMMAND_FORMAT =
             "am stack move-top-activity-to-pinned-stack %1d 0 0 500 500";
 
-    static final String LAUNCHING_ACTIVITY = "LaunchingActivity";
-    static final String ALT_LAUNCHING_ACTIVITY = "AltLaunchingActivity";
-    static final String BROADCAST_RECEIVER_ACTIVITY = "BroadcastReceiverActivity";
+    // TODO(b/73349193): Remove this.
+    static final String LAUNCHING_ACTIVITY_NAME = "LaunchingActivity";
 
     /** Broadcast shell command for finishing {@link BroadcastReceiverActivity}. */
     static final String FINISH_ACTIVITY_BROADCAST
@@ -1527,7 +1526,7 @@ public abstract class ActivityManagerTestBase {
         private boolean mMultipleTask;
         private int mDisplayId = INVALID_DISPLAY_ID;
         // A proxy activity that launches other activities including mTargetActivityName
-        private String mLaunchingActivityName = LAUNCHING_ACTIVITY;
+        private String mLaunchingActivityName = LAUNCHING_ACTIVITY_NAME;
         private ComponentName mLaunchingActivity;
         private boolean mReorderToFront;
         private boolean mWaitForLaunched;

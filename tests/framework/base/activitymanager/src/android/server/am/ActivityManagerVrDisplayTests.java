@@ -18,6 +18,8 @@ package android.server.am;
 
 import static android.server.am.ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID;
 import static android.server.am.ComponentNameUtils.getActivityName;
+import static android.server.am.Components.ALT_LAUNCHING_ACTIVITY;
+import static android.server.am.Components.LAUNCHING_ACTIVITY;
 import static android.server.am.Components.RESIZEABLE_ACTIVITY;
 import static android.server.am.Components.VR_TEST_ACTIVITY;
 
@@ -93,7 +95,7 @@ public class ActivityManagerVrDisplayTests extends ActivityManagerDisplayTestBas
             final ActivityManagerState.ActivityStack focusedStack
                     = mAmWmState.getAmState().getStackById(focusedStackId);
             assertEquals("Launched activity must be resumed in focused stack",
-                    getActivityComponentName(LAUNCHING_ACTIVITY), focusedStack.mResumedActivity);
+                    getActivityName(LAUNCHING_ACTIVITY), focusedStack.mResumedActivity);
 
             // Check if the launch activity is in Vr virtual display id.
             final List<ActivityDisplay> reportedDisplays = getDisplaysStates();
@@ -140,7 +142,7 @@ public class ActivityManagerVrDisplayTests extends ActivityManagerDisplayTestBas
             final ActivityManagerState.ActivityStack focusedStack
                     = mAmWmState.getAmState().getStackById(focusedStackId);
             assertEquals("Launched activity must be resumed in focused stack",
-                    getActivityComponentName(LAUNCHING_ACTIVITY), focusedStack.mResumedActivity);
+                    getActivityName(LAUNCHING_ACTIVITY), focusedStack.mResumedActivity);
 
             // Check if the launch activity is in Vr virtual display id.
             final List<ActivityDisplay> reportedDisplays = getDisplaysStates();
@@ -184,7 +186,7 @@ public class ActivityManagerVrDisplayTests extends ActivityManagerDisplayTestBas
             final ActivityManagerState.ActivityStack focusedStack
                     = mAmWmState.getAmState().getStackById(focusedStackId);
             assertEquals("Launched activity must be resumed in focused stack",
-                    getActivityComponentName(ALT_LAUNCHING_ACTIVITY),
+                    getActivityName(ALT_LAUNCHING_ACTIVITY),
                     focusedStack.mResumedActivity);
 
             // Check if the launch activity is in Vr virtual display id.
