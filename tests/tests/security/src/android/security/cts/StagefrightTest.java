@@ -286,6 +286,11 @@ public class StagefrightTest extends InstrumentationTestCase {
     }
 
     @SecurityTest
+    public void testStagefright_bug_65735716() throws Exception {
+        doStagefrightTestRawBlob(R.raw.bug_65735716_avc, "video/avc", 320, 240);
+    }
+
+    @SecurityTest
     public void testStagefright_bug_65717533() throws Exception {
         doStagefrightTest(R.raw.bug_65717533_header_corrupt);
     }
