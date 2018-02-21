@@ -181,17 +181,6 @@ public class AvailableIntentsTest extends AndroidTestCase {
     }
 
     /**
-     * Test ACTION_SHOW_ASSISTED_DIALING_SETTINGS, it will display the assisted dialing preferences.
-     */
-    public void testShowAssistedDialingSettings() {
-        PackageManager packageManager = mContext.getPackageManager();
-        if (packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
-            Intent intent = new Intent(TelecomManager.ACTION_SHOW_ASSISTED_DIALING_SETTINGS);
-            assertCanBeHandled(intent);
-        }
-    }
-
-    /**
      * Test ACTION_SHOW_CALL_SETTINGS, it will display the call preferences.
      */
     public void testShowCallSettings() {
