@@ -1689,7 +1689,6 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             launchActivityOnDisplay(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, newDisplay.mId);
 
             lockScreenSession.gotoKeyguard();
-            mAmWmState.waitForKeyguardShowingAndNotOccluded();
 
             mAmWmState.waitForActivityState(TEST_ACTIVITY, STATE_STOPPED);
             mAmWmState.waitForActivityState(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, STATE_RESUMED);
