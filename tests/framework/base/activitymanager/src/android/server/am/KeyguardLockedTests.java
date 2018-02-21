@@ -18,11 +18,11 @@ package android.server.am;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
+import static android.server.am.UiDeviceUtils.pressBackButton;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
-
-import android.app.KeyguardManager;
 
 import org.junit.Before;
 import org.junit.Test;

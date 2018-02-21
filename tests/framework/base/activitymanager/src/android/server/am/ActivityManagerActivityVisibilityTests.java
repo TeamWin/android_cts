@@ -39,6 +39,7 @@ import static android.server.am.Components.TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIV
 import static android.server.am.Components.TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY;
 import static android.server.am.Components.TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY;
 import static android.server.am.Components.TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY;
+import static android.server.am.UiDeviceUtils.pressBackButton;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;

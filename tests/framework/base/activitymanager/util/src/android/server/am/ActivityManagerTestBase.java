@@ -40,10 +40,14 @@ import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logAlways;
 import static android.server.am.StateLogger.logE;
-import static android.view.KeyEvent.KEYCODE_APP_SWITCH;
-import static android.view.KeyEvent.KEYCODE_MENU;
-import static android.view.KeyEvent.KEYCODE_SLEEP;
-import static android.view.KeyEvent.KEYCODE_WAKEUP;
+import static android.server.am.UiDeviceUtils.pressAppSwitchButton;
+import static android.server.am.UiDeviceUtils.pressBackButton;
+import static android.server.am.UiDeviceUtils.pressEnterButton;
+import static android.server.am.UiDeviceUtils.pressHomeButton;
+import static android.server.am.UiDeviceUtils.pressSleepButton;
+import static android.server.am.UiDeviceUtils.pressUnlockButton;
+import static android.server.am.UiDeviceUtils.pressWakeupButton;
+import static android.server.am.UiDeviceUtils.waitForDeviceIdle;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -51,19 +55,16 @@ import static org.junit.Assert.fail;
 import static java.lang.Integer.toHexString;
 
 import android.app.ActivityManager;
-import android.app.KeyguardManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.ParcelFileDescriptor;
-import android.os.PowerManager;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.server.am.settings.SettingsSession;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
-import android.support.test.uiautomator.UiDevice;
 import android.view.Display;
 
 import com.android.compatibility.common.util.SystemUtil;
@@ -83,7 +84,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BooleanSupplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -152,7 +152,6 @@ public abstract class ActivityManagerTestBase {
 
     protected Context mContext;
     protected ActivityManager mAm;
-    protected UiDevice mDevice;
 
     // TODO(b/73349193): Use {@link #getAmStartCmd(ComponentName, String...)} instead.
     @Deprecated
@@ -315,7 +314,6 @@ public abstract class ActivityManagerTestBase {
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getContext();
         mAm = mContext.getSystemService(ActivityManager.class);
-        mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         setDefaultComponentName();
         executeShellCommand("pm grant " + mContext.getPackageName()
                 + " android.permission.MANAGE_ACTIVITY_STACKS");
@@ -637,55 +635,10 @@ public abstract class ActivityManagerTestBase {
                 stackTop, stackWidth, stackHeight));
     }
 
-    protected void pressHomeButton() {
-        mDevice.pressHome();
-    }
-
-    protected void pressBackButton() {
-        mDevice.pressBack();
-    }
-
-    protected void pressAppSwitchButton() throws Exception {
-        mDevice.pressKeyCode(KEYCODE_APP_SWITCH);
+    protected void pressAppSwitchButtonAndWaitForRecents() throws Exception {
+        pressAppSwitchButton();
         mAmWmState.waitForRecentsActivityVisible();
         mAmWmState.waitForAppTransitionIdle();
-    }
-
-    protected void pressWakeupButton() {
-        final PowerManager pm = mContext.getSystemService(PowerManager.class);
-        retryPressKeyCode(KEYCODE_WAKEUP, () -> pm != null && pm.isInteractive(),
-                "***Waiting for device wakeup...");
-    }
-
-    protected void pressUnlockButton() {
-        final KeyguardManager kgm = mContext.getSystemService(KeyguardManager.class);
-        retryPressKeyCode(KEYCODE_MENU, () -> kgm != null && !kgm.isKeyguardLocked(),
-                "***Waiting for device unlock...");
-    }
-
-    protected void pressSleepButton() {
-        final PowerManager pm = mContext.getSystemService(PowerManager.class);
-        retryPressKeyCode(KEYCODE_SLEEP, () -> pm != null && !pm.isInteractive(),
-                "***Waiting for device sleep...");
-    }
-
-    private void retryPressKeyCode(int keyCode, BooleanSupplier waitFor, String msg) {
-        int retry = 1;
-        do {
-            mDevice.pressKeyCode(keyCode);
-            if (waitFor.getAsBoolean()) {
-                return;
-            }
-            logAlways(msg + " retry=" + retry);
-            try {
-                Thread.sleep(50);
-            } catch (InterruptedException e) {
-                logE("Sleep interrupted: " + msg, e);
-            }
-        } while (retry++ < 5);
-        if (!waitFor.getAsBoolean()) {
-            logE(msg + " FAILED");
-        }
     }
 
     // Utility method for debugging, not used directly here, but useful, so kept around.
@@ -879,10 +832,10 @@ public abstract class ActivityManagerTestBase {
         }
 
         public LockScreenSession enterAndConfirmLockCredential() throws Exception {
-            mDevice.waitForIdle(3000);
+            waitForDeviceIdle(3000);
 
             runCommandAndPrintOutput("input text " + LOCK_CREDENTIAL);
-            mDevice.pressEnter();
+            pressEnterButton();
             return this;
         }
 
@@ -1737,7 +1690,7 @@ public abstract class ActivityManagerTestBase {
 
             if (mWaitForLaunched) {
                 mAmWmState.waitForValidState(false /* compareTaskAndStackBounds */, mTargetPackage,
-                        new WaitForValidActivityState.Builder(mTargetActivityName).build());
+                        new WaitForValidActivityState(mTargetActivityName));
             }
         }
     }

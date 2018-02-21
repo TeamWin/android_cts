@@ -36,6 +36,8 @@ import static android.server.am.Components.TEST_ACTIVITY;
 import static android.server.am.Components.VIRTUAL_DISPLAY_ACTIVITY;
 import static android.server.am.StateLogger.logAlways;
 import static android.server.am.StateLogger.logE;
+import static android.server.am.UiDeviceUtils.pressSleepButton;
+import static android.server.am.UiDeviceUtils.pressWakeupButton;
 import static android.server.am.second.Components.SECOND_ACTIVITY;
 import static android.server.am.second.Components.SECOND_LAUNCH_BROADCAST_ACTION;
 import static android.server.am.second.Components.SECOND_LAUNCH_BROADCAST_RECEIVER;

@@ -20,6 +20,7 @@ import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.Components.ENTRY_POINT_ALIAS_ACTIVITY;
 import static android.server.am.Components.SINGLE_TASK_ACTIVITY;
 import static android.server.am.Components.TEST_ACTIVITY;
+import static android.server.am.UiDeviceUtils.pressHomeButton;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;

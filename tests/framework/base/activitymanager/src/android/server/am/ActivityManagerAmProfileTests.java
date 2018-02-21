@@ -17,6 +17,7 @@
 package android.server.am;
 
 import static android.server.am.ComponentNameUtils.getActivityName;
+import static android.server.am.UiDeviceUtils.pressHomeButton;
 import static android.server.am.debuggable.Components.DEBUGGABLE_APP_ACTIVITY;
 
 import static org.junit.Assert.assertEquals;

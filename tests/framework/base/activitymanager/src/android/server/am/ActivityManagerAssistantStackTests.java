@@ -42,6 +42,7 @@ import static android.server.am.Components.PIP_ACTIVITY;
 import static android.server.am.Components.TEST_ACTIVITY;
 import static android.server.am.Components.TRANSLUCENT_ASSISTANT_ACTIVITY;
 import static android.server.am.Components.TestActivity.TEST_ACTIVITY_ACTION_FINISH_SELF;
+import static android.server.am.UiDeviceUtils.pressBackButton;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertEquals;

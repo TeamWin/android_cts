@@ -27,7 +27,7 @@ import static android.server.am.ActivityManagerState.STATE_DESTROYED;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.ActivityManagerState.STATE_STOPPED;
 import static android.server.am.Components.TestActivity.TEST_ACTIVITY_ACTION_FINISH_SELF;
-import static android.view.KeyEvent.KEYCODE_WINDOW;
+import static android.server.am.UiDeviceUtils.pressWindowButton;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -1057,7 +1057,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // Some devices do not support recents or implement it differently (instead of using a
         // separate stack id or as an activity), for those cases the visibility asserts will be
         // ignored
-        pressAppSwitchButton();
+        pressAppSwitchButtonAndWaitForRecents();
         mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true);
         mAmWmState.assertVisibility(TEST_ACTIVITY, false);
     }
@@ -1490,13 +1490,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
      */
     private void setAppOpsOpToMode(String packageName, String op, int mode) throws Exception {
         executeShellCommand(String.format("appops set %s %s %d", packageName, op, mode));
-    }
-
-    /**
-     * Triggers the window keycode.
-     */
-    private void pressWindowButton() throws Exception {
-        mDevice.pressKeyCode(KEYCODE_WINDOW);
     }
 
     /**

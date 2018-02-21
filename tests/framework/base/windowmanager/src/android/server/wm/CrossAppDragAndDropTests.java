@@ -23,6 +23,9 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMAR
 import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT;
 import static android.server.am.ActivityManagerTestBase.executeShellCommand;
 import static android.server.am.StateLogger.log;
+import static android.server.am.UiDeviceUtils.dragPointer;
+import static android.server.am.UiDeviceUtils.pressMenuButton;
+import static android.server.am.UiDeviceUtils.wakeUpDevice;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -37,8 +40,6 @@ import android.os.RemoteException;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.FlakyTest;
-import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 
 import org.junit.After;
@@ -117,7 +118,6 @@ public class CrossAppDragAndDropTests {
 
     protected Context mContext;
     protected ActivityManager mAm;
-    private UiDevice mDevice;
 
     private Map<String, String> mSourceResults;
     private Map<String, String> mTargetResults;
@@ -140,7 +140,6 @@ public class CrossAppDragAndDropTests {
 
         mContext = InstrumentationRegistry.getContext();
         mAm = mContext.getSystemService(ActivityManager.class);
-        mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
 
         mSourcePackageName = SOURCE_PACKAGE_NAME;
         mTargetPackageName = TARGET_PACKAGE_NAME;
@@ -249,7 +248,7 @@ public class CrossAppDragAndDropTests {
     }
 
     private void injectInput(Point from, Point to, int steps) throws Exception {
-        mDevice.drag(from.x, from.y, to.x, to.y, steps);
+        dragPointer(from, to, steps);
     }
 
     private String findTaskInfo(String name) {
@@ -327,12 +326,12 @@ public class CrossAppDragAndDropTests {
     private void unlockDevice() {
         // Wake up the device, if necessary.
         try {
-            mDevice.wakeUp();
+            wakeUpDevice();
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
         // Unlock the screen.
-        mDevice.pressMenu();
+        pressMenuButton();
     }
 
     private void assertDropResult(String sourceMode, String targetMode, String expectedDropResult)

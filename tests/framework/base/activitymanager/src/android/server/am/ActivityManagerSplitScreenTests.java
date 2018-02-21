@@ -27,6 +27,7 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMAR
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.server.am.Components.TestActivity.TEST_ACTIVITY_ACTION_FINISH_SELF;
+import static android.server.am.UiDeviceUtils.pressHomeButton;
 import static android.server.am.WindowManagerState.TRANSIT_WALLPAPER_OPEN;
 import static android.view.Surface.ROTATION_0;
 import static android.view.Surface.ROTATION_180;
@@ -459,7 +460,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
                 launchActivityInDockStackAndMinimize(DOCKED_ACTIVITY_NAME);
 
                 // Unminimize the docked stack
-                pressAppSwitchButton();
+                pressAppSwitchButtonAndWaitForRecents();
                 waitForDockNotMinimized();
                 assertDockNotMinimized();
 
@@ -515,7 +516,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
             mAmWmState.computeState(new WaitForValidActivityState(TEST_ACTIVITY_NAME));
 
             // Unminimized back to splitscreen
-            pressAppSwitchButton();
+            pressAppSwitchButtonAndWaitForRecents();
             mAmWmState.computeState(new WaitForValidActivityState(TEST_ACTIVITY_NAME));
         }
     }

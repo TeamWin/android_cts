@@ -19,6 +19,7 @@ package android.server.am;
 import static android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP;
 import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.ComponentNameUtils.getWindowName;
+import static android.server.am.UiDeviceUtils.pressBackButton;
 import static android.server.am.displaysize.Components.SMALLEST_WIDTH_ACTIVITY;
 
 import static org.junit.Assert.assertTrue;
