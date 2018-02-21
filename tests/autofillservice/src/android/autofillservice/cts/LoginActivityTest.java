@@ -33,6 +33,7 @@ import static android.autofillservice.cts.Helper.assertTextOnly;
 import static android.autofillservice.cts.Helper.assertValue;
 import static android.autofillservice.cts.Helper.dumpStructure;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
+import static android.autofillservice.cts.Helper.getContext;
 import static android.autofillservice.cts.Helper.setUserComplete;
 import static android.autofillservice.cts.InstrumentedAutoFillService.SERVICE_CLASS;
 import static android.autofillservice.cts.InstrumentedAutoFillService.SERVICE_PACKAGE;
@@ -113,10 +114,12 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             new AutofillActivityTestRule<CheckoutActivity>(CheckoutActivity.class, false);
 
     private LoginActivity mActivity;
+    private boolean mCanPassKeys;
 
     @Before
     public void setActivity() {
         mActivity = mActivityRule.getActivity();
+        mCanPassKeys = !Helper.isAutofillWindowFullScreen(getContext());
     }
 
     /**
@@ -1181,6 +1184,66 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Check the results.
         mActivity.assertAutoFilled();
+    }
+
+    @Test
+    public void keyboardFilterResult() throws Exception {
+        if (!mCanPassKeys) {
+            return;
+        }
+
+        final String AA = "Two A's";
+        final String AB = "A and B";
+        final String B = "Only B";
+
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "aa")
+                        .setPresentation(createPresentation(AA))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "ab")
+                        .setPresentation(createPresentation(AB))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "b")
+                        .setPresentation(createPresentation(B))
+                        .build())
+                .build());
+
+        // Trigger auto-fill.
+        requestFocusOnUsername();
+        sReplier.getNextFillRequest();
+
+        // With no filter text all datasets should be shown
+        mUiBot.assertDatasets(AA, AB, B);
+
+        // Only two datasets start with 'a'
+        runShellCommand("input keyevent KEYCODE_A");
+        mUiBot.assertDatasets(AA, AB);
+
+        // Only one dataset start with 'aa'
+        runShellCommand("input keyevent KEYCODE_A");
+        mUiBot.assertDatasets(AA);
+
+        // Only two datasets start with 'a'
+        runShellCommand("input keyevent KEYCODE_DEL");
+        mUiBot.assertDatasets(AA, AB);
+
+        // With no filter text all datasets should be shown
+        runShellCommand("input keyevent KEYCODE_DEL");
+        mUiBot.assertDatasets(AA, AB, B);
+
+        // No dataset start with 'aaa'
+        final MyAutofillCallback callback = mActivity.registerCallback();
+        runShellCommand("input keyevent KEYCODE_A");
+        runShellCommand("input keyevent KEYCODE_A");
+        runShellCommand("input keyevent KEYCODE_A");
+        callback.assertUiHiddenEvent(mActivity.getUsername());
+        mUiBot.assertNoDatasets();
     }
 
     @Test

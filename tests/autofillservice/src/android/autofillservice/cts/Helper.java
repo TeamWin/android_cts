@@ -730,6 +730,13 @@ final class Helper {
     }
 
     /**
+     * Check if autofill window is fullscreen, see com.android.server.autofill.ui.FillUi
+     */
+    public static boolean isAutofillWindowFullScreen(Context context) {
+        return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK);
+    }
+
+    /**
      * Uses Shell command to get the Autofill logging level.
      */
     public static String getLoggingLevel() {
