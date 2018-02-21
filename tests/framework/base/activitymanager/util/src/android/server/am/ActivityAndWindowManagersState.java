@@ -322,14 +322,6 @@ public class ActivityAndWindowManagersState {
                 "***Waiting for Activity State: " + activityState);
     }
 
-    // TODO(b/73349193): Use {@link #waitForActivityState(ComponentName, String)} instead.
-    @Deprecated
-    void waitForActivityState(String activityName, String activityState)
-            throws Exception {
-        waitForWithAmState(state -> state.hasActivityState(activityName, activityState),
-                "***Waiting for Activity State: " + activityState);
-    }
-
     @Deprecated
     void waitForFocusedStack(int stackId) throws Exception {
         waitForWithAmState(state -> state.getFocusedStackId() == stackId,
@@ -462,7 +454,7 @@ public class ActivityAndWindowManagersState {
                 // Check if window is visible - it should be represented as one of the window
                 // states.
                 windowName = (state.windowName != null) ? state.windowName
-                        : ActivityManagerTestBase.getActivityWindowName(packageName, activityName);
+                        : getActivityWindowName(packageName, activityName);
             }
             final int stackId = state.stackId;
             final int windowingMode = state.windowingMode;
@@ -640,32 +632,17 @@ public class ActivityAndWindowManagersState {
         assertEquals(msg, activityComponentName, mWmState.getFocusedApp());
     }
 
-    @Deprecated
-    void assertFocusedActivity(final String msg, final String activityName) {
-        final String activityComponentName = getActivityComponentName(activityName);
-        assertEquals(msg, activityComponentName, mAmState.getFocusedActivity());
-        assertEquals(msg, activityComponentName, mWmState.getFocusedApp());
-    }
-
-    void assertNotFocusedActivity(String msg, String activityName) throws Exception {
-        final String componentName = getActivityComponentName(activityName);
-        if (mAmState.getFocusedActivity().equals(componentName)) {
-            assertNotEquals(msg, mAmState.getFocusedActivity(), componentName);
-        }
-        if (mWmState.getFocusedApp().equals(componentName)) {
-            assertNotEquals(msg, mWmState.getFocusedApp(), componentName);
-        }
+    void assertNotFocusedActivity(String msg, ComponentName activityName) throws Exception {
+        assertNotEquals(msg, mAmState.getFocusedActivity(), getActivityName(activityName));
+        assertNotEquals(msg, mWmState.getFocusedApp(), getActivityName(activityName));
     }
 
     void assertResumedActivity(final String msg, final ComponentName activityName) {
         assertEquals(msg, getActivityName(activityName), mAmState.getResumedActivity());
     }
 
-    void assertNotResumedActivity(String msg, String activityName) throws Exception {
-        final String componentName = getActivityComponentName(activityName);
-        if (mAmState.getResumedActivity().equals(componentName)) {
-            assertNotEquals(msg, mAmState.getResumedActivity(), componentName);
-        }
+    void assertNotResumedActivity(String msg, ComponentName activityName) throws Exception {
+        assertNotEquals(msg, mAmState.getResumedActivity(), getActivityName(activityName));
     }
 
     void assertFocusedWindow(String msg, String windowName) {
@@ -673,9 +650,7 @@ public class ActivityAndWindowManagersState {
     }
 
     void assertNotFocusedWindow(String msg, String windowName) {
-        if (mWmState.getFocusedWindow().equals(windowName)) {
-            assertNotEquals(msg, mWmState.getFocusedWindow(), windowName);
-        }
+        assertNotEquals(msg, mWmState.getFocusedWindow(), windowName);
     }
 
     void assertFrontWindow(String msg, String windowName) {

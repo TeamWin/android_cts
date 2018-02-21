@@ -242,12 +242,6 @@ public abstract class ActivityManagerTestBase {
         return "am start -n " + getActivityName(activityName) + " -f 0x18000000";
     }
 
-    /** TODO(b/73349193): Use {@link #getAmStartCmdInNewTask(ComponentName)} instead. */
-    @Deprecated
-    protected static String getAmStartCmdInNewTask(final String activityName) {
-        return "am start -n " + getActivityComponentName(activityName) + " -f 0x18000000";
-    }
-
     protected static String getAmStartCmdOverHome(final ComponentName activityName) {
         return "am start --activity-task-on-home -n " + getActivityName(activityName);
     }
@@ -417,10 +411,10 @@ public abstract class ActivityManagerTestBase {
      * @return the stack id of the newly created stack.
      */
     @Deprecated
-    protected int launchActivityInNewDynamicStack(final String activityName) throws Exception {
+    protected int launchActivityInNewDynamicStack(ComponentName activityName) throws Exception {
         HashSet<Integer> stackIds = getStackIds();
         executeShellCommand("am stack start " + ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID
-                + " " + getActivityComponentName(activityName));
+                + " " + getActivityName(activityName));
         HashSet<Integer> newStackIds = getStackIds();
         newStackIds.removeAll(stackIds);
         if (newStackIds.isEmpty()) {
@@ -453,17 +447,6 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected void launchActivity(ComponentName activityName, int windowingMode,
-            final String... keyValuePairs) throws Exception {
-        executeShellCommand(getAmStartCmd(activityName, keyValuePairs)
-                + " --windowingMode " + windowingMode);
-        mAmWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
-                .setWindowingMode(windowingMode)
-                .build());
-    }
-
-    // TODO(b/73349193): Use {@link #launchActivity(ComponentName, int, String...)} instead.
-    @Deprecated
-    protected void launchActivity(String activityName, int windowingMode,
             final String... keyValuePairs) throws Exception {
         executeShellCommand(getAmStartCmd(activityName, keyValuePairs)
                 + " --windowingMode " + windowingMode);
@@ -1264,22 +1247,16 @@ public abstract class ActivityManagerTestBase {
     @Nullable
     ReportedSizes getLastReportedSizesForActivity(
             ComponentName activityName, LogSeparator logSeparator) {
-        return getLastReportedSizesForActivity(getLogTag(activityName), logSeparator);
-    }
-
-    // TODO(b/73349193): Use {@link #getLastReportedSizesForActivity(ComponentName, LogSeparator)}.
-    @Deprecated
-    @Nullable
-    ReportedSizes getLastReportedSizesForActivity(String activityName, LogSeparator logSeparator) {
+        final String logTag = getLogTag(activityName);
         for (int retry = 1; retry <= 5; retry++ ) {
-            final ReportedSizes result = readLastReportedSizes(logSeparator, activityName);
+            final ReportedSizes result = readLastReportedSizes(logSeparator, logTag);
             if (result != null) {
                 return result;
             }
             logAlways("***Waiting for sizes to be reported... retry=" + retry);
             SystemClock.sleep(1000);
         }
-        logE("***Waiting for activity size failed: activityName=" + activityName);
+        logE("***Waiting for activity size failed: activityName=" + logTag);
         return null;
     }
 
