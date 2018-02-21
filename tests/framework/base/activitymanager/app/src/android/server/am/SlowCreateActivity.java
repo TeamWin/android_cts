@@ -18,13 +18,14 @@ package android.server.am;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.SystemClock;
+
+import java.util.concurrent.TimeUnit;
 
 public class SlowCreateActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        try {
-            Thread.sleep(2000);
-        } catch(InterruptedException e) {}
+        SystemClock.sleep(TimeUnit.SECONDS.toMillis(2));
         super.onCreate(savedInstanceState);
     }
 }
