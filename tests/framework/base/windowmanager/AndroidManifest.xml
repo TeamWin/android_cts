@@ -30,6 +30,9 @@
             android:enabled="true"
             android:exported="true">
         </service>
+
+        <activity android:name="android.server.wm.AlertWindowsAppOpsTestsActivity"/>
+
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
