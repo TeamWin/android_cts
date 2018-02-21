@@ -43,7 +43,10 @@ public class CtsSelfManagedConnectionService extends ConnectionService {
     public static int CREATE_INCOMING_CONNECTION_FAILED_LOCK = 1;
     public static int CREATE_OUTGOING_CONNECTION_FAILED_LOCK = 2;
     public static int HANDOVER_FAILED_LOCK = 3;
-    private static int NUM_LOCKS = HANDOVER_FAILED_LOCK + 1;
+    public static int FOCUS_GAINED_LOCK = 4;
+    public static int FOCUS_LOST_LOCK = 5;
+
+    private static int NUM_LOCKS = FOCUS_LOST_LOCK + 1;
 
     private static CtsSelfManagedConnectionService sConnectionService;
 
@@ -132,6 +135,16 @@ public class CtsSelfManagedConnectionService extends ConnectionService {
     }
 
 
+    @Override
+    public void onConnectionServiceFocusGained() {
+        mLocks[FOCUS_GAINED_LOCK].countDown();
+    }
+
+    @Override
+    public void onConnectionServiceFocusLost() {
+        mLocks[FOCUS_LOST_LOCK].countDown();
+    }
+
     public void tearDown() {
         synchronized(mLock) {
             if (mConnections != null && mConnections.size() > 0) {
@@ -150,6 +163,8 @@ public class CtsSelfManagedConnectionService extends ConnectionService {
         SelfManagedConnection connection = new SelfManagedConnection(isIncoming,
                 mConnectionListener);
         connection.setConnectionProperties(Connection.PROPERTY_SELF_MANAGED);
+        connection.setConnectionCapabilities(
+                Connection.CAPABILITY_HOLD | Connection.CAPABILITY_SUPPORT_HOLD);
         connection.setAddress(request.getAddress(), TelecomManager.PRESENTATION_ALLOWED);
         connection.setExtras(request.getExtras());
 
