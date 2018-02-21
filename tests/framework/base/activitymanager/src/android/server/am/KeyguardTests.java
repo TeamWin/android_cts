@@ -292,7 +292,6 @@ public class KeyguardTests extends KeyguardTestBase {
         try (final LockScreenSession lockScreenSession = new LockScreenSession();
              final RotationSession rotationSession = new RotationSession()) {
             lockScreenSession.gotoKeyguard();
-            mAmWmState.waitForKeyguardShowingAndNotOccluded();
             mAmWmState.assertKeyguardShowingAndNotOccluded();
             executeShellCommand(getAmStartCmd("ShowWhenLockedActivity"));
             mAmWmState.computeState(new WaitForValidActivityState("ShowWhenLockedActivity"));
@@ -358,7 +357,6 @@ public class KeyguardTests extends KeyguardTestBase {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             final LogSeparator logSeparator = clearLogcat();
             lockScreenSession.gotoKeyguard();
-            mAmWmState.waitForKeyguardShowingAndNotOccluded();
             mAmWmState.assertKeyguardShowingAndNotOccluded();
             launchActivity("ShowWhenLockedAttrActivity");
             mAmWmState.computeState(new WaitForValidActivityState("ShowWhenLockedAttrActivity"));
