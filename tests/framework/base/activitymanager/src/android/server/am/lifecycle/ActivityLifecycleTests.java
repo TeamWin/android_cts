@@ -1,6 +1,7 @@
 package android.server.am.lifecycle;
 
 import static android.support.test.runner.lifecycle.Stage.DESTROYED;
+import static android.support.test.runner.lifecycle.Stage.PAUSED;
 import static android.support.test.runner.lifecycle.Stage.RESUMED;
 import static android.support.test.runner.lifecycle.Stage.STOPPED;
 
@@ -60,7 +61,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
 
     @FlakyTest(bugId = 72956507)
     @Test
-    public void testRelaunch() throws Exception {
+    public void testRelaunchResumed() throws Exception {
         final Activity activity = mFirstActivityTestRule.launchActivity(new Intent());
         waitAndAssertActivityStates(state(activity, RESUMED));
 
@@ -68,6 +69,38 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         InstrumentationRegistry.getInstrumentation().runOnMainSync(activity::recreate);
         waitAndAssertActivityStates(state(activity, RESUMED));
 
-        LifecycleVerifier.assertRelaunchSequence(FirstActivity.class, getLifecycleLog());
+        LifecycleVerifier.assertRelaunchSequence(FirstActivity.class, getLifecycleLog(), RESUMED);
+    }
+
+    @FlakyTest(bugId = 72956507)
+    @Test
+    public void testRelaunchPaused() throws Exception {
+        final Activity pausedActivity = mFirstActivityTestRule.launchActivity(new Intent());
+        final Activity topTranslucentActivity =
+                mTranslucentActivityTestRule.launchActivity(new Intent());
+
+        waitAndAssertActivityStates(state(pausedActivity, PAUSED),
+                state(topTranslucentActivity, RESUMED));
+
+        getLifecycleLog().clear();
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(pausedActivity::recreate);
+        waitAndAssertActivityStates(state(pausedActivity, PAUSED));
+
+        LifecycleVerifier.assertRelaunchSequence(FirstActivity.class, getLifecycleLog(), PAUSED);
+    }
+
+    @FlakyTest(bugId = 72956507)
+    @Test
+    public void testRelaunchStopped() throws Exception {
+        final Activity stoppedActivity = mFirstActivityTestRule.launchActivity(new Intent());
+        final Activity topActivity = mSecondActivityTestRule.launchActivity(new Intent());
+
+        waitAndAssertActivityStates(state(stoppedActivity, STOPPED), state(topActivity, RESUMED));
+
+        getLifecycleLog().clear();
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(stoppedActivity::recreate);
+        waitAndAssertActivityStates(state(stoppedActivity, STOPPED));
+
+        LifecycleVerifier.assertRelaunchSequence(FirstActivity.class, getLifecycleLog(), STOPPED);
     }
 }
