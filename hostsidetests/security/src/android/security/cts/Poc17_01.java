@@ -43,4 +43,16 @@ public class Poc17_01 extends SecurityTestCase {
                          "[\\s\\n\\S]*>>> /system/bin/" +
                          "mediaserver <<<[\\s\\n\\S]*", logcatOut);
     }
+
+    /**
+     *  b/32255299
+     */
+    @SecurityTest
+    public void testPocCVE_2017_0386() throws Exception {
+        AdbUtils.runCommandLine("logcat -c" , getDevice());
+        AdbUtils.runPoc("CVE-2017-0386", getDevice(), 60);
+
+        String logcat = AdbUtils.runCommandLine("logcat -d", getDevice());
+        assertMatches("[\\s\\n\\S]*No Integer overflow[\\s\\n\\S]*", logcat);
+    }
  }
