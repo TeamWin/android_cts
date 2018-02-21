@@ -18,11 +18,14 @@ package android.server.am;
 
 import static android.content.pm.PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS;
 import static android.server.am.ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID;
+import static android.server.am.ComponentNameUtils.getSimpleClassName;
+import static android.server.am.Components.VIRTUAL_DISPLAY_ACTIVITY;
 import static android.server.am.StateLogger.log;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import android.content.ComponentName;
 import android.content.res.Configuration;
 import android.provider.Settings;
 import android.server.am.ActivityManagerState.ActivityDisplay;
@@ -43,13 +46,9 @@ import java.util.regex.Pattern;
  * @see ActivityManagerDisplayTests
  * @see ActivityManagerDisplayLockedKeyguardTests
  */
-public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
-    private static final String WM_SIZE = "wm size";
-    private static final String WM_DENSITY = "wm density";
+class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
 
     static final int CUSTOM_DENSITY_DPI = 222;
-
-    private static final String VIRTUAL_DISPLAY_ACTIVITY = "VirtualDisplayActivity";
     private static final int INVALID_DENSITY_DPI = -1;
 
     ActivityDisplay getDisplayState(List<ActivityDisplay> displays, int displayId) {
@@ -196,7 +195,7 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
         private boolean mCanShowWithInsecureKeyguard = false;
         private boolean mPublicDisplay = false;
         private boolean mResizeDisplay = true;
-        private String mLaunchActivity = null;
+        private ComponentName mLaunchActivity = null;
         private boolean mSimulateDisplay = false;
         private boolean mMustBeCreated = true;
 
@@ -230,7 +229,7 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
             return this;
         }
 
-        public VirtualDisplaySession setLaunchActivity(String launchActivity) {
+        public VirtualDisplaySession setLaunchActivity(ComponentName launchActivity) {
             mLaunchActivity = launchActivity;
             return this;
         }
@@ -307,7 +306,7 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
             if (mLaunchInSplitScreen) {
                 getLaunchActivityBuilder()
                         .setToSide(true)
-                        .setTargetActivityName(VIRTUAL_DISPLAY_ACTIVITY)
+                        .setTargetActivity(VIRTUAL_DISPLAY_ACTIVITY)
                         .execute();
             } else {
                 launchActivity(VIRTUAL_DISPLAY_ACTIVITY);
@@ -337,7 +336,8 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
             if (mLaunchActivity != null) {
                 createVirtualDisplayCommand
                         .append(" --es launch_target_activity ")
-                        .append(mLaunchActivity);
+                        // TODO(b/73349193): Should pass component name.
+                        .append(getSimpleClassName(mLaunchActivity));
             }
             executeShellCommand(createVirtualDisplayCommand.toString());
             mVirtualDisplayCreated = true;

@@ -17,6 +17,9 @@
 package android.server.am;
 
 import static android.server.am.ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID;
+import static android.server.am.ComponentNameUtils.getActivityName;
+import static android.server.am.Components.RESIZEABLE_ACTIVITY;
+import static android.server.am.Components.VR_TEST_ACTIVITY;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -34,8 +37,6 @@ import java.util.List;
  *     atest CtsActivityManagerDeviceTestCases:ActivityManagerVrDisplayTests
  */
 public class ActivityManagerVrDisplayTests extends ActivityManagerDisplayTestBase {
-    private static final String RESIZEABLE_ACTIVITY_NAME = "ResizeableActivity";
-    private static final String VR_TEST_ACTIVITY_NAME = "VrTestActivity";
     private static final int VR_VIRTUAL_DISPLAY_WIDTH = 700;
     private static final int VR_VIRTUAL_DISPLAY_HEIGHT = 900;
     private static final int VR_VIRTUAL_DISPLAY_DPI = 320;
@@ -74,13 +75,13 @@ public class ActivityManagerVrDisplayTests extends ActivityManagerDisplayTestBas
             vrModeSession.enablePersistentVrMode();
 
             // Launch the VR activity.
-            launchActivity(VR_TEST_ACTIVITY_NAME);
-            mAmWmState.computeState(new WaitForValidActivityState(VR_TEST_ACTIVITY_NAME));
-            mAmWmState.assertVisibility(VR_TEST_ACTIVITY_NAME, true /* visible */);
+            launchActivity(VR_TEST_ACTIVITY);
+            mAmWmState.computeState(VR_TEST_ACTIVITY);
+            mAmWmState.assertVisibility(VR_TEST_ACTIVITY, true /* visible */);
 
             // Launch the non-VR 2D activity and check where it ends up.
             launchActivity(LAUNCHING_ACTIVITY);
-            mAmWmState.computeState(new WaitForValidActivityState(LAUNCHING_ACTIVITY));
+            mAmWmState.computeState(LAUNCHING_ACTIVITY);
 
             // Ensure that the subsequent activity is visible
             mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true /* visible */);
@@ -121,13 +122,13 @@ public class ActivityManagerVrDisplayTests extends ActivityManagerDisplayTestBas
             vrModeSession.enablePersistentVrMode();
 
             // Launch the VR activity.
-            launchActivity(VR_TEST_ACTIVITY_NAME);
-            mAmWmState.computeState(new WaitForValidActivityState(VR_TEST_ACTIVITY_NAME));
-            mAmWmState.assertVisibility(VR_TEST_ACTIVITY_NAME, true /* visible */);
+            launchActivity(VR_TEST_ACTIVITY);
+            mAmWmState.computeState(VR_TEST_ACTIVITY);
+            mAmWmState.assertVisibility(VR_TEST_ACTIVITY, true /* visible */);
 
             // Re-launch the non-VR 2D activity and check where it ends up.
             launchActivity(LAUNCHING_ACTIVITY);
-            mAmWmState.computeState(new WaitForValidActivityState(LAUNCHING_ACTIVITY));
+            mAmWmState.computeState(LAUNCHING_ACTIVITY);
 
             // Ensure that the subsequent activity is visible
             mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true /* visible */);
@@ -165,13 +166,13 @@ public class ActivityManagerVrDisplayTests extends ActivityManagerDisplayTestBas
             vrModeSession.enablePersistentVrMode();
 
             // Launch the VR activity.
-            launchActivity(VR_TEST_ACTIVITY_NAME);
-            mAmWmState.computeState(new WaitForValidActivityState(VR_TEST_ACTIVITY_NAME));
-            mAmWmState.assertVisibility(VR_TEST_ACTIVITY_NAME, true /* visible */);
+            launchActivity(VR_TEST_ACTIVITY);
+            mAmWmState.computeState(VR_TEST_ACTIVITY);
+            mAmWmState.assertVisibility(VR_TEST_ACTIVITY, true /* visible */);
 
             // Launch the non-VR 2D activity and check where it ends up.
             launchActivity(ALT_LAUNCHING_ACTIVITY);
-            mAmWmState.computeState(new WaitForValidActivityState(ALT_LAUNCHING_ACTIVITY));
+            mAmWmState.computeState(ALT_LAUNCHING_ACTIVITY);
 
             // Ensure that the subsequent activity is visible
             mAmWmState.assertVisibility(ALT_LAUNCHING_ACTIVITY, true /* visible */);
@@ -209,20 +210,19 @@ public class ActivityManagerVrDisplayTests extends ActivityManagerDisplayTestBas
         }
 
         // Launch the non-VR 2D activity and check where it ends up.
-        launchActivity(RESIZEABLE_ACTIVITY_NAME);
-        mAmWmState.computeState(new WaitForValidActivityState(RESIZEABLE_ACTIVITY_NAME));
+        launchActivity(RESIZEABLE_ACTIVITY);
+        mAmWmState.computeState(RESIZEABLE_ACTIVITY);
 
         // Ensure that the subsequent activity is visible
-        mAmWmState.assertVisibility(RESIZEABLE_ACTIVITY_NAME, true /* visible */);
+        mAmWmState.assertVisibility(RESIZEABLE_ACTIVITY, true /* visible */);
 
         // Check that activity is launched in focused stack on primary display.
-        mAmWmState.assertFocusedActivity("Launched activity must be focused",
-                RESIZEABLE_ACTIVITY_NAME);
+        mAmWmState.assertFocusedActivity("Launched activity must be focused", RESIZEABLE_ACTIVITY);
         final int frontStackId = mAmWmState.getAmState().getFrontStackId(DEFAULT_DISPLAY_ID);
         final ActivityManagerState.ActivityStack frontStack
                 = mAmWmState.getAmState().getStackById(frontStackId);
         assertEquals("Launched activity must be resumed in front stack",
-                getActivityComponentName(RESIZEABLE_ACTIVITY_NAME), frontStack.mResumedActivity);
+                getActivityName(RESIZEABLE_ACTIVITY), frontStack.mResumedActivity);
         assertEquals("Front stack must be on primary display",
                 DEFAULT_DISPLAY_ID, frontStack.mDisplayId);
     }

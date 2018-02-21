@@ -22,6 +22,13 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.server.am.ActivityAndWindowManagersState.dpToPx;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
+import static android.server.am.ComponentNameUtils.getWindowName;
+import static android.server.am.Components.DIALOG_WHEN_LARGE_ACTIVITY;
+import static android.server.am.Components.LANDSCAPE_ORIENTATION_ACTIVITY;
+import static android.server.am.Components.NIGHT_MODE_ACTIVITY;
+import static android.server.am.Components.PORTRAIT_ORIENTATION_ACTIVITY;
+import static android.server.am.Components.RESIZEABLE_ACTIVITY;
+import static android.server.am.Components.TEST_ACTIVITY;
 import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logE;
 import static android.server.am.translucentapp.Components.TRANSLUCENT_LANDSCAPE_ACTIVITY;
@@ -37,6 +44,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
+import android.content.ComponentName;
 import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
 import android.support.test.filters.FlakyTest;
@@ -51,12 +59,6 @@ import java.util.List;
  *     atest CtsActivityManagerDeviceTestCases:ActivityManagerAppConfigurationTests
  */
 public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBase {
-    private static final String RESIZEABLE_ACTIVITY_NAME = "ResizeableActivity";
-    private static final String TEST_ACTIVITY_NAME = "TestActivity";
-    private static final String PORTRAIT_ACTIVITY_NAME = "PortraitOrientationActivity";
-    private static final String LANDSCAPE_ACTIVITY_NAME = "LandscapeOrientationActivity";
-    private static final String NIGHT_MODE_ACTIVITY = "NightModeActivity";
-    private static final String DIALOG_WHEN_LARGE_ACTIVITY = "DialogWhenLargeActivity";
 
     private static final int SMALL_WIDTH_DP = 426;
     private static final int SMALL_HEIGHT_DP = 320;
@@ -75,13 +77,13 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
         LogSeparator logSeparator = clearLogcat();
-        launchActivity(RESIZEABLE_ACTIVITY_NAME, WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
-        final ReportedSizes fullscreenSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
+        launchActivity(RESIZEABLE_ACTIVITY, WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
+        final ReportedSizes fullscreenSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY,
                 logSeparator);
 
         logSeparator = clearLogcat();
-        setActivityTaskWindowingMode(RESIZEABLE_ACTIVITY_NAME, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
-        final ReportedSizes dockedSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
+        setActivityTaskWindowingMode(RESIZEABLE_ACTIVITY, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
+        final ReportedSizes dockedSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY,
                 logSeparator);
 
         assertSizesAreSane(fullscreenSizes, dockedSizes);
@@ -98,13 +100,13 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
         LogSeparator logSeparator = clearLogcat();
-        launchActivity(RESIZEABLE_ACTIVITY_NAME, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
-        final ReportedSizes dockedSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
+        launchActivity(RESIZEABLE_ACTIVITY, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
+        final ReportedSizes dockedSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY,
                 logSeparator);
 
         logSeparator = clearLogcat();
-        setActivityTaskWindowingMode(RESIZEABLE_ACTIVITY_NAME, WINDOWING_MODE_FULLSCREEN);
-        final ReportedSizes fullscreenSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
+        setActivityTaskWindowingMode(RESIZEABLE_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
+        final ReportedSizes fullscreenSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY,
                 logSeparator);
 
         assertSizesAreSane(fullscreenSizes, dockedSizes);
@@ -121,9 +123,9 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
             rotationSession.set(ROTATION_0);
 
             final LogSeparator logSeparator = clearLogcat();
-            launchActivity(RESIZEABLE_ACTIVITY_NAME,
+            launchActivity(RESIZEABLE_ACTIVITY,
                     WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
-            final ReportedSizes initialSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
+            final ReportedSizes initialSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY,
                     logSeparator);
 
             rotateAndCheckSizes(rotationSession, initialSizes);
@@ -145,10 +147,12 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
             final LogSeparator logSeparator = clearLogcat();
             // Launch our own activity to side in case Recents (or other activity to side) doesn't
             // support rotation.
-            launchActivitiesInSplitScreen(LAUNCHING_ACTIVITY, TEST_ACTIVITY_NAME);
+            launchActivitiesInSplitScreen(
+                    getLaunchActivityBuilder().setTargetActivityName(LAUNCHING_ACTIVITY),
+                    getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY));
             // Launch target activity in docked stack.
-            getLaunchActivityBuilder().setTargetActivityName(RESIZEABLE_ACTIVITY_NAME).execute();
-            final ReportedSizes initialSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
+            getLaunchActivityBuilder().setTargetActivity(RESIZEABLE_ACTIVITY).execute();
+            final ReportedSizes initialSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY,
                     logSeparator);
 
             rotateAndCheckSizes(rotationSession, initialSizes);
@@ -168,8 +172,10 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
             rotationSession.set(ROTATION_0);
 
             final LogSeparator logSeparator = clearLogcat();
-            launchActivitiesInSplitScreen(LAUNCHING_ACTIVITY, RESIZEABLE_ACTIVITY_NAME);
-            final ReportedSizes initialSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
+            launchActivitiesInSplitScreen(
+                    getLaunchActivityBuilder().setTargetActivityName(LAUNCHING_ACTIVITY),
+                    getLaunchActivityBuilder().setTargetActivity(RESIZEABLE_ACTIVITY));
+            final ReportedSizes initialSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY,
                     logSeparator);
 
             rotateAndCheckSizes(rotationSession, initialSizes);
@@ -181,8 +187,8 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         final int[] rotations = { ROTATION_270, ROTATION_180, ROTATION_90, ROTATION_0 };
         for (final int rotation : rotations) {
             final LogSeparator logSeparator = clearLogcat();
-            final int actualStackId = mAmWmState.getAmState().getTaskByActivityName(
-                    RESIZEABLE_ACTIVITY_NAME).mStackId;
+            final int actualStackId =
+                    mAmWmState.getAmState().getTaskByActivity(RESIZEABLE_ACTIVITY).mStackId;
             final int displayId = mAmWmState.getAmState().getStackById(actualStackId).mDisplayId;
             rotationSession.set(rotation);
             final int newDeviceRotation = getDeviceRotation(displayId);
@@ -195,7 +201,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
                 return;
             }
 
-            final ReportedSizes rotatedSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
+            final ReportedSizes rotatedSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY,
                     logSeparator);
             assertSizesRotate(prevSizes, rotatedSizes);
             prevSizes = rotatedSizes;
@@ -208,7 +214,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      */
     @Test
     public void testSameConfigurationFullSplitFullRelaunch() throws Exception {
-        moveActivityFullSplitFull(TEST_ACTIVITY_NAME);
+        moveActivityFullSplitFull(TEST_ACTIVITY);
     }
 
     /**
@@ -217,7 +223,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     @Presubmit
     @Test
     public void testSameConfigurationFullSplitFullNoRelaunch() throws Exception {
-        moveActivityFullSplitFull(RESIZEABLE_ACTIVITY_NAME);
+        moveActivityFullSplitFull(RESIZEABLE_ACTIVITY);
     }
 
     /**
@@ -227,7 +233,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * user long-presses overview/recents button to exit split-screen.
      * Asserts that initial and final reported sizes in fullscreen stack are the same.
      */
-    private void moveActivityFullSplitFull(String activityName) throws Exception {
+    private void moveActivityFullSplitFull(ComponentName activityName) throws Exception {
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
         // Launch to fullscreen stack and record size.
@@ -271,7 +277,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      */
     @Test
     public void testSameConfigurationSplitFullSplitRelaunch() throws Exception {
-        moveActivitySplitFullSplit(TEST_ACTIVITY_NAME);
+        moveActivitySplitFullSplit(TEST_ACTIVITY);
     }
 
     /**
@@ -279,7 +285,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      */
     @Test
     public void testSameConfigurationSplitFullSplitNoRelaunch() throws Exception {
-        moveActivitySplitFullSplit(RESIZEABLE_ACTIVITY_NAME);
+        moveActivitySplitFullSplit(RESIZEABLE_ACTIVITY);
     }
 
     /**
@@ -301,8 +307,11 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         final int smallHeightPx = dpToPx(SMALL_HEIGHT_DP, density);
 
         mAm.resizeStack(stack.mStackId, new Rect(0, 0, smallWidthPx, smallHeightPx));
-        mAmWmState.waitForValidState(DIALOG_WHEN_LARGE_ACTIVITY,
-                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
+        mAmWmState.waitForValidState(
+                new WaitForValidActivityState.Builder(DIALOG_WHEN_LARGE_ACTIVITY)
+                        .setWindowingMode(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY)
+                        .setActivityType(ACTIVITY_TYPE_STANDARD)
+                        .build());
     }
 
     /**
@@ -313,26 +322,26 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     @FlakyTest(bugId = 71875755)
     public void testFullscreenAppOrientationRequests() throws Exception {
         LogSeparator logSeparator = clearLogcat();
-        launchActivity(PORTRAIT_ACTIVITY_NAME);
-        mAmWmState.assertVisibility(PORTRAIT_ACTIVITY_NAME, true /* visible */);
+        launchActivity(PORTRAIT_ORIENTATION_ACTIVITY);
+        mAmWmState.assertVisibility(PORTRAIT_ORIENTATION_ACTIVITY, true /* visible */);
         ReportedSizes reportedSizes =
-                getLastReportedSizesForActivity(PORTRAIT_ACTIVITY_NAME, logSeparator);
+                getLastReportedSizesForActivity(PORTRAIT_ORIENTATION_ACTIVITY, logSeparator);
         assertEquals("portrait activity should be in portrait",
                 1 /* portrait */, reportedSizes.orientation);
         logSeparator = clearLogcat();
 
-        launchActivity(LANDSCAPE_ACTIVITY_NAME);
-        mAmWmState.assertVisibility(LANDSCAPE_ACTIVITY_NAME, true /* visible */);
+        launchActivity(LANDSCAPE_ORIENTATION_ACTIVITY);
+        mAmWmState.assertVisibility(LANDSCAPE_ORIENTATION_ACTIVITY, true /* visible */);
         reportedSizes =
-                getLastReportedSizesForActivity(LANDSCAPE_ACTIVITY_NAME, logSeparator);
+                getLastReportedSizesForActivity(LANDSCAPE_ORIENTATION_ACTIVITY, logSeparator);
         assertEquals("landscape activity should be in landscape",
                 2 /* landscape */, reportedSizes.orientation);
         logSeparator = clearLogcat();
 
-        launchActivity(PORTRAIT_ACTIVITY_NAME);
-        mAmWmState.assertVisibility(PORTRAIT_ACTIVITY_NAME, true /* visible */);
+        launchActivity(PORTRAIT_ORIENTATION_ACTIVITY);
+        mAmWmState.assertVisibility(PORTRAIT_ORIENTATION_ACTIVITY, true /* visible */);
         reportedSizes =
-                getLastReportedSizesForActivity(PORTRAIT_ACTIVITY_NAME, logSeparator);
+                getLastReportedSizesForActivity(PORTRAIT_ORIENTATION_ACTIVITY, logSeparator);
         assertEquals("portrait activity should be in portrait",
                 1 /* portrait */, reportedSizes.orientation);
         logSeparator = clearLogcat();
@@ -341,9 +350,9 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     @Test
     public void testNonfullscreenAppOrientationRequests() throws Exception {
         LogSeparator logSeparator = clearLogcat();
-        launchActivity(PORTRAIT_ACTIVITY_NAME);
+        launchActivity(PORTRAIT_ORIENTATION_ACTIVITY);
         final ReportedSizes initialReportedSizes =
-                getLastReportedSizesForActivity(PORTRAIT_ACTIVITY_NAME, logSeparator);
+                getLastReportedSizesForActivity(PORTRAIT_ORIENTATION_ACTIVITY, logSeparator);
         assertEquals("portrait activity should be in portrait",
                 1 /* portrait */, initialReportedSizes.orientation);
         logSeparator = clearLogcat();
@@ -366,7 +375,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         // specifying orientation. We instead start an activity known to launch immediately after
         // so that we can ensure processing the first activity occurred.
         launchActivityNoWait(TRANSLUCENT_LANDSCAPE_ACTIVITY);
-        launchActivity(PORTRAIT_ACTIVITY_NAME);
+        launchActivity(PORTRAIT_ORIENTATION_ACTIVITY);
 
         assertFalse("target SDK > 26 non-fullscreen activity should not reach onResume",
                 mAmWmState.getAmState().containsActivity(TRANSLUCENT_LANDSCAPE_ACTIVITY));
@@ -392,8 +401,8 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     @Test
     public void testTaskCloseRestoreOrientation() throws Exception {
         // Start landscape activity.
-        launchActivity(LANDSCAPE_ACTIVITY_NAME);
-        mAmWmState.assertVisibility(LANDSCAPE_ACTIVITY_NAME, true /* visible */);
+        launchActivity(LANDSCAPE_ORIENTATION_ACTIVITY);
+        mAmWmState.assertVisibility(LANDSCAPE_ORIENTATION_ACTIVITY, true /* visible */);
         assertEquals("Fullscreen app requested landscape orientation",
                 0 /* landscape */, mAmWmState.getWmState().getLastOrientation());
 
@@ -408,8 +417,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         executeShellCommand(FINISH_ACTIVITY_BROADCAST);
 
         // Verify that activity brought to front is in originally requested orientation.
-        mAmWmState.computeState(
-            new WaitForValidActivityState.Builder(LANDSCAPE_ACTIVITY_NAME).build());
+        mAmWmState.computeState(LANDSCAPE_ORIENTATION_ACTIVITY);
         assertEquals("Should return to app in landscape orientation",
                 0 /* landscape */, mAmWmState.getWmState().getLastOrientation());
     }
@@ -422,8 +430,8 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     @FlakyTest(bugId = 71792393)
     public void testTaskMoveToBackOrientation() throws Exception {
         // Start landscape activity.
-        launchActivity(LANDSCAPE_ACTIVITY_NAME);
-        mAmWmState.assertVisibility(LANDSCAPE_ACTIVITY_NAME, true /* visible */);
+        launchActivity(LANDSCAPE_ORIENTATION_ACTIVITY);
+        mAmWmState.assertVisibility(LANDSCAPE_ORIENTATION_ACTIVITY, true /* visible */);
         assertEquals("Fullscreen app requested landscape orientation",
                 0 /* landscape */, mAmWmState.getWmState().getLastOrientation());
 
@@ -438,7 +446,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         executeShellCommand(MOVE_TASK_TO_BACK_BROADCAST);
 
         // Verify that activity brought to front is in originally requested orientation.
-        mAmWmState.waitForValidState(LANDSCAPE_ACTIVITY_NAME);
+        mAmWmState.waitForValidState(LANDSCAPE_ORIENTATION_ACTIVITY);
         assertEquals("Should return to app in landscape orientation",
                 0 /* landscape */, mAmWmState.getWmState().getLastOrientation());
     }
@@ -454,7 +462,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
 
         try (final RotationSession rotationSession = new RotationSession()) {
             requestOrientationInSplitScreen(rotationSession,
-                    ROTATION_90 /* portrait */, LANDSCAPE_ACTIVITY_NAME);
+                    ROTATION_90 /* portrait */, LANDSCAPE_ORIENTATION_ACTIVITY);
         }
     }
 
@@ -468,7 +476,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
 
         try (final RotationSession rotationSession = new RotationSession()) {
             requestOrientationInSplitScreen(rotationSession,
-                    ROTATION_0 /* landscape */, PORTRAIT_ACTIVITY_NAME);
+                    ROTATION_0 /* landscape */, PORTRAIT_ORIENTATION_ACTIVITY);
         }
     }
 
@@ -477,7 +485,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * didn't change.
      */
     private void requestOrientationInSplitScreen(RotationSession rotationSession, int orientation,
-            String activity) throws Exception {
+            ComponentName activity) throws Exception {
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
         // Set initial orientation.
@@ -486,14 +494,14 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         // Launch activities that request orientations and check that device doesn't rotate.
         launchActivitiesInSplitScreen(
                 getLaunchActivityBuilder().setTargetActivityName(LAUNCHING_ACTIVITY),
-                getLaunchActivityBuilder().setTargetActivityName(activity).setMultipleTask(true));
+                getLaunchActivityBuilder().setTargetActivity(activity).setMultipleTask(true));
 
         mAmWmState.assertVisibility(activity, true /* visible */);
         assertEquals("Split-screen apps shouldn't influence device orientation",
                 orientation, mAmWmState.getWmState().getRotation());
 
-        getLaunchActivityBuilder().setMultipleTask(true).setTargetActivityName(activity).execute();
-        mAmWmState.computeState(new String[] {activity});
+        getLaunchActivityBuilder().setMultipleTask(true).setTargetActivity(activity).execute();
+        mAmWmState.computeState(activity);
         mAmWmState.assertVisibility(activity, true /* visible */);
         assertEquals("Split-screen apps shouldn't influence device orientation",
                 orientation, mAmWmState.getWmState().getRotation());
@@ -503,7 +511,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * Launches activity in docked stack, moves to fullscreen stack and back to docked stack.
      * Asserts that initial and final reported sizes in docked stack are the same.
      */
-    private void moveActivitySplitFullSplit(String activityName) throws Exception {
+    private void moveActivitySplitFullSplit(ComponentName activityName) throws Exception {
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
         // Launch to docked stack and record size.
@@ -587,20 +595,20 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         assertEquals(firstSize.smallestWidthDp, secondSize.smallestWidthDp);
     }
 
-    private ReportedSizes getActivityDisplaySize(String activityName, LogSeparator logSeparator)
-            throws Exception {
+    private ReportedSizes getActivityDisplaySize(ComponentName activityName,
+            LogSeparator logSeparator) throws Exception {
         mAmWmState.computeState(false /* compareTaskAndStackBounds */,
-                new WaitForValidActivityState.Builder(activityName).build());
+                new WaitForValidActivityState(activityName));
         final ReportedSizes details = getLastReportedSizesForActivity(activityName, logSeparator);
         assertNotNull(details);
         return details;
     }
 
-    private Rect getDisplayRect(String activityName)
+    private Rect getDisplayRect(ComponentName activityName)
             throws Exception {
-        final String windowName = getActivityWindowName(activityName);
+        final String windowName = getWindowName(activityName);
 
-        mAmWmState.computeState(new String[] {activityName});
+        mAmWmState.computeState(activityName);
         mAmWmState.assertFocusedWindow("Test window must be the front window.", windowName);
 
         final List<WindowManagerState.WindowState> tempWindowList = new ArrayList<>();

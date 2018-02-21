@@ -16,6 +16,8 @@
 
 package android.server.am;
 
+import static android.server.am.Components.DISMISS_KEYGUARD_ACTIVITY;
+
 import static org.junit.Assume.assumeTrue;
 
 import android.server.am.ActivityManagerState.ActivityDisplay;
@@ -30,7 +32,6 @@ import org.junit.Test;
  *     atest CtsActivityManagerDeviceTestCases:ActivityManagerDisplayKeyguardTests
  */
 public class ActivityManagerDisplayKeyguardTests extends ActivityManagerDisplayTestBase {
-    private static final String DISMISS_KEYGUARD_ACTIVITY = "DismissKeyguardActivity";
 
     @Before
     @Override
