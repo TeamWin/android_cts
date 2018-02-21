@@ -397,13 +397,6 @@ public abstract class ActivityManagerTestBase {
         mAmWmState.waitForValidState(activityName);
     }
 
-    /** TODO(b/73349193): Use {@link #launchActivityInNewTask(ComponentName)} instead. */
-    @Deprecated
-    protected void launchActivityInNewTask(final String targetActivityName) throws Exception {
-        executeShellCommand(getAmStartCmdInNewTask(targetActivityName));
-        mAmWmState.waitForValidState(targetActivityName);
-    }
-
     /**
      * Starts an activity in a new stack.
      * @return the stack id of the newly created stack.
@@ -489,12 +482,6 @@ public abstract class ActivityManagerTestBase {
         launchActivityInSplitScreenWithRecents(activityName, SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT);
     }
 
-    // TODO(b/73349193): Use {@link #launchActivityInSplitScreenWithRecents(ComponentName)}.
-    @Deprecated
-    protected void launchActivityInSplitScreenWithRecents(String activityName) throws Exception {
-        launchActivityInSplitScreenWithRecents(activityName, SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT);
-    }
-
     protected void launchActivityInSplitScreenWithRecents(
             ComponentName activityName, int createMode) throws Exception {
         launchActivity(activityName);
@@ -508,29 +495,6 @@ public abstract class ActivityManagerTestBase {
                         .setActivityType(ACTIVITY_TYPE_STANDARD)
                         .build());
         mAmWmState.waitForRecentsActivityVisible();
-    }
-
-    // TODO(b/73349193): Use {@link #launchActivityInSplitScreenWithRecents(ComponentName, int)}.
-    @Deprecated
-    protected void launchActivityInSplitScreenWithRecents(String activityName, int createMode)
-            throws Exception {
-        launchActivity(activityName);
-        final int taskId = mAmWmState.getAmState().getTaskByActivityName(activityName).mTaskId;
-        mAm.setTaskWindowingModeSplitScreenPrimary(taskId, createMode, true /* onTop */,
-                false /* animate */, null /* initialBounds */, true /* showRecents */);
-
-        mAmWmState.waitForValidState(activityName,
-                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
-        mAmWmState.waitForRecentsActivityVisible();
-    }
-
-    // TODO(b/73349193): Use {@link #launchActivitiesInSplitScreen(LaunchActivityBuilder, LaunchActivityBuilder)
-    @Deprecated
-    protected void launchActivitiesInSplitScreen(String primaryActivity, String secondaryActivity)
-            throws Exception {
-        launchActivitiesInSplitScreen(
-                getLaunchActivityBuilder().setTargetActivityName(primaryActivity),
-                getLaunchActivityBuilder().setTargetActivityName(secondaryActivity));
     }
 
     /**
@@ -603,13 +567,6 @@ public abstract class ActivityManagerTestBase {
 
     protected void resizeActivityTask(
             ComponentName activityName, int left, int top, int right, int bottom)
-            throws Exception {
-        resizeActivityTask(getActivityTaskId(activityName), left, top, right, bottom);
-    }
-
-    /** TODO(b/73349193): Use {@link #resizeActivityTask(ComponentName, int, int, int, int)}. */
-    @Deprecated
-    protected void resizeActivityTask(String activityName, int left, int top, int right, int bottom)
             throws Exception {
         resizeActivityTask(getActivityTaskId(activityName), left, top, right, bottom);
     }
@@ -852,12 +809,7 @@ public abstract class ActivityManagerTestBase {
             pressSleepButton();
             for (int retry = 1; isDisplayOn() && retry <= 5; retry++) {
                 logAlways("***Waiting for display to turn off... retry=" + retry);
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    logAlways(e.toString());
-                    // Well I guess we are not waiting...
-                }
+                SystemClock.sleep(TimeUnit.SECONDS.toMillis(1));
             }
             return this;
         }
@@ -1049,11 +1001,7 @@ public abstract class ActivityManagerTestBase {
                     return;
                 }
                 logAlways(waitingMessage + ": " + resultString);
-                try {
-                    Thread.sleep(RETRY_INTERVAL);
-                } catch (InterruptedException e) {
-                    logE(waitingMessage + ": interrupted", e);
-                }
+                SystemClock.sleep(RETRY_INTERVAL);
             }
             fail(resultString);
         }
@@ -1105,45 +1053,37 @@ public abstract class ActivityManagerTestBase {
         }
     }
 
-    void assertActivityLifecycle(
-            ComponentName activityName, boolean relaunched, LogSeparator logSeparator) {
-        assertActivityLifecycle(getLogTag(activityName), relaunched, logSeparator);
-    }
-
-    /**
-     * TODO(b/73349193): Use {@link #assertActivityLifecycle(ComponentName, boolean, LogSeparator)}.
-     */
-    @Deprecated
-    void assertActivityLifecycle(
-            String activityName, boolean relaunched, LogSeparator logSeparator) {
+    void assertActivityLifecycle(ComponentName activityName, boolean relaunched,
+            LogSeparator logSeparator) {
+        final String logTag = getLogTag(activityName);
         new RetryValidator() {
 
             @Nullable
             @Override
             protected String validate() {
                 final ActivityLifecycleCounts lifecycleCounts =
-                        new ActivityLifecycleCounts(activityName, logSeparator);
+                        new ActivityLifecycleCounts(logTag, logSeparator);
                 if (relaunched) {
                     if (lifecycleCounts.mDestroyCount < 1) {
-                        return activityName + " must have been destroyed. mDestroyCount="
+                        return logTag + " must have been destroyed. mDestroyCount="
                                 + lifecycleCounts.mDestroyCount;
                     }
                     if (lifecycleCounts.mCreateCount < 1) {
-                        return activityName + " must have been (re)created. mCreateCount="
+                        return logTag + " must have been (re)created. mCreateCount="
                                 + lifecycleCounts.mCreateCount;
                     }
                     return null;
                 }
                 if (lifecycleCounts.mDestroyCount > 0) {
-                    return activityName + " must *NOT* have been destroyed. mDestroyCount="
+                    return logTag + " must *NOT* have been destroyed. mDestroyCount="
                             + lifecycleCounts.mDestroyCount;
                 }
                 if (lifecycleCounts.mCreateCount > 0) {
-                    return activityName + " must *NOT* have been (re)created. mCreateCount="
+                    return logTag + " must *NOT* have been (re)created. mCreateCount="
                             + lifecycleCounts.mCreateCount;
                 }
                 if (lifecycleCounts.mConfigurationChangedCount < 1) {
-                    return activityName + " must have received configuration changed. "
+                    return logTag + " must have received configuration changed. "
                             + "mConfigurationChangedCount="
                             + lifecycleCounts.mConfigurationChangedCount;
                 }
@@ -1154,29 +1094,22 @@ public abstract class ActivityManagerTestBase {
 
     protected void assertRelaunchOrConfigChanged(ComponentName activityName, int numRelaunch,
             int numConfigChange, LogSeparator logSeparator) {
-        assertRelaunchOrConfigChanged(
-                getLogTag(activityName), numRelaunch, numConfigChange, logSeparator);
-    }
-
-    // TODO(b/73349193): Use {@link #assertRelaunchOrConfigChanged(ComponentName, int, int, LogSeparator)}.
-    @Deprecated
-    protected void assertRelaunchOrConfigChanged(String activityName, int numRelaunch,
-            int numConfigChange, LogSeparator logSeparator) {
+        final String logTag = getLogTag(activityName);
         new RetryValidator() {
 
             @Nullable
             @Override
             protected String validate() {
                 final ActivityLifecycleCounts lifecycleCounts =
-                        new ActivityLifecycleCounts(activityName, logSeparator);
+                        new ActivityLifecycleCounts(logTag, logSeparator);
                 if (lifecycleCounts.mDestroyCount != numRelaunch) {
-                    return activityName + " has been destroyed " + lifecycleCounts.mDestroyCount
+                    return logTag + " has been destroyed " + lifecycleCounts.mDestroyCount
                             + " time(s), expecting " + numRelaunch;
                 } else if (lifecycleCounts.mCreateCount != numRelaunch) {
-                    return activityName + " has been (re)created " + lifecycleCounts.mCreateCount
+                    return logTag + " has been (re)created " + lifecycleCounts.mCreateCount
                             + " time(s), expecting " + numRelaunch;
                 } else if (lifecycleCounts.mConfigurationChangedCount != numConfigChange) {
-                    return activityName + " has received "
+                    return logTag + " has received "
                             + lifecycleCounts.mConfigurationChangedCount
                             + " onConfigurationChanged() calls, expecting " + numConfigChange;
                 }
@@ -1368,26 +1301,19 @@ public abstract class ActivityManagerTestBase {
     }
 
     /** Waits for at least one onMultiWindowModeChanged event. */
-    ActivityLifecycleCounts waitForOnMultiWindowModeChanged(
-            String activityName, LogSeparator logSeparator) {
-        int retriesLeft = 5;
+    ActivityLifecycleCounts waitForOnMultiWindowModeChanged(ComponentName activityName,
+            LogSeparator logSeparator) {
+        int retry = 1;
         ActivityLifecycleCounts result;
         do {
             result = new ActivityLifecycleCounts(activityName, logSeparator);
-            if (result.mMultiWindowModeChangedCount < 1) {
-                log("***waitForOnMultiWindowModeChanged...");
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    log(e.toString());
-                    // Well I guess we are not waiting...
-                }
-            } else {
-                break;
+            if (result.mMultiWindowModeChangedCount >= 1) {
+                return result;
             }
-        } while (retriesLeft-- > 0);
+            logAlways("***waitForOnMultiWindowModeChanged... retry=" + retry);
+            SystemClock.sleep(TimeUnit.SECONDS.toMillis(1));
+        } while (retry++ <= 5);
         return result;
-
     }
 
     // TODO: Now that our test are device side, we can convert these to a more direct communication

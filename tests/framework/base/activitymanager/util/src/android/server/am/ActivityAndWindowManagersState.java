@@ -31,11 +31,14 @@ import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logAlways;
 import static android.server.am.StateLogger.logE;
 
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.lessThan;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -78,14 +81,6 @@ public class ActivityAndWindowManagersState {
 
     private ActivityManagerState mAmState = new ActivityManagerState();
     private WindowManagerState mWmState = new WindowManagerState();
-
-    // TODO(b/73349193): Use {@link #computeState(ComponentName...)} instead.
-    @Deprecated
-    public void computeState(String... simpleActivityNames) throws Exception {
-        computeState(true, Arrays.stream(simpleActivityNames)
-                .map(WaitForValidActivityState::new)
-                .toArray(WaitForValidActivityState[]::new));
-    }
 
     /**
      * Compute AM and WM state of device, check sanity and bounds.
@@ -573,7 +568,7 @@ public class ActivityAndWindowManagersState {
     }
 
     void assertSanity() throws Exception {
-        assertTrue("Must have stacks", mAmState.getStackCount() > 0);
+        assertThat("Must have stacks", mAmState.getStackCount(), greaterThan(0));
         if (!mAmState.getKeyguardControllerState().keyguardShowing) {
             assertEquals("There should be one and only one resumed activity in the system.",
                     1, mAmState.getResumedActivitiesCount());
@@ -666,13 +661,6 @@ public class ActivityAndWindowManagersState {
         assertEquals(msg, getActivityName(activityName), mAmState.getResumedActivity());
     }
 
-    // TODO(b/73349193): Use {@link #assertResumedActivity(String, ComponentName)} instead.
-    @Deprecated
-    void assertResumedActivity(String msg, String activityName) throws Exception {
-        final String componentName = getActivityComponentName(activityName);
-        assertEquals(msg, componentName, mAmState.getResumedActivity());
-    }
-
     void assertNotResumedActivity(String msg, String activityName) throws Exception {
         final String componentName = getActivityComponentName(activityName);
         if (mAmState.getResumedActivity().equals(componentName)) {
@@ -711,14 +699,10 @@ public class ActivityAndWindowManagersState {
         final boolean activityVisible = mAmState.isActivityVisible(activityComponentName);
         final boolean windowVisible = mWmState.isWindowVisible(windowName);
 
-        if (visible) {
-            assertTrue("Activity=" + activityComponentName + " must be visible.", activityVisible);
-            assertTrue("Window=" + windowName + " must be visible.", windowVisible);
-        } else {
-            assertFalse("Activity=" + activityComponentName + " must NOT be visible.",
-                    activityVisible);
-            assertFalse("Window=" + windowName + " must NOT be visible.", windowVisible);
-        }
+        assertEquals("Activity=" + activityComponentName + " must" + (visible ? "" : " NOT")
+                + " be visible.", visible, activityVisible);
+        assertEquals("Window=" + windowName + " must" + (visible ? "" : " NOT") + " be visible.",
+                visible, windowVisible);
     }
 
     void assertHomeActivityVisible(boolean visible) {
@@ -822,7 +806,7 @@ public class ActivityAndWindowManagersState {
     /**
      * Check task bounds when docked to top/left.
      */
-    void assertDockedTaskBounds(int taskWidth, int taskHeight, String activityName) {
+    void assertDockedTaskBounds(int taskWidth, int taskHeight, ComponentName activityName) {
         // Task size can be affected by default minimal size.
         int defaultMinimalTaskSize = defaultMinimalTaskSize(
                 mAmState.getStandardStackByWindowingMode(
@@ -831,7 +815,7 @@ public class ActivityAndWindowManagersState {
         int targetHeight = Math.max(taskHeight, defaultMinimalTaskSize);
 
         assertEquals(new Rect(0, 0, targetWidth, targetHeight),
-                mAmState.getTaskByActivityName(activityName).getBounds());
+                mAmState.getTaskByActivity(activityName).getBounds());
     }
 
     void assertValidBounds(boolean compareTaskAndStackBounds) {
@@ -937,16 +921,16 @@ public class ActivityAndWindowManagersState {
                                 assertEquals("Task width must be equal to stack width taskId="
                                                 + taskId + ", stackId=" + stackId,
                                         aStackBounds.width(), wTaskBounds.width());
-                                assertTrue("Task height must be greater than stack height "
+                                assertThat("Task height must be greater than stack height "
                                                 + "taskId=" + taskId + ", stackId=" + stackId,
-                                        aStackBounds.height() < wTaskBounds.height());
+                                        aStackBounds.height(), lessThan(wTaskBounds.height()));
                                 assertEquals("Task and stack x position must be equal taskId="
                                                 + taskId + ", stackId=" + stackId,
                                         wTaskBounds.left, wStackBounds.left);
                             } else {
-                                assertTrue("Task width must be greater than stack width taskId="
+                                assertThat("Task width must be greater than stack width taskId="
                                                 + taskId + ", stackId=" + stackId,
-                                        aStackBounds.width() < wTaskBounds.width());
+                                        aStackBounds.width(), lessThan(wTaskBounds.width()));
                                 assertEquals("Task height must be equal to stack height taskId="
                                                 + taskId + ", stackId=" + stackId,
                                         aStackBounds.height(), wTaskBounds.height());

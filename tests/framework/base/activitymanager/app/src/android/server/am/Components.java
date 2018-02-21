@@ -67,6 +67,8 @@ public class Components extends ComponentsBase {
             component("ShowWhenLockedActivity");
     public static final ComponentName SHOW_WHEN_LOCKED_ATTR_ACTIVITY =
             component("ShowWhenLockedAttrActivity");
+    public static final ComponentName SINGLE_INSTANCE_ACTIVITY =
+            component("SingleInstanceActivity");
     public static final ComponentName SINGLE_TASK_ACTIVITY = component("SingleTaskActivity");
     public static final ComponentName SPLASHSCREEN_ACTIVITY = component("SplashscreenActivity");
     public static final ComponentName SWIPE_REFRESH_ACTIVITY = component("SwipeRefreshActivity");
