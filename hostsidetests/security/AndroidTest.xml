@@ -17,5 +17,6 @@
     <target_preparer class="com.android.cts.tradefed.targetprep.CtsFilePusher">
         <option name="cleanup" value="true" />
         <option name="push" value="CVE-2016-8430->/data/local/tmp/CVE-2016-8430" />
+        <option name="push" value="CVE-2016-2504->/data/local/tmp/CVE-2016-2504" />
     </target_preparer>
 </configuration>
