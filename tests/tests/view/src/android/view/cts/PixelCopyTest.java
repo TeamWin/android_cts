@@ -83,6 +83,10 @@ public class PixelCopyTest {
                     PixelCopyWideGamutViewProducerActivity.class, false, false);
 
     @Rule
+    public ActivityTestRule<PixelCopyViewProducerDialogActivity> mDialogSourceActivityRule =
+            new ActivityTestRule<>(PixelCopyViewProducerDialogActivity.class, false, false);
+
+    @Rule
     public SurfaceTextureRule mSurfaceRule = new SurfaceTextureRule();
 
     private Instrumentation mInstrumentation;
@@ -455,6 +459,116 @@ public class PixelCopyTest {
             assertEqualsRgba16f("Bottom left",  bitmap, 32, 96, dst, -0.59f, -0.04f,  1.07f, 1.0f);
             // ProPhoto RGB yellow in scRGB-nl
             assertEqualsRgba16f("Bottom right", bitmap, 96, 96, dst,  1.12f,  1.00f, -0.44f, 1.0f);
+        } while (activity.rotate());
+    }
+
+    private Window waitForDialogProducerActivity() {
+        PixelCopyViewProducerActivity activity =
+                mDialogSourceActivityRule.launchActivity(null);
+        activity.waitForFirstDrawCompleted(3, TimeUnit.SECONDS);
+        return activity.getWindow();
+    }
+
+    private Rect makeDialogRect(int left, int top, int right, int bottom) {
+        Rect r = new Rect(left, top, right, bottom);
+        mDialogSourceActivityRule.getActivity().normalizedToSurface(r);
+        return r;
+    }
+
+    @Test
+    public void testDialogProducer() {
+        Bitmap bitmap;
+        Window window = waitForDialogProducerActivity();
+        PixelCopyViewProducerActivity activity = mDialogSourceActivityRule.getActivity();
+        do {
+            Rect src = makeDialogRect(0, 0, 100, 100);
+            bitmap = Bitmap.createBitmap(src.width(), src.height(), Config.ARGB_8888);
+            int result = mCopyHelper.request(window, src, bitmap);
+            assertEquals("Fullsize copy request failed", PixelCopy.SUCCESS, result);
+            assertEquals(Config.ARGB_8888, bitmap.getConfig());
+            assertBitmapQuadColor(bitmap,
+                    Color.RED, Color.GREEN, Color.BLUE, Color.BLACK);
+            assertBitmapEdgeColor(bitmap, Color.YELLOW);
+        } while (activity.rotate());
+    }
+
+    @Test
+    public void testDialogProducerCropTopLeft() {
+        Window window = waitForDialogProducerActivity();
+        Bitmap bitmap = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
+        PixelCopyViewProducerActivity activity = mDialogSourceActivityRule.getActivity();
+        do {
+            int result = mCopyHelper.request(window, makeDialogRect(0, 0, 50, 50), bitmap);
+            assertEquals("Scaled copy request failed", PixelCopy.SUCCESS, result);
+            assertBitmapQuadColor(bitmap,
+                    Color.RED, Color.RED, Color.RED, Color.RED);
+        } while (activity.rotate());
+    }
+
+    @Test
+    public void testDialogProducerCropCenter() {
+        Window window = waitForDialogProducerActivity();
+        Bitmap bitmap = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
+        PixelCopyViewProducerActivity activity = mDialogSourceActivityRule.getActivity();
+        do {
+            int result = mCopyHelper.request(window, makeDialogRect(25, 25, 75, 75), bitmap);
+            assertEquals("Scaled copy request failed", PixelCopy.SUCCESS, result);
+            assertBitmapQuadColor(bitmap,
+                    Color.RED, Color.GREEN, Color.BLUE, Color.BLACK);
+        } while (activity.rotate());
+    }
+
+    @Test
+    public void testDialogProducerCropBottomHalf() {
+        Window window = waitForDialogProducerActivity();
+        Bitmap bitmap = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
+        PixelCopyViewProducerActivity activity = mDialogSourceActivityRule.getActivity();
+        do {
+            int result = mCopyHelper.request(window, makeDialogRect(0, 50, 100, 100), bitmap);
+            assertEquals("Scaled copy request failed", PixelCopy.SUCCESS, result);
+            assertBitmapQuadColor(bitmap,
+                    Color.BLUE, Color.BLACK, Color.BLUE, Color.BLACK);
+        } while (activity.rotate());
+    }
+
+    @Test
+    public void testDialogProducerScaling() {
+        // Since we only sample mid-pixel of each qudrant, filtering
+        // quality isn't tested
+        Window window = waitForDialogProducerActivity();
+        Bitmap bitmap = Bitmap.createBitmap(20, 20, Config.ARGB_8888);
+        PixelCopyViewProducerActivity activity = mDialogSourceActivityRule.getActivity();
+        do {
+            int result = mCopyHelper.request(window, bitmap);
+            assertEquals("Scaled copy request failed", PixelCopy.SUCCESS, result);
+            // Make sure nothing messed with the bitmap
+            assertEquals(20, bitmap.getWidth());
+            assertEquals(20, bitmap.getHeight());
+            assertEquals(Config.ARGB_8888, bitmap.getConfig());
+            assertBitmapQuadColor(bitmap,
+                    Color.RED, Color.GREEN, Color.BLUE, Color.BLACK);
+        } while (activity.rotate());
+    }
+
+    @Test
+    public void testDialogProducerCopyToRGBA16F() {
+        Window window = waitForDialogProducerActivity();
+        PixelCopyViewProducerActivity activity = mDialogSourceActivityRule.getActivity();
+
+        Bitmap bitmap;
+        do {
+            Rect src = makeDialogRect(0, 0, 100, 100);
+            bitmap = Bitmap.createBitmap(src.width(), src.height(), Config.RGBA_F16);
+            int result = mCopyHelper.request(window, src, bitmap);
+            // On OpenGL ES 2.0 devices a copy to RGBA_F16 can fail because there's
+            // not support for float textures
+            if (result != PixelCopy.ERROR_DESTINATION_INVALID) {
+                assertEquals("Fullsize copy request failed", PixelCopy.SUCCESS, result);
+                assertEquals(Config.RGBA_F16, bitmap.getConfig());
+                assertBitmapQuadColor(bitmap,
+                        Color.RED, Color.GREEN, Color.BLUE, Color.BLACK);
+                assertBitmapEdgeColor(bitmap, Color.YELLOW);
+            }
         } while (activity.rotate());
     }
 
