@@ -193,7 +193,6 @@ public class CtsConnectionService extends ConnectionService {
     }
 
     public static boolean waitForUnBinding() {
-        sServiceUnBoundLatch = TestUtils.waitForLock(sServiceUnBoundLatch);
-        return sServiceUnBoundLatch != null;
+        return TestUtils.waitForLatchCountDown(sServiceUnBoundLatch);
     }
 }
