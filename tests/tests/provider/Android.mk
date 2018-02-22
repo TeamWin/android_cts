@@ -42,5 +42,6 @@ LOCAL_JNI_SHARED_LIBRARIES := libcts_jni libnativehelper_compat_libc++
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_PACKAGE_NAME := CtsProviderTestCases
+LOCAL_PRIVATE_PLATFORM_APIS := true
 
 include $(BUILD_CTS_PACKAGE)
