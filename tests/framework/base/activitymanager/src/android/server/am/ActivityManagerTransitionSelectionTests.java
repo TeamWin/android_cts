@@ -16,6 +16,9 @@
 
 package android.server.am;
 
+import static android.server.am.Components.BOTTOM_ACTIVITY;
+import static android.server.am.Components.TOP_ACTIVITY;
+import static android.server.am.Components.TRANSLUCENT_TOP_ACTIVITY;
 import static android.server.am.WindowManagerState.TRANSIT_ACTIVITY_CLOSE;
 import static android.server.am.WindowManagerState.TRANSIT_ACTIVITY_OPEN;
 import static android.server.am.WindowManagerState.TRANSIT_TASK_CLOSE;
@@ -27,6 +30,7 @@ import static android.server.am.WindowManagerState.TRANSIT_WALLPAPER_OPEN;
 
 import static org.junit.Assert.assertEquals;
 
+import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
 import android.support.test.filters.FlakyTest;
 
@@ -47,12 +51,6 @@ import org.junit.Test;
 @Presubmit
 @FlakyTest(bugId = 71792333)
 public class ActivityManagerTransitionSelectionTests extends ActivityManagerTestBase {
-
-    private static final String BOTTOM_ACTIVITY_NAME = "BottomActivity";
-    private static final String TOP_ACTIVITY_NAME = "TopActivity";
-    private static final String TRANSLUCENT_TOP_ACTIVITY_NAME = "TranslucentTopActivity";
-
-    //------------------------------------------------------------------------//
 
     // Test activity open/close under normal timing
     @Test
@@ -225,40 +223,46 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
         testTransitionSelection(true /*testOpen*/, false /*testNewTask*/,
                 bottomWallpaper, topWallpaper, false /*topTranslucent*/, slowStop, expectedTransit);
     }
+
     private void testCloseActivity(boolean bottomWallpaper,
             boolean topWallpaper, boolean slowStop, String expectedTransit) throws Exception {
         testTransitionSelection(false /*testOpen*/, false /*testNewTask*/,
                 bottomWallpaper, topWallpaper, false /*topTranslucent*/, slowStop, expectedTransit);
     }
+
     private void testOpenTask(boolean bottomWallpaper,
             boolean topWallpaper, boolean slowStop, String expectedTransit) throws Exception {
         testTransitionSelection(true /*testOpen*/, true /*testNewTask*/,
                 bottomWallpaper, topWallpaper, false /*topTranslucent*/, slowStop, expectedTransit);
     }
+
     private void testCloseTask(boolean bottomWallpaper,
             boolean topWallpaper, boolean slowStop, String expectedTransit) throws Exception {
         testTransitionSelection(false /*testOpen*/, true /*testNewTask*/,
                 bottomWallpaper, topWallpaper, false /*topTranslucent*/, slowStop, expectedTransit);
     }
+
     private void testCloseActivityTranslucent(boolean bottomWallpaper,
             boolean topWallpaper, String expectedTransit) throws Exception {
         testTransitionSelection(false /*testOpen*/, false /*testNewTask*/,
                 bottomWallpaper, topWallpaper, true /*topTranslucent*/,
                 false /*slowStop*/, expectedTransit);
     }
+
     private void testCloseTaskTranslucent(boolean bottomWallpaper,
             boolean topWallpaper, String expectedTransit) throws Exception {
         testTransitionSelection(false /*testOpen*/, true /*testNewTask*/,
                 bottomWallpaper, topWallpaper, true /*topTranslucent*/,
                 false /*slowStop*/, expectedTransit);
     }
+
     //------------------------------------------------------------------------//
 
     private void testTransitionSelection(
             boolean testOpen, boolean testNewTask,
             boolean bottomWallpaper, boolean topWallpaper, boolean topTranslucent,
             boolean testSlowStop, String expectedTransit) throws Exception {
-        String bottomStartCmd = getAmStartCmd(BOTTOM_ACTIVITY_NAME);
+        String bottomStartCmd = getAmStartCmd(BOTTOM_ACTIVITY);
         if (bottomWallpaper) {
             bottomStartCmd += " --ez USE_WALLPAPER true";
         }
@@ -267,11 +271,10 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
         }
         executeShellCommand(bottomStartCmd);
 
-        mAmWmState.computeState(new WaitForValidActivityState(BOTTOM_ACTIVITY_NAME));
+        mAmWmState.computeState(BOTTOM_ACTIVITY);
 
-        final String topActivityName = topTranslucent ?
-                TRANSLUCENT_TOP_ACTIVITY_NAME : TOP_ACTIVITY_NAME;
-        String topStartCmd = getAmStartCmd(topActivityName);
+        final ComponentName topActivity = topTranslucent ? TRANSLUCENT_TOP_ACTIVITY : TOP_ACTIVITY;
+        String topStartCmd = getAmStartCmd(topActivity);
         if (testNewTask) {
             topStartCmd += " -f 0x18000000";
         }
@@ -285,9 +288,9 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
 
         Thread.sleep(5000);
         if (testOpen) {
-            mAmWmState.computeState(new WaitForValidActivityState(topActivityName));
+            mAmWmState.computeState(topActivity);
         } else {
-            mAmWmState.computeState(new WaitForValidActivityState(BOTTOM_ACTIVITY_NAME));
+            mAmWmState.computeState(BOTTOM_ACTIVITY);
         }
 
         assertEquals("Picked wrong transition", expectedTransit,
