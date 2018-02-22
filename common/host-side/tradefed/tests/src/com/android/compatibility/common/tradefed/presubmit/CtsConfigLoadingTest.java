@@ -56,6 +56,7 @@ public class CtsConfigLoadingTest {
             "art",
             "auth",
             "auto",
+            "autofill",
             "backup",
             "bionic",
             "bluetooth",
