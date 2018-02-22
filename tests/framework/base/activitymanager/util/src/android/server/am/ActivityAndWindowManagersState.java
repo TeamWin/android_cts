@@ -211,7 +211,7 @@ public class ActivityAndWindowManagersState {
         logE("***Waiting for debugger window failed");
     }
 
-    void waitForHomeActivityVisible() {
+    boolean waitForHomeActivityVisible() {
         ComponentName homeActivity = mAmState.getHomeActivityName();
         // Sometimes this function is called before we know what Home Activity is
         if (homeActivity == null) {
@@ -221,12 +221,17 @@ public class ActivityAndWindowManagersState {
         }
         assertNotNull("homeActivity should not be null", homeActivity);
         waitForValidState(new WaitForValidActivityState(homeActivity));
+        return mAmState.isHomeActivityVisible();
     }
 
     /**
      * @return true if recents activity is visible. Devices without recents will return false
      */
     boolean waitForRecentsActivityVisible() {
+        if (mAmState.isHomeRecentsComponent()) {
+            return waitForHomeActivityVisible();
+        }
+
         waitForWithAmState(ActivityManagerState::isRecentsActivityVisible,
                 "***Waiting for recents activity to be visible...");
         return mAmState.isRecentsActivityVisible();
