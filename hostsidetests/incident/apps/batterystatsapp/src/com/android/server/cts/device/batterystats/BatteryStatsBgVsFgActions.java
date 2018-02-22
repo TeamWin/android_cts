@@ -68,8 +68,6 @@ public class BatteryStatsBgVsFgActions {
     public static final String ACTION_JOB_SCHEDULE = "action.jobs";
     public static final String ACTION_SYNC = "action.sync";
     public static final String ACTION_WIFI_SCAN = "action.wifi_scan";
-    public static final String ACTION_WIFI_DOWNLOAD = "action.wifi_download";
-    public static final String ACTION_WIFI_UPLOAD = "action.wifi_upload";
     public static final String ACTION_SLEEP_WHILE_BACKGROUND = "action.sleep_background";
     public static final String ACTION_SLEEP_WHILE_TOP = "action.sleep_top";
     public static final String ACTION_SHOW_APPLICATION_OVERLAY = "action.show_application_overlay";
@@ -104,12 +102,6 @@ public class BatteryStatsBgVsFgActions {
                 break;
             case ACTION_WIFI_SCAN:
                 doWifiScan(ctx, requestCode);
-                break;
-            case ACTION_WIFI_DOWNLOAD:
-                doWifiDownload(ctx, requestCode);
-                break;
-            case ACTION_WIFI_UPLOAD:
-                doWifiUpload(ctx, requestCode);
                 break;
             case ACTION_SLEEP_WHILE_BACKGROUND:
                 sleep(DO_NOTHING_TIMEOUT);
@@ -357,38 +349,6 @@ public class BatteryStatsBgVsFgActions {
         BroadcastReceiver receiver = registerReceiver(ctx, onReceiveLatch, intentFilter);
         ctx.getSystemService(WifiManager.class).startScan();
         waitForReceiver(ctx, 60_000, onReceiveLatch, receiver);
-    }
-
-    private static void doWifiDownload(Context ctx, String requestCode) {
-        CountDownLatch latch = new CountDownLatch(1);
-
-        new AsyncTask<Void, Void, Void>() {
-            @Override
-            protected Void doInBackground(Void... params) {
-                BatteryStatsWifiTransferTests.download(requestCode);
-                latch.countDown();
-                return null;
-            }
-        }.execute();
-
-        waitForReceiver(null, 60_000, latch, null);
-        tellHostActionFinished(ACTION_WIFI_DOWNLOAD, requestCode);
-    }
-
-    private static void doWifiUpload(Context ctx, String requestCode) {
-        CountDownLatch latch = new CountDownLatch(1);
-
-        new AsyncTask<Void, Void, Void>() {
-            @Override
-            protected Void doInBackground(Void... params) {
-                BatteryStatsWifiTransferTests.upload();
-                latch.countDown();
-                return null;
-            }
-        }.execute();
-
-        waitForReceiver(null, 60_000, latch, null);
-        tellHostActionFinished(ACTION_WIFI_UPLOAD, requestCode);
     }
 
     /** Register receiver to determine when given action is complete. */
