@@ -1,4 +1,4 @@
-# Copyright (C) 2017 The Android Open Source Project
+# Copyright (C) 2018 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,9 +16,10 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_PACKAGE_NAME := CtsApacheHttpLegacyCurrentApiSignatureTestCases
+LOCAL_PACKAGE_NAME := CtsApacheHttpLegacy27ApiSignatureTestCases
 
 LOCAL_SIGNATURE_API_FILES := \
+    current.api \
     apache-http-legacy-minus-current.api \
 
 include $(LOCAL_PATH)/../build_signature_apk.mk
