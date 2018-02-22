@@ -29,7 +29,7 @@ public class MbmsStreamingSessionTest extends MbmsStreamingTestBase {
     public void testDuplicateSession() throws Exception {
         try {
             MbmsStreamingSession failure = MbmsStreamingSession.create(
-                    mContext, mCallback, mCallbackHandler);
+                    mContext, mCallbackExecutor, mCallback);
             fail("Duplicate create should've thrown an exception");
         } catch (IllegalStateException e) {
             // Succeed

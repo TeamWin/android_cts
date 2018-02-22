@@ -21,6 +21,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -41,6 +42,7 @@ import java.io.File;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -107,13 +109,12 @@ public class MbmsDownloadTestBase extends InstrumentationTestCase {
         }
     }
 
-    static final DownloadRequest.Builder DOWNLOAD_REQUEST_TEMPLATE =
-            new DownloadRequest.Builder(CtsDownloadService.DOWNLOAD_SOURCE_URI)
-                    .setServiceInfo(CtsDownloadService.FILE_SERVICE_INFO);
+    DownloadRequest.Builder downloadRequestTemplate;
 
     Context mContext;
     HandlerThread mHandlerThread;
-    Handler mCallbackHandler;
+    Handler mHandler;
+    Executor mCallbackExecutor;
     ICtsDownloadMiddlewareControl mMiddlewareControl;
     MbmsDownloadSession mDownloadSession;
     TestCallback mCallback = new TestCallback();
@@ -123,8 +124,16 @@ public class MbmsDownloadTestBase extends InstrumentationTestCase {
         mContext = getInstrumentation().getContext();
         mHandlerThread = new HandlerThread("EmbmsCtsTestWorker");
         mHandlerThread.start();
-        mCallbackHandler = new Handler(mHandlerThread.getLooper());
+        mHandler = new Handler(mHandlerThread.getLooper());
+        mCallbackExecutor = mHandler::post;
         mCallback = new TestCallback();
+
+        File destinationDirectory = new File(mContext.getFilesDir(), "downloads");
+        destinationDirectory.mkdirs();
+        Uri destinationDirectoryUri = Uri.fromFile(destinationDirectory);
+        downloadRequestTemplate = new DownloadRequest.Builder(
+                CtsDownloadService.DOWNLOAD_SOURCE_URI, destinationDirectoryUri)
+                .setServiceInfo(CtsDownloadService.FILE_SERVICE_INFO);
         getControlBinder();
         setupDownloadSession();
     }
@@ -138,7 +147,7 @@ public class MbmsDownloadTestBase extends InstrumentationTestCase {
 
     private void setupDownloadSession() throws Exception {
         mDownloadSession = MbmsDownloadSession.create(
-                mContext, mCallback, mCallbackHandler);
+                mContext, mCallbackExecutor, mCallback);
         assertNotNull(mDownloadSession);
         assertTrue(mCallback.waitOnMiddlewareReady());
         assertEquals(0, mCallback.getNumErrorCalls());
