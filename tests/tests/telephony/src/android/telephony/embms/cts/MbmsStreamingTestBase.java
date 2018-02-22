@@ -21,6 +21,7 @@ import com.android.internal.os.SomeArgs;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -87,7 +88,7 @@ public class MbmsStreamingTestBase extends InstrumentationTestCase {
 
     Context mContext;
     HandlerThread mHandlerThread;
-    Handler mCallbackHandler;
+    Executor mCallbackExecutor;
     ICtsStreamingMiddlewareControl mMiddlewareControl;
     MbmsStreamingSession mStreamingSession;
     TestCallback mCallback = new TestCallback();
@@ -97,7 +98,7 @@ public class MbmsStreamingTestBase extends InstrumentationTestCase {
         mContext = getInstrumentation().getContext();
         mHandlerThread = new HandlerThread("EmbmsCtsTestWorker");
         mHandlerThread.start();
-        mCallbackHandler = new Handler(mHandlerThread.getLooper());
+        mCallbackExecutor = (new Handler(mHandlerThread.getLooper()))::post;
         mCallback = new TestCallback();
         getControlBinder();
         setupStreamingSession();
@@ -112,7 +113,7 @@ public class MbmsStreamingTestBase extends InstrumentationTestCase {
 
     private void setupStreamingSession() throws Exception {
         mStreamingSession = MbmsStreamingSession.create(
-                mContext, mCallback, mCallbackHandler);
+                mContext, mCallbackExecutor, mCallback);
         assertNotNull(mStreamingSession);
         assertTrue(mCallback.waitOnMiddlewareReady());
         assertEquals(0, mCallback.getNumErrorCalls());
