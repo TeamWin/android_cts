@@ -50,19 +50,29 @@ public class RetryRule implements TestRule {
                 for (int i = 1; i <= mMaxAttempts; i++) {
                     try {
                         base.evaluate();
+                        if (i == 1) {
+                            Log.v(TAG, "Good News, Everyone! " + name + " passed right away");
+                        } else {
+                            Log.d(TAG,
+                                    "Better late than never: " + name + "passed at attempt #" + i);
+                        }
                         return;
                     } catch (RetryableException e) {
                         final Timeout timeout = e.getTimeout();
                         if (timeout != null) {
+                            long before = timeout.ms();
                             timeout.increase();
+                            Log.d(TAG, "Increased " + timeout.getName() + " from " + before + "ms "
+                                    + " to " + timeout.ms() + "ms");
                         }
                         caught = e;
                     } catch (StaleObjectException e) {
                         caught = e;
                     }
-                    Log.w(TAG, name + ": attempt " + i + " failed: " + caught);
+                    Log.w(TAG, "Arrrr! " + name + " failed at attempt " + i + "/" + mMaxAttempts
+                            + ": " + caught);
                 }
-                Log.e(TAG, name + ": giving up after " + mMaxAttempts + " attempts");
+                Log.e(TAG, "D'OH! " + name + ": giving up after " + mMaxAttempts + " attempts");
                 throw caught;
             }
         };

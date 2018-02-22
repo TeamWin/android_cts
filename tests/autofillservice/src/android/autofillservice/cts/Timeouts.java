@@ -24,7 +24,7 @@ final class Timeouts {
     /**
      * Timeout until framework binds / unbinds from service.
      */
-    static final Timeout CONNECTION_TIMEOUT = new Timeout("CONNECTION_TIMEOUT", 1000, 2F, 2000);
+    static final Timeout CONNECTION_TIMEOUT = new Timeout("CONNECTION_TIMEOUT", 1000, 2F, 10000);
 
     /**
      * Timeout until framework unbinds from a service.
@@ -39,17 +39,23 @@ final class Timeouts {
     /**
      * Timeout for expected autofill requests.
      */
-    static final Timeout FILL_TIMEOUT = new Timeout("FILL_TIMEOUT", 1000, 2F, 2000);
+    static final Timeout FILL_TIMEOUT = new Timeout("FILL_TIMEOUT", 500, 2F, 10000);
 
     /**
      * Timeout for expected save requests.
      */
-    static final Timeout SAVE_TIMEOUT = new Timeout("SAVE_TIMEOUT", 2000, 3F, 5000);
+    static final Timeout SAVE_TIMEOUT = new Timeout("SAVE_TIMEOUT", 1000, 2F, 10000);
+
+    /**
+     * Timeout used when save is not expected to be shown - test will sleep for that amount of time
+     * as there is no callback that be received to assert it's not shown.
+     */
+    static final long SAVE_NOT_SHOWN_NAPTIME_MS = 5000;
 
     /**
      * Timeout for UI operations. Typically used by {@link UiBot}.
      */
-    static final Timeout UI_TIMEOUT = new Timeout("UI_TIMEOUT", 1000, 2F, 2000);
+    static final Timeout UI_TIMEOUT = new Timeout("UI_TIMEOUT", 500, 2F, 10000);
 
     /**
      * Timeout for webview operations. Typically used by {@link UiBot}.
