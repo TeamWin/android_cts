@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.audio;
 
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
@@ -110,14 +111,18 @@ public class USBAudioPeripheralButtonsActivity extends USBAudioPeripheralActivit
         if (mIsPeripheralAttached && mSelectedProfile != null) {
             ProfileButtonAttributes mButtonAttributes = mSelectedProfile.getButtonAttributes();
             boolean match = mButtonAttributes != null;
+            boolean interceptedVolume = getResources().getBoolean(Resources.getSystem()
+                .getIdentifier("config_handleVolumeKeysInWindowManager", "bool", "android"));
             if (match && mButtonAttributes.mHasBtnA != mHasBtnA) {
                 match = false;
             }
-            if (match && mButtonAttributes.mHasBtnB != mHasBtnB) {
-                match = false;
-            }
-            if (match && mButtonAttributes.mHasBtnC != mHasBtnC) {
-                match = false;
+            if (!interceptedVolume) {
+                if (match && mButtonAttributes.mHasBtnB != mHasBtnB) {
+                    match = false;
+                }
+                if (match && mButtonAttributes.mHasBtnC != mHasBtnC) {
+                    match = false;
+                }
             }
             Log.i(TAG, "match:" + match);
             getPassButton().setEnabled(match);
