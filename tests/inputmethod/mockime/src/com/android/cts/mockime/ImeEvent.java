@@ -16,19 +16,53 @@
 
 package com.android.cts.mockime;
 
+import android.inputmethodservice.AbstractInputMethodService;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.view.View;
 
 /**
  * An immutable object that stores event happened in the {@link MockIme}.
  */
 public final class ImeEvent {
 
+    private enum ReturnType {
+        Null,
+        KnownUnsupportedType,
+        Boolean,
+    }
+
+    private static ReturnType getReturnTypeFromObject(@Nullable Object object) {
+        if (object == null) {
+            return ReturnType.Null;
+        }
+        if (object instanceof AbstractInputMethodService.AbstractInputMethodImpl) {
+            return ReturnType.KnownUnsupportedType;
+        }
+        if (object instanceof View) {
+            return ReturnType.KnownUnsupportedType;
+        }
+        if (object instanceof Boolean) {
+            return ReturnType.Boolean;
+        }
+        throw new UnsupportedOperationException("Unsupported return type=" + object);
+    }
+
     ImeEvent(@NonNull String eventName, int nestLevel, @NonNull String threadName, int threadId,
             boolean isMainThread, long enterTimestamp, long exitTimestamp, long enterWallTime,
             long exitWallTime, @NonNull ImeState enterState, @Nullable ImeState exitState,
-            @NonNull Bundle arguments) {
+            @NonNull Bundle arguments, @Nullable Object returnValue) {
+        this(eventName, nestLevel, threadName, threadId, isMainThread, enterTimestamp,
+                exitTimestamp, enterWallTime, exitWallTime, enterState, exitState, arguments,
+                returnValue, getReturnTypeFromObject(returnValue));
+    }
+
+    private ImeEvent(@NonNull String eventName, int nestLevel, @NonNull String threadName,
+            int threadId, boolean isMainThread, long enterTimestamp, long exitTimestamp,
+            long enterWallTime, long exitWallTime, @NonNull ImeState enterState,
+            @Nullable ImeState exitState, @NonNull Bundle arguments, @Nullable Object returnValue,
+            @NonNull ReturnType returnType) {
         mEventName = eventName;
         mNestLevel = nestLevel;
         mThreadName = threadName;
@@ -41,6 +75,8 @@ public final class ImeEvent {
         mEnterState = enterState;
         mExitState = exitState;
         mArguments = arguments;
+        mReturnValue = returnValue;
+        mReturnType = returnType;
     }
 
     @NonNull
@@ -58,6 +94,7 @@ public final class ImeEvent {
         bundle.putBundle("mEnterState", mEnterState.toBundle());
         bundle.putBundle("mExitState", mExitState != null ? mExitState.toBundle() : null);
         bundle.putBundle("mArguments", mArguments);
+        bundle.putString("mReturnType", mReturnType.name());
         return bundle;
     }
 
@@ -75,9 +112,22 @@ public final class ImeEvent {
         final ImeState enterState = ImeState.fromBundle(bundle.getBundle("mEnterState"));
         final ImeState exitState = ImeState.fromBundle(bundle.getBundle("mExitState"));
         final Bundle arguments = bundle.getBundle("mArguments");
+        final Object result;
+        final ReturnType returnType = ReturnType.valueOf(bundle.getString("mReturnType"));
+        switch (returnType) {
+            case Null:
+            case KnownUnsupportedType:
+                result = null;
+                break;
+            case Boolean:
+                result = bundle.getBoolean("mReturnValue");
+                break;
+            default:
+                throw new UnsupportedOperationException("Unsupported type=" + returnType);
+        }
         return new ImeEvent(eventName, nestLevel, threadName,
                 threadId, isMainThread, enterTimestamp, exitTimestamp, enterWallTime, exitWallTime,
-                enterState, exitState, arguments);
+                enterState, exitState, arguments, result, returnType);
     }
 
     /**
@@ -183,6 +233,22 @@ public final class ImeEvent {
     }
 
     /**
+     * @return result value of this event.
+     * @throws NullPointerException if the return value is {@code null}
+     * @throws ClassCastException if the return value is non-{@code null} object that is different
+     *                            from {@link Boolean}
+     */
+    public boolean getReturnBooleanValue() {
+        if (mReturnType == ReturnType.Null) {
+            throw new NullPointerException();
+        }
+        if (mReturnType != ReturnType.Boolean) {
+            throw new ClassCastException();
+        }
+        return (Boolean) mReturnValue;
+    }
+
+    /**
      * @return {@code true} if the event is issued when the event starts, not when the event
      * finishes.
      */
@@ -207,4 +273,8 @@ public final class ImeEvent {
     private final ImeState mExitState;
     @NonNull
     private final Bundle mArguments;
+    @Nullable
+    private final Object mReturnValue;
+    @NonNull
+    private final ReturnType mReturnType;
 }

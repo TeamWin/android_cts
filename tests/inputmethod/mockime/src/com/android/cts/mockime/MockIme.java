@@ -544,7 +544,7 @@ public final class MockIme extends InputMethodService {
             // Send enter event
             sendEventInternal(new ImeEvent(eventName, nestLevel, mThreadName,
                     mThreadId, mIsMainThread, enterTimestamp, 0, enterWallTime,
-                    0, enterState, null, arguments));
+                    0, enterState, null, arguments, null));
             ++mNestLevel;
             T result;
             try {
@@ -558,7 +558,7 @@ public final class MockIme extends InputMethodService {
             // Send exit event
             sendEventInternal(new ImeEvent(eventName, nestLevel, mThreadName,
                     mThreadId, mIsMainThread, enterTimestamp, exitTimestamp, enterWallTime,
-                    exitWallTime, enterState, exitState, arguments));
+                    exitWallTime, enterState, exitState, arguments, result));
             return result;
         }
 
