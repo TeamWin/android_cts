@@ -20,10 +20,17 @@ import android.content.ComponentName;
 import android.server.am.component.ComponentsBase;
 
 public class Components extends ComponentsBase {
+    public static final ComponentName ALT_LAUNCHING_ACTIVITY = component("AltLaunchingActivity");
     public static final ComponentName ALWAYS_FOCUSABLE_PIP_ACTIVITY =
             component("AlwaysFocusablePipActivity");
     public static final ComponentName ANIMATION_TEST_ACTIVITY = component("AnimationTestActivity");
     public static final ComponentName ASSISTANT_ACTIVITY = component("AssistantActivity");
+    public static final ComponentName BOTTOM_LEFT_LAYOUT_ACTIVITY =
+            component("BottomLeftLayoutActivity");
+    public static final ComponentName BOTTOM_RIGHT_LAYOUT_ACTIVITY =
+            component("BottomRightLayoutActivity");
+    public static final ComponentName BROADCAST_RECEIVER_ACTIVITY =
+            component("BroadcastReceiverActivity");
     public static final ComponentName DIALOG_WHEN_LARGE_ACTIVITY =
             component("DialogWhenLargeActivity");
     public static final ComponentName DISMISS_KEYGUARD_ACTIVITY =
@@ -44,6 +51,8 @@ public class Components extends ComponentsBase {
     public static final ComponentName LAUNCH_PIP_ON_PIP_ACTIVITY =
             component("LaunchPipOnPipActivity");
     public static final ComponentName LAUNCHING_ACTIVITY = component("LaunchingActivity");
+    public static final ComponentName LOG_CONFIGURATION_ACTIVITY =
+            component("LogConfigurationActivity");
     public static final ComponentName MOVE_TASK_TO_BACK_ACTIVITY =
             component("MoveTaskToBackActivity");
     public static final ComponentName NIGHT_MODE_ACTIVITY = component("NightModeActivity");
@@ -58,10 +67,16 @@ public class Components extends ComponentsBase {
             component("ShowWhenLockedActivity");
     public static final ComponentName SHOW_WHEN_LOCKED_ATTR_ACTIVITY =
             component("ShowWhenLockedAttrActivity");
+    public static final ComponentName SINGLE_INSTANCE_ACTIVITY =
+            component("SingleInstanceActivity");
     public static final ComponentName SINGLE_TASK_ACTIVITY = component("SingleTaskActivity");
+    public static final ComponentName SLOW_CREATE_ACTIVITY = component("SlowCreateActivity");
     public static final ComponentName SPLASHSCREEN_ACTIVITY = component("SplashscreenActivity");
     public static final ComponentName SWIPE_REFRESH_ACTIVITY = component("SwipeRefreshActivity");
     public static final ComponentName TEST_ACTIVITY = component("TestActivity");
+    public static final ComponentName TOP_LEFT_LAYOUT_ACTIVITY = component("TopLeftLayoutActivity");
+    public static final ComponentName TOP_RIGHT_LAYOUT_ACTIVITY =
+            component("TopRightLayoutActivity");
     public static final ComponentName TRANSLUCENT_ACTIVITY = component("TranslucentActivity");
     public static final ComponentName TRANSLUCENT_ASSISTANT_ACTIVITY =
             component("TranslucentAssistantActivity");

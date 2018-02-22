@@ -16,6 +16,8 @@
 
 package android.server.am;
 
+import static android.server.am.UiDeviceUtils.pressBackButton;
+
 import static org.junit.Assert.assertTrue;
 
 import org.junit.After;

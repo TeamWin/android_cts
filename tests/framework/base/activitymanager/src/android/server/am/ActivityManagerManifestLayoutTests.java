@@ -19,14 +19,21 @@ package android.server.am;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.server.am.ActivityAndWindowManagersState.dpToPx;
+import static android.server.am.ComponentNameUtils.getWindowName;
+import static android.server.am.Components.BOTTOM_LEFT_LAYOUT_ACTIVITY;
+import static android.server.am.Components.BOTTOM_RIGHT_LAYOUT_ACTIVITY;
+import static android.server.am.Components.TOP_LEFT_LAYOUT_ACTIVITY;
+import static android.server.am.Components.TOP_RIGHT_LAYOUT_ACTIVITY;
+
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
 
 import static org.junit.Assume.assumeTrue;
 
+import android.content.ComponentName;
 import android.graphics.Rect;
 import android.server.am.WindowManagerState.Display;
 import android.server.am.WindowManagerState.WindowState;
-
-import junit.framework.Assert;
 
 import org.junit.Test;
 
@@ -93,33 +100,37 @@ public class ActivityManagerManifestLayoutTests extends ActivityManagerTestBase 
     }
 
     private void testMinimalSize(int windowingMode) throws Exception {
-        final String activityName = "BottomRightLayoutActivity";
-
         // Issue command to resize to <0,0,1,1>. We expect the size to be floored at
         // MIN_WIDTH_DPxMIN_HEIGHT_DP.
         if (windowingMode == WINDOWING_MODE_FREEFORM) {
-            launchActivity(activityName, WINDOWING_MODE_FREEFORM);
-            resizeActivityTask(activityName, 0, 0, 1, 1);
+            launchActivity(BOTTOM_RIGHT_LAYOUT_ACTIVITY, WINDOWING_MODE_FREEFORM);
+            resizeActivityTask(BOTTOM_RIGHT_LAYOUT_ACTIVITY, 0, 0, 1, 1);
         } else { // stackId == DOCKED_STACK_ID
-            launchActivityInSplitScreenWithRecents(activityName);
+            launchActivityInSplitScreenWithRecents(BOTTOM_RIGHT_LAYOUT_ACTIVITY);
             resizeDockedStack(1, 1, 1, 1);
         }
-        getDisplayAndWindowState(activityName, false);
+        getDisplayAndWindowState(BOTTOM_RIGHT_LAYOUT_ACTIVITY, false);
 
         final int minWidth = dpToPx(MIN_WIDTH_DP, mDisplay.getDpi());
         final int minHeight = dpToPx(MIN_HEIGHT_DP, mDisplay.getDpi());
         final Rect containingRect = mWindowState.getContainingFrame();
 
-        Assert.assertEquals("Min width is incorrect", minWidth, containingRect.width());
-        Assert.assertEquals("Min height is incorrect", minHeight, containingRect.height());
+        assertEquals("Min width is incorrect", minWidth, containingRect.width());
+        assertEquals("Min height is incorrect", minHeight, containingRect.height());
     }
 
     private void testLayout(
             int vGravity, int hGravity, boolean fraction) throws Exception {
         assumeTrue("Skipping test: no freeform support", supportsFreeform());
 
-        final String activityName = (vGravity == GRAVITY_VER_TOP ? "Top" : "Bottom")
-                + (hGravity == GRAVITY_HOR_LEFT ? "Left" : "Right") + "LayoutActivity";
+        final ComponentName activityName;
+        if (vGravity == GRAVITY_VER_TOP) {
+            activityName = (hGravity == GRAVITY_HOR_LEFT) ? TOP_LEFT_LAYOUT_ACTIVITY
+                    : TOP_RIGHT_LAYOUT_ACTIVITY;
+        } else {
+            activityName = (hGravity == GRAVITY_HOR_LEFT) ? BOTTOM_LEFT_LAYOUT_ACTIVITY
+                    : BOTTOM_RIGHT_LAYOUT_ACTIVITY;
+        }
 
         // Launch in freeform stack
         launchActivity(activityName, WINDOWING_MODE_FREEFORM);
@@ -145,11 +156,11 @@ public class ActivityManagerManifestLayoutTests extends ActivityManagerTestBase 
                 vGravity, hGravity, expectedWidthPx, expectedHeightPx, containingRect, appRect);
     }
 
-    private void getDisplayAndWindowState(String activityName, boolean checkFocus)
+    private void getDisplayAndWindowState(ComponentName activityName, boolean checkFocus)
             throws Exception {
-        final String windowName = getActivityWindowName(activityName);
+        final String windowName = getWindowName(activityName);
 
-        mAmWmState.computeState(new WaitForValidActivityState.Builder(activityName).build());
+        mAmWmState.computeState(activityName);
 
         if (checkFocus) {
             mAmWmState.assertFocusedWindow("Test window must be the front window.", windowName);
@@ -159,34 +170,32 @@ public class ActivityManagerManifestLayoutTests extends ActivityManagerTestBase 
 
         mAmWmState.getWmState().getMatchingVisibleWindowState(windowName, mTempWindowList);
 
-        Assert.assertEquals("Should have exactly one window state for the activity.",
+        assertEquals("Should have exactly one window state for the activity.",
                 1, mTempWindowList.size());
 
         mWindowState = mTempWindowList.get(0);
-        Assert.assertNotNull("Should have a valid window", mWindowState);
+        assertNotNull("Should have a valid window", mWindowState);
 
         mDisplay = mAmWmState.getWmState().getDisplay(mWindowState.getDisplayId());
-        Assert.assertNotNull("Should be on a display", mDisplay);
+        assertNotNull("Should be on a display", mDisplay);
     }
 
     private void verifyFrameSizeAndPosition(
             int vGravity, int hGravity, int expectedWidthPx, int expectedHeightPx,
             Rect containingFrame, Rect parentFrame) {
-        Assert.assertEquals("Width is incorrect", expectedWidthPx, containingFrame.width());
-        Assert.assertEquals("Height is incorrect", expectedHeightPx, containingFrame.height());
+        assertEquals("Width is incorrect", expectedWidthPx, containingFrame.width());
+        assertEquals("Height is incorrect", expectedHeightPx, containingFrame.height());
 
         if (vGravity == GRAVITY_VER_TOP) {
-            Assert.assertEquals("Should be on the top", parentFrame.top, containingFrame.top);
+            assertEquals("Should be on the top", parentFrame.top, containingFrame.top);
         } else if (vGravity == GRAVITY_VER_BOTTOM) {
-            Assert.assertEquals("Should be on the bottom",
-                    parentFrame.bottom, containingFrame.bottom);
+            assertEquals("Should be on the bottom", parentFrame.bottom, containingFrame.bottom);
         }
 
         if (hGravity == GRAVITY_HOR_LEFT) {
-            Assert.assertEquals("Should be on the left", parentFrame.left, containingFrame.left);
+            assertEquals("Should be on the left", parentFrame.left, containingFrame.left);
         } else if (hGravity == GRAVITY_HOR_RIGHT){
-            Assert.assertEquals("Should be on the right",
-                    parentFrame.right, containingFrame.right);
+            assertEquals("Should be on the right", parentFrame.right, containingFrame.right);
         }
     }
 }

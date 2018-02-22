@@ -53,7 +53,6 @@ public class ActivityManagerDisplayKeyguardTests extends ActivityManagerDisplayT
             final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
 
             lockScreenSession.gotoKeyguard();
-            mAmWmState.waitForKeyguardShowingAndNotOccluded();
             mAmWmState.assertKeyguardShowingAndNotOccluded();
             launchActivityOnDisplay(DISMISS_KEYGUARD_ACTIVITY, newDisplay.mId);
             mAmWmState.waitForKeyguardShowingAndNotOccluded();

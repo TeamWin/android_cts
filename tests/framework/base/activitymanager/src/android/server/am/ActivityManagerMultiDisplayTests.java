@@ -27,6 +27,9 @@ import static android.server.am.ActivityManagerState.STATE_STOPPED;
 import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.ComponentNameUtils.getSimpleClassName;
 import static android.server.am.ComponentNameUtils.getWindowName;
+import static android.server.am.Components.ALT_LAUNCHING_ACTIVITY;
+import static android.server.am.Components.BROADCAST_RECEIVER_ACTIVITY;
+import static android.server.am.Components.LAUNCHING_ACTIVITY;
 import static android.server.am.Components.LAUNCH_BROADCAST_ACTION;
 import static android.server.am.Components.LAUNCH_BROADCAST_RECEIVER;
 import static android.server.am.Components.NON_RESIZEABLE_ACTIVITY;
@@ -36,6 +39,8 @@ import static android.server.am.Components.TEST_ACTIVITY;
 import static android.server.am.Components.VIRTUAL_DISPLAY_ACTIVITY;
 import static android.server.am.StateLogger.logAlways;
 import static android.server.am.StateLogger.logE;
+import static android.server.am.UiDeviceUtils.pressSleepButton;
+import static android.server.am.UiDeviceUtils.pressWakeupButton;
 import static android.server.am.second.Components.SECOND_ACTIVITY;
 import static android.server.am.second.Components.SECOND_LAUNCH_BROADCAST_ACTION;
 import static android.server.am.second.Components.SECOND_LAUNCH_BROADCAST_RECEIVER;
@@ -238,7 +243,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             ActivityManagerState.ActivityStack frontStack =
                     mAmWmState.getAmState().getStackById(frontStackId);
             assertEquals("Launched activity must be on the secondary display and resumed",
-                    getActivityComponentName(BROADCAST_RECEIVER_ACTIVITY),
+                    getActivityName(BROADCAST_RECEIVER_ACTIVITY),
                     frontStack.mResumedActivity);
             mAmWmState.assertFocusedStack("Focus must be on the secondary display", frontStackId);
 
@@ -280,7 +285,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             ActivityManagerState.ActivityStack frontStack =
                     mAmWmState.getAmState().getStackById(frontStackId);
             assertEquals("Launched activity must be on the secondary display and resumed",
-                    getActivityComponentName(LAUNCHING_ACTIVITY),
+                    getActivityName(LAUNCHING_ACTIVITY),
                     frontStack.mResumedActivity);
             mAmWmState.assertFocusedStack("Focus must be on the secondary display", frontStackId);
 
@@ -392,7 +397,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             final ActivityManagerState.ActivityStack frontStack
                     = mAmWmState.getAmState().getStackById(frontStackId);
             assertEquals("Launched activity must be resumed in front stack",
-                    getActivityComponentName(LAUNCHING_ACTIVITY), frontStack.mResumedActivity);
+                    getActivityName(LAUNCHING_ACTIVITY), frontStack.mResumedActivity);
             assertEquals("Front stack must be on primary display",
                     DEFAULT_DISPLAY_ID, frontStack.mDisplayId);
         }
@@ -677,7 +682,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
         // Setup split-screen.
         launchActivitiesInSplitScreen(
                 getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY),
-                getLaunchActivityBuilder().setTargetActivityName(LAUNCHING_ACTIVITY));
+                getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY));
         mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true /* visible */);
 
         tryCreatingAndRemovingDisplayWithActivity(true /* splitScreen */,
@@ -907,7 +912,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             ActivityManagerState.ActivityStack frontStack = mAmWmState.getAmState().getStackById(
                     frontStackId);
             assertEquals("Activity launched on secondary display must be resumed",
-                    getActivityComponentName(LAUNCHING_ACTIVITY),
+                    getActivityName(LAUNCHING_ACTIVITY),
                     frontStack.mResumedActivity);
             mAmWmState.assertFocusedStack("Focus must be on secondary display", frontStackId);
 
@@ -1194,8 +1199,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             // {@link Intent#FLAG_ACTIVITY_NEW_TASK} and {@link Intent#FLAG_ACTIVITY_MULTIPLE_TASK}
             // when launching on some specific display. We don't do it here as we want an existing
             // task to be used.
-            final String launchCommand = "am start -n " + getActivityComponentName(
-                    LAUNCHING_ACTIVITY)
+            final String launchCommand = "am start -n " + getActivityName(LAUNCHING_ACTIVITY)
                     + " --display " + newDisplay.mId;
             executeShellCommand(launchCommand);
             mAmWmState.waitForActivityState(LAUNCHING_ACTIVITY, STATE_RESUMED);
@@ -1203,13 +1207,14 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             // Check that activity is brought to front.
             mAmWmState.assertFocusedActivity("Existing task must be brought to front",
                     LAUNCHING_ACTIVITY);
-            mAmWmState.assertResumedActivity("Existing task must be resumed", LAUNCHING_ACTIVITY);
+            mAmWmState.assertResumedActivity("Existing task must be resumed",
+                    LAUNCHING_ACTIVITY);
 
             // Check that activity is on the right display.
             final ActivityManagerState.ActivityStack firstFrontStack =
                     mAmWmState.getAmState().getStackById(frontStackId);
             assertEquals("Activity must be moved to the secondary display",
-                    getActivityComponentName(LAUNCHING_ACTIVITY), firstFrontStack.mResumedActivity);
+                    getActivityName(LAUNCHING_ACTIVITY), firstFrontStack.mResumedActivity);
             mAmWmState.assertFocusedStack("Focus must be on secondary display", frontStackId);
 
             // Check that task has moved from primary display to secondary.
@@ -1246,8 +1251,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             // {@link Intent#FLAG_ACTIVITY_NEW_TASK} and {@link Intent#FLAG_ACTIVITY_MULTIPLE_TASK}
             // when launching on some specific display. We don't do it here as we want an existing
             // task to be used.
-            final String launchCommand = "am start -n " + getActivityComponentName(
-                    LAUNCHING_ACTIVITY)
+            final String launchCommand = "am start -n " + getActivityName(LAUNCHING_ACTIVITY)
                     + " --display " + newDisplay.mId;
             executeShellCommand(launchCommand);
             mAmWmState.waitForActivityState(LAUNCHING_ACTIVITY, STATE_RESUMED);
@@ -1255,14 +1259,15 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             // Check that activity is brought to front.
             mAmWmState.assertFocusedActivity("Existing task must be brought to front",
                     LAUNCHING_ACTIVITY);
-            mAmWmState.assertResumedActivity("Existing task must be resumed", LAUNCHING_ACTIVITY);
+            mAmWmState.assertResumedActivity("Existing task must be resumed",
+                    LAUNCHING_ACTIVITY);
 
             // Check that activity is on the right display.
             final int frontStackId = mAmWmState.getAmState().getFrontStackId(newDisplay.mId);
             final ActivityManagerState.ActivityStack firstFrontStack =
                     mAmWmState.getAmState().getStackById(frontStackId);
             assertEquals("Activity must be moved to the secondary display",
-                    getActivityComponentName(LAUNCHING_ACTIVITY), firstFrontStack.mResumedActivity);
+                    getActivityName(LAUNCHING_ACTIVITY), firstFrontStack.mResumedActivity);
             mAmWmState.assertFocusedStack("Focus must be on secondary display", frontStackId);
 
             // Check that task has moved from primary display to secondary.
@@ -1346,10 +1351,10 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             final ActivityManagerState.ActivityStack firstFrontStack =
                     mAmWmState.getAmState().getStackById(frontStackId);
             assertEquals("Activity launched on secondary display must be resumed",
-                    getActivityComponentName(LAUNCHING_ACTIVITY), firstFrontStack.mResumedActivity);
+                    getActivityName(LAUNCHING_ACTIVITY), firstFrontStack.mResumedActivity);
             mAmWmState.assertFocusedStack("Focus must be on secondary display", frontStackId);
 
-            executeShellCommand("am start -n " + getActivityComponentName(ALT_LAUNCHING_ACTIVITY));
+            executeShellCommand("am start -n " + getActivityName(ALT_LAUNCHING_ACTIVITY));
             mAmWmState.waitForValidState(false /* compareTaskAndStackBounds */, componentName,
                     new WaitForValidActivityState(ALT_LAUNCHING_ACTIVITY));
 
@@ -1360,12 +1365,12 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             final ActivityManagerState.ActivityStack defaultDisplayFrontStack =
                     mAmWmState.getAmState().getStackById(defaultDisplayFrontStackId);
             assertEquals("Activity launched on default display must be resumed",
-                    getActivityComponentName(ALT_LAUNCHING_ACTIVITY),
+                    getActivityName(ALT_LAUNCHING_ACTIVITY),
                     defaultDisplayFrontStack.mResumedActivity);
             mAmWmState.assertFocusedStack("Focus must be on primary display",
                     defaultDisplayFrontStackId);
 
-            executeShellCommand("am start -n " + getActivityComponentName(LAUNCHING_ACTIVITY));
+            executeShellCommand("am start -n " + getActivityName(LAUNCHING_ACTIVITY));
             mAmWmState.waitForFocusedStack(frontStackId);
 
             // Check that the third intent is redirected to the first task due to the root
@@ -1373,7 +1378,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             final ActivityManagerState.ActivityStack secondFrontStack
                     = mAmWmState.getAmState().getStackById(frontStackId);
             assertEquals("Activity launched on secondary display must be resumed",
-                    getActivityComponentName(LAUNCHING_ACTIVITY),
+                    getActivityName(LAUNCHING_ACTIVITY),
                     secondFrontStack.mResumedActivity);
             mAmWmState.assertFocusedStack("Focus must be on primary display", frontStackId);
             assertEquals("Focused stack must only contain 1 task",
@@ -1398,12 +1403,11 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             final ActivityManagerState.ActivityStack firstFrontStack =
                     mAmWmState.getAmState().getStackById(frontStackId);
             assertEquals("Activity launched on secondary display must be resumed",
-                    getActivityComponentName(LAUNCHING_ACTIVITY), firstFrontStack.mResumedActivity);
+                    getActivityName(LAUNCHING_ACTIVITY), firstFrontStack.mResumedActivity);
             mAmWmState.assertFocusedStack("Focus must be on secondary display", frontStackId);
 
             // We don't want FLAG_ACTIVITY_MULTIPLE_TASK, so we can't use launchActivityOnDisplay
-            executeShellCommand("am start -n "
-                    + getActivityComponentName(ALT_LAUNCHING_ACTIVITY)
+            executeShellCommand("am start -n " + getActivityName(ALT_LAUNCHING_ACTIVITY)
                     + " -f 0x10000000" // FLAG_ACTIVITY_NEW_TASK
                     + " --display " + newDisplay.mId);
             mAmWmState.computeState(ALT_LAUNCHING_ACTIVITY);
@@ -1415,7 +1419,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             final ActivityManagerState.ActivityStack secondFrontStack =
                     mAmWmState.getAmState().getStackById(secondFrontStackId);
             assertEquals("Activity launched on secondary display must be resumed",
-                    getActivityComponentName(ALT_LAUNCHING_ACTIVITY),
+                    getActivityName(ALT_LAUNCHING_ACTIVITY),
                     secondFrontStack.mResumedActivity);
             mAmWmState.assertFocusedStack("Focus must be on secondary display",
                     secondFrontStackId);
@@ -1444,7 +1448,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             final ActivityManagerState.ActivityStack firstFrontStack =
                     mAmWmState.getAmState().getStackById(frontStackId);
             assertEquals("Activity launched on secondary display must be resumed",
-                    getActivityComponentName(BROADCAST_RECEIVER_ACTIVITY),
+                    getActivityName(BROADCAST_RECEIVER_ACTIVITY),
                     firstFrontStack.mResumedActivity);
             mAmWmState.assertFocusedStack("Focus must be on secondary display", frontStackId);
 
@@ -1471,7 +1475,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             final ActivityManagerState.ActivityStack secondFrontStack =
                     mAmWmState.getAmState().getStackById(frontStackId);
             assertEquals("Activity must be launched on secondary display",
-                    getActivityComponentName(LAUNCHING_ACTIVITY),
+                    getActivityName(LAUNCHING_ACTIVITY),
                     secondFrontStack.mResumedActivity);
             assertEquals("Secondary display must contain 2 tasks",
                     2, secondFrontStack.getTasks().size());
@@ -1687,7 +1691,6 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             launchActivityOnDisplay(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, newDisplay.mId);
 
             lockScreenSession.gotoKeyguard();
-            mAmWmState.waitForKeyguardShowingAndNotOccluded();
 
             mAmWmState.waitForActivityState(TEST_ACTIVITY, STATE_STOPPED);
             mAmWmState.waitForActivityState(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, STATE_RESUMED);

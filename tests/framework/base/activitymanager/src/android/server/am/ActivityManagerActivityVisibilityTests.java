@@ -25,8 +25,11 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMAR
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.server.am.ActivityManagerState.STATE_PAUSED;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
+import static android.server.am.Components.ALT_LAUNCHING_ACTIVITY;
 import static android.server.am.Components.ALWAYS_FOCUSABLE_PIP_ACTIVITY;
+import static android.server.am.Components.BROADCAST_RECEIVER_ACTIVITY;
 import static android.server.am.Components.DOCKED_ACTIVITY;
+import static android.server.am.Components.LAUNCHING_ACTIVITY;
 import static android.server.am.Components.LAUNCH_PIP_ON_PIP_ACTIVITY;
 import static android.server.am.Components.MOVE_TASK_TO_BACK_ACTIVITY;
 import static android.server.am.Components.NO_HISTORY_ACTIVITY;
@@ -39,6 +42,7 @@ import static android.server.am.Components.TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIV
 import static android.server.am.Components.TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY;
 import static android.server.am.Components.TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY;
 import static android.server.am.Components.TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY;
+import static android.server.am.UiDeviceUtils.pressBackButton;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -169,7 +173,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
 
         // Launch two activities in docked stack.
         launchActivityInSplitScreenWithRecents(LAUNCHING_ACTIVITY);
-        getLaunchActivityBuilder().setTargetActivityName(BROADCAST_RECEIVER_ACTIVITY).execute();
+        getLaunchActivityBuilder().setTargetActivity(BROADCAST_RECEIVER_ACTIVITY).execute();
         mAmWmState.computeState(BROADCAST_RECEIVER_ACTIVITY);
         mAmWmState.assertVisibility(BROADCAST_RECEIVER_ACTIVITY, true);
         // Launch something to fullscreen stack to make it focused.
@@ -244,13 +248,14 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         launchActivity(LAUNCHING_ACTIVITY);
 
         // Launch the alternate launching activity from launching activity with reorder to front.
-        getLaunchActivityBuilder().setTargetActivityName(ALT_LAUNCHING_ACTIVITY)
+        getLaunchActivityBuilder().setTargetActivity(ALT_LAUNCHING_ACTIVITY)
                 .setReorderToFront(true).execute();
 
         // Launch the launching activity from the alternate launching activity with reorder to
         // front.
-        getLaunchActivityBuilder().setTargetActivityName(LAUNCHING_ACTIVITY)
-                .setLaunchingActivityName(ALT_LAUNCHING_ACTIVITY).setReorderToFront(true)
+        getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY)
+                .setLaunchingActivity(ALT_LAUNCHING_ACTIVITY)
+                .setReorderToFront(true)
                 .execute();
 
         // Press back
@@ -279,8 +284,9 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         launchActivity(LAUNCHING_ACTIVITY);
 
         // Launch the alternate launching activity from launching activity with reorder to front.
-        getLaunchActivityBuilder().setTargetActivityName(ALT_LAUNCHING_ACTIVITY)
-                .setReorderToFront(true).execute();
+        getLaunchActivityBuilder().setTargetActivity(ALT_LAUNCHING_ACTIVITY)
+                .setReorderToFront(true)
+                .execute();
 
         // Return home
         launchHomeActivity();

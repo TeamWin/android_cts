@@ -191,6 +191,13 @@
                   android:configChanges="orientation|screenSize"
                   android:colorMode="wideColorGamut" />
 
+        <activity android:name="android.view.cts.PixelCopyViewProducerDialogActivity"
+                  android:label="PixelCopyViewProducerDialogActivity"
+                  android:screenOrientation="portrait"
+                  android:rotationAnimation="jumpcut"
+                  android:theme="@android:style/Theme.Material.Dialog.NoActionBar"
+                  android:configChanges="orientation|screenSize" />
+
         <activity android:name="android.view.cts.FocusFinderCtsActivity"
                   android:screenOrientation="locked"
                   android:label="FocusFinderCtsActivity">

@@ -23,8 +23,10 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMAR
 import static android.server.am.ActivityAndWindowManagersState.dpToPx;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.ComponentNameUtils.getWindowName;
+import static android.server.am.Components.BROADCAST_RECEIVER_ACTIVITY;
 import static android.server.am.Components.DIALOG_WHEN_LARGE_ACTIVITY;
 import static android.server.am.Components.LANDSCAPE_ORIENTATION_ACTIVITY;
+import static android.server.am.Components.LAUNCHING_ACTIVITY;
 import static android.server.am.Components.NIGHT_MODE_ACTIVITY;
 import static android.server.am.Components.PORTRAIT_ORIENTATION_ACTIVITY;
 import static android.server.am.Components.RESIZEABLE_ACTIVITY;
@@ -148,7 +150,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
             // Launch our own activity to side in case Recents (or other activity to side) doesn't
             // support rotation.
             launchActivitiesInSplitScreen(
-                    getLaunchActivityBuilder().setTargetActivityName(LAUNCHING_ACTIVITY),
+                    getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY),
                     getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY));
             // Launch target activity in docked stack.
             getLaunchActivityBuilder().setTargetActivity(RESIZEABLE_ACTIVITY).execute();
@@ -173,7 +175,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
 
             final LogSeparator logSeparator = clearLogcat();
             launchActivitiesInSplitScreen(
-                    getLaunchActivityBuilder().setTargetActivityName(LAUNCHING_ACTIVITY),
+                    getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY),
                     getLaunchActivityBuilder().setTargetActivity(RESIZEABLE_ACTIVITY));
             final ReportedSizes initialSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY,
                     logSeparator);
@@ -493,7 +495,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
 
         // Launch activities that request orientations and check that device doesn't rotate.
         launchActivitiesInSplitScreen(
-                getLaunchActivityBuilder().setTargetActivityName(LAUNCHING_ACTIVITY),
+                getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY),
                 getLaunchActivityBuilder().setTargetActivity(activity).setMultipleTask(true));
 
         mAmWmState.assertVisibility(activity, true /* visible */);

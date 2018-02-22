@@ -66,7 +66,6 @@ public class ActivityManagerDisplayLockedKeyguardTests extends ActivityManagerDi
 
             // Lock the device.
             lockScreenSession.gotoKeyguard();
-            mAmWmState.waitForKeyguardShowingAndNotOccluded();
             mAmWmState.waitForActivityState(TEST_ACTIVITY, STATE_STOPPED);
             mAmWmState.assertVisibility(TEST_ACTIVITY, false /* visible */);
 
@@ -90,7 +89,6 @@ public class ActivityManagerDisplayLockedKeyguardTests extends ActivityManagerDi
             final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
 
             lockScreenSession.gotoKeyguard();
-            mAmWmState.waitForKeyguardShowingAndNotOccluded();
             mAmWmState.assertKeyguardShowingAndNotOccluded();
             launchActivityOnDisplay(DISMISS_KEYGUARD_ACTIVITY, newDisplay.mId);
             lockScreenSession.enterAndConfirmLockCredential();
@@ -108,7 +106,6 @@ public class ActivityManagerDisplayLockedKeyguardTests extends ActivityManagerDi
             final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
 
             lockScreenSession.gotoKeyguard();
-            mAmWmState.waitForKeyguardShowingAndNotOccluded();
             mAmWmState.assertKeyguardShowingAndNotOccluded();
             launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
             mAmWmState.computeState(SHOW_WHEN_LOCKED_ACTIVITY);

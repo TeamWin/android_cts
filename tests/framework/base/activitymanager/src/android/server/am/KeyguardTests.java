@@ -18,6 +18,7 @@ package android.server.am;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
+import static android.server.am.UiDeviceUtils.pressHomeButton;
 import static android.view.Surface.ROTATION_90;
 import static android.view.WindowManager.LayoutParams.TYPE_WALLPAPER;
 
@@ -177,7 +178,7 @@ public class KeyguardTests extends KeyguardTestBase {
 
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             launchActivitiesInSplitScreen(
-                    getLaunchActivityBuilder().setTargetActivityName(LAUNCHING_ACTIVITY),
+                    getLaunchActivityBuilder().setTargetActivityName(LAUNCHING_ACTIVITY_NAME),
                     getLaunchActivityBuilder().setTargetActivityName("ShowWhenLockedActivity")
                             .setRandomData(true)
                             .setMultipleTask(false)
@@ -292,7 +293,6 @@ public class KeyguardTests extends KeyguardTestBase {
         try (final LockScreenSession lockScreenSession = new LockScreenSession();
              final RotationSession rotationSession = new RotationSession()) {
             lockScreenSession.gotoKeyguard();
-            mAmWmState.waitForKeyguardShowingAndNotOccluded();
             mAmWmState.assertKeyguardShowingAndNotOccluded();
             executeShellCommand(getAmStartCmd("ShowWhenLockedActivity"));
             mAmWmState.computeState(new WaitForValidActivityState("ShowWhenLockedActivity"));
@@ -358,7 +358,6 @@ public class KeyguardTests extends KeyguardTestBase {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             final LogSeparator logSeparator = clearLogcat();
             lockScreenSession.gotoKeyguard();
-            mAmWmState.waitForKeyguardShowingAndNotOccluded();
             mAmWmState.assertKeyguardShowingAndNotOccluded();
             launchActivity("ShowWhenLockedAttrActivity");
             mAmWmState.computeState(new WaitForValidActivityState("ShowWhenLockedAttrActivity"));

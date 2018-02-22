@@ -18,11 +18,15 @@ package android.view.inputmethod.cts;
 
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
+import static android.view.inputmethod.cts.util.TestUtils.getOnMainSync;
 import static android.view.inputmethod.cts.util.TestUtils.waitOnMainUntil;
 
+import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
-import static com.android.cts.mockime.ImeEventStreamTestUtils.waitForInputViewLayoutStable;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import android.app.Instrumentation;
 import android.inputmethodservice.InputMethodService;
@@ -35,6 +39,7 @@ import android.view.inputmethod.cts.util.TestActivity;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
+import com.android.cts.mockime.ImeCommand;
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
@@ -44,6 +49,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Tests for {@link InputMethodService} methods.
@@ -52,7 +58,7 @@ import java.util.concurrent.TimeUnit;
 @RunWith(AndroidJUnit4.class)
 public class InputMethodServiceTest extends EndToEndImeTestBase {
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
-    private static final long LAYOUT_STABLE_THRESHOLD = TimeUnit.SECONDS.toMillis(3);
+    private static final long EXPECTED_TIMEOUT = TimeUnit.SECONDS.toMillis(2);
 
     private Instrumentation mInstrumentation;
 
@@ -87,16 +93,26 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
             final TestActivity testActivity = createTestActivity(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
             expectEvent(stream, event -> "onStartInputView".equals(event.getEventName()), TIMEOUT);
 
-            imeSession.callSetBackDisposition(InputMethodService.BACK_DISPOSITION_WILL_DISMISS);
-            waitForInputViewLayoutStable(stream, LAYOUT_STABLE_THRESHOLD);
+            final ImeCommand command = imeSession.callSetBackDisposition(
+                    InputMethodService.BACK_DISPOSITION_WILL_DISMISS);
+            expectCommand(stream, command, TIMEOUT);
+
+            testActivity.setIgnoreBackKey(true);
+            assertEquals(0,
+                    (long) getOnMainSync(() -> testActivity.getOnBackPressedCallCount()));
             mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
 
             // keyboard will hide
             expectEvent(stream, event -> "hideSoftInput".equals(event.getEventName()), TIMEOUT);
 
-            // Activity should still be running since ime consumes the back key.
-            waitOnMainUntil(() -> !testActivity.isFinishing(), LAYOUT_STABLE_THRESHOLD,
-                    "Activity should not be finishing.");
+            // Make sure TestActivity#onBackPressed() is NOT called.
+            try {
+                waitOnMainUntil(() -> testActivity.getOnBackPressedCallCount() > 0,
+                        EXPECTED_TIMEOUT);
+                fail("Activity#onBackPressed() should not be called");
+            } catch (TimeoutException e){
+                // This is fine.  We actually expect timeout.
+            }
         }
     }
 
@@ -111,16 +127,21 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
             final TestActivity testActivity = createTestActivity(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
             expectEvent(stream, event -> "onStartInputView".equals(event.getEventName()), TIMEOUT);
 
-            imeSession.callSetBackDisposition(InputMethodService.BACK_DISPOSITION_WILL_NOT_DISMISS);
-            waitForInputViewLayoutStable(stream, LAYOUT_STABLE_THRESHOLD);
+            final ImeCommand command = imeSession.callSetBackDisposition(
+                    InputMethodService.BACK_DISPOSITION_WILL_NOT_DISMISS);
+            expectCommand(stream, command, TIMEOUT);
+
+            testActivity.setIgnoreBackKey(true);
+            assertEquals(0,
+                    (long) getOnMainSync(() -> testActivity.getOnBackPressedCallCount()));
             mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
 
-            // keyboard will hide.
-            expectEvent(stream, event -> "hideSoftInput".equals(event.getEventName()), TIMEOUT);
+            // keyboard will not hide
+            notExpectEvent(stream, event -> "hideSoftInput".equals(event.getEventName()),
+                    EXPECTED_TIMEOUT);
 
-            // activity should've gone (or going) away since IME wont consume the back event.
-            waitOnMainUntil(() -> testActivity.isFinishing(), LAYOUT_STABLE_THRESHOLD,
-                    "Activity should be finishing or finished.");
+            // Activity#onBackPressed() should be called.
+            waitOnMainUntil(() -> testActivity.getOnBackPressedCallCount() > 0, TIMEOUT);
         }
     }
 

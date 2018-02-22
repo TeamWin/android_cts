@@ -40,10 +40,14 @@ import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logAlways;
 import static android.server.am.StateLogger.logE;
-import static android.view.KeyEvent.KEYCODE_APP_SWITCH;
-import static android.view.KeyEvent.KEYCODE_MENU;
-import static android.view.KeyEvent.KEYCODE_SLEEP;
-import static android.view.KeyEvent.KEYCODE_WAKEUP;
+import static android.server.am.UiDeviceUtils.pressAppSwitchButton;
+import static android.server.am.UiDeviceUtils.pressBackButton;
+import static android.server.am.UiDeviceUtils.pressEnterButton;
+import static android.server.am.UiDeviceUtils.pressHomeButton;
+import static android.server.am.UiDeviceUtils.pressSleepButton;
+import static android.server.am.UiDeviceUtils.pressUnlockButton;
+import static android.server.am.UiDeviceUtils.pressWakeupButton;
+import static android.server.am.UiDeviceUtils.waitForDeviceIdle;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -51,19 +55,16 @@ import static org.junit.Assert.fail;
 import static java.lang.Integer.toHexString;
 
 import android.app.ActivityManager;
-import android.app.KeyguardManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.ParcelFileDescriptor;
-import android.os.PowerManager;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.server.am.settings.SettingsSession;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
-import android.support.test.uiautomator.UiDevice;
 import android.view.Display;
 
 import com.android.compatibility.common.util.SystemUtil;
@@ -83,7 +84,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BooleanSupplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -115,9 +115,8 @@ public abstract class ActivityManagerTestBase {
     private static final String AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK_COMMAND_FORMAT =
             "am stack move-top-activity-to-pinned-stack %1d 0 0 500 500";
 
-    static final String LAUNCHING_ACTIVITY = "LaunchingActivity";
-    static final String ALT_LAUNCHING_ACTIVITY = "AltLaunchingActivity";
-    static final String BROADCAST_RECEIVER_ACTIVITY = "BroadcastReceiverActivity";
+    // TODO(b/73349193): Remove this.
+    static final String LAUNCHING_ACTIVITY_NAME = "LaunchingActivity";
 
     /** Broadcast shell command for finishing {@link BroadcastReceiverActivity}. */
     static final String FINISH_ACTIVITY_BROADCAST
@@ -152,7 +151,6 @@ public abstract class ActivityManagerTestBase {
 
     protected Context mContext;
     protected ActivityManager mAm;
-    protected UiDevice mDevice;
 
     // TODO(b/73349193): Use {@link #getAmStartCmd(ComponentName, String...)} instead.
     @Deprecated
@@ -315,7 +313,6 @@ public abstract class ActivityManagerTestBase {
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getContext();
         mAm = mContext.getSystemService(ActivityManager.class);
-        mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         setDefaultComponentName();
         executeShellCommand("pm grant " + mContext.getPackageName()
                 + " android.permission.MANAGE_ACTIVITY_STACKS");
@@ -398,13 +395,6 @@ public abstract class ActivityManagerTestBase {
     protected void launchActivityInNewTask(final ComponentName activityName) throws Exception {
         executeShellCommand(getAmStartCmdInNewTask(activityName));
         mAmWmState.waitForValidState(activityName);
-    }
-
-    /** TODO(b/73349193): Use {@link #launchActivityInNewTask(ComponentName)} instead. */
-    @Deprecated
-    protected void launchActivityInNewTask(final String targetActivityName) throws Exception {
-        executeShellCommand(getAmStartCmdInNewTask(targetActivityName));
-        mAmWmState.waitForValidState(targetActivityName);
     }
 
     /**
@@ -492,12 +482,6 @@ public abstract class ActivityManagerTestBase {
         launchActivityInSplitScreenWithRecents(activityName, SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT);
     }
 
-    // TODO(b/73349193): Use {@link #launchActivityInSplitScreenWithRecents(ComponentName)}.
-    @Deprecated
-    protected void launchActivityInSplitScreenWithRecents(String activityName) throws Exception {
-        launchActivityInSplitScreenWithRecents(activityName, SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT);
-    }
-
     protected void launchActivityInSplitScreenWithRecents(
             ComponentName activityName, int createMode) throws Exception {
         launchActivity(activityName);
@@ -511,29 +495,6 @@ public abstract class ActivityManagerTestBase {
                         .setActivityType(ACTIVITY_TYPE_STANDARD)
                         .build());
         mAmWmState.waitForRecentsActivityVisible();
-    }
-
-    // TODO(b/73349193): Use {@link #launchActivityInSplitScreenWithRecents(ComponentName, int)}.
-    @Deprecated
-    protected void launchActivityInSplitScreenWithRecents(String activityName, int createMode)
-            throws Exception {
-        launchActivity(activityName);
-        final int taskId = mAmWmState.getAmState().getTaskByActivityName(activityName).mTaskId;
-        mAm.setTaskWindowingModeSplitScreenPrimary(taskId, createMode, true /* onTop */,
-                false /* animate */, null /* initialBounds */, true /* showRecents */);
-
-        mAmWmState.waitForValidState(activityName,
-                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
-        mAmWmState.waitForRecentsActivityVisible();
-    }
-
-    // TODO(b/73349193): Use {@link #launchActivitiesInSplitScreen(LaunchActivityBuilder, LaunchActivityBuilder)
-    @Deprecated
-    protected void launchActivitiesInSplitScreen(String primaryActivity, String secondaryActivity)
-            throws Exception {
-        launchActivitiesInSplitScreen(
-                getLaunchActivityBuilder().setTargetActivityName(primaryActivity),
-                getLaunchActivityBuilder().setTargetActivityName(secondaryActivity));
     }
 
     /**
@@ -610,13 +571,6 @@ public abstract class ActivityManagerTestBase {
         resizeActivityTask(getActivityTaskId(activityName), left, top, right, bottom);
     }
 
-    /** TODO(b/73349193): Use {@link #resizeActivityTask(ComponentName, int, int, int, int)}. */
-    @Deprecated
-    protected void resizeActivityTask(String activityName, int left, int top, int right, int bottom)
-            throws Exception {
-        resizeActivityTask(getActivityTaskId(activityName), left, top, right, bottom);
-    }
-
     private void resizeActivityTask(int taskId, int left, int top, int right, int bottom)
             throws Exception {
         final String cmd = "am task resize "
@@ -637,55 +591,10 @@ public abstract class ActivityManagerTestBase {
                 stackTop, stackWidth, stackHeight));
     }
 
-    protected void pressHomeButton() {
-        mDevice.pressHome();
-    }
-
-    protected void pressBackButton() {
-        mDevice.pressBack();
-    }
-
-    protected void pressAppSwitchButton() throws Exception {
-        mDevice.pressKeyCode(KEYCODE_APP_SWITCH);
+    protected void pressAppSwitchButtonAndWaitForRecents() throws Exception {
+        pressAppSwitchButton();
         mAmWmState.waitForRecentsActivityVisible();
         mAmWmState.waitForAppTransitionIdle();
-    }
-
-    protected void pressWakeupButton() {
-        final PowerManager pm = mContext.getSystemService(PowerManager.class);
-        retryPressKeyCode(KEYCODE_WAKEUP, () -> pm != null && pm.isInteractive(),
-                "***Waiting for device wakeup...");
-    }
-
-    protected void pressUnlockButton() {
-        final KeyguardManager kgm = mContext.getSystemService(KeyguardManager.class);
-        retryPressKeyCode(KEYCODE_MENU, () -> kgm != null && !kgm.isKeyguardLocked(),
-                "***Waiting for device unlock...");
-    }
-
-    protected void pressSleepButton() {
-        final PowerManager pm = mContext.getSystemService(PowerManager.class);
-        retryPressKeyCode(KEYCODE_SLEEP, () -> pm != null && !pm.isInteractive(),
-                "***Waiting for device sleep...");
-    }
-
-    private void retryPressKeyCode(int keyCode, BooleanSupplier waitFor, String msg) {
-        int retry = 1;
-        do {
-            mDevice.pressKeyCode(keyCode);
-            if (waitFor.getAsBoolean()) {
-                return;
-            }
-            logAlways(msg + " retry=" + retry);
-            try {
-                Thread.sleep(50);
-            } catch (InterruptedException e) {
-                logE("Sleep interrupted: " + msg, e);
-            }
-        } while (retry++ < 5);
-        if (!waitFor.getAsBoolean()) {
-            logE(msg + " FAILED");
-        }
     }
 
     // Utility method for debugging, not used directly here, but useful, so kept around.
@@ -879,10 +788,10 @@ public abstract class ActivityManagerTestBase {
         }
 
         public LockScreenSession enterAndConfirmLockCredential() throws Exception {
-            mDevice.waitForIdle(3000);
+            waitForDeviceIdle(3000);
 
             runCommandAndPrintOutput("input text " + LOCK_CREDENTIAL);
-            mDevice.pressEnter();
+            pressEnterButton();
             return this;
         }
 
@@ -900,12 +809,7 @@ public abstract class ActivityManagerTestBase {
             pressSleepButton();
             for (int retry = 1; isDisplayOn() && retry <= 5; retry++) {
                 logAlways("***Waiting for display to turn off... retry=" + retry);
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    logAlways(e.toString());
-                    // Well I guess we are not waiting...
-                }
+                SystemClock.sleep(TimeUnit.SECONDS.toMillis(1));
             }
             return this;
         }
@@ -1097,11 +1001,7 @@ public abstract class ActivityManagerTestBase {
                     return;
                 }
                 logAlways(waitingMessage + ": " + resultString);
-                try {
-                    Thread.sleep(RETRY_INTERVAL);
-                } catch (InterruptedException e) {
-                    logE(waitingMessage + ": interrupted", e);
-                }
+                SystemClock.sleep(RETRY_INTERVAL);
             }
             fail(resultString);
         }
@@ -1153,45 +1053,37 @@ public abstract class ActivityManagerTestBase {
         }
     }
 
-    void assertActivityLifecycle(
-            ComponentName activityName, boolean relaunched, LogSeparator logSeparator) {
-        assertActivityLifecycle(getLogTag(activityName), relaunched, logSeparator);
-    }
-
-    /**
-     * TODO(b/73349193): Use {@link #assertActivityLifecycle(ComponentName, boolean, LogSeparator)}.
-     */
-    @Deprecated
-    void assertActivityLifecycle(
-            String activityName, boolean relaunched, LogSeparator logSeparator) {
+    void assertActivityLifecycle(ComponentName activityName, boolean relaunched,
+            LogSeparator logSeparator) {
+        final String logTag = getLogTag(activityName);
         new RetryValidator() {
 
             @Nullable
             @Override
             protected String validate() {
                 final ActivityLifecycleCounts lifecycleCounts =
-                        new ActivityLifecycleCounts(activityName, logSeparator);
+                        new ActivityLifecycleCounts(logTag, logSeparator);
                 if (relaunched) {
                     if (lifecycleCounts.mDestroyCount < 1) {
-                        return activityName + " must have been destroyed. mDestroyCount="
+                        return logTag + " must have been destroyed. mDestroyCount="
                                 + lifecycleCounts.mDestroyCount;
                     }
                     if (lifecycleCounts.mCreateCount < 1) {
-                        return activityName + " must have been (re)created. mCreateCount="
+                        return logTag + " must have been (re)created. mCreateCount="
                                 + lifecycleCounts.mCreateCount;
                     }
                     return null;
                 }
                 if (lifecycleCounts.mDestroyCount > 0) {
-                    return activityName + " must *NOT* have been destroyed. mDestroyCount="
+                    return logTag + " must *NOT* have been destroyed. mDestroyCount="
                             + lifecycleCounts.mDestroyCount;
                 }
                 if (lifecycleCounts.mCreateCount > 0) {
-                    return activityName + " must *NOT* have been (re)created. mCreateCount="
+                    return logTag + " must *NOT* have been (re)created. mCreateCount="
                             + lifecycleCounts.mCreateCount;
                 }
                 if (lifecycleCounts.mConfigurationChangedCount < 1) {
-                    return activityName + " must have received configuration changed. "
+                    return logTag + " must have received configuration changed. "
                             + "mConfigurationChangedCount="
                             + lifecycleCounts.mConfigurationChangedCount;
                 }
@@ -1202,29 +1094,22 @@ public abstract class ActivityManagerTestBase {
 
     protected void assertRelaunchOrConfigChanged(ComponentName activityName, int numRelaunch,
             int numConfigChange, LogSeparator logSeparator) {
-        assertRelaunchOrConfigChanged(
-                getLogTag(activityName), numRelaunch, numConfigChange, logSeparator);
-    }
-
-    // TODO(b/73349193): Use {@link #assertRelaunchOrConfigChanged(ComponentName, int, int, LogSeparator)}.
-    @Deprecated
-    protected void assertRelaunchOrConfigChanged(String activityName, int numRelaunch,
-            int numConfigChange, LogSeparator logSeparator) {
+        final String logTag = getLogTag(activityName);
         new RetryValidator() {
 
             @Nullable
             @Override
             protected String validate() {
                 final ActivityLifecycleCounts lifecycleCounts =
-                        new ActivityLifecycleCounts(activityName, logSeparator);
+                        new ActivityLifecycleCounts(logTag, logSeparator);
                 if (lifecycleCounts.mDestroyCount != numRelaunch) {
-                    return activityName + " has been destroyed " + lifecycleCounts.mDestroyCount
+                    return logTag + " has been destroyed " + lifecycleCounts.mDestroyCount
                             + " time(s), expecting " + numRelaunch;
                 } else if (lifecycleCounts.mCreateCount != numRelaunch) {
-                    return activityName + " has been (re)created " + lifecycleCounts.mCreateCount
+                    return logTag + " has been (re)created " + lifecycleCounts.mCreateCount
                             + " time(s), expecting " + numRelaunch;
                 } else if (lifecycleCounts.mConfigurationChangedCount != numConfigChange) {
-                    return activityName + " has received "
+                    return logTag + " has received "
                             + lifecycleCounts.mConfigurationChangedCount
                             + " onConfigurationChanged() calls, expecting " + numConfigChange;
                 }
@@ -1301,15 +1186,9 @@ public abstract class ActivityManagerTestBase {
     }
 
     void assertSingleStart(ComponentName activityName, LogSeparator logSeparator) {
-        assertSingleStart(getLogTag(activityName), logSeparator);
-    }
-
-    // TODO(b/73349193): Use {@link #assertSingleStart(ComponentName, LogSeparator)} instead.
-    @Deprecated
-    void assertSingleStart(String logTag, LogSeparator logSeparator) {
-        new ActivityLifecycleCountsValidator(logTag, logSeparator, 0 /* createCount */,
-                1 /* startCount */, 1 /* resumeCount */, 0 /* pauseCount */, 0 /* stopCount */,
-                0 /* destroyCount */)
+        new ActivityLifecycleCountsValidator(getLogTag(activityName), logSeparator,
+                0 /* createCount */, 1 /* startCount */, 1 /* resumeCount */, 0 /* pauseCount */,
+                0 /* stopCount */, 0 /* destroyCount */)
                 .assertValidator("***Waiting for activity start and resume");
     }
 
@@ -1422,26 +1301,19 @@ public abstract class ActivityManagerTestBase {
     }
 
     /** Waits for at least one onMultiWindowModeChanged event. */
-    ActivityLifecycleCounts waitForOnMultiWindowModeChanged(
-            String activityName, LogSeparator logSeparator) {
-        int retriesLeft = 5;
+    ActivityLifecycleCounts waitForOnMultiWindowModeChanged(ComponentName activityName,
+            LogSeparator logSeparator) {
+        int retry = 1;
         ActivityLifecycleCounts result;
         do {
             result = new ActivityLifecycleCounts(activityName, logSeparator);
-            if (result.mMultiWindowModeChangedCount < 1) {
-                log("***waitForOnMultiWindowModeChanged...");
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    log(e.toString());
-                    // Well I guess we are not waiting...
-                }
-            } else {
-                break;
+            if (result.mMultiWindowModeChangedCount >= 1) {
+                return result;
             }
-        } while (retriesLeft-- > 0);
+            logAlways("***waitForOnMultiWindowModeChanged... retry=" + retry);
+            SystemClock.sleep(TimeUnit.SECONDS.toMillis(1));
+        } while (retry++ <= 5);
         return result;
-
     }
 
     // TODO: Now that our test are device side, we can convert these to a more direct communication
@@ -1580,7 +1452,7 @@ public abstract class ActivityManagerTestBase {
         private boolean mMultipleTask;
         private int mDisplayId = INVALID_DISPLAY_ID;
         // A proxy activity that launches other activities including mTargetActivityName
-        private String mLaunchingActivityName = LAUNCHING_ACTIVITY;
+        private String mLaunchingActivityName = LAUNCHING_ACTIVITY_NAME;
         private ComponentName mLaunchingActivity;
         private boolean mReorderToFront;
         private boolean mWaitForLaunched;
@@ -1737,7 +1609,7 @@ public abstract class ActivityManagerTestBase {
 
             if (mWaitForLaunched) {
                 mAmWmState.waitForValidState(false /* compareTaskAndStackBounds */, mTargetPackage,
-                        new WaitForValidActivityState.Builder(mTargetActivityName).build());
+                        new WaitForValidActivityState(mTargetActivityName));
             }
         }
     }

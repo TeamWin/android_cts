@@ -45,4 +45,6 @@ public final class DeviceTestConstants {
     public static final String TEST_SET_INPUTMETHOD_AND_SUBTYPE = "testSetInputMethodAndSubtype";
     public static final String TEST_SWITCH_NEXT_INPUT = "testSwitchToNextInputMethod";
     public static final String TEST_SWITCH_LAST_INPUT = "testSwitchToLastInputMethod";
+    public static final String TEST_INPUT_UNBINDS_ON_IME_STOPPED = "testInputUnbindsOnImeStopped";
+    public static final String TEST_INPUT_UNBINDS_ON_APP_STOPPED = "testInputUnbindsOnAppStopped";
 }

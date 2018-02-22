@@ -787,6 +787,13 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    public void testSetVoiceCallVolumeToZeroPermission() {
+        // Verify that only apps with MODIFY_PHONE_STATE can set VOICE_CALL_STREAM to 0
+        mAudioManager.setStreamVolume(AudioManager.STREAM_VOICE_CALL, 0, 0);
+        assertTrue("MODIFY_PHONE_STATE is required in order to set voice call volume to 0",
+                    mAudioManager.getStreamVolume(AudioManager.STREAM_VOICE_CALL) != 0);
+    }
+
     public void testMuteFixedVolume() throws Exception {
         int[] streams = {
                 AudioManager.STREAM_VOICE_CALL,

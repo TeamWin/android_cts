@@ -76,6 +76,11 @@ public final class DeviceEventConstants {
         ON_CREATE,
 
         /**
+         * {@link android.inputmethodservice.InputMethodService#onBindInput()} callback.
+         */
+        ON_BIND_INPUT,
+
+        /**
          * {@link android.inputmethodservice.InputMethodService#onStartInput(android.view.inputmethod.EditorInfo,boolean) onStartInput(EditorInfo,boolean}
          * callback.
          */
@@ -85,6 +90,11 @@ public final class DeviceEventConstants {
          * {@link android.inputmethodservice.InputMethodService#onStartInputView(android.view.inputmethod.EditorInfo, boolean) onStartInputView(EditorInfo,boolean}
          */
         ON_START_INPUT_VIEW,
+
+        /**
+         * {@link android.inputmethodservice.InputMethodService#onUnbindInput()} callback.
+         */
+        ON_UNBIND_INPUT,
 
         /**
          * {@link android.inputmethodservice.InputMethodService#onFinishInputView(boolean) onFinishInputView(boolean)}

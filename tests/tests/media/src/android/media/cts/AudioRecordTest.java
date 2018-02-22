@@ -39,6 +39,7 @@ import android.util.Log;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.testng.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -801,6 +802,34 @@ public class AudioRecordTest {
                 track.release();
                 track = null;
             }
+        }
+    }
+
+    @Test
+    public void testVoiceCallAudioSourcePermissions() throws Exception {
+        if (!hasMicrophone()) {
+            return;
+        }
+
+        // Make sure that VOICE_CALL, VOICE_DOWNLINK and VOICE_UPLINK audio sources cannot
+        // be used by apps that don't have the CAPTURE_AUDIO_OUTPUT permissions
+        final int[] voiceCallAudioSources = new int [] {MediaRecorder.AudioSource.VOICE_CALL,
+            MediaRecorder.AudioSource.VOICE_DOWNLINK,
+            MediaRecorder.AudioSource.VOICE_UPLINK};
+
+        for (int source : voiceCallAudioSources) {
+            // AudioRecord.Builder should fail when trying to use
+            // one of the voice call audio sources.
+            assertThrows(UnsupportedOperationException.class,
+                            () -> {
+                                new AudioRecord.Builder()
+                                 .setAudioSource(source)
+                                 .setAudioFormat(new AudioFormat.Builder()
+                                         .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                                         .setSampleRate(8000)
+                                         .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
+                                         .build())
+                                 .build(); });
         }
     }
 

@@ -61,6 +61,10 @@ public final class ShellCommandUtils {
         return "content delete --uri " + contentUri;
     }
 
+    public static String uninstallPackage(String packageName) {
+        return "pm uninstall " + packageName;
+    }
+
     /**
      * Command to send broadcast {@code Intent}.
      *

@@ -19,10 +19,13 @@ package android.view.inputmethod.cts.util;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
+import android.support.annotation.UiThread;
 import android.support.test.InstrumentationRegistry;
 import android.view.View;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
@@ -33,6 +36,32 @@ public final class TestActivity extends Activity {
 
     private Function<TestActivity, View> mInitializer = null;
 
+    private AtomicBoolean mIgnoreBackKey = new AtomicBoolean();
+
+    private long mOnBackPressedCallCount;
+
+    /**
+     * Controls how {@link #onBackPressed()} behaves.
+     *
+     * <p>TODO: Use {@link android.app.AppComponentFactory} instead to customise the behavior of
+     * {@link TestActivity}.</p>
+     *
+     * @param ignore {@code true} when {@link TestActivity} should do nothing when
+     *               {@link #onBackPressed()} is called
+     */
+    @AnyThread
+    public void setIgnoreBackKey(boolean ignore) {
+        mIgnoreBackKey.set(ignore);
+    }
+
+    @UiThread
+    public long getOnBackPressedCallCount() {
+        return mOnBackPressedCallCount;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,6 +69,18 @@ public final class TestActivity extends Activity {
             mInitializer = sInitializer.get();
         }
         setContentView(mInitializer.apply(this));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void onBackPressed() {
+        ++mOnBackPressedCallCount;
+        if (mIgnoreBackKey.get()) {
+            return;
+        }
+        super.onBackPressed();
     }
 
     /**

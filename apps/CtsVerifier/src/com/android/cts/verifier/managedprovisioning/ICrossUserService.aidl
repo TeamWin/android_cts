@@ -16,6 +16,8 @@
 
 package com.android.cts.verifier.managedprovisioning;
 
+import android.os.UserHandle;
+
 interface ICrossUserService {
     void switchUser(in UserHandle userHandle);
 }

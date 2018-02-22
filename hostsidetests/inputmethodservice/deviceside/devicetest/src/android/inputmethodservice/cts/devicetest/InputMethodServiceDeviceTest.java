@@ -19,9 +19,14 @@ package android.inputmethodservice.cts.devicetest;
 import static android.inputmethodservice.cts.DeviceEvent.isFrom;
 import static android.inputmethodservice.cts.DeviceEvent.isNewerThan;
 import static android.inputmethodservice.cts.DeviceEvent.isType;
+import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType
+        .ON_BIND_INPUT;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_CREATE;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_DESTROY;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_START_INPUT;
+
+import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType
+        .ON_UNBIND_INPUT;
 import static android.inputmethodservice.cts.common.ImeCommandConstants.ACTION_IME_COMMAND;
 import static android.inputmethodservice.cts.common.ImeCommandConstants
         .COMMAND_SET_INPUT_METHOD_AND_SUBTYPE;
@@ -37,6 +42,7 @@ import static android.inputmethodservice.cts.devicetest.MoreCollectors.startingF
 
 import android.inputmethodservice.cts.DeviceEvent;
 import android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType;
+import android.inputmethodservice.cts.common.EditTextAppConstants;
 import android.inputmethodservice.cts.common.Ime1Constants;
 import android.inputmethodservice.cts.common.Ime2Constants;
 import android.inputmethodservice.cts.common.test.DeviceTestConstants;
@@ -190,6 +196,62 @@ public class InputMethodServiceDeviceTest {
         pollingCheck(() -> helper.shell(ShellCommandUtils.getCurrentIme())
                         .equals(initialIme),
                 TIMEOUT, initialIme + " is current IME");
+    }
+
+    @Test
+    public void testInputUnbindsOnImeStopped() throws Throwable {
+        final TestHelper helper = new TestHelper(
+                getClass(), DeviceTestConstants.TEST_INPUT_UNBINDS_ON_IME_STOPPED);
+        final long startActivityTime = SystemClock.uptimeMillis();
+        helper.launchActivity(DeviceTestConstants.PACKAGE, DeviceTestConstants.TEST_ACTIVITY_CLASS);
+        helper.findUiObject(R.id.text_entry).click();
+
+        pollingCheck(() -> helper.queryAllEvents()
+                        .filter(isNewerThan(startActivityTime))
+                        .anyMatch(isFrom(Ime1Constants.CLASS).and(isType(ON_START_INPUT))),
+                TIMEOUT, "CtsInputMethod1.onStartInput is called");
+        pollingCheck(() -> helper.queryAllEvents()
+                        .filter(isNewerThan(startActivityTime))
+                        .anyMatch(isFrom(Ime1Constants.CLASS).and(isType(ON_BIND_INPUT))),
+                TIMEOUT, "CtsInputMethod1.onBindInput is called");
+
+        final long imeForceStopTime = SystemClock.uptimeMillis();
+        helper.shell(ShellCommandUtils.uninstallPackage(Ime1Constants.PACKAGE));
+
+        helper.shell(ShellCommandUtils.setCurrentIme(Ime2Constants.IME_ID));
+        helper.findUiObject(R.id.text_entry).click();
+        pollingCheck(() -> helper.queryAllEvents()
+                        .filter(isNewerThan(imeForceStopTime))
+                        .anyMatch(isFrom(Ime2Constants.CLASS).and(isType(ON_START_INPUT))),
+                TIMEOUT, "CtsInputMethod2.onStartInput is called");
+        pollingCheck(() -> helper.queryAllEvents()
+                        .filter(isNewerThan(imeForceStopTime))
+                        .anyMatch(isFrom(Ime2Constants.CLASS).and(isType(ON_BIND_INPUT))),
+                TIMEOUT, "CtsInputMethod2.onBindInput is called");
+    }
+
+    @Test
+    public void testInputUnbindsOnAppStopped() throws Throwable {
+        final TestHelper helper = new TestHelper(
+                getClass(), DeviceTestConstants.TEST_INPUT_UNBINDS_ON_APP_STOPPED);
+        final long startActivityTime = SystemClock.uptimeMillis();
+        helper.launchActivity(EditTextAppConstants.PACKAGE, EditTextAppConstants.CLASS);
+
+        pollingCheck(() -> helper.queryAllEvents()
+                        .filter(isNewerThan(startActivityTime))
+                        .anyMatch(isFrom(Ime1Constants.CLASS).and(isType(ON_START_INPUT))),
+                TIMEOUT, "CtsInputMethod1.onStartInput is called");
+        pollingCheck(() -> helper.queryAllEvents()
+                        .filter(isNewerThan(startActivityTime))
+                        .anyMatch(isFrom(Ime1Constants.CLASS).and(isType(ON_BIND_INPUT))),
+                TIMEOUT, "CtsInputMethod1.onBindInput is called");
+
+        helper.shell(ShellCommandUtils.uninstallPackage(EditTextAppConstants.PACKAGE));
+
+        pollingCheck(() -> helper.queryAllEvents()
+                        .filter(isNewerThan(startActivityTime))
+                        .anyMatch(isFrom(Ime1Constants.CLASS).and(isType(ON_UNBIND_INPUT))),
+                TIMEOUT, "CtsInputMethod1.onUnBindInput is called");
     }
 
     /**
