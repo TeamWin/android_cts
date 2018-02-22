@@ -71,13 +71,22 @@ class LifecycleVerifier {
     }
 
     static void assertRelaunchSequence(Class<? extends Activity> activityClass,
-            LifecycleLog lifecycleLog) {
+            LifecycleLog lifecycleLog, Stage startState) {
         final List<Stage> observedTransitions = lifecycleLog.getActivityLog(activityClass);
         log("Observed sequence: " + observedTransitions);
         final String errorMessage = errorDuringTransition(activityClass, "relaunch");
 
-        final List<Stage> expectedTransitions =
-                Arrays.asList(PAUSED, STOPPED, DESTROYED, PRE_ON_CREATE, CREATED, STARTED, RESUMED);
+        final List<Stage> expectedTransitions;
+        if (startState == PAUSED) {
+            expectedTransitions = Arrays.asList(
+                    STOPPED, DESTROYED, PRE_ON_CREATE, CREATED, STARTED, RESUMED, PAUSED);
+        } else if (startState == STOPPED) {
+            expectedTransitions = Arrays.asList(
+                    DESTROYED, PRE_ON_CREATE, CREATED, STARTED, RESUMED, PAUSED, STOPPED);
+        } else {
+            expectedTransitions = Arrays.asList(
+                    PAUSED, STOPPED, DESTROYED, PRE_ON_CREATE, CREATED, STARTED, RESUMED);
+        }
         assertEquals(errorMessage, expectedTransitions, observedTransitions);
     }
 
