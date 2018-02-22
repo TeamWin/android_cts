@@ -47,7 +47,8 @@ public class DrawActivity extends Activity {
     static final String EXTRA_WIDE_COLOR_GAMUT = "DrawActivity.WIDE_COLOR_GAMUT";
 
     private final static long TIME_OUT_MS = 10000;
-    private final Point mLock = new Point();
+    private final Object mLock = new Object();
+    private ActivityTestBase.TestPositionInfo mPositionInfo;
 
     private Handler mHandler;
     private View mView;
@@ -72,11 +73,11 @@ public class DrawActivity extends Activity {
         return mOnTv;
     }
 
-    public Point enqueueRenderSpecAndWait(int layoutId, CanvasClient canvasClient,
-            @Nullable ViewInitializer viewInitializer, boolean useHardware, boolean usePicture) {
+    public ActivityTestBase.TestPositionInfo enqueueRenderSpecAndWait(int layoutId,
+            CanvasClient canvasClient, @Nullable ViewInitializer viewInitializer,
+            boolean useHardware, boolean usePicture) {
         ((RenderSpecHandler) mHandler).setViewInitializer(viewInitializer);
         int arg2 = (useHardware ? View.LAYER_TYPE_NONE : View.LAYER_TYPE_SOFTWARE);
-        Point point = new Point();
         synchronized (mLock) {
             if (canvasClient != null) {
                 mHandler.obtainMessage(RenderSpecHandler.CANVAS_MSG, usePicture ? 1 : 0,
@@ -87,12 +88,11 @@ public class DrawActivity extends Activity {
 
             try {
                 mLock.wait(TIME_OUT_MS);
-                point.set(mLock.x, mLock.y);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
-        return point;
+        return mPositionInfo;
     }
 
     public void reset() {
@@ -187,8 +187,6 @@ public class DrawActivity extends Activity {
     }
 
     private class DrawCounterListener implements ViewTreeObserver.OnDrawListener {
-        private final int[] mLocationInWindow = new int[2];
-
         @Override
         public void onDraw() {
             long vsyncMillis = mView.getDrawingTime();
@@ -196,9 +194,14 @@ public class DrawActivity extends Activity {
             mView.post(() -> mView.getViewTreeObserver().removeOnDrawListener(this));
 
             mDrawMonitor.notifyWhenDrawn(vsyncMillis, () -> {
+                final int[] location = new int[2];
+                mViewWrapper.getLocationInWindow(location);
+                Point surfaceOffset = new Point(location[0], location[1]);
+                mViewWrapper.getLocationOnScreen(location);
+                Point screenOffset = new Point(location[0], location[1]);
                 synchronized (mLock) {
-                    mViewWrapper.getLocationInWindow(mLocationInWindow);
-                    mLock.set(mLocationInWindow[0], mLocationInWindow[1]);
+                    mPositionInfo = new ActivityTestBase.TestPositionInfo(
+                            surfaceOffset, screenOffset);
                     mLock.notify();
                 }
             });
