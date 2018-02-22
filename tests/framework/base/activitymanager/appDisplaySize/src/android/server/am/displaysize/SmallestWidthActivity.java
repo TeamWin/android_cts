@@ -16,16 +16,14 @@
 
 package android.server.am.displaysize;
 
+import static android.server.am.displaysize.Components.SmallestWidthActivity
+        .EXTRA_LAUNCH_ANOTHER_ACTIVITY;
+
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
 
 public class SmallestWidthActivity extends Activity {
-
-    /**
-     * Extra key to launch another activity. The extra value is activity's component name.
-     */
-    private static final String EXTRA_LAUNCH_ANOTHER_ACTIVITY = "launch_another_activity";
 
     @Override
     protected void onNewIntent(final Intent intent) {
