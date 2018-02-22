@@ -21,6 +21,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.telephony.MbmsDownloadSession;
 import android.telephony.cts.embmstestapp.CtsDownloadService;
+import android.telephony.mbms.DownloadRequest;
 import android.telephony.mbms.MbmsDownloadReceiver;
 
 import java.io.File;
@@ -29,14 +30,16 @@ import java.util.List;
 
 public class MbmsDownloadFlowTest extends MbmsDownloadTestBase {
     private File tempFileRootDir;
-    private String tempFileRootDirPath;
+    private DownloadRequest testDownloadRequest;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
+        testDownloadRequest = downloadRequestTemplate
+                .setAppIntent(new Intent(MbmsDownloadReceiverTest.APP_INTENT_ACTION))
+                .build();
         tempFileRootDir = new File(mContext.getFilesDir(), "CtsTestDir");
         tempFileRootDir.mkdir();
-        tempFileRootDirPath = tempFileRootDir.getCanonicalPath();
         mDownloadSession.setTempFileRootDirectory(tempFileRootDir);
     }
 
@@ -49,15 +52,15 @@ public class MbmsDownloadFlowTest extends MbmsDownloadTestBase {
 
     public void testFileDownloadFlow() throws Exception {
         MbmsDownloadReceiverTest.AppIntentCapture captor =
-                new MbmsDownloadReceiverTest.AppIntentCapture(mContext, mCallbackHandler);
-        mDownloadSession.download(MbmsDownloadReceiverTest.TEST_DOWNLOAD_REQUEST);
+                new MbmsDownloadReceiverTest.AppIntentCapture(mContext, mHandler);
+        mDownloadSession.download(testDownloadRequest);
         mMiddlewareControl.actuallyStartDownloadFlow();
         Intent downloadDoneIntent = captor.getIntent();
 
         assertEquals(MbmsDownloadReceiverTest.APP_INTENT_ACTION, downloadDoneIntent.getAction());
         assertEquals(MbmsDownloadSession.RESULT_SUCCESSFUL,
                 downloadDoneIntent.getIntExtra(MbmsDownloadSession.EXTRA_MBMS_DOWNLOAD_RESULT, -1));
-        assertEquals(MbmsDownloadReceiverTest.TEST_DOWNLOAD_REQUEST,
+        assertEquals(testDownloadRequest,
                 downloadDoneIntent.getParcelableExtra(
                         MbmsDownloadSession.EXTRA_MBMS_DOWNLOAD_REQUEST));
         assertEquals(CtsDownloadService.FILE_INFO,
