@@ -958,6 +958,15 @@ public class ActivityAndWindowManagersState {
         }
     }
 
+    public void assertActivityDisplayed(final ComponentName activityName) throws Exception {
+        assertWindowDisplayed(getWindowName(activityName));
+    }
+
+    public void assertWindowDisplayed(final String windowName) throws Exception {
+        waitForValidState(WaitForValidActivityState.forWindow(windowName));
+        assertTrue(windowName + "is visible", getWmState().isWindowVisible(windowName));
+    }
+
     boolean isScreenPortrait() {
         final int displayId = mAmState.getStandardStackByWindowingMode(
             WINDOWING_MODE_SPLIT_SCREEN_PRIMARY).mDisplayId;

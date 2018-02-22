@@ -29,6 +29,7 @@ LOCAL_SRC_FILES := \
     $(call all-named-files-under,Components.java, appDebuggable) \
     $(call all-named-files-under,Components.java, appDeprecatedSdk) \
     $(call all-named-files-under,Components.java, appDisplaySize) \
+    $(call all-named-files-under,Components.java, appPrereleaseSdk) \
     $(call all-named-files-under,Components.java, appSecondUid) \
     $(call all-named-files-under,Components.java, appThirdUid) \
     $(call all-named-files-under,Components.java, translucentapp) \
