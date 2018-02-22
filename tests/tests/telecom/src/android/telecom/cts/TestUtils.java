@@ -223,17 +223,36 @@ public class TestUtils {
         }
     }
 
-    public static CountDownLatch waitForLock(CountDownLatch lock) {
-        boolean success;
-        try {
-            if (lock == null) {
-                return null;
-            }
-            success = lock.await(5000, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException ie) {
-            return null;
+    /**
+     * Waits for the {@link CountDownLatch} to count down to 0 and then returns without reseting
+     * the latch.
+     * @param lock the latch that the system will wait on.
+     * @return true if the latch was released successfully, false if the latch timed out before
+     * resetting.
+     */
+    public static boolean waitForLatchCountDown(CountDownLatch lock) {
+        if (lock == null) {
+            return false;
         }
 
+        boolean success;
+        try {
+            success = lock.await(5000, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException ie) {
+            return false;
+        }
+
+        return success;
+    }
+
+    /**
+     * Waits for the {@link CountDownLatch} to count down to 0 and then returns a new reset latch.
+     * @param lock The lock that will await a countDown to 0.
+     * @return a new reset {@link CountDownLatch} if the lock successfully counted down to 0 or
+     * null if the operation timed out.
+     */
+    public static CountDownLatch waitForLock(CountDownLatch lock) {
+        boolean success = waitForLatchCountDown(lock);
         if (success) {
             return new CountDownLatch(1);
         } else {
