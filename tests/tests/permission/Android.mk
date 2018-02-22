@@ -43,6 +43,7 @@ LOCAL_PACKAGE_NAME := CtsPermissionTestCases
 
 # uncomment when b/13249777 is fixed
 #LOCAL_SDK_VERSION := current
+LOCAL_PRIVATE_PLATFORM_APIS := true
 LOCAL_JAVA_LIBRARIES += android.test.runner.stubs
 LOCAL_JAVA_LIBRARIES += android.test.base.stubs
 

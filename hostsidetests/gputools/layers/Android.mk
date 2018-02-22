@@ -54,6 +54,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE_TAGS := tests
 
 LOCAL_PACKAGE_NAME := CtsGpuToolsRootlessGpuDebugApp-LAYERS
+LOCAL_SDK_VERSION := current
 
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts
