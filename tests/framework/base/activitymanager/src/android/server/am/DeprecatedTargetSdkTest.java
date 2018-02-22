@@ -16,8 +16,13 @@
 
 package android.server.am;
 
+import static android.server.am.ComponentNameUtils.getWindowName;
+import static android.server.am.UiDeviceUtils.pressBackButton;
+import static android.server.am.deprecatedsdk.Components.MAIN_ACTIVITY;
+
 import static org.junit.Assert.assertTrue;
 
+import android.content.ComponentName;
 import android.support.test.runner.AndroidJUnit4;
 
 import org.junit.After;
@@ -32,11 +37,10 @@ import org.junit.runner.RunWith;
  */
 @RunWith(AndroidJUnit4.class)
 public class DeprecatedTargetSdkTest extends ActivityManagerTestBase {
-    private static final String AM_START_COMMAND = "am start -n %s/%s.%s";
-    private static final String AM_FORCE_STOP = "am force-stop %s";
 
-    private static final int ACTIVITY_TIMEOUT_MILLIS = 1000;
-    private static final int WINDOW_TIMEOUT_MILLIS = 1000;
+    /** @see com.android.server.am.DeprecatedTargetSdkVersionDialog */
+    private static final String DEPRECATED_TARGET_SDK_VERSION_DIALOG =
+            "DeprecatedTargetSdkVersionDialog";
 
     @After
     @Override
@@ -44,49 +48,31 @@ public class DeprecatedTargetSdkTest extends ActivityManagerTestBase {
         super.tearDown();
 
         // Ensure app process is stopped.
-        forceStopPackage("android.server.am.deprecatedsdk");
-        forceStopPackage("android.server.am");
+        stopTestPackage(MAIN_ACTIVITY);
     }
 
     @Test
     public void testCompatibilityDialog() throws Exception {
         // Launch target app.
-        startActivity("android.server.am.deprecatedsdk", "MainActivity");
-        verifyWindowDisplayed("MainActivity", ACTIVITY_TIMEOUT_MILLIS);
-        verifyWindowDisplayed("DeprecatedTargetSdkVersionDialog", WINDOW_TIMEOUT_MILLIS);
+        launchActivity(MAIN_ACTIVITY);
+        assertActivityDisplayed(MAIN_ACTIVITY);
+        assertWindowDisplayed(DEPRECATED_TARGET_SDK_VERSION_DIALOG);
 
         // Go back to dismiss the warning dialog.
-        executeShellCommand("input keyevent 4");
+        pressBackButton();
 
         // Go back again to formally stop the app. If we just kill the process, it'll attempt to
         // resume rather than starting from scratch (as far as ActivityStack is concerned) and it
         // won't invoke the warning dialog.
-        executeShellCommand("input keyevent 4");
+        pressBackButton();
     }
 
-    private void forceStopPackage(String packageName) {
-        final String forceStopCmd = String.format(AM_FORCE_STOP, packageName);
-        executeShellCommand(forceStopCmd);
+    private void assertActivityDisplayed(final ComponentName activityName) throws Exception {
+        assertWindowDisplayed(getWindowName(activityName));
     }
 
-    private void startActivity(String packageName, String activityName){
-        executeShellCommand(getStartCommand(packageName, activityName));
-    }
-
-    private String getStartCommand(String packageName, String activityName) {
-        return String.format(AM_START_COMMAND, packageName, packageName, activityName);
-    }
-
-    private void verifyWindowDisplayed(String windowName, long timeoutMillis) {
-        boolean success = false;
-
-        // Verify that compatibility dialog is shown within 1000ms.
-        final long timeoutTimeMillis = System.currentTimeMillis() + timeoutMillis;
-        while (!success && System.currentTimeMillis() < timeoutTimeMillis) {
-            final String output = executeShellCommand("dumpsys window");
-            success = output.contains(windowName);
-        }
-
-        assertTrue(windowName + " was not displayed", success);
+    private void assertWindowDisplayed(final String windowName) throws Exception {
+        mAmWmState.waitForValidState(WaitForValidActivityState.forWindow(windowName));
+        assertTrue(windowName + "is visible", mAmWmState.getWmState().isWindowVisible(windowName));
     }
 }
