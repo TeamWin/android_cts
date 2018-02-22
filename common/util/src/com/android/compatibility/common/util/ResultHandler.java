@@ -156,8 +156,9 @@ public class ResultHandler {
      * @return an IInvocationResult for this result, or null upon error
      */
     public static IInvocationResult getResultFromDir(File resultDir, Boolean useChecksum) {
+        File resultFile = null;
         try {
-            File resultFile = new File(resultDir, TEST_RESULT_FILE_NAME);
+            resultFile = new File(resultDir, TEST_RESULT_FILE_NAME);
             if (!resultFile.exists()) {
                 return null;
             }
@@ -277,6 +278,9 @@ public class ResultHandler {
             parser.require(XmlPullParser.END_TAG, NS, RESULT_TAG);
             return invocation;
         } catch (XmlPullParserException | IOException e) {
+            System.out.println(
+                    String.format("Exception when trying to load %s",
+                            resultFile.getAbsolutePath()));
             e.printStackTrace();
             return null;
         }
