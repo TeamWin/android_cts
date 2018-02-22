@@ -25,6 +25,9 @@ LOCAL_MULTILIB := both
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src) $(call all-Iaidl-files-under, src)
 
+LOCAL_AIDL_INCLUDES := \
+    frameworks/native/aidl/gui
+
 LOCAL_STATIC_JAVA_LIBRARIES := android-ex-camera2 \
                                compatibility-common-util-devicesidelib \
                                cts-sensors-tests \
@@ -46,6 +49,7 @@ LOCAL_JAVA_LIBRARIES += android.test.runner.stubs
 LOCAL_JAVA_LIBRARIES += android.test.base.stubs
 LOCAL_JAVA_LIBRARIES += android.test.mock.stubs
 LOCAL_JAVA_LIBRARIES += bouncycastle
+LOCAL_JAVA_LIBRARIES += voip-common
 
 LOCAL_PACKAGE_NAME := CtsVerifier
 
@@ -54,8 +58,6 @@ LOCAL_JNI_SHARED_LIBRARIES := libctsverifier_jni \
 		libnativehelper_compat_libc++
 
 LOCAL_PROGUARD_FLAG_FILES := proguard.flags
-
-LOCAL_SDK_VERSION := test_current
 
 LOCAL_DEX_PREOPT := false
 -include cts/error_prone_rules_tests.mk
