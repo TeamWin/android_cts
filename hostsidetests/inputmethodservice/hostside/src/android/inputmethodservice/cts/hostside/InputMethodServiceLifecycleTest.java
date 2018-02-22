@@ -25,6 +25,7 @@ import static android.inputmethodservice.cts.common.DeviceEventConstants.RECEIVE
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
+import android.inputmethodservice.cts.common.EditTextAppConstants;
 import android.inputmethodservice.cts.common.EventProviderConstants.EventTableConstants;
 import android.inputmethodservice.cts.common.Ime1Constants;
 import android.inputmethodservice.cts.common.Ime2Constants;
@@ -149,6 +150,35 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         shell(ShellCommandUtils.setCurrentIme(Ime1Constants.IME_ID));
 
         assertTrue(runDeviceTestMethod(testSwitchInputs));
+    }
+
+    @Test
+    public void testInputUnbindsOnImeStopped() throws Exception {
+        final TestInfo testUnbind = new TestInfo(
+                DeviceTestConstants.PACKAGE, DeviceTestConstants.TEST_CLASS,
+                DeviceTestConstants.TEST_INPUT_UNBINDS_ON_IME_STOPPED);
+        sendTestStartEvent(testUnbind);
+        installPackage(Ime1Constants.APK, "-r");
+        installPackage(Ime2Constants.APK, "-r");
+        shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
+        shell(ShellCommandUtils.enableIme(Ime2Constants.IME_ID));
+        shell(ShellCommandUtils.setCurrentIme(Ime1Constants.IME_ID));
+
+        assertTrue(runDeviceTestMethod(testUnbind));
+    }
+
+    @Test
+    public void testInputUnbindsOnAppStop() throws Exception {
+        final TestInfo testUnbind = new TestInfo(
+                DeviceTestConstants.PACKAGE, DeviceTestConstants.TEST_CLASS,
+                DeviceTestConstants.TEST_INPUT_UNBINDS_ON_APP_STOPPED);
+        sendTestStartEvent(testUnbind);
+        installPackage(Ime1Constants.APK, "-r");
+        installPackage(EditTextAppConstants.APK, "-r");
+        shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
+        shell(ShellCommandUtils.setCurrentIme(Ime1Constants.IME_ID));
+
+        assertTrue(runDeviceTestMethod(testUnbind));
     }
 
     private void sendTestStartEvent(final TestInfo deviceTest) throws Exception {

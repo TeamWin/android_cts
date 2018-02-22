@@ -16,12 +16,18 @@
 
 package android.inputmethodservice.cts.ime;
 
+import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType
+        .ON_BIND_INPUT;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_CREATE;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_DESTROY;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_FINISH_INPUT;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_FINISH_INPUT_VIEW;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_START_INPUT;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_START_INPUT_VIEW;
+
+
+import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType
+        .ON_UNBIND_INPUT;
 
 import android.content.Intent;
 import android.inputmethodservice.InputMethodService;
@@ -44,7 +50,7 @@ public abstract class CtsBaseInputMethod extends InputMethodService implements I
 
     @Override
     public void onCreate() {
-        mLogTag = getClass().getSimpleName();
+        mLogTag = "CtsBaseInputMethod";//getClass().getSimpleName();
         if (DEBUG) {
             Log.d(mLogTag, "onCreate:");
         }
@@ -53,6 +59,15 @@ public abstract class CtsBaseInputMethod extends InputMethodService implements I
         super.onCreate();
 
         mImeCommandReceiver.register(this /* ime */);
+    }
+
+    @Override
+    public void onBindInput() {
+        if (DEBUG) {
+            Log.d(mLogTag, "onBindInput");
+        }
+        sendEvent(ON_BIND_INPUT);
+        super.onBindInput();
     }
 
     @Override
@@ -77,6 +92,15 @@ public abstract class CtsBaseInputMethod extends InputMethodService implements I
         sendEvent(ON_START_INPUT_VIEW, editorInfo, restarting);
 
         super.onStartInputView(editorInfo, restarting);
+    }
+
+    @Override
+    public void onUnbindInput() {
+        super.onUnbindInput();
+        if (DEBUG) {
+            Log.d(mLogTag, "onUnbindInput");
+        }
+        sendEvent(ON_UNBIND_INPUT);
     }
 
     @Override
