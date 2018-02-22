@@ -198,7 +198,7 @@ public class CtsSelfManagedConnectionService extends ConnectionService {
      *      timeout expired without the lock being released.
      */
     public boolean waitForUpdate(int lock) {
-        mLocks[lock] = waitForLock(mLocks[lock]);
+        mLocks[lock] = TestUtils.waitForLock(mLocks[lock]);
         return mLocks[lock] != null;
     }
 
@@ -207,31 +207,7 @@ public class CtsSelfManagedConnectionService extends ConnectionService {
      * @return {@code true} if binding happened within the time limit, or {@code false} otherwise.
      */
     public static boolean waitForBinding() {
-        sBindingLock = waitForLock(sBindingLock);
-        return sBindingLock != null;
-    }
-
-    /**
-     * Given a {@link CountDownLatch}, wait for the latch to reach zero for 5 seconds.  If the lock
-     * was released, return a new instance.  Otherwise, return null to indicate that the timeout
-     * expired without the lock being released.
-     *
-     * @param lock The lock to wait on.
-     * @return {@code true} if the lock was released, and {@code false} if it failed to be released.
-     */
-    private static CountDownLatch waitForLock(CountDownLatch lock) {
-        boolean success;
-        try {
-            success = lock.await(5000, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException ie) {
-            return null;
-        }
-
-        if (success) {
-            return new CountDownLatch(1);
-        } else {
-            return null;
-        }
+        return TestUtils.waitForLatchCountDown(sBindingLock);
     }
 
     public TestUtils.InvokeCounter getOnCreateIncomingHandoverConnectionCounter() {
