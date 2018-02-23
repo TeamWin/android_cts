@@ -1328,7 +1328,8 @@ public class ItsService extends Service implements SensorEventListener {
 
                 int newCount = mCountCallbacksRemaining.get();
                 if (newCount == currentCount) {
-                    throw new ItsException("No callback received within timeout");
+                    throw new ItsException("No callback received within timeout " +
+                            timeoutMs + "ms");
                 }
                 currentCount = newCount;
             }
@@ -1802,8 +1803,8 @@ public class ItsService extends Service implements SensorEventListener {
                     logMsg.append(String.format(
                             "sens=%d, exp=%.1fms, dur=%.1fms, ",
                             result.get(CaptureResult.SENSOR_SENSITIVITY),
-                            result.get(CaptureResult.SENSOR_EXPOSURE_TIME).intValue() / 1000000.0f,
-                            result.get(CaptureResult.SENSOR_FRAME_DURATION).intValue() /
+                            result.get(CaptureResult.SENSOR_EXPOSURE_TIME).longValue() / 1000000.0f,
+                            result.get(CaptureResult.SENSOR_FRAME_DURATION).longValue() /
                                         1000000.0f));
                 }
                 if (result.get(CaptureResult.COLOR_CORRECTION_GAINS) != null) {
