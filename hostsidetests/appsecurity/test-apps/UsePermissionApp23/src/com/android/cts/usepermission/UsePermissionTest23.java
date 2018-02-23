@@ -51,6 +51,7 @@ public class UsePermissionTest23 extends BasePermissionsTest {
     }
 
     @Ignore
+    @Test
     public void testFail() throws Exception {
         fail("Expected");
     }

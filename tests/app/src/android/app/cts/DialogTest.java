@@ -746,6 +746,7 @@ public class DialogTest {
         assertFalse(d.isOnContextMenuClosedCalled);
     }
 
+    @Test
     public void testOnSearchRequested() {
     }
 
