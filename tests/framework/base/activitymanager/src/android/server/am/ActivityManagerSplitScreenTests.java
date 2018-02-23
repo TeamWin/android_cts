@@ -244,6 +244,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
 
     @Test
     @Presubmit
+    @FlakyTest(bugId = 73808815)
     public void testLaunchToSideSingleInstance() throws Exception {
         launchTargetToSide(SINGLE_INSTANCE_ACTIVITY, false);
     }
