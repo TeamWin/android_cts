@@ -20,6 +20,7 @@ LOCAL_MODULE_TAGS := tests optional
 
 # Must match the package name in CtsTestCaseList.mk
 LOCAL_PACKAGE_NAME := CtsActivityManagerDeviceTestCases
+LOCAL_PRIVATE_PLATFORM_APIS := true
 
 LOCAL_SRC_FILES := \
     $(call all-java-files-under, src) \

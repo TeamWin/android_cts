@@ -119,7 +119,7 @@ public class TestResult implements Parcelable {
         mStatus = source.readString();
         mException = source.readString();
         mIntent = source.readParcelable(Object.class.getClassLoader());
-        mInstantAppPackageInfoExposed = source.readBoolean();
+        mInstantAppPackageInfoExposed = source.readInt() != 0;
     }
 
     public static class Builder {

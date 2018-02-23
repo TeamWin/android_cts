@@ -36,5 +36,6 @@ LOCAL_PACKAGE_NAME := CtsSpeechTestCases
 
 # Needed for testing O API
 #LOCAL_SDK_VERSION := test_current
+LOCAL_PRIVATE_PLATFORM_APIS := true
 
 include $(BUILD_CTS_PACKAGE)
