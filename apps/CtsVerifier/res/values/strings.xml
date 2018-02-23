@@ -1695,10 +1695,11 @@
 
     <string name="caboot_test">CA Cert Notification on Boot test</string>
     <string name="caboot_info">This test is to confirm that when the user has installed a trusted credential, the system notifies the user when it boots.</string>
-    <string name="caboot_check_cert_installed">Please check here to see whether a certificate is already installed. (If this button does nothing, pass the test and move on.)</string>
+    <string name="caboot_check_cert_installed">Please check here to see whether a certificate is already installed. If this button does nothing, pass the test and move on.</string>
     <string name="caboot_check_creds">Check Credentials</string>
-    <string name="caboot_if_not_installed">Only if there is no credential currently installed, install one. (If this button does nothing, pass the test and move on.)</string>
+    <string name="caboot_if_not_installed">Only if there is no credential currently installed, install one.</string>
     <string name="caboot_install_cert">Install credential</string>
+    <string name="caboot_remove_screen_lock">Remove screen lock</string>
     <string name="caboot_reboot_desc">Please reboot the device and return to this test.</string>
     <string name="caboot_after_boot">AFTER REBOOTING: Check that there is a notification that the network may be monitored. Opening that notification should show a dialog box giving more information, with a button to check trusted credentials. This should open up the same view of trusted credentials that you get via the "Check credentials" button.</string>
 
