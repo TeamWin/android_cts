@@ -15,6 +15,7 @@
  */
 package android.autofillservice.cts;
 
+import static android.autofillservice.cts.Helper.assertTextIsSanitized;
 import static android.autofillservice.cts.Helper.getContext;
 import static android.autofillservice.cts.Helper.hasAutofillFeature;
 import static android.autofillservice.cts.InstrumentedAutoFillServiceCompatMode.SERVICE_NAME;
@@ -22,12 +23,14 @@ import static android.autofillservice.cts.InstrumentedAutoFillServiceCompatMode.
 import static android.autofillservice.cts.common.SettingsHelper.NAMESPACE_GLOBAL;
 import static android.provider.Settings.Global.AUTOFILL_COMPAT_ALLOWED_PACKAGES;
 
+import static com.google.common.truth.Truth.assertThat;
+
+import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.common.SettingsStateChangerRule;
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 
 import org.junit.After;
-import org.junit.Before;
 import org.junit.ClassRule;
 
 /**
@@ -76,8 +79,15 @@ public class VirtualContainerActivityCompatModeTest extends VirtualContainerActi
         InstrumentedAutoFillServiceCompatMode.setIgnoreUnexpectedRequests(true);
     }
 
+    @Override
+    protected void assertUrlBarIsSanitized(ViewNode urlBar) {
+        assertTextIsSanitized(urlBar);
+        assertThat(urlBar.getWebDomain()).isEqualTo("dev.null");
+        assertThat(urlBar.getWebScheme()).isEqualTo("ftp");
+    }
+
     // TODO(b/72811561): currently only one test pass at time; remove once they all pass
-    @Before
+    @After
     public void thereCanBeOnlyOne() {
         sRanAlready = true;
     }
