@@ -35,7 +35,6 @@
 
 # Jack seems less rigorous than proguard when it comes to warning about
 # transitive dependencies.
--dontwarn com.android.org.bouncycastle.**
 -dontwarn com.android.okhttp.**
 -dontwarn org.opencv.**
 -dontwarn android.support.test.internal.runner.hidden.ExposedInstrumentationApi
