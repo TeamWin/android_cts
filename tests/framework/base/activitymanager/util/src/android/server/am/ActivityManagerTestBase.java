@@ -33,6 +33,20 @@ import static android.content.pm.PackageManager.FEATURE_SCREEN_LANDSCAPE;
 import static android.content.pm.PackageManager.FEATURE_SCREEN_PORTRAIT;
 import static android.content.pm.PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE;
 import static android.content.pm.PackageManager.FEATURE_WATCH;
+import static android.server.am.ActivityLauncher.KEY_DISPLAY_ID;
+import static android.server.am.ActivityLauncher.KEY_LAUNCH_ACTIVITY;
+import static android.server.am.ActivityLauncher.KEY_LAUNCH_TO_SIDE;
+import static android.server.am.ActivityLauncher.KEY_MULTIPLE_TASK;
+import static android.server.am.ActivityLauncher.KEY_NEW_TASK;
+import static android.server.am.ActivityLauncher.KEY_RANDOM_DATA;
+import static android.server.am.ActivityLauncher.KEY_REORDER_TO_FRONT;
+import static android.server.am.ActivityLauncher.KEY_SUPPRESS_EXCEPTIONS;
+import static android.server.am.ActivityLauncher.KEY_TARGET_ACTIVITY;
+import static android.server.am.ActivityLauncher.KEY_TARGET_COMPONENT;
+import static android.server.am.ActivityLauncher.KEY_TARGET_PACKAGE;
+import static android.server.am.ActivityLauncher.KEY_USE_APPLICATION_CONTEXT;
+import static android.server.am.ActivityLauncher.KEY_USE_INSTRUMENTATION;
+import static android.server.am.ActivityLauncher.launchActivityFromExtras;
 import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.ComponentNameUtils.getLogTag;
 import static android.server.am.ComponentNameUtils.getSimpleClassName;
@@ -58,6 +72,7 @@ import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.provider.Settings;
@@ -504,16 +519,10 @@ public abstract class ActivityManagerTestBase {
     protected void launchActivitiesInSplitScreen(LaunchActivityBuilder primaryActivity,
             LaunchActivityBuilder secondaryActivity) throws Exception {
         // Launch split-screen primary.
-        String tmpLaunchingActivityName = primaryActivity.mLaunchingActivityName;
         primaryActivity
-                // TODO(b/70618153): Work around issues with the activity launch builder where
-                // launching activity doesn't work. We don't really need launching activity in this
-                // case and should probably change activity launcher to work without a launching
-                // activity.
-                .setLaunchingActivityName(primaryActivity.mTargetActivityName)
+                .setUseInstrumentation()
                 .setWaitForLaunched(true)
                 .execute();
-        primaryActivity.setLaunchingActivityName(tmpLaunchingActivityName);
 
         final int taskId = mAmWmState.getAmState().getTaskByActivityName(
                 primaryActivity.mTargetActivityName).mTaskId;
@@ -523,17 +532,13 @@ public abstract class ActivityManagerTestBase {
         mAmWmState.waitForRecentsActivityVisible();
 
         // Launch split-screen secondary
-        tmpLaunchingActivityName = secondaryActivity.mLaunchingActivityName;
+        // Recents become focused, so we can just launch new task in focused stack
         secondaryActivity
-                // TODO(b/70618153): Work around issues with the activity launch builder where
-                // launching activity doesn't work. We don't really need launching activity in this
-                // case and should probably change activity launcher to work without a launching
-                // activity.
-                .setLaunchingActivityName(secondaryActivity.mTargetActivityName)
+                .setUseInstrumentation()
                 .setWaitForLaunched(true)
-                .setToSide(true)
+                .setNewTask(true)
+                .setMultipleTask(true)
                 .execute();
-        secondaryActivity.setLaunchingActivityName(tmpLaunchingActivityName);
     }
 
     protected void setActivityTaskWindowingMode(final ComponentName activityName,
@@ -1462,6 +1467,11 @@ public abstract class ActivityManagerTestBase {
         private String mBroadcastReceiverPackage;
         private String mBroadcastReceiverAction;
 
+        private enum LauncherType {
+            INSTRUMENTATION, LAUNCHING_ACTIVITY, BROADCAST_RECEIVER
+        }
+        private LauncherType mLauncherType = LauncherType.LAUNCHING_ACTIVITY;
+
         public LaunchActivityBuilder(ActivityAndWindowManagersState amWmState) {
             mAmWmState = amWmState;
             mWaitForLaunched = true;
@@ -1521,11 +1531,13 @@ public abstract class ActivityManagerTestBase {
         @Deprecated
         public LaunchActivityBuilder setLaunchingActivityName(String name) {
             mLaunchingActivityName = name;
+            mLauncherType = LauncherType.LAUNCHING_ACTIVITY;
             return this;
         }
 
         public LaunchActivityBuilder setLaunchingActivity(ComponentName component) {
             mLaunchingActivity = component;
+            mLauncherType = LauncherType.LAUNCHING_ACTIVITY;
             return this;
         }
 
@@ -1534,11 +1546,21 @@ public abstract class ActivityManagerTestBase {
             return this;
         }
 
-        /** Use broadcast receiver instead of launching activity. */
+        /** Use broadcast receiver as a launchpad for activities. */
         public LaunchActivityBuilder setUseBroadcastReceiver(final ComponentName broadcastReceiver,
                 final String broadcastAction) {
             mBroadcastReceiverPackage = broadcastReceiver.getPackageName();
             mBroadcastReceiverAction = broadcastAction;
+            mLauncherType = LauncherType.BROADCAST_RECEIVER;
+            return this;
+        }
+
+        /** Use {@link android.app.Instrumentation} as a launchpad for activities. */
+        public LaunchActivityBuilder setUseInstrumentation() {
+            mLauncherType = LauncherType.INSTRUMENTATION;
+            // Calling startActivity() from outside of an Activity context requires the
+            // FLAG_ACTIVITY_NEW_TASK flag.
+            setNewTask(true);
             return this;
         }
 
@@ -1548,6 +1570,44 @@ public abstract class ActivityManagerTestBase {
         }
 
         public void execute() throws Exception {
+            switch (mLauncherType) {
+                case INSTRUMENTATION:
+                    launchUsingInstrumentation();
+                    break;
+                case LAUNCHING_ACTIVITY:
+                case BROADCAST_RECEIVER:
+                    launchUsingShellCommand();
+            }
+
+            if (mWaitForLaunched) {
+                mAmWmState.waitForValidState(false /* compareTaskAndStackBounds */, mTargetPackage,
+                        new WaitForValidActivityState.Builder(mTargetActivityName).build());
+            }
+        }
+
+        /** Launch an activity using instrumentation. */
+        private void launchUsingInstrumentation() {
+            final Bundle b = new Bundle();
+            b.putBoolean(KEY_USE_INSTRUMENTATION, true);
+            b.putBoolean(KEY_LAUNCH_ACTIVITY, true);
+            b.putBoolean(KEY_LAUNCH_TO_SIDE, mToSide);
+            b.putBoolean(KEY_RANDOM_DATA, mRandomData);
+            b.putBoolean(KEY_NEW_TASK, mNewTask);
+            b.putBoolean(KEY_MULTIPLE_TASK, mMultipleTask);
+            b.putBoolean(KEY_REORDER_TO_FRONT, mReorderToFront);
+            b.putString(KEY_TARGET_ACTIVITY, mTargetActivityName);
+            b.putString(KEY_TARGET_PACKAGE, mTargetPackage);
+            b.putInt(KEY_DISPLAY_ID, mDisplayId);
+            b.putBoolean(KEY_USE_APPLICATION_CONTEXT, mUseApplicationContext);
+            b.putString(KEY_TARGET_COMPONENT, mComponent != null ? getActivityName(mComponent)
+                    : null);
+            b.putBoolean(KEY_SUPPRESS_EXCEPTIONS, mSuppressExceptions);
+            final Context context = InstrumentationRegistry.getContext();
+            launchActivityFromExtras(context, b);
+        }
+
+        /** Build and execute a shell command to launch an activity. */
+        private void launchUsingShellCommand() {
             StringBuilder commandBuilder = new StringBuilder();
             if (mBroadcastReceiverPackage != null && mBroadcastReceiverAction != null) {
                 // Use broadcast receiver to launch the target.
@@ -1566,51 +1626,47 @@ public abstract class ActivityManagerTestBase {
             }
 
             // Add a flag to ensure we actually mean to launch an activity.
-            commandBuilder.append(" --ez launch_activity true");
+            commandBuilder.append(" --ez " + KEY_LAUNCH_ACTIVITY + " true");
 
             if (mToSide) {
-                commandBuilder.append(" --ez launch_to_the_side true");
+                commandBuilder.append(" --ez " + KEY_LAUNCH_TO_SIDE + " true");
             }
             if (mRandomData) {
-                commandBuilder.append(" --ez random_data true");
+                commandBuilder.append(" --ez " + KEY_RANDOM_DATA + " true");
             }
             if (mNewTask) {
-                commandBuilder.append(" --ez new_task true");
+                commandBuilder.append(" --ez " + KEY_NEW_TASK + " true");
             }
             if (mMultipleTask) {
-                commandBuilder.append(" --ez multiple_task true");
+                commandBuilder.append(" --ez " + KEY_MULTIPLE_TASK + " true");
             }
             if (mReorderToFront) {
-                commandBuilder.append(" --ez reorder_to_front true");
+                commandBuilder.append(" --ez " + KEY_REORDER_TO_FRONT + " true");
             }
             if (mTargetActivityName != null) {
-                commandBuilder.append(" --es target_activity ").append(mTargetActivityName);
-                commandBuilder.append(" --es package_name ").append(mTargetPackage);
+                commandBuilder.append(" --es " + KEY_TARGET_ACTIVITY + " ")
+                        .append(mTargetActivityName);
+                commandBuilder.append(" --es " + KEY_TARGET_PACKAGE + " ").append(mTargetPackage);
             }
             if (mDisplayId != INVALID_DISPLAY_ID) {
-                commandBuilder.append(" --ei display_id ").append(mDisplayId);
+                commandBuilder.append(" --ei " + KEY_DISPLAY_ID + " ").append(mDisplayId);
             }
 
             if (mUseApplicationContext) {
-                commandBuilder.append(" --ez use_application_context true");
+                commandBuilder.append(" --ez " + KEY_USE_APPLICATION_CONTEXT + " true");
             }
 
             if (mComponent != null) {
                 // {@link ActivityLauncher} parses this extra string by
                 // {@link ComponentName#unflattenFromString(String)}.
-                commandBuilder.append(" --es target_component ")
+                commandBuilder.append(" --es " + KEY_TARGET_COMPONENT + " ")
                         .append(getActivityName(mComponent));
             }
 
             if (mSuppressExceptions) {
-                commandBuilder.append(" --ez suppress_exceptions true");
+                commandBuilder.append(" --ez " + KEY_SUPPRESS_EXCEPTIONS + " true");
             }
             executeShellCommand(commandBuilder.toString());
-
-            if (mWaitForLaunched) {
-                mAmWmState.waitForValidState(false /* compareTaskAndStackBounds */, mTargetPackage,
-                        new WaitForValidActivityState(mTargetActivityName));
-            }
         }
     }
 }

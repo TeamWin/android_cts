@@ -18,13 +18,15 @@ package android.server.am;
 
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY;
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC;
+import static android.server.am.ActivityLauncher.KEY_DISPLAY_ID;
+import static android.server.am.ActivityLauncher.KEY_LAUNCH_ACTIVITY;
+import static android.server.am.ActivityLauncher.KEY_TARGET_ACTIVITY;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.os.Bundle;
-import android.server.am.util.ActivityLauncher;
 import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
@@ -227,9 +229,9 @@ public class VirtualDisplayActivity extends Activity implements SurfaceHolder.Ca
 
     private void launchActivity(String activityName, int displayId) {
         final Bundle extras = new Bundle();
-        extras.putBoolean("launch_activity", true);
-        extras.putString("target_activity", activityName);
-        extras.putInt("display_id", displayId);
+        extras.putBoolean(KEY_LAUNCH_ACTIVITY, true);
+        extras.putString(KEY_TARGET_ACTIVITY, activityName);
+        extras.putInt(KEY_DISPLAY_ID, displayId);
         ActivityLauncher.launchActivityFromExtras(this, extras);
     }
 }

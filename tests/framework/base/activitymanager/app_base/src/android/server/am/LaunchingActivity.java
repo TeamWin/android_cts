@@ -17,11 +17,8 @@
 package android.server.am;
 
 import android.os.Bundle;
-import android.server.am.util.ActivityLauncher;
 import android.app.Activity;
 import android.content.Intent;
-import android.server.am.util.ActivityLauncher;
-import android.util.Log;
 
 /**
  * Activity that launches another activities when new intent is received.
