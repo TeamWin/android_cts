@@ -1,4 +1,4 @@
-<!--
+/*
  * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,11 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- -->
-<device-admin xmlns:android="http://schemas.android.com/apk/res/android" android:visible="false">
-    <support-transfer-ownership/>
-    <uses-policies>
-        <limit-password/>
-        <watch-login/>
-        <reset-password/>
-        <force-lock/>
-        <wipe-data/>
-        <expire-password/>
-        <encrypted-storage/>
-        <disable-camera/>
-    </uses-policies>
-</device-admin>
+ */
+
+package android.admin.app;
+
+import android.app.admin.DeviceAdminReceiver;
+
+public class CtsDeviceAdminReceiver3 extends DeviceAdminReceiver {
+}
