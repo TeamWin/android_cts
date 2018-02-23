@@ -516,11 +516,6 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
     }
 
     @Override
-    protected void cleanUpAfterScreenOrientationIsBackToPortrait() throws Exception {
-        sReplier.getNextFillRequest();
-    }
-
-    @Override
     protected void tapLinkThenTapBackThenStartOverTest(PostSaveLinkTappedAction action,
             boolean manualRequest) throws Exception {
         startActivity();

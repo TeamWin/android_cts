@@ -15,8 +15,6 @@
  */
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.Helper.runShellCommand;
-
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.Activity;
@@ -65,11 +63,9 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
     public final void testTapLink_changeOrientationThenTapBack() throws Exception {
         sUiBot.setScreenOrientation(UiBot.PORTRAIT);
         try {
-            runShellCommand("wm density 420");
             saveUiRestoredAfterTappingLinkTest(
                     PostSaveLinkTappedAction.ROTATE_THEN_TAP_BACK_BUTTON);
         } finally {
-            runShellCommand("wm density reset");
             sUiBot.setScreenOrientation(UiBot.PORTRAIT);
         }
     }
@@ -86,9 +82,6 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
 
     protected abstract void saveUiRestoredAfterTappingLinkTest(PostSaveLinkTappedAction type)
             throws Exception;
-
-    protected void cleanUpAfterScreenOrientationIsBackToPortrait() throws Exception {
-    }
 
     /**
      * Tests scenarios when user taps a link in the custom description, taps back to return to the
