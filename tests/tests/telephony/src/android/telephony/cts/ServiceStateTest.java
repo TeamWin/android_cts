@@ -23,6 +23,8 @@ public class ServiceStateTest extends AndroidTestCase {
     private static final String OPERATOR_ALPHA_LONG = "CtsOperatorLong";
     private static final String OPERATOR_ALPHA_SHORT = "CtsOp";
     private static final String OPERATOR_NUMERIC = "02871";
+    private static final int SYSTEM_ID = 123;
+    private static final int NETWORK_ID = 456;
 
     public void testServiceState() {
         ServiceState serviceState = new ServiceState();
@@ -52,6 +54,10 @@ public class ServiceStateTest extends AndroidTestCase {
         assertEquals(OPERATOR_ALPHA_LONG, serviceState.getOperatorAlphaLong());
         assertEquals(OPERATOR_ALPHA_SHORT, serviceState.getOperatorAlphaShort());
         assertEquals(OPERATOR_NUMERIC, serviceState.getOperatorNumeric());
+
+        serviceState.setSystemAndNetworkId(SYSTEM_ID, NETWORK_ID);
+        assertEquals(SYSTEM_ID, serviceState.getSystemId());
+        assertEquals(NETWORK_ID, serviceState.getNetworkId());
 
         assertTrue(serviceState.hashCode() > 0);
         assertNotNull(serviceState.toString());
