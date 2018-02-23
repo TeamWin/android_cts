@@ -22,7 +22,7 @@ include $(CLEAR_VARS)
 # don't include this package in any target
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
+LOCAL_SRC_FILES := $(call all-java-files-under, src/java)
 
 LOCAL_MODULE := cts-api-signature-test
 
@@ -36,5 +36,14 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util \
 
 include $(BUILD_STATIC_JAVA_LIBRARY)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := libclassdescriptors
+LOCAL_MODULE_TAGS := optional
+LOCAL_SRC_FILES := src/jni/classdescriptors.cpp
+LOCAL_HEADER_LIBRARIES := jni_headers libopenjdkjvmti_headers
+LOCAL_SDK_VERSION := current
+LOCAL_NDK_STL_VARIANT := c++_static
+include $(BUILD_SHARED_LIBRARY)
 
 include $(call all-makefiles-under,$(LOCAL_PATH))

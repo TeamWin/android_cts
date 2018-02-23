@@ -21,7 +21,7 @@
 #         the list of api files needed
 
 # don't include this package in any target
-LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_TAGS := tests
 
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
@@ -30,8 +30,14 @@ LOCAL_SDK_VERSION := current
 
 LOCAL_STATIC_JAVA_LIBRARIES := cts-api-signature-test
 
+LOCAL_JNI_SHARED_LIBRARIES := libclassdescriptors
+LOCAL_MULTILIB := both
+
 LOCAL_ADDITIONAL_DEPENDENCIES += \
     $(addprefix $(COMPATIBILITY_TESTCASES_OUT_cts)/,$(LOCAL_SIGNATURE_API_FILES))
+
+LOCAL_DEX_PREOPT := false
+LOCAL_PROGUARD_ENABLED := disabled
 
 include $(BUILD_CTS_PACKAGE)
 
