@@ -28,6 +28,7 @@ import android.graphics.Canvas;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.autofill.AutofillId;
+import android.widget.EditText;
 
 /**
  * A custom activity that uses {@link Canvas} to draw the following fields:
@@ -44,6 +45,7 @@ public class VirtualContainerActivity extends AbstractAutoFillActivity {
 
     static final String BLANK_VALUE = "        ";
 
+    EditText mUrlBar;
     VirtualContainerView mCustomView;
 
     Line mUsername;
@@ -59,8 +61,10 @@ public class VirtualContainerActivity extends AbstractAutoFillActivity {
 
         setContentView(R.layout.virtual_container_activity);
 
+        mUrlBar = findViewById(R.id.my_url_bar);
         mCustomView = findViewById(R.id.virtual_container_view);
 
+        mUrlBar.setText("ftp://dev.null/4/8/15/16/23/42");
         mUsername = mCustomView.addLine(ID_USERNAME_LABEL, "Username", ID_USERNAME, BLANK_VALUE);
         mPassword = mCustomView.addLine(ID_PASSWORD_LABEL, "Password", ID_PASSWORD, BLANK_VALUE);
 

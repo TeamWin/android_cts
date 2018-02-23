@@ -61,6 +61,7 @@ class VirtualContainerView extends View {
 
     static final String LABEL_CLASS = "my.readonly.view";
     static final String TEXT_CLASS = "my.editable.view";
+    static final String ID_URL_BAR = "my_url_bar";
 
     private final ArrayList<Line> mLines = new ArrayList<>();
     private final SparseArray<Item> mItems = new SparseArray<>();
