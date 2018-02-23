@@ -338,12 +338,15 @@ public class AnimatedImageDrawableTest {
     public void testLoopCounts() throws Throwable {
         for (int loopCount : new int[] { 3, 5, 7, 16 }) {
             AnimatedImageDrawable drawable = createFromImageDecoder(RES_ID);
+            assertEquals(AnimatedImageDrawable.LOOP_INFINITE, drawable.getLoopCount());
+
             Callback cb = new Callback(drawable);
             mActivityRule.runOnUiThread(() -> {
                 setContentView(drawable);
 
                 drawable.registerAnimationCallback(cb);
                 drawable.setLoopCount(loopCount);
+                assertEquals(loopCount, drawable.getLoopCount());
                 drawable.start();
             });
 
@@ -353,6 +356,9 @@ public class AnimatedImageDrawableTest {
 
             cb.waitForEnd(DURATION * 2);
             cb.assertEnded(true);
+
+            drawable.setLoopCount(AnimatedImageDrawable.LOOP_INFINITE);
+            assertEquals(AnimatedImageDrawable.LOOP_INFINITE, drawable.getLoopCount());
         }
     }
 
