@@ -17,7 +17,8 @@
 package android.server.am;
 
 import static android.server.am.UiDeviceUtils.pressBackButton;
-import static android.server.am.prerelease.Components.MAIN_ACTIVITY;
+
+import static org.junit.Assert.assertTrue;
 
 import org.junit.After;
 import org.junit.Test;
@@ -29,9 +30,11 @@ import org.junit.Test;
  *     atest CtsActivityManagerDeviceTestCases:PrereleaseSdkTest
  */
 public class PrereleaseSdkTest extends ActivityManagerTestBase {
+    private static final String AM_START_COMMAND = "am start -n %s/%s.%s";
+    private static final String AM_FORCE_STOP = "am force-stop %s";
 
-    /** @see com.android.server.am.UnsupportedCompileSdkDialog */
-    private static final String UNSUPPORTED_COMPILE_SDK_DIALOG = "UnsupportedCompileSdkDialog";
+    private static final int ACTIVITY_TIMEOUT_MILLIS = 1000;
+    private static final int WINDOW_TIMEOUT_MILLIS = 1000;
 
     @After
     @Override
@@ -39,15 +42,16 @@ public class PrereleaseSdkTest extends ActivityManagerTestBase {
         super.tearDown();
 
         // Ensure app process is stopped.
-        stopTestPackage(MAIN_ACTIVITY);
+        forceStopPackage("android.server.am.prerelease");
+        forceStopPackage("android.server.am");
     }
 
     @Test
     public void testCompatibilityDialog() throws Exception {
         // Launch target app.
-        launchActivity(MAIN_ACTIVITY);
-        assertActivityDisplayed(MAIN_ACTIVITY);
-        assertWindowDisplayed(UNSUPPORTED_COMPILE_SDK_DIALOG);
+        startActivity("android.server.am.prerelease", "MainActivity");
+        verifyWindowDisplayed("MainActivity", ACTIVITY_TIMEOUT_MILLIS);
+        verifyWindowDisplayed("UnsupportedCompileSdkDialog", WINDOW_TIMEOUT_MILLIS);
 
         // Go back to dismiss the warning dialog.
         pressBackButton();
@@ -56,5 +60,31 @@ public class PrereleaseSdkTest extends ActivityManagerTestBase {
         // resume rather than starting from scratch (as far as ActivityStack is concerned) and it
         // won't invoke the warning dialog.
         pressBackButton();
+    }
+
+    private void forceStopPackage(String packageName) {
+        final String forceStopCmd = String.format(AM_FORCE_STOP, packageName);
+        executeShellCommand(forceStopCmd);
+    }
+
+    private void startActivity(String packageName, String activityName){
+        executeShellCommand(getStartCommand(packageName, activityName));
+    }
+
+    private String getStartCommand(String packageName, String activityName) {
+        return String.format(AM_START_COMMAND, packageName, packageName, activityName);
+    }
+
+    private void verifyWindowDisplayed(String windowName, long timeoutMillis) {
+        boolean success = false;
+
+        // Verify that compatibility dialog is shown within 1000ms.
+        final long timeoutTimeMillis = System.currentTimeMillis() + timeoutMillis;
+        while (!success && System.currentTimeMillis() < timeoutTimeMillis) {
+            final String output = executeShellCommand("dumpsys window");
+            success = output.contains(windowName);
+        }
+
+        assertTrue(windowName + " was not displayed", success);
     }
 }
