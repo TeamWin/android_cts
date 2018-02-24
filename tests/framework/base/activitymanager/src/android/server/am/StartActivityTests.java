@@ -16,6 +16,7 @@
 
 package android.server.am;
 
+import static android.server.am.Components.TEST_ACTIVITY;
 import static android.server.am.app27.Components.SDK_27_LAUNCHING_ACTIVITY;
 
 import static org.junit.Assert.assertFalse;
@@ -37,10 +38,6 @@ import org.junit.Test;
 @Presubmit
 @FlakyTest
 public class StartActivityTests extends ActivityManagerTestBase {
-    private static final String SDK_CURRENT_PACKAGE = "android.server.am";
-
-    private static final ComponentName TEST_ACTIVITY = ComponentName.createRelative(
-            SDK_CURRENT_PACKAGE, ".TestActivity");
 
     @Rule
     public final ActivityTestRule<TestActivity2> mTestActivity2Rule =
