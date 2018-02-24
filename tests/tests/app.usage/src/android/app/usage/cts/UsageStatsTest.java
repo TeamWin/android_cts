@@ -203,7 +203,7 @@ public class UsageStatsTest {
             UsageEvents.Event event = new UsageEvents.Event();
             assertTrue(events.getNextEvent(event));
             if (event.mEventType == UsageEvents.Event.STANDBY_BUCKET_CHANGED) {
-                found |= event.mBucket == UsageStatsManager.STANDBY_BUCKET_RARE;
+                found |= event.getStandbyBucket() == UsageStatsManager.STANDBY_BUCKET_RARE;
             }
         }
 
