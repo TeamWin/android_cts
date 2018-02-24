@@ -1,9 +1,17 @@
 package android.server.am.lifecycle;
 
+import static android.support.test.runner.lifecycle.Stage.CREATED;
 import static android.support.test.runner.lifecycle.Stage.DESTROYED;
 import static android.support.test.runner.lifecycle.Stage.PAUSED;
+import static android.support.test.runner.lifecycle.Stage.PRE_ON_CREATE;
 import static android.support.test.runner.lifecycle.Stage.RESUMED;
+import static android.support.test.runner.lifecycle.Stage.STARTED;
 import static android.support.test.runner.lifecycle.Stage.STOPPED;
+import static android.view.Surface.ROTATION_0;
+import static android.view.Surface.ROTATION_180;
+import static android.view.Surface.ROTATION_270;
+import static android.view.Surface.ROTATION_90;
+import static org.junit.Assert.fail;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -15,6 +23,8 @@ import android.support.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.Arrays;
 
 /**
  * Build/Install/Run:
@@ -102,5 +112,56 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         waitAndAssertActivityStates(state(stoppedActivity, STOPPED));
 
         LifecycleVerifier.assertRelaunchSequence(FirstActivity.class, getLifecycleLog(), STOPPED);
+    }
+
+    @FlakyTest(bugId = 72956507)
+    @Test
+    public void testRelaunchConfigurationChangedWhileBecomingVisible() throws Exception {
+        final Activity becomingVisibleActivity = mFirstActivityTestRule.launchActivity(new Intent());
+        final Activity translucentActivity =
+                mTranslucentActivityTestRule.launchActivity(new Intent());
+        final Activity topOpaqueActivity = mSecondActivityTestRule.launchActivity(new Intent());
+
+        waitAndAssertActivityStates(state(becomingVisibleActivity, STOPPED),
+                state(translucentActivity, STOPPED), state(topOpaqueActivity, RESUMED));
+
+        getLifecycleLog().clear();
+        try (final RotationSession rotationSession = new RotationSession()) {
+            final int current = rotationSession.get();
+            // Set new rotation to cause a configuration change.
+            switch (current) {
+                case ROTATION_0:
+                case ROTATION_180:
+                    rotationSession.set(ROTATION_90);
+                    break;
+                case ROTATION_90:
+                case ROTATION_270:
+                    rotationSession.set(ROTATION_0);
+                    break;
+                default:
+                    fail("Unknown rotation:" + current);
+            }
+
+            // Assert that the top activity was relaunched.
+            waitAndAssertActivityStates(state(topOpaqueActivity, RESUMED));
+            LifecycleVerifier.assertRelaunchSequence(
+                    SecondActivity.class, getLifecycleLog(), RESUMED);
+
+            // Finish the top activity
+            getLifecycleLog().clear();
+            mSecondActivityTestRule.finishActivity();
+
+            // Assert that the translucent activity and the activity visible behind it were
+            // relaunched.
+            waitAndAssertActivityStates(state(becomingVisibleActivity, PAUSED),
+                    state(translucentActivity, RESUMED));
+
+            LifecycleVerifier.assertSequence(FirstActivity.class, getLifecycleLog(),
+                    Arrays.asList(DESTROYED, PRE_ON_CREATE, CREATED, STARTED, RESUMED, PAUSED),
+                    "becomingVisiblePaused");
+            LifecycleVerifier.assertSequence(TranslucentActivity.class, getLifecycleLog(),
+                    Arrays.asList(DESTROYED, PRE_ON_CREATE, CREATED, STARTED, RESUMED),
+                    "becomingVisibleResumed");
+        }
     }
 }

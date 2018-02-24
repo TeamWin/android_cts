@@ -879,7 +879,7 @@ public abstract class ActivityManagerTestBase {
     protected class RotationSession extends SettingsSession<Integer> {
         private final SettingsSession<Integer> mUserRotation;
 
-        RotationSession() throws Exception {
+        public RotationSession() throws Exception {
             // Save accelerometer_rotation preference.
             super(Settings.System.getUriFor(Settings.System.ACCELEROMETER_ROTATION),
                     Settings.System::getInt, Settings.System::putInt);
