@@ -58,6 +58,8 @@ import android.view.autofill.AutofillManager.AutofillCallback;
 import android.view.autofill.AutofillValue;
 import android.webkit.WebView;
 
+import com.android.compatibility.common.util.RequiredFeatureRule;
+
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;

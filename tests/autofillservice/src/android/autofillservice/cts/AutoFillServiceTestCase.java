@@ -33,6 +33,8 @@ import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 import android.widget.RemoteViews;
 
+import com.android.compatibility.common.util.RequiredFeatureRule;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
