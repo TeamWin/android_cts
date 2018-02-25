@@ -1165,7 +1165,7 @@ public abstract class ActivityManagerTestBase {
     }
 
     void assertSingleLaunchAndStop(ComponentName activityName, LogSeparator logSeparator) {
-        assertSingleStartAndStop(getLogTag(activityName), logSeparator);
+        assertSingleLaunchAndStop(getLogTag(activityName), logSeparator);
     }
 
     // TODO(b/73349193): Use {@link #assertSingleLaunchAndStop(ComponentName, LogSeparator)}.
