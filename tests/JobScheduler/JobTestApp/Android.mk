@@ -26,5 +26,6 @@ LOCAL_SRC_FILES := \
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 LOCAL_PACKAGE_NAME := CtsJobTestApp
+LOCAL_SDK_VERSION := current
 
 include $(BUILD_CTS_PACKAGE)

@@ -22,9 +22,8 @@ LOCAL_MULTILIB := both
 LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestrunner \
     compatibility-device-util \
-    legacy-android-test \
 
-LOCAL_JAVA_LIBRARIES := android.test.runner.stubs
+LOCAL_JAVA_LIBRARIES := android.test.base.stubs android.test.runner.stubs
 
 LOCAL_JNI_SHARED_LIBRARIES := \
     libc++ \
@@ -39,6 +38,7 @@ LOCAL_JNI_SHARED_LIBRARIES := \
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src common)
 LOCAL_PACKAGE_NAME := CtsSelinuxTargetSdkCurrentTestCases
+LOCAL_SDK_VERSION := current
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 include $(BUILD_CTS_PACKAGE)
 

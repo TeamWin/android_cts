@@ -20,12 +20,14 @@ LOCAL_MODULE_TAGS := tests optional
 
 # Must match the package name in CtsTestCaseList.mk
 LOCAL_PACKAGE_NAME := CtsActivityManagerDeviceTestCases
+LOCAL_PRIVATE_PLATFORM_APIS := true
 
 LOCAL_SRC_FILES := \
     $(call all-java-files-under, src) \
     $(call all-named-files-under,Components.java, app) \
     $(call all-named-files-under,Components.java, app27) \
     $(call all-named-files-under,Components.java, appDebuggable) \
+    $(call all-named-files-under,Components.java, appDeprecatedSdk) \
     $(call all-named-files-under,Components.java, appDisplaySize) \
     $(call all-named-files-under,Components.java, appSecondUid) \
     $(call all-named-files-under,Components.java, appThirdUid) \

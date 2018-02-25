@@ -22,11 +22,9 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
-import android.app.Instrumentation;
 import android.graphics.Bitmap;
 import android.graphics.PointF;
 import android.graphics.Rect;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
@@ -38,6 +36,7 @@ import android.widget.LinearLayout.LayoutParams;
 import android.widget.Magnifier;
 
 import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -46,6 +45,8 @@ import org.junit.runner.RunWith;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests for {@link Magnifier}.
@@ -53,7 +54,9 @@ import java.util.Map;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class MagnifierTest {
-    private Instrumentation mInstrumentation;
+    private static final String TIME_LIMIT_EXCEEDED =
+            "Completing the magnifier operation took too long";
+
     private Activity mActivity;
     private LinearLayout mLayout;
     private Magnifier mMagnifier;
@@ -64,7 +67,6 @@ public class MagnifierTest {
 
     @Before
     public void setup() {
-        mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mActivity = mActivityRule.getActivity();
         PollingCheck.waitFor(mActivity::hasWindowFocus);
         mLayout = mActivity.findViewById(R.id.magnifier_activity_basic_layout);
@@ -141,25 +143,31 @@ public class MagnifierTest {
     }
 
     @Test
-    public void testWindowContent() {
+    public void testWindowContent() throws Throwable {
         prepareFourQuadrantsScenario();
+        final CountDownLatch latch = new CountDownLatch(1);
+        mMagnifier.setOnOperationCompleteCallback(latch::countDown);
+
         // Show the magnifier at the center of the activity.
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             mMagnifier.show(mLayout.getWidth() / 2, mLayout.getHeight() / 2);
         });
-        mInstrumentation.waitForIdleSync();
+        assertTrue(TIME_LIMIT_EXCEEDED, latch.await(1, TimeUnit.SECONDS));
 
         assertFourQuadrants(mMagnifier.getContent());
     }
 
     @Test
-    public void testWindowPosition() {
+    public void testWindowPosition() throws Throwable {
         prepareFourQuadrantsScenario();
+        final CountDownLatch latch = new CountDownLatch(1);
+        mMagnifier.setOnOperationCompleteCallback(latch::countDown);
+
         // Show the magnifier at the center of the activity.
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             mMagnifier.show(mLayout.getWidth() / 2, mLayout.getHeight() / 2);
         });
-        mInstrumentation.waitForIdleSync();
+        assertTrue(TIME_LIMIT_EXCEEDED, latch.await(1, TimeUnit.SECONDS));
 
         // Assert that the magnifier position represents a valid rectangle on screen.
         final Rect position = mMagnifier.getWindowPositionOnScreen();
@@ -169,27 +177,33 @@ public class MagnifierTest {
     }
 
     @Test
-    public void testWindowContent_modifiesAfterUpdate() {
+    public void testWindowContent_modifiesAfterUpdate() throws Throwable {
         prepareFourQuadrantsScenario();
+
         // Show the magnifier at the center of the activity.
-        mInstrumentation.runOnMainSync(() -> {
+        final CountDownLatch latchForShow = new CountDownLatch(1);
+        mMagnifier.setOnOperationCompleteCallback(latchForShow::countDown);
+        mActivityRule.runOnUiThread(() -> {
             mMagnifier.show(mLayout.getWidth() / 2, mLayout.getHeight() / 2);
         });
-        mInstrumentation.waitForIdleSync();
+        assertTrue(TIME_LIMIT_EXCEEDED, latchForShow.await(1, TimeUnit.SECONDS));
 
         final Bitmap initialBitmap = mMagnifier.getContent()
                 .copy(mMagnifier.getContent().getConfig(), true);
         assertFourQuadrants(initialBitmap);
 
         // Make the one quadrant white.
-        mInstrumentation.runOnMainSync(() -> {
-            mActivity.findViewById(R.id.magnifier_activity_four_quadrants_layout_quadrant_1)
-                    .setBackground(null);
+        final View quadrant1 =
+                mActivity.findViewById(R.id.magnifier_activity_four_quadrants_layout_quadrant_1);
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, quadrant1, () -> {
+            quadrant1.setBackground(null);
         });
-        mInstrumentation.waitForIdleSync();
+
         // Update the magnifier.
-        mInstrumentation.runOnMainSync(mMagnifier::update);
-        mInstrumentation.waitForIdleSync();
+        final CountDownLatch latchForUpdate = new CountDownLatch(1);
+        mMagnifier.setOnOperationCompleteCallback(latchForUpdate::countDown);
+        mActivityRule.runOnUiThread(mMagnifier::update);
+        assertTrue(TIME_LIMIT_EXCEEDED, latchForUpdate.await(1, TimeUnit.SECONDS));
 
         final Bitmap newBitmap = mMagnifier.getContent();
         assertFourQuadrants(newBitmap);
@@ -200,13 +214,13 @@ public class MagnifierTest {
      * Sets the activity to contain four equal quadrants coloured differently and
      * instantiates a magnifier. This method should not be called on the UI thread.
      */
-    private void prepareFourQuadrantsScenario() {
-        mInstrumentation.runOnMainSync(() -> {
+    private void prepareFourQuadrantsScenario() throws Throwable {
+        WidgetTestUtils.runOnMainAndLayoutSync(mActivityRule, () -> {
             mActivity.setContentView(R.layout.magnifier_activity_four_quadrants_layout);
             mLayout = mActivity.findViewById(R.id.magnifier_activity_four_quadrants_layout);
             mMagnifier = new Magnifier(mLayout);
-        });
-        mInstrumentation.waitForIdleSync();
+        }, false);
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mLayout, null);
     }
 
     /**

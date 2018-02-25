@@ -19,11 +19,13 @@ import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.testtype.ISubPlan;
 import com.android.compatibility.common.tradefed.testtype.SubPlan;
 import com.android.compatibility.common.tradefed.testtype.retry.RetryFactoryTest;
+import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.IConfiguration;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.Option.Importance;
 import com.android.tradefed.config.OptionClass;
+import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.suite.BaseTestSuite;
 import com.android.tradefed.testtype.suite.SuiteModuleLoader;
@@ -59,6 +61,8 @@ public class CompatibilityTestSuite extends BaseTestSuite {
     private String mSubPlan;
 
     private CompatibilityBuildHelper mBuildHelper;
+    /** Tag if the current instance is running as a retry from RetryFactory */
+    private boolean mIsRetry = false;
 
     @Override
     public void setBuild(IBuildInfo buildInfo) {
@@ -84,8 +88,8 @@ public class CompatibilityTestSuite extends BaseTestSuite {
     @Override
     public LinkedHashMap<String, IConfiguration> loadTests() {
         if (mRetrySessionId != null) {
-            throw new IllegalArgumentException("--retry cannot be specified with cts-suite.xml. "
-                    + "Use 'run cts --retry <session id>' instead.");
+            throw new IllegalArgumentException("--retry cannot be specified with cts[*].xml. "
+                    + "Use 'run retry --retry <session id>' instead.");
         }
         return super.loadTests();
     }
@@ -125,6 +129,13 @@ public class CompatibilityTestSuite extends BaseTestSuite {
     }
 
     /**
+     * Mark the instance of CompatibilityTestSuite as a retry.
+     */
+    public final void isRetry() {
+        mIsRetry = true;
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -136,9 +147,15 @@ public class CompatibilityTestSuite extends BaseTestSuite {
                 getModuleLoader().loadConfigsFromDirectory(testsDir, abis, suitePrefix, suiteTag));
         // Add an extra check in CTS since we never expect the config folder to be empty.
         if (loadedConfigs.size() == 0) {
-            throw new IllegalArgumentException(
-                    String.format("No config files found in %s or in resources.",
-                            testsDir.getAbsolutePath()));
+            if (mIsRetry) {
+                // Only log if it's a retry
+                CLog.logAndDisplay(LogLevel.DEBUG,
+                        "No module that needed to run in retry were found. nothing to do.");
+            } else {
+                throw new IllegalArgumentException(
+                        String.format("No config files found in %s or in resources.",
+                                testsDir.getAbsolutePath()));
+            }
         }
         return loadedConfigs;
     }

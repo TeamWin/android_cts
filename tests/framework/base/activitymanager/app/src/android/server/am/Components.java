@@ -25,6 +25,7 @@ public class Components extends ComponentsBase {
             component("AlwaysFocusablePipActivity");
     public static final ComponentName ANIMATION_TEST_ACTIVITY = component("AnimationTestActivity");
     public static final ComponentName ASSISTANT_ACTIVITY = component("AssistantActivity");
+    public static final ComponentName BOTTOM_ACTIVITY = component("BottomActivity");
     public static final ComponentName BOTTOM_LEFT_LAYOUT_ACTIVITY =
             component("BottomLeftLayoutActivity");
     public static final ComponentName BOTTOM_RIGHT_LAYOUT_ACTIVITY =
@@ -74,12 +75,15 @@ public class Components extends ComponentsBase {
     public static final ComponentName SPLASHSCREEN_ACTIVITY = component("SplashscreenActivity");
     public static final ComponentName SWIPE_REFRESH_ACTIVITY = component("SwipeRefreshActivity");
     public static final ComponentName TEST_ACTIVITY = component("TestActivity");
+    public static final ComponentName TOP_ACTIVITY = component("TopActivity");
     public static final ComponentName TOP_LEFT_LAYOUT_ACTIVITY = component("TopLeftLayoutActivity");
     public static final ComponentName TOP_RIGHT_LAYOUT_ACTIVITY =
             component("TopRightLayoutActivity");
     public static final ComponentName TRANSLUCENT_ACTIVITY = component("TranslucentActivity");
     public static final ComponentName TRANSLUCENT_ASSISTANT_ACTIVITY =
             component("TranslucentAssistantActivity");
+    public static final ComponentName TRANSLUCENT_TOP_ACTIVITY =
+            component("TranslucentTopActivity");
     public static final ComponentName TURN_SCREEN_ON_ACTIVITY = component("TurnScreenOnActivity");
     public static final ComponentName TURN_SCREEN_ON_ATTR_ACTIVITY =
             component("TurnScreenOnAttrActivity");

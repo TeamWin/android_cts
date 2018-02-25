@@ -59,6 +59,7 @@ LOCAL_AAPT_FLAGS := \
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_MULTILIB := both
 LOCAL_PACKAGE_NAME := CtsContentTestCases
+LOCAL_PRIVATE_PLATFORM_APIS := true
 
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests

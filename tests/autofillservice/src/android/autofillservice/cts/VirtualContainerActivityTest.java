@@ -25,6 +25,7 @@ import static android.autofillservice.cts.Helper.assertTextIsSanitized;
 import static android.autofillservice.cts.Helper.assertTextOnly;
 import static android.autofillservice.cts.Helper.dumpStructure;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
+import static android.autofillservice.cts.VirtualContainerView.ID_URL_BAR;
 import static android.autofillservice.cts.VirtualContainerView.LABEL_CLASS;
 import static android.autofillservice.cts.VirtualContainerView.TEXT_CLASS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
@@ -37,7 +38,6 @@ import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
-import android.autofillservice.cts.VirtualContainerActivityTest.CommitType;
 import android.autofillservice.cts.VirtualContainerView.Line;
 import android.content.ComponentName;
 import android.graphics.Rect;
@@ -162,11 +162,13 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
 
         // Make sure input was sanitized.
         final FillRequest request = sReplier.getNextFillRequest();
+        final ViewNode urlBar = findNodeByResourceId(request.structure, ID_URL_BAR);
         final ViewNode usernameLabel = findNodeByResourceId(request.structure, ID_USERNAME_LABEL);
         final ViewNode username = findNodeByResourceId(request.structure, ID_USERNAME);
         final ViewNode passwordLabel = findNodeByResourceId(request.structure, ID_PASSWORD_LABEL);
         final ViewNode password = findNodeByResourceId(request.structure, ID_PASSWORD);
 
+        assertUrlBarIsSanitized(urlBar);
         assertTextIsSanitized(username);
         assertTextIsSanitized(password);
         assertLabel(usernameLabel, "Username");
@@ -602,6 +604,12 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         } else {
             assertTextAndValue(node, expectedValue);
         }
+    }
+
+    protected void assertUrlBarIsSanitized(ViewNode urlBar) {
+        assertTextIsSanitized(urlBar);
+        assertThat(urlBar.getWebDomain()).isNull();
+        assertThat(urlBar.getWebScheme()).isNull();
     }
 
     // TODO(b/72811561): currently only one test pass at time

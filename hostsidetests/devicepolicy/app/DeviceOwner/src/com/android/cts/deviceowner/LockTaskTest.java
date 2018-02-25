@@ -20,7 +20,7 @@ import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_HOME;
 import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_KEYGUARD;
 import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_NONE;
 import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_NOTIFICATIONS;
-import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_RECENTS;
+import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_OVERVIEW;
 import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_SYSTEM_INFO;
 
 import static junit.framework.Assert.assertEquals;
@@ -191,7 +191,7 @@ public class LockTaskTest {
                 LOCK_TASK_FEATURE_SYSTEM_INFO,
                 LOCK_TASK_FEATURE_NOTIFICATIONS,
                 LOCK_TASK_FEATURE_HOME,
-                LOCK_TASK_FEATURE_RECENTS,
+                LOCK_TASK_FEATURE_OVERVIEW,
                 LOCK_TASK_FEATURE_GLOBAL_ACTIONS,
                 LOCK_TASK_FEATURE_KEYGUARD
         };
@@ -505,11 +505,11 @@ public class LockTaskTest {
     }
 
     /**
-     * Starts LockTaskUtilityActivity with {@link ActivityOptions#setLockTaskMode(boolean)}
+     * Starts LockTaskUtilityActivity with {@link ActivityOptions#setLockTaskEnabled(boolean)}
      */
     private void startLockTaskWithOptions(String className) throws InterruptedException {
         Intent intent = getLockTaskUtility(className);
-        Bundle options = ActivityOptions.makeBasic().setLockTaskMode(true).toBundle();
+        Bundle options = ActivityOptions.makeBasic().setLockTaskEnabled(true).toBundle();
         startAndWait(intent, options);
     }
 

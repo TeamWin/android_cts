@@ -79,6 +79,7 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
         testChangeFontScale(FONT_SCALE_ACTIVITY, true /* relaunch */);
     }
 
+    @FlakyTest(bugId = 73812451)
     @Presubmit
     @Test
     public void testChangeFontScaleNoRelaunch() throws Exception {

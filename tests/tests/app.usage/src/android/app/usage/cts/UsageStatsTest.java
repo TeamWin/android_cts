@@ -16,7 +16,9 @@
 
 package android.app.usage.cts;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
 import android.app.AppOpsManager;
@@ -38,7 +40,6 @@ import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.Until;
-import android.test.InstrumentationTestCase;
 import android.util.SparseLongArray;
 
 import org.junit.Before;
@@ -202,11 +203,21 @@ public class UsageStatsTest {
             UsageEvents.Event event = new UsageEvents.Event();
             assertTrue(events.getNextEvent(event));
             if (event.mEventType == UsageEvents.Event.STANDBY_BUCKET_CHANGED) {
-                found |= event.mBucket == UsageStatsManager.STANDBY_BUCKET_RARE;
+                found |= event.getStandbyBucket() == UsageStatsManager.STANDBY_BUCKET_RARE;
             }
         }
 
         assertTrue(found);
+    }
+
+    @Test
+    public void testGetAppStandbyBuckets() throws Exception {
+        mUiDevice.executeShellCommand("am set-standby-bucket " + mTargetPackage + " rare");
+        Map<String, Integer> bucketMap = mUsageStatsManager.getAppStandbyBuckets();
+        assertTrue("No bucket data returned", bucketMap.size() > 0);
+        final int bucket = bucketMap.getOrDefault(mTargetPackage, -1);
+        assertEquals("Incorrect bucket returned for " + mTargetPackage, bucket,
+                UsageStatsManager.STANDBY_BUCKET_RARE);
     }
 
     /**

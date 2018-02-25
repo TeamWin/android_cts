@@ -71,6 +71,9 @@ public class CompatibilityBuildProvider implements IDeviceBuildProvider, IInvoca
     @Option(name="build-flavor", description="build flavor name to supply.")
     private String mBuildFlavor = null;
 
+    @Option(name="build-target", description="build target name to supply.")
+    private String mBuildTarget = null;
+
     @Option(name="build-attribute", description="build attributes to supply.")
     private Map<String, String> mBuildAttributes = new HashMap<String,String>();
 
@@ -103,6 +106,9 @@ public class CompatibilityBuildProvider implements IDeviceBuildProvider, IInvoca
         for (Map.Entry<String, String> entry : mBuildAttributes.entrySet()) {
             buildInfo.addBuildAttribute(entry.getKey(), entry.getValue());
         }
+        if (mTestTag != null) {
+            buildInfo.setTestTag(mTestTag);
+        }
     }
 
     /**
@@ -117,7 +123,7 @@ public class CompatibilityBuildProvider implements IDeviceBuildProvider, IInvoca
      * {@inheritDoc}
      */
     @Override
-    public IBuildInfo getBuild() {
+    public IBuildInfo getBuild() throws BuildRetrievalError {
         // Create a blank BuildInfo which will get populated later.
         String version = null;
         if (mBuildId != null) {
@@ -128,7 +134,7 @@ public class CompatibilityBuildProvider implements IDeviceBuildProvider, IInvoca
                 version = IBuildInfo.UNKNOWN_BUILD_ID;
             }
         }
-        IBuildInfo ctsBuild = new DeviceBuildInfo(version, mTestTag);
+        IBuildInfo ctsBuild = new DeviceBuildInfo(version, mBuildTarget);
         if (mBranch  != null) {
             ctsBuild.setBuildBranch(mBranch);
         }
@@ -151,9 +157,18 @@ public class CompatibilityBuildProvider implements IDeviceBuildProvider, IInvoca
             // build info fields
             return getBuild();
         } else {
-            String buildId = device.getBuildId();
-            String buildFlavor = device.getBuildFlavor();
-            IBuildInfo info = new DeviceBuildInfo(buildId, mTestTag);
+            if (mBuildId == null) {
+                mBuildId = device.getBuildId();
+            }
+            if (mBuildFlavor == null) {
+                mBuildFlavor = device.getBuildFlavor();
+            }
+            if (mBuildTarget == null) {
+                String name = device.getProperty("ro.product.name");
+                String variant = device.getProperty("ro.build.type");
+                mBuildTarget = name + "-" + variant;
+            }
+            IBuildInfo info = new DeviceBuildInfo(mBuildId, mBuildTarget);
             if (mBranch == null) {
                 // if branch is not specified via param, make a pseudo branch name based on platform
                 // version and product info from device
@@ -164,7 +179,7 @@ public class CompatibilityBuildProvider implements IDeviceBuildProvider, IInvoca
                         device.getProperty("ro.build.version.release"));
             }
             info.setBuildBranch(mBranch);
-            info.setBuildFlavor(buildFlavor);
+            info.setBuildFlavor(mBuildFlavor);
             String buildAlias = device.getBuildAlias();
             if (RELEASE_BUILD.matcher(buildAlias).matches()) {
                 info.addBuildAttribute("build_alias", buildAlias);

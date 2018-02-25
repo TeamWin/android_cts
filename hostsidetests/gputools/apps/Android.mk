@@ -30,6 +30,7 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_MODULE_TAGS := tests
 LOCAL_PACKAGE_NAME := CtsGpuToolsRootlessGpuDebugApp-DEBUG
+LOCAL_SDK_VERSION := current
 
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts
@@ -51,6 +52,7 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_MODULE_TAGS := tests
 LOCAL_PACKAGE_NAME := CtsGpuToolsRootlessGpuDebugApp-RELEASE
+LOCAL_SDK_VERSION := current
 
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts

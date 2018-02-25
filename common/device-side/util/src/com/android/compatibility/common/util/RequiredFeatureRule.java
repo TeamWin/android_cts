@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.autofillservice.cts;
+package com.android.compatibility.common.util;
 
 import android.support.test.InstrumentationRegistry;
 import android.util.Log;
@@ -26,7 +26,6 @@ import org.junit.runners.model.Statement;
 /**
  * Custom JUnit4 rule that does not run a test case if the device does not have a given feature.
  */
-// TODO: move to common CTS codebase
 public class RequiredFeatureRule implements TestRule {
     private static final String TAG = "RequiredFeatureRule";
 

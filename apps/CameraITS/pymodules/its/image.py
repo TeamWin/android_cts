@@ -414,7 +414,7 @@ def convert_raw_to_rgb_image(r_plane, gr_plane, gb_plane, b_plane,
     return img
 
 
-def get_black_level(chan, props, cap_res):
+def get_black_level(chan, props, cap_res=None):
     """Return the black level to use for a given capture.
 
     Uses a dynamic value from the capture result if available, else falls back
@@ -428,7 +428,7 @@ def get_black_level(chan, props, cap_res):
     Returns:
         The black level value for the specified channel.
     """
-    if (cap_res.has_key('android.sensor.dynamicBlackLevel') and
+    if (cap_res is not None and cap_res.has_key('android.sensor.dynamicBlackLevel') and
             cap_res['android.sensor.dynamicBlackLevel'] is not None):
         black_levels = cap_res['android.sensor.dynamicBlackLevel']
     else:

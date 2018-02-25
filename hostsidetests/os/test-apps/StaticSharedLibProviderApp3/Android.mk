@@ -20,6 +20,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE_TAGS := tests
 
 LOCAL_PACKAGE_NAME := CtsStaticSharedLibProviderApp3
+LOCAL_SDK_VERSION := current
 
 LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/keysets/cts-keyset-test-b
 

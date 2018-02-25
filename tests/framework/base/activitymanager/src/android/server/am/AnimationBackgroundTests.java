@@ -16,14 +16,15 @@
 
 package android.server.am;
 
-
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
+import static android.server.am.Components.ANIMATION_TEST_ACTIVITY;
+import static android.server.am.Components.LAUNCHING_ACTIVITY;
+import static android.view.Display.DEFAULT_DISPLAY;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
-
-import static android.server.am.ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID;
 
 /**
  * Build/Install/Run:
@@ -33,9 +34,9 @@ public class AnimationBackgroundTests extends ActivityManagerTestBase {
 
     @Test
     public void testAnimationBackground_duringAnimation() throws Exception {
-        launchActivityOnDisplay(LAUNCHING_ACTIVITY_NAME, DEFAULT_DISPLAY_ID);
+        launchActivityOnDisplay(LAUNCHING_ACTIVITY, DEFAULT_DISPLAY);
         getLaunchActivityBuilder()
-                .setTargetActivityName("AnimationTestActivity")
+                .setTargetActivity(ANIMATION_TEST_ACTIVITY)
                 .setWaitForLaunched(false)
                 .execute();
 
@@ -51,9 +52,9 @@ public class AnimationBackgroundTests extends ActivityManagerTestBase {
 
     @Test
     public void testAnimationBackground_gone() throws Exception {
-        launchActivityOnDisplay(LAUNCHING_ACTIVITY_NAME, DEFAULT_DISPLAY_ID);
-        getLaunchActivityBuilder().setTargetActivityName("AnimationTestActivity").execute();
-        mAmWmState.computeState(new WaitForValidActivityState.Builder("AnimationTestActivity").build());
+        launchActivityOnDisplay(LAUNCHING_ACTIVITY, DEFAULT_DISPLAY);
+        getLaunchActivityBuilder().setTargetActivity(ANIMATION_TEST_ACTIVITY).execute();
+        mAmWmState.computeState(ANIMATION_TEST_ACTIVITY);
         assertFalse("window animation background needs to be gone", mAmWmState.getWmState()
                 .getStandardStackByWindowingMode(WINDOWING_MODE_FULLSCREEN)
                 .isWindowAnimationBackgroundSurfaceShowing());

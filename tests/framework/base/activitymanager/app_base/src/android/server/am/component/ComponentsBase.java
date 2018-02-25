@@ -16,24 +16,10 @@
 
 package android.server.am.component;
 
-import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertThat;
 
-import android.app.Activity;
-import android.app.Service;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
-import android.content.Context;
-
-import org.hamcrest.Matchers;
-
-import java.lang.reflect.Modifier;
-import java.util.Arrays;
-import java.util.stream.Collectors;
 
 /**
  * Base class for Components constants holding class.

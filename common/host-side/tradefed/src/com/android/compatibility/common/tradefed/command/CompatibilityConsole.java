@@ -22,6 +22,7 @@ import com.android.compatibility.common.tradefed.testtype.ModuleRepo;
 import com.android.compatibility.common.util.IInvocationResult;
 import com.android.compatibility.common.util.ResultHandler;
 import com.android.compatibility.common.util.TestStatus;
+import com.android.tradefed.build.BuildRetrievalError;
 import com.android.tradefed.command.Console;
 import com.android.tradefed.config.ArgsOptionParser;
 import com.android.tradefed.config.ConfigurationException;
@@ -426,8 +427,12 @@ public class CompatibilityConsole extends Console {
 
     private CompatibilityBuildHelper getBuildHelper() {
         if (mBuildHelper == null) {
-            CompatibilityBuildProvider buildProvider = new CompatibilityBuildProvider();
-            mBuildHelper = new CompatibilityBuildHelper(buildProvider.getBuild());
+            try {
+                CompatibilityBuildProvider buildProvider = new CompatibilityBuildProvider();
+                mBuildHelper = new CompatibilityBuildHelper(buildProvider.getBuild());
+            } catch (BuildRetrievalError e) {
+                e.printStackTrace();
+            }
         }
         return mBuildHelper;
     }

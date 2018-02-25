@@ -25,6 +25,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_PACKAGE_NAME := CtsAccessSerialLegacy
+LOCAL_SDK_VERSION := current
 
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 

@@ -27,8 +27,14 @@ import static com.android.compatibility.common.util.AppOpsUtils.allowedOperation
 import static com.android.compatibility.common.util.AppOpsUtils.rejectedOperationLogged;
 import static com.android.compatibility.common.util.AppOpsUtils.setOpMode;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
+
 import android.Manifest.permission;
 import android.app.AppOpsManager;
+import android.app.AppOpsManager.OnOpChangedListener;
 import android.content.Context;
 import android.os.Process;
 import android.test.InstrumentationTestCase;
@@ -159,12 +165,12 @@ public class AppOpsTest extends InstrumentationTestCase {
         }
     }
 
-    public void testCheckPackagePassesTest() throws Exception {
+    public void testCheckPackagePassesCheck() throws Exception {
         mAppOps.checkPackage(mMyUid, mOpPackageName);
         mAppOps.checkPackage(Process.SYSTEM_UID, "android");
     }
 
-    public void testCheckPackageDoesntPassTest() throws Exception {
+    public void testCheckPackageDoesntPassCheck() throws Exception {
         try {
             // Package name doesn't match UID.
             mAppOps.checkPackage(Process.SYSTEM_UID, mOpPackageName);
@@ -184,6 +190,41 @@ public class AppOpsTest extends InstrumentationTestCase {
             mAppOps.checkPackage(mMyUid, "");
             fail("SecurityException expected");
         } catch (SecurityException expected) {
+        }
+    }
+
+    public void testWatchingMode() throws Exception {
+        OnOpChangedListener watcher = mock(OnOpChangedListener.class);
+        try {
+            setOpMode(mOpPackageName, OPSTR_READ_SMS, MODE_ALLOWED);
+
+            mAppOps.startWatchingMode(OPSTR_READ_SMS, mOpPackageName, watcher);
+
+            // Make a change to the app op's mode.
+            reset(watcher);
+            setOpMode(mOpPackageName, OPSTR_READ_SMS, MODE_ERRORED);
+            verify(watcher).onOpChanged(OPSTR_READ_SMS, mOpPackageName);
+
+            // Make another change to the app op's mode.
+            reset(watcher);
+            setOpMode(mOpPackageName, OPSTR_READ_SMS, MODE_ALLOWED);
+            verify(watcher).onOpChanged(OPSTR_READ_SMS, mOpPackageName);
+
+            // Set mode to the same value as before - expect no call to the listener.
+            reset(watcher);
+            setOpMode(mOpPackageName, OPSTR_READ_SMS, MODE_ALLOWED);
+            verifyZeroInteractions(watcher);
+
+            mAppOps.stopWatchingMode(watcher);
+
+            // Make a change to the app op's mode. Since we already stopped watching the mode, the
+            // listener shouldn't be called.
+            reset(watcher);
+            setOpMode(mOpPackageName, OPSTR_READ_SMS, MODE_ERRORED);
+            verifyZeroInteractions(watcher);
+        } finally {
+            // Clean up registered watcher.
+            mAppOps.stopWatchingMode(watcher);
         }
     }
 

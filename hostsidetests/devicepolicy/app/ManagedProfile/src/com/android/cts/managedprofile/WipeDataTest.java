@@ -44,7 +44,7 @@ public class WipeDataTest extends BaseManagedProfileTest {
      * external storage should be allowed.
      */
     public void testWipeDataWithReason() throws InterruptedException {
-        mDevicePolicyManager.wipeDataWithReason(0, TEST_WIPE_DATA_REASON);
+        mDevicePolicyManager.wipeData(0, TEST_WIPE_DATA_REASON);
         // The test that the profile will indeed be removed is done in the host.
         // Notification verification is done in another test.
     }

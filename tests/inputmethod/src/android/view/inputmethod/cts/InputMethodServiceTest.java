@@ -33,6 +33,7 @@ import android.inputmethodservice.InputMethodService;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
+import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
 import android.view.inputmethod.cts.util.TestActivity;
@@ -40,6 +41,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 
 import com.android.cts.mockime.ImeCommand;
+import com.android.cts.mockime.ImeEvent;
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
@@ -50,6 +52,7 @@ import org.junit.runner.RunWith;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Predicate;
 
 /**
  * Tests for {@link InputMethodService} methods.
@@ -61,6 +64,23 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
     private static final long EXPECTED_TIMEOUT = TimeUnit.SECONDS.toMillis(2);
 
     private Instrumentation mInstrumentation;
+
+    private static Predicate<ImeEvent> backKeyDownMatcher(boolean expectedReturnValue) {
+        return event -> {
+            if (!event.isEnterEvent()) {
+                // Skip enter event since we are interested in the return value.
+                return false;
+            }
+            if (!TextUtils.equals("onKeyDown", event.getEventName())) {
+                return false;
+            }
+            final int keyCode = event.getArguments().getInt("keyCode");
+            if (keyCode != KeyEvent.KEYCODE_BACK) {
+                return false;
+            }
+            return event.getReturnBooleanValue() == expectedReturnValue;
+        };
+    }
 
     @Before
     public void setup() {
@@ -102,6 +122,10 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
                     (long) getOnMainSync(() -> testActivity.getOnBackPressedCallCount()));
             mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
 
+            // InputMethodService#onKeyDown() should handle back key event.
+            // TODO: Also check InputMethodService#requestHideSelf()
+            expectEvent(stream, backKeyDownMatcher(true), TIMEOUT);
+
             // keyboard will hide
             expectEvent(stream, event -> "hideSoftInput".equals(event.getEventName()), TIMEOUT);
 
@@ -135,6 +159,10 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
             assertEquals(0,
                     (long) getOnMainSync(() -> testActivity.getOnBackPressedCallCount()));
             mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
+
+            // InputMethodService#onKeyDown() will not handle back key event.
+            // TODO: Also check InputMethodService#requestHideSelf()
+            expectEvent(stream, backKeyDownMatcher(false), TIMEOUT);
 
             // keyboard will not hide
             notExpectEvent(stream, event -> "hideSoftInput".equals(event.getEventName()),

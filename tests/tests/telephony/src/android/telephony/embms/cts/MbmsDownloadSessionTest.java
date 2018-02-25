@@ -33,7 +33,7 @@ public class MbmsDownloadSessionTest extends MbmsDownloadTestBase {
     public void testDuplicateSession() throws Exception {
         try {
             MbmsDownloadSession failure = MbmsDownloadSession.create(
-                    mContext, mCallback, mCallbackHandler);
+                    mContext, mCallbackExecutor, mCallback);
             fail("Duplicate create should've thrown an exception");
         } catch (IllegalStateException e) {
             // Succeed
@@ -139,7 +139,7 @@ public class MbmsDownloadSessionTest extends MbmsDownloadTestBase {
     }
 
     public void testResetDownloadKnowledge() throws Exception {
-        DownloadRequest request = DOWNLOAD_REQUEST_TEMPLATE.build();
+        DownloadRequest request = downloadRequestTemplate.build();
         mDownloadSession.resetDownloadKnowledge(request);
 
         List<Bundle> resetDownloadKnowledgeCalls =
@@ -150,7 +150,7 @@ public class MbmsDownloadSessionTest extends MbmsDownloadTestBase {
     }
 
     public void testGetDownloadStatus() throws Exception {
-        DownloadRequest request = DOWNLOAD_REQUEST_TEMPLATE.build();
+        DownloadRequest request = downloadRequestTemplate.build();
         mDownloadSession.requestDownloadState(request, CtsDownloadService.FILE_INFO);
 
         List<Bundle> getDownloadStatusCalls =
@@ -163,7 +163,7 @@ public class MbmsDownloadSessionTest extends MbmsDownloadTestBase {
     }
 
     public void testCancelDownload() throws Exception {
-        DownloadRequest request = DOWNLOAD_REQUEST_TEMPLATE.build();
+        DownloadRequest request = downloadRequestTemplate.build();
         mDownloadSession.cancelDownload(request);
 
         List<Bundle> cancelDownloadCalls =
@@ -174,7 +174,11 @@ public class MbmsDownloadSessionTest extends MbmsDownloadTestBase {
     }
 
     public void testListPendingDownloads() throws Exception {
-        DownloadRequest request = DOWNLOAD_REQUEST_TEMPLATE.setAppIntent(new Intent()).build();
+        File tempFileRootDir = new File(mContext.getFilesDir(), "CtsTestDir");
+        tempFileRootDir.mkdir();
+        mDownloadSession.setTempFileRootDirectory(tempFileRootDir);
+
+        DownloadRequest request = downloadRequestTemplate.setAppIntent(new Intent()).build();
         mDownloadSession.download(request);
 
         List<DownloadRequest> downloads = mDownloadSession.listPendingDownloads();
@@ -194,14 +198,12 @@ public class MbmsDownloadSessionTest extends MbmsDownloadTestBase {
         assertNotSame(mDownloadSession.getTempFileRootDirectory(), tempFileDirName);
     }
 
-    public void testDownloadRequestOpacity() throws Exception {
+    public void testDownloadRequestSerialization() throws Exception {
         Intent intent = new Intent("sample_intent_action");
-        DownloadRequest request = DOWNLOAD_REQUEST_TEMPLATE.setAppIntent(intent).build();
-        DownloadRequest newRequest = new DownloadRequest.Builder(request.getSourceUri())
-                .setServiceId(request.getFileServiceId())
-                .setSubscriptionId(request.getSubscriptionId())
-                .setOpaqueData(request.getOpaqueData())
-                .build();
+        DownloadRequest request = downloadRequestTemplate.setAppIntent(intent).build();
+        DownloadRequest newRequest =
+                DownloadRequest.Builder.fromSerializedRequest(request.toByteArray())
+                        .build();
         assertEquals(request, newRequest);
     }
 

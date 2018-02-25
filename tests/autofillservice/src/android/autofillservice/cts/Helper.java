@@ -58,6 +58,8 @@ import android.view.autofill.AutofillManager.AutofillCallback;
 import android.view.autofill.AutofillValue;
 import android.webkit.WebView;
 
+import com.android.compatibility.common.util.RequiredFeatureRule;
+
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
@@ -104,11 +106,15 @@ final class Helper {
         /**
          * Returns whether the node passes the filter for such given id.
          */
-        boolean matches(T node, String id);
+        boolean matches(T node, Object id);
     }
 
     private static final NodeFilter<ViewNode> RESOURCE_ID_FILTER = (node, id) -> {
         return id.equals(node.getIdEntry());
+    };
+
+    private static final NodeFilter<ViewNode> AUTOFILL_ID_FILTER = (node, id) -> {
+        return id.equals(node.getAutofillId());
     };
 
     private static final NodeFilter<ViewNode> HTML_NAME_FILTER = (node, id) -> {
@@ -209,7 +215,7 @@ final class Helper {
     /**
      * Gets a node if it matches the filter criteria for the given id.
      */
-    static ViewNode findNodeByFilter(@NonNull AssistStructure structure, @NonNull String id,
+    static ViewNode findNodeByFilter(@NonNull AssistStructure structure, @NonNull Object id,
             @NonNull NodeFilter<ViewNode> filter) {
         Log.v(TAG, "Parsing request for activity " + structure.getActivityComponent());
         final int nodes = structure.getWindowNodeCount();
@@ -227,7 +233,7 @@ final class Helper {
     /**
      * Gets a node if it matches the filter criteria for the given id.
      */
-    static ViewNode findNodeByFilter(@NonNull List<FillContext> contexts, @NonNull String id,
+    static ViewNode findNodeByFilter(@NonNull List<FillContext> contexts, @NonNull Object id,
             @NonNull NodeFilter<ViewNode> filter) {
         for (FillContext context : contexts) {
             ViewNode node = findNodeByFilter(context.getStructure(), id, filter);
@@ -241,7 +247,7 @@ final class Helper {
     /**
      * Gets a node if it matches the filter criteria for the given id.
      */
-    static ViewNode findNodeByFilter(@NonNull ViewNode node, @NonNull String id,
+    static ViewNode findNodeByFilter(@NonNull ViewNode node, @NonNull Object id,
             @NonNull NodeFilter<ViewNode> filter) {
         if (filter.matches(node, id)) {
             return node;
@@ -367,6 +373,14 @@ final class Helper {
             }
         }
         return null;
+    }
+
+    /**
+     * Gets a view (or a descendant of it) that has the given {@code id}, or {@code null} if
+     * not found.
+     */
+    static ViewNode findNodeByAutofillId(AssistStructure structure, AutofillId id) {
+        return findNodeByFilter(structure, id, AUTOFILL_ID_FILTER);
     }
 
     /**
@@ -727,6 +741,13 @@ final class Helper {
      */
     public static boolean hasAutofillFeature() {
         return RequiredFeatureRule.hasFeature(PackageManager.FEATURE_AUTOFILL);
+    }
+
+    /**
+     * Check if autofill window is fullscreen, see com.android.server.autofill.ui.FillUi
+     */
+    public static boolean isAutofillWindowFullScreen(Context context) {
+        return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK);
     }
 
     /**
@@ -1160,7 +1181,7 @@ final class Helper {
         }
     }
 
-    public static boolean hasHint(@Nullable String[] hints, @Nullable String expectedHint) {
+    public static boolean hasHint(@Nullable String[] hints, @Nullable Object expectedHint) {
         if (hints == null || expectedHint == null) return false;
         for (String actualHint : hints) {
             if (expectedHint.equals(actualHint)) return true;

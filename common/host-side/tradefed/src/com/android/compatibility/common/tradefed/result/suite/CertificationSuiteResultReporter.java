@@ -60,7 +60,8 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
 /**
- * Extension of {@link SuiteResultReporter} to handle Compatibility specific format and operations.
+ * Extension of {@link XmlFormattedGeneratorReporter} and {@link SuiteResultReporter} to handle
+ * Compatibility specific format and operations.
  */
 public class CertificationSuiteResultReporter extends XmlFormattedGeneratorReporter
         implements ILogSaverListener, ITestSummaryListener {

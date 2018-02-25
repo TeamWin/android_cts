@@ -46,6 +46,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowInsets;
@@ -410,6 +411,11 @@ public final class MockIme extends InputMethodService {
         getTracer().onFinishInput(() -> super.onFinishInput());
     }
 
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        return getTracer().onKeyDown(keyCode, event, () -> super.onKeyDown(keyCode, event));
+    }
+
     @CallSuper
     public boolean onEvaluateInputViewShown() {
         return getTracer().onEvaluateInputViewShown(() -> {
@@ -544,7 +550,7 @@ public final class MockIme extends InputMethodService {
             // Send enter event
             sendEventInternal(new ImeEvent(eventName, nestLevel, mThreadName,
                     mThreadId, mIsMainThread, enterTimestamp, 0, enterWallTime,
-                    0, enterState, null, arguments));
+                    0, enterState, null, arguments, null));
             ++mNestLevel;
             T result;
             try {
@@ -558,7 +564,7 @@ public final class MockIme extends InputMethodService {
             // Send exit event
             sendEventInternal(new ImeEvent(eventName, nestLevel, mThreadName,
                     mThreadId, mIsMainThread, enterTimestamp, exitTimestamp, enterWallTime,
-                    exitWallTime, enterState, exitState, arguments));
+                    exitWallTime, enterState, exitState, arguments, result));
             return result;
         }
 
@@ -610,6 +616,13 @@ public final class MockIme extends InputMethodService {
 
         public void onFinishInput(@NonNull Runnable runnable) {
             recordEventInternal("onFinishInput", runnable);
+        }
+
+        public boolean onKeyDown(int keyCode, KeyEvent event, @NonNull BooleanSupplier supplier) {
+            final Bundle arguments = new Bundle();
+            arguments.putInt("keyCode", keyCode);
+            arguments.putParcelable("event", event);
+            return recordEventInternal("onKeyDown", supplier::getAsBoolean, arguments);
         }
 
         public boolean onShowInputRequested(int flags, boolean configChange,

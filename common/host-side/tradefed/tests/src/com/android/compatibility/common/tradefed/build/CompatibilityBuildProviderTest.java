@@ -85,6 +85,8 @@ public class CompatibilityBuildProviderTest {
         EasyMock.expect(mMockDevice.getBuildId()).andReturn("8888");
         EasyMock.expect(mMockDevice.getBuildFlavor()).andReturn("flavor");
         EasyMock.expect(mMockDevice.getBuildAlias()).andReturn("alias");
+        EasyMock.expect(mMockDevice.getProperty("ro.product.name")).andReturn("product");
+        EasyMock.expect(mMockDevice.getProperty("ro.build.type")).andReturn("userdebug");
         EasyMock.replay(mMockDevice);
         IBuildInfo info = mProvider.getBuild(mMockDevice);
         EasyMock.verify(mMockDevice);

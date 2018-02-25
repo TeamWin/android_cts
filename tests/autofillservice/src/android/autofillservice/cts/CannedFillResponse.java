@@ -69,6 +69,7 @@ final class CannedFillResponse {
     private final Validator mValidator;
     private final String[] mRequiredSavableIds;
     private final String[] mOptionalSavableIds;
+    private final AutofillId[] mRequiredSavableAutofillIds;
     private final String mSaveDescription;
     private final CustomDescription mCustomDescription;
     private final Bundle mExtras;
@@ -93,6 +94,7 @@ final class CannedFillResponse {
         mFailureMessage = builder.mFailureMessage;
         mValidator = builder.mValidator;
         mRequiredSavableIds = builder.mRequiredSavableIds;
+        mRequiredSavableAutofillIds = builder.mRequiredSavableAutofillIds;
         mOptionalSavableIds = builder.mOptionalSavableIds;
         mSaveDescription = builder.mSaveDescription;
         mCustomDescription = builder.mCustomDescription;
@@ -151,12 +153,16 @@ final class CannedFillResponse {
                 builder.addDataset(dataset);
             }
         }
-        if (mRequiredSavableIds != null) {
-            final SaveInfo.Builder saveInfo =
-                    mRequiredSavableIds == null || mRequiredSavableIds.length == 0
+        if (mRequiredSavableIds != null || mRequiredSavableAutofillIds != null) {
+            final SaveInfo.Builder saveInfo;
+            if (mRequiredSavableAutofillIds != null) {
+                saveInfo = new SaveInfo.Builder(mSaveType, mRequiredSavableAutofillIds);
+            } else {
+                saveInfo = mRequiredSavableIds == null || mRequiredSavableIds.length == 0
                         ? new SaveInfo.Builder(mSaveType)
                             : new SaveInfo.Builder(mSaveType,
                                     getAutofillIds(nodeResolver, mRequiredSavableIds));
+            }
 
             saveInfo.setFlags(mSaveInfoFlags);
 
@@ -222,6 +228,7 @@ final class CannedFillResponse {
                 + ",datasets=" + mDatasets
                 + ", requiredSavableIds=" + Arrays.toString(mRequiredSavableIds)
                 + ", optionalSavableIds=" + Arrays.toString(mOptionalSavableIds)
+                + ", requiredSavableAutofillIds=" + Arrays.toString(mRequiredSavableAutofillIds)
                 + ", saveInfoFlags=" + mSaveInfoFlags
                 + ", fillResponseFlags=" + mFillResponseFlags
                 + ", failureMessage=" + mFailureMessage
@@ -255,6 +262,7 @@ final class CannedFillResponse {
         private Validator mValidator;
         private String[] mRequiredSavableIds;
         private String[] mOptionalSavableIds;
+        private AutofillId[] mRequiredSavableAutofillIds;
         private String mSaveDescription;
         public CustomDescription mCustomDescription;
         public int mSaveType = -1;
@@ -297,11 +305,28 @@ final class CannedFillResponse {
         }
 
         /**
-         * Sets the required savable ids based on they {@code resourceId}.
+         * Sets the required savable ids based on their {@code resourceId}.
          */
         public Builder setRequiredSavableIds(int type, String... ids) {
+            if (mRequiredSavableAutofillIds != null) {
+                throw new IllegalStateException("Already set required autofill ids: "
+                        + Arrays.toString(mRequiredSavableAutofillIds));
+            }
             mSaveType = type;
             mRequiredSavableIds = ids;
+            return this;
+        }
+
+        /**
+         * Sets the required savable ids based on their {@code autofillId}.
+         */
+        public Builder setRequiredSavableAutofillIds(int type, AutofillId... ids) {
+            if (mRequiredSavableIds != null) {
+                throw new IllegalStateException("Already set required resource ids: "
+                        + Arrays.toString(mRequiredSavableIds));
+            }
+            mSaveType = type;
+            mRequiredSavableAutofillIds = ids;
             return this;
         }
 
@@ -465,6 +490,8 @@ final class CannedFillResponse {
      */
     static class CannedDataset {
         private final Map<String, AutofillValue> mFieldValues;
+        private final Map<AutofillId, AutofillValue> mFieldValuesById;
+        private final Map<AutofillId, RemoteViews> mFieldPresentationsById;
         private final Map<String, RemoteViews> mFieldPresentations;
         private final Map<String, Pair<Boolean, Pattern>> mFieldFilters;
         private final RemoteViews mPresentation;
@@ -473,6 +500,8 @@ final class CannedFillResponse {
 
         private CannedDataset(Builder builder) {
             mFieldValues = builder.mFieldValues;
+            mFieldValuesById = builder.mFieldValuesById;
+            mFieldPresentationsById = builder.mFieldPresentationsById;
             mFieldPresentations = builder.mFieldPresentations;
             mFieldFilters = builder.mFieldFilters;
             mPresentation = builder.mPresentation;
@@ -495,22 +524,36 @@ final class CannedFillResponse {
                     if (node == null) {
                         throw new AssertionError("No node with resource id " + id);
                     }
-                    final AutofillId autofillid = node.getAutofillId();
+                    final AutofillId autofillId = node.getAutofillId();
                     final AutofillValue value = entry.getValue();
                     final RemoteViews presentation = mFieldPresentations.get(id);
                     final Pair<Boolean, Pattern> filter = mFieldFilters.get(id);
                     if (presentation != null) {
                         if (filter == null) {
-                            builder.setValue(autofillid, value, presentation);
+                            builder.setValue(autofillId, value, presentation);
                         } else {
-                            builder.setValue(autofillid, value, filter.second, presentation);
+                            builder.setValue(autofillId, value, filter.second, presentation);
                         }
                     } else {
                         if (filter == null) {
-                            builder.setValue(autofillid, value);
+                            builder.setValue(autofillId, value);
                         } else {
-                            builder.setValue(autofillid, value, filter.second);
+                            builder.setValue(autofillId, value, filter.second);
                         }
+                    }
+                }
+            }
+            if (mFieldValuesById != null) {
+                // NOTE: filter is not yet supported when calling methods that explicitly pass
+                // autofill id
+                for (Map.Entry<AutofillId, AutofillValue> entry : mFieldValuesById.entrySet()) {
+                    final AutofillId autofillId = entry.getKey();
+                    final AutofillValue value = entry.getValue();
+                    final RemoteViews presentation = mFieldPresentationsById.get(autofillId);
+                    if (presentation != null) {
+                        builder.setValue(autofillId, value, presentation);
+                    } else {
+                        builder.setValue(autofillId, value);
                     }
                 }
             }
@@ -522,14 +565,18 @@ final class CannedFillResponse {
         public String toString() {
             return "CannedDataset " + mId + " : [hasPresentation=" + (mPresentation != null)
                     + ", fieldPresentations=" + (mFieldPresentations)
+                    + ", fieldPresentationsById=" + (mFieldPresentationsById)
                     + ", hasAuthentication=" + (mAuthentication != null)
                     + ", fieldValues=" + mFieldValues
+                    + ", fieldValuesById=" + mFieldValuesById
                     + ", fieldFilters=" + mFieldFilters + "]";
         }
 
         static class Builder {
             private final Map<String, AutofillValue> mFieldValues = new HashMap<>();
+            private final Map<AutofillId, AutofillValue> mFieldValuesById = new HashMap<>();
             private final Map<String, RemoteViews> mFieldPresentations = new HashMap<>();
+            private final Map<AutofillId, RemoteViews> mFieldPresentationsById = new HashMap<>();
             private final Map<String, Pair<Boolean, Pattern>> mFieldFilters = new HashMap<>();
 
             private RemoteViews mPresentation;
@@ -616,6 +663,14 @@ final class CannedFillResponse {
             }
 
             /**
+             * Sets the canned value of a date field based on its {@code autofillId}.
+             */
+            public Builder setField(AutofillId autofillId, AutofillValue value) {
+                mFieldValuesById.put(autofillId, value);
+                return this;
+            }
+
+            /**
              * Sets the canned value of a date field based on its {@code id}.
              *
              * <p>The meaning of the id is defined by the object using the canned dataset.
@@ -639,6 +694,15 @@ final class CannedFillResponse {
             public Builder setField(String id, String text, RemoteViews presentation) {
                 setField(id, text);
                 mFieldPresentations.put(id, presentation);
+                return this;
+            }
+
+            /**
+             * Sets the canned value of a date field based on its {@code autofillId}.
+             */
+            public Builder setField(AutofillId autofillId, String text, RemoteViews presentation) {
+                setField(autofillId, AutofillValue.forText(text));
+                mFieldPresentationsById.put(autofillId, presentation);
                 return this;
             }
 

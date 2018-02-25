@@ -28,5 +28,6 @@ LOCAL_SRC_FILES := $(call all-subdir-java-files)
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 LOCAL_PACKAGE_NAME := CtsCantSaveState2
+LOCAL_SDK_VERSION := current
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)

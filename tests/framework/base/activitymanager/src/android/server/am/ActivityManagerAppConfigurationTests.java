@@ -51,6 +51,7 @@ import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
 import android.support.test.filters.FlakyTest;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -371,7 +372,8 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     }
 
     // TODO(b/70870253): This test seems malfunction.
-    // @Test
+    @Ignore("b/70870253")
+    @Test
     public void testNonFullscreenActivityProhibited() throws Exception {
         // We do not wait for the activity as it should not launch based on the restrictions around
         // specifying orientation. We instead start an activity known to launch immediately after
