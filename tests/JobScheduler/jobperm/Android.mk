@@ -29,5 +29,6 @@ LOCAL_SRC_FILES := \
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 LOCAL_PACKAGE_NAME := CtsJobSchedulerJobPerm
+LOCAL_PRIVATE_PLATFORM_APIS := true
 
 include $(BUILD_CTS_PACKAGE)

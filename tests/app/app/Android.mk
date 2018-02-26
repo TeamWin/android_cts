@@ -40,5 +40,6 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src) \
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 LOCAL_PACKAGE_NAME := CtsAppTestStubs
+LOCAL_PRIVATE_PLATFORM_APIS := true
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)

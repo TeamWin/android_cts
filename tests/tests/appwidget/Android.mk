@@ -24,6 +24,7 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src) \
     $(call all-java-files-under, common/src)
 
 LOCAL_PACKAGE_NAME := CtsAppWidgetTestCases
+LOCAL_PRIVATE_PLATFORM_APIS := true
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     mockito-target-minus-junit4 \

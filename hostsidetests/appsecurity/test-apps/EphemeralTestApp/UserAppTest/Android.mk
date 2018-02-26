@@ -29,6 +29,7 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res
 
 LOCAL_PACKAGE_NAME := CtsEphemeralTestsUserAppTest
+LOCAL_SDK_VERSION := current
 
 LOCAL_PROGUARD_ENABLED := disabled
 LOCAL_DEX_PREOPT := false
