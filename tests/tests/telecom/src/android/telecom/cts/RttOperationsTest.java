@@ -311,7 +311,12 @@ public class RttOperationsTest extends BaseTelecomTestWithMockServices {
     }
 
     private boolean getRttMasterSwitch() throws Exception {
-        return Integer.valueOf(TestUtils.executeShellCommand(
-                getInstrumentation(), "settings get system rtt_calling_mode")) == 1;
+        try {
+            return Integer.valueOf(TestUtils.executeShellCommand(
+                    getInstrumentation(), "settings get system rtt_calling_mode")) == 1;
+        } catch (NumberFormatException e) {
+            // If the setting hasn't been set yet, assume it's off
+            return false;
+        }
     }
 }
