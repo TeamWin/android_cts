@@ -23,6 +23,7 @@ LOCAL_MODULE_TAGS := tests
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_PACKAGE_NAME := CtsStaticSharedLibProviderApp7
+LOCAL_SDK_VERSION := current
 
 LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/keysets/cts-keyset-test-b
 

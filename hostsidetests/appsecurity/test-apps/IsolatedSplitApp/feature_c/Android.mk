@@ -17,6 +17,7 @@
 LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
+LOCAL_SDK_VERSION := current
 LOCAL_USE_AAPT2 := true
 LOCAL_MODULE_TAGS := tests
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests

@@ -95,7 +95,7 @@ public class TestResult implements Parcelable {
         dest.writeString(mMethodName);
         dest.writeString(mStatus);
         dest.writeString(mException);
-        dest.writeBoolean(mInstantAppPackageInfoExposed);
+        dest.writeInt(mInstantAppPackageInfoExposed ? 1 : 0);
     }
 
     public static final Creator<TestResult> CREATOR = new Creator<TestResult>() {
@@ -113,7 +113,7 @@ public class TestResult implements Parcelable {
         mMethodName = source.readString();
         mStatus = source.readString();
         mException = source.readString();
-        mInstantAppPackageInfoExposed = source.readBoolean();
+        mInstantAppPackageInfoExposed = source.readInt() != 0;
     }
 
     public static class Builder {

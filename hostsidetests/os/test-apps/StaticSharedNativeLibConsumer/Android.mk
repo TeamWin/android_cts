@@ -28,6 +28,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 LOCAL_JNI_SHARED_LIBRARIES := libstaticsharednativelibconsumerjni
 
 LOCAL_PACKAGE_NAME := CtsStaticSharedNativeLibConsumer
+LOCAL_SDK_VERSION := current
 
 LOCAL_MULTILIB := both
 

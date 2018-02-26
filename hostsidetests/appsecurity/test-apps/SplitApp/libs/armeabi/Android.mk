@@ -19,6 +19,7 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_PACKAGE_NAME := CtsSplitApp_armeabi
+LOCAL_SDK_VERSION := current
 
 LOCAL_JAVA_RESOURCE_DIRS := raw
 

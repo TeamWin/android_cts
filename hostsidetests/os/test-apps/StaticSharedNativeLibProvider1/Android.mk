@@ -23,6 +23,7 @@ LOCAL_MODULE_TAGS := tests
 LOCAL_JNI_SHARED_LIBRARIES := libstaticsharednativelibprovider
 
 LOCAL_PACKAGE_NAME := CtsStaticSharedNativeLibProvider1
+LOCAL_SDK_VERSION := current
 
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
