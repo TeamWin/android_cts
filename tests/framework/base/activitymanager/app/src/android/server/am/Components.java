@@ -71,6 +71,8 @@ public class Components extends ComponentsBase {
             component("ShowWhenLockedActivity");
     public static final ComponentName SHOW_WHEN_LOCKED_ATTR_ACTIVITY =
             component("ShowWhenLockedAttrActivity");
+    public static final ComponentName SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY =
+            component("ShowWhenLockedAttrRemoveAttrActivity");
     public static final ComponentName SHOW_WHEN_LOCKED_DIALOG_ACTIVITY =
             component("ShowWhenLockedDialogActivity");
     public static final ComponentName SHOW_WHEN_LOCKED_TRANSLUCENT_ACTIVITY =
@@ -111,6 +113,7 @@ public class Components extends ComponentsBase {
     public static final ComponentName VIRTUAL_DISPLAY_ACTIVITY =
             component("VirtualDisplayActivity");
     public static final ComponentName VR_TEST_ACTIVITY = component("VrTestActivity");
+    public static final ComponentName WALLPAPAER_ACTIVITY = component("WallpaperActivity");
 
     public static final ComponentName ASSISTANT_VOICE_INTERACTION_SERVICE =
             component("AssistantVoiceInteractionService");
