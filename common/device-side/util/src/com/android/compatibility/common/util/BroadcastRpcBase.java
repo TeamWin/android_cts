@@ -40,6 +40,8 @@ import java.util.concurrent.atomic.AtomicReference;
 public abstract class BroadcastRpcBase<TRequest, TResponse> {
     private static final String TAG = "BroadcastRpc";
 
+    private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
+
     static final String ACTION_REQUEST = "ACTION_REQUEST";
     static final String EXTRA_PAYLOAD = "EXTRA_PAYLOAD";
     static final String EXTRA_EXCEPTION = "EXTRA_EXCEPTION";
@@ -54,7 +56,7 @@ public abstract class BroadcastRpcBase<TRequest, TResponse> {
 
     public TResponse invoke(ComponentName targetReceiver, TRequest request) throws Exception {
         // Create a request intent.
-        Log.i(TAG, "Sending to: " + targetReceiver + "\nRequest: " + request);
+        Log.i(TAG, "Sending to: " + targetReceiver + (VERBOSE ? "\nRequest: " + request : ""));
 
         final Intent requestIntent = new Intent(ACTION_REQUEST)
                 .setComponent(targetReceiver)
@@ -91,7 +93,7 @@ public abstract class BroadcastRpcBase<TRequest, TResponse> {
         final byte[] resultPayload = responseBundle.get().getByteArray(EXTRA_PAYLOAD);
         assertNotNull("Didn't receive result payload", resultPayload);
 
-        Log.i(TAG, "Response received: " + resultPayload.toString());
+        Log.i(TAG, "Response received: " + (VERBOSE ? resultPayload.toString() : ""));
 
         return bytesToResponse(resultPayload);
     }
@@ -107,7 +109,7 @@ public abstract class BroadcastRpcBase<TRequest, TResponse> {
             // Parse the request.
             final TRequest request = bytesToRequest(intent.getByteArrayExtra(EXTRA_PAYLOAD));
 
-            Log.i(TAG, "Request received: " + request);
+            Log.i(TAG, "Request received: " + (VERBOSE ? request.toString() : ""));
 
             Throwable exception = null;
 
@@ -115,7 +117,7 @@ public abstract class BroadcastRpcBase<TRequest, TResponse> {
             TResponse response = null;
             try {
                 response = handleRequest(context, request);
-                Log.i(TAG, "Response generated: " + response);
+                Log.i(TAG, "Response generated: " + (VERBOSE ? response.toString() : ""));
             } catch (Throwable e) {
                 exception = e;
                 Log.e(TAG, "Exception thrown: " + e.getMessage(), e);

@@ -23,7 +23,6 @@ import static com.android.compatibility.common.util.BundleUtils.makeBundle;
 import static com.android.compatibility.common.util.ConnectivityUtils.assertNetworkConnected;
 import static com.android.compatibility.common.util.SettingsUtils.putGlobalSetting;
 import static com.android.compatibility.common.util.SystemUtil.runCommandAndPrintOnLogcat;
-import static com.android.compatibility.common.util.TestUtils.runWithFailureHook;
 import static com.android.compatibility.common.util.TestUtils.waitUntil;
 
 import static junit.framework.TestCase.assertEquals;
@@ -50,14 +49,17 @@ import android.util.Log;
 
 import com.android.compatibility.common.util.AmUtils;
 import com.android.compatibility.common.util.BatteryUtils;
+import com.android.compatibility.common.util.OnFailureRule;
 import com.android.compatibility.common.util.ParcelUtils;
 import com.android.compatibility.common.util.SystemUtil;
-import com.android.compatibility.common.util.TestUtils.RunnableWithThrow;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.Description;
 import org.junit.runner.RunWith;
+import org.junit.runners.model.Statement;
 
 
 // TODO Don't run if no network is available.
@@ -69,7 +71,16 @@ public class CtsSyncManagerTest {
 
     public static final int DEFAULT_TIMEOUT_SECONDS = 30;
 
-    public static final boolean DEBUG = true;
+    public static final boolean DEBUG = false;
+
+    @Rule
+    public final OnFailureRule mDumpOnFailureRule = new OnFailureRule() {
+        @Override
+        protected void onTestFailure(Statement base, Description description, Throwable t) {
+            runCommandAndPrintOnLogcat(TAG, "dumpsys content");
+            runCommandAndPrintOnLogcat(TAG, "dumpsys jobscheduler");
+        }
+    };
 
     protected final BroadcastRpc mRpc = new BroadcastRpc();
 
@@ -154,74 +165,63 @@ public class CtsSyncManagerTest {
                 24 * 60 * 60, ContentResolver.getPeriodicSyncs(account, authority).get(0).period);
     }
 
-    private void runTest(RunnableWithThrow r) throws Exception {
-        runWithFailureHook(r, () -> {
-            runCommandAndPrintOnLogcat(TAG, "dumpsys content");
-            runCommandAndPrintOnLogcat(TAG, "dumpsys jobscheduler");
-        });
-    }
-
     @Test
     public void testInitialSync() throws Exception {
-        runTest(() -> {
-            removeAllAccounts();
+        removeAllAccounts();
 
-            mRpc.invoke(APP1_PACKAGE, rb -> rb.setClearSyncInvocations(
-                    ClearSyncInvocations.newBuilder()));
+        mRpc.invoke(APP1_PACKAGE, rb -> rb.setClearSyncInvocations(
+                ClearSyncInvocations.newBuilder()));
 
-            // Add the first account, which will trigger an initial sync.
-            addAccountAndLetInitialSyncRun(ACCOUNT_1_A, APP1_AUTHORITY);
+        // Add the first account, which will trigger an initial sync.
+        addAccountAndLetInitialSyncRun(ACCOUNT_1_A, APP1_AUTHORITY);
 
-            // Check the sync request parameters.
+        // Check the sync request parameters.
 
-            Response res = mRpc.invoke(APP1_PACKAGE,
-                    rb -> rb.setGetSyncInvocations(GetSyncInvocations.newBuilder()));
-            assertEquals(1, res.getSyncInvocations().getSyncInvocationsCount());
+        Response res = mRpc.invoke(APP1_PACKAGE,
+                rb -> rb.setGetSyncInvocations(GetSyncInvocations.newBuilder()));
+        assertEquals(1, res.getSyncInvocations().getSyncInvocationsCount());
 
-            SyncInvocation si = res.getSyncInvocations().getSyncInvocations(0);
+        SyncInvocation si = res.getSyncInvocations().getSyncInvocations(0);
 
-            assertEquals(ACCOUNT_1_A.name, si.getAccountName());
-            assertEquals(ACCOUNT_1_A.type, si.getAccountType());
-            assertEquals(APP1_AUTHORITY, si.getAuthority());
+        assertEquals(ACCOUNT_1_A.name, si.getAccountName());
+        assertEquals(ACCOUNT_1_A.type, si.getAccountType());
+        assertEquals(APP1_AUTHORITY, si.getAuthority());
 
-            Bundle extras = ParcelUtils.fromBytes(si.getExtras().toByteArray());
-            assertTrue(extras.getBoolean(ContentResolver.SYNC_EXTRAS_INITIALIZE));
-        });
+        Bundle extras = ParcelUtils.fromBytes(si.getExtras().toByteArray());
+        assertTrue(extras.getBoolean(ContentResolver.SYNC_EXTRAS_INITIALIZE));
     }
 
     @Test
     public void testSoftErrorRetriesActiveApp() throws Exception {
-        runTest(() -> {
-            removeAllAccounts();
+        removeAllAccounts();
 
-            // Let the initial sync happen.
-            addAccountAndLetInitialSyncRun(ACCOUNT_1_A, APP1_AUTHORITY);
+        // Let the initial sync happen.
+        addAccountAndLetInitialSyncRun(ACCOUNT_1_A, APP1_AUTHORITY);
 
-            writeSyncConfig(2, 1, 2, 3);
+        writeSyncConfig(2, 1, 2, 3);
 
-            clearSyncInvocations(APP1_PACKAGE);
+        clearSyncInvocations(APP1_PACKAGE);
 
-            AmUtils.setStandbyBucket(APP1_PACKAGE, UsageStatsManager.STANDBY_BUCKET_ACTIVE);
+        AmUtils.setStandbyBucket(APP1_PACKAGE, UsageStatsManager.STANDBY_BUCKET_ACTIVE);
 
-            // Set soft error.
-            mRpc.invoke(APP1_PACKAGE, rb ->
-                    rb.setSetResult(SetResult.newBuilder().setResult(Result.SOFT_ERROR)));
+        // Set soft error.
+        mRpc.invoke(APP1_PACKAGE, rb ->
+                rb.setSetResult(SetResult.newBuilder().setResult(Result.SOFT_ERROR)));
 
-            Bundle b = makeBundle(
-                    "testSoftErrorRetriesActiveApp", true,
-                    ContentResolver.SYNC_EXTRAS_IGNORE_SETTINGS, true);
+        Bundle b = makeBundle(
+                "testSoftErrorRetriesActiveApp", true,
+                ContentResolver.SYNC_EXTRAS_IGNORE_SETTINGS, true);
 
-            ContentResolver.requestSync(ACCOUNT_1_A, APP1_AUTHORITY, b);
+        ContentResolver.requestSync(ACCOUNT_1_A, APP1_AUTHORITY, b);
 
-            // First sync + 3 retries == 4, so should be called more than 4 times.
-            // But it's active, so it should retry more than that.
-            waitUntil("Should retry more than 3 times.", () -> {
-                final Response res = mRpc.invoke(APP1_PACKAGE,
-                        rb -> rb.setGetSyncInvocations(GetSyncInvocations.newBuilder()));
-                final int calls =  res.getSyncInvocations().getSyncInvocationsCount();
-                Log.i(TAG, "NumSyncInvocations=" + calls);
-                return calls > 7; // Arbitrarily bigger than 4.
-            });
+        // First sync + 3 retries == 4, so should be called more than 4 times.
+        // But it's active, so it should retry more than that.
+        waitUntil("Should retry more than 3 times.", () -> {
+            final Response res = mRpc.invoke(APP1_PACKAGE,
+                    rb -> rb.setGetSyncInvocations(GetSyncInvocations.newBuilder()));
+            final int calls =  res.getSyncInvocations().getSyncInvocationsCount();
+            Log.i(TAG, "NumSyncInvocations=" + calls);
+            return calls > 7; // Arbitrarily bigger than 4.
         });
     }
 

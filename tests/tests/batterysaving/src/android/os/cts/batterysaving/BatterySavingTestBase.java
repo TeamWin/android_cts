@@ -17,6 +17,7 @@ package android.os.cts.batterysaving;
 
 import static com.android.compatibility.common.util.BatteryUtils.runDumpsysBatteryReset;
 import static com.android.compatibility.common.util.BatteryUtils.turnOnScreen;
+import static com.android.compatibility.common.util.SystemUtil.runCommandAndPrintOnLogcat;
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.android.compatibility.common.util.TestUtils.waitUntil;
 
@@ -28,17 +29,33 @@ import android.os.PowerManager;
 import android.support.test.InstrumentationRegistry;
 import android.util.Log;
 
+import com.android.compatibility.common.util.OnFailureRule;
+
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
 
 public class BatterySavingTestBase {
     private static final String TAG = "BatterySavingTestBase";
 
     public static final int DEFAULT_TIMEOUT_SECONDS = 30;
 
-    public static final boolean DEBUG = true;
+    public static final boolean DEBUG = false;
 
     protected final BroadcastRpc mRpc = new BroadcastRpc();
+
+    @Rule
+    public final OnFailureRule mDumpOnFailureRule = new OnFailureRule() {
+        @Override
+        protected void onTestFailure(Statement base, Description description, Throwable t) {
+            runCommandAndPrintOnLogcat(TAG, "dumpsys power");
+            runCommandAndPrintOnLogcat(TAG, "dumpsys alarm");
+            runCommandAndPrintOnLogcat(TAG, "dumpsys jobscheduler");
+            runCommandAndPrintOnLogcat(TAG, "dumpsys content");
+        }
+    };
 
     @Before
     public final void resetDumpsysBatteryBeforeTest() throws Exception {
