@@ -30,6 +30,7 @@ import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.suite.BaseTestSuite;
 import com.android.tradefed.testtype.suite.SuiteModuleLoader;
 import com.android.tradefed.testtype.suite.SuiteTestFilter;
+import com.android.tradefed.testtype.suite.TestSuiteInfo;
 import com.android.tradefed.util.xml.AbstractXmlParser.ParseException;
 
 import java.io.File;
@@ -88,8 +89,10 @@ public class CompatibilityTestSuite extends BaseTestSuite {
     @Override
     public LinkedHashMap<String, IConfiguration> loadTests() {
         if (mRetrySessionId != null) {
-            throw new IllegalArgumentException("--retry cannot be specified with cts[*].xml. "
-                    + "Use 'run retry --retry <session id>' instead.");
+            throw new IllegalArgumentException(
+                    String.format("--retry cannot be specified with %s[*].xml. "
+                            + "Use 'run retry --retry <session id>' instead.",
+                            TestSuiteInfo.getInstance().getName().toLowerCase()));
         }
         return super.loadTests();
     }
