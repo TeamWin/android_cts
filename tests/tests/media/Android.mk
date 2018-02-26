@@ -73,6 +73,7 @@ LOCAL_PACKAGE_NAME := CtsMediaTestCases
 
 # uncomment when b/13249737 is fixed
 #LOCAL_SDK_VERSION := current
+LOCAL_PRIVATE_PLATFORM_APIS := true
 
 LOCAL_JAVA_LIBRARIES += android.test.runner org.apache.http.legacy
 

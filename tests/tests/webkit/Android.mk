@@ -38,5 +38,6 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 # uncomment when dalvik.annotation.Test* are removed or part of SDK
 #LOCAL_SDK_VERSION := current
+LOCAL_PRIVATE_PLATFORM_APIS := true
 
 include $(BUILD_CTS_PACKAGE)
