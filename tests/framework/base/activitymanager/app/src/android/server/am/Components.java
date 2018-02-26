@@ -36,6 +36,8 @@ public class Components extends ComponentsBase {
             component("DialogWhenLargeActivity");
     public static final ComponentName DISMISS_KEYGUARD_ACTIVITY =
             component("DismissKeyguardActivity");
+    public static final ComponentName DISMISS_KEYGUARD_METHOD_ACTIVITY =
+            component("DismissKeyguardMethodActivity");
     public static final ComponentName DOCKED_ACTIVITY = component("DockedActivity");
     public static final ComponentName ENTRY_POINT_ALIAS_ACTIVITY =
             component("EntryPointAliasActivity");
@@ -43,6 +45,7 @@ public class Components extends ComponentsBase {
     public static final ComponentName FONT_SCALE_NO_RELAUNCH_ACTIVITY =
             component("FontScaleNoRelaunchActivity");
     public static final ComponentName FREEFORM_ACTIVITY = component("FreeformActivity");
+    public static final ComponentName KEYGUARD_LOCK_ACTIVITY = component("KeyguardLockActivity");
     public static final ComponentName LANDSCAPE_ORIENTATION_ACTIVITY =
             component("LandscapeOrientationActivity");
     public static final ComponentName LAUNCH_ASSISTANT_ACTIVITY_FROM_SESSION =
@@ -68,6 +71,12 @@ public class Components extends ComponentsBase {
             component("ShowWhenLockedActivity");
     public static final ComponentName SHOW_WHEN_LOCKED_ATTR_ACTIVITY =
             component("ShowWhenLockedAttrActivity");
+    public static final ComponentName SHOW_WHEN_LOCKED_DIALOG_ACTIVITY =
+            component("ShowWhenLockedDialogActivity");
+    public static final ComponentName SHOW_WHEN_LOCKED_TRANSLUCENT_ACTIVITY =
+            component("ShowWhenLockedTranslucentActivity");
+    public static final ComponentName SHOW_WHEN_LOCKED_WITH_DIALOG_ACTIVITY =
+            component("ShowWhenLockedWithDialogActivity");
     public static final ComponentName SINGLE_INSTANCE_ACTIVITY =
             component("SingleInstanceActivity");
     public static final ComponentName SINGLE_TASK_ACTIVITY = component("SingleTaskActivity");
@@ -87,8 +96,12 @@ public class Components extends ComponentsBase {
     public static final ComponentName TURN_SCREEN_ON_ACTIVITY = component("TurnScreenOnActivity");
     public static final ComponentName TURN_SCREEN_ON_ATTR_ACTIVITY =
             component("TurnScreenOnAttrActivity");
+    public static final ComponentName TURN_SCREEN_ON_ATTR_DISMISS_KEYGUARD_ACTIVITY =
+            component("TurnScreenOnAttrDismissKeyguardActivity");
     public static final ComponentName TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY =
             component("TurnScreenOnAttrRemoveAttrActivity");
+    public static final ComponentName TURN_SCREEN_ON_DISMISS_KEYGUARD_ACTIVITY =
+            component("TurnScreenOnDismissKeyguardActivity");
     public static final ComponentName TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY =
             component("TurnScreenOnShowOnLockActivity");
     public static final ComponentName TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY =
