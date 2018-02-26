@@ -57,6 +57,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.function.IntFunction;
+import java.util.function.Supplier;
 
 @RunWith(AndroidJUnit4.class)
 public class ImageDecoderTest {
@@ -1543,6 +1544,8 @@ public class ImageDecoderTest {
         fail("should not have reached here!");
     }
 
+    private interface ByteBufferSupplier extends Supplier<ByteBuffer> {};
+
     @Test
     public void testOffsetByteArray() {
         for (Record record : RECORDS) {
@@ -1555,78 +1558,77 @@ public class ImageDecoderTest {
             int myPosition = 7;
             assertEquals(offset, myOffset + myPosition);
 
-            SourceCreator[] creators = new SourceCreator[] {
-                // Internally, this gives the buffer a position, but not an offset.
-                unused -> ImageDecoder.createSource(ByteBuffer.wrap(array, offset, length)),
-                unused -> {
+            ByteBufferSupplier[] suppliers = new ByteBufferSupplier[] {
+                    // Internally, this gives the buffer a position, but not an offset.
+                    () -> ByteBuffer.wrap(array, offset, length),
                     // Same, but make it readOnly to ensure that we test the
                     // ByteBufferSource rather than the ByteArraySource.
-                    ByteBuffer buf = ByteBuffer.wrap(array, offset, length);
-                    return ImageDecoder.createSource(buf.asReadOnlyBuffer());
-                },
-                unused -> {
-                    // slice() to give the buffer an offset.
-                    ByteBuffer buf = ByteBuffer.wrap(array, 0, array.length - extra);
-                    buf.position(offset);
-                    return ImageDecoder.createSource(buf.slice());
-                },
-                unused -> {
-                    // Same, but make it readOnly to ensure that we test the
-                    // ByteBufferSource rather than the ByteArraySource.
-                    ByteBuffer buf = ByteBuffer.wrap(array, 0, array.length - extra);
-                    buf.position(offset);
-                    return ImageDecoder.createSource(buf.slice().asReadOnlyBuffer());
-                },
-                unused -> {
-                    // Use both a position and an offset.
-                    ByteBuffer buf = ByteBuffer.wrap(array, myOffset,
+                    () -> ByteBuffer.wrap(array, offset, length).asReadOnlyBuffer(),
+                    () -> {
+                        // slice() to give the buffer an offset.
+                        ByteBuffer buf = ByteBuffer.wrap(array, 0, array.length - extra);
+                        buf.position(offset);
+                        return buf.slice();
+                    },
+                    () -> {
+                        // Same, but make it readOnly to ensure that we test the
+                        // ByteBufferSource rather than the ByteArraySource.
+                        ByteBuffer buf = ByteBuffer.wrap(array, 0, array.length - extra);
+                        buf.position(offset);
+                        return buf.slice().asReadOnlyBuffer();
+                    },
+                    () -> {
+                        // Use both a position and an offset.
+                        ByteBuffer buf = ByteBuffer.wrap(array, myOffset,
                             array.length - extra - myOffset);
-                    buf = buf.slice();
-                    buf.position(myPosition);
-                    return ImageDecoder.createSource(buf);
-                },
-                unused -> {
-                    // Same, as readOnly.
-                    ByteBuffer buf = ByteBuffer.wrap(array, myOffset,
-                            array.length - extra - myOffset);
-                    buf = buf.slice();
-                    buf.position(myPosition);
-                    return ImageDecoder.createSource(buf.asReadOnlyBuffer());
-                },
-                unused -> {
-                    // Direct ByteBuffer with a position.
-                    ByteBuffer buf = ByteBuffer.allocateDirect(array.length);
-                    buf.put(array);
-                    buf.position(offset);
-                    return ImageDecoder.createSource(buf);
-                },
-                unused -> {
-                    // Sliced direct ByteBuffer, for an offset.
-                    ByteBuffer buf = ByteBuffer.allocateDirect(array.length);
-                    buf.put(array);
-                    buf.position(offset);
-                    return ImageDecoder.createSource(buf.slice());
-                },
-                unused -> {
-                    // Direct ByteBuffer with position and offset.
-                    ByteBuffer buf = ByteBuffer.allocateDirect(array.length);
-                    buf.put(array);
-                    buf.position(myOffset);
-                    buf = buf.slice();
-                    buf.position(myPosition);
-                    return ImageDecoder.createSource(buf);
-                },
+                        buf = buf.slice();
+                        buf.position(myPosition);
+                        return buf;
+                    },
+                    () -> {
+                        // Same, as readOnly.
+                        ByteBuffer buf = ByteBuffer.wrap(array, myOffset,
+                                array.length - extra - myOffset);
+                        buf = buf.slice();
+                        buf.position(myPosition);
+                        return buf.asReadOnlyBuffer();
+                    },
+                    () -> {
+                        // Direct ByteBuffer with a position.
+                        ByteBuffer buf = ByteBuffer.allocateDirect(array.length);
+                        buf.put(array);
+                        buf.position(offset);
+                        return buf;
+                    },
+                    () -> {
+                        // Sliced direct ByteBuffer, for an offset.
+                        ByteBuffer buf = ByteBuffer.allocateDirect(array.length);
+                        buf.put(array);
+                        buf.position(offset);
+                        return buf.slice();
+                    },
+                    () -> {
+                        // Direct ByteBuffer with position and offset.
+                        ByteBuffer buf = ByteBuffer.allocateDirect(array.length);
+                        buf.put(array);
+                        buf.position(myOffset);
+                        buf = buf.slice();
+                        buf.position(myPosition);
+                        return buf;
+                    },
             };
-            for (SourceCreator f : creators) {
-                ImageDecoder.Source src = f.apply(0);
+            for (int i = 0; i < suppliers.length; ++i) {
+                ByteBuffer buffer = suppliers[i].get();
+                final int position = buffer.position();
+                ImageDecoder.Source src = ImageDecoder.createSource(buffer);
                 try {
-                    Drawable drawable = ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
-                        decoder.setOnPartialImageListener((error, source) -> false);
-                    });
+                    Drawable drawable = ImageDecoder.decodeDrawable(src);
                     assertNotNull(drawable);
                 } catch (IOException e) {
                     fail("Failed with exception " + e);
                 }
+                assertEquals("Mismatch for supplier " + i,
+                        position, buffer.position());
             }
         }
     }
