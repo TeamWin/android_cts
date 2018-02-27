@@ -27,6 +27,7 @@ import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -4297,6 +4298,12 @@ public class ViewTest {
         assertTrue(view.isAttachedToWindow());
 
         View.DragShadowBuilder shadowBuilder = mock(View.DragShadowBuilder.class);
+        doAnswer(a -> {
+            final Point outPoint = (Point) a.getArguments()[0];
+            outPoint.x = 1;
+            outPoint.y = 1;
+            return null;
+        }).when(shadowBuilder).onProvideShadowMetrics(any(), any());
         view.startDragAndDrop(ClipData.newPlainText("", ""), shadowBuilder, view, 0);
         reset(shadowBuilder);
 
