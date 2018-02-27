@@ -134,7 +134,7 @@ public class MultiWindowLoginActivityTest extends AutoFillServiceTestCase {
         // EmptyActivity will have window focus
         assertThat(emptyActivity.hasWindowFocus()).isTrue();
         // LoginActivity username field is still focused but window has no focus
-        assertThat(loginActivity.getUsername().hasFocus());
+        assertThat(loginActivity.getUsername().hasFocus()).isTrue();
         assertThat(loginActivity.hasWindowFocus()).isFalse();
 
         // Make LoginActivity to regain window focus and fill ui is expected to show
@@ -147,7 +147,7 @@ public class MultiWindowLoginActivityTest extends AutoFillServiceTestCase {
         mUiBot.assertNoDatasets();
         assertThat(emptyActivity.hasWindowFocus()).isTrue();
         // LoginActivity username field is still focused but window has no focus
-        assertThat(loginActivity.getUsername().hasFocus());
+        assertThat(loginActivity.getUsername().hasFocus()).isTrue();
         assertThat(loginActivity.hasWindowFocus()).isFalse();
     }
 }
