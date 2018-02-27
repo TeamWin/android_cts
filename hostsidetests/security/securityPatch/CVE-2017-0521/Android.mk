@@ -21,6 +21,10 @@ LOCAL_MULTILIB := both
 LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE)32
 LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE)64
 
+# This test relies on a particular implementation of ion, so needs to use
+# the frozen headers from libion.
+LOCAL_C_INCLUDES := $(TOP)/system/core/libion/kernel-headers
+
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts
 LOCAL_CTS_TEST_PACKAGE := android.security.cts
