@@ -169,7 +169,7 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
 
         final LogSeparator logSeparator = clearLogcat();
         // Update package info.
-        executeShellCommand("am update-appinfo all " + componentName);
+        executeShellCommand("am update-appinfo all " + TEST_ACTIVITY.getPackageName());
         mAmWmState.waitForWithAmState((amState) -> {
             // Wait for activity to be resumed and asset seq number to be updated.
             try {

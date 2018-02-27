@@ -23,8 +23,6 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.content.pm.ActivityInfo.RESIZE_MODE_RESIZEABLE;
-import static android.server.am.ActivityManagerTestBase.getActivityComponentName;
-import static android.server.am.ActivityManagerTestBase.getActivityWindowName;
 import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.am.StateLogger.log;
@@ -44,6 +42,7 @@ import static org.junit.Assert.fail;
 
 import android.content.ComponentName;
 import android.graphics.Rect;
+import android.os.SystemClock;
 import android.server.am.ActivityManagerState.ActivityStack;
 import android.server.am.ActivityManagerState.ActivityTask;
 import android.server.am.WindowManagerState.Display;
@@ -88,10 +87,11 @@ public class ActivityAndWindowManagersState {
      *
      * @param componentNames array of activity names to wait for.
      */
-    public void computeState(ComponentName... componentNames) throws Exception {
-        computeState(true, Arrays.stream(componentNames)
-                .map(WaitForValidActivityState::new)
-                .toArray(WaitForValidActivityState[]::new));
+    public void computeState(ComponentName... componentNames) {
+        waitForValidState(true /* compareTaskAndStackBounds */,
+                Arrays.stream(componentNames)
+                        .map(WaitForValidActivityState::new)
+                        .toArray(WaitForValidActivityState[]::new));
     }
 
     /**
@@ -100,9 +100,8 @@ public class ActivityAndWindowManagersState {
      *
      * @param waitForActivitiesVisible array of activity names to wait for.
      */
-    public void computeState(WaitForValidActivityState... waitForActivitiesVisible)
-            throws Exception {
-        computeState(true, waitForActivitiesVisible);
+    public void computeState(WaitForValidActivityState... waitForActivitiesVisible) {
+        waitForValidState(true /* compareTaskAndStackBounds */, waitForActivitiesVisible);
     }
 
     /**
@@ -113,68 +112,37 @@ public class ActivityAndWindowManagersState {
      * @param waitForActivitiesVisible  array of activity states to wait for.
      */
     void computeState(boolean compareTaskAndStackBounds,
-            WaitForValidActivityState... waitForActivitiesVisible) throws Exception {
+            WaitForValidActivityState... waitForActivitiesVisible) {
         waitForValidState(compareTaskAndStackBounds, waitForActivitiesVisible);
     }
 
-    void waitForValidState(ComponentName... activityNames) throws Exception {
-        waitForValidState(Arrays.stream(activityNames)
-                .map(WaitForValidActivityState::new)
-                .toArray(WaitForValidActivityState[]::new));
-
-    }
-
     /**
-     * Wait for the activity to appear and for valid state in AM and WM.
-     * TODO(b/73349193): Use {@link #waitForValidState(WaitForValidActivityState...)} instead.
+     * Wait for the activities to appear and for valid state in AM and WM.
      *
-     * @param simpleActivityName name of activity to wait for.
+     * @param activityNames name list of activities to wait for.
      */
-    @Deprecated
-    void waitForValidState(String simpleActivityName) throws Exception {
+    void waitForValidState(ComponentName... activityNames) {
         waitForValidState(false /* compareTaskAndStackBounds */,
-                new WaitForValidActivityState(simpleActivityName));
+                Arrays.stream(activityNames)
+                        .map(WaitForValidActivityState::new)
+                        .toArray(WaitForValidActivityState[]::new));
+
     }
 
     /** Wait for the activity to appear and for valid state in AM and WM. */
-    void waitForValidState(WaitForValidActivityState... waitForActivityVisible) throws Exception {
+    void waitForValidState(WaitForValidActivityState... waitForActivityVisible) {
         waitForValidState(false /* compareTaskAndStackBounds */, waitForActivityVisible);
     }
 
-    // TODO(b/73349193): Use {@link #waitForValidState(WaitForValidActivityState...)} instead.
-    @Deprecated
-    void waitForValidState(String simpleActivityName, int windowingMode, int activityType)
-            throws Exception {
-        waitForValidState(false /* compareTaskAndStackBounds */,
-                new WaitForValidActivityState.Builder(simpleActivityName)
-                        .setActivityType(activityType)
-                        .setWindowingMode(windowingMode)
-                        .build());
-    }
-
     /**
      * Wait for the activities to appear in proper stacks and for valid state in AM and WM.
      *
      * @param compareTaskAndStackBounds flag indicating if we should compare task and stack bounds
      *                                  for equality.
-     * @param waitForActivitiesVisible  array of activity state to wait for.
-     */
-    private void waitForValidState(boolean compareTaskAndStackBounds,
-            WaitForValidActivityState... waitForActivitiesVisible) throws Exception {
-        waitForValidState(compareTaskAndStackBounds, ActivityManagerTestBase.componentName,
-                waitForActivitiesVisible);
-    }
-
-    /**
-     * Wait for the activities to appear in proper stacks and for valid state in AM and WM.
-     *
-     * @param compareTaskAndStackBounds flag indicating if we should compare task and stack bounds
-     *                                  for equality.
-     * @param packageName               name of the package of activities that we're waiting for.
      * @param waitForActivitiesVisible  array of activity states to wait for.
      */
-    void waitForValidState(boolean compareTaskAndStackBounds, String packageName,
-            WaitForValidActivityState... waitForActivitiesVisible) throws Exception {
+    private void waitForValidState(boolean compareTaskAndStackBounds,
+            WaitForValidActivityState... waitForActivitiesVisible) {
         for (int retry = 1; retry <= 5; retry++) {
             // TODO: Get state of AM and WM at the same time to avoid mismatches caused by
             // requesting dump in some intermediate state.
@@ -182,15 +150,10 @@ public class ActivityAndWindowManagersState {
             mWmState.computeState();
             if (shouldWaitForSanityCheck(compareTaskAndStackBounds)
                     || shouldWaitForValidStacks(compareTaskAndStackBounds)
-                    || shouldWaitForActivities(packageName, waitForActivitiesVisible)
+                    || shouldWaitForActivities(waitForActivitiesVisible)
                     || shouldWaitForWindows()) {
-                log("***Waiting for valid stacks and activities states... retry=" + retry);
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    log(e.toString());
-                    // Well I guess we are not waiting...
-                }
+                logAlways("***Waiting for valid stacks and activities states... retry=" + retry);
+                SystemClock.sleep(1000);
             } else {
                 return;
             }
@@ -202,42 +165,27 @@ public class ActivityAndWindowManagersState {
      * Ensures all exiting windows have been removed.
      */
     void waitForAllExitingWindows() {
-        int retriesLeft = 5;
-        do {
+        for (int retry = 1; retry <= 5; retry++) {
             mWmState.computeState();
-            if (mWmState.containsExitingWindow()) {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    log(e.toString());
-                    // Well I guess we are not waiting...
-                }
-            } else {
-                break;
+            if (!mWmState.containsExitingWindow()) {
+                return;
             }
-        } while (retriesLeft-- > 0);
-
-        assertFalse(mWmState.containsExitingWindow());
+            logAlways("***Waiting for all exiting windows have been removed... retry=" + retry);
+            SystemClock.sleep(1000);
+        }
+        fail("All exiting windows have been removed");
     }
 
-    void waitForAllStoppedActivities() throws Exception {
-        int retriesLeft = 5;
-        do {
+    void waitForAllStoppedActivities() {
+        for (int retry = 1; retry <= 5; retry++) {
             mAmState.computeState();
-            if (mAmState.containsStartedActivities()){
-                log("***Waiting for valid stacks and activities states...");
-                try {
-                    Thread.sleep(1500);
-                } catch (InterruptedException e) {
-                    log(e.toString());
-                    // Well I guess we are not waiting...
-                }
-            } else {
-                break;
+            if (!mAmState.containsStartedActivities()) {
+                return;
             }
-        } while (retriesLeft-- > 0);
-
-        assertFalse(mAmState.containsStartedActivities());
+            logAlways("***Waiting for all started activities have been removed... retry=" + retry);
+            SystemClock.sleep(1500);
+        }
+        fail("All started activities have been removed");
     }
 
     /**
@@ -249,26 +197,21 @@ public class ActivityAndWindowManagersState {
      * for debugger.
      */
     void waitForDebuggerWindowVisible(ComponentName activityName) {
-        int retriesLeft = 5;
-        do {
+        for (int retry = 1; retry <= 5; retry++) {
             mAmState.computeState();
             mWmState.computeState();
             if (shouldWaitForDebuggerWindow()
                     || shouldWaitForActivityRecords(activityName)) {
-                logAlways("***Waiting for debugger window...");
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    log(e.toString());
-                    // Well I guess we are not waiting...
-                }
+                logAlways("***Waiting for debugger window... retry=" + retry);
+                SystemClock.sleep(1000);
             } else {
-                break;
+                return;
             }
-        } while (retriesLeft-- > 0);
+        }
+        logE("***Waiting for debugger window failed");
     }
 
-    void waitForHomeActivityVisible() throws Exception {
+    void waitForHomeActivityVisible() {
         ComponentName homeActivity = mAmState.getHomeActivityName();
         // Sometimes this function is called before we know what Home Activity is
         if (homeActivity == null) {
@@ -283,52 +226,51 @@ public class ActivityAndWindowManagersState {
     /**
      * @return true if recents activity is visible. Devices without recents will return false
      */
-    boolean waitForRecentsActivityVisible() throws Exception {
+    boolean waitForRecentsActivityVisible() {
         waitForWithAmState(ActivityManagerState::isRecentsActivityVisible,
                 "***Waiting for recents activity to be visible...");
         return mAmState.isRecentsActivityVisible();
     }
 
-    void waitForKeyguardShowingAndNotOccluded() throws Exception {
+    void waitForKeyguardShowingAndNotOccluded() {
         waitForWithAmState(state -> state.getKeyguardControllerState().keyguardShowing
                         && !state.getKeyguardControllerState().keyguardOccluded,
                 "***Waiting for Keyguard showing...");
     }
 
-    void waitForKeyguardShowingAndOccluded() throws Exception {
+    void waitForKeyguardShowingAndOccluded() {
         waitForWithAmState(state -> state.getKeyguardControllerState().keyguardShowing
                         && state.getKeyguardControllerState().keyguardOccluded,
                 "***Waiting for Keyguard showing and occluded...");
     }
 
-    void waitForKeyguardGone() throws Exception {
+    void waitForKeyguardGone() {
         waitForWithAmState(state -> !state.getKeyguardControllerState().keyguardShowing,
                 "***Waiting for Keyguard gone...");
     }
 
-    void waitForRotation(int rotation) throws Exception {
+    void waitForRotation(int rotation) {
         waitForWithWmState(state -> state.getRotation() == rotation,
                 "***Waiting for Rotation: " + rotation);
     }
 
-    void waitForDisplayUnfrozen() throws Exception {
+    void waitForDisplayUnfrozen() {
         waitForWithWmState(state -> !state.isDisplayFrozen(),
                 "***Waiting for Display unfrozen");
     }
 
-    void waitForActivityState(ComponentName activityName, String activityState)
-            throws Exception {
+    void waitForActivityState(ComponentName activityName, String activityState) {
         waitForWithAmState(state -> state.hasActivityState(activityName, activityState),
                 "***Waiting for Activity State: " + activityState);
     }
 
     @Deprecated
-    void waitForFocusedStack(int stackId) throws Exception {
+    void waitForFocusedStack(int stackId) {
         waitForWithAmState(state -> state.getFocusedStackId() == stackId,
                 "***Waiting for focused stack...");
     }
 
-    void waitForFocusedStack(int windowingMode, int activityType) throws Exception {
+    void waitForFocusedStack(int windowingMode, int activityType) {
         waitForWithAmState(state ->
                         (activityType == ACTIVITY_TYPE_UNDEFINED
                                 || state.getFocusedStackActivityType() == activityType)
@@ -337,52 +279,38 @@ public class ActivityAndWindowManagersState {
                 "***Waiting for focused stack...");
     }
 
-    void waitForAppTransitionIdle() throws Exception {
+    void waitForAppTransitionIdle() {
         waitForWithWmState(
                 state -> WindowManagerState.APP_STATE_IDLE.equals(state.getAppTransitionState()),
                 "***Waiting for app transition idle...");
     }
 
-    void waitForWithAmState(Predicate<ActivityManagerState> waitCondition,
-            String message) throws Exception {
+    void waitForWithAmState(Predicate<ActivityManagerState> waitCondition, String message) {
         waitFor((amState, wmState) -> waitCondition.test(amState), message);
     }
 
-    void waitForWithWmState(Predicate<WindowManagerState> waitCondition,
-            String message) throws Exception {
+    void waitForWithWmState(Predicate<WindowManagerState> waitCondition, String message) {
         waitFor((amState, wmState) -> waitCondition.test(wmState), message);
     }
 
     void waitFor(
-            BiPredicate<ActivityManagerState, WindowManagerState> waitCondition, String message)
-            throws Exception {
+            BiPredicate<ActivityManagerState, WindowManagerState> waitCondition, String message) {
         waitFor(message, () -> {
-            try {
-                mAmState.computeState();
-                mWmState.computeState();
-            } catch (Exception e) {
-                logE(e.toString());
-                return false;
-            }
+            mAmState.computeState();
+            mWmState.computeState();
             return waitCondition.test(mAmState, mWmState);
         });
     }
 
-    void waitFor(String message, BooleanSupplier waitCondition) throws Exception {
-        int retriesLeft = 5;
-        do {
-            if (!waitCondition.getAsBoolean()) {
-                log(message);
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    log(e.toString());
-                    // Well I guess we are not waiting...
-                }
-            } else {
-                break;
+    void waitFor(String message, BooleanSupplier waitCondition) {
+        for (int retry = 1; retry <= 5; retry++) {
+            if (waitCondition.getAsBoolean()) {
+                return;
             }
-        } while (retriesLeft-- > 0);
+            logAlways(message + " retry=" + retry);
+            SystemClock.sleep(1000);
+        }
+        logE(message + " failed");
     }
 
     /**
@@ -392,13 +320,13 @@ public class ActivityAndWindowManagersState {
         if (!taskListsInAmAndWmAreEqual()) {
             // We want to wait for equal task lists in AM and WM in case we caught them in the
             // middle of some state change operations.
-            log("***taskListsInAmAndWmAreEqual=false");
+            logAlways("***taskListsInAmAndWmAreEqual=false");
             return true;
         }
         if (!stackBoundsInAMAndWMAreEqual()) {
             // We want to wait a little for the stacks in AM and WM to have equal bounds as there
             // might be a transition animation ongoing when we got the states from WM AM separately.
-            log("***stackBoundsInAMAndWMAreEqual=false");
+            logAlways("***stackBoundsInAMAndWMAreEqual=false");
             return true;
         }
         try {
@@ -406,21 +334,21 @@ public class ActivityAndWindowManagersState {
             // and WM.
             assertValidBounds(compareTaskAndStackBounds);
         } catch (AssertionError e) {
-            log("***taskBoundsInAMAndWMAreEqual=false : " + e.getMessage());
+            logAlways("***taskBoundsInAMAndWMAreEqual=false : " + e.getMessage());
             return true;
         }
         final int stackCount = mAmState.getStackCount();
         if (stackCount == 0) {
-            log("***stackCount=" + stackCount);
+            logAlways("***stackCount=" + stackCount);
             return true;
         }
         final int resumedActivitiesCount = mAmState.getResumedActivitiesCount();
         if (!mAmState.getKeyguardControllerState().keyguardShowing && resumedActivitiesCount != 1) {
-            log("***resumedActivitiesCount=" + resumedActivitiesCount);
+            logAlways("***resumedActivitiesCount=" + resumedActivitiesCount);
             return true;
         }
         if (mAmState.getFocusedActivity() == null) {
-            log("***focusedActivity=null");
+            logAlways("***focusedActivity=null");
             return true;
         }
         return false;
@@ -429,8 +357,7 @@ public class ActivityAndWindowManagersState {
     /**
      * @return true if should wait for some activities to become visible.
      */
-    private boolean shouldWaitForActivities(String packageName,
-            WaitForValidActivityState... waitForActivitiesVisible) {
+    private boolean shouldWaitForActivities(WaitForValidActivityState... waitForActivitiesVisible) {
         if (waitForActivitiesVisible == null || waitForActivitiesVisible.length == 0) {
             return false;
         }
@@ -441,21 +368,8 @@ public class ActivityAndWindowManagersState {
         boolean tasksInCorrectStacks = true;
         List<WindowState> matchingWindowStates = new ArrayList<>();
         for (final WaitForValidActivityState state : waitForActivitiesVisible) {
-            final String activityComponentName;
-            final String windowName;
-            if (state.componentName != null) {
-                activityComponentName = state.componentName;
-                windowName = state.windowName;
-            } else {
-                final String activityName = state.activityName;
-                activityComponentName = (activityName != null)
-                        ? getActivityComponentName(packageName, activityName)
-                        : null;
-                // Check if window is visible - it should be represented as one of the window
-                // states.
-                windowName = (state.windowName != null) ? state.windowName
-                        : getActivityWindowName(packageName, activityName);
-            }
+            final ComponentName activityName = state.activityName;
+            final String windowName = state.windowName;
             final int stackId = state.stackId;
             final int windowingMode = state.windowingMode;
             final int activityType = state.activityType;
@@ -463,11 +377,11 @@ public class ActivityAndWindowManagersState {
             mWmState.getMatchingVisibleWindowState(windowName, matchingWindowStates);
             boolean activityWindowVisible = !matchingWindowStates.isEmpty();
             if (!activityWindowVisible) {
-                log("Activity window not visible: " + windowName);
+                logAlways("Activity window not visible: " + windowName);
                 allActivityWindowsVisible = false;
-            } else if (activityComponentName != null
-                    && !mAmState.isActivityVisible(activityComponentName)) {
-                log("Activity not visible: " + activityComponentName);
+            } else if (activityName != null
+                    && !mAmState.isActivityVisible(activityName)) {
+                logAlways("Activity not visible: " + getActivityName(activityName));
                 allActivityWindowsVisible = false;
             } else {
                 // Check if window is already the correct state requested by test.
@@ -489,7 +403,7 @@ public class ActivityAndWindowManagersState {
                 }
 
                 if (!windowInCorrectState) {
-                    log("Window in incorrect stack: " + state);
+                    logAlways("Window in incorrect stack: " + state);
                     tasksInCorrectStacks = false;
                 }
             }
@@ -502,15 +416,15 @@ public class ActivityAndWindowManagersState {
      */
     private boolean shouldWaitForWindows() {
         if (mWmState.getFrontWindow() == null) {
-            log("***frontWindow=null");
+            logAlways("***frontWindow=null");
             return true;
         }
         if (mWmState.getFocusedWindow() == null) {
-            log("***focusedWindow=null");
+            logAlways("***focusedWindow=null");
             return true;
         }
         if (mWmState.getFocusedApp() == null) {
-            log("***focusedApp=null");
+            logAlways("***focusedApp=null");
             return true;
         }
 
@@ -545,7 +459,7 @@ public class ActivityAndWindowManagersState {
             assertSanity();
             assertValidBounds(compareTaskAndStackBounds);
         } catch (Throwable t) {
-            log("Waiting for sanity check: " + t.toString());
+            logAlways("Waiting for sanity check: " + t.toString());
             return true;
         }
         return false;
@@ -559,7 +473,7 @@ public class ActivityAndWindowManagersState {
         return mWmState;
     }
 
-    void assertSanity() throws Exception {
+    void assertSanity() {
         assertThat("Must have stacks", mAmState.getStackCount(), greaterThan(0));
         if (!mAmState.getKeyguardControllerState().keyguardShowing) {
             assertEquals("There should be one and only one resumed activity in the system.",
@@ -579,24 +493,22 @@ public class ActivityAndWindowManagersState {
         assertNotNull("Must have app.", mWmState.getFocusedApp());
     }
 
-    void assertContainsStack(String msg, int windowingMode, int activityType) throws Exception {
+    void assertContainsStack(String msg, int windowingMode, int activityType) {
         assertTrue(msg, mAmState.containsStack(windowingMode, activityType));
         assertTrue(msg, mWmState.containsStack(windowingMode, activityType));
     }
 
-    void assertDoesNotContainStack(String msg, int windowingMode, int activityType)
-            throws Exception {
+    void assertDoesNotContainStack(String msg, int windowingMode, int activityType) {
         assertFalse(msg, mAmState.containsStack(windowingMode, activityType));
         assertFalse(msg, mWmState.containsStack(windowingMode, activityType));
     }
 
-    void assertFrontStack(String msg, int stackId) throws Exception {
+    void assertFrontStack(String msg, int stackId) {
         assertEquals(msg, stackId, mAmState.getFrontStackId(DEFAULT_DISPLAY_ID));
         assertEquals(msg, stackId, mWmState.getFrontStackId(DEFAULT_DISPLAY_ID));
     }
 
-    void assertFrontStack(String msg, int windowingMode, int activityType)
-            throws Exception {
+    void assertFrontStack(String msg, int windowingMode, int activityType) {
         if (windowingMode != WINDOWING_MODE_UNDEFINED) {
             assertEquals(msg, windowingMode,
                     mAmState.getFrontStackWindowingMode(DEFAULT_DISPLAY_ID));
@@ -606,18 +518,17 @@ public class ActivityAndWindowManagersState {
         }
     }
 
-    void assertFrontStackActivityType(String msg, int activityType) throws Exception {
+    void assertFrontStackActivityType(String msg, int activityType) {
         assertEquals(msg, activityType, mAmState.getFrontStackActivityType(DEFAULT_DISPLAY_ID));
         assertEquals(msg, activityType, mWmState.getFrontStackActivityType(DEFAULT_DISPLAY_ID));
     }
 
     @Deprecated
-    void assertFocusedStack(String msg, int stackId) throws Exception {
+    void assertFocusedStack(String msg, int stackId) {
         assertEquals(msg, stackId, mAmState.getFocusedStackId());
     }
 
-    void assertFocusedStack(String msg, int windowingMode, int activityType)
-            throws Exception {
+    void assertFocusedStack(String msg, int windowingMode, int activityType) {
         if (windowingMode != WINDOWING_MODE_UNDEFINED) {
             assertEquals(msg, windowingMode, mAmState.getFocusedStackWindowingMode());
         }
@@ -632,7 +543,7 @@ public class ActivityAndWindowManagersState {
         assertEquals(msg, activityComponentName, mWmState.getFocusedApp());
     }
 
-    void assertNotFocusedActivity(String msg, ComponentName activityName) throws Exception {
+    void assertNotFocusedActivity(String msg, ComponentName activityName) {
         assertNotEquals(msg, mAmState.getFocusedActivity(), getActivityName(activityName));
         assertNotEquals(msg, mWmState.getFocusedApp(), getActivityName(activityName));
     }
@@ -641,7 +552,7 @@ public class ActivityAndWindowManagersState {
         assertEquals(msg, getActivityName(activityName), mAmState.getResumedActivity());
     }
 
-    void assertNotResumedActivity(String msg, ComponentName activityName) throws Exception {
+    void assertNotResumedActivity(String msg, ComponentName activityName) {
         assertNotEquals(msg, mAmState.getResumedActivity(), getActivityName(activityName));
     }
 
@@ -657,24 +568,12 @@ public class ActivityAndWindowManagersState {
         assertEquals(msg, windowName, mWmState.getFrontWindow());
     }
 
-    // TODO(b/73349193): Use {@link #assertVisibility(ComponentName, boolean)} instead.
-    @Deprecated
-    public void assertVisibility(String activityName, boolean visible) {
-        final String activityComponentName = getActivityComponentName(activityName);
-        final String windowName = getActivityWindowName(activityName);
-        assertVisibility(activityComponentName, windowName, visible);
-    }
-
     public void assertVisibility(final ComponentName activityName, final boolean visible) {
-        assertVisibility(getActivityName(activityName), getWindowName(activityName), visible);
-    }
-
-    private void assertVisibility(String activityComponentName, String windowName,
-            boolean visible) {
-        final boolean activityVisible = mAmState.isActivityVisible(activityComponentName);
+        final String windowName = getWindowName(activityName);
+        final boolean activityVisible = mAmState.isActivityVisible(activityName);
         final boolean windowVisible = mWmState.isWindowVisible(windowName);
 
-        assertEquals("Activity=" + activityComponentName + " must" + (visible ? "" : " NOT")
+        assertEquals("Activity=" + getActivityName(activityName) + " must" + (visible ? "" : " NOT")
                 + " be visible.", visible, activityVisible);
         assertEquals("Window=" + windowName + " must" + (visible ? "" : " NOT") + " be visible.",
                 visible, windowVisible);
@@ -689,7 +588,7 @@ public class ActivityAndWindowManagersState {
     /**
      * Asserts that the device default display minimim width is larger than the minimum task width.
      */
-    void assertDeviceDefaultDisplaySize(String errorMessage) throws Exception {
+    void assertDeviceDefaultDisplaySize(String errorMessage) {
         computeState(true);
         final int minTaskSizePx = defaultMinimalTaskSize(DEFAULT_DISPLAY_ID);
         final Display display = getWmState().getDisplay(DEFAULT_DISPLAY_ID);
@@ -700,17 +599,22 @@ public class ActivityAndWindowManagersState {
     }
 
     public void assertKeyguardShowingAndOccluded() {
-        assertTrue(getAmState().getKeyguardControllerState().keyguardShowing);
-        assertTrue(getAmState().getKeyguardControllerState().keyguardOccluded);
+        assertTrue("Keyguard is showing",
+                getAmState().getKeyguardControllerState().keyguardShowing);
+        assertTrue("Keyguard is occluded",
+                getAmState().getKeyguardControllerState().keyguardOccluded);
     }
 
     public void assertKeyguardShowingAndNotOccluded() {
-        assertTrue(getAmState().getKeyguardControllerState().keyguardShowing);
-        assertFalse(getAmState().getKeyguardControllerState().keyguardOccluded);
+        assertTrue("Keyguard is showing",
+                getAmState().getKeyguardControllerState().keyguardShowing);
+        assertFalse("Keyguard is not occluded",
+                getAmState().getKeyguardControllerState().keyguardOccluded);
     }
 
     public void assertKeyguardGone() {
-        assertFalse(getAmState().getKeyguardControllerState().keyguardShowing);
+        assertFalse("Keyguard is not shown",
+                getAmState().getKeyguardControllerState().keyguardShowing);
     }
 
     boolean taskListsInAmAndWmAreEqual() {
