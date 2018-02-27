@@ -18,12 +18,14 @@ package android.server.am;
 
 import static android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP;
 import static android.server.am.ComponentNameUtils.getActivityName;
+import static android.server.am.Components.TEST_ACTIVITY;
 import static android.server.am.UiDeviceUtils.pressBackButton;
 import static android.server.am.displaysize.Components.SMALLEST_WIDTH_ACTIVITY;
+import static android.server.am.displaysize.Components.SmallestWidthActivity
+        .EXTRA_LAUNCH_ANOTHER_ACTIVITY;
 
 import static org.junit.Assert.assertTrue;
 
-import android.content.ComponentName;
 import android.os.Build;
 
 import org.junit.After;
@@ -37,14 +39,6 @@ import org.junit.Test;
  *     atest CtsActivityManagerDeviceTestCases:DisplaySizeTest
  */
 public class DisplaySizeTest extends ActivityManagerTestBase {
-    private static final String DENSITY_PROP_DEVICE = "ro.sf.lcd_density";
-    private static final String DENSITY_PROP_EMULATOR = "qemu.sf.lcd_density";
-
-    private static final ComponentName TEST_ACTIVITY = ComponentName.createRelative(
-            "android.server.am", ".TestActivity");
-
-    /** SmallestWidthActivity#EXTRA_LAUNCH_ANOTHER_ACTIVITY */
-    private static final String EXTRA_LAUNCH_ANOTHER_ACTIVITY = "launch_another_activity";
 
     /** @see com.android.server.am.UnsupportedDisplaySizeDialog */
     private static final String UNSUPPORTED_DISPLAY_SIZE_DIALOG_NAME =
@@ -54,7 +48,6 @@ public class DisplaySizeTest extends ActivityManagerTestBase {
     @Override
     public void tearDown() throws Exception {
         super.tearDown();
-        resetDensity();
 
         // Ensure app process is stopped.
         stopTestPackage(SMALLEST_WIDTH_ACTIVITY);
@@ -64,31 +57,35 @@ public class DisplaySizeTest extends ActivityManagerTestBase {
     @Test
     public void testCompatibilityDialog() throws Exception {
         // Launch some other app (not to perform density change on launcher).
-        executeShellCommand(getAmStartCmd(TEST_ACTIVITY));
+        launchActivity(TEST_ACTIVITY);
         mAmWmState.assertActivityDisplayed(TEST_ACTIVITY);
 
-        setUnsupportedDensity();
+        try (final ScreenDensitySession screenDensitySession = new ScreenDensitySession()) {
+            screenDensitySession.setUnsupportedDensity();
 
-        // Launch target app.
-        executeShellCommand(getAmStartCmd(SMALLEST_WIDTH_ACTIVITY));
-        mAmWmState.assertActivityDisplayed(SMALLEST_WIDTH_ACTIVITY);
-        mAmWmState.assertWindowDisplayed(UNSUPPORTED_DISPLAY_SIZE_DIALOG_NAME);
+            // Launch target app.
+            launchActivity(SMALLEST_WIDTH_ACTIVITY);
+            mAmWmState.assertActivityDisplayed(SMALLEST_WIDTH_ACTIVITY);
+            mAmWmState.assertWindowDisplayed(UNSUPPORTED_DISPLAY_SIZE_DIALOG_NAME);
+        }
     }
 
     @Test
     public void testCompatibilityDialogWhenFocused() throws Exception {
-        executeShellCommand(getAmStartCmd(SMALLEST_WIDTH_ACTIVITY));
+        launchActivity(SMALLEST_WIDTH_ACTIVITY);
         mAmWmState.assertActivityDisplayed(SMALLEST_WIDTH_ACTIVITY);
 
-        setUnsupportedDensity();
+        try (final ScreenDensitySession screenDensitySession = new ScreenDensitySession()) {
+            screenDensitySession.setUnsupportedDensity();
 
-        mAmWmState.assertWindowDisplayed(UNSUPPORTED_DISPLAY_SIZE_DIALOG_NAME);
+            mAmWmState.assertWindowDisplayed(UNSUPPORTED_DISPLAY_SIZE_DIALOG_NAME);
+        }
     }
 
     @Test
     public void testCompatibilityDialogAfterReturn() throws Exception {
         // Launch target app.
-        executeShellCommand(getAmStartCmd(SMALLEST_WIDTH_ACTIVITY));
+        launchActivity(SMALLEST_WIDTH_ACTIVITY);
         mAmWmState.assertActivityDisplayed(SMALLEST_WIDTH_ACTIVITY);
         // Launch another activity.
         final String startActivityOnTop = String.format("%s -f 0x%x --es %s %s",
@@ -97,44 +94,56 @@ public class DisplaySizeTest extends ActivityManagerTestBase {
         executeShellCommand(startActivityOnTop);
         mAmWmState.assertActivityDisplayed(TEST_ACTIVITY);
 
-        setUnsupportedDensity();
+        try (final ScreenDensitySession screenDensitySession = new ScreenDensitySession()) {
+            screenDensitySession.setUnsupportedDensity();
 
-        pressBackButton();
+            pressBackButton();
 
-        mAmWmState.assertActivityDisplayed(SMALLEST_WIDTH_ACTIVITY);
-        mAmWmState.assertWindowDisplayed(UNSUPPORTED_DISPLAY_SIZE_DIALOG_NAME);
+            mAmWmState.assertActivityDisplayed(SMALLEST_WIDTH_ACTIVITY);
+            mAmWmState.assertWindowDisplayed(UNSUPPORTED_DISPLAY_SIZE_DIALOG_NAME);
+        }
     }
 
-    private void setUnsupportedDensity() {
-        // Set device to 0.85 zoom. It doesn't matter that we're zooming out
-        // since the feature verifies that we're in a non-default density.
-        final int stableDensity = getStableDensity();
-        final int targetDensity = (int) (stableDensity * 0.85);
-        setDensity(targetDensity);
-    }
+    private static class ScreenDensitySession implements AutoCloseable {
+        private static final String DENSITY_PROP_DEVICE = "ro.sf.lcd_density";
+        private static final String DENSITY_PROP_EMULATOR = "qemu.sf.lcd_density";
 
-    private int getStableDensity() {
-        final String densityProp;
-        if (Build.IS_EMULATOR) {
-            densityProp = DENSITY_PROP_EMULATOR;
-        } else {
-            densityProp = DENSITY_PROP_DEVICE;
+        void setUnsupportedDensity() {
+            // Set device to 0.85 zoom. It doesn't matter that we're zooming out
+            // since the feature verifies that we're in a non-default density.
+            final int stableDensity = getStableDensity();
+            final int targetDensity = (int) (stableDensity * 0.85);
+            setDensity(targetDensity);
         }
 
-        return Integer.parseInt(executeShellCommand("getprop " + densityProp).trim());
-    }
+        @Override
+        public void close() throws Exception {
+            resetDensity();
+        }
 
-    private void setDensity(int targetDensity) {
-        executeShellCommand("wm density " + targetDensity);
+        private int getStableDensity() {
+            final String densityProp;
+            if (Build.IS_EMULATOR) {
+                densityProp = DENSITY_PROP_EMULATOR;
+            } else {
+                densityProp = DENSITY_PROP_DEVICE;
+            }
 
-        // Verify that the density is changed.
-        final String output = executeShellCommand("wm density");
-        final boolean success = output.contains("Override density: " + targetDensity);
+            return Integer.parseInt(executeShellCommand("getprop " + densityProp).trim());
+        }
 
-        assertTrue("Failed to set density to " + targetDensity, success);
-    }
+        private void setDensity(int targetDensity) {
+            executeShellCommand("wm density " + targetDensity);
 
-    private void resetDensity() {
-        executeShellCommand("wm density reset");
+            // Verify that the density is changed.
+            final String output = executeShellCommand("wm density");
+            final boolean success = output.contains("Override density: " + targetDensity);
+
+            assertTrue("Failed to set density to " + targetDensity, success);
+        }
+
+        private void resetDensity() {
+            executeShellCommand("wm density reset");
+        }
     }
 }
