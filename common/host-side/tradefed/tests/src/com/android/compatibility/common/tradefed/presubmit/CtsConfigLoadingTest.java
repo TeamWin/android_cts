@@ -27,6 +27,7 @@ import com.android.tradefed.config.ConfigurationException;
 import com.android.tradefed.config.ConfigurationFactory;
 import com.android.tradefed.config.IConfiguration;
 import com.android.tradefed.targetprep.ITargetPreparer;
+import com.android.tradefed.testtype.AndroidJUnitTest;
 import com.android.tradefed.testtype.HostTest;
 import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.ITestFilterReceiver;
@@ -104,6 +105,21 @@ public class CtsConfigLoadingTest {
     ));
 
     /**
+     * In Most cases we impose the usage of the AndroidJUnitRunner because it supports all the
+     * features required (filtering, sharding, etc.). We do not typically expect people to need a
+     * different runner.
+     */
+    private static final String INSTRUMENTATION_RUNNER_NAME =
+            "android.support.test.runner.AndroidJUnitRunner";
+    private static final Set<String> RUNNER_EXCEPTION = new HashSet<>();
+    static {
+        // Used for a bunch of system-api cts tests
+        RUNNER_EXCEPTION.add("repackaged.android.test.InstrumentationTestRunner");
+        // Used by a UiRendering scenario where an activity is persisted between tests
+        RUNNER_EXCEPTION.add("android.uirendering.cts.runner.UiRenderingRunner");
+    }
+
+    /**
      * Test that configuration shipped in Tradefed can be parsed.
      * -> Exclude deprecated ApkInstaller.
      * -> Check if host-side tests are non empty.
@@ -159,7 +175,8 @@ public class CtsConfigLoadingTest {
                     int testCount = hostTest.countTestCases();
                     if (testCount == 0) {
                         throw new ConfigurationException(
-                                String.format("%s: %s reports 0 test cases.", config, test));
+                                String.format("%s: %s reports 0 test cases.",
+                                        config.getName(), test));
                     }
                 }
                 // Tests are expected to implement that interface.
@@ -167,6 +184,19 @@ public class CtsConfigLoadingTest {
                     throw new IllegalArgumentException(String.format(
                             "Test in module %s must implement ITestFilterReceiver.",
                             config.getName()));
+                }
+                // Ensure that the device runner is the AJUR one
+                if (test instanceof AndroidJUnitTest) {
+                    AndroidJUnitTest instru = (AndroidJUnitTest) test;
+                    if (!INSTRUMENTATION_RUNNER_NAME.equals(instru.getRunnerName())) {
+                        // Some runner are exempt
+                        if (!RUNNER_EXCEPTION.contains(instru.getRunnerName())) {
+                            throw new ConfigurationException(
+                                    String.format("%s: uses '%s' instead of the '%s' that is "
+                                            + "expected", config.getName(), instru.getRunnerName(),
+                                            INSTRUMENTATION_RUNNER_NAME));
+                        }
+                    }
                 }
             }
             ConfigurationDescriptor cd = c.getConfigurationDescription();
