@@ -95,6 +95,24 @@ public class AnimatedImageDrawableTest {
         new AnimatedImageDrawable();
     }
 
+    @Test
+    public void testMutate() {
+        AnimatedImageDrawable aid1 = (AnimatedImageDrawable) mRes.getDrawable(R.drawable.animated);
+        AnimatedImageDrawable aid2 = (AnimatedImageDrawable) mRes.getDrawable(R.drawable.animated);
+
+        final int originalAlpha = aid1.getAlpha();
+        assertEquals(255, originalAlpha);
+        assertEquals(255, aid2.getAlpha());
+
+        try {
+            aid1.mutate();
+            aid1.setAlpha(100);
+            assertEquals(originalAlpha, aid2.getAlpha());
+        } finally {
+            mRes.getDrawable(R.drawable.animated).setAlpha(originalAlpha);
+        }
+    }
+
     private AnimatedImageDrawable createFromImageDecoder(int resId) {
         Uri uri = null;
         try {
