@@ -125,9 +125,7 @@ public class USBAudioPeripheralButtonsActivity extends USBAudioPeripheralActivit
             Log.i(TAG, "match:" + match);
             getPassButton().setEnabled(match);
         } else {
-            // Headset not publicly available, violates CTS Verifier additional equipment
-            // guidelines. Allow skipping test. See b/67777923 for details.
-            getPassButton().setEnabled(true /*false*/);
+            getPassButton().setEnabled(false);
         }
     }
 
