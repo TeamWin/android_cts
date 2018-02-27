@@ -24,6 +24,9 @@ import android.server.cts.ActivityManagerState.ActivityTask;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.log.LogUtil.CLog;
 
+import org.junit.Ignore;
+import org.junit.Test;
+
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
@@ -347,6 +350,9 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         //         1 /* portrait */, updatedReportedSizes.orientation);
     }
 
+    // TODO(b/70870253): This test seems malfunction.
+    @Ignore("b/70870253")
+    @Test
     public void testNonFullscreenActivityProhibited() throws Exception {
         setComponentName(TRANSLUCENT_CURRENT_PACKAGE);
 
