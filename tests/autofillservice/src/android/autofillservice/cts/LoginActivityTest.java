@@ -81,7 +81,6 @@ import android.view.accessibility.AccessibilityNodeProvider;
 import android.view.autofill.AutofillManager;
 import android.widget.RemoteViews;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
@@ -1199,31 +1198,8 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
-    @Ignore("Test fail on some devices because Recents UI is not well defined: b/72044685")
-    public void testSaveGoesAwayWhenTappingRecentsButton() throws Exception {
-        // Launches new activity first...
-        startCheckoutActivityAsNewTask();
-        try {
-            // .. then the real activity being tested.
-            mUiBot.switchAppsUsingRecents();
-            mUiBot.assertShownByRelativeId(ID_USERNAME_CONTAINER);
-
-            saveGoesAway(DismissType.RECENTS_BUTTON);
-        } finally {
-            CheckoutActivity.finishIt(mUiBot);
-        }
-    }
-
-    @Test
     public void testSaveGoesAwayWhenTouchingOutside() throws Exception {
         saveGoesAway(DismissType.TOUCH_OUTSIDE);
-    }
-
-    private void startCheckoutActivityAsNewTask() throws Exception {
-        final Intent intent = new Intent(mContext, CheckoutActivity.class)
-                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RETAIN_IN_RECENTS);
-        mCheckoutActivityRule.launchActivity(intent);
-        mUiBot.assertShownByRelativeId(CheckoutActivity.ID_ADDRESS);
     }
 
     private void saveGoesAway(DismissType dismissType) throws Exception {
@@ -1266,10 +1242,6 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
                 break;
             case TOUCH_OUTSIDE:
                 mUiBot.assertShownByText(expectedMessage).click();
-                break;
-            case RECENTS_BUTTON:
-                mUiBot.switchAppsUsingRecents();
-                mUiBot.assertShownByRelativeId(CheckoutActivity.ID_ADDRESS);
                 break;
             default:
                 throw new IllegalArgumentException("invalid dismiss type: " + dismissType);

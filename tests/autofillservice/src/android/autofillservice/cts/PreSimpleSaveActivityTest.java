@@ -215,7 +215,7 @@ public class PreSimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase
     @Override
     protected void saveUiCancelledAfterTappingLinkTest(PostSaveLinkTappedAction type)
             throws Exception {
-        startActivity(type == PostSaveLinkTappedAction.TAP_RECENTS);
+        startActivity(false);
         // Set service.
         enableService();
 
@@ -247,11 +247,6 @@ public class PreSimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase
         mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
 
         switch (type) {
-            case TAP_RECENTS:
-                mUiBot.switchAppsUsingRecents();
-                // Make sure right activity is showing.
-                mUiBot.assertShownByRelativeId(ID_INPUT);
-                break;
             case LAUNCH_PREVIOUS_ACTIVITY:
                 startActivityOnNewTask(PreSimpleSaveActivity.class);
                 mUiBot.assertShownByRelativeId(ID_INPUT);

@@ -48,7 +48,6 @@ import android.view.View;
 import android.view.autofill.AutofillId;
 import android.widget.RemoteViews;
 
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -348,20 +347,6 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         dismissSaveTest(DismissType.FOCUS_OUTSIDE);
     }
 
-    @Test
-    @Ignore("Test fail on some devices because Recents UI is not well defined: b/72044685")
-    public void testDismissSave_byTappingRecents() throws Exception {
-        // Launches a different activity first.
-        startWelcomeActivityOnNewTask();
-
-        // Then launches the main activity.
-        startActivity(true);
-        mUiBot.assertShownByRelativeId(ID_INPUT);
-
-        // And finally test it..
-        dismissSaveTest(DismissType.RECENTS_BUTTON);
-    }
-
     private void dismissSaveTest(DismissType dismissType) throws Exception {
         // Set service.
         enableService();
@@ -397,10 +382,6 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
             case FOCUS_OUTSIDE:
                 mActivity.syncRunOnUiThread(() -> mActivity.mLabel.requestFocus());
                 mUiBot.assertShownByText(TEXT_LABEL).click();
-                break;
-            case RECENTS_BUTTON:
-                mUiBot.switchAppsUsingRecents();
-                WelcomeActivity.assertShowingDefaultMessage(mUiBot);
                 break;
             default:
                 throw new IllegalArgumentException("invalid dismiss type: " + dismissType);
@@ -665,7 +646,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
     @Override
     protected void saveUiCancelledAfterTappingLinkTest(PostSaveLinkTappedAction type)
             throws Exception {
-        startActivity(type == PostSaveLinkTappedAction.TAP_RECENTS);
+        startActivity(false);
         // Set service.
         enableService();
 
@@ -694,9 +675,6 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
 
         switch (type) {
-            case TAP_RECENTS:
-                mUiBot.switchAppsUsingRecents();
-                break;
             case LAUNCH_PREVIOUS_ACTIVITY:
                 startActivityOnNewTask(SimpleSaveActivity.class);
                 break;

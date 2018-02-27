@@ -85,12 +85,6 @@ final class Timeouts {
     static final Timeout UI_SCREEN_ORIENTATION_TIMEOUT =
             new Timeout("UI_SCREEN_ORIENTATION_TIMEOUT", 5000, 2F, 10000);
 
-    /**
-     * Timeout for using Recents to swtich activities.
-     */
-    static final Timeout UI_RECENTS_SWITCH_TIMEOUT =
-            new Timeout("UI_RECENTS_SWITCH_TIMEOUT", 200, 2F, 1000);
-
     private Timeouts() {
         throw new UnsupportedOperationException("contain static methods only");
     }

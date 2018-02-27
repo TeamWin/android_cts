@@ -25,7 +25,6 @@ import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiObject2;
 import android.widget.RemoteViews;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -166,18 +165,6 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
             PostSaveLinkTappedAction action, boolean manualRequest) throws Exception;
 
     /**
-     * Tests scenarios when user taps a link in the custom description, then double-tap recents
-     * to go back to the original activity:
-     * the Save UI should have been canceled.
-     */
-    @Test
-    @Ignore("Test fail on some devices because Recents UI is not well defined: b/72044685")
-    public final void testTapLink_backToPreviousActivityByTappingRecents()
-            throws Exception {
-        saveUiCancelledAfterTappingLinkTest(PostSaveLinkTappedAction.TAP_RECENTS);
-    }
-
-    /**
      * Tests scenarios when user taps a link in the custom description, then re-launches the
      * original activity:
      * the Save UI should have been canceled.
@@ -225,7 +212,6 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
     enum PostSaveLinkTappedAction {
         TAP_BACK_BUTTON,
         ROTATE_THEN_TAP_BACK_BUTTON,
-        TAP_RECENTS,
         FINISH_ACTIVITY,
         LAUNCH_NEW_ACTIVITY,
         LAUNCH_PREVIOUS_ACTIVITY,
