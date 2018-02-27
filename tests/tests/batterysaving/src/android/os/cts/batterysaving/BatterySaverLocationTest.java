@@ -15,8 +15,6 @@
  */
 package android.os.cts.batterysaving;
 
-import static android.content.pm.PackageManager.FEATURE_LOCATION;
-import static android.content.pm.PackageManager.FEATURE_LOCATION_GPS;
 import static android.provider.Settings.Secure.LOCATION_MODE_OFF;
 import static android.provider.Settings.Secure.LOCATION_PROVIDERS_ALLOWED;
 
@@ -32,6 +30,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.os.PowerManager;
 import android.provider.Settings;
@@ -42,9 +41,10 @@ import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
 import com.android.compatibility.common.util.CallbackAsserter;
-import com.android.compatibility.common.util.FeatureUtil;
+import com.android.compatibility.common.util.RequiredFeatureRule;
 import com.android.compatibility.common.util.TestUtils.RunnableWithThrow;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -58,15 +58,19 @@ import org.junit.runner.RunWith;
 public class BatterySaverLocationTest extends BatterySavingTestBase {
     private static final String TAG = "BatterySaverLocationTest";
 
+    @Rule
+    public final RequiredFeatureRule mRequireLocationRule =
+            new RequiredFeatureRule(PackageManager.FEATURE_LOCATION);
+
+    @Rule
+    public final RequiredFeatureRule mRequireLocationGpsRule =
+            new RequiredFeatureRule(PackageManager.FEATURE_LOCATION_GPS);
+
     /**
      * Test for the {@link PowerManager#LOCATION_MODE_ALL_DISABLED_WHEN_SCREEN_OFF} mode.
      */
     @Test
     public void testLocationAllDisabled() throws Exception {
-        if (!FeatureUtil.hasAllSystemFeatures(FEATURE_LOCATION, FEATURE_LOCATION_GPS)) {
-            Log.i(TAG, "Device doesn't support GPS");
-            return;
-        }
         assertTrue("Screen is off", getPowerManager().isInteractive());
 
         assertFalse(getPowerManager().isPowerSaveMode());

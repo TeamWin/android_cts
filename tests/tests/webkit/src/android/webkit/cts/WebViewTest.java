@@ -3072,4 +3072,12 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
             Assert.fail("The privacy policy URL should be a well-formed URL");
         }
     }
+
+    public void testWebViewClassLoaderReturnsNonNull() {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+
+        assertNotNull(WebView.getWebViewClassLoader());
+    }
 }

@@ -21,6 +21,7 @@ import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VI
 import static android.view.inputmethod.cts.util.TestUtils.getOnMainSync;
 import static android.view.inputmethod.cts.util.TestUtils.waitOnMainUntil;
 
+import static com.android.cts.mockime.ImeEventStreamTestUtils.EventFilterMode.CHECK_EXIT_EVENT_ONLY;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
@@ -67,10 +68,6 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
 
     private static Predicate<ImeEvent> backKeyDownMatcher(boolean expectedReturnValue) {
         return event -> {
-            if (!event.isEnterEvent()) {
-                // Skip enter event since we are interested in the return value.
-                return false;
-            }
             if (!TextUtils.equals("onKeyDown", event.getEventName())) {
                 return false;
             }
@@ -124,7 +121,7 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
 
             // InputMethodService#onKeyDown() should handle back key event.
             // TODO: Also check InputMethodService#requestHideSelf()
-            expectEvent(stream, backKeyDownMatcher(true), TIMEOUT);
+            expectEvent(stream, backKeyDownMatcher(true), CHECK_EXIT_EVENT_ONLY, TIMEOUT);
 
             // keyboard will hide
             expectEvent(stream, event -> "hideSoftInput".equals(event.getEventName()), TIMEOUT);
@@ -162,7 +159,7 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
 
             // InputMethodService#onKeyDown() will not handle back key event.
             // TODO: Also check InputMethodService#requestHideSelf()
-            expectEvent(stream, backKeyDownMatcher(false), TIMEOUT);
+            expectEvent(stream, backKeyDownMatcher(false), CHECK_EXIT_EVENT_ONLY, TIMEOUT);
 
             // keyboard will not hide
             notExpectEvent(stream, event -> "hideSoftInput".equals(event.getEventName()),

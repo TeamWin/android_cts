@@ -84,17 +84,47 @@ public class TouchDelegateTest {
                 downTime);
         mInstrumentation.waitForIdleSync();
 
-        MotionEvent event = mActivity.removeOldestButtonEvent();
-        assertNotNull(event);
-        assertEquals(MotionEvent.ACTION_DOWN, event.getAction());
-        event.recycle();
-        event = mActivity.removeOldestButtonEvent();
-        assertNotNull(event);
-        assertEquals(MotionEvent.ACTION_CANCEL, event.getAction());
-        event.recycle();
+        ensureOldestActionEquals(MotionEvent.ACTION_DOWN);
+        ensureOldestActionEquals(MotionEvent.ACTION_CANCEL);
+
         assertNull(mActivity.removeOldestButtonEvent());
         assertEquals(0, mActivity.getButtonClickCount());
         assertEquals(0, mActivity.getParentClickCount());
+    }
+
+    @Test
+    public void testTwoPointers() {
+        // Ensure ACTION_POINTER_DOWN and ACTION_POINTER_UP are forwarded to the target view
+        // by the TouchDelegate
+        final long downTime = SystemClock.uptimeMillis();
+        dispatchMotionEventToActivity(MotionEvent.ACTION_DOWN, mActivity.touchDelegateY, downTime);
+        dispatchMotionEventToActivity(MotionEvent.ACTION_MOVE, mActivity.touchDelegateY, downTime);
+        int actionPointer1Down =
+                (1 << MotionEvent.ACTION_POINTER_INDEX_SHIFT) + MotionEvent.ACTION_POINTER_DOWN;
+        dispatchMultiTouchMotionEventToActivity(actionPointer1Down, 2,
+                mActivity.touchDelegateY, downTime);
+        dispatchMultiTouchMotionEventToActivity(MotionEvent.ACTION_MOVE, 2,
+                mActivity.touchDelegateY, downTime);
+        int actionPointer1Up =
+                (1 << MotionEvent.ACTION_POINTER_INDEX_SHIFT) + MotionEvent.ACTION_POINTER_UP;
+        dispatchMultiTouchMotionEventToActivity(actionPointer1Up, 2,
+                mActivity.touchDelegateY, downTime);
+        dispatchMotionEventToActivity(MotionEvent.ACTION_UP, mActivity.touchDelegateY, downTime);
+        mInstrumentation.waitForIdleSync();
+
+        ensureOldestActionEquals(MotionEvent.ACTION_DOWN);
+        ensureOldestActionEquals(MotionEvent.ACTION_MOVE);
+        ensureOldestActionEquals(MotionEvent.ACTION_POINTER_DOWN);
+        ensureOldestActionEquals(MotionEvent.ACTION_MOVE);
+        ensureOldestActionEquals(MotionEvent.ACTION_POINTER_UP);
+        ensureOldestActionEquals(MotionEvent.ACTION_UP);
+    }
+
+    private void ensureOldestActionEquals(int action) {
+        MotionEvent event = mActivity.removeOldestButtonEvent();
+        assertNotNull(event);
+        assertEquals(action, event.getActionMasked());
+        event.recycle();
     }
 
     private void clickParent() {
@@ -120,6 +150,32 @@ public class TouchDelegateTest {
             final MotionEvent event = MotionEvent.obtain(downTime, eventTime, action,
                     mActivity.x, y, 0);
             event.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+            mActivity.dispatchTouchEvent(event);
+            event.recycle();
+        });
+    }
+
+    private void dispatchMultiTouchMotionEventToActivity(int action, int pointerCount,
+            int y, long downTime) {
+        mActivity.runOnUiThread(() -> {
+            final long eventTime = SystemClock.uptimeMillis();
+            MotionEvent.PointerProperties[] properties =
+                    new MotionEvent.PointerProperties[pointerCount];
+            MotionEvent.PointerCoords[] coords = new MotionEvent.PointerCoords[pointerCount];
+
+            for (int i = 0; i < pointerCount; i++) {
+                properties[i] = new MotionEvent.PointerProperties();
+                properties[i].id = i;
+                properties[i].toolType = MotionEvent.TOOL_TYPE_FINGER;
+                coords[i] = new MotionEvent.PointerCoords();
+                coords[i].x = mActivity.x + i * 10; // small offset so that pointers do not overlap
+                coords[i].y = y;
+            }
+
+            final MotionEvent event = MotionEvent.obtain(downTime, eventTime, action, pointerCount,
+                    properties, coords, 0, 0, 0, 0,
+                    0, 0, InputDevice.SOURCE_TOUCHSCREEN, 0);
+
             mActivity.dispatchTouchEvent(event);
             event.recycle();
         });
