@@ -190,7 +190,7 @@ public class DialogFrameTests extends ParentChildTestBase {
 
     public void testMarginsArePercentagesOfContentFrame() throws Exception {
         float horizontalMargin = .25f;
-        float verticalMargin = .25f;
+        float verticalMargin = .35f;
         doParentChildTest("WithMargins",
             (WindowState parent, WindowState dialog) -> {
                 Rectangle frame = parent.getContentFrame();
