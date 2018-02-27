@@ -28,7 +28,7 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 LOCAL_SDK_VERSION := current
 
-LOCAL_STATIC_JAVA_LIBRARIES := cts-api-signature-test
+LOCAL_STATIC_JAVA_LIBRARIES += cts-api-signature-test
 
 LOCAL_JNI_SHARED_LIBRARIES := libclassdescriptors
 LOCAL_MULTILIB := both
