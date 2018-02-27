@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-package android.app;
+package android.content;
 
-public class Activity {
+public class ComponentName {
+    public ComponentName(String pkg, String cls) {}
 }
