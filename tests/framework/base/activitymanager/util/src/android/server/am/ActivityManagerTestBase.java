@@ -226,28 +226,6 @@ public abstract class ActivityManagerTestBase {
 
     protected ActivityAndWindowManagersState mAmWmState = new ActivityAndWindowManagersState();
 
-    private SurfaceTraceReceiver mSurfaceTraceReceiver;
-    private Thread mSurfaceTraceThread;
-
-    protected void installSurfaceObserver(SurfaceTraceReceiver.SurfaceObserver observer) {
-        mSurfaceTraceReceiver = new SurfaceTraceReceiver(observer);
-        mSurfaceTraceThread = new Thread() {
-            @Override
-            public void run() {
-                try {
-                    registerSurfaceTraceReceiver("wm surface-trace", mSurfaceTraceReceiver);
-                } catch (IOException e) {
-                    logE("Error running wm surface-trace: " + e.toString());
-                }
-            }
-        };
-        mSurfaceTraceThread.start();
-    }
-
-    protected void removeSurfaceObserver() {
-        mSurfaceTraceThread.interrupt();
-    }
-
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getContext();
@@ -291,20 +269,6 @@ public abstract class ActivityManagerTestBase {
             logE("Error running shell command: " + command);
             throw new RuntimeException(e);
         }
-    }
-
-    protected static void registerSurfaceTraceReceiver(String command, SurfaceTraceReceiver outputReceiver)
-            throws IOException {
-        log("Shell command: " + command);
-        ParcelFileDescriptor pfd = InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .executeShellCommand(command);
-        byte[] buf = new byte[512];
-        int bytesRead;
-        FileInputStream fis = new ParcelFileDescriptor.AutoCloseInputStream(pfd);
-        while ((bytesRead = fis.read(buf)) != -1) {
-            outputReceiver.addOutput(buf, 0, bytesRead);
-        }
-        fis.close();
     }
 
     protected Bitmap takeScreenshot() {
