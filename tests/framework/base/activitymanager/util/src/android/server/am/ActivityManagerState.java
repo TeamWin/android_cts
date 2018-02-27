@@ -22,7 +22,6 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
-import static android.server.am.ActivityManagerTestBase.getActivityComponentName;
 import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.ProtoExtractors.extract;
 import static android.server.am.StateLogger.log;
@@ -31,6 +30,7 @@ import static android.server.am.StateLogger.logE;
 import android.content.ComponentName;
 import android.graphics.Rect;
 import android.os.ParcelFileDescriptor;
+import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 
 import com.android.server.am.proto.nano.ActivityDisplayProto;
@@ -89,12 +89,7 @@ class ActivityManagerState {
             if (retry) {
                 log("***Incomplete AM state. Retrying...");
                 // Wait half a second between retries for activity manager to finish transitioning.
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    log(e.toString());
-                    // Well I guess we are not waiting...
-                }
+                SystemClock.sleep(500);
             }
 
             String dumpsysCmd = "";
@@ -360,16 +355,11 @@ class ActivityManagerState {
     }
 
     boolean isActivityVisible(ComponentName activityName) {
-        return isActivityVisible(getActivityName(activityName));
-    }
-
-    /** TODO(b/73349193): Use {@link #isActivityVisible(ComponentName)} instead. */
-    @Deprecated
-    boolean isActivityVisible(String fullActivityName) {
+        final String fullName = getActivityName(activityName);
         for (ActivityStack stack : mStacks) {
             for (ActivityTask task : stack.mTasks) {
                 for (Activity activity : task.mActivities) {
-                    if (activity.name.equals(fullActivityName)) {
+                    if (activity.name.equals(fullName)) {
                         return activity.visible;
                     }
                 }
@@ -467,13 +457,6 @@ class ActivityManagerState {
 
     ActivityTask getTaskByActivity(ComponentName activityName) {
         return getTaskByActivityInternal(getActivityName(activityName), WINDOWING_MODE_UNDEFINED);
-    }
-
-    /** TODO(b/73349193): Use {@link #getTaskByActivity(ComponentName)} instead. */
-    @Deprecated
-    ActivityTask getTaskByActivityName(String activityName) {
-        return getTaskByActivityInternal(
-                getActivityComponentName(activityName), WINDOWING_MODE_UNDEFINED);
     }
 
     ActivityTask getTaskByActivity(ComponentName activityName, int windowingMode) {

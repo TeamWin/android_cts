@@ -20,6 +20,7 @@ LOCAL_MODULE_TAGS := tests optional
 
 LOCAL_SRC_FILES := \
     $(call all-java-files-under, src) \
+    $(call all-named-files-under,Components.java, ../app) \
     $(call all-named-files-under,ComponentsBase.java, ../app_base)
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
