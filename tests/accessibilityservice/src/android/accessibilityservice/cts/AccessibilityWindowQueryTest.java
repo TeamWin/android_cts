@@ -34,6 +34,9 @@ import static android.view.accessibility.AccessibilityNodeInfo.ACTION_FOCUS;
 import static android.view.accessibility.AccessibilityNodeInfo.ACTION_LONG_CLICK;
 import static android.view.accessibility.AccessibilityNodeInfo.ACTION_SELECT;
 
+import static org.hamcrest.Matchers.lessThan;
+import static org.junit.Assert.assertThat;
+
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.cts.activities.AccessibilityWindowQueryActivity;
@@ -52,9 +55,10 @@ import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction;
 import android.view.accessibility.AccessibilityWindowInfo;
-
 import android.widget.Button;
-import android.accessibilityservice.cts.R;
+
+import org.hamcrest.Description;
+import org.hamcrest.TypeSafeMatcher;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -63,6 +67,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * Test cases for testing the accessibility APIs for querying of the screen content.
@@ -259,7 +266,6 @@ public class AccessibilityWindowQueryTest
 
     @MediumTest
     public void testSingleAccessibilityFocusAcrossWindows() throws Exception {
-        setAccessInteractiveWindowsFlag();
         try {
             // Add two more windows.
             final View views[];
@@ -573,6 +579,27 @@ public class AccessibilityWindowQueryTest
         assertTrue(numPictureInPictureWindows >= 1);
     }
 
+    public void testGetWindows_resultIsSortedByLayerDescending() throws TimeoutException {
+        addTwoAppPanelWindows();
+        List<AccessibilityWindowInfo> windows = getInstrumentation().getUiAutomation().getWindows();
+
+        AccessibilityWindowInfo windowAddedFirst = findWindow(windows, R.string.button1);
+        AccessibilityWindowInfo windowAddedSecond = findWindow(windows, R.string.button2);
+        assertThat(windowAddedFirst.getLayer(), lessThan(windowAddedSecond.getLayer()));
+
+        assertThat(windows, new IsSortedBy<>(w -> w.getLayer(), /* ascending */ false));
+    }
+
+    private AccessibilityWindowInfo findWindow(List<AccessibilityWindowInfo> windows,
+            int btnTextRes) {
+        return windows.stream()
+                .filter(w -> w.getRoot()
+                        .findAccessibilityNodeInfosByText(getString(btnTextRes))
+                        .size() == 1)
+                .findFirst()
+                .get();
+    }
+
     private boolean isDividerWindowPresent(UiAutomation uiAutomation) {
         List<AccessibilityWindowInfo> windows = uiAutomation.getWindows();
         final int windowCount = windows.size();
@@ -659,50 +686,44 @@ public class AccessibilityWindowQueryTest
     }
 
     private View[] addTwoAppPanelWindows() throws TimeoutException {
-        final UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
+        setAccessInteractiveWindowsFlag();
+        getInstrumentation().getUiAutomation()
+                .waitForIdle(TIMEOUT_WINDOW_STATE_IDLE, TIMEOUT_ASYNC_PROCESSING);
 
-        uiAutomation.waitForIdle(TIMEOUT_WINDOW_STATE_IDLE, TIMEOUT_ASYNC_PROCESSING);
+        return new View[] {
+                addWindow(R.string.button1, params -> {
+                    params.gravity = Gravity.TOP;
+                    params.y = getStatusBarHeight(getActivity());
+                }),
+                addWindow(R.string.button2, params -> {
+                    params.gravity = Gravity.BOTTOM;
+                })
+        };
+    }
 
-        final View views[] = new View[2];
-        // Add the first window.
-        uiAutomation.executeAndWaitForEvent(() -> getInstrumentation().runOnMainSync(() -> {
-            final WindowManager.LayoutParams params = new WindowManager.LayoutParams();
-            params.gravity = Gravity.TOP;
-            params.y = getStatusBarHeight(getActivity());
-            params.width = WindowManager.LayoutParams.MATCH_PARENT;
-            params.height = WindowManager.LayoutParams.WRAP_CONTENT;
-            params.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
-                    | WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR
-                    | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-                    | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
-            params.type = WindowManager.LayoutParams.TYPE_APPLICATION_PANEL;
-            params.token = getActivity().getWindow().getDecorView().getWindowToken();
+    private Button addWindow(int btnTextRes, Consumer<WindowManager.LayoutParams> configure)
+            throws TimeoutException {
+        AtomicReference<Button> result = new AtomicReference<>();
+        getInstrumentation().getUiAutomation().executeAndWaitForEvent(() -> {
+            getInstrumentation().runOnMainSync(() -> {
+                final WindowManager.LayoutParams params = new WindowManager.LayoutParams();
+                params.width = WindowManager.LayoutParams.MATCH_PARENT;
+                params.height = WindowManager.LayoutParams.WRAP_CONTENT;
+                params.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                        | WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR
+                        | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                        | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
+                params.type = WindowManager.LayoutParams.TYPE_APPLICATION_PANEL;
+                params.token = getActivity().getWindow().getDecorView().getWindowToken();
+                configure.accept(params);
 
-            final Button button = new Button(getActivity());
-            button.setText(R.string.button1);
-            views[0] = button;
-            getActivity().getWindowManager().addView(button, params);
-        }), filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_ADDED), TIMEOUT_ASYNC_PROCESSING);
-
-        // Add the second window.
-        uiAutomation.executeAndWaitForEvent(() -> getInstrumentation().runOnMainSync(() -> {
-            final WindowManager.LayoutParams params = new WindowManager.LayoutParams();
-            params.gravity = Gravity.BOTTOM;
-            params.width = WindowManager.LayoutParams.MATCH_PARENT;
-            params.height = WindowManager.LayoutParams.WRAP_CONTENT;
-            params.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
-                    | WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR
-                    | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-                    | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
-            params.type = WindowManager.LayoutParams.TYPE_APPLICATION_PANEL;
-            params.token = getActivity().getWindow().getDecorView().getWindowToken();
-
-            final Button button = new Button(getActivity());
-            button.setText(R.string.button2);
-            views[1] = button;
-            getActivity().getWindowManager().addView(button, params);
-        }), filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_ADDED), TIMEOUT_ASYNC_PROCESSING);
-        return views;
+                final Button button = new Button(getActivity());
+                button.setText(btnTextRes);
+                result.set(button);
+                getActivity().getWindowManager().addView(button, params);
+            });
+        }, filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_ADDED), TIMEOUT_ASYNC_PROCESSING);
+        return result.get();
     }
 
     private void setAccessInteractiveWindowsFlag () {
@@ -805,5 +826,34 @@ public class AccessibilityWindowQueryTest
     @Override
     protected void scrubClass(Class<?> testCaseClass) {
         /* intentionally do not scrub */
+    }
+
+    private static class IsSortedBy<T> extends TypeSafeMatcher<List<T>> {
+
+        private final Function<T, ? extends Comparable> mProperty;
+        private final boolean mAscending;
+
+        private IsSortedBy(Function<T, ? extends Comparable> comparator, boolean ascending) {
+            mProperty = comparator;
+            mAscending = ascending;
+        }
+
+        @Override
+        public void describeTo(Description description) {
+            description.appendText("is sorted");
+        }
+
+        @Override
+        protected boolean matchesSafely(List<T> item) {
+            for (int i = 0; i < item.size() - 1; i++) {
+                Comparable a = mProperty.apply(item.get(i));
+                Comparable b = mProperty.apply(item.get(i));
+                int aMinusB = a.compareTo(b);
+                if (aMinusB != 0 && (aMinusB < 0) != mAscending) {
+                    return false;
+                }
+            }
+            return true;
+        }
     }
 }
