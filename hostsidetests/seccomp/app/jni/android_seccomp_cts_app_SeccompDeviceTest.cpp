@@ -18,10 +18,15 @@
 
 #define LOG_TAG "SeccompTest"
 
-#include <cutils/log.h>
+#include <android/log.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+
+#define ALOG(priority, tag, ...) ((void)__android_log_print(ANDROID_##priority, tag, __VA_ARGS__))
+
+#define ALOGI(...) ALOG(LOG_INFO, LOG_TAG, __VA_ARGS__)
+#define ALOGE(...) ALOG(LOG_ERROR, LOG_TAG, __VA_ARGS__)
 
 /*
  * Function: testSyscallBlocked

@@ -25,14 +25,8 @@ LOCAL_SRC_FILES := \
 		CtsSeccompJniOnLoad.cpp \
 		android_seccomp_cts_app_SeccompDeviceTest.cpp \
 
-LOCAL_SHARED_LIBRARIES := \
-		libnativehelper \
-		liblog \
-		libcutils \
-		libc++ \
-		libpackagelistparser \
-
-
+LOCAL_SDK_VERSION := current
+LOCAL_LDLIBS := -llog
 LOCAL_C_INCLUDES += ndk/sources/cpufeatures
 LOCAL_STATIC_LIBRARIES := cpufeatures
 
