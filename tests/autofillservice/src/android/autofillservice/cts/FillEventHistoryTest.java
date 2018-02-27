@@ -439,7 +439,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         // Trigger autofill on username
         mActivity.onUsername(View::requestFocus);
         sReplier.getNextFillRequest();
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
 
         // Trigger save
         mActivity.onUsername((v) -> v.setText("malkovich"));
@@ -465,7 +465,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         // Trigger autofill on username
         mActivity.onUsername(View::requestFocus);
         sReplier.getNextFillRequest();
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
 
         // Trigger save
         mActivity.onUsername((v) -> v.setText("malkovich"));

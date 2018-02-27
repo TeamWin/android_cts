@@ -76,7 +76,7 @@ public abstract class AutoFillServiceTestCase {
     };
 
     @Rule
-    public final RetryRule mRetryRule = new RetryRule(5);
+    public final RetryRule mRetryRule = new RetryRule(2);
 
     @Rule
     public final AutofillLoggingTestRule mLoggingRule = new AutofillLoggingTestRule(TAG);
@@ -108,6 +108,7 @@ public abstract class AutoFillServiceTestCase {
     protected AutoFillServiceTestCase(UiBot uiBot) {
         mPackageName = mContext.getPackageName();
         mUiBot = uiBot;
+        mUiBot.reset();
     }
 
     @BeforeClass
@@ -122,7 +123,7 @@ public abstract class AutoFillServiceTestCase {
     }
 
     @Before
-    public void cleanupState() {
+    public void cleanupStaticState() {
         Helper.preTestCleanup();
         sReplier.reset();
     }

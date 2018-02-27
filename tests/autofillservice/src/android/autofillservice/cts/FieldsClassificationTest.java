@@ -163,7 +163,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         mActivity.focusCell(1, 1);
         sReplier.getNextFillRequest();
 
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
         callback.assertUiUnavailableEvent(field);
 
         // Simulate user input
@@ -205,7 +205,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         mActivity.focusCell(1, 1);
         sReplier.getNextFillRequest();
 
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
         callback.assertUiUnavailableEvent(field);
 
         // Simulate user input
@@ -248,7 +248,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         mActivity.focusCell(1, 1);
         sReplier.getNextFillRequest();
 
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
         callback.assertUiUnavailableEvent(field1);
 
         // Simulate user input
@@ -294,7 +294,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         mActivity.focusCell(1, 1);
         sReplier.getNextFillRequest();
 
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
         callback.assertUiUnavailableEvent(field1);
 
         // Simulate user input
@@ -349,7 +349,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         mActivity.focusCell(1, 1);
         sReplier.getNextFillRequest();
 
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
         callback.assertUiUnavailableEvent(field1);
 
         // Simulate user input
@@ -393,7 +393,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         mActivity.focusCell(1, 1);
         sReplier.getNextFillRequest();
 
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
         callback.assertUiUnavailableEvent(field);
 
         // Simulate user input
@@ -425,7 +425,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         mActivity.focusCell(1, 1);
         sReplier.getNextFillRequest();
 
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
         callback.assertUiUnavailableEvent(field);
 
         // Finish context.

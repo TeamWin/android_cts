@@ -37,8 +37,6 @@ import java.util.concurrent.TimeoutException;
 
 public class MultiWindowLoginActivityTest extends AutoFillServiceTestCase {
 
-    private static final String TAG = "MultiWindowTest";
-
     @Rule
     public final AutofillActivityTestRule<MultiWindowLoginActivity> mActivityRule =
             new AutofillActivityTestRule<MultiWindowLoginActivity>(MultiWindowLoginActivity.class);
@@ -66,7 +64,7 @@ public class MultiWindowLoginActivityTest extends AutoFillServiceTestCase {
     }
 
 
-    protected String runAmStartActivity(Class activityClass, int flags) {
+    protected String runAmStartActivity(Class<? extends Activity> activityClass, int flags) {
         return runAmStartActivity(activityClass.getName(), flags);
     }
 

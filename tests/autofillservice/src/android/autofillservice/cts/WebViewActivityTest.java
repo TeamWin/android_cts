@@ -80,7 +80,7 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Assert not shown.
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
     }
 
     @Test
@@ -181,7 +181,7 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Assert not shown.
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
 
         // Trigger save.
         if (INJECT_EVENTS) {
