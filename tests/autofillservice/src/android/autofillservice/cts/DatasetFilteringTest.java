@@ -20,12 +20,28 @@ import static android.autofillservice.cts.Helper.ID_USERNAME;
 import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
 
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
+import android.content.IntentSender;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.regex.Pattern;
 
 public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
+
+    private static String sMaxDatasets;
+
+    @BeforeClass
+    public static void setMaxDatasets() {
+        sMaxDatasets = runShellCommand("cmd autofill get max_visible_datasets");
+        runShellCommand("cmd autofill set max_visible_datasets 4");
+    }
+
+    @AfterClass
+    public static void restoreMaxDatasets() {
+        runShellCommand("cmd autofill set max_visible_datasets %s", sMaxDatasets);
+    }
 
     @Test
     public void testFilter() throws Exception {
@@ -349,5 +365,107 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
         mActivity.onUsername((v) -> v.setText("aaa"));
         callback.assertUiHiddenEvent(mActivity.getUsername());
         mUiBot.assertNoDatasets();
+    }
+
+    @Test
+    public void testFilter_mixPlainAndRegex() throws Exception {
+        final String plain = "Plain";
+        final String regexPlain = "RegexPlain";
+        final String authRegex = "AuthRegex";
+        final String kitchnSync = "KitchenSync";
+        final Pattern everything = Pattern.compile(".*");
+
+        enableService();
+
+        // Set expectations.
+        final IntentSender authentication = AuthenticationActivity.createSender(mContext, 1,
+                new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .build());
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "aword")
+                        .setPresentation(createPresentation(plain))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "a ignore", everything)
+                        .setPresentation(createPresentation(regexPlain))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "ab ignore", everything)
+                        .setAuthentication(authentication)
+                        .setPresentation(createPresentation(authRegex))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "ab ignore", createPresentation(kitchnSync),
+                                everything)
+                        .build())
+                .build());
+
+        // Trigger auto-fill.
+        requestFocusOnUsername();
+        sReplier.getNextFillRequest();
+
+        // With no filter text all datasets should be shown
+        mUiBot.assertDatasets(plain, regexPlain, authRegex, kitchnSync);
+
+        // All datasets start with 'a'
+        mActivity.onUsername((v) -> v.setText("a"));
+        mUiBot.assertDatasets(plain, regexPlain, authRegex, kitchnSync);
+
+        // Only the regex datasets should start with 'ab'
+        mActivity.onUsername((v) -> v.setText("ab"));
+        mUiBot.assertDatasets(regexPlain, authRegex, kitchnSync);
+    }
+
+    @Test
+    public void testFilter_mixPlainAndRegex_usingKeyboard() throws Exception {
+        final String plain = "Plain";
+        final String regexPlain = "RegexPlain";
+        final String authRegex = "AuthRegex";
+        final String kitchnSync = "KitchenSync";
+        final Pattern everything = Pattern.compile(".*");
+
+        enableService();
+
+        // Set expectations.
+        final IntentSender authentication = AuthenticationActivity.createSender(mContext, 1,
+                new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .build());
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "aword")
+                        .setPresentation(createPresentation(plain))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "a ignore", everything)
+                        .setPresentation(createPresentation(regexPlain))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "ab ignore", everything)
+                        .setAuthentication(authentication)
+                        .setPresentation(createPresentation(authRegex))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "ab ignore", createPresentation(kitchnSync),
+                                everything)
+                        .build())
+                .build());
+
+        // Trigger auto-fill.
+        requestFocusOnUsername();
+        sReplier.getNextFillRequest();
+
+        // With no filter text all datasets should be shown
+        mUiBot.assertDatasets(plain, regexPlain, authRegex, kitchnSync);
+
+        // All datasets start with 'a'
+        runShellCommand("input keyevent KEYCODE_A");
+        mUiBot.assertDatasets(plain, regexPlain, authRegex, kitchnSync);
+
+        // Only the regex datasets should start with 'ab'
+        runShellCommand("input keyevent KEYCODE_B");
+        mUiBot.assertDatasets(regexPlain, authRegex, kitchnSync);
     }
 }
