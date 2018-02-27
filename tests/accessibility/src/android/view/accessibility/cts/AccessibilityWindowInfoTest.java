@@ -49,6 +49,7 @@ public class AccessibilityWindowInfoTest extends AndroidTestCase {
         AccessibilityWindowInfo w2 = AccessibilityWindowInfo.CREATOR.createFromParcel(parcel);
         assertNotSame(w1, w2);
         assertTrue(areWindowsEqual(w1, w2));
+        parcel.recycle();
     }
 
     @SmallTest

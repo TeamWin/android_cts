@@ -161,5 +161,7 @@ public class IconTest {
 
         // loading drawable synchronously.
         assertNotNull(icon.loadDrawable(mActivity));
+
+        parcel.recycle();
     }
 }

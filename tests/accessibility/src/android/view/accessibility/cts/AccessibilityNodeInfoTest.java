@@ -64,6 +64,8 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
 
         // make sure all fields properly marshaled
         assertEqualsAccessibilityNodeInfo(sentInfo, receivedInfo);
+
+        parcel.recycle();
     }
 
     /**

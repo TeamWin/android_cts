@@ -139,6 +139,8 @@ public class CursorWindowTest {
         cursorWindow = CursorWindow.CREATOR.createFromParcel(parcel);
         assertEquals(TEST_NUMBER, cursorWindow.getStartPosition());
         assertEquals(TEST_STRING, cursorWindow.getString(TEST_NUMBER, 0));
+
+        parcel.recycle();
     }
 
     @Test
