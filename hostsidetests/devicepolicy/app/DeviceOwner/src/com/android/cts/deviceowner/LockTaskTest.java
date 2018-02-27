@@ -26,6 +26,7 @@ import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_SYSTEM_INF
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
+import static org.testng.Assert.assertThrows;
 
 import static org.junit.Assert.assertArrayEquals;
 
@@ -198,8 +199,15 @@ public class LockTaskTest {
 
         int cumulative = LOCK_TASK_FEATURE_NONE;
         for (int flag : flags) {
-            mDevicePolicyManager.setLockTaskFeatures(ADMIN_COMPONENT, flag);
-            assertEquals(flag, mDevicePolicyManager.getLockTaskFeatures(ADMIN_COMPONENT));
+            if (flag == LOCK_TASK_FEATURE_OVERVIEW) {
+                // Overview can only be used in combination with HOME
+                assertThrows(
+                        IllegalArgumentException.class,
+                        () -> mDevicePolicyManager.setLockTaskFeatures(ADMIN_COMPONENT, flag));
+            } else {
+                mDevicePolicyManager.setLockTaskFeatures(ADMIN_COMPONENT, flag);
+                assertEquals(flag, mDevicePolicyManager.getLockTaskFeatures(ADMIN_COMPONENT));
+            }
 
             cumulative |= flag;
             mDevicePolicyManager.setLockTaskFeatures(ADMIN_COMPONENT, cumulative);
