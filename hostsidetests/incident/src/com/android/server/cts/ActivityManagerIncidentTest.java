@@ -18,12 +18,13 @@ package com.android.server.cts;
 
 import com.android.server.am.proto.ActiveServicesProto;
 import com.android.server.am.proto.ActiveServicesProto.ServicesByUser;
-import com.android.server.am.proto.BroadcastProto;
+import com.android.server.am.proto.ActivityManagerServiceDumpBroadcastsProto;
+import com.android.server.am.proto.ActivityManagerServiceDumpProcessesProto;
+import com.android.server.am.proto.ActivityManagerServiceDumpProcessesProto.LruProcesses;
+import com.android.server.am.proto.ActivityManagerServiceDumpServicesProto;
 import com.android.server.am.proto.BroadcastQueueProto;
 import com.android.server.am.proto.BroadcastQueueProto.BroadcastSummary;
 import com.android.server.am.proto.BroadcastRecordProto;
-import com.android.server.am.proto.ProcessesProto;
-import com.android.server.am.proto.ProcessesProto.LruProcesses;
 import com.android.server.am.proto.ProcessRecordProto;
 import com.android.server.am.proto.ServiceRecordProto;
 import com.android.server.am.proto.UidRecordProto;
@@ -46,7 +47,8 @@ public class ActivityManagerIncidentTest extends ProtoDumpTestCase {
     public void testDumpBroadcasts() throws Exception {
         getDevice().executeShellCommand("am broadcast -a " + TEST_BROADCAST);
         Thread.sleep(100);
-        final BroadcastProto dump = getDump(BroadcastProto.parser(),
+        final ActivityManagerServiceDumpBroadcastsProto dump = getDump(
+                ActivityManagerServiceDumpBroadcastsProto.parser(),
                 "dumpsys activity --proto broadcasts");
 
         assertTrue(dump.getReceiverListCount() > 0);
@@ -70,7 +72,7 @@ mybroadcast:
             }
         }
         assertTrue(found);
-        BroadcastProto.MainHandler mainHandler = dump.getHandler();
+        ActivityManagerServiceDumpBroadcastsProto.MainHandler mainHandler = dump.getHandler();
         assertTrue(mainHandler.getHandler().contains(
             "com.android.server.am.ActivityManagerService"));
     }
@@ -79,11 +81,13 @@ mybroadcast:
      * Tests activity manager dumps services.
      */
     public void testDumpServices() throws Exception {
-        final ActiveServicesProto dump = getDump(ActiveServicesProto.parser(),
+        final ActivityManagerServiceDumpServicesProto dump = getDump(
+                ActivityManagerServiceDumpServicesProto.parser(),
                 "dumpsys activity --proto service");
-        assertTrue(dump.getServicesByUsersCount() > 0);
+        ActiveServicesProto activeServices = dump.getActiveServices();
+        assertTrue(activeServices.getServicesByUsersCount() > 0);
 
-        for (ServicesByUser perUserServices : dump.getServicesByUsersList()) {
+        for (ServicesByUser perUserServices : activeServices.getServicesByUsersList()) {
             assertTrue(perUserServices.getServiceRecordsCount() > 0);
             for (ServiceRecordProto service : perUserServices.getServiceRecordsList()) {
                 assertFalse(service.getShortName().isEmpty());
@@ -100,7 +104,8 @@ mybroadcast:
      * Tests activity manager dumps processes.
      */
     public void testDumpProcesses() throws Exception {
-        final ProcessesProto dump = getDump(ProcessesProto.parser(),
+        final ActivityManagerServiceDumpProcessesProto dump = getDump(
+                ActivityManagerServiceDumpProcessesProto.parser(),
                 "dumpsys activity --proto processes");
 
         assertTrue(dump.getProcsCount() > 0);

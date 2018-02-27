@@ -42,7 +42,7 @@ import com.android.server.wm.proto.nano.PinnedStackControllerProto;
 import com.android.server.wm.proto.nano.StackProto;
 import com.android.server.wm.proto.nano.TaskProto;
 import com.android.server.wm.proto.nano.WindowContainerProto;
-import com.android.server.wm.proto.nano.WindowManagerServiceProto;
+import com.android.server.wm.proto.nano.WindowManagerServiceDumpProto;
 import com.android.server.wm.proto.nano.WindowStateAnimatorProto;
 import com.android.server.wm.proto.nano.WindowStateProto;
 import com.android.server.wm.proto.nano.WindowSurfaceControllerProto;
@@ -171,7 +171,7 @@ public class WindowManagerState {
 
     private void parseSysDumpProto(byte[] sysDump) throws InvalidProtocolBufferNanoException {
         reset();
-        WindowManagerServiceProto state = WindowManagerServiceProto.parseFrom(sysDump);
+        WindowManagerServiceDumpProto state = WindowManagerServiceDumpProto.parseFrom(sysDump);
         List<WindowState> allWindows = new ArrayList<>();
         Map<String, WindowState> windowMap = new HashMap<>();
         if (state.focusedWindow != null) {
