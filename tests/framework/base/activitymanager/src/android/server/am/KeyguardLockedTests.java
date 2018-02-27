@@ -18,6 +18,10 @@ package android.server.am;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
+import static android.server.am.Components.DISMISS_KEYGUARD_ACTIVITY;
+import static android.server.am.Components.DISMISS_KEYGUARD_METHOD_ACTIVITY;
+import static android.server.am.Components.PIP_ACTIVITY;
+import static android.server.am.Components.SHOW_WHEN_LOCKED_ACTIVITY;
 import static android.server.am.UiDeviceUtils.pressBackButton;
 
 import static org.junit.Assert.assertFalse;
@@ -33,10 +37,7 @@ import org.junit.Test;
  */
 public class KeyguardLockedTests extends KeyguardTestBase {
 
-    private static final String SHOW_WHEN_LOCKED_ACTIVITY = "ShowWhenLockedActivity";
-    private static final String PIP_ACTIVITY = "PipActivity";
-    private static final String PIP_ACTIVITY_ACTION_ENTER_PIP =
-            "android.server.am.PipActivity.enter_pip";
+    private static final String ACTION_ENTER_PIP = "android.server.am.PipActivity.enter_pip";
     private static final String EXTRA_SHOW_OVER_KEYGUARD = "show_over_keyguard";
 
     @Before
@@ -71,11 +72,11 @@ public class KeyguardLockedTests extends KeyguardTestBase {
             lockScreenSession.setLockCredential()
                     .gotoKeyguard();
             mAmWmState.assertKeyguardShowingAndNotOccluded();
-            launchActivity("DismissKeyguardActivity");
+            launchActivity(DISMISS_KEYGUARD_ACTIVITY);
             lockScreenSession.enterAndConfirmLockCredential();
             mAmWmState.waitForKeyguardGone();
             mAmWmState.assertKeyguardGone();
-            mAmWmState.assertVisibility("DismissKeyguardActivity", true);
+            mAmWmState.assertVisibility(DISMISS_KEYGUARD_ACTIVITY, true);
         }
     }
 
@@ -86,13 +87,13 @@ public class KeyguardLockedTests extends KeyguardTestBase {
                     .gotoKeyguard();
             mAmWmState.assertKeyguardShowingAndNotOccluded();
             launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
-            mAmWmState.computeState(new WaitForValidActivityState(SHOW_WHEN_LOCKED_ACTIVITY));
+            mAmWmState.computeState(SHOW_WHEN_LOCKED_ACTIVITY);
             mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
-            launchActivity("DismissKeyguardActivity");
+            launchActivity(DISMISS_KEYGUARD_ACTIVITY);
             lockScreenSession.enterAndConfirmLockCredential();
             mAmWmState.waitForKeyguardGone();
             mAmWmState.assertKeyguardGone();
-            mAmWmState.assertVisibility("DismissKeyguardActivity", true);
+            mAmWmState.assertVisibility(DISMISS_KEYGUARD_ACTIVITY, true);
             mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, false);
         }
     }
@@ -104,7 +105,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
                     .gotoKeyguard();
             mAmWmState.assertKeyguardShowingAndNotOccluded();
             launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
-            mAmWmState.computeState(new WaitForValidActivityState(SHOW_WHEN_LOCKED_ACTIVITY));
+            mAmWmState.computeState(SHOW_WHEN_LOCKED_ACTIVITY);
             mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
             executeShellCommand("am broadcast -a trigger_broadcast --ez dismissKeyguard true");
             lockScreenSession.enterAndConfirmLockCredential();
@@ -123,11 +124,11 @@ public class KeyguardLockedTests extends KeyguardTestBase {
             lockScreenSession.gotoKeyguard();
             mAmWmState.computeState(true);
             assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
-            launchActivity("DismissKeyguardMethodActivity");
+            launchActivity(DISMISS_KEYGUARD_METHOD_ACTIVITY);
             lockScreenSession.enterAndConfirmLockCredential();
             mAmWmState.waitForKeyguardGone();
-            mAmWmState.computeState(new WaitForValidActivityState("DismissKeyguardMethodActivity"));
-            mAmWmState.assertVisibility("DismissKeyguardMethodActivity", true);
+            mAmWmState.computeState(DISMISS_KEYGUARD_METHOD_ACTIVITY);
+            mAmWmState.assertVisibility(DISMISS_KEYGUARD_METHOD_ACTIVITY, true);
             assertFalse(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
             assertOnDismissSucceededInLogcat(logSeparator);
         }
@@ -141,11 +142,11 @@ public class KeyguardLockedTests extends KeyguardTestBase {
             lockScreenSession.gotoKeyguard();
             mAmWmState.computeState(true);
             assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
-            launchActivity("DismissKeyguardMethodActivity");
+            launchActivity(DISMISS_KEYGUARD_METHOD_ACTIVITY);
             pressBackButton();
             assertOnDismissCancelledInLogcat(logSeparator);
             mAmWmState.computeState(true);
-            mAmWmState.assertVisibility("DismissKeyguardMethodActivity", false);
+            mAmWmState.assertVisibility(DISMISS_KEYGUARD_METHOD_ACTIVITY, false);
             assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
         }
     }
@@ -162,7 +163,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
             // Enter PiP on an activity on top of the keyguard, and ensure that it prompts the user
             // for their credentials and does not enter picture-in-picture yet
             launchActivity(PIP_ACTIVITY, EXTRA_SHOW_OVER_KEYGUARD, "true");
-            executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_ENTER_PIP);
+            executeShellCommand("am broadcast -a " + ACTION_ENTER_PIP);
             mAmWmState.waitForKeyguardShowingAndOccluded();
             mAmWmState.assertKeyguardShowingAndOccluded();
             mAmWmState.assertDoesNotContainStack("Must not contain pinned stack.",
@@ -185,14 +186,14 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.setLockCredential();
             launchActivity(PIP_ACTIVITY);
-            executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_ENTER_PIP);
-            mAmWmState.computeState(new WaitForValidActivityState(PIP_ACTIVITY));
+            executeShellCommand("am broadcast -a " + ACTION_ENTER_PIP);
+            mAmWmState.computeState(PIP_ACTIVITY);
             mAmWmState.assertContainsStack("Must contain pinned stack.", WINDOWING_MODE_PINNED,
                     ACTIVITY_TYPE_STANDARD);
             mAmWmState.assertVisibility(PIP_ACTIVITY, true);
 
             launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
-            mAmWmState.computeState(new WaitForValidActivityState(SHOW_WHEN_LOCKED_ACTIVITY));
+            mAmWmState.computeState(SHOW_WHEN_LOCKED_ACTIVITY);
             mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
 
             lockScreenSession.gotoKeyguard();
@@ -210,8 +211,8 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.setLockCredential();
             launchActivity(PIP_ACTIVITY, EXTRA_SHOW_OVER_KEYGUARD, "true");
-            executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_ENTER_PIP);
-            mAmWmState.computeState(new WaitForValidActivityState(PIP_ACTIVITY));
+            executeShellCommand("am broadcast -a " + ACTION_ENTER_PIP);
+            mAmWmState.computeState(PIP_ACTIVITY);
             mAmWmState.assertContainsStack("Must contain pinned stack.", WINDOWING_MODE_PINNED,
                     ACTIVITY_TYPE_STANDARD);
             mAmWmState.assertVisibility(PIP_ACTIVITY, true);

@@ -52,6 +52,10 @@ public class Components extends ComponentsBase {
             component("LaunchAssistantActivityFromSession");
     public static final ComponentName LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK  =
             component("LaunchAssistantActivityIntoAssistantStack");
+    public static final ComponentName LAUNCH_ENTER_PIP_ACTIVITY =
+            component("LaunchEnterPipActivity");
+    public static final ComponentName LAUNCH_INTO_PINNED_STACK_PIP_ACTIVITY =
+            component("LaunchIntoPinnedStackPipActivity");
     public static final ComponentName LAUNCH_PIP_ON_PIP_ACTIVITY =
             component("LaunchPipOnPipActivity");
     public static final ComponentName LAUNCHING_ACTIVITY = component("LaunchingActivity");
@@ -64,9 +68,15 @@ public class Components extends ComponentsBase {
     public static final ComponentName NO_RELAUNCH_ACTIVITY = component("NoRelaunchActivity");
     public static final ComponentName NON_RESIZEABLE_ACTIVITY = component("NonResizeableActivity");
     public static final ComponentName PIP_ACTIVITY = component("PipActivity");
+    public static final ComponentName PIP_ACTIVITY2 = component("PipActivity2");
+    public static final ComponentName PIP_ACTIVITY_WITH_SAME_AFFINITY =
+            component("PipActivityWithSameAffinity");
+    public static final ComponentName PIP_ON_STOP_ACTIVITY = component("PipOnStopActivity");
     public static final ComponentName PORTRAIT_ORIENTATION_ACTIVITY =
             component("PortraitOrientationActivity");
     public static final ComponentName RESIZEABLE_ACTIVITY = component("ResizeableActivity");
+    public static final ComponentName RESUME_WHILE_PAUSING_ACTIVITY =
+            component("ResumeWhilePausingActivity");
     public static final ComponentName SHOW_WHEN_LOCKED_ACTIVITY =
             component("ShowWhenLockedActivity");
     public static final ComponentName SHOW_WHEN_LOCKED_ATTR_ACTIVITY =
@@ -87,6 +97,8 @@ public class Components extends ComponentsBase {
     public static final ComponentName SWIPE_REFRESH_ACTIVITY = component("SwipeRefreshActivity");
     public static final ComponentName TEST_ACTIVITY = component("TestActivity");
     public static final ComponentName TOP_ACTIVITY = component("TopActivity");
+    public static final ComponentName TEST_ACTIVITY_WITH_SAME_AFFINITY =
+            component("TestActivityWithSameAffinity");
     public static final ComponentName TOP_LEFT_LAYOUT_ACTIVITY = component("TopLeftLayoutActivity");
     public static final ComponentName TOP_RIGHT_LAYOUT_ACTIVITY =
             component("TopRightLayoutActivity");
@@ -95,6 +107,8 @@ public class Components extends ComponentsBase {
             component("TranslucentAssistantActivity");
     public static final ComponentName TRANSLUCENT_TOP_ACTIVITY =
             component("TranslucentTopActivity");
+    public static final ComponentName TRANSLUCENT_TEST_ACTIVITY =
+            component("TranslucentTestActivity");
     public static final ComponentName TURN_SCREEN_ON_ACTIVITY = component("TurnScreenOnActivity");
     public static final ComponentName TURN_SCREEN_ON_ATTR_ACTIVITY =
             component("TurnScreenOnAttrActivity");

@@ -331,16 +331,11 @@ class ActivityManagerState {
     }
 
     boolean containsActivity(ComponentName activityName) {
-        return containsActivity(getActivityName(activityName));
-    }
-
-    /** TODO(b/73349193): Use {@link #containsActivity(ComponentName)} instead. */
-    @Deprecated
-    boolean containsActivity(String fullActivityName) {
+        final String fullName = getActivityName(activityName);
         for (ActivityStack stack : mStacks) {
             for (ActivityTask task : stack.mTasks) {
                 for (Activity activity : task.mActivities) {
-                    if (activity.name.equals(fullActivityName)) {
+                    if (activity.name.equals(fullName)) {
                         return true;
                     }
                 }
@@ -349,8 +344,8 @@ class ActivityManagerState {
         return false;
     }
 
-    boolean containsActivityInWindowingMode(String activityName, int windowingMode) {
-        final String fullName = getActivityComponentName(activityName);
+    boolean containsActivityInWindowingMode(ComponentName activityName, int windowingMode) {
+        final String fullName = getActivityName(activityName);
         for (ActivityStack stack : mStacks) {
             for (ActivityTask task : stack.mTasks) {
                 for (Activity activity : task.mActivities) {
@@ -398,16 +393,7 @@ class ActivityManagerState {
     }
 
     boolean hasActivityState(ComponentName activityName, String activityState) {
-        return hasActivityStateInternal(getActivityName(activityName), activityState);
-    }
-
-    /** TODO(b/73349193): Use {@link #hasActivityState(ComponentName, String)} instead. */
-    @Deprecated
-    boolean hasActivityState(String activityName, String activityState) {
-        return hasActivityStateInternal(getActivityComponentName(activityName), activityState);
-    }
-
-    private boolean hasActivityStateInternal(String fullName, String activityState) {
+        final String fullName = getActivityName(activityName);
         for (ActivityStack stack : mStacks) {
             for (ActivityTask task : stack.mTasks) {
                 for (Activity activity : task.mActivities) {
@@ -475,15 +461,7 @@ class ActivityManagerState {
     }
 
     int getStackIdByActivity(ComponentName activityName) {
-        return getStackIdByActivityInternal(getTaskByActivity(activityName));
-    }
-
-    @Deprecated
-    int getStackIdByActivityName(String activityName) {
-        return getStackIdByActivityInternal(getTaskByActivityName(activityName));
-    }
-
-    private int getStackIdByActivityInternal(ActivityTask task) {
+        final ActivityTask task = getTaskByActivity(activityName);
         return  (task == null) ? INVALID_STACK_ID : task.mStackId;
     }
 
