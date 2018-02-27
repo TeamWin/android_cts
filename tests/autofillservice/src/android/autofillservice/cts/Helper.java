@@ -1023,7 +1023,7 @@ final class Helper {
             assertWithMessage("Wrong categoryId at (%s, %s): %s", i, j, match)
                 .that(match.getCategoryId()).isEqualTo(expectedResult.remoteIds[j]);
             assertWithMessage("Wrong score at (%s, %s): %s", i, j, match)
-                .that(match.getScore()).isWithin(expectedResult.scores[j]);
+                .that(match.getScore()).isWithin(0.01f).of(expectedResult.scores[j]);
         }
     }
 

@@ -263,7 +263,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         assertFillEventForFieldsClassification(events.get(0),
                 new FieldClassificationResult[] {
                         new FieldClassificationResult(fieldId1, "myId", 1.0F),
-                        new FieldClassificationResult(fieldId2, "myId", 1.0F),
+                        new FieldClassificationResult(fieldId2, "myId", 0.6F),
                 });
     }
 
