@@ -20,7 +20,7 @@ LOCAL_PACKAGE_NAME := CtsLibcoreOkHttpTestCases
 LOCAL_PRIVATE_PLATFORM_APIS := true
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    bouncycastle-nojarjar \
+    bouncycastle-unbundled \
     cts-core-test-runner \
     okhttp-nojarjar \
     okhttp-tests-nojarjar
