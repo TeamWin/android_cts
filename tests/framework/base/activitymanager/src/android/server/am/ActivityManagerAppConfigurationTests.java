@@ -190,9 +190,9 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         final int[] rotations = { ROTATION_270, ROTATION_180, ROTATION_90, ROTATION_0 };
         for (final int rotation : rotations) {
             final LogSeparator logSeparator = clearLogcat();
-            final int actualStackId =
-                    mAmWmState.getAmState().getTaskByActivity(RESIZEABLE_ACTIVITY).mStackId;
-            final int displayId = mAmWmState.getAmState().getStackById(actualStackId).mDisplayId;
+            final ActivityManagerState.ActivityTask task =
+                    mAmWmState.getAmState().getTaskByActivity(RESIZEABLE_ACTIVITY);
+            final int displayId = mAmWmState.getAmState().getStackById(task.mStackId).mDisplayId;
             rotationSession.set(rotation);
             final int newDeviceRotation = getDeviceRotation(displayId);
             if (newDeviceRotation == INVALID_DEVICE_ROTATION) {
@@ -206,7 +206,9 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
 
             final ReportedSizes rotatedSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY,
                     logSeparator);
-            assertSizesRotate(prevSizes, rotatedSizes);
+            assertSizesRotate(prevSizes, rotatedSizes,
+                    // Skip orientation checks if we are not in fullscreen mode.
+                    task.getWindowingMode() != WINDOWING_MODE_FULLSCREEN);
             prevSizes = rotatedSizes;
         }
     }
@@ -548,13 +550,17 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * Asserts that after rotation, the aspect ratios of display size, metrics, and configuration
      * have flipped.
      */
-    private static void assertSizesRotate(ReportedSizes rotationA, ReportedSizes rotationB)
-            throws Exception {
+    private static void assertSizesRotate(ReportedSizes rotationA, ReportedSizes rotationB,
+            boolean skipOrientationCheck) throws Exception {
         assertEquals(rotationA.displayWidth, rotationA.metricsWidth);
         assertEquals(rotationA.displayHeight, rotationA.metricsHeight);
         assertEquals(rotationB.displayWidth, rotationB.metricsWidth);
         assertEquals(rotationB.displayHeight, rotationB.metricsHeight);
 
+        if (skipOrientationCheck) {
+            // All done if we are not doing orientation check.
+            return;
+        }
         final boolean beforePortrait = rotationA.displayWidth < rotationA.displayHeight;
         final boolean afterPortrait = rotationB.displayWidth < rotationB.displayHeight;
         assertFalse(beforePortrait == afterPortrait);
